@@ -31,6 +31,7 @@ import com.vmware.admiral.common.util.DelegatingX509KeyManager;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.common.util.ServiceUtils;
+import com.vmware.admiral.compute.content.kubernetes.deployments.Deployment;
 import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
@@ -46,7 +47,7 @@ public class KubernetesRemoteApiClient {
      * Kubernetes API doesn't support field selectors just yet
      * https://github.com/kubernetes/kubernetes/issues/1362
      */
-    static final String apiPrefix = "/api/v1";
+
     public static final String pingPath = "/healthz";
 
     private static final Logger logger = Logger
@@ -151,18 +152,21 @@ public class KubernetesRemoteApiClient {
 
     public void doInfo(KubernetesContext context, CompletionHandler completionHandler) {
         // TODO: This should be changed to an URL with host information
-        URI uri = UriUtils.buildUri(ApiUtil.namespacePrefix(context) + "/pods");
+        URI uri = UriUtils
+                .buildUri(ApiUtil.namespacePrefix(context, ApiUtil.API_PREFIX_V1) + "/pods");
         sendRequest(Action.GET, uri, null, context, completionHandler);
     }
 
     public void getNamespaces(KubernetesContext context, CompletionHandler completionHandler) {
-        URI uri = UriUtils.buildUri(ApiUtil.apiPrefix(context) + "/namespaces");
+        URI uri = UriUtils
+                .buildUri(ApiUtil.apiPrefix(context, ApiUtil.API_PREFIX_V1) + "/namespaces");
         sendRequest(Action.GET, uri, null, context, completionHandler);
     }
 
     public void createNamespaceIfMissing(KubernetesContext context,
             CompletionHandler completionHandler) {
-        URI uri = UriUtils.buildUri(ApiUtil.apiPrefix(context) + "/namespaces");
+        URI uri = UriUtils
+                .buildUri(ApiUtil.apiPrefix(context, ApiUtil.API_PREFIX_V1) + "/namespaces");
         String target = context.host.customProperties.get(
                 KubernetesHostConstants.KUBERNETES_HOST_NAMESPACE_PROP_NAME);
 
@@ -193,8 +197,31 @@ public class KubernetesRemoteApiClient {
     }
 
     public void getPods(KubernetesContext context, CompletionHandler completionHandler) {
-        URI uri = UriUtils.buildUri(ApiUtil.namespacePrefix(context) + "/pods");
+
+        URI uri = UriUtils
+                .buildUri(ApiUtil.namespacePrefix(context, ApiUtil.API_PREFIX_V1) + "/pods");
         sendRequest(Action.GET, uri, null, context, completionHandler);
+    }
+
+    public void createService(
+            com.vmware.admiral.compute.content.kubernetes.services.Service service,
+            KubernetesContext context, CompletionHandler completionHandler) {
+
+        URI uri = UriUtils
+                .buildUri(ApiUtil.namespacePrefix(context, ApiUtil.API_PREFIX_V1) + "/services");
+
+        sendRequest(Action.POST, uri, service, context, completionHandler);
+    }
+
+    public void createDeployment(Deployment deployment, KubernetesContext context,
+            CompletionHandler completionHandler) {
+        createOrUpdateTargetSsl(context);
+
+        URI uri = UriUtils.buildUri(
+                ApiUtil.namespacePrefix(context, ApiUtil.API_PREFIX_EXTENSIONS_V1BETA)
+                        + "/deployments");
+
+        sendRequest(Action.POST, uri, deployment, context, completionHandler);
     }
 
     private void sendRequest(Service.Action action, URI uri, Object body, KubernetesContext context,

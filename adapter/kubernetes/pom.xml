@@ -49,6 +49,13 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>admiral-compute</artifactId>
+            <version>${project.version}</version>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>${xenon.group}</groupId>
             <artifactId>xenon-common</artifactId>
             <version>${xenon.version}</version>

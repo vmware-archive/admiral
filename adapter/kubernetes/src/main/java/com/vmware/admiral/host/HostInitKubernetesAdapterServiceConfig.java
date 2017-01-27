@@ -12,6 +12,7 @@
 package com.vmware.admiral.host;
 
 import com.vmware.admiral.adapter.kubernetes.service.KubernetesAdapterService;
+import com.vmware.admiral.adapter.kubernetes.service.KubernetesApplicationAdapterService;
 import com.vmware.admiral.adapter.kubernetes.service.KubernetesHostAdapterService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
@@ -26,8 +27,13 @@ public class HostInitKubernetesAdapterServiceConfig {
                     Operation.createPost(UriUtils.buildUri(host, KubernetesAdapterService.class)),
                     new KubernetesAdapterService());
             host.startService(
-                    Operation.createPost(UriUtils.buildUri(host, KubernetesHostAdapterService.class)),
+                    Operation.createPost(
+                            UriUtils.buildUri(host, KubernetesHostAdapterService.class)),
                     new KubernetesHostAdapterService());
+            host.startService(
+                    Operation.createPost(UriUtils.buildUri(host,
+                            KubernetesApplicationAdapterService.class)),
+                    new KubernetesApplicationAdapterService());
         }
     }
 }

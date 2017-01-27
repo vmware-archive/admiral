@@ -25,6 +25,7 @@ import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
 import com.vmware.admiral.host.ComputeInitialBootService;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
+import com.vmware.admiral.host.HostInitKubernetesAdapterServiceConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.xenon.common.Operation;
@@ -49,12 +50,18 @@ public class BaseKubernetesMockTest extends BaseTestCase {
         }
     }
 
+    @Override
+    protected boolean getPeerSynchronizationEnabled() {
+        return true;
+    }
+
     @Before
     public void setUpMockKubernetesHost() throws Throwable {
         HostInitTestDcpServicesConfig.startServices(host);
         HostInitPhotonModelServiceConfig.startServices(host);
         HostInitCommonServiceConfig.startServices(host);
         HostInitComputeServicesConfig.startServices(host, false);
+        HostInitKubernetesAdapterServiceConfig.startServices(host, false);
         waitForServiceAvailability(ComputeInitialBootService.SELF_LINK);
         waitForInitialBootServiceToBeSelfStopped(ComputeInitialBootService.SELF_LINK);
 
