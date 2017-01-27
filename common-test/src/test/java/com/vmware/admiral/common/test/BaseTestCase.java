@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -83,7 +83,7 @@ public abstract class BaseTestCase {
             "dcp.management.test.wait.thread.sleep.millis", 500);
     private static final int HOST_TIMEOUT_SECONDS = 60;
 
-    protected static final int MAINTENANCE_INTERVAL_MILLIS = 50;
+    protected static final int MAINTENANCE_INTERVAL_MILLIS = 20;
     protected VerificationHost host;
 
     private static class CustomizationVerificationHost extends VerificationHost {
@@ -161,9 +161,10 @@ public abstract class BaseTestCase {
 
         VerificationHost h = VerificationHost.initialize(new CustomizationVerificationHost(chains),
                 args);
-        h.setMaintenanceIntervalMicros(TimeUnit.MILLISECONDS
-                .toMicros(MAINTENANCE_INTERVAL_MILLIS));
+        h.setMaintenanceIntervalMicros(this.getMaintenanceIntervalMillis() * 1000);
         h.setTimeoutSeconds(HOST_TIMEOUT_SECONDS);
+
+        h.setPeerSynchronizationEnabled(this.getPeerSynchronizationEnabled());
 
         h.start();
 
@@ -175,18 +176,20 @@ public abstract class BaseTestCase {
         ServiceHost.Arguments args = new ServiceHost.Arguments();
         args.sandbox = null; // ask runtime to pick a random storage location
         args.port = 0; // ask runtime to pick a random port
-        Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains = new HashMap<>();
+        Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains =
+                new HashMap<>();
         customizeChains(chains);
 
         VerificationHost h = VerificationHost.initialize(new CustomizationVerificationHost(chains),
                 args);
-        h.setMaintenanceIntervalMicros(TimeUnit.MILLISECONDS
-                .toMicros(MAINTENANCE_INTERVAL_MILLIS));
+        h.setMaintenanceIntervalMicros(this.getMaintenanceIntervalMillis() * 1000);
 
         ServerX509TrustManager trustManager = new TestServerX509TrustManager(h, reloadTime);
         SSLContext sslContext = CertificateUtil.createSSLContext(trustManager, null);
 
         h.setClient(createServiceClient(sslContext, 0, h));
+        h.setPeerSynchronizationEnabled(this.getPeerSynchronizationEnabled());
+
         h.start();
 
         return new AbstractMap.SimpleEntry<>(h, trustManager);
@@ -210,6 +213,27 @@ public abstract class BaseTestCase {
         } catch (URISyntaxException e) {
             throw new RuntimeException("Failed to create ServiceClient", e);
         }
+    }
+
+    /**
+     * Returns default peer synchronization flag. For hosts started in single mode it should be
+     * false till https://www.pivotaltracker.com/n/projects/1471320/stories/138426713 is resolved.
+     * <p/>
+     * Tests for clustered nodes AND tests calling registerForServiceAvailability with
+     * checkForReplica true SHOULD overwrite this method and return <code>true</code>.
+     *
+     * @return boolean value
+     */
+    protected boolean getPeerSynchronizationEnabled() {
+        return false;
+    }
+
+    /**
+     * Returns maintenance interval millis to be set to the host
+     * @return milliseconds
+     */
+    protected long getMaintenanceIntervalMillis() {
+        return MAINTENANCE_INTERVAL_MILLIS;
     }
 
     protected void customizeChains(

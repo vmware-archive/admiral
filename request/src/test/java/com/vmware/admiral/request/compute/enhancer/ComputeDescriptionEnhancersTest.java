@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -88,7 +88,13 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         context = new EnhanceContext();
         context.imageType = "ubuntu-1604";
         context.endpointType = awsEndpointType;
-        context.environmentLink = UriUtils.buildUriPath(EnvironmentService.FACTORY_LINK, awsEndpointType);
+        context.environmentLink = UriUtils.buildUriPath(EnvironmentService.FACTORY_LINK,
+                awsEndpointType);
+    }
+
+    @Override
+    protected boolean getPeerSynchronizationEnabled() {
+        return true;
     }
 
     @Test

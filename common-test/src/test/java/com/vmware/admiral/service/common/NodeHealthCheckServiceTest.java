@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -27,7 +27,8 @@ import com.vmware.xenon.common.UriUtils;
 
 public class NodeHealthCheckServiceTest extends BaseTestCase {
 
-    private Set<String> unavaibleServicesPaths = new HashSet<>(Arrays.asList("dummy-test-service"));
+    private Set<String> unavailableServicesPaths = new HashSet<>(
+            Arrays.asList("dummy-test-service"));
 
     private Set<String> availableServicesPaths = new HashSet<>();
 
@@ -37,20 +38,17 @@ public class NodeHealthCheckServiceTest extends BaseTestCase {
 
     @Before
     public void setUp() throws Throwable {
-        host.startService(
-                Operation.createPost(UriUtils.buildUri(host,
-                        ConfigurationFactoryService.class)),
-                new ConfigurationFactoryService());
+        host.startServiceAndWait(ConfigurationFactoryService.class,
+                ConfigurationFactoryService.SELF_LINK);
 
-        host.startService(
-                Operation.createPost(UriUtils.buildUri(host,
-                        NodeHealthCheckService.class)),
-                new NodeHealthCheckService());
-
-        waitForServiceAvailability(host, ConfigurationFactoryService.SELF_LINK);
+        host.startServiceAndWait(NodeHealthCheckService.class, NodeHealthCheckService.SELF_LINK);
 
         availableServicesPaths.addAll(Arrays.asList(ConfigurationFactoryService.SELF_LINK));
+    }
 
+    @Override
+    protected boolean getPeerSynchronizationEnabled() {
+        return true;
     }
 
     @Test
@@ -60,12 +58,12 @@ public class NodeHealthCheckServiceTest extends BaseTestCase {
 
         this.host.testStart(1);
 
-        Operation get = Operation.createGet(UriUtils.buildUri(host.getUri(), NodeHealthCheckService.SELF_LINK));
+        Operation get = Operation.createGet(UriUtils.buildUri(host.getUri(),
+                NodeHealthCheckService.SELF_LINK));
 
         retryHealthCheck(RETRIES_COUNT, get);
 
         this.host.testWait();
-
     }
 
     private void retryHealthCheck(int retries, Operation get) {
@@ -86,27 +84,27 @@ public class NodeHealthCheckServiceTest extends BaseTestCase {
         });
 
         this.host.send(get);
-
     }
 
     @Test
     public void testHealthCheckForNotStartedServices() {
 
-        registerServicesForMonitoring(unavaibleServicesPaths);
+        registerServicesForMonitoring(unavailableServicesPaths);
 
         this.host.testStart(1);
 
-        Operation get = Operation.createGet(UriUtils.buildUri(host.getUri(), NodeHealthCheckService.SELF_LINK));
+        Operation get = Operation.createGet(UriUtils.buildUri(host.getUri(),
+                NodeHealthCheckService.SELF_LINK));
 
         get.setCompletion((o, e) -> {
             if (e != null) {
-                unavaibleServicesPaths.stream().forEach(service -> {
+                unavailableServicesPaths.forEach(service -> {
                     try {
-                        Assert.assertTrue(e.getMessage().contains(String.format("Unavailable services: %s", service)));
+                        Assert.assertTrue(e.getMessage().contains(
+                                String.format("Unavailable services: %s", service)));
                     } catch (Throwable t) {
                         this.host.failIteration(t);
                     }
-
                 });
                 this.host.completeIteration();
                 return;
@@ -116,7 +114,6 @@ public class NodeHealthCheckServiceTest extends BaseTestCase {
 
         this.host.send(get);
         this.host.testWait();
-
     }
 
     private void registerServicesForMonitoring(Set<String> services) {
@@ -126,7 +123,8 @@ public class NodeHealthCheckServiceTest extends BaseTestCase {
         healthCheck.services = services;
 
         this.host.testStart(1);
-        Operation patch = Operation.createPatch(UriUtils.buildUri(host.getUri(), NodeHealthCheckService.SELF_LINK));
+        Operation patch = Operation.createPatch(UriUtils.buildUri(host.getUri(),
+                NodeHealthCheckService.SELF_LINK));
         patch.setBody(healthCheck);
         patch.setCompletion((o, e) -> {
             if (e != null) {
