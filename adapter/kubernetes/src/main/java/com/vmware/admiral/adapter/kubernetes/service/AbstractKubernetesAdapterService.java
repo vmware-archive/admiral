@@ -215,7 +215,7 @@ public abstract class AbstractKubernetesAdapterService extends StatelessService 
 
         try {
             if (request.serviceTaskCallback.isEmpty()) {
-                logFine("No callback provided to Docker adapter service for resource: %s.",
+                logFine("No callback provided to Kubernetes adapter service for resource: %s.",
                         request.resourceReference);
                 return;
             }
