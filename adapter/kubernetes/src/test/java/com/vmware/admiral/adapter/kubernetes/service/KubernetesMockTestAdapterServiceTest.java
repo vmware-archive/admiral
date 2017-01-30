@@ -229,7 +229,6 @@ public class KubernetesMockTestAdapterServiceTest extends BaseKubernetesMockTest
         kubernetesFailingHostState = doPost(computeState, ComputeService.FACTORY_LINK);
 
         ContainerState containerState = new ContainerState();
-        // This id is returned by the kubernetes host mock
         containerState.id = "test-failing-container-id";
         containerState.parentLink = kubernetesFailingHostState.documentSelfLink;
         containerState.descriptionLink = containerDescriptionLink;

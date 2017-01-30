@@ -315,7 +315,7 @@ public class HostContainerListDataCollection extends StatefulService {
 
         String containerHostLink = body.containerHostLink;
         if (containerHostLink == null) {
-            logFine("'containerHostLink' is required");
+            logWarning("'containerHostLink' is required");
             op.complete();
             return;
         }
@@ -1165,6 +1165,10 @@ public class HostContainerListDataCollection extends StatefulService {
                 (ComputeState host) -> {
                     if (ContainerHostUtil.isVicHost(host)) {
                         logInfo("VIC host detected, system containers will not be installed.");
+                        return;
+                    }
+                    if (ContainerHostUtil.isKubernetesHost(host)) {
+                        logInfo("Kubernetes host detected, system containers will not be installed.");
                         return;
                     }
                     createOrRetrieveSystemContainer(containerHostLink, systemContainerName,
