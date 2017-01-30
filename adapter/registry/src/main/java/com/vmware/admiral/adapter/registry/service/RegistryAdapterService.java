@@ -17,7 +17,6 @@ import static com.vmware.admiral.service.common.RegistryService.API_VERSION_PROP
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -28,9 +27,8 @@ import java.util.stream.Collectors;
 
 import com.vmware.admiral.adapter.docker.util.DockerImage;
 import com.vmware.admiral.adapter.registry.service.RegistrySearchResponse.Result;
-import com.vmware.admiral.common.AuthCredentialsType;
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.security.EncryptionUtils;
+import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.service.common.RegistryService.ApiVersion;
@@ -221,28 +219,12 @@ public class RegistryAdapterService extends StatelessService {
     private void processAuthentication(RequestContext context,
             AuthCredentialsServiceState authState) {
         if (authState != null) {
-            String authorizationHeaderValue = createAuthorizationHeader(authState);
+            String authorizationHeaderValue = AuthUtils.createAuthorizationHeader(authState);
             if (authorizationHeaderValue != null) {
                 context.request.customProperties.put(AUTHORIZATION_HEADER,
                         authorizationHeaderValue);
             }
         }
-    }
-
-    private String createAuthorizationHeader(AuthCredentialsServiceState authState) {
-        AuthCredentialsType authCredentialsType = AuthCredentialsType.valueOf(authState.type);
-        if (AuthCredentialsType.Password.equals(authCredentialsType)) {
-            String username = authState.userEmail;
-            String password = EncryptionUtils.decrypt(authState.privateKey);
-
-            String code = new String(Base64.getEncoder().encode(
-                    new StringBuffer(username).append(":").append(password).toString().getBytes()));
-            String headerValue = new StringBuffer("Basic ").append(code).toString();
-
-            return headerValue;
-        }
-
-        return null;
     }
 
     private void processSearchRequest(RequestContext context) {

@@ -22,7 +22,10 @@ import com.vmware.admiral.adapter.kubernetes.service.AbstractKubernetesAdapterSe
 import com.vmware.admiral.adapter.kubernetes.service.apiobject.Namespace;
 import com.vmware.admiral.adapter.kubernetes.service.apiobject.NamespaceList;
 import com.vmware.admiral.adapter.kubernetes.service.apiobject.ObjectMeta;
+import com.vmware.admiral.common.AuthCredentialsType;
 import com.vmware.admiral.common.security.EncryptionUtils;
+import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.DelegatingX509KeyManager;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
@@ -49,13 +52,8 @@ public class KubernetesRemoteApiClient {
     private static final Logger logger = Logger
             .getLogger(KubernetesRemoteApiClient.class.getName());
 
-    private static final int SSL_TRUST_RETRIES_COUNT = Integer.getInteger(
-            "com.vmware.admiral.adapter.ssltrust.delegate.retries", 5);
-    private static final long SSL_TRUST_RETRIES_WAIT = Long.getLong(
-            "com.vmware.admiral.adapter.ssltrust.delegate.retries.wait.millis", 500);
     private static final int REQUEST_TIMEOUT_SECONDS = 10;
 
-    private final ServiceHost host;
     private final ServiceClient serviceClient;
     private final DelegatingX509KeyManager keyManager = new DelegatingX509KeyManager();
     private ServerX509TrustManager trustManager;
@@ -63,7 +61,6 @@ public class KubernetesRemoteApiClient {
     private static KubernetesRemoteApiClient INSTANCE = null;
 
     protected KubernetesRemoteApiClient(ServiceHost host, final TrustManager trustManager) {
-        this.host = host;
         this.serviceClient = ServiceClientFactory.createServiceClient(trustManager, keyManager);
 
         if (trustManager instanceof ServerX509TrustManager) {
@@ -80,39 +77,29 @@ public class KubernetesRemoteApiClient {
     }
 
     public void stop() {
-        /*if (attachServiceClient != null) {
-            attachServiceClient.stop();
-        }*/
         if (this.serviceClient != null) {
             this.serviceClient.stop();
         }
-        /*if (largeDataClient != null) {
-            largeDataClient.stop();
-        }*/
 
         INSTANCE = null;
     }
 
     public void handleMaintenance(Operation post) {
-        /*if (attachServiceClient != null) {
-            attachServiceClient.handleMaintenance(post);
-        }*/
         if (serviceClient != null) {
             serviceClient.handleMaintenance(post);
         }
-        /*if (largeDataClient != null) {
-            largeDataClient.handleMaintenance(post);
-        }*/
     }
 
     private void createOrUpdateTargetSsl(KubernetesContext context) {
-        if (context.credentials == null) {
+        if (context.credentials == null
+                || !AuthCredentialsType.PublicKey.name().equals(context.credentials.type)) {
             return;
         }
 
-        /*if (!isSecure(input.getDockerUri())) {
+        URI uri = UriUtils.buildUri(context.host.address);
+        if (!isSecure(uri)) {
             return;
-        }*/
+        }
 
         String clientKey = EncryptionUtils.decrypt(context.credentials.privateKey);
         String clientCert = context.credentials.publicKey;
@@ -133,7 +120,14 @@ public class KubernetesRemoteApiClient {
         }
     }
 
-    private void prepareRequest(Operation op) {
+    private void prepareRequest(Operation op, KubernetesContext context) {
+        String authorizationHeaderValue = AuthUtils.createAuthorizationHeader(context.credentials);
+        if (authorizationHeaderValue != null) {
+            op.addRequestHeader(Operation.AUTHORIZATION_HEADER, authorizationHeaderValue);
+        } else {
+            createOrUpdateTargetSsl(context);
+        }
+
         op.setReferer(URI.create("/"));
         op.forceRemote();
 
@@ -144,52 +138,36 @@ public class KubernetesRemoteApiClient {
     }
 
     public void ping(KubernetesContext context, CompletionHandler completionHandler) {
-        createOrUpdateTargetSsl(context);
-
         URI uri = UriUtils.buildUri(context.host.address + pingPath);
         Operation op = Operation
                 .createGet(uri)
                 .setCompletion(completionHandler);
 
-        prepareRequest(op);
+        prepareRequest(op, context);
         op.setExpiration(ServiceUtils.getExpirationTimeFromNowInMicros(
                 TimeUnit.SECONDS.toMicros(10)));
         serviceClient.send(op);
     }
 
     public void doInfo(KubernetesContext context, CompletionHandler completionHandler) {
-        createOrUpdateTargetSsl(context);
-
         // TODO: This should be changed to an URL with host information
         URI uri = UriUtils.buildUri(ApiUtil.namespacePrefix(context) + "/pods");
-        /*
-        sendRequest(Service.Action.GET, uri, null, (op, ex) -> {
-            if (ex != null) {
-                completionHandler.handle(op, ex);
-            } else {
-                String body = op.getBody(String.class);
-                System.out.println(body);
-            }
-        });
-        */
-        sendRequest(Action.GET, uri, null, completionHandler);
+        sendRequest(Action.GET, uri, null, context, completionHandler);
     }
 
     public void getNamespaces(KubernetesContext context, CompletionHandler completionHandler) {
-        createOrUpdateTargetSsl(context);
         URI uri = UriUtils.buildUri(ApiUtil.apiPrefix(context) + "/namespaces");
-        sendRequest(Action.GET, uri, null, completionHandler);
+        sendRequest(Action.GET, uri, null, context, completionHandler);
     }
 
-    public void createNamespaceIfMissing(KubernetesContext context, CompletionHandler completionHandler) {
-        createOrUpdateTargetSsl(context);
-
+    public void createNamespaceIfMissing(KubernetesContext context,
+            CompletionHandler completionHandler) {
         URI uri = UriUtils.buildUri(ApiUtil.apiPrefix(context) + "/namespaces");
         String target = context.host.customProperties.get(
                 KubernetesHostConstants.KUBERNETES_HOST_NAMESPACE_PROP_NAME);
 
         //getNamespaces(context, (operation, throwable) -> {
-        sendRequest(Action.GET, uri, null, (o, ex) -> {
+        sendRequest(Action.GET, uri, null, context, (o, ex) -> {
             if (ex != null) {
                 completionHandler.handle(o, ex);
                 return;
@@ -210,25 +188,29 @@ public class KubernetesRemoteApiClient {
             Namespace namespace = new Namespace();
             namespace.metadata = new ObjectMeta();
             namespace.metadata.name = target;
-            sendRequest(Action.POST, uri, Utils.toJson(namespace), completionHandler);
+            sendRequest(Action.POST, uri, Utils.toJson(namespace), context, completionHandler);
         });
     }
 
     public void getPods(KubernetesContext context, CompletionHandler completionHandler) {
-        createOrUpdateTargetSsl(context);
-
         URI uri = UriUtils.buildUri(ApiUtil.namespacePrefix(context) + "/pods");
-        sendRequest(Action.GET, uri, null, completionHandler);
+        sendRequest(Action.GET, uri, null, context, completionHandler);
     }
 
-    private void sendRequest(Service.Action action, URI uri, Object body,
-                             CompletionHandler completionHandler) {
+    private void sendRequest(Service.Action action, URI uri, Object body, KubernetesContext context,
+            CompletionHandler completionHandler) {
         Operation op = Operation.createGet(uri)
                 .setAction(action)
                 .setBody(body)
                 .setCompletion(completionHandler);
 
-        prepareRequest(op);
+        prepareRequest(op, context);
         serviceClient.send(op);
     }
+
+    private boolean isSecure(URI uri) {
+        AssertUtil.assertNotNull(uri, "uri");
+        return UriUtils.HTTPS_SCHEME.equalsIgnoreCase(uri.getScheme());
+    }
+
 }

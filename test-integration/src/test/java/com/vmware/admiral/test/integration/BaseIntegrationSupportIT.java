@@ -31,6 +31,7 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
@@ -39,6 +40,7 @@ import javax.net.ssl.X509TrustManager;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -383,6 +385,17 @@ public abstract class BaseIntegrationSupportIT {
 
         throw new RuntimeException(String.format(
                 "Failed waiting for state change"));
+    }
+
+    protected static void waitFor(Predicate<Void> predicate) throws Exception {
+        for (int i = 0; i < STATE_CHANGE_WAIT_POLLING_RETRY_COUNT; i++) {
+            Thread.sleep(STATE_CHANGE_WAIT_POLLING_PERIOD_MILLIS);
+            if (predicate.test(null)) {
+                return;
+            }
+        }
+
+        throw new RuntimeException(String.format("Failed waiting"));
     }
 
     protected static void waitForStatusCode(URI uri, int expectedStatusCode) throws Exception {
