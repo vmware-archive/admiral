@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -31,7 +31,7 @@
             v-bind:value="model.item.endpoint"
             v-on:change="onEndpointChange"></dropdown-search>
       </div>
-      <div class="form-group row">
+      <div v-if="isDockerPlacementZone" class="form-group row">
         <div class="subtitle">{{i18n('app.placementZone.edit.placementPolicy')}}
           <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="top"
               v-tooltip="i18n('app.placementZone.edit.placementPolicyHint')"></i>
@@ -46,7 +46,7 @@
             v-bind:value="{'name': model.item.epzState && model.item.epzState.placementPolicy}"
             v-on:change="onPlacementPolicyChange"></dropdown>
       </div>
-      <div class="tags form-group row">
+      <div v-if="isDockerPlacementZone" class="tags form-group row">
         <div class="form-control">
           <label>{{i18n('app.placementZone.edit.tagsTitle')}}
             <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="top"
@@ -60,12 +60,12 @@
         </div>
       </div>
       <div class="form-group row">
-        <div class="checkbox-inline">
+        <div v-if="isDockerPlacementZone" class="checkbox-inline">
           <input id="dynamic-input" class="dynamic-input" type="checkbox" v-on:change="onDynamicChange()">
           <label for="dynamic-input">{{i18n('app.placementZone.edit.dynamicTitle')}}</label>
         </div>
       </div>
-      <div class="tagsToMatch form-group row">
+      <div v-if="isDockerPlacementZone" class="tagsToMatch form-group row">
         <div class="form-control">
           <label>{{i18n('app.placementZone.edit.tagsToMatchTitle')}}
             <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="top"

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -42,6 +42,12 @@ let hostConstraints = {
         allow_underscores: true
       })) {
       return 'errors.hostIp';
+    }
+  },
+
+  hostType: function(hostType) {
+    if (!hostType) {
+      return 'errors.required';
     }
   },
 
@@ -96,19 +102,26 @@ let onOpenToolbarItem = function(name, data, shouldSelectAndComplete) {
 };
 
 let getHostSpec = function(hostModel) {
-  let customProperties = {
-    __adapterDockerType: hostModel.connectionType
-  };
-
-  if (hostModel.credential) {
-    customProperties.__authCredentialsLink = hostModel.credential.documentSelfLink;
-  }
+  let customProperties = {};
 
   if (hostModel.customProperties) {
 
     hostModel.customProperties.forEach(function(prop) {
       customProperties[prop.name] = prop.value;
     });
+  }
+
+  // Set or overwrite service use custom properties
+  if (hostModel.connectionType) {
+    customProperties.__adapterDockerType = hostModel.connectionType;
+  }
+
+  if (hostModel.hostType) {
+    customProperties.__containerHostType = hostModel.hostType;
+  }
+
+  if (hostModel.credential) {
+    customProperties.__authCredentialsLink = hostModel.credential.documentSelfLink;
   }
 
   var id = hostModel.address;
@@ -215,6 +228,16 @@ let toViewModel = function(dto) {
     selfLinkId: utils.getDocumentId(dto.documentSelfLink),
     tagLinks: dto.tagLinks
   };
+};
+
+let updateSchedulerPlacementZoneName = function(hostModel) {
+  if (hostModel.hostType === constants.HOST.TYPE.DOCKER) {
+    hostModel.schedulerPlacementZoneName = null;
+  } else if (!hostModel.schedulerPlacementZoneName
+             || hostModel.schedulerPlacementZoneName === '') {
+    hostModel.schedulerPlacementZoneName = hostModel.hostType.toLowerCase()
+      + ':' + hostModel.address.replace(/(http:|https:|\/)/g, '');
+  }
 };
 
 let updateEditableProperties = function(hostModel) {
@@ -601,6 +624,50 @@ let HostsStore = Reflux.createStore({
     actions.NavigationActions.openHosts();
   },
 
+  createPlacementZoneIfNeeded: function(hostModel) {
+
+    // auto creation of placement zones is possible for schedulers only
+    if (hostModel.hostType === constants.HOST.TYPE.DOCKER) {
+      return Promise.resolve(hostModel);
+    }
+
+    if (!hostModel.schedulerPlacementZoneName
+        || hostModel.schedulerPlacementZoneName === '') {
+      return Promise.resolve(hostModel);
+    }
+
+    let placementZoneConfig = {
+      resourcePoolState: {
+        name: hostModel.schedulerPlacementZoneName,
+        customProperties: {
+          __placementZoneType: constants.PLACEMENT_ZONE.TYPE.SCHEDULER
+        }
+      }
+    };
+
+    return services.createPlacementZone(placementZoneConfig).then((result) => {
+      hostModel.resourcePoolLink = result.resourcePoolState.documentSelfLink;
+      hostModel.createdSchedulerPlacementZone = true;
+      return Promise.resolve(hostModel);
+    });
+
+  },
+
+  cleanupCreatedPlacementZone: function(hostModel) {
+    if (!hostModel.createdSchedulerPlacementZone) {
+      // No placement zone was automatically created
+      return Promise.resolve();
+    }
+    if (!hostModel.resourcePoolLink || hostModel.resourcePoolLink === '') {
+      // No placement zone set
+      return Promise.resolve();
+    }
+
+    return services.deletePlacementZone({
+      documentSelfLink: hostModel.resourcePoolLink
+    });
+  },
+
   onAddHost: function(hostModel, tags) {
     this.setInData(['hostAddView', 'validationErrors'], null);
     this.setInData(['hostAddView', 'shouldAcceptCertificate'], null);
@@ -620,20 +687,33 @@ let HostsStore = Reflux.createStore({
 
         hostModel.tagLinks = [...new Set(createdTags.map((tag) => tag.documentSelfLink))];
 
-        var hostSpec = getHostSpec(hostModel);
+        return this.createPlacementZoneIfNeeded(hostModel).then((hostModel) => {
 
-        services.addHost(hostSpec).then((hostSpec) => {
-          this.setInData(['hostAddView', 'isSavingHost'], false);
-          if (hostSpec && hostSpec.certificate) {
-            this.setInData(['hostAddView', 'shouldAcceptCertificate'], {
-              certificateHolder: hostSpec
+          var hostSpec = getHostSpec(hostModel);
+
+          return services.addHost(hostSpec).then((hostSpec) => {
+            this.setInData(['hostAddView', 'isSavingHost'], false);
+            if (hostSpec && hostSpec.certificate) {
+              // if certificate has to be accepted, delete auto-generated placement zone
+              // it will be recreated if and when the certificate has been accepted
+              return this.cleanupCreatedPlacementZone(hostModel).then(() => {
+                this.setInData(['hostAddView', 'shouldAcceptCertificate'], {
+                  certificateHolder: hostSpec
+                });
+                this.emitChange();
+              });
+            } else {
+              this.onHostAdded();
+            }
+          }).catch((e) => {
+            // cleanup auto-generated placement zone and rethrow the error
+            return this.cleanupCreatedPlacementZone(hostModel).then(() => {
+              return Promise.reject(e);
             });
-            this.emitChange();
-          } else {
-            this.onHostAdded();
-          }
-        }).catch(this.onGenericEditError);
-      });
+          });
+
+        });
+      }).catch(this.onGenericEditError);
     }
 
     this.emitChange();
@@ -686,15 +766,16 @@ let HostsStore = Reflux.createStore({
       actions.CertificatesActions.retrieveCertificates();
       actions.DeploymentPolicyActions.retrieveDeploymentPolicies();
 
+      var containerHostType = hostSpec.customProperties.__containerHostType;
       var credentialLink = hostSpec.customProperties.__authCredentialsLink;
       var deploymentPolicyLink = hostSpec.customProperties.__deploymentPolicyLink;
-      this.loadHostData(hostModel, credentialLink, deploymentPolicyLink);
+      this.loadHostData(hostModel, containerHostType, credentialLink, deploymentPolicyLink);
     }).catch(this.onGenericEditError);
 
     this.emitChange();
   },
 
-  loadHostData: function(hostModel, credentialLink, deploymentPolicyLink) {
+  loadHostData: function(hostModel, containerHostType, credentialLink, deploymentPolicyLink) {
     var promises = [];
 
     if (hostModel.resourcePoolLink) {
@@ -743,6 +824,7 @@ let HostsStore = Reflux.createStore({
         dto: hostModel.dto,
         id: hostModel.id,
         hostAlias: utils.getHostName(hostModel),
+        selectedHostType: containerHostType,
         address: hostModel.address ? hostModel.address : hostModel.id,
         placementZone: hostModel.placementZone,
         credential: credential,
@@ -772,7 +854,6 @@ let HostsStore = Reflux.createStore({
     } else {
       this.setInData(['hostAddView', 'isSavingHost'], true);
 
-      // the only thing currently editable are the custom properties
       let customProperties = {};
       if (hostModel.customProperties) {
         customProperties = utils.arrayToObject(hostModel.customProperties);
@@ -852,7 +933,9 @@ let HostsStore = Reflux.createStore({
           });
           this.emitChange();
         } else {
+          updateSchedulerPlacementZoneName(hostModel);
           this.setInData(['hostAddView', 'validationErrors', '_valid'], true);
+          this.setInData(['hostAddView', 'verifiedHostModel'], hostModel);
           this.emitChange();
         }
       }).catch(this.onGenericEditError);
@@ -902,10 +985,17 @@ let HostsStore = Reflux.createStore({
         return Promise.all(tagsPromises).then((createdTags) => {
           hostModel.tagLinks = [...new Set(createdTags.map((tag) => tag.documentSelfLink))];
 
-          var hostSpec = getHostSpec(hostModel);
-          hostSpec.sslTrust = certificateHolder;
-
-          return services.addHost(hostSpec);
+          return this.createPlacementZoneIfNeeded(hostModel).then((hostModel) => {
+            var hostSpec = getHostSpec(hostModel);
+            hostSpec.sslTrust = certificateHolder;
+            return services.addHost(hostSpec);
+          })
+          .catch((e) => {
+            // cleanup auto-generated placement zone and rethrow the error
+            return this.cleanupCreatedPlacementZone(hostModel).then(() => {
+              return Promise.reject(e);
+            });
+          });
         });
       })
       .then(this.onHostAdded)
@@ -932,8 +1022,10 @@ let HostsStore = Reflux.createStore({
         return services.validateHost(hostSpec);
       })
       .then(() => {
+        updateSchedulerPlacementZoneName(hostModel);
         this.setInData(['hostAddView', 'validationErrors', '_valid'], true);
         this.setInData(['hostAddView', 'isVerifyingHost'], false);
+        this.setInData(['hostAddView', 'verifiedHostModel'], hostModel);
         this.emitChange();
       })
       .catch(this.onGenericEditError);

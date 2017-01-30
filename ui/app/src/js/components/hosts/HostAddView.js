@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -74,7 +74,9 @@ var HostAddView = Vue.extend({
       credential: null,
       deploymentPolicy: null,
       connectionType: 'API',
-      autoConfigure: false
+      autoConfigure: false,
+      selectedHostType: constants.HOST.TYPE.DOCKER,
+      schedulerPlacementZoneName: null
     };
   },
 
@@ -90,12 +92,78 @@ var HostAddView = Vue.extend({
     },
     autoConfigurationEnabled: function() {
       return !utils.isApplicationEmbedded() && (!this.model || !this.model.isUpdate);
+    },
+    isDockerHost: function() {
+      return this.selectedHostType === constants.HOST.TYPE.DOCKER;
+    },
+    isVerifiedDockerHost: function() {
+      return this.isDockerHost && this.isHostModelVerified;
+    },
+    isVerifiedSchedulerHost: function() {
+      return !this.isDockerHost && this.isHostModelVerified;
+    },
+    isHostModelVerified: function() {
+      // check if model is verified
+      if (!this.model.verifiedHostModel) {
+        return false;
+      }
+
+      // check if address matches verified address
+      if (utils.populateDefaultSchemeAndPort(this.address) !==
+          utils.populateDefaultSchemeAndPort(this.model.verifiedHostModel.address)) {
+        return false;
+      }
+
+      // check if credentials match verified credentials
+      if (this.credential) {
+        if (!this.model.verifiedHostModel.credential) {
+          return false;
+        } else if (this.credential.documentSelfLink !==
+                   this.model.verifiedHostModel.credential.documentSelfLink) {
+          return false;
+        }
+      } else if (this.model.verifiedHostModel.credential) {
+        return false;
+      }
+
+      // check if host type matches verified host type
+      return this.selectedHostType === this.model.verifiedHostModel.hostType;
+    },
+    isVicOptionEnabled: function() {
+      return utils.isVicHostOptionEnabled();
+    },
+    isKubernetesOptionEnabled: function() {
+      return utils.isKubernetesHostOptionEnabled();
+    },
+    showAllCommonInputs: function() {
+      return this.isHostModelVerified || this.model.isUpdate;
+    },
+    showPlacementZone: function() {
+      return this.showAllCommonInputs;
+    },
+    showDeploymentPolicy: function() {
+      return this.showAllCommonInputs;
+    },
+    showTags: function() {
+      return this.isVerifiedDockerHost || (this.model.isUpdate && this.isDockerHost);
+    },
+    showAutoConfigure: function() {
+      return this.isVerifiedDockerHost && !this.model.isUpdate;
+    },
+    showCustomProperties: function() {
+      return this.showAllCommonInputs;
+    },
+    showAddButton: function() {
+      return this.showAllCommonInputs;
+    },
+    showVerifyButton: function() {
+      return !this.model.isUpdate;
     }
   },
 
   attached: function() {
     // Resource pool input
-    var elemPlacementZone = $(this.$el).find('#placementZone .form-control');
+    var elemPlacementZone = $(this.$el).find('#placementZone .dropdown-holder');
     this.placementZoneInput = new DropdownSearchMenu(elemPlacementZone, {
       title: i18n.t('dropdownSearchMenu.title', {
         entity: i18n.t('app.placementZone.entity')
@@ -177,7 +245,15 @@ var HostAddView = Vue.extend({
       } else {
         this.placementZoneInput.setLoading(false);
         this.placementZoneInput.setOptions(
-            (this.model.placementZones || []).map((config) => config.resourcePoolState));
+            (this.model.placementZones || []).map((config) => {
+              if (config.placementZoneType
+                  && config.placementZoneType !== constants.PLACEMENT_ZONE.TYPE.DOCKER) {
+                let placementZone = config.resourcePoolState.asMutable();
+                placementZone.isDisabled = true;
+                return placementZone;
+              }
+              return Immutable(config.resourcePoolState);
+            }));
       }
     }, {immediate: true});
 
@@ -242,16 +318,26 @@ var HostAddView = Vue.extend({
 
         if (model.address !== oldModel.address) {
           this.address = model.address;
-          this.disableInput('address', model.address);
+          this.disableInput('address', 'input', model.address);
         }
 
         if (model.hostAlias !== oldModel.hostAlias) {
           this.hostAlias = model.hostAlias;
         }
 
+        if (model.selectedHostType !== oldModel.selectedHostType) {
+          this.selectedHostType = model.selectedHostType;
+          this.disableInput('hostType', 'div', model.selectedHostType);
+        }
+
         if (model.placementZone !== oldModel.placementZone) {
-          this.placementZoneInput.setSelectedOption(model.placementZone);
-          this.placementZone = this.placementZoneInput.getSelectedOption();
+          this.placementZone = model.placementZone;
+          if (model.selectedHostType === constants.HOST.TYPE.DOCKER) {
+            this.placementZoneInput.setSelectedOption(model.placementZone);
+          } else {
+            this.schedulerPlacementZoneName = model.placementZone.name;
+            this.disableInput('placementZone', 'input', model.placementZone.name);
+          }
         }
 
         if (model.credential !== oldModel.credential) {
@@ -272,7 +358,15 @@ var HostAddView = Vue.extend({
         if (model.customProperties !== oldModel.customProperties) {
           this.customPropertiesEditor.setData(model.customProperties);
         }
+      } else if (!model.isVerifyingHost && model.verifiedHostModel) {
+
+        if (this.schedulerPlacementZoneName !==
+            model.verifiedHostModel.schedulerPlacementZoneName) {
+          this.schedulerPlacementZoneName =
+            model.verifiedHostModel.schedulerPlacementZoneName;
+        }
       }
+
     }, {immediate: true});
 
     // Should accept certificate
@@ -359,9 +453,10 @@ var HostAddView = Vue.extend({
         modal.hide();
       });
     },
-    disableInput: function(inputId, value) {
-      var inputEl = $(this.$el).find('#' + inputId + ' input');
-      inputEl.replaceWith($('<label class="host-edit-value">' + value + '</label>'));
+    disableInput: function(inputId, elemType, value) {
+      var inputEl = $(this.$el).find('#' + inputId + ' ' + elemType);
+      inputEl.replaceWith($('<label data-name="host-edit-value" class="host-edit-value">'
+                            + value + '</label>'));
     },
 
     getHostData: function() {
@@ -369,14 +464,21 @@ var HostAddView = Vue.extend({
         dto: this.model.dto,
         id: this.model.id,
         address: validator.trim(this.address),
+        hostType: this.selectedHostType,
         hostAlias: this.hostAlias,
-        resourcePoolLink: this.placementZone ? this.placementZone.documentSelfLink : null,
         credential: this.credential,
         connectionType: this.connectionType,
         customProperties: this.customPropertiesEditor.getData(),
         descriptionLink: this.model.descriptionLink,
         selfLinkId: this.model.selfLinkId
       };
+
+      if (this.isDockerHost || this.model.isUpdate) {
+        hostData.resourcePoolLink = this.placementZone ?
+          this.placementZone.documentSelfLink : null;
+      } else {
+        hostData.schedulerPlacementZoneName = this.schedulerPlacementZoneName;
+      }
 
       if (this.deploymentPolicy) {
         let policy = hostData.customProperties.find(function(entry) {
@@ -417,17 +519,19 @@ var HostAddView = Vue.extend({
       let hostData = this.getHostData();
 
       // Host auto configuration
-      if (this.autoConfigure) {
+      if (this.autoConfigure && this.isDockerHost) {
         // full uri expected
         hostData.address = utils.populateDefaultSchemeAndPort(this.address);
         HostActions.autoConfigureHost(hostData);
         return;
       }
 
+      // tags are supported only for docker hosts
+      let tags = this.isDockerHost ? this.tagsInput.getValue() : [];
+
       // By default try to add the host at the given address.
       // If the host has self signed certificate, we may need to accept it,
       // by clicking confirmAddHost
-      let tags = this.tagsInput.getValue();
       if (this.model.isUpdate) {
         HostActions.updateHost(hostData, tags);
       } else {

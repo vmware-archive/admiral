@@ -32,7 +32,6 @@ import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
-import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
 /**
@@ -87,8 +86,18 @@ public class ResourcePoolOperationProcessingChain extends OperationProcessingCha
     private boolean handleDelete(ResourcePoolService service, Operation op,
             Predicate<Operation> invokingFilter) {
         ResourcePoolState currentState = service.getState(op);
-        QueryTask queryTask = QueryTask.Builder.createDirectTask()
-                .setQuery(currentState.query).addOption(QueryOption.COUNT).build();
+
+        QueryTask queryTask;
+        if (currentState.query != null) {
+            queryTask = QueryTask.Builder.createDirectTask().setQuery(currentState.query).build();
+        } else if (currentState.documentSelfLink != null) {
+            queryTask = QueryUtil.buildPropertyQuery(ComputeState.class,
+                    ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, currentState.documentSelfLink);
+        } else {
+            return true;
+        }
+
+        QueryUtil.addCountOption(queryTask);
 
         service.sendRequest(Operation.createPost(service, ServiceUriPaths.CORE_QUERY_TASKS)
                 .setBody(queryTask)

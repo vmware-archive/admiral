@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -11,11 +11,12 @@
 
 <form class="host-form">
   <div id="address" class="form-group" v-bind:class="{'has-error': validationErrors.address}">
-    <label class="required">
+    <label v-bind:class="{'required': !model.isUpdate}">
       {{i18n("app.host.details.address")}}
     </label>
     <input v-on:blur="onBlur" class="form-control" v-model="address" v-bind:placeholder="i18n('app.host.details.addressPlaceholder')">
-    <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left"
+    <i v-if="!model.isUpdate"
+       class="fa fa-question-circle" data-toggle="tooltip" data-placement="left"
         v-tooltip="i18n('app.host.details.addressHint')"></i>
     <span class="help-block">{{i18n(validationErrors.address)}}</span>
   </div>
@@ -24,25 +25,42 @@
     <input class="form-control" v-model="hostAlias">
     <span class="help-block">{{i18n(validationErrors.hostAlias)}}</span>
   </div>
-  <div id="placementZone" class="form-group" v-bind:class="{'has-error': validationErrors.placementZone}">
-    <label>
-      {{i18n("app.host.details.placementZone")}}
-    </label>
-    <div class="form-control dropdown-holder"></div>
-    <span class="help-block">{{i18n(validationErrors.placementZone)}}</span>
+  <div id="hostType" class="form-group">
+    <label>{{i18n("app.host.details.hostType")}}</label>
+    <div class="select">
+      <select class="form-control" v-model="selectedHostType">
+        <option value="DOCKER">Docker</option>
+        <option value="VIC" v-if="isVicOptionEnabled">VIC</option>
+        <option value="KUBERNETES" v-if="isKubernetesOptionEnabled">Kubernetes</option>
+      </select>
+    </div>
   </div>
   <div id="credential" class="form-group" v-bind:class="{'has-error': validationErrors.credential}">
     <label>{{i18n("app.host.details.credential")}}</label>
     <div class="form-control dropdown-holder"></div>
     <span class="help-block">{{i18n(validationErrors.credential)}}</span>
   </div>
-  <div v-if="isApplicationEmbedded()" id="deploymentPolicy" class="form-group">
+  <div id="placementZone" v-show="showPlacementZone" class="form-group" v-bind:class="{'has-error': validationErrors.placementZone}">
+    <label v-bind:class="{'required': isVerifiedSchedulerHost && !model.isUpdate}">
+      {{i18n("app.host.details.placementZone")}}
+    </label>
+    <div v-show="isDockerHost" class="form-control dropdown-holder"></div>
+    <label v-show="!isDockerHost">{{schedulerPlacementZoneName}}</label>
+    <i class="fa fa-question-circle"
+       v-if="!model.isUpdate"
+       v-show="!isDockerHost"
+       data-toggle="tooltip"
+       data-placement="left"
+       v-tooltip="i18n('app.host.details.placementZoneInputHint')"></i>
+    <span class="help-block">{{i18n(validationErrors.placementZone)}}</span>
+  </div>
+  <div v-if="isApplicationEmbedded()" id="deploymentPolicy" class="form-group" v-show="showDeploymentPolicy">
     <label>{{i18n("app.host.details.deploymentPolicy")}}</label>
     <div class="form-control dropdown-holder"></div>
     <span class="help-block">{{i18n(validationErrors.deploymentPolicy)}}</span>
   </div>
 
-  <div id="tags" class="form-group tags" v-bind:class="{'has-error': validationErrors.tags}">
+  <div id="tags" v-show="showTags" class="form-group tags" v-bind:class="{'has-error': validationErrors.tags}">
     <label>{{i18n("app.host.details.tags")}}</label>
     <input class="tags-input" v-bind:placeholder="i18n('app.host.details.tagsPlaceholder')">
     <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left"
@@ -50,7 +68,7 @@
     <span class="help-block">{{i18n(validationErrors.tags)}}</span>
   </div>
 
-  <div class="form-group auto-configure" v-if="autoConfigurationEnabled">
+  <div class="form-group auto-configure" v-if="autoConfigurationEnabled" v-show="showAutoConfigure">
     <label>{{i18n("app.host.details.autoConfigure")}}</label>
     <div class="checkbox-inline">
       <input class="checkbox-control" type="checkbox" id="hostAutoConfig" v-model="autoConfigure"/>
@@ -59,19 +77,21 @@
     <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left"
           v-tooltip="i18n('app.host.details.autoConfigureHint')"></i>
   </div>
-  <div id="customProperties" class="form-group" v-bind:class="{'has-error': validationErrors.customProperties}">
+  <div id="customProperties" v-show="showCustomProperties" class="form-group" v-bind:class="{'has-error': validationErrors.customProperties}">
     <label>{{i18n("app.host.details.customProperties")}}</label>
     <div class="custom-prop-fields"></div>
     <span class="help-block">{{i18n(validationErrors.customProperties)}}</span>
   </div>
   <div class="control-btns">
     <button type="button" class="btn btn-primary saveHost"
+            v-show="showAddButton"
             v-bind:class="{'disabled': buttonsDisabled, 'loading': model.isSavingHost}"
             v-on:click="saveHost"
             :disabled="buttonsDisabled">
       <template v-if="model.isUpdate">{{i18n("app.host.details.update")}}</template>
       <template v-else>{{i18n("app.host.details.add")}}</template><i class="fa fa-spinner fa-spin loader-inline"></i></button>
     <a href="#" class="btn verifyHost"
+        v-show="showVerifyButton"
         v-bind:class="{'disabled': isVerifyButtonDisabled, 'loading': model.isVerifyingHost}"
         v-on:click="verifyHost">{{i18n("app.host.details.verify")}}<i class="fa fa-spinner fa-spin loader-inline"></i></a>
     <span class="help-block"></span>
