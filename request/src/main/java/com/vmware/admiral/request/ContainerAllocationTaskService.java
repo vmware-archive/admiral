@@ -54,6 +54,7 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.HealthChecker;
+import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.ServiceNetwork;
 import com.vmware.admiral.compute.content.ServiceLinkSerializer;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState.SubStage;
@@ -671,7 +672,8 @@ public class ContainerAllocationTaskService
             containerState.volumes = mapVolumes(containerDesc, hostSelection);
             containerState.networks = mapNetworks(containerDesc, hostSelection);
             if (containerDesc.portBindings != null) {
-                containerState.ports = Arrays.asList(containerDesc.portBindings);
+                containerState.ports = new ArrayList<PortBinding>(
+                        Arrays.asList(containerDesc.portBindings));
             }
 
             if (containerState.networks != null && !containerState.networks.isEmpty()) {
