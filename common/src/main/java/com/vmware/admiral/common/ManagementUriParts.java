@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -33,6 +33,9 @@ public interface ManagementUriParts {
     String CERT_DISTRIBUTION_ADD_REGISTRY = CONFIG + "/cert-dist-add-reg";
     String CERT_DISTRIBUTION_ADD_HOST = CONFIG + "/certs-dist-add-host";
     String ENDPOINTS = CONFIG + "/endpoints";
+
+    String EXTENSIBILITY_SUBSCRIPTION = CONFIG + "/extensibility-subscriptions";
+    String EXTENSIBILITY_MANAGER = CONFIG + "/extensibility-manager";
 
     // Resources:
     String DESCRIPTION_SUFFIX = "-descriptions";

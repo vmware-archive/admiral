@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -17,6 +17,8 @@ import com.vmware.admiral.service.common.ClusterMonitoringService;
 import com.vmware.admiral.service.common.CommonInitialBootService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.CounterSubTaskService;
+import com.vmware.admiral.service.common.ExtensibilitySubscriptionFactoryService;
+import com.vmware.admiral.service.common.ExtensibilitySubscriptionManager;
 import com.vmware.admiral.service.common.LogService;
 import com.vmware.admiral.service.common.NodeHealthCheckService;
 import com.vmware.admiral.service.common.RegistryService;
@@ -37,17 +39,22 @@ public class HostInitCommonServiceConfig extends HostInitServiceHelper {
                 ConfigurationFactoryService.class,
                 SslTrustCertificateFactoryService.class,
                 CommonInitialBootService.class,
-                ReverseProxyService.class);
+                ReverseProxyService.class,
+                ExtensibilitySubscriptionFactoryService.class,
+                ExtensibilitySubscriptionManager.class
+        );
 
         startServiceFactories(host, ResourceNamePrefixService.class, RegistryService.class,
                 LogService.class, EventLogService.class,
                 CounterSubTaskService.class, AuthBootstrapService.class);
 
-        // start initialization of system documents
-        host.sendRequest(Operation.createPost(
-                UriUtils.buildUri(host, CommonInitialBootService.class))
+        // start initialization of system documents, posting with pragma to queue a request,
+        // for a service to become available
+        host.sendRequest(Operation
+                .createPost(UriUtils.buildUri(host, CommonInitialBootService.class))
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
                 .setReferer(host.getUri())
                 .setBody(new ServiceDocument()));
-
     }
+
 }
