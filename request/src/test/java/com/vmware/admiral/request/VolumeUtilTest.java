@@ -14,6 +14,7 @@ package com.vmware.admiral.request;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,6 +32,28 @@ import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.ServiceDocument;
 
 public class VolumeUtilTest {
+
+    @Test
+    public void testValidateVolumeName() {
+        VolumeUtil.validateLocalVolumeName("Vn");
+        VolumeUtil.validateLocalVolumeName("name");
+        VolumeUtil.validateLocalVolumeName("34name");
+        VolumeUtil.validateLocalVolumeName("volume-name");
+        VolumeUtil.validateLocalVolumeName("Volume_Name");
+        VolumeUtil.validateLocalVolumeName("v0lum3.Nam3");
+        VolumeUtil.validateLocalVolumeName("name_102f9858-9996-4183-aa4c-082769df38f0");
+
+        testInvalidVolumeName("");
+        testInvalidVolumeName("   ");
+        testInvalidVolumeName(" \t  ");
+        testInvalidVolumeName("v");
+        testInvalidVolumeName("_volume");
+        testInvalidVolumeName("volume@name");
+        testInvalidVolumeName("#volume_name45");
+        testInvalidVolumeName("втф");
+        testInvalidVolumeName("vol name");
+        testInvalidVolumeName("(vol name)");
+    }
 
     @Test
     public void testParseOfHostDirectory() {
@@ -147,5 +170,14 @@ public class VolumeUtilTest {
             assertEquals(1, cd.affinity.length);
             assertEquals(noAffinity.name, cd.affinity[0]);
         });
+    }
+
+    private void testInvalidVolumeName(String name) {
+        try {
+            VolumeUtil.validateLocalVolumeName(name);
+            fail("Volume name validation for [" + name + "] was expected to fail!");
+        } catch (LocalizableValidationException e) {
+            // error is expected
+        }
     }
 }

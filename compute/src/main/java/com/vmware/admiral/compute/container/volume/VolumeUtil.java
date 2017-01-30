@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -48,15 +50,21 @@ public class VolumeUtil {
     private static final String HOST_CONTAINER_DIR_DELIMITER = ":/";
 
     public static final String ERROR_VOLUME_NAME_IS_REQUIRED = "Volume name is required.";
-    public static final String ERROR_VOLUME_NAME_IS_PATH = "Volume name must not be a path.";
+    public static final String ERROR_VOLUME_NAME_INVALID = "\"%s\" includes invalid characters for"
+            + " a local volume name, only \"[a-zA-Z0-9][a-zA-Z0-9@_.-]+\" are allowed.";
 
-    public static void validateVolumeName(String name) {
+    private static final Pattern RX_VOLUME_NAME = Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9_.-]+$");
+
+    public static void validateLocalVolumeName(String name) {
         if (name == null || name.trim().isEmpty()) {
-            throw new LocalizableValidationException(ERROR_VOLUME_NAME_IS_REQUIRED, "compute.volumes.name.required");
+            throw new LocalizableValidationException(ERROR_VOLUME_NAME_IS_REQUIRED,
+                    "compute.volumes.name.required");
         }
 
-        if (name.contains("/")) {
-            throw new LocalizableValidationException(ERROR_VOLUME_NAME_IS_PATH, "compute.volumes.name.is.path");
+        Matcher matcher = RX_VOLUME_NAME.matcher(name);
+        if (!matcher.matches()) {
+            String errMsg = String.format(ERROR_VOLUME_NAME_INVALID, name);
+            throw new LocalizableValidationException(errMsg, "compute.volumes.name.invalid");
         }
     }
 

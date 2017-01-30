@@ -82,11 +82,17 @@ var ContainersViewVueComponent = Vue.extend({
     hasNetworkCreateError: function() {
       return this.model.creatingResource.error && this.model.creatingResource.error._generic;
     },
+    hasVolumeCreateError: function() {
+      return this.model.creatingResource.error && this.model.creatingResource.error._generic;
+    },
     containerDetailsError: function() {
       return this.hasContainerDetailsError ? this.model.selectedItemDetails.error._generic : '';
     },
     networkCreateError: function() {
       return this.hasNetworkCreateError ? this.model.creatingResource.error._generic : '';
+    },
+    volumeCreateError: function() {
+      return this.hasVolumeCreateError ? this.model.creatingResource.error._generic : '';
     },
     showContextPanel: function() {
       var selectedItemDetails = this.model.selectedItemDetails;
