@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -40,7 +40,8 @@ public abstract class HostInitServiceHelper {
             } catch (InstantiationException | IllegalAccessException e) {
                 throw new RuntimeException("Failed to create factory for " + serviceClass, e);
             }
-            populateServicesForHealthCheck(host, serviceInstance, serviceClass, servicesForHealthCheck, true);
+            populateServicesForHealthCheck(host, serviceInstance, serviceClass,
+                    servicesForHealthCheck, true);
             host.startFactory(serviceInstance);
         }
         registerServiceForHelathcheck(host, servicesForHealthCheck);
@@ -49,7 +50,7 @@ public abstract class HostInitServiceHelper {
     @SafeVarargs
     public static void startServices(ServiceHost host,
             Class<? extends Service>... serviceClasses) {
-        Set<String> servicesForHelathceck = new HashSet<>();
+        Set<String> servicesForHealthCheck = new HashSet<>();
         for (Class<? extends Service> serviceClass : serviceClasses) {
             Service serviceInstance;
             try {
@@ -59,11 +60,12 @@ public abstract class HostInitServiceHelper {
                 throw new RuntimeException("Failed to create instance of " + serviceClass, e);
             }
 
-            populateServicesForHealthCheck(host, serviceInstance, serviceClass, servicesForHelathceck, false);
+            populateServicesForHealthCheck(host, serviceInstance, serviceClass,
+                    servicesForHealthCheck, false);
 
             startService(host, serviceClass, serviceInstance);
         }
-        registerServiceForHelathcheck(host, servicesForHelathceck);
+        registerServiceForHelathcheck(host, servicesForHealthCheck);
     }
 
     public static void startService(ServiceHost host, Class<? extends Service> serviceClass,
@@ -84,7 +86,8 @@ public abstract class HostInitServiceHelper {
                 serviceInstance);
     }
 
-    private static void populateServicesForHealthCheck(ServiceHost host, Service serviceInstance, Class<? extends Service> serviceClass, Set<String> servicesForHelathceck,
+    private static void populateServicesForHealthCheck(ServiceHost host, Service serviceInstance,
+            Class<? extends Service> serviceClass, Set<String> servicesForHelathceck,
             boolean factory) {
 
         String factoryOrSelfLink = factory ? "FACTORY_LINK" : "SELF_LINK";
@@ -97,8 +100,10 @@ public abstract class HostInitServiceHelper {
                     Object value = selfLink.get(serviceInstance);
                     servicesForHelathceck.add(value.toString());
                 }
-            } catch (NoSuchFieldException | SecurityException | IllegalAccessException | IllegalArgumentException e) {
-                host.log(Level.SEVERE, "Exception while getting %s field for Service: %s :%s", factoryOrSelfLink, serviceClass, e);
+            } catch (NoSuchFieldException | SecurityException | IllegalAccessException
+                    | IllegalArgumentException e) {
+                host.log(Level.SEVERE, "Exception while getting %s field for Service: %s :%s",
+                        factoryOrSelfLink, serviceClass, e);
             }
         }
     }
@@ -109,15 +114,16 @@ public abstract class HostInitServiceHelper {
         nodeHealthCheck.services = services;
         nodeHealthCheck.setSelfLink(NodeHealthCheckService.SELF_LINK);
 
-        host.sendRequest(Operation.createPatch(UriUtils.buildUri(host, nodeHealthCheck.getSelfLink()))
+        host.sendRequest(Operation
+                .createPatch(UriUtils.buildUri(host, nodeHealthCheck.getSelfLink()))
                 .setBody(nodeHealthCheck)
                 .setReferer(host.getUri())
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        host.log(Level.SEVERE, "Exception while register services for healthcheck: %s", e);
+                        host.log(Level.SEVERE,
+                                "Exception while register services for healthcheck: %s", e);
                     }
                 }));
-
     }
 
 }
