@@ -35,8 +35,7 @@ public class ContainerHostUtil {
      * @return boolean value
      */
     public static boolean isSchedulerHost(ComputeState computeState) {
-        // TODO check for kubernetes as well
-        return ContainerHostUtil.isVicHost(computeState);
+        return ContainerHostUtil.isVicHost(computeState) || ContainerHostUtil.isKubernetesHost(computeState);
     }
 
     /**
@@ -90,6 +89,19 @@ public class ContainerHostUtil {
         }
 
         return vic;
+    }
+
+    /**
+     * Check if host is running Kubernetes.
+     *
+     * @param computeState
+     *            host to check
+     * @return boolean value
+     */
+    public static boolean isKubernetesHost(ComputeState computeState) {
+        String hostType = computeState.customProperties.get(
+                ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME);
+        return (hostType != null && hostType.equals(ContainerHostType.KUBERNETES.name()));
     }
 
     /**
