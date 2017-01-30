@@ -21,7 +21,6 @@ import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.vmware.admiral.compute.env.NetworkProfileService;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
@@ -29,7 +28,6 @@ import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.compute.ComputeNetworkAllocationTaskService.ComputeNetworkAllocationTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
-import com.vmware.xenon.common.UriUtils;
 
 public class ComputeNetworkAllocationTaskServiceTest extends RequestBaseTest {
 
@@ -136,8 +134,7 @@ public class ComputeNetworkAllocationTaskServiceTest extends RequestBaseTest {
         desc.documentSelfLink = UUID.randomUUID().toString();
         desc.external = external;
         if (external) {
-            desc.networkProfileLink = UriUtils.buildUriPath(NetworkProfileService.FACTORY_LINK,
-                    "my-net-profile");
+            desc.connectivity = "my-net-profile";
         }
         return desc;
     }

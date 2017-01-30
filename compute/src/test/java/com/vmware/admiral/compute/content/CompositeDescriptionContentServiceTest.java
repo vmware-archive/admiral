@@ -120,7 +120,6 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
         assertEquals(1, wordpressComputeDescription.tagLinks.size());
 
         assertEquals("public-wpnet", networkDescription.name);
-        assertEquals(true, networkDescription.isPublic);
         assertNull(networkDescription.assignment);
 
         descLinks.addAll(cd.descriptionLinks);

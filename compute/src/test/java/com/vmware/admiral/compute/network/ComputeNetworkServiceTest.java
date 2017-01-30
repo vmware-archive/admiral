@@ -24,7 +24,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.container.ComputeBaseTest;
-import com.vmware.admiral.compute.env.NetworkProfileService;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.IpAssignment;
 import com.vmware.photon.controller.model.resources.SecurityGroupService;
@@ -58,8 +57,6 @@ public class ComputeNetworkServiceTest extends ComputeBaseTest {
                     network.id = prefix + "id" + index;
                     network.name = prefix + "name" + index;
 
-                    network.networkProfileLink = UriUtils
-                            .buildUriPath(NetworkProfileService.FACTORY_LINK, "my-profile");
                     network.assignment = IpAssignment.STATIC.name();
                     network.external = true;
                     network.descriptionLink = UriUtils
@@ -75,7 +72,6 @@ public class ComputeNetworkServiceTest extends ComputeBaseTest {
                     networksForDeletion.add(networkState.documentSelfLink);
                     assertTrue(networkState.id.startsWith(prefix + "id"));
                     assertTrue(networkState.name.startsWith(prefix + "name"));
-                    assertNotNull(networkState.networkProfileLink);
                     assertNotNull(networkState.securityGroupLinks);
                     assertEquals(1, networkState.securityGroupLinks.size());
                 });

@@ -56,8 +56,3 @@ components:
     data:
       name: wpnet
       assignment: static
-  public-wpnet:
-    type: "Compute.Network"
-    data:
-      name: public-wpnet
-      public: "true"
