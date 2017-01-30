@@ -15,12 +15,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonFilter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.YamlMapper;
+import com.vmware.admiral.compute.env.NetworkProfileService;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.SecurityGroupService;
 import com.vmware.xenon.common.Operation;
@@ -45,9 +46,6 @@ public class ComputeNetworkService extends StatefulService {
     public static class ComputeNetwork extends ResourceState {
         public String assignment;
 
-        @JsonProperty("public")
-        public boolean isPublic;
-
         /**
          * Composite Template use only. If set to true, specifies that this network exists outside
          * of the Composite Template.
@@ -64,22 +62,21 @@ public class ComputeNetworkService extends StatefulService {
         public String descriptionLink;
 
         /**
-         * Link to the network profile.
+         * A tag or name of the Network Profile configuration to use. If not specified a default one
+         * will be calculated based on other components and placement logic.
          */
-        @Documentation(description = "Link to the network profile")
-        @UsageOption(option = PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL)
-        public String networkProfileLink;
+        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        public String connectivity;
 
-        /**
-         * Link to the Subnet to which this Compute network will be connected.
-         */
-        @Documentation(description = "Link to the Subnet to which this Compute network will be connected")
-        @UsageOption(option = PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL)
-        private String subnetLink;
-
-        @Documentation(description = "Security grouops to apply to all instances connected to this network")
+        @Documentation(description = "Security groups to apply to all instances connected to this network")
         @UsageOption(option = PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL)
         public Set<String> securityGroupLinks;
+
+        @JsonIgnore
+        @Documentation(description = "List Network profiles, calculated during allocation, applicable for this network.")
+        @PropertyOptions(usage = { PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL,
+                PropertyUsageOption.SERVICE_USE, PropertyUsageOption.OPTIONAL })
+        public Set<String> networkProfileLinks;
     }
 
     @Override
@@ -102,6 +99,8 @@ public class ComputeNetworkService extends StatefulService {
         nd.name = "My Network";
         nd.securityGroupLinks = new HashSet<>();
         nd.securityGroupLinks.add(SecurityGroupService.FACTORY_LINK + "/my-sec-group");
+        nd.networkProfileLinks = new HashSet<>();
+        nd.networkProfileLinks.add(NetworkProfileService.FACTORY_LINK + "/my-net-profile");
         return nd;
     }
 }

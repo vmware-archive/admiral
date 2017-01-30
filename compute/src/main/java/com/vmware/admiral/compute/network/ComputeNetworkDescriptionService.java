@@ -15,10 +15,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonFilter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
@@ -51,9 +49,6 @@ public class ComputeNetworkDescriptionService extends StatefulService {
     public static class ComputeNetworkDescription extends ResourceState {
         public String assignment;
 
-        @JsonProperty("public")
-        public boolean isPublic;
-
         /**
          * Composite Template use only. If set to true, specifies that this network exists outside
          * of the Composite Template.
@@ -65,13 +60,11 @@ public class ComputeNetworkDescriptionService extends StatefulService {
         public Boolean external = Boolean.FALSE;
 
         /**
-         * Link to the network profile.
+         * A tag or name of the Network Profile configuration to use. If not specified a default one
+         * will be calculated based on other components and placement logic.
          */
-        @JsonIgnore
-        @Documentation(description = "Link to the network profile")
-        @PropertyOptions(usage = { PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL,
-                PropertyUsageOption.OPTIONAL })
-        public String networkProfileLink;
+        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        public String connectivity;
 
         @Documentation(description = "Security groups to apply to all instances connected to this network")
         @PropertyOptions(usage = { PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL,

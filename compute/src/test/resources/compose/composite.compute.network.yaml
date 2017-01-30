@@ -31,4 +31,3 @@ components:
     type: "Compute.Network"
     data:
       name: public-wpnet
-      public: "true"
