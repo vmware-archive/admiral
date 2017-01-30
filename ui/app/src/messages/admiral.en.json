@@ -520,11 +520,6 @@
           "userLinkLabel": "Subscription ID",
           "tenantIdLabel": "Tenant ID"
         },
-        "openstack": {
-          "url": "URL",
-          "domain": "Domain",
-          "project": "Project"
-        },
         "vsphere": {
           "hostNameLabel": "Host name or IP",
           "privateKeyIdLabel": "Username",
