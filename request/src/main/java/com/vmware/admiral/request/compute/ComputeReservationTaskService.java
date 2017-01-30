@@ -41,6 +41,7 @@ import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.ResourcePlacementReservationRequest;
+import com.vmware.admiral.request.allocation.filter.AffinityConstraint;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
 import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService.ComputeReservationTaskState.SubStage;
@@ -53,9 +54,13 @@ import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallback
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.adapterapi.EndpointConfigRequest;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.photon.controller.model.resources.TagFactoryService;
+import com.vmware.photon.controller.model.resources.TagService.TagState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
@@ -95,7 +100,6 @@ public class ComputeReservationTaskService
             RESERVATION_SELECTED,
             COMPLETED,
             ERROR;
-
         }
 
         @Documentation(description = "The description that defines the requested resource.")
@@ -399,24 +403,123 @@ public class ComputeReservationTaskService
                                     t);
                             return;
                         }
-                        LinkedHashMap<String, String> resourcePoolsPerGroupPlacementLinks = all
+
+                        List <GroupResourcePlacementState> filteredPlacements = all
                                 .stream()
                                 .filter(p -> p.getRight() != null)
                                 .flatMap(p -> supportsCD(state, placementsByRpLink, p))
-                                .sorted((g1, g2) -> g1.priority - g2.priority)
-                                .collect(Collectors.toMap(gp -> gp.documentSelfLink,
-                                        gp -> gp.resourcePoolLink,
-                                        (k1, k2) -> k1, LinkedHashMap::new));
+                                .collect(Collectors.toList());
 
-                        proceedTo(isGlobal(state) ? SubStage.SELECTED_GLOBAL : SubStage.SELECTED,
-                                s -> {
-                                    // Use a LinkedHashMap to preserve the order
-                                    logInfo("ResourcePoolsPerPlacement after filtering:"
-                                            + resourcePoolsPerGroupPlacementLinks);
-                                    s.resourcePoolsPerGroupPlacementLinks = resourcePoolsPerGroupPlacementLinks;
-                                });
+                        logInfo("Remaining candidate placements after endpoint filtering: "
+                                + filteredPlacements);
+
+                        filterPlacementsByRequirements(state, filteredPlacements, tenantLinks,
+                                computeDesc);
                     });
                 });
+    }
+
+    private void filterPlacementsByRequirements(ComputeReservationTaskState state,
+            List<GroupResourcePlacementState> placements, List<String> tenantLinks,
+            ComputeDescription computeDesc) {
+        if (placements == null) {
+            failTask(null, new IllegalStateException("No placements found"));
+            return;
+        }
+
+        // check if requirements are stated in the compute description
+        String requirementsString = getProp(computeDesc.customProperties,
+                ComputeConstants.CUSTOM_PROP_PROVISIONING_REQUIREMENTS);
+        if (requirementsString == null) {
+            proceedTo(isGlobal(state) ? SubStage.SELECTED_GLOBAL : SubStage.SELECTED, s -> {
+                s.resourcePoolsPerGroupPlacementLinks = placements.stream()
+                        .sorted((g1, g2) -> g1.priority - g2.priority)
+                        .collect(Collectors.toMap(gp -> gp.documentSelfLink,
+                                gp -> gp.resourcePoolLink, (k1, k2) -> k1,
+                                LinkedHashMap::new));
+            });
+            return;
+        }
+
+        // parse requirements and retrieve the tag links from the affinity constraints
+        @SuppressWarnings("unchecked")
+        List<String> affinitiesAsString = Utils.fromJson(requirementsString, List.class);
+        Map<AffinityConstraint, String> tagLinkByConstraint = new HashMap<>();
+        for (String affinityAsString : affinitiesAsString) {
+            AffinityConstraint constraint = AffinityConstraint.fromString(affinityAsString);
+            String tagLink = getTagLinkForConstraint(constraint, computeDesc.tenantLinks);
+            tagLinkByConstraint.put(constraint, tagLink);
+        }
+
+        // retrieve resource pool instances in order to check which ones satisfy the reqs
+        Map<String, ResourcePoolState> resourcePoolsByLink = new HashMap<>();
+        List<Operation> getOperations = placements.stream()
+                .map(gp -> Operation
+                        .createGet(getHost(), gp.resourcePoolLink)
+                        .setReferer(getUri())
+                        .setCompletion((o, e) -> {
+                            if (e == null) {
+                                resourcePoolsByLink.put(gp.resourcePoolLink,
+                                        o.getBody(ResourcePoolState.class));
+                            }
+                        })).collect(Collectors.toList());
+        OperationJoin.create(getOperations).setCompletion((ops, exs) -> {
+            if (exs != null) {
+                failTask("Error retrieving resource pools: " + Utils.toString(exs),
+                        exs.values().iterator().next());
+                return;
+            }
+
+            // filter out placements that do not satisfy the HARD constraints, and then sort
+            // remaining placements by listing first those with more soft constraints satisfied
+            // (placement priority being used as a second criteria)
+            proceedTo(isGlobal(state) ? SubStage.SELECTED_GLOBAL : SubStage.SELECTED, s -> {
+                s.resourcePoolsPerGroupPlacementLinks = placements.stream()
+                        .filter(gp -> checkRpSatisfyHardConstraints(
+                                resourcePoolsByLink.get(gp.resourcePoolLink), tagLinkByConstraint))
+                        .sorted((gp1, gp2) -> {
+                            int softCount1 = getNumberOfSatisfiedSoftConstraints(
+                                    resourcePoolsByLink.get(gp1.resourcePoolLink),
+                                    tagLinkByConstraint);
+                            int softCount2 = getNumberOfSatisfiedSoftConstraints(
+                                    resourcePoolsByLink.get(gp2.resourcePoolLink),
+                                    tagLinkByConstraint);
+                            return softCount1 != softCount2 ? softCount1 - softCount2
+                                    : gp1.priority - gp2.priority;
+                        }).collect(Collectors.toMap(gp -> gp.documentSelfLink,
+                                gp -> gp.resourcePoolLink, (k1, k2) -> k1,
+                                LinkedHashMap::new));
+            });
+        }).sendWith(getHost());
+    }
+
+    private static String getTagLinkForConstraint(AffinityConstraint constraint,
+            List<String> tenantLinks) {
+        String[] tagParts = constraint.name.split(":");
+
+        TagState tag = new TagState();
+        tag.key = tagParts[0];
+        tag.value = tagParts.length > 1 ? tagParts[1] : "";
+        tag.tenantLinks = tenantLinks;
+
+        return TagFactoryService.generateSelfLink(tag);
+    }
+
+    private static boolean checkRpSatisfyHardConstraints(ResourcePoolState rp,
+            Map<AffinityConstraint, String> tagLinkByConstraint) {
+        return tagLinkByConstraint.entrySet().stream()
+                .filter(e -> e.getKey().isHard())
+                .allMatch(e -> (rp != null && rp.tagLinks != null
+                        && rp.tagLinks.contains(e.getValue())) == !e.getKey().antiAffinity);
+    }
+
+    private static int getNumberOfSatisfiedSoftConstraints(ResourcePoolState rp,
+            Map<AffinityConstraint, String> tagLinkByConstraint) {
+        return (int)tagLinkByConstraint.entrySet().stream()
+                .filter(e -> e.getKey().isSoft())
+                .filter(e -> (rp != null && rp.tagLinks != null
+                        && rp.tagLinks.contains(e.getValue())) == !e.getKey().antiAffinity)
+                .count();
     }
 
     private Stream<GroupResourcePlacementState> supportsCD(ComputeReservationTaskState state,

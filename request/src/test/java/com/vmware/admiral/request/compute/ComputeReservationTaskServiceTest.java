@@ -19,6 +19,7 @@ import java.util.HashMap;
 
 import org.junit.Test;
 
+import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
@@ -26,6 +27,9 @@ import com.vmware.admiral.request.compute.ComputeReservationTaskService.ComputeR
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.photon.controller.model.resources.TagService;
+import com.vmware.photon.controller.model.resources.TagService.TagState;
 
 public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
 
@@ -272,4 +276,116 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         assertEquals(task.resourceCount, countPerDesc.longValue());
     }
 
+    @Test
+    public void testSatisfiedAntiRequirement() throws Throwable {
+        GroupResourcePlacementState groupPlacementState = doPost(
+                TestRequestStateFactory
+                        .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE),
+                GroupResourcePlacementService.FACTORY_LINK);
+        addForDeletion(groupPlacementState);
+
+        ComputeDescription descPatch = new ComputeDescription();
+        descPatch.customProperties = new HashMap<>();
+        descPatch.customProperties.put(ComputeConstants.CUSTOM_PROP_PROVISIONING_REQUIREMENTS,
+                "[\"!cap:pci\"]");
+        doPatch(descPatch, hostDesc.documentSelfLink);
+
+        ComputeReservationTaskState task = new ComputeReservationTaskState();
+        task.tenantLinks = groupPlacementState.tenantLinks;
+        task.resourceDescriptionLink = hostDesc.documentSelfLink;
+        task.resourceCount = 1;
+        task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+
+        task = doPost(task, ComputeReservationTaskService.FACTORY_LINK);
+        assertNotNull(task);
+
+        task = waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
+    }
+
+    @Test
+    public void testSatisfiedHardRequirement() throws Throwable {
+        GroupResourcePlacementState groupPlacementState = TestRequestStateFactory
+                .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
+        groupPlacementState.resourcePoolLink = computeResourcePool.documentSelfLink;
+        groupPlacementState = doPost(groupPlacementState, GroupResourcePlacementService.FACTORY_LINK);
+        addForDeletion(groupPlacementState);
+
+        TagState tag = new TagState();
+        tag.key = "cap";
+        tag.value = "pci";
+        tag = doPost(tag, TagService.FACTORY_LINK);
+
+        ResourcePoolState rpPatch = new ResourcePoolState();
+        rpPatch.tagLinks = Collections.singleton(tag.documentSelfLink);
+        doPatch(rpPatch, computeResourcePool.documentSelfLink);
+
+        ComputeDescription descPatch = new ComputeDescription();
+        descPatch.customProperties = new HashMap<>();
+        descPatch.customProperties.put(ComputeConstants.CUSTOM_PROP_PROVISIONING_REQUIREMENTS,
+                "[\"cap:pci\"]");
+        doPatch(descPatch, hostDesc.documentSelfLink);
+
+        ComputeReservationTaskState task = new ComputeReservationTaskState();
+        task.tenantLinks = groupPlacementState.tenantLinks;
+        task.resourceDescriptionLink = hostDesc.documentSelfLink;
+        task.resourceCount = 1;
+        task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+
+        task = doPost(task, ComputeReservationTaskService.FACTORY_LINK);
+        assertNotNull(task);
+
+        task = waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
+    }
+
+    @Test
+    public void testUnsatisfiedHardRequirement() throws Throwable {
+        GroupResourcePlacementState groupPlacementState = doPost(
+                TestRequestStateFactory
+                        .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE),
+                GroupResourcePlacementService.FACTORY_LINK);
+        addForDeletion(groupPlacementState);
+
+        ComputeDescription descPatch = new ComputeDescription();
+        descPatch.customProperties = new HashMap<>();
+        descPatch.customProperties.put(ComputeConstants.CUSTOM_PROP_PROVISIONING_REQUIREMENTS,
+                "[\"cap:pci\"]");
+        doPatch(descPatch, hostDesc.documentSelfLink);
+
+        ComputeReservationTaskState task = new ComputeReservationTaskState();
+        task.tenantLinks = groupPlacementState.tenantLinks;
+        task.resourceDescriptionLink = hostDesc.documentSelfLink;
+        task.resourceCount = 1;
+        task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+
+        task = doPost(task, ComputeReservationTaskService.FACTORY_LINK);
+        assertNotNull(task);
+
+        task = waitForTaskError(task.documentSelfLink, ComputeReservationTaskState.class);
+    }
+
+    @Test
+    public void testUnsatisfiedSoftRequirement() throws Throwable {
+        GroupResourcePlacementState groupPlacementState = doPost(
+                TestRequestStateFactory
+                        .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE),
+                GroupResourcePlacementService.FACTORY_LINK);
+        addForDeletion(groupPlacementState);
+
+        ComputeDescription descPatch = new ComputeDescription();
+        descPatch.customProperties = new HashMap<>();
+        descPatch.customProperties.put(ComputeConstants.CUSTOM_PROP_PROVISIONING_REQUIREMENTS,
+                "[\"cap:pci:soft\"]");
+        doPatch(descPatch, hostDesc.documentSelfLink);
+
+        ComputeReservationTaskState task = new ComputeReservationTaskState();
+        task.tenantLinks = groupPlacementState.tenantLinks;
+        task.resourceDescriptionLink = hostDesc.documentSelfLink;
+        task.resourceCount = 1;
+        task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+
+        task = doPost(task, ComputeReservationTaskService.FACTORY_LINK);
+        assertNotNull(task);
+
+        task = waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
+    }
 }

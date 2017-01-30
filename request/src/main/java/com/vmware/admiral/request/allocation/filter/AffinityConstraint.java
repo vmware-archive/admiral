@@ -11,6 +11,10 @@
 
 package com.vmware.admiral.request.allocation.filter;
 
+import static com.vmware.admiral.request.allocation.filter.AffinityConstraint.AffinityConstraintType.ANTI_AFFINITY_PREFIX;
+import static com.vmware.admiral.request.allocation.filter.AffinityConstraint.AffinityConstraintType.HARD;
+import static com.vmware.admiral.request.allocation.filter.AffinityConstraint.AffinityConstraintType.SOFT;
+
 /**
  * Affinity constraint value type representing the name of a constraint, the type and the
  * anti-affinity indicator.
@@ -96,5 +100,29 @@ public class AffinityConstraint {
     public String toString() {
         return "AffinityConstraint [name=" + name + ", type=" + type + ", antiAffinity="
                 + antiAffinity + "]";
+    }
+
+    /**
+     * Parses an {@code AffinityConstraint} instance from the given string representation.
+     */
+    public static AffinityConstraint fromString(String str) {
+        AffinityConstraint constraint = new AffinityConstraint();
+        final boolean anti_affinity = str.startsWith(ANTI_AFFINITY_PREFIX);
+        if (anti_affinity) {
+            str = str.replaceFirst(ANTI_AFFINITY_PREFIX, "");
+            constraint.antiAffinity = true;
+        }
+        if (str.endsWith(SOFT.getValue())) {
+            constraint.name = str.substring(0, str.length() - SOFT.getValue().length());
+            constraint.type = SOFT;
+        } else if (str.endsWith(HARD.getValue())) {
+            constraint.name = str.substring(0, str.length() - HARD.getValue().length());
+            constraint.type = HARD;
+        } else {
+            constraint.name = str;
+            constraint.type = HARD;
+        }
+
+        return constraint;
     }
 }
