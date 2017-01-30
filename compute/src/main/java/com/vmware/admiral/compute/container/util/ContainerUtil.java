@@ -273,6 +273,9 @@ public class ContainerUtil {
                 ContainerState newContainerState) {
             oldContainerState.ports = oldContainerState.ports == null ?
                     new ArrayList<>() : oldContainerState.ports;
+            newContainerState.ports = newContainerState.powerState == ContainerState.PowerState.RETIRED
+                    && newContainerState.ports == null ?
+                    new ArrayList<>() : newContainerState.ports;
             // ports are not collected or no changes to unexposed ports
             if (newContainerState.ports == null ||
                     newContainerState.ports.isEmpty() && oldContainerState.ports.isEmpty()) {

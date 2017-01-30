@@ -62,6 +62,7 @@ public class ContainerPortsAllocationTaskService
             CONTEXT_PREPARED,
             ALLOCATING_PORTS,
             PORTS_ALLOCATED,
+            ERROR,
             COMPLETED;
 
             static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
@@ -101,6 +102,9 @@ public class ContainerPortsAllocationTaskService
             break;
         case COMPLETED:
             complete();
+            break;
+        case ERROR:
+            completeWithError();
             break;
         default:
             break;

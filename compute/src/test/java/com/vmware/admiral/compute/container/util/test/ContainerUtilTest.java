@@ -57,7 +57,7 @@ public class ContainerUtilTest extends ComputeBaseTest {
     @Test
     public void testCreateContainerDesc() throws Throwable {
 
-        ContainerState containerState = createContainerState(null);
+        ContainerState containerState = createContainerState(null, true);
         ContainerDescription containerDesc = ContainerUtil
                 .createContainerDescription(containerState);
         assertEquals(containerState.descriptionLink, containerDesc.documentSelfLink);
@@ -78,7 +78,7 @@ public class ContainerUtilTest extends ComputeBaseTest {
 
     @Test
     public void testUpdateDiscoverContainerDescription() throws Throwable {
-        ContainerState containerState = createContainerState(null);
+        ContainerState containerState = createContainerState(null, true);
         ContainerDescription containerDesc = ContainerUtil
                 .createContainerDescription(containerState);
         containerDesc = doPost(containerDesc, ContainerDescriptionService.FACTORY_LINK);
@@ -117,7 +117,7 @@ public class ContainerUtilTest extends ComputeBaseTest {
     @Test
     public void testUpdateContainerPorts() throws Throwable {
         ComputeService.ComputeState computeState = createComputeHost();
-        ContainerState containerState = createContainerState(computeState.documentSelfLink);
+        ContainerState containerState = createContainerState(computeState.documentSelfLink, true);
         HostPortProfileService.HostPortProfileState profile = createHostPortProfile(computeState,
                 containerState, new Long[] {new Long(5000), new Long(3045)});
         final String profileDescrLink = profile.documentSelfLink;
@@ -165,12 +165,43 @@ public class ContainerUtilTest extends ComputeBaseTest {
         }.arrayEquals(null, document.reservedPorts.entrySet(), actualPorts.entrySet());
     }
 
-    private ContainerState createContainerState(String parentLink) throws Throwable {
+    @Test
+    public void testReleaseRetiredContainerPorts() throws Throwable {
+        ComputeService.ComputeState computeState = createComputeHost();
+        ContainerState containerState = createContainerState(computeState.documentSelfLink, false);
+        doPut(containerState);
+        HostPortProfileService.HostPortProfileState profile = createHostPortProfile(computeState,
+                containerState, new Long[] {new Long(5000), new Long(3045)});
+        final String profileDescrLink = profile.documentSelfLink;
+
+        ContainerState patch = new ContainerState();
+        patch.powerState = ContainerState.PowerState.RETIRED;
+        String configValue = String.format(
+                "{\"Hostname\":\"%s\", \"Domainname\":\"%s\", \"User\":\"%s\", \"WorkingDir\":\"%s\"}",
+                HOSTNAME, DOMAIN_NAME, USERNAME, WORKING_DIR);
+
+        patch.attributes = new HashMap<String, String>();
+
+        patch.attributes.put("Config", configValue);
+
+        doOperation(patch, UriUtils.buildUri(host, containerState.documentSelfLink),
+                false, Action.PATCH);
+
+        waitFor(() -> {
+
+            HostPortProfileService.HostPortProfileState document = getDocument(
+                    HostPortProfileService.HostPortProfileState.class, profileDescrLink);
+
+            return document.reservedPorts.isEmpty();
+        });
+    }
+
+    private ContainerState createContainerState(String parentLink, boolean isDiscovered) throws Throwable {
 
         ContainerState containerState = new ContainerState();
-        containerState.descriptionLink = String.format("%s-%s",
+        containerState.descriptionLink = isDiscovered ? String.format("%s-%s",
                 SystemContainerDescriptions.DISCOVERED_DESCRIPTION_LINK,
-                UUID.randomUUID().toString());
+                UUID.randomUUID().toString()) : UUID.randomUUID().toString();
         containerState.image = "test-image";
         containerState.tenantLinks = Collections.singletonList(TENANT_LINKS);
         containerState.command = new String[] { CONTAINER_COMMAND };
@@ -178,6 +209,7 @@ public class ContainerUtilTest extends ComputeBaseTest {
         containerState.names = new ArrayList<>(Arrays.asList("name_" + containerState.id));
         containerState.parentLink = parentLink;
         containerState = doPost(containerState, ContainerFactoryService.SELF_LINK);
+
         PortBinding[] ports = new PortBinding[1];
         PortBinding port = new PortBinding();
         port.containerPort = "8263";
