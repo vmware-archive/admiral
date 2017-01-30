@@ -11,10 +11,6 @@
 
 package com.vmware.admiral.request.allocation.filter;
 
-import static com.vmware.admiral.request.allocation.filter.AffinityConstraint.AffinityConstraintType.ANTI_AFFINITY_PREFIX;
-import static com.vmware.admiral.request.allocation.filter.AffinityConstraint.AffinityConstraintType.HARD;
-import static com.vmware.admiral.request.allocation.filter.AffinityConstraint.AffinityConstraintType.SOFT;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -176,26 +172,9 @@ public class ServiceAffinityHostFilter extends BaseAffinityHostFilter {
         final Map<String, AffinityConstraint> affinityConstraints = new HashMap<>(
                 affinities.length);
         for (String name : affinities) {
-            AffinityConstraint constraint = new AffinityConstraint();
-            final boolean anti_affinity = name.startsWith(ANTI_AFFINITY_PREFIX);
-            if (anti_affinity) {
-                name = name.replaceFirst(ANTI_AFFINITY_PREFIX, "");
-                constraint.antiAffinity = true;
-            }
-            if ((affinity && !anti_affinity) || (!affinity && anti_affinity)) {
-                if (name.endsWith(SOFT.getValue())) {
-                    constraint.name = name.replace(SOFT.getValue(), "");
-                    constraint.type = SOFT;
-                    affinityConstraints.put(constraint.name, constraint);
-                } else if (name.endsWith(HARD.getValue())) {
-                    constraint.name = name.replace(HARD.getValue(), "");
-                    constraint.type = HARD;
-                    affinityConstraints.put(constraint.name, constraint);
-                } else {
-                    constraint.name = name;
-                    constraint.type = HARD;
-                    affinityConstraints.put(constraint.name, constraint);
-                }
+            AffinityConstraint constraint = AffinityConstraint.fromString(name);
+            if (affinity == !constraint.antiAffinity) {
+                affinityConstraints.put(constraint.name, constraint);
             }
         }
         return affinityConstraints;

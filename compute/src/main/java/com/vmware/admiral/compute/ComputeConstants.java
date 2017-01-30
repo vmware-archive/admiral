@@ -50,6 +50,8 @@ public class ComputeConstants {
 
     public static final String HOST_TYPE_HEADER_NAME = "HOST_TYPE";
 
+    public static final String CUSTOM_PROP_PROVISIONING_REQUIREMENTS = "requirements";
+
     public static final String OVA_URI = "ova.uri";
     public static final String OVF_PROP_PREFIX = "ovf.prop:";
     public static final String OVF_COREOS_CLOUD_INIT_PROP = "guestinfo.coreos.config.data";
