@@ -196,15 +196,18 @@ public class ContainerVolumeDescriptionService extends StatefulService {
      */
     public void validateState(ContainerVolumeDescription state, boolean isUpdate) {
         if (!isUpdate) {
+            if (StringUtils.isBlank(state.driver)) {
+                state.driver = DEFAULT_VOLUME_DRIVER;
+            }
+
             // check that all required fields are not null.
             // Skip this step on updates (null = no update)
             Utils.validateState(getStateDescription(), state);
-            VolumeUtil.validateVolumeName(state.name);
+            if (DEFAULT_VOLUME_DRIVER.equals(state.driver)) {
+                VolumeUtil.validateLocalVolumeName(state.name);
+            }
         }
 
-        if (StringUtils.isBlank(state.driver)) {
-            state.driver = DEFAULT_VOLUME_DRIVER;
-        }
 
         if (state.instanceAdapterReference == null) {
             state.instanceAdapterReference = UriUtils
