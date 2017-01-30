@@ -166,6 +166,10 @@
                                     implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>com.vmware.admiral.host.ManagementHost</mainClass>
                                 </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <!-- the base name of the resource bundle, a fully qualified class name -->
+                                    <resource>i18n/messages_en.properties</resource>
+                                </transformer>
                             </transformers>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                             <shadedClassifierName>uber-jar-with-agent</shadedClassifierName>
