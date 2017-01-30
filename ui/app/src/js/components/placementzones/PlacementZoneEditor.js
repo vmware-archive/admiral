@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -13,6 +13,7 @@ import VueDropdownSearch from 'components/common/VueDropdownSearch'; //eslint-di
 import VueTags from 'components/common/VueTags'; //eslint-disable-line
 import PlacementZoneEditorVue from 'components/placementzones/PlacementZoneEditorVue.html';
 import { PlacementZonesActions } from 'actions/Actions';
+import constants from 'core/constants';
 import services from 'core/services';
 import utils from 'core/utils';
 
@@ -27,6 +28,10 @@ var PlacementZoneEditor = Vue.extend({
   computed: {
     showEndpoint: () => {
       return utils.isApplicationCompute();
+    },
+    isDockerPlacementZone: function() {
+      return !this.model.item.placementZoneType
+        || this.model.item.placementZoneType === constants.PLACEMENT_ZONE.TYPE.DOCKER;
     }
   },
   data() {
@@ -67,6 +72,11 @@ var PlacementZoneEditor = Vue.extend({
       item.resourcePoolState.name = this.name;
       item.resourcePoolState.customProperties = {};
 
+      if (this.model.item.placementZoneType) {
+        item.resourcePoolState.customProperties.__placementZoneType =
+          this.model.item.placementZoneType;
+      }
+
       if (this.endpoint) {
         item.resourcePoolState.customProperties.__endpointLink =
             this.endpoint.documentSelfLink;
@@ -100,7 +110,8 @@ var PlacementZoneEditor = Vue.extend({
       });
     },
     isDynamic() {
-      return this.dynamicInput.is(':checked');
+      return this.isDockerPlacementZone
+        && this.dynamicInput.is(':checked');
     },
     onEndpointChange(endpoint) {
       this.endpoint = endpoint;
@@ -129,15 +140,17 @@ var PlacementZoneEditor = Vue.extend({
   attached() {
     this.name = this.model.item.name;
     this.nameInput = $('.name-input', this.$el);
-    this.dynamicInput = $('.dynamic-input', this.$el);
-    this.tagsToMatchContainer = $('.tagsToMatch', this.$el);
+    if (this.isDockerPlacementZone) {
+      this.dynamicInput = $('.dynamic-input', this.$el);
+      this.tagsToMatchContainer = $('.tagsToMatch', this.$el);
 
-    if (this.model.item && this.model.item.tagsToMatch && this.model.item.tagsToMatch.length) {
-      this.dynamicInput.prop('checked', true);
-      this.tagsToMatchContainer.show();
-    } else {
-      this.dynamicInput.prop('checked', false);
-      this.tagsToMatchContainer.hide();
+      if (this.model.item && this.model.item.tagsToMatch && this.model.item.tagsToMatch.length) {
+        this.dynamicInput.prop('checked', true);
+        this.tagsToMatchContainer.show();
+      } else {
+        this.dynamicInput.prop('checked', false);
+        this.tagsToMatchContainer.hide();
+      }
     }
 
     Vue.nextTick(() => {

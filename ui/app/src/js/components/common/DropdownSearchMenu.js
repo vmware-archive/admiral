@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -34,7 +34,7 @@ function createItem(itemSpec, renderer) {
   var anchor = $('<a>', {
     role: 'menuitem',
     href: '#',
-    disabled: !!itemSpec.isBusy
+    disabled: !!itemSpec.isBusy || !!itemSpec.isDisabled
   });
   anchor.attr('data-name', itemSpec.name);
 
@@ -46,7 +46,7 @@ function createItem(itemSpec, renderer) {
 
   var item = $('<li>', {
     role: 'presentation',
-    disabled: !!itemSpec.isBusy
+    disabled: !!itemSpec.isBusy || !!itemSpec.isDisabled
   }).append(anchor);
   item.data('spec', itemSpec);
 
