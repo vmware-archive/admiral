@@ -19,6 +19,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 import com.vmware.admiral.adapter.common.service.mock.MockTaskFactoryService;
+import com.vmware.admiral.common.AuthCredentialsType;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
 import com.vmware.admiral.host.ComputeInitialBootService;
@@ -90,35 +91,9 @@ public class BaseKubernetesMockTest extends BaseTestCase {
                 MockKubernetesPathConstants.BASE_FAILING_PATH);
 
         kubernetesCredentials = new AuthCredentialsServiceState();
-
-        /*mockKubernetesHost.startService(Operation.createPost(UriUtils.buildUri(
-                mockKubernetesHost, MockDockerCreateContainerService.class)),
-                new MockDockerCreateContainerService());
-
-        mockKubernetesHost.startService(Operation.createPost(UriUtils.buildUri(
-                mockKubernetesHost, MockDockerCreateImageService.class)),
-                new MockDockerCreateImageService());
-
-        mockKubernetesHost.startService(Operation.createPost(UriUtils.buildUri(
-                mockKubernetesHost, MockDockerContainerListService.class)),
-                new MockDockerContainerListService());
-
-        mockKubernetesHost.startService(Operation.createPost(UriUtils.buildUri(
-                mockKubernetesHost, MockDockerCreateVolumeService.class)),
-                new MockDockerCreateVolumeService());
-
-        mockKubernetesHost.startService(Operation.createPost(UriUtils.buildUri(
-                mockKubernetesHost, MockDockerVolumeListService.class)),
-                new MockDockerVolumeListService());
-
-        mockKubernetesHost.startService(Operation.createPost(UriUtils.buildUri(
-                mockKubernetesHost, MockDockerInspectVolumeService.class)),
-                new MockDockerInspectVolumeService());
-
-        mockKubernetesHost.startService(Operation.createPost(UriUtils.buildUri(
-                mockKubernetesHost, MockDockerNetworkService.class)),
-                new MockDockerNetworkService());
-        */
+        kubernetesCredentials.type = AuthCredentialsType.Password.name();
+        kubernetesCredentials.userEmail = "test@admiral";
+        kubernetesCredentials.privateKey = "password";
     }
 
     protected static AuthCredentialsServiceState getKubernetesCredentials() {
