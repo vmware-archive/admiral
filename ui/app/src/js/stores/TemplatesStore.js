@@ -17,7 +17,7 @@ import utils from 'core/utils';
 import imageUtils from 'core/imageUtils';
 import RegistryStore from 'stores/RegistryStore';
 import RequestsStore from 'stores/RequestsStore';
-import PlacementZonesStore from 'stores/PlacementZonesStore';
+import PlacementsStore from 'stores/PlacementsStore';
 import ResourceGroupsStore from 'stores/ResourceGroupsStore';
 import NotificationsStore from 'stores/NotificationsStore';
 import EventLogStore from 'stores/EventLogStore';
@@ -574,9 +574,9 @@ let TemplatesStore = Reflux.createStore({
       }
     });
 
-    PlacementZonesStore.listen((placementZonesData) => {
+    PlacementsStore.listen((placementsData) => {
       if (this.data.selectedItemDetails) {
-        this.setInData(['selectedItemDetails', 'placementZones'], placementZonesData.items);
+        this.setInData(['selectedItemDetails', 'placements'], placementsData.items);
         this.emitChange();
       }
     });
@@ -587,7 +587,7 @@ let TemplatesStore = Reflux.createStore({
     actions.RegistryActions,
     actions.TemplatesContextToolbarActions,
     actions.NavigationActions,
-    actions.PlacementZoneActions
+    actions.PlacementActions
   ],
 
   onOpenTemplates: function(queryOptions, forceReload) {
@@ -816,11 +816,17 @@ let TemplatesStore = Reflux.createStore({
     this.setInData(['selectedItemDetails', 'contextView'], {});
     this.emitChange();
 
-    actions.PlacementZonesActions.retrievePlacementZones();
+    Promise.all([
+          services.loadPlacements()
+    ]).then((placementsResult) => {
+          let placements = Object.values(placementsResult[0]);
+          this.setInData(['selectedItemDetails', 'placements'], placements);
+          this.emitChange();
+        });
 
     if (closureDescription) {
       var _this = this;
-      _this.loadClosurePlacementZone(closureDescription);
+      _this.loadClosurePlacement(closureDescription);
     }
   },
 
@@ -829,19 +835,19 @@ let TemplatesStore = Reflux.createStore({
     this.emitChange();
   },
 
-  loadClosurePlacementZone: function(closureDescription) {
+  loadClosurePlacement: function(closureDescription) {
     var _this = this;
 
-    if (closureDescription.placementZoneId) {
+    if (closureDescription.placementLink) {
       Promise.all([
-          services.loadPlacementZone(closureDescription.placementZoneId)
+          services.loadPlacement(closureDescription.placementLink)
         ])
-        .then(function([placementZone]) {
+        .then(function([placement]) {
 
           _this.setInData(['selectedItemDetails', 'tasks', 'editingItemData',
-              'placementZone'
+              'placement'
             ],
-            placementZone);
+            placement);
 
           _this.emitChange();
         });

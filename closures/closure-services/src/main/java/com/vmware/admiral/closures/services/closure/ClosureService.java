@@ -55,6 +55,7 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
     private static final int MAX_LOG_SIZE_BYTES = Integer
             .getInteger("com.vmware.admiral.closures.max.log.size.bytes",
                     200 * 1024);
+    private static final long DEFAULT_CLOSURE_EXPIRATION_DAYS = 10;
 
     private final transient DriverRegistry driverRegistry;
 
@@ -435,8 +436,9 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                     } else {
                         Closure currentState = op.getBody(Closure.class);
 
-                        currentState.inputs.putAll(reqClosure.inputs);
-
+                        if (reqClosure.inputs != null) {
+                            currentState.inputs.putAll(reqClosure.inputs);
+                        }
                         this.setState(put, currentState);
                         put.setBody(currentState).complete();
                     }
@@ -617,6 +619,9 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                 closure.outputs.put(k, null);
             });
         }
+
+        closure.documentExpirationTimeMicros = Utils.fromNowMicrosUtc(TimeUnit.DAYS
+                .toMicros(DEFAULT_CLOSURE_EXPIRATION_DAYS));
     }
 
     private void verifyPatchRequest(Closure currentState, Closure requestedState) {
@@ -795,7 +800,7 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         if (body.descriptionLink == null || body.descriptionLink.isEmpty()) {
             op.setStatusCode(Operation.STATUS_CODE_BAD_REQUEST);
             op.fail(new IllegalArgumentException(
-                    String.format("Closure definition reference is required: %s",
+                    String.format("Closure description link is required: %s",
                             body.documentSelfLink)));
             return true;
         }

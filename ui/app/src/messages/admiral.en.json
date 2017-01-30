@@ -931,7 +931,8 @@
         "descriptionId": "ID",
         "source": "Source",
         "sourceURL": "Source URL",
-        "resources": "Resources"
+        "resources": "Resources",
+        "placement": "Placement"
       },
       "state": {
         "CREATED": "CREATED",
