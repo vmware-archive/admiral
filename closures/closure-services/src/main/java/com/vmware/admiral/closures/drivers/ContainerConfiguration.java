@@ -33,7 +33,7 @@ public class ContainerConfiguration {
 
     public JsonObject logConfiguration;
 
-    public String placementZoneId;
+    public String placementLink;
 
     public ContainerConfiguration() {
     }
@@ -51,7 +51,7 @@ public class ContainerConfiguration {
                 ", dependencies='" + dependencies + '\'' +
                 ", sourceURL='" + sourceURL + '\'' +
                 ", logConfiguration=" + logConfiguration +
-                ", placementZoneId='" + placementZoneId + '\'' +
+                ", placementLink='" + placementLink + '\'' +
                 '}';
     }
 }

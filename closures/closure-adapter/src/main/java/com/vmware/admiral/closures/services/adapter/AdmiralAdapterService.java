@@ -37,7 +37,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -79,7 +78,6 @@ import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ConfigurationService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeService;
-import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
@@ -95,7 +93,6 @@ public class AdmiralAdapterService extends
 
     public static final String DISPLAY_NAME = "Closure Container Provisioning";
 
-    private static final String CLOSURE_PLACEMENT_NAME = "closures-resource-placement";
     private static final String MAX_LOG_FILE_SIZE = "200k";
 
     private static final String BUILD_IMAGE_RETRIES_COUNT_PARAM_NAME = "build.closure.image.retries.count";
@@ -139,12 +136,12 @@ public class AdmiralAdapterService extends
         /** Resource pool to use on provisioning */
         @PropertyOptions(usage = { SERVICE_USE, SINGLE_ASSIGNMENT, LINK,
                 AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
-        public String resourcePoolLink;
+        public String placementZoneLink;
 
         /** Resource policy to use on provisioning */
         @PropertyOptions(usage = { SERVICE_USE, SINGLE_ASSIGNMENT, LINK,
                 AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
-        public String resourcePolicyLink;
+        public String groupResourcePlacementLink;
 
         /** Compute state to use on provisioning */
         @PropertyOptions(usage = { SERVICE_USE, SINGLE_ASSIGNMENT, LINK,
@@ -191,7 +188,7 @@ public class AdmiralAdapterService extends
             ContainerDescription contDesc) {
         proceedWithComputeStates(contDesc, state, ComputeService.ComputeState.class,
                 ComputeService.ComputeState
-                        .FIELD_NAME_RESOURCE_POOL_LINK, state.resourcePoolLink,
+                        .FIELD_NAME_RESOURCE_POOL_LINK, state.placementZoneLink,
                 (computeResult) -> {
                     if (computeResult.hasException()) {
                         failTask("Unable to fetch compute states: ", computeResult.getException());
@@ -560,13 +557,12 @@ public class AdmiralAdapterService extends
             AdmiralAdapterTaskState state) {
         // Create allocation closure
         ContainerAllocationTaskState allocationTask = prepareContainerAllocationTask(containerDesc,
-                1,
-                state.resourcePolicyLink);
+                1, state.groupResourcePlacementLink);
 
         HostSelectionFilter.HostSelection hostSelection = new HostSelectionFilter.HostSelection();
         hostSelection.resourceCount = 1;
         hostSelection.hostLink = state.selectedComputeLink;
-        hostSelection.resourcePoolLinks = new ArrayList<>(Arrays.asList(state.resourcePoolLink));
+        hostSelection.resourcePoolLinks = new ArrayList<>(Arrays.asList(state.placementZoneLink));
         allocationTask.hostSelections = new ArrayList<>(Collections.singletonList(hostSelection));
 
         // Allocate container
@@ -973,139 +969,57 @@ public class AdmiralAdapterService extends
 
     private void proceedWithGroupPlacement(AdmiralAdapterTaskState state,
             ContainerDescription containerDesc) {
-        String placementZoneId = computeResourcePoolId(state.configuration);
-        fetchGroupPlacement((result) -> {
+        fetchGroupPlacement(state, (result) -> {
                     if (result.hasException()) {
                         failTask("Unable to fetch resource pool policy!", result.getException());
                         return;
                     }
                     GroupResourcePlacementState placement = result.getResult();
                     if (placement != null) {
-                        String placementZoneLink = UriUtils
-                                .buildUriPath(ResourcePoolService.FACTORY_LINK, placementZoneId);
-                        if (!placementZoneLink.equalsIgnoreCase(placement.resourcePoolLink)) {
-                            logInfo("Updating placement zone link of closure placement: %s "
-                                            + "with placement zone: %s", placement.name,
-                                    placementZoneLink);
-                            updatePlacementZoneOfGroupPlacement(placement, placementZoneLink);
-                        }
-
+                        String placementZoneLink = placement.resourcePoolLink;
                         proceedTo(AdmiralAdapterTaskState.SubStage.RESOURCE_POOL_RESERVED, (s) -> {
-                            s.resourcePoolLink = placementZoneLink;
-                            s.resourcePolicyLink = placement.documentSelfLink;
+                            s.placementZoneLink = placementZoneLink;
+                            s.groupResourcePlacementLink = placement.documentSelfLink;
                         });
 
                     } else {
                         // create closure placement
-                        createGroupPlacement(state, placementZoneId, containerDesc);
+                        failTask("No configured placement available!", null);
+                        return;
                     }
                 }
         );
     }
 
-    private void createGroupPlacement(AdmiralAdapterTaskState state, String resourcePoolId,
-            ContainerDescription
-                    containerDesc) {
-        GroupResourcePlacementState placementState = new GroupResourcePlacementState();
-        placementState.resourcePoolLink = UriUtils
-                .buildUriPath(ResourcePoolService.FACTORY_LINK, resourcePoolId);
-        placementState.tenantLinks = state.tenantLinks;
-        placementState.name = CLOSURE_PLACEMENT_NAME;
-        placementState.priority = 100;
-        placementState.maxNumberInstances = 1000000;
-        placementState.memoryLimit = 0L;
-        placementState.cpuShares = 0;
-        placementState.availableInstancesCount = 1000000;
-        placementState.availableMemory = 0;
-
-        URI uri = UriUtils.buildUri(getHost(), GroupResourcePlacementService.FACTORY_LINK);
-        logInfo("Creating closure group placement: %s", uri);
-        getHost().sendRequest(OperationUtil.createForcedPost(uri)
-                .setBody(placementState)
-                .setReferer(getHost().getUri())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        logSevere("Exception while creating closure group placement: ", e);
-                        return;
-                    }
-
-                    logInfo("Closure group placement created successfully.");
-                    proceedWithGroupPlacement(state, containerDesc);
-                }));
-    }
-
-    private void updatePlacementZoneOfGroupPlacement(GroupResourcePlacementState placement,
-            String resourcePoolLink) {
-        placement.resourcePoolLink = resourcePoolLink;
-        getHost().sendRequest(Operation.createPatch(getHost(), placement.documentSelfLink)
-                .setBody(placement)
-                .setReferer(getHost().getUri())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        logWarning("Unable to update placement '" + placement.documentSelfLink
-                                + "''  with new configured placement zone: " + resourcePoolLink, e);
-                        return;
-                    }
-
-                    logInfo("Resource placement updated with placement zone: %s",
-                            resourcePoolLink);
-                }));
-
-    }
-
-    private void fetchGroupPlacement(
+    private void fetchGroupPlacement(AdmiralAdapterTaskState state,
             Consumer<ServiceDocumentQuery.ServiceDocumentQueryElementResult<GroupResourcePlacementService
                     .GroupResourcePlacementState>> callbackFunction) {
-        logInfo("Fetching group placement: %s", CLOSURE_PLACEMENT_NAME);
+        String placementId = computePlacementId(state.configuration);
+        logInfo("Fetching group placement: %s", placementId);
         try {
-            QueryTask q = QueryUtil.buildPropertyQuery(GroupResourcePlacementState.class,
-                    GroupResourcePlacementState
-                            .FIELD_NAME_NAME, CLOSURE_PLACEMENT_NAME);
-            q.documentExpirationTimeMicros = ServiceDocumentQuery.getDefaultQueryExpiration();
-            q.querySpec.options = EnumSet
-                    .of(QueryTask.QuerySpecification.QueryOption.EXPAND_CONTENT);
-
-            getHost().sendRequest(Operation
-                    .createPost(UriUtils.buildUri(getHost(), ServiceUriPaths.CORE_QUERY_TASKS))
-                    .setBody(q)
+            getHost().sendRequest(Operation.createGet(getHost(), placementId)
                     .setReferer(getHost().getUri())
-                    .setCompletion(
-                            (o, e) -> {
-                                if (e != null) {
-                                    callbackFunction.accept(error(e));
-                                    return;
-                                }
-                                try {
-                                    QueryTask qtr = o.getBody(QueryTask.class);
-                                    if (qtr.results.documents == null
-                                            || qtr.results.documents.isEmpty()) {
-                                        callbackFunction.accept(noResult());
-                                    } else {
-                                        Collection<Object> values = qtr.results.documents.values();
-                                        Object policyValue = values.iterator().next();
-                                        GroupResourcePlacementState policyState = Utils
-                                                .fromJson(policyValue,
-                                                        GroupResourcePlacementState.class);
-
-                                        callbackFunction.accept(result(policyState, values.size()));
-                                    }
-                                } catch (Throwable ex) {
-                                    logSevere("Error occurred: ", ex);
-                                    callbackFunction.accept(error(ex));
-                                }
-                            }));
+                    .setCompletion((op, ex) -> {
+                        if (ex != null) {
+                            callbackFunction.accept(error(ex));
+                        } else {
+                            GroupResourcePlacementState placement = op.getBody
+                                    (GroupResourcePlacementState.class);
+                            callbackFunction.accept(result(placement, 1));
+                        }
+                    }));
 
         } catch (Throwable ex) {
-            logSevere("Unable to allocate execution container", ex);
+            logSevere("Unable to fetch configured group placement!", ex);
         }
     }
 
-    private String computeResourcePoolId(ContainerConfiguration configuration) {
-        if (ClosureUtils.isEmpty(configuration.placementZoneId)) {
-            return GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_ID;
+    private String computePlacementId(ContainerConfiguration configuration) {
+        if (ClosureUtils.isEmpty(configuration.placementLink)) {
+            return GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK;
         }
 
-        return configuration.placementZoneId;
+        return configuration.placementLink;
     }
 
     private void fetchContainerDescription(AdmiralAdapterTaskState state,
@@ -1114,7 +1028,7 @@ public class AdmiralAdapterService extends
 
         String containerDescriptionLink = CLOSURES_CONTAINER_DESC + "-" + checksum;
         URI containerDescriptionURI = UriUtils.buildUri(getHost(), containerDescriptionLink);
-        logInfo("Getting container desc: {}", containerDescriptionURI);
+        logInfo("Getting container desc: %s", containerDescriptionURI);
 
         try {
             ServiceDocumentQuery<ContainerDescription> query = new ServiceDocumentQuery<>(getHost(),
@@ -1133,11 +1047,11 @@ public class AdmiralAdapterService extends
                         } else if (r.hasResult()) {
                             ContainerDescription contDesc = r.getResult();
                             this.cachedContainerDescription = contDesc;
-                            logInfo("Already created execution container description: {}",
+                            logInfo("Already created execution container description: %s",
                                     contDesc.documentSelfLink);
                             callbackFunction.accept(contDesc);
                         } else {
-                            logInfo("Unable to find execution container description: {}",
+                            logInfo("Unable to find execution container description: %s",
                                     containerDescriptionLink);
 
                             // container description not found... proceed with creation
@@ -1174,7 +1088,7 @@ public class AdmiralAdapterService extends
                 state.configuration, configChecksum);
         URI uri = UriUtils.buildUri(getHost(), ContainerDescriptionService.FACTORY_LINK);
 
-        logInfo("Creating execution container description: {}", uri);
+        logInfo("Creating execution container description: %s", uri);
         getHost().sendRequest(OperationUtil.createForcedPost(uri)
                 .setBody(containerDesc)
                 .setReferer(getHost().getUri())

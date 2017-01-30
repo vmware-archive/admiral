@@ -15,7 +15,7 @@ import constants from 'core/constants';
 import RequestsStore from 'stores/RequestsStore';
 import NotificationsStore from 'stores/NotificationsStore';
 import EventLogStore from 'stores/EventLogStore';
-import PlacementZonesStore from 'stores/PlacementZonesStore';
+import PlacementsStore from 'stores/PlacementsStore';
 import ContextPanelStoreMixin from 'stores/mixins/ContextPanelStoreMixin';
 import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
 import utils from 'core/utils';
@@ -403,9 +403,9 @@ let ContainersStore = Reflux.createStore({
       }
     });
 
-    PlacementZonesStore.listen((placementZonesData) => {
+    PlacementsStore.listen((placementsData) => {
       if (this.data.creatingResource) {
-        this.setInData(['creatingResource', 'placementZones'], placementZonesData.items);
+        this.setInData(['creatingResource', 'placements'], placementsData.items);
         this.emitChange();
       }
     });
@@ -732,7 +732,14 @@ let ContainersStore = Reflux.createStore({
     this.setInData(['listView', 'queryOptions', '$category'],
                    constants.RESOURCES.SEARCH_CATEGORY.CLOSURES);
 
-    actions.PlacementZonesActions.retrievePlacementZones();
+    Promise.all([
+          services.loadPlacements()
+    ]).then((placementsResult) => {
+          let placements = Object.values(placementsResult[0]);
+          this.setInData(['creatingResource', 'placements'], placements);
+          this.emitChange();
+        });
+
     this.emitChange();
   },
 
