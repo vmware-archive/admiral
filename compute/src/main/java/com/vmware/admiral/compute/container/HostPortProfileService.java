@@ -161,7 +161,7 @@ public class HostPortProfileService extends StatefulService {
         // First remove all ports, this will remove ports that are not allocated anymore
         releasePorts(state, request);
         // Second mark ports allocated
-        allocateSpecificPorts(state, request, true);
+        allocateSpecificPorts(state, request);
         logInfo("Updating port allocation from [%s] to [%s] for container [%s] and profile [%s]",
                 previousPorts,
                 getAllocatedPorts(state, request.containerLink),
@@ -183,7 +183,7 @@ public class HostPortProfileService extends StatefulService {
     /** Allocate all ports for HostPortProfileReservationRequest. */
     private void allocatePorts(HostPortProfileState state,
                                HostPortProfileReservationRequest request) {
-        allocateSpecificPorts(state, request, false);
+        allocateSpecificPorts(state, request);
         allocateAdditionalPorts(state, request);
 
         logInfo("Allocating ports [%s] for container [%s] and profile [%s].",
@@ -220,24 +220,12 @@ public class HostPortProfileService extends StatefulService {
 
     /** Allocate specific ports. */
     private void allocateSpecificPorts(HostPortProfileState state,
-                                       HostPortProfileReservationRequest request,
-                                       boolean force) {
+                                       HostPortProfileReservationRequest request) {
         if (request.specificHostPorts == null) {
             return;
         }
 
-        for (long requestedPort : request.specificHostPorts) {
-            // check port is not already allocated
-            if (state.reservedPorts.containsKey(requestedPort) && !force) {
-                LocalizableValidationException exception = new LocalizableValidationException(
-                        "Unable to allocate hostPort. Requested port is already allocated: "
-                                + requestedPort,
-                        "compute.host.port.allocated", requestedPort);
-                throw exception;
-            }
-
-            state.reservedPorts.put(requestedPort, request.containerLink);
-        }
+        request.specificHostPorts.forEach(p -> state.reservedPorts.put(p, request.containerLink));
     }
 
     @Override
