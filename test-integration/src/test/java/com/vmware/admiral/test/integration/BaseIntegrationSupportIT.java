@@ -31,7 +31,6 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
-
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
@@ -40,7 +39,6 @@ import javax.net.ssl.X509TrustManager;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -98,6 +96,7 @@ public abstract class BaseIntegrationSupportIT {
     protected static final Queue<ServiceDocument> documentsForDeletionAfterClass = new LinkedBlockingQueue<>();
     protected static final Queue<ServiceDocument> documentsForDeletion = new LinkedBlockingQueue<>();
     protected final TestLogger logger;
+    private static String baseURI;
 
     protected BaseIntegrationSupportIT() {
         logger = new TestLogger(getClass());
@@ -156,6 +155,9 @@ public abstract class BaseIntegrationSupportIT {
     }
 
     protected static String getBaseUrl() {
+        if (baseURI != null) {
+            return baseURI;
+        }
         // if a dynamic port is used, build the URL from the host and port parts
         String port = getSystemOrTestProp(TEST_DCP_PORT_PROP_NAME);
 
@@ -187,6 +189,15 @@ public abstract class BaseIntegrationSupportIT {
     protected static <T extends ServiceDocument> T getDocument(String seflLink,
             Class<? extends T> type) throws Exception {
         String body = sendRequest(HttpMethod.GET, seflLink, null);
+        if (body == null || body.isEmpty()) {
+            return null;
+        }
+        return Utils.fromJson(body, type);
+    }
+
+    protected static <T extends ServiceDocument> T getDocument(String seflLink,
+            Class<? extends T> type, Map <String, String> headers) throws Exception {
+        String body = sendRequest(HttpMethod.GET, seflLink, null, headers);
         if (body == null || body.isEmpty()) {
             return null;
         }
@@ -305,6 +316,17 @@ public abstract class BaseIntegrationSupportIT {
             throws Exception {
         HttpResponse httpResponse = SimpleHttpsClient.execute(method,
                 getBaseUrl() + buildServiceUri(link), body);
+        if (httpResponse.responseBody == null && HttpMethod.GET == method) {
+            Utils.logWarning("Body for method %s and link: %s is null. Status code: %s", method,
+                    link, httpResponse.statusCode);
+        }
+        return httpResponse.responseBody;
+    }
+
+    protected static String sendRequest(HttpMethod method, String link, String body, Map <String, String> headers)
+            throws Exception {
+        HttpResponse httpResponse = SimpleHttpsClient.execute(method,
+                getBaseUrl() + buildServiceUri(link), body, headers, null);
         if (httpResponse.responseBody == null && HttpMethod.GET == method) {
             Utils.logWarning("Body for method %s and link: %s is null. Status code: %s", method,
                     link, httpResponse.statusCode);
@@ -501,5 +523,9 @@ public abstract class BaseIntegrationSupportIT {
 
             return instance;
         }
+    }
+
+    public static void setBaseURI(String baseURI) {
+        BaseIntegrationSupportIT.baseURI = baseURI;
     }
 }

@@ -74,6 +74,7 @@ public class IntegratonTestStateFactory extends CommonTestStateFactory {
         poolState.minMemoryBytes = 1024L * 1024L * 1024L * 46L;
         poolState.maxMemoryBytes = poolState.minMemoryBytes * 2;
         poolState.minDiskCapacityBytes = poolState.maxDiskCapacityBytes = 1024L * 1024L * 1024L * 1024L;
+        poolState.tenantLinks = new ArrayList<String>();
 
         addDefaultDocumentTimeout(poolState);
 

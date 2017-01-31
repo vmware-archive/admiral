@@ -636,4 +636,8 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
         compute.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME, credLink);
         return addHost(compute);
     }
+
+    public AuthCredentialsServiceState getDockerHostAuthCredentials() {
+        return dockerHostAuthCredentials;
+    }
 }
