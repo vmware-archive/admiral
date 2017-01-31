@@ -14,14 +14,14 @@ include agent.properties
 
 build_nodejsbase:
 	# Builds closure NodeJS runner base image
-	docker ${DOCKER_ARGS} build --force-rm -t $(ADMIRAL_CLOSURE_NODEJS_IMAGE_NAME):$(ADMIRAL_CLOSURE_NODEJS_IMAGE_VERSION) photon-closure-runner_nodejs_4.3.0_base
+	docker ${DOCKER_ARGS} build --force-rm -t $(ADMIRAL_CLOSURE_NODEJS_IMAGE_NAME):$(ADMIRAL_CLOSURE_NODEJS_IMAGE_VERSION) photon-closure-runner_nodejs_base
 	mkdir -p ../../host/images-bin || echo "Image dir exists?"
 	docker ${DOCKER_ARGS} save $(ADMIRAL_CLOSURE_NODEJS_IMAGE_NAME):$(ADMIRAL_CLOSURE_NODEJS_IMAGE_VERSION) | xz -z	-f -c > \
 	 ../../host/images-bin/$(ADMIRAL_CLOSURE_NODEJS_IMAGE_TAR_FILENAME).tar.xz
 
 build_pythonbase:
 	# Builds closure Python runner base image
-	docker ${DOCKER_ARGS} build --force-rm -t $(ADMIRAL_CLOSURE_PYTHON_IMAGE_NAME):$(ADMIRAL_CLOSURE_PYTHON_IMAGE_VERSION) photon-closure-runner_python_3.4.3_base
+	docker ${DOCKER_ARGS} build --force-rm -t $(ADMIRAL_CLOSURE_PYTHON_IMAGE_NAME):$(ADMIRAL_CLOSURE_PYTHON_IMAGE_VERSION) photon-closure-runner_python_base
 	mkdir -p ../../host/images-bin || echo "Image dir exists?"
 	docker ${DOCKER_ARGS} save $(ADMIRAL_CLOSURE_PYTHON_IMAGE_NAME):$(ADMIRAL_CLOSURE_PYTHON_IMAGE_VERSION) | xz -z	-f -c > \
 	../../host/images-bin/$(ADMIRAL_CLOSURE_PYTHON_IMAGE_TAR_FILENAME).tar.xz

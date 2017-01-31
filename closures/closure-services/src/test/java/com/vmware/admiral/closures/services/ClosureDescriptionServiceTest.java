@@ -94,7 +94,7 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
         ClosureDescription initialState = new ClosureDescription();
         initialState.name = "test";
         initialState.documentSelfLink = UUID.randomUUID().toString();
-        initialState.runtime = DriverConstants.RUNTIME_NODEJS_4_3_0;
+        initialState.runtime = DriverConstants.RUNTIME_NODEJS_4;
         Operation post = Operation
                 .createPost(factoryUri)
                 .setBody(initialState)
@@ -112,7 +112,7 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
         ClosureDescription initialState = new ClosureDescription();
         initialState.name = "test";
         initialState.documentSelfLink = UUID.randomUUID().toString();
-        initialState.runtime = DriverConstants.RUNTIME_NODEJS_4_3_0;
+        initialState.runtime = DriverConstants.RUNTIME_NODEJS_4;
         initialState.source = "var a = 1; print(\"Hello \" + a);";
         initialState.dependencies = "invalid json";
         Operation post = Operation
@@ -149,7 +149,7 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
         this.host.testStart(1);
         ClosureDescription initialState = new ClosureDescription();
         initialState.name = "test";
-        initialState.runtime = DriverConstants.RUNTIME_NODEJS_4_3_0;
+        initialState.runtime = DriverConstants.RUNTIME_NODEJS_4;
         initialState.entrypoint = "invalid";
         initialState.source = "var a = 1; print(\"Hello \" + a);";
         initialState.documentSelfLink = UUID.randomUUID().toString();
@@ -169,9 +169,8 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
         this.host.testStart(1);
         ClosureDescription initialState = new ClosureDescription();
         initialState.name = "test";
-        initialState.runtime = DriverConstants.RUNTIME_NODEJS_4_3_0;
+        initialState.runtime = DriverConstants.RUNTIME_NODEJS_4;
         initialState.source = "var a = 1; print(\"Hello \" + a);";
-        initialState.runtime = "nashorn";
         initialState.entrypoint = "modulename.handlername";
         initialState.documentSelfLink = UUID.randomUUID().toString();
         ClosureDescription[] responses = new ClosureDescription[1];
@@ -207,9 +206,8 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
         this.host.testStart(1);
         ClosureDescription initialState = new ClosureDescription();
         initialState.name = "test";
-        initialState.runtime = DriverConstants.RUNTIME_NODEJS_4_3_0;
+        initialState.runtime = DriverConstants.RUNTIME_NODEJS_4;
         initialState.source = "var a = 1; print(\"Hello \" + a);";
-        initialState.runtime = "nashorn";
         Map inputs = new HashMap<>();
         inputs.put("a", new JsonPrimitive(10));
         initialState.inputs = inputs;
@@ -250,7 +248,7 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
         this.host.testStart(1);
         ClosureDescription initialState = new ClosureDescription();
         initialState.name = "test";
-        initialState.runtime = DriverConstants.RUNTIME_NODEJS_4_3_0;
+        initialState.runtime = DriverConstants.RUNTIME_NODEJS_4;
         initialState.source = "var a = 1; print(\"Hello \" + a);";
         Map inputs = new HashMap<>();
         inputs.put("a", new JsonPrimitive(10));
@@ -286,7 +284,7 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
         // edit created description
         ClosureDescription newState = new ClosureDescription();
         newState.name = "test-changed";
-        newState.runtime = DriverConstants.RUNTIME_NODEJS_4_3_0;
+        newState.runtime = DriverConstants.RUNTIME_NODEJS_4;
         newState.source = "var a = 1; print(\"Hello \" + a);";
         inputs = new HashMap<>();
         inputs.put("a", new JsonPrimitive(20));
@@ -326,7 +324,7 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
         this.host.testStart(1);
         ClosureDescription initialState = new ClosureDescription();
         initialState.name = "test";
-        initialState.runtime = DriverConstants.RUNTIME_NODEJS_4_3_0;
+        initialState.runtime = DriverConstants.RUNTIME_NODEJS_4;
         initialState.source = "var a = 1; print(\"Hello \" + a);";
         Map inputs = new HashMap<>();
         inputs.put("a", new JsonPrimitive(10));
@@ -389,7 +387,7 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
         this.host.testStart(1);
         ClosureDescription initialState = new ClosureDescription();
         initialState.name = "test";
-        initialState.runtime = DriverConstants.RUNTIME_NODEJS_4_3_0;
+        initialState.runtime = DriverConstants.RUNTIME_NODEJS_4;
         initialState.source = "var a = 1; print(\"Hello \" + a);";
         initialState.runtime = "nashorn";
         initialState.logConfiguration = new JsonObject();
