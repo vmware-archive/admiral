@@ -22,6 +22,7 @@ import com.google.gson.JsonElement;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.TaskState.TaskStage;
@@ -32,6 +33,7 @@ import com.vmware.xenon.common.Utils;
  *
  */
 @JsonFilter(YamlMapper.SERVICE_DOCUMENT_FILTER)
+@ServiceDocument.IndexingParameters(serializedStateSize = 112640)
 public class Closure extends ResourceState {
 
     /**

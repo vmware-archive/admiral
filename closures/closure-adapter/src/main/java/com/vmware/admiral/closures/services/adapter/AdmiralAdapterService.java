@@ -93,7 +93,7 @@ public class AdmiralAdapterService extends
 
     public static final String DISPLAY_NAME = "Closure Container Provisioning";
 
-    private static final String MAX_LOG_FILE_SIZE = "200k";
+    private static final String MAX_LOG_FILE_SIZE = "90k";
 
     private static final String BUILD_IMAGE_RETRIES_COUNT_PARAM_NAME = "build.closure.image.retries.count";
 
