@@ -17,18 +17,22 @@
           <label class="title"></label>
           <div class="row">
             <div class="name form-group col-md-6">
-              <label>{{i18n "app.placement.edit.nameLabel"}}</label>
+              <label class="required">{{i18n "app.placement.edit.nameLabel"}}</label>
               <div class="nameInput form-control">
                 <input type="text">
               </div>
             </div>
             <div class="group form-group col-md-6">
+              {{#if isEmbeded}}
+              <label class="required">{{i18n-appmode-aware "app.placement.edit.groupLabel" "app.placement.edit.businessGroupLabel"}}</label>
+              {{else}}
               <label>{{i18n-appmode-aware "app.placement.edit.groupLabel" "app.placement.edit.businessGroupLabel"}}</label>
+              {{/if}}
               <div class="placementGroupInput form-control">
               </div>
             </div>
             <div class="placementZone form-group col-md-6">
-              <label>{{i18n "app.placement.edit.placementZoneLabel"}}<span class="requiredFieldMark">*</span></label>
+              <label class="required">{{i18n "app.placement.edit.placementZoneLabel"}}</label>
               <div class="form-control">
                 <div class="dropdown-holder"></div>
                 <span class="help-block"></span>
