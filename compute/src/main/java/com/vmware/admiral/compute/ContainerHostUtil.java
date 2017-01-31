@@ -99,6 +99,9 @@ public class ContainerHostUtil {
      * @return boolean value
      */
     public static boolean isKubernetesHost(ComputeState computeState) {
+        if (computeState == null || computeState.customProperties == null) {
+            return false;
+        }
         String hostType = computeState.customProperties.get(
                 ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME);
         return (hostType != null && hostType.equals(ContainerHostType.KUBERNETES.name()));
