@@ -25,7 +25,7 @@
       <div class="form-group row" v-if="showEndpoint">
         <div class="subtitle">{{i18n('app.placementZone.edit.endpointTitle')}}</div>
         <dropdown-search
-            v-bind:disabled="model.item.documentSelfLink"
+            v-bind:disabled="!!model.item.documentSelfLink"
             v-bind:entity="i18n('app.endpoint.entity')"
             v-bind:filter="searchEndpoints"
             v-bind:value="model.item.endpoint"
@@ -43,8 +43,21 @@
             }, {
               name: 'SPREAD'
             }]"
-            v-bind:value="{'name': model.item.epzState.placementPolicy}"
+            v-bind:value="{'name': model.item.epzState && model.item.epzState.placementPolicy}"
             v-on:change="onPlacementPolicyChange"></dropdown>
+      </div>
+      <div class="tags form-group row">
+        <div class="form-control">
+          <label>{{i18n('app.placementZone.edit.tagsTitle')}}
+            <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="top"
+                v-tooltip="i18n('app.placementZone.edit.tagsHint')"></i>
+          </label>
+          <tags
+            :placeholder="i18n('app.placementZone.edit.tagsPlaceholder')"
+            :value="model.item.tags"
+            @change="onTagsChange">
+          </tags>
+        </div>
       </div>
       <div class="form-group row">
         <div class="checkbox-inline">
@@ -52,13 +65,17 @@
           <label for="dynamic-input">{{i18n('app.placementZone.edit.dynamicTitle')}}</label>
         </div>
       </div>
-      <div class="tags form-group row">
+      <div class="tagsToMatch form-group row">
         <div class="form-control">
           <label>{{i18n('app.placementZone.edit.tagsToMatchTitle')}}
             <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="top"
                 v-tooltip="i18n('app.placementZone.edit.tagsToMatchHint')"></i>
           </label>
-          <input class="tags-input" placeholder="{{i18n('app.placementZone.edit.tagsToMatchPlaceholder')}}">
+          <tags
+            :placeholder="i18n('app.placementZone.edit.tagsToMatchPlaceholder')"
+            :value="model.item.tagsToMatch"
+            @change="onTagsToMatchChange">
+          </tags>
         </div>
       </div>
     </section>

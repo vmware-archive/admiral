@@ -209,11 +209,11 @@ public class ElasticPlacementZoneConfigurationServiceTest extends ComputeBaseTes
         ElasticPlacementZoneConfigurationState createdState = sendState(state, Action.POST);
 
         // update through the config service
-        ElasticPlacementZoneConfigurationState patchState = createState(false);
-        patchState.resourcePoolState.documentSelfLink =
+        ElasticPlacementZoneConfigurationState putState = createState(false);
+        putState.resourcePoolState.documentSelfLink =
                 createdState.resourcePoolState.documentSelfLink;
-        patchState.resourcePoolState.name = "new-name";
-        ElasticPlacementZoneConfigurationState latestState = sendState(patchState, Action.PATCH);
+        putState.resourcePoolState.name = "new-name";
+        ElasticPlacementZoneConfigurationState latestState = sendState(putState, Action.PUT);
 
         // validate returned state
         assertEquals("new-name", latestState.resourcePoolState.name);
@@ -234,19 +234,19 @@ public class ElasticPlacementZoneConfigurationServiceTest extends ComputeBaseTes
         ElasticPlacementZoneConfigurationState createdState = sendState(state, Action.POST);
 
         // update through the config service
-        ElasticPlacementZoneConfigurationState patchState = createState(true);
-        patchState.resourcePoolState.documentSelfLink =
+        ElasticPlacementZoneConfigurationState putState = createState(true);
+        putState.resourcePoolState.documentSelfLink =
                 createdState.resourcePoolState.documentSelfLink;
-        patchState.resourcePoolState.name = "new-name";
-        patchState.epzState = buildEpzState(patchState.resourcePoolState.documentSelfLink,
+        putState.resourcePoolState.name = "new-name";
+        putState.epzState = buildEpzState(putState.resourcePoolState.documentSelfLink,
                 "tag3", "tag4");
-        patchState.epzState.documentSelfLink = createdState.epzState.documentSelfLink;
-        ElasticPlacementZoneConfigurationState latestState = sendState(patchState, Action.PATCH);
+        putState.epzState.documentSelfLink = createdState.epzState.documentSelfLink;
+        ElasticPlacementZoneConfigurationState latestState = sendState(putState, Action.PUT);
 
         // validate returned state
         assertEquals("new-name", latestState.resourcePoolState.name);
         assertNotNull(latestState.resourcePoolState.query);
-        assertEquals(patchState.epzState.tagLinksToMatch, latestState.epzState.tagLinksToMatch);
+        assertEquals(putState.epzState.tagLinksToMatch, latestState.epzState.tagLinksToMatch);
 
         // validate the actual RP state
         ResourcePoolState rp = getDocument(ResourcePoolState.class,
@@ -256,7 +256,7 @@ public class ElasticPlacementZoneConfigurationServiceTest extends ComputeBaseTes
         // validate the actual EPZ state
         ElasticPlacementZoneState epz = getDocument(ElasticPlacementZoneState.class,
                 createdState.epzState.documentSelfLink);
-        assertEquals(patchState.epzState.tagLinksToMatch, epz.tagLinksToMatch);
+        assertEquals(putState.epzState.tagLinksToMatch, epz.tagLinksToMatch);
     }
 
     @Test
@@ -267,22 +267,23 @@ public class ElasticPlacementZoneConfigurationServiceTest extends ComputeBaseTes
         ElasticPlacementZoneConfigurationState createdState = sendState(state, Action.POST);
 
         // add EPZ through the config service
-        ElasticPlacementZoneConfigurationState patchState = createState(false);
-        patchState.resourcePoolState.documentSelfLink =
+        ElasticPlacementZoneConfigurationState putState = createState(false);
+        putState.resourcePoolState = buildRpState();
+        putState.resourcePoolState.documentSelfLink =
                 createdState.resourcePoolState.documentSelfLink;
-        patchState.epzState = buildEpzState(patchState.resourcePoolState.documentSelfLink,
+        putState.epzState = buildEpzState(putState.resourcePoolState.documentSelfLink,
                 "tag3", "tag4");
-        ElasticPlacementZoneConfigurationState latestState = sendState(patchState, Action.PATCH);
+        ElasticPlacementZoneConfigurationState latestState = sendState(putState, Action.PUT);
 
         // validate returned state
         assertNotNull(latestState.epzState);
         assertNotNull(latestState.epzState.documentSelfLink);
-        assertEquals(patchState.epzState.tagLinksToMatch, latestState.epzState.tagLinksToMatch);
+        assertEquals(putState.epzState.tagLinksToMatch, latestState.epzState.tagLinksToMatch);
 
         // validate the actual EPZ state
         ElasticPlacementZoneState epz = getDocument(ElasticPlacementZoneState.class,
                 latestState.epzState.documentSelfLink);
-        assertEquals(patchState.epzState.tagLinksToMatch, epz.tagLinksToMatch);
+        assertEquals(putState.epzState.tagLinksToMatch, epz.tagLinksToMatch);
     }
 
     @Test
@@ -293,14 +294,14 @@ public class ElasticPlacementZoneConfigurationServiceTest extends ComputeBaseTes
         ElasticPlacementZoneConfigurationState createdState = sendState(state, Action.POST);
 
         // update through the config service
-        ElasticPlacementZoneConfigurationState patchState = createState(false);
-        state.resourcePoolState = buildRpState();
-        patchState.resourcePoolState.documentSelfLink =
+        ElasticPlacementZoneConfigurationState putState = createState(false);
+        putState.resourcePoolState = buildRpState();
+        putState.resourcePoolState.documentSelfLink =
                 createdState.resourcePoolState.documentSelfLink;
-        ElasticPlacementZoneConfigurationState latestState = sendState(patchState, Action.PATCH);
+        ElasticPlacementZoneConfigurationState latestState = sendState(putState, Action.PUT);
 
         // validate returned state
-        assertNull(latestState.resourcePoolState);
+        assertNotNull(latestState.resourcePoolState);
         assertNull(latestState.epzState);
     }
 

@@ -9,9 +9,9 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import DropdownSearch from 'components/common/VueDropdownSearch'; //eslint-disable-line
+import VueDropdownSearch from 'components/common/VueDropdownSearch'; //eslint-disable-line
+import VueTags from 'components/common/VueTags'; //eslint-disable-line
 import PlacementZoneEditorVue from 'components/placementzones/PlacementZoneEditorVue.html';
-import Tags from 'components/common/Tags';
 import { PlacementZonesActions } from 'actions/Actions';
 import services from 'core/services';
 import utils from 'core/utils';
@@ -32,7 +32,9 @@ var PlacementZoneEditor = Vue.extend({
   data() {
     return {
       placementPolicy: null,
-      saveDisabled: !this.model.item.name
+      saveDisabled: !this.model.item.name,
+      tags: this.model.item.tags || [],
+      tagsToMatch: this.model.item.tagsToMatch || []
     };
   },
   methods: {
@@ -70,14 +72,7 @@ var PlacementZoneEditor = Vue.extend({
             this.endpoint.documentSelfLink;
       }
 
-      let tags = this.tags.getValue().reduce((prev, curr) => {
-        if (!prev.find((tag) => tag.key === curr.key && tag.value === curr.value)) {
-          prev.push(curr);
-        }
-        return prev;
-      }, []);
-
-      if (tags.length) {
+      if (this.tagsToMatch && this.tagsToMatch.length) {
         item.epzState = item.epzState || {};
       }
 
@@ -88,9 +83,11 @@ var PlacementZoneEditor = Vue.extend({
       }
 
       if (item.documentSelfLink) {
-        PlacementZonesActions.updatePlacementZone(item, tags);
+        PlacementZonesActions.updatePlacementZone(item, this.tags,
+            this.isDynamic() ? this.tagsToMatch : []);
       } else {
-        PlacementZonesActions.createPlacementZone(item, tags);
+        PlacementZonesActions.createPlacementZone(item, this.tags,
+            this.isDynamic() ? this.tagsToMatch : []);
       }
     },
     searchEndpoints(...args) {
@@ -101,6 +98,9 @@ var PlacementZoneEditor = Vue.extend({
           resolve(result);
         }).catch(reject);
       });
+    },
+    isDynamic() {
+      return this.dynamicInput.is(':checked');
     },
     onEndpointChange(endpoint) {
       this.endpoint = endpoint;
@@ -113,31 +113,31 @@ var PlacementZoneEditor = Vue.extend({
       this.placementPolicy = value && value.name;
     },
     onDynamicChange() {
-      if (this.dynamicInput.is(':checked')) {
-        this.tagsContainer.show();
+      if (this.isDynamic()) {
+        this.tagsToMatchContainer.show();
       } else {
-        this.tagsContainer.hide();
+        this.tagsToMatchContainer.hide();
       }
-      this.tags.setValue([]);
+    },
+    onTagsChange(tags) {
+      this.tags = tags;
+    },
+    onTagsToMatchChange(tagsToMatch) {
+      this.tagsToMatch = tagsToMatch;
     }
   },
   attached() {
     this.name = this.model.item.name;
     this.nameInput = $('.name-input', this.$el);
     this.dynamicInput = $('.dynamic-input', this.$el);
-    this.tagsInput = $('.tags-input', this.$el);
-    this.tagsContainer = $('.tags', this.$el);
+    this.tagsToMatchContainer = $('.tagsToMatch', this.$el);
 
-    this.tags = new Tags(this.tagsInput);
-
-    if (this.model.item && this.model.item.tags && this.model.item.tags.length) {
+    if (this.model.item && this.model.item.tagsToMatch && this.model.item.tagsToMatch.length) {
       this.dynamicInput.prop('checked', true);
-      this.tagsContainer.show();
-      this.tags.setValue(this.model.item.tags);
+      this.tagsToMatchContainer.show();
     } else {
       this.dynamicInput.prop('checked', false);
-      this.tagsContainer.hide();
-      this.tags.setValue([]);
+      this.tagsToMatchContainer.hide();
     }
 
     Vue.nextTick(() => {

@@ -12,9 +12,9 @@
 import { EnvironmentsActions, NavigationActions } from 'actions/Actions';
 import VueDropdownSearch from 'components/common/VueDropdownSearch'; //eslint-disable-line
 import VueMulticolumnInputs from 'components/common/VueMulticolumnInputs'; //eslint-disable-line
+import VueTags from 'components/common/VueTags'; //eslint-disable-line
 import EndpointsList from 'components/endpoints/EndpointsList'; //eslint-disable-line
 import EnvironmentEditViewVue from 'components/environments/EnvironmentEditViewVue.html';
-import Tags from 'components/common/Tags';
 
 export default Vue.component('environment-edit-view', {
   template: EnvironmentEditViewVue,
@@ -30,7 +30,8 @@ export default Vue.component('environment-edit-view', {
   data: () => {
     return {
       endpointType: null,
-      saveDisabled: true
+      saveDisabled: true,
+      tags: this.model.item.tags || []
     };
   },
   computed: {
@@ -102,14 +103,8 @@ export default Vue.component('environment-edit-view', {
 
     $(this.$el).find('.nav-item a[href="#basic"]').tab('show');
 
-    this.tagsInput = new Tags($(this.$el).find('.tags .tags-input'));
-
     this.unwatchModel = this.$watch('model', (model, oldModel) => {
         oldModel = oldModel || { item: {} };
-        if (model.item.tags !== oldModel.item.tags) {
-          this.tagsInput.setValue(model.item.tags);
-          this.tags = this.tagsInput.getValue();
-        }
         this.endpointType =
             (this.model.item.endpoint && this.model.item.endpoint.endpointType) ||
             this.model.item.endpointType;
@@ -129,11 +124,10 @@ export default Vue.component('environment-edit-view', {
       $event.preventDefault();
 
       let model = this.getModel();
-      let tags = this.tagsInput.getValue();
       if (model.documentSelfLink) {
-        EnvironmentsActions.updateEnvironment(model, tags);
+        EnvironmentsActions.updateEnvironment(model, this.tags);
       } else {
-        EnvironmentsActions.createEnvironment(model, tags);
+        EnvironmentsActions.createEnvironment(model, this.tags);
       }
     },
     createEndpoint() {
@@ -158,6 +152,9 @@ export default Vue.component('environment-edit-view', {
         this.endpointType = this.endpoint && this.endpoint.endpointType;
         this.saveDisabled = !model.name || !(model.endpointType || this.endpoint);
       });
+    },
+    onTagsChange(tags) {
+      this.tags = tags;
     },
     getModel() {
       var toSave = $.extend({ properties: {} }, this.model.item.asMutable({deep: true}));

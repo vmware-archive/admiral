@@ -157,11 +157,13 @@ let EnvironmentsStore = Reflux.createStore({
   },
 
   onCreateEnvironment(model, tags) {
-    Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
-      return Promise.all(tags.map((tag, i) =>
-        result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
-    }).then((updatedTags) => {
+    let tagsPromises = [];
+    tags.forEach((tag) => {
+      tagsPromises.push(services.createTag(tag));
+    });
+    Promise.all(tagsPromises).then((updatedTags) => {
       let data = $.extend({}, model, {
+        tags: tags,
         tagLinks: [...new Set(updatedTags.map((tag) => tag.documentSelfLink))]
       });
       Promise.all([
@@ -189,11 +191,13 @@ let EnvironmentsStore = Reflux.createStore({
   },
 
   onUpdateEnvironment(model, tags) {
-    Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
-      return Promise.all(tags.map((tag, i) =>
-        result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
-    }).then((updatedTags) => {
+    let tagsPromises = [];
+    tags.forEach((tag) => {
+      tagsPromises.push(services.createTag(tag));
+    });
+    Promise.all(tagsPromises).then((updatedTags) => {
       let data = $.extend({}, model, {
+        tags: tags,
         tagLinks: [...new Set(updatedTags.map((tag) => tag.documentSelfLink))]
       });
       Promise.all([

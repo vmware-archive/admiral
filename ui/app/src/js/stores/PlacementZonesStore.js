@@ -41,6 +41,10 @@ function enhanceConfig(config) {
   config.endpointLink = utils.getCustomPropertyValue(
       config.resourcePoolState.customProperties, '__endpointLink');
   config.name = config.resourcePoolState.name;
+  config.dto = {
+    epzState: config.epzState,
+    resourcePoolState: config.resourcePoolState
+  };
   return config;
 }
 
@@ -67,20 +71,34 @@ let PlacementZonesStore = Reflux.createStore({
           return config;
         });
 
-        var tagPromises = Object.values(processedResult).map((config) => {
-          if (config.epzState &&
-              config.epzState.tagLinksToMatch && config.epzState.tagLinksToMatch.length) {
-            return services.loadTags(config.epzState.tagLinksToMatch).then((tags) => {
+        let configs = Object.values(processedResult);
+        var tagsPromises = configs.map((config) => {
+          if (config.resourcePoolState &&
+              config.resourcePoolState.tagLinks && config.resourcePoolState.tagLinks.length) {
+            return services.loadTags(config.resourcePoolState.tagLinks).then((tags) => {
               config.tags = Object.values(tags);
               return config;
             });
           } else {
+            config.tags = [];
             return Promise.resolve(config);
           }
         });
 
-        Promise.all(tagPromises).then((configs) => {
+        var tagsToMatchPromises = configs.map((config) => {
+          if (config.epzState &&
+              config.epzState.tagLinksToMatch && config.epzState.tagLinksToMatch.length) {
+            return services.loadTags(config.epzState.tagLinksToMatch).then((tagsToMatch) => {
+              config.tagsToMatch = Object.values(tagsToMatch);
+              return config;
+            });
+          } else {
+            config.tagsToMatch = [];
+            return Promise.resolve(config);
+          }
+        });
 
+        Promise.all([...tagsPromises, ...tagsToMatchPromises]).then(() => {
           var countContainerHosts = !utils.isApplicationCompute();
           var countOnlyComputes = utils.isApplicationCompute() ? true : undefined;
           // Retrieve hosts counts for the resource pools
@@ -91,7 +109,6 @@ let PlacementZonesStore = Reflux.createStore({
                   return config;
                 });
           });
-
           Promise.all(countedHostsResPoolsPromises).then((configs) => {
               // notify data retrieved for all resource pools
               this.setInData(['items'], configs);
@@ -121,18 +138,28 @@ let PlacementZonesStore = Reflux.createStore({
     this.emitChange();
   },
 
-  onCreatePlacementZone: function(config, tags) {
+  onCreatePlacementZone: function(config, tags, tagsToMatch) {
     this.setInData(['editingItemData', 'validationErrors'], null);
     this.setInData(['editingItemData', 'saving'], true);
     this.emitChange();
 
-    Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
-      return Promise.all(tags.map((tag, i) =>
-        result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
-    }).then((createdTags) => {
+    let tagsPromises = [];
+    tags.forEach((tag) => {
+      tagsPromises.push(services.createTag(tag));
+    });
+
+    let tagsToMatchPromises = [];
+    tagsToMatch.forEach((tag) => {
+      tagsToMatchPromises.push(services.createTag(tag));
+    });
+
+    Promise.all(tagsPromises).then((createdTags) => {
+      config.resourcePoolState.tagLinks = createdTags.map((tag) => tag.documentSelfLink);
+      return Promise.all(tagsToMatchPromises);
+    }).then((createdTagsToMatch) => {
       if (config.epzState) {
         config.epzState = $.extend(config.epzState, {
-          tagLinksToMatch: createdTags.map((tag) => tag.documentSelfLink)
+          tagLinksToMatch: createdTagsToMatch.map((tag) => tag.documentSelfLink)
         });
       }
       return services.createPlacementZone(config);
@@ -142,10 +169,9 @@ let PlacementZonesStore = Reflux.createStore({
       createdConfig.cpuPercentage = 0;
       createdConfig.memoryPercentage = 0;
       createdConfig.storagePercentage = 0;
+      createdConfig.tags = tags;
+      createdConfig.tagsToMatch = tagsToMatch;
       createdConfig = enhanceConfig(createdConfig);
-      if (tags.length) {
-        createdConfig.tags = tags;
-      }
 
       var immutableConfig = Immutable(createdConfig);
 
@@ -166,27 +192,38 @@ let PlacementZonesStore = Reflux.createStore({
     }).catch(this.onGenericEditError);
   },
 
-  onUpdatePlacementZone: function(config, tags) {
+  onUpdatePlacementZone: function(config, tags, tagsToMatch) {
     this.setInData(['editingItemData', 'validationErrors'], null);
     this.setInData(['editingItemData', 'saving'], true);
     this.emitChange();
 
-    Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
-      return Promise.all(tags.map((tag, i) =>
-        result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
-    }).then((updatedTags) => {
+    let tagsPromises = [];
+    tags.forEach((tag) => {
+      tagsPromises.push(services.createTag(tag));
+    });
+
+    let tagsToMatchPromises = [];
+    tagsToMatch.forEach((tag) => {
+      tagsToMatchPromises.push(services.createTag(tag));
+    });
+
+    Promise.all(tagsPromises).then((updatedTags) => {
+      config.resourcePoolState.tagLinks = updatedTags.map((tag) => tag.documentSelfLink);
+      return Promise.all(tagsToMatchPromises);
+    }).then((updatedTagsToMatch) => {
       if (config.epzState) {
         config.epzState = $.extend(config.epzState, {
           resourcePoolLink: config.resourcePoolState.documentSelfLink,
-          tagLinksToMatch: updatedTags.map((tag) => tag.documentSelfLink)
+          tagLinksToMatch: updatedTagsToMatch.map((tag) => tag.documentSelfLink)
         });
       }
-      return services.updatePlacementZone(config);
+      return services.updatePlacementZone($.extend(true, {}, config.dto, config));
     }).then((updatedConfig) => {
       // If the backend did not make any changes, the response will be empty
       updatedConfig.resourcePoolState = updatedConfig.resourcePoolState || config.resourcePoolState;
       updatedConfig.epzState = updatedConfig.epzState || config.epzState;
       updatedConfig.tags = tags;
+      updatedConfig.tagsToMatch = tagsToMatch;
       updatedConfig = enhanceConfig(updatedConfig);
 
       var configs = this.data.items.asMutable();

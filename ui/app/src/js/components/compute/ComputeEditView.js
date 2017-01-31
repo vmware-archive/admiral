@@ -10,7 +10,7 @@
  */
 
 import { ComputeActions, ComputeContextToolbarActions } from 'actions/Actions';
-import Tags from 'components/common/Tags';
+import VueTags from 'components/common/VueTags'; //eslint-disable-line
 import ComputeEditViewVue from 'components/compute/ComputeEditViewVue.html';
 
 export default Vue.component('compute-edit-view', {
@@ -19,6 +19,11 @@ export default Vue.component('compute-edit-view', {
     model: {
       required: true
     }
+  },
+  data() {
+    return {
+      tags: this.model.item.tags || []
+    };
   },
   computed: {
     validationErrors() {
@@ -32,22 +37,12 @@ export default Vue.component('compute-edit-view', {
       return this.model.contextView && this.model.contextView.expanded;
     }
   },
-  attached() {
-    this.tagsInput = new Tags($(this.$el).find('#tags .tags-input'));
-    this.unwatchModel = this.$watch('model', (model, oldModel) => {
-        oldModel = oldModel || { item: {} };
-        if (model.item.tags !== oldModel.item.tags) {
-          this.tagsInput.setValue(model.item.tags);
-          this.tags = this.tagsInput.getValue();
-        }
-    }, {immediate: true});
-  },
-  detached() {
-    this.unwatchModel();
-  },
   methods: {
     onPlacementZoneChange(placementZone) {
       this.placementZone = placementZone;
+    },
+    onTagsChange(tags) {
+      this.tags = tags;
     },
     saveCompute() {
       let model = {
@@ -55,8 +50,7 @@ export default Vue.component('compute-edit-view', {
         resourcePoolLink: this.placementZone ? this.placementZone.documentSelfLink : null,
         selfLinkId: this.model.item.selfLinkId
       };
-      let tags = this.tagsInput.getValue();
-      ComputeActions.updateCompute(model, tags);
+      ComputeActions.updateCompute(model, this.tags);
     },
     openToolbarPlacementZones: ComputeContextToolbarActions.openToolbarPlacementZones,
     closeToolbar: ComputeContextToolbarActions.closeToolbar,

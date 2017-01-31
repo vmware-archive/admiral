@@ -103,9 +103,9 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
     }
 
     @Override
-    public void handlePatch(Operation patch) {
-        ElasticPlacementZoneConfigurationState state = validateState(patch);
-        doUpdate(patch, state);
+    public void handlePut(Operation put) {
+        ElasticPlacementZoneConfigurationState state = validateState(put);
+        doUpdate(put, state);
     }
 
     private ElasticPlacementZoneConfigurationState validateState(Operation op) {
@@ -389,9 +389,9 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
         if (state.tenantLinks != null && !state.tenantLinks.isEmpty()) {
             state.resourcePoolState.tenantLinks = state.tenantLinks;
         }
-        // patch the resource pool
+        // put the resource pool
         updateOps.add(Operation
-                .createPatch(getHost(), state.resourcePoolState.documentSelfLink)
+                .createPut(getHost(), state.resourcePoolState.documentSelfLink)
                 .setBody(state.resourcePoolState)
                 .setReferer(getUri()));
 

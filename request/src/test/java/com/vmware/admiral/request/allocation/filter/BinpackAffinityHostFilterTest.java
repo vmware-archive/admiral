@@ -192,7 +192,7 @@ public class BinpackAffinityHostFilterTest extends BaseAffinityHostFilterTest {
 
         epz = doOperation(epz,
                 UriUtils.buildUri(host, ElasticPlacementZoneConfigurationService.SELF_LINK),
-                ElasticPlacementZoneConfigurationState.class, false, Action.PATCH);
+                ElasticPlacementZoneConfigurationState.class, false, Action.PUT);
 
         assertEquals(epz.epzState.placementPolicy,
                 ElasticPlacementZoneService.PlacementPolicy.BINPACK);

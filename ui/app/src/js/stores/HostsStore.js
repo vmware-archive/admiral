@@ -611,10 +611,12 @@ let HostsStore = Reflux.createStore({
     } else {
       this.setInData(['hostAddView', 'isSavingHost'], true);
 
-      Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
-        return Promise.all(tags.map((tag, i) =>
-          result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
-      }).then((createdTags) => {
+      let tagsPromises = [];
+      tags.forEach((tag) => {
+        tagsPromises.push(services.createTag(tag));
+      });
+
+      Promise.all(tagsPromises).then((createdTags) => {
 
         hostModel.tagLinks = [...new Set(createdTags.map((tag) => tag.documentSelfLink))];
 
@@ -647,10 +649,12 @@ let HostsStore = Reflux.createStore({
     } else {
       this.setInData(['hostAddView', 'isSavingHost'], true);
 
-      Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
-        return Promise.all(tags.map((tag, i) =>
-          result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
-      }).then((createdTags) => {
+      let tagsPromises = [];
+      tags.forEach((tag) => {
+        tagsPromises.push(services.createTag(tag));
+      });
+
+      Promise.all(tagsPromises).then((createdTags) => {
         description.tagLinks = [...new Set(createdTags.map((tag) => tag.documentSelfLink))];
 
         services.createHostDescription(description).then((createdDescription) => {
@@ -781,10 +785,12 @@ let HostsStore = Reflux.createStore({
         delete customProperties.__hostAlias;
       }
 
-      Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
-        return Promise.all(tags.map((tag, i) =>
-          result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
-      }).then((updatedTags) => {
+      let tagsPromises = [];
+      tags.forEach((tag) => {
+        tagsPromises.push(services.createTag(tag));
+      });
+
+      Promise.all(tagsPromises).then((updatedTags) => {
         let hostDataCustomProperties = $.extend({},
           utils.getSystemCustomProperties(hostModel.dto.customProperties), customProperties);
 
@@ -888,12 +894,12 @@ let HostsStore = Reflux.createStore({
         this.setInData(['hostAddView', 'isSavingHost'], true);
         this.emitChange();
 
-        return Promise.all(tags.map((tag) =>
-            services.loadTag(tag.key, tag.value))).then((result) => {
-          return Promise.all(tags.map((tag, i) =>
-            result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
-        }).then((createdTags) => {
+        let tagsPromises = [];
+        tags.forEach((tag) => {
+          tagsPromises.push(services.createTag(tag));
+        });
 
+        return Promise.all(tagsPromises).then((createdTags) => {
           hostModel.tagLinks = [...new Set(createdTags.map((tag) => tag.documentSelfLink))];
 
           var hostSpec = getHostSpec(hostModel);
