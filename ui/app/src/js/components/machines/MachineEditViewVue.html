@@ -85,7 +85,10 @@
         <label class="col-sm-3">{{i18n("app.host.details.tags")}}</label>
         <div class="col-sm-9">
           <div class="tags-holder">
-            <input class="tags-input">
+            <tags
+              :value="model.item.tags"
+              @change="onTagsChange">
+            </tags>
           </div>
           <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left"
              title="{{i18n ('app.host.details.tagsHint')}}"></i>

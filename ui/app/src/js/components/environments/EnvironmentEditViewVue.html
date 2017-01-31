@@ -87,7 +87,10 @@
                 <div class="form-group tags" v-bind:class="{'has-error': validationErrors.tags}">
                   <label>{{i18n("app.environment.edit.tagsLabel")}}</label>
                   <div class="form-control tags-holder">
-                    <input class="tags-input">
+                    <tags
+                      :value="model.item.tags"
+                      @change="onTagsChange">
+                    </tags>
                   </div>
                   <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left"
                       v-tooltip="i18n('app.host.details.tagsHint')"></i>

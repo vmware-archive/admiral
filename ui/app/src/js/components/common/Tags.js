@@ -23,7 +23,13 @@ function getValue(tag) {
 
 function Tags(el) {
   this.$el = el;
-  this.$el.tokenfield({
+  this.$el
+    .on('tokenfield:createdtoken tokenfield:editedtoken tokenfield:removedtoken', () => {
+      if (this.changeCallback) {
+        this.changeCallback(this.getValue());
+      }
+    })
+    .tokenfield({
     createTokensOnBlur: true,
     typeahead: [{
       hint: false
@@ -65,24 +71,33 @@ function Tags(el) {
 }
 
 Tags.prototype.getValue = function() {
-  return this.$el.tokenfield('getTokens').map((token) => {
-    var pair = token.value.split(':');
-    return {
+  return this.$el.tokenfield('getTokens').reduce((prev, curr) => {
+    let pair = curr.value.split(':');
+    let item = {
       key: pair[0],
       value: pair[1] || ''
     };
-  });
+    if (prev.find((tag) => tag.key === item.key && tag.value === item.value)) {
+      return prev;
+    }
+    return [...prev, item];
+  }, []);
 };
 
 Tags.prototype.setValue = function(value) {
   value = value || [];
-  if (value.asMutable) {
-    value = value.asMutable({deep: true});
-  }
-  this.$el.tokenfield('setTokens', value.map((tag) => ({
-    source: tag,
-    value: getValue(tag)
-  })));
+  let tokens = [];
+  value.forEach((tag) => {
+    tokens.push({
+      source: $.extend({}, tag),
+      value: getValue(tag)
+    });
+  });
+  this.$el.tokenfield('setTokens', [...tokens]);
+};
+
+Tags.prototype.setChangeCallback = function(changeCallback) {
+  this.changeCallback = changeCallback;
 };
 
 export default Tags;

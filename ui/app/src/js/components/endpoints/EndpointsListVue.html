@@ -69,7 +69,10 @@
                     </thead>
                     <tbody>
                       <td class="truncateText primary-cell" title="{{item.name}}">{{item.name}}</td>
-                      <td title="{{item.endpointType}}"><img class="endpoint-icon" v-bind:src="'image-assets/endpoints/' + item.endpointType + '.png'"/><span class="truncateText">{{item.endpointType}}</span></td>
+                      <td class="endpoint-icon" title="{{item.endpointType}}">
+                        <img v-bind:src="'image-assets/endpoints/' + item.endpointType + '.png'">
+                        <span class="truncateText">{{item.endpointType}}</span>
+                      </td>
                       <!-- Actions column -->
                       <td></td>
                     </tbody>
@@ -84,7 +87,10 @@
             </template>
             <template v-if="!isEditingOrHighlightedItem(item)">
               <td class="truncateText primary-cell" title="{{item.name}}">{{item.name}}</td>
-              <td title="{{item.endpointType}}"><img class="endpoint-icon" v-bind:src="'image-assets/endpoints/' + item.endpointType + '.png'"/><span class="truncateText">{{item.endpointType}}</span></td>
+              <td class="endpoint-icon" title="{{item.endpointType}}">
+                <img v-bind:src="'image-assets/endpoints/' + item.endpointType + '.png'">
+                <span class="truncateText">{{item.endpointType}}</span>
+              </td>
               <!-- Actions column -->
               <td class="table-actions">
                 <div v-bind:class="{hide: isDeleting(item)}">

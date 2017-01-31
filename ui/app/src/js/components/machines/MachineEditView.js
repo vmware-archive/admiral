@@ -10,7 +10,7 @@
  */
 
 import { MachineActions, MachinesContextToolbarActions } from 'actions/Actions';
-import Tags from 'components/common/Tags';
+import VueTags from 'components/common/VueTags'; //eslint-disable-line
 import MachineEditViewVue from 'components/machines/MachineEditViewVue.html';
 
 export default Vue.component('machine-edit-view', {
@@ -26,6 +26,7 @@ export default Vue.component('machine-edit-view', {
   },
   data: function() {
     return {
+      tags: this.model.item.tags || [],
       templateContent: ''
     };
   },
@@ -41,19 +42,6 @@ export default Vue.component('machine-edit-view', {
       return this.model.contextView && this.model.contextView.expanded;
     }
   },
-  attached() {
-    this.tagsInput = new Tags($(this.$el).find('#tags .tags-input'));
-    this.unwatchModel = this.$watch('model', (model, oldModel) => {
-        oldModel = oldModel || { item: {} };
-        if (model.item.tags !== oldModel.item.tags) {
-          this.tagsInput.setValue(model.item.tags);
-          this.tags = this.tagsInput.getValue();
-        }
-    }, {immediate: true});
-  },
-  detached() {
-    this.unwatchModel();
-  },
   methods: {
     browseFile: function($event) {
       $event.preventDefault();
@@ -67,6 +55,9 @@ export default Vue.component('machine-edit-view', {
         return;
       }
       this.loadFromFile(files[0]);
+    },
+    onTagsChange(tags) {
+      this.tags = tags;
     },
     loadFromFile: function(file) {
       var reader = new FileReader();
@@ -89,8 +80,7 @@ export default Vue.component('machine-edit-view', {
         resourcePoolLink: this.placementZone ? this.placementZone.documentSelfLink : null,
         selfLinkId: this.model.item.selfLinkId
       };
-      let tags = this.tagsInput.getValue();
-      MachineActions.updateMachine(model, tags);
+      MachineActions.updateMachine(model, this.tags);
     },
     openToolbarPlacementZones: MachinesContextToolbarActions.openToolbarPlacementZones,
     closeToolbar: MachinesContextToolbarActions.closeToolbar,

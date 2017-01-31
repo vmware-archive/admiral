@@ -214,7 +214,6 @@ let ComputeStore = Reflux.createStore({
           this.setInData(['listView', 'nextPageLink'], nextPageLink);
           this.emitChange();
         });
-
       });
     }
 
@@ -256,10 +255,11 @@ let ComputeStore = Reflux.createStore({
     this.emitChange();
   },
   onUpdateCompute(model, tags) {
-    Promise.all(tags.map((tag) => services.loadTag(tag.key, tag.value))).then((result) => {
-      return Promise.all(tags.map((tag, i) =>
-        result[i] ? Promise.resolve(result[i]) : services.createTag(tag)));
-    }).then((updatedTags) => {
+    let tagsPromises = [];
+    tags.forEach((tag) => {
+      tagsPromises.push(services.createTag(tag));
+    });
+    Promise.all(tagsPromises).then((updatedTags) => {
       let data = $.extend({}, model.dto, {
         resourcePoolLink: model.resourcePoolLink,
         tagLinks: [...new Set(updatedTags.map((tag) => tag.documentSelfLink))]
