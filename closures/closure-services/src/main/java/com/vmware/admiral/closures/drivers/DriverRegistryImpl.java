@@ -30,8 +30,8 @@ public final class DriverRegistryImpl implements DriverRegistry {
     private final Map<String, ExecutionDriver> executionDrivers = new HashMap<>();
 
     public DriverRegistryImpl() {
-        supportedRuntimes.put(DriverConstants.RUNTIME_NODEJS_4_3_0, DriverConstants.NODEJS_4_3_0_IMAGE);
-        supportedRuntimes.put(DriverConstants.RUNTIME_PYTHON_3_4_3, DriverConstants.PYTHON_3_4_3_IMAGE);
+        supportedRuntimes.put(DriverConstants.RUNTIME_NODEJS_4, DriverConstants.NODEJS_4_IMAGE);
+        supportedRuntimes.put(DriverConstants.RUNTIME_PYTHON_3, DriverConstants.PYTHON_3_IMAGE);
         supportedRuntimes.put(DriverConstants.RUNTIME_NASHORN, null);
     }
 
@@ -52,7 +52,7 @@ public final class DriverRegistryImpl implements DriverRegistry {
     @Override
     public ExecutionDriver getDriver() {
         if (executionDrivers.size() > 0) {
-            return executionDrivers.get(DriverConstants.RUNTIME_NODEJS_4_3_0);
+            return executionDrivers.get(DriverConstants.RUNTIME_NODEJS_4);
         }
 
         throw new IllegalArgumentException("No available execution driver!" + executionDrivers.size());

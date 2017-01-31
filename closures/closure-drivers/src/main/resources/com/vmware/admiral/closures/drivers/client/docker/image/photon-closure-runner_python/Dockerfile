@@ -1,4 +1,4 @@
-FROM vmware/photon-closure-runner_python_3.4.3_base:1.0
+FROM vmware/photon-closure-runner_python_base:1.0
 
 ARG TASK_URI
 ARG TOKEN

@@ -32,8 +32,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
-import junit.framework.TestCase;
-
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -53,16 +51,18 @@ import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.Utils;
 
+import junit.framework.TestCase;
+
 public class PythonTest extends BaseIntegrationTest {
 
     protected static String IMAGE_NAME_PREFIX = "vmware/photon-closure-runner_";
 
     private static final String IMAGE_NAME =
-            IMAGE_NAME_PREFIX + DriverConstants.RUNTIME_PYTHON_3_4_3;
+            IMAGE_NAME_PREFIX + DriverConstants.RUNTIME_PYTHON_3;
 
     private static String testWebserverUri;
 
-    private static String RUNTIME_PYTHON = "python_3.4.3";
+    private static String RUNTIME_PYTHON = "python";
 
     private static ServiceClient serviceClient;
 

@@ -1,4 +1,4 @@
-FROM vmware/photon-closure-runner_nodejs_4.3.0_base:1.0
+FROM vmware/photon-closure-runner_nodejs_base:1.0
 
 ARG TASK_URI
 ARG TOKEN

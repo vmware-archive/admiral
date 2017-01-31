@@ -514,12 +514,12 @@ function sourceModeChanged(mode) {
 }
 
 function updateCodeFormater(runtime, sourceEditor) {
-  if (runtime === 'python_3.4.3') {
+  if (runtime === 'python') {
     sourceEditor.getSession().setMode({
       path: 'ace/mode/python',
       v: Date.now()
     });
-  } else if (runtime === 'nodejs_4.3.0') {
+  } else if (runtime === 'nodejs') {
     sourceEditor.getSession().setMode({
       path: 'ace/mode/javascript',
       v: Date.now()
@@ -528,12 +528,12 @@ function updateCodeFormater(runtime, sourceEditor) {
 }
 
 function updateDependenciesFormater(runtime, dependencyEditor) {
-  if (runtime === 'python_3.4.3') {
+  if (runtime === 'python') {
     dependencyEditor.getSession().setMode({
       path: 'ace/mode/text',
       v: Date.now()
     });
-  } else if (runtime === 'nodejs_4.3.0') {
+  } else if (runtime === 'nodejs') {
     dependencyEditor.getSession().setMode({
       path: 'ace/mode/json',
       v: Date.now()

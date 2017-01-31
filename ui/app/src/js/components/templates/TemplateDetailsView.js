@@ -331,10 +331,10 @@ var TemplateDetailsView = Vue.extend({
           return 'image-assets/closure-unknown.png';
         },
         closureRuntime: function() {
-          if (this.model.runtime === 'nodejs_4.3.0') {
-            return 'NodeJS 4.3.0';
-          } else if (this.model.runtime === 'python_3.4.3') {
-            return 'Python 3.4.3';
+          if (this.model.runtime === 'nodejs') {
+            return 'NodeJS 4';
+          } else if (this.model.runtime === 'python') {
+            return 'Python 3';
           }
           return 'Unknown';
         }

@@ -74,7 +74,7 @@ public class ClosureDescriptionService extends StatefulService {
 
     private void formatDependencies(ClosureDescription body) {
         if (!ClosureUtils.isEmpty(body.dependencies) && body.runtime
-                .equalsIgnoreCase(DriverConstants.RUNTIME_NODEJS_4_3_0)) {
+                .equalsIgnoreCase(DriverConstants.RUNTIME_NODEJS_4)) {
             JsonParser parser = new JsonParser();
             JsonElement jsElement = parser.parse(body.dependencies);
             body.dependencies = jsElement.toString();
@@ -222,7 +222,7 @@ public class ClosureDescriptionService extends StatefulService {
             }
         }
 
-        if (DriverConstants.RUNTIME_NODEJS_4_3_0.equalsIgnoreCase(body.runtime)
+        if (DriverConstants.RUNTIME_NODEJS_4.equalsIgnoreCase(body.runtime)
                 && !ClosureUtils.isEmpty(body.dependencies)) {
             JsonParser parser = new JsonParser();
             try {
@@ -238,9 +238,9 @@ public class ClosureDescriptionService extends StatefulService {
     }
 
     private boolean isRuntimeNotSupported(ClosureDescription body) {
-        if (Objects.equals(body.runtime, DriverConstants.RUNTIME_NODEJS_4_3_0)) {
+        if (Objects.equals(body.runtime, DriverConstants.RUNTIME_NODEJS_4)) {
             return false;
-        } else if (Objects.equals(body.runtime, DriverConstants.RUNTIME_PYTHON_3_4_3)) {
+        } else if (Objects.equals(body.runtime, DriverConstants.RUNTIME_PYTHON_3)) {
             return false;
         } else if (Objects.equals(body.runtime, DriverConstants.RUNTIME_NASHORN)) {
             return false;

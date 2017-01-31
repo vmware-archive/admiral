@@ -62,9 +62,9 @@ public class ClosuresIT extends BaseProvisioningOnCoreOsIT {
     protected static String IMAGE_NAME_PREFIX = "vmware/photon-closure-runner_";
 
     private static final String IMAGE_NAME = IMAGE_NAME_PREFIX
-            + DriverConstants.RUNTIME_NODEJS_4_3_0;
+            + DriverConstants.RUNTIME_NODEJS_4;
 
-    private static String RUNTIME_NODEJS = "nodejs_4.3.0";
+    private static String RUNTIME_NODEJS = "nodejs";
 
     private static String dockerBuildImageLink;
     private static String dockerBuildBaseImageLink;

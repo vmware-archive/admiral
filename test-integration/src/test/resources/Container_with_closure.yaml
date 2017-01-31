@@ -22,7 +22,7 @@ components:
     type: App.Closure
     data:
       name: test
-      runtime: nodejs_4.3.0
+      runtime: nodejs
       description: Sum function which is part of template.
       source: |
         module.exports = function test(ctx) {

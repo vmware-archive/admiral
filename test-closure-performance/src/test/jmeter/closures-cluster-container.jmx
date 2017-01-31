@@ -462,7 +462,7 @@ log.info(&quot;Sending task execution request N &quot; + counter);
             <collectionProp name="Arguments.arguments">
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                <stringProp name="Argument.value">{&quot;runtime&quot;: &quot;nodejs_4.3.0&quot;,&quot;source&quot;: &quot;module.exports = function test(ctx, a, b){console.log(&apos;Hello numbers: a=&apos; + a + &apos; b=&apos; + b);ctx.result = a + b;};&quot;,&quot;resources&quot;:{&quot;ramMB&quot;: 200,&quot;timeoutSeconds&quot;: 10},&quot;description&quot;: &quot;Test nodejs task definition.&quot;,&quot;name&quot;: &quot;test&quot;}&#xd;
+                <stringProp name="Argument.value">{&quot;runtime&quot;: &quot;nodejs&quot;,&quot;source&quot;: &quot;module.exports = function test(ctx, a, b){console.log(&apos;Hello numbers: a=&apos; + a + &apos; b=&apos; + b);ctx.result = a + b;};&quot;,&quot;resources&quot;:{&quot;ramMB&quot;: 200,&quot;timeoutSeconds&quot;: 10},&quot;description&quot;: &quot;Test nodejs task definition.&quot;,&quot;name&quot;: &quot;test&quot;}&#xd;
 &#xd;
 &#xd;
 </stringProp>
