@@ -124,7 +124,7 @@ public class ClosureDescription extends ResourceState {
      * Link of the placement to use. Optional parameter.
      *
      */
-    @Documentation(description = "Ling to a placement to use.")
+    @Documentation(description = "Link to a placement to use.")
     @UsageOption(option = PropertyUsageOption.OPTIONAL)
     public String placementLink;
 
