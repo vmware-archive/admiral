@@ -29,8 +29,8 @@ import java.util.stream.Collectors;
 
 import javax.net.ssl.TrustManager;
 
+import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.VolumeOperationType;
@@ -63,7 +63,6 @@ import com.vmware.xenon.services.common.FileContentService;
  * https://jira-hzn.eng.vmware.com/browse/VBV-671
  *
  */
-@Ignore
 public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
 
     private static final String TEST_CUSTOM_PROP_NAME = "Hostname";
@@ -80,8 +79,8 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
     private static final String TEST_VOLUME_ID_KEY = "Id";
     private static final String TEST_VOLUME_MOUNTPOINT_KEY = "Mountpoint";
 
-    private static Integer VOLUME_LIST_RETRY_COUNT = 6;
-    private static Integer TIME_BETWEEN_RETRIES_IN_MILSEC = 3000;
+    private static final Integer VOLUME_LIST_RETRY_COUNT = 50;
+    private static final Integer TIME_BETWEEN_RETRIES_IN_MILSEC = 300;
 
     private String parentComputeStateLink;
     private String testDockerCredentialsLink;
@@ -120,6 +119,11 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
 
         // Volume creation is not direct operation, this means it will take some time.
         waitForVolumeCreation();
+    }
+
+    @After
+    public void tearDown() throws Throwable {
+        MockDockerVolumeListService.volumesList.clear();
     }
 
     @Test
@@ -375,11 +379,12 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
     }
 
     private void waitForVolumeCreation() throws InterruptedException {
+        int count = VOLUME_LIST_RETRY_COUNT;
         while ((MockDockerVolumeListService.volumesList == null
                 || MockDockerVolumeListService.volumesList.isEmpty())
-                && VOLUME_LIST_RETRY_COUNT > 0) {
+                && count > 0) {
             Thread.sleep(TIME_BETWEEN_RETRIES_IN_MILSEC);
-            VOLUME_LIST_RETRY_COUNT--;
+            count--;
         }
     }
 

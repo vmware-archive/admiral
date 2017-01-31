@@ -127,7 +127,7 @@ public class BaseMockDockerTestCase extends BaseTestCase {
         args.port = 0;
         mockDockerHost = VerificationHost.create(args);
         mockDockerHost.setPeerSynchronizationEnabled(this.getPeerSynchronizationEnabled());
-        mockDockerHost.setMaintenanceIntervalMicros(this.getMaintenanceIntervalMillis());
+        mockDockerHost.setMaintenanceIntervalMicros(this.getMaintenanceIntervalMillis() * 1000);
         mockDockerHost.start();
 
         mockDockerHost.startService(Operation.createPost(UriUtils.buildUri(
