@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -148,6 +149,12 @@ public class CompositeComponentRemovalTaskService
         OperationJoin.create(operations)
                 .setCompletion((ops, exs) -> {
                     if (exs != null) {
+                        // ignore CancellationException when removing composite component
+                        exs = exs.entrySet().stream()
+                                .filter((e) -> !(e.getValue() instanceof CancellationException))
+                                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+                    }
+                    if (exs != null && !exs.isEmpty()) {
                         failTask("Failed removing composite states: " + Utils.toString(exs), null);
                         return;
                     }
