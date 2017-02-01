@@ -124,7 +124,7 @@ public class ProvisionContainerHostsTaskService
             throw new LocalizableValidationException("'endpointLink' must not be empty", "request.provision.endpoint-link.empty");
         }
 
-        if (state.resourceCount > 0) {
+        if (state.resourceCount < 1) {
             throw new LocalizableValidationException("'resourceCount' must be greater than 0.", "request.resource-count.zero");
         }
     }
