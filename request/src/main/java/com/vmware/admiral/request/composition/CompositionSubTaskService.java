@@ -22,7 +22,6 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -149,8 +148,8 @@ public class CompositionSubTaskService
         public String requestId;
 
         /**
-         * Set by the Task with the links of the provisioned resources.
-         * If the task is not provisionining, the resource links needs to be set from outside.
+         * Set by the Task with the links of the provisioned resources. If the task is not
+         * provisionining, the resource links needs to be set from outside.
          */
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Set<String> resourceLinks;
@@ -259,8 +258,9 @@ public class CompositionSubTaskService
         if (state.resourceLinks == null || state.resourceLinks.isEmpty()) {
             String errMsg = "No resourceLinks found for allocated resources.";
             logWarning(errMsg);
-            return state.serviceTaskCallback.getFailedResponse(new LocalizableValidationException(errMsg,
-                    "request.composition.resource-links.missing"));
+            return state.serviceTaskCallback
+                    .getFailedResponse(new LocalizableValidationException(errMsg,
+                            "request.composition.resource-links.missing"));
         } else {
             CallbackCompleteResponse finishedResponse = new CallbackCompleteResponse();
             finishedResponse.copy(state.serviceTaskCallback.getFinishedResponse());
@@ -276,11 +276,11 @@ public class CompositionSubTaskService
     @Override
     protected void validateStateOnStart(CompositionSubTaskState state)
             throws IllegalArgumentException {
-        boolean descAndResourcesEmpty =
-                (state.resourceDescriptionLink == null || state.resourceDescriptionLink
+        boolean descAndResourcesEmpty = (state.resourceDescriptionLink == null
+                || state.resourceDescriptionLink
                         .isEmpty())
-                        &&
-                        (state.resourceLinks == null || state.resourceLinks.isEmpty());
+                &&
+                (state.resourceLinks == null || state.resourceLinks.isEmpty());
 
         assertTrue(!descAndResourcesEmpty, "resourceDescriptionLink and resourceLinks are empty");
     }
@@ -589,7 +589,7 @@ public class CompositionSubTaskService
 
         if (RequestBrokerState.REMOVE_RESOURCE_OPERATION.equals(requestBrokerState.operation)
                 && ResourceType.CONTAINER_NETWORK_TYPE.getName()
-                .equals(requestBrokerState.resourceType)) {
+                        .equals(requestBrokerState.resourceType)) {
             if (requestBrokerState.customProperties == null) {
                 requestBrokerState.customProperties = new HashMap<>();
             }
@@ -600,7 +600,7 @@ public class CompositionSubTaskService
 
         if (RequestBrokerState.REMOVE_RESOURCE_OPERATION.equals(requestBrokerState.operation)
                 && ResourceType.CONTAINER_VOLUME_TYPE.getName()
-                .equals(requestBrokerState.resourceType)) {
+                        .equals(requestBrokerState.resourceType)) {
             if (requestBrokerState.customProperties == null) {
                 requestBrokerState.customProperties = new HashMap<>();
             }
@@ -705,7 +705,7 @@ public class CompositionSubTaskService
         componentDescriptionQueryTask.documentExpirationTimeMicros = ServiceDocumentQuery
                 .getDefaultQueryExpiration();
 
-        //QueryUtil.addExpandOption(componentDescriptionQueryTask);
+        // QueryUtil.addExpandOption(componentDescriptionQueryTask);
 
         dependsOnDescriptionLinks.add(descLink);
         QueryUtil.addListValueClause(componentDescriptionQueryTask,
@@ -731,7 +731,7 @@ public class CompositionSubTaskService
 
                     if (result == null || result.documentLinks == null || result.documentLinks
                             .isEmpty()) {
-                        return DeferredResult.completed(Collections.emptyList());
+                        return DeferredResult.completed(new ArrayList<NestedState>());
                     }
 
                     List<DeferredResult<NestedState>> nestedResources = new ArrayList<>();
@@ -771,7 +771,7 @@ public class CompositionSubTaskService
                                 provisioningTimeBindings,
                                 nameToResource);
 
-                        //This will do a PUT on the whole tree
+                        // This will do a PUT on the whole tree
                         evaluated.sendRequest(this, Action.PUT);
                     }
                     return DeferredResult.allOf(updates);
