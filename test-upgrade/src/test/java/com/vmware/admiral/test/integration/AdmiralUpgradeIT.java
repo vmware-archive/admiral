@@ -12,19 +12,25 @@
 package com.vmware.admiral.test.integration;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
+import static com.vmware.admiral.test.integration.TestPropertiesUtil.getSystemOrTestProp;
 
 import java.net.URI;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ServiceClientFactory;
@@ -38,10 +44,14 @@ import com.vmware.admiral.compute.container.HostContainerListDataCollection.Host
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.service.common.NodeHealthCheckService;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
+import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpResponse;
+import com.vmware.admiral.test.integration.data.IntegratonTestStateFactory;
+import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
 public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
@@ -49,11 +59,20 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
     private static final String TEMPLATE_FILE_MASTER = "Admiral_master.yaml";
     private static final String ADMIRAL_NAME = "admiral";
 
+    private static final String SEPARATOR = "/";
+
+    private static final String UPGRADE_SKIP_INITIALIZE = "upgrade.skip.initialize";
+    private static final String UPGRADE_SKIP_VALIDATE = "upgrade.skip.validate";
+
+    private static final String CREDENTIALS_SELF_LINK = AuthCredentialsService.FACTORY_LINK
+            + SEPARATOR +
+            IntegratonTestStateFactory.AUTH_CREDENTIALS_ID;
+    private static final String COMPUTE_SELF_LINK = ComputeService.FACTORY_LINK + SEPARATOR
+            + IntegratonTestStateFactory.DOCKER_COMPUTE_ID;
+
     private static ServiceClient serviceClient;
 
     private String compositeDescriptionLink;
-    private String dockerHostSelfLink;
-    private String credentialsSelfLink;
     private boolean dataInitialized;
 
     @BeforeClass
@@ -78,9 +97,17 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
 
     @Test
     public void testProvision() throws Exception {
-        doProvisionDockerContainerOnCoreOS(false, DockerAdapterType.API);
-        compositeDescriptionLink = importTemplate(serviceClient, TEMPLATE_FILE_MASTER);
-        doProvisionDockerContainerOnCoreOS(false, DockerAdapterType.API);
+        String skipInitialize = getSystemOrTestProp(UPGRADE_SKIP_INITIALIZE, "false");
+        if (skipInitialize.equals(Boolean.FALSE.toString())) {
+            doProvisionDockerContainerOnCoreOS(false, DockerAdapterType.API);
+        }
+
+        String skipValidate = getSystemOrTestProp(UPGRADE_SKIP_VALIDATE, "false");
+        if (skipValidate.equals(Boolean.FALSE.toString())) {
+            dataInitialized = true;
+            compositeDescriptionLink = importTemplate(serviceClient, TEMPLATE_FILE_MASTER);
+            doProvisionDockerContainerOnCoreOS(false, DockerAdapterType.API);
+        }
     }
 
     @Override
@@ -115,8 +142,8 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
 
     private void removeData(ContainerState admiralContainer) throws Exception {
         changeBaseURI(admiralContainer);
-        delete(dockerHostSelfLink);
-        delete(credentialsSelfLink);
+        delete(COMPUTE_SELF_LINK);
+        delete(CREDENTIALS_SELF_LINK);
         setBaseURI(null);
     }
 
@@ -130,7 +157,7 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         uri = URI.create(getBaseUrl() + ManagementUriParts.CONTAINER_HOSTS);
         waitForStatusCode(uri, Operation.STATUS_CODE_OK);
 
-        waitForStateChange(dockerHostSelfLink, (body) -> {
+        waitForStateChange(COMPUTE_SELF_LINK, (body) -> {
             if (body == null) {
                 return false;
             }
@@ -138,10 +165,32 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
             // trust alias custom property must be set eventually after upgrade
             return (ContainerHostUtil.getTrustAlias(dockerHost) != null);
         });
+        ComputeState dockerHost = getDocument(
+                COMPUTE_SELF_LINK,
+                ComputeState.class);
+        assertTrue(dockerHost != null);
 
-        AuthCredentialsServiceState credentials = getDocument(credentialsSelfLink,
+        AuthCredentialsServiceState credentials = getDocument(
+                CREDENTIALS_SELF_LINK,
                 AuthCredentialsServiceState.class);
         assertTrue(credentials != null);
+
+        // get all the containers with expand - validate xenon issue:
+        // https://www.pivotaltracker.com/n/projects/1471320/stories/137898729
+        HttpResponse response = SimpleHttpsClient.execute(HttpMethod.GET,
+                getBaseUrl() + buildServiceUri("/resources/containers?expand"));
+        assertTrue(response.statusCode == 200);
+
+        // There are at least 2 containers availabale the provisioned admiral and the agent
+        JsonElement json = new JsonParser().parse(response.responseBody);
+        JsonObject jsonObject = json.getAsJsonObject();
+        JsonArray documentLinks = jsonObject.getAsJsonArray("documentLinks");
+        for (int i = 0; i < documentLinks.size(); i++) {
+            String selfLink = documentLinks.get(i).getAsString();
+            ContainerState state = getDocument(selfLink, ContainerState.class);
+            assertTrue(state != null);
+        }
+
         setBaseURI(null);
     }
 
@@ -162,16 +211,12 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         uri = URI.create(getBaseUrl() + ManagementUriParts.CONTAINER_HOSTS);
         waitForStatusCode(uri, Operation.STATUS_CODE_OK);
 
+        // create documents to check for after upgrade
         setupCoreOsHost(DockerAdapterType.API, false);
-        // create entities to check for after upgrade
-        dockerHostSelfLink = getDockerHost().documentSelfLink;
-        credentialsSelfLink = getDockerHostAuthCredentials().documentSelfLink;
-
-        ComputeState dockerHost = getDocument(dockerHostSelfLink, ComputeState.class);
-        assertNotNull(dockerHost);
-        assertNotNull(dockerHost.customProperties);
-        // trust alias custom property is not set by default before upgrade
-        assertNull(ContainerHostUtil.getTrustAlias(dockerHost));
+        // credentials
+        AuthCredentialsServiceState credentials = IntegratonTestStateFactory
+                .createAuthCredentials(false);
+        postDocument(AuthCredentialsService.FACTORY_LINK, credentials);
 
         dataInitialized = true;
     }
@@ -183,7 +228,7 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         setBaseURI(null);
 
         ContainerListCallback dataCollectionBody = new ContainerListCallback();
-        dataCollectionBody.containerHostLink = dockerHostSelfLink;
+        dataCollectionBody.containerHostLink = COMPUTE_SELF_LINK;
         AtomicInteger counter = new AtomicInteger();
         waitForStateChange(
                 admiralContainer.documentSelfLink,

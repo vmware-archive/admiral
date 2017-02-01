@@ -7,8 +7,11 @@ components:
       name: "admiral"
       image: "vmware/bellevue:upgrade"
       _cluster: 1
+      env:
+      - var: "JAVA_OPTS"
+        value: "-Dxenon.kryo.handleBuiltInCollections=false"
       volumes:
       - "/usr/tmp/admiral:/var/admiral"
       publish_all: true
-      UseLocalImageWithPriority: "true"
       restart_policy: "no"
+      UseLocalImageWithPriority: "true"
