@@ -1771,10 +1771,10 @@ public class NodeJSTest extends BaseIntegrationTest {
         closureDescState.resources = constraints;
 
         closureDescState.logConfiguration = new JsonObject();
-        closureDescState.logConfiguration.addProperty("type", "json-file");
+        ((JsonObject) closureDescState.logConfiguration).addProperty("type", "json-file");
         JsonObject logConfig = new JsonObject();
         logConfig.addProperty("max-size", "300k");
-        closureDescState.logConfiguration.add("config", logConfig);
+        ((JsonObject) closureDescState.logConfiguration).add("config", logConfig);
 
         String taskDefPayload = Utils.toJson(closureDescState);
         ClosureDescription closureDescription = createClosureDescription(taskDefPayload,

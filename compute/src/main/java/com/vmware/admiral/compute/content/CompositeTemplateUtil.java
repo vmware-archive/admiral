@@ -256,7 +256,7 @@ public class CompositeTemplateUtil {
             retMap = toMap((JsonObject) json);
         } else {
             Utils.log(CompositeTemplateUtil.class, CompositeTemplateUtil.class.getSimpleName(),
-                    Level.WARNING, "Log configuration is not a valuid JsonObject!");
+                    Level.WARNING, "Log configuration is not a valid JsonObject!");
         }
         return retMap;
     }
