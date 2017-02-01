@@ -33,6 +33,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
@@ -90,6 +91,7 @@ public class ComputeReservationTaskService
 
         public static enum SubStage {
             CREATED,
+            NETWORK_CONSTRAINTS_COLLECTED,
             SELECTED,
             PLACEMENT,
             HOSTS_SELECTED,
@@ -122,6 +124,10 @@ public class ComputeReservationTaskService
         /** (Internal) Set by task after the ComputeState is found to host the containers */
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public List<HostSelection> selectedComputePlacementHosts;
+
+        /** (Internal) Set by task network profiles that can be used to create compute networks */
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        public Set<String> networkProfileConstraints;
     }
 
     public ComputeReservationTaskService() {
@@ -137,6 +143,9 @@ public class ComputeReservationTaskService
     protected void handleStartedStagePatch(ComputeReservationTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:
+            collectNetworkConstraints(state, null);
+            break;
+        case NETWORK_CONSTRAINTS_COLLECTED:
             queryGroupResourcePlacements(state, state.tenantLinks, this.computeDescription);
             break;
         case SELECTED:
@@ -202,6 +211,33 @@ public class ComputeReservationTaskService
 
     protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
         String groupResourcePlacementLink;
+    }
+
+    private void collectNetworkConstraints(ComputeReservationTaskState state,
+            ComputeDescription computeDesc) {
+        if (computeDesc == null) {
+            getComputeDescription(state.resourceDescriptionLink,
+                    (retrievedCompDesc) -> collectNetworkConstraints(state, retrievedCompDesc));
+            return;
+        }
+
+        if (computeDesc.networkInterfaceDescLinks == null || computeDesc.networkInterfaceDescLinks
+                .isEmpty()) {
+            proceedTo(SubStage.NETWORK_CONSTRAINTS_COLLECTED);
+            return;
+        }
+
+        NetworkProfileQueryUtils.getComputeNetworkProfileConstraints(getHost(),
+                UriUtils.buildUri(getHost(), getSelfLink()), computeDesc,
+                (networkProfileLinks, e) -> {
+                    if (e != null) {
+                        failTask("Error getting network profile constraints: ", e);
+                        return;
+                    }
+                    proceedTo(SubStage.NETWORK_CONSTRAINTS_COLLECTED, s -> {
+                        s.networkProfileConstraints = networkProfileLinks;
+                    });
+                });
     }
 
     private void queryGroupResourcePlacements(ComputeReservationTaskState state,
@@ -345,7 +381,8 @@ public class ComputeReservationTaskService
             List<GroupResourcePlacementState> placements, List<String> tenantLinks,
             ComputeDescription computeDesc) {
         if (placements == null) {
-            failTask(null, new LocalizableValidationException("No placements found", "request.compute.reservation.placements.missing"));
+            failTask(null, new LocalizableValidationException("No placements found",
+                    "request.compute.reservation.placements.missing"));
             return;
         }
 
@@ -357,7 +394,7 @@ public class ComputeReservationTaskService
 
         EnvironmentQueryUtils.queryEnvironments(getHost(),
                 UriUtils.buildUri(getHost(), getSelfLink()), placementsByRpLink.keySet(),
-                endpointLink, tenantLinks, (envs, e) -> {
+                endpointLink, tenantLinks, state.networkProfileConstraints, (envs, e) -> {
                     if (e != null) {
                         failTask("Error retrieving environments for the selected placements: ", e);
                         return;
@@ -404,7 +441,7 @@ public class ComputeReservationTaskService
                             return;
                         }
 
-                        List <GroupResourcePlacementState> filteredPlacements = all
+                        List<GroupResourcePlacementState> filteredPlacements = all
                                 .stream()
                                 .filter(p -> p.getRight() != null)
                                 .flatMap(p -> supportsCD(state, placementsByRpLink, p))

@@ -68,7 +68,7 @@ public class EnvironmentQueryUtilsTest extends RequestBaseTest {
         TestContext ctx = testCreate(1);
         List<EnvEntry> entries = new ArrayList<>();
         EnvironmentQueryUtils.queryEnvironments(host, referer, pools.keySet(),
-                endpoint.documentSelfLink, null,
+                endpoint.documentSelfLink, null, null,
                 (all, e) -> {
                     if (e != null) {
                         ctx.fail(e);
@@ -98,7 +98,7 @@ public class EnvironmentQueryUtilsTest extends RequestBaseTest {
         TestContext ctx = testCreate(1);
         List<EnvEntry> entries = new ArrayList<>();
         EnvironmentQueryUtils.queryEnvironments(host, referer, pools, endpoint.documentSelfLink,
-                null,
+                null, null,
                 (all, e) -> {
                     if (e != null) {
                         ctx.fail(e);
@@ -132,7 +132,7 @@ public class EnvironmentQueryUtilsTest extends RequestBaseTest {
         TestContext ctx = testCreate(1);
         List<EnvEntry> entries = new ArrayList<>();
         EnvironmentQueryUtils.queryEnvironments(host, referer, pools, endpoint.documentSelfLink,
-                null,
+                null, null,
                 (all, e) -> {
                     if (e != null) {
                         ctx.fail(e);
@@ -144,6 +144,43 @@ public class EnvironmentQueryUtilsTest extends RequestBaseTest {
         ctx.await();
 
         assertTrue(entries.isEmpty());
+    }
+
+    @Test
+    public void testFilterEnvByNetworkProfile() throws Throwable {
+        pools = createResourcePools();
+        Map<String, EnvironmentState> envs = createEnvironments();
+        Set<String> networkProfileLinks = new HashSet<>(1);
+        EnvironmentState awsEnv = envs.entrySet()
+                .stream()
+                .filter(e -> e.getValue().endpointType == EndpointType.aws.name())
+                .findAny()
+                .orElse(null).getValue();
+        networkProfileLinks.add(awsEnv.networkProfileLink);
+
+        TestContext ctx = testCreate(1);
+        List<EnvEntry> entries = new ArrayList<>();
+        EnvironmentQueryUtils.queryEnvironments(host, referer, pools.keySet(),
+                endpoint.documentSelfLink, null, networkProfileLinks,
+                (all, e) -> {
+                    if (e != null) {
+                        ctx.fail(e);
+                        return;
+                    }
+                    entries.addAll(all);
+                    ctx.complete();
+                });
+        ctx.await();
+
+        assertFalse(entries.isEmpty());
+        assertEquals(2, entries.size());
+        entries.forEach(e -> {
+            assertEquals(endpoint.documentSelfLink, e.endpoint.documentSelfLink);
+            assertEquals(EndpointType.aws.name(), e.endpoint.endpointType);
+            assertNotNull(e.envLinks);
+            assertEquals(1, e.envLinks.size());
+            assertEquals(awsEnv.documentSelfLink, e.envLinks.iterator().next());
+        });
     }
 
     private Map<String, ResourcePoolState> createResourcePools() throws Throwable {

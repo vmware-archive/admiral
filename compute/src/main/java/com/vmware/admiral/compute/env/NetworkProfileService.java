@@ -28,6 +28,8 @@ public class NetworkProfileService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.NETWORK_PROFILES;
 
     public static class NetworkProfile extends MultiTenantDocument {
+        public static final String FIELD_NAME_NAME = "name";
+
         @Documentation(description = "The name that can be used to refer to this network profile")
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
         public String name;

@@ -289,9 +289,18 @@ public class ComputeAllocationTaskService
         }
 
         if (environmentLink == null) {
-            queryEnvironment(state, endpoint, state.tenantLinks,
-                    (envLink) -> prepareContext(state, computeDesc, resourcePool, endpoint,
-                            envLink));
+            NetworkProfileQueryUtils.getComputeNetworkProfileConstraints(getHost(),
+                    UriUtils.buildUri(getHost(), getSelfLink()), computeDesc,
+                    (networkProfileLinks, e) -> {
+                        if (e != null) {
+                            failTask("Error getting network profile constraints: ", e);
+                            return;
+                        }
+                        queryEnvironment(state, endpoint, state.tenantLinks, networkProfileLinks,
+                                (envLink) -> prepareContext(state, computeDesc, resourcePool,
+                                        endpoint,
+                                        envLink));
+                    });
             return;
         }
 
@@ -936,7 +945,7 @@ public class ComputeAllocationTaskService
     }
 
     private void queryEnvironment(ComputeAllocationTaskState state,
-            EndpointState endpoint, List<String> tenantLinks,
+            EndpointState endpoint, List<String> tenantLinks, Set<String> networkProfileLinks,
             Consumer<String> callbackFunction) {
 
         if (tenantLinks == null || tenantLinks.isEmpty()) {
@@ -946,10 +955,10 @@ public class ComputeAllocationTaskService
             logInfo("Quering for group [%s] environments for endpoint [%s] of type [%s]...",
                     tenantLinks, endpoint.documentSelfLink, endpoint.endpointType);
         }
-        Query tenantLinksQuery = QueryUtil.addTenantAndGroupClause(tenantLinks);
+        Query tenantLinksQuery = QueryUtil.addTenantClause(tenantLinks);
 
         // link=LINK || (link=unset && type=TYPE)
-        Query query = Query.Builder.create()
+        Query.Builder query = Query.Builder.create()
                 .addKindFieldClause(EnvironmentState.class)
                 .addClause(tenantLinksQuery)
                 .addClause(Query.Builder.create()
@@ -961,11 +970,15 @@ public class ComputeAllocationTaskService
                                 .addFieldClause(EnvironmentState.FIELD_NAME_ENDPOINT_TYPE,
                                         endpoint.endpointType)
                                 .build())
-                        .build())
-                .build();
+                        .build());
+
+        if (networkProfileLinks != null && !networkProfileLinks.isEmpty()) {
+            query = query.addInClause(EnvironmentState.FIELD_NAME_NETWORK_PROFILE_LINK,
+                    networkProfileLinks);
+        }
 
         QueryTask task = QueryTask.Builder.createDirectTask()
-                .setQuery(query)
+                .setQuery(query.build())
                 .addOption(QueryOption.EXPAND_CONTENT)
                 .build();
         task.documentExpirationTimeMicros = state.documentExpirationTimeMicros;
@@ -982,9 +995,8 @@ public class ComputeAllocationTaskService
                             } else {
                                 if (foundEnvs.isEmpty()) {
                                     if (tenantLinks != null && !tenantLinks.isEmpty()) {
-                                        ArrayList<String> subLinks = new ArrayList<>(tenantLinks);
-                                        subLinks.remove(tenantLinks.size() - 1);
-                                        queryEnvironment(state, endpoint, subLinks, callbackFunction);
+                                        queryEnvironment(state, endpoint, null,
+                                                networkProfileLinks, callbackFunction);
                                     } else {
                                         failTask(String.format(
                                                 "No available environments for endpoint %s of type %s",

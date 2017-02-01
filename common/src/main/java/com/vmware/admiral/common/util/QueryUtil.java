@@ -270,6 +270,7 @@ public class QueryUtil {
         } else {
             groupClause = addListValueClause(propertyName, tenantLinks.stream()
                     .filter(tenantLink -> tenantLink.startsWith(MultiTenantDocument.TENANTS_PREFIX))
+                    .filter(tenantLink -> !tenantLink.contains(MultiTenantDocument.GROUP_IDENTIFIER))
                     .collect(Collectors.toList()), MatchType.TERM);
         }
 
