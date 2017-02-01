@@ -971,7 +971,7 @@ public class AdmiralAdapterService extends
             ContainerDescription containerDesc) {
         fetchGroupPlacement(state, (result) -> {
                     if (result.hasException()) {
-                        failTask("Unable to fetch resource pool policy!", result.getException());
+                        failTask("No available placement group!", result.getException());
                         return;
                     }
                     GroupResourcePlacementState placement = result.getResult();
@@ -1124,9 +1124,9 @@ public class AdmiralAdapterService extends
     }
 
     private LogConfig prepareLogConfig(ContainerConfiguration configuration) {
-        JsonObject jsonLogConfig = configuration.logConfiguration;
+        JsonElement jsonLogConfig = configuration.logConfiguration;
         LogConfig logConfig = new LogConfig();
-        if (jsonLogConfig == null) {
+        if (jsonLogConfig == null || !jsonLogConfig.isJsonObject()) {
             // set default log configuration
             logConfig.type = "json-file";
             logConfig.config = new HashMap<>();
@@ -1134,7 +1134,8 @@ public class AdmiralAdapterService extends
             return logConfig;
         }
 
-        JsonElement typeElement = jsonLogConfig.get("type");
+        JsonObject jsonObject = (JsonObject) jsonLogConfig;
+        JsonElement typeElement = jsonObject.get("type");
         if (typeElement == null || typeElement.isJsonNull()) {
             logConfig.type = "json-file";
         } else {
@@ -1142,7 +1143,7 @@ public class AdmiralAdapterService extends
         }
 
         Map<String, String> configMap = new HashMap<>();
-        JsonElement configElement = jsonLogConfig.get("config");
+        JsonElement configElement = jsonObject.get("config");
         if (configElement == null || configElement.isJsonNull()) {
             logConfig.config = configMap;
             return logConfig;

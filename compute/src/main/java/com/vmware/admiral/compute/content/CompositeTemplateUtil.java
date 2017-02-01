@@ -250,10 +250,13 @@ public class CompositeTemplateUtil {
         }
     }
 
-    public static Map<String, Object> jsonToMap(JsonObject json) {
+    public static Map<String, Object> jsonToMap(JsonElement json) {
         Map<String, Object> retMap = new HashMap<String, Object>();
-        if (json != null) {
-            retMap = toMap(json);
+        if (json != null && json.isJsonObject()) {
+            retMap = toMap((JsonObject) json);
+        } else {
+            Utils.log(CompositeTemplateUtil.class, CompositeTemplateUtil.class.getSimpleName(),
+                    Level.WARNING, "Log configuration is not a valuid JsonObject!");
         }
         return retMap;
     }
@@ -884,7 +887,8 @@ public class CompositeTemplateUtil {
             if (!yamlLiterals.contains(component.type)) {
                 String errorMessage = String.format("Component '%s' has an unsupported type '%s'",
                         componentName, component.type);
-                throw new LocalizableValidationException(errorMessage, "compute.template.components.unsupported.type",
+                throw new LocalizableValidationException(errorMessage,
+                        "compute.template.components.unsupported.type",
                         componentName, component.type);
             }
         });
