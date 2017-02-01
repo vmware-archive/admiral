@@ -51,8 +51,6 @@ import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.Utils;
 
-import junit.framework.TestCase;
-
 public class PythonTest extends BaseIntegrationTest {
 
     protected static String IMAGE_NAME_PREFIX = "vmware/photon-closure-runner_";
@@ -141,7 +139,7 @@ public class PythonTest extends BaseIntegrationTest {
                 serviceClient);
 
         Closure closure = getClosure(createdClosure.documentSelfLink, serviceClient);
-        TestCase.assertNotNull(closure);
+        assertNotNull(closure);
 
         assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, closure.state);
