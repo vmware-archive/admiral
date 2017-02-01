@@ -233,6 +233,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         ContainerVolumeDescription desc = new ContainerVolumeDescription();
         desc.documentSelfLink = "test-volume-" + name;
         desc.name = name;
+        desc.driver = "local";
         desc.tenantLinks = Collections.singletonList("test-group");
         desc.customProperties = new HashMap<>(1);
         desc.customProperties.put("volume propKey string", "volume customPropertyValue string");
