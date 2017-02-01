@@ -17,7 +17,9 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_VOLUME_SCOPE_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_VOLUME_STATUS_PROP_NAME;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
@@ -56,10 +58,19 @@ public class ContainerVolumeStateMapper {
         volumeState.status = getMap(properties, DOCKER_VOLUME_STATUS_PROP_NAME);
     }
 
-    private static <T> Map<String, T> getMap(Map<String, Object> properties, String propertyName) {
+    private static <T> Map<String, String> getMap(Map<String, Object> properties, String propertyName) {
         @SuppressWarnings("unchecked")
         Map<String, T> map = (Map<String, T>) properties.get(propertyName);
 
-        return map;
+        if (map != null) {
+            Map<String, String> resultMap = new HashMap<String, String>();
+            for (Entry<String, T> entry : map.entrySet()) {
+                resultMap.put(entry.getKey(), entry.getValue().toString());
+            }
+
+            return resultMap;
+        }
+
+        return null;
     }
 }
