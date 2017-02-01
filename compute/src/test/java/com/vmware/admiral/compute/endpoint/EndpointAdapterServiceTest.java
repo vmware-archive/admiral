@@ -33,8 +33,11 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.EndpointService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
+import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.tasks.EndpointAllocationTaskService;
 import com.vmware.photon.controller.model.tasks.EndpointAllocationTaskService.EndpointAllocationTaskState;
+import com.vmware.photon.controller.model.tasks.ScheduledTaskService;
+import com.vmware.photon.controller.model.tasks.ScheduledTaskService.ScheduledTaskState;
 import com.vmware.photon.controller.model.tasks.TaskOption;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
@@ -190,6 +193,43 @@ public class EndpointAdapterServiceTest extends ComputeBaseTest {
 
         host.send(op);
         host.testWait();
+    }
+
+    @Test
+    public void testCollectStatsForEndpoint() throws Throwable {
+
+        EndpointState endpoint = createEndpoint("ep");
+
+        String endpointAdapterUri = String.format("%s?operation=%s",
+                EndpointAdapterService.SELF_LINK,
+                ManagementUriParts.REQUEST_PARAM_ENUMERATE_OPERATION_NAME);
+
+        ServiceDocumentQueryResult queryResult = getDocument(ServiceDocumentQueryResult.class,
+                ResourcePoolService.FACTORY_LINK);
+
+        // Assign RP to enumeration.
+        endpointAdapterUri += String.format("&%s=%s",
+                ManagementUriParts.REQUEST_PARAM_TARGET_RESOURCE_POOL_LINK,
+                queryResult.documents.keySet().stream().findFirst().get());
+
+        EndpointState newEndpointState = doPost(endpoint, endpointAdapterUri);
+
+        assertNotNull(newEndpointState);
+        assertNotNull(newEndpointState.documentSelfLink);
+        assertNotNull(newEndpointState.authCredentialsLink);
+        assertNotNull(newEndpointState.computeLink);
+
+        // Check scheduled task was created
+        String schedTaskLink = UriUtils.buildUriPath(ScheduledTaskService.FACTORY_LINK,
+                UriUtils.getLastPathSegment(newEndpointState.documentSelfLink)
+                        .concat("-stats-collection"));
+
+        ScheduledTaskState scheduledTaskState = getDocument(ScheduledTaskState.class,
+                schedTaskLink);
+        assertNotNull(scheduledTaskState);
+
+        documentLinksForDeletion.add(UriUtils.buildUriPath(EndpointAdapterService.SELF_LINK,
+                newEndpointState.documentSelfLink));
     }
 
     @Test

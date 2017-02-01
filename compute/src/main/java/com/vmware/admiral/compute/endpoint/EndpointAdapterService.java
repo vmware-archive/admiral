@@ -13,18 +13,28 @@ package com.vmware.admiral.compute.endpoint;
 
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.photon.controller.model.ComputeProperties;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.EndpointService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.tasks.EndpointAllocationTaskService;
 import com.vmware.photon.controller.model.tasks.EndpointAllocationTaskService.EndpointAllocationTaskState;
 import com.vmware.photon.controller.model.tasks.EndpointRemovalTaskService;
 import com.vmware.photon.controller.model.tasks.EndpointRemovalTaskService.EndpointRemovalTaskState;
+import com.vmware.photon.controller.model.tasks.ResourceEnumerationTaskService;
+import com.vmware.photon.controller.model.tasks.ScheduledTaskService;
+import com.vmware.photon.controller.model.tasks.ScheduledTaskService.ScheduledTaskState;
 import com.vmware.photon.controller.model.tasks.TaskOption;
+import com.vmware.photon.controller.model.tasks.monitoring.StatsCollectionTaskService.StatsCollectionTaskState;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceErrorResponse;
@@ -33,6 +43,8 @@ import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 
 /**
  * Stateless service that simplifies(adapts) CRUD operations with endpoints.
@@ -63,6 +75,10 @@ import com.vmware.xenon.common.Utils;
 public class EndpointAdapterService extends StatelessService {
 
     public static final String SELF_LINK = ManagementUriParts.ENDPOINTS;
+
+    private static final String DEFAULT_SCHEDULED_TASK_INTERVAL_MICROS = System.getProperty(
+            "default.scheduled.stats.collection.interval.micros",
+            String.valueOf(TimeUnit.MINUTES.toMicros(5)));
 
     public EndpointAdapterService() {
         super.toggleOption(ServiceOption.URI_NAMESPACE_OWNER, true);
@@ -148,6 +164,11 @@ public class EndpointAdapterService extends StatelessService {
                                 body.taskInfo.failure);
                         return;
                     }
+
+                    if (enumerate) {
+                        triggerStatsCollection(body);
+                    }
+
                     post.setBody(body.endpointState);
                     post.complete();
                 })
@@ -267,6 +288,58 @@ public class EndpointAdapterService extends StatelessService {
         op.setStatusCode(statusCode);
         op.setContentType(Operation.MEDIA_TYPE_APPLICATION_JSON);
         op.fail(e, rsp);
+    }
+
+    private void triggerStatsCollection(EndpointAllocationTaskState currentState) {
+
+        EndpointState endpoint = currentState.endpointState;
+
+        String statsCollectionSuffix = "-stats-collection";
+
+        // Append suffix to avoid duplication with enumeration scheduler.
+        String id = UriUtils.getLastPathSegment(endpoint.documentSelfLink)
+                .concat(statsCollectionSuffix);
+
+        long intervalMicros = currentState.enumerationRequest.refreshIntervalMicros != null
+                ? currentState.enumerationRequest.refreshIntervalMicros
+                : Long.valueOf(DEFAULT_SCHEDULED_TASK_INTERVAL_MICROS);
+
+        StatsCollectionTaskState statsCollectionTask = new StatsCollectionTaskState();
+        statsCollectionTask.resourcePoolLink = currentState.enumerationRequest.resourcePoolLink;
+        statsCollectionTask.options = EnumSet.of(TaskOption.SELF_DELETE_ON_COMPLETION);
+
+        // Create additional Query clause
+        List<Query> queries = Arrays.asList(
+                Query.Builder.create(Occurance.MUST_OCCUR)
+                        .setTerm(ComputeState.FIELD_NAME_TYPE, ComputeType.VM_HOST.name()).build());
+
+        statsCollectionTask.customizationClauses = queries;
+
+        ScheduledTaskState scheduledTaskState = new ScheduledTaskState();
+        scheduledTaskState.documentSelfLink = id;
+        scheduledTaskState.factoryLink = ResourceEnumerationTaskService.FACTORY_LINK;
+        scheduledTaskState.initialStateJson = Utils.toJson(statsCollectionTask);
+        scheduledTaskState.intervalMicros = intervalMicros;
+        scheduledTaskState.delayMicros = currentState.enumerationRequest.delayMicros;
+        scheduledTaskState.tenantLinks = endpoint.tenantLinks;
+        scheduledTaskState.customProperties = new HashMap<>();
+        scheduledTaskState.customProperties.put(ComputeProperties.ENDPOINT_LINK_PROP_NAME,
+                endpoint.documentSelfLink);
+
+        Operation.createPost(this, ScheduledTaskService.FACTORY_LINK)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
+                .setBody(scheduledTaskState)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logWarning("Error triggering stats collection task, reason: %s",
+                                e.getMessage());
+                    } else {
+                        logInfo("Stats collection has been scheduled for endpoint: %s",
+                                currentState.documentSelfLink);
+                    }
+
+                })
+                .sendWith(this);
     }
 
 }
