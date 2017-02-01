@@ -11,6 +11,9 @@
 
 package com.vmware.admiral.service.common.util;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -18,8 +21,34 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.util.ValidationUtils;
 import com.vmware.xenon.common.LocalizableValidationException;
+import com.vmware.xenon.common.Operation;
 
 public class ValidationUtilsTest {
+
+    @Test
+    public void testValidate() {
+        Exception ex = new LocalizableValidationException("testValidate", "100");
+        FailHanldingOperation op = new FailHanldingOperation();
+        boolean isValid = ValidationUtils.validate(op, () -> {
+            throw ex;
+        });
+        assertFalse(isValid);
+        assertEquals(ex, op.failure);
+
+        op = new FailHanldingOperation();
+        isValid = ValidationUtils.validate(op, () -> {
+        });
+        assertTrue(isValid);
+        assertNull(op.failure);
+    }
+
+    private static class FailHanldingOperation extends Operation {
+        private Throwable failure;
+
+        public void fail(Throwable e, Object failureBody) {
+            failure = e;
+        }
+    }
 
     @Test
     public void testValidateHost() {
@@ -54,6 +83,27 @@ public class ValidationUtilsTest {
         ValidationUtils.validateHost("ab");
         ValidationUtils.validateHost("a-b");
         ValidationUtils.validateHost("a-b.com");
+    }
+
+    @Test
+    public void testValidatePort() {
+        try {
+            ValidationUtils.validatePort("-1");
+            fail("expected to fail");
+        } catch (LocalizableValidationException e) {
+            assertTrue(e.getMessage().contains("not a valid port number"));
+        }
+
+        try {
+            ValidationUtils.validatePort("65536");
+            fail("expected to fail");
+        } catch (LocalizableValidationException e) {
+            assertTrue(e.getMessage().contains("not a valid port number"));
+        }
+
+        ValidationUtils.validatePort("0");
+        ValidationUtils.validatePort("80");
+        ValidationUtils.validatePort("65535");
     }
 
     @Test
