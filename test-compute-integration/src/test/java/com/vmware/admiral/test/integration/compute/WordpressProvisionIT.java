@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -51,6 +52,7 @@ import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
 @RunWith(Parameterized.class)
+@Ignore("There are changes to wordpress deps, so the scripts have to be updated.")
 public class WordpressProvisionIT extends BaseComputeProvisionIT {
 
     private static final String WP_PATH = "mywordpresssite";
