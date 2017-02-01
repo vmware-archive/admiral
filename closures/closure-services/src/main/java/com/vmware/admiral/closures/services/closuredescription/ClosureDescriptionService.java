@@ -92,8 +92,7 @@ public class ClosureDescriptionService extends StatefulService {
         logInfo("Closure source: %s Closure source URL: %s, language: %s", patchedState.source,
                 patchedState.sourceURL, patchedState.runtime);
 
-        if (patchedState.logConfiguration != null && !patchedState.logConfiguration.entrySet()
-                .isEmpty()) {
+        if (patchedState.logConfiguration != null && !patchedState.logConfiguration.isJsonNull()) {
             currentState.logConfiguration = patchedState.logConfiguration;
         }
 

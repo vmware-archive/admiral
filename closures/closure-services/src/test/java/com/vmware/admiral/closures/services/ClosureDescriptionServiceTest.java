@@ -391,10 +391,10 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
         initialState.source = "var a = 1; print(\"Hello \" + a);";
         initialState.runtime = "nashorn";
         initialState.logConfiguration = new JsonObject();
-        initialState.logConfiguration.addProperty("type", "json-file");
+        ((JsonObject)initialState.logConfiguration).addProperty("type", "json-file");
         JsonObject configuration = new JsonObject();
         configuration.addProperty("max-size", "200k");
-        initialState.logConfiguration.add("config", configuration);
+        ((JsonObject)initialState.logConfiguration).add("config", configuration);
 
         initialState.documentSelfLink = UUID.randomUUID().toString();
         ClosureDescription[] responses = new ClosureDescription[1];
@@ -409,10 +409,10 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
 
                     assertEquals(initialState.source, responses[0].source);
                     assertEquals(initialState.runtime, responses[0].runtime);
-                    assertEquals(initialState.logConfiguration.get("type").getAsString(), "json-file");
+                    assertEquals(((JsonObject)initialState.logConfiguration).get("type").getAsString(), "json-file");
 
                     assertEquals(
-                            initialState.logConfiguration.get("config").getAsJsonObject().get("max-size").getAsString(),
+                            ((JsonObject)initialState.logConfiguration).get("config").getAsJsonObject().get("max-size").getAsString(),
                             "200k");
                     assertNotNull(responses[0].resources);
                     assertEquals(ClosureProps.DEFAULT_CPU_SHARES, responses[0].resources.cpuShares);

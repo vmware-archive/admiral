@@ -11,7 +11,7 @@
 
 package com.vmware.admiral.closures.drivers;
 
-import com.google.gson.JsonObject;
+import com.google.gson.JsonElement;
 
 /**
  * Represents execution container configuration properties.
@@ -31,7 +31,7 @@ public class ContainerConfiguration {
 
     public String sourceURL;
 
-    public JsonObject logConfiguration;
+    public JsonElement logConfiguration;
 
     public String placementLink;
 
