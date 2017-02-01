@@ -15,12 +15,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.compute.env.NetworkProfileService;
+import com.vmware.admiral.compute.env.NetworkProfileService.NetworkProfile;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
@@ -76,6 +80,47 @@ public class ComputeNetworkAllocationTaskServiceTest extends RequestBaseTest {
         assertEquals(networkDescription.documentSelfLink, networkState.descriptionLink);
 
         assertTrue(networkState.name.contains(networkDescription.name));
+    }
+
+    @Test
+    public void testAllocationTaskWithTenantNetworkProfile() throws Throwable {
+        NetworkProfile tenantNp = createNetworkProfile("tenant-np", computeNetworkDesc.tenantLinks);
+        createNetworkProfile("system-np", null);
+        ComputeNetworkAllocationTaskState allocationTask = createComputeNetworkAllocationTask(
+                computeNetworkDesc.documentSelfLink, 1);
+        allocationTask = allocate(allocationTask);
+
+        ComputeNetwork networkState = getDocument(ComputeNetwork.class,
+                allocationTask.resourceLinks.iterator().next());
+
+        assertNotNull(networkState);
+        assertEquals(computeNetworkDesc.documentSelfLink, networkState.descriptionLink);
+        assertTrue(networkState.name.contains(computeNetworkDesc.name));
+        assertEquals(allocationTask.resourceLinks.iterator().next(), networkState.documentSelfLink);
+
+        assertNotNull(networkState.networkProfileLinks);
+        assertEquals(1, networkState.networkProfileLinks.size());
+        assertEquals(tenantNp.documentSelfLink, networkState.networkProfileLinks.iterator().next());
+    }
+
+    @Test
+    public void testAllocationTaskWithoutTenantNetworkProfile() throws Throwable {
+        createNetworkProfile("tenant-np", Arrays.asList(UUID.randomUUID().toString()));
+        NetworkProfile systemNp = createNetworkProfile("system-np", null);
+        ComputeNetworkAllocationTaskState allocationTask = createComputeNetworkAllocationTask(
+                computeNetworkDesc.documentSelfLink, 1);
+        allocationTask = allocate(allocationTask);
+
+        ComputeNetwork networkState = getDocument(ComputeNetwork.class,
+                allocationTask.resourceLinks.iterator().next());
+
+        assertNotNull(networkState);
+        assertEquals(computeNetworkDesc.documentSelfLink, networkState.descriptionLink);
+        assertTrue(networkState.name.contains(computeNetworkDesc.name));
+        assertEquals(allocationTask.resourceLinks.iterator().next(), networkState.documentSelfLink);
+
+        assertNotNull(networkState.networkProfileLinks);
+        assertTrue(networkState.networkProfileLinks.contains(systemNp.documentSelfLink));
     }
 
     private ComputeNetworkAllocationTaskState createComputeNetworkAllocationTask(
@@ -137,5 +182,14 @@ public class ComputeNetworkAllocationTaskServiceTest extends RequestBaseTest {
             desc.connectivity = "my-net-profile";
         }
         return desc;
+    }
+
+    private NetworkProfile createNetworkProfile(String name, List<String> tenantLinks)
+            throws Throwable {
+        NetworkProfile networkProfile = TestRequestStateFactory
+                .createNetworkProfile(name);
+        networkProfile.documentSelfLink = UUID.randomUUID().toString();
+        networkProfile.tenantLinks = tenantLinks;
+        return doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
     }
 }

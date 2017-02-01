@@ -57,6 +57,7 @@ public class EnvironmentService extends StatefulService {
         public static final String FIELD_NAME_ENDPOINT_LINK = "endpointLink";
         public static final String FIELD_NAME_ENDPOINT_TYPE = "endpointType";
         public static final String FIELD_NAME_MISC = "misc";
+        public static final String FIELD_NAME_NETWORK_PROFILE_LINK = "networkProfileLink";
 
         @Documentation(description = "Link to the endpoint this environment is associated with")
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
