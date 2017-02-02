@@ -33,7 +33,6 @@ import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.serialization.ReleaseConstants;
-import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.request.allocation.filter.AffinityFilters;
@@ -176,10 +175,9 @@ public class ComputePlacementSelectionTaskService extends
                         ComputeType.VM_GUEST.toString());
 
         QueryTask queryTask = QueryTask.Builder.create().setQuery(queryBuilder.build()).build();
-        QueryUtil.addExpandOption(queryTask);
 
         final List<String> computeDescriptionLinks = new ArrayList<>();
-        Map<String, Long> hostToAvailableMemory = new LinkedHashMap<>();
+
         ServiceDocumentQuery<ComputeDescription> query = new ServiceDocumentQuery<ComputeDescription>(
                 getHost(), ComputeDescription.class);
         query.query(queryTask, (r) -> {
@@ -187,7 +185,6 @@ public class ComputePlacementSelectionTaskService extends
                 failTask("Error querying for placement compute description.", r.getException());
             } else if (r.hasResult()) {
                 computeDescriptionLinks.add(r.getDocumentSelfLink());
-                hostToAvailableMemory.put(r.getDocumentSelfLink(), r.getResult().totalMemoryBytes);
             } else {
                 if (computeDescriptionLinks.isEmpty()) {
                     failTask(null, new LocalizableValidationException(
@@ -195,13 +192,13 @@ public class ComputePlacementSelectionTaskService extends
                             "request.compute.placement.compute-description.missing"));
                     return;
                 }
-                proceedComputeSelection(state, computeDescriptionLinks, hostToAvailableMemory);
+                proceedComputeSelection(state, computeDescriptionLinks);
             }
         });
     }
 
     private void proceedComputeSelection(ComputePlacementSelectionTaskState state,
-            Collection<String> computeDescriptionLinks, Map<String, Long> hostToAvailableMemory) {
+            Collection<String> computeDescriptionLinks) {
 
         ResourcePoolQueryHelper helper = ResourcePoolQueryHelper.createForResourcePools(getHost(),
                 state.resourcePoolLinks);
@@ -222,12 +219,12 @@ public class ComputePlacementSelectionTaskService extends
                 failTask(null, new LocalizableValidationException(
                         "No powered-on compute placement candidates found in "
                                 + "placement zones: " + state.resourcePoolLinks,
-                                "request.compute.placement.powered-on.placements.unavailable", state.resourcePoolLinks));
+                        "request.compute.placement.powered-on.placements.unavailable",
+                        state.resourcePoolLinks));
                 return;
             }
 
-            Map<String, HostSelection> hostSelectionMap = buildHostSelectionMap(qr,
-                    hostToAvailableMemory);
+            Map<String, HostSelection> hostSelectionMap = buildHostSelectionMap(qr);
 
             proceedTo(SubStage.FILTER, s -> {
                 s.hostSelectionMap = hostSelectionMap;
@@ -287,8 +284,7 @@ public class ComputePlacementSelectionTaskService extends
     }
 
     private Map<String, HostSelection> buildHostSelectionMap(
-            ResourcePoolQueryHelper.QueryResult rpQueryResult,
-            Map<String, Long> hostToAvailableMemory) {
+            ResourcePoolQueryHelper.QueryResult rpQueryResult) {
         Collection<ComputeState> computes = rpQueryResult.computesByLink.values();
         final Map<String, HostSelection> initHostSelectionMap = new LinkedHashMap<>(
                 computes.size());
@@ -299,10 +295,6 @@ public class ComputePlacementSelectionTaskService extends
                     .get(computeState.documentSelfLink);
             hostSelection.deploymentPolicyLink = computeState.customProperties
                     .get(ContainerHostService.CUSTOM_PROPERTY_DEPLOYMENT_POLICY);
-            if (hostToAvailableMemory.containsKey(computeState.descriptionLink)) {
-                hostSelection.availableMemory = hostToAvailableMemory
-                        .get(computeState.descriptionLink);
-            }
             initHostSelectionMap.put(hostSelection.hostLink, hostSelection);
         }
         return initHostSelectionMap;
