@@ -34,9 +34,9 @@ import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.seria
 import java.io.IOException;
 import java.util.HashMap;
 
+import org.junit.Before;
 import org.junit.Test;
 
-import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.HttpVersion;
@@ -50,9 +50,15 @@ import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerProbeHTTPG
 import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerProbeTCPSocketAction;
 import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerResources;
 import com.vmware.admiral.compute.content.kubernetes.services.Service;
+import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.xenon.common.Service.Action;
 
-public class KubernetesUtilTest extends ComputeBaseTest {
+public class KubernetesUtilTest {
+
+    @Before
+    public void beforeForKubernetesUtilTest() throws Throwable {
+        HostInitComputeServicesConfig.initCompositeComponentRegistry();
+    }
 
     @Test
     public void testConvertCompositeTemplateToKubernetesTemplate() throws IOException {
