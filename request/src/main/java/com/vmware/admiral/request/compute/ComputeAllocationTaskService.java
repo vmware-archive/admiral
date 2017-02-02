@@ -57,6 +57,7 @@ import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAl
 import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState;
 import com.vmware.admiral.request.compute.enhancer.ComputeDescriptionEnhancers;
 import com.vmware.admiral.request.compute.enhancer.Enhancer.EnhanceContext;
+import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -289,8 +290,9 @@ public class ComputeAllocationTaskService
         }
 
         if (environmentLink == null) {
+            String contextId = RequestUtils.getContextId(state);
             NetworkProfileQueryUtils.getComputeNetworkProfileConstraints(getHost(),
-                    UriUtils.buildUri(getHost(), getSelfLink()), computeDesc,
+                    UriUtils.buildUri(getHost(), getSelfLink()), contextId, computeDesc,
                     (networkProfileLinks, e) -> {
                         if (e != null) {
                             failTask("Error getting network profile constraints: ", e);
