@@ -11,8 +11,11 @@
 
 package com.vmware.admiral.compute.content.kubernetes.services;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import com.vmware.admiral.compute.content.kubernetes.CommonKubernetesEntity;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Service extends CommonKubernetesEntity {
     public ServiceSpec spec;
 }

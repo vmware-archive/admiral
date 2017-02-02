@@ -11,8 +11,11 @@
 
 package com.vmware.admiral.compute.content.kubernetes.deployments;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import com.vmware.admiral.compute.content.kubernetes.CommonKubernetesEntity;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Deployment extends CommonKubernetesEntity {
     public DeploymentSpec spec;
 }

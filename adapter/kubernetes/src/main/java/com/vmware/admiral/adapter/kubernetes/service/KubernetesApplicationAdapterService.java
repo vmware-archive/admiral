@@ -25,6 +25,10 @@ import com.vmware.admiral.compute.container.CompositeComponentService.CompositeC
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.compute.container.ContainerFactoryService;
+import com.vmware.admiral.compute.container.ContainerService;
+import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.content.kubernetes.KubernetesEntityList;
 import com.vmware.admiral.compute.content.kubernetes.deployments.Deployment;
 import com.vmware.admiral.compute.content.kubernetes.services.Service;
 import com.vmware.xenon.common.Operation;
@@ -69,10 +73,45 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                     } else {
                         handleExceptions(context.request, null, () -> {
                             context.compositeComponent = o.getBody(CompositeComponent.class);
-                            processCompositeComponent(context);
+                            createKubernetesContext(context);
                         });
                     }
                 }));
+    }
+
+    public void createKubernetesContext(RequestContext context) {
+        getContainerHost(
+                context.request,
+                null,
+                context.request.getHostReference(),
+                (k8sContext) -> {
+                    context.kubernetesContext = k8sContext;
+                    context.client = getApiClient();
+                    handleExceptions(context.request, null,
+                            () -> processOperation(context));
+                }
+        );
+    }
+
+    private void processOperation(RequestContext context) {
+        try {
+            switch (context.request.getOperationtype()) {
+            case CREATE:
+                processCompositeComponent(context);
+                break;
+
+            case DELETE:
+                validateApplicationBeforeDelete(context);
+                break;
+
+            default:
+                fail(context.request, new IllegalArgumentException(
+                        "Unexpected request type: " + context.request.getOperationtype()
+                ));
+            }
+        } catch (Throwable e) {
+            fail(context.request, e);
+        }
     }
 
     public void processCompositeComponent(RequestContext context) {
@@ -86,52 +125,11 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                         handleExceptions(context.request, null, () -> {
                             context.compositeDescription = o2.getBody
                                     (CompositeDescription.class);
-                            processCompositeDescription(context);
+                            processCreateApplication(context);
                         });
                     }
                 }));
 
-    }
-
-    public void processCompositeDescription(RequestContext context) {
-        if (context.request.getHostReference() == null) {
-            fail(context.request, new IllegalArgumentException("hostReference"));
-            return;
-        }
-
-        getContainerHost(
-                context.request,
-                null,
-                context.request.getHostReference(),
-                (k8sContext) -> {
-                    context.kubernetesContext = k8sContext;
-                    context.client = getApiClient();
-                    handleExceptions(context.request, null,
-                            () -> processOperation(context));
-                }
-        );
-
-    }
-
-    private void processOperation(RequestContext context) {
-        try {
-            switch (context.request.getOperationtype()) {
-            case CREATE:
-                processCreateApplication(context);
-                break;
-
-            case DELETE:
-                //processDelete
-                break;
-
-            default:
-                fail(context.request, new IllegalArgumentException(
-                        "Unexpected request type: " + context.request.getOperationtype()
-                ));
-            }
-        } catch (Throwable e) {
-            fail(context.request, e);
-        }
     }
 
     private void processCreateApplication(RequestContext context) {
@@ -233,6 +231,159 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                     }
                 }
             });
+        }
+    }
+
+    private void validateApplicationBeforeDelete(RequestContext context) {
+        List<String> containerStateLinks = context.compositeComponent.componentLinks.stream()
+                .filter(link -> link.startsWith(ContainerFactoryService.SELF_LINK))
+                .collect(Collectors.toList());
+
+        List<Operation> getContainerStates = containerStateLinks.stream()
+                .map(link -> Operation.createGet(this, link))
+                .collect(Collectors.toList());
+
+        OperationJoin.create(getContainerStates)
+                .setCompletion((ops, errors) -> {
+                    if (errors != null) {
+                        // Filter not null exceptions, fail the request with first one,
+                        // log all others.
+                        List<Throwable> throwables = errors.entrySet().stream()
+                                .filter(e -> e.getValue() != null)
+                                .map(e -> e.getValue())
+                                .collect(Collectors.toList());
+                        fail(context.request, throwables.get(0));
+                        throwables.stream().skip(1)
+                                .forEach(e -> logWarning("%s", e.getMessage()));
+                    } else {
+                        List<ContainerService.ContainerState> states = ops.entrySet().stream()
+                                .map(desc -> desc.getValue()
+                                        .getBody(ContainerService.ContainerState.class))
+                                .collect(Collectors.toList());
+
+                        validateApplicationComponents(context, states);
+
+                    }
+                }).sendWith(this);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void validateApplicationComponents(RequestContext context, List<ContainerState>
+            states) {
+        long servicesToDelete = states.stream()
+                .filter(c -> c.ports != null && c.ports.size() > 0)
+                .count();
+
+        long deploymentsToDelete = states.size();
+
+        // Validate the services
+        context.client.getServices(context.compositeComponent.name, context.kubernetesContext,
+                (o, ex) -> {
+                    if (ex != null) {
+                        fail(context.request, ex);
+                    } else {
+                        KubernetesEntityList<Service> services = o.getBody(KubernetesEntityList.class);
+                        if (validateServicesToDelete(context, servicesToDelete, services)) {
+                            // Validate the deployments
+                            context.client.getDeployments(context.compositeComponent.name,
+                                    context.kubernetesContext,
+                                    (op, exc) -> {
+                                        if (exc != null) {
+                                            fail(context.request, exc);
+                                        } else {
+                                            KubernetesEntityList<Deployment> deployments = op
+                                                    .getBody(KubernetesEntityList.class);
+                                            if (validateDeploymentsToDelete(context,
+                                                    deploymentsToDelete, deployments)) {
+                                                // Proceed to deletion.
+                                                processDeleteApplication(context, services,
+                                                        deployments);
+                                            }
+                                        }
+                                    });
+                        }
+                    }
+                });
+    }
+
+    private boolean validateServicesToDelete(RequestContext context, long servicesToDelete,
+            KubernetesEntityList<Service> services) {
+        if (servicesToDelete != services.getItems(Service.class).size()) {
+            fail(context.request,
+                    new IllegalStateException(String.format(
+                            "The count of services to delete differs from the count of services with the same application label "
+                                    + "on Kubernetes host: %s. Services to delete: %d, services on the host: %d",
+                            context.kubernetesContext.host.address, servicesToDelete,
+                            services.getItems(Service.class).size())));
+            return false;
+        }
+        return true;
+    }
+
+    private boolean validateDeploymentsToDelete(RequestContext context, long deploymentsToDelete,
+            KubernetesEntityList<Deployment> deployments) {
+        if (deploymentsToDelete != deployments.getItems(Deployment.class).size()) {
+            fail(context.request,
+                    new IllegalStateException(String.format(
+                            "The count of deployments to delete differs from the count of "
+                                    + "deployments with the same application label on Kubernetes "
+                                    + "host: %s. Deployments to delete: %d, deployments on the host: %d",
+                            context.kubernetesContext.host.address, deploymentsToDelete,
+                            deployments.getItems(Deployment.class).size())));
+            return false;
+        }
+        return true;
+    }
+
+    private void processDeleteApplication(RequestContext context,
+            KubernetesEntityList<Service> services, KubernetesEntityList<Deployment> deployments) {
+        Runnable callback = () -> processDeleteDeployments(context, deployments,
+                () -> patchTaskStage(context.request, TaskStage.FINISHED, null));
+
+        processDeleteServices(context, services, callback);
+    }
+
+    private void processDeleteServices(RequestContext context,
+            KubernetesEntityList<Service> services, Runnable callback) {
+        AtomicBoolean hasError = new AtomicBoolean(false);
+        AtomicInteger counter = new AtomicInteger(services.getItems(Service.class).size());
+        for (Service service : services.getItems(Service.class)) {
+            context.client.deleteService(service.metadata.name, context.kubernetesContext,
+                    (o, ex) -> {
+                        if (ex != null) {
+                            if (hasError.compareAndSet(false, true)) {
+                                fail(context.request, ex);
+                            } else {
+                                logWarning("Failure deleting service: %s", Utils.toString(ex));
+                            }
+                        } else {
+                            if (counter.decrementAndGet() == 0 && !hasError.get()) {
+                                callback.run();
+                            }
+                        }
+                    });
+        }
+    }
+
+    private void processDeleteDeployments(RequestContext context, KubernetesEntityList<Deployment>
+            deployments, Runnable callback) {
+        AtomicBoolean hasError = new AtomicBoolean(false);
+        AtomicInteger counter = new AtomicInteger(deployments.getItems(Deployment.class).size());
+        for (Deployment deployment : deployments.getItems(Deployment.class)) {
+            context.client.deleteDeployment(deployment.metadata.name, context.kubernetesContext,
+                    (o, ex) -> {
+                        if (ex != null) {
+                            if (hasError.compareAndSet(false, true)) {
+                                fail(context.request, ex);
+                            } else {
+                                logWarning("Failure deleting deployment: %s", Utils.toString(ex));
+                            }
+                        } else {
+                            if (counter.decrementAndGet() == 0 && !hasError.get()) {
+                                callback.run();
+                            }
+                        }
+                    });
         }
     }
 }
