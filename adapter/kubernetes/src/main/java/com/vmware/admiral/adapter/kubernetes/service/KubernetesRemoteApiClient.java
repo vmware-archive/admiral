@@ -11,6 +11,11 @@
 
 package com.vmware.admiral.adapter.kubernetes.service;
 
+import static com.vmware.admiral.adapter.kubernetes.service.ApiUtil.API_PREFIX_EXTENSIONS_V1BETA;
+import static com.vmware.admiral.adapter.kubernetes.service.ApiUtil.API_PREFIX_V1;
+import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.KUBERNETES_LABEL_APP;
+
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -24,7 +29,6 @@ import com.vmware.admiral.adapter.kubernetes.service.apiobject.NamespaceList;
 import com.vmware.admiral.adapter.kubernetes.service.apiobject.ObjectMeta;
 import com.vmware.admiral.common.AuthCredentialsType;
 import com.vmware.admiral.common.security.EncryptionUtils;
-import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.DelegatingX509KeyManager;
@@ -49,6 +53,8 @@ public class KubernetesRemoteApiClient {
      */
 
     public static final String pingPath = "/healthz";
+
+    public static final String LABEL_SELECTOR_QUERY = "labelSelector";
 
     private static final Logger logger = Logger
             .getLogger(KubernetesRemoteApiClient.class.getName());
@@ -215,13 +221,60 @@ public class KubernetesRemoteApiClient {
 
     public void createDeployment(Deployment deployment, KubernetesContext context,
             CompletionHandler completionHandler) {
-        createOrUpdateTargetSsl(context);
-
         URI uri = UriUtils.buildUri(
-                ApiUtil.namespacePrefix(context, ApiUtil.API_PREFIX_EXTENSIONS_V1BETA)
+                ApiUtil.namespacePrefix(context, API_PREFIX_EXTENSIONS_V1BETA)
                         + "/deployments");
 
         sendRequest(Action.POST, uri, deployment, context, completionHandler);
+    }
+
+    public void getServices(String appName, KubernetesContext context, CompletionHandler
+            completionHandler) {
+        URI uri = UriUtils.buildUri(ApiUtil.namespacePrefix(context, ApiUtil.API_PREFIX_V1) +
+                "/services");
+
+        if (appName != null) {
+            uri = UriUtils.extendUriWithQuery(uri, LABEL_SELECTOR_QUERY, String
+                    .format("%s=%s", KUBERNETES_LABEL_APP, appName));
+        }
+
+        sendRequest(Action.GET, uri, null, context, completionHandler);
+    }
+
+    public void getDeployments(String appName, KubernetesContext context, CompletionHandler
+            completionHandler) {
+        URI uri = UriUtils.buildUri(
+                ApiUtil.namespacePrefix(context, API_PREFIX_EXTENSIONS_V1BETA)
+                        + "/deployments");
+
+        if (appName != null) {
+            uri = UriUtils.extendUriWithQuery(uri, LABEL_SELECTOR_QUERY, String
+                    .format("%s=%s", KUBERNETES_LABEL_APP, appName));
+        }
+
+        sendRequest(Action.GET, uri, null, context, completionHandler);
+    }
+
+    public void deleteService(String serviceName, KubernetesContext context, CompletionHandler
+            completionHandler) {
+        assertNotNull(serviceName, "serviceName");
+
+        URI uri = UriUtils.buildUri(
+                ApiUtil.namespacePrefix(context, API_PREFIX_V1) + "/services/" + serviceName);
+
+        sendRequest(Action.DELETE, uri, null, context, completionHandler);
+    }
+
+    public void deleteDeployment(String deploymentName, KubernetesContext context,
+            CompletionHandler completionHandler) {
+        assertNotNull(deploymentName, "deploymentName");
+
+        URI uri = UriUtils.buildUri(
+                ApiUtil.namespacePrefix(context, API_PREFIX_EXTENSIONS_V1BETA) + "/deployments/"
+                        + deploymentName);
+
+        sendRequest(Action.DELETE, uri, null, context, completionHandler);
+
     }
 
     private void sendRequest(Service.Action action, URI uri, Object body, KubernetesContext context,
@@ -236,7 +289,7 @@ public class KubernetesRemoteApiClient {
     }
 
     private boolean isSecure(URI uri) {
-        AssertUtil.assertNotNull(uri, "uri");
+        assertNotNull(uri, "uri");
         return UriUtils.HTTPS_SCHEME.equalsIgnoreCase(uri.getScheme());
     }
 
