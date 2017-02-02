@@ -17,8 +17,13 @@ import static org.junit.Assert.assertNotNull;
 import java.net.URI;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -29,17 +34,20 @@ import com.vmware.admiral.compute.ElasticPlacementZoneService;
 import com.vmware.admiral.compute.ElasticPlacementZoneService.ElasticPlacementZoneState;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState;
-import com.vmware.photon.controller.model.constants.PhotonModelConstants;
+import com.vmware.photon.controller.model.monitoring.InMemoryResourceMetricService;
+import com.vmware.photon.controller.model.monitoring.InMemoryResourceMetricService.InMemoryResourceMetric;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.tasks.monitoring.StatsConstants;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service.Action;
-import com.vmware.xenon.common.ServiceStats;
+import com.vmware.xenon.common.ServiceStats.TimeSeriesStats;
+import com.vmware.xenon.common.ServiceStats.TimeSeriesStats.AggregationType;
+import com.vmware.xenon.common.ServiceStats.TimeSeriesStats.TimeBin;
 import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.TestContext;
 
 /**
@@ -104,18 +112,29 @@ public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBase
         ComputeState computeHost3 = createVmComputeWithRandomComputeDescription(true,
                 ComputeType.VM_HOST);
 
-        // Propagate stats to compute/stats URI
-        ServiceStats.ServiceStat compute2Stats = new ServiceStats.ServiceStat();
-        compute2Stats.name = "daily.memoryUsedBytes";
-        compute2Stats.latestValue = Utils.getNowMicrosUtc();
-        compute2Stats.sourceTimeMicrosUtc = Utils.getNowMicrosUtc();
-        compute2Stats.unit = PhotonModelConstants.UNIT_MICROSECONDS;
-        compute2Stats.accumulatedValue = 5000000000L;
+        // Create TimeSeriesStats to represent Hourly metrics.
+        TimeSeriesStats timeStats = new TimeSeriesStats((int) TimeUnit.DAYS.toHours(1),
+                TimeUnit.HOURS.toMillis(1),
+                EnumSet.of(AggregationType.AVG));
 
-        URI inMemoryStatsUri = UriUtils.buildStatsUri(host, computeHost2.documentSelfLink);
+        TimeSeriesStats.TimeBin bin = new TimeSeriesStats.TimeBin();
+        bin.avg = 7.6779843E10;
+        SortedMap<Long, TimeBin> bins = new TreeMap<>();
+        bins.put(5000000000L, bin);
+        timeStats.bins = bins;
+        Map<String, TimeSeriesStats> stats = new HashMap<>();
+        stats.put("daily.memoryUsedBytes", timeStats);
+
+        InMemoryResourceMetric hourlyMemoryState = new InMemoryResourceMetric();
+        hourlyMemoryState.timeSeriesStats = stats;
+        hourlyMemoryState.documentSelfLink = UriUtils
+                .getLastPathSegment(computeHost2.documentSelfLink)
+                .concat(StatsConstants.HOUR_SUFFIX);
+
+        URI inMemoryStatsUri = UriUtils.buildUri(host, InMemoryResourceMetricService.FACTORY_LINK);
 
         TestContext waitCompute1Stats = new TestContext(1, Duration.ofSeconds(30));
-        Operation.createPost(inMemoryStatsUri).setBody(compute2Stats)
+        Operation.createPost(inMemoryStatsUri).setBody(hourlyMemoryState)
                 .setReferer(host.getUri())
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -126,16 +145,28 @@ public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBase
         ;
         waitCompute1Stats.await();
 
-        ServiceStats.ServiceStat compute3Stats = new ServiceStats.ServiceStat();
-        compute3Stats.name = "daily.memoryUsedBytes";
-        compute3Stats.latestValue = Utils.getNowMicrosUtc();
-        compute3Stats.sourceTimeMicrosUtc = Utils.getNowMicrosUtc();
-        compute3Stats.unit = PhotonModelConstants.UNIT_MICROSECONDS;
-        compute3Stats.accumulatedValue = 9000000000L;
+        TimeSeriesStats timeStats2 = new TimeSeriesStats((int) TimeUnit.DAYS.toHours(1),
+                TimeUnit.HOURS.toMillis(1),
+                EnumSet.of(AggregationType.AVG));
+        TimeSeriesStats.TimeBin bin2 = new TimeSeriesStats.TimeBin();
+        bin.avg = 8.6779843E10;
+        SortedMap<Long, TimeSeriesStats.TimeBin> bins2 = new TreeMap<>();
+        bins2.put(9000000000L, bin2);
+        timeStats2.bins = bins2;
 
-        inMemoryStatsUri = UriUtils.buildStatsUri(host, computeHost3.documentSelfLink);
+        Map<String, TimeSeriesStats> stats2 = new HashMap<>();
+        stats.put("daily.memoryUsedBytes", timeStats2);
+
+        InMemoryResourceMetric hourlyMemoryState2 = new InMemoryResourceMetric();
+        hourlyMemoryState2.timeSeriesStats = stats2;
+        hourlyMemoryState2.documentSelfLink = UriUtils
+                .getLastPathSegment(computeHost3.documentSelfLink)
+                .concat(StatsConstants.HOUR_SUFFIX);
+
+        URI inMemoryStatsUri2 = UriUtils.buildUri(host, InMemoryResourceMetricService.FACTORY_LINK);
+
         TestContext waitCompute3Stats = new TestContext(1, Duration.ofSeconds(30));
-        Operation.createPost(inMemoryStatsUri).setBody(compute3Stats)
+        Operation.createPost(inMemoryStatsUri2).setBody(hourlyMemoryState2)
                 .setReferer(host.getUri())
                 .setCompletion((o, e) -> {
                     if (e != null) {

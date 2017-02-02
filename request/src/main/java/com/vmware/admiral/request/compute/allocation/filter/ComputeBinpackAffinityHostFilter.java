@@ -12,7 +12,6 @@
 package com.vmware.admiral.request.compute.allocation.filter;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -21,6 +20,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
@@ -28,13 +28,15 @@ import com.vmware.admiral.compute.ElasticPlacementZoneService;
 import com.vmware.admiral.request.allocation.filter.AffinityConstraint;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService;
+import com.vmware.photon.controller.model.monitoring.InMemoryResourceMetricService;
+import com.vmware.photon.controller.model.monitoring.InMemoryResourceMetricService.InMemoryResourceMetric;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
-
+import com.vmware.photon.controller.model.tasks.monitoring.StatsConstants;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceHost;
-import com.vmware.xenon.common.ServiceStats;
-import com.vmware.xenon.common.ServiceStats.ServiceStat;
+import com.vmware.xenon.common.ServiceStats.TimeSeriesStats;
+import com.vmware.xenon.common.ServiceStats.TimeSeriesStats.TimeBin;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
@@ -55,7 +57,7 @@ import com.vmware.xenon.common.Utils;
 */
 public class ComputeBinpackAffinityHostFilter implements HostSelectionFilter<FilterContext> {
 
-    private static final Long MINIMAL_AVAILABLE_MEMORY_IN_BYTES = 3000000000L; // 3 GB
+    private static final Double MINIMAL_AVAILABLE_MEMORY_IN_BYTES = 3E9; // 3 GB
 
     private static final String DAILY_MEMORY_USED_BYTES = "daily.memoryUsedBytes";
 
@@ -134,11 +136,8 @@ public class ComputeBinpackAffinityHostFilter implements HostSelectionFilter<Fil
     private void collectStats(String resourcePoolLink,
             Map<String, HostSelection> hostSelectionMap, HostSelectionFilterCompletion callback) {
 
-        List<Operation> statsOperations = new ArrayList<>();
-
-        for (String computeStateLink : hostSelectionMap.keySet()) {
-            statsOperations.add(createCollectStatsOperation(computeStateLink));
-        }
+        List<Operation> statsOperations = hostSelectionMap.keySet().stream()
+                .map(h -> createCollectStatsOperation(h)).collect(Collectors.toList());
 
         OperationJoin hostsStatsOperation = OperationJoin
                 .create(statsOperations);
@@ -168,32 +167,64 @@ public class ComputeBinpackAffinityHostFilter implements HostSelectionFilter<Fil
 
     private Operation createCollectStatsOperation(String computeLink) {
 
-        host.log(Level.INFO, String.format("Start collecting stats from host: %s", computeLink));
+        URI computeStatsUri = UriUtils.extendUri(
+                UriUtils.buildUri(host, InMemoryResourceMetricService.FACTORY_LINK),
+                UriUtils.getLastPathSegment(computeLink).concat(StatsConstants.HOUR_SUFFIX));
 
-        URI computeStatsUri = UriUtils.buildStatsUri(host, computeLink);
+        host.log(Level.INFO, String.format("Starting stats collection for: %s", computeStatsUri));
 
         return Operation.createGet(computeStatsUri)
                 .setReferer(host.getUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        host.log(Level.WARNING, Utils.toString(ex));
+                        host.log(Level.WARNING,
+                                String.format("Stats collection for: %s failed. Error: %s",
+                                        computeStatsUri, Utils.toString(ex)));
 
                         return;
                     }
 
-                    // Get available memory and put it in "memoryByCompute" map.
-                    ServiceStats serviceStats = o.getBody(ServiceStats.class);
-                    Map<String, ServiceStat> stats = serviceStats.entries;
-                    if (stats != null && !stats.isEmpty()) {
-                        ServiceStat serviceStat = stats.get(DAILY_MEMORY_USED_BYTES);
-                        memoryByCompute.put(computeLink, serviceStat.accumulatedValue);
+                    // Get available memory per compute and put it in "memoryByCompute" map.
+                    InMemoryResourceMetric inMemoryMetrics = o
+                            .getBody(InMemoryResourceMetric.class);
 
+                    /**
+                    {
+                        "timeSeriesStats": {
+                          "daily.memoryUsedBytes": {
+                            "bins": {
+                              "1485777600000": {
+                                "avg": 7.6720092E10,
+                                "min": 7.6720092E10,
+                                "max": 7.6720092E10,
+                                "sum": 7.6720092E10,
+                                "latest": 7.6720092E10,
+                                "count": 1.0
+                              },
+                              "1485781200000": {
+                                "avg": 7.6779843E10,
+                                "min": 7.6779843E10,
+                                "max": 7.6779843E10,
+                                "sum": 1.53559686E11,
+                                "latest": 7.6779843E10,
+                                "count": 2.0
+                              }
+                            }
+                        ...
+                   * */
+
+                    Map<String, TimeSeriesStats> stats = inMemoryMetrics.timeSeriesStats;
+                    if (stats != null && !stats.isEmpty()) {
+                        TimeSeriesStats timeSeries = stats.get(DAILY_MEMORY_USED_BYTES);
+                        // [timeSeries.bins] is SortedMap so last key is the latest statistic.
+                        long lastBin = timeSeries.bins.lastKey();
+                        TimeBin timeBin = timeSeries.bins.get(lastBin);
+                        memoryByCompute.put(computeLink, timeBin.avg);
                     } else {
                         host.log(Level.SEVERE,
                                 String.format("Stats for [%s] are empty!", computeLink));
                     }
                 });
-
     }
 
     // Get max loaded in terms of memory host.
