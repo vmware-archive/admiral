@@ -292,6 +292,7 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
 
     private ContainerListCallback containerListCallbackFromPodList(PodList podList) {
         ContainerListCallback result = new ContainerListCallback();
+        String id = null;
         if (podList.items == null) {
             return result;
         }
@@ -300,8 +301,9 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
                 continue;
             }
             for (ContainerStatus status: pod.status.containerStatuses) {
-                result.containerIdsAndNames.put(status.containerID, status.name);
-                result.containerIdsAndImage.put(status.containerID, status.image);
+                id = KubernetesContainerStateMapper.getId(status.containerID);
+                result.containerIdsAndNames.put(id, status.name);
+                result.containerIdsAndImage.put(id, status.image);
             }
         }
         return result;
