@@ -20,8 +20,8 @@ import com.vmware.xenon.common.LocalizableValidationException;
 
 public class AssertUtil {
 
-    public static final String PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT = "%s cannot be empty";
-    public static final String PROPERTY_MUST_BE_EMPTY_MESSAGE_FORMAT = "%s must be empty";
+    public static final String PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT = "'%s' cannot be empty";
+    public static final String PROPERTY_MUST_BE_EMPTY_MESSAGE_FORMAT = "'%s' must be empty";
 
     public static void assertNotNull(Object value, String propertyName) {
         if (value == null) {
