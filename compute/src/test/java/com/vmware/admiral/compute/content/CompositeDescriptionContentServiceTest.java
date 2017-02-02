@@ -176,7 +176,7 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
         this.host.testWait();
 
         this.host.testStart(1);
-        this.host.send(validateBadRequestOnImportOperation("", "yaml cannot be empty"));
+        this.host.send(validateBadRequestOnImportOperation("", "'yaml' cannot be empty"));
         this.host.testWait();
 
         this.host.testStart(1);
