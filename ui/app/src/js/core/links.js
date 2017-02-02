@@ -34,6 +34,7 @@ var links = Immutable({
   DEPLOYMENT_POLICIES: RESOURCES + '/deployment-policies',
   TAGS: RESOURCES + '/tags',
   EPZ_CONFIG: RESOURCES + '/elastic-placement-zones-config',
+  SUBNETWORKS: RESOURCES + '/sub-networks',
 
   CONTAINER_HOSTS: RESOURCES + '/hosts',
   CONTAINERS: RESOURCES + '/containers',
@@ -45,12 +46,10 @@ var links = Immutable({
   COMPOSITE_DESCRIPTIONS_CLONE: RESOURCES + '/composite-descriptions-clone',
   COMPOSITE_DESCRIPTIONS_CONTENT: RESOURCES + '/composite-templates',
   COMPOSITE_COMPONENTS: RESOURCES + '/composite-components',
+  CONTAINER_NETWORKS: RESOURCES + '/container-networks',
   CONTAINER_VOLUMES: RESOURCES + '/container-volumes',
   MANAGE_CONTAINERS_ENDPOINT: '/manage',
   DATA_COLLECTION: '/data-collection/types/App.Container',
-
-  NETWORKS: RESOURCES + '/container-networks',
-  VOLUMES: RESOURCES + '/container-volumes',
 
   SSL_TRUST_CERTS: CONFIG + '/trust-certs',
   SSL_TRUST_CERTS_IMPORT: CONFIG + '/trust-certs-import',

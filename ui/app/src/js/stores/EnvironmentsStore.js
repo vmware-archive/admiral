@@ -45,19 +45,21 @@ let EnvironmentsStore = Reflux.createStore({
   mixins: [ContextPanelStoreMixin, CrudStoreMixin],
   init() {
     EndpointsStore.listen((endpointsData) => {
-      if (!this.data.editingItemData) {
-        return;
-      }
 
       let endpoints = (endpointsData.items || []).map((item) =>
         $.extend({
           iconSrc: `image-assets/endpoints/${item.endpointType}.png`
         }, item));
-      this.setInData(['editingItemData', 'endpoints'], endpoints);
+      this.setInData(['endpoints'], endpoints);
+
+      if (!this.data.editingItemData) {
+        return;
+      } else {
+        this.setInData(['editingItemData', 'endpoints'], endpoints);
+      }
 
       if (isContextPanelActive.call(this, constants.CONTEXT_PANEL.ENDPOINTS)) {
-        this.setInData(['editingItemData', 'contextView', 'activeItem', 'data'],
-          endpointsData);
+        this.setInData(['editingItemData', 'contextView', 'activeItem', 'data'], endpointsData);
 
         let itemToSelect = endpointsData.newItem || endpointsData.updatedItem;
         if (itemToSelect && this.data.editingItemData.contextView.shouldSelectAndComplete) {
@@ -65,8 +67,6 @@ let EnvironmentsStore = Reflux.createStore({
               item.documentSelfLink === itemToSelect.documentSelfLink);
           clearTimeout(this.itemSelectTimeout);
           this.itemSelectTimeout = setTimeout(() => {
-            console.log(3, itemToSelect);
-            console.log(4, endpoints.find((item) => item === itemToSelect));
             this.setInData(['editingItemData', 'item', 'endpoint'], itemToSelect);
             this.onCloseToolbar();
           }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
@@ -112,6 +112,7 @@ let EnvironmentsStore = Reflux.createStore({
     EndpointsActions.retrieveEndpoints();
 
     this.setInData(['editingItemData', 'item'], {});
+    this.setInData(['editingItemData', 'endpoints'], this.data.endpoints);
     this.emitChange();
   },
 
@@ -133,13 +134,24 @@ let EnvironmentsStore = Reflux.createStore({
         promises.push(Promise.resolve());
       }
 
-      Promise.all(promises).then(([endpoint, tags]) => {
+      if (document.networkProfile && document.networkProfile.subnetLinks &&
+          document.networkProfile.subnetLinks.length) {
+        promises.push(
+            services.loadSubnetworks(document.networkProfile.subnetLinks).catch(() =>
+                Promise.resolve()));
+      } else {
+        promises.push(Promise.resolve());
+      }
+
+      Promise.all(promises).then(([endpoint, tags, networkSubnets]) => {
         if (document.endpointLink && endpoint) {
           document.endpoint = endpoint;
         }
         document.tags = tags ? Object.values(tags) : [];
+        document.networkSubnets = networkSubnets ? Object.values(networkSubnets) : [];
 
         this.setInData(['editingItemData', 'item'], Immutable(document));
+        this.setInData(['editingItemData', 'endpoints'], this.data.endpoints);
         this.emitChange();
       });
 
@@ -147,7 +159,6 @@ let EnvironmentsStore = Reflux.createStore({
 
     EndpointsActions.retrieveEndpoints();
 
-    this.setInData(['editingItemData', 'item'], {});
     this.emitChange();
   },
 

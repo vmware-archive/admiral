@@ -85,7 +85,7 @@ function createTypeaheadSource($typeaheadHolder) {
       initialQueryPromise.then(promiseCallback);
     } else {
       timeout = setTimeout(() => {
-        services.searchNetworks(q, NETWORK_RESULT_LIMIT).then(promiseCallback);
+        services.searchContainerNetworks(q, NETWORK_RESULT_LIMIT).then(promiseCallback);
       }, 300);
     }
   };
@@ -242,7 +242,7 @@ var NetworkDefinitionForm = Vue.extend({
       toggleButtonsState.call(_this);
     });
 
-    initialQueryPromise = services.searchNetworks(INITIAL_FILTER, NETWORK_RESULT_LIMIT);
+    initialQueryPromise = services.searchContainerNetworks(INITIAL_FILTER, NETWORK_RESULT_LIMIT);
 
     var typeaheadSource = createTypeaheadSource(
       $(this.$el).find('.network-name-search .search-input'));

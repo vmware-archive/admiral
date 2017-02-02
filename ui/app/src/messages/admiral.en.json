@@ -121,8 +121,8 @@
         "placementPolicy": "Advanced Placement Policy",
         "placementPolicyHint": "By default resources are placed on random hosts. One of the following strategies can be optionally applied:<br><br><b>BINPACK</b> - place on host with highest memory usage.<br><br><b>SPREAD</b> - place on host with smallest number of resources.",
         "dynamicTitle": "Dynamically allocate resources to this zone",
-        "tagsTitle": "Capability",
-        "tagsHint": "Enter key:value capabilities",
+        "tagsTitle": "Tags",
+        "tagsHint": "Enter key:value tags",
         "tagsPlaceholder": "Example: compliance:yes",
         "tagsToMatchTitle": "Tags to match",
         "tagsToMatchHint": "Enter key:value tags to match",
@@ -473,7 +473,10 @@
         "bootDiskPropertyLabel": "Boot Disk Property",
         "cpuCountLabel": "CPUs",
         "diskSizeMbLabel": "Disk size",
-        "memoryMbLabel": "Memory"
+        "memoryMbLabel": "Memory",
+        "subnetsLabel": "Subnets",
+        "cidrLabel": "CIDR",
+        "cidrLabelHint": "0.0.0.0/0"
       },
       "instanceType": {
         "aws": {
@@ -569,6 +572,9 @@
         "title": "Edit Compute",
         "nameLabel": "Name"
       }
+    },
+    "network": {
+      "entity": "Network"
     },
     "resource": {
       "list": {

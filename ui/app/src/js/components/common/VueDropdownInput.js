@@ -23,6 +23,7 @@ export default Vue.component('dropdown-input', {
           :loading="loading"
           :manage="manage"
           :options="options"
+          :renderer="renderer"
           :value="value"
           @change="onChange">
       </dropdown>
@@ -61,6 +62,10 @@ export default Vue.component('dropdown-input', {
       required: false,
       type: Array
     },
+    renderer: {
+      required: false,
+      type: Function
+    },
     required: {
       default: false,
       required: false,
@@ -72,8 +77,8 @@ export default Vue.component('dropdown-input', {
     }
   },
   methods: {
-    onChange(value) {
-      this.$dispatch('change', value);
+    onChange(value, instance) {
+      this.$dispatch('change', value, instance);
     }
   }
 });

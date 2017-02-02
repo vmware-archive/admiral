@@ -12,7 +12,7 @@
 import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
 
 const INITIAL_FILTER = '';
-const RESULT_LIMIT = 10;
+const RESULT_LIMIT = 5;
 
 export default Vue.component('dropdown-search', {
   template: `
@@ -47,6 +47,10 @@ export default Vue.component('dropdown-search', {
       required: false,
       type: Array
     },
+    renderer: {
+      required: false,
+      type: Function
+    },
     value: {
       required: false,
       type: Object
@@ -62,11 +66,14 @@ export default Vue.component('dropdown-search', {
       })
     });
     dropdownSearchMenu.setOptionSelectCallback(() =>
-        this.$dispatch('change', dropdownSearchMenu.getSelectedOption()));
+        this.$dispatch('change', dropdownSearchMenu.getSelectedOption(), this));
     dropdownSearchMenu.setClearOptionSelectCallback(() =>
-        this.$dispatch('change', dropdownSearchMenu.getSelectedOption()));
+        this.$dispatch('change', dropdownSearchMenu.getSelectedOption(), this));
     dropdownSearchMenu.setDisabled(this.disabled);
     dropdownSearchMenu.setLoading(this.loading);
+    if (this.renderer) {
+      dropdownSearchMenu.setOptionsRenderer(this.renderer);
+    }
     dropdownSearchMenu.setOptions(this.options);
     if (this.filter) {
       dropdownSearchMenu.setFilterCallback((q, callback) => {

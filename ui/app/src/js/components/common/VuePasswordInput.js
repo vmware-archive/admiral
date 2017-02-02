@@ -48,8 +48,8 @@ export default Vue.component('password-input', {
     }
   },
   methods: {
-    onChange(value) {
-      this.$dispatch('change', value);
+    onChange(value, instance) {
+      this.$dispatch('change', value, instance);
     }
   }
 });

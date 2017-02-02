@@ -57,7 +57,7 @@ describe("ContainerStore test", function() {
         }, 0);
       });
     });
-    spyOn(services, 'loadNetworks').and.callFake(function() {
+    spyOn(services, 'loadContainerNetworks').and.callFake(function() {
       return new Promise(function(resolve, reject){
         setTimeout(function() {
           var documents = {};

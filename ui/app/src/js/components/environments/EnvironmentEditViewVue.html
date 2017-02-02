@@ -9,14 +9,14 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div class="environment-edit-view" v-bind:class="{'right-context-expanded': contextExpanded}">
+<div class="environment-edit-view" :class="{'right-context-expanded': contextExpanded}">
   <div class="main-panel">
     <alert alert-type="danger"
-           v-bind:show-alert="validationErrors._generic && (validationErrors._generic != null)"
-           v-bind:alert-message="validationErrors._generic"></alert>
+           :show-alert="validationErrors._generic && (validationErrors._generic != null)"
+           :alert-message="validationErrors._generic"></alert>
     <alert alert-type="success"
-           v-bind:show-alert="validationErrors._valid && (validationErrors._valid != null)"
-           v-bind:alert-message="i18n('app.host.details.verified')"></alert>
+           :show-alert="validationErrors._valid && (validationErrors._valid != null)"
+           :alert-message="i18n('app.host.details.verified')"></alert>
 
     <div class="environment-form form-horizontal">
       <div class="title">
@@ -31,17 +31,17 @@
                 {{i18n('app.environment.edit.basicTab')}}
               </a>
             </li>
-            <li role="presentation" class="nav-item" v-bind:class="{'disabled': saveDisabled}">
+            <li role="presentation" class="nav-item" :class="{'disabled': saveDisabled}">
               <a href="#compute" class="nav-link" aria-controls="compute" role="tab" data-toggle="pill">
                 {{i18n('app.environment.edit.computeTab')}}
               </a>
             </li>
-            <li role="presentation" class="nav-item" v-bind:class="{'disabled': saveDisabled}">
+            <li role="presentation" class="nav-item" :class="{'disabled': saveDisabled}">
               <a href="#network" class="nav-link" aria-controls="network" role="tab" data-toggle="pill">
                 {{i18n('app.environment.edit.networkTab')}}
               </a>
             </li>
-            <li role="presentation" class="nav-item" v-bind:class="{'disabled': saveDisabled}">
+            <li role="presentation" class="nav-item" :class="{'disabled': saveDisabled}">
               <a href="#storage" class="nav-link" aria-controls="storage" role="tab" data-toggle="pill">
                 {{i18n('app.environment.edit.storageTab')}}
               </a>
@@ -55,8 +55,10 @@
                   <label class="required">
                     {{i18n('app.environment.edit.nameLabel')}}
                   </label>
-                  <input class="form-control name-input"
-                      v-bind:value="model.item.name" v-on:input="onNameChange()">
+                  <input
+                      class="form-control name-input"
+                      :value="model.item.name"
+                      @input="onNameChange($event)">
                 </div>
 
                 <div class="form-group" v-if="!model.item.endpointType">
@@ -65,10 +67,10 @@
                   </label>
                   <div class="form-control">
                     <dropdown-search
-                        v-bind:disabled="!!model.item.endpoint"
-                        v-bind:entity="i18n('app.endpoint.entity')"
-                        v-bind:loading="!model.endpoints"
-                        v-bind:manage="[{
+                        :disabled="!!model.item.endpoint"
+                        :entity="i18n('app.endpoint.entity')"
+                        :loading="!model.endpoints"
+                        :manage="[{
                           action: createEndpoint,
                           icon: 'plus',
                           name: i18n('app.endpoint.createNew')
@@ -77,14 +79,14 @@
                           icon: 'pencil',
                           name: i18n('app.endpoint.manage')
                         }]"
-                        v-bind:options="model.endpoints"
-                        v-bind:value="model.item.endpoint"
-                        v-on:change="onEndpointChange">
+                        :options="model.endpoints"
+                        :value="model.item.endpoint"
+                        @change="onEndpointChange">
                     </dropdown-search>
                   </div>
                 </div>
 
-                <div class="form-group tags" v-bind:class="{'has-error': validationErrors.tags}">
+                <div class="form-group tags" :class="{'has-error': validationErrors.tags}">
                   <label>{{i18n("app.environment.edit.tagsLabel")}}</label>
                   <div class="form-control tags-holder">
                     <tags
@@ -107,8 +109,8 @@
                   </label>
                   <div class="form-control">
                     <multicolumn-inputs v-ref:instance-type v-if="endpointType === 'vsphere'"
-                      v-bind:value="instanceTypeValue"
-                      v-bind:model="{
+                      :value="instanceTypeValue"
+                      :model="{
                         name: {
                           header: i18n('app.environment.edit.nameLabel')
                         },
@@ -123,8 +125,8 @@
                         }
                       }"></multicolumn-inputs>
                     <multicolumn-inputs v-ref:instance-type v-else
-                      v-bind:value="instanceTypeValue"
-                      v-bind:model="{
+                      :value="instanceTypeValue"
+                      :model="{
                         name: {
                           header: i18n('app.environment.edit.nameLabel')
                         },
@@ -141,8 +143,8 @@
                   </label>
                   <div class="form-control">
                     <multicolumn-inputs v-ref:image-type
-                      v-bind:value="imageTypeValue"
-                      v-bind:model="{
+                      :value="imageTypeValue"
+                      :model="{
                         name: {
                           header: i18n('app.environment.edit.nameLabel')
                         },
@@ -157,6 +159,71 @@
             </div>
             <div role="tabpanel" class="tab-pane" id="network">
               <form>
+
+                <div class="form-group networkName">
+                  <label class="required">
+                    {{i18n('app.environment.edit.nameLabel')}}
+                  </label>
+                  <input
+                      class="form-control name-input"
+                      :value="model.item.networkProfile && model.item.networkProfile.name"
+                      @input="onNetworkNameChange($event)">
+                </div>
+                <div class="form-group subnets" v-if="endpoint && endpointType === 'aws'">
+                  <label>
+                    {{i18n('app.environment.edit.subnetsLabel')}}
+                  </label>
+                  <div class="form-control">
+                    <div class="multicolumn-inputs">
+                      <div class="multicolumn-inputs-list">
+                        <div class="multicolumn-inputs-list-head">
+                          <div class="multicolumn-input-controls">
+                            <ul>
+                              <li>
+                                <div class="multicolumn-header">
+                                  <div class="multicolumn-header-label">{{i18n('app.environment.edit.nameLabel')}}</div>
+                                </div>
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                        <div class="multicolumn-inputs-list-body-wrapper">
+                          <div class="multicolumn-inputs-list-body" v-for="subnet in networkSubnets" track-by="$index">
+                            <div class="multicolumn-input">
+                              <div class="multicolumn-input-controls">
+                                <ul>
+                                  <li>
+                                    <div class="inline-input-holder">
+                                      <dropdown-search
+                                          :entity="i18n('app.network.entity')"
+                                          :filter="searchNetworkSubnets"
+                                          :index="$index"
+                                          :renderer="renderNetworkSubnet"
+                                          :value="subnet"
+                                          @change="onNetworkSubnetChange">
+                                      </dropdown-search>
+                                    </div>
+                                  </li>
+                                </ul>
+                              </div>
+                              <div class="multicolumn-input-toolbar">
+                                <a href="#" tabindex="-1" class="multicolumn-input-remove"
+                                    @click="removeNetworkSubnet($event, $index)">
+                                  <i class="btn btn-circle fa fa-minus"></i>
+                                </a>
+                                <a :style="{'visibility': $index + 1 === networkSubnets.length ? 'visible' : 'hidden'}"
+                                    href="#" class="multicolumn-input-add"
+                                    @click="addNetworkSubnet($event)">
+                                  <i class="btn btn-circle fa fa-plus"></i>
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </form>
             </div>
             <div role="tabpanel" class="tab-pane" id="storage">
@@ -167,8 +234,8 @@
                   </label>
                   <div class="form-control">
                     <multicolumn-inputs v-ref:boot-disk-property
-                      v-bind:value="bootDiskPropertyValue"
-                      v-bind:model="{
+                      :value="bootDiskPropertyValue"
+                      :model="{
                         name: {
                           header: i18n('app.environment.edit.nameLabel')
                         },
@@ -186,30 +253,30 @@
 
       <div class="control-btns">
         <button type="submit" class="btn btn-primary"
-                v-bind:class="{'loading': model.saving}"
-                v-bind:disabled="saveDisabled"
-                v-on:click="save($event)">
+                :class="{'loading': model.saving}"
+                :disabled="saveDisabled"
+                @click="save($event)">
           {{i18n("app.environment.edit.save")}}
           <i class="fa fa-spinner fa-spin loader-inline"></i></button>
         <span class="help-block"></span>
       </div>
     </div>
 
-    <div class="mask" v-bind:class="{'hide': !contextExpanded}"></div>
+    <div class="mask" :class="{'hide': !contextExpanded}"></div>
   </div>
 
-  <context-sidepanel class="right-context-panel" v-on:close="closeToolbar()">
+  <context-sidepanel class="right-context-panel" @close="closeToolbar()">
     <div slot="toolbar" class="toolbar">
       <context-sidepanel-toolbar-item
-        v-bind:active="activeContextItem === 'endpoints'"
-        v-bind:icon-class="'fa fa-cloud'"
-        v-bind:label="i18n('app.endpoint.contextPanelTooltip')"
-        v-on:open="manageEndpoints()" v-on:close="closeToolbar()">
+        :active="activeContextItem === 'endpoints'"
+        :icon-class="'fa fa-cloud'"
+        :label="i18n('app.endpoint.contextPanelTooltip')"
+        @open="manageEndpoints()" @close="closeToolbar()">
       </context-sidepanel-toolbar-item>
     </div>
     <div slot="content" class="content">
       <endpoints-list v-if="activeContextItem === 'endpoints'"
-        v-bind:model="model.contextView.activeItem.data"></endpoints-list>
+        :model="model.contextView.activeItem.data"></endpoints-list>
     </div>
   </context-sidepanel>
 

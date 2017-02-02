@@ -168,11 +168,11 @@ var RequestsListVueComponent = Vue.extend({
                   // Containers
                   params[constants.SEARCH_CATEGORY_PARAM] =
                       constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS;
-                } else if (link.indexOf(links.NETWORKS) !== -1) {
+                } else if (link.indexOf(links.CONTAINER_NETWORKS) !== -1) {
                   // Networks
                   params[constants.SEARCH_CATEGORY_PARAM] =
                       constants.RESOURCES.SEARCH_CATEGORY.NETWORKS;
-                } else if (link.indexOf(links.VOLUMES) !== -1) {
+                } else if (link.indexOf(links.CONTAINER_VOLUMES) !== -1) {
                   // Volumes
                   params[constants.SEARCH_CATEGORY_PARAM] =
                     constants.RESOURCES.SEARCH_CATEGORY.VOLUMES;

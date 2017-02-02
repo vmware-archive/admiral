@@ -24,6 +24,7 @@ export default Vue.component('dropdown-search-input', {
           :loading="loading"
           :manage="manage"
           :options="options"
+          :renderer="renderer"
           :value="value"
           @change="onChange">
       </dropdown-search>
@@ -66,6 +67,10 @@ export default Vue.component('dropdown-search-input', {
       required: false,
       type: Array
     },
+    renderer: {
+      required: false,
+      type: Function
+    },
     required: {
       default: false,
       required: false,
@@ -77,8 +82,8 @@ export default Vue.component('dropdown-search-input', {
     }
   },
   methods: {
-    onChange(value) {
-      this.$dispatch('change', value);
+    onChange(value, instance) {
+      this.$dispatch('change', value, instance);
     }
   }
 });
