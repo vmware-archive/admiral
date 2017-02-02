@@ -40,14 +40,14 @@ import com.vmware.xenon.services.common.QueryTask;
 public class NetworkProfileQueryUtils {
 
     /** Collect network profile constraints for all networks associated with compute */
-    public static void getComputeNetworkProfileConstraints(ServiceHost host, URI referer,
+    public static void getComputeNetworkProfileConstraints(ServiceHost host, URI referer, String contextId,
             ComputeDescription computeDesc, BiConsumer<Set<String>, Throwable> consumer) {
         if (computeDesc.networkInterfaceDescLinks == null || computeDesc.networkInterfaceDescLinks
                 .isEmpty()) {
             consumer.accept(null, null);
             return;
         }
-        getContextComputeNetworks(host, referer, computeDesc, consumer,
+        getContextComputeNetworks(host, referer, contextId, consumer,
                 (retrievedNetworks) -> getNetworkConstraints(host, referer, computeDesc,
                         retrievedNetworks, consumer));
     }
@@ -67,7 +67,7 @@ public class NetworkProfileQueryUtils {
                             ComputeNetwork computeNetwork = contextComputeNetworks.get(nic.name);
                             if (computeNetwork == null) {
                                 throw new LocalizableValidationException(
-                                        "Could not find context network component with name {0}.",
+                                        String.format("Could not find context network component with name '%s'.", nic.name),
                                         "compute.network.component.not.found", nic.name);
 
                             }
@@ -93,12 +93,10 @@ public class NetworkProfileQueryUtils {
         });
     }
 
-    private static void getContextComputeNetworks(ServiceHost host, URI referer,
-            ComputeDescription computeDescription,
+    private static void getContextComputeNetworks(ServiceHost host, URI referer, String contextId,
             BiConsumer<Set<String>, Throwable> consumer,
             Consumer<HashMap<String, ComputeNetwork>> callbackFunction) {
         HashMap<String, ComputeNetwork> contextNetworks = new HashMap<>();
-        String contextId = computeDescription.customProperties.get(FIELD_NAME_CONTEXT_ID_KEY);
         if (StringUtil.isNullOrEmpty(contextId)) {
             callbackFunction.accept(contextNetworks);
             return;

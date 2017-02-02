@@ -68,7 +68,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
 
         TestContext ctx = testCreate(1);
         Set<String> networkProfileLinks = new HashSet<>();
-        NetworkProfileQueryUtils.getComputeNetworkProfileConstraints(host, referer, computeDescription,
+        NetworkProfileQueryUtils.getComputeNetworkProfileConstraints(host, referer, contextId, computeDescription,
                 (all, e) -> {
                     if (e != null) {
                         ctx.fail(e);

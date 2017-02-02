@@ -156,7 +156,7 @@ public class ComputeNetworkAllocationTaskService extends
             }
             break;
         case RESOURCES_NAMED:
-            selectNetworkProfiles(state, networkDescription.tenantLinks, networkDescription);
+            selectNetworkProfiles(state, networkDescription.tenantLinks);
             break;
         case NETWORK_PROFILES_SELECTED:
             createComputeNetworkStates(state, networkDescription, null);
@@ -372,15 +372,8 @@ public class ComputeNetworkAllocationTaskService extends
                 }));
     }
 
-    private void selectNetworkProfiles(ComputeNetworkAllocationTaskState state, List<String> tenantLinks,
-            ComputeNetworkDescription networkDescription) {
+    private void selectNetworkProfiles(ComputeNetworkAllocationTaskState state, List<String> tenantLinks) {
         assertNotNull(state, "state");
-
-        if (networkDescription == null) {
-            getComputeNetworkDescription(state,
-                    (netwkDesc) -> selectNetworkProfiles(state, netwkDesc.tenantLinks, netwkDesc));
-            return;
-        }
 
         final Set<String> networkProfileLinks = new HashSet<>();
 
@@ -398,7 +391,7 @@ public class ComputeNetworkAllocationTaskService extends
             }
             // If there no network profiles defined for the tenant, get system network profiles
             if (networkProfileLinks.isEmpty() && tenantLinks != null && !tenantLinks.isEmpty()) {
-                selectNetworkProfiles(state, null, networkDescription);
+                selectNetworkProfiles(state, null);
                 return;
             }
 
