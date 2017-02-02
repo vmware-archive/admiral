@@ -40,6 +40,10 @@ export default Vue.component('dropdown', {
       required: false,
       type: Array
     },
+    renderer: {
+      required: false,
+      type: Function
+    },
     value: {
       required: false,
       type: Object
@@ -53,11 +57,14 @@ export default Vue.component('dropdown', {
       searchDisabled: true
     });
     dropdownSearchMenu.setOptionSelectCallback(() =>
-        this.$dispatch('change', dropdownSearchMenu.getSelectedOption()));
+        this.$dispatch('change', dropdownSearchMenu.getSelectedOption(), this));
     dropdownSearchMenu.setClearOptionSelectCallback(() =>
-        this.$dispatch('change', dropdownSearchMenu.getSelectedOption()));
+        this.$dispatch('change', dropdownSearchMenu.getSelectedOption(), this));
     dropdownSearchMenu.setDisabled(this.disabled);
     dropdownSearchMenu.setLoading(this.loading);
+    if (this.renderer) {
+      dropdownSearchMenu.setOptionsRenderer(this.renderer);
+    }
     dropdownSearchMenu.setOptions(this.options);
     if (this.manage) {
       dropdownSearchMenu.setManageOptions(this.manage);

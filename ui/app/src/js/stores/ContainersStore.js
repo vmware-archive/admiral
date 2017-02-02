@@ -565,11 +565,11 @@ let ContainersStore = Reflux.createStore({
 
       switch (queryOptions.$category) {
         case constants.RESOURCES.SEARCH_CATEGORY.NETWORKS:
-          loadResourceFunction = services.loadNetworks;
+          loadResourceFunction = services.loadContainerNetworks;
           break;
 
         case constants.RESOURCES.SEARCH_CATEGORY.VOLUMES:
-          loadResourceFunction = services.loadVolumes;
+          loadResourceFunction = services.loadContainerVolumes;
           break;
 
         case constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS:

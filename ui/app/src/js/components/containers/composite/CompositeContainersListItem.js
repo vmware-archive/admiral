@@ -37,7 +37,8 @@ var CompositeContainersListItem = Vue.extend({
       return this.model.componentLinks.filter(cl => cl.indexOf(links.CONTAINERS) === 0).length;
     },
     networkIds: function() {
-      let networkLinks = this.model.componentLinks.filter(cl => cl.indexOf(links.NETWORKS) === 0);
+      let networkLinks = this.model.componentLinks.filter(cl =>
+          cl.indexOf(links.CONTAINER_NETWORKS) === 0);
 
       return networkLinks && networkLinks.map(link => utils.getDocumentId(link));
     },

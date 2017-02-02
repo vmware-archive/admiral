@@ -15,6 +15,7 @@ import VueMulticolumnInputs from 'components/common/VueMulticolumnInputs'; //esl
 import VueTags from 'components/common/VueTags'; //eslint-disable-line
 import EndpointsList from 'components/endpoints/EndpointsList'; //eslint-disable-line
 import EnvironmentEditViewVue from 'components/environments/EnvironmentEditViewVue.html';
+import services from 'core/services';
 
 export default Vue.component('environment-edit-view', {
   template: EnvironmentEditViewVue,
@@ -27,14 +28,27 @@ export default Vue.component('environment-edit-view', {
       type: Object
     }
   },
-  data: () => {
+  data() {
+    let endpointType = this.model.item.endpoint && this.model.item.endpoint.endpointType ||
+          this.model.item.endpointType;
+    let networkSubnets = this.model.item.networkSubnets &&
+        this.model.item.networkSubnets.asMutable() || [];
+    if (networkSubnets.length === 0) {
+      networkSubnets.push({});
+    }
     return {
-      endpointType: null,
-      saveDisabled: true,
+      endpoint: this.model.item.endpoint,
+      endpointType,
+      name: this.model.item.name,
+      networkName: this.model.item.networkProfile && this.model.item.networkProfile.name,
+      networkSubnets,
       tags: this.model.item.tags || []
     };
   },
   computed: {
+    saveDisabled() {
+      return !this.name || !this.endpointType;
+    },
     validationErrors() {
       return this.model.validationErrors || {};
     },
@@ -102,18 +116,6 @@ export default Vue.component('environment-edit-view', {
     });
 
     $(this.$el).find('.nav-item a[href="#basic"]').tab('show');
-
-    this.unwatchModel = this.$watch('model', (model, oldModel) => {
-        oldModel = oldModel || { item: {} };
-        this.endpointType =
-            (this.model.item.endpoint && this.model.item.endpoint.endpointType) ||
-            this.model.item.endpointType;
-        this.saveDisabled = !this.model.item.name ||
-            !(this.model.item.endpointType || this.model.item.endpoint);
-    }, {immediate: true});
-  },
-  detached() {
-    this.unwatchModel();
   },
   methods: {
     goBack() {
@@ -139,27 +141,56 @@ export default Vue.component('environment-edit-view', {
     closeToolbar() {
       EnvironmentsActions.closeToolbar();
     },
-    onNameChange() {
-      Vue.nextTick(() => {
-        var model = this.getModel();
-        this.saveDisabled = !model.name || !(model.endpointType || this.endpoint);
-      });
+    onNameChange($event) {
+      this.name = $event.target.value;
     },
     onEndpointChange(endpoint) {
       this.endpoint = endpoint;
-      Vue.nextTick(() => {
-        var model = this.getModel();
-        this.endpointType = this.endpoint && this.endpoint.endpointType;
-        this.saveDisabled = !model.name || !(model.endpointType || this.endpoint);
-      });
+      this.endpointType = endpoint && endpoint.endpointType;
     },
     onTagsChange(tags) {
       this.tags = tags;
     },
+    onNetworkNameChange($event) {
+      this.networkName = $event.target.value;
+    },
+    onNetworkSubnetChange(value, dropdown) {
+      let index = $(dropdown.$el).attr('index');
+      this.networkSubnets[index] = value || {};
+    },
+    addNetworkSubnet($event) {
+      $event.stopImmediatePropagation();
+      $event.preventDefault();
+      this.networkSubnets = this.networkSubnets.concat({});
+    },
+    removeNetworkSubnet($event, $index) {
+      $event.stopImmediatePropagation();
+      $event.preventDefault();
+      if (this.networkSubnets.length !== 1) {
+        this.networkSubnets.splice($index, 1);
+      }
+    },
+    renderNetworkSubnet(network) {
+      let cidrLabel = i18n.t('app.environment.edit.cidrLabel');
+      return `
+        <div>
+          <div class="host-picker-item-primary" title="${network.name}">${network.name}</div>
+          <div class="host-picker-item-secondary" title="${network.subnetCIDR}">
+            ${cidrLabel}: ${network.subnetCIDR}
+          </div>
+        </div>`;
+    },
+    searchNetworkSubnets(...args) {
+      return new Promise((resolve, reject) => {
+        services.searchSubnetworks.apply(null,
+            [this.endpoint.documentSelfLink, ...args]).then((result) => {
+          resolve(result);
+        }).catch(reject);
+      });
+    },
     getModel() {
       var toSave = $.extend({ properties: {} }, this.model.item.asMutable({deep: true}));
-
-      toSave.name = $(this.$el).find('.name input').val();
+      toSave.name = this.name;
       toSave.endpointLink = this.endpoint && this.endpoint.documentSelfLink;
       toSave.computeProfile = toSave.computeProfile || {};
       toSave.storageProfile = toSave.storageProfile || {};
@@ -192,6 +223,14 @@ export default Vue.component('environment-edit-view', {
           return previous;
         }, {});
       }
+
+      toSave.networkProfile.name = this.networkName;
+      toSave.networkProfile.subnetLinks = [];
+      this.networkSubnets
+        .filter((subnet) => subnet.documentSelfLink)
+        .forEach((subnet) => {
+          toSave.networkProfile.subnetLinks.push(subnet.documentSelfLink);
+        });
 
       return toSave;
     }

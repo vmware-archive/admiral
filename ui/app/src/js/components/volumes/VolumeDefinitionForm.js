@@ -86,7 +86,7 @@ function createTypeaheadSource($typeaheadHolder) {
       initialQueryPromise.then(promiseCallback);
     } else {
       timeout = setTimeout(() => {
-        services.searchVolumeDescriptions(q, VOLUME_RESULT_LIMIT).then(promiseCallback);
+        services.searchContainerVolumeDescriptions(q, VOLUME_RESULT_LIMIT).then(promiseCallback);
       }, 300);
     }
   };
@@ -172,7 +172,7 @@ var VolumeDefinitionForm = Vue.extend({
       toggleButtonsState.call(_this);
     });
 
-    initialQueryPromise = services.searchVolumes(INITIAL_FILTER, VOLUME_RESULT_LIMIT);
+    initialQueryPromise = services.searchContainerVolumes(INITIAL_FILTER, VOLUME_RESULT_LIMIT);
 
     var typeaheadSource = createTypeaheadSource(
       $(this.$el).find('.volume-name-search .search-input'));

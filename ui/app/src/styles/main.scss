@@ -926,6 +926,10 @@ $main-list-view-right: 10px;
       font-size: 26px;
     }
   }
+  .multicolumn-inputs-list-body-wrapper {
+    max-height: none;
+    overflow: visible;
+  }
 }
 
 .inline-editable-list-and-context-view {

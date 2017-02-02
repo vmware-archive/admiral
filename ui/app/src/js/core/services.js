@@ -223,12 +223,12 @@ var makeDay2OperationRequestClosures = function(closureLinks, op) {
 
 var makeDay2OperationRequestNetworks = function(networkLinks, op) {
   return batchDay2OperationResource(NETWORK_TYPE,
-            ensurePrefixResourceLinks(links.NETWORKS, networkLinks), op);
+            ensurePrefixResourceLinks(links.CONTAINER_NETWORKS, networkLinks), op);
 };
 
 var makeDay2OperationRequestVolumes = function(volumeLinks, op) {
   return batchDay2OperationResource(VOLUME_TYPE,
-            ensurePrefixResourceLinks(links.VOLUMES, volumeLinks), op);
+            ensurePrefixResourceLinks(links.CONTAINER_VOLUMES, volumeLinks), op);
 };
 
 var makeDay2OperationRequestComposites = function(compositeComponentLinks, op) {
@@ -518,7 +518,7 @@ services.countNetworksPerHost = function(hostLink) {
     [ODATA_FILTER_PROP_NAME]: buildContainersSearchQuery(queryOptions)
   };
 
-  return get(mergeUrl(links.NETWORKS, params)).then((result) => {
+  return get(mergeUrl(links.CONTAINER_NETWORKS, params)).then((result) => {
     return result.totalCount;
   });
 };
@@ -728,6 +728,46 @@ services.searchCompute = function(resourcePoolLink, query, limit) {
   let filter = buildHostsQuery(qOps, false, true);
   let url = buildPaginationUrl(links.COMPUTE_RESOURCES, filter, true,
                                'creationTimeMicros asc', limit);
+  return get(url).then(function(data) {
+    var documentLinks = data.documentLinks || [];
+
+    var result = {
+      totalCount: data.totalCount
+    };
+
+    result.items = documentLinks.map((link) => {
+      return data.documents[link];
+    });
+
+    return result;
+  });
+};
+
+services.loadSubnetworks = function(documentSelfLinks) {
+  var params = {};
+  if (documentSelfLinks && documentSelfLinks.length) {
+    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+      documentSelfLink: documentSelfLinks.map((link) => {
+        return {
+          val: link,
+          op: 'eq'
+        };
+      }),
+      [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
+    });
+  }
+  return list(links.SUBNETWORKS, true, params);
+};
+
+services.searchSubnetworks = function(endpointLink, query, limit) {
+  var qOps = {
+    any: query.toLowerCase(),
+    endpoint: endpointLink
+  };
+
+  let filter = buildSearchQuery(qOps);
+  let url = buildPaginationUrl(links.SUBNETWORKS, filter, true,
+                               'documentUpdateTimeMicros desc', limit);
   return get(url).then(function(data) {
     var documentLinks = data.documentLinks || [];
 
@@ -1148,7 +1188,7 @@ services.manageComposite = function(compositeId) {
 };
 
 services.manageNetwork = function(networkId) {
-  return get(links.NETWORKS + '/' + networkId + links.MANAGE_CONTAINERS_ENDPOINT);
+  return get(links.CONTAINER_NETWORKS + '/' + networkId + links.MANAGE_CONTAINERS_ENDPOINT);
 };
 
 services.loadClosure = function(closureId) {
@@ -1180,7 +1220,7 @@ services.loadNetworksForCompositeComponent = function(compositeComponentId) {
   var compositeComponentLink = (compositeComponentId.indexOf(urlPrefix) > -1)
                                   ? compositeComponentId : urlPrefix + compositeComponentId;
 
-  return services.loadNetworks({compositeComponentLinks: [compositeComponentLink]});
+  return services.loadContainerNetworks({compositeComponentLinks: [compositeComponentLink]});
 };
 
 services.loadCompositeComponent = function(compositeComponentId) {
@@ -1212,18 +1252,18 @@ services.loadCompositeComponentsByLinks = function(documentSelfLinks) {
   return list(links.COMPOSITE_COMPONENTS, true, params);
 };
 
-services.loadNetworks = function(queryOptions) {
+services.loadContainerNetworks = function(queryOptions) {
   var filter = buildContainersSearchQuery(queryOptions);
-  var url = buildPaginationUrl(links.NETWORKS, filter, true);
+  var url = buildPaginationUrl(links.CONTAINER_NETWORKS, filter, true);
   return get(url).then(function(result) {
     return result;
   });
 };
 
-services.loadVolumes = function(queryOptions) {
+services.loadContainerVolumes = function(queryOptions) {
   var filter = buildContainersSearchQuery(queryOptions);
 
-  var url = buildPaginationUrl(links.VOLUMES, filter, true);
+  var url = buildPaginationUrl(links.CONTAINER_VOLUMES, filter, true);
 
   return get(url).then(function(result) {
     return result;
@@ -1685,16 +1725,16 @@ services.createVolumeDescription = function(volumeDescription) {
   return post(links.CONTAINER_VOLUMES_DESCRIPTIONS, volumeDescription);
 };
 
-services.searchNetworks = function(query, limit) {
-  services.searchEntities(links.NETWORKS, query, limit);
+services.searchContainerNetworks = function(query, limit) {
+  services.searchEntities(links.CONTAINER_NETWORKS, query, limit);
 };
 
-services.searchVolumeDescriptions = function(query, limit) {
+services.searchContainerVolumeDescriptions = function(query, limit) {
   return services.searchEntities(links.CONTAINER_VOLUMES_DESCRIPTIONS, query, limit);
 };
 
-services.searchVolumes = function(query, limit) {
-  return services.searchEntities(links.VOLUMES, query, limit);
+services.searchContainerVolumes = function(query, limit) {
+  return services.searchEntities(links.CONTAINER_VOLUMES, query, limit);
 };
 
 services.searchEntities = function(entityTypeLink, query, limit) {
@@ -2130,10 +2170,10 @@ var buildContainersSearchQuery = function(queryOptions) {
       var category = queryOptions[constants.SEARCH_CATEGORY_PARAM];
       switch (category) {
         case constants.RESOURCES.SEARCH_CATEGORY.NETWORKS:
-          link = links.NETWORKS;
+          link = links.CONTAINER_NETWORKS;
           break;
         case constants.RESOURCES.SEARCH_CATEGORY.VOLUMES:
-          link = links.VOLUMES;
+          link = links.CONTAINER_VOLUMES;
           break;
         case constants.RESOURCES.SEARCH_CATEGORY.CLOSURES:
           link = links.CLOSURES;
@@ -2280,6 +2320,16 @@ var buildSearchQuery = function(queryOptions) {
     userQueryOps.type = typeArray.map((type) => {
       return {
         val: '*' + type + '*',
+        op: 'eq'
+      };
+    });
+  }
+
+  var endpointArray = toArrayIfDefined(queryOptions.endpoint);
+  if (endpointArray) {
+    userQueryOps.endpointLink = endpointArray.map((endpoint) => {
+      return {
+        val: endpoint,
         op: 'eq'
       };
     });

@@ -58,7 +58,7 @@ export default Vue.component('form-input', {
       $event.preventDefault();
       $event.stopPropagation();
 
-      this.$dispatch('change', $event.currentTarget.value);
+      this.$dispatch('change', $event.currentTarget.value, this);
     }
   }
 });
