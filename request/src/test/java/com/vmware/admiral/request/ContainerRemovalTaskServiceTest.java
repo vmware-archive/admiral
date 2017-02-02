@@ -313,7 +313,20 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
     }
 
     @Test
+    public void testRemoveOfStaleContainerOperationFromHostRemoval() throws Throwable {
+        // try to remove a container as part of host removal when the container was already removed
+        testRemoveOfStaleContainerOperationFromContainerRemovalTask(
+                ManagementUriParts.REQUEST_HOST_REMOVAL_OPERATIONS);
+    }
+
+    @Test
     public void testRemoveOfStaleContainerOperation() throws Throwable {
+        // try to remove a container when the container was already removed
+        testRemoveOfStaleContainerOperationFromContainerRemovalTask(ManagementUriParts.REQUESTS);
+    }
+
+    private void testRemoveOfStaleContainerOperationFromContainerRemovalTask(
+            String serviceTaskCallbackLink) throws Throwable {
         ContainerState container = TestRequestStateFactory.createContainer();
         container.descriptionLink = containerDesc.documentSelfLink;
         container.adapterManagementReference = containerDesc.instanceAdapterReference;
@@ -327,13 +340,12 @@ public class ContainerRemovalTaskServiceTest extends RequestBaseTest {
         // the container is removed.
         delete(container.documentSelfLink);
 
-        // try to remove the container as part of host removal as well.
+        // try to remove the container from ContainerRemovalTaskState
         ContainerRemovalTaskState containerRemovalTask = new ContainerRemovalTaskState();
         containerRemovalTask.taskSubStage = ContainerRemovalTaskState.SubStage.INSTANCES_REMOVED;
         containerRemovalTask.resourceLinks = containerStateLinks;
         containerRemovalTask.removeOnly = true;
-        containerRemovalTask.serviceTaskCallback = ServiceTaskCallback.create(ManagementUriParts
-                        .REQUEST_HOST_REMOVAL_OPERATIONS,
+        containerRemovalTask.serviceTaskCallback = ServiceTaskCallback.create(serviceTaskCallbackLink,
                 TaskState.TaskStage.STARTED,
                 ContainerHostRemovalTaskService.ContainerHostRemovalTaskState.SubStage.REMOVED_CONTAINERS,
                 TaskState.TaskStage.STARTED,
