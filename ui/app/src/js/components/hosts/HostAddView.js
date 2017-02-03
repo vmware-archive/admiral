@@ -455,7 +455,7 @@ var HostAddView = Vue.extend({
     },
     disableInput: function(inputId, elemType, value) {
       var inputEl = $(this.$el).find('#' + inputId + ' ' + elemType);
-      inputEl.replaceWith($('<label data-name="host-edit-value" class="host-edit-value">'
+      inputEl.replaceWith($('<label data-name="host-edit-value">'
                             + value + '</label>'));
     },
 

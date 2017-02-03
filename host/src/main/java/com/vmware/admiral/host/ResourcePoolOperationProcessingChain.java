@@ -28,6 +28,7 @@ import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationProcessingChain;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.Utils;
@@ -55,7 +56,7 @@ public class ResourcePoolOperationProcessingChain extends OperationProcessingCha
             @Override
             public boolean test(Operation op) {
                 if (op.getAction() == Action.POST) {
-                    return handlePostOrPut(op);
+                    return handlePostOrPut(service, op, this);
                 }
                 return true;
             }
@@ -72,7 +73,7 @@ public class ResourcePoolOperationProcessingChain extends OperationProcessingCha
                 case DELETE:
                     return handleDelete(service, op, this);
                 case PUT:
-                    return handlePostOrPut(op);
+                    return handlePostOrPut(service, op, this);
                 case PATCH:
                     return handlePatch(service, op, this);
                 default:
@@ -119,22 +120,28 @@ public class ResourcePoolOperationProcessingChain extends OperationProcessingCha
         return false;
     }
 
-    private boolean handlePostOrPut(Operation op) {
+    private boolean handlePostOrPut(Service service, Operation op,
+            Predicate<Operation> invokingFilter) {
         ResourcePoolState placementZone = op.getBody(ResourcePoolState.class);
-        if (!PlacementZoneUtil.isSchedulerPlacementZone(placementZone)) {
-            return true;
+
+        if (PlacementZoneUtil.isSchedulerPlacementZone(placementZone)) {
+            try {
+                AssertUtil.assertEmpty(placementZone.tagLinks, "tagLinks");
+            } catch (LocalizableValidationException ex) {
+                op.fail(ex);
+                return false;
+            }
+            verifyZoneContainsSingleSchedulerOrNoHost(placementZone.documentSelfLink, op, service,
+                    () -> resumeProcessingRequest(op, invokingFilter));
+        } else {
+            verifyZoneContainsNoSchedulers(placementZone.documentSelfLink, op, service,
+                    () -> resumeProcessingRequest(op, invokingFilter));
         }
 
-        try {
-            AssertUtil.assertEmpty(placementZone.tagLinks, "tagLinks");
-            return true;
-        } catch (LocalizableValidationException ex) {
-            op.fail(ex);
-            return false;
-        }
+        return false;
     }
 
-    private boolean handlePatch(ResourcePoolService service, Operation op,
+    private boolean handlePatch(Service service, Operation op,
             Predicate<Operation> invokingFilter) {
         ResourcePoolState patchState = op.getBody(ResourcePoolState.class);
         Operation.createGet(op.getUri()).setCompletion((o, e) -> {
@@ -188,7 +195,12 @@ public class ResourcePoolOperationProcessingChain extends OperationProcessingCha
     }
 
     private void verifyZoneContainsSingleSchedulerOrNoHost(String resourcePoolLink, Operation op,
-            ResourcePoolService service, Runnable successCallback) {
+            Service service, Runnable successCallback) {
+        if (resourcePoolLink == null) {
+            // there is no placement zone to verify
+            successCallback.run();
+            return;
+        }
 
         QueryTask queryTask = QueryUtil.buildPropertyQuery(ComputeState.class,
                 ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, resourcePoolLink);
@@ -224,7 +236,12 @@ public class ResourcePoolOperationProcessingChain extends OperationProcessingCha
     }
 
     private void verifyZoneContainsNoSchedulers(String resourcePoolLink, Operation op,
-            ResourcePoolService service, Runnable successCallback) {
+            Service service, Runnable successCallback) {
+        if (resourcePoolLink == null) {
+            // there is no placement zone to verify
+            successCallback.run();
+            return;
+        }
 
         QueryTask queryTask = QueryUtil.buildPropertyQuery(ComputeState.class,
                 ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, resourcePoolLink);
