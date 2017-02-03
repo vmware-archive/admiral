@@ -219,10 +219,14 @@ var (
 	encryptionKey string
 
 	//Tags flags
-	tags             []string
-	tagsDesc         = "Host tags to match. Input format - key:value"
-	tagsToRemove     []string
-	tagsToRemoveDesc = "Host tags to remove. Input format - key:value"
+	tags                    []string
+	tagsDesc                = "Tags. Input format - key:value"
+	tagsToRemove            []string
+	tagsToRemoveDesc        = "Tags. Input format - key:value"
+	tagsToMatch             []string
+	tagsToMatchDesc         = "Tags to match. Input format - key:value"
+	tagsToMatchToRemove     []string
+	tagsToMatchToRemoveDesc = "Tags to match. Input format - key:value"
 
 	//Endpoint flags
 	accessKey            string

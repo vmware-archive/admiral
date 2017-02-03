@@ -39,6 +39,10 @@ type PlacementZone struct {
 	ResourcePoolState ResourcePoolState `json:"resourcePoolState"`
 	EpzState          EpzState          `json:"epzState,omitempty"`
 	DocumentSelfLink  string            `json:"documentSelfLink,omitempty"`
+
+	DocumentVersion              int `json:"documentVersion"`
+	DocumentUpdateTimeMicros     int `json:"documentUpdateTimeMicros"`
+	DocumentExpirationTimeMicros int `json:"documentExpirationTimeMicros"`
 }
 
 func (pz *PlacementZone) GetID() string {
@@ -50,7 +54,17 @@ type ResourcePoolState struct {
 	MaxCpuCount      int64              `json:"maxCpuCount,omitempty"`
 	MaxMemoryBytes   int64              `json:"maxMemoryBytes,omitempty"`
 	CustomProperties map[string]*string `json:"customProperties,omitempty"`
+	TagLinks         []string           `json:"tagLinks"`
 	DocumentSelfLink string             `json:"documentSelfLink,omitempty"`
+
+	DescriptionLink              string      `json:"descriptionLink,omitempty"`
+	DocumentVersion              int         `json:"documentVersion,omitempty"`
+	DocumentEpoch                int         `json:"documentEpoch,omitempty"`
+	DocumentKind                 string      `json:"documentKind,omitempty"`
+	DocumentUpdateTimeMicros     interface{} `json:"documentUpdateTimeMicros,omitempty"`
+	DocumentUpdateAction         string      `json:"documentUpdateAction,omitempty"`
+	DocumentExpirationTimeMicros interface{} `json:"documentExpirationTimeMicros,omitempty"`
+	DocumentOwner                string      `json:"documentOwner,omitempty"`
 }
 
 func (rps *ResourcePoolState) GetID() string {
@@ -93,10 +107,65 @@ func (rps *ResourcePoolState) GetUsedCpuPercentage() string {
 	return fmt.Sprintf("%.2f%%", utils.MathRound(result*100)/100)
 }
 
+func (rps *ResourcePoolState) AddTagLinks(tagsInput []string) error {
+	if rps.TagLinks == nil {
+		rps.TagLinks = make([]string, 0)
+	}
+	for _, ti := range tagsInput {
+		tagId, err := tags.GetTagIdByEqualKeyVals(ti, true)
+		if err != nil {
+			return err
+		}
+		tagLink := utils.CreateResLinkForTag(tagId)
+		if tagLink != "" && !rps.containsTagLink(tagLink) {
+			rps.TagLinks = append(rps.TagLinks, tagLink)
+		}
+	}
+	return nil
+}
+
+func (rps *ResourcePoolState) RemoveTagLinks(tagsInput []string) error {
+	tagsToRemove := make([]string, 0)
+	for _, ti := range tagsInput {
+		tagId, err := tags.GetTagIdByEqualKeyVals(ti, false)
+		if err != nil {
+			return err
+		}
+		if tagId != "" {
+			tagLink := utils.CreateResLinkForTag(tagId)
+			tagsToRemove = append(tagsToRemove, tagLink)
+		}
+	}
+
+	for _, tagToRemove := range tagsToRemove {
+		for i := 0; i < len(rps.TagLinks); i++ {
+			if tagToRemove == rps.TagLinks[i] {
+				rps.TagLinks = append(rps.TagLinks[:i], rps.TagLinks[i+1:]...)
+				i--
+			}
+		}
+	}
+
+	return nil
+}
+
+func (rps *ResourcePoolState) containsTagLink(tagLink string) bool {
+	for _, tl := range rps.TagLinks {
+		if tl == tagLink {
+			return true
+		}
+	}
+	return false
+}
+
 type EpzState struct {
 	ResourcePoolLink string   `json:"resourcePoolLink,omitempty"`
 	TagLinksToMatch  []string `json:"tagLinksToMatch,omitempty"`
 	DocumentSelfLink string   `json:"documentSelfLink,omitempty"`
+
+	DocumentVersion              int `json:"documentVersion"`
+	DocumentUpdateTimeMicros     int `json:"documentUpdateTimeMicros"`
+	DocumentExpirationTimeMicros int `json:"documentExpirationTimeMicros"`
 }
 
 func (epzs *EpzState) AddTagLinks(tagsInput []string) error {
@@ -236,7 +305,7 @@ func RemovePZID(id string) (string, error) {
 	return fullId, nil
 }
 
-func AddPZ(rpName string, custProps, tags []string) (string, error) {
+func AddPZ(rpName string, custProps, tags, tagsToMatch []string) (string, error) {
 	url := urlutils.BuildUrl(urlutils.ElasticPlacementZone, nil, true)
 
 	cp := make(map[string]*string, 0)
@@ -246,6 +315,7 @@ func AddPZ(rpName string, custProps, tags []string) (string, error) {
 		Name:             rpName,
 		CustomProperties: cp,
 	}
+	resPoolState.AddTagLinks(tagsToMatch)
 
 	epzState := EpzState{}
 	epzState.AddTagLinks(tags)
@@ -268,7 +338,7 @@ func AddPZ(rpName string, custProps, tags []string) (string, error) {
 
 }
 
-func EditPZ(pzName, newName string, tagsToAdd, tagsToRemove []string) (string, error) {
+func EditPZ(pzName, newName string, tagsToAdd, tagsToRemove, tagsToMatchToAdd, tagsToMatchToRemove []string) (string, error) {
 	links := GetPZLinks(pzName)
 	if len(links) > 1 {
 		return "", DuplicateNamesError
@@ -276,10 +346,10 @@ func EditPZ(pzName, newName string, tagsToAdd, tagsToRemove []string) (string, e
 		return "", PlacementZoneNotFound
 	}
 	id := utils.GetResourceID(links[0])
-	return EditPZID(id, newName, tagsToAdd, tagsToRemove)
+	return EditPZID(id, newName, tagsToAdd, tagsToRemove, tagsToMatchToAdd, tagsToMatchToRemove)
 }
 
-func EditPZID(id, newName string, tagsToAdd, tagsToRemove []string) (string, error) {
+func EditPZID(id, newName string, tagsToAdd, tagsToRemove, tagsToMatchToAdd, tagsToMatchToRemove []string) (string, error) {
 	fullId, err := selflink.GetFullId(id, new(PlacementZoneList), utils.PLACEMENT_ZONE)
 
 	utils.CheckBlockingError(err)
@@ -291,17 +361,33 @@ func EditPZID(id, newName string, tagsToAdd, tagsToRemove []string) (string, err
 		oldPz.ResourcePoolState.Name = newName
 	}
 
-	err = oldPz.EpzState.RemoveTagLinks(tagsToRemove)
-	if err != nil {
-		return "", err
+	if len(tagsToRemove) > 0 {
+		err = oldPz.EpzState.RemoveTagLinks(tagsToRemove)
+		if err != nil {
+			return "", err
+		}
 	}
-	err = oldPz.EpzState.AddTagLinks(tagsToAdd)
-	if err != nil {
-		return "", err
+	if len(tagsToAdd) > 0 {
+		err = oldPz.EpzState.AddTagLinks(tagsToAdd)
+		if err != nil {
+			return "", err
+		}
+	}
+	if len(tagsToMatchToRemove) > 0 {
+		err = oldPz.ResourcePoolState.RemoveTagLinks(tagsToMatchToRemove)
+		if err != nil {
+			return "", err
+		}
+	}
+	if len(tagsToMatchToAdd) > 0 {
+		err = oldPz.ResourcePoolState.AddTagLinks(tagsToMatchToAdd)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	jsonBody, _ := json.Marshal(oldPz)
-	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
+	req, _ := http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr != nil {
 		return "", respErr

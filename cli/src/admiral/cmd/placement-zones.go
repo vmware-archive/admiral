@@ -51,7 +51,8 @@ var placementZoneAddCmd = &cobra.Command{
 
 func initPlacementZoneAdd() {
 	//placementZoneAddCmd.Flags().StringSliceVar(&custProps, "cp", []string{}, custPropsDesc)
-	placementZoneAddCmd.Flags().StringSliceVar(&tags, "tag", []string{}, tagsDesc)
+	placementZoneAddCmd.Flags().StringSliceVarP(&tags, "tag", "t", []string{}, tagsDesc)
+	placementZoneAddCmd.Flags().StringSliceVarP(&tagsToMatch, "tag-to-match", "T", []string{}, tagsToMatchDesc)
 	PlacementZonesRootCmd.AddCommand(placementZoneAddCmd)
 }
 
@@ -63,7 +64,7 @@ func RunPlacementZoneAdd(args []string) (string, error) {
 	if pzName, ok = ValidateArgsCount(args); !ok {
 		return "", MissingPlacementZoneNameError
 	}
-	id, err := placementzones.AddPZ(pzName, custProps, tags)
+	id, err := placementzones.AddPZ(pzName, custProps, tags, tagsToMatch)
 	if err != nil {
 		return "", err
 	} else {
@@ -141,8 +142,10 @@ var placementZoneUpdateCmd = &cobra.Command{
 
 func initPlacementZoneUpdate() {
 	placementZoneUpdateCmd.Flags().StringVar(&newName, "name", "", "New name of placement zone.")
-	placementZoneUpdateCmd.Flags().StringSliceVar(&tags, "tag-add", []string{}, tagsDesc)
+	placementZoneUpdateCmd.Flags().StringSliceVarP(&tags, "tag-add", "t", []string{}, tagsDesc)
 	placementZoneUpdateCmd.Flags().StringSliceVar(&tagsToRemove, "tag-rm", []string{}, tagsToRemoveDesc)
+	placementZoneUpdateCmd.Flags().StringSliceVarP(&tagsToMatch, "tag-to-match-add", "T", []string{}, tagsToMatchDesc)
+	placementZoneUpdateCmd.Flags().StringSliceVar(&tagsToMatchToRemove, "tag-to-match-rm", []string{}, tagsToMatchToRemoveDesc)
 	PlacementZonesRootCmd.AddCommand(placementZoneUpdateCmd)
 }
 
@@ -157,7 +160,7 @@ func RunPlacementZoneUpdate(args []string) (string, error) {
 	if id, ok = ValidateArgsCount(args); !ok {
 		return "", MissingPlacementZoneIdError
 	}
-	newID, err = placementzones.EditPZID(id, newName, tags, tagsToRemove)
+	newID, err = placementzones.EditPZID(id, newName, tags, tagsToRemove, tagsToMatch, tagsToMatchToRemove)
 
 	if err != nil {
 		return "", err
