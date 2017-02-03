@@ -16,12 +16,17 @@ import java.util.logging.Level;
 
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
+import com.vmware.admiral.log.EventLogService;
+import com.vmware.admiral.log.EventLogService.EventLogState;
+import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 
 public class ContainerHealthEvaluator {
     public static final int DEFAULT_HEALTHY_THRESHOLD = Integer.getInteger(
@@ -80,9 +85,10 @@ public class ContainerHealthEvaluator {
         if (healthConfig.unhealthyThreshold == null) {
             healthConfig.unhealthyThreshold = DEFAULT_UNHEALTHY_THRESHOLD;
         }
-        if (patchHealth.healthFailureCount >= healthConfig.unhealthyThreshold) {
-            status = ContainerState.CONTAINER_ERROR_STATUS;
+        if (patchHealth.healthFailureCount == healthConfig.unhealthyThreshold) {
+            status = String.format("Health check failed last %d attempts", patchHealth.healthFailureCount);
             powerState = PowerState.ERROR;
+            publishEventLog(patchHealth);
         } else if (!skipDegraded
                 && patchHealth.healthFailureCount < healthConfig.unhealthyThreshold
                 && patchHealth.healthSuccessCount < healthConfig.healthyThreshold) {
@@ -121,6 +127,27 @@ public class ContainerHealthEvaluator {
                                 }
                             }));
         }
+    }
+
+    private void publishEventLog(ContainerStats patchHealth) {
+        EventLogState eventLog = new EventLogState();
+        eventLog.description = String.format(
+                "Health check failed for container %s after %d tries, container state will be set to ERROR.",
+                containerState.documentSelfLink, patchHealth.healthFailureCount);;
+        eventLog.eventLogType = EventLogType.ERROR;
+        eventLog.resourceType = getClass().getName();
+        eventLog.tenantLinks = containerState.tenantLinks;
+
+        host.log(Level.WARNING, eventLog.description);
+
+        host.sendRequest(Operation.createPost(host, EventLogService.FACTORY_LINK)
+                .setBody(eventLog)
+                .setReferer(ContainerFactoryService.SELF_LINK)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.log(Level.WARNING, "Failed to create event log: %s", Utils.toString(e));
+                    }
+                }));
     }
 
     private void getHealthConfig(String containerDescriptionLink,

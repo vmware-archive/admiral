@@ -972,7 +972,8 @@
         "UNKNOWN": "UNKNOWN",
         "RETIRED": "RETIRED",
         "PROVISIONING": "PROVISIONING",
-        "continuousStateSince": "__state__ for __duration__"
+        "continuousStateSince": "__state__ for __duration__",
+        "errorStatus": "__state__: __status__"
       },
       "actions": {
         "start": "Start",

@@ -193,10 +193,6 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
             ContainerState errorContainerState = getDocument(ContainerState.class,
                     containerStateReference.getPath());
 
-            if (!errorContainerState.status.equals(ContainerState.CONTAINER_ERROR_STATUS)) {
-                return false;
-            }
-
             return PowerState.ERROR == errorContainerState.powerState;
         });
     }

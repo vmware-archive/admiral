@@ -173,11 +173,9 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
 
         waitFor(() -> {
             ContainerState containerWithError = getDocument(ContainerState.class, containerLink);
-            if (!containerWithError.status.equals(ContainerState.CONTAINER_ERROR_STATUS)) {
+            if (!containerWithError.powerState.equals(PowerState.ERROR)) {
                 return false;
             }
-
-            assertEquals(PowerState.ERROR, containerWithError.powerState);
 
             return true;
         });

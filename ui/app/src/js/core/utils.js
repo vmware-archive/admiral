@@ -350,7 +350,7 @@ var utils = {
     return validator.isInt(intValue, limitValueRange);
   },
 
-  containerStatusDisplay: function(state, timestamp) {
+  containerStatusDisplay: function(state, timestamp, status) {
     var stateString = '';
     if (state) {
       stateString = i18n.t('app.container.state.' + state);
@@ -361,6 +361,11 @@ var utils = {
         return i18n.t('app.container.state.continuousStateSince', {
           state: stateString,
           duration: moment.duration(now.diff(stateMoment)).humanize()
+        });
+      } else if (state === constants.CONTAINERS.STATES.ERROR && status) {
+        return i18n.t('app.container.state.errorStatus', {
+          state: stateString,
+          status: status
         });
       }
     }
