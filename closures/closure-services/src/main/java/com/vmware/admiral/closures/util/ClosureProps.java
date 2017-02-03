@@ -44,6 +44,26 @@ public class ClosureProps {
             Integer.getInteger("closure.service.max-exec-timeout-seconds",
                     600);
 
+    public static final int RETRIES_COUNT = Integer
+            .getInteger("com.vmware.admiral.service.tasks.retries", 3);
+
+    public static final int MAX_LOG_SIZE_BYTES = Integer
+            .getInteger("com.vmware.admiral.closures.max.log.size.bytes",
+                    90 * 1024);
+
+    public static final long DEFAULT_CLOSURE_EXPIRATION_DAYS = Integer
+            .getInteger("com.vmware.admiral.closures.expiration.days", 10);
+
+    /**
+     * Publicly/Externally accessible URI of Admiral services. In case it exits the propery will be
+     * used by closure runtime execution to callback Admiral services instead of xenon publicUri
+     * property.
+     */
+    public static final String PUBLIC_ADMIRAl_ACCESS_URI_PROP =
+            System.getProperty("closure.service.public.access.uri");
+
+    public static final String MAX_LOG_FILE_SIZE = (MAX_LOG_SIZE_BYTES / 1024) + "k";
+
     public static final Integer MIN_MEMORY_MB_RES_CONSTRAINT = 50;
     public static final Integer MAX_MEMORY_MB_RES_CONSTRAINT = 1536;
 
