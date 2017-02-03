@@ -230,12 +230,12 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                             verifyStatusCode(o.getStatusCode(), Operation.STATUS_CODE_BAD_REQUEST);
                             String error = e.getMessage();
                             if (error.equals(
-                                    ContainerHostService.CONTAINER_HOST_IS_NOT_VIC_MESSAGE)) {
+                                    ContainerHostService.CONTAINER_HOST_IS_NOT_VCH_MESSAGE)) {
                                 host.completeIteration();
                             } else {
                                 String message = String.format(
                                         "Error message should be '%s' but was '%s'",
-                                        ContainerHostService.CONTAINER_HOST_IS_NOT_VIC_MESSAGE,
+                                        ContainerHostService.CONTAINER_HOST_IS_NOT_VCH_MESSAGE,
                                         error);
                                 host.failIteration(new IllegalStateException(message));
                             }
@@ -488,7 +488,7 @@ public class ContainerHostServiceIT extends RequestBaseTest {
         // use a scheduler placement zone
         computeState.resourcePoolLink = schedulerPlacementZone.documentSelfLink;
 
-        addHost(containerHostSpec, ContainerHostService.CONTAINER_HOST_IS_NOT_VIC_MESSAGE);
+        addHost(containerHostSpec, ContainerHostService.CONTAINER_HOST_IS_NOT_VCH_MESSAGE);
     }
 
     @Test
@@ -769,7 +769,7 @@ public class ContainerHostServiceIT extends RequestBaseTest {
 
     private void markHostForVicValidation(ComputeState cs) {
         cs.customProperties.put(ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME,
-                ContainerHostType.VIC.toString());
+                ContainerHostType.VCH.toString());
     }
 
     private void dataCollectHost(ComputeState cs) {
@@ -810,7 +810,7 @@ public class ContainerHostServiceIT extends RequestBaseTest {
         ComputeState state = createComputeState();
         state.resourcePoolLink = schedulerPlacementZone.documentSelfLink;
         state.customProperties.put(MockDockerHostAdapterService.CONTAINER_HOST_TYPE_PROP_NAME,
-                ContainerHostType.VIC.toString());
+                ContainerHostType.VCH.toString());
         return state;
     }
 

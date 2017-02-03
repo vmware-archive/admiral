@@ -72,7 +72,7 @@ public class ContainerHostService extends StatelessService {
     public static final String INCORRECT_PLACEMENT_ZONE_TYPE_MESSAGE_FORMAT = "Incorrect placement "
             + "zone type. Expected '%s' but was '%s'";
     public static final String CONTAINER_HOST_ALREADY_EXISTS_MESSAGE = "Container host already exists";
-    public static final String CONTAINER_HOST_IS_NOT_VIC_MESSAGE = "Not a VIC host";
+    public static final String CONTAINER_HOST_IS_NOT_VCH_MESSAGE = "Host is not a VCH";
     public static final String PLACEMENT_ZONE_NOT_EMPTY_MESSAGE = "Placement zone is not empty";
     public static final String PLACEMENT_ZONE_CONTAINS_SCHEDULERS_MESSAGE = "Placement zone is not empty "
             + "or does not contain only docker hosts";
@@ -117,7 +117,7 @@ public class ContainerHostService extends StatelessService {
 
     public enum ContainerHostType {
         DOCKER,
-        VIC,
+        VCH,
         KUBERNETES;
 
         public static ContainerHostType getDefaultHostType() {
@@ -321,7 +321,7 @@ public class ContainerHostService extends StatelessService {
         switch (type) {
         case DOCKER:
             return DOCKER_COMPUTE_DESC_LINK;
-        case VIC:
+        case VCH:
             return VIC_COMPUTE_DESC_LINK;
         case KUBERNETES:
             return KubernetesHostConstants.KUBERNETES_COMPUTE_DESC_LINK;
@@ -334,7 +334,7 @@ public class ContainerHostService extends StatelessService {
         switch (type) {
         case DOCKER:
             return UriUtils.buildUri(getHost(), ManagementUriParts.ADAPTER_DOCKER_HOST);
-        case VIC:
+        case VCH:
             return UriUtils.buildUri(getHost(), ManagementUriParts.ADAPTER_DOCKER_HOST);
         case KUBERNETES:
             return UriUtils.buildUri(getHost(), ManagementUriParts.ADAPTER_KUBERNETES_HOST);
@@ -371,7 +371,7 @@ public class ContainerHostService extends StatelessService {
             validateConnection(hostSpec, op);
             break;
 
-        case VIC:
+        case VCH:
             validateVicHost(hostSpec, op);
             break;
 
@@ -396,7 +396,7 @@ public class ContainerHostService extends StatelessService {
                         } else {
                             logInfo("VIC host verification failed for %s", computeAddress);
                             op.fail(new IllegalArgumentException(
-                                    CONTAINER_HOST_IS_NOT_VIC_MESSAGE));
+                                    CONTAINER_HOST_IS_NOT_VCH_MESSAGE));
                         }
                     });
         });
@@ -415,7 +415,7 @@ public class ContainerHostService extends StatelessService {
             });
             break;
 
-        case VIC:
+        case VCH:
             verifyPlacementZoneType(hostSpec, op, PlacementZoneType.SCHEDULER, () -> {
                 verifyPlacementZoneIsEmpty(hostSpec, op, () -> {
                     storeVicHost(hostSpec, op);
@@ -457,7 +457,7 @@ public class ContainerHostService extends StatelessService {
                 if (ContainerHostUtil.isVicHost(computeState)) {
                     doStoreHost(hostSpec, op);
                 } else {
-                    op.fail(new IllegalArgumentException(CONTAINER_HOST_IS_NOT_VIC_MESSAGE));
+                    op.fail(new IllegalArgumentException(CONTAINER_HOST_IS_NOT_VCH_MESSAGE));
                 }
             });
         }

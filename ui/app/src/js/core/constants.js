@@ -71,7 +71,7 @@ var constants = Immutable({
   HOST: {
     TYPE: {
       DOCKER: 'DOCKER',
-      VIC: 'VIC',
+      VCH: 'VCH',
       KUBERNETES: 'KUBERNETES'
     }
   },

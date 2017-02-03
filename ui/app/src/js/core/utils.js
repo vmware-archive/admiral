@@ -641,8 +641,8 @@ var utils = {
     return this.getConfigurationPropertyBoolean('allow.external.photon.adapters');
   },
 
-  isVicHostOptionEnabled: function() {
-    return this.getConfigurationPropertyBoolean('allow.ft.host-option.vic');
+  isVchHostOptionEnabled: function() {
+    return this.getConfigurationPropertyBoolean('allow.ft.host-option.vch');
   },
 
   isKubernetesHostOptionEnabled: function() {
