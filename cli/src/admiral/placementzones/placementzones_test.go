@@ -43,7 +43,7 @@ func TestMain(m *testing.M) {
 func TestAddRemovePlacementZone(t *testing.T) {
 	// Testing phase 1
 	name := "test-placement-zone"
-	id, err := AddPZ(name, nil, nil)
+	id, err := AddPZ(name, nil, nil, nil)
 	CheckTestError(err, t)
 
 	// Validating phase 1
@@ -90,12 +90,12 @@ func TestAddRemovePlacementZone(t *testing.T) {
 func TestUpdatePlacementZone(t *testing.T) {
 	// Preparing
 	name := "test-placement-zone"
-	id, err := AddPZ(name, nil, nil)
+	id, err := AddPZ(name, nil, nil, nil)
 	CheckTestError(err, t)
 
 	// Testing
 	newName := "new-test-placement-zone"
-	id, err = EditPZID(id, newName, nil, nil)
+	id, err = EditPZID(id, newName, nil, nil, nil, nil)
 	CheckTestError(err, t)
 	// Validating
 	pzl := &PlacementZoneList{}
@@ -126,7 +126,7 @@ func TestUpdatePlacementZone(t *testing.T) {
 func TestAddPlacementZoneWithEmptyName(t *testing.T) {
 	// Testing
 	name := ""
-	_, err := AddPZ(name, nil, nil)
+	_, err := AddPZ(name, nil, nil, nil)
 
 	// Validating
 	if err == nil {
@@ -138,7 +138,7 @@ func TestAddAndUpdatePlacementZoneWithTags(t *testing.T) {
 	// Testing phase 1
 	name := "test-placement-zone"
 	pzTags := []string{"test:test", "test1:test1"}
-	id, err := AddPZ(name, nil, pzTags)
+	id, err := AddPZ(name, nil, pzTags, nil)
 	CheckTestError(err, t)
 
 	// Validating phase 1
@@ -168,7 +168,7 @@ func TestAddAndUpdatePlacementZoneWithTags(t *testing.T) {
 	// Testing phase 2
 	tagsToAdd := []string{"newTag:newTag"}
 	tagsToRemove := []string{"test:test", "test1:test1"}
-	id, err = EditPZID(id, "", tagsToAdd, tagsToRemove)
+	id, err = EditPZID(id, "", tagsToAdd, tagsToRemove, nil, nil)
 	CheckTestError(err, t)
 
 	// Validating phase 2
