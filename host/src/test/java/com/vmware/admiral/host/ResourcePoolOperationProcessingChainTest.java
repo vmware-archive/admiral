@@ -225,6 +225,52 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
     }
 
     @Test
+    public void testPutSchedulerPZInUseToDockerPZShouldFail() throws Throwable {
+        // First create a docker placement zone.
+        ResourcePoolState createdPlacementZone = createPlacementZone("scheduler-placement-zone",
+                true);
+        assertNotNull(createdPlacementZone);
+
+        // Now create a compute state that uses this placement zone
+        createComputeState(createdPlacementZone, true);
+
+        // Now update the type of the zone to docker and issue a PUT. This should fail
+        markDockerPlacementZone(createdPlacementZone);
+        try {
+            doPut(createdPlacementZone);
+            Assert.fail(
+                    "PUT should fail to update the type of a used "
+                    + "scheduler placement zone to a docker zone");
+        } catch (IllegalStateException ex) {
+            verifyExceptionMessage(ex.getMessage(),
+                    ResourcePoolOperationProcessingChain.SCHEDULER_HOSTS_IN_PLACEMENT_ZONE_MESSAGE);
+        }
+    }
+
+    @Test
+    public void testPutDockerPZInUseToSchedulerPZShouldFail() throws Throwable {
+        // First create a docker placement zone.
+        ResourcePoolState createdPlacementZone = createPlacementZone("docker-placement-zone",
+                false);
+        assertNotNull(createdPlacementZone);
+
+        // Now create a compute state that uses this placement zone
+        createComputeState(createdPlacementZone);
+
+        // Now update the type of the zone to scheduler and issue a PUT. This should fail
+        markSchedulerPlacementZone(createdPlacementZone);
+        try {
+            doPut(createdPlacementZone);
+            Assert.fail(
+                    "PUT should fail to update the type of a used "
+                    + "docker placement zone to a scheduler zone");
+        } catch (IllegalStateException ex) {
+            verifyExceptionMessage(ex.getMessage(),
+                    ResourcePoolOperationProcessingChain.NON_SCHEDULER_HOST_IN_PLACEMENT_ZONE_MESSAGE);
+        }
+    }
+
+    @Test
     public void testUpdateDockerPZInUseToSchedulerPZShouldFail() throws Throwable {
         // First create a docker placement zone.
         ResourcePoolState createdPlacementZone = createPlacementZone("docker-placement-zone",
