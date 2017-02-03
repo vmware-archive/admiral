@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.URI;
+import java.time.Duration;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -42,6 +43,7 @@ import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -92,6 +94,10 @@ import com.vmware.xenon.common.ServiceRequestListener;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.TestContext;
+import com.vmware.xenon.services.common.NodeGroupService.NodeGroupState;
+import com.vmware.xenon.services.common.NodeGroupService.UpdateQuorumRequest;
+import com.vmware.xenon.services.common.NodeState;
+import com.vmware.xenon.services.common.NodeState.NodeStatus;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
@@ -229,9 +235,29 @@ public abstract class BaseManagementHostClusterIT {
             waitWhilePortIsListening(host);
             FileUtils.deleteDirectory(new File(host.getStorageSandbox().getPath()));
             logger.log(Level.INFO, String.format("Host '%s' stopped", hostname));
+
         } catch (Exception e) {
             throw new RuntimeException("Exception stopping host!", e);
         }
+    }
+
+    /**
+     * Stops the host and removes it from default node group.
+     *
+     * @param availableHost
+     *            - available host which will exclude other from group.
+     * @param hostToStop
+     *            - unavailable host.
+     */
+    protected void stopHostAndRemoveItFromNodeGroup(ManagementHost availableHost,
+            ManagementHost hostToStop) {
+
+        stopHost(hostToStop);
+
+        if (availableHost != null) {
+            waitUntilNodeIsRemovedFromGroup(availableHost);
+        }
+
     }
 
     public void validateDefaultContentAdded(List<ManagementHost> allHostsInstances, String token)
@@ -884,6 +910,106 @@ public abstract class BaseManagementHostClusterIT {
 
     private static TestContext testContext() {
         return TestContext.create(1, TimeUnit.SECONDS.toMicros(10));
+    }
+
+    private void waitUntilNodeIsRemovedFromGroup(ManagementHost availableHost) {
+        TestContext waiter = new TestContext(1, Duration.ofSeconds(30));
+
+        AtomicBoolean unavailableNodeDetected = new AtomicBoolean(false);
+
+        Operation.createGet(availableHost, ServiceUriPaths.DEFAULT_NODE_GROUP)
+                .setReferer(availableHost.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        availableHost.log(Level.WARNING,
+                                String.format("Exception while getting state of default group: %s",
+                                        e.getMessage()));
+                        waiter.fail(e);
+                        return;
+                    }
+
+                    NodeGroupState state = o.getBody(NodeGroupState.class);
+
+                    if (state.nodes != null && !state.nodes.isEmpty()) {
+                        for (Entry<String, NodeState> map : state.nodes.entrySet()) {
+                            if (map.getValue().status == NodeStatus.UNAVAILABLE) {
+                                unavailableNodeDetected.set(true);
+                                state.nodes.remove(map.getKey());
+                            }
+                        }
+                    }
+
+                    if (unavailableNodeDetected.get()) {
+                        // Unavailable nodes detected. Going to remove them.
+                        removeUnavailableNodeFromGroup(availableHost, state, waiter);
+                    } else {
+                        // All nodes are available.
+                        waiter.completeIteration();
+                    }
+                }).sendWith(availableHost);
+
+        waiter.await();
+    }
+
+    private void removeUnavailableNodeFromGroup(ManagementHost availableHost, NodeGroupState state,
+            TestContext waiter) {
+        Operation.createPatch(availableHost, ServiceUriPaths.DEFAULT_NODE_GROUP)
+                .setBody(state)
+                .setReferer(availableHost.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        waiter.fail(e);
+                        return;
+                    }
+                    // Only available nodes remain.
+                    int availableNodes = state.nodes.size();
+                    createUpdateQuorumOperation(availableHost, availableNodes, waiter);
+
+                }).sendWith(availableHost);
+    }
+
+    private void createUpdateQuorumOperation(ManagementHost availableHost, int availableNodes,
+            TestContext waiter) {
+
+        UpdateQuorumRequest request = new UpdateQuorumRequest();
+        request.isGroupUpdate = true;
+        request.kind = UpdateQuorumRequest.KIND;
+        request.membershipQuorum = (availableNodes / 2) + 1;
+
+        availableHost.log(Level.INFO,
+                String.format("Updating membershipQuorum to %d", request.membershipQuorum));
+
+        Operation.createPatch(availableHost, ServiceUriPaths.DEFAULT_NODE_GROUP)
+                .setBody(request)
+                .setReferer(availableHost.getUri())
+                .setCompletion(
+                        (o, e) -> {
+                            if (e != null) {
+                                waiter.fail(e);
+                            } else {
+                                waiter.completeIteration();
+                            }
+                        })
+                .sendWith(availableHost);
+        ;
+    }
+
+    protected void disableDataCollection(ManagementHost host, String token, TestContext waiter) {
+
+        Operation.createDelete(UriUtils.buildUri(host,
+                HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK))
+                .setReferer(host.getUri())
+                .addRequestHeader(Operation.REQUEST_AUTH_TOKEN_HEADER, token)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        waiter.fail(e);
+                        return;
+                    }
+                    waiter.completeIteration();
+
+                }).sendWith(host);
+        ;
+
     }
 
 }
