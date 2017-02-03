@@ -93,8 +93,6 @@ public class AdmiralAdapterService extends
 
     public static final String DISPLAY_NAME = "Closure Container Provisioning";
 
-    private static final String MAX_LOG_FILE_SIZE = "90k";
-
     private static final String BUILD_IMAGE_RETRIES_COUNT_PARAM_NAME = "build.closure.image.retries.count";
 
     private final Random randomIntegers = new Random();
@@ -1130,7 +1128,7 @@ public class AdmiralAdapterService extends
             // set default log configuration
             logConfig.type = "json-file";
             logConfig.config = new HashMap<>();
-            logConfig.config.put("max-size", MAX_LOG_FILE_SIZE);
+            logConfig.config.put("max-size", ClosureProps.MAX_LOG_FILE_SIZE);
             return logConfig;
         }
 

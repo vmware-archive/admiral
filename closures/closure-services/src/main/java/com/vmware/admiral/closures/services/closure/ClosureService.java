@@ -50,13 +50,6 @@ import com.vmware.xenon.common.Utils;
 public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         extends StatefulService {
 
-    private static final int RETRIES_COUNT = Integer
-            .getInteger("com.vmware.admiral.service.tasks.retries", 3);
-    private static final int MAX_LOG_SIZE_BYTES = Integer
-            .getInteger("com.vmware.admiral.closures.max.log.size.bytes",
-                    200 * 1024);
-    private static final long DEFAULT_CLOSURE_EXPIRATION_DAYS = 10;
-
     private final transient DriverRegistry driverRegistry;
 
     public ClosureService(DriverRegistry driverRegistry, long maintenanceTimeout) {
@@ -232,7 +225,7 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
     }
 
     protected void updateRequestTracker(ClosureTaskState state) {
-        updateRequestTracker(state, RETRIES_COUNT);
+        updateRequestTracker(state, ClosureProps.RETRIES_COUNT);
     }
 
     protected void updateRequestTracker(ClosureTaskState state, int retryCount) {
@@ -528,13 +521,13 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
     }
 
     private byte[] shrinkToMaxAllowedSize(byte[] targetArray) {
-        if (targetArray == null || targetArray.length <= MAX_LOG_SIZE_BYTES) {
+        if (targetArray == null || targetArray.length <= ClosureProps.MAX_LOG_SIZE_BYTES) {
             return targetArray;
         }
 
-        byte[] limitedArray = new byte[MAX_LOG_SIZE_BYTES];
-        System.arraycopy(targetArray, targetArray.length - MAX_LOG_SIZE_BYTES, limitedArray, 0,
-                MAX_LOG_SIZE_BYTES);
+        byte[] limitedArray = new byte[ClosureProps.MAX_LOG_SIZE_BYTES];
+        System.arraycopy(targetArray, targetArray.length - ClosureProps.MAX_LOG_SIZE_BYTES,
+                limitedArray, 0, ClosureProps.MAX_LOG_SIZE_BYTES);
         return limitedArray;
     }
 
@@ -621,7 +614,7 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         }
 
         closure.documentExpirationTimeMicros = Utils.fromNowMicrosUtc(TimeUnit.DAYS
-                .toMicros(DEFAULT_CLOSURE_EXPIRATION_DAYS));
+                .toMicros(ClosureProps.DEFAULT_CLOSURE_EXPIRATION_DAYS));
     }
 
     private void verifyPatchRequest(Closure currentState, Closure requestedState) {

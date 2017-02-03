@@ -23,6 +23,7 @@ import com.vmware.admiral.closures.drivers.ContainerConfiguration;
 import com.vmware.admiral.closures.drivers.ExecutionDriver;
 import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
+import com.vmware.admiral.closures.util.ClosureProps;
 import com.vmware.admiral.closures.util.ClosureUtils;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
@@ -40,14 +41,16 @@ public abstract class DockerDriverBase implements ExecutionDriver {
 
     public abstract String getDockerImage();
 
-    public DockerDriverBase(ServiceHost serviceHost, ClosureDockerClientFactory dockerClientFactory) {
+    public DockerDriverBase(ServiceHost serviceHost,
+            ClosureDockerClientFactory dockerClientFactory) {
         this.serviceHost = serviceHost;
         this.dockerClientFactory = dockerClientFactory;
     }
 
     @Override
-    public void executeClosure(Closure closure, ClosureDescription closureDesc, String token, Consumer<Throwable>
-            errorHandler) {
+    public void executeClosure(Closure closure, ClosureDescription closureDesc, String token,
+            Consumer<Throwable>
+                    errorHandler) {
         ClosureDockerClient dockerClient = dockerClientFactory.getClient();
 
         String containerImage = getDockerImage();
@@ -69,7 +72,9 @@ public abstract class DockerDriverBase implements ExecutionDriver {
         configuration.envVars = vars.toArray(new String[vars.size()]);
         logInfo("Creating closure with envs: %s", vars.get(0));
 
-        dockerClient.createAndStartContainer(closure.documentSelfLink, containerImage, configuration, errorHandler);
+        dockerClient
+                .createAndStartContainer(closure.documentSelfLink, containerImage, configuration,
+                        errorHandler);
         logInfo("Code execution request sent.");
     }
 
@@ -77,12 +82,14 @@ public abstract class DockerDriverBase implements ExecutionDriver {
     public void cleanClosure(Closure closure, Consumer<Throwable> errorHandler) {
         ClosureDockerClient dockerClient = dockerClientFactory.getClient();
         if (dockerClient == null) {
-            Utils.logWarning("No available docker clients found! Unable to clean execution container!");
+            Utils.logWarning(
+                    "No available docker clients found! Unable to clean execution container!");
             return;
         }
 
         if (closure.resourceLinks == null || closure.resourceLinks.size() <= 0) {
-            errorHandler.accept(new Exception("No resource to clean for closure: " + closure.documentSelfLink));
+            errorHandler.accept(new Exception(
+                    "No resource to clean for closure: " + closure.documentSelfLink));
             return;
         }
 
@@ -94,17 +101,20 @@ public abstract class DockerDriverBase implements ExecutionDriver {
                 logInfo("Closure cancelled: %s", closure.documentSelfLink);
             } catch (Exception ex) {
                 Utils.logWarning(
-                        "Unable to clean containers corresponding to cancelled closure: " + closure.documentSelfLink,
+                        "Unable to clean containers corresponding to cancelled closure: "
+                                + closure.documentSelfLink,
                         ex);
             }
         }
     }
 
     @Override
-    public void cleanImage(String imageName, String computeStateLink, Consumer<Throwable> errorHandler) {
+    public void cleanImage(String imageName, String computeStateLink,
+            Consumer<Throwable> errorHandler) {
         ClosureDockerClient dockerClient = dockerClientFactory.getClient();
         if (dockerClient == null) {
-            errorHandler.accept(new Exception("No available docker clients found! Unable to clean docker image!"));
+            errorHandler.accept(new Exception(
+                    "No available docker clients found! Unable to clean docker image!"));
             return;
         }
 
@@ -121,10 +131,12 @@ public abstract class DockerDriverBase implements ExecutionDriver {
     }
 
     @Override
-    public void inspectImage(String imageName, String imageRequestLink, Consumer<Throwable> errorHandler) {
+    public void inspectImage(String imageName, String imageRequestLink,
+            Consumer<Throwable> errorHandler) {
         ClosureDockerClient dockerClient = dockerClientFactory.getClient();
         if (dockerClient == null) {
-            errorHandler.accept(new Exception("No available docker clients found! Unable to clean docker image!"));
+            errorHandler.accept(new Exception(
+                    "No available docker clients found! Unable to clean docker image!"));
             return;
         }
 
@@ -161,12 +173,42 @@ public abstract class DockerDriverBase implements ExecutionDriver {
     }
 
     private URI prepareTaskUri(Closure closure) {
-        ServiceHost serviceHost = getServiceHost();
-        return UriUtils.buildPublicUri(serviceHost, closure.documentSelfLink);
+        URI taskUri = null;
+        if (ClosureProps.PUBLIC_ADMIRAl_ACCESS_URI_PROP != null) {
+            taskUri = buildPublicAccessUri(ClosureProps.PUBLIC_ADMIRAl_ACCESS_URI_PROP,
+                    closure.documentSelfLink);
+        }
+
+        if (taskUri == null) {
+            // fallback to publicUri as defined in xenon
+            taskUri = UriUtils.buildPublicUri(getServiceHost(), closure.documentSelfLink);
+        }
+        logFine("Closure callback URI: %s, closure: %s", taskUri, closure.documentSelfLink);
+        return taskUri;
+    }
+
+    public URI buildPublicAccessUri(String accessUri, String linkPath) {
+        try {
+            if (accessUri != null) {
+                if (accessUri.endsWith("/")) {
+                    accessUri = accessUri.substring(0, accessUri.lastIndexOf('/'));
+                }
+                return URI.create(accessUri + linkPath);
+            }
+        } catch (Throwable e) {
+            Utils.log(Utils.class, Utils.class.getSimpleName(), Level.SEVERE,
+                    "Failure in building public access %s, %s, %s", accessUri, linkPath, Utils
+                            .toString(e));
+        }
+        return null;
     }
 
     private void logInfo(String message, Object... values) {
         Utils.log(getClass(), getClass().getSimpleName(), Level.INFO, message, values);
+    }
+
+    private void logFine(String message, Object... values) {
+        Utils.log(getClass(), getClass().getSimpleName(), Level.FINE, message, values);
     }
 
 }
