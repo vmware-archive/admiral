@@ -1002,7 +1002,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                             containerId, networkId);
                     if (error.compareAndSet(false, true)) {
                         // Update the container state so further actions (e.g. cleanup) can be performed
-                        context.containerState.status = ContainerState.CONTAINER_ERROR_STATUS;
+                        context.containerState.status = String.format("Cannot connect container to network %s", networkId);
                         context.containerState.powerState = ContainerState.PowerState.ERROR;
                         context.requestFailed = true;
                         inspectContainer(context);

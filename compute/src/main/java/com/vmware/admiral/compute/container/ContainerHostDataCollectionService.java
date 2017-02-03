@@ -952,6 +952,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
                                 + computeStateSelfLink);
                         return;
                     } else if (r.hasResult()) {
+                        logWarning("Disable container %s, because host %s is unavailable",
+                                r.getDocumentSelfLink(), computeStateSelfLink);
                         sendRequest(Operation
                                 .createPatch(this, r.getDocumentSelfLink())
                                 .setBody(errorState));
