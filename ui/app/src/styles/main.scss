@@ -617,7 +617,7 @@ $main-list-view-right: 10px;
 
 .form-group .dropdown {
   width: 100%;
-  .btn {
+  .dropdown-toggle {
     width: 100%;
     max-width: 100%;
     padding-right: 10px;
@@ -651,6 +651,7 @@ $main-list-view-right: 10px;
 
 .form-group .help-block:empty {
   margin: 0;
+  display: none;
 }
 
 .form-group .dropdown .dropdown-options, .form-group .dropdown .dropdown-manage {
