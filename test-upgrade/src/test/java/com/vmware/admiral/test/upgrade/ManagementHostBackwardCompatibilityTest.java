@@ -75,7 +75,7 @@ public class ManagementHostBackwardCompatibilityTest extends ManagementHostBaseT
 
     @Before
     public void beforeTest() throws Exception {
-        hostPort = 9292;
+        hostPort = 0; // ask runtime to pick a random port
 
         SANDBOX.create();
         hostSandbox = SANDBOX.getRoot().toPath().toString();
