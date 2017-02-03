@@ -106,4 +106,53 @@ public class KubernetesContainerStateMapper {
             throw new IllegalArgumentException(e.getMessage());
         }
     }
+
+    public static float parseCPU(String value) {
+        if (value == null) {
+            return 0;
+        }
+        try {
+            if (value.endsWith("m")) {
+                return Float.parseFloat(value.substring(0, value.length() - 1)) * 0.001F;
+            } else {
+                return Float.parseFloat(value);
+            }
+        } catch (NumberFormatException ignored) {
+            return 0F;
+        }
+    }
+
+    private static final String[] magnitude = new String[] {"K", "M", "G", "T", "P"};
+
+    public static long parseMem(String value) {
+        if (value == null) {
+            return 0;
+        }
+        try {
+            String[] r = value.split("[KMGTP]i?");
+            long val = Long.parseLong(r[0]);
+            long mult = value.endsWith("i") ? 1024L : 1000L;
+            String end = value.substring(r[0].length());
+            switch (end.length()) {
+            case 0:
+                return val;
+            case 1:
+            case 2:
+                String mag = end.substring(0, 1);
+                boolean found = false;
+                for (String m: magnitude) {
+                    val *= mult;
+                    if (m.equals(mag)) {
+                        found = true;
+                        break;
+                    }
+                }
+                return found ? val : 0;
+            default:
+                return 0;
+            }
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
+    }
 }

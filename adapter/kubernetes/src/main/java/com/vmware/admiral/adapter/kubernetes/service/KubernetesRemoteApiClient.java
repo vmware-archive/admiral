@@ -17,15 +17,27 @@ import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.KUBERNETES_LABEL_APP;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509ExtendedKeyManager;
 
+import com.google.common.util.concurrent.AtomicDouble;
+
 import com.vmware.admiral.adapter.kubernetes.service.AbstractKubernetesAdapterService.KubernetesContext;
+import com.vmware.admiral.adapter.kubernetes.service.apiobject.KubernetesNodeData;
 import com.vmware.admiral.adapter.kubernetes.service.apiobject.Namespace;
 import com.vmware.admiral.adapter.kubernetes.service.apiobject.NamespaceList;
+import com.vmware.admiral.adapter.kubernetes.service.apiobject.Node;
+import com.vmware.admiral.adapter.kubernetes.service.apiobject.NodeList;
 import com.vmware.admiral.adapter.kubernetes.service.apiobject.ObjectMeta;
 import com.vmware.admiral.common.AuthCredentialsType;
 import com.vmware.admiral.common.security.EncryptionUtils;
@@ -35,6 +47,7 @@ import com.vmware.admiral.common.util.DelegatingX509KeyManager;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.common.util.ServiceUtils;
+import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.content.kubernetes.deployments.Deployment;
 import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
 import com.vmware.xenon.common.Operation;
@@ -87,7 +100,6 @@ public class KubernetesRemoteApiClient {
         if (this.serviceClient != null) {
             this.serviceClient.stop();
         }
-
         INSTANCE = null;
     }
 
@@ -157,9 +169,88 @@ public class KubernetesRemoteApiClient {
     }
 
     public void doInfo(KubernetesContext context, CompletionHandler completionHandler) {
-        // TODO: This should be changed to an URL with host information
-        URI uri = UriUtils
-                .buildUri(ApiUtil.namespacePrefix(context, ApiUtil.API_PREFIX_V1) + "/pods");
+        getNodes(context, (o, ex) -> {
+            if (ex != null) {
+                completionHandler.handle(null, ex);
+            } else {
+                NodeList nodeList = o.getBody(NodeList.class);
+                AtomicDouble usedCPU = new AtomicDouble(0D);
+                AtomicDouble totalCPU = new AtomicDouble(0D);
+                AtomicDouble totalMem = new AtomicDouble(0D);
+                AtomicDouble usedMem = new AtomicDouble(0D);
+                AtomicInteger counter = new AtomicInteger(nodeList.items.size());
+                AtomicBoolean hasError = new AtomicBoolean();
+                List<KubernetesNodeData> nodes = new ArrayList<>(nodeList.items.size());
+                if (nodeList != null && nodeList.items != null) {
+                    for (Node node: nodeList.items) {
+                        if (node == null || node.metadata == null || node.metadata.name == null) {
+                            continue;
+                        }
+                        getStats(context, node, (o2, ex2) -> {
+                            if (ex2 != null) {
+                                logger.log(Level.WARNING, String.format("Error while getting stats "
+                                        + "for node %s", node.metadata.name), ex2);
+                                if (hasError.compareAndSet(false, true)) {
+                                    completionHandler.handle(null, ex2);
+                                }
+                            } else {
+                                @SuppressWarnings("unchecked")
+                                Map<String, Object> data = o2.getBody(Map.class);
+                                KubernetesNodeData nodeData = new KubernetesNodeData();
+                                nodeData.name = node.metadata.name;
+                                if (data != null && data.containsKey("allocatedResources")) {
+                                    @SuppressWarnings("unchecked")
+                                    Map<String, Double> resources = (Map<String, Double>) data.get("allocatedResources");
+                                    Double val = null;
+                                    if ((val = resources.get("cpuRequestsFraction")) != null) {
+                                        Double totalForNode = resources.get("cpuCapacity");
+                                        totalCPU.addAndGet(totalForNode);
+                                        nodeData.usedCPU = val;
+                                        usedCPU.addAndGet(val * totalForNode);
+                                    }
+                                    if ((val = resources.get("memoryCapacity")) != null) {
+                                        nodeData.totalMem = val;
+                                        totalMem.addAndGet(val);
+                                    }
+                                    if ((val = resources.get("memoryRequests")) != null) {
+                                        nodeData.availableMem = nodeData.totalMem - val;
+                                        usedMem.addAndGet(val);
+                                    }
+                                }
+                                synchronized (nodes) {
+                                    nodes.add(nodeData);
+                                }
+                                if (counter.decrementAndGet() == 0 && !hasError.get()) {
+                                    Map<String, String> properties = new HashMap<>();
+                                    properties.put(
+                                            ContainerHostService.DOCKER_HOST_CPU_USAGE_PCT_PROP_NAME,
+                                            Double.toString(usedCPU.get() / totalCPU.get()));
+                                    properties.put(
+                                            ContainerHostService.DOCKER_HOST_AVAILABLE_MEMORY_PROP_NAME,
+                                            Double.toString(totalMem.get() - usedMem.get()));
+                                    properties.put(
+                                            ContainerHostService.DOCKER_HOST_TOTAL_MEMORY_PROP_NAME,
+                                            Double.toString(totalMem.get()));
+                                    properties.put(
+                                            ContainerHostService.KUBERNETES_HOST_NODE_LIST_PROP_NAME,
+                                            Utils.toJson(nodes));
+                                    Operation result = new Operation();
+                                    result.setBody(properties);
+                                    completionHandler.handle(result, null);
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+        });
+    }
+
+    public void getStats(KubernetesContext context, Node node, CompletionHandler
+            completionHandler) {
+        URI uri = UriUtils.buildUri(ApiUtil.apiPrefix(context, ApiUtil.API_PREFIX_V1)
+                + "/proxy/namespaces/kube-system/services/kubernetes-dashboard/api/v1/node/"
+                + node.metadata.name);
         sendRequest(Action.GET, uri, null, context, completionHandler);
     }
 
@@ -203,9 +294,14 @@ public class KubernetesRemoteApiClient {
     }
 
     public void getPods(KubernetesContext context, CompletionHandler completionHandler) {
-
         URI uri = UriUtils
                 .buildUri(ApiUtil.namespacePrefix(context, ApiUtil.API_PREFIX_V1) + "/pods");
+        sendRequest(Action.GET, uri, null, context, completionHandler);
+    }
+
+    public void getNodes(KubernetesContext context, CompletionHandler completionHandler) {
+        URI uri = UriUtils
+                .buildUri(ApiUtil.apiPrefix(context, ApiUtil.API_PREFIX_V1) + "/nodes");
         sendRequest(Action.GET, uri, null, context, completionHandler);
     }
 

@@ -240,4 +240,118 @@ public class KubernetesContainerStateMapperTest {
     public void TestParseDateWithEmptyString() {
         KubernetesContainerStateMapper.parseDate("");
     }
+
+    @Test
+    public void TestCorrectParseCPUm() {
+        float r = KubernetesContainerStateMapper.parseCPU("549m");
+        Assert.assertEquals(0.549F, r, 1e-6F);
+    }
+
+    @Test
+    public void TestCorrectParseCPU() {
+        float r = KubernetesContainerStateMapper.parseCPU("1.43");
+        Assert.assertEquals(1.43F, r, 1e-6F);
+    }
+
+    @Test
+    public void TestInvalidParseCPU() {
+        float r = KubernetesContainerStateMapper.parseCPU("m933m");
+        Assert.assertEquals(0F, r, 1e-6F);
+    }
+
+    @Test
+    public void TestParseCPUWithEmptyString() {
+        float r = KubernetesContainerStateMapper.parseCPU("");
+        Assert.assertEquals(0F, r, 1e-6F);
+    }
+
+    @Test
+    public void TestParseCPUWithNull() {
+        float r = KubernetesContainerStateMapper.parseCPU(null);
+        Assert.assertEquals(0F, r, 1e-6F);
+    }
+
+    @Test
+    public void TestCorrectParseMem() {
+        long r = KubernetesContainerStateMapper.parseMem("4000");
+        Assert.assertEquals(4000L, r);
+    }
+
+    @Test
+    public void TestCorrectParseMemK() {
+        long r = KubernetesContainerStateMapper.parseMem("4K");
+        Assert.assertEquals(4000L, r);
+    }
+
+    @Test
+    public void TestCorrectParseMemKi() {
+        long r = KubernetesContainerStateMapper.parseMem("4Ki");
+        Assert.assertEquals(4096L, r);
+    }
+
+    @Test
+    public void TestCorrectParseMemM() {
+        long r = KubernetesContainerStateMapper.parseMem("4M");
+        Assert.assertEquals(4_000_000L, r);
+    }
+
+    @Test
+    public void TestCorrectParseMemMi() {
+        long r = KubernetesContainerStateMapper.parseMem("4Mi");
+        Assert.assertEquals(4L * 1024L * 1024L, r);
+    }
+
+    @Test
+    public void TestCorrectParseMemG() {
+        long r = KubernetesContainerStateMapper.parseMem("4G");
+        Assert.assertEquals(4_000_000_000L, r);
+    }
+
+    @Test
+    public void TestCorrectParseMemGi() {
+        long r = KubernetesContainerStateMapper.parseMem("4Gi");
+        Assert.assertEquals(4L * 1024L * 1024L * 1024L, r);
+    }
+
+    @Test
+    public void TestCorrectParseMemT() {
+        long r = KubernetesContainerStateMapper.parseMem("4T");
+        Assert.assertEquals(4_000_000_000_000L, r);
+    }
+
+    @Test
+    public void TestCorrectParseMemTi() {
+        long r = KubernetesContainerStateMapper.parseMem("4Ti");
+        Assert.assertEquals(4L * 1024L * 1024L * 1024L * 1024L, r);
+    }
+
+    @Test
+    public void TestCorrectParseMemP() {
+        long r = KubernetesContainerStateMapper.parseMem("4P");
+        Assert.assertEquals(4_000_000_000_000_000L, r);
+    }
+
+    @Test
+    public void TestCorrectParseMemPi() {
+        long r = KubernetesContainerStateMapper.parseMem("4Pi");
+        Assert.assertEquals(4L * 1024L * 1024L * 1024L * 1024L * 1024L, r);
+    }
+
+    @Test
+    public void TestInvalidParseMem() {
+        long r = KubernetesContainerStateMapper.parseMem("4PiP");
+        Assert.assertEquals(0L, r);
+    }
+
+    @Test
+    public void TestParseMemWithEmptyString() {
+        long r = KubernetesContainerStateMapper.parseMem("");
+        Assert.assertEquals(0L, r);
+    }
+
+    @Test
+    public void TestParseMemWithNull() {
+        long r = KubernetesContainerStateMapper.parseMem(null);
+        Assert.assertEquals(0L, r);
+    }
 }

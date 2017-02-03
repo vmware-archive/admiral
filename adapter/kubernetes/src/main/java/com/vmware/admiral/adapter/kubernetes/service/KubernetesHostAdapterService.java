@@ -104,12 +104,9 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
             if (ex != null) {
                 fail(request, o, ex);
             } else {
-                // TODO: Find out what properties can be get from the kubernetes host and patch with
-                // TODO: them. The returned operation body must be changed to pass them.
-                // TODO: Now it doesn't add anything to the host properties.
-                // @SuppressWarnings("unchecked")
-                // Map<String, Object> properties = o.getBody(Map.class);
-                patchHostState(request, null,
+                @SuppressWarnings("unchecked")
+                Map<String, Object> properties = o.getBody(Map.class);
+                patchHostState(request, properties,
                         (o1, ex1) -> patchTaskStage(request, TaskStage.FINISHED, ex1));
             }
         };
@@ -196,9 +193,8 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
                     if (ex1 != null) {
                         op.fail(ex1);
                     } else {
-                        // TODO: Add properties to the compute state
                         ComputeState computeState = new ComputeState();
-                        computeState.customProperties = new HashMap<>();
+                        computeState.customProperties = op1.getBody(Map.class);
                         op.setBody(computeState);
                         op.complete();
                     }
