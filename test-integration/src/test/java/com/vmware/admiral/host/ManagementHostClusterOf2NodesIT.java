@@ -23,6 +23,7 @@ import static com.vmware.admiral.service.common.AuthBootstrapService.waitForInit
 
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +33,6 @@ import java.util.logging.Level;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ResourceType;
@@ -46,12 +46,13 @@ import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.common.test.TestContext;
 
 /**
  * Similar to {@link ManagementHostAuthUsersIT} but this test includes 2 nodes, only SSL enabled and
  * the users' passwords are encrypted.
  */
-@Ignore("VBV-984")
+
 public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT {
 
     private ManagementHost hostOne;
@@ -119,7 +120,7 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
          * ==== Restart node1 ====================================================================
          */
 
-        stopHost(hostOne);
+        stopHostAndRemoveItFromNodeGroup(hostTwo, hostOne);
 
         // We should explicitly set the quorum in the running node to 1 here, but now the
         // ClusterMonitoringService will take care of that. Otherwise the next operation will hang.
@@ -140,7 +141,7 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
          * ==== Restart node2 ====================================================================
          */
 
-        stopHost(hostTwo);
+        stopHostAndRemoveItFromNodeGroup(hostOne, hostTwo);
 
         // We should explicitly set the quorum in the running node to 1 here, but now the
         // ClusterMonitoringService will take care of that. Otherwise the next operation will hang.
@@ -179,7 +180,7 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
          * ==== Stop both nodes ==================================================================
          */
 
-        stopHost(hostOne);
+        stopHostAndRemoveItFromNodeGroup(hostTwo, hostOne);
         stopHost(hostTwo);
 
         /*
@@ -228,11 +229,18 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         assertContainerDescription(hostTwo, headers);
     }
 
-    @Ignore("VBV-1018")
     @Test
     public void testProvisioningOfContainerInCluster() throws Throwable {
 
         Map<String, String> headers = getAuthenticationHeaders(hostOne);
+
+        TestContext waiter = new TestContext(1, Duration.ofSeconds(30));
+        disableDataCollection(hostOne, headers.get("x-xenon-auth-token"), waiter);
+        waiter.await();
+
+        waiter = new TestContext(1, Duration.ofSeconds(30));
+        disableDataCollection(hostTwo, headers.get("x-xenon-auth-token"), waiter);
+        waiter.await();
 
         // 1. Request a container instance:
         RequestBrokerState request = TestRequestStateFactory
@@ -256,27 +264,25 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         assertNotNull(response.resourceLinks);
 
         assertEquals(1, response.resourceLinks.size());
+        String resourceLink = response.resourceLinks.get(0);
 
-        response.resourceLinks.forEach((resourceLink) -> {
-            // Get the container from second host, the document should be replicated.
-            URI containersUri = UriUtils.buildUri(hostTwo, resourceLink);
-            String containerAsJson = null;
+        // Get the container from second host, the document should be replicated.
+        URI containersUri = UriUtils.buildUri(hostTwo, resourceLink);
+        String containerAsJson = null;
 
-            try {
-                containerAsJson = getResource(hostTwo, headers, containersUri);
-            } catch (Exception e) {
-                throw new RuntimeException(String.format(
-                        "Exception appears while trying to get a container %s ", containersUri));
-            }
-            assertNotNull(containerAsJson);
-            ContainerJSONResponseMapper container = Utils.fromJson(containerAsJson,
-                    ContainerJSONResponseMapper.class);
-            assertNotNull(container);
-            assertEquals(ContainerDescriptionService.FACTORY_LINK + "/test-container-desc",
-                    container.descriptionLink);
-            assertEquals(PowerState.RUNNING.toString(), container.powerState);
-
-        });
+        try {
+            containerAsJson = getResource(hostTwo, headers, containersUri);
+        } catch (Exception e) {
+            throw new RuntimeException(String.format(
+                    "Exception appears while trying to get a container %s ", containersUri));
+        }
+        assertNotNull(containerAsJson);
+        ContainerJSONResponseMapper container = Utils.fromJson(containerAsJson,
+                ContainerJSONResponseMapper.class);
+        assertNotNull(container);
+        assertEquals(ContainerDescriptionService.FACTORY_LINK + "/test-container-desc",
+                container.descriptionLink);
+        assertEquals(PowerState.RUNNING.toString(), container.powerState);
 
     }
 
@@ -284,6 +290,14 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
     public void testProvisioningOfApplicationInCluster() throws Throwable {
 
         Map<String, String> headers = getAuthenticationHeaders(hostOne);
+
+        TestContext waiter = new TestContext(1, Duration.ofSeconds(30));
+        disableDataCollection(hostOne, headers.get("x-xenon-auth-token"), waiter);
+        waiter.await();
+
+        waiter = new TestContext(1, Duration.ofSeconds(30));
+        disableDataCollection(hostTwo, headers.get("x-xenon-auth-token"), waiter);
+        waiter.await();
 
         ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
         container1Desc.documentSelfLink = UUID.randomUUID().toString();
@@ -333,4 +347,5 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         assertEquals(2, compositeComponent.componentLinks.size());
 
     }
+
 }
