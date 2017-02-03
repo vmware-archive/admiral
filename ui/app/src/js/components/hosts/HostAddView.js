@@ -129,8 +129,8 @@ var HostAddView = Vue.extend({
       // check if host type matches verified host type
       return this.selectedHostType === this.model.verifiedHostModel.hostType;
     },
-    isVicOptionEnabled: function() {
-      return utils.isVicHostOptionEnabled();
+    isVchOptionEnabled: function() {
+      return utils.isVchHostOptionEnabled();
     },
     isKubernetesOptionEnabled: function() {
       return utils.isKubernetesHostOptionEnabled();

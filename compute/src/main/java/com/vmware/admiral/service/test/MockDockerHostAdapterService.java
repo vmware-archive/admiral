@@ -137,7 +137,7 @@ public class MockDockerHostAdapterService extends StatelessService {
 
         if (mockRequest != null && mockRequest.customProperties != null) {
             String hostType = mockRequest.customProperties.get(CONTAINER_HOST_TYPE_PROP_NAME);
-            if (hostType != null && hostType.equals(ContainerHostType.VIC.toString())) {
+            if (hostType != null && hostType.equals(ContainerHostType.VCH.toString())) {
                 properties.put(DOCKER_INFO_STORAGE_DRIVER_PROP_NAME, VIC_STORAGE_DRIVER_PROP_VALUE);
             }
         }

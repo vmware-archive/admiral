@@ -378,7 +378,7 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
         computeState.customProperties = new HashMap<>();
         if (isScheduler) {
             computeState.customProperties.put(ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME,
-                    ContainerHostType.VIC.toString());
+                    ContainerHostType.VCH.toString());
         } else {
             computeState.customProperties.put(ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME,
                     ContainerHostType.DOCKER.toString());
