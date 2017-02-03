@@ -54,6 +54,8 @@ then
 
 	echo DOCKER_OPTS=\"-H 0.0.0.0:$PORT -H unix:///var/run/docker.sock --tlsverify --tlscacert=/etc/docker/ca.pem --tlscert=/etc/docker/server.pem --tlskey=/etc/docker/server-key.pem\" > /etc/default/docker
 	iptables -A INPUT -p tcp --dport $PORT -j ACCEPT
+	echo "iptables -A INPUT -p tcp --dport $PORT -j ACCEPT" >> /etc/systemd/scripts/iptables
 	systemctl daemon-reload
+	systemctl enable docker
 	systemctl restart docker
 fi
