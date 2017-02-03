@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.adapter.kubernetes.mock;
 
+import com.vmware.admiral.adapter.kubernetes.service.ApiUtil;
 import com.vmware.admiral.adapter.kubernetes.service.KubernetesRemoteApiClient;
 
 /**
@@ -20,7 +21,11 @@ public interface MockKubernetesPathConstants {
     String BASE_PATH = "/mock/kubernetes";
     String BASE_FAILING_PATH = "/mock/failing-kubernetes";
     String PING = KubernetesRemoteApiClient.pingPath;
-    String API = "/api/v1";
-    String NAMESPACES = API + "/namespaces";
+    String API_V1 = ApiUtil.API_PREFIX_V1;
+    String NAMESPACES = API_V1 + "/namespaces";
     String PODS = "/pods";
+    String NODES = API_V1 + "/nodes";
+
+    String DASHBOARD_PROXY_FOR_STATS = API_V1 +
+            "/proxy/namespaces/kube-system/services/kubernetes-dashboard/api/v1/node/";
 }
