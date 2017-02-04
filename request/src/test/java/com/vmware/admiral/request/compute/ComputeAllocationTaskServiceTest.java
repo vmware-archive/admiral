@@ -18,46 +18,28 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.Set;
-import java.util.UUID;
 
-import org.junit.Before;
 import org.junit.Test;
 
-import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputeProvisionTaskState;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 
 public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
-
-    private static final String TEST_VM_NAME = "testVM";
-
-    protected ComputeState vmHostCompute;
 
     @Override
     protected ResourceType placementResourceType() {
         return ResourceType.COMPUTE_TYPE;
     }
 
-    @Override
-    @Before
-    public void setUp() throws Throwable {
-        super.setUp();
-
-        // create a single powered-on compute available for placement
-        vmHostCompute = createVmHostCompute(true);
-    }
-
     @Test
     public void testAllocationTaskServiceLifeCycle() throws Throwable {
-        ComputeDescription computeDescription = doPost(createComputeDescription(),
-                ComputeDescriptionService.FACTORY_LINK);
+        ComputeDescription computeDescription = createVMComputeDescription(false);
 
         ComputeAllocationTaskState allocationTask = createComputeAllocationTask(
                 computeDescription.documentSelfLink, 1, true);
@@ -75,8 +57,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
     @Test
     public void testComputeAllocationWithFollowingProvisioningRequest() throws Throwable {
         host.log(">>>>>>Start: testComputeAllocationWithFollowingProvisioningRequest <<<<< ");
-        ComputeDescription computeDescription = doPost(createComputeDescription(),
-                ComputeDescriptionService.FACTORY_LINK);
+        ComputeDescription computeDescription = createVMComputeDescription(false);
 
         ComputeAllocationTaskState allocationTask = createComputeAllocationTask(
                 computeDescription.documentSelfLink, 1, true);
@@ -106,17 +87,6 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         assertNotNull(computeState.id);
         assertEquals(computeDescription.documentSelfLink, computeState.descriptionLink);
         // assertEquals(vmHostCompute.documentSelfLink, computeState.parentLink);
-    }
-
-    private ComputeDescription createComputeDescription() {
-        ComputeDescription cd = new ComputeDescription();
-        cd.id = UUID.randomUUID().toString();
-        cd.name = TEST_VM_NAME;
-        cd.instanceType = "small";
-        cd.customProperties = new HashMap<>();
-        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME,
-                "linux");
-        return cd;
     }
 
     private ComputeAllocationTaskState allocate(ComputeAllocationTaskState allocationTask)

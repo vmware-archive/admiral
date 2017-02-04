@@ -397,6 +397,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
         containerHost.documentSelfLink = containerHost.id;
         containerHost.resourcePoolLink = resourcePool != null ? resourcePool.documentSelfLink
                 : null;
+        containerHost.tenantLinks = computeDesc.tenantLinks;
         containerHost.descriptionLink = computeDesc.documentSelfLink;
         containerHost.powerState = com.vmware.photon.controller.model.resources.ComputeService
                 .PowerState.ON;

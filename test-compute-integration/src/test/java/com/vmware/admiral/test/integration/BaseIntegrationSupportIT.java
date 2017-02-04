@@ -511,6 +511,7 @@ public abstract class BaseIntegrationSupportIT {
         ResourceEnumerationTaskState enumTask = new ResourceEnumerationTaskState();
         enumTask.parentComputeLink = endpoint.computeLink;
         enumTask.resourcePoolLink = endpoint.resourcePoolLink;
+        enumTask.endpointLink = endpoint.documentSelfLink;
         enumTask.adapterManagementReference = parentCompute.adapterManagementReference;
         enumTask.tenantLinks = endpoint.tenantLinks;
 

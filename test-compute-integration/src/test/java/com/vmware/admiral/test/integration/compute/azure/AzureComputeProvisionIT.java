@@ -15,8 +15,6 @@ import static com.vmware.photon.controller.model.adapters.azure.constants.AzureC
 
 import java.util.UUID;
 
-import org.junit.Ignore;
-
 import com.vmware.admiral.test.integration.compute.BaseComputeProvisionIT;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
@@ -25,7 +23,7 @@ import com.vmware.photon.controller.model.resources.EndpointService.EndpointStat
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
-@Ignore("We have to modify first the CI jobs to pass the Azure accessKey,secret,subscriptionId and tenant")
+//@Ignore("We have to modify first the CI jobs to pass the Azure accessKey,secret,subscriptionId and tenant")
 public class AzureComputeProvisionIT extends BaseComputeProvisionIT {
 
     private static final String SUBSCRIPTION_PROP = "test.azure.subscription.id";

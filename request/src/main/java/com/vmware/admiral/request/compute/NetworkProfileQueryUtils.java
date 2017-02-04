@@ -22,7 +22,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import io.netty.util.internal.StringUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
@@ -38,9 +38,11 @@ import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.services.common.QueryTask;
 
 public class NetworkProfileQueryUtils {
+    public static final String NO_NIC_VM = "__noNICVM";
 
     /** Collect network profile constraints for all networks associated with compute */
-    public static void getComputeNetworkProfileConstraints(ServiceHost host, URI referer, String contextId,
+    public static void getComputeNetworkProfileConstraints(ServiceHost host, URI referer,
+            String contextId,
             ComputeDescription computeDesc, BiConsumer<Set<String>, Throwable> consumer) {
         if (computeDesc.networkInterfaceDescLinks == null || computeDesc.networkInterfaceDescLinks
                 .isEmpty()) {
@@ -53,23 +55,33 @@ public class NetworkProfileQueryUtils {
     }
 
     private static void getNetworkConstraints(ServiceHost host, URI referer,
-            ComputeDescription computeDescription, HashMap<String, ComputeNetwork> contextComputeNetworks,
+            ComputeDescription computeDescription,
+            HashMap<String, ComputeNetwork> contextComputeNetworks,
             BiConsumer<Set<String>, Throwable> consumer) {
         DeferredResult<List<ComputeNetwork>> result = DeferredResult.allOf(
                 computeDescription.networkInterfaceDescLinks.stream()
                         .map(nicDescLink -> {
-                            Operation op = Operation.createGet(host, nicDescLink).setReferer(referer);
+                            Operation op = Operation.createGet(host, nicDescLink)
+                                    .setReferer(referer);
 
                             return host.sendWithDeferredResult(op,
                                     NetworkInterfaceDescription.class);
                         })
-                        .map(nid -> nid.thenCompose(nic -> {
-                            ComputeNetwork computeNetwork = contextComputeNetworks.get(nic.name);
+                        .map(nidr -> nidr.thenCompose(nid -> {
+                            if (nid.customProperties != null
+                                    && nid.customProperties.containsKey(NO_NIC_VM)) {
+                                // VM was requested without NIC then simply return a no constraint
+                                // compute network
+                                return DeferredResult.completed(new ComputeNetwork());
+                            }
+
+                            ComputeNetwork computeNetwork = contextComputeNetworks.get(nid.name);
                             if (computeNetwork == null) {
                                 throw new LocalizableValidationException(
-                                        String.format("Could not find context network component with name '%s'.", nic.name),
-                                        "compute.network.component.not.found", nic.name);
-
+                                        String.format(
+                                                "Could not find context network component with name '%s'.",
+                                                nid.name),
+                                        "compute.network.component.not.found", nid.name);
                             }
                             return DeferredResult.completed(computeNetwork);
                         }))
@@ -97,7 +109,7 @@ public class NetworkProfileQueryUtils {
             BiConsumer<Set<String>, Throwable> consumer,
             Consumer<HashMap<String, ComputeNetwork>> callbackFunction) {
         HashMap<String, ComputeNetwork> contextNetworks = new HashMap<>();
-        if (StringUtil.isNullOrEmpty(contextId)) {
+        if (StringUtils.isBlank(contextId)) {
             callbackFunction.accept(contextNetworks);
             return;
         }
@@ -123,8 +135,7 @@ public class NetworkProfileQueryUtils {
                             Operation.createGet(host, cn.descriptionLink).setReferer(referer),
                             ComputeNetworkDescription.class)
                             .thenCompose(cnd -> {
-                                DeferredResult<Pair<String, ComputeNetwork>> r =
-                                        new DeferredResult<>();
+                                DeferredResult<Pair<String, ComputeNetwork>> r = new DeferredResult<>();
                                 r.complete(Pair.of(cnd.name, cn));
                                 return r;
                             }))
