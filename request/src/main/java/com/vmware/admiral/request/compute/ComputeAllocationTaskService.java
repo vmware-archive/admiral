@@ -76,9 +76,11 @@ import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionS
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService.NetworkInterfaceState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.photon.controller.model.resources.TagFactoryService;
 import com.vmware.photon.controller.model.resources.TagService;
 import com.vmware.photon.controller.model.resources.TagService.TagState;
+import com.vmware.photon.controller.model.tasks.QueryUtils.QueryByPages;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -90,6 +92,7 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.Query.Builder;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
@@ -853,12 +856,16 @@ public class ComputeAllocationTaskService
                                     NetworkInterfaceDescription.class);
                         })
                         .map(dr -> dr.thenCompose(nid -> {
-                            NetworkInterfaceState nic = createNicState(state, nid, env);
+                            DeferredResult<NetworkInterfaceState> nic = createNicState(state, nid,
+                                    env);
 
-                            return this.sendWithDeferredResult(Operation
-                                    .createPost(this, NetworkInterfaceService.FACTORY_LINK)
-                                    .setBody(nic),
-                                    NetworkInterfaceState.class);
+                            return nic.thenCompose(n -> {
+                                return this.sendWithDeferredResult(Operation
+                                        .createPost(this, NetworkInterfaceService.FACTORY_LINK)
+                                        .setBody(n),
+                                        NetworkInterfaceState.class);
+                            });
+
                         }))
                         .map(ncr -> ncr.thenCompose(nic -> {
                             return DeferredResult.completed(nic.documentSelfLink);
@@ -874,7 +881,7 @@ public class ComputeAllocationTaskService
         });
     }
 
-    private NetworkInterfaceState createNicState(ComputeAllocationTaskState state,
+    private DeferredResult<NetworkInterfaceState> createNicState(ComputeAllocationTaskState state,
             NetworkInterfaceDescription nid, EnvironmentStateExpanded env) {
         String subnetLink = nid.subnetLink;
 
@@ -884,19 +891,42 @@ public class ComputeAllocationTaskService
                 subnetLink = networkProfile.subnetLinks.get(0);
             }
         }
-        NetworkInterfaceState nic = new NetworkInterfaceState();
-        nic.id = UUID.randomUUID().toString();
-        nic.documentSelfLink = nic.id;
-        nic.customProperties = nid.customProperties;
-        nic.firewallLinks = nid.firewallLinks;
-        nic.groupLinks = nid.groupLinks;
-        nic.name = nid.name;
-        nic.networkInterfaceDescriptionLink = nid.documentSelfLink;
-        nic.networkLink = nid.networkLink;
-        nic.subnetLink = subnetLink;
-        nic.tagLinks = nid.tagLinks;
-        nic.tenantLinks = state.tenantLinks;
-        return nic;
+        DeferredResult<String> subnet;
+        if (subnetLink == null) {
+            subnet = findSubnetBy(state, nid);
+        } else {
+            subnet = DeferredResult.completed(subnetLink);
+        }
+        DeferredResult<NetworkInterfaceState> n = subnet.thenCompose(sl -> {
+            NetworkInterfaceState nic = new NetworkInterfaceState();
+            nic.id = UUID.randomUUID().toString();
+            nic.documentSelfLink = nic.id;
+            nic.customProperties = nid.customProperties;
+            nic.securityGroupLinks = nid.securityGroupLinks;
+            nic.groupLinks = nid.groupLinks;
+            nic.name = nid.name;
+            nic.networkInterfaceDescriptionLink = nid.documentSelfLink;
+            nic.networkLink = nid.networkLink;
+            nic.subnetLink = sl;
+            nic.tagLinks = nid.tagLinks;
+            nic.tenantLinks = state.tenantLinks;
+            return DeferredResult.completed(nic);
+        });
+        return n;
+    }
+
+    private DeferredResult<String> findSubnetBy(ComputeAllocationTaskState state,
+            NetworkInterfaceDescription nid) {
+        Builder builder = Query.Builder.create()
+                .addKindFieldClause(SubnetState.class)
+                .addClause(QueryUtil.addTenantClause(nid.tenantLinks))
+                .addFieldClause(SubnetState.FIELD_NAME_ENDPOINT_LINK, state.endpointLink);
+        QueryByPages<SubnetState> querySubnetStates = new QueryByPages<>(
+                getHost(), builder.build(), SubnetState.class, nid.tenantLinks);
+
+        ArrayList<String> links = new ArrayList<>();
+        return querySubnetStates.queryLinks(sl -> links.add(sl))
+                .thenApply(ignore -> links.stream().findFirst().orElse(null));
     }
 
     private void getResourcePool(ComputeAllocationTaskState state,

@@ -15,12 +15,15 @@ import static com.vmware.admiral.compute.ComputeConstants.OVA_URI;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.logging.Level;
 
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.env.ComputeImageDescription;
+import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentState;
 import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentStateExpanded;
 import com.vmware.admiral.compute.env.InstanceTypeDescription;
+import com.vmware.admiral.request.compute.NetworkProfileQueryUtils;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.IpAssignment;
@@ -108,11 +111,9 @@ public class EnvironmentComputeDescriptionEnhancer extends ComputeDescriptionEnh
                         }
                     }
 
-                    String networkId = env.getStringMiscValue("placement", "networkId");
-                    if (!context.skipNetwork && networkId != null
-                            && (cd.networkInterfaceDescLinks == null
+                    if (!context.skipNetwork && (cd.networkInterfaceDescLinks == null
                             || cd.networkInterfaceDescLinks.isEmpty())) {
-                        attachNetworkInterfaceDescription(context, cd, networkId, result);
+                        attachNetworkInterfaceDescription(context, cd, env, result);
                     } else {
                         result.complete(cd);
                     }
@@ -140,48 +141,62 @@ public class EnvironmentComputeDescriptionEnhancer extends ComputeDescriptionEnh
     }
 
     private void attachNetworkInterfaceDescription(EnhanceContext context, ComputeDescription cd,
-            String networkId, DeferredResult<ComputeDescription> result) {
-        Query q = Query.Builder.create()
-                .addKindFieldClause(NetworkState.class)
-                .addFieldClause(NetworkState.FIELD_NAME_NAME, networkId)
-                .addFieldClause(NetworkState.FIELD_NAME_REGION_ID, context.regionId)
-                .build();
+            EnvironmentState env, DeferredResult<ComputeDescription> result) {
 
-        QueryTask queryTask = QueryTask.Builder.createDirectTask()
-                .setQuery(q)
-                .build();
-        queryTask.tenantLinks = cd.tenantLinks;
-        Operation.createPost(UriUtils.buildUri(this.host, ServiceUriPaths.CORE_QUERY_TASKS))
-                .setBody(queryTask)
-                .setReferer(this.referer)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        host.log(Level.WARNING, "Error processing task %s",
-                                queryTask.documentSelfLink);
-                        result.complete(cd);
-                        return;
-                    }
+        String networkId = env.getStringMiscValue("placement", "networkId");
 
-                    QueryTask body = o.getBody(QueryTask.class);
-                    if (body.results.documentLinks.isEmpty()) {
-                        result.complete(cd);
-                    } else {
-                        String networkLink = body.results.documentLinks.get(0);
-                        createNicDesc(context, cd, networkLink, result);
-                    }
-                })
-                .sendWith(this.host);
+        if (networkId == null) {
+            // For now keep it here, optionally we will support it as direct placement decision.
+            String subnetLink = EnhancerUtils.getCustomProperty(cd, "subnetworkLink");
+            createNicDesc(context, cd, null, subnetLink, result);
+        } else {
+            Query q = Query.Builder.create()
+                    .addKindFieldClause(NetworkState.class)
+                    .addFieldClause(NetworkState.FIELD_NAME_NAME, networkId)
+                    .addFieldClause(NetworkState.FIELD_NAME_REGION_ID, context.regionId)
+                    .build();
+
+            QueryTask queryTask = QueryTask.Builder.createDirectTask()
+                    .setQuery(q)
+                    .build();
+            queryTask.tenantLinks = cd.tenantLinks;
+            Operation.createPost(UriUtils.buildUri(this.host, ServiceUriPaths.CORE_QUERY_TASKS))
+                    .setBody(queryTask)
+                    .setReferer(this.referer)
+                    .setCompletion((o, e) -> {
+                        if (e != null) {
+                            host.log(Level.WARNING, "Error processing task %s",
+                                    queryTask.documentSelfLink);
+                            result.complete(cd);
+                            return;
+                        }
+
+                        QueryTask body = o.getBody(QueryTask.class);
+                        if (body.results.documentLinks.isEmpty()) {
+                            result.complete(cd);
+                        } else {
+                            String networkLink = body.results.documentLinks.get(0);
+                            createNicDesc(context, cd, networkLink, null, result);
+                        }
+                    })
+                    .sendWith(this.host);
+        }
     }
 
     private void createNicDesc(
             com.vmware.admiral.request.compute.enhancer.Enhancer.EnhanceContext context,
-            ComputeDescription cd, String networkLink, DeferredResult<ComputeDescription> result) {
+            ComputeDescription cd, String networkLink, String subnetLink,
+            DeferredResult<ComputeDescription> result) {
         NetworkInterfaceDescription nid = new NetworkInterfaceDescription();
         nid.assignment = IpAssignment.DYNAMIC;
         nid.deviceIndex = 0;
         nid.name = cd.name + "_nic";
         nid.networkLink = networkLink;
+        nid.subnetLink = subnetLink;
         nid.tenantLinks = cd.tenantLinks;
+        nid.customProperties = new HashMap<>();
+        nid.customProperties.put(NetworkProfileQueryUtils.NO_NIC_VM, Boolean.TRUE.toString());
+
         Operation.createPost(this.host, NetworkInterfaceDescriptionService.FACTORY_LINK)
                 .setBody(nid)
                 .setReferer(this.referer)

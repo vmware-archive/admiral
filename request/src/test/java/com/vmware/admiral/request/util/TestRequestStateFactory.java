@@ -53,6 +53,7 @@ import com.vmware.photon.controller.model.resources.EndpointService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.photon.controller.model.resources.SubnetService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 
@@ -234,6 +235,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         poolState.maxMemoryBytes = poolState.minMemoryBytes * 2;
         poolState.minDiskCapacityBytes = poolState.maxDiskCapacityBytes = 1024L * 1024L * 1024L
                 * 1024L;
+        poolState.tenantLinks = createTenantLinks(TENANT_NAME);
         poolState.customProperties = new HashMap<>(3);
         poolState.customProperties.put(ComputeConstants.ENDPOINT_AUTH_CREDENTIALS_PROP_NAME,
                 CommonTestStateFactory.AUTH_CREDENTIALS_ID);
@@ -314,10 +316,13 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         hostDescription.authCredentialsLink = UriUtils.buildUriPath(
                 AuthCredentialsService.FACTORY_LINK,
                 CommonTestStateFactory.AUTH_CREDENTIALS_ID);
-        hostDescription.instanceType = "linux";
+        hostDescription.instanceType = "small";
+        hostDescription.tenantLinks = createTenantLinks(TENANT_NAME);
         hostDescription.customProperties = new HashMap<>();
         hostDescription.customProperties.put(
                 ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "coreos");
+        hostDescription.customProperties.put("subnetworkLink",
+                UriUtils.buildUriPath(SubnetService.FACTORY_LINK, "my-subnet"));
 
         return hostDescription;
     }
@@ -359,6 +364,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
                 AuthCredentialsService.FACTORY_LINK,
                 CommonTestStateFactory.AUTH_CREDENTIALS_ID);
         computeDescription.zoneId = ENDPOINT_REGION_ID;
+        computeDescription.tenantLinks = createTenantLinks(TENANT_NAME);
         computeDescription.customProperties = new HashMap<>();
 
         return computeDescription;
@@ -383,6 +389,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
                 VM_GUEST_COMPUTE_DESC_ID);
         cs.resourcePoolLink = UriUtils.buildUriPath(ResourcePoolService.FACTORY_LINK,
                 RESOURCE_POOL_ID);
+        cs.tenantLinks = createTenantLinks(TENANT_NAME);
         cs.adapterManagementReference = URI.create("http://localhost:8081");
         cs.customProperties = new HashMap<>();
         return cs;
@@ -432,6 +439,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
                 endpointId);
         endpoint.endpointType = type.name();
         endpoint.name = endpointId;
+        endpoint.tenantLinks = createTenantLinks(TENANT_NAME);
         endpoint.endpointProperties = new HashMap<>();
         endpoint.endpointProperties.put("privateKeyId", "testId");
         endpoint.endpointProperties.put("privateKey",

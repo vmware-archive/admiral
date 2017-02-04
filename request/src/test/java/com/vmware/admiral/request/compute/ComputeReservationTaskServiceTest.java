@@ -313,6 +313,8 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         TagState tag = new TagState();
         tag.key = "cap";
         tag.value = "pci";
+        tag.tenantLinks = TestRequestStateFactory
+                .createTenantLinks(TestRequestStateFactory.TENANT_NAME);
         tag = doPost(tag, TagService.FACTORY_LINK);
 
         ResourcePoolState rpPatch = new ResourcePoolState();

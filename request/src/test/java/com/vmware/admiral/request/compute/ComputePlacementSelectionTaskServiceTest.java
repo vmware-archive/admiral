@@ -22,10 +22,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
@@ -36,7 +34,6 @@ import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState;
 import com.vmware.photon.controller.model.monitoring.InMemoryResourceMetricService;
 import com.vmware.photon.controller.model.monitoring.InMemoryResourceMetricService.InMemoryResourceMetric;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -55,26 +52,14 @@ import com.vmware.xenon.common.test.TestContext;
  */
 public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBaseTest {
 
-    private ComputeState vmHostCompute;
-
     @Override
     protected ResourceType placementResourceType() {
         return ResourceType.COMPUTE_TYPE;
     }
 
-    @Override
-    @Before
-    public void setUp() throws Throwable {
-        super.setUp();
-
-        // create a single powered-on compute available for placement
-        vmHostCompute = createVmHostCompute(true);
-    }
-
     @Test
     public void testSingleInstanceProvisioning() throws Throwable {
-        ComputeDescription computeDescription = doPost(createComputeDescription(),
-                ComputeDescriptionService.FACTORY_LINK);
+        ComputeDescription computeDescription = createVMComputeDescription(true);
 
         ComputePlacementSelectionTaskState taskRequestState = new ComputePlacementSelectionTaskState();
         taskRequestState.computeDescriptionLink = computeDescription.documentSelfLink;
@@ -103,8 +88,7 @@ public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBase
 
         setAdvancedPlacementPolicyToEPZS(ElasticPlacementZoneService.PlacementPolicy.BINPACK);
 
-        ComputeDescription computeDescription = doPost(createComputeDescription(),
-                ComputeDescriptionService.FACTORY_LINK);
+        ComputeDescription computeDescription = createVMComputeDescription(true);
 
         // Create two more Compute hosts.
         ComputeState computeHost2 = createVmComputeWithRandomComputeDescription(true,
@@ -203,8 +187,7 @@ public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBase
 
         setAdvancedPlacementPolicyToEPZS(ElasticPlacementZoneService.PlacementPolicy.SPREAD);
 
-        ComputeDescription computeDescription = doPost(createComputeDescription(),
-                ComputeDescriptionService.FACTORY_LINK);
+        ComputeDescription computeDescription = createVMComputeDescription(true);
 
         // Create two more Compute hosts of type VM_HOST.
         ComputeState computeHost1 = createVmComputeWithRandomComputeDescription(true,
@@ -236,14 +219,6 @@ public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBase
         // Verify that placement has happened on most loaded host - computeHost3.
         assertEquals(computeHost2.documentSelfLink,
                 taskState.selectedComputePlacementHosts.stream().findFirst().get().hostLink);
-    }
-
-    private ComputeDescription createComputeDescription() {
-        ComputeDescription cd = new ComputeDescription();
-        cd.id = UUID.randomUUID().toString();
-        cd.name = "small"; // aws adapter is using name as value for instance type
-        cd.customProperties = new HashMap<>();
-        return cd;
     }
 
     private void setAdvancedPlacementPolicyToEPZS(ElasticPlacementZoneService.PlacementPolicy policy)
