@@ -34,6 +34,7 @@ public class EpzComputeEnumerationPeriodicService extends StatelessService {
     public EpzComputeEnumerationPeriodicService() {
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.toggleOption(ServiceOption.PERIODIC_MAINTENANCE, true);
+        super.toggleOption(ServiceOption.PERSISTENCE, false);
         super.setMaintenanceIntervalMicros(MAINTENANCE_INTERVAL_MICROS);
     }
 

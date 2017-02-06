@@ -13,6 +13,7 @@ package com.vmware.admiral.host;
 
 import com.vmware.admiral.compute.EpzComputeEnumerationPeriodicService;
 import com.vmware.admiral.compute.PlacementCapacityUpdatePeriodicService;
+import com.vmware.admiral.compute.endpoint.EndpointHealthCheckPeriodicService;
 import com.vmware.xenon.common.ServiceHost;
 
 /**
@@ -27,6 +28,7 @@ public class HostInitComputeBackgroundServicesConfig extends HostInitServiceHelp
     public static void startServices(ServiceHost host) {
         startServices(host,
                 EpzComputeEnumerationPeriodicService.class,
-                PlacementCapacityUpdatePeriodicService.class);
+                PlacementCapacityUpdatePeriodicService.class,
+                EndpointHealthCheckPeriodicService.class);
     }
 }
