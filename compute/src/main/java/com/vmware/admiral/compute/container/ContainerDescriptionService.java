@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -411,11 +411,13 @@ public class ContainerDescriptionService extends StatefulService {
             }
 
             if (dockerHostAddress == null && hostComputeState.customProperties != null) {
-                dockerHostAddress = hostComputeState.customProperties.get(ComputeConstants.DOCKER_URI_PROP_NAME);
+                dockerHostAddress = hostComputeState.customProperties
+                        .get(ComputeConstants.DOCKER_URI_PROP_NAME);
             }
 
             if (dockerHostAddress == null && hostComputeState.customProperties != null) {
-                dockerHostAddress = hostComputeState.customProperties.get(ComputeConstants.HOST_URI_PROP_NAME);
+                dockerHostAddress = hostComputeState.customProperties
+                        .get(ComputeConstants.HOST_URI_PROP_NAME);
             }
 
             AssertUtil.assertNotNull(dockerHostAddress, "address");
@@ -431,12 +433,6 @@ public class ContainerDescriptionService extends StatefulService {
             hostComputeState.customProperties.putIfAbsent(ComputeConstants.HOST_URI_PROP_NAME,
                     hostUri.toString());
             return uri;
-        }
-
-        public static URI getHostUri(ComputeState computeState) {
-            URI dockerUri = getDockerHostUri(computeState);
-            return UriUtils.buildUri(
-                    dockerUri.getScheme(), dockerUri.getHost(), dockerUri.getPort(), null, null);
         }
 
         @Override
@@ -567,7 +563,7 @@ public class ContainerDescriptionService extends StatefulService {
 
         logFine("Performing maintenance for: %s", getUri());
 
-        new HealthChecker(getHost()).doHealthCheck(UriUtils.buildUri(getHost(), getSelfLink()));
+        new HealthChecker(getHost()).doHealthCheck(getSelfLink());
 
         post.complete();
     }
@@ -636,7 +632,7 @@ public class ContainerDescriptionService extends StatefulService {
         QueryUtil.addListValueClause(compositeQueryTask,
                 descriptionLinksItemField, Arrays.asList(getSelfLink()));
 
-        List<String> compositeDescriptions = new ArrayList<String>();
+        List<String> compositeDescriptions = new ArrayList<>();
         new ServiceDocumentQuery<CompositeDescription>(getHost(), CompositeDescription.class)
                 .query(compositeQueryTask, (r) -> {
                     if (r.hasException()) {
@@ -681,7 +677,7 @@ public class ContainerDescriptionService extends StatefulService {
                                         r.getDocumentSelfLink(), r.getException());
                             } else if (r.hasResult()) {
                                 ContainerDescription containerDesc = r.getResult();
-                                List<String> newLinksList = new ArrayList<String>();
+                                List<String> newLinksList = new ArrayList<>();
 
                                 for (int i = 0; i < containerDesc.links.length; i++) {
                                     if (!containerDesc.links[i].split(":")[0]
@@ -701,10 +697,10 @@ public class ContainerDescriptionService extends StatefulService {
                                         .setCompletion(
                                                 (o, ex) -> {
                                                     if (ex != null) {
-                                                        logSevere(
-                                                                "Failed to delete container-description link for %s - %s",
-                                                                containerDesc.documentSelfLink,
-                                                                ex);
+                                                        String s = "Failed to delete container-"
+                                                                + "description link for %s - %s";
+                                                        logSevere(s, containerDesc.documentSelfLink,
+                                                                Utils.toJson(ex));
                                                     }
                                                 }));
                             }
@@ -789,4 +785,5 @@ public class ContainerDescriptionService extends StatefulService {
 
         return template;
     }
+
 }

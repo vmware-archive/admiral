@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -25,6 +25,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -79,13 +80,15 @@ import com.vmware.xenon.common.Utils;
 /**
  * Task implementing the provision container request resource work flow.
  */
-public class ContainerAllocationTaskService
-        extends
-        AbstractTaskStatefulService<ContainerAllocationTaskService.ContainerAllocationTaskState, ContainerAllocationTaskService.ContainerAllocationTaskState.SubStage> {
+public class ContainerAllocationTaskService extends AbstractTaskStatefulService
+        <ContainerAllocationTaskService.ContainerAllocationTaskState,
+                ContainerAllocationTaskService.ContainerAllocationTaskState.SubStage> {
 
     public static final String DISPLAY_NAME = "Container Allocation";
-    public static final String HEALTH_CHECK_TIMEOUT_PARAM_NAME = "provision.container.health.check.timeout.ms";
-    public static final String HEALTH_CHECK_DELAY_PARAM_NAME = "provision.container.health.check.delay.ms";
+    public static final String HEALTH_CHECK_TIMEOUT_PARAM_NAME =
+            "provision.container.health.check.timeout.ms";
+    public static final String HEALTH_CHECK_DELAY_PARAM_NAME =
+            "provision.container.health.check.delay.ms";
 
     // cached container description
     private volatile ContainerDescription containerDescription;
@@ -93,9 +96,9 @@ public class ContainerAllocationTaskService
     private long healthCheckDelay;
     private long healthCheckTimeout;
 
-    public static class ContainerAllocationTaskState
-            extends
-            com.vmware.admiral.service.common.TaskServiceDocument<ContainerAllocationTaskState.SubStage> {
+    public static class ContainerAllocationTaskState extends
+            com.vmware.admiral.service.common.TaskServiceDocument<ContainerAllocationTaskState
+                    .SubStage> {
 
         /**
          * (Optional) Indicates that a given container linked to a ContainerDescription depends on
@@ -104,7 +107,7 @@ public class ContainerAllocationTaskService
          */
         public static final String FIELD_NAME_CONTEXT_POD_DEPENDENT = "__composition_depend_pod";
 
-        public static enum SubStage {
+        public enum SubStage {
             CREATED,
             CONTEXT_PREPARED,
             RESOURCES_NAMED,
@@ -138,7 +141,8 @@ public class ContainerAllocationTaskService
         public String groupResourcePlacementLink;
 
         /** (Required) Number of resources to provision. */
-        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, AUTO_MERGE_IF_NOT_NULL },
+                indexing = STORE_ONLY)
         public Long resourceCount;
 
         /** Set by a Task with the links of the provisioned resources. */
@@ -254,13 +258,16 @@ public class ContainerAllocationTaskService
             }
 
             if (state.resourceCount > state.resourceLinks.size()) {
-                throw new LocalizableValidationException("Resource count must be equal to number of resources during post allocation.",
+                throw new LocalizableValidationException("Resource count must be equal to number"
+                        + " of resources during post allocation.",
                         "request.container.allocation.resource.count");
             }
 
         } else {
-            if (state.groupResourcePlacementLink == null || state.groupResourcePlacementLink.isEmpty()) {
-                throw new LocalizableValidationException("'groupResourcePlacementLink' must not be empty",
+            if (state.groupResourcePlacementLink == null
+                    || state.groupResourcePlacementLink.isEmpty()) {
+                throw new LocalizableValidationException("'groupResourcePlacementLink' must not be "
+                        + "empty",
                         "request.container.allocation.group.empty");
             }
         }
@@ -312,7 +319,8 @@ public class ContainerAllocationTaskService
     private void proceedAfterHostSelection(ContainerAllocationTaskState state) {
         if (!state.postAllocation && state.hostSelections == null && state.resourceNames == null) {
             failTask(null, new LocalizableValidationException(
-                    "computeHostLink and resourceNames can't be null at this state", "request.container.allocation.host.missing"));
+                    "computeHostLink and resourceNames can't be null at this state",
+                    "request.container.allocation.host.missing"));
         } else if (state.postAllocation
                 || (state.hostSelections != null && state.resourceNames != null)) {
 
@@ -424,7 +432,8 @@ public class ContainerAllocationTaskService
     private void selectPlacementComputeHost(ContainerAllocationTaskState state,
             String resourcePoolLink) {
         if (!state.postAllocation && state.resourceNames == null || state.resourceNames.isEmpty()) {
-            failTask(null, new LocalizableValidationException("resource names expected at this stage.",
+            failTask(null, new LocalizableValidationException("resource names expected at"
+                    + " this stage.",
                     "request.container.allocation.resource-names.missing"));
             return;
         }
@@ -473,7 +482,8 @@ public class ContainerAllocationTaskService
                             .getBody(GroupResourcePlacementState.class);
                     if (placementState.resourcePoolLink == null) {
                         failTask(null, new LocalizableValidationException(
-                                "Placement state has no resourcePoolLink", "request.container.allocation.missing.resource-pool"));
+                                "Placement state has no resourcePoolLink",
+                                "request.container.allocation.missing.resource-pool"));
                         return;
                     }
                     callbackFunction.accept(placementState.resourcePoolLink);
@@ -586,7 +596,9 @@ public class ContainerAllocationTaskService
         if (taskCallback == null) {
             // create a counter subtask link first
             createCounterSubTaskCallback(state, state.resourceCount, !allocationRequest,
-                    !allocationRequest || state.postAllocation ? SubStage.WAITING_FOR_HEALTH_CHECK : SubStage.COMPLETED,
+                    !allocationRequest || state.postAllocation
+                            ? SubStage.WAITING_FOR_HEALTH_CHECK
+                            : SubStage.COMPLETED,
                     (serviceTask) -> provisionAllocatedContainers(state, serviceTask));
             return;
         }
@@ -617,7 +629,7 @@ public class ContainerAllocationTaskService
         AssertUtil.assertTrue(resourceNames.size() <= hostSelections.size(),
                 "There should be a selected host for each resource");
 
-        Map<String, HostSelection> resourceNameToHostSelection = new HashMap<String, HostSelection>();
+        Map<String, HostSelection> resourceNameToHostSelection = new HashMap<>();
         Iterator<String> rnIterator = resourceNames.iterator();
         Iterator<HostSelection> hsIterator = hostSelections.iterator();
         while (rnIterator.hasNext() && hsIterator.hasNext()) {
@@ -638,9 +650,9 @@ public class ContainerAllocationTaskService
             if (groupResourcePlacementState == null) {
                 getResourcePlacementState(
                         state,
-                        (resourcePlacementState) -> createContainerState(state, containerDesc, isFromTemplate,
-                                resourceName, resourcePlacementState,
-                                hostSelection, taskCallback));
+                        (resourcePlacementState) -> createContainerState(state, containerDesc,
+                                isFromTemplate, resourceName, resourcePlacementState, hostSelection,
+                                taskCallback));
                 return;
             }
 
@@ -795,7 +807,12 @@ public class ContainerAllocationTaskService
     }
 
     private void waitForHealthCheck(ContainerAllocationTaskState state) {
-        AtomicInteger expectedSuccessfullHealthCheckCount = new AtomicInteger(
+        if (this.containerDescription == null) {
+            getContainerDescription(state, result -> waitForHealthCheck(state));
+            return;
+        }
+
+        AtomicInteger expectedSuccessfulHealthCheckCount = new AtomicInteger(
                 state.resourceLinks.size());
         AtomicBoolean proceededToError = new AtomicBoolean(false);
 
@@ -825,19 +842,21 @@ public class ContainerAllocationTaskService
                     while (it.hasNext()) {
                         String resourceLink = it.next();
                         fetchContainerState(resourceLink, (cs) -> {
-                            doHealthCheck(state, cs, expectedSuccessfullHealthCheckCount, proceededToError, System.currentTimeMillis());
+                            doHealthCheck(state, cs, expectedSuccessfulHealthCheckCount,
+                                    proceededToError, System.currentTimeMillis());
                         });
                     }
                 });
     }
 
     private void doHealthCheck(ContainerAllocationTaskState state, ContainerState containerState,
-            AtomicInteger expectedSuccessfullHealthCheckCount, AtomicBoolean proceededToError, long startTime) {
+            AtomicInteger expectedSuccessfulHealthCheckCount, AtomicBoolean proceededToError,
+            long startTime) {
 
         if ((System.currentTimeMillis() - startTime) > this.healthCheckTimeout) {
             logWarning("Health check timeout exceeded.");
             if (this.containerDescription.healthConfig.continueProvisioningOnError) {
-                if (expectedSuccessfullHealthCheckCount.decrementAndGet() == 0) {
+                if (expectedSuccessfulHealthCheckCount.decrementAndGet() == 0) {
                     proceedTo(SubStage.COMPLETED);
                 }
 
@@ -862,16 +881,16 @@ public class ContainerAllocationTaskService
                 this.containerDescription.healthConfig, (containerStats) -> {
                     if (containerStats != null
                             && Boolean.TRUE.equals(containerStats.healthCheckSuccess)) {
-                        if (expectedSuccessfullHealthCheckCount.decrementAndGet() == 0) {
+                        if (expectedSuccessfulHealthCheckCount.decrementAndGet() == 0) {
                             proceedTo(SubStage.COMPLETED);
                             return;
                         }
-
                     } else {
+                        logInfo("Scheduling health check for: %s", containerState.documentSelfLink);
                         getHost().schedule(() -> {
-                            logInfo("Scheduling health check for: " + containerState.documentSelfLink);
                             doHealthCheck(state, containerState,
-                                    expectedSuccessfullHealthCheckCount, proceededToError, startTime);
+                                    expectedSuccessfulHealthCheckCount, proceededToError,
+                                    startTime);
                         }, this.healthCheckDelay, TimeUnit.MILLISECONDS);
                     }
                 });
@@ -929,9 +948,7 @@ public class ContainerAllocationTaskService
 
             List<String> newAliases = new ArrayList<>();
             if (config.aliases != null) {
-                for (String alias : config.aliases) {
-                    newAliases.add(alias);
-                }
+                Collections.addAll(newAliases, config.aliases);
             }
             newAliases.add(cd.name);
 
