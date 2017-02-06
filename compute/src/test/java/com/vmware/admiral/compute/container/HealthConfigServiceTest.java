@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -139,8 +139,7 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
         container = doPost(container, ContainerFactoryService.SELF_LINK);
 
         // Do maintenance
-        new HealthChecker(host)
-                .doHealthCheck(UriUtils.buildUri(host, containerDesc.documentSelfLink));
+        new HealthChecker(host).doHealthCheck(containerDesc.documentSelfLink);
         // expect the container to have changed status to degraded after maintenance - container url
         // is wrong
         final String containerLink = container.documentSelfLink;
@@ -164,8 +163,7 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
             return true;
         });
 
-        new HealthChecker(host)
-                .doHealthCheck(UriUtils.buildUri(host, containerDesc.documentSelfLink));
+        new HealthChecker(host).doHealthCheck(containerDesc.documentSelfLink);
 
         waitFor(() -> {
             ContainerStats containerStats = getContainerStats(containerLink);
@@ -205,8 +203,7 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
         container = doPost(container, ContainerFactoryService.SELF_LINK);
 
         // Do maintenance
-        new HealthChecker(host)
-                .doHealthCheck(UriUtils.buildUri(host, containerDesc.documentSelfLink));
+        new HealthChecker(host).doHealthCheck(containerDesc.documentSelfLink);
         // expect the container to have changed status to degraded after maintenance - container url
         // is wrong
         final String containerLink = container.documentSelfLink;
@@ -237,8 +234,7 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
         doOperation(patch, uri, false, Action.PATCH);
 
         try (ServerSocket serverSocket = new ServerSocket(8800)) {
-            new HealthChecker(host)
-                    .doHealthCheck(UriUtils.buildUri(host, containerDesc.documentSelfLink));
+            new HealthChecker(host).doHealthCheck(containerDesc.documentSelfLink);
 
             waitFor(() -> {
                 ContainerState containerWithError = getDocument(ContainerState.class,
@@ -276,8 +272,7 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
         container = doPost(container, ContainerFactoryService.SELF_LINK);
 
         // Do maintenance
-        new HealthChecker(host)
-                .doHealthCheck(UriUtils.buildUri(host, containerDesc.documentSelfLink));
+        new HealthChecker(host).doHealthCheck(containerDesc.documentSelfLink);
         // expect the container to have changed status to degraded after maintenance - container url
         // is wrong
         final String containerLink = container.documentSelfLink;
@@ -307,8 +302,7 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
                 MockDockerAdapterService.class)), dockerAdapterService);
         waitForServiceAvailability(MockDockerAdapterService.SELF_LINK);
 
-        new HealthChecker(host)
-                .doHealthCheck(UriUtils.buildUri(host, containerDesc.documentSelfLink));
+        new HealthChecker(host).doHealthCheck(containerDesc.documentSelfLink);
 
         waitFor(() -> {
             ContainerState containerWithError = getDocument(ContainerState.class, containerLink);
@@ -354,8 +348,7 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
 
         // Do maintenance
         host.log("Starting health check...");
-        new HealthChecker(host)
-                .doHealthCheck(UriUtils.buildUri(host, containerDesc.documentSelfLink));
+        new HealthChecker(host).doHealthCheck(containerDesc.documentSelfLink);
         host.log("Health check done. Waiting for updates...");
 
         final String containerLink = container.documentSelfLink;
@@ -369,8 +362,7 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
         });
 
         host.log("Second health check.");
-        new HealthChecker(host)
-                .doHealthCheck(UriUtils.buildUri(host, containerDesc.documentSelfLink));
+        new HealthChecker(host).doHealthCheck(containerDesc.documentSelfLink);
         waitFor(() -> {
             ContainerState healthyContainer = getDocument(ContainerState.class, containerLink);
 
