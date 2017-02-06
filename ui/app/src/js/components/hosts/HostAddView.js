@@ -148,7 +148,7 @@ var HostAddView = Vue.extend({
       return this.isVerifiedDockerHost || (this.model.isUpdate && this.isDockerHost);
     },
     showAutoConfigure: function() {
-      return this.isVerifiedDockerHost && !this.model.isUpdate;
+      return this.isDockerHost && !this.model.isUpdate;
     },
     showCustomProperties: function() {
       return this.showAllCommonInputs;
