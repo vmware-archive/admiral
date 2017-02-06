@@ -84,10 +84,6 @@ import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsSe
 
 public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
-    private static final String VMS_RESOURCE_POOL_ID = "vms-resource-pool";
-    private static final String RESOURCE_POOL_ID = "hosts-resource-pool";
-    private static final String PLACEMENT_ID = "host-placement";
-
     public static final String CONTAINER_DCP_TEST_LATEST_ID = "dcp-test:latest-id";
     public static final String CONTAINER_DCP_TEST_LATEST_IMAGE = "kitematic/hello-world-nginx";
     public static final String CONTAINER_DCP_TEST_LATEST_NAME = "docker-dcp-test";
@@ -132,7 +128,8 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
         triggerAndWaitForEndpointEnumeration(endpoint);
 
-        groupResourcePlacementState = createResourcePlacement(PLACEMENT_ID, endpointType,
+        groupResourcePlacementState = createResourcePlacement(getClass().getSimpleName(),
+                endpointType,
                 endpoint.resourcePoolLink,
                 documentLifeCycle);
 
@@ -304,7 +301,8 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
     protected ResourcePoolState createResourcePool(EndpointType endpointType,
             EndpointState endpoint, TestDocumentLifeCycle documentLifeCycle) throws Exception {
-        return createResourcePool(endpointType, endpoint, RESOURCE_POOL_ID, documentLifeCycle);
+        return createResourcePool(endpointType, endpoint, getClass().getSimpleName(),
+                documentLifeCycle);
     }
 
     protected ResourcePoolState createResourcePool(EndpointType endpointType,
@@ -342,7 +340,8 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
     private ResourcePoolState createResourcePoolOfVMs(EndpointType endpointType,
             TestDocumentLifeCycle documentLifeCycle) throws Exception {
-        return createResourcePool(endpointType, null, VMS_RESOURCE_POOL_ID, documentLifeCycle);
+        return createResourcePool(endpointType, null, "vms-" + getClass().getSimpleName(),
+                documentLifeCycle);
     }
 
     protected void createEnvironment(ComputeProfile computeProfile, NetworkProfile networkProfile,
