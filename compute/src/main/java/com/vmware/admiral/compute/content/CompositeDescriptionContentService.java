@@ -12,6 +12,7 @@
 package com.vmware.admiral.compute.content;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
+import static com.vmware.admiral.common.util.OperationUtil.isApplicationYamlContent;
 import static com.vmware.admiral.common.util.UriUtilsExtended.MEDIA_TYPE_APPLICATION_YAML;
 import static com.vmware.admiral.common.util.ValidationUtils.handleValidationException;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.assertContainersComponentsOnly;
@@ -228,8 +229,5 @@ public class CompositeDescriptionContentService extends StatelessService {
         return nestedState.sendRequest(this, Action.POST);
     }
 
-    private boolean isApplicationYamlContent(String contentType) {
-        return (contentType != null)
-                && MEDIA_TYPE_APPLICATION_YAML.equals(contentType.split(";")[0]);
-    }
+
 }
