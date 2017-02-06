@@ -13,6 +13,7 @@ package com.vmware.admiral.compute.container;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -34,6 +35,7 @@ import com.vmware.admiral.compute.container.HostVolumeListDataCollection.VolumeL
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState.PowerState;
 import com.vmware.admiral.service.test.MockDockerHostAdapterService;
 import com.vmware.admiral.service.test.MockDockerVolumeAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
@@ -135,6 +137,32 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
         assertEquals(containerVolumeCreated.id, containerVolumeGet.id);
         assertEquals(containerVolumeCreated.name, containerVolumeGet.name);
         assertEquals(containerVolumeCreated.documentSelfLink , containerVolumeGet.documentSelfLink);
+    }
+
+    @Test
+    public void testRemoveVolumesInRetiredState() throws Throwable {
+        // create a volume state but don't add it to the mock adapter
+        ContainerVolumeState volume = createVolume(null, COMPUTE_HOST_LINK);
+        assertNull(volume._healthFailureCount);
+
+        // 1st data collection
+        startAndWaitHostVolumeListDataCollection();
+
+        volume = getDocument(ContainerVolumeState.class, volume.documentSelfLink);
+        assertEquals(new Integer(1), volume._healthFailureCount);
+        assertEquals(PowerState.RETIRED, volume.powerState);
+
+        // 2nd data collection
+        startAndWaitHostVolumeListDataCollection();
+
+        volume = getDocument(ContainerVolumeState.class, volume.documentSelfLink);
+        assertEquals(new Integer(2), volume._healthFailureCount);
+        assertEquals(PowerState.RETIRED, volume.powerState);
+
+        // 3rd data collection
+        startAndWaitHostVolumeListDataCollection();
+        List<ContainerVolumeState> volumeStates = getVolumeStates();
+        assertEquals(0, volumeStates.size());
     }
 
     private void startAndWaitHostVolumeListDataCollection() throws Throwable {

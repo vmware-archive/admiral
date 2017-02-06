@@ -61,6 +61,8 @@ import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
  * Synchronize the ContainerVolumeStates with a list of volume names
  */
 public class HostVolumeListDataCollection extends StatefulService {
+    public static final Integer MAX_DATACOLLECTION_FAILURES = Integer.getInteger(
+            "com.vmware.admiral.compute.container.volume.max.datacollection.failures", 3);
 
     public static class HostVolumeListDataCollectionFactoryService extends FactoryService {
         public static final String SELF_LINK = ManagementUriParts.HOST_VOLUME_LIST_DATA_COLLECTION;
@@ -381,9 +383,34 @@ public class HostVolumeListDataCollection extends StatefulService {
     }
 
     private void handleMissingContainerVolume(ContainerVolumeState volumeState) {
+        Integer healthFailureCount = volumeState._healthFailureCount != null
+                ? Integer.valueOf(volumeState._healthFailureCount + 1)
+                : Integer.valueOf(1);
+
+        if (MAX_DATACOLLECTION_FAILURES.equals(healthFailureCount)) {
+            // clean up transient volume states (these point to volumes that are auto-created by
+            // docker upon container provisioning and are not not tracked by us; nevertheless, they
+            // are auto-discovered and later deleted by docker during container removal requests)
+
+            logInfo("Deleting volume with link [%s] after max failures to datacollect it reached.",
+                    volumeState.documentSelfLink);
+
+            Operation deleteOp = Operation.createDelete(this, volumeState.documentSelfLink)
+                    .setCompletion((o, e) -> {
+                        if (e != null) {
+                            logWarning("Failed to delete volume state with link [%s]: [%s]",
+                                    volumeState.documentSelfLink, Utils.toString(e));
+                        }
+                    });
+
+            sendRequest(deleteOp);
+            return;
+        }
+
         // patch volume status to RETIRED
         ContainerVolumeState patchVolumeState = new ContainerVolumeState();
         patchVolumeState.powerState = PowerState.RETIRED;
+        patchVolumeState._healthFailureCount = healthFailureCount;
         sendRequest(Operation
                 .createPatch(this, volumeState.documentSelfLink)
                 .setBody(patchVolumeState)

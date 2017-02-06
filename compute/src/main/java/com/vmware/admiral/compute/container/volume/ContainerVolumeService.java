@@ -145,6 +145,12 @@ public class ContainerVolumeService extends StatefulService {
         @PropertyOptions(indexing = { PropertyIndexingOption.EXPAND }, usage = {
                 PropertyUsageOption.OPTIONAL })
         public Map<String, String> status;
+
+        /** The number of failures to update this volume state by the data collection service. */
+        @Documentation(description = "The number of failures to update this volume state by the"
+                + " data collection service.")
+        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL, PropertyUsageOption.SERVICE_USE })
+        public Integer _healthFailureCount;
     }
 
     public ContainerVolumeService() {
