@@ -1202,9 +1202,7 @@ services.loadClosureDescriptionById = function(closureDescriptionId) {
 services.loadContainers = function(queryOptions) {
   var filter = buildContainersSearchQuery(queryOptions);
   var url = buildPaginationUrl(links.CONTAINERS, filter, true, 'created asc');
-  return get(url).then(function(result) {
-    return result;
-  });
+  return get(url);
 };
 
 services.loadContainersForCompositeComponent = function(compositeComponentId) {
@@ -1231,9 +1229,7 @@ services.loadCompositeComponents = function(queryOptions) {
   var filter = queryOptions ? buildContainersSearchQuery(queryOptions) : '';
   let url = buildPaginationUrl(links.COMPOSITE_COMPONENTS, filter, true,
       'documentUpdateTimeMicros asc');
-  return get(url).then(function(result) {
-    return result;
-  });
+  return get(url);
 };
 
 services.loadCompositeComponentsByLinks = function(documentSelfLinks) {
@@ -1255,19 +1251,19 @@ services.loadCompositeComponentsByLinks = function(documentSelfLinks) {
 services.loadContainerNetworks = function(queryOptions) {
   var filter = buildContainersSearchQuery(queryOptions);
   var url = buildPaginationUrl(links.CONTAINER_NETWORKS, filter, true);
-  return get(url).then(function(result) {
-    return result;
-  });
+  return get(url);
 };
 
 services.loadContainerVolumes = function(queryOptions) {
   var filter = buildContainersSearchQuery(queryOptions);
-
   var url = buildPaginationUrl(links.CONTAINER_VOLUMES, filter, true);
+  return get(url);
+};
 
-  return get(url).then(function(result) {
-    return result;
-  });
+services.loadKubernetesEntities = function(queryOptions) {
+  var filter = buildContainersSearchQuery(queryOptions);
+  var url = buildPaginationUrl(links.KUBERNETES_ENTITIES, filter, true);
+  return get(url);
 };
 
 services.loadExposedService = function(link) {
@@ -1439,6 +1435,14 @@ services.createVolume = function(volumeDescription, hostIds) {
       return services.createRequest(createdVolumeDescription.documentSelfLink,
         createdVolumeDescription.tenantLinks, null, VOLUME_TYPE,
         customProperties);
+    });
+};
+
+services.createKubernetesEntities = function(entitiesContent, group) {
+  return services.importContainerTemplate(entitiesContent).then(
+    function(compositeDescriptionSelfLink) {
+      return services.createRequest(compositeDescriptionSelfLink, null, group,
+                                  COMPOSITE_COMPONENT_TYPE);
     });
 };
 

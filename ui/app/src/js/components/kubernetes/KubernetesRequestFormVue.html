@@ -11,22 +11,20 @@
 
 <div class="templateImport">
   <div class="templateImport-header">
-    <div class="title">{{i18n("app.template.import.title")}}</div>
+    <div class="title">{{i18n("app.template.details.editKubernetes.createEntities.title")}}</div>
   </div>
   <div class="templateImport-properties">
     <div class="template-import-option">
-      <a class="btn btn-sm btn-secondary fileUpload" v-on:click="browseFile" v-bind:class="{'disabled': model.isImportingTemplate}">
+      <a class="btn btn-sm btn-secondary fileUpload" v-on:click="browseFile" v-bind:class="{'disabled': model.creating}">
         <span>{{i18n("app.template.import.loadButton")}}</span>
       </a>
       <input type="file" class="upload" v-on:change="onFileChange"/>
-      <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="right" v-tooltip="i18n('app.template.import.importTemplateHint')"></i>
+      <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="right" v-tooltip="i18n('app.template.details.editKubernetes.createEntities.hint')"></i>
     </div>
-    <textarea v-model="templateContent" class="template-input" v-bind:disabled="model.isImportingTemplate" :placeholder="i18n('app.template.import.contentPlaceholder')"></textarea>
-    <div class="templateImport-toolbar">
+    <textarea v-model="entitiesContent" class="template-input" v-bind:disabled="model.creating" :placeholder="i18n('app.template.details.editKubernetes.createEntities.placeholder')"></textarea>
     <button type="submit" class="btn btn-primary"
-                v-bind:class="{'disabled': !templateContent, 'loading': model.isImportingTemplate}"
-                v-on:click="importTemplate">{{i18n("app.template.import.importButton")}}<i class="fa fa-spinner fa-spin loader-inline"></i>
+                v-bind:class="{'disabled': disableCreatingButton, 'loading': model.creating}"
+                v-on:click="createEntities">{{i18n("app.template.details.editKubernetes.createEntities.button")}}<i class="fa fa-spinner fa-spin loader-inline"></i>
     </button>
-  </div>
   </div>
 </div>

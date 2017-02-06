@@ -415,6 +415,7 @@ let ContainersStore = Reflux.createStore({
     actions.ContainerActions,
     actions.NetworkActions,
     actions.VolumeActions,
+    actions.KubernetesActions,
     actions.RegistryActions,
     actions.ContainersContextToolbarActions
   ],
@@ -578,6 +579,10 @@ let ContainersStore = Reflux.createStore({
 
         case constants.RESOURCES.SEARCH_CATEGORY.CLOSURES:
           loadResourceFunction = services.loadClosures;
+          break;
+
+        case constants.RESOURCES.SEARCH_CATEGORY.KUBERNETES:
+          loadResourceFunction = services.loadKubernetesEntities;
           break;
 
         default:
@@ -757,6 +762,13 @@ let ContainersStore = Reflux.createStore({
     this.emitChange();
   },
 
+   onOpenCreateKubernetesEntities: function() {
+    this.setInData(['creatingResource'], {});
+    this.setInData(['listView', 'queryOptions', '$category'],
+                      constants.RESOURCES.SEARCH_CATEGORY.KUBERNETES);
+    this.emitChange();
+  },
+
   onCreateContainer: function(containerDescription, group) {
     services.createContainer(containerDescription, group).then((request) => {
       this.navigateContainersListViewAndOpenRequests(request);
@@ -780,6 +792,12 @@ let ContainersStore = Reflux.createStore({
       // show volumes view and open requests panel
       this.navigateContainersListViewAndOpenRequests(request);
 
+    }).catch(this.onGenericCreateError);
+  },
+
+  onCreateKubernetesEntities: function(entitiesContent, group) {
+    services.createKubernetesEntities(entitiesContent, group).then((request) => {
+      this.navigateContainersListViewAndOpenRequests(request);
     }).catch(this.onGenericCreateError);
   },
 

@@ -11,7 +11,7 @@
 
 import ContainerRequestFormVue from 'components/containers/ContainerRequestFormVue.html';
 import ContainerDefinitionForm from 'components/containers/ContainerDefinitionForm';
-import ResourceGroupsMixin from 'components/templates/ResourceGroupsMixin'; // eslint-disable-line
+import ResourceGroupsMixin from 'components/templates/ResourceGroupsMixin';
 import { TemplateActions, ContainerActions } from 'actions/Actions';
 import constants from 'core/constants';
 

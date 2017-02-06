@@ -22,6 +22,7 @@ import Tags from 'components/common/Tags';
 import { HostActions, HostContextToolbarActions } from 'actions/Actions';
 import constants from 'core/constants';
 import utils from 'core/utils';
+import ft from 'core/ft';
 import modal from 'core/modal';
 
 const placementZoneManageOptions = [{
@@ -130,10 +131,10 @@ var HostAddView = Vue.extend({
       return this.selectedHostType === this.model.verifiedHostModel.hostType;
     },
     isVchOptionEnabled: function() {
-      return utils.isVchHostOptionEnabled();
+      return ft.isVchHostOptionEnabled();
     },
     isKubernetesOptionEnabled: function() {
-      return utils.isKubernetesHostOptionEnabled();
+      return ft.isKubernetesHostOptionEnabled();
     },
     showAllCommonInputs: function() {
       return this.isHostModelVerified || this.model.isUpdate;

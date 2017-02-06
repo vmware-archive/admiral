@@ -27,8 +27,6 @@ var TemplateImporterView = Vue.extend({
     }
   },
   attached: function() {
-    $(this.$el).find('.fa-question-circle').tooltip({html: true});
-
     this.unwatchModel = this.$watch('model', (model) => {
       if (model.error) {
         this.$dispatch('container-form-alert',

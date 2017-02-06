@@ -42,7 +42,7 @@ var NetworkRequestForm = Vue.extend({
         var hosts = this.$refs.hostPicker.getHosts();
         var hostIds = hosts.map(h => utils.getDocumentId(h.documentSelfLink));
 
-        this.savingNetwork = true;
+        this.creatingNetwork = true;
         ContainerActions.createNetwork(network, hostIds);
       }
     }

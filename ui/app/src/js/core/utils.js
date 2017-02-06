@@ -26,8 +26,6 @@ const VERSION_REG_EX = /^(\*|\d+(\.\d+){0,2}(\.\*)?)/g;
 var isEmbedded = window.isEmbedded;
 var isSingleView = window.isSingleView;
 
-var isDocsAvailable = false;
-
 var byteUnits = ['Bytes', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
 
 var configurationProperties = null;
@@ -52,9 +50,7 @@ var utils = {
   getConfigurationPropertyBoolean: function(property) {
     return configurationProperties && configurationProperties[property] === 'true';
   },
-  setDocsAvailable: function(value) {
-    isDocsAvailable = value;
-  },
+
   existsConfigurationProperty: function(property) {
     return configurationProperties.hasOwnProperty(property);
   },
@@ -64,7 +60,8 @@ var utils = {
             || viewName === constants.VIEWS.RESOURCES.VIEWS.APPLICATIONS.name
             || viewName === constants.VIEWS.RESOURCES.VIEWS.NETWORKS.name
             || viewName === constants.VIEWS.RESOURCES.VIEWS.VOLUMES.name
-            || viewName === constants.VIEWS.RESOURCES.VIEWS.CLOSURES.name;
+            || viewName === constants.VIEWS.RESOURCES.VIEWS.CLOSURES.name
+            || viewName === constants.VIEWS.RESOURCES.VIEWS.KUBERNETES.name;
   },
 
   validate: function(model, constraints) {
@@ -179,10 +176,6 @@ var utils = {
   shouldHideCustomProperty: function(property) {
     return (property.name.substring(0, 2) === constants.PROPERTIES.VISIBILITY_HIDDEN_PREFIX ||
            property.value === null);
-  },
-
-  areClosuresAllowed: function() {
-    return this.getConfigurationPropertyBoolean('allow.closures') && !this.isApplicationEmbedded();
   },
 
   setIn: function(immutableObject, path, value) {
@@ -623,30 +616,6 @@ var utils = {
     var buildNumber = this.getBuildNumber();
     var match = buildNumber && buildNumber.match(VERSION_REG_EX);
     return match && match[0];
-  },
-
-  isContextAwareHelpEnabled: function() {
-   return this.getConfigurationPropertyBoolean('allow.ensemble.help');
-  },
-
-  isContextAwareHelpAvailable: function() {
-   return this.isContextAwareHelpEnabled() && isDocsAvailable;
-  },
-
-  isNimbusEnabled: function() {
-    return this.getConfigurationPropertyBoolean('allow.nimbus');
-  },
-
-  isExternalPhotonAdaptersEnabled: function() {
-    return this.getConfigurationPropertyBoolean('allow.external.photon.adapters');
-  },
-
-  isVchHostOptionEnabled: function() {
-    return this.getConfigurationPropertyBoolean('allow.ft.host-option.vch');
-  },
-
-  isKubernetesHostOptionEnabled: function() {
-    return this.getConfigurationPropertyBoolean('allow.ft.host-option.kubernetes');
   },
 
   isRequestRunning: function(request) {

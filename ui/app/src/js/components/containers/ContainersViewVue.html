@@ -44,6 +44,9 @@
           <a href="#/closures/new" class="btn btn-primary create-resource-btn" v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CLOSURES && areClosuresAllowed">
             <i class="fa fa-plus-circle"></i>{{i18n("app.resource.list.closure.create")}}
           </a>
+          <a href="#/kubernetes/new" class="btn btn-primary create-resource-btn" v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.KUBERNETES">
+            <i class="fa fa-plus-circle"></i>{{i18n("app.resource.list.kubernetes.create")}}
+          </a>
         </div>
         <div class="selected-context-small-holder" v-if="model.selectedItem">
           <div class="grid-item">
@@ -250,6 +253,19 @@
     <div class="content">
       <closure-request-form v-bind:model="model.creatingResource"
                             v-bind:use-resource-action="true"></closure-request-form>
+    </div>
+  </div>
+
+  <div class="mask" v-if="creatingKubernetes"></div>
+  <div class="create-kubernetes closable-view" v-if="creatingKubernetes" transition="slide-and-fade">
+    <alert alert-type="danger" v-bind:show-alert="hasVolumeCreateError"
+                               v-bind:alert-message="volumeCreateError"></alert>
+    <a class="close-button" v-on:click="goBack($event)">
+      <i class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span>
+    </a>
+
+    <div class="content">
+      <kubernetes-request-form v-bind:model="model.creatingResource"></kubernetes-request-form>
     </div>
   </div>
 

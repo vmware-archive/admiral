@@ -80,6 +80,10 @@ export var VolumeActions = Reflux.createActions([
   'volumeOperationCompleted', 'volumeOperationFailed'
 ]);
 
+export var KubernetesActions = Reflux.createActions([
+  'openCreateKubernetesEntities', 'createKubernetesEntities'
+]);
+
 export var EventLogActions = Reflux.createActions([
   'openEventLog', 'openEventLogNext', 'retrieveEventLogNotifications', 'selectEventLog',
   'closeEventLog', 'removeEventLog', 'clearEventLog'

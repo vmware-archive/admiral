@@ -27,6 +27,7 @@ import ResourceGroupsMixin from 'components/templates/ResourceGroupsMixin'; // e
 import GridHolderMixin from 'components/common/GridHolderMixin';
 import constants from 'core/constants';
 import utils from 'core/utils';
+import ft from 'core/ft';
 import exportHelper from 'components/templates/TemplateExportHelper';
 import {
   NavigationActions,
@@ -119,7 +120,7 @@ var TemplatesViewVueComponent = Vue.extend({
       return this.model.selectedItemDetails && this.model.selectedItemDetails.addClosureView;
     },
     areClosuresAllowed: function() {
-      return utils.areClosuresAllowed();
+      return ft.areClosuresAllowed();
     },
     isPartialResult: function() {
       return this.model.listView && this.model.listView.isPartialResult;

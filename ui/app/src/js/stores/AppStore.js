@@ -17,6 +17,7 @@ import * as actions from 'actions/Actions';
 import routes from 'core/routes';
 import constants from 'core/constants';
 import utils from 'core/utils';
+import ft from 'core/ft';
 import docs from 'core/docs';
 import services from 'core/services';
 import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
@@ -136,9 +137,9 @@ AppStore = Reflux.createStore({
       routes.initialize(true);
     });
 
-    if (utils.isContextAwareHelpEnabled()) {
+    if (ft.isContextAwareHelpEnabled()) {
       docs.checkIfAvailable(() => {
-        var isContextAwareHelpAvailable = utils.isContextAwareHelpAvailable();
+        var isContextAwareHelpAvailable = ft.isContextAwareHelpAvailable();
 
         if (this.data.centerView && this.data.centerView.name === constants.VIEWS.HOME.name) {
           this.setInData(['centerView', 'data', 'isContextAwareHelpAvailable'],
@@ -153,7 +154,7 @@ AppStore = Reflux.createStore({
 
   onOpenHome: function() {
     var firstLoad = !this.data.centerView;
-    var isContextAwareHelpAvailable = utils.isContextAwareHelpAvailable();
+    var isContextAwareHelpAvailable = ft.isContextAwareHelpAvailable();
     updateCenterViewIfNeeded.call(this, constants.VIEWS.HOME.name, {
       isContextAwareHelpAvailable: isContextAwareHelpAvailable
     }, true);

@@ -895,6 +895,8 @@ $main-list-view-right: 10px;
     @extend .font-mono;
     resize: vertical;
     min-height: 300px;
+    line-height: 16px;
+    font-size: 13px;
   }
 
   .template-import-option {
@@ -1171,6 +1173,8 @@ form.placement-inline-edit-properties {
       @extend .font-mono;
       resize: vertical;
       min-height: 300px;
+      line-height: 16px;
+      font-size: 13px;
     }
 
     .template-import-option {
@@ -1188,17 +1192,6 @@ form.placement-inline-edit-properties {
         margin-top: 7px;
         float: left;
       }
-    }
-  }
-
-  .templateImport-toolbar {
-    float: right;
-    margin-top: 10px;
-
-    button {
-      font-size: 18px;
-      padding-left: 20px;
-      padding-right: 20px;
     }
   }
 }
