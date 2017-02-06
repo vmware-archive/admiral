@@ -11,12 +11,14 @@
 
 package com.vmware.admiral.common.util;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.ser.FilterProvider;
@@ -26,6 +28,7 @@ import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.Utils;
 
 /**
  * YAML mapping functions
@@ -62,5 +65,15 @@ public class YamlMapper {
                 .map(Field::getName)
                 .filter(ServiceDocument::isBuiltInDocumentField)
                 .collect(Collectors.toSet());
+    }
+
+    public static String fromYamlToJson(String yaml) throws IOException {
+        Object obj = objectMapper().readValue(yaml, Object.class);
+        return Utils.toJson(obj);
+    }
+
+    public static String fromJsonToYaml(String json) throws IOException {
+        JsonNode jsonNode = objectMapper().readTree(json);
+        return objectMapper().writeValueAsString(jsonNode);
     }
 }

@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.common.util;
 
+import static com.vmware.admiral.common.util.UriUtilsExtended.MEDIA_TYPE_APPLICATION_YAML;
+
 import java.net.URI;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -83,4 +85,16 @@ public class OperationUtil {
         );
     }
 
+    public static boolean isApplicationYamlContent(String contentType) {
+        return (contentType != null)
+                && MEDIA_TYPE_APPLICATION_YAML.equals(contentType.split(";")[0]);
+    }
+
+    public static boolean isApplicationYamlAccpetHeader(Operation op) {
+        String acceptHeader = op.getRequestHeader("Accept");
+        if (acceptHeader == null || acceptHeader.trim().equals("")) {
+            return false;
+        }
+        return MEDIA_TYPE_APPLICATION_YAML.equals(acceptHeader);
+    }
 }

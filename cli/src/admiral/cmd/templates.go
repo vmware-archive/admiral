@@ -121,20 +121,28 @@ var templateImportCmd = &cobra.Command{
 	},
 }
 
+var importKubernetes bool
+
 func initTemplateImport() {
+	templateImportCmd.Flags().BoolVar(&importKubernetes, "k8s", false, "Import k8s object.")
+	templateImportCmd.Flags().MarkHidden("k8s")
 	TemplatesRootCmd.AddCommand(templateImportCmd)
 }
 
 func RunTemplateImport(args []string) (string, error) {
 	var (
-		filePath string
-		ok       bool
+		filePath, id string
+		ok           bool
+		err          error
 	)
 	if filePath, ok = ValidateArgsCount(args); !ok {
 		return "", MissingPathToFileError
 	}
-	id, err := templates.Import(filePath)
-
+	if importKubernetes {
+		id, err = templates.ImportKubernetes(filePath)
+	} else {
+		id, err = templates.Import(filePath)
+	}
 	if err != nil {
 		return "", err
 	} else {

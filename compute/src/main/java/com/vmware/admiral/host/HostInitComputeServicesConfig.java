@@ -60,6 +60,8 @@ import com.vmware.admiral.compute.env.EnvironmentMappingService;
 import com.vmware.admiral.compute.env.EnvironmentService;
 import com.vmware.admiral.compute.env.NetworkProfileService;
 import com.vmware.admiral.compute.env.StorageProfileService;
+import com.vmware.admiral.compute.kubernetes.KubernetesDescriptionContentService;
+import com.vmware.admiral.compute.kubernetes.KubernetesDescriptionService;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.network.ComputeNetworkService;
@@ -94,7 +96,8 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 RegistryConfigCertificateDistributionService.class,
                 ComputeInitialBootService.class,
                 ElasticPlacementZoneConfigurationService.class,
-                EnvironmentMappingService.class);
+                EnvironmentMappingService.class,
+                KubernetesDescriptionContentService.class);
 
         startServiceFactories(host, CaSigningCertService.class,
                 ContainerDescriptionService.class,
@@ -115,7 +118,8 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ContainerVolumeDescriptionService.class,
                 ElasticPlacementZoneService.class,
                 EpzComputeEnumerationTaskService.class,
-                PlacementCapacityUpdateTaskService.class);
+                PlacementCapacityUpdateTaskService.class,
+                KubernetesDescriptionService.class);
 
         if (startMockContainerHostService) {
             startServices(host, MockContainerHostService.class);

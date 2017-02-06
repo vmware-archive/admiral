@@ -231,6 +231,7 @@ public abstract class BaseTestCase {
 
     /**
      * Returns maintenance interval millis to be set to the host
+     *
      * @return milliseconds
      */
     protected long getMaintenanceIntervalMillis() {
@@ -362,7 +363,7 @@ public abstract class BaseTestCase {
             assertTrue(childTemplate.documentDescription != null);
             assertTrue(childTemplate.documentDescription.propertyDescriptions != null
                     && childTemplate.documentDescription.propertyDescriptions
-                            .size() > 0);
+                    .size() > 0);
 
             if (!TaskServiceDocument.class.isAssignableFrom(childTemplate.getClass())) {
                 Field[] allFields = childTemplate.getClass().getDeclaredFields();
@@ -542,7 +543,7 @@ public abstract class BaseTestCase {
 
     /**
      * Waits until the given task succeeds and returns its final state.
-     *
+     * <p>
      * Note: will stop polling if the task transitions to any final state.
      */
     protected <T extends TaskServiceDocument<E>, E extends Enum<E>> T waitForTaskSuccess(
@@ -555,7 +556,7 @@ public abstract class BaseTestCase {
 
     /**
      * Waits until the given task fails and returns its final state.
-     *
+     * <p>
      * Note: will stop polling if the task transitions to any final state.
      */
     protected <T extends TaskServiceDocument<E>, E extends Enum<E>> T waitForTaskError(
@@ -727,7 +728,7 @@ public abstract class BaseTestCase {
      * Tries to retrieve the given document and creates it (through a POST request), if not found.
      * Assuming the {@code documentSelfLink} in the given document does not contain the full path
      * but only the relative path from the given {@code factoryLink}.
-     *
+     * <p>
      * Returns the document state as retrieved from the server.
      */
     protected <T extends ServiceDocument> T getOrCreateDocument(T inState, String factoryLink)
@@ -887,17 +888,40 @@ public abstract class BaseTestCase {
         List<String> result = new LinkedList<>();
         new ServiceDocumentQuery<>(
                 host, type).query(query,
-                        (r) -> {
-                            if (r.hasException()) {
-                                ctx.failIteration(r.getException());
-                                return;
-                            }
-                            if (r.hasResult()) {
-                                result.add(r.getDocumentSelfLink());
-                                return;
-                            }
+                    (r) -> {
+                        if (r.hasException()) {
+                            ctx.failIteration(r.getException());
+                            return;
+                        }
+                        if (r.hasResult()) {
+                            result.add(r.getDocumentSelfLink());
+                            return;
+                        }
+                        ctx.completeIteration();
+                    });
+        ctx.await();
+
+        return result;
+    }
+
+    public List<String> getDocumentLinksOfType(Class<? extends ServiceDocument> type)
+            throws Throwable {
+        TestContext ctx = testCreate(1);
+        QueryTask query = QueryUtil.buildQuery(type, true);
+
+        List<String> result = new LinkedList<>();
+        new ServiceDocumentQuery<>(
+                host, type).query(query,
+                    (r) -> {
+                        if (r.hasException()) {
+                            ctx.failIteration(r.getException());
+                            return;
+                        } else if (r.hasResult()) {
+                            result.add(r.getDocumentSelfLink());
+                        } else {
                             ctx.completeIteration();
-                        });
+                        }
+                    });
         ctx.await();
 
         return result;
@@ -939,7 +963,8 @@ public abstract class BaseTestCase {
         field.set(instance, newValue);
     }
 
-    protected void validateLocalizableException(LocalizableExceptionHandler handler, String expectation)
+    protected void validateLocalizableException(LocalizableExceptionHandler handler,
+            String expectation)
             throws Throwable {
         try {
             handler.call();
@@ -952,7 +977,7 @@ public abstract class BaseTestCase {
     protected void waitForInitialBootServiceToBeSelfStopped(String bootServiceSelfLink)
             throws Throwable {
         waitFor("Failed waiting for " + bootServiceSelfLink
-                + " to self stop itself after all instances created.",
+                        + " to self stop itself after all instances created.",
                 () -> {
                     TestContext ctx = testCreate(1);
                     URI uri = UriUtils.buildUri(host, bootServiceSelfLink);

@@ -352,6 +352,24 @@ func Export(id, dirF, format string) (string, error) {
 	return fullId, nil
 }
 
+func ImportKubernetes(dirF string) (string, error) {
+	importFile, err := ioutil.ReadFile(dirF)
+
+	if err != nil {
+		return "", err
+	}
+
+	url := config.URL + "/resources/kubernetes-templates"
+
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(importFile))
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
+	}
+
+	return string(respBody), nil
+}
+
 //Function to verify if file can be created.
 //Returns the file and result of verification
 func verifyFile(dirF string) (*os.File, error) {
