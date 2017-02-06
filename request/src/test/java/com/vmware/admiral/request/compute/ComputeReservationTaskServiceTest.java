@@ -14,6 +14,7 @@ package com.vmware.admiral.request.compute;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 
@@ -26,10 +27,14 @@ import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupR
 import com.vmware.admiral.request.compute.ComputeReservationTaskService.ComputeReservationTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
+import com.vmware.photon.controller.model.Constraint;
+import com.vmware.photon.controller.model.Constraint.Condition;
+import com.vmware.photon.controller.model.Constraint.Condition.Enforcement;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.TagService;
 import com.vmware.photon.controller.model.resources.TagService.TagState;
+import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 
 public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
 
@@ -285,9 +290,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         addForDeletion(groupPlacementState);
 
         ComputeDescription descPatch = new ComputeDescription();
-        descPatch.customProperties = new HashMap<>();
-        descPatch.customProperties.put(ComputeConstants.CUSTOM_PROP_PROVISIONING_REQUIREMENTS,
-                "[\"!cap:pci\"]");
+        addConstraintToComputeDesc(descPatch, "cap", "pci", true, true);
         doPatch(descPatch, hostDesc.documentSelfLink);
 
         ComputeReservationTaskState task = new ComputeReservationTaskState();
@@ -322,9 +325,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         doPatch(rpPatch, computeResourcePool.documentSelfLink);
 
         ComputeDescription descPatch = new ComputeDescription();
-        descPatch.customProperties = new HashMap<>();
-        descPatch.customProperties.put(ComputeConstants.CUSTOM_PROP_PROVISIONING_REQUIREMENTS,
-                "[\"cap:pci\"]");
+        addConstraintToComputeDesc(descPatch, "cap", "pci", true, false);
         doPatch(descPatch, hostDesc.documentSelfLink);
 
         ComputeReservationTaskState task = new ComputeReservationTaskState();
@@ -348,9 +349,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         addForDeletion(groupPlacementState);
 
         ComputeDescription descPatch = new ComputeDescription();
-        descPatch.customProperties = new HashMap<>();
-        descPatch.customProperties.put(ComputeConstants.CUSTOM_PROP_PROVISIONING_REQUIREMENTS,
-                "[\"cap:pci\"]");
+        addConstraintToComputeDesc(descPatch, "cap", "pci", true, false);
         doPatch(descPatch, hostDesc.documentSelfLink);
 
         ComputeReservationTaskState task = new ComputeReservationTaskState();
@@ -374,9 +373,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         addForDeletion(groupPlacementState);
 
         ComputeDescription descPatch = new ComputeDescription();
-        descPatch.customProperties = new HashMap<>();
-        descPatch.customProperties.put(ComputeConstants.CUSTOM_PROP_PROVISIONING_REQUIREMENTS,
-                "[\"cap:pci:soft\"]");
+        addConstraintToComputeDesc(descPatch, "cap", "pci", false, false);
         doPatch(descPatch, hostDesc.documentSelfLink);
 
         ComputeReservationTaskState task = new ComputeReservationTaskState();
@@ -389,5 +386,15 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         assertNotNull(task);
 
         task = waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
+    }
+
+    private static void addConstraintToComputeDesc(ComputeDescription computeDesc, String tagKey,
+            String tagValue, boolean isHard, boolean isAnti) {
+        Constraint constraint = new Constraint();
+        constraint.conditions = Arrays.asList(
+                Condition.forTag(tagKey, tagValue, isHard ? Enforcement.HARD : Enforcement.SOFT,
+                        isAnti ? Occurance.MUST_NOT_OCCUR : Occurance.MUST_OCCUR));
+        computeDesc.constraints = new HashMap<>();
+        computeDesc.constraints.put(ComputeConstants.COMPUTE_PLACEMENT_CONSTRAINT_KEY, constraint);
     }
 }

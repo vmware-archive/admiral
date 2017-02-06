@@ -33,7 +33,6 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
@@ -42,7 +41,6 @@ import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.ResourcePlacementReservationRequest;
-import com.vmware.admiral.request.allocation.filter.AffinityConstraint;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
 import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService.ComputeReservationTaskState.SubStage;
@@ -54,6 +52,8 @@ import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.ComputeProperties;
+import com.vmware.photon.controller.model.Constraint;
+import com.vmware.photon.controller.model.Constraint.Condition;
 import com.vmware.photon.controller.model.adapterapi.EndpointConfigRequest;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
@@ -467,9 +467,11 @@ public class ComputeReservationTaskService
         }
 
         // check if requirements are stated in the compute description
-        String requirementsString = getProp(computeDesc.customProperties,
-                ComputeConstants.CUSTOM_PROP_PROVISIONING_REQUIREMENTS);
-        if (requirementsString == null) {
+        Constraint placementConstraint = computeDesc.constraints != null
+                ? computeDesc.constraints.get(ComputeConstants.COMPUTE_PLACEMENT_CONSTRAINT_KEY)
+                : null;
+        if (placementConstraint == null || placementConstraint.conditions == null
+                || placementConstraint.conditions.isEmpty()) {
             proceedTo(isGlobal(state) ? SubStage.SELECTED_GLOBAL : SubStage.SELECTED, s -> {
                 s.resourcePoolsPerGroupPlacementLinks = placements.stream()
                         .sorted((g1, g2) -> g1.priority - g2.priority)
@@ -480,17 +482,16 @@ public class ComputeReservationTaskService
             return;
         }
 
-        // parse requirements and retrieve the tag links from the affinity constraints
-        @SuppressWarnings("unchecked")
-        List<String> affinitiesAsString = Utils.fromJson(requirementsString, List.class);
-        Map<AffinityConstraint, String> tagLinkByConstraint = new HashMap<>();
-        for (String affinityAsString : affinitiesAsString) {
-            AffinityConstraint constraint = AffinityConstraint.fromString(affinityAsString);
-            String tagLink = getTagLinkForConstraint(constraint, computeDesc.tenantLinks);
-            tagLinkByConstraint.put(constraint, tagLink);
+        // retrieve the tag links from constraint conditions
+        Map<Condition, String> tagLinkByCondition = new HashMap<>();
+        for (Condition condition : placementConstraint.conditions) {
+            String tagLink = getTagLinkForCondition(condition, computeDesc.tenantLinks);
+            if (tagLink != null) {
+                tagLinkByCondition.put(condition, tagLink);
+            }
         }
 
-        // retrieve resource pool instances in order to check which ones satisfy the reqs
+        // retrieve resource pool instances in order to check which ones satisfy the constraint
         Map<String, ResourcePoolState> resourcePoolsByLink = new HashMap<>();
         List<Operation> getOperations = placements.stream()
                 .map(gp -> Operation
@@ -515,14 +516,14 @@ public class ComputeReservationTaskService
             proceedTo(isGlobal(state) ? SubStage.SELECTED_GLOBAL : SubStage.SELECTED, s -> {
                 s.resourcePoolsPerGroupPlacementLinks = placements.stream()
                         .filter(gp -> checkRpSatisfyHardConstraints(
-                                resourcePoolsByLink.get(gp.resourcePoolLink), tagLinkByConstraint))
+                                resourcePoolsByLink.get(gp.resourcePoolLink), tagLinkByCondition))
                         .sorted((gp1, gp2) -> {
                             int softCount1 = getNumberOfSatisfiedSoftConstraints(
                                     resourcePoolsByLink.get(gp1.resourcePoolLink),
-                                    tagLinkByConstraint);
+                                    tagLinkByCondition);
                             int softCount2 = getNumberOfSatisfiedSoftConstraints(
                                     resourcePoolsByLink.get(gp2.resourcePoolLink),
-                                    tagLinkByConstraint);
+                                    tagLinkByCondition);
                             return softCount1 != softCount2 ? softCount1 - softCount2
                                     : gp1.priority - gp2.priority;
                         }).collect(Collectors.toMap(gp -> gp.documentSelfLink,
@@ -532,9 +533,14 @@ public class ComputeReservationTaskService
         }).sendWith(getHost());
     }
 
-    private static String getTagLinkForConstraint(AffinityConstraint constraint,
+    private static String getTagLinkForCondition(Condition condition,
             List<String> tenantLinks) {
-        String[] tagParts = constraint.name.split(":");
+        if (!Condition.Type.TAG.equals(condition.type) || condition.expression == null
+                || condition.expression.propertyName == null) {
+            return null;
+        }
+
+        String[] tagParts = condition.expression.propertyName.split(":");
 
         TagState tag = new TagState();
         tag.key = tagParts[0];
@@ -545,19 +551,21 @@ public class ComputeReservationTaskService
     }
 
     private static boolean checkRpSatisfyHardConstraints(ResourcePoolState rp,
-            Map<AffinityConstraint, String> tagLinkByConstraint) {
-        return tagLinkByConstraint.entrySet().stream()
-                .filter(e -> e.getKey().isHard())
+            Map<Condition, String> tagLinkByCondition) {
+        return tagLinkByCondition.entrySet().stream()
+                .filter(e -> Condition.Enforcement.HARD.equals(e.getKey().enforcement))
                 .allMatch(e -> (rp != null && rp.tagLinks != null
-                        && rp.tagLinks.contains(e.getValue())) == !e.getKey().antiAffinity);
+                        && rp.tagLinks.contains(e.getValue())) ==
+                                !Occurance.MUST_NOT_OCCUR.equals(e.getKey().occurrence));
     }
 
     private static int getNumberOfSatisfiedSoftConstraints(ResourcePoolState rp,
-            Map<AffinityConstraint, String> tagLinkByConstraint) {
-        return (int)tagLinkByConstraint.entrySet().stream()
-                .filter(e -> e.getKey().isSoft())
+            Map<Condition, String> tagLinkByCondition) {
+        return (int)tagLinkByCondition.entrySet().stream()
+                .filter(e -> Condition.Enforcement.SOFT.equals(e.getKey().enforcement))
                 .filter(e -> (rp != null && rp.tagLinks != null
-                        && rp.tagLinks.contains(e.getValue())) == !e.getKey().antiAffinity)
+                        && rp.tagLinks.contains(e.getValue())) ==
+                                !Occurance.MUST_NOT_OCCUR.equals(e.getKey().occurrence))
                 .count();
     }
 
