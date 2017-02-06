@@ -55,6 +55,7 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeService.Contai
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.compute.content.TemplateComputeDescription;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
+import com.vmware.admiral.compute.endpoint.EndpointHealthCheckTaskService;
 import com.vmware.admiral.compute.env.ComputeProfileService;
 import com.vmware.admiral.compute.env.EnvironmentMappingService;
 import com.vmware.admiral.compute.env.EnvironmentService;
@@ -119,7 +120,8 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ElasticPlacementZoneService.class,
                 EpzComputeEnumerationTaskService.class,
                 PlacementCapacityUpdateTaskService.class,
-                KubernetesDescriptionService.class);
+                KubernetesDescriptionService.class,
+                EndpointHealthCheckTaskService.class);
 
         if (startMockContainerHostService) {
             startServices(host, MockContainerHostService.class);

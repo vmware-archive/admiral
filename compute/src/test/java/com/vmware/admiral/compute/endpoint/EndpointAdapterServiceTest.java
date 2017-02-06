@@ -17,8 +17,6 @@ import static org.junit.Assert.assertNotNull;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -34,14 +32,11 @@ import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.EndpointService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
-import com.vmware.photon.controller.model.tasks.EndpointAllocationTaskService;
 import com.vmware.photon.controller.model.tasks.EndpointAllocationTaskService.EndpointAllocationTaskState;
 import com.vmware.photon.controller.model.tasks.ScheduledTaskService;
 import com.vmware.photon.controller.model.tasks.ScheduledTaskService.ScheduledTaskState;
-import com.vmware.photon.controller.model.tasks.TaskOption;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
-import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.TestContext;
@@ -103,7 +98,8 @@ public class EndpointAdapterServiceTest extends ComputeBaseTest {
         TestContext ctx = testCreate(1);
         AtomicReference<ServiceDocumentQueryResult> result = new AtomicReference<>();
         URI uri = UriUtils
-                .buildExpandLinksQueryUri(UriUtils.buildUri(host, EndpointAdapterService.SELF_LINK));
+                .buildExpandLinksQueryUri(
+                        UriUtils.buildUri(host, EndpointAdapterService.SELF_LINK));
 
         Operation list = Operation.createGet(uri);
         list.setCompletion((o, e) -> {
@@ -244,29 +240,6 @@ public class EndpointAdapterServiceTest extends ComputeBaseTest {
                 endpointAllocationTask.endpointState.documentSelfLink));
 
         documentLinksForDeletion.add(endpointAllocationTask.endpointState.documentSelfLink);
-    }
-
-    private EndpointAllocationTaskState allocateEndpoint(EndpointState endpoint) throws Throwable {
-        EndpointAllocationTaskState state = new EndpointAllocationTaskState();
-        state.endpointState = endpoint;
-        state.options = EnumSet.of(TaskOption.IS_MOCK);
-        state.taskInfo = new TaskState();
-        state.taskInfo.isDirect = true;
-
-        EndpointAllocationTaskState result = doPost(state,
-                EndpointAllocationTaskService.FACTORY_LINK);
-        return result;
-    }
-
-    private EndpointState createEndpoint(String name) {
-        EndpointState endpoint = new EndpointState();
-        endpoint.endpointType = "aws";
-        endpoint.name = name;
-        endpoint.endpointProperties = new HashMap<>();
-        endpoint.endpointProperties.put("privateKey", "aws.access.key");
-        endpoint.endpointProperties.put("privateKeyId", "aws.secret.key");
-        endpoint.endpointProperties.put("regionId", "us-east-1");
-        return endpoint;
     }
 
 }

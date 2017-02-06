@@ -142,6 +142,10 @@ public interface ManagementUriParts {
     String REQUEST_PROVISION_EXPOSE_SERVICE_TASKS = REQUEST + "/expose-service-processing-tasks";
     String REQUEST_CALLBACK_HANDLER_TASKS = REQUEST + "/callback-handler/";
     String REQUEST_CONTAINER_PORTS_ALLOCATION_TASKS = REQUEST + "/container-ports-allocation-tasks";
+    String REQUEST_ENDPOINT_HEALTHCHECK_TASKS = REQUEST + "/endpoint-healthcheck-tasks";
+    String ENDPOINT_PERIODIC_HEALTHCHECK = REQUEST + "/endpoint-periodic-healthcheck";
+
+
 
     String CONFIGURE_HOST = REQUEST + "/configure-host/";
 

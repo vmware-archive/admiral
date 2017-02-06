@@ -128,6 +128,11 @@ public class SubscriptionManager<T extends ServiceDocument> implements Closeable
      * @return the subscriptionLink for the subscription created.
      */
     public String start(Consumer<SubscriptionNotification<T>> notificationHandler) {
+        return start(notificationHandler, false);
+    }
+
+    public String start(Consumer<SubscriptionNotification<T>> notificationHandler,
+            boolean replayState) {
         if (!subscribeForNotifications) {
             documentUpdateTimeMicros = Utils.getNowMicrosUtc();
             schedulePolling(notificationHandler);
@@ -191,7 +196,6 @@ public class SubscriptionManager<T extends ServiceDocument> implements Closeable
                     Utils.toString(e));
         }
 
-        boolean replayState = false;
         boolean usePublicUri = false;
         ServiceSubscriber sr = ServiceSubscriber.create(replayState).setUsePublicUri(usePublicUri);
         host.startSubscriptionService(subscribe, notificationTarget, sr);
