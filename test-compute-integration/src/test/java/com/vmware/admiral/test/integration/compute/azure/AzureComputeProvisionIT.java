@@ -23,7 +23,6 @@ import com.vmware.photon.controller.model.resources.EndpointService.EndpointStat
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
-//@Ignore("We have to modify first the CI jobs to pass the Azure accessKey,secret,subscriptionId and tenant")
 public class AzureComputeProvisionIT extends BaseComputeProvisionIT {
 
     private static final String SUBSCRIPTION_PROP = "test.azure.subscription.id";
