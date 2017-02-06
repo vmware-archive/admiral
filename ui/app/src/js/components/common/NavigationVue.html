@@ -43,10 +43,15 @@
     <img class="nav-item-image" src="image-assets/resource-icons/volume.png">
     <span>{{i18n("app.navbar.volumes")}}</span>
   </a>
-  <a v-bind:class="{'active': currentView === constants.VIEWS.RESOURCES.VIEWS.CLOSURES.name && areClosuresAllowed(), 'hide': isCollapsed(constants.VIEWS.RESOURCES) || !areClosuresAllowed()}"
+  <a v-if="areClosuresAllowed()" v-bind:class="{'active': currentView === constants.VIEWS.RESOURCES.VIEWS.CLOSURES.name, 'hide': isCollapsed(constants.VIEWS.RESOURCES)}"
      class="nav-item inner closures" href="#/closures">
     <img class="nav-item-image" src="image-assets/resource-icons/task.png">
     <span>{{i18n("app.navbar.closures")}}</span>
+  </a>
+  <a v-if="isKubernetesEnabled()" v-bind:class="{'active': currentView === constants.VIEWS.RESOURCES.VIEWS.KUBERNETES.name, 'hide': isCollapsed(constants.VIEWS.RESOURCES)}"
+     class="nav-item inner kubernetes" href="#/kubernetes">
+    <img class="nav-item-image" src="image-assets/resource-icons/kubernetes.png">
+    <span>{{i18n("app.navbar.kubernetes")}}</span>
   </a>
   </template>
   <template v-if="app === 'compute'">

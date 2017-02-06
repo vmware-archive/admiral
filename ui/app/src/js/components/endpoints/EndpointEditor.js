@@ -18,7 +18,7 @@ import NimbusEndpointEditor from 'components/endpoints/nimbus/EndpointEditor'; /
 import VsphereEndpointEditor from 'components/endpoints/vsphere/EndpointEditor'; //eslint-disable-line
 import EndpointEditorVue from 'components/endpoints/EndpointEditorVue.html';
 import { EndpointsActions } from 'actions/Actions';
-import utils from 'core/utils';
+import ft from 'core/ft';
 import services from 'core/services';
 
 const OOTB_TYPES = [
@@ -88,7 +88,7 @@ var getSupportedEditors = function() {
     'azure-endpoint-editor',
     'vsphere-endpoint-editor'
   ];
-  if (utils.isNimbusEnabled()) {
+  if (ft.isNimbusEnabled()) {
     supportedEditors.push('nimbus-endpoint-editor');
   }
   if (externalAdapters) {
@@ -100,7 +100,7 @@ var getSupportedEditors = function() {
 
 var getSupportedTypes = function() {
   let supportedTypes = OOTB_TYPES.slice();
-  if (utils.isNimbusEnabled()) {
+  if (ft.isNimbusEnabled()) {
     supportedTypes.push({
       id: 'nimbus',
       name: 'Nimbus',
@@ -132,7 +132,7 @@ export default Vue.component('endpoint-editor', {
     let supportedTypes = getSupportedTypes();
 
     if (!externalAdapters) {
-      if (utils.isExternalPhotonAdaptersEnabled()) {
+      if (ft.isExternalPhotonAdaptersEnabled()) {
         var loading = {
           id: 'loading',
           name: 'Loading',

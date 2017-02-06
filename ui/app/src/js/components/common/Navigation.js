@@ -10,9 +10,9 @@
  */
 
 import NavigationVue from 'components/common/NavigationVue.html';
-import constants from 'core/constants';//eslint-disable-line
-import computeConstants from 'core/computeConstants';//eslint-disable-line
-import utils from 'core/utils';//eslint-disable-line
+import constants from 'core/constants';
+import computeConstants from 'core/computeConstants';
+import ft from 'core/ft';
 
 var Navigation = Vue.extend({
   template: NavigationVue,
@@ -97,7 +97,10 @@ var Navigation = Vue.extend({
       return !this.isExpanded(item);
     },
     areClosuresAllowed: function() {
-      return utils.areClosuresAllowed();
+      return ft.areClosuresAllowed();
+    },
+    isKubernetesEnabled: function() {
+      return ft.isKubernetesHostOptionEnabled();
     }
   }
 });

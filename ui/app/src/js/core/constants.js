@@ -58,6 +58,9 @@ var constants = Immutable({
         },
         CLOSURES_DESC: {
           name: 'closures_desc'
+        },
+        KUBERNETES: {
+          name: 'kubernetes'
         }
       }
     }
@@ -109,7 +112,8 @@ var constants = Immutable({
       APPLICATIONS: 'applications',
       NETWORKS: 'networks',
       VOLUMES: 'volumes',
-      CLOSURES: 'closures'
+      CLOSURES: 'closures',
+      KUBERNETES: 'kubernetes'
     },
     NETWORKS: {
       OPERATION: {

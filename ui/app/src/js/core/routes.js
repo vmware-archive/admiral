@@ -92,6 +92,14 @@ crossroads.addRoute('/volumes:?query:', function(query) {
   actions.ContainerActions.openContainers(query, true);
 });
 
+crossroads.addRoute('/kubernetes:?query:', function(query) {
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.KUBERNETES.name);
+
+  query = query || {};
+  query.$category = 'kubernetes';
+  actions.ContainerActions.openContainers(query, true);
+});
+
 crossroads.addRoute('/closures', function() {
   actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.CLOSURES.name);
   actions.ContainerActions.openContainers({
@@ -176,6 +184,14 @@ crossroads.addRoute('/volumes/new', function() {
     '$category': 'volumes'
   }, true);
   actions.VolumeActions.openCreateVolume();
+});
+
+crossroads.addRoute('/kubernetes/new', function() {
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.KUBERNETES.name);
+  actions.ContainerActions.openContainers({
+    '$category': 'kubernetes'
+  }, true);
+  actions.KubernetesActions.openCreateKubernetesEntities();
 });
 
 crossroads.addRoute('containers/composite/{compositeComponentId*}' +

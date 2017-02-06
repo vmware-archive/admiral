@@ -24,6 +24,7 @@
       "networks": "Networks",
       "volumes": "Volumes",
       "closures": "Closures",
+      "kubernetes": "Kubernetes",
       "eventlog": "Event Log",
       "placementZones": "Placement Zones",
       "environments": "Environments",
@@ -337,6 +338,16 @@
           "createTitle": "Create Volume",
           "customProperties": "Custom properties"
         },
+        "editKubernetes": {
+          "newTitle": "Add Kubernetes",
+          "editTitle": "Edit Kubernetes",
+          "createEntities": {
+            "title": "Create Kubernetes Entities",
+            "button": "Create",
+            "hint": "Provision Kubernetes entities from YAML definitions by loading a file or manually enter its content. Supports multiple definitions, separated by \"---\", e.g. Deployment/Service pair.",
+            "placeholder": "Enter YAML of Kubernetes definitions... "
+          }
+        },
         "network": {
           "drag": "Drag to attach container to this network",
           "drop": "Drop to attach container to this network"
@@ -610,6 +621,9 @@
         "closure": {
           "create": "Create Closure"
         },
+        "kubernetes": {
+          "create": "Create"
+        },
         "volume": {
           "create": "Create Volume",
           "connectedDateLabel": "Connected since",
@@ -633,13 +647,16 @@
           "applications": "Applications",
           "networks": "Networks",
           "volumes": "Volumes",
-          "closures": "Closures"
+          "closures": "Closures",
+          "kubernetes": "Kubernetes"
         },
         "searchPlaceholder": {
           "containers": "Search for containers",
           "applications": "Search for applications",
           "networks": "Search for networks",
-          "closures": "Search for closures"
+          "closures": "Search for closures",
+          "volumes": "Search for volumes",
+          "kubernetes": "Search for Kubernetes entities"
         },
         "searchCategory": {
           "networks": "Networks"

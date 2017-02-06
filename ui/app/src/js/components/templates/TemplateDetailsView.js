@@ -29,6 +29,7 @@ import TemplateNewItemMenu from 'components/templates/TemplateNewItemMenu'; //es
 import exportHelper from 'components/templates/TemplateExportHelper';
 import { TemplateActions } from 'actions/Actions';
 import utils from 'core/utils';
+import ft from 'core/ft';
 import constants from 'core/constants';
 
 var TemplateDetailsView = Vue.extend({
@@ -81,7 +82,7 @@ var TemplateDetailsView = Vue.extend({
       return activeItemData && activeItemData.contextView && activeItemData.contextView.expanded;
     },
     areClosuresAllowed: function() {
-      return utils.areClosuresAllowed();
+      return ft.areClosuresAllowed();
     }
   },
   events: {

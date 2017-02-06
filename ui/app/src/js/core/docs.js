@@ -10,6 +10,7 @@
  */
 
 import utils from 'core/utils';
+import ft from 'core/ft';
 
 var docs = {};
 
@@ -157,7 +158,7 @@ docs.release = function() {
 docs.checkIfAvailable = function(callback) {
   $.ajax(ENSEMBLE_URL).done((data, textStatus, jqXHR) => {
     if (jqXHR.status === 200) {
-      utils.setDocsAvailable(true);
+      ft.setDocsAvailable(true);
     }
     callback();
   }).fail(() => {
@@ -165,7 +166,7 @@ docs.checkIfAvailable = function(callback) {
   });
 };
 
-if (utils.isContextAwareHelpEnabled()) {
+if (ft.isContextAwareHelpEnabled()) {
   retrieveTokensFromStorage();
 }
 

@@ -33,7 +33,7 @@
           <span>{{i18n("app.machine.edit.loadButton")}}</span>
         </a>
         <input type="file" class="upload" v-on:change="onFileChange"></input>
-        <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="right" :title="i18n('app.machine.edit.importTemplateHint')"></i>
+        <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="right" v-tooltip="i18n('app.machine.edit.importTemplateHint')"></i>
       </div>
 
       <textarea v-model="templateContent" class="template-input" v-bind:disabled="model.isImportingTemplate" :placeholder="i18n('app.machine.edit.importPlaceholder')"></textarea>

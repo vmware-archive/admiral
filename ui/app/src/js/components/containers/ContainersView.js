@@ -24,14 +24,16 @@ import CompositeContainerDetails from 'components/containers/composite/Composite
 import CompositeClosuresDetails from 'components/containers/closure/CompositeClosuresDetails';//eslint-disable-line
 import RequestsList from 'components/requests/RequestsList';//eslint-disable-line
 import EventLogList from 'components/eventlog/EventLogList';//eslint-disable-line
-import ClosureRequestForm from 'components/closures/ClosureRequestForm'; // eslint-disable-line
-import ContainerRequestForm from 'components/containers/ContainerRequestForm'; // eslint-disable-line
-import NetworkRequestForm from 'components/networks/NetworkRequestForm'; // eslint-disable-line
-import VolumeRequestForm from 'components/volumes/VolumeRequestForm'; // eslint-disable-line
+import ClosureRequestForm from 'components/closures/ClosureRequestForm';
+import ContainerRequestForm from 'components/containers/ContainerRequestForm';
+import NetworkRequestForm from 'components/networks/NetworkRequestForm';
+import VolumeRequestForm from 'components/volumes/VolumeRequestForm';
+import KubernetesRequestForm from 'components/kubernetes/KubernetesRequestForm';
 import VueAdapter from 'components/common/VueAdapter';
 import GridHolderMixin from 'components/common/GridHolderMixin';
 import constants from 'core/constants';
 import utils from 'core/utils';
+import ft from 'core/ft';
 import { NavigationActions, RequestsActions, NotificationsActions,
           ContainerActions, ContainersContextToolbarActions
            } from 'actions/Actions';
@@ -55,25 +57,16 @@ var ContainersViewVueComponent = Vue.extend({
       return this.model.listView.items && this.model.listView.items.length > 0;
     },
     titleSearch: function() {
-      switch (this.selectedCategory) {
-        case constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS:
-          return i18n.t('app.resource.list.titleSearch.applications');
-        case constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS:
-          return i18n.t('app.resource.list.titleSearch.containers');
-        case constants.RESOURCES.SEARCH_CATEGORY.NETWORKS:
-          return i18n.t('app.resource.list.titleSearch.networks');
-        case constants.RESOURCES.SEARCH_CATEGORY.VOLUMES:
-          return i18n.t('app.resource.list.titleSearch.volumes');
-        case constants.RESOURCES.SEARCH_CATEGORY.CLOSURES:
-          return i18n.t('app.resource.list.titleSearch.closures');
-      }
+      return i18n.t('app.resource.list.titleSearch.' + this.selectedCategory);
     },
     placeholderByCategoryMap: function() {
       return {
         'containers': i18n.t('app.resource.list.searchPlaceholder.containers'),
         'applications': i18n.t('app.resource.list.searchPlaceholder.applications'),
         'networks': i18n.t('app.resource.list.searchPlaceholder.networks'),
-        'closures': i18n.t('app.resource.list.searchPlaceholder.closures')
+        'closures': i18n.t('app.resource.list.searchPlaceholder.closures'),
+        'volumes': i18n.t('app.resource.list.searchPlaceholder.volumes'),
+        'kubernetes': i18n.t('app.resource.list.searchPlaceholder.kubernetes')
       };
     },
     hasContainerDetailsError: function() {
@@ -151,6 +144,10 @@ var ContainersViewVueComponent = Vue.extend({
       return this.model.creatingResource &&
         this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.VOLUMES;
     },
+    creatingKubernetes: function() {
+      return this.model.creatingResource &&
+        this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.KUBERNETES;
+    },
     searchSuggestions: function() {
       return constants.CONTAINERS.SEARCH_SUGGESTIONS;
     },
@@ -159,7 +156,7 @@ var ContainersViewVueComponent = Vue.extend({
         this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CLOSURES;
     },
     areClosuresAllowed: function() {
-      return utils.areClosuresAllowed();
+      return ft.areClosuresAllowed();
     }
   },
   data: function() {
@@ -551,6 +548,13 @@ var ContainersViewVueComponent = Vue.extend({
         this.performDeleteBatchOperation();
       }
     }
+  },
+  components: {
+    containerRequestForm: ContainerRequestForm,
+    networkRequestForm: NetworkRequestForm,
+    volumeRequestForm: VolumeRequestForm,
+    closureRequestForm: ClosureRequestForm,
+    kubernetesRequestForm: KubernetesRequestForm
   }
 });
 
