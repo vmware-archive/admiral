@@ -901,15 +901,19 @@ public class ComputeAllocationTaskService
             NetworkInterfaceState nic = new NetworkInterfaceState();
             nic.id = UUID.randomUUID().toString();
             nic.documentSelfLink = nic.id;
-            nic.customProperties = nid.customProperties;
-            nic.securityGroupLinks = nid.securityGroupLinks;
-            nic.groupLinks = nid.groupLinks;
             nic.name = nid.name;
-            nic.networkInterfaceDescriptionLink = nid.documentSelfLink;
+            nic.deviceIndex = nid.deviceIndex;
+            nic.address = nid.address;
             nic.networkLink = nid.networkLink;
             nic.subnetLink = sl;
+            nic.networkInterfaceDescriptionLink = nid.documentSelfLink;
+            nic.securityGroupLinks = nid.securityGroupLinks;
+            nic.groupLinks = nid.groupLinks;
             nic.tagLinks = nid.tagLinks;
             nic.tenantLinks = state.tenantLinks;
+            nic.endpointLink = state.endpointLink;
+            nic.customProperties = nid.customProperties;
+
             return DeferredResult.completed(nic);
         });
         return n;
