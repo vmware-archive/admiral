@@ -25,7 +25,7 @@ export default Vue.component('nimbus-endpoint-editor', {
         @change="onPrivateKeyChange">
       </password-input>
       <text-input
-        :disabled="model.documentSelfLink"
+        :disabled="!!model.documentSelfLink"
         :label="i18n('app.endpoint.edit.regionIdLabel')"
         :required="true"
         :value="regionId"
@@ -48,27 +48,31 @@ export default Vue.component('nimbus-endpoint-editor', {
       userEmail: properties.privateKeyId
     };
   },
+  attached() {
+    this.dispatchChange();
+  },
   methods: {
     onPrivateKeyIdChange(privateKeyId) {
       this.privateKeyId = privateKeyId;
-      this.dispatchChangeIfNeeded();
+      this.dispatchChange();
     },
     onPrivateKeyChange(privateKey) {
       this.privateKey = privateKey;
-      this.dispatchChangeIfNeeded();
+      this.dispatchChange();
     },
     onRegionIdChange(regionId) {
       this.regionId = regionId;
-      this.dispatchChangeIfNeeded();
+      this.dispatchChange();
     },
-    dispatchChangeIfNeeded() {
-      if (this.privateKeyId && this.privateKey && this.regionId) {
-        this.$dispatch('change', {
+    dispatchChange() {
+      this.$dispatch('change', {
+        properties: {
           privateKeyId: this.privateKeyId,
           privateKey: this.privateKey,
           regionId: this.regionId
-        });
-      }
+        },
+        valid: this.privateKeyId && this.privateKey && this.regionId
+      }, this);
     }
   }
 });

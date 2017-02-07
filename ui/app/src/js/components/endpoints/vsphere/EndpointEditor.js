@@ -64,39 +64,50 @@ export default Vue.component('vsphere-endpoint-editor', {
       regionIdLoading: false
     };
   },
+  attached() {
+    this.dispatchChange();
+  },
   methods: {
     onHostNameChange(hostName) {
       this.hostName = hostName;
-      this.dispatchChangeIfNeeded();
+      this.regionId = null;
+      this.regionIdValues = [];
+      this.dispatchChange();
     },
     onPrivateKeyIdChange(privateKeyId) {
       this.privateKeyId = privateKeyId;
-      this.dispatchChangeIfNeeded();
+      this.regionId = null;
+      this.regionIdValues = [];
+      this.dispatchChange();
     },
     onPrivateKeyChange(privateKey) {
       this.privateKey = privateKey;
-      this.dispatchChangeIfNeeded();
+      this.regionId = null;
+      this.regionIdValues = [];
+      this.dispatchChange();
     },
     onRegionIdChange(regionIdObject) {
       this.regionId = regionIdObject && regionIdObject.id;
       this.dispatchChange();
     },
     dispatchChange() {
-      this.$dispatch('change', {
-        hostName: this.hostName,
-        privateKeyId: this.privateKeyId,
-        privateKey: this.privateKey,
-        regionId: this.regionId
-      });
-    },
-    dispatchChangeIfNeeded() {
       if (this.hostName && this.privateKeyId && this.privateKey) {
-        if (this.regionIdValues.length) {
-          this.dispatchChange();
-        } else {
+        if (!this.regionIdValues.length) {
           this.searchRegionIds();
         }
+      } else {
+        this.regionId = null;
+        this.regionIdValues = [];
       }
+      this.$dispatch('change', {
+        properties: {
+          hostName: this.hostName,
+          privateKeyId: this.privateKeyId,
+          privateKey: this.privateKey,
+          regionId: this.regionId
+        },
+        valid: this.hostName && this.privateKeyId && this.privateKey && this.regionId
+      }, this);
     },
     searchRegionIds() {
       let {hostName, privateKeyId, privateKey} = this;
@@ -111,7 +122,7 @@ export default Vue.component('vsphere-endpoint-editor', {
               privateKey !== this.privateKey) {
             this.searchRegionIds();
           } else {
-            this.$dispatch('error', utils.getValidationErrors(e));
+            this.$dispatch('error', utils.getValidationErrors(e), this);
           }
         });
       }

@@ -37,7 +37,8 @@
         v-if="endpointType === supportedTypes[index].id"
         :is="editor"
         :model="model.item"
-        v-on:change="onPropertiesChange">
+        v-on:change="onEditorChange"
+        v-on:error="onEditorError">
       </div>
     </section>
   </form>
