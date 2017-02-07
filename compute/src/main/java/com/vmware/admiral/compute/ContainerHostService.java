@@ -72,10 +72,16 @@ public class ContainerHostService extends StatelessService {
     public static final String INCORRECT_PLACEMENT_ZONE_TYPE_MESSAGE_FORMAT = "Incorrect placement "
             + "zone type. Expected '%s' but was '%s'";
     public static final String CONTAINER_HOST_ALREADY_EXISTS_MESSAGE = "Container host already exists";
-    public static final String CONTAINER_HOST_IS_NOT_VCH_MESSAGE = "Host is not a VCH";
+    public static final String CONTAINER_HOST_IS_NOT_VCH_MESSAGE = "Host type is not VCH";
     public static final String PLACEMENT_ZONE_NOT_EMPTY_MESSAGE = "Placement zone is not empty";
     public static final String PLACEMENT_ZONE_CONTAINS_SCHEDULERS_MESSAGE = "Placement zone is not empty "
-            + "or does not contain only docker hosts";
+            + "or does not contain only Docker hosts";
+
+    public static final String CONTAINER_HOST_ALREADY_EXISTS_MESSAGE_CODE = "compute.host.already.exists";
+    public static final String CONTAINER_HOST_IS_NOT_VCH_MESSAGE_CODE = "compute.host.type.not.vch";
+    public static final String INCORRECT_PLACEMENT_ZONE_TYPE_MESSAGE_CODE = "compute.placement-zone.type.incorrect";
+    public static final String PLACEMENT_ZONE_NOT_EMPTY_MESSAGE_CODE = "compute.placement-zone.not.empty";
+    public static final String PLACEMENT_ZONE_CONTAINS_SCHEDULERS_MESSAGE_CODE = "compute.placement-zone.contains.schedulers";
 
     public static final String DOCKER_COMPUTE_DESC_ID = "docker-host-compute-desc-id";
     public static final String DOCKER_COMPUTE_DESC_LINK = UriUtils.buildUriPath(
@@ -172,7 +178,8 @@ public class ContainerHostService extends StatelessService {
     @Override
     public void handlePut(Operation op) {
         if (!op.hasBody()) {
-            op.fail(new IllegalArgumentException("ContainerHostSpec body is required"));
+            op.fail(new LocalizableValidationException("ContainerHostSpec body is required",
+                    "compute.host.spec.is.required"));
             return;
         }
 
@@ -214,7 +221,8 @@ public class ContainerHostService extends StatelessService {
                                 } else if (r.hasResult()) {
                                     found.set(true);
                                     op.fail(new LocalizableValidationException(
-                                            CONTAINER_HOST_ALREADY_EXISTS_MESSAGE, "compute.host.already.exists"));
+                                            CONTAINER_HOST_ALREADY_EXISTS_MESSAGE,
+                                            CONTAINER_HOST_ALREADY_EXISTS_MESSAGE_CODE));
                                 } else if (!found.get()) {
                                     createHost(hostSpec, op);
                                 }
@@ -326,7 +334,9 @@ public class ContainerHostService extends StatelessService {
         case KUBERNETES:
             return KubernetesHostConstants.KUBERNETES_COMPUTE_DESC_LINK;
         default:
-            throw new IllegalArgumentException("Unknown type " + type);
+            throw new LocalizableValidationException(String.format(
+                    ContainerHostUtil.CONTAINER_HOST_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT, type),
+                    ContainerHostUtil.CONTAINER_HOST_TYPE_NOT_SUPPORTED_MESSAGE_CODE, type);
         }
     }
 
@@ -339,7 +349,9 @@ public class ContainerHostService extends StatelessService {
         case KUBERNETES:
             return UriUtils.buildUri(getHost(), ManagementUriParts.ADAPTER_KUBERNETES_HOST);
         default:
-            throw new IllegalArgumentException("Unknown type " + type);
+            throw new LocalizableValidationException(String.format(
+                    ContainerHostUtil.CONTAINER_HOST_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT, type),
+                    ContainerHostUtil.CONTAINER_HOST_TYPE_NOT_SUPPORTED_MESSAGE_CODE, type);
         }
     }
 
@@ -359,7 +371,7 @@ public class ContainerHostService extends StatelessService {
         ContainerHostType hostType;
         try {
             hostType = ContainerHostUtil.getDeclaredContainerHostType(hostSpec.hostState);
-        } catch (IllegalArgumentException ex) {
+        } catch (LocalizableValidationException ex) {
             logWarning(ex.getMessage());
             op.fail(ex);
             return;
@@ -379,7 +391,8 @@ public class ContainerHostService extends StatelessService {
             String error = String.format(
                     ContainerHostUtil.CONTAINER_HOST_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT,
                     hostType.toString());
-            op.fail(new IllegalArgumentException(error));
+            op.fail(new LocalizableValidationException(error,
+                    ContainerHostUtil.CONTAINER_HOST_TYPE_NOT_SUPPORTED_MESSAGE_CODE, hostType));
             break;
         }
     }
@@ -395,8 +408,9 @@ public class ContainerHostService extends StatelessService {
                             completeOperationSuccess(op);
                         } else {
                             logInfo("VIC host verification failed for %s", computeAddress);
-                            op.fail(new IllegalArgumentException(
-                                    CONTAINER_HOST_IS_NOT_VCH_MESSAGE));
+                            op.fail(new LocalizableValidationException(
+                                    CONTAINER_HOST_IS_NOT_VCH_MESSAGE,
+                                    CONTAINER_HOST_IS_NOT_VCH_MESSAGE_CODE));
                         }
                     });
         });
@@ -404,8 +418,16 @@ public class ContainerHostService extends StatelessService {
     }
 
     protected void storeHost(ContainerHostSpec hostSpec, Operation op) {
-        ContainerHostType hostType = ContainerHostUtil
-                .getDeclaredContainerHostType(hostSpec.hostState);
+        ContainerHostType hostType;
+        try {
+            hostType = ContainerHostUtil
+                    .getDeclaredContainerHostType(hostSpec.hostState);
+        } catch (LocalizableValidationException ex) {
+            logWarning(ex.getMessage());
+            op.fail(ex);
+            return;
+        }
+
         switch (hostType) {
         case DOCKER:
             verifyPlacementZoneType(hostSpec, op, PlacementZoneType.DOCKER, () -> {
@@ -433,7 +455,8 @@ public class ContainerHostService extends StatelessService {
             String error = String.format(
                     ContainerHostUtil.CONTAINER_HOST_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT,
                     hostType.toString());
-            op.fail(new IllegalArgumentException(error));
+            op.fail(new LocalizableValidationException(error,
+                    ContainerHostUtil.CONTAINER_HOST_TYPE_NOT_SUPPORTED_MESSAGE_CODE, hostType));
             break;
         }
     }
@@ -457,7 +480,9 @@ public class ContainerHostService extends StatelessService {
                 if (ContainerHostUtil.isVicHost(computeState)) {
                     doStoreHost(hostSpec, op);
                 } else {
-                    op.fail(new IllegalArgumentException(CONTAINER_HOST_IS_NOT_VCH_MESSAGE));
+                    op.fail(new LocalizableValidationException(
+                            CONTAINER_HOST_IS_NOT_VCH_MESSAGE,
+                            CONTAINER_HOST_IS_NOT_VCH_MESSAGE_CODE));
                 }
             });
         }
@@ -570,10 +595,12 @@ public class ContainerHostService extends StatelessService {
                         } else {
                             String error = String.format(
                                     INCORRECT_PLACEMENT_ZONE_TYPE_MESSAGE_FORMAT,
-                                    expectedType.toString(), zoneType.toString());
-                            op.fail(new IllegalArgumentException(error));
+                                    expectedType, zoneType);
+                            op.fail(new LocalizableValidationException(error,
+                                    INCORRECT_PLACEMENT_ZONE_TYPE_MESSAGE_CODE,
+                                    expectedType, zoneType));
                         }
-                    } catch (IllegalArgumentException ex) {
+                    } catch (LocalizableValidationException ex) {
                         op.fail(ex);
                     }
                 }).sendWith(getHost());
@@ -598,7 +625,8 @@ public class ContainerHostService extends StatelessService {
                         op.fail(r.getException());
                     } else if (r.getCount() > 0) {
                         emptyZone.set(false);
-                        op.fail(new IllegalArgumentException(PLACEMENT_ZONE_NOT_EMPTY_MESSAGE));
+                        op.fail(new LocalizableValidationException(PLACEMENT_ZONE_NOT_EMPTY_MESSAGE,
+                                PLACEMENT_ZONE_NOT_EMPTY_MESSAGE_CODE));
                     } else {
                         if (emptyZone.get()) {
                             successCallback.run();
@@ -627,8 +655,9 @@ public class ContainerHostService extends StatelessService {
                     } else if (r.hasResult()) {
                         if (ContainerHostUtil.isTreatedLikeSchedulerHost(r.getResult())) {
                             schedulerFound.set(true);
-                            op.fail(new IllegalArgumentException(
-                                    PLACEMENT_ZONE_CONTAINS_SCHEDULERS_MESSAGE));
+                            op.fail(new LocalizableValidationException(
+                                    PLACEMENT_ZONE_CONTAINS_SCHEDULERS_MESSAGE,
+                                    PLACEMENT_ZONE_CONTAINS_SCHEDULERS_MESSAGE_CODE));
                         }
                     } else {
                         if (!schedulerFound.get()) {

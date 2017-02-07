@@ -241,7 +241,7 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
             Assert.fail(
                     "PUT should fail to update the type of a used "
                     + "scheduler placement zone to a docker zone");
-        } catch (IllegalStateException ex) {
+        } catch (LocalizableValidationException ex) {
             verifyExceptionMessage(ex.getMessage(),
                     ResourcePoolOperationProcessingChain.SCHEDULER_HOSTS_IN_PLACEMENT_ZONE_MESSAGE);
         }
@@ -264,7 +264,7 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
             Assert.fail(
                     "PUT should fail to update the type of a used "
                     + "docker placement zone to a scheduler zone");
-        } catch (IllegalStateException ex) {
+        } catch (LocalizableValidationException ex) {
             verifyExceptionMessage(ex.getMessage(),
                     ResourcePoolOperationProcessingChain.NON_SCHEDULER_HOST_IN_PLACEMENT_ZONE_MESSAGE);
         }
@@ -288,7 +288,7 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
             Assert.fail(
                     "PATCH should fail to update the type of a used "
                     + "docker placement zone to a scheduler zone");
-        } catch (IllegalStateException ex) {
+        } catch (LocalizableValidationException ex) {
             verifyExceptionMessage(ex.getMessage(),
                     ResourcePoolOperationProcessingChain.NON_SCHEDULER_HOST_IN_PLACEMENT_ZONE_MESSAGE);
         }
@@ -312,7 +312,7 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
             Assert.fail(
                     "PATCH should fail to update the type of a used "
                     + "scheduler placement zone to a docker zone");
-        } catch (IllegalStateException ex) {
+        } catch (LocalizableValidationException ex) {
             verifyExceptionMessage(ex.getMessage(),
                     ResourcePoolOperationProcessingChain.SCHEDULER_HOSTS_IN_PLACEMENT_ZONE_MESSAGE);
         }
@@ -340,7 +340,7 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
             Assert.fail(
                     "PATCH should fail to update the type of a docker placement "
                     + "zone to a scheduler zone when the placement zone is in use by multiple scheduler hosts");
-        } catch (IllegalStateException ex) {
+        } catch (LocalizableValidationException ex) {
             verifyExceptionMessage(ex.getMessage(),
                     ResourcePoolOperationProcessingChain.MULTIPLE_HOSTS_IN_PLACEMENT_ZONE_MESSAGE);
         }

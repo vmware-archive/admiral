@@ -43,12 +43,17 @@ import com.vmware.xenon.services.common.ServiceUriPaths;
 public class ResourcePoolOperationProcessingChain extends OperationProcessingChain {
 
     public static final String PLACEMENT_ZONE_IN_USE_MESSAGE = "Placement zone is in use";
-    public static final String MULTIPLE_HOSTS_IN_PLACEMENT_ZONE_MESSAGE = "Cannot conver to "
-            + "scheduler placement zone: placement zone contains more than one host";
-    public static final String NON_SCHEDULER_HOST_IN_PLACEMENT_ZONE_MESSAGE = "Cannot conver to "
-            + "docker scheduler zone: placement zone contains a non-scheduler host";
-    public static final String SCHEDULER_HOSTS_IN_PLACEMENT_ZONE_MESSAGE = "Cannot conver to "
-            + "docker placement zone: placement zone contains scheduler host(s)";
+    public static final String MULTIPLE_HOSTS_IN_PLACEMENT_ZONE_MESSAGE = "Cannot convert to "
+            + "scheduler placement zone: placement zone contains multiple hosts";
+    public static final String NON_SCHEDULER_HOST_IN_PLACEMENT_ZONE_MESSAGE = "Cannot convert to "
+            + "Docker placement zone: placement zone contains a non-scheduler host";
+    public static final String SCHEDULER_HOSTS_IN_PLACEMENT_ZONE_MESSAGE = "Cannot convert to "
+            + "Docker placement zone: placement zone contains scheduler host(s)";
+
+    public static final String PLACEMENT_ZONE_IN_USE_MESSAGE_CODE = "host.resource-pool.in.use";
+    public static final String MULTIPLE_HOSTS_IN_PLACEMENT_ZONE_MESSAGE_CODE = "host.placement-zone.contains.multiple.hosts";
+    public static final String NON_SCHEDULER_HOST_IN_PLACEMENT_ZONE_MESSAGE_CODE = "host.placement-zone.contains.non-scheduler.host";
+    public static final String SCHEDULER_HOSTS_IN_PLACEMENT_ZONE_MESSAGE_CODE = "host.placement-zone.contains.scheduler.hosts";
 
     public ResourcePoolOperationProcessingChain(FactoryService service) {
         super(service);
@@ -110,7 +115,9 @@ public class ResourcePoolOperationProcessingChain extends OperationProcessingCha
                     } else {
                         ServiceDocumentQueryResult result = o.getBody(QueryTask.class).results;
                         if (result.documentCount != 0) {
-                            op.fail(new LocalizableValidationException(PLACEMENT_ZONE_IN_USE_MESSAGE, "host.resource-pool.in.use"));
+                            op.fail(new LocalizableValidationException(
+                                    PLACEMENT_ZONE_IN_USE_MESSAGE,
+                                    PLACEMENT_ZONE_IN_USE_MESSAGE_CODE));
                         } else {
                             resumeProcessingRequest(op, invokingFilter);
                         }
@@ -214,13 +221,15 @@ public class ResourcePoolOperationProcessingChain extends OperationProcessingCha
                         if (r.hasException()) {
                             op.fail(r.getException());
                         } else if (r.getCount() > 1) {
-                            op.fail(new IllegalStateException(
-                                    MULTIPLE_HOSTS_IN_PLACEMENT_ZONE_MESSAGE));
+                            op.fail(new LocalizableValidationException(
+                                    MULTIPLE_HOSTS_IN_PLACEMENT_ZONE_MESSAGE,
+                                    MULTIPLE_HOSTS_IN_PLACEMENT_ZONE_MESSAGE_CODE));
                             opFailed.set(true);
                         } else if (r.hasResult()) {
                             if (!ContainerHostUtil.isTreatedLikeSchedulerHost(r.getResult())) {
-                                op.fail(new IllegalStateException(
-                                        NON_SCHEDULER_HOST_IN_PLACEMENT_ZONE_MESSAGE));
+                                op.fail(new LocalizableValidationException(
+                                        NON_SCHEDULER_HOST_IN_PLACEMENT_ZONE_MESSAGE,
+                                        NON_SCHEDULER_HOST_IN_PLACEMENT_ZONE_MESSAGE_CODE));
                                 opFailed.set(true);
                             } else {
                                 // one host is found, but it is a scheduler
@@ -258,8 +267,9 @@ public class ResourcePoolOperationProcessingChain extends OperationProcessingCha
                         }
                     } else {
                         if (schedulerFound.get()) {
-                            op.fail(new IllegalStateException(
-                                    SCHEDULER_HOSTS_IN_PLACEMENT_ZONE_MESSAGE));
+                            op.fail(new LocalizableValidationException(
+                                    SCHEDULER_HOSTS_IN_PLACEMENT_ZONE_MESSAGE,
+                                    SCHEDULER_HOSTS_IN_PLACEMENT_ZONE_MESSAGE_CODE));
                         } else {
                             successCallback.run();
                         }
