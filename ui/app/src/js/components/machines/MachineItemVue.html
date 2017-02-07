@@ -10,30 +10,30 @@
   -->
 
 <div class="machine-item">
-  <div class="status {{stateMessage(model.powerState)}}"><span class="status-state">{{stateMessage(model.powerState)}}</span></div>
-  <div title="{{hostName}}" class="title truncateText">{{hostName}}</div>
+  <div :class="'status ' + stateMessage(model.powerState)"><span class="status-state">{{stateMessage(model.powerState)}}</span></div>
+  <div :title="hostName" class="title truncateText">{{hostName}}</div>
   <div class="details form-horizontal">
     <div class="form-group">
       <label class="col-xs-5">{{i18n("app.host.details.hostAddress")}}</label>
       <div class="col-xs-7 truncateText"
-           title="{{model.address}}">{{model.address}}</div>
+           :title="model.address">{{model.address}}</div>
     </div>
     <div class="form-group">
       <label class="col-xs-5">{{i18n("app.host.details.placementZone")}}</label>
-      <div class="col-xs-7 truncateText" title="{{model.placementZoneName}}">
-        <a href="#/machines?placementZone={{model.placementZoneDocumentId}}"
+      <div class="col-xs-7 truncateText" :title="model.placementZoneName">
+        <a :href="'#/machines?placementZone=' + model.placementZoneDocumentId"
            class="navigation-link">{{model.placementZoneName}}</a>
       </div>
     </div>
     <div class="form-group">
       <label class="col-xs-5">{{i18n("app.host.details.memory")}}</label>
       <div class="col-xs-7 truncateText"
-           title="{{model.memory}}">{{model.memory}} MB</div>
+           :title="model.memory">{{model.memory}} MB</div>
     </div>
     <div class="form-group">
       <label class="col-xs-5">{{i18n("app.host.details.cpu")}}</label>
       <div class="col-xs-7 truncateText"
-           title="{{model.cpuCount}}">{{model.cpuCount}} CPU{{ model.cpuCount > 1 ? 's' : '' }}, {{model.cpuMhzPerCore}} Mhz</div>
+           :title="model.cpuCount">{{model.cpuCount}} CPU{{ model.cpuCount > 1 ? 's' : '' }}, {{model.cpuMhzPerCore}} Mhz</div>
     </div>
   </div>
   <div class="actions">

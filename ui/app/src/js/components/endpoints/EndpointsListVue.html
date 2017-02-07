@@ -68,8 +68,8 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <td class="truncateText primary-cell" title="{{item.name}}">{{item.name}}</td>
-                      <td class="endpoint-icon" title="{{item.endpointType}}">
+                      <td class="truncateText primary-cell" :title="item.name">{{item.name}}</td>
+                      <td class="endpoint-icon" :title="item.endpointType">
                         <img v-bind:src="'image-assets/endpoints/' + item.endpointType + '.png'">
                         <span class="truncateText">{{item.endpointType}}</span>
                       </td>
@@ -86,8 +86,8 @@
               </td>
             </template>
             <template v-if="!isEditingOrHighlightedItem(item)">
-              <td class="truncateText primary-cell" title="{{item.name}}">{{item.name}}</td>
-              <td class="endpoint-icon" title="{{item.endpointType}}">
+              <td class="truncateText primary-cell" :title="item.name">{{item.name}}</td>
+              <td class="endpoint-icon" :title="item.endpointType">
                 <img v-bind:src="'image-assets/endpoints/' + item.endpointType + '.png'">
                 <span class="truncateText">{{item.endpointType}}</span>
               </td>

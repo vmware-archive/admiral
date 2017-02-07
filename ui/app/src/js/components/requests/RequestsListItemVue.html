@@ -10,23 +10,23 @@
   -->
 
 <div class="request-item-holder">
-  <a class="request-item" href="#" v-on:click="redirect($event)" v-bind:disabled="!isEnabled(model)" data-name="{{model.name}}">
+  <a class="request-item" href="#" v-on:click="redirect($event)" v-bind:disabled="!isEnabled(model)" :data-name="model.name">
   <div class="title">
     <div v-if="hasResourceIds" class="name truncateText" data-toggle="tooltip"
-         data-placement="top" title="{{requestTitleText}}">{{requestTitleText}} <i v-if="showHint" class="fa fa-hand-o-left" transition="slide-and-fade"></i></div>
+         data-placement="top" :title="requestTitleText">{{requestTitleText}} <i v-if="showHint" class="fa fa-hand-o-left" transition="slide-and-fade"></i></div>
     <div v-if="!hasResourceIds && model.name" class="name">{{model.name}} <i v-if="showHint" class="fa fa-hand-o-left" transition="slide-and-fade"></i></div>
     <div class="phase">{{model.phase}} -- {{model.name}}</div>
   </div>
-  <div class="request-item-info" data-name="{{model.name}}">
+  <div class="request-item-info" :data-name="model.name">
     <table width="100%" cellspacing="0" cellpadding="0">
       <tr>
         <td>
           <div class="progress">
             <div class="progress-bar" v-bind:class="getProgressClass(model)" role="progressbar"
-                 aria-valuenow="{{model.progress}}" aria-valuemin="0" aria-valuemax="100"
+                 :aria-valuenow="model.progress" aria-valuemin="0" aria-valuemax="100"
                  v-bind:style="{ width: progress + '%'}">
             </div>
-            <div class="progress-status" title="{{model.taskInfo.stage + ' (' + model.subStage + ')'}}">
+            <div class="progress-status" :title="model.taskInfo.stage + ' (' + model.subStage + ')'">
               <span class="stage">{{model.taskInfo.stage}}</span>
               <span class="substage">({{model.subStage}})</span>
             </div>
@@ -35,11 +35,11 @@
         <td v-if="isEnabled(model)" width="40">
           <div class="request-status-actions" v-if="isEnabled(model)">
             <div v-if="model.errorMessage" class="btn"
-                 v-on:click="redirect($event)" title="{{i18n('app.request.actions.details.show')}}"><i class="fa fa-warning"></i></div>
+                 v-on:click="redirect($event)" :title="i18n('app.request.actions.details.show')"><i class="fa fa-warning"></i></div>
             <div v-else class="btn"
-                 v-on:click="redirect($event)" title="{{i18n('app.request.actions.open')}}"><i class="fa fa-eye"></i></div>
+                 v-on:click="redirect($event)" :title="i18n('app.request.actions.open')"><i class="fa fa-eye"></i></div>
             <div v-if="isDeleteEnabled(model)" href="#" class="btn"
-                 v-on:click="deleteRequest($event)" title="{{i18n('delete')}}"><i class="fa fa-trash"></i></div>
+                 v-on:click="deleteRequest($event)" :title="i18n('delete')"><i class="fa fa-trash"></i></div>
           </div>
         </td>
       </tr>

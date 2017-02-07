@@ -17,7 +17,7 @@
                              v-bind:alert-message="i18n('app.container.details.operation.failure')"></alert>
   <div class="container-details-header">
     <div class="title">{{model.instance.name}}<refresh-button v-on:click="refresh()"></refresh-button></div>
-    <div class="status {{model.instance.state}}">{{model.instance.state}}</div>
+    <div :class="'status ' + model.instance.state">{{model.instance.state}}</div>
     <div class="toolbar-actions">
       <template v-if="hasOperationInProgress() || confirmationOperation">
         <div class="progress-holder">

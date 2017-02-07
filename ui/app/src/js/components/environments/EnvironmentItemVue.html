@@ -12,13 +12,13 @@
 <div class="environment-item">
   <div class="image-header">
     <img v-bind:src="'image-assets/endpoints/' + endpointType + '.png'">
-    <div title="{{id}}" class="title truncateText">{{model.name}}</div>
+    <div :title="id" class="title truncateText">{{model.name}}</div>
   </div>
   <hr>
   <div class="details form-horizontal">
     <div class="form-group">
       <label class="col-xs-5">{{i18n("app.environment.details.endpoint")}}</label>
-      <div class="col-xs-7 truncateText" title="{{endpointName}}">
+      <div class="col-xs-7 truncateText" :title="endpointName">
         <span>{{endpointName}}</span>
       </div>
     </div>

@@ -12,9 +12,9 @@
 var VueToolbarActionButton = Vue.extend({
   template: `<div class="toolbar-action" v-show="supported">
            <a class="btn btn-circle-outline"
-              data-toggle="tooltip" data-placement="top" title="{{tooltip}}"
-              data-name="{{id}}">
-             <i v-if="iconName" class="fa fa-{{iconName}}"></i>
+              data-toggle="tooltip" data-placement="top" :title="tooltip"
+              :data-name="id">
+             <i v-if="iconName" :class="'fa fa-' + iconName"></i>
              <img v-if="iconSrc" v-bind:src="iconSrc"/>
           </a>
            <div class="toolbar-action-label">{{label}}</div>

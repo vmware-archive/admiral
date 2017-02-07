@@ -22,14 +22,14 @@
       </template>
     </div>
     <div class="title-holder">
-      <div class="title truncateText" title="{{model.name}}">{{model.name}}</div>
+      <div class="title truncateText" :title="model.name">{{model.name}}</div>
       <div class="image-tag">{{closureRuntime}}</div>
       <div style="clear: both;"></div>
     </div>
   </div>
   <hr/>
   <div class="image-content">
-    <div class="closure-description-text" title="{{model.description}}">{{model.description}}&nbsp;</div>
+    <div class="closure-description-text" :title="model.description">{{model.description}}&nbsp;</div>
     <div>
       <span class="image-label">{{i18n("app.closure.list.memory")}}</span>
       <span class="image-label">{{model.resources.ramMB}} MB&nbsp;</span>
@@ -61,7 +61,7 @@
         <div class="provisionGroup">
           <select v-model="preferredGroupId">
             <option v-for="option in groupOptions" track-by="id"
-                    value="{{option.id}}">
+                    :value="option.id">
               {{option.name}}
             </option>
             <option v-if="clearSelectionSupported()" value="">{{i18n('noSelection')}}</option>

@@ -23,8 +23,8 @@
           <h1 class="welcome-title">{{i18n("app.homepage.welcome")}}</h1>
           <!-- Notice that the mustaches are triple in order to un-escape HTML bold tags -->
           <h2 class="welcome-description">
-            <div>{{{i18n("app.homepage.description")}}}</div>
-            <div>{{{i18n("app.homepage.start")}}}</div>
+            <div v-html="i18n('app.homepage.description')"></div>
+            <div v-html="i18n('app.homepage.start')"></div>
           </h2>
           <div class="buttonBar" v-bind:class="{'buttonBar-hidden': model.loginView}">
             <button class="btn btn-primary enter-btn" v-on:click="openHosts($event)">{{i18n("app.homepage.enter")}}</button>

@@ -14,7 +14,7 @@ var MaximizableBehaviour = Vue.extend({
     <div v-bind:class="{'maximized' : maximized}" class="maximizableControl">
       <slot></slot>
       <a class="maximizableControlToggle">
-        <i class="fa fa-{{maximized ? 'compress' : 'expand'}}"></i>
+        <i :class="'fa fa-' + maximized ? 'compress' : 'expand'"></i>
       </a>
     </div>
   `,

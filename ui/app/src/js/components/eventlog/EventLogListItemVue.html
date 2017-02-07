@@ -16,13 +16,13 @@
   </div>
   <div class="eventlog-actions">
     <div class="btn" v-bind:class="{hide: expanded}"
-         title="{{i18n('app.request.actions.details.show')}}"
+         :title="i18n('app.request.actions.details.show')"
          v-on:click="toggleExpandDescription($event)"><i class="fa fa-eye"></i></div>
     <div class="btn" v-bind:class="{hide: !expanded}"
-         title="{{i18n('app.request.actions.details.hide')}}"
+         :title="i18n('app.request.actions.details.hide')"
          v-on:click="toggleExpandDescription($event)"><i class="fa fa-eye-slash"></i></div>
     <div class="btn"
-         title="{{i18n('delete')}}"
+         :title="i18n('delete')"
          v-on:click="deleteEventLog($event)"><i class="fa fa-trash"></i></div>
   </div>
 </div>

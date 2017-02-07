@@ -33,10 +33,10 @@
           <span>{{i18n("app.machine.edit.loadButton")}}</span>
         </a>
         <input type="file" class="upload" v-on:change="onFileChange"></input>
-        <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="right" title="{{i18n('app.machine.edit.importTemplateHint')}}"></i>
+        <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="right" :title="i18n('app.machine.edit.importTemplateHint')"></i>
       </div>
 
-      <textarea v-model="templateContent" class="template-input" v-bind:disabled="model.isImportingTemplate" placeholder="{{i18n('app.machine.edit.importPlaceholder')}}"></textarea>
+      <textarea v-model="templateContent" class="template-input" v-bind:disabled="model.isImportingTemplate" :placeholder="i18n('app.machine.edit.importPlaceholder')"></textarea>
 
       <div class="templateImport-toolbar">
         <button type="submit" class="btn btn-primary"
@@ -91,7 +91,7 @@
             </tags>
           </div>
           <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left"
-             title="{{i18n ('app.host.details.tagsHint')}}"></i>
+             :title="i18n('app.host.details.tagsHint')"></i>
           <span class="help-block">{{i18n(validationErrors.tags)}}</span>
         </div>
       </div>

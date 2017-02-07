@@ -15,7 +15,7 @@
           v-bind:alert-message="alert.message"
           v-bind:alert-timeout="3000"
           v-on:alert-closed="closeAlert()"></alert>
-  <div class="status {{model.powerState}}">
+  <div :class="'status ' + model.powerState">
     <i class="fa fa-lock" title="Managed by catalog"
        v-show="operationSupported('MANAGE')"></i>
     <span class="status-state">{{networkStatusDisplay(model.powerState)}}</span>
@@ -23,8 +23,8 @@
   <div class="container-header">
     <img v-bind:src="model.icon"/>
     <div class="title-holder">
-      <div class="title truncateText" title="{{model.name}}">{{model.name}}</div>
-      <div class="image-tag truncateText" title="{{model.image}}">{{model.image}}</div>
+      <div class="title truncateText" :title="model.name">{{model.name}}</div>
+      <div class="image-tag truncateText" :title="model.image">{{model.image}}</div>
     </div>
   </div>
   <hr/>
