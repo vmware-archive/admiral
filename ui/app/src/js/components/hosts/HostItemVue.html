@@ -10,20 +10,20 @@
   -->
 
 <div class="host-item">
-  <div class="status {{hostStateMessage(model.powerState)}}"><span class="status-state">{{hostStateMessage(model.powerState)}}</span></div>
-  <div title="{{id}}" class="title truncateText">{{hostName}}</div>
+  <div :class="'status ' + hostStateMessage(model.powerState)"><span class="status-state">{{hostStateMessage(model.powerState)}}</span></div>
+  <div :title="id" class="title truncateText">{{hostName}}</div>
   <div class="details form-horizontal">
     <div class="form-group">
       <label class="col-xs-5">{{i18n("app.host.details.hostAddress")}}</label>
       <div class="col-xs-7 truncateText"
-           title="{{model.address}}">{{model.address}}</div>
+           :title="model.address">{{model.address}}</div>
     </div>
     <div class="form-group">
       <label class="col-xs-5">{{i18n("app.host.details.placementZone")}}</label>
-      <div class="col-xs-7 truncateText" title="{{epzNames}}">
+      <div class="col-xs-7 truncateText" :title="epzNames">
         <span v-for="epz in model.epzs" track-by="epzDocumentId">
             <span v-if="$index > 0">,</span>
-            <a href="#/hosts?placementZone={{epz.epzDocumentId}}"
+            <a :href="'#/hosts?placementZone=' + epz.epzDocumentId"
                class="navigation-link">{{epz.epzName}}</a>
         </span>
       </div>
@@ -34,14 +34,14 @@
     </div>
     <div class="form-group">
       <label class="col-xs-5">{{i18n("app.host.details.containers")}}</label>
-      <div class="col-xs-7"><a href="#/containers?parentId={{model.selfLinkId}}" class="navigation-link">{{model.containers}}</a></div>
+      <div class="col-xs-7"><a :href="'#/containers?parentId=' + model.selfLinkId" class="navigation-link">{{model.containers}}</a></div>
     </div>
     <div class="form-group">
       <label class="col-xs-5">{{i18n("app.host.details.memory")}}</label>
       <div class="col-xs-7">
         <div class="stats-holder">
           <div class="progress">
-            <div class="progress-bar progress-bar-{{hostPercentageLevel(model.memoryPercentage)}}"
+            <div :class="'progress-bar progress-bar-' + hostPercentageLevel(model.memoryPercentage)"
                  role="progressbar" v-bind:style="{ width: model.memoryPercentage + '%'}"></div>
           </div>
           <div class="help-text" v-if="model.memoryPercentage >= 0">{{model.memoryPercentage}}%</div>
@@ -54,7 +54,7 @@
       <div class="col-xs-7">
         <div class="stats-holder">
           <div class="progress">
-            <div class="progress-bar progress-bar-{{hostPercentageLevel(model.cpuPercentage)}}"
+            <div :class="'progress-bar progress-bar-' + hostPercentageLevel(model.cpuPercentage)"
                  role="progressbar" v-bind:style="{ width: model.cpuPercentage + '%'}"></div>
           </div>
           <div class="help-text" v-if="model.cpuPercentage >= 0">{{model.cpuPercentage}}%</div>

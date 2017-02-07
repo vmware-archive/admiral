@@ -20,7 +20,7 @@
       <div class="form-group row">
         <input class="name-input"
             v-bind:value="model.item.name" v-on:input="onNameChange()"
-            placeholder="{{i18n('app.placementZone.edit.nameTitle')}}">
+            :placeholder="i18n('app.placementZone.edit.nameTitle')">
       </div>
       <div class="form-group row" v-if="showEndpoint">
         <div class="subtitle">{{i18n('app.placementZone.edit.endpointTitle')}}</div>

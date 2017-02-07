@@ -32,8 +32,6 @@ var ComputeItem = Vue.extend({
       return this.model.epzs.map((epz) => epz.epzName).join(', ');
     }
   },
-  attached: function() {
-  },
   methods: {
     stateMessage: function(state) {
       return i18n.t('state.' + state);

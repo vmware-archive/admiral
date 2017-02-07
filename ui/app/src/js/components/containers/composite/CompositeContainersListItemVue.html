@@ -16,7 +16,7 @@
       v-bind:alert-timeout="3000"
       v-on:alert-closed="closeAlert()"></alert>
   <div class="container-header-holder">
-    <div class="status {{model.powerState}}">
+    <div :class="'status ' + model.powerState">
       <i class="fa fa-lock" title="Managed by catalog"
          v-show="operationSupported('MANAGE')"></i>
       <span class="status-state">{{i18n("app.container.list.composite.name")}}</span></div>
@@ -27,7 +27,7 @@
         </template>
       </div>
       <div class="title-holder">
-        <div class="title truncateText" title="{{model.name}}">{{model.name}}</div>
+        <div class="title truncateText" :title="model.name">{{model.name}}</div>
       </div>
     </div>
   </div>

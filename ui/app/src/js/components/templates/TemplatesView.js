@@ -68,7 +68,6 @@ var TemplatesViewVueComponent = Vue.extend({
 
     return {
       constants: constants,
-      queryOptions: {},
       placeholderByCategory: placeholderByCategory,
       // this view behaves better if the target width is set before the width transition
       requiresPreTransitionWidth: true,
@@ -121,6 +120,9 @@ var TemplatesViewVueComponent = Vue.extend({
     },
     areClosuresAllowed: function() {
       return utils.areClosuresAllowed();
+    },
+    isPartialResult: function() {
+      return this.model.listView && this.model.listView.isPartialResult;
     }
   },
   mixins: [GridHolderMixin],
@@ -141,7 +143,7 @@ var TemplatesViewVueComponent = Vue.extend({
       });
     });
 
-    this.unwatchIsPartialResult = this.$watch('model.listView && model.listView.isPartialResult',
+    this.unwatchIsPartialResult = this.$watch('isPartialResult',
                                               (isPartialResult) => {
       if (isPartialResult) {
         var errorMessage = i18n.t('app.template.list.partialResultWarning');
@@ -184,6 +186,11 @@ var TemplatesViewVueComponent = Vue.extend({
         groups: {
           required: false
         }
+      },
+      data: function() {
+        return {
+          readOnly: false
+        };
       },
       methods: {
         provisionContainer: function($event) {

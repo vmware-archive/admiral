@@ -11,9 +11,8 @@
 
 var VueAlert = Vue.extend({
   template: `
-    <div class="alert-holder" v-show="alertVisible" transition="fade">
-      <div class="alert alert-{{alertType}}
-      {{alertDismissible ? 'alert-dismissible' : ''}}"
+    <div class="alert-holder" v-show="alertVisible" >
+      <div :class="'alert alert-' + alertType + (alertDismissible ? ' alert-dismissible' : '')"
       role="alert"><a class="close" v-if="alertDismissible">
       <i class="fa fa-close"></i></a>
       <i class="fa fa-exclamation-circle alert-icon"></i>

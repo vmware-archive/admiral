@@ -11,7 +11,7 @@
 
 <div class="composite-closure-item">
   <div class="container-header-holder">
-    <div class="status {{model.powerState}}"><span class="status-state">{{i18n("app.closure.list.name")}}</span></div>
+    <div :class="'status ' + model.powerState"><span class="status-state">{{i18n("app.closure.list.name")}}</span></div>
     <div class="container-header">
       <img v-bind:src="closureIcon" />
       <div v-bind:class="'icons icons-' + numberOfIcons">
@@ -20,13 +20,13 @@
         </template>
       </div>
       <div class="title-holder">
-        <div class="title truncateText" title="{{model.name}}">{{model.name}}</div>
+        <div class="title truncateText" :title="model.name">{{model.name}}</div>
       </div>
     </div>
   </div>
   <hr/>
   <div class="container-content">
-    <div class="closure-description-text" title="{{model.description}}">{{model.description}}&nbsp;</div>
+    <div class="closure-description-text" :title="model.description">{{model.description}}&nbsp;</div>
     <div>
       <span class="container-label">{{i18n("app.closure.list.memory")}}</span>
       <span class="container-label">{{model.resources.ramMB}} MB&nbsp;</span>

@@ -16,14 +16,14 @@
          v-bind:show-alert="loginSuccess" v-bind:alert-message="i18n('loginPanel.success')"></alert>
   <div class="input-with-icon">
     <span class="icon"><i class="fa fa-user"></i></span>
-    <input id="username" name="username" class="form-control" type="text" placeholder="{{i18n('loginPanel.username')}}"
+    <input id="username" name="username" class="form-control" type="text" :placeholder="i18n('loginPanel.username')"
            v-on:change="changeUNPW()"
            v-on:input="changeUNPW()"
            v-on:keyup.enter="login()"/>
   </div>
   <div class="input-with-icon">
     <span class="icon"><i class="fa fa-lock"></i></span>
-    <input id="password" class="form-control" type="password" placeholder="{{i18n('loginPanel.password')}}"
+    <input id="password" class="form-control" type="password" :placeholder="i18n('loginPanel.password')"
            v-on:change="changeUNPW()"
            v-on:input="changeUNPW()"
            v-on:keyup.enter="login()"/>

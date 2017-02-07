@@ -15,7 +15,7 @@
         v-bind:alert-message="alert.message"
         v-bind:alert-timeout="3000"
         v-on:alert-closed="closeAlert()"></alert>
-  <div class="status {{model.powerState}}">
+  <div :class="'status ' + model.powerState">
     <i class="fa fa-lock" title="Managed by catalog"
        v-show="operationSupported('MANAGE')"></i>
     <span class="status-state">{{containerStatusDisplay(model.powerState, model.started)}}</span>
@@ -23,15 +23,15 @@
   <div class="container-header">
     <img v-bind:src="model.icon"/>
     <div class="title-holder">
-      <div class="title truncateText" title="{{model.names}}">{{model.names}}</div>
-      <div class="image-tag truncateText" title="{{model.image}}">{{model.image}}</div>
+      <div class="title truncateText" :title="model.names">{{model.names}}</div>
+      <div class="image-tag truncateText" :title="model.image">{{model.image}}</div>
     </div>
   </div>
   <hr/>
   <div class="container-content">
     <div class="container-host-holder">
       <span class="container-label">{{i18n("app.container.list.hostLabel")}}</span>
-      <a class="navigation-link" href="#/hosts?documentId={{model.hostDocumentId}}"
+      <a class="navigation-link" :href="'#/hosts?documentId=' + model.hostDocumentId"
          v-on:click="showHost($event)">{{model.hostName}}</a>
     </div>
     <div class="container-created-holder">

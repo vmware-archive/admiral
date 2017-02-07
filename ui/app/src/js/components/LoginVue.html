@@ -22,7 +22,7 @@
       <div class="welcome-title">{{i18n("app.homepage.welcome")}}</div>
       <!-- Notice that the mustaches are triple in order to un-escape HTML bold tags -->
       <div class="welcome-description">
-        <div>{{{i18n("app.homepage.description")}}}</div>
+        <div v-html="i18n('app.homepage.description')"></div>
       </div>
     </div>
     <login-panel></login-panel>

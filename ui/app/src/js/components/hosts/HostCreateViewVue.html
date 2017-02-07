@@ -34,7 +34,7 @@
     <div class="select">
       <select v-model="instanceType" class="form-control">
         <option v-for="(key, value) in instanceTypes"
-            value="{{key}}" track-by="$index">
+            :value="key" track-by="$index">
           {{getInstanceTypeDescription(key)}}
         </option>
       </select>
@@ -48,7 +48,7 @@
     <div class="select">
       <select v-model="imageType" class="form-control">
         <option v-for="(key, value) in imageTypes"
-            value="{{key}}" track-by="$index">
+            :value="key" track-by="$index">
           {{getImageTypeDescription(key)}}
         </option>
       </select>
@@ -90,7 +90,7 @@
     <label>{{i18n("app.host.details.tags")}}</label>
     <input class="tags-input">
     <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left"
-        title="{{i18n ('app.host.details.tagsHint')}}"></i>
+        :title="i18n('app.host.details.tagsHint')"></i>
   </div>
 
   <div id="customProperties" class="form-group" v-bind:class="{'hide': endpoint === null || isNimbusEndpoint}">

@@ -14,7 +14,7 @@
   <div class="container-header">
     <img v-bind:src="closureIcon" />
     <div class="title-holder">
-      <div class="title truncateText" title="{{model.name}}">{{model.name}}</div>
+      <div class="title truncateText" :title="model.name">{{model.name}}</div>
       <div class="image-tag truncateText">{{closureRuntime}}</div>
     </div>
   </div>
@@ -22,7 +22,7 @@
   <hr/>
 
   <div class="container-content">
-    <div class="closure-description-text" title="{{model.description}}">{{model.description}}&nbsp;</div>
+    <div class="closure-description-text" :title="model.description">{{model.description}}&nbsp;</div>
     <div>
         <span class="container-label">Memory:</span>
         <span class="container-label">{{model.resources.ramMB}} MB&nbsp;</span>

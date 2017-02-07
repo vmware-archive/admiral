@@ -20,12 +20,12 @@
     <tr v-if="model.hostName && model.hostDocumentId">
       <td>{{i18n("app.container.details.attributes.host")}}</td>
       <td class="container-properties-value-cell"><a class="navigation-link"
-        href="#/hosts?documentId={{model.hostDocumentId}}" v-on:click="showHost($event)">{{model.hostName}}</a></td>
+        :href="'#/hosts?documentId=' + model.hostDocumentId" v-on:click="showHost($event)">{{model.hostName}}</a></td>
     </tr>
     <tr v-if="applicationId">
       <td>{{i18n("app.resource.list.relations.applications")}}</td>
       <td class="container-properties-value-cell"><a class="navigation-link"
-        href="#/applications/{{model.compositeComponentLink}}" v-on:click="showApp($event)">1</a></td>
+        :href="'#/applications/' + model.compositeComponentLink" v-on:click="showApp($event)">1</a></td>
     </tr>
     <tr>
       <td>{{i18n("app.container.details.attributes.createdDateLabel")}}</td>
@@ -58,7 +58,7 @@
       <td class="container-properties-value-cell">
         <template v-for="portLink in portLinks">
           <template v-if="portLink.link"><a
-            href="{{portLink.link}}" target="_blank">{{portLink.name}}</a></template>
+            :href="portLink.link" target="_blank">{{portLink.name}}</a></template>
           <template v-else>{{portLink.name}}</template><br/>
         </template>
       </td>

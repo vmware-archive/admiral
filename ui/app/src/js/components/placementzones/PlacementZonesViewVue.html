@@ -59,7 +59,7 @@
           <tbody>
             <tr v-if="isEditingNewItem()">
               <td colspan="5" class="inline-edit-holder placementZoneEditHolder">
-                <placement-zone-editor v-bind:model="model.editingItemData || {item:{}}"></placement-zone-editor>
+                <placement-zone-editor v-bind:model="model.editingItemData || { item:{} }"></placement-zone-editor>
               </td>
             </tr>
             <tr class="item" v-for="item in model.items | orderBy sortKey sortOrders[sortKey]" track-by="documentSelfLink">
@@ -85,7 +85,7 @@
                         </tr>
                       </thead>
                       <tbody>
-                        <td class="truncateText primary-cell" title="{{item.name}}" colspan="5">{{item.name}}</td>
+                        <td class="truncateText primary-cell" :title="item.name" colspan="5">{{item.name}}</td>
                       </tbody>
                     </table>
                   </div>
@@ -93,16 +93,16 @@
               </template>
               <template v-if="isEditingItem(item)">
                 <td colspan="5" class="inline-edit-holder placementZoneEditHolder">
-                  <placement-zone-editor v-bind:model="model.editingItemData || {item:{}}"></placement-zone-editor>
+                  <placement-zone-editor v-bind:model="model.editingItemData || { item:{} }"></placement-zone-editor>
                 </td>
               </template>
               <template v-if="!isEditingOrHighlightedItem(item)">
-                <td class="truncateText primary-cell" title="{{item.name}}">{{item.name}}</td>
+                <td class="truncateText primary-cell" :title="item.name">{{item.name}}</td>
                 <td>
                   <div class="stats-holder">
                     <div class="help-text">{{item.cpuPercentage}}%</div>
                     <div class="progress">
-                      <div class="progress-bar progress-bar-{{getPercentageLevel(item.cpuPercentage)}}" role="progressbar" v-bind:style="{'width': item.cpuPercentage + '%'}"></div>
+                      <div :class="'progress-bar progress-bar-' + getPercentageLevel(item.cpuPercentage)" role="progressbar" v-bind:style="{'width': item.cpuPercentage + '%'}"></div>
                     </div>
                   </div>
                 </td>
@@ -110,13 +110,13 @@
                   <div class="stats-holder">
                     <div class="help-text">{{item.memoryPercentage}}%</div>
                     <div class="progress">
-                      <div class="progress-bar progress-bar-{{getPercentageLevel(item.memoryPercentage)}}" role="progressbar" v-bind:style="{'width': item.memoryPercentage + '%'}"></div>
+                      <div :class="'progress-bar progress-bar-' + getPercentageLevel(item.memoryPercentage)" role="progressbar" v-bind:style="{'width': item.memoryPercentage + '%'}"></div>
                     </div>
                   </div>
                 </td>
                 <td>
                   <div class="placementZone-host-count">
-                    <a href="#/{{getHostsPath()}}?placementZone={{getDocumentId(item)}}" class="link">{{item.hostsCount}}</a>
+                    <a :href="'#/{{getHostsPath()}}?placementZone=' + getDocumentId(item)" class="link">{{item.hostsCount}}</a>
                   </div>
                 </td>
                 <!-- Actions column -->

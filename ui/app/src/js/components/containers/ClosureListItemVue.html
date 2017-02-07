@@ -10,11 +10,11 @@
   -->
 
 <div class="container-item">
-  <div class="status {{model.state}}"><span class="status-state">{{model.state}}</span></div>
+  <div :class="'status ' + model.state"><span class="status-state">{{model.state}}</span></div>
   <div class="container-header">
     <img src="image-assets/closure-unknown.png"/>
     <div class="title-holder">
-      <div class="closure-title" title="{{arrayToString names}}">{{model.name}}</div>
+      <div class="closure-title" :title="model.name">{{model.name}}</div>
       <div class="image-tag truncateText">{{model.image}}</div>
     </div>
   </div>

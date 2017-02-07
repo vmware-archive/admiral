@@ -124,7 +124,7 @@
                   <div style="clear: both;">
                     <input id="createTemplateNameInput" class="form-control create-template-name-input"
                            name="createTemplateNameInput" type="text"
-                           placeholder="{{i18n('app.template.details.createNameHint')}}"
+                           :placeholder="i18n('app.template.details.createNameHint')"
                            v-model="createTemplateName"/>
                     <a class="btn btn-primary create-template-btn"
                        v-on:click="createNewTemplate($event)">{{i18n("app.template.details.createProceed")}}</a>

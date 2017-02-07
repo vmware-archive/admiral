@@ -11,9 +11,9 @@
 
 var VueBigActionButton = Vue.extend({
   template: `<div class="big-action" v-show="supported">
-           <a class="btn btn-circle-outline" title="{{label}}" data-name="{{name}}""
+           <a class="btn btn-circle-outline" :title="label" :data-name="name""
               v-on:mousedown="pressed()">
-             <i v-if="iconName" class="fa fa-{{iconName}}"></i>
+             <i v-if="iconName" :class="'fa fa-' + iconName"></i>
              <img v-if="iconSrc" v-bind:src="iconSrc"/>
              </a>
            <div class="big-action-label">{{label}}</div>

@@ -20,8 +20,8 @@
   <div class="container-header">
     <img v-bind:src="model.icon"/>
     <div class="title-holder">
-      <div class="title truncateText" title="{{model.name}}">{{model.name}}</div>
-      <div class="image-tag truncateText" title="{{model.image}}">{{model.image}}</div>
+      <div class="title truncateText" :title="model.name">{{model.name}}</div>
+      <div class="image-tag truncateText" :title="model.image">{{model.image}}</div>
     </div>
   </div>
 
@@ -50,7 +50,7 @@
           <select class="form-control container-label">
             <option selected="true" disabled="disabled">{{i18n("app.template.list.containers")}}</option>
             <option v-for="container in model.otherContainers" track-by="id"
-                    value="{{container.name}}">{{container.name}}</option>
+                    :value="container.name">{{container.name}}</option>
           </select>
           <input type="text" class="form-control container-label"
                  placeholder='{{i18n("app.template.list.alias")}}'></input>
