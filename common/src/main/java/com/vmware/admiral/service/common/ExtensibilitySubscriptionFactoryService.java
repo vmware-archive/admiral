@@ -14,9 +14,8 @@ package com.vmware.admiral.service.common;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionService.ExtensibilitySubscription;
 import com.vmware.xenon.common.FactoryService;
-import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
-import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.ServiceDocument;
 
 public class ExtensibilitySubscriptionFactoryService extends FactoryService {
 
@@ -24,6 +23,8 @@ public class ExtensibilitySubscriptionFactoryService extends FactoryService {
 
     public ExtensibilitySubscriptionFactoryService() {
         super(ExtensibilitySubscription.class);
+
+        this.setUseBodyForSelfLink(true);
     }
 
     @Override
@@ -32,18 +33,13 @@ public class ExtensibilitySubscriptionFactoryService extends FactoryService {
     }
 
     @Override
-    public void handlePost(Operation post) {
-        if (!post.hasBody()) {
+    protected String buildDefaultChildSelfLink(ServiceDocument document) {
+        if (document == null) {
             throw new IllegalArgumentException("Body is required");
         }
+        ExtensibilitySubscription state = (ExtensibilitySubscription) document;
 
-        ExtensibilitySubscription body = post.getBody(ExtensibilitySubscription.class);
-
-        body.documentSelfLink = UriUtils.buildUriPath(SELF_LINK,
-                ExtensibilitySubscriptionService.constructKey(body));
-        post.setBodyNoCloning(body);
-
-        super.handlePost(post);
+        return ExtensibilitySubscriptionService.constructKey(state);
     }
 
 }

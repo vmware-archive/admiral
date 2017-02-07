@@ -62,8 +62,6 @@ public class ExtensibilitySubscriptionService extends StatefulService {
         toggleOption(ServiceOption.PERSISTENCE, true);
         toggleOption(ServiceOption.REPLICATION, true);
         toggleOption(ServiceOption.OWNER_SELECTION, true);
-        toggleOption(ServiceOption.IMMUTABLE, true);
-        toggleOption(ServiceOption.ON_DEMAND_LOAD, true);
     }
 
     @Override

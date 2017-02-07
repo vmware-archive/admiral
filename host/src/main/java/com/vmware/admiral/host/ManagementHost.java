@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -17,7 +17,6 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
-
 import javax.net.ssl.SSLContext;
 
 import io.swagger.models.Info;
@@ -28,6 +27,7 @@ import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.admiral.service.common.ConfigurationService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
+import com.vmware.admiral.service.common.ExtensibilitySubscriptionManager;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.FactoryService;
@@ -52,7 +52,7 @@ import com.vmware.xenon.swagger.SwaggerDescriptorService;
 /**
  * Stand alone process entry point for management of infrastructure and applications.
  */
-public class ManagementHost extends ServiceHost {
+public class ManagementHost extends ServiceHost implements IExtensibilityRegistryHost {
 
     /** Flag to start a mock adapter instance useful for integration tests */
     public boolean startMockHostAdapterInstance;
@@ -90,11 +90,14 @@ public class ManagementHost extends ServiceHost {
      */
     public Path certificateFile;
 
-    private static Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains = new HashMap<>();
+    private ExtensibilitySubscriptionManager extensibilityRegistry;
 
-    /**
-     * Add concrete {@link OperationProcessingChain} implementations that prevent the deletion of
-     * referenced states.
+    private static Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains
+            = new HashMap<>();
+
+    /*
+      Add concrete {@link OperationProcessingChain} implementations that prevent the deletion of
+      referenced states.
      */
     static {
         chains.put(AuthCredentialsService.class, AuthCredentialsOperationProcessingChain.class);
@@ -247,6 +250,11 @@ public class ManagementHost extends ServiceHost {
                 + this.getUri() + ServiceUriPaths.SWAGGER + "/ui");
     }
 
+    private void startExtensibilityRegistry() {
+        extensibilityRegistry = new ExtensibilitySubscriptionManager();
+        this.startService(extensibilityRegistry);
+    }
+
     /**
      * The directory from which services are dynamically loaded; see
      * {@link #enableDynamicServiceLoading()}
@@ -286,11 +294,13 @@ public class ManagementHost extends ServiceHost {
             URI uri = new URI(nodeGroupPublicUri);
 
             if (this.getPort() != -1 && uri.getPort() == this.getPort()) {
-                throw new IllegalArgumentException("--nodeGroupPublicUri port must be different from --port");
+                throw new IllegalArgumentException("--nodeGroupPublicUri port must be different"
+                        + " from --port");
             }
 
             if (this.getSecurePort() != -1 && uri.getPort() == this.getSecurePort()) {
-                throw new IllegalArgumentException("--nodeGroupPublicUri port must be different from --securePort");
+                throw new IllegalArgumentException("--nodeGroupPublicUri port must be different"
+                        + " from --securePort");
             }
 
             if (uri.getPort() < 0 || uri.getPort() >= Short.MAX_VALUE * 2) {
@@ -365,6 +375,8 @@ public class ManagementHost extends ServiceHost {
 
         startCommonServices();
 
+        startExtensibilityRegistry();
+
         // now start ServerX509TrustManager
         trustManager.start();
         setAuthorizationContext(null);
@@ -378,7 +390,8 @@ public class ManagementHost extends ServiceHost {
             String commitID = (String) getState().codeProperties
                     .get(GIT_COMMIT_SOURCE_PROPERTY_COMMIT_ID);
             if (commitID == null) {
-                throw new LocalizableValidationException("CommitID code property not found!", "host.commit.id.not.found");
+                throw new LocalizableValidationException("CommitID code property not found!",
+                        "host.commit.id.not.found");
             }
             commitID = commitID.substring(0, 8);
             String userAgent = ServiceHost.class.getSimpleName() + "/" + commitID;
@@ -418,4 +431,10 @@ public class ManagementHost extends ServiceHost {
     public AuthorizationContext getSystemAuthorizationContext() {
         return super.getSystemAuthorizationContext();
     }
+
+    @Override
+    public ExtensibilitySubscriptionManager getExtensibilityRegistry() {
+        return extensibilityRegistry;
+    }
+
 }
