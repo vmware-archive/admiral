@@ -1,30 +1,30 @@
-.network-form {
+.volume-form {
   overflow: auto;
 }
 
-.host-picker-item-primary, .network-search-item-primary {
+.host-picker-item-primary, .volume-search-item-primary {
   font-size: 16px;
 }
 
-.host-picker-item-secondary, .network-search-item-secondary {
+.host-picker-item-secondary, .volume-search-item-secondary {
   font-size: 12px;
 }
 
 .host-picker-item-primary .host-picker-item-secondary,
-.network-search-item-primary {
+.volume-search-item-primary {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.network-search-item-secondary {
+.volume-search-item-secondary {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   color: #cccccc;
 }
 
-.network-form .multicolumn-inputs-list-body-wrapper {
+.volume-form .multicolumn-inputs-list-body-wrapper {
   overflow: visible;
   max-height: initial;
 }

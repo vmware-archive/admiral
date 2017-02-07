@@ -1221,6 +1221,14 @@ services.loadNetworksForCompositeComponent = function(compositeComponentId) {
   return services.loadContainerNetworks({compositeComponentLinks: [compositeComponentLink]});
 };
 
+services.loadVolumesForCompositeComponent = function(compositeComponentId) {
+  let urlPrefix = links.COMPOSITE_COMPONENTS + '/';
+  var compositeComponentLink = (compositeComponentId.indexOf(urlPrefix) > -1)
+    ? compositeComponentId : urlPrefix + compositeComponentId;
+
+  return services.loadContainerVolumes({compositeComponentLinks: [compositeComponentLink]});
+};
+
 services.loadCompositeComponent = function(compositeComponentId) {
   return get(links.COMPOSITE_COMPONENTS + '/' + compositeComponentId);
 };

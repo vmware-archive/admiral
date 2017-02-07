@@ -1,0 +1,260 @@
+$resource-details-size: 150px;
+
+.resource {
+  cursor: pointer;
+  position: relative;
+  margin-right: 40px;
+  margin-bottom: 20px;
+  margin-top: 40px;
+  z-index: 3;
+}
+
+.resource-details {
+  padding: 5px;
+  width: $resource-details-size;
+  position: relative;
+  border: 1px solid #dbdbdb;
+  border-radius: 5px;
+  background-color: $context-view-background-color;
+
+  .delete-inline-item-confirmation-holder {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+
+  .resource-icon {
+    position: absolute;
+    top: 8px;
+    left: 5px;
+  }
+  .resource-label {
+    margin-left: 20px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .resource-actions {
+    display: none;
+
+    position: absolute;
+    top: 1px;
+    right: 1px;
+
+    padding: 2px 2px 2px 5px;
+    min-height: 28px;
+    background-color: $main_background_color;
+  }
+
+  .resource-actions .btn {
+    padding: 0px;
+    margin: 0px;
+    height: 28px;
+    line-height: 28px;
+    border: none;
+    color: $secondary_hint_title_color;
+    font-size: 18px;
+  }
+
+  .resource-actions .btn:hover {
+    color: $main_color;
+    background-color: inherit;
+  }
+}
+
+.resource:hover .resource-actions {
+  display: block;
+}
+
+.resource-anchor {
+  opacity: 0;
+  position: absolute;
+  top: -10px;
+  height: 46px;
+  left: $resource-details-size + 30px;
+  right: 0;
+
+  .resource-label-drag, .resource-label-drop {
+    display: none;
+  }
+}
+
+.resource-anchor-line {
+  position: absolute;
+  border-bottom: 1px solid black;
+  left: $resource-details-size;
+  right: 0;
+  top: 14px;
+  height: 2px;
+  @include transition(right 0.5s ease);
+}
+
+.resource-anchor-line.shrink {
+  right: 100%;
+}
+
+.resource-anchor:hover, .resource-anchor.jsplumb-drag-hover {
+  opacity: 1;
+  border: 1px dashed gray;
+}
+
+.resource .resource-anchor:hover .resource-label-drag {
+  display: block;
+}
+
+.resource .resource-anchor.jsplumb-drag-hover .resource-label-drop {
+  display: block;
+}
+
+.resource-delete-connection {
+  opacity: 0;
+  margin-left: 10px;
+  margin-top: -10px;
+  cursor: pointer;
+  z-index: 3;
+  color: $secondary_hint_title_color;
+}
+
+.resource-delete-connection.jsplumb-hover {
+  opacity: 1;
+}
+
+.resource-delete-connection:hover {
+  color: $main_color;
+}
+
+.jsplumb-connector {
+  z-index: 0;
+  opacity: 0.4;
+}
+
+.jsplumb-connector.jsplumb-hover, .jsplumb-connector.jsplumb-dragging {
+  z-index: 2;
+  opacity: 1;
+}
+
+.jsplumb-endpoint {
+  opacity: 0.6;
+  z-index: 3;
+  cursor: pointer;
+}
+.jsplumb-endpoint:hover, .jsplumb-endpoint.jsplumb-endpoint-connected,
+.jsplumb-endpoint.jsplumb-drag-hover, .jsplumb-endpoint.jsplumb-endpoint-drop-allowed {
+  opacity: 1;
+}
+
+.jsplumb-endpoint:hover, .jsplumb-endpoint.jsplumb-drag-hover,
+.jsplumb-endpoint.jsplumb-endpoint-drop-allowed {
+  transform: scale(1.1, 1.1);
+}
+
+.resource-link.jsplumb-dragging {
+}
+
+.container-link.jsplumb-dragging {
+}
+
+.composite-child-containers-view > .containers-list {
+  .jsplumb-endpoint, .resource-delete-connection, .resource {
+    cursor: auto;
+  }
+
+  .resource .resource-details {
+    cursor: pointer;
+  }
+  .resource .resource-details:hover {
+    border-color: $main-color-80;
+    @include box-shadow(0px 2px 10px 1px $main-color-semi);
+  }
+
+  .jsplumb-endpoint:not(.jsplumb-endpoint-connected) {
+    display: none;
+  }
+
+  .resource-anchor:hover, .resource-anchor.jsplumb-drag-hover {
+    opacity: 1;
+    border: none;
+  }
+
+  .resource:hover .resource-actions {
+    display: none;
+  }
+
+  .resource .resource-anchor:hover .resource-label-drag {
+    display: none;
+  }
+
+  .resource .resource-anchor.jsplumb-drag-hover .resource-label-drop {
+    display: none;
+  }
+
+  .resource, .jsplumb-endpoint, .jsplumb-connector {
+  }
+}
+
+.composite-child-containers-view > .containers-list.context-selected {
+  .resource, .jsplumb-endpoint, .jsplumb-connector {
+    opacity: 0;
+    @include transition(opacity 0.5s);
+  }
+}
+
+.resource-link-value {
+  padding: 2px;
+  margin-left: 50px;
+  margin-top: -10px;
+
+  opacity: 0.6;
+  z-index: 2;
+
+  color: $secondary_hint_title_color;
+  background-color: #fafafa;
+
+  .volume-container-path-value {
+    display: inline-block;
+    max-width: 200px;
+  }
+
+  .editable {
+    cursor: pointer;
+  }
+
+  .edit-volume-container-path {
+    opacity: 0;
+
+    position: absolute;
+    top: 0px;
+    right: -12px;
+  }
+}
+
+.resource-link-value.jsplumb-hover {
+  opacity: 0.8;
+  z-index: 100;
+  color: $main_color;
+
+  .edit-volume-container-path {
+    opacity: 0.8;
+  }
+}
+
+.resource-link-value-edit {
+  padding: 5px;
+  margin-left: 65px;
+  margin-top: -7px;
+
+  opacity: 0.9;
+  z-index: 10;
+
+  background-color: #fff;
+
+  border: 1px solid $main-color;
+  border-radius: 5px;
+
+  @include box-shadow(0px 2px 10px 1px $main-color-semi);
+}
+
+.resource-link-value-edit a.btn {
+  margin-left: 2px;
+}

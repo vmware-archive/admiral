@@ -69,12 +69,19 @@
         <span class="vertical-helper"></span>
         <div class="spinner"></div>
       </div>
+
       <network-box v-for="network in networks | networksOrderBy"
                    track-by="documentSelfLink"
                    v-bind:model="network"
                    v-on:attached="networkAttached"
                    v-on:detached="networkDetached"
                    ></network-box>
+
+      <volume-box v-for="volume in volumes | volumesOrderBy"
+                  track-by="documentSelfLink"
+                  v-bind:model="volume"
+                  v-on:attached="volumeAttached"
+                  v-on:detached="volumeDetached"></volume-box>
     </div>
   </div>
   <div v-if="model.selectedItemDetails"

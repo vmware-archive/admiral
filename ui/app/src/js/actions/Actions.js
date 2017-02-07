@@ -48,8 +48,8 @@ export var TemplateActions = Reflux.createActions([
   'openAddClosure', 'removeClosure', 'saveClosure', 'runClosure', 'cancelAddClosure',
   'createClosureTemplate', 'resetMonitoredClosure',
   'openCreateNewTemplate', 'createNewTemplate',
-  'openEditVolume', 'cancelEditVolume', 'attachVolume', 'detachVolume',
-  'attachDetachVolume', 'saveVolume', 'removeVolume'
+  'openEditVolume', 'cancelEditVolume', 'saveVolume', 'removeVolume', 'attachVolume',
+  'detachVolume', 'attachDetachVolume', 'editAttachedVolume'
 ]);
 
 export var ContainerActions = Reflux.createActions([

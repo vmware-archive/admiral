@@ -107,6 +107,10 @@
                 <img src="image-assets/resource-icons/task.png"/>
                 <span class='label'>{{i18n('app.template.details.editClosures.newTitle')}}</span>
               </div>
+              <div class="template-new-item" v-on:click="openAddNewVolume">
+                <img src="image-assets/resource-icons/volume.png"/>
+                <span class="label">{{i18n("app.template.details.editVolume.newLabel")}}</span>
+              </div>
               <div class="template-new-item" v-on:click="openAddNewKubernetes">
                 <img src="image-assets/resource-icons/kubernetes.png"/>
                 <span class='label'>{{i18n('app.template.details.editKubernetes.newTitle')}}</span>
@@ -114,15 +118,24 @@
             </template-new-item-menu>
           </grid-item>
         </grid>
+
         <div v-if="model.templateDetails.listView.itemsLoading" class="loading">
           <span class="vertical-helper"></span>
           <div class="spinner"></div>
         </div>
+
         <network-box v-for="network in networks | networksOrderBy" track-by="documentSelfLink" v-bind:model="network"
              v-on:attached="networkAttached"
              v-on:detached="networkDetached"
              v-on:edit="editNetwork"
              v-on:remove="removeNetwork"></network-box>
+
+        <volume-box v-for="volume in volumes | volumesOrderBy" track-by="documentSelfLink"
+                    v-bind:model="volume"
+                    v-on:attached="volumeAttached"
+                    v-on:detached="volumeDetached"
+                    v-on:edit="editVolume"
+                    v-on:remove="removeVolume"></volume-box>
 <!--
         <hr/>
          <closure-box v-if="areClosuresAllowed" v-for="closure in model.templateDetails.listView.closures" track-by="documentSelfLink" v-bind:model="closure"
@@ -193,11 +206,26 @@
                                v-bind:allow-existing="true"
                                ></network-definition-form>
       <div class="control-btns">
-      <button class="btn btn-primary save-container-definition"
-              v-bind:class="{'loading': savingNetwork}"
-              v-bind:disabled="buttonNetworkDisabled"
-              v-on:click="saveNetwork($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
+        <button class="btn btn-primary save-container-definition"
+                v-bind:class="{'loading': savingNetwork}"
+                v-bind:disabled="buttonNetworkDisabled"
+                v-on:click="saveNetwork($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
+      </div>
     </div>
+  </div>
+  <div class="edit-volume closable-view" v-if="!!model.editVolume" transition="slide-and-fade">
+    <div class="content">
+      <div class="title" v-if="model.editVolume.definitionInstance.documentSelfLink">{{i18n('app.template.details.editVolume.editTitle')}}</div>
+      <div class="title" v-else>{{i18n('app.template.details.editVolume.newTitle')}}</div>
+      <volume-definition-form v-ref:volume-edit-form
+                              v-bind:model="model.editVolume.definitionInstance"
+                              v-bind:allow-existing="true"
+        ></volume-definition-form>
+      <div class="control-btns">
+        <button class="btn btn-primary save-container-definition" v-bind:class="{'loading': savingVolume}"
+                v-bind:disabled="buttonVolumeDisabled"
+                v-on:click="saveVolume($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
+      </div>
     </div>
   </div>
 </div>

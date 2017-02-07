@@ -376,6 +376,55 @@ let getNetworkLinks = function(containerOrCluster, networks) {
   return networkLinks;
 };
 
+let getContainerVolumeLinks = function(containerVolumes, volumes) {
+  var containerVolumeLinks = [];
+
+  if (containerVolumes) {
+    containerVolumes.forEach((containerVolumeString) => {
+      let volume = utils.findVolume(containerVolumeString, volumes);
+
+      if (volume) {
+        containerVolumeLinks.push(volume.documentSelfLink);
+      }
+    });
+  }
+
+  return containerVolumeLinks;
+};
+
+let getVolumeLinks = function(compositeComponentItems, volumes) {
+  var volumeLinks = {};
+
+  function fillVolumeLinks(item) {
+    let itemVolumes = item.volumes;
+
+    if (item.containers) { // cluster
+      itemVolumes = [];
+
+      item.containers.forEach((container) => {
+        if (container.volumes) {
+          itemVolumes = itemVolumes.concat(container.volumes);
+        }
+      });
+    }
+
+    let containerVolumeLinks = getContainerVolumeLinks(itemVolumes, volumes);
+
+    let containerSelfLink = item.documentSelfLink;
+    if (!volumeLinks[containerSelfLink]) {
+      volumeLinks[containerSelfLink] = [];
+    }
+
+    volumeLinks[containerSelfLink] = [...new Set(containerVolumeLinks)];
+  }
+
+  compositeComponentItems.forEach((item) => {
+    fillVolumeLinks(item);
+  });
+
+  return volumeLinks;
+};
+
 let ContainersStore = Reflux.createStore({
   mixins: [ContextPanelStoreMixin, CrudStoreMixin],
   init: function() {
@@ -1396,6 +1445,9 @@ let ContainersStore = Reflux.createStore({
       compositeComponentDetails.listView.networks = currentCompositeComponent.listView.networks;
       compositeComponentDetails.listView.networkLinks =
                                                   currentCompositeComponent.listView.networkLinks;
+      compositeComponentDetails.listView.volumes = currentCompositeComponent.listView.volumes;
+      compositeComponentDetails.listView.volumeLinks =
+                                                  currentCompositeComponent.listView.volumeLinks;
     }
 
     parentCursor.setIn(['selectedItem'], compositeComponent);
@@ -1408,14 +1460,19 @@ let ContainersStore = Reflux.createStore({
     operation.forPromise(Promise.all([
       services.loadCompositeComponent(compositeComponentId),
       services.loadContainersForCompositeComponent(compositeComponentId),
-      services.loadNetworksForCompositeComponent(compositeComponentId)
-    ])).then(([retrievedCompositeComponent, childContainersResult, childNetworksResult]) => {
+      services.loadNetworksForCompositeComponent(compositeComponentId),
+      services.loadVolumesForCompositeComponent(compositeComponentId)
+    ])).then(([retrievedCompositeComponent, childContainersResult, childNetworksResult,
+      childVolumesResult]) => {
 
       var childContainers = utils.resultToArray(childContainersResult.documents ?
           childContainersResult.documents : childContainersResult);
 
       var childNetworks = utils.resultToArray(childNetworksResult.documents ?
           childNetworksResult.documents : childNetworksResult);
+
+      var childVolumes = utils.resultToArray(childVolumesResult.documents ?
+        childVolumesResult.documents : childVolumesResult);
 
       enhanceCompositeComponent(retrievedCompositeComponent);
       retrievedCompositeComponent.icons = getContainersImageIcons(childContainers);
@@ -1430,11 +1487,15 @@ let ContainersStore = Reflux.createStore({
 
       var networkLinks = getNetworkLinks(items, childNetworks);
 
+      var volumeLinks = getVolumeLinks(items, childVolumes);
+
       parentCursor.select(['selectedItemDetails', 'listView'])
         .setIn(['items'], items)
         .setIn(['itemsLoading'], false)
         .setIn(['networks'], childNetworks)
-        .setIn(['networkLinks'], networkLinks);
+        .setIn(['networkLinks'], networkLinks)
+        .setIn(['volumes'], childVolumes)
+        .setIn(['volumeLinks'], volumeLinks);
 
       this.emitChange();
 

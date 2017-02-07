@@ -351,6 +351,11 @@
         "network": {
           "drag": "Drag to attach container to this network",
           "drop": "Drop to attach container to this network"
+        },
+        "volume": {
+          "drag": "Drag to attach container to this volume",
+          "drop": "Drop to attach container to this volume",
+          "editContainerPath": "Container Path:"
         }
       },
       "actions": {
