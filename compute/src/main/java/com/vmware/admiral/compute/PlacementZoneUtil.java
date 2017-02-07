@@ -13,10 +13,12 @@ package com.vmware.admiral.compute;
 
 import com.vmware.admiral.compute.PlacementZoneConstants.PlacementZoneType;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.xenon.common.LocalizableValidationException;
 
 public class PlacementZoneUtil {
 
     public static final String PLACEMENT_ZONE_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT = "Placement zone type '%s' is not supported";
+    public static final String PLACEMENT_ZONE_TYPE_NOT_SUPPORTED_MESSAGE_CODE = "compute.placement-zone.type.not.supported";
 
     public static PlacementZoneType getPlacementZoneType(ResourcePoolState placementZone) {
         if (placementZone.customProperties == null) {
@@ -33,7 +35,8 @@ public class PlacementZoneUtil {
             } catch (IllegalArgumentException ex) {
                 String error = String.format(PLACEMENT_ZONE_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT,
                         placementZone);
-                throw new IllegalArgumentException(error, ex);
+                throw new LocalizableValidationException(ex, error,
+                        PLACEMENT_ZONE_TYPE_NOT_SUPPORTED_MESSAGE_CODE, placementZone);
             }
         }
     }

@@ -17,12 +17,14 @@ import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.UriUtils;
 
 public class ContainerHostUtil {
 
     public static final String CONTAINER_HOST_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT = "Container "
             + "host type '%s' is not supported";
+    public static final String CONTAINER_HOST_TYPE_NOT_SUPPORTED_MESSAGE_CODE = "compute.host.type.not.supported";
 
     private static final String PROPERTY_NAME_DRIVER = "__Driver";
     private static final String VMWARE_VIC_DRIVER1 = "vmware";
@@ -68,7 +70,8 @@ public class ContainerHostUtil {
         } catch (IllegalArgumentException ex) {
             String error = String.format(CONTAINER_HOST_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT,
                     hostTypeRaw);
-            throw new IllegalArgumentException(error, ex);
+            throw new LocalizableValidationException(ex, error,
+                    CONTAINER_HOST_TYPE_NOT_SUPPORTED_MESSAGE_CODE, hostTypeRaw);
         }
     }
 
