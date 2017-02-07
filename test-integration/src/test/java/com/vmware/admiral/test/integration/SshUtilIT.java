@@ -273,7 +273,13 @@ public class SshUtilIT extends BaseTestCase {
         AuthCredentialsServiceState creds = new AuthCredentialsServiceState();
         creds.userEmail = SSH_USER;
         creds.type = "PublicKey";
-        creds.privateKey = FileUtil.getResourceAsString(SSH_PKEY_FILE, true);
+        Assert.assertNotNull("'ssh.host.pkey' not specified", SSH_PKEY_FILE);
+        try {
+            creds.privateKey = FileUtil.getResourceAsString(SSH_PKEY_FILE, true);
+        } catch (NullPointerException npe) {
+            System.err.println("NPE getting resource '" + SSH_PKEY_FILE + "' as string");
+            throw npe;
+        }
 
         return creds;
     }
