@@ -114,6 +114,7 @@ var TemplatesViewVueComponent = Vue.extend({
           !this.model.selectedItemDetails.editContainerDefinition &&
           !this.model.selectedItemDetails.newContainerDefinition &&
           !this.model.selectedItemDetails.editNetwork &&
+          !this.model.selectedItemDetails.editVolume &&
           !this.model.selectedItemDetails.addClosureView);
     },
     showClosureContextPanel: function() {

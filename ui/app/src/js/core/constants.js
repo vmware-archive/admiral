@@ -311,7 +311,11 @@ var constants = Immutable({
     CONTAINER: 'DOCKER_CONTAINER',
     COMPUTE: 'COMPUTE'
   },
-  NEW_ITEM_SYSTEM_VALUE: '__new'
+  NEW_ITEM_SYSTEM_VALUE: '__new',
+  RESOURCE_CONNECTION_TYPE: {
+    NETWORK: 'network',
+    VOLUME: 'volume'
+  }
 });
 
 export default constants;

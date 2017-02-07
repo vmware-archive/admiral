@@ -73,10 +73,12 @@ var ContainersViewVueComponent = Vue.extend({
       return this.model.selectedItemDetails.error && this.model.selectedItemDetails.error._generic;
     },
     hasNetworkCreateError: function() {
-      return this.model.creatingResource.error && this.model.creatingResource.error._generic;
+      return this.model.creatingResource && this.model.creatingResource.error
+        && this.model.creatingResource.error._generic;
     },
     hasVolumeCreateError: function() {
-      return this.model.creatingResource.error && this.model.creatingResource.error._generic;
+      return this.model.creatingResource && this.model.creatingResource.error
+        && this.model.creatingResource.error._generic;
     },
     containerDetailsError: function() {
       return this.hasContainerDetailsError ? this.model.selectedItemDetails.error._generic : '';

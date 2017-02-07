@@ -567,14 +567,14 @@
     }
   }
 
-  .container-networks {
+  .container-resource-relations {
     position: absolute;
     bottom: -10px;
-    left: 10px;
+    left: 90px;
 
-    .container-network-anchor {
+    .container-resource-anchor {
       display: inline-block;
-      width: 20px;
+      width: 40px;
       cursor: pointer;
     }
   }

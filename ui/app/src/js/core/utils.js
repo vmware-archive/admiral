@@ -1261,6 +1261,26 @@ var utils = {
     }
 
     return runtimeName;
+  },
+
+  findVolume: function(containerVolumeString, volumes) {
+    let foundVolume;
+
+    if (volumes) {
+
+      foundVolume = volumes.find((volume) => {
+        let volumeName = volume.name;
+        let idxContainerVolNameEnd = containerVolumeString.indexOf(':');
+
+        let containerVolumeName = (idxContainerVolNameEnd > -1)
+          && containerVolumeString.substring(0, idxContainerVolNameEnd);
+
+        return containerVolumeName.indexOf(volumeName) > -1
+                || volumeName.indexOf(containerVolumeName) > -1;
+      });
+    }
+
+    return foundVolume;
   }
 };
 
