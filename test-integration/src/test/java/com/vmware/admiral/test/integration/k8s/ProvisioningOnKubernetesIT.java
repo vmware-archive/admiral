@@ -58,6 +58,7 @@ import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsSe
  * Class for test that adds a k8s host
  */
 @RunWith(Parameterized.class)
+@Ignore
 public class ProvisioningOnKubernetesIT extends BaseIntegrationSupportIT {
 
     protected ComputeState kubernetesHostCompute;
