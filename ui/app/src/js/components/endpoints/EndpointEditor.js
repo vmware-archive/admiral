@@ -124,7 +124,7 @@ export default Vue.component('endpoint-editor', {
   computed: {
     validationErrors() {
       return (this.model.validationErrors && this.model.validationErrors._generic) ||
-          (this.propertiesErrors && this.propertiesErrors._generic);
+          (this.editorErrors && this.editorErrors._generic);
     }
   },
   attached() {
@@ -157,10 +157,13 @@ export default Vue.component('endpoint-editor', {
   },
   data() {
     return {
+      editor: {
+        properties: this.model.item.endpointProperties || {},
+        valid: false
+      },
+      editorErrors: null,
       endpointType: this.model.item.endpointType,
       name: this.model.item.name,
-      properties: this.model.item.endpointProperties || {},
-      propertiesErrors: null,
       saveDisabled: !this.model.item.documentSelfLink,
       supportedEditors: [],
       supportedTypes: []
@@ -190,33 +193,21 @@ export default Vue.component('endpoint-editor', {
       this.endpointType = endpointType && endpointType.id;
       this.saveDisabled = this.isSaveDisabled();
     },
-    onPropertiesChange(properties) {
-      this.properties = properties;
+    onEditorChange(editor) {
+      this.editor = editor;
+      this.editorErrors = null;
       this.saveDisabled = this.isSaveDisabled();
     },
-    onPropertiesError(errors) {
-      this.propertiesErrors = errors;
+    onEditorError(errors) {
+      this.editorErrors = errors;
     },
     isSaveDisabled() {
-      let model = this.getModel();
-      if (!model.name || !model.endpointType) {
-        return true;
-      }
-      let properties = model.endpointProperties;
-      if (!properties.privateKeyId || !properties.privateKey || !properties.regionId) {
-        return true;
-      }
-      if (model.endpointType === 'azure' && (!properties.userLink || !properties.azureTenantId)) {
-          return true;
-      }
-      if (model.endpointType === 'vsphere' && !properties.hostName) {
-          return true;
-      }
-      return false;
+      return !this.name || !this.endpointType || !this.editor.valid;
     },
     getModel() {
       return $.extend({}, this.model.item, {
-        endpointProperties: $.extend(this.model.item.endpointProperties || {}, this.properties),
+        endpointProperties: $.extend(this.model.item.endpointProperties || {},
+            this.editor.properties),
         endpointType: this.endpointType,
         name: this.name
       });

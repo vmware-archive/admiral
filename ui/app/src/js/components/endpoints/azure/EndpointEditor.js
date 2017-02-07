@@ -25,21 +25,21 @@ export default Vue.component('azure-endpoint-editor', {
         @change="onPrivateKeyChange">
       </password-input>
       <text-input
-        :disabled="model.documentSelfLink"
+        :disabled="!!model.documentSelfLink"
         :label="i18n('app.endpoint.edit.azure.userLinkLabel')"
         :required="true"
         :value="userLink"
         @change="onUserLinkChange">
       </text-input>
       <text-input
-        :disabled="model.documentSelfLink"
+        :disabled="!!model.documentSelfLink"
         :label="i18n('app.endpoint.edit.azure.tenantIdLabel')"
         :required="true"
         :value="azureTenantId"
         @change="onAzureTenantIdChange">
       </text-input>
       <text-input
-        :disabled="model.documentSelfLink"
+        :disabled="!!model.documentSelfLink"
         :label="i18n('app.endpoint.edit.regionIdLabel')"
         :required="true"
         :value="regionId"
@@ -63,38 +63,42 @@ export default Vue.component('azure-endpoint-editor', {
       regionId: properties.regionId
     };
   },
+  attached() {
+    this.dispatchChange();
+  },
   methods: {
     onPrivateKeyIdChange(privateKeyId) {
       this.privateKeyId = privateKeyId;
-      this.dispatchChangeIfNeeded();
+      this.dispatchChange();
     },
     onPrivateKeyChange(privateKey) {
       this.privateKey = privateKey;
-      this.dispatchChangeIfNeeded();
+      this.dispatchChange();
     },
     onUserLinkChange(userLink) {
       this.userLink = userLink;
-      this.dispatchChangeIfNeeded();
+      this.dispatchChange();
     },
     onAzureTenantIdChange(azureTenantId) {
       this.azureTenantId = azureTenantId;
-      this.dispatchChangeIfNeeded();
+      this.dispatchChange();
     },
     onRegionIdChange(regionId) {
       this.regionId = regionId;
-      this.dispatchChangeIfNeeded();
+      this.dispatchChange();
     },
-    dispatchChangeIfNeeded() {
-      if (this.privateKeyId && this.privateKey && this.userLink &&
-          this.azureTenantId && this.regionId) {
-        this.$dispatch('change', {
+    dispatchChange() {
+      this.$dispatch('change', {
+        properties: {
           privateKeyId: this.privateKeyId,
           privateKey: this.privateKey,
           userLink: this.userLink,
           azureTenantId: this.azureTenantId,
           regionId: this.regionId
-        });
-      }
+        },
+        valid: this.privateKeyId && this.privateKey && this.userLink &&
+          this.azureTenantId && this.regionId
+      }, this);
     }
   }
 });
