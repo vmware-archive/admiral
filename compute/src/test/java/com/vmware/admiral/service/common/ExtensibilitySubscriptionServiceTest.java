@@ -16,15 +16,13 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.lang.reflect.Field;
 import java.net.URI;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.common.test.BaseTestCase;
-import com.vmware.admiral.host.HostInitServiceHelper;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionService.ExtensibilitySubscription;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
@@ -38,21 +36,13 @@ public class ExtensibilitySubscriptionServiceTest extends BaseTestCase {
 
     @Before
     public void setUp() throws Throwable {
-        reset();
         sender = host.getTestRequestSender();
 
         // start services
-        HostInitServiceHelper.startServices(host,
-                ConfigurationService.ConfigurationFactoryService.class,
-                ExtensibilitySubscriptionFactoryService.class);
-        // wait to become available
-        waitForServiceAvailability(ConfigurationService.ConfigurationFactoryService.SELF_LINK);
-        waitForServiceAvailability(ExtensibilitySubscriptionFactoryService.SELF_LINK);
-    }
-
-    @After
-    public void tearDown() throws Throwable {
-        reset();
+        host.startServiceAndWait(ConfigurationFactoryService.class,
+                ConfigurationFactoryService.SELF_LINK);
+        host.startServiceAndWait(ExtensibilitySubscriptionFactoryService.class,
+                ExtensibilitySubscriptionFactoryService.SELF_LINK);
     }
 
     @Test
@@ -175,11 +165,6 @@ public class ExtensibilitySubscriptionServiceTest extends BaseTestCase {
         state.callbackReference = "uri";
         state.blocking = false;
         return state;
-    }
-
-    private void reset() throws Exception {
-        Field f = ExtensibilitySubscriptionManager.class.getDeclaredField("INSTANCE");
-        setPrivateField(f, ExtensibilitySubscriptionService.class, null);
     }
 
 }

@@ -18,7 +18,6 @@ import com.vmware.admiral.service.common.CommonInitialBootService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.CounterSubTaskService;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionFactoryService;
-import com.vmware.admiral.service.common.ExtensibilitySubscriptionManager;
 import com.vmware.admiral.service.common.LogService;
 import com.vmware.admiral.service.common.NodeHealthCheckService;
 import com.vmware.admiral.service.common.RegistryService;
@@ -40,8 +39,7 @@ public class HostInitCommonServiceConfig extends HostInitServiceHelper {
                 SslTrustCertificateFactoryService.class,
                 CommonInitialBootService.class,
                 ReverseProxyService.class,
-                ExtensibilitySubscriptionFactoryService.class,
-                ExtensibilitySubscriptionManager.class
+                ExtensibilitySubscriptionFactoryService.class
         );
 
         startServiceFactories(host, ResourceNamePrefixService.class, RegistryService.class,

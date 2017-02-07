@@ -13,6 +13,7 @@ package com.vmware.admiral.service.common;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
@@ -43,25 +44,26 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
     // internal map of the registered extensibility subscriptions
     private final Map<String, ExtensibilitySubscription> extensions = new ConcurrentHashMap<>();
 
-    private static volatile ExtensibilitySubscriptionManager INSTANCE;
+    private SubscriptionManager<ConfigurationState> subscriptionManager;
+
+    private AtomicBoolean initialized = new AtomicBoolean();
 
     public ExtensibilitySubscriptionManager() {
-    }
-
-    /**
-     * Gets initialized singleton instance of {@code LifecycleExtensibilityManager}
-     */
-    public static ExtensibilitySubscriptionManager getInstance() {
-        if (INSTANCE == null) {
-            throw new IllegalStateException(
-                    "LifecycleExtensibilityManager service has not been started.");
-        }
-        return INSTANCE;
     }
 
     @Override
     public void handleStart(Operation start) {
         initialize(start);
+    }
+
+    @Override
+    public void handleStop(Operation delete) {
+        if (subscriptionManager != null) {
+            subscriptionManager.close();
+        }
+        initialized.set(false);
+
+        super.handleStop(delete);
     }
 
     /**
@@ -72,27 +74,20 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
      * </ul>
      */
     private void initialize(Operation op) {
-        if (INSTANCE == null) {
-            synchronized (ExtensibilitySubscriptionManager.class) {
-                if (INSTANCE == null) {
-                    INSTANCE = this;
-
-                    ensureSubscriptionTargetExists(op, () -> {
-                        subscribe();
-                        loadExtensibilityStates(op);
-                    });
-                } else {
-                    op.complete();
-                }
-            }
-        } else {
+        if (initialized.getAndSet(true)) {
+            // already initialized
             op.complete();
+            return;
         }
+
+        ensureSubscriptionTargetExists(op, () -> {
+            subscribe();
+            loadExtensibilityStates(op);
+        });
     }
 
-
     private void subscribe() {
-        SubscriptionManager<ConfigurationState> subscriptionManager = new SubscriptionManager<>(
+        subscriptionManager = new SubscriptionManager<>(
                 getHost(), getHost().nextUUID(),
                 ExtensibilitySubscriptionService.LAST_UPDATED_DOCUMENT_KEY,
                 ConfigurationState.class, true);

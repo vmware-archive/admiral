@@ -12,18 +12,19 @@
 package com.vmware.admiral.service.common;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.common.test.BaseTestCase;
-import com.vmware.admiral.host.HostInitServiceHelper;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionService.ExtensibilitySubscription;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
@@ -32,40 +33,40 @@ import com.vmware.xenon.common.test.TestRequestSender;
 public class ExtensibilitySubscriptionManagerTest extends BaseTestCase {
 
     private TestRequestSender sender;
+    private ExtensibilitySubscriptionManager manager;
 
     @Before
     public void setUp() throws Throwable {
-        reset();
         sender = host.getTestRequestSender();
 
-        // start services
-        HostInitServiceHelper.startServices(host,
-                ConfigurationService.ConfigurationFactoryService.class,
-                ExtensibilitySubscriptionManager.class,
-                ExtensibilitySubscriptionFactoryService.class);
-        // wait to become available
-        waitForServiceAvailability(ConfigurationService.ConfigurationFactoryService.SELF_LINK);
-        waitForServiceAvailability(ExtensibilitySubscriptionFactoryService.SELF_LINK);
-        waitForServiceAvailability(ExtensibilitySubscriptionManager.SELF_LINK);
-    }
+        host.startServiceAndWait(ConfigurationFactoryService.class,
+                ConfigurationFactoryService.SELF_LINK);
+        host.startServiceAndWait(ExtensibilitySubscriptionFactoryService.class,
+                ExtensibilitySubscriptionFactoryService.SELF_LINK);
 
-    @After
-    public void tearDown() throws Throwable {
-        reset();
+        manager = new ExtensibilitySubscriptionManager();
+        host.startServiceAndWait(manager, ExtensibilitySubscriptionManager.SELF_LINK, null);
     }
 
     @Test
     public void testInitialState() throws Throwable {
-        assertNotNull(ExtensibilitySubscriptionManager.getInstance());
+        assertNotNull(manager);
         Map<String, ExtensibilitySubscription> map = getExtensibilityManagerInternalMap();
         assertNotNull(map);
         assertEquals(0, map.size());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testNotInitialized() throws Throwable {
-        tearDown();
-        ExtensibilitySubscriptionManager.getInstance();
+        Operation result = sender.sendAndWait(Operation
+                .createDelete(host, ExtensibilitySubscriptionManager.SELF_LINK));
+        assertNotNull(result);
+        assertEquals(Operation.STATUS_CODE_OK, result.getStatusCode());
+
+        Field field = ExtensibilitySubscriptionManager.class.getDeclaredField("initialized");
+        AtomicBoolean b = getPrivateField(field, manager);
+        assertNotNull(b);
+        assertFalse(b.get());
     }
 
     @Test
@@ -101,7 +102,7 @@ public class ExtensibilitySubscriptionManagerTest extends BaseTestCase {
     private Map<String, ExtensibilitySubscription> getExtensibilityManagerInternalMap()
             throws Exception {
         Field f = ExtensibilitySubscriptionManager.class.getDeclaredField("extensions");
-        return getPrivateField(f, ExtensibilitySubscriptionManager.getInstance());
+        return getPrivateField(f, manager);
     }
 
     private void verifyMapSize(Map map, int count) throws Throwable {
@@ -116,11 +117,6 @@ public class ExtensibilitySubscriptionManagerTest extends BaseTestCase {
         state.callbackReference = uri;
         state.blocking = false;
         return state;
-    }
-
-    private void reset() throws Exception {
-        Field f = ExtensibilitySubscriptionManager.class.getDeclaredField("INSTANCE");
-        setPrivateField(f, ExtensibilitySubscriptionService.class, null);
     }
 
 }
