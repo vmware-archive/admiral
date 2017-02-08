@@ -43,6 +43,7 @@ public class VolumeUtilTest {
         VolumeUtil.validateLocalVolumeName("v0lum3.Nam3");
         VolumeUtil.validateLocalVolumeName("name_102f9858-9996-4183-aa4c-082769df38f0");
 
+        testInvalidVolumeName(null);
         testInvalidVolumeName("");
         testInvalidVolumeName("   ");
         testInvalidVolumeName(" \t  ");
@@ -67,7 +68,18 @@ public class VolumeUtilTest {
 
         // Parse of named volumes should return named volume itself.
         assertEquals(namedVolume, VolumeUtil.parseVolumeHostDirectory(containerDir));
+    }
 
+    @Test
+    public void testParseOfNamedVolume() {
+        String namedVolume = "named-test-volume";
+        assertEquals(namedVolume, VolumeUtil.parseVolumeHostDirectory(namedVolume));
+    }
+
+    @Test
+    public void testParseOfEmptyVolume() {
+        String emptyVolume = "";
+        assertEquals(emptyVolume, VolumeUtil.parseVolumeHostDirectory(emptyVolume));
     }
 
     @Test
@@ -128,6 +140,27 @@ public class VolumeUtilTest {
         assertNotNull(c1.affinity);
         assertEquals(1, c1.affinity.length);
         assertEquals("C2", c1.affinity[0]);
+        assertNull(c2.affinity);
+    }
+
+    @Test
+    public void testApplyNamedVolumeConstraints3() {
+        //         C1    C2
+        //         |    /
+        // Local  Custom (requires non-default driver)
+
+        ContainerVolumeDescription local = createVolumeDesc("Local", "local");
+        ContainerVolumeDescription custom = createVolumeDesc("Custom", "custom");
+
+        ContainerDescription c1 = createContainerDesc("C1", "Custom:/etc");
+        ContainerDescription c2 = createContainerDesc("C2", "Custom:/etc" );
+
+        CompositeDescriptionExpanded compositeDesc = createCompositeDesc(
+                Arrays.asList(c1, c2, local, custom));
+
+        VolumeUtil.applyLocalNamedVolumeConstraints(compositeDesc.componentDescriptions);
+
+        assertNull(c1.affinity);
         assertNull(c2.affinity);
     }
 

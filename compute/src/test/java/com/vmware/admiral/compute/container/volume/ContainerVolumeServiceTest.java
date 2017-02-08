@@ -138,6 +138,17 @@ public class ContainerVolumeServiceTest extends ComputeBaseTest {
         assertEquals(1, updatedVolume.compositeComponentLinks.size());
     }
 
+    @Test
+    public void testUpdate() throws Throwable {
+        ContainerVolumeState volume = createVolume("tenant/coke");
+
+        volume.name = "new name";
+
+        ContainerVolumeState updatedVolume = doPut(volume);
+
+        assertEquals(volume.name, updatedVolume.name);
+    }
+
     private ContainerVolumeState createVolume(String group)
             throws Throwable {
         ContainerVolumeState volumeState = new ContainerVolumeState();
