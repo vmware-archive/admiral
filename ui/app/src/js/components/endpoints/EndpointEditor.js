@@ -14,7 +14,6 @@ import VuePasswordInput from 'components/common/VuePasswordInput'; //eslint-disa
 import VueTextInput from 'components/common/VueTextInput'; //eslint-disable-line
 import AwsEndpointEditor from 'components/endpoints/aws/EndpointEditor'; //eslint-disable-line
 import AzureEndpointEditor from 'components/endpoints/azure/EndpointEditor'; //eslint-disable-line
-import NimbusEndpointEditor from 'components/endpoints/nimbus/EndpointEditor'; //eslint-disable-line
 import VsphereEndpointEditor from 'components/endpoints/vsphere/EndpointEditor'; //eslint-disable-line
 import EndpointEditorVue from 'components/endpoints/EndpointEditorVue.html';
 import { EndpointsActions } from 'actions/Actions';
@@ -88,9 +87,6 @@ var getSupportedEditors = function() {
     'azure-endpoint-editor',
     'vsphere-endpoint-editor'
   ];
-  if (ft.isNimbusEnabled()) {
-    supportedEditors.push('nimbus-endpoint-editor');
-  }
   if (externalAdapters) {
     supportedEditors = supportedEditors.concat(
         externalAdapters.map(({endpointEditor}) => endpointEditor));
@@ -100,13 +96,6 @@ var getSupportedEditors = function() {
 
 var getSupportedTypes = function() {
   let supportedTypes = OOTB_TYPES.slice();
-  if (ft.isNimbusEnabled()) {
-    supportedTypes.push({
-      id: 'nimbus',
-      name: 'Nimbus',
-      iconSrc: 'image-assets/endpoints/nimbus.png'
-    });
-  }
   if (externalAdapters) {
     supportedTypes = supportedTypes.concat(externalAdapters);
   }
