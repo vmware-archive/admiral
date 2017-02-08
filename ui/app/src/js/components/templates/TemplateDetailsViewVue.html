@@ -95,23 +95,23 @@
           </grid-item>
           <grid-item class="new-item">
             <template-new-item-menu>
-              <div class="new-definition template-new-item" v-on:click="openAddNewContainerDefinition">
+              <div class="new-definition template-new-item" :disabled="templateHasKubernetesEntities ? 'disabled' : ''" v-on:click="openAddNewContainerDefinition">
                 <img src="image-assets/resource-icons/container.png"/>
                 <span class="label">{{i18n("app.template.details.newDefinition.newLabel")}}</span>
               </div>
-              <div class="template-new-item" v-on:click="openAddNewNetwork">
+              <div class="template-new-item" :disabled="templateHasKubernetesEntities ? 'disabled' : ''" v-on:click="openAddNewNetwork">
                 <img src="image-assets/resource-icons/network.png"/>
                 <span class="label">{{i18n("app.template.details.editNetwork.newLabel")}}</span>
               </div>
-              <div v-if="areClosuresAllowed" class="template-new-item" v-on:click="openAddNewClosure">
+              <div v-if="areClosuresAllowed" :disabled="templateHasKubernetesEntities ? 'disabled' : ''" class="template-new-item" v-on:click="openAddNewClosure">
                 <img src="image-assets/resource-icons/task.png"/>
                 <span class='label'>{{i18n('app.template.details.editClosures.newTitle')}}</span>
               </div>
-              <div class="template-new-item" v-on:click="openAddNewVolume">
+              <div class="template-new-item" v-on:click="openAddNewVolume" :disabled="templateHasGenericEntities ? 'disabled' : ''">
                 <img src="image-assets/resource-icons/volume.png"/>
                 <span class="label">{{i18n("app.template.details.editVolume.newLabel")}}</span>
               </div>
-              <div class="template-new-item" v-on:click="openAddNewKubernetes">
+              <div v-if="isKubernetesEnabled" class="template-new-item" :disabled="templateHasGenericEntities ? 'disabled' : ''" v-on:click="openAddNewKubernetes">
                 <img src="image-assets/resource-icons/kubernetes.png"/>
                 <span class='label'>{{i18n('app.template.details.editKubernetes.newTitle')}}</span>
               </div>
@@ -136,11 +136,6 @@
                     v-on:detached="volumeDetached"
                     v-on:edit="editVolume"
                     v-on:remove="removeVolume"></volume-box>
-<!--
-        <hr/>
-         <closure-box v-if="areClosuresAllowed" v-for="closure in model.templateDetails.listView.closures" track-by="documentSelfLink" v-bind:model="closure"
-                     v-on:edit="editClosureDescription"
-                     v-on:remove="removeClosure"></closure-box> -->
       </div>
     </div>
   </div>

@@ -31,6 +31,7 @@ import TemplateNewItemMenu from 'components/templates/TemplateNewItemMenu'; //es
 import exportHelper from 'components/templates/TemplateExportHelper';
 import { TemplateActions } from 'actions/Actions';
 import utils from 'core/utils';
+import links from 'core/links';
 import ft from 'core/ft';
 import constants from 'core/constants';
 
@@ -53,7 +54,9 @@ var TemplateDetailsView = Vue.extend({
       disableSavingVolumeButton: true,
       editingTemplateName: false,
       templateName: '',
-      networkType: 'bridge'
+      networkType: 'bridge',
+      templateHasKubernetesEntities: false,
+      templateHasGenericEntities: false
     };
   },
   computed: {
@@ -73,6 +76,10 @@ var TemplateDetailsView = Vue.extend({
     networks: function() {
       var networks = this.model.templateDetails && this.model.templateDetails.listView.networks;
       return networks || [];
+    },
+    items: function() {
+      var items = this.model.templateDetails && this.model.templateDetails.listView.items;
+      return items || [];
     },
     networkLinks: function() {
       var networkLinks = this.model.templateDetails &&
@@ -101,6 +108,9 @@ var TemplateDetailsView = Vue.extend({
     },
     areClosuresAllowed: function() {
       return ft.areClosuresAllowed();
+    },
+    isKubernetesEnabled: function() {
+      return ft.isKubernetesHostOptionEnabled();
     }
   },
   events: {
@@ -513,6 +523,28 @@ var TemplateDetailsView = Vue.extend({
       }
     });
 
+    this.unwatchNetworksForEdit = this.$watch('networks', (networks, oldNetworks) => {
+      if (networks !== oldNetworks) {
+
+        if (this.networks.length > 0) {
+          this.templateHasGenericEntities = true;
+        }
+      }
+    });
+
+    this.unwatchItemsForEdit = this.$watch('items', (items, oldItems) => {
+      if (items !== oldItems) {
+        for (var i = 0; i < items.length; i++) {
+          var item = items[i];
+          if (item.documentSelfLink.indexOf(links.CONTAINER_DESCRIPTIONS) !== -1) {
+            this.templateHasGenericEntities = true;
+          } else if (item.documentSelfLink.indexOf(links.KUBERNETES_DESCRIPTIONS) !== -1) {
+            this.templateHasKubernetesEntities = true;
+          }
+        }
+      }
+    });
+
     this.bindResourceConnection(constants.RESOURCE_CONNECTION_TYPE.NETWORK,
                                   TemplateActions.attachNetwork);
     this.bindResourceDetachConnection(constants.RESOURCE_CONNECTION_TYPE.NETWORK,
@@ -529,6 +561,8 @@ var TemplateDetailsView = Vue.extend({
   },
   detached: function() {
     this.unwatchExpanded();
+    this.unwatchNetworksForEdit();
+    this.unwatchItemsForEdit();
 
     var $detailsContent = $(this.$el);
     $detailsContent.off('transitionend MSTransitionEnd webkitTransitionEnd oTransitionEnd');
