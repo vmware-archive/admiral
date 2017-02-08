@@ -33,6 +33,7 @@ import java.util.logging.Level;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ResourceType;
@@ -159,6 +160,7 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         validateDefaultContentAdded(hosts, tokenOne);
     }
 
+    @Ignore("VBV-1018")
     @Test
     public void testRestrictedOperationWithNodesStoppedAndStarted() throws Throwable {
 
@@ -201,6 +203,7 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         validateDefaultContentAdded(hosts, tokenOne);
     }
 
+    @Ignore("VBV-1018")
     @Test
     public void testReplicationOfDocumentsAfterRestart() throws Throwable {
 
@@ -286,6 +289,7 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
 
     }
 
+    @Ignore("VBV-1018")
     @Test
     public void testProvisioningOfApplicationInCluster() throws Throwable {
 
