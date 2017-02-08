@@ -30,7 +30,7 @@ import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.PropertyMapping;
 import com.vmware.admiral.compute.env.ComputeProfileService.ComputeProfile;
-import com.vmware.admiral.compute.env.NetworkProfileService.NetworkProfile;
+import com.vmware.admiral.compute.env.NetworkProfileService.NetworkProfileExpanded;
 import com.vmware.admiral.compute.env.StorageProfileService.StorageProfile;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.ResourceState;
@@ -119,7 +119,7 @@ public class EnvironmentService extends StatefulService {
         public EndpointState endpoint;
         public ComputeProfile computeProfile;
         public StorageProfile storageProfile;
-        public NetworkProfile networkProfile;
+        public NetworkProfileExpanded networkProfile;
 
         public static URI buildUri(URI envStateUri) {
             return UriUtils.buildExpandLinksQueryUri(envStateUri);
@@ -177,11 +177,13 @@ public class EnvironmentService extends StatefulService {
                     }));
         }
         if (currentState.networkProfileLink != null) {
-            getOps.add(Operation.createGet(this, currentState.networkProfileLink)
+            URI uri = NetworkProfileExpanded.buildUri(UriUtils.buildUri(this.getHost(),
+                    currentState.networkProfileLink));
+            getOps.add(Operation.createGet(uri)
                     .setReferer(this.getUri())
                     .setCompletion((o, e) -> {
                         if (e == null) {
-                            expanded.networkProfile = o.getBody(NetworkProfile.class);
+                            expanded.networkProfile = o.getBody(NetworkProfileExpanded.class);
                         }
                     }));
         }

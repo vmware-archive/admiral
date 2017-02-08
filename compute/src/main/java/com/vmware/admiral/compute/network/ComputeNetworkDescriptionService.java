@@ -11,7 +11,9 @@
 
 package com.vmware.admiral.compute.network;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonFilter;
@@ -21,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.YamlMapper;
+import com.vmware.photon.controller.model.Constraint;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.SecurityGroupService;
 import com.vmware.xenon.common.Operation;
@@ -60,11 +63,11 @@ public class ComputeNetworkDescriptionService extends StatefulService {
         public Boolean external = Boolean.FALSE;
 
         /**
-         * A tag or name of the Network Profile configuration to use. If not specified a default one
-         * will be calculated based on other components and placement logic.
+         * Constraints of compute network to the network profile and subnet profile.
+         * If not specified a default subnet will be calculated based on other components and placement logic.
          */
-        @UsageOption(option = PropertyUsageOption.OPTIONAL)
-        public String connectivity;
+        @UsageOption(option = PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL)
+        public Map<String, Constraint> constraints;
 
         @Documentation(description = "Security groups to apply to all instances connected to this network")
         @PropertyOptions(usage = { PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL,
@@ -101,6 +104,7 @@ public class ComputeNetworkDescriptionService extends StatefulService {
         ComputeNetworkDescription nd = (ComputeNetworkDescription) super.getDocumentTemplate();
         nd.name = "My Network";
         nd.securityGroupLinks = new HashSet<>();
+        nd.constraints = new HashMap<>();
         nd.securityGroupLinks.add(SecurityGroupService.FACTORY_LINK + "/my-sec-group");
         return nd;
     }

@@ -11,7 +11,9 @@
 
 package com.vmware.admiral.compute.network;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonFilter;
@@ -21,9 +23,9 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.YamlMapper;
-import com.vmware.admiral.compute.env.NetworkProfileService;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.SecurityGroupService;
+import com.vmware.photon.controller.model.resources.SubnetService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
@@ -73,10 +75,10 @@ public class ComputeNetworkService extends StatefulService {
         public Set<String> securityGroupLinks;
 
         @JsonIgnore
-        @Documentation(description = "List Network profiles, calculated during allocation, applicable for this network.")
+        @Documentation(description = "List of subnetStates, calculated during allocation, applicable for this network.")
         @PropertyOptions(usage = { PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL,
                 PropertyUsageOption.SERVICE_USE, PropertyUsageOption.OPTIONAL })
-        public Set<String> networkProfileLinks;
+        public List<String> subnetLinks;
     }
 
     @Override
@@ -99,8 +101,8 @@ public class ComputeNetworkService extends StatefulService {
         nd.name = "My Network";
         nd.securityGroupLinks = new HashSet<>();
         nd.securityGroupLinks.add(SecurityGroupService.FACTORY_LINK + "/my-sec-group");
-        nd.networkProfileLinks = new HashSet<>();
-        nd.networkProfileLinks.add(NetworkProfileService.FACTORY_LINK + "/my-net-profile");
+        nd.subnetLinks = new ArrayList<>();
+        nd.subnetLinks.add(SubnetService.FACTORY_LINK + "/my-subnet");
         return nd;
     }
 }

@@ -49,7 +49,6 @@ import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentState;
 import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentStateExpanded;
-import com.vmware.admiral.compute.env.NetworkProfileService.NetworkProfile;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService.ResourceNamePrefixTaskState;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
@@ -294,7 +293,7 @@ public class ComputeAllocationTaskService
 
         if (environmentLink == null) {
             String contextId = RequestUtils.getContextId(state);
-            NetworkProfileQueryUtils.getComputeNetworkProfileConstraints(getHost(),
+            NetworkProfileQueryUtils.getNetworkProfileConstraintsForComputeNics(getHost(),
                     UriUtils.buildUri(getHost(), getSelfLink()), contextId, computeDesc,
                     (networkProfileLinks, e) -> {
                         if (e != null) {
@@ -501,15 +500,15 @@ public class ComputeAllocationTaskService
                     }
                     SubStage nextStage = cd.customProperties
                             .containsKey(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME)
-                                    ? SubStage.COMPUTE_DESCRIPTION_RECONFIGURED
-                                    : SubStage.RESOURCES_NAMES;
+                            ? SubStage.COMPUTE_DESCRIPTION_RECONFIGURED
+                            : SubStage.RESOURCES_NAMES;
 
                     Operation.createPut(this, state.resourceDescriptionLink)
                             .setBody(cd)
                             .setCompletion((o, e) -> {
                                 if (e != null) {
                                     failTask("Failed patching compute description : "
-                                            + Utils.toString(e),
+                                                    + Utils.toString(e),
                                             null);
                                     return;
                                 }
@@ -885,18 +884,28 @@ public class ComputeAllocationTaskService
             NetworkInterfaceDescription nid, EnvironmentStateExpanded env) {
         String subnetLink = nid.subnetLink;
 
-        NetworkProfile networkProfile = env.networkProfile;
-        if (networkProfile != null) {
-            if (networkProfile.subnetLinks != null && !networkProfile.subnetLinks.isEmpty()) {
-                subnetLink = networkProfile.subnetLinks.get(0);
-            }
-        }
-        DeferredResult<String> subnet;
-        if (subnetLink == null) {
+        DeferredResult<String> subnet = null;
+        if ((env.networkProfile != null && env.networkProfile.subnetStates != null
+                && !env.networkProfile.subnetStates.isEmpty()) && (nid.customProperties == null
+                || !nid.customProperties.containsKey(NetworkProfileQueryUtils.NO_NIC_VM))) {
+            DeferredResult<String> subnetDeferred = new DeferredResult<>();
+            NetworkProfileQueryUtils.getSubnetForComputeNic(getHost(),
+                    UriUtils.buildUri(getHost(), getSelfLink()),
+                    RequestUtils.getContextId(state), nid, env,
+                    (link, ex) -> {
+                        if (ex != null) {
+                            subnetDeferred.fail(ex);
+                            return;
+                        }
+                        subnetDeferred.complete(link);
+                    });
+            subnet = subnetDeferred;
+        } else if (subnetLink == null) {
             subnet = findSubnetBy(state, nid);
         } else {
             subnet = DeferredResult.completed(subnetLink);
         }
+
         DeferredResult<NetworkInterfaceState> n = subnet.thenCompose(sl -> {
             NetworkInterfaceState nic = new NetworkInterfaceState();
             nic.id = UUID.randomUUID().toString();
