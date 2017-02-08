@@ -96,9 +96,9 @@ public class MockDockerHostAdapterService extends StatelessService {
             callbackResponse.containerHostLink = request.resourceReference.getPath();
             String hostId = Service.getId(request.resourceReference.getPath());
             callbackResponse.networkIdsAndNames = new HashMap<>();
-            for (String networkId : MockDockerNetworkAdapterService.getNetworkIds(hostId)) {
+            for (String networkId : MockDockerNetworkAdapterService.getNetworkIdsByHost(hostId)) {
                 callbackResponse.networkIdsAndNames.put(networkId,
-                        MockDockerNetworkAdapterService.getNetworkNames(networkId));
+                        MockDockerNetworkAdapterService.getNetworkNameById(networkId));
             }
             patchTaskStage(request, null, callbackResponse);
             op.setBody(callbackResponse);
@@ -108,7 +108,7 @@ public class MockDockerHostAdapterService extends StatelessService {
             callbackResponse.containerHostLink = request.resourceReference.getPath();
             String hostId = Service.getId(request.resourceReference.getPath());
             callbackResponse.volumeNames = new ArrayList<>();
-            for (String name: MockDockerVolumeAdapterService.getVolumeNames(hostId)) {
+            for (String name : MockDockerVolumeAdapterService.getVolumeNamesByHost(hostId)) {
                 callbackResponse.addName(name);
             }
             patchTaskStage(request, null, callbackResponse);

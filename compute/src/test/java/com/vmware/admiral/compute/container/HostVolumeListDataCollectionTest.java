@@ -108,7 +108,10 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
     @Test
     public void testDiscoverExistingVolumeOnHost() throws Throwable {
         // add preexisting volume to the adapter service
-        addVolumeToMockAdapter(TEST_HOST_ID, TEST_PREEXISTING_VOLUME_NAME);
+        String reference = UriUtils.buildUri(host, UriUtils
+                .buildUriPath(ContainerVolumeService.FACTORY_LINK, TEST_PREEXISTING_VOLUME_NAME))
+                .toString();
+        addVolumeToMockAdapter(TEST_HOST_ID, reference, TEST_PREEXISTING_VOLUME_NAME);
 
         // run data collection on preexisting volume
         startAndWaitHostVolumeListDataCollection();
@@ -127,7 +130,9 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
     public void testProvisionedVolumeIsNotDiscovered() throws Throwable {
         // provision volume
         ContainerVolumeState containerVolumeCreated = createVolume(null, COMPUTE_HOST_LINK);
-        addVolumeToMockAdapter(TEST_HOST_ID, containerVolumeCreated.name);
+        String reference = UriUtils.buildUri(host, UriUtils
+                .buildUriPath(ContainerVolumeService.FACTORY_LINK, TEST_PREEXISTING_VOLUME_NAME))
+                .toString();
         // run data collection on preexisting volume
         startAndWaitHostVolumeListDataCollection();
         List<ContainerVolumeState> volumeStates = getVolumeStates();
@@ -244,7 +249,7 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
         return volumeState;
     }
 
-    private void addVolumeToMockAdapter(String hostId, String volumeName) {
-        MockDockerVolumeAdapterService.addVolumeName(hostId, volumeName);
+    private void addVolumeToMockAdapter(String hostId, String reference, String volumeName) {
+        MockDockerVolumeAdapterService.addVolumeName(hostId, reference, volumeName);
     }
 }

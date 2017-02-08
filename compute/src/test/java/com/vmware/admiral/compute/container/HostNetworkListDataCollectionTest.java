@@ -235,11 +235,8 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
         return networkState;
     }
 
-    private void addNetworkToMockAdapter(String hostId, String networkd,
-            String networkNames) {
-        MockDockerNetworkAdapterService.addNetworkId(hostId, networkd,
-                networkNames);
-        MockDockerNetworkAdapterService.addNetworkNames(hostId, networkd,
-                networkNames);
+    private void addNetworkToMockAdapter(String hostId, String networkId, String networkNames) {
+        MockDockerNetworkAdapterService.addNetworkId(hostId, networkId, networkNames);
+        MockDockerNetworkAdapterService.addNetworkName(hostId, networkId, networkNames);
     }
 }
