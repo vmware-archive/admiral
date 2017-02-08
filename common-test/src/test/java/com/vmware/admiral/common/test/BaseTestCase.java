@@ -634,6 +634,13 @@ public abstract class BaseTestCase {
         TestContext ctx = testCreate(1);
         URI uri = UriUtils.buildUri(host, selfLink);
         uri = UriUtils.extendUriWithQuery(uri, keyValues);
+        return getDocument(type, uri);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected <T> T getDocument(Class<T> type, URI uri)
+            throws Throwable {
+        TestContext ctx = testCreate(1);
         Object[] result = new Object[1];
         Operation get = Operation
                 .createGet(uri)
@@ -642,7 +649,7 @@ public abstract class BaseTestCase {
                 .setCompletion(
                         (o, e) -> {
                             if (e != null) {
-                                host.log("Can't load document %s. Error: %s", selfLink,
+                                host.log("Can't load document %s. Error: %s", uri,
                                         Utils.toString(e));
                                 ctx.failIteration(e);
                             } else {

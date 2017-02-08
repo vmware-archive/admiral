@@ -229,7 +229,7 @@ public class ComputeReservationTaskService
         }
 
         String contextId = RequestUtils.getContextId(state);
-        NetworkProfileQueryUtils.getComputeNetworkProfileConstraints(getHost(),
+        NetworkProfileQueryUtils.getNetworkProfileConstraintsForComputeNics(getHost(),
                 UriUtils.buildUri(getHost(), getSelfLink()), contextId, computeDesc,
                 (networkProfileLinks, e) -> {
                     if (e != null) {

@@ -23,10 +23,8 @@ import java.util.function.Consumer;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.OperationUtil;
-import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
-import com.vmware.admiral.compute.env.NetworkProfileService;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.network.ComputeNetworkService;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
@@ -39,14 +37,12 @@ import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
-import com.vmware.photon.controller.model.tasks.QueryUtils;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.services.common.QueryTask;
 
 /**
  * Task implementing the allocation of a compute network.
@@ -118,12 +114,12 @@ public class ComputeNetworkAllocationTaskService extends
         public String descName;
 
         /** (Internal) Set by task with environments compatible with the network. */
-        @Documentation(description = "Set by task environments compatible with the network.")
+        @Documentation(description = "Set by task subnets compatible with the network.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
                 PropertyUsageOption.SERVICE_USE,
                 PropertyUsageOption.SINGLE_ASSIGNMENT,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
-        public Set<String> networkProfileLinks;
+        public List<String> subnetLinks;
 
     }
 
@@ -156,7 +152,7 @@ public class ComputeNetworkAllocationTaskService extends
             }
             break;
         case RESOURCES_NAMED:
-            selectNetworkProfiles(state, networkDescription.tenantLinks);
+            selectSubnets(networkDescription);
             break;
         case NETWORK_PROFILES_SELECTED:
             createComputeNetworkStates(state, networkDescription, null);
@@ -312,12 +308,12 @@ public class ComputeNetworkAllocationTaskService extends
             networkState.tenantLinks = state.tenantLinks;
             networkState.descriptionLink = networkDescription.documentSelfLink;
             networkState.customProperties = state.customProperties;
-            networkState.networkProfileLinks = state.networkProfileLinks;
+            networkState.subnetLinks = state.subnetLinks;
 
             String contextId;
             if (state.customProperties != null
                     && (contextId = state.customProperties
-                            .get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY)) != null) {
+                    .get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY)) != null) {
                 networkState.customProperties.put(FIELD_NAME_CONTEXT_ID_KEY, contextId);
                 networkState.customProperties.put(
                         ComputeConstants.FIELD_NAME_COMPOSITE_COMPONENT_LINK_KEY,
@@ -372,32 +368,18 @@ public class ComputeNetworkAllocationTaskService extends
                 }));
     }
 
-    private void selectNetworkProfiles(ComputeNetworkAllocationTaskState state, List<String> tenantLinks) {
-        assertNotNull(state, "state");
+    private void selectSubnets(ComputeNetworkDescription networkDescription) {
+        NetworkProfileQueryUtils.getSubnetsForNetworkDescription(getHost(),
+                UriUtils.buildUri(getHost(), getSelfLink()), networkDescription,
+                (subnetLinks, e) -> {
+                    if (e != null) {
+                        failTask("Error selecting subnets for the for the network: ", e);
+                        return;
+                    }
 
-        final Set<String> networkProfileLinks = new HashSet<>();
-
-        // TODO: if there are any network profiles found, filter network profiles by tags
-        QueryTask.Query.Builder builder = QueryTask.Query.Builder.create()
-                .addKindFieldClause(NetworkProfileService.NetworkProfile.class)
-                .addClause(QueryUtil.addTenantClause(tenantLinks));
-        QueryUtils.QueryByPages<NetworkProfileService.NetworkProfile> query =
-                new QueryUtils.QueryByPages<>(getHost(), builder.build(),
-                        NetworkProfileService.NetworkProfile.class, null);
-        query.queryLinks(rp -> networkProfileLinks.add(rp)).whenComplete((v, e) -> {
-            if (e != null) {
-                failTask("Failure retrieving network profiles", e);
-                return;
-            }
-            // If there no network profiles defined for the tenant, get system network profiles
-            if (networkProfileLinks.isEmpty() && tenantLinks != null && !tenantLinks.isEmpty()) {
-                selectNetworkProfiles(state, null);
-                return;
-            }
-
-            proceedTo(SubStage.NETWORK_PROFILES_SELECTED,
-                    s -> s.networkProfileLinks = networkProfileLinks);
-        });
+                    proceedTo(SubStage.NETWORK_PROFILES_SELECTED,
+                            s -> s.subnetLinks = subnetLinks);
+                });
     }
 
     private static String buildNetworkLink(String name) {
@@ -407,6 +389,4 @@ public class ComputeNetworkAllocationTaskService extends
     private static String buildNetworkId(String name) {
         return name.replaceAll(" ", "-");
     }
-
-
 }
