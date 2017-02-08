@@ -299,14 +299,16 @@ var TemplateNewItemMenu = Vue.extend({
 
         let scale = this.getDistance(currentItem);
 
-        if (currentItem === closestItem && this.isMouseDown) {
+        var currentItemDisabled = currentItem.instance.getAttribute('disabled');
+
+        if (currentItem === closestItem && this.isMouseDown && !currentItemDisabled) {
           scale += 0.1;
         }
 
         var x = currentItem.initialX + (currentItem.x - currentItem.initialX) * ease;
         var y = currentItem.initialY + (currentItem.y - currentItem.initialY) * ease;
 
-        ctx.globalAlpha = ease;
+        ctx.globalAlpha = currentItemDisabled ? Math.min(0.5, ease) : ease;
 
         ctx.translate(x, y);
         ctx.translate(RADIUS, RADIUS);
@@ -322,10 +324,11 @@ var TemplateNewItemMenu = Vue.extend({
 
         if (currentItem === closestItem) {
           ctx.strokeStyle = '#727173';
-          ctx.lineWidth = 5;
+          ctx.lineWidth = currentItemDisabled ? 1 : 5;
+
           ctx.stroke();
 
-          ctx.fillStyle = '#3399cc';
+          ctx.fillStyle = currentItemDisabled ? '#727173' : '#3399cc';
           ctx.font = '18px Arial';
           ctx.textAlign = 'center';
           ctx.fillText(currentItem.label, 0, RADIUS + 20);
