@@ -53,7 +53,7 @@ import com.vmware.xenon.common.test.TestContext;
  * Similar to {@link ManagementHostAuthUsersIT} but this test includes 2 nodes, only SSL enabled and
  * the users' passwords are encrypted.
  */
-
+@Ignore("VBV-1018")
 public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT {
 
     private ManagementHost hostOne;
@@ -160,7 +160,6 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         validateDefaultContentAdded(hosts, tokenOne);
     }
 
-    @Ignore("VBV-1018")
     @Test
     public void testRestrictedOperationWithNodesStoppedAndStarted() throws Throwable {
 
@@ -203,7 +202,6 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         validateDefaultContentAdded(hosts, tokenOne);
     }
 
-    @Ignore("VBV-1018")
     @Test
     public void testReplicationOfDocumentsAfterRestart() throws Throwable {
 
@@ -289,7 +287,6 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
 
     }
 
-    @Ignore("VBV-1018")
     @Test
     public void testProvisioningOfApplicationInCluster() throws Throwable {
 
