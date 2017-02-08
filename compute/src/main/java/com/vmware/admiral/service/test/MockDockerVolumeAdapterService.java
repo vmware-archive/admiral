@@ -12,13 +12,12 @@
 package com.vmware.admiral.service.test;
 
 import java.net.URI;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
@@ -29,6 +28,7 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionSer
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.StatelessService;
@@ -51,9 +51,8 @@ public class MockDockerVolumeAdapterService extends StatelessService {
     public boolean isFailureExpected;
     public String computeHostIpAddress = MOCK_HOST_ASSIGNED_ADDRESS;
 
-    private static final Map<String, ContainerVolumeState> VOLUMES = new ConcurrentHashMap<>();
-    // Map of volume names by hostId. hostId -> list of volume names
-    private static final Map<String, List<String>> VOLUME_NAMES = new ConcurrentHashMap<>();
+    // Map of volume names by hostId. hostId -> Map of volumeReference -> volume name
+    private static final Map<String, Map<String, String>> VOLUME_NAMES = new ConcurrentHashMap<>();
 
     private static class MockAdapterRequest extends AdapterRequest {
 
@@ -169,7 +168,8 @@ public class MockDockerVolumeAdapterService extends StatelessService {
         }
 
         if (state.isProvisioning()) {
-            addVolume(state.resourceReference, volume);
+            addVolumeName(Service.getId(volume.originatingHostLink),
+                    state.resourceReference.toString(), volume.name);
             patchProvisioningTask(state, (Throwable) null);
         } else if (state.isDeprovisioning()) {
             removeVolumeByReference(state.resourceReference);
@@ -246,54 +246,44 @@ public class MockDockerVolumeAdapterService extends StatelessService {
     }
 
     public static synchronized void resetVolumes() {
-        VOLUMES.clear();
         VOLUME_NAMES.clear();
     }
 
-    public static synchronized void removeVolumeById(String id) {
-        Iterator<Map.Entry<String, ContainerVolumeState>> it = VOLUMES.entrySet().iterator();
-        while (it.hasNext()) {
-            ContainerVolumeState volume = it.next().getValue();
-            if (id.equals(volume.id)) {
-                it.remove();
+    private synchronized void removeVolumeByReference(URI volumeReference) {
+        Iterator<Map<String, String>> itHost = VOLUME_NAMES.values().iterator();
+        while (itHost.hasNext()) {
+            Map<String, String> volumeNamesByHost = itHost.next();
+            Iterator<Entry<String, String>> itVolumes = volumeNamesByHost.entrySet().iterator();
+            while (itVolumes.hasNext()) {
+                Entry<String, String> entry = itVolumes.next();
+                if (entry.getKey().endsWith(volumeReference.getPath())) {
+                    Utils.log(MockDockerVolumeAdapterService.class,
+                            MockDockerVolumeAdapterService.class.getSimpleName(), Level.INFO,
+                            "Volume with reference: %s and container name: %s removed.", entry.getKey(),
+                            entry.getValue());
+                    itVolumes.remove();
+                    return;
+                }
             }
         }
+        Utils.logWarning("**************** No volumeId found for reference: "
+                + volumeReference.getPath());
     }
 
-    private synchronized void removeVolumeByReference(URI volumeReference) {
-        VOLUMES.remove(volumeReference.toString());
-    }
-
-    public static synchronized void addVolume(URI volumeReference, ContainerVolumeState volume) {
-        VOLUMES.put(volumeReference.toString(), volume);
-    }
-
-    public static synchronized void addVolumeName(String hostId, String volumeName) {
+    public static synchronized void addVolumeName(String hostId, String reference, String volumeName) {
         Utils.log(MockDockerAdapterService.class, MockDockerAdapterService.class.getSimpleName(),
-                Level.INFO, "Volume with name: %s created on host: %s.",
-                volumeName, hostId);
+                Level.INFO, "Volume with name: %s created on host: %s.", volumeName, hostId);
         if (!VOLUME_NAMES.containsKey(hostId)) {
-            VOLUME_NAMES.put(hostId, new CopyOnWriteArrayList<>());
+            VOLUME_NAMES.put(hostId, new ConcurrentHashMap<>());
         }
-        VOLUME_NAMES.get(hostId).add(volumeName);
+        VOLUME_NAMES.get(hostId).put(reference, volumeName);
     }
 
-
-    public static synchronized List<String> getVolumeNames() {
-        List<String> volumeNames = new ArrayList<>();
-        Iterator<List<String>> iteratorHost = VOLUME_NAMES.values().iterator();
-        while (iteratorHost.hasNext()) {
-            List<String> volumeNamesByHost = iteratorHost.next();
-            volumeNames.addAll(volumeNamesByHost);
-        }
-        return volumeNames;
-    }
-
-    public static synchronized List<String> getVolumeNames(String hostId) {
+    public static synchronized Collection<String> getVolumeNamesByHost(String hostId) {
         if (VOLUME_NAMES.containsKey(hostId)) {
-            return VOLUME_NAMES.get(hostId);
+            return VOLUME_NAMES.get(hostId).values();
         } else {
-            return Collections.emptyList();
+            return Collections.emptySet();
         }
     }
 }

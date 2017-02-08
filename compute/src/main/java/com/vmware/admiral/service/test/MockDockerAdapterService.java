@@ -509,26 +509,13 @@ public class MockDockerAdapterService extends StatelessService {
         return getContainerIds().size();
     }
 
-    public static synchronized void removeContainerId(String containerId) {
-        Iterator<Map<String, String>> iteratorHost = CONTAINER_IDS.values().iterator();
-        while (iteratorHost.hasNext()) {
-            Map<String, String> containerIdsByHost = iteratorHost.next();
-            if (containerIdsByHost.containsKey(containerId)) {
-                containerIdsByHost.remove(containerId);
-                Utils.log(MockDockerAdapterService.class,
-                        MockDockerAdapterService.class.getSimpleName(),
-                        Level.INFO, "Container with id: %s removed.", containerId);
-                return;
-            }
-
-        }
-    }
-
     private synchronized void removeContainerIdByReference(URI containerReference) {
-        Iterator<Map<String, String>> iteratorHost = CONTAINER_IDS.values().iterator();
+        Iterator<Map.Entry<String, Map<String, String>>> iteratorHost = CONTAINER_IDS.entrySet()
+                .iterator();
         while (iteratorHost.hasNext()) {
-            Map<String, String> containerIdsByHost = iteratorHost.next();
-            Iterator<Entry<String, String>> iterator = containerIdsByHost.entrySet().iterator();
+            Map.Entry<String, Map<String, String>> containerIdsByHost = iteratorHost.next();
+            Iterator<Entry<String, String>> iterator = containerIdsByHost.getValue().entrySet()
+                    .iterator();
             while (iterator.hasNext()) {
                 Entry<String, String> entry = iterator.next();
                 if (entry.getValue().endsWith(containerReference.getPath())) {
@@ -536,6 +523,13 @@ public class MockDockerAdapterService extends StatelessService {
                             MockDockerAdapterService.class.getSimpleName(),
                             Level.INFO, "Container with id: %s and container ref: %s removed.",
                             entry.getKey(), containerReference);
+                    String hostId = containerIdsByHost.getKey();
+                    if (CONTAINER_IDS_AND_NAMES.containsKey(hostId)) {
+                        CONTAINER_IDS_AND_NAMES.get(hostId).remove(entry.getKey());
+                    }
+                    if (CONTAINER_IDS_AND_IMAGE.containsKey(hostId)) {
+                        CONTAINER_IDS_AND_IMAGE.get(hostId).remove(entry.getKey());
+                    }
                     iterator.remove();
                     return;
                 }

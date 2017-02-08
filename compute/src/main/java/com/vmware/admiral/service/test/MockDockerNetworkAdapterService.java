@@ -13,9 +13,9 @@ package com.vmware.admiral.service.test;
 
 import java.net.URI;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -28,6 +28,7 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.StatelessService;
@@ -50,12 +51,9 @@ public class MockDockerNetworkAdapterService extends StatelessService {
     public String computeHostIpAddress = MOCK_HOST_ASSIGNED_ADDRESS;
 
     // Map of network ids by hostId. hostId -> Map of networkId -> networkReference
-    private static final Map<String, ContainerNetworkState> NETWORKS = new ConcurrentHashMap<>();
-
-    // Map of network ids by hostId. hostId -> Map of networkId -> networkReference
     private static final Map<String, Map<String, String>> NETWORK_IDS = new ConcurrentHashMap<>();
     // Map of network ids and names by hostId. hostId -> Map of networkId -> network name
-    private static final Map<String, Map<String, String>> NETWORK_IDS_AND_NAMES = new ConcurrentHashMap<>();
+    private static final Map<String, Map<String, String>> NETWORK_NAMES = new ConcurrentHashMap<>();
 
     static {
         // TODO (VBV-806) - These special initializations are required because some Container
@@ -65,15 +63,15 @@ public class MockDockerNetworkAdapterService extends StatelessService {
 
         addNetworkId("test-docker-host-compute", "test-external-network",
                 "test-external-network");
-        addNetworkNames("test-docker-host-compute", "test-external-network",
+        addNetworkName("test-docker-host-compute", "test-external-network",
                 "test-external-network");
         addNetworkId("test-docker-host-compute2", "test-external-network",
                 "test-external-network");
-        addNetworkNames("test-docker-host-compute2", "test-external-network",
+        addNetworkName("test-docker-host-compute2", "test-external-network",
                 "test-external-network");
         addNetworkId("test-docker-host-compute3", "test-external-network",
                 "test-external-network");
-        addNetworkNames("test-docker-host-compute3", "test-external-network",
+        addNetworkName("test-docker-host-compute3", "test-external-network",
                 "test-external-network");
     }
 
@@ -191,7 +189,9 @@ public class MockDockerNetworkAdapterService extends StatelessService {
         }
 
         if (state.isProvisioning()) {
-            addNetwork(state.resourceReference, network);
+            addNetworkId(Service.getId(network.originatingHostLink), network.id,
+                    state.resourceReference.toString());
+            addNetworkName(Service.getId(network.originatingHostLink), network.id, network.name);
             patchProvisioningTask(state, (Throwable) null);
         } else if (state.isDeprovisioning()) {
             removeNetworkByReference(state.resourceReference);
@@ -270,33 +270,39 @@ public class MockDockerNetworkAdapterService extends StatelessService {
     }
 
     public static synchronized void resetNetworks() {
-        NETWORKS.clear();
         NETWORK_IDS.clear();
-        NETWORK_IDS_AND_NAMES.clear();
-    }
-
-    public static synchronized void removeNetworkById(String id) {
-        Iterator<Map.Entry<String, ContainerNetworkState>> it = NETWORKS.entrySet().iterator();
-        while (it.hasNext()) {
-            ContainerNetworkState network = it.next().getValue();
-            if (id.equals(network.id)) {
-                it.remove();
-            }
-        }
+        NETWORK_NAMES.clear();
     }
 
     private synchronized void removeNetworkByReference(URI networkReference) {
-        NETWORKS.remove(networkReference.toString());
-    }
-
-    public static synchronized void addNetwork(URI networkReference,
-            ContainerNetworkState network) {
-        NETWORKS.put(networkReference.toString(), network);
+        Iterator<Map.Entry<String, Map<String, String>>> itHost = NETWORK_IDS.entrySet().iterator();
+        while (itHost.hasNext()) {
+            Map.Entry<String, Map<String, String>> networkIdsByHost = itHost.next();
+            Iterator<Entry<String, String>> itNetworks = networkIdsByHost.getValue().entrySet().iterator();
+            while (itNetworks.hasNext()) {
+                Entry<String, String> entry = itNetworks.next();
+                if (entry.getValue().endsWith(networkReference.getPath())) {
+                    Utils.log(MockDockerNetworkAdapterService.class,
+                            MockDockerNetworkAdapterService.class.getSimpleName(), Level.INFO,
+                            "Network with id: %s and container ref: %s removed.", entry.getKey(),
+                            networkReference);
+                    String hostId = networkIdsByHost.getKey();
+                    if (NETWORK_NAMES.containsKey(hostId)) {
+                        NETWORK_NAMES.get(hostId).remove(entry.getKey());
+                    }
+                    itNetworks.remove();
+                    return;
+                }
+            }
+        }
+        Utils.logWarning("**************** No networkId found for reference: "
+                + networkReference.getPath());
     }
 
     public static synchronized void addNetworkId(String hostId, String networkId,
             String networkReference) {
-        Utils.log(MockDockerAdapterService.class, MockDockerAdapterService.class.getSimpleName(),
+        Utils.log(MockDockerNetworkAdapterService.class,
+                MockDockerNetworkAdapterService.class.getSimpleName(),
                 Level.INFO, "Network with id: %s and network ref: %s created in host: %s.",
                 networkId, networkReference, hostId);
         if (!NETWORK_IDS.containsKey(hostId)) {
@@ -305,17 +311,14 @@ public class MockDockerNetworkAdapterService extends StatelessService {
         NETWORK_IDS.get(hostId).put(networkId, networkReference);
     }
 
-    public static synchronized Set<String> getNetworkIds() {
-        Set<String> networkIds = new HashSet<>();
-        Iterator<Map<String, String>> iteratorHost = NETWORK_IDS.values().iterator();
-        while (iteratorHost.hasNext()) {
-            Map<String, String> networkIdsByHost = iteratorHost.next();
-            networkIds.addAll(networkIdsByHost.keySet());
+    public static synchronized void addNetworkName(String hostId, String networkId, String name) {
+        if (!NETWORK_NAMES.containsKey(hostId)) {
+            NETWORK_NAMES.put(hostId, new ConcurrentHashMap<>());
         }
-        return networkIds;
+        NETWORK_NAMES.get(hostId).put(networkId, name);
     }
 
-    public static synchronized Set<String> getNetworkIds(String hostId) {
+    public static synchronized Set<String> getNetworkIdsByHost(String hostId) {
         if (NETWORK_IDS.containsKey(hostId)) {
             return NETWORK_IDS.get(hostId).keySet();
         } else {
@@ -323,15 +326,8 @@ public class MockDockerNetworkAdapterService extends StatelessService {
         }
     }
 
-    public static synchronized void addNetworkNames(String hostId, String networkId, String name) {
-        if (!NETWORK_IDS_AND_NAMES.containsKey(hostId)) {
-            NETWORK_IDS_AND_NAMES.put(hostId, new ConcurrentHashMap<>());
-        }
-        NETWORK_IDS_AND_NAMES.get(hostId).put(networkId, name);
-    }
-
-    public static synchronized String getNetworkNames(String networkId) {
-        Iterator<Map<String, String>> iteratorHost = NETWORK_IDS_AND_NAMES.values().iterator();
+    public static synchronized String getNetworkNameById(String networkId) {
+        Iterator<Map<String, String>> iteratorHost = NETWORK_NAMES.values().iterator();
         while (iteratorHost.hasNext()) {
             Map<String, String> networkIdsAndNamesByHost = iteratorHost.next();
             if (networkIdsAndNamesByHost.containsKey(networkId)) {

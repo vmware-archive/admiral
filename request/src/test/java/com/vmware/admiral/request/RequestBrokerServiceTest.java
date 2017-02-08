@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import org.junit.After;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
@@ -87,11 +86,6 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 
 public class RequestBrokerServiceTest extends RequestBaseTest {
-
-    @After
-    public void tearDown() throws Throwable {
-        MockDockerNetworkAdapterService.resetNetworks();
-    }
 
     @Test
     public void testRequestLifeCycle() throws Throwable {
@@ -453,7 +447,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         addForDeletion(networkState);
         MockDockerNetworkAdapterService.addNetworkId(extractId(computeHost.documentSelfLink),
                 networkState.id, networkState.id);
-        MockDockerNetworkAdapterService.addNetworkNames(extractId(computeHost.documentSelfLink),
+        MockDockerNetworkAdapterService.addNetworkName(extractId(computeHost.documentSelfLink),
                 networkState.id, networkState.name);
 
         ContainerNetworkDescription networkDesc = NetworkUtils
@@ -1344,7 +1338,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         volumeState = doPost(volumeState, ContainerVolumeService.FACTORY_LINK);
         addForDeletion(volumeState);
         MockDockerVolumeAdapterService.addVolumeName(extractId(computeHost.documentSelfLink),
-                volumeName);
+                volumeState.id, volumeName);
 
         ContainerVolumeDescription volumeDesc = VolumeUtil
                 .createContainerVolumeDescription(volumeState);
@@ -1556,9 +1550,12 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         volumeDesc = doPost(volumeDesc, ContainerVolumeDescriptionService.FACTORY_LINK);
         addForDeletion(volumeDesc);
 
-        // 1. Request a volume with expected failure:
+        // 1. Request a volume in the given host with expected failure:
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
                 ResourceType.CONTAINER_VOLUME_TYPE.getName(), volumeDesc.documentSelfLink);
+        request.customProperties.put(
+                ReservationAllocationTaskService.CONTAINER_HOST_ID_CUSTOM_PROPERTY, computeHost.id);
+
         host.log("########  Start of request ######## ");
         request = startRequest(request);
 
