@@ -16,6 +16,7 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_VOLUME_NAME_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_VOLUME_SCOPE_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_VOLUME_STATUS_PROP_NAME;
+import static com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.VMDK_VOLUME_DRIVER;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -43,11 +44,12 @@ public class ContainerVolumeStateMapper {
         AssertUtil.assertNotNull(volumeState, "volumeState");
         AssertUtil.assertNotNull(properties, "properties");
 
-        volumeState.name = (String) properties.get(DOCKER_VOLUME_NAME_PROP_NAME);
         volumeState.driver = (String) properties.get(DOCKER_VOLUME_DRIVER_PROP_NAME);
         volumeState.mountpoint = (String) properties.get(DOCKER_VOLUME_MOUNTPOINT_PROP_NAME);
         volumeState.scope = (String) properties.get(DOCKER_VOLUME_SCOPE_PROP_NAME);
         mapVolumeStatus(volumeState, properties);
+
+        updateVolumeName(volumeState, properties);
 
         volumeState.powerState = PowerState.CONNECTED;
     }
@@ -72,5 +74,25 @@ public class ContainerVolumeStateMapper {
         }
 
         return null;
+    }
+
+    private static void updateVolumeName(ContainerVolumeState volumeState,
+            Map<String, Object> properties) {
+
+        volumeState.name = (String) properties.get(DOCKER_VOLUME_NAME_PROP_NAME);
+
+        if (!VMDK_VOLUME_DRIVER.equals(volumeState.driver)) {
+            return;
+        }
+
+        String datastore;
+        if (volumeState.status != null
+                && (datastore = volumeState.status.get("datastore")) != null) {
+            String nameSuffix = "@" + datastore;
+            if (!volumeState.name.endsWith(nameSuffix)) {
+                volumeState.name += nameSuffix;
+            }
+        }
+
     }
 }

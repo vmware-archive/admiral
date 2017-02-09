@@ -50,6 +50,7 @@ public class ContainerVolumeDescriptionService extends StatefulService {
             DISCOVERED_INSTANCE);
 
     public static final String DEFAULT_VOLUME_DRIVER = "local";
+    public static final String VMDK_VOLUME_DRIVER = "vmdk";
 
     @JsonFilter(YamlMapper.SERVICE_DOCUMENT_FILTER)
     @JsonIgnoreProperties({ "customProperties" })
