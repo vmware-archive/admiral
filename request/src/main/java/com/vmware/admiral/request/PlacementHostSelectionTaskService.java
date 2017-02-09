@@ -46,8 +46,8 @@ import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallback
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
-import com.vmware.photon.controller.model.resources.util.ResourcePoolQueryHelper;
-import com.vmware.photon.controller.model.resources.util.ResourcePoolQueryHelper.QueryResult;
+import com.vmware.photon.controller.model.tasks.helpers.ResourcePoolQueryHelper;
+import com.vmware.photon.controller.model.tasks.helpers.ResourcePoolQueryHelper.QueryResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.services.common.QueryTask;
