@@ -288,6 +288,7 @@ var getPlacementModel = function() {
 var toggleButtonsState = function() {
 
   var placementZone = this.placementZoneInput.getSelectedOption();
+  var name = validator.trim(this.$el.find('.nameInput input').val());
   var priority = this.$el.find('.priorityInput input').val();
   var maxNumberInstances = this.$el.find('.maxInstancesInput input').val();
   var memoryLimit = this.$el.find('.memoryLimitInput input').val();
@@ -316,7 +317,7 @@ var toggleButtonsState = function() {
   utils.applyValidationError(this.$el.find('.cpuSharesInput'),
                                      cpuSharesClause ? null : i18n.t('errors.invalidInputValue'));
 
-  let notEnoughInfo = !placementZone || !priorityClause || !maxNumberInstancesClause
+  let notEnoughInfo = !placementZone || !name || !priorityClause || !maxNumberInstancesClause
                       || !groupClause || !memoryLimitClause || !cpuSharesClause;
   if (notEnoughInfo) {
     $saveBtn.attr('disabled', true);
