@@ -13,7 +13,9 @@ package com.vmware.admiral.service.common;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
@@ -22,16 +24,18 @@ import com.vmware.admiral.common.util.SubscriptionManager;
 import com.vmware.admiral.common.util.SubscriptionManager.SubscriptionNotification;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
+import com.vmware.admiral.service.common.ExtensibilitySubscriptionCallbackService.ExtensibilitySubscriptionCallback;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionService.ExtensibilitySubscription;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatelessService;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 
 /**
- * LifecycleExtensibilityManager enables clients to subscribe and receive notification when a task
- * service reaches desired stage and substage.
+ * ExtensibilitySubscriptionManager enables clients to subscribe and receive notification when a
+ * task service reaches desired stage and substage.
  * <p>
  * Notifications can be asynchronous or synchronous (blocking). The first are sent and the task
  * proceeds with its execution. The latter block further task execution and wait callback to be
@@ -41,8 +45,13 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
 
     public static final String SELF_LINK = ManagementUriParts.EXTENSIBILITY_MANAGER;
 
+    private static final int NOTIFICATION_RETRY_COUNT = Integer.getInteger(
+            "com.vmware.admiral.service.extensibility.notification.retries", 3);
+    private static final int NOTIFICATION_RETRY_WAIT = Integer.getInteger(
+            "com.vmware.admiral.service.extensibility.notification.wait", 15);
+
     // internal map of the registered extensibility subscriptions
-    private final Map<String, ExtensibilitySubscription> extensions = new ConcurrentHashMap<>();
+    private final Map<String, ExtensibilitySubscription> subscriptions = new ConcurrentHashMap<>();
 
     private SubscriptionManager<ConfigurationState> subscriptionManager;
 
@@ -64,6 +73,29 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
         initialized.set(false);
 
         super.handleStop(delete);
+    }
+
+    <T extends TaskServiceDocument<?>> void handleStagePatch(
+            AbstractTaskStatefulService<?, ?> taskService, T state,
+            Consumer<T> callback) {
+
+        ExtensibilitySubscription extensibilitySubscription = getExtensibilitySubscription(state);
+
+        if (extensibilitySubscription == null) {
+            // no extensibility subscription registered, continue task execution
+            callback.accept(state);
+            return;
+        }
+
+        if (extensibilitySubscription.blocking) {
+            // blocking notification
+            sendBlockingNotificationCall(taskService, extensibilitySubscription, state);
+        } else {
+            // asynchronous notification
+            sendAsyncNotificationCall(extensibilitySubscription, state);
+            // continue task execution
+            callback.accept(state);
+        }
     }
 
     /**
@@ -108,7 +140,7 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
                         ExtensibilitySubscription state = r.getResult();
                         addExtensibilitySubscription(state);
                     } else {
-                        logInfo("Loaded %d extensibility states", extensions.size());
+                        logInfo("Loaded %d extensibility states", subscriptions.size());
                         op.complete();
                     }
                 });
@@ -143,43 +175,108 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
     /**
      * Sends notification to subscriber
      *
-     * @param service            task service
-     * @param extensibilityState extensibility state
-     * @param state              task state to send
+     * @param service
+     *            task service
+     * @param extensibility
+     *            extensibility state
+     * @param state
+     *            task state to send
      */
-    @SuppressWarnings({ "rawtypes", "unused" })
+    @SuppressWarnings("rawtypes")
     private <T extends TaskServiceDocument> void sendAsyncNotificationCall(
-            AbstractTaskStatefulService service, ExtensibilitySubscription extensibilityState,
+            ExtensibilitySubscription extensibility,
             T state) {
+        logFine("Sending async notification to [%s] for [%s]",
+                extensibility.callbackReference, state.documentSelfLink);
+
+        sendExternalNotification(extensibility, state, NOTIFICATION_RETRY_COUNT);
     }
 
     /**
      * Sends notification to subscriber. Client should post to the callback state to resume the task
      * execution.
      *
-     * @param service            task service
-     * @param extensibilityState extensibility state
-     * @param state              task state to send
+     * @param service
+     *            task service
+     * @param extensibility
+     *            extensibility state
+     * @param state
+     *            task state to send
      */
-    @SuppressWarnings({ "rawtypes", "unused" })
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private <T extends TaskServiceDocument> void sendBlockingNotificationCall(
             AbstractTaskStatefulService service,
-            ExtensibilitySubscription extensibilityState, T state) {
+            ExtensibilitySubscription extensibility, T state) {
+
+        logFine("Sending blocking notification to [%s] for [%s]",
+                extensibility.callbackReference, state.documentSelfLink);
+
+        ExtensibilitySubscriptionCallback callbackState = new ExtensibilitySubscriptionCallback();
+        callbackState.taskStateJson = Utils.toJson(state);
+
+        sendRequest(Operation
+                .createPost(this, ExtensibilitySubscriptionCallbackService.FACTORY_LINK)
+                .setBody(callbackState)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logSevere("Failure creating extensibility callback: %s", Utils.toJson(e));
+                        service.failTask("Failure creating extensibility callback", e);
+                        return;
+                    }
+
+                    ExtensibilitySubscriptionCallback result = o
+                            .getBody(ExtensibilitySubscriptionCallback.class);
+
+                    T taskToSend = (T) Utils.fromJson(result.taskStateJson, service.getStateType());
+                    service.processForExtensibility(taskToSend);
+
+                    sendExternalNotification(extensibility, buildDataToSend(result, taskToSend),
+                            NOTIFICATION_RETRY_COUNT);
+                }));
     }
 
     /**
-     * Sends a service document to external url. Supports retry in case of an
-     * error and if task service is provided this method will call failTask
-     * when no more retries left.
+     * Sends a service document to external url. Supports retry in case of an error and if task
+     * service is provided this method will call failTask when no more retries left.
      *
-     * @param url         address to send notification to
-     * @param body        document to send
-     * @param retriesLeft number of retries left before give up
-     * @param taskService task service
+     * @param extensibility
+     *            extensibility state
+     * @param body
+     *            document to send
+     * @param retriesLeft
+     *            number of retries left before give up
      */
-    @SuppressWarnings({ "rawtypes", "unused" })
-    private void sendExternalNotification(String url, ServiceDocument body,
-            int retriesLeft, AbstractTaskStatefulService taskService) {
+    private void sendExternalNotification(ExtensibilitySubscription extensibility,
+            ServiceDocument body, int retriesLeft) {
+        //URI uri = URI.create(extensibility.callbackReference);
+        sendRequest(Operation.createPost(extensibility.callbackReference)
+                .setBody(body)
+                .setReferer(getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        if (retriesLeft <= 1) {
+                            logWarning("Cannot notify [%s] for task [%s]. Error: %s",
+                                    extensibility.callbackReference.toString(), body.documentSelfLink, e.getMessage());
+                            // TODO log to eventlogs
+                            // TODO fail task or something?
+                        } else {
+                            getHost().schedule(() -> {
+                                sendExternalNotification(extensibility, body, retriesLeft - 1);
+                            }, NOTIFICATION_RETRY_WAIT, TimeUnit.SECONDS);
+                        }
+                    }
+                }));
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private <T extends TaskServiceDocument> ServiceDocument buildDataToSend(
+            ExtensibilitySubscriptionCallback result, T taskToSend) {
+        ExtensibilitySubscriptionCallback data = new ExtensibilitySubscriptionCallback();
+
+        data.serviceCallback = UriUtils.buildUri(result.documentSelfLink);
+        data.taskStateJson = Utils.toJson(taskToSend);
+
+        return data;
     }
 
     private void ensureSubscriptionTargetExists(Operation op, Runnable callback) {
@@ -198,8 +295,8 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
 
                         sendRequest(Operation
                                 .createPost(this, ConfigurationFactoryService.SELF_LINK)
-                                .addPragmaDirective(Operation
-                                        .PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
+                                .addPragmaDirective(
+                                        Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
                                 .setBody(body)
                                 .setCompletion((o, e) -> {
                                     if (e != null) {
@@ -216,13 +313,27 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
     private void addExtensibilitySubscription(ExtensibilitySubscription state) {
         logFine("Added extensibility [%s] with callback [%s]",
                 state.documentSelfLink, state.callbackReference);
-        extensions.put(state.documentSelfLink, state);
+        subscriptions.put(state.documentSelfLink, state);
     }
 
     private void removeExtensibilitySubscription(String extensibilityLink) {
         logFine("Remove extensibility for [%s]", extensibilityLink);
+        subscriptions.remove(extensibilityLink);
+    }
 
-        extensions.remove(extensibilityLink);
+    /**
+     * Construct documentSelfLink of Task state by adding {@link ExtensibilitySubscriptionService}
+     * FACTORY_LINK for prefix. For example: DummyServiceTaskState:FINISHED:COMPLETED will be
+     * converted to: [/config/extensibility-subscriptions/DummyServiceTaskState:FINISHED:COMPLETED]
+     */
+    private <T extends TaskServiceDocument<?>> String constructKey(T state) {
+        return String.format("%s/%s:%s:%s", ExtensibilitySubscriptionService.FACTORY_LINK,
+                state.getClass().getSimpleName(),
+                state.taskInfo.stage.name(), state.taskSubStage.name());
+    }
+
+    private ExtensibilitySubscription getExtensibilitySubscription(TaskServiceDocument<?> task) {
+        return subscriptions.get(constructKey(task));
     }
 
 }

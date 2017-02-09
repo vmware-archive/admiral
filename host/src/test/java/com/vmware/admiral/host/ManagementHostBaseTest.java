@@ -11,12 +11,16 @@
 
 package com.vmware.admiral.host;
 
+import java.net.URI;
+import java.time.Duration;
 import java.util.logging.Level;
 
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.test.TestContext;
 
 public class ManagementHostBaseTest extends ServiceHost {
 
@@ -80,7 +84,8 @@ public class ManagementHostBaseTest extends ServiceHost {
     private static class TestServiceDocumentsInitializer extends HostInitServiceHelper {
 
         public static void startServices(ManagementHost host) {
-            startServices(host, TestAuthServiceDocumentHelper.class);
+            startServices(host, TestAuthServiceDocumentHelper.class, DummyFactoryService.class,
+                    DummySubscriber.class);
 
             // start initialization of test documents
             host.sendRequest(Operation.createPost(
@@ -88,6 +93,48 @@ public class ManagementHostBaseTest extends ServiceHost {
                     .setReferer(host.getUri())
                     .setBody(new ServiceDocument()));
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    protected <T extends ServiceDocument> T sendOperation(ManagementHost host, URI uri, Object body,
+            Class<T> bodyType, Action action) {
+        Object[] result = new Object[1];
+
+        Operation op = null;
+
+        switch (action) {
+
+        case POST:
+            op = Operation.createPost(uri)
+                    .setBody(body);
+            break;
+        case GET:
+            op = Operation.createGet(uri);
+            break;
+        case DELETE:
+            op = Operation.createDelete(uri);
+            break;
+        default:
+            throw new IllegalArgumentException(
+                    String.format("Unsupported action: %s", action.name()));
+        }
+
+        TestContext context = new TestContext(1, Duration.ofSeconds(30));
+        op.setReferer(host.getUri());
+        op.setCompletion((o, e) -> {
+            if (e != null) {
+                context.fail(e);
+                return;
+            }
+            if (action != Action.DELETE) {
+                result[0] = o.getBody(bodyType);
+            }
+
+            context.completeIteration();
+        }).sendWith(host);
+
+        context.await();
+        return (T) result[0];
     }
 
 }

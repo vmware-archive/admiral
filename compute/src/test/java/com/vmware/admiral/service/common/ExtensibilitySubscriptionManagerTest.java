@@ -44,14 +44,16 @@ public class ExtensibilitySubscriptionManagerTest extends BaseTestCase {
         host.startServiceAndWait(ExtensibilitySubscriptionFactoryService.class,
                 ExtensibilitySubscriptionFactoryService.SELF_LINK);
 
+
         manager = new ExtensibilitySubscriptionManager();
         host.startServiceAndWait(manager, ExtensibilitySubscriptionManager.SELF_LINK, null);
+
     }
 
     @Test
     public void testInitialState() throws Throwable {
         assertNotNull(manager);
-        Map<String, ExtensibilitySubscription> map = getExtensibilityManagerInternalMap();
+        Map<String, ExtensibilitySubscription> map = getExtensibilitySubscriptions();
         assertNotNull(map);
         assertEquals(0, map.size());
     }
@@ -74,7 +76,7 @@ public class ExtensibilitySubscriptionManagerTest extends BaseTestCase {
         ExtensibilitySubscription state1 = createExtensibilityState("substage1", "uri1");
         ExtensibilitySubscription state2 = createExtensibilityState("substage2", "uri2");
         ExtensibilitySubscription state3 = createExtensibilityState("substage3", "uri3");
-        Map<String, ExtensibilitySubscription> map = getExtensibilityManagerInternalMap();
+        Map<String, ExtensibilitySubscription> map = getExtensibilitySubscriptions();
         assertNotNull(map);
 
         URI uri = UriUtils.buildUri(host, ExtensibilitySubscriptionService.FACTORY_LINK);
@@ -99,9 +101,9 @@ public class ExtensibilitySubscriptionManagerTest extends BaseTestCase {
         verifyMapSize(map, 2);
     }
 
-    private Map<String, ExtensibilitySubscription> getExtensibilityManagerInternalMap()
+    private Map<String, ExtensibilitySubscription> getExtensibilitySubscriptions()
             throws Exception {
-        Field f = ExtensibilitySubscriptionManager.class.getDeclaredField("extensions");
+        Field f = ExtensibilitySubscriptionManager.class.getDeclaredField("subscriptions");
         return getPrivateField(f, manager);
     }
 
@@ -114,7 +116,7 @@ public class ExtensibilitySubscriptionManagerTest extends BaseTestCase {
         state.task = "task";
         state.stage = "stage";
         state.substage = substage;
-        state.callbackReference = uri;
+        state.callbackReference = UriUtils.buildUri(uri);
         state.blocking = false;
         return state;
     }
