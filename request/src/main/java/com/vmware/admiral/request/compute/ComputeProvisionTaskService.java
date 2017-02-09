@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
@@ -191,6 +192,8 @@ public class ComputeProvisionTaskService extends
                 provisionTaskState.isMockRequest = isMockRequest;
                 provisionTaskState.taskSubStage = ProvisionComputeTaskService.ProvisionComputeTaskState.SubStage.CREATING_HOST;
                 provisionTaskState.tenantLinks = state.tenantLinks;
+                provisionTaskState.documentExpirationTimeMicros = ServiceUtils
+                        .getDefaultTaskExpirationTimeInMicros();
 
                 return Operation.createPost(this, ProvisionComputeTaskService.FACTORY_LINK)
                         .setBody(provisionTaskState);
