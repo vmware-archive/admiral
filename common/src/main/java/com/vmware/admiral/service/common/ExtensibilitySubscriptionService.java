@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.service.common;
 
+import java.net.URI;
+
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
@@ -35,7 +37,7 @@ public class ExtensibilitySubscriptionService extends StatefulService {
 
     public static class ExtensibilitySubscription extends MultiTenantDocument {
 
-        @Documentation(description = "Task name")
+        @Documentation(description = "Task type")
         @UsageOption(option = PropertyUsageOption.REQUIRED)
         public String task;
 
@@ -54,7 +56,7 @@ public class ExtensibilitySubscriptionService extends StatefulService {
         @Documentation(description = "Callback address, when the specified task reaches the stage "
                 + "and substage, a POST request with the task state will be sent to the subscriber")
         @UsageOption(option = PropertyUsageOption.REQUIRED)
-        public String callbackReference;
+        public URI callbackReference;
     }
 
     public ExtensibilitySubscriptionService() {
@@ -69,16 +71,11 @@ public class ExtensibilitySubscriptionService extends StatefulService {
         validateState(post);
 
         post.complete();
-    }
-
-    @Override
-    public void handleStart(Operation post) {
-        post.complete();
         notifyUpdatedExtensibilityDocument();
     }
 
     @Override
-    public void handleStop(Operation delete) {
+    public void handleDelete(Operation delete) {
         delete.complete();
 
         notifyUpdatedExtensibilityDocument();

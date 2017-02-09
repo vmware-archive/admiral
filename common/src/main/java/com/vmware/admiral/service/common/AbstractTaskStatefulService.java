@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -15,6 +15,7 @@ import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties
 
 import java.net.URI;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
@@ -23,6 +24,7 @@ import java.util.logging.Level;
 
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceUtils;
+import com.vmware.admiral.host.IExtensibilityRegistryHost;
 import com.vmware.admiral.service.common.CounterSubTaskService.CounterSubTaskState;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.xenon.common.Operation;
@@ -45,6 +47,8 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     private static final Level DEFAULT_LOG_LEVEL = Level.parse(System.getProperty(
             "com.vmware.admiral.service.tasks.log.level", Level.INFO.getName()));
 
+    private ExtensibilitySubscriptionManager extensibilityManager;
+
     protected volatile Class<E> subStageType;
 
     private final String displayName;
@@ -56,6 +60,9 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
     /** SubStages that are indicating a transient state and order of patching can't be guaranteed */
     protected Set<E> transientSubStages = Collections.emptySet();
+
+    /** SubStages that are eligible for subscription */
+    protected EnumSet<E> subscriptionSubStages;
 
     private volatile String locale;
 
@@ -90,6 +97,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         super(stateType);
         this.subStageType = subStageType;
         this.displayName = displayName;
+        this.subscriptionSubStages = EnumSet.noneOf(subStageType);
     }
 
     protected void setSelfDelete(boolean selfDelete) {
@@ -170,7 +178,12 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         startPost.setBody(state);
         startPost.complete();
 
-        handleStagePatch(state);
+        if (isExtensibilityResponse(startPost)) {
+            handleStagePatch(state);
+            return;
+        }
+
+        handleSubscriptions(state);
     }
 
     @Override
@@ -218,8 +231,8 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     }
 
     /**
-     * Optional custom validation code, if needed.
-     * Validation based on state annotations has been already performed.
+     * Optional custom validation code, if needed. Validation based on state annotations has been
+     * already performed.
      */
     protected void validateStateOnStart(T state) throws IllegalArgumentException {
     }
@@ -238,11 +251,35 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             return;
         }
 
-        updateRequestTracker(state);
-
         patch.complete();
 
-        handleStagePatch(state);
+        if (isExtensibilityResponse(patch)) {
+            handleStagePatch(state);
+            return;
+        }
+
+        handleSubscriptions(state);
+    }
+
+    // Check if Task allows subscription on this stage.
+    private void handleSubscriptions(T state) {
+        // Check if Task allows subscription on this stage.
+        if (subscriptionSubStages.contains(state.taskSubStage)) {
+            ExtensibilitySubscriptionManager manager = getExtensibilityManager();
+            if (manager != null) {
+                manager.handleStagePatch(this, state, this::handleStagePatch);
+            } else {
+                // ServiceHost is not instance of ManagementHost
+                handleStagePatch(state);
+            }
+        } else {
+            // Task doesn't allow subscription on current stage.
+            handleStagePatch(state);
+        }
+    }
+
+    private boolean isExtensibilityResponse(Operation op) {
+        return op.getBodyRaw() instanceof ExtensibilitySubscriptionManager;
     }
 
     protected void updateRequestTracker(T state) {
@@ -283,6 +320,8 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     }
 
     protected void handleStagePatch(T state) {
+        updateRequestTracker(state);
+
         // calculate whether to self-delete now because below handlers can alter the state through
         // simultaneous PATCH requests
         boolean shouldSelfDelete = this.selfDelete &&
@@ -418,8 +457,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
     /**
      * Performs custom task state validation and merge. Allows sub-classes to provide custom
-     * validation and merge code when the automatic merge based on annotations is not
-     * sufficient.
+     * validation and merge code when the automatic merge based on annotations is not sufficient.
      *
      * This method must not complete/fail the given patch operation.
      */
@@ -501,8 +539,8 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     }
 
     /**
-     * Moves the task to the given subStage. The method assumes the task stage is STARTED as this
-     * is the stage where most sub-stage transition happen.
+     * Moves the task to the given subStage. The method assumes the task stage is STARTED as this is
+     * the stage where most sub-stage transition happen.
      */
     protected void proceedTo(E subStage, Consumer<T> patchBodyConfigurator) {
         proceedTo(TaskStage.STARTED, subStage, patchBodyConfigurator);
@@ -534,8 +572,8 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     }
 
     /**
-     * Completes the task by setting its stage to FAILED. The subStage can be specified, and if
-     * not, the one named ERROR will be used, if any.
+     * Completes the task by setting its stage to FAILED. The subStage can be specified, and if not,
+     * the one named ERROR will be used, if any.
      */
     protected void completeWithError(E subStage, Consumer<T> patchBodyConfigurator) {
         proceedTo(TaskStage.FAILED, subStage, patchBodyConfigurator);
@@ -555,9 +593,9 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     }
 
     /**
-     * Moves the task to the specified stage/subStage by sending a patch to self.
-     * By default the patch body is empty; use the {@code patchBodyConfigurator} argument to
-     * set patch fields that are required for this stage transition.
+     * Moves the task to the specified stage/subStage by sending a patch to self. By default the
+     * patch body is empty; use the {@code patchBodyConfigurator} argument to set patch fields that
+     * are required for this stage transition.
      */
     @SuppressWarnings("unchecked")
     protected void proceedTo(TaskStage stage, E subStage, Consumer<T> patchBodyConfigurator) {
@@ -674,35 +712,32 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     }
 
     protected void notifyCallerService(T state) {
-        if (!state.serviceTaskCallback.isEmpty()) {
-            log(this.logLevel, "Callback to [%s] with state [%s] ",
-                    state.serviceTaskCallback.serviceSelfLink, state.taskInfo.stage);
-        }
-
-        ServiceTaskCallbackResponse callbackResponse;
-        switch (state.taskInfo.stage) {
-        case FINISHED:
-            callbackResponse = getFinishedCallbackResponse(state);
-            break;
-        case CANCELLED:
-            return;
-        case FAILED:
-        default:
-            callbackResponse = getFailedCallbackResponse(state);
-            break;
-        }
-
-        // copy the state custom properties
-        callbackResponse.customProperties = mergeCustomProperties(
-                callbackResponse.customProperties, state.customProperties);
-
         if (state.serviceTaskCallback.isEmpty()) {
             return;
         }
+        log(this.logLevel, "Callback to [%s] with state [%s]",
+                state.serviceTaskCallback.serviceSelfLink, state.taskInfo.stage);
 
         if (state.serviceTaskCallback.isExternal()) {
             sendRequestStateToExternalUrl(state.serviceTaskCallback.serviceSelfLink, state);
         } else {
+            ServiceTaskCallbackResponse callbackResponse;
+            switch (state.taskInfo.stage) {
+            case FINISHED:
+                callbackResponse = getFinishedCallbackResponse(state);
+                break;
+            case CANCELLED:
+                return;
+            case FAILED:
+            default:
+                callbackResponse = getFailedCallbackResponse(state);
+                break;
+            }
+
+            // copy the state custom properties
+            callbackResponse.customProperties = mergeCustomProperties(
+                    callbackResponse.customProperties, state.customProperties);
+
             sendRequest(Operation.createPatch(this, state.serviceTaskCallback.serviceSelfLink)
                     .setBody(callbackResponse)
                     .setCompletion((o, e) -> {
@@ -720,6 +755,19 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
     protected ServiceTaskCallbackResponse getFinishedCallbackResponse(T state) {
         return state.serviceTaskCallback.getFinishedResponse();
+    }
+
+    /**
+     * Modifies task state before sending it to subscriber. This method is called before notifying
+     * subscriber, and is used to 'hide' sensitive data that's not needed to be sent.
+     *
+     * @param taskToSend
+     *            task state
+     */
+    protected void processForExtensibility(T taskToSend) {
+        // hide properties from sending to subscriber
+        taskToSend.requestTrackerLink = null;
+        taskToSend.serviceTaskCallback = null;
     }
 
     private void sendRequestStateToExternalUrl(String callbackReference, T state) {
@@ -741,6 +789,22 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         } catch (Exception e) {
             logSevere(e);
         }
+    }
+
+    /**
+     * Returns extensibility manager associated with the host.
+     */
+    private ExtensibilitySubscriptionManager getExtensibilityManager() {
+        if (extensibilityManager == null) {
+            if (getHost() instanceof IExtensibilityRegistryHost) {
+                extensibilityManager = ((IExtensibilityRegistryHost) getHost())
+                        .getExtensibilityRegistry();
+            }
+            if (extensibilityManager == null) {
+                getHost().log(Level.SEVERE, "Host does not provide extensibility manager");
+            }
+        }
+        return extensibilityManager;
     }
 
     protected TaskStatusState fromTask(TaskServiceDocument<E> state) {

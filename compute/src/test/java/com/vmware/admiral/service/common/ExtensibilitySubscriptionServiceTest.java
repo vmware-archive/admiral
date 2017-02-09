@@ -162,7 +162,7 @@ public class ExtensibilitySubscriptionServiceTest extends BaseTestCase {
         state.task = "task";
         state.stage = "stage";
         state.substage = "substage";
-        state.callbackReference = "uri";
+        state.callbackReference = UriUtils.buildUri("uri");
         state.blocking = false;
         return state;
     }

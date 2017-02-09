@@ -37,6 +37,7 @@ public interface ManagementUriParts {
 
     String EXTENSIBILITY_SUBSCRIPTION = CONFIG + "/extensibility-subscriptions";
     String EXTENSIBILITY_MANAGER = CONFIG + "/extensibility-manager";
+    String EXTENSIBILITY_CALLBACKS = CONFIG + "/extensibility-callbacks";
 
     // Resources:
     String DESCRIPTION_SUFFIX = "-descriptions";

@@ -23,7 +23,6 @@ public class ExtensibilitySubscriptionFactoryService extends FactoryService {
 
     public ExtensibilitySubscriptionFactoryService() {
         super(ExtensibilitySubscription.class);
-
         this.setUseBodyForSelfLink(true);
     }
 
