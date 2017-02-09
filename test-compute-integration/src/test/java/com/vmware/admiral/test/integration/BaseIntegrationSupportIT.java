@@ -22,6 +22,7 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -44,7 +45,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -52,6 +52,7 @@ import org.junit.Rule;
 import org.junit.rules.Timeout;
 
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
@@ -531,14 +532,9 @@ public abstract class BaseIntegrationSupportIT {
 
     protected List<String> getTenantLinks() {
         if (this.tenantLinks == null) {
-            String tenantLinkProp = getTestProp(TENANT_LINKS_KEY, "/tenants/admiral");
-            String[] values = StringUtils.split(tenantLinkProp, ',');
-
-            List<String> result = new LinkedList<>();
-            for (int i = 0; i < values.length; i++) {
-                result.add(values[i].trim());
-            }
-            this.tenantLinks = result;
+            this.tenantLinks = new ArrayList<>();
+            this.tenantLinks.add(UriUtils.buildUriPath(QueryUtil.TENANT_IDENTIFIER,
+                    getClass().getName().toLowerCase()));
         }
         return tenantLinks;
     }
