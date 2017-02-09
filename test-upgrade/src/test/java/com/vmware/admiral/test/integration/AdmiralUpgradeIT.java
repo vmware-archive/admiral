@@ -184,14 +184,15 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         Map<String, String> versionHeader = new HashMap<String, String>();
         versionHeader.put(ReleaseConstants.VERSION_PREFIX, ReleaseConstants.API_VERSION_0_9_1);
 
-        ComputeState dockerHost = getDocument(
+        com.vmware.admiral.test.integration.client.ComputeState dockerHost = getDocument(
                 COMPUTE_SELF_LINK,
-                ComputeState.class, versionHeader);
+                com.vmware.admiral.test.integration.client.ComputeState.class, versionHeader);
         assertTrue(dockerHost != null);
 
-        AuthCredentialsServiceState credentials = getDocument(
+        com.vmware.admiral.test.integration.client.AuthCredentialsServiceState credentials = getDocument(
                 CREDENTIALS_SELF_LINK,
-                AuthCredentialsServiceState.class, versionHeader);
+                com.vmware.admiral.test.integration.client.AuthCredentialsServiceState.class,
+                versionHeader);
         assertTrue(credentials != null);
 
         // get all the containers with expand - validate xenon issue:
@@ -207,7 +208,8 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         JsonArray documentLinks = jsonObject.getAsJsonArray("documentLinks");
         for (int i = 0; i < documentLinks.size(); i++) {
             String selfLink = documentLinks.get(i).getAsString();
-            ContainerState state = getDocument(selfLink, ContainerState.class, versionHeader);
+            com.vmware.admiral.test.integration.client.ContainerState state = getDocument(selfLink,
+                    com.vmware.admiral.test.integration.client.ContainerState.class, versionHeader);
             assertTrue(state != null);
         }
 

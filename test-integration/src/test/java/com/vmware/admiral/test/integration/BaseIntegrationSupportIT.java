@@ -31,6 +31,7 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
@@ -39,6 +40,7 @@ import javax.net.ssl.X509TrustManager;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -195,7 +197,7 @@ public abstract class BaseIntegrationSupportIT {
         return Utils.fromJson(body, type);
     }
 
-    protected static <T extends ServiceDocument> T getDocument(String seflLink,
+    protected static <T> T getDocument(String seflLink,
             Class<? extends T> type, Map <String, String> headers) throws Exception {
         String body = sendRequest(HttpMethod.GET, seflLink, null, headers);
         if (body == null || body.isEmpty()) {

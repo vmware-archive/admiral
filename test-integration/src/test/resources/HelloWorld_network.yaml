@@ -1,0 +1,28 @@
+---
+name: "hello-world-nginx"
+components:
+  hello-world-nginx:
+    type: "App.Container"
+    data:
+      name: "hello-world-nginx"
+      image: "registry.hub.docker.com/kitematic/hello-world-nginx"
+      _cluster: 1
+      networks:
+      - name: "test-network"
+      publish_all: true
+      restart_policy: "no"
+  hello-world-nginx2:
+    type: "App.Container"
+    data:
+      name: "hello-world-nginx2"
+      image: "registry.hub.docker.com/kitematic/hello-world-nginx"
+      _cluster: 1
+      networks:
+      - name: "test-network"
+      publish_all: true
+      restart_policy: "no"
+  test-network:
+    type: "App.Network"
+    data:
+      name: "test-network"
+      external: false
