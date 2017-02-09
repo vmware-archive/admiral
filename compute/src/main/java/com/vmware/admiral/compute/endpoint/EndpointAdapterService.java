@@ -30,10 +30,10 @@ import com.vmware.photon.controller.model.tasks.EndpointAllocationTaskService;
 import com.vmware.photon.controller.model.tasks.EndpointAllocationTaskService.EndpointAllocationTaskState;
 import com.vmware.photon.controller.model.tasks.EndpointRemovalTaskService;
 import com.vmware.photon.controller.model.tasks.EndpointRemovalTaskService.EndpointRemovalTaskState;
-import com.vmware.photon.controller.model.tasks.ResourceEnumerationTaskService;
 import com.vmware.photon.controller.model.tasks.ScheduledTaskService;
 import com.vmware.photon.controller.model.tasks.ScheduledTaskService.ScheduledTaskState;
 import com.vmware.photon.controller.model.tasks.TaskOption;
+import com.vmware.photon.controller.model.tasks.monitoring.StatsCollectionTaskService;
 import com.vmware.photon.controller.model.tasks.monitoring.StatsCollectionTaskService.StatsCollectionTaskState;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -305,7 +305,7 @@ public class EndpointAdapterService extends StatelessService {
                 : Long.valueOf(DEFAULT_SCHEDULED_TASK_INTERVAL_MICROS);
 
         StatsCollectionTaskState statsCollectionTask = new StatsCollectionTaskState();
-        statsCollectionTask.resourcePoolLink = currentState.enumerationRequest.resourcePoolLink;
+        statsCollectionTask.resourcePoolLink = endpoint.resourcePoolLink;
         statsCollectionTask.options = EnumSet.of(TaskOption.SELF_DELETE_ON_COMPLETION);
 
         // Create additional Query clause
@@ -317,7 +317,7 @@ public class EndpointAdapterService extends StatelessService {
 
         ScheduledTaskState scheduledTaskState = new ScheduledTaskState();
         scheduledTaskState.documentSelfLink = id;
-        scheduledTaskState.factoryLink = ResourceEnumerationTaskService.FACTORY_LINK;
+        scheduledTaskState.factoryLink = StatsCollectionTaskService.FACTORY_LINK;
         scheduledTaskState.initialStateJson = Utils.toJson(statsCollectionTask);
         scheduledTaskState.intervalMicros = intervalMicros;
         scheduledTaskState.delayMicros = currentState.enumerationRequest.delayMicros;
