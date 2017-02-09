@@ -27,7 +27,7 @@
       "kubernetes": "Kubernetes",
       "eventlog": "Event Log",
       "placementZones": "Placement Zones",
-      "environments": "Environments",
+      "environments": "Profiles",
       "endpoints": "Endpoints",
       "machines": "Machines",
       "compute": "Compute"
@@ -458,10 +458,10 @@
     },
     "environment": {
       "list": {
-        "title": "Environments",
-        "titleSearch": "Found environments",
-        "searchPlaceholder": "Search for environments",
-        "addButton": "Create Environment",
+        "title": "Profiles",
+        "titleSearch": "Found profiles",
+        "searchPlaceholder": "Search for profiles",
+        "addButton": "Create Profile",
         "addPropertyButton": "Add Property",
         "nameColumn": "Name",
         "endpointTypeColumn": "Endpoint Type",
@@ -476,8 +476,8 @@
         "remove": "Remove"
       },
       "edit": {
-        "addTitle": "Add Environment",
-        "editTitle": "Edit Environment",
+        "addTitle": "Add Profile",
+        "editTitle": "Edit Profile",
         "save": "Save",
         "basicTab": "Basic",
         "computeTab": "Compute",
