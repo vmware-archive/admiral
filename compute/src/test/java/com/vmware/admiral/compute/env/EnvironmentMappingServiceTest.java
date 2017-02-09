@@ -36,7 +36,7 @@ public class EnvironmentMappingServiceTest extends ComputeBaseTest {
         Map<String, Object> documents = result.getBody(ServiceDocumentQueryResult.class).documents;
         EnvironmentMappingState state = Utils.fromJson(documents.get(ComputeProfileService.FACTORY_LINK),
                 EnvironmentMappingState.class);
-        assertEquals(Arrays.asList("coreos"), state.mappings.get("imageMapping"));
+        assertEquals(Arrays.asList("coreos", "ubuntu-1604"), state.mappings.get("imageMapping"));
         assertEquals(Arrays.asList("small", "medium", "large", "xlarge"), state.mappings.get("instanceTypeMapping"));
     }
 }
