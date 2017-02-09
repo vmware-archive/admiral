@@ -13,6 +13,7 @@ package com.vmware.admiral.request.compute;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -26,6 +27,8 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentState;
 import com.vmware.photon.controller.model.ComputeProperties;
+import com.vmware.photon.controller.model.resources.ComputeService;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.ResourceState;
@@ -88,32 +91,64 @@ public class EnvironmentQueryUtils {
 
             entriesPerEndpoint.computeIfAbsent(epl, k -> new ArrayList<>())
                     .add(new EnvEntry(rp.documentSelfLink, null));
-        }).whenComplete((v, e) -> {
-            if (e != null) {
-                consumer.accept(null, e);
-                return;
-            }
+        }).thenCompose(v -> {
 
-            List<DeferredResult<List<EnvEntry>>> list = entriesPerEndpoint.keySet().stream()
+            List<DeferredResult<EndpointState>> endpointsDeferred = entriesPerEndpoint.keySet()
+                    .stream()
                     .map(epl -> host.sendWithDeferredResult(
-                            Operation.createGet(host, epl).setReferer(referer), EndpointState.class)
-                            .thenApply(ep -> applyEndpoint(ep,
-                                    entriesPerEndpoint.get(ep.documentSelfLink)))
-                            .thenCompose(entries -> queryEnvironments(host, entries, tenantLinks,
-                                    environmentLinks)))
+                            Operation.createGet(host, epl).setReferer(referer),
+                            EndpointState.class))
                     .collect(Collectors.toList());
 
-            DeferredResult.allOf(list).whenComplete((all, ex) -> {
-                if (ex != null) {
-                    consumer.accept(null, ex);
-                } else {
-                    consumer.accept(
-                            all.stream().flatMap(l -> l.stream())
-                                    .filter(env -> !env.envLinks.isEmpty())
-                                    .collect(Collectors.toList()),
-                            null);
-                }
-            });
+            return DeferredResult.allOf(endpointsDeferred);
+        }).thenCompose(endpoints -> {
+
+            if (endpoints == null || endpoints.isEmpty()) {
+                return DeferredResult.completed(Collections.emptyList());
+            }
+
+            // get the compute states that back the endpoints
+            List<String> computeLinks = endpoints.stream().map(ep -> ep.computeLink)
+                    .collect(Collectors.toList());
+
+            Builder computeStatesQueryBuilder = Query.Builder.create()
+                    .addKindFieldClause(ComputeState.class)
+                    .addInClause(ServiceDocument.FIELD_NAME_SELF_LINK, computeLinks)
+                    .addFieldClause(ComputeState.FIELD_NAME_POWER_STATE, ComputeService.PowerState.ON);
+
+            QueryUtils.QueryByPages<ComputeState> q = new QueryUtils.QueryByPages<>(host,
+                    computeStatesQueryBuilder.build(), ComputeState.class, tenantLinks);
+
+            //return only the endpoints whose computestate's power state is on
+            DeferredResult<List<EndpointState>> filteredEndpoints = q
+                    .collectLinks(Collectors.toSet())
+                    .thenApply(cs -> {
+                        List<EndpointState> collect = endpoints.stream()
+                                .filter(ep -> cs.contains(ep.computeLink))
+                                .collect(Collectors.toList());
+                        return collect;
+                    });
+
+            return filteredEndpoints;
+        }).thenApply(eps -> {
+            return eps.stream().map(ep ->
+                    applyEndpoint(ep, entriesPerEndpoint.get(ep.documentSelfLink)));
+        }).thenCompose(entriesStream -> {
+            List<DeferredResult<List<EnvEntry>>> list = entriesStream
+                    .map(entries -> queryEnvironments(host, entries, tenantLinks,
+                            environmentLinks)).collect(Collectors.toList());
+            return DeferredResult.allOf(list);
+        }).whenComplete((all, ex) -> {
+            if (ex != null) {
+                consumer.accept(null, ex);
+            } else {
+                consumer.accept(
+                        all.stream()
+                                .flatMap(l -> l.stream())
+                                .filter(env -> !env.envLinks.isEmpty())
+                                .collect(Collectors.toList()),
+                        null);
+            }
         });
     }
 
