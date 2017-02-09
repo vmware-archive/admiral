@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.compute.kubernetes;
 
+import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNullOrEmpty;
 
 import java.io.IOException;
@@ -110,9 +111,12 @@ public class KubernetesService extends StatefulService {
         CommonKubernetesEntity entity = state.getKubernetesEntity(CommonKubernetesEntity.class);
         assertNotNullOrEmpty(entity.apiVersion, "apiVersion");
         assertNotNullOrEmpty(entity.kind, "kind");
+        assertNotNull(entity.metadata, "metadata");
+        assertNotNullOrEmpty(entity.metadata.name, "name");
         assertNotNullOrEmpty(entity.metadata.selfLink, "selfLink");
         state.type = entity.kind;
         state.selfLink = entity.metadata.selfLink;
+        state.name = entity.metadata.name;
     }
 
     @Override

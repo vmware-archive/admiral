@@ -23,4 +23,6 @@ public class CommonDescriptionEntity {
     public String version;
     public Map<String, Object> services; // if Docker Compose version 2
     public Map<String, Object> components; // if Composite Template
+    public String apiVersion; // if Kubernetes
+    public String kind; // if Kubernetes
 }

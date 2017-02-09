@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.compute.kubernetes;
 
+import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNullOrEmpty;
 
 import java.io.IOException;
@@ -80,8 +81,11 @@ public class KubernetesDescriptionService extends StatefulService {
 
         assertNotNullOrEmpty(kubernetesEntity.apiVersion, "apiVersion");
         assertNotNullOrEmpty(kubernetesEntity.kind, "kind");
+        assertNotNull(kubernetesEntity.metadata, "metadata");
+        assertNotNullOrEmpty(kubernetesEntity.metadata.name, "name");
 
         description.type = kubernetesEntity.kind;
+        description.name = kubernetesEntity.metadata.name;
     }
 
     @Override

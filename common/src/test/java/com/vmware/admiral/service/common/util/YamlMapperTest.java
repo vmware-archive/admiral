@@ -14,12 +14,28 @@ package com.vmware.admiral.service.common.util;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.Test;
 
 import com.vmware.admiral.common.util.YamlMapper;
 
 public class YamlMapperTest {
+
+    private String sampleYamlDefinition = "---\n"
+            + "apiVersion: v1\n"
+            + "kind: Service\n"
+            + "metadata:\n"
+            + "  name: wordpress\n"
+            + "  labels:\n"
+            + "    app: wordpress\n"
+            + "spec:\n"
+            + "  ports:\n"
+            + "  - port: 80\n"
+            + "  selector:\n"
+            + "    app: wordpress\n"
+            + "    tier: frontend";
 
     @Test
     public void testConvertFromYamlToJson() throws IOException {
@@ -48,4 +64,46 @@ public class YamlMapperTest {
 
         assertEquals(expectedYamlOutput, actualYamlOutput);
     }
+
+    @Test
+    public void testIsMultiYaml() {
+        String[] in = new String[] { sampleYamlDefinition,
+                sampleYamlDefinition + "\n" + sampleYamlDefinition };
+
+        boolean[] out = new boolean[] { false, true };
+
+        assertEquals(out[0], YamlMapper.isMultiYaml(in[0]));
+        assertEquals(out[1], YamlMapper.isMultiYaml(in[1]));
+    }
+
+    @Test
+    public void testSplitYamlWithSingleYaml() {
+        String yamlInput = sampleYamlDefinition;
+
+        List<String> expectedOutput = new ArrayList<>();
+        expectedOutput.add(sampleYamlDefinition);
+
+        List<String> actualOutput = YamlMapper.splitYaml(yamlInput);
+
+        assertEquals(1, actualOutput.size());
+
+        assertEquals(expectedOutput.get(0), actualOutput.get(0));
+    }
+
+    @Test
+    public void testSplitYamlWithMultipleYamls() {
+        String yamlInput = sampleYamlDefinition + "\n" + sampleYamlDefinition;
+
+        List<String> expectedOutput = new ArrayList<>();
+        expectedOutput.add(sampleYamlDefinition);
+        expectedOutput.add(sampleYamlDefinition);
+
+        List<String> actualOutput = YamlMapper.splitYaml(yamlInput);
+
+        assertEquals(2, actualOutput.size());
+
+        assertEquals(expectedOutput.get(0), actualOutput.get(0));
+        assertEquals(expectedOutput.get(1), actualOutput.get(1));
+    }
+
 }
