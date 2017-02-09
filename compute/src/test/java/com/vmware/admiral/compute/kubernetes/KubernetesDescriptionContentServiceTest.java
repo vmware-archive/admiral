@@ -26,7 +26,7 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
-public class KubernetesDescrtiptionContentServiceTest extends ComputeBaseTest {
+public class KubernetesDescriptionContentServiceTest extends ComputeBaseTest {
     private String sampleYamlDefinition = "---\n"
             + "apiVersion: v1\n"
             + "kind: Service\n"

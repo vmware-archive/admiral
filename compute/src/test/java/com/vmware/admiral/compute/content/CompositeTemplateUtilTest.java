@@ -442,6 +442,8 @@ public class CompositeTemplateUtilTest {
         try {
             getYamlType(getContent("../docker-host-private-key.PEM"));
             fail("With invalid content should fail!");
+        } catch (IllegalArgumentException iae) {
+            assertTrue(iae.getMessage().startsWith("Provided yaml is invalid"));
         } catch (LocalizableValidationException e) {
             assertTrue(e.getMessage().startsWith("Error processing YAML content:"));
         }
@@ -778,6 +780,52 @@ public class CompositeTemplateUtilTest {
 
         assertTrue(networkComponentTemplates.stream()
                 .allMatch(c -> c.data instanceof ComputeNetworkDescription));
+    }
+
+    @Test
+    public void testGetYamlTypeWithValidInputs() throws IOException {
+        String compositeTemplate = getContent("composite.simple.yaml");
+        String dockerCompose = getContent("docker.simple.network.yaml");
+        String kubernetesTemplate = getContent("kubernetes.wordpress.deployment.yaml");
+        String multiKubernetesTemplate = kubernetesTemplate + "\n" + kubernetesTemplate;
+
+        String[] input = new String[] {
+                compositeTemplate, dockerCompose, kubernetesTemplate, multiKubernetesTemplate };
+
+        YamlType[] expectedTypes = new YamlType[] {
+                YamlType.COMPOSITE_TEMPLATE,
+                YamlType.DOCKER_COMPOSE,
+                YamlType.KUBERNETES_TEMPLATE,
+                YamlType.KUBERNETES_TEMPLATE
+        };
+
+        for (int i = 0; i < input.length; i++) {
+            YamlType actualType = getYamlType(input[i]);
+            assertEquals(expectedTypes[i], actualType);
+        }
+    }
+
+    /**
+     * The test should verify the case where we try to get the YAML type of
+     * multi yaml docker compose or composite template.
+     */
+    @Test
+    public void testGetYamlTypeWithMultiYamlsShouldFail() throws IOException {
+        String compositeTemplate = getContent("composite.simple.yaml");
+        String dockerCompose = getContent("docker.simple.network.yaml");
+        String[] multiYamls = new String[] {
+                compositeTemplate + "\n" + compositeTemplate,
+                dockerCompose + "\n" + dockerCompose };
+        String expectedFailMsg = "Multiple YAML definitions are not supported "
+                + "for Docker Compose and YAML Blueprint.";
+
+        for (String multiYaml : multiYamls) {
+            try {
+                getYamlType(multiYaml);
+            } catch (Throwable ex) {
+                assertEquals(expectedFailMsg, ex.getMessage());
+            }
+        }
     }
 
     public static String getContent(String filename) {

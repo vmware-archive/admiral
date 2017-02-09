@@ -12,9 +12,12 @@
 package com.vmware.admiral.compute.content;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
+import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
+import static com.vmware.admiral.common.util.AssertUtil.assertNotNullOrEmpty;
 import static com.vmware.admiral.common.util.OperationUtil.isApplicationYamlContent;
 import static com.vmware.admiral.common.util.UriUtilsExtended.MEDIA_TYPE_APPLICATION_YAML;
 import static com.vmware.admiral.common.util.ValidationUtils.handleValidationException;
+import static com.vmware.admiral.compute.content.CompositeTemplateUtil.FORMATTER;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.assertContainersComponentsOnly;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.convertCompositeDescriptionToCompositeTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.deserializeCompositeTemplate;
@@ -26,7 +29,10 @@ import static com.vmware.admiral.compute.content.CompositeTemplateUtil.getYamlTy
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serializeCompositeTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serializeDockerCompose;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -38,9 +44,13 @@ import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.content.CompositeTemplateUtil.YamlType;
 import com.vmware.admiral.compute.content.compose.DockerCompose;
+import com.vmware.admiral.compute.kubernetes.KubernetesDescriptionContentService;
+import com.vmware.admiral.compute.kubernetes.KubernetesDescriptionService;
+import com.vmware.admiral.compute.kubernetes.KubernetesDescriptionService.KubernetesDescription;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
@@ -69,6 +79,8 @@ public class CompositeDescriptionContentService extends StatelessService {
 
     public static final String FORMAT_DOCKER_COMPOSE_TYPE = "Docker";
 
+    public static final String KUBERNETES_APPLICATION_TEMPLATE_PREFIX = "Kubernetes Application ";
+
     @Override
     public void handleGet(Operation op) {
         Map<String, String> queryParams = UriUtils.parseUriQueryParams(op.getUri());
@@ -94,12 +106,17 @@ public class CompositeDescriptionContentService extends StatelessService {
             }
 
             CompositeDescription description = o.getBody(CompositeDescription.class);
-            convertCompositeDescriptionToCompositeTemplate(this, description).thenAccept(
-                    template -> serializeAndComplete(template, returnDocker, returnInline, op))
-                    .exceptionally(e -> {
-                        op.fail(e);
-                        return null;
-                    });
+
+            if (containsKubernetesDescriptions(description)) {
+                processCompositeDescriptionWithKubernetes(description, op, returnInline);
+            } else {
+                convertCompositeDescriptionToCompositeTemplate(this, description).thenAccept(
+                        template -> serializeAndComplete(template, returnDocker, returnInline, op))
+                        .exceptionally(e -> {
+                            op.fail(e);
+                            return null;
+                        });
+            }
         }));
     }
 
@@ -128,18 +145,66 @@ public class CompositeDescriptionContentService extends StatelessService {
         }
     }
 
+    private void processCompositeDescriptionWithKubernetes(CompositeDescription description,
+            Operation op, boolean returnInline) {
+        List<Operation> getDescOps = description.descriptionLinks.stream()
+                .map(l -> Operation.createGet(this, l)).collect(Collectors.toList());
+
+        OperationJoin.create(getDescOps)
+                .setCompletion((ops, errors) -> {
+                    if (errors != null) {
+                        List<Throwable> throwables = errors.values().stream()
+                                .filter(e -> e != null)
+                                .collect(Collectors.toList());
+                        op.fail(throwables.get(0));
+                        throwables.stream().skip(1)
+                                .forEach(e -> logWarning("%s", e.getMessage()));
+                    } else {
+                        StringBuilder builder = new StringBuilder();
+                        ops.values().forEach(o -> {
+                            KubernetesDescription desc = o.getBody(KubernetesDescription.class);
+                            builder.append(desc.kubernetesEntity);
+                            builder.append("\n");
+                        });
+                        op.setBody(builder.toString().trim());
+                        op.setContentType(MEDIA_TYPE_APPLICATION_YAML);
+                        String contentDisposition = (returnInline
+                                ? CONTENT_DISPOSITION_INLINE : CONTENT_DISPOSITION_ATTACHMENT)
+                                + CONTENT_DISPOSITION_FILENAME;
+
+                        op.addResponseHeader(CONTENT_DISPOSITION_HEADER, contentDisposition);
+                        op.complete();
+                    }
+                }).sendWith(this);
+    }
+
+    private boolean containsKubernetesDescriptions(CompositeDescription description) {
+        if (description.descriptionLinks == null || description.descriptionLinks.size() < 1) {
+            return false;
+        }
+        for (String link : description.descriptionLinks) {
+            if (!link.startsWith(KubernetesDescriptionService.FACTORY_LINK)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Override
     public void handlePost(Operation op) {
         if (!op.hasBody()) {
-            op.fail(new LocalizableValidationException("body is required", "compute.body.required"));
+            op.fail(new LocalizableValidationException("body is required",
+                    "compute.body.required"));
             return;
         }
 
-        CompositeTemplate template;
+        CompositeTemplate template = null;
+        String content = null;
+        YamlType yamlType = null;
         try {
             if (isApplicationYamlContent(op.getContentType())) {
-                String content = op.getBody(String.class);
-                YamlType yamlType = getYamlType(content);
+                content = op.getBody(String.class);
+                yamlType = getYamlType(content);
                 switch (yamlType) {
                 case COMPOSITE_TEMPLATE:
                     template = deserializeCompositeTemplate(content);
@@ -147,6 +212,8 @@ public class CompositeDescriptionContentService extends StatelessService {
                 case DOCKER_COMPOSE:
                     DockerCompose compose = deserializeDockerCompose(content);
                     template = fromDockerComposeToCompositeTemplate(compose);
+                    break;
+                case KUBERNETES_TEMPLATE:
                     break;
                 default:
                     throw new LocalizableValidationException(
@@ -165,12 +232,21 @@ public class CompositeDescriptionContentService extends StatelessService {
                 }
             }
 
-            assertNotEmpty(template.name, "name");
-            assertContainersComponentsOnly(template.components);
         } catch (Exception e) {
             handleValidationException(op, e);
             return;
         }
+
+        if (YamlType.KUBERNETES_TEMPLATE == yamlType) {
+            processKubernetesTemplate(content, op);
+        } else {
+            processCompositeTemplate(template, op);
+        }
+
+    }
+
+    private void processCompositeTemplate(CompositeTemplate template, Operation op) {
+        validateCompositeTemplate(template);
 
         Operation createDescriptionOp = Operation.createPost(this,
                 CompositeDescriptionFactoryService.SELF_LINK);
@@ -190,8 +266,8 @@ public class CompositeDescriptionContentService extends StatelessService {
             if (e != null) {
                 logWarning("Failed to create CompositeDescription: %s", Utils.toString(e));
                 LocalizableValidationException ex = new LocalizableValidationException(e,
-                                "Failed to create CompositeDescription: " + Utils.toString(e),
-                                "compute.composite-description.create.failed");
+                        "Failed to create CompositeDescription: " + Utils.toString(e),
+                        "compute.composite-description.create.failed");
                 op.fail(ex);
                 return null;
             } else {
@@ -206,6 +282,40 @@ public class CompositeDescriptionContentService extends StatelessService {
         if (handle.isDone()) {
             // do something with the deferred result because findbugs complains
         }
+    }
+
+    private void processKubernetesTemplate(String yamlContent, Operation post) {
+        assertNotNullOrEmpty(yamlContent, "yamlContent");
+
+        sendRequest(Operation.createPost(this, KubernetesDescriptionContentService.SELF_LINK)
+                .setBody(yamlContent)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        post.fail(ex);
+                    } else {
+                        String[] resourceLinks = o.getBody(String[].class);
+                        CompositeDescription description = new CompositeDescription();
+                        description.descriptionLinks = Arrays.asList(resourceLinks);
+                        description.name = KUBERNETES_APPLICATION_TEMPLATE_PREFIX + ZonedDateTime
+                                .now(ZoneOffset.UTC).format(FORMATTER);
+                        Operation createCompositeDescription = Operation
+                                .createPost(this, CompositeDescriptionFactoryService.SELF_LINK)
+                                .setBody(description)
+                                .setCompletion((op, err) -> {
+                                    if (err != null) {
+                                        post.fail(err);
+                                    } else {
+                                        CompositeDescription createdDescription = op.getBody
+                                                (CompositeDescription.class);
+                                        post.addResponseHeader(Operation.LOCATION_HEADER,
+                                                createdDescription.documentSelfLink);
+                                        post.complete();
+                                    }
+                                });
+
+                        sendRequest(createCompositeDescription);
+                    }
+                }));
     }
 
     private DeferredResult<List<Operation>> createComponents(CompositeTemplate compositeTemplate) {
@@ -229,5 +339,10 @@ public class CompositeDescriptionContentService extends StatelessService {
         return nestedState.sendRequest(this, Action.POST);
     }
 
+    private void validateCompositeTemplate(CompositeTemplate compositeTemplate) {
+        assertNotNull(compositeTemplate, "compositeTemplate");
+        assertNotEmpty(compositeTemplate.name, "name");
+        assertContainersComponentsOnly(compositeTemplate.components);
+    }
 
 }

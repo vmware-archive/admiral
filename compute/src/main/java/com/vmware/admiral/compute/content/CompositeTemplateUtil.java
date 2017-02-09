@@ -80,24 +80,31 @@ public class CompositeTemplateUtil {
 
     public static final String DOCKER_COMPOSE_VERSION_2 = "2";
 
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter
+    public static final DateTimeFormatter FORMATTER = DateTimeFormatter
             .ofPattern("yyyy-MM-dd HH.mm.ss.SSS O");
 
     public enum YamlType {
         DOCKER_COMPOSE,
         COMPOSITE_TEMPLATE,
+        KUBERNETES_TEMPLATE,
         UNKNOWN
     }
 
     /**
      * Returns the {@link YamlType} of the provided YAML.
-     *
+     * <p>
      * // * @param yaml The YAML content to process.
      *
      * @return {@link YamlType} of the provided YAML
      */
     public static YamlType getYamlType(String yaml) throws IOException {
         assertNotEmpty(yaml, "yaml");
+        boolean isMultiYaml = YamlMapper.isMultiYaml(yaml);
+        if (isMultiYaml) {
+            List<String> yamls = YamlMapper.splitYaml(yaml);
+            // Make the verification only with a single yaml in case of multi.
+            yaml = yamls.get(0);
+        }
 
         CommonDescriptionEntity template;
         try {
@@ -108,13 +115,24 @@ public class CompositeTemplateUtil {
                     "compute.template.yaml.content.error", e.getOriginalMessage());
         }
 
-        if (DOCKER_COMPOSE_VERSION_2.equals(template.version)
-                && (!isNullOrEmpty(template.services))) {
-            return YamlType.DOCKER_COMPOSE;
-        } else if (!isNullOrEmpty(template.components)) {
-            return YamlType.COMPOSITE_TEMPLATE;
+        if (!isNullOrEmpty(template.apiVersion) && !isNullOrEmpty(template.kind)) {
+            return YamlType.KUBERNETES_TEMPLATE;
         } else {
-            return YamlType.UNKNOWN;
+            if (isMultiYaml) {
+                throw new LocalizableValidationException(
+                        "Multiple YAML definitions are not supported "
+                                + "for Docker Compose and YAML Blueprint.",
+                        "compute.template.yaml.content.multiple.definitions");
+            } else {
+                if (DOCKER_COMPOSE_VERSION_2.equals(template.version)
+                        && (!isNullOrEmpty(template.services))) {
+                    return YamlType.DOCKER_COMPOSE;
+                } else if (!isNullOrEmpty(template.components)) {
+                    return YamlType.COMPOSITE_TEMPLATE;
+                } else {
+                    return YamlType.UNKNOWN;
+                }
+            }
         }
     }
 

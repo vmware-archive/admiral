@@ -11,10 +11,16 @@
 
 package com.vmware.admiral.common.util;
 
+import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
+
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -39,6 +45,7 @@ public class YamlMapper {
     private static final FilterProvider filters = new SimpleFilterProvider().addFilter(
             SERVICE_DOCUMENT_FILTER, createBuiltinFieldFilter());
     private static final ObjectWriter objectWriter = objectMapper.writer(filters);
+    private static final String YAML_REGEX_VERIFIER = "(?<!.)---(?!.)";
 
     public static ObjectMapper objectMapper() {
         return objectMapper;
@@ -75,5 +82,40 @@ public class YamlMapper {
     public static String fromJsonToYaml(String json) throws IOException {
         JsonNode jsonNode = objectMapper().readTree(json);
         return objectMapper().writeValueAsString(jsonNode);
+    }
+
+    public static List<String> splitYaml(String yaml) {
+        assertNotNull(yaml, "yaml");
+
+        List<String> result = new ArrayList<>();
+        if (!yaml.startsWith("---")) {
+            result.add(yaml);
+            return result;
+        }
+        String[] yamls = yaml.split(YAML_REGEX_VERIFIER);
+        result = Arrays.stream(yamls)
+                .filter(y -> !y.trim().equals(""))
+                .collect(Collectors.toList());
+
+        for (int i = 0; i < result.size(); i++) {
+            String tempYaml = "---\n" + result.get(i).trim();
+            result.set(i, tempYaml);
+        }
+
+        return result;
+    }
+
+    /**
+     * Check if the string contains multiple yaml definitions concatenated.
+     */
+    public static boolean isMultiYaml(String yaml) {
+        Pattern pattern = Pattern.compile(YAML_REGEX_VERIFIER);
+        Matcher matcher = pattern.matcher(yaml);
+        int counter = 0;
+        while (matcher.find()) {
+            counter++;
+        }
+
+        return counter > 1;
     }
 }

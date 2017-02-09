@@ -11,10 +11,10 @@
 
 package com.vmware.admiral.compute.kubernetes;
 
+import static com.vmware.admiral.common.util.YamlMapper.splitYaml;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.isNullOrEmpty;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -65,21 +65,6 @@ public class KubernetesDescriptionContentService extends StatelessService {
                         post.complete();
                     }
                 }).sendWith(this);
-    }
-
-    private List<String> splitYaml(String yaml) {
-        String[] yamls = yaml.split("(?<!.)---(?!.)");
-        List<String> result = Arrays.stream(yamls)
-                .filter(y -> !y.trim().equals(""))
-                .collect(Collectors.toList());
-
-        for (int i = 0; i < result.size(); i++) {
-            String tempYaml = "---\n" + result.get(i).trim();
-            result.remove(i);
-            result.add(i, tempYaml);
-        }
-
-        return result;
     }
 
     private List<Operation> createOperations(List<String> kubernetesDefinitions) {
