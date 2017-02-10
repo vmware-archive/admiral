@@ -534,7 +534,7 @@ public abstract class BaseIntegrationSupportIT {
         if (this.tenantLinks == null) {
             this.tenantLinks = new ArrayList<>();
             this.tenantLinks.add(UriUtils.buildUriPath(QueryUtil.TENANT_IDENTIFIER,
-                    getClass().getName().toLowerCase()));
+                    getClass().getSimpleName().toLowerCase()));
         }
         return tenantLinks;
     }
