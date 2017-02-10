@@ -196,7 +196,7 @@ public abstract class DockerDriverBase implements ExecutionDriver {
                 return URI.create(accessUri + linkPath);
             }
         } catch (Throwable e) {
-            Utils.log(Utils.class, Utils.class.getSimpleName(), Level.SEVERE,
+            Utils.log(Utils.class, DockerDriverBase.class.getSimpleName(), Level.SEVERE,
                     "Failure in building public access %s, %s, %s", accessUri, linkPath, Utils
                             .toString(e));
         }

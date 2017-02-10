@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.closures.services.closuredescription;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
@@ -25,6 +26,7 @@ import com.vmware.admiral.closures.util.ClosureUtils;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatefulService;
+import com.vmware.xenon.common.UriUtils;
 
 /**
  * Represents closure definition service.
@@ -201,6 +203,27 @@ public class ClosureDescriptionService extends StatefulService {
             op.setStatusCode(Operation.STATUS_CODE_BAD_REQUEST);
             op.fail(new IllegalArgumentException(errorMsg));
             return false;
+        }
+
+        if (!ClosureUtils.isEmpty(body.sourceURL)) {
+            URI uri = UriUtils.buildUri(body.sourceURL);
+            if (uri == null) {
+                String errorMsg = "Closure source URI is NOT valid!";
+                logWarning(errorMsg);
+                op.setStatusCode(Operation.STATUS_CODE_BAD_REQUEST);
+                op.fail(new IllegalArgumentException(errorMsg));
+                return false;
+            }
+
+            String uriScheme = uri.getScheme();
+            if (!("HTTP".equalsIgnoreCase(uriScheme) || "HTTPS".equalsIgnoreCase(uriScheme))) {
+                String errorMsg = "Closure source URI is NOT valid! Only 'http' or 'https' "
+                        + "schemes are supported";
+                logWarning(errorMsg);
+                op.setStatusCode(Operation.STATUS_CODE_BAD_REQUEST);
+                op.fail(new IllegalArgumentException(errorMsg));
+                return false;
+            }
         }
 
         if (ClosureUtils.isEmpty(body.name)) {
