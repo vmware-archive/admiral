@@ -90,6 +90,7 @@ public interface ManagementUriParts {
     String COMPUTE_NETWORKS = RESOURCES + "/compute-networks";
     String COMPUTE_NETWORK_DESC = RESOURCES + "/compute-network" + DESCRIPTION_SUFFIX;
 
+    String KUBERNETES = RESOURCES + "/kubernetes";
     String KUBERNETES_DESC = RESOURCES + "/kubernetes" + DESCRIPTION_SUFFIX;
     String KUBERNETES_DESC_CONTENT = RESOURCES + "/kubernetes-templates";
 
