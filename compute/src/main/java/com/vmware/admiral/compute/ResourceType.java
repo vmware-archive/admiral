@@ -26,7 +26,8 @@ public enum ResourceType {
     CONTAINER_VOLUME_TYPE("CONTAINER_VOLUME", "App.Volume"),
     CLOSURE_TYPE("CLOSURE", "App.Closure"),
     CONFIGURE_HOST_TYPE("CONFIGURE_HOST", ""),
-    COMPUTE_NETWORK_TYPE("COMPUTE_NETWORK", "Compute.Network");
+    COMPUTE_NETWORK_TYPE("COMPUTE_NETWORK", "Compute.Network"),
+    KUBERNETES_ENTITY_TYPE("KUBERNETES_ENTITY", "Kubernetes.Entity");
 
     private final String name;
     private final String contentType;

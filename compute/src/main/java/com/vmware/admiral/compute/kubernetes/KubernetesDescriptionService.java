@@ -18,14 +18,14 @@ import java.io.IOException;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.content.kubernetes.CommonKubernetesEntity;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatefulService;
 
 public class KubernetesDescriptionService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.KUBERNETES_DESC;
 
-    public static class KubernetesDescription extends ServiceDocument {
+    public static class KubernetesDescription extends ResourceState {
 
         /**
          * Serialized kubernetes entity in YAML format.
@@ -81,7 +81,7 @@ public class KubernetesDescriptionService extends StatefulService {
         assertNotNullOrEmpty(kubernetesEntity.apiVersion, "apiVersion");
         assertNotNullOrEmpty(kubernetesEntity.kind, "kind");
 
-        description.type = description.getKubernetesEntity(CommonKubernetesEntity.class).kind;
+        description.type = kubernetesEntity.kind;
     }
 
     @Override
