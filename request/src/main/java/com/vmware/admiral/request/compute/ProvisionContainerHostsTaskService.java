@@ -198,6 +198,7 @@ public class ProvisionContainerHostsTaskService
                 Arrays.asList(ComputeType.DOCKER_CONTAINER.name()));
 
         cd.instanceType = state.hostDescription.instanceType;
+        cd.tenantLinks = state.tenantLinks;
         cd.customProperties = new HashMap<>();
         cd.customProperties
                 .put(ComputeAllocationTaskState.ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME, "true");

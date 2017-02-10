@@ -13,19 +13,23 @@ package com.vmware.admiral.test.integration.compute.aws;
 
 import static org.junit.Assert.assertNotNull;
 
+import java.util.Set;
+
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
+import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
+import com.vmware.admiral.request.compute.ComputeRemovalTaskService;
+import com.vmware.admiral.request.compute.ComputeRemovalTaskService.ComputeRemovalTaskState;
 import com.vmware.admiral.request.compute.ProvisionContainerHostsTaskService;
 import com.vmware.admiral.request.compute.ProvisionContainerHostsTaskService.DockerHostDescription;
 import com.vmware.admiral.request.compute.ProvisionContainerHostsTaskService.ProvisionContainerHostsTaskState;
 import com.vmware.admiral.test.integration.BaseIntegrationSupportIT;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
+import com.vmware.xenon.common.UriUtils;
 
-@Ignore
 public class AwsProvisionContainerHostIT extends BaseIntegrationSupportIT {
 
     private static final String ACCESS_KEY_PROP = "test.aws.access.key";
@@ -34,21 +38,34 @@ public class AwsProvisionContainerHostIT extends BaseIntegrationSupportIT {
 
     private EndpointType endpointType;
     private EndpointState endpoint;
+    private Set<String> resourceLinks;
 
     @Before
     public void setUp() throws Throwable {
 
         endpointType = getEndpointType();
         endpoint = createEndpoint(endpointType, TestDocumentLifeCycle.NO_DELETE);
+        triggerAndWaitForEndpointEnumeration(endpoint);
     }
 
     @Override
     @After
     public void baseTearDown() throws Exception {
-        // super.baseTearDown();
+        deleteDockerHosts();
+        super.baseTearDown();
+        delete(UriUtils.buildUriPath(EndpointAdapterService.SELF_LINK, endpoint.documentSelfLink));
+    }
 
-        // delete(UriUtils.buildUriPath(EndpointAdapterService.SELF_LINK,
-        // endpoint.documentSelfLink));
+    private void deleteDockerHosts() throws Exception {
+        if (this.resourceLinks == null) {
+            return;
+        }
+        ComputeRemovalTaskState crts = new ComputeRemovalTaskState();
+        crts.resourceLinks = this.resourceLinks;
+        crts.skipReleaseResourceQuota = true;
+        crts.tenantLinks = getTenantLinks();
+        ComputeRemovalTaskState state = postDocument(ComputeRemovalTaskService.FACTORY_LINK, crts);
+        waitForTaskToComplete(state.documentSelfLink);
     }
 
     @Override
@@ -85,5 +102,6 @@ public class AwsProvisionContainerHostIT extends BaseIntegrationSupportIT {
                 ProvisionContainerHostsTaskState.class);
         assertNotNull(provisionRequest);
         assertNotNull(provisionRequest.resourceLinks);
+        this.resourceLinks = provisionRequest.resourceLinks;
     }
 }
