@@ -168,6 +168,14 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         handleStagePatch(state);
     }
 
+    @Override
+    public void sendRequest(Operation op) {
+        if (locale != null) {
+            op.addRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER, locale);
+        }
+        super.sendRequest(op);
+    }
+
     private boolean validateNewState(T state, Operation startPost) {
         if (state.documentVersion > 0) {
             return false;
