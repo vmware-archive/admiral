@@ -55,7 +55,9 @@ let closureDefinitionConstraints = {
     if (sourceConfig.sourceMode === 'SourceURL') {
       if (!sourceConfig.sourceURL || validator.trim(sourceConfig.sourceURL).length === 0) {
         error.sourceURL = 'errors.required';
-      } else if (!validator.isURL(sourceConfig.sourceURL, urlPathConfig)) {
+      } else if (!validator.isURL(sourceConfig.sourceURL, urlPathConfig)
+        || !(sourceConfig.sourceURL.startsWith('http://')
+            || sourceConfig.sourceURL.startsWith('https://'))) {
         error.sourceURL = 'errors.urlPath';
       }
     } else if (sourceConfig.sourceMode === 'Source') {
@@ -207,7 +209,12 @@ class ClosureDefinitionForm extends Component {
     let inputNames = [];
     if (rawInputData) {
       rawInputData.forEach(function(e) {
-        inputData[e.name] = JSON.parse(e.value);
+        try {
+          inputData[e.name] = JSON.parse(e.value);
+        } catch (ex) {
+          // Not a valid JSON! Converting it to string
+          inputData[e.name] = String(e.value);
+        }
         inputNames.push(e.name);
       });
     }

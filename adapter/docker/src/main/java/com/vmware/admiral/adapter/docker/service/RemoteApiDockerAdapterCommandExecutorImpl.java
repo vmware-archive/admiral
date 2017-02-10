@@ -140,8 +140,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
                         Matcher matcher = ERROR_PATTERN.matcher(body);
                         if (matcher.find()) {
                             logger.info("Build failure detected! Response Body: " + body);
-                            completionHandler.handle(o, new RuntimeException("Error: "
-                                    + matcher.group(1)));
+                            completionHandler.handle(o, new RuntimeException("Error: " + body));
                             o.complete();
                             return;
                         }

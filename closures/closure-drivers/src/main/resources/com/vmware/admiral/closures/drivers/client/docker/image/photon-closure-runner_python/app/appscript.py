@@ -100,7 +100,7 @@ class Context:
             op = operation.upper()
             target_uri = build_closure_description_uri(self.closure_uri, link)
             if op == 'GET':
-                resp = requests.get(target_uri, stream=True)
+                resp = requests.get(target_uri, stream=True, verify=False)
             elif op == 'POST':
                 resp = requests.post(target_uri, data=json.dumps(body), headers=headers)
             elif op == 'PATCH':
@@ -153,7 +153,7 @@ def download_and_save_source(source_url, module_name, closure_description, skip_
     if not os.path.exists(SRC_DIR):
         os.makedirs(SRC_DIR)
     # print 'Downloading source from: ', source_url
-    resp = requests.get(source_url, stream=True)
+    resp = requests.get(source_url, stream=True, verify=False)
     content_type = resp.headers['content-type']
     if resp.status_code != 200:
         raise Exception('Unable to fetch script source from: ', source_url)
@@ -190,7 +190,7 @@ def proceed_with_closure_description(closure_uri, closure_desc_uri, inputs, clos
                'Accept': 'application/json',
                'x-xenon-auth-token': os.environ['TOKEN']
                }
-    closure_desc_response = requests.get(closure_desc_uri, headers=headers)
+    closure_desc_response = requests.get(closure_desc_uri, headers=headers, verify=False)
     if closure_desc_response.ok:
         closure_description = json.loads(closure_desc_response.content.decode('utf-8'))
         (module_name, handler_name) = create_entry_point(closure_description)
@@ -251,7 +251,7 @@ def proceed_with_closure_execution(skip_execution=False):
                'Accept': 'application/json',
                'x-xenon-auth-token': os.environ['TOKEN']
                }
-    closure_response = requests.get(closure_uri, headers=headers)
+    closure_response = requests.get(closure_uri, headers=headers, verify=False)
     if closure_response.ok:
         closure_data = json.loads(closure_response.content.decode('utf-8'))
         closure_semaphore = closure_data['closureSemaphore']
