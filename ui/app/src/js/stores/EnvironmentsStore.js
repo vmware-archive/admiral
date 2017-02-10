@@ -9,10 +9,12 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { EndpointsActions, EnvironmentsActions, NavigationActions } from 'actions/Actions';
+import { EndpointsActions, EnvironmentsActions, NavigationActions,
+    SubnetworksActions} from 'actions/Actions';
 import ContextPanelStoreMixin from 'stores/mixins/ContextPanelStoreMixin';
 import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
 import EndpointsStore from 'stores/EndpointsStore';
+import SubnetworksStore from 'stores/SubnetworksStore';
 import constants from 'core/constants';
 import services from 'core/services';
 import utils from 'core/utils';
@@ -75,6 +77,36 @@ let EnvironmentsStore = Reflux.createStore({
 
       this.emitChange();
     });
+
+    SubnetworksStore.listen((subnetworksData) => {
+
+      let subnetworks = subnetworksData.items || [];
+      this.setInData(['subnetworks'], subnetworks);
+
+      if (!this.data.editingItemData) {
+        return;
+      } else {
+        this.setInData(['editingItemData', 'subnetworks'], subnetworks);
+      }
+
+      if (isContextPanelActive.call(this, constants.CONTEXT_PANEL.SUBNETWORKS)) {
+        this.setInData(['editingItemData', 'contextView', 'activeItem', 'data'], subnetworksData);
+
+        let itemToSelect = subnetworksData.newItem || subnetworksData.updatedItem;
+        if (itemToSelect && this.data.editingItemData.contextView.shouldSelectAndComplete) {
+          itemToSelect = subnetworks.find((item) =>
+              item.documentSelfLink === itemToSelect.documentSelfLink);
+          clearTimeout(this.itemSelectTimeout);
+          this.itemSelectTimeout = setTimeout(() => {
+            this.setInData(['editingItemData', 'item', 'subnetwork'], itemToSelect);
+            this.onCloseToolbar();
+          }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
+        }
+      }
+
+      this.emitChange();
+    });
+
   },
 
   listenables: [EnvironmentsActions],
@@ -109,10 +141,9 @@ let EnvironmentsStore = Reflux.createStore({
   },
 
   onOpenAddEnvironment() {
-    EndpointsActions.retrieveEndpoints();
-
     this.setInData(['editingItemData', 'item'], {});
     this.setInData(['editingItemData', 'endpoints'], this.data.endpoints);
+    this.setInData(['editingItemData', 'subnetworks'], this.data.subnetworks);
     this.emitChange();
   },
 
@@ -137,18 +168,18 @@ let EnvironmentsStore = Reflux.createStore({
       if (document.networkProfile && document.networkProfile.subnetLinks &&
           document.networkProfile.subnetLinks.length) {
         promises.push(
-            services.loadSubnetworks(document.networkProfile.subnetLinks).catch(() =>
-                Promise.resolve()));
+            services.loadSubnetworks(document.endpointLink,
+                document.networkProfile.subnetLinks).catch(() => Promise.resolve()));
       } else {
         promises.push(Promise.resolve());
       }
 
-      Promise.all(promises).then(([endpoint, tags, networkSubnets]) => {
+      Promise.all(promises).then(([endpoint, tags, subnetworks]) => {
         if (document.endpointLink && endpoint) {
           document.endpoint = endpoint;
         }
         document.tags = tags ? Object.values(tags) : [];
-        document.networkSubnets = networkSubnets ? Object.values(networkSubnets) : [];
+        document.subnetworks = subnetworks ? Object.values(subnetworks) : [];
 
         this.setInData(['editingItemData', 'item'], Immutable(document));
         this.setInData(['editingItemData', 'endpoints'], this.data.endpoints);
@@ -156,8 +187,6 @@ let EnvironmentsStore = Reflux.createStore({
       });
 
     }).catch(this.onGenericEditError);
-
-    EndpointsActions.retrieveEndpoints();
 
     this.emitChange();
   },
@@ -266,6 +295,17 @@ let EnvironmentsStore = Reflux.createStore({
     }
   },
 
+  onSelectView(view, endpointLink) {
+    switch (view) {
+      case 'basic':
+        EndpointsActions.retrieveEndpoints();
+        break;
+      case 'network':
+        SubnetworksActions.retrieveSubnetworks(endpointLink);
+        break;
+    }
+  },
+
   onCreateEndpoint() {
     onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.ENDPOINTS,
         EndpointsStore.getData(), true);
@@ -275,6 +315,11 @@ let EnvironmentsStore = Reflux.createStore({
   onManageEndpoints() {
     onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.ENDPOINTS,
         EndpointsStore.getData(), true);
+  },
+
+  onManageSubnetworks() {
+    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.SUBNETWORKS,
+        SubnetworksStore.getData(), true);
   }
 });
 

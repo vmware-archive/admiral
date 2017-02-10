@@ -188,7 +188,7 @@
                           </div>
                         </div>
                         <div class="multicolumn-inputs-list-body-wrapper">
-                          <div class="multicolumn-inputs-list-body" v-for="subnet in networkSubnets" track-by="$index">
+                          <div class="multicolumn-inputs-list-body" v-for="subnetwork in subnetworks" track-by="$index">
                             <div class="multicolumn-input">
                               <div class="multicolumn-input-controls">
                                 <ul>
@@ -196,11 +196,16 @@
                                     <div class="inline-input-holder">
                                       <dropdown-search
                                           :entity="i18n('app.network.entity')"
-                                          :filter="searchNetworkSubnets"
+                                          :filter="searchSubnetworks"
                                           :index="$index"
-                                          :renderer="renderNetworkSubnet"
-                                          :value="subnet"
-                                          @change="onNetworkSubnetChange">
+                                          :renderer="renderSubnetwork"
+                                          :value="subnetwork"
+                                          :manage="[{
+                                            action: manageSubnetworks,
+                                            icon: 'pencil',
+                                            name: i18n('app.subnetwork.manage')
+                                          }]"
+                                          @change="onSubnetworkChange">
                                       </dropdown-search>
                                     </div>
                                   </li>
@@ -208,12 +213,12 @@
                               </div>
                               <div class="multicolumn-input-toolbar">
                                 <a href="#" tabindex="-1" class="multicolumn-input-remove"
-                                    @click="removeNetworkSubnet($event, $index)">
+                                    @click="removeSubnetwork($event, $index)">
                                   <i class="btn btn-circle fa fa-minus"></i>
                                 </a>
-                                <a :style="{'visibility': $index + 1 === networkSubnets.length ? 'visible' : 'hidden'}"
+                                <a :style="{'visibility': $index + 1 === subnetworks.length ? 'visible' : 'hidden'}"
                                     href="#" class="multicolumn-input-add"
-                                    @click="addNetworkSubnet($event)">
+                                    @click="addSubnetwork($event)">
                                   <i class="btn btn-circle fa fa-plus"></i>
                                 </a>
                               </div>
@@ -268,15 +273,25 @@
   <context-sidepanel class="right-context-panel" @close="closeToolbar()">
     <div slot="toolbar" class="toolbar">
       <context-sidepanel-toolbar-item
+        v-if="currentView === 'basic'"
         :active="activeContextItem === 'endpoints'"
         :icon-class="'fa fa-cloud'"
         :label="i18n('app.endpoint.contextPanelTooltip')"
         @open="manageEndpoints()" @close="closeToolbar()">
       </context-sidepanel-toolbar-item>
+      <context-sidepanel-toolbar-item
+        v-if="currentView === 'network'"
+        :active="activeContextItem === 'subnetworks'"
+        :icon-class="'fa fa-sitemap'"
+        :label="i18n('app.subnetwork.contextPanelTooltip')"
+        @open="manageSubnetworks()" @close="closeToolbar()">
+      </context-sidepanel-toolbar-item>
     </div>
     <div slot="content" class="content">
       <endpoints-list v-if="activeContextItem === 'endpoints'"
         :model="model.contextView.activeItem.data"></endpoints-list>
+      <subnetworks-list v-if="activeContextItem === 'subnetworks'"
+        :model="model.contextView.activeItem.data"></subnetworks-list>
     </div>
   </context-sidepanel>
 

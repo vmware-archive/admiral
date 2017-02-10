@@ -20,7 +20,8 @@ var constants = Immutable({
     DEPLOYMENT_POLICIES: 'deploymentPolicies',
     REQUESTS: 'requests',
     EVENTLOGS: 'eventlogs',
-    ENDPOINTS: 'endpoints'
+    ENDPOINTS: 'endpoints',
+    SUBNETWORKS: 'subnetworks'
   },
   VIEWS: {
     HOME: {name: 'home'},
