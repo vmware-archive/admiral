@@ -1,0 +1,56 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="inline-edit">
+  <alert alert-type="danger"
+         :show-alert="validationErrors"
+         :alert-message="validationErrors"></alert>
+  <form class="inline-edit-properties">
+    <section class="form-block">
+      <label class="title" v-if="model.item.documentSelfLink">{{i18n('app.subnetwork.edit.update')}}</label>
+      <label class="title" v-else>{{i18n('app.subnetwork.edit.addNew')}}</label>
+      <text-input
+        :label="i18n('app.subnetwork.edit.nameLabel')"
+        :required="true"
+        :value="model.item.name"
+        :disabled="!!model.item.documentSelfLink"
+        @change="onNameChange">
+      </text-input>
+      <text-input
+        :label="i18n('app.subnetwork.edit.cidrLabel')"
+        :required="true"
+        :value="model.item.subnetCIDR"
+        :disabled="!!model.item.documentSelfLink"
+        @change="onCidrChange">
+      </text-input>
+      <div class="form-group">
+        <label>{{i18n('app.subnetwork.edit.tagsTitle')}}
+          <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="top"
+              v-tooltip="i18n('app.subnetwork.edit.tagsHint')"></i>
+        </label>
+        <tags
+          :placeholder="i18n('app.subnetwork.edit.tagsPlaceholder')"
+          :value="model.item.tags"
+          @change="onTagsChange">
+        </tags>
+      </div>
+    </section>
+  </form>
+  <div class="inline-edit-toolbar">
+    <a href="#" class="btn btn-circle" :class="{'loading': model.saving}" @click="save($event)" :disabled="saveDisabled">
+      <i class="fa fa-check"></i>
+      <i class="fa fa-spinner fa-spin loader"></i>
+    </a>
+    <a href="#" class="btn btn-circle" v-on:click="cancel($event)">
+      <i class="fa fa-times"></i>
+    </a>
+  </div>
+</div>

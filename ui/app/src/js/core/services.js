@@ -297,8 +297,11 @@ var list = function(url, expandQuery, paramsData) {
   }
   return get(mergeUrl(url, paramsData)).then(function(result) {
     // The result.documents check is added to support vRA.
-    if (expandQuery && result.documents) {
-      return result.documents;
+    if (expandQuery && result.documentLinks && result.documents) {
+      return result.documentLinks.reduce((previous, current) => {
+        previous[current] = result.documents[current];
+        return previous;
+      }, {});
     } else {
       return result;
     }
@@ -743,7 +746,7 @@ services.searchCompute = function(resourcePoolLink, query, limit) {
   });
 };
 
-services.loadSubnetworks = function(documentSelfLinks) {
+services.loadSubnetworks = function(endpointLink, documentSelfLinks) {
   var params = {};
   if (documentSelfLinks && documentSelfLinks.length) {
     params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
@@ -755,6 +758,14 @@ services.loadSubnetworks = function(documentSelfLinks) {
       }),
       [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
     });
+  } else if (endpointLink) {
+    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+      endpointLink: [{
+        val: endpointLink,
+        op: 'eq'
+      }]
+    });
+    params[ODATA_ORDERBY_PROP_NAME] = 'documentUpdateTimeMicros desc';
   }
   return list(links.SUBNETWORKS, true, params);
 };
@@ -781,6 +792,14 @@ services.searchSubnetworks = function(endpointLink, query, limit) {
 
     return result;
   });
+};
+
+services.createSubnetwork = function(subnetwork) {
+  return post(links.SUBNETWORKS, subnetwork);
+};
+
+services.updateSubnetwork = function(subnetwork) {
+  return put(subnetwork.documentSelfLink, subnetwork);
 };
 
 services.loadMachines = function(queryOptions) {

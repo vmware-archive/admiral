@@ -14,6 +14,7 @@ import VueDropdownSearch from 'components/common/VueDropdownSearch'; //eslint-di
 import VueMulticolumnInputs from 'components/common/VueMulticolumnInputs'; //eslint-disable-line
 import VueTags from 'components/common/VueTags'; //eslint-disable-line
 import EndpointsList from 'components/endpoints/EndpointsList'; //eslint-disable-line
+import SubnetworksList from 'components/subnetworks/SubnetworksList'; //eslint-disable-line
 import EnvironmentEditViewVue from 'components/environments/EnvironmentEditViewVue.html';
 import services from 'core/services';
 
@@ -31,17 +32,17 @@ export default Vue.component('environment-edit-view', {
   data() {
     let endpointType = this.model.item.endpoint && this.model.item.endpoint.endpointType ||
           this.model.item.endpointType;
-    let networkSubnets = this.model.item.networkSubnets &&
-        this.model.item.networkSubnets.asMutable() || [];
-    if (networkSubnets.length === 0) {
-      networkSubnets.push({});
+    let subnetworks = this.model.item.subnetworks && this.model.item.subnetworks.asMutable() || [];
+    if (subnetworks.length === 0) {
+      subnetworks.push({});
     }
     return {
+      currentView: 'basic',
       endpoint: this.model.item.endpoint,
       endpointType,
       name: this.model.item.name,
       networkName: this.model.item.networkProfile && this.model.item.networkProfile.name,
-      networkSubnets,
+      subnetworks,
       tags: this.model.item.tags || []
     };
   },
@@ -113,9 +114,14 @@ export default Vue.component('environment-edit-view', {
         e.preventDefault();
         return false;
       }
+      this.currentView = $(e.target).attr('href').substring(1);
+      EnvironmentsActions.selectView(this.currentView,
+          this.endpoint && this.endpoint.documentSelfLink);
     });
 
-    $(this.$el).find('.nav-item a[href="#basic"]').tab('show');
+    $(this.$el).find('.nav-item a[href="#' + this.currentView + '"]').tab('show');
+    EnvironmentsActions.selectView(this.currentView,
+        this.endpoint && this.endpoint.documentSelfLink);
   },
   methods: {
     goBack() {
@@ -138,6 +144,9 @@ export default Vue.component('environment-edit-view', {
     manageEndpoints() {
       EnvironmentsActions.manageEndpoints();
     },
+    manageSubnetworks() {
+      EnvironmentsActions.manageSubnetworks();
+    },
     closeToolbar() {
       EnvironmentsActions.closeToolbar();
     },
@@ -154,23 +163,23 @@ export default Vue.component('environment-edit-view', {
     onNetworkNameChange($event) {
       this.networkName = $event.target.value;
     },
-    onNetworkSubnetChange(value, dropdown) {
+    onSubnetworkChange(value, dropdown) {
       let index = $(dropdown.$el).attr('index');
-      this.networkSubnets[index] = value || {};
+      this.subnetworks[index] = value || {};
     },
-    addNetworkSubnet($event) {
+    addSubnetwork($event) {
       $event.stopImmediatePropagation();
       $event.preventDefault();
-      this.networkSubnets = this.networkSubnets.concat({});
+      this.subnetworks = this.subnetworks.concat({});
     },
-    removeNetworkSubnet($event, $index) {
+    removeSubnetwork($event, $index) {
       $event.stopImmediatePropagation();
       $event.preventDefault();
-      if (this.networkSubnets.length !== 1) {
-        this.networkSubnets.splice($index, 1);
+      if (this.subnetworks.length !== 1) {
+        this.subnetworks.splice($index, 1);
       }
     },
-    renderNetworkSubnet(network) {
+    renderSubnetwork(network) {
       let cidrLabel = i18n.t('app.environment.edit.cidrLabel');
       return `
         <div>
@@ -180,7 +189,7 @@ export default Vue.component('environment-edit-view', {
           </div>
         </div>`;
     },
-    searchNetworkSubnets(...args) {
+    searchSubnetworks(...args) {
       return new Promise((resolve, reject) => {
         services.searchSubnetworks.apply(null,
             [this.endpoint.documentSelfLink, ...args]).then((result) => {
@@ -226,7 +235,7 @@ export default Vue.component('environment-edit-view', {
 
       toSave.networkProfile.name = this.networkName;
       toSave.networkProfile.subnetLinks = [];
-      this.networkSubnets
+      this.subnetworks
         .filter((subnet) => subnet.documentSelfLink)
         .forEach((subnet) => {
           toSave.networkProfile.subnetLinks.push(subnet.documentSelfLink);

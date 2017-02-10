@@ -30,41 +30,42 @@ function Tags(el) {
       }
     })
     .tokenfield({
-    createTokensOnBlur: true,
-    typeahead: [{
-      hint: false
-    }, {
-      source: (q, sync, async) => {
-        services.searchTags(q).then((result) => {
-          let values = Object.values(result);
-          let suggestions = values.map((tag) => ({
-            source: tag,
-            value: getValue(tag)
-          }));
-          suggestions.sort((a, b) => a.value === b.value ? 0 : +(a.value > b.value) || -1);
-          if (values.length) {
-            if (q.indexOf(':') === -1) {
-              suggestions = [{ value: values[0].key + ':'}, ...suggestions];
+      minWidth: 180,
+      createTokensOnBlur: true,
+      typeahead: [{
+        hint: false
+      }, {
+        source: (q, sync, async) => {
+          services.searchTags(q).then((result) => {
+            let values = Object.values(result);
+            let suggestions = values.map((tag) => ({
+              source: tag,
+              value: getValue(tag)
+            }));
+            suggestions.sort((a, b) => a.value === b.value ? 0 : +(a.value > b.value) || -1);
+            if (values.length) {
+              if (q.indexOf(':') === -1) {
+                suggestions = [{ value: values[0].key + ':'}, ...suggestions];
+              }
+              if (!values.find((tag) => tag.key === q)) {
+                suggestions = [{ value: q + (q.indexOf(':') === -1 ? ':' : '')}, ...suggestions];
+              }
+            } else {
+              suggestions = [{ value: q + (q.indexOf(':') === -1 ? ':' : '')}];
             }
-            if (!values.find((tag) => tag.key === q)) {
-              suggestions = [{ value: q + (q.indexOf(':') === -1 ? ':' : '')}, ...suggestions];
-            }
-          } else {
-            suggestions = [{ value: q + (q.indexOf(':') === -1 ? ':' : '')}];
+            async(suggestions);
+          });
+        },
+        display: (tag) => {
+          return tag.value;
+        },
+        templates: {
+          suggestion: (tag) => {
+            return '<div>' + tag.value + '</div>';
           }
-          async(suggestions);
-        });
-      },
-      display: (tag) => {
-        return tag.value;
-      },
-      templates: {
-        suggestion: (tag) => {
-          return '<div>' + tag.value + '</div>';
         }
-      }
-    }]
-  });
+      }]
+    });
   // Workaround a tokenfield/typeahead issue by manually creating a .tt-hint input
   this.$el.parent().find('.twitter-typeahead')
       .prepend('<input class="tt-hint" style="display:none">');

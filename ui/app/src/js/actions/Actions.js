@@ -165,12 +165,17 @@ export var CertificatesActions = Reflux.createActions([
 export var EnvironmentsActions = Reflux.createActions([
   'openEnvironments', 'openEnvironmentsNext', 'openAddEnvironment', 'editEnvironment',
   'cancelEditEnvironment', 'createEnvironment', 'updateEnvironment', 'deleteEnvironment',
-  'createEndpoint', 'manageEndpoints', 'closeToolbar'
+  'createEndpoint', 'manageEndpoints', 'manageSubnetworks', 'closeToolbar', 'selectView'
 ]);
 
 export var EndpointsActions = Reflux.createActions([
   'retrieveEndpoints', 'editEndpoint', 'cancelEditEndpoint', 'createEndpoint',
   'updateEndpoint', 'deleteEndpoint'
+]);
+
+export var SubnetworksActions = Reflux.createActions([
+  'retrieveSubnetworks', 'editSubnetwork', 'cancelEditSubnetwork', 'createSubnetwork',
+  'updateSubnetwork', 'deleteSubnetwork'
 ]);
 
 export var RequestsActions = Reflux.createActions([

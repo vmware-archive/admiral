@@ -595,6 +595,26 @@
     "network": {
       "entity": "Network"
     },
+    "subnetwork": {
+      "list": {
+        "title": "Subnetworks",
+        "addButton": "Add",
+        "nameColumn": "Name",
+        "cidrColumn": "CIDR"
+      },
+      "edit": {
+        "addNew": "Add Subnetwork",
+        "update": "Edit Subnetwork",
+        "nameLabel": "Name",
+        "cidrLabel": "CIDR",
+        "tagsTitle": "Tags",
+        "tagsHint": "Enter key:value tags",
+        "tagsPlaceholder": "Example: access:restricted"
+      },
+      "entity": "Subnetwork",
+      "manage": "Manage Subnetworks",
+      "contextPanelTooltip": "Subnetworks"
+    },
     "resource": {
       "list": {
         "network": {
