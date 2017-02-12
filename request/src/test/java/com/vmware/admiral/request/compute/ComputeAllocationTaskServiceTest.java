@@ -124,6 +124,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         ComputeAllocationTaskState allocationTask = new ComputeAllocationTaskState();
         allocationTask.resourceDescriptionLink = computeDescriptionLink;
         allocationTask.groupResourcePlacementLink = computeGroupPlacementState.documentSelfLink;
+        allocationTask.tenantLinks = computeGroupPlacementState.tenantLinks;
         allocationTask.resourceType = "Compute";
         allocationTask.resourceCount = resourceCount;
         allocationTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();

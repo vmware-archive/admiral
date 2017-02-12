@@ -75,6 +75,10 @@ public class EnvironmentQueryUtils {
                     "*", MatchType.WILDCARD);
         }
 
+        if (tenantLinks == null || tenantLinks.isEmpty()) {
+            builder.addClause(QueryUtil.addTenantClause(tenantLinks));
+        }
+
         QueryUtils.QueryByPages<ResourcePoolState> query = new QueryUtils.QueryByPages<>(host,
                 builder.build(), ResourcePoolState.class, QueryUtil.getTenantLinks(tenantLinks));
 
@@ -93,7 +97,7 @@ public class EnvironmentQueryUtils {
             List<DeferredResult<List<EnvEntry>>> list = entriesPerEndpoint.keySet().stream()
                     .map(epl -> host.sendWithDeferredResult(
                             Operation.createGet(host, epl).setReferer(referer), EndpointState.class)
-                            .thenApply(ep -> applyEndpointType(ep,
+                            .thenApply(ep -> applyEndpoint(ep,
                                     entriesPerEndpoint.get(ep.documentSelfLink)))
                             .thenCompose(entries -> queryEnvironments(host, entries, tenantLinks,
                                     networkProfileLinks)))
@@ -113,7 +117,7 @@ public class EnvironmentQueryUtils {
         });
     }
 
-    private static List<EnvEntry> applyEndpointType(EndpointState e, List<EnvEntry> entries) {
+    private static List<EnvEntry> applyEndpoint(EndpointState e, List<EnvEntry> entries) {
         if (entries == null) {
             return new ArrayList<>();
         }
@@ -131,16 +135,17 @@ public class EnvironmentQueryUtils {
         // Endpoint link and type will be the same for all entries.
         EnvEntry entry = entries.get(0);
 
-        if (tenantLinks == null || tenantLinks.isEmpty()) {
+        List<String> tl = QueryUtil.getTenantLinks(tenantLinks);
+        if (tl == null || tl.isEmpty()) {
             host.log(Level.INFO,
                     "Quering for global environments for endpoint [%s] of type [%s]...",
                     entry.endpoint.documentSelfLink, entry.endpoint.endpointType);
         } else {
             host.log(Level.INFO,
                     "Quering for group [%s] environments for endpoint [%s] of type [%s]...",
-                    tenantLinks, entry.endpoint.documentSelfLink, entry.endpoint.endpointType);
+                    tl, entry.endpoint.documentSelfLink, entry.endpoint.endpointType);
         }
-        Query tenantLinksQuery = QueryUtil.addTenantClause(tenantLinks);
+        Query tenantLinksQuery = QueryUtil.addTenantClause(tl);
 
         // link=LINK || (link=unset && type=TYPE)
         Builder query = Query.Builder.create()
@@ -176,7 +181,7 @@ public class EnvironmentQueryUtils {
                                 entries.forEach(e -> e.addEnvLink(r.getDocumentSelfLink()));
                             } else {
                                 if (entry.envLinks.isEmpty()) {
-                                    if (tenantLinks != null && !tenantLinks.isEmpty()) {
+                                    if (tl != null && !tl.isEmpty()) {
                                         queryEnvironments(host, entries, null, networkProfileLinks)
                                                 .whenComplete((envs, t) -> {
                                                     if (t != null) {
