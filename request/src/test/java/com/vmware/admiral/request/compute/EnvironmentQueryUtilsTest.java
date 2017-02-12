@@ -91,7 +91,7 @@ public class EnvironmentQueryUtilsTest extends RequestBaseTest {
 
     @Test
     public void testPoolWithNoEndpoint() throws Throwable {
-        ResourcePoolState pool = doCreateResourcePool(null);
+        ResourcePoolState pool = doCreateResourcePool(null, null);
         Set<String> pools = new HashSet<>();
         pools.add(pool.documentSelfLink);
 
@@ -125,7 +125,7 @@ public class EnvironmentQueryUtilsTest extends RequestBaseTest {
                 .createEndpoint(UUID.randomUUID().toString(), EndpointType.vsphere);
         endpoint = doPost(endpoint, EndpointAdapterService.SELF_LINK);
 
-        ResourcePoolState pool = doCreateResourcePool(endpoint.documentSelfLink);
+        ResourcePoolState pool = doCreateResourcePool(endpoint.documentSelfLink, null);
         Set<String> pools = new HashSet<>();
         pools.add(pool.documentSelfLink);
 
@@ -186,17 +186,19 @@ public class EnvironmentQueryUtilsTest extends RequestBaseTest {
     private Map<String, ResourcePoolState> createResourcePools() throws Throwable {
         Map<String, ResourcePoolState> pools = new HashMap<>();
         for (int i = 0; i < 2; i++) {
-            ResourcePoolState pool = doCreateResourcePool(endpoint.documentSelfLink);
+            ResourcePoolState pool = doCreateResourcePool(endpoint.documentSelfLink, null);
             pools.put(pool.documentSelfLink, pool);
         }
-        ResourcePoolState pool = doCreateResourcePool(null);
+        ResourcePoolState pool = doCreateResourcePool(null, null);
         pools.put(pool.documentSelfLink, pool);
         return pools;
     }
 
-    private ResourcePoolState doCreateResourcePool(String endpointLink) throws Throwable {
+    private ResourcePoolState doCreateResourcePool(String endpointLink, List<String> tenantLinks)
+            throws Throwable {
         ResourcePoolState pool = TestRequestStateFactory
                 .createResourcePool(UUID.randomUUID().toString(), endpointLink);
+        pool.tenantLinks = tenantLinks;
         pool = doPost(pool, ResourcePoolService.FACTORY_LINK);
         return pool;
     }

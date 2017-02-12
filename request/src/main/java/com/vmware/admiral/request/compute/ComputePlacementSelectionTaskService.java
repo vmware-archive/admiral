@@ -20,6 +20,7 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -33,6 +34,7 @@ import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.serialization.ReleaseConstants;
+import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.request.allocation.filter.AffinityFilters;
@@ -170,9 +172,11 @@ public class ComputePlacementSelectionTaskService extends
 
         Query.Builder queryBuilder = Query.Builder.create()
                 .addKindFieldClause(ComputeDescription.class)
+                .addClause(QueryUtil.addTenantClause(state.tenantLinks))
                 .addCollectionItemClause(
                         ComputeDescription.FIELD_NAME_SUPPORTED_CHILDREN,
                         ComputeType.VM_GUEST.toString());
+
 
         QueryTask queryTask = QueryTask.Builder.create().setQuery(queryBuilder.build()).build();
 
@@ -206,7 +210,12 @@ public class ComputePlacementSelectionTaskService extends
         helper.setAdditionalQueryClausesProvider(qb -> {
             qb.addInClause(ComputeState.FIELD_NAME_DESCRIPTION_LINK, computeDescriptionLinks)
                     .addFieldClause(ComputeState.FIELD_NAME_POWER_STATE, PowerState.ON.toString())
-                    .addFieldClause(ComputeState.FIELD_NAME_TYPE, ComputeType.VM_HOST);
+                    .addInClause(ComputeState.FIELD_NAME_TYPE,
+                            Arrays.asList(ComputeType.VM_HOST.name(), ComputeType.ZONE.name()));
+        });
+
+        helper.setAdditionalResourcePoolQueryClausesProvider(qb -> {
+            qb.addClause(QueryUtil.addTenantClause(state.tenantLinks));
         });
 
         helper.query(qr -> {

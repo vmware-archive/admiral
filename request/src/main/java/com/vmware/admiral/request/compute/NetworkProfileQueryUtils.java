@@ -51,25 +51,26 @@ public class NetworkProfileQueryUtils {
 
     /** Collect network profile constraints for all networks associated with compute. */
     public static void getNetworkProfileConstraintsForComputeNics(ServiceHost host, URI referer,
-            String contextId, ComputeDescription computeDesc, BiConsumer<Set<String>, Throwable> consumer) {
+            List<String> tenantLinks, String contextId, ComputeDescription computeDesc,
+            BiConsumer<Set<String>, Throwable> consumer) {
         if (computeDesc.networkInterfaceDescLinks == null || computeDesc.networkInterfaceDescLinks
                 .isEmpty()) {
             consumer.accept(null, null);
             return;
         }
-        getContextComputeNetworks(host, referer, contextId, consumer,
+        getContextComputeNetworks(host, referer, tenantLinks, contextId, consumer,
                 (retrievedNetworks) -> {
-                    getNetworkConstraints(host, referer, computeDesc,
+                    getNetworkConstraints(host, referer, tenantLinks, computeDesc,
                             retrievedNetworks, consumer);
                 });
     }
 
     /** Select Subnet that is applicable for compute network interface. */
     public static void getSubnetForComputeNic(ServiceHost host, URI referer,
-            String contextId, NetworkInterfaceDescription nid, EnvironmentStateExpanded environmentState,
-            BiConsumer<String, Throwable> consumer) {
+            List<String> tenantLinks, String contextId, NetworkInterfaceDescription nid,
+            EnvironmentStateExpanded environmentState, BiConsumer<String, Throwable> consumer) {
         // Get all context networks
-        getContextComputeNetworks(host, referer, contextId,
+        getContextComputeNetworks(host, referer, tenantLinks, contextId,
                 (contextNetworks, e) -> {
                     if (e != null) {
                         consumer.accept(null, e);
@@ -120,10 +121,14 @@ public class NetworkProfileQueryUtils {
 
         Set<String> environmentLinks = new HashSet<>();
         QueryTask.Query.Builder builder = QueryTask.Query.Builder.create()
-                .addKindFieldClause(EnvironmentState.class)
-                .addClause(QueryUtil.addTenantClause(tenantLinks));
+                .addKindFieldClause(EnvironmentState.class);
+        if (tenantLinks == null || tenantLinks.isEmpty()) {
+            builder.addClause(QueryUtil.addTenantClause(tenantLinks));
+        }
+
         QueryUtils.QueryByPages<EnvironmentState> query =
-                new QueryUtils.QueryByPages<>(host, builder.build(), EnvironmentState.class, null);
+                new QueryUtils.QueryByPages<>(host, builder.build(), EnvironmentState.class,
+                        QueryUtil.getTenantLinks(tenantLinks));
         query.queryLinks(env -> environmentLinks.add(env))
                 .whenComplete(((v, e) -> {
                     if (e != null) {
@@ -133,9 +138,7 @@ public class NetworkProfileQueryUtils {
                     // If there no network profiles defined for the tenant, get system network profiles
                     if (environmentLinks.isEmpty() && tenantLinks != null && !tenantLinks
                             .isEmpty()) {
-                        selectSubnetsForNetworkDescriptionTenant(host, referer,
-                                null,
-                                consumer);
+                        selectSubnetsForNetworkDescriptionTenant(host, referer, null, consumer);
                         return;
                     }
 
@@ -170,7 +173,7 @@ public class NetworkProfileQueryUtils {
     }
 
     private static void getNetworkConstraints(ServiceHost host, URI referer,
-            ComputeDescription computeDescription,
+            List<String> tenantLinks, ComputeDescription computeDescription,
             Map<String, ComputeNetwork> contextComputeNetworks,
             BiConsumer<Set<String>, Throwable> consumer) {
         getNetworkSubnetConstraints(host, referer, computeDescription,
@@ -188,10 +191,14 @@ public class NetworkProfileQueryUtils {
                                             .buildCollectionItemName(
                                                     NetworkProfile.FIELD_NAME_SUBNET_LINKS),
                                     subnetLinks, QueryTask.QueryTerm.MatchType.TERM));
+
+                    if (tenantLinks == null || tenantLinks.isEmpty()) {
+                        builder.addClause(QueryUtil.addTenantClause(tenantLinks));
+                    }
+
                     QueryUtils.QueryByPages<NetworkProfile> query =
                             new QueryUtils.QueryByPages<>(host, builder.build(),
-                                    NetworkProfile.class,
-                                    null);
+                                    NetworkProfile.class, QueryUtil.getTenantLinks(tenantLinks));
                     query.queryLinks(np -> networkProfileLinks.add(np)).whenComplete((v, ex) -> {
                         consumer.accept(networkProfileLinks, ex);
                     });
@@ -245,8 +252,8 @@ public class NetworkProfileQueryUtils {
         });
     }
 
-    private static void getContextComputeNetworks(ServiceHost host, URI referer, String contextId,
-            BiConsumer<Set<String>, Throwable> consumer,
+    private static void getContextComputeNetworks(ServiceHost host, URI referer,
+            List<String> tenantLinks, String contextId, BiConsumer<Set<String>, Throwable> consumer,
             Consumer<Map<String, ComputeNetwork>> callbackFunction) {
         Map<String, ComputeNetwork> contextNetworks = new HashMap<>();
         if (StringUtils.isBlank(contextId)) {
@@ -261,8 +268,7 @@ public class NetworkProfileQueryUtils {
         builder.addCompositeFieldClause(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
                 FIELD_NAME_CONTEXT_ID_KEY, contextId);
         QueryUtils.QueryByPages<ComputeNetwork> query = new QueryUtils.QueryByPages<>(
-                host,
-                builder.build(), ComputeNetwork.class, null);
+                host, builder.build(), ComputeNetwork.class, tenantLinks);
         query.queryDocuments(ns -> computeNetworks.add(ns)).whenComplete((v, e) -> {
             if (e != null) {
                 consumer.accept(null, e);

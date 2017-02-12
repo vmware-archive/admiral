@@ -81,6 +81,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
         TestContext ctx = testCreate(1);
         List<String> networkProfileLinks = new ArrayList<>();
         NetworkProfileQueryUtils.getNetworkProfileConstraintsForComputeNics(host, referer,
+                networkDescription1.tenantLinks,
                 contextId, computeDescription,
                 (all, e) -> {
                     if (e != null) {
@@ -134,8 +135,10 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
                 createSubnet("sub-2").documentSelfLink);
         NetworkProfile networkProfile1 = createNetworkProfile(subnets1, Arrays.asList(UUID.randomUUID().toString()));
         createEnvironment(networkProfile1.documentSelfLink, networkProfile1.tenantLinks);
-        List<String> subnets2 = Arrays.asList(createSubnet("sub-3").documentSelfLink);
-        NetworkProfile networkProfile2 = createNetworkProfile(subnets2, null);
+
+        SubnetState subnet3 = createSubnet("sub-3", null);
+        List<String> subnets2 = Arrays.asList(subnet3.documentSelfLink);
+        NetworkProfile networkProfile2 = createNetworkProfile(subnets2, subnet3.tenantLinks);
         createEnvironment(networkProfile2.documentSelfLink, networkProfile2.tenantLinks);
 
         TestContext ctx = testCreate(1);
@@ -176,7 +179,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
 
         TestContext ctx = testCreate(1);
         List<String> subnets = new ArrayList<>();
-        NetworkProfileQueryUtils.getSubnetForComputeNic(host, referer, contextId,
+        NetworkProfileQueryUtils.getSubnetForComputeNic(host, referer, nid.tenantLinks, contextId,
                 nid, createEnvironment(networkProfile.documentSelfLink, networkProfile.tenantLinks),
                 (all, e) -> {
                     if (e != null) {
@@ -216,7 +219,8 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
         TestContext ctx = testCreate(1);
         List<String> subnets = new ArrayList<>();
         List<Throwable> exceptions = new ArrayList<>();
-        NetworkProfileQueryUtils.getSubnetForComputeNic(host, referer, contextId, nid,
+        NetworkProfileQueryUtils.getSubnetForComputeNic(host, referer, nid.tenantLinks, contextId,
+                nid,
                 createEnvironment(networkProfile2.documentSelfLink, networkProfile2.tenantLinks),
                 (all, e) -> {
                     if (e != null) {
@@ -301,6 +305,15 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
             throws Throwable {
         SubnetState subnet = TestRequestStateFactory.createSubnetState(
                 name);
+        subnet.documentSelfLink = UUID.randomUUID().toString();
+        subnet.networkLink = UUID.randomUUID().toString();
+        return doPost(subnet, SubnetService.FACTORY_LINK);
+    }
+
+    private SubnetState createSubnet(String name, List<String> tenantLinks)
+            throws Throwable {
+        SubnetState subnet = TestRequestStateFactory.createSubnetState(
+                name, tenantLinks);
         subnet.documentSelfLink = UUID.randomUUID().toString();
         subnet.networkLink = UUID.randomUUID().toString();
         return doPost(subnet, SubnetService.FACTORY_LINK);

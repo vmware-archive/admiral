@@ -15,7 +15,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -41,7 +40,6 @@ import com.vmware.admiral.compute.env.NetworkProfileService.NetworkProfile;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
-import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
@@ -122,7 +120,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         ContainerDescription containerDesc = new ContainerDescription();
         containerDesc.documentSelfLink = CONTAINER_DESC_LINK_NAME;
         containerDesc.name = name;
-        containerDesc.tenantLinks = Collections.singletonList("test-group");
+        containerDesc.tenantLinks = getTenantLinks();
         containerDesc.image = CONTAINER_DESC_IMAGE;
         containerDesc.imageReference = CONTAINER_IMAGE_REF;
         containerDesc.command = new String[] { "/opt/dcp/bin/dcp-test.sh" };
@@ -176,7 +174,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         ContainerNetworkDescription desc = new ContainerNetworkDescription();
         desc.documentSelfLink = "test-network-" + name;
         desc.name = name;
-        desc.tenantLinks = Collections.singletonList("test-group");
+        desc.tenantLinks = getTenantLinks();
         desc.customProperties = new HashMap<>();
         return desc;
     }
@@ -185,16 +183,20 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         ComputeNetworkDescription desc = new ComputeNetworkDescription();
         desc.documentSelfLink = "test-network-" + name;
         desc.name = name;
-        desc.tenantLinks = Collections.singletonList(MultiTenantDocument.TENANTS_PREFIX + "test-group");
+        desc.tenantLinks = getTenantLinks();
         desc.customProperties = new HashMap<>();
         return desc;
+    }
+
+    protected static List<String> getTenantLinks() {
+        return createTenantLinks("test-group");
     }
 
     public static NetworkProfile createNetworkProfile(String name) {
         NetworkProfile networkProfile = new NetworkProfile();
         networkProfile.documentSelfLink = "test-network-profile-" + name;
         networkProfile.name = name;
-        networkProfile.tenantLinks = Collections.singletonList("test-group");
+        networkProfile.tenantLinks = getTenantLinks();
         return networkProfile;
     }
 
@@ -203,7 +205,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         EnvironmentState environmentState = new EnvironmentState();
         environmentState.documentSelfLink = "test-env-" + name;
         environmentState.name = name;
-        environmentState.tenantLinks = Collections.singletonList("test-group");
+        environmentState.tenantLinks = getTenantLinks();
         environmentState.networkProfileLink = networkProfileLink;
         environmentState.computeProfileLink = computeProfileLink;
         environmentState.storageProfileLink = storageProfileLink;
@@ -212,10 +214,15 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
     }
 
     public static SubnetState createSubnetState(String name) {
+        return createSubnetState(name,
+                getTenantLinks());
+    }
+
+    public static SubnetState createSubnetState(String name, List<String> tenantLinks) {
         SubnetState subnetState = new SubnetState();
         subnetState.documentSelfLink = "test-subnet-" + name;
         subnetState.subnetCIDR = "10.10.10.10/24";
-        subnetState.tenantLinks = Collections.singletonList("test-group");
+        subnetState.tenantLinks = tenantLinks;
         return subnetState;
     }
 
@@ -224,7 +231,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         state.documentSelfLink = "test-network-state" + name;
         state.descriptionLink = descLink;
         state.name = name;
-        state.tenantLinks = Collections.singletonList("test-group");
+        state.tenantLinks = getTenantLinks();
         state.customProperties = new HashMap<>();
         return state;
     }
@@ -234,7 +241,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         desc.documentSelfLink = "test-volume-" + name;
         desc.name = name;
         desc.driver = "local";
-        desc.tenantLinks = Collections.singletonList("test-group");
+        desc.tenantLinks = getTenantLinks();
         desc.customProperties = new HashMap<>(1);
         desc.customProperties.put("volume propKey string", "volume customPropertyValue string");
         return desc;

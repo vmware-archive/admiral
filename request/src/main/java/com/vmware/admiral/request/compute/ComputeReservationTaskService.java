@@ -197,7 +197,8 @@ public class ComputeReservationTaskService
     @Override
     protected void validateStateOnStart(ComputeReservationTaskState state) {
         if (state.resourceCount < 1) {
-            throw new LocalizableValidationException("'resourceCount' must be greater than 0.", "request.resource-count.zero");
+            throw new LocalizableValidationException("'resourceCount' must be greater than 0.",
+                    "request.resource-count.zero");
         }
     }
 
@@ -230,7 +231,8 @@ public class ComputeReservationTaskService
 
         String contextId = RequestUtils.getContextId(state);
         NetworkProfileQueryUtils.getNetworkProfileConstraintsForComputeNics(getHost(),
-                UriUtils.buildUri(getHost(), getSelfLink()), contextId, computeDesc,
+                UriUtils.buildUri(getHost(), getSelfLink()), state.tenantLinks, contextId,
+                computeDesc,
                 (networkProfileLinks, e) -> {
                     if (e != null) {
                         failTask("Error getting network profile constraints: ", e);
@@ -243,8 +245,7 @@ public class ComputeReservationTaskService
     }
 
     private void queryGroupResourcePlacements(ComputeReservationTaskState state,
-            List<String> tenantLinks,
-            ComputeDescription computeDesc) {
+            List<String> tenantLinks, ComputeDescription computeDesc) {
 
         if (computeDesc == null) {
             getComputeDescription(state.resourceDescriptionLink,
@@ -253,19 +254,21 @@ public class ComputeReservationTaskService
             return;
         }
 
-        if (tenantLinks == null || tenantLinks.isEmpty()) {
+        // GroupResourcePlacements must be filtered on by tenant and project
+        List<String> tgl = QueryUtil.getTenantAndGroupLinks(tenantLinks);
+        if (tgl == null || tgl.isEmpty()) {
             logInfo("Quering for global placements for resource description: [%s] and resource count: [%s]...",
                     state.resourceDescriptionLink, state.resourceCount);
         } else {
             logInfo("Quering for group placements in [%s], for resource description: [%s] and resource count: [%s]...",
-                    tenantLinks, state.resourceDescriptionLink, state.resourceCount);
+                    tgl, state.resourceDescriptionLink, state.resourceCount);
         }
 
         // match on group property:
         QueryTask q = QueryUtil.buildQuery(GroupResourcePlacementState.class, false);
         q.documentExpirationTimeMicros = state.documentExpirationTimeMicros;
 
-        q.querySpec.query.addBooleanClause(QueryUtil.addTenantAndGroupClause(tenantLinks));
+        q.querySpec.query.addBooleanClause(QueryUtil.addTenantAndGroupClause(tgl));
         q.querySpec.query.addBooleanClause(Query.Builder.create()
                 .addFieldClause(GroupResourcePlacementState.FIELD_NAME_RESOURCE_TYPE,
                         ResourceType.COMPUTE_TYPE.getName())
@@ -304,15 +307,16 @@ public class ComputeReservationTaskService
                 placements.add(r.getResult());
             } else {
                 if (placements.isEmpty()) {
-                    if (tenantLinks != null && !tenantLinks.isEmpty()) {
+                    if (tgl != null && !tgl.isEmpty()) {
                         proceedTo(SubStage.QUERYING_GLOBAL);
                     } else {
                         failTask("No available group placements.", null);
                     }
                     return;
                 }
-
-                filterSelectedByEndpoint(state, placements, tenantLinks, computeDesc);
+                // pass the final tenantLinks, e.g. if global GroupResourcePlacement is selected,
+                // then only global endpoints and deployment profiles must be used.
+                filterSelectedByEndpoint(state, placements, tgl, computeDesc);
             }
         });
     }
@@ -402,9 +406,9 @@ public class ComputeReservationTaskService
                         return;
                     }
 
-                    EnvironmentComputeDescriptionEnhancer enhancer =
-                            new EnvironmentComputeDescriptionEnhancer(getHost(),
-                                    UriUtils.buildUri(getHost().getPublicUri(), getSelfLink()));
+                    EnvironmentComputeDescriptionEnhancer enhancer = new EnvironmentComputeDescriptionEnhancer(
+                            getHost(), UriUtils.buildUri(getHost().getPublicUri(), getSelfLink()));
+
                     List<DeferredResult<Pair<ComputeDescription, EnvEntry>>> list = envs
                             .stream()
                             .flatMap(envEntry -> envEntry.envLinks.stream().map(envLink -> {
@@ -417,8 +421,7 @@ public class ComputeReservationTaskService
                                 context.regionId = envEntry.endpoint.endpointProperties
                                         .get(EndpointConfigRequest.REGION_KEY);
 
-                                DeferredResult<Pair<ComputeDescription, EnvEntry>> r =
-                                        new DeferredResult<>();
+                                DeferredResult<Pair<ComputeDescription, EnvEntry>> r = new DeferredResult<>();
                                 enhancer.enhance(context, cloned).whenComplete((cd, t) -> {
                                     if (t != null) {
                                         r.complete(Pair.of(cd, null));
@@ -502,7 +505,8 @@ public class ComputeReservationTaskService
                                 resourcePoolsByLink.put(gp.resourcePoolLink,
                                         o.getBody(ResourcePoolState.class));
                             }
-                        })).collect(Collectors.toList());
+                        }))
+                .collect(Collectors.toList());
         OperationJoin.create(getOperations).setCompletion((ops, exs) -> {
             if (exs != null) {
                 failTask("Error retrieving resource pools: " + Utils.toString(exs),
@@ -555,17 +559,17 @@ public class ComputeReservationTaskService
         return tagLinkByCondition.entrySet().stream()
                 .filter(e -> Condition.Enforcement.HARD.equals(e.getKey().enforcement))
                 .allMatch(e -> (rp != null && rp.tagLinks != null
-                        && rp.tagLinks.contains(e.getValue())) ==
-                                !Occurance.MUST_NOT_OCCUR.equals(e.getKey().occurrence));
+                        && rp.tagLinks.contains(e.getValue())) == !Occurance.MUST_NOT_OCCUR
+                                .equals(e.getKey().occurrence));
     }
 
     private static int getNumberOfSatisfiedSoftConstraints(ResourcePoolState rp,
             Map<Condition, String> tagLinkByCondition) {
-        return (int)tagLinkByCondition.entrySet().stream()
+        return (int) tagLinkByCondition.entrySet().stream()
                 .filter(e -> Condition.Enforcement.SOFT.equals(e.getKey().enforcement))
                 .filter(e -> (rp != null && rp.tagLinks != null
-                        && rp.tagLinks.contains(e.getValue())) ==
-                                !Occurance.MUST_NOT_OCCUR.equals(e.getKey().occurrence))
+                        && rp.tagLinks.contains(e.getValue())) == !Occurance.MUST_NOT_OCCUR
+                                .equals(e.getKey().occurrence))
                 .count();
     }
 

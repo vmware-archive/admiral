@@ -238,7 +238,8 @@ public class ComputeAllocationTaskService
         }
 
         if (state.resourceCount < 1) {
-            throw new LocalizableValidationException("'resourceCount' must be greater than 0.", "request.resource-count.zero");
+            throw new LocalizableValidationException("'resourceCount' must be greater than 0.",
+                    "request.resource-count.zero");
         }
     }
 
@@ -287,16 +288,17 @@ public class ComputeAllocationTaskService
         if (environmentLink == null) {
             String contextId = RequestUtils.getContextId(state);
             NetworkProfileQueryUtils.getNetworkProfileConstraintsForComputeNics(getHost(),
-                    UriUtils.buildUri(getHost(), getSelfLink()), contextId, computeDesc,
+                    UriUtils.buildUri(getHost(), getSelfLink()), state.tenantLinks, contextId,
+                    computeDesc,
                     (networkProfileLinks, e) -> {
                         if (e != null) {
                             failTask("Error getting network profile constraints: ", e);
                             return;
                         }
-                        queryEnvironment(state, endpoint, state.tenantLinks, networkProfileLinks,
+                        queryEnvironment(state, endpoint,
+                                QueryUtil.getTenantLinks(state.tenantLinks), networkProfileLinks,
                                 (envLink) -> prepareContext(state, computeDesc, resourcePool,
-                                        endpoint,
-                                        envLink));
+                                        endpoint, envLink));
                     });
             return;
         }
@@ -476,6 +478,8 @@ public class ComputeAllocationTaskService
 
         EnhanceContext context = new EnhanceContext();
         context.environmentLink = state.environmentLink;
+        context.endpointLink = state.endpointLink;
+        context.resourcePoolLink = state.resourcePoolLink;
         context.regionId = endpointComputeDescription.regionId;
         context.zoneId = endpointComputeDescription.zoneId;
         context.endpointType = state.endpointType;
@@ -493,15 +497,15 @@ public class ComputeAllocationTaskService
                     }
                     SubStage nextStage = cd.customProperties
                             .containsKey(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME)
-                            ? SubStage.COMPUTE_DESCRIPTION_RECONFIGURED
-                            : SubStage.RESOURCES_NAMES;
+                                    ? SubStage.COMPUTE_DESCRIPTION_RECONFIGURED
+                                    : SubStage.RESOURCES_NAMES;
 
                     Operation.createPut(this, state.resourceDescriptionLink)
                             .setBody(cd)
                             .setCompletion((o, e) -> {
                                 if (e != null) {
                                     failTask("Failed patching compute description : "
-                                                    + Utils.toString(e),
+                                            + Utils.toString(e),
                                             null);
                                     return;
                                 }
@@ -740,6 +744,7 @@ public class ComputeAllocationTaskService
         resource.descriptionLink = state.resourceDescriptionLink;
         resource.resourcePoolLink = state.getCustomProperty(
                 ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_RESOURCE_POOL_LINK);
+        resource.endpointLink = state.endpointLink;
         resource.diskLinks = diskLinks;
         resource.networkInterfaceLinks = networkLinks;
         resource.customProperties = new HashMap<>(state.customProperties);
@@ -875,10 +880,10 @@ public class ComputeAllocationTaskService
         DeferredResult<String> subnet = null;
         if ((env.networkProfile != null && env.networkProfile.subnetStates != null
                 && !env.networkProfile.subnetStates.isEmpty()) && (nid.customProperties == null
-                || !nid.customProperties.containsKey(NetworkProfileQueryUtils.NO_NIC_VM))) {
+                        || !nid.customProperties.containsKey(NetworkProfileQueryUtils.NO_NIC_VM))) {
             DeferredResult<String> subnetDeferred = new DeferredResult<>();
             NetworkProfileQueryUtils.getSubnetForComputeNic(getHost(),
-                    UriUtils.buildUri(getHost(), getSelfLink()),
+                    UriUtils.buildUri(getHost(), getSelfLink()), state.tenantLinks,
                     RequestUtils.getContextId(state), nid, env,
                     (link, ex) -> {
                         if (ex != null) {
@@ -889,6 +894,7 @@ public class ComputeAllocationTaskService
                     });
             subnet = subnetDeferred;
         } else if (subnetLink == null) {
+            // TODO: filter also by NetworkProfile
             subnet = findSubnetBy(state, nid);
         } else {
             subnet = DeferredResult.completed(subnetLink);
@@ -918,15 +924,33 @@ public class ComputeAllocationTaskService
 
     private DeferredResult<String> findSubnetBy(ComputeAllocationTaskState state,
             NetworkInterfaceDescription nid) {
-        Builder builder = Query.Builder.create()
-                .addKindFieldClause(SubnetState.class);
-        QueryByPages<SubnetState> querySubnetStates = new QueryByPages<>(
-                getHost(), builder.build(), SubnetState.class, QueryUtil.getTenantLinks(nid
-                .tenantLinks));
+        Builder builder = Query.Builder.create().addKindFieldClause(SubnetState.class);
+        if (state.tenantLinks == null || state.tenantLinks.isEmpty()) {
+            builder.addClause(QueryUtil.addTenantClause(state.tenantLinks));
+        }
+        QueryByPages<SubnetState> querySubnetStates = new QueryByPages<>(getHost(), builder.build(),
+                SubnetState.class, QueryUtil.getTenantLinks(state.tenantLinks));
 
         ArrayList<String> links = new ArrayList<>();
-        return querySubnetStates.queryLinks(sl -> links.add(sl))
-                .thenApply(ignore -> links.stream().findFirst().orElse(null));
+        ArrayList<String> prefered = new ArrayList<>();
+        ArrayList<String> supportPublic = new ArrayList<>();
+        return querySubnetStates.queryDocuments(s -> {
+            if (s.supportPublicIpAddress && s.defaultForZone) {
+                prefered.add(s.documentSelfLink);
+            } else if (s.supportPublicIpAddress) {
+                supportPublic.add(s.documentSelfLink);
+            } else {
+                links.add(s.documentSelfLink);
+            }
+        }).thenApply(ignore -> {
+            if (!prefered.isEmpty()) {
+                return prefered.get(0);
+            }
+            if (supportPublic.isEmpty()) {
+                return supportPublic.get(0);
+            }
+            return links.stream().findFirst().orElse(null);
+        });
     }
 
     private void getResourcePool(ComputeAllocationTaskState state,
@@ -960,7 +984,8 @@ public class ComputeAllocationTaskService
                     GroupResourcePlacementState placementState = o
                             .getBody(GroupResourcePlacementState.class);
                     if (placementState.resourcePoolLink == null) {
-                        failTask(null, new LocalizableValidationException("Placement state has no resourcePoolLink",
+                        failTask(null, new LocalizableValidationException(
+                                "Placement state has no resourcePoolLink",
                                 "request.compute.allocation.resource-pool.missing"));
                         return;
                     }
@@ -1020,7 +1045,8 @@ public class ComputeAllocationTaskService
                 getHost(), EnvironmentState.class).query(task,
                         (r) -> {
                             if (r.hasException()) {
-                                failTask("Failure while quering for enviroment mappings", r.getException());
+                                failTask("Failure while quering for enviroment mappings",
+                                        r.getException());
                                 return;
                             } else if (r.hasResult()) {
                                 foundEnvs.add(r.getResult());
@@ -1032,11 +1058,13 @@ public class ComputeAllocationTaskService
                                     } else {
                                         failTask(String.format(
                                                 "No available environments for endpoint %s of type %s",
-                                                endpoint.documentSelfLink, endpoint.endpointType), null);
+                                                endpoint.documentSelfLink, endpoint.endpointType),
+                                                null);
                                     }
                                 } else {
                                     EnvironmentState envForTheEndpoint = foundEnvs.stream()
-                                            .filter(env -> endpoint.documentSelfLink.equals(env.endpointLink))
+                                            .filter(env -> endpoint.documentSelfLink
+                                                    .equals(env.endpointLink))
                                             .findFirst().orElse(null);
                                     if (envForTheEndpoint != null) {
                                         callbackFunction.accept(envForTheEndpoint.documentSelfLink);

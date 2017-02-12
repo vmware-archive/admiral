@@ -63,6 +63,7 @@ public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBase
 
         ComputePlacementSelectionTaskState taskRequestState = new ComputePlacementSelectionTaskState();
         taskRequestState.computeDescriptionLink = computeDescription.documentSelfLink;
+        taskRequestState.tenantLinks = computeDescription.tenantLinks;
         taskRequestState.resourceCount = 1;
         taskRequestState.resourcePoolLinks = new ArrayList<>();
         taskRequestState.resourcePoolLinks.add(computeResourcePool.documentSelfLink);
@@ -164,6 +165,7 @@ public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBase
         ComputePlacementSelectionTaskState taskRequestState = new ComputePlacementSelectionTaskState();
         taskRequestState.computeDescriptionLink = computeDescription.documentSelfLink;
         taskRequestState.resourceCount = 1;
+        taskRequestState.tenantLinks = computeDescription.tenantLinks;
         taskRequestState.resourcePoolLinks = new ArrayList<>();
         taskRequestState.resourcePoolLinks.add(computeResourcePool.documentSelfLink);
 
@@ -202,6 +204,7 @@ public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBase
 
         ComputePlacementSelectionTaskState taskRequestState = new ComputePlacementSelectionTaskState();
         taskRequestState.computeDescriptionLink = computeDescription.documentSelfLink;
+        taskRequestState.tenantLinks = computeDescription.tenantLinks;
         taskRequestState.resourceCount = 1;
         taskRequestState.resourcePoolLinks = new ArrayList<>();
         taskRequestState.resourcePoolLinks.add(computeResourcePool.documentSelfLink);

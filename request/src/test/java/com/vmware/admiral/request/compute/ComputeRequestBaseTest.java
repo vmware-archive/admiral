@@ -53,6 +53,7 @@ public class ComputeRequestBaseTest extends RequestBaseTest {
         cd.id = UUID.randomUUID().toString();
         cd.name = TEST_VM_NAME;
         cd.instanceType = "small";
+        cd.tenantLinks = computeGroupPlacementState.tenantLinks;
         cd.customProperties = new HashMap<>();
         cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME,
                 "coreos");
@@ -72,6 +73,7 @@ public class ComputeRequestBaseTest extends RequestBaseTest {
         nid.id = UUID.randomUUID().toString();
         nid.name = name;
         nid.documentSelfLink = nid.id;
+        nid.tenantLinks = computeGroupPlacementState.tenantLinks;
         nid.subnetLink = UriUtils.buildUriPath(SubnetService.FACTORY_LINK, "my-subnet");
 
         NetworkInterfaceDescription returnState = doPost(nid,

@@ -29,6 +29,8 @@ public interface Enhancer<T extends ResourceState> {
 
     static class EnhanceContext {
         public String environmentLink;
+        public String endpointLink;
+        public String resourcePoolLink;
         public String regionId;
         public String zoneId;
         public String endpointType;

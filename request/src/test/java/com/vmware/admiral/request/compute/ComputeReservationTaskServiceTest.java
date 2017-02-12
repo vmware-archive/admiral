@@ -17,6 +17,7 @@ import static org.junit.Assert.assertNotNull;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.UUID;
 
 import org.junit.Test;
 
@@ -24,13 +25,23 @@ import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
+import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService.ComputeReservationTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
+import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.Constraint;
 import com.vmware.photon.controller.model.Constraint.Condition;
 import com.vmware.photon.controller.model.Constraint.Condition.Enforcement;
+import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
+import com.vmware.photon.controller.model.resources.ComputeService;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
+import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
+import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.TagService;
 import com.vmware.photon.controller.model.resources.TagService.TagState;
@@ -77,7 +88,8 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         groupPlacementState.customProperties = new HashMap<>();
         groupPlacementState.customProperties.put("key1", "placement-value1");
         groupPlacementState.customProperties.put("key2", "placement-value2");
-        groupPlacementState = doPost(groupPlacementState, GroupResourcePlacementService.FACTORY_LINK);
+        groupPlacementState = doPost(groupPlacementState,
+                GroupResourcePlacementService.FACTORY_LINK);
         addForDeletion(groupPlacementState);
 
         GroupResourcePlacementState notEnougInstancesPlacement = TestRequestStateFactory
@@ -200,12 +212,11 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
 
     @Test
     public void testReservationTaskLifeCycleWithNoGroup() throws Throwable {
-        GroupResourcePlacementState groupPlacementState = TestRequestStateFactory
-                .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
-        groupPlacementState.tenantLinks = null;
-        groupPlacementState = doPost(groupPlacementState,
-                GroupResourcePlacementService.FACTORY_LINK);
-        addForDeletion(groupPlacementState);
+        EndpointState globalEndpoint = createGlobalEndpoint();
+        ResourcePoolState rp = createResourcePoolForEndpoint(globalEndpoint);
+        createVmHostCompute(globalEndpoint, rp);
+        GroupResourcePlacementState globalGroupState = createGroupPlacementFor(rp);
+        addForDeletion(globalGroupState);
 
         // create another suitable group placement but with a group that should not be selected
         doPost(TestRequestStateFactory.createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE),
@@ -222,14 +233,14 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
 
         task = waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
 
-        groupPlacementState = getDocument(GroupResourcePlacementState.class,
-                groupPlacementState.documentSelfLink);
+        globalGroupState = getDocument(GroupResourcePlacementState.class,
+                globalGroupState.documentSelfLink);
 
-        assertEquals(groupPlacementState.documentSelfLink, task.groupResourcePlacementLink);
+        assertEquals(globalGroupState.documentSelfLink, task.groupResourcePlacementLink);
 
-        assertEquals(groupPlacementState.allocatedInstancesCount, task.resourceCount);
-        assertEquals(1, groupPlacementState.resourceQuotaPerResourceDesc.size());
-        Long countPerDesc = groupPlacementState.resourceQuotaPerResourceDesc
+        assertEquals(globalGroupState.allocatedInstancesCount, task.resourceCount);
+        assertEquals(1, globalGroupState.resourceQuotaPerResourceDesc.size());
+        Long countPerDesc = globalGroupState.resourceQuotaPerResourceDesc
                 .get(task.resourceDescriptionLink);
         assertEquals(task.resourceCount, countPerDesc.longValue());
     }
@@ -244,18 +255,19 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
                 GroupResourcePlacementService.FACTORY_LINK);
         addForDeletion(groupPlacementState);
 
-        // create global placement that should be selected since the group placement is not applicable.
-        GroupResourcePlacementState globalGroupState = TestRequestStateFactory
-                .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
-        globalGroupState.tenantLinks = null;
-        globalGroupState = doPost(globalGroupState,
-                GroupResourcePlacementService.FACTORY_LINK);
+        // create global placement that should be selected since the group placement is not
+        // applicable.
+        EndpointState globalEndpoint = createGlobalEndpoint();
+        ResourcePoolState rp = createResourcePoolForEndpoint(globalEndpoint);
+        createVmHostCompute(globalEndpoint, rp);
+        GroupResourcePlacementState globalGroupState = createGroupPlacementFor(rp);
         addForDeletion(globalGroupState);
 
         // create another suitable group placement but with a group that should not be selected
         GroupResourcePlacementState differentGroup = TestRequestStateFactory
                 .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
-        differentGroup.tenantLinks = Collections.singletonList("different-group");
+        differentGroup.tenantLinks = Collections
+                .singletonList(MultiTenantDocument.TENANTS_PREFIX + "/different-group");
         differentGroup = doPost(differentGroup, GroupResourcePlacementService.FACTORY_LINK);
         addForDeletion(differentGroup);
 
@@ -310,7 +322,8 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         GroupResourcePlacementState groupPlacementState = TestRequestStateFactory
                 .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
         groupPlacementState.resourcePoolLink = computeResourcePool.documentSelfLink;
-        groupPlacementState = doPost(groupPlacementState, GroupResourcePlacementService.FACTORY_LINK);
+        groupPlacementState = doPost(groupPlacementState,
+                GroupResourcePlacementService.FACTORY_LINK);
         addForDeletion(groupPlacementState);
 
         TagState tag = new TagState();
@@ -396,5 +409,57 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
                         isAnti ? Occurance.MUST_NOT_OCCUR : Occurance.MUST_OCCUR));
         computeDesc.constraints = new HashMap<>();
         computeDesc.constraints.put(ComputeConstants.COMPUTE_PLACEMENT_CONSTRAINT_KEY, constraint);
+    }
+
+    private EndpointState createGlobalEndpoint() throws Throwable {
+        EndpointState endpoint = TestRequestStateFactory
+                .createEndpoint(UUID.randomUUID().toString(), EndpointType.aws);
+        endpoint.tenantLinks = null;
+        endpoint = getOrCreateDocument(endpoint, EndpointAdapterService.SELF_LINK);
+        return endpoint;
+    }
+
+    private ResourcePoolState createResourcePoolForEndpoint(EndpointState endpoint)
+            throws Throwable {
+        ResourcePoolState rp = TestRequestStateFactory
+                .createResourcePool(UUID.randomUUID().toString(), endpoint.documentSelfLink);
+        rp.tenantLinks = endpoint.tenantLinks;
+        rp = getOrCreateDocument(rp, ResourcePoolService.FACTORY_LINK);
+        return rp;
+    }
+
+    private GroupResourcePlacementState createGroupPlacementFor(ResourcePoolState rp)
+            throws Throwable {
+        GroupResourcePlacementState rgp = TestRequestStateFactory
+                .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
+        rgp.resourcePoolLink = rp.documentSelfLink;
+        rgp.tenantLinks = rp.tenantLinks;
+        rgp = getOrCreateDocument(rgp, GroupResourcePlacementService.FACTORY_LINK);
+        return rgp;
+    }
+
+    private ComputeState createVmHostCompute(EndpointState endpoint, ResourcePoolState rp)
+            throws Throwable {
+        ComputeDescription cd = TestRequestStateFactory
+                .createComputeDescriptionForVmGuestChildren();
+        cd.documentSelfLink = cd.id;
+        cd.tenantLinks = endpoint.tenantLinks;
+        cd.authCredentialsLink = endpoint.authCredentialsLink;
+        cd = getOrCreateDocument(cd, ComputeDescriptionService.FACTORY_LINK);
+
+        ComputeState vmHostComputeState = TestRequestStateFactory.createVmHostComputeState();
+        vmHostComputeState.id = UUID.randomUUID().toString();
+        vmHostComputeState.documentSelfLink = vmHostComputeState.id;
+        vmHostComputeState.resourcePoolLink = rp.documentSelfLink;
+        vmHostComputeState.descriptionLink = cd.documentSelfLink;
+        vmHostComputeState.type = ComputeType.VM_HOST;
+        vmHostComputeState.powerState = PowerState.ON;
+        vmHostComputeState.tenantLinks = endpoint.tenantLinks;
+        vmHostComputeState = getOrCreateDocument(vmHostComputeState, ComputeService.FACTORY_LINK);
+        assertNotNull(vmHostComputeState);
+
+        addForDeletion(vmHostComputeState);
+
+        return vmHostComputeState;
     }
 }
