@@ -11,16 +11,22 @@
 
 package com.vmware.admiral.adapter.docker.service;
 
+import static com.vmware.admiral.adapter.common.VolumeOperationType.DISCOVER_VMDK_DATASTORE;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_VOLUME_DRIVER_OPTS_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_VOLUME_DRIVER_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_VOLUME_NAME_PROP_NAME;
+import static com.vmware.admiral.compute.ContainerHostService.DEFAULT_VMDK_DATASTORE_PROP_NAME;
+import static com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.VMDK_VOLUME_DRIVER;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.logging.Level;
 
 import com.vmware.admiral.adapter.common.VolumeOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
@@ -30,6 +36,8 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER_VOLUME;
 
     public static final String DOCKER_VOLUME_DRIVER_TYPE_DEFAULT = "local";
+
+    private static final String VMDK_DATASTORE_DISCOVERY_VOLUME_NAME = "__vmdkDatastoreDiscovery";
 
     private static class RequestContext {
         public ContainerVolumeRequest request;
@@ -62,6 +70,13 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
      * filling the {@link RequestContext#volumeState} property.
      */
     private void processVolumeRequest(RequestContext context) {
+        if (context.request.getOperationType() == DISCOVER_VMDK_DATASTORE) {
+            handleExceptions(context.request, context.operation, () -> {
+                processDiscoverVmdkDatastore(context);
+            });
+            return;
+        }
+
         Operation getVolumeState = Operation.createGet(context.request.getVolumeStateReference())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -251,4 +266,92 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
         });
     }
 
+    private void processDiscoverVmdkDatastore(RequestContext context) {
+        getContainerHost(
+                context.request,
+                context.operation,
+                context.request.resourceReference,
+                (computeState, commandInput) -> {
+                    context.commandInput = commandInput;
+                    context.executor = getCommandExecutor();
+                    handleExceptions(context.request, context.operation,
+                            () -> performVmdkDatastoreDiscovery(context));
+                });
+    }
+
+    private void performVmdkDatastoreDiscovery(RequestContext context) {
+        // generate random name to prevent name conflicts; deleting and recreating
+        // VMDK volumes with the same name sometimes result in error
+        CommandInput createCommandInput = context.commandInput.withProperty(
+                DockerAdapterCommandExecutor.DOCKER_VOLUME_NAME_PROP_NAME,
+                VMDK_DATASTORE_DISCOVERY_VOLUME_NAME + UUID.randomUUID());
+
+        createCommandInput.withProperty(
+                DOCKER_VOLUME_DRIVER_PROP_NAME,
+                VMDK_VOLUME_DRIVER);
+
+        context.executor.createVolume(createCommandInput, (op, ex) -> {
+            if (ex != null) {
+                fail(context.request, op, ex);
+            } else {
+                inspectVmdkDatastoreDiscoveryVolume(context);
+            }
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    private void inspectVmdkDatastoreDiscoveryVolume(RequestContext context) {
+        context.executor.inspectVolume(
+                context.commandInput,
+                (o, ex) -> {
+                    if (ex != null) {
+                        fail(context.request, o, ex);
+                    } else {
+                        handleExceptions(context.request, context.operation, () -> {
+                            Map<String, Object> properties = o.getBody(Map.class);
+
+                            String datastore = ContainerVolumeStateMapper
+                                    .getVmdkDatastoreName(properties);
+
+                            if (datastore == null) {
+                                String errMsg = String.format(
+                                        "Failed to discover default datastore for host [%s]",
+                                        context.request.resourceReference);
+                                fail(context.request, new Exception(errMsg));
+                                return;
+                            }
+
+                            patchComputeState(context, datastore,
+                                    () -> deleteVmdkDatastoreDiscoveryVolume(context));
+                        });
+                    }
+                });
+    }
+
+    private void deleteVmdkDatastoreDiscoveryVolume(RequestContext context) {
+        context.executor.removeVolume(context.commandInput, (op, ex) -> {
+            if (ex != null) {
+                fail(context.request, op, ex);
+            } else {
+                patchTaskStage(context.request, TaskStage.FINISHED, null);
+            }
+        });
+    }
+
+    private void patchComputeState(RequestContext context, String datastore, Runnable callback) {
+        ComputeState patch = new ComputeState();
+        patch.customProperties = new HashMap<>();
+        patch.customProperties.put(DEFAULT_VMDK_DATASTORE_PROP_NAME, datastore);
+
+        sendRequest(Operation
+                .createPatch(context.request.resourceReference)
+                .setBody(patch)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        fail(context.request, o, ex);
+                    } else {
+                        callback.run();
+                    }
+                }));
+    }
 }

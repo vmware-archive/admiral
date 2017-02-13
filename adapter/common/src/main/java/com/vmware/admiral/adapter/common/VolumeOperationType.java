@@ -19,7 +19,8 @@ public enum VolumeOperationType {
     CREATE("Volume.Create"),
     LIST_VOLUMES("Volume.List"),
     DELETE("Volume.Delete"),
-    INSPECT("Volume.Inspect");
+    INSPECT("Volume.Inspect"),
+    DISCOVER_VMDK_DATASTORE("Volume.DiscoverVmdkDatastore");
 
     VolumeOperationType(String id) {
         this.id = id;
