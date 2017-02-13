@@ -38,12 +38,13 @@ import org.yaml.snakeyaml.util.UriEncoder;
 
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.compute.BindingEvaluator;
+import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
-import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
 import com.vmware.admiral.compute.content.NestedState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
+import com.vmware.admiral.request.RequestStatusService;
 import com.vmware.admiral.request.RequestStatusService.RequestStatus;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService.ResourceNamePrefixTaskState;
@@ -51,6 +52,8 @@ import com.vmware.admiral.request.composition.CompositeComponentRemovalTaskServi
 import com.vmware.admiral.request.composition.CompositionGraph.ResourceNode;
 import com.vmware.admiral.request.composition.CompositionSubTaskService.CompositionSubTaskState;
 import com.vmware.admiral.request.composition.CompositionTaskService.CompositionTaskState.SubStage;
+import com.vmware.admiral.request.kubernetes.CompositeKubernetesProvisioningTaskService;
+import com.vmware.admiral.request.kubernetes.CompositeKubernetesProvisioningTaskService.KubernetesProvisioningTaskState;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -74,6 +77,9 @@ public class CompositionTaskService
         AbstractTaskStatefulService<CompositionTaskService.CompositionTaskState, CompositionTaskService.CompositionTaskState.SubStage> {
 
     public static final String DISPLAY_NAME = "Composition";
+
+    // cached description
+    private volatile CompositeDescriptionExpanded compositeDescription;
 
     public static class CompositionTaskState extends
             com.vmware.admiral.service.common.TaskServiceDocument<CompositionTaskState.SubStage> {
@@ -113,6 +119,9 @@ public class CompositionTaskService
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Set<String> resourceNames;
 
+        /** (Internal) Set by task when preparing context in case a specific scheduler can handle the task. */
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        public String externalSchedulerTaskLink;
     }
 
     public CompositionTaskService() {
@@ -137,7 +146,7 @@ public class CompositionTaskService
             createComponentState(state, null);
             break;
         case COMPONENT_CREATED:
-            calculateResourceDependencyGraph(state, null);
+            prepareProvisioninWithSelfOrExternalScheduler(state);
             break;
         case DEPENDENCY_GRAPH:
             distributeTasks(state);
@@ -283,11 +292,19 @@ public class CompositionTaskService
                 }));
     }
 
+    private void prepareProvisioninWithSelfOrExternalScheduler(final CompositionTaskState state) {
+        if (state.externalSchedulerTaskLink != null && !state.externalSchedulerTaskLink.isEmpty()) {
+            sendToExternalScheduler(state);
+        } else {
+            calculateResourceDependencyGraph(state, null);
+        }
+    }
+
     private void calculateResourceDependencyGraph(final CompositionTaskState state,
             final CompositeDescriptionExpanded compositeDesc) {
 
         if (compositeDesc == null) {
-            getCompositeDescription(state, true,
+            getCompositeDescription(state,
                     (compDesc) -> this.calculateResourceDependencyGraph(state, compDesc));
             return;
         }
@@ -310,6 +327,46 @@ public class CompositionTaskService
                 s.taskInfo.failure = Utils.toServiceErrorResponse(e);
             });
         }
+    }
+
+    private void sendToExternalScheduler(final CompositionTaskState state) {
+        KubernetesProvisioningTaskState task = new KubernetesProvisioningTaskState();
+        task.documentSelfLink = getSelfId();
+        task.serviceTaskCallback = ServiceTaskCallback.create(
+                getSelfLink(), TaskStage.STARTED, SubStage.COMPLETED,
+                TaskStage.STARTED, SubStage.ERROR);
+        task.customProperties = state.customProperties;
+        task.compositeComponentLink = state.compositeComponentLink;
+        task.resourceDescriptionLink = state.resourceDescriptionLink;
+
+        task.tenantLinks = state.tenantLinks;
+        task.requestTrackerLink = state.requestTrackerLink;
+
+        sendRequest(Operation
+                .createPost(this, state.externalSchedulerTaskLink)
+                .setBody(task)
+                .setContextId(getSelfId())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating kubernetes provisioning task", e);
+                        return;
+                    }
+
+                    proceedTo(SubStage.PROVISIONING, (s) -> {
+                        final ResourceNode resourceNode = new ResourceNode();
+                        resourceNode.name = RequestStatusService.DEFAULT_COMPONENT_NAME;
+                        resourceNode.resourceDescLink = state.compositeComponentLink;
+                        resourceNode.resourceType = ResourceType.JOIN_COMPOSITE_COMPONENT_TYPE
+                                .getName();
+
+                        s.remainingCount = 1L;
+                        s.requestTrackerLink = state.requestTrackerLink;
+                        s.resourceNodes = new HashMap<>();
+                        s.resourceNodes.put(resourceNode.name, resourceNode);
+
+                        updateComponentsInRequestTracker(s);
+                    });
+                }));
     }
 
     private void updateComponentsInRequestTracker(CompositionTaskState state) {
@@ -530,9 +587,9 @@ public class CompositionTaskService
     }
 
     private void prepareContext(final CompositionTaskState state,
-            final CompositeDescription compositeDesc) {
+            final CompositeDescriptionExpanded compositeDesc) {
         if (compositeDesc == null) {
-            getCompositeDescription(state, false, (compDesc) -> prepareContext(state, compDesc));
+            getCompositeDescription(state, (compDesc) -> prepareContext(state, compDesc));
             return;
         }
 
@@ -552,13 +609,14 @@ public class CompositionTaskService
         proceedTo(SubStage.CONTEXT_PREPARED, s -> {
             s.customProperties = state.customProperties;
             s.descName = compositeDesc.name;
+            s.externalSchedulerTaskLink = getExternalSchedulerTaskLink(compositeDesc);
         });
     }
 
     private void createComponentState(final CompositionTaskState state,
             final CompositeDescriptionExpanded compositeDesc) {
         if (compositeDesc == null) {
-            getCompositeDescription(state, true,
+            getCompositeDescription(state,
                     (compDesc) -> this.createComponentState(state, compDesc));
             return;
         }
@@ -598,13 +656,16 @@ public class CompositionTaskService
                         }));
     }
 
-    private void getCompositeDescription(CompositionTaskState state, boolean expanded,
+    private void getCompositeDescription(CompositionTaskState state,
             Consumer<CompositeDescriptionExpanded> callbackFunction) {
-        URI uri = UriUtils.buildUri(this.getHost(), state.resourceDescriptionLink);
-        if (expanded) {
-            uri = UriUtils.extendUriWithQuery(uri, UriUtils.URI_PARAM_ODATA_EXPAND,
-                    Boolean.TRUE.toString());
+        if (compositeDescription != null) {
+            callbackFunction.accept(compositeDescription);
+            return;
         }
+
+        URI uri = UriUtils.buildUri(this.getHost(), state.resourceDescriptionLink);
+        uri = UriUtils.extendUriWithQuery(uri, UriUtils.URI_PARAM_ODATA_EXPAND,
+                Boolean.TRUE.toString());
         final URI getUri = uri;
         sendRequest(Operation.createGet(getUri)
                 .setCompletion((o, e) -> {
@@ -614,36 +675,36 @@ public class CompositionTaskService
                     }
                     CompositeDescriptionExpanded description = o
                             .getBody(CompositeDescriptionExpanded.class);
-                    handleBindings(expanded, callbackFunction, getUri, description);
+                    handleBindings((cd) -> {
+                        compositeDescription = cd;
+                        callbackFunction.accept(cd);
+                    }, getUri, description);
                 }));
     }
 
-    private void handleBindings(boolean expanded,
-            Consumer<CompositeDescriptionExpanded> callbackFunction,
+    private void handleBindings(Consumer<CompositeDescriptionExpanded> callbackFunction,
             URI uri, CompositeDescriptionExpanded description) {
 
-        if (description.bindings == null || !expanded) {
+        if (description.bindings == null) {
             callbackFunction.accept(description);
             return;
         }
         convertCompositeDescriptionToCompositeTemplate(this, description).thenApply(template -> {
             BindingEvaluator.evaluateBindings(template);
             return template;
-        }).thenAccept(template ->
-                DeferredResult.allOf(template.components.values().stream()
-                        .map(t -> new NestedState((ServiceDocument) t.data, t.children))
-                        .map(n -> n.sendRequest(this, Action.PUT))
-                        .collect(Collectors.toList()))
-        ).thenCompose(nothing -> this.sendWithDeferredResult(
-                Operation.createGet(uri),
-                CompositeDescriptionExpanded.class)
-        ).whenComplete((result, ex) -> {
-            if (ex != null) {
-                failTask("Error while updating evaluated", ex);
-                return;
-            }
-            callbackFunction.accept(result);
-        });
+        }).thenAccept(template -> DeferredResult.allOf(template.components.values().stream()
+                .map(t -> new NestedState((ServiceDocument) t.data, t.children))
+                .map(n -> n.sendRequest(this, Action.PUT))
+                .collect(Collectors.toList()))).thenCompose(nothing -> this.sendWithDeferredResult(
+                        Operation.createGet(uri),
+                        CompositeDescriptionExpanded.class))
+                .whenComplete((result, ex) -> {
+                    if (ex != null) {
+                        failTask("Error while updating evaluated", ex);
+                        return;
+                    }
+                    callbackFunction.accept(result);
+                });
 
     }
 
@@ -679,5 +740,14 @@ public class CompositionTaskService
                                 completeWithError();
                             }
                         }));
+    }
+
+    private String getExternalSchedulerTaskLink(CompositeDescriptionExpanded compositeDesc) {
+        if (compositeDesc.descriptionLinks != null) {
+            if (CompositeKubernetesProvisioningTaskService.supportsCompositeDescription(compositeDesc)) {
+                return CompositeKubernetesProvisioningTaskService.FACTORY_LINK;
+            }
+        }
+        return null;
     }
 }

@@ -25,8 +25,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import com.vmware.admiral.adapter.common.KubernetesOperationType;
-import com.vmware.admiral.adapter.kubernetes.ApplicationRequest;
+import com.vmware.admiral.adapter.common.ApplicationOperationType;
+import com.vmware.admiral.adapter.common.ApplicationRequest;
 import com.vmware.admiral.adapter.kubernetes.KubernetesRemoteApiClient;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
@@ -70,10 +70,10 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
         context.request = op.getBody(ApplicationRequest.class);
         context.request.validate();
 
-        KubernetesOperationType operationType = context.request.getOperationtype();
+        ApplicationOperationType operationType = context.request.getOperationtype();
 
         logInfo("Processing application operation request %s for resource %s on host %s",
-                operationType, context.request.resourceReference, context.request.hostReference);
+                operationType, context.request.resourceReference, context.request.hostLink);
 
         op.complete();
 
@@ -101,14 +101,13 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
         getContainerHost(
                 context.request,
                 null,
-                context.request.getHostReference(),
+                context.request.resolve(context.request.hostLink),
                 (k8sContext) -> {
                     context.kubernetesContext = k8sContext;
                     context.client = getApiClient();
                     handleExceptions(context.request, null,
                             () -> processOperation(context));
-                }
-        );
+                });
     }
 
     private void processOperation(RequestContext context) {
@@ -124,8 +123,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
 
             default:
                 fail(context.request, new IllegalArgumentException(
-                        "Unexpected request type: " + context.request.getOperationtype()
-                ));
+                        "Unexpected request type: " + context.request.getOperationtype()));
             }
         } catch (Throwable e) {
             fail(context.request, e);
@@ -141,8 +139,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                         fail(context.request, e2);
                     } else {
                         handleExceptions(context.request, null, () -> {
-                            context.compositeDescription = o2.getBody
-                                    (CompositeDescription.class);
+                            context.compositeDescription = o2.getBody(CompositeDescription.class);
                             processCreateApplication(context);
                         });
                     }
@@ -221,8 +218,8 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
         }
     }
 
-    private void processServiceDescriptions(RequestContext context, List<KubernetesDescription>
-            serviceDescriptions, Runnable callback) throws IOException {
+    private void processServiceDescriptions(RequestContext context,
+            List<KubernetesDescription> serviceDescriptions, Runnable callback) throws IOException {
 
         final AtomicInteger counter = new AtomicInteger(serviceDescriptions.size());
         final AtomicBoolean hasError = new AtomicBoolean(false);
@@ -389,11 +386,11 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         fail(context.request, new IllegalStateException(String.format("Unable to "
-                                        + "get resource state for %s, reason: %s", selfLink,
+                                + "get resource state for %s, reason: %s", selfLink,
                                 Utils.toString(ex))));
                     } else {
-                        Class stateClass = CompositeComponentRegistry.metaByStateLink
-                                (selfLink).stateClass;
+                        Class stateClass = CompositeComponentRegistry
+                                .metaByStateLink(selfLink).stateClass;
                         BaseKubernetesState entity = (BaseKubernetesState) o.getBody(stateClass);
                         callBack.accept(entity);
                     }

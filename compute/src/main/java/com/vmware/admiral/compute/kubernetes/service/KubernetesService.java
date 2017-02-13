@@ -22,6 +22,7 @@ import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.content.kubernetes.CommonKubernetesEntity;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.StatefulService;
 
 public class KubernetesService extends StatefulService {
@@ -62,8 +63,7 @@ public class KubernetesService extends StatefulService {
         /**
          * Link to CompositeComponent when a entity is part of App/Composition request.
          */
-        @Documentation(
-                description = "Link to CompositeComponent when a entity is part of App/Composition request.")
+        @Documentation(description = "Link to CompositeComponent when a entity is part of App/Composition request.")
         public String compositeComponentLink;
 
         /**
@@ -71,6 +71,14 @@ public class KubernetesService extends StatefulService {
          */
         @Documentation(description = "Entity host link")
         public String parentLink;
+
+        /**
+         * Link to the resource placement associated with a given kubernetes entity instance. Null if no
+         * placement
+         */
+        @Documentation(description = "Link to the resource placement associated with a given kubernetes entity instance. Null if no placement")
+        @PropertyOptions(usage = { PropertyUsageOption.LINK, PropertyUsageOption.OPTIONAL })
+        public String groupResourcePlacementLink;
 
         public <T extends CommonKubernetesEntity> T getKubernetesEntity(Class<T> type)
                 throws IOException {

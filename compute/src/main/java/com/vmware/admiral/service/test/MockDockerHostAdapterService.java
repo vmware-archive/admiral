@@ -12,7 +12,6 @@
 package com.vmware.admiral.service.test;
 
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,17 +23,13 @@ import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection.NetworkListCallback;
 import com.vmware.admiral.compute.container.HostVolumeListDataCollection.VolumeListCallback;
-import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
-import com.vmware.xenon.common.ServiceErrorResponse;
-import com.vmware.xenon.common.StatelessService;
-import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
-public class MockDockerHostAdapterService extends StatelessService {
+public class MockDockerHostAdapterService extends BaseMockAdapterService {
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER_HOST;
 
     /**
@@ -160,46 +155,5 @@ public class MockDockerHostAdapterService extends StatelessService {
                 .setBody(computeState).setCompletion((o, ex) -> {
                     patchTaskStage(request, ex);
                 }));
-    }
-
-    private void patchTaskStage(AdapterRequest state, Throwable exception) {
-
-        patchTaskStage(state,
-                exception == null ? null : Utils.toServiceErrorResponse(exception),
-                null);
-    }
-
-    private void patchTaskStage(AdapterRequest state, ServiceErrorResponse errorResponse,
-            ServiceTaskCallbackResponse callbackResponse) {
-
-        if (state.serviceTaskCallback.isEmpty()) {
-            return;
-        }
-
-        if (errorResponse != null) {
-            callbackResponse = state.serviceTaskCallback.getFailedResponse(errorResponse);
-        } else if (callbackResponse == null) {
-            callbackResponse = state.serviceTaskCallback.getFinishedResponse();
-        }
-
-        URI callbackReference = URI.create(state.serviceTaskCallback.serviceSelfLink);
-        if (callbackReference.getScheme() == null) {
-            callbackReference = UriUtils.buildUri(getHost(),
-                    state.serviceTaskCallback.serviceSelfLink);
-        }
-
-        // tell the parent we are done. We are a mock service, so we get things done, fast.
-        sendRequest(Operation
-                .createPatch(callbackReference)
-                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
-                .setBody(callbackResponse)
-                .setCompletion(
-                        (o, e) -> {
-                            if (e != null) {
-                                logWarning(
-                                        "Notifying parent task %s from mock docker host adapter failed: %s",
-                                        o.getUri(), Utils.toString(e));
-                            }
-                        }));
     }
 }

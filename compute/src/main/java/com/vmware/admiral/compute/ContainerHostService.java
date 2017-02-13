@@ -396,6 +396,10 @@ public class ContainerHostService extends StatelessService {
             validateVicHost(hostSpec, op);
             break;
 
+        case KUBERNETES:
+            validateConnection(hostSpec, op);
+            break;
+
         default:
             String error = String.format(
                     ContainerHostUtil.CONTAINER_HOST_TYPE_NOT_SUPPORTED_MESSAGE_FORMAT,

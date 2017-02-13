@@ -60,6 +60,12 @@
             <artifactId>admiral-adapter-docker</artifactId>
             <version>${project.version}</version>
         </dependency>
+        
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>admiral-adapter-kubernetes</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- TEST -->
         <dependency>

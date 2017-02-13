@@ -143,6 +143,8 @@ public interface ManagementUriParts {
     String REQUEST_PROVISION_CONTAINER_VOLUME_TASKS = REQUEST
             + "/provision-container-volume-tasks";
     String REQUEST_COMPUTE_PROVISION_TASKS = REQUEST + "/compute-provision-tasks";
+    String REQUEST_PROVISION_COMPOSITE_KUBERNETES_TASKS = REQUEST
+            + "/provision-composite-kubernetes-tasks";
     String REQUEST_PROVISION_PLACEMENT_TASKS = REQUEST + "/placement-tasks";
     String REQUEST_PROVISION_COMPUTE_PLACEMENT_TASKS = REQUEST + "/compute-placement-tasks";
     String REQUEST_PROVISION_NAME_PREFIXES_TASKS = REQUEST + "/resource-prefix-tasks";

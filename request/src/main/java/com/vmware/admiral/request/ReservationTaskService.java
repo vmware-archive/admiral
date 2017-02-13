@@ -35,7 +35,10 @@ import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ResourceType;
-import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.compute.container.CompositeComponentRegistry;
+import com.vmware.admiral.compute.container.CompositeComponentRegistry.ComponentMeta;
+import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
+import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.ResourcePlacementReservationRequest;
 import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState;
@@ -66,26 +69,14 @@ public class ReservationTaskService
 
     public static final String DISPLAY_NAME = "Reservation";
 
-    // cached container description
-    private volatile ContainerDescription containerDescription;
+    // cached component description
+    private volatile ReservationComponentDescription description;
 
     public static class ReservationTaskState extends
             com.vmware.admiral.service.common.TaskServiceDocument<ReservationTaskState.SubStage> {
 
         public static enum SubStage {
-            CREATED,
-            SELECTED,
-            PLACEMENT,
-            HOSTS_SELECTED,
-            QUERYING_GLOBAL,
-            SELECTED_GLOBAL,
-            PLACEMENT_GLOBAL,
-            HOSTS_SELECTED_GLOBAL,
-            RESERVATION_ALLOCATION,
-            ALLOCATING_RESOURCE_POOL,
-            RESERVATION_SELECTED,
-            COMPLETED,
-            ERROR;
+            CREATED, SELECTED, PLACEMENT, HOSTS_SELECTED, QUERYING_GLOBAL, SELECTED_GLOBAL, PLACEMENT_GLOBAL, HOSTS_SELECTED_GLOBAL, RESERVATION_ALLOCATION, ALLOCATING_RESOURCE_POOL, RESERVATION_SELECTED, COMPLETED, ERROR;
 
             static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
                     Arrays.asList(PLACEMENT, PLACEMENT_GLOBAL, ALLOCATING_RESOURCE_POOL));
@@ -132,7 +123,7 @@ public class ReservationTaskService
     protected void handleStartedStagePatch(ReservationTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:
-            queryGroupResourcePlacements(state, containerDescription, QUERY_RETRIES_COUNT);
+            queryGroupResourcePlacements(state, description, QUERY_RETRIES_COUNT);
             break;
         case SELECTED:
         case SELECTED_GLOBAL:
@@ -157,7 +148,7 @@ public class ReservationTaskService
             break;
         case QUERYING_GLOBAL:
             // query again but with global group (group set to null):
-            queryGroupResourcePlacements(state, containerDescription, QUERY_RETRIES_COUNT);
+            queryGroupResourcePlacements(state, description, QUERY_RETRIES_COUNT);
             break;
         case COMPLETED:
             complete();
@@ -187,7 +178,8 @@ public class ReservationTaskService
     @Override
     protected void validateStateOnStart(ReservationTaskState state) {
         if (state.resourceCount < 1) {
-            throw new LocalizableValidationException("'resourceCount' must be greater than 0.", "request.resource-count.zero");
+            throw new LocalizableValidationException("'resourceCount' must be greater than 0.",
+                    "request.resource-count.zero");
         }
         if (state.resourceType == null || state.resourceType.isEmpty()) {
             state.resourceType = ResourceType.CONTAINER_TYPE.getName();
@@ -207,20 +199,22 @@ public class ReservationTaskService
     }
 
     private void createReservationAllocationTask(ReservationTaskState reservationTask,
-            ContainerDescription containerDesc) {
+            ReservationComponentDescription description) {
 
-        if (containerDesc == null) {
+        if (description == null) {
             getContainerDescription(
                     reservationTask.resourceDescriptionLink,
-                    (retrievedContDesc) -> createReservationAllocationTask(reservationTask,
-                            retrievedContDesc));
+                    (desc) -> createReservationAllocationTask(reservationTask,
+                            desc));
             return;
         }
 
         ReservationAllocationTaskState reservationAllocationTask = new ReservationAllocationTaskState();
         reservationAllocationTask.tenantLinks = reservationTask.tenantLinks;
-        reservationAllocationTask.customProperties = containerDesc.customProperties;
-        reservationAllocationTask.name = containerDesc.name;
+
+        reservationAllocationTask.customProperties = description
+                .getCommonDescription().customProperties;
+        reservationAllocationTask.name = description.getCommonDescription().name;
         reservationAllocationTask.resourcePoolsPerGroupPlacementLinks = reservationTask.resourcePoolsPerGroupPlacementLinks;
         reservationAllocationTask.documentSelfLink = getSelfId();
         reservationAllocationTask.contextId = getContextId(reservationTask);
@@ -248,9 +242,9 @@ public class ReservationTaskService
     }
 
     private void queryGroupResourcePlacements(ReservationTaskState state,
-            ContainerDescription containerDesc, int retriesCount) {
+            ReservationComponentDescription description, int retriesCount) {
 
-        if (containerDesc == null) {
+        if (description == null) {
             getContainerDescription(state.resourceDescriptionLink,
                     (retrievedContDesc) -> queryGroupResourcePlacements(state, retrievedContDesc,
                             retriesCount));
@@ -258,7 +252,8 @@ public class ReservationTaskService
         }
 
         // If property __containerHostId exists call ReservationAllocationTaskService
-        if (containerDesc.customProperties != null && containerDesc.customProperties
+        Map<String, String> customProperties = description.getCommonDescription().customProperties;
+        if (customProperties != null && customProperties
                 .containsKey(ReservationAllocationTaskService.CONTAINER_HOST_ID_CUSTOM_PROPERTY)) {
             proceedTo(ReservationTaskState.SubStage.RESERVATION_ALLOCATION);
             return;
@@ -297,11 +292,13 @@ public class ReservationTaskService
                 .build();
         q.querySpec.query.addBooleanClause(numOfInstancesClause);
 
-        if (containerDesc.memoryLimit != null) {
+        Long memoryLimit = description.getCommonDescription().memoryLimit;
+
+        if (memoryLimit != null) {
             Query memoryLimitClause = Query.Builder.create()
                     .addRangeClause(GroupResourcePlacementState.FIELD_NAME_AVAILABLE_MEMORY,
                             NumericRange.createLongRange(
-                                    state.resourceCount * containerDesc.memoryLimit,
+                                    state.resourceCount * memoryLimit,
                                     Long.MAX_VALUE, true, false),
                             Occurance.SHOULD_OCCUR)
                     .addRangeClause(GroupResourcePlacementState.FIELD_NAME_MEMORY_LIMIT,
@@ -310,7 +307,7 @@ public class ReservationTaskService
                     .build();
 
             q.querySpec.query.addBooleanClause(memoryLimitClause);
-            logInfo("Placement query includes memory limit of: [%s]: ", containerDesc.memoryLimit);
+            logInfo("Placement query includes memory limit of: [%s]: ", memoryLimit);
         }
 
         /*
@@ -340,7 +337,7 @@ public class ReservationTaskService
                             if (retriesCount > 0) {
                                 getHost().schedule(() -> {
                                     queryGroupResourcePlacements(state,
-                                            this.containerDescription, retriesCount - 1);
+                                            description, retriesCount - 1);
                                 }, QueryUtil.QUERY_RETRY_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
                             } else {
                                 if (state.tenantLinks != null && !state.tenantLinks.isEmpty()) {
@@ -352,28 +349,34 @@ public class ReservationTaskService
                             return;
                         }
 
-                        proceedTo(isGlobal(state) ? SubStage.SELECTED_GLOBAL : SubStage.SELECTED, s -> {
-                            /* Use a LinkedHashMap to preserve the order */
-                            s.resourcePoolsPerGroupPlacementLinks = new LinkedHashMap<>();
-                            s.resourcePoolsPerGroupPlacementLinks.putAll(buildResourcePoolsMap(
-                                    containerDesc, placements));
-                        });
+                        proceedTo(isGlobal(state) ? SubStage.SELECTED_GLOBAL : SubStage.SELECTED,
+                                s -> {
+                                    /* Use a LinkedHashMap to preserve the order */
+                                    s.resourcePoolsPerGroupPlacementLinks = new LinkedHashMap<>();
+                                    s.resourcePoolsPerGroupPlacementLinks
+                                            .putAll(buildResourcePoolsMap(
+                                                    description, placements));
+                                });
                     }
                 });
     }
 
-    private LinkedHashMap<String, String> buildResourcePoolsMap(ContainerDescription containerDesc,
+    private LinkedHashMap<String, String> buildResourcePoolsMap(
+            ReservationComponentDescription description,
             List<GroupResourcePlacementState> placements) {
         LinkedHashMap<String, String> resPools = new LinkedHashMap<String, String>();
         List<GroupResourcePlacementState> filteredPlacements = null;
-        if (containerDesc.deploymentPolicyId != null && !containerDesc.deploymentPolicyId
+
+        String deploymentPolicyId = description.getCommonDescription().deploymentPolicyId;
+
+        if (deploymentPolicyId != null && !deploymentPolicyId
                 .isEmpty()) {
             filteredPlacements = placements
                     .stream()
                     .filter((e) -> {
                         return e.deploymentPolicyLink != null
                                 && e.deploymentPolicyLink
-                                        .endsWith(containerDesc.deploymentPolicyId);
+                                        .endsWith(deploymentPolicyId);
                     }).collect(Collectors.toList());
         }
 
@@ -515,9 +518,9 @@ public class ReservationTaskService
     }
 
     private void getContainerDescription(String resourceDescriptionLink,
-            Consumer<ContainerDescription> callbackFunction) {
-        if (containerDescription != null) {
-            callbackFunction.accept(containerDescription);
+            Consumer<ReservationComponentDescription> callbackFunction) {
+        if (description != null) {
+            callbackFunction.accept(description);
             return;
         }
         sendRequest(Operation.createGet(this, resourceDescriptionLink)
@@ -527,9 +530,19 @@ public class ReservationTaskService
                         return;
                     }
 
-                    ContainerDescription desc = o.getBody(ContainerDescription.class);
-                    this.containerDescription = desc;
-                    callbackFunction.accept(desc);
+                    ReservationComponentDescription cd = new ReservationComponentDescription();
+
+                    if (resourceDescriptionLink
+                            .startsWith(CompositeDescriptionFactoryService.SELF_LINK)) {
+                        cd.updateServiceDocument(o.getBody(CompositeDescription.class));
+                    } else {
+                        ComponentMeta metaByDescriptionLink = CompositeComponentRegistry
+                                .metaByDescriptionLink(resourceDescriptionLink);
+                        cd.updateServiceDocument(o.getBody(metaByDescriptionLink.descriptionClass));
+                    }
+
+                    this.description = cd;
+                    callbackFunction.accept(cd);
                 }));
     }
 }

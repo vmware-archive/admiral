@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.xenon.common.LocalizableValidationException;
 
 /**
@@ -56,6 +57,7 @@ public interface HostSelectionFilter<T> extends AffinityFilter {
         public Long availableMemory;
         public String deploymentPolicyLink;
         public String plugins;
+        public ContainerHostType hostType;
 
         /** Configured location of the key-value store for the overlay networks. */
         public String clusterStore;

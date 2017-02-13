@@ -89,7 +89,7 @@ public class KubernetesDescriptionService extends StatefulService {
         assertNotNullOrEmpty(kubernetesEntity.apiVersion, "apiVersion");
         assertNotNullOrEmpty(kubernetesEntity.kind, "kind");
         assertNotNull(kubernetesEntity.metadata, "metadata");
-        assertNotNullOrEmpty(kubernetesEntity.metadata.name, "name");
+        assertNotNullOrEmpty(kubernetesEntity.metadata.name, "metadata.name");
 
         description.type = kubernetesEntity.kind;
         description.name = kubernetesEntity.metadata.name;

@@ -14,6 +14,7 @@ package com.vmware.admiral.host;
 import com.vmware.admiral.adapter.kubernetes.service.KubernetesAdapterService;
 import com.vmware.admiral.adapter.kubernetes.service.KubernetesApplicationAdapterService;
 import com.vmware.admiral.adapter.kubernetes.service.KubernetesHostAdapterService;
+import com.vmware.admiral.service.kubernetes.test.MockKubernetesApplicationAdapterService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
@@ -21,7 +22,10 @@ import com.vmware.xenon.common.UriUtils;
 public class HostInitKubernetesAdapterServiceConfig {
     public static void startServices(ServiceHost host, boolean startMockHostAdapterInstance) {
         if (startMockHostAdapterInstance) {
-            // Do something
+            host.startService(
+                    Operation.createPost(
+                            UriUtils.buildUri(host, MockKubernetesApplicationAdapterService.class)),
+                    new MockKubernetesApplicationAdapterService());
         } else {
             host.startService(
                     Operation.createPost(UriUtils.buildUri(host, KubernetesAdapterService.class)),

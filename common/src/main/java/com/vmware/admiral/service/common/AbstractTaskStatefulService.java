@@ -330,8 +330,8 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             T patchBody, T currentState) {
 
         // referer is only shown if different from the task itself
-        final String refererLogPart = patch.getUri().equals(patch.getReferer()) ? "" :
-                String.format(" Caller: [%s]", patch.getReferer());
+        final String refererLogPart = patch.getUri().equals(patch.getReferer()) ? ""
+                : String.format(" Caller: [%s]", patch.getReferer());
 
         long currentExpiration = currentState.documentExpirationTimeMicros;
         if (patchBody.taskInfo == null || patchBody.taskInfo.stage == null) {
@@ -564,7 +564,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         T body = null;
 
         try {
-            body = (T)getStateType().newInstance();
+            body = (T) getStateType().newInstance();
         } catch (InstantiationException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
@@ -654,7 +654,8 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         if (t != null) {
             Operation operation = null;
             if (locale != null) {
-                operation = (new Operation().addRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER, locale));
+                operation = (new Operation().addRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER,
+                        locale));
             }
             body.taskInfo.failure = Utils.toValidationErrorResponse(t, operation);
         } else {
@@ -766,6 +767,8 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             // reached error state
             taskStatus.progress = 100;
         }
+
+        System.out.println(taskStatus.progress);
 
         return taskStatus;
     }

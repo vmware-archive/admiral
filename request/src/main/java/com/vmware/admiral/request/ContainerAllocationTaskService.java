@@ -81,15 +81,12 @@ import com.vmware.xenon.common.Utils;
 /**
  * Task implementing the provision container request resource work flow.
  */
-public class ContainerAllocationTaskService extends AbstractTaskStatefulService
-        <ContainerAllocationTaskService.ContainerAllocationTaskState,
-                ContainerAllocationTaskService.ContainerAllocationTaskState.SubStage> {
+public class ContainerAllocationTaskService extends
+        AbstractTaskStatefulService<ContainerAllocationTaskService.ContainerAllocationTaskState, ContainerAllocationTaskService.ContainerAllocationTaskState.SubStage> {
 
     public static final String DISPLAY_NAME = "Container Allocation";
-    public static final String HEALTH_CHECK_TIMEOUT_PARAM_NAME =
-            "provision.container.health.check.timeout.ms";
-    public static final String HEALTH_CHECK_DELAY_PARAM_NAME =
-            "provision.container.health.check.delay.ms";
+    public static final String HEALTH_CHECK_TIMEOUT_PARAM_NAME = "provision.container.health.check.timeout.ms";
+    public static final String HEALTH_CHECK_DELAY_PARAM_NAME = "provision.container.health.check.delay.ms";
 
     // cached container description
     private volatile ContainerDescription containerDescription;
@@ -98,8 +95,7 @@ public class ContainerAllocationTaskService extends AbstractTaskStatefulService
     private long healthCheckTimeout;
 
     public static class ContainerAllocationTaskState extends
-            com.vmware.admiral.service.common.TaskServiceDocument<ContainerAllocationTaskState
-                    .SubStage> {
+            com.vmware.admiral.service.common.TaskServiceDocument<ContainerAllocationTaskState.SubStage> {
 
         /**
          * (Optional) Indicates that a given container linked to a ContainerDescription depends on
@@ -472,23 +468,15 @@ public class ContainerAllocationTaskService extends AbstractTaskStatefulService
 
     private void getResourcePool(ContainerAllocationTaskState state,
             Consumer<String> callbackFunction) {
-        sendRequest(Operation.createGet(this, state.groupResourcePlacementLink)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Failure retrieving GroupResourcePlacement", e);
-                        return;
-                    }
-
-                    GroupResourcePlacementState placementState = o
-                            .getBody(GroupResourcePlacementState.class);
-                    if (placementState.resourcePoolLink == null) {
-                        failTask(null, new LocalizableValidationException(
-                                "Placement state has no resourcePoolLink",
-                                "request.container.allocation.missing.resource-pool"));
-                        return;
-                    }
-                    callbackFunction.accept(placementState.resourcePoolLink);
-                }));
+        getResourcePlacementState(state, (placementState) -> {
+            if (placementState.resourcePoolLink == null) {
+                failTask(null, new LocalizableValidationException(
+                        "Placement state has no resourcePoolLink",
+                        "request.container.allocation.missing.resource-pool"));
+                return;
+            }
+            callbackFunction.accept(placementState.resourcePoolLink);
+        });
     }
 
     private void getResourcePlacementState(ContainerAllocationTaskState state,

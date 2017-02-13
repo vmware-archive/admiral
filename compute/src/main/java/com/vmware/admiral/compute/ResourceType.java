@@ -20,6 +20,7 @@ import com.vmware.xenon.common.LocalizableValidationException;
 public enum ResourceType {
     CONTAINER_TYPE(ComputeType.DOCKER_CONTAINER.toString(), "App.Container"),
     COMPOSITE_COMPONENT_TYPE("COMPOSITE_COMPONENT", ""),
+    JOIN_COMPOSITE_COMPONENT_TYPE("JOIN_COMPOSITE_COMPONENT", ""),
     COMPUTE_TYPE("COMPUTE", "Compute"),
     CONTAINER_HOST_TYPE("CONTAINER_HOST", ""),
     NETWORK_TYPE("NETWORK", "App.Network"),
@@ -27,7 +28,6 @@ public enum ResourceType {
     CLOSURE_TYPE("CLOSURE", "App.Closure"),
     CONFIGURE_HOST_TYPE("CONFIGURE_HOST", ""),
     COMPUTE_NETWORK_TYPE("COMPUTE_NETWORK", "Compute.Network"),
-    KUBERNETES_ENTITY_TYPE("KUBERNETES_ENTITY", "Kubernetes.Entity"),
     KUBERNETES_POD_TYPE("KUBERNETES_POD", "Kubernetes.Pod"),
     KUBERNETES_DEPLOYMENT_TYPE("KUBERNETES_DEPLOYMENT", "Kubernetes.Deployment"),
     KUBERNETES_SERVICE_TYPE("KUBERNETES_SERVICE", "Kubernetes.Service"),
