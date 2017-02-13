@@ -277,6 +277,29 @@ public class QueryUtil {
         return groupClause;
     }
 
+    public static List<String> getTenantLinks(List<String> tenantLinks) {
+        if (tenantLinks == null || tenantLinks.isEmpty()) {
+            return tenantLinks;
+
+        } else {
+            return tenantLinks.stream()
+                    .filter(tenantLink -> tenantLink.startsWith(MultiTenantDocument.TENANTS_PREFIX))
+                    .filter(tenantLink -> !tenantLink
+                            .contains(MultiTenantDocument.GROUP_IDENTIFIER))
+                    .collect(Collectors.toList());
+        }
+    }
+
+    public static List<String> getTenantAndGroupLinks(List<String> tenantLinks) {
+        if (tenantLinks == null || tenantLinks.isEmpty()) {
+            return tenantLinks;
+        } else {
+            return tenantLinks.stream()
+                    .filter(tenantLink -> !tenantLink.startsWith(MultiTenantDocument.USERS_PREFIX))
+                    .collect(Collectors.toList());
+        }
+    }
+
     public static QueryTask.Query createKindClause(Class<?> c) {
         QueryTask.Query kindClause = new QueryTask.Query()
                 .setTermPropertyName(ServiceDocument.FIELD_NAME_KIND)

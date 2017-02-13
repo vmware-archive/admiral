@@ -106,9 +106,6 @@ public class ComputeAllocationTaskService
 
     private static final String ID_DELIMITER_CHAR = "-";
 
-    // cached compute description
-    private transient volatile ComputeDescription computeDescription;
-
     public static class ComputeAllocationTaskState
             extends
             com.vmware.admiral.service.common.TaskServiceDocument<ComputeAllocationTaskState.SubStage> {
@@ -120,6 +117,46 @@ public class ComputeAllocationTaskService
         public static final String FIELD_NAME_CUSTOM_PROP_RESOURCE_POOL_LINK = "__resourcePoolLink";
         public static final String FIELD_NAME_CUSTOM_PROP_REGION_ID = "__regionId";
         private static final String FIELD_NAME_CUSTOM_PROP_DISK_NAME = "__diskName";
+        @Documentation(description = "The description that defines the requested resource.")
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED, LINK }, indexing = STORE_ONLY)
+        public String resourceDescriptionLink;
+        @Documentation(description = "Type of resource to create")
+        @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
+        public String resourceType;
+        @Documentation(description = "(Required) the groupResourcePlacementState that links to ResourcePool")
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, OPTIONAL, LINK }, indexing = STORE_ONLY)
+        public String groupResourcePlacementLink;
+        @Documentation(description = "(Optional) the resourcePoolLink to ResourcePool")
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, OPTIONAL,
+                AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        public String resourcePoolLink;
+        @Documentation(description = "(Required) Number of resources to provision. ")
+        @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
+        public Long resourceCount;
+        @Documentation(description = "Set by the task with the links of the provisioned resources.")
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL, OPTIONAL }, indexing = STORE_ONLY)
+        public Set<String> resourceLinks;
+        // links to placement computes where to provision the requested resources
+        // the size of the collection equals the requested resource count
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL,
+                LINKS }, indexing = STORE_ONLY)
+        public Collection<HostSelection> selectedComputePlacementHosts;
+
+        // Service use fields:
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL,
+                LINK }, indexing = STORE_ONLY)
+        public String endpointLink;
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL,
+                LINK }, indexing = STORE_ONLY)
+        public String endpointComputeStateLink;
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL,
+                LINK }, indexing = STORE_ONLY)
+        public String environmentLink;
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        public String endpointType;
+        /** (Internal) Set by task after resource name prefixes requested. */
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        public Set<String> resourceNames;
 
         public static enum SubStage {
             CREATED,
@@ -132,59 +169,14 @@ public class ComputeAllocationTaskService
             COMPLETED,
             ERROR;
         }
-
-        @Documentation(description = "The description that defines the requested resource.")
-        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED, LINK }, indexing = STORE_ONLY)
-        public String resourceDescriptionLink;
-
-        @Documentation(description = "Type of resource to create")
-        @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
-        public String resourceType;
-
-        @Documentation(description = "(Required) the groupResourcePlacementState that links to ResourcePool")
-        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, OPTIONAL, LINK }, indexing = STORE_ONLY)
-        public String groupResourcePlacementLink;
-
-        @Documentation(description = "(Optional) the resourcePoolLink to ResourcePool")
-        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, OPTIONAL,
-                AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
-        public String resourcePoolLink;
-
-        @Documentation(description = "(Required) Number of resources to provision. ")
-        @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
-        public Long resourceCount;
-
-        @Documentation(description = "Set by the task with the links of the provisioned resources.")
-        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL, OPTIONAL }, indexing = STORE_ONLY)
-        public Set<String> resourceLinks;
-
-        // Service use fields:
-
-        // links to placement computes where to provision the requested resources
-        // the size of the collection equals the requested resource count
-        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL,
-                LINKS }, indexing = STORE_ONLY)
-        public Collection<HostSelection> selectedComputePlacementHosts;
-
-        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL,
-                LINK }, indexing = STORE_ONLY)
-        public String endpointLink;
-
-        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL,
-                LINK }, indexing = STORE_ONLY)
-        public String endpointComputeStateLink;
-
-        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL,
-                LINK }, indexing = STORE_ONLY)
-        public String environmentLink;
-
-        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
-        public String endpointType;
-
-        /** (Internal) Set by task after resource name prefixes requested. */
-        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
-        public Set<String> resourceNames;
     }
+
+    protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
+        Set<String> resourceLinks;
+    }
+
+    // cached compute description
+    private transient volatile ComputeDescription computeDescription;
 
     public ComputeAllocationTaskService() {
         super(ComputeAllocationTaskState.class, SubStage.class, DISPLAY_NAME);
@@ -193,6 +185,11 @@ public class ComputeAllocationTaskService
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
+    }
+
+    static boolean enableContainerHost(Map<String, String> customProperties) {
+        return customProperties
+                .containsKey(ComputeAllocationTaskState.ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME);
     }
 
     @Override
@@ -255,10 +252,6 @@ public class ComputeAllocationTaskService
             logWarning("No resourceLinks found for allocated compute resources.");
         }
         return finishedResponse;
-    }
-
-    protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
-        Set<String> resourceLinks;
     }
 
     private void prepareContext(ComputeAllocationTaskState state,
@@ -519,11 +512,6 @@ public class ComputeAllocationTaskService
                             })
                             .sendWith(this);
                 });
-    }
-
-    static boolean enableContainerHost(Map<String, String> customProperties) {
-        return customProperties
-                .containsKey(ComputeAllocationTaskState.ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME);
     }
 
     private void createResourcePrefixNameSelectionTask(ComputeAllocationTaskState state,
@@ -931,11 +919,10 @@ public class ComputeAllocationTaskService
     private DeferredResult<String> findSubnetBy(ComputeAllocationTaskState state,
             NetworkInterfaceDescription nid) {
         Builder builder = Query.Builder.create()
-                .addKindFieldClause(SubnetState.class)
-                .addClause(QueryUtil.addTenantClause(nid.tenantLinks))
-                .addFieldClause(SubnetState.FIELD_NAME_ENDPOINT_LINK, state.endpointLink);
+                .addKindFieldClause(SubnetState.class);
         QueryByPages<SubnetState> querySubnetStates = new QueryByPages<>(
-                getHost(), builder.build(), SubnetState.class, nid.tenantLinks);
+                getHost(), builder.build(), SubnetState.class, QueryUtil.getTenantLinks(nid
+                .tenantLinks));
 
         ArrayList<String> links = new ArrayList<>();
         return querySubnetStates.queryLinks(sl -> links.add(sl))

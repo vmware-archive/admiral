@@ -76,7 +76,7 @@ public class EnvironmentQueryUtils {
         }
 
         QueryUtils.QueryByPages<ResourcePoolState> query = new QueryUtils.QueryByPages<>(host,
-                builder.build(), ResourcePoolState.class, tenantLinks);
+                builder.build(), ResourcePoolState.class, QueryUtil.getTenantLinks(tenantLinks));
 
         final Map<String, List<EnvEntry>> entriesPerEndpoint = new HashMap<>();
         query.queryDocuments(rp -> {
