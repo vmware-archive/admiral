@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
@@ -23,6 +24,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import com.vmware.admiral.common.util.YamlMapper;
+import com.vmware.admiral.compute.ComputeConstants;
+import com.vmware.photon.controller.model.Constraint;
+import com.vmware.photon.controller.model.Constraint.Condition;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.xenon.common.Utils;
 
@@ -35,6 +39,32 @@ public class TemplateComputeDescription extends ComputeDescriptionService.Comput
 
     public static final String CUSTOM_PROP_NAME_CLUSTER_SIZE = "_cluster";
     public static final String CUSTOM_PROP_NAME_AFFINITY = "affinity";
+
+    /**
+     * Definition of a constraint to be used in the template instead of the more complex
+     * underlying {@link Constraint}/{@link Condition} structure.
+     *
+     * This allows for yaml declaration like this:
+     * <pre>
+     *   constraints:
+     *     - tag: "!location:eu:hard"
+     *     - tag: "location:us:soft"
+     *     - tag: "!windows"
+     * </pre>
+     */
+    public static class StringEncodedConstraint {
+        /**
+         * Defines a tag constraint in a single string in the following format:
+         *
+         * {@code [!]tagKey[:tagValue]:[soft|hard]}
+         */
+        public String tag;
+    }
+
+    @JsonAnyGetter
+    private Map<String, String> getProperties() {
+        return customProperties;
+    }
 
     @JsonAnySetter
     private void putProperty(String key, String value) {
@@ -53,11 +83,39 @@ public class TemplateComputeDescription extends ComputeDescriptionService.Comput
         networkInterfaceDescLinks = networks;
     }
 
-    @JsonAnyGetter
-    private Map<String, String> getProperties() {
-        return customProperties;
+    @JsonProperty("constraints")
+    public List<StringEncodedConstraint> getPlacementConstraints() {
+        Constraint constraint = this.constraints != null
+                ? this.constraints.get(ComputeConstants.COMPUTE_PLACEMENT_CONSTRAINT_KEY) : null;
+        if (constraint == null) {
+            return null;
+        }
+
+        List<StringEncodedConstraint> stringConstraints = constraint.conditions.stream()
+                .map(ConstraintConverter::encodeCondition)
+                .filter(r -> r != null)
+                .collect(Collectors.toList());
+        return stringConstraints;
     }
 
+    public void setPlacementConstraints(List<StringEncodedConstraint> stringConstraints) {
+        if (stringConstraints == null) {
+            return;
+        }
+
+        Constraint constraint = new Constraint();
+        constraint.conditions = stringConstraints.stream()
+                .map(ConstraintConverter::decodeCondition)
+                .filter(c -> c != null)
+                .collect(Collectors.toList());
+
+        if (this.constraints == null) {
+            this.constraints = new HashMap<>();
+        }
+        this.constraints.put(ComputeConstants.COMPUTE_PLACEMENT_CONSTRAINT_KEY, constraint);
+    }
+
+    @SuppressWarnings("unchecked")
     public static List<String> getAffinityNames(ComputeDescriptionService.ComputeDescription desc) {
         if (desc.customProperties == null) {
             return Collections.emptyList();

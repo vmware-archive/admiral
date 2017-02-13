@@ -39,17 +39,22 @@ import org.junit.runners.Parameterized;
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.common.util.FileUtil;
 import com.vmware.admiral.compute.ComponentDescription;
+import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
+import com.vmware.photon.controller.model.Constraint;
+import com.vmware.photon.controller.model.Constraint.Condition.Enforcement;
+import com.vmware.photon.controller.model.Constraint.Condition.Type;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 
 /**
  * Test the CompositeDescriptionContentService
@@ -118,6 +123,25 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
 
         assertEquals(1, wordpressComputeDescription.networkInterfaceDescLinks.size());
         assertEquals(1, wordpressComputeDescription.tagLinks.size());
+
+        Constraint placementConstraint = wordpressComputeDescription.constraints.get(
+                ComputeConstants.COMPUTE_PLACEMENT_CONSTRAINT_KEY);
+        assertEquals(3, placementConstraint.conditions.size());
+
+        assertEquals(Type.TAG, placementConstraint.conditions.get(0).type);
+        assertEquals(Enforcement.HARD, placementConstraint.conditions.get(0).enforcement);
+        assertEquals(Occurance.MUST_NOT_OCCUR, placementConstraint.conditions.get(0).occurrence);
+        assertEquals("location:eu", placementConstraint.conditions.get(0).expression.propertyName);
+
+        assertEquals(Type.TAG, placementConstraint.conditions.get(1).type);
+        assertEquals(Enforcement.SOFT, placementConstraint.conditions.get(1).enforcement);
+        assertEquals(Occurance.MUST_OCCUR, placementConstraint.conditions.get(1).occurrence);
+        assertEquals("location:us", placementConstraint.conditions.get(1).expression.propertyName);
+
+        assertEquals(Type.TAG, placementConstraint.conditions.get(2).type);
+        assertEquals(Enforcement.HARD, placementConstraint.conditions.get(2).enforcement);
+        assertEquals(Occurance.MUST_NOT_OCCUR, placementConstraint.conditions.get(2).occurrence);
+        assertEquals("windows", placementConstraint.conditions.get(2).expression.propertyName);
 
         assertEquals("public-wpnet", networkDescription.name);
         assertNull(networkDescription.assignment);
