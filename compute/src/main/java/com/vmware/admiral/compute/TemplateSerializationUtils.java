@@ -102,12 +102,14 @@ public class TemplateSerializationUtils {
         return result;
     }
 
+    @SuppressWarnings("unchecked")
     public static Map<String, Object> serializeComponentTemplate(
             ComponentTemplate<?> componentTemplate,
             ObjectMapper objectMapper,
             ObjectWriter objectWriter)
             throws IOException {
         //We have a special deserializer for the ComponentTemplate
+        @SuppressWarnings("rawtypes")
         Map serializedComponentTemplate = objectMapper
                 .readValue(objectWriter.writeValueAsString(componentTemplate), Map.class);
         serializedComponentTemplate.remove("children");

@@ -147,6 +147,7 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
      * @param extensibilityState extensibility state
      * @param state              task state to send
      */
+    @SuppressWarnings({ "rawtypes", "unused" })
     private <T extends TaskServiceDocument> void sendAsyncNotificationCall(
             AbstractTaskStatefulService service, ExtensibilitySubscription extensibilityState,
             T state) {
@@ -160,6 +161,7 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
      * @param extensibilityState extensibility state
      * @param state              task state to send
      */
+    @SuppressWarnings({ "rawtypes", "unused" })
     private <T extends TaskServiceDocument> void sendBlockingNotificationCall(
             AbstractTaskStatefulService service,
             ExtensibilitySubscription extensibilityState, T state) {
@@ -175,6 +177,7 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
      * @param retriesLeft number of retries left before give up
      * @param taskService task service
      */
+    @SuppressWarnings({ "rawtypes", "unused" })
     private void sendExternalNotification(String url, ServiceDocument body,
             int retriesLeft, AbstractTaskStatefulService taskService) {
     }

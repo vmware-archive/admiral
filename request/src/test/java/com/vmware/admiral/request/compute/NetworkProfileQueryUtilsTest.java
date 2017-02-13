@@ -67,6 +67,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
         List<String> subnets1 = Arrays.asList(createSubnet("sub-1").documentSelfLink,
                 createSubnet("sub-2").documentSelfLink);
         NetworkProfile networkProfile = createNetworkProfile(subnets1, networkDescription1.tenantLinks);
+        @SuppressWarnings("unused")
         ComputeNetwork computeNetwork1 = createComputeNetwork(networkDescription1, contextId, subnets1);
         // Same name, different context
         ComputeNetworkDescription networkDescription2 = createNetworkDescription("my net");
@@ -132,7 +133,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
         List<String> subnets1 = Arrays.asList(createSubnet("sub-1").documentSelfLink,
                 createSubnet("sub-2").documentSelfLink);
         NetworkProfile networkProfile1 = createNetworkProfile(subnets1, Arrays.asList(UUID.randomUUID().toString()));
-        EnvironmentState environmentState = createEnvironment(networkProfile1.documentSelfLink, networkProfile1.tenantLinks);
+        createEnvironment(networkProfile1.documentSelfLink, networkProfile1.tenantLinks);
         List<String> subnets2 = Arrays.asList(createSubnet("sub-3").documentSelfLink);
         NetworkProfile networkProfile2 = createNetworkProfile(subnets2, null);
         createEnvironment(networkProfile2.documentSelfLink, networkProfile2.tenantLinks);
@@ -198,6 +199,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
         ComputeNetworkDescription networkDescription = createNetworkDescription("my net");
         List<String> subnets1 = Arrays.asList(createSubnet("sub-1").documentSelfLink,
                 createSubnet("sub-2").documentSelfLink);
+        @SuppressWarnings("unused")
         NetworkProfile networkProfile1 = createNetworkProfile(subnets1,
                 networkDescription.tenantLinks);
         List<String> subnets2 = Arrays.asList(createSubnet("sub-3").documentSelfLink);

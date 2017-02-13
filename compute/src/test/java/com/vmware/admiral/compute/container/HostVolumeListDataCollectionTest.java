@@ -130,6 +130,7 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
     public void testProvisionedVolumeIsNotDiscovered() throws Throwable {
         // provision volume
         ContainerVolumeState containerVolumeCreated = createVolume(null, COMPUTE_HOST_LINK);
+        @SuppressWarnings("unused")
         String reference = UriUtils.buildUri(host, UriUtils
                 .buildUriPath(ContainerVolumeService.FACTORY_LINK, TEST_PREEXISTING_VOLUME_NAME))
                 .toString();

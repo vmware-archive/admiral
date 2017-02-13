@@ -441,9 +441,10 @@ public class GroupResourcePlacementService extends StatefulService {
                             }
                             if (e != null) {
                                 patch.fail(new LocalizableValidationException(
-                                            "Unable to get the resource description with link: " + request.resourceDescriptionLink,
-                                            "compute.resource-placement.unavailable",
-                                            new String[] { request.resourceDescriptionLink }));
+                                        "Unable to get the resource description with link: "
+                                                + request.resourceDescriptionLink,
+                                        "compute.resource-placement.unavailable",
+                                        request.resourceDescriptionLink));
                                 return;
                             }
 
