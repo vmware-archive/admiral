@@ -9,17 +9,15 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.adapter.kubernetes.service.apiobject;
+package com.vmware.admiral.compute.content.kubernetes.pods;
 
 import java.util.List;
 
-public class PodStatus {
-    /*public String phase;
-    public List<PodCondition> conditions;
-    public String message;
-    public String reason;
-    public String hostIP;
-    public String podIP;
-    public String startTime;   //date-time*/
-    public List<ContainerStatus> containerStatuses;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import com.vmware.admiral.compute.content.kubernetes.CommonKubernetesEntity;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class PodList extends CommonKubernetesEntity {
+    public List<Pod> items;
 }

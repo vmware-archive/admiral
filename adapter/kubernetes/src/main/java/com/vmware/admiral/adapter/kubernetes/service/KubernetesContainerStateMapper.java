@@ -16,16 +16,16 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import com.vmware.admiral.adapter.kubernetes.service.apiobject.Container;
-import com.vmware.admiral.adapter.kubernetes.service.apiobject.ContainerPort;
-import com.vmware.admiral.adapter.kubernetes.service.apiobject.ContainerStatus;
-import com.vmware.admiral.adapter.kubernetes.service.apiobject.EnvVar;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.PortBinding;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainer;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerEnvVar;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerPort;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerStatus;
 
 public class KubernetesContainerStateMapper {
-    public static String makeEnv(EnvVar env) {
+    public static String makeEnv(PodContainerEnvVar env) {
         return env.name + "=" + env.value;
     }
 
@@ -41,19 +41,19 @@ public class KubernetesContainerStateMapper {
         return id;
     }
 
-    public static PortBinding makePort(ContainerPort port) {
+    public static PortBinding makePort(PodContainerPort port) {
         PortBinding result = new PortBinding();
 
         result.containerPort = Integer.toString(port.containerPort);
         result.hostPort = Integer.toString(port.hostPort);
-        result.hostIp = port.hostIP;
+        result.hostIp = port.hostIp;
         result.protocol = port.protocol;
 
         return result;
     }
 
-    public static void mapContainer(ContainerState outContainerState, Container inContainer,
-            ContainerStatus status) {
+    public static void mapContainer(ContainerState outContainerState, PodContainer inContainer,
+            PodContainerStatus status) {
         if (outContainerState == null || inContainer == null || status == null) {
             return;
         }
@@ -62,27 +62,26 @@ public class KubernetesContainerStateMapper {
         outContainerState.names = Arrays.asList(inContainer.name);
         outContainerState.image = inContainer.image;
         if (inContainer.command != null) {
-            outContainerState.command = inContainer.command.toArray(
-                    new String[inContainer.command.size()]);
+            outContainerState.command = inContainer.command;
         }
 
         if (inContainer.env != null) {
-            outContainerState.env = new String[inContainer.env.size()];
+            outContainerState.env = new String[inContainer.env.length];
             for (int i = 0; i < outContainerState.env.length; ++i) {
-                outContainerState.env[i] = makeEnv(inContainer.env.get(i));
+                outContainerState.env[i] = makeEnv(inContainer.env[i]);
             }
         }
         if (inContainer.ports != null) {
-            outContainerState.ports = new ArrayList<>(inContainer.ports.size());
-            for (int i = 0; i < inContainer.ports.size(); ++i) {
-                outContainerState.ports.add(makePort(inContainer.ports.get(i)));
+            outContainerState.ports = new ArrayList<>(inContainer.ports.length);
+            for (int i = 0; i < inContainer.ports.length; ++i) {
+                outContainerState.ports.add(makePort(inContainer.ports[i]));
             }
         }
 
         outContainerState.powerState = getPowerState(status);
     }
 
-    public static PowerState getPowerState(ContainerStatus status) {
+    public static PowerState getPowerState(PodContainerStatus status) {
         if (status == null || status.state == null) {
             return PowerState.UNKNOWN;
         }

@@ -9,13 +9,9 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.adapter.kubernetes.service.apiobject;
+package com.vmware.admiral.compute.content.kubernetes.pods;
 
-import java.util.List;
-
-public class NodeList {
-    // public String kind;
-    // public String apiVersion;
-    // public ListMeta metadata;
-    public List<Node> items;
+public class PodContainerStateWaiting {
+    // public String reason;
+    // public String message;
 }

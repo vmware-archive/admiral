@@ -9,15 +9,14 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.adapter.kubernetes.service.apiobject;
+package com.vmware.admiral.compute.content.kubernetes.pods;
 
-public class ContainerStatus {
-    public String name;
-    public ContainerState state;
-    // public ContainerState lastState;
-    // public boolean ready;
-    // public int restartCount;
-    public String image;
-    // public String imageID;
-    public String containerID;
+public class PodContainerStateTerminated {
+    /*public int exitCode;
+    public int signal;
+    public String reason;
+    public String message;
+    public String startedAt;
+    public String finishedAt;
+    public String containerID;*/
 }

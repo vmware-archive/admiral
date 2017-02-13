@@ -16,6 +16,10 @@ import static org.junit.Assert.assertNotNull;
 
 import org.junit.Test;
 
+import com.vmware.admiral.compute.content.kubernetes.ObjectMeta;
+import com.vmware.admiral.compute.content.kubernetes.namespaces.Namespace;
+import com.vmware.admiral.compute.content.kubernetes.namespaces.NamespaceList;
+import com.vmware.admiral.compute.content.kubernetes.namespaces.NamespaceSpec;
 import com.vmware.xenon.common.Utils;
 
 public class ApiObjectSerializeTest {

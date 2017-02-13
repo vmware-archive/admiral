@@ -20,13 +20,13 @@ import java.util.stream.Collectors;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
-import com.vmware.admiral.adapter.kubernetes.service.apiobject.ContainerStatus;
-import com.vmware.admiral.adapter.kubernetes.service.apiobject.Pod;
-import com.vmware.admiral.adapter.kubernetes.service.apiobject.PodList;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
+import com.vmware.admiral.compute.content.kubernetes.pods.Pod;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerStatus;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodList;
 import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -296,7 +296,7 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
             if (pod.status == null || pod.status.containerStatuses == null) {
                 continue;
             }
-            for (ContainerStatus status: pod.status.containerStatuses) {
+            for (PodContainerStatus status: pod.status.containerStatuses) {
                 id = KubernetesContainerStateMapper.getId(status.containerID);
                 result.containerIdsAndNames.put(id, status.name);
                 result.containerIdsAndImage.put(id, status.image);

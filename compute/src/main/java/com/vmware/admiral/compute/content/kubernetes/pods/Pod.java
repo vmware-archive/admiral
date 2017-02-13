@@ -19,4 +19,5 @@ import com.vmware.admiral.compute.content.kubernetes.pods.PodSpec;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Pod extends CommonKubernetesEntity {
     public PodSpec spec;
+    public PodStatus status;
 }
