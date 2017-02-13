@@ -12,6 +12,8 @@
 package com.vmware.admiral.compute;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.CommonContinuousQueries.ContinuousQueryId;
@@ -31,6 +33,12 @@ public class EpzComputeEnumerationPeriodicService extends StatelessService {
             "dcp.management.epz.compute.periodic.maintenance.period.micros",
             TimeUnit.SECONDS.toMicros(300));
 
+    // used to avoid refresh on compute change too soon after a previous refresh
+    private static final long PAUSE_SECONDS = Long.getLong(
+            "dcp.management.epz.compute.periodic.pause.seconds", 10);
+    private final AtomicBoolean paused = new AtomicBoolean();
+    private final AtomicBoolean invalidated = new AtomicBoolean();
+
     public EpzComputeEnumerationPeriodicService() {
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.toggleOption(ServiceOption.PERIODIC_MAINTENANCE, true);
@@ -40,14 +48,15 @@ public class EpzComputeEnumerationPeriodicService extends StatelessService {
 
     @Override
     public void handlePeriodicMaintenance(Operation post) {
-        EpzComputeEnumerationTaskService.triggerForAllResourcePools(this);
         post.complete();
+        doTrigger(() -> "Periodic refresh", false);
     }
 
     @Override
     public void handleStart(Operation startPost) {
         startPost.complete();
-        CommonContinuousQueries.subscribeTo(this.getHost(), ContinuousQueryId.COMPUTES, this::onComputeChange);
+        CommonContinuousQueries.subscribeTo(this.getHost(), ContinuousQueryId.COMPUTES,
+                this::onComputeChange);
     }
 
     public void onComputeChange(Operation op) {
@@ -55,8 +64,35 @@ public class EpzComputeEnumerationPeriodicService extends StatelessService {
         QueryTask queryTask = op.getBody(QueryTask.class);
         if (queryTask.results != null && queryTask.results.documentLinks != null
                 && !queryTask.results.documentLinks.isEmpty()) {
-            logInfo("Compute change: %s", String.join(", ", queryTask.results.documentLinks));
-            EpzComputeEnumerationTaskService.triggerForAllResourcePools(this);
+            doTrigger(() -> String.format("Compute change: %s",
+                    String.join(", ", queryTask.results.documentLinks)), true);
         }
+    }
+
+    private void doTrigger(Supplier<String> logSupplier, boolean postponeIfPaused) {
+        // do nothing if refresh is currently paused
+        if (!this.paused.compareAndSet(false, true)) {
+            if (postponeIfPaused) {
+                logFine(() -> logSupplier.get() + " [postponed]");
+                invalidated.set(true);
+            } else {
+                logFine(() -> logSupplier.get() + " [not needed]");
+            }
+            return;
+        }
+
+        // refresh
+        logInfo(logSupplier);
+        EpzComputeEnumerationTaskService.triggerForAllResourcePools(this);
+
+        // re-enable after the pause
+        this.getHost().schedule(() -> {
+            boolean isRefreshRequired = this.invalidated.getAndSet(false);
+            this.paused.set(false);
+
+            if (isRefreshRequired) {
+                doTrigger(() -> "Postponed refresh", false);
+            }
+        }, PAUSE_SECONDS, TimeUnit.SECONDS);
     }
 }
