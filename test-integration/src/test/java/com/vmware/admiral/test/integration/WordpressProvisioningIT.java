@@ -37,7 +37,6 @@ import org.junit.runners.Parameterized.Parameters;
 
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.common.util.ServiceClientFactory;
-import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerLogService;
@@ -50,7 +49,6 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkService.Cont
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.service.common.LogService;
-import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceClient;
@@ -400,11 +398,6 @@ public class WordpressProvisioningIT extends BaseProvisioningOnCoreOsIT {
         }
 
         throw new IllegalStateException("Mysql failed to start");
-    }
-
-    private String getHostnameOfComputeHost(String hostLink) throws Exception {
-        String address = getDocument(hostLink, ComputeState.class).address;
-        return UriUtilsExtended.extractHost(address);
     }
 
     private boolean useExternalNetwork() {

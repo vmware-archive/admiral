@@ -26,9 +26,11 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -58,6 +60,7 @@ import com.vmware.admiral.compute.container.CompositeComponentRegistry.Component
 import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
+import com.vmware.admiral.compute.container.ShellContainerExecutorService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
@@ -626,6 +629,27 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
                 doc.documentCount + networkToCreate > DOCKER_MAX_BRIDGE_NETWORKS_COUNT) {
             throw new Exception("Max number of networks exceeded.");
         }
+    }
+
+    protected String getHostnameOfComputeHost(String hostLink) throws Exception {
+        String address = getDocument(hostLink, ComputeState.class).address;
+        return UriUtilsExtended.extractHost(address);
+    }
+
+    protected void runContainerCommand(String containerLink, String[] command) throws Exception {
+
+        logger.info("Running command [%s] in container [%s]", Arrays.toString(command),
+                containerLink);
+        URI uri = URI
+                .create(getBaseUrl() + buildServiceUri(ShellContainerExecutorService.SELF_LINK));
+
+        String url = UriUtils.appendQueryParam(uri,
+                ShellContainerExecutorService.CONTAINER_LINK_URI_PARAM, containerLink).toString();
+
+        Map<String, Object> params = new HashMap<>();
+        params.put(ShellContainerExecutorService.COMMAND_KEY, command);
+
+        SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod.POST, url, Utils.toJson(params));
     }
 
     private Operation sendRequest(ServiceClient serviceClient, Operation op, long timeoutMilis)
