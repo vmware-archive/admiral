@@ -30,6 +30,7 @@ import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.photon.controller.model.tasks.QueryUtils.QueryByPages;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.Service;
@@ -108,7 +109,6 @@ public class EpzComputeEnumerationTaskService extends
                 EpzComputeEnumerationTaskState.SubStage.class, DISPLAY_NAME);
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
-        super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
 
         // these are one-off tasks that are not needed upon completion
@@ -153,37 +153,21 @@ public class EpzComputeEnumerationTaskService extends
      * run in parallel for the same resource pool.
      */
     public static void triggerForAllResourcePools(Service sender) {
+        // TODO pmitrov: add support for tenant links
         Query rpQuery = Query.Builder.create().addKindFieldClause(ResourcePoolState.class).build();
-        QueryTask rpQueryTask = QueryTask.Builder.createDirectTask().setQuery(rpQuery).build();
-
-        Operation.createPost(sender.getHost(), ServiceUriPaths.CORE_QUERY_TASKS)
-                .setBody(rpQueryTask)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        sender.getHost().log(Level.WARNING,
-                                "Failed to start enumeration task for all resource pools: %s",
-                                e.getMessage());
-                        return;
-                    }
-
-                    // start enumeration tasks for all resource pools in parallel
-                    ServiceDocumentQueryResult result = o.getBody(QueryTask.class).results;
-                    if (result != null && result.documentLinks != null) {
-                        result.documentLinks.forEach(rpLink -> {
-                            EpzComputeEnumerationTaskService.triggerForResourcePool(sender, rpLink);
-                        });
-                    }
-                }).sendWith(sender);
+        new QueryByPages<ResourcePoolState>(sender.getHost(), rpQuery, ResourcePoolState.class, null)
+                .queryLinks(rpLink ->
+                        EpzComputeEnumerationTaskService.triggerForResourcePool(sender, rpLink))
+                .exceptionally(e -> {
+                    sender.getHost().log(Level.WARNING,
+                            "Failed to start enumeration task for all resource pools: %s",
+                            e.getMessage());
+                    return null;
+                });
     }
 
     @Override
     public void handlePut(Operation put) {
-        if (put.hasPragmaDirective(Operation.PRAGMA_DIRECTIVE_POST_TO_PUT)) {
-            logFine("Task already started, ignoring converted PUT.");
-            put.complete();
-            return;
-        }
-
         // unsupported op
         put.fail(Operation.STATUS_CODE_BAD_METHOD);
     }
