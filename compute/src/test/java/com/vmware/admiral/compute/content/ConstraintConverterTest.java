@@ -56,7 +56,13 @@ public class ConstraintConverterTest {
     @Test
     public void testInvalidConstraints() {
         testInvalid("key:value:value");
+        testInvalid("key:value:value:soft");
         testInvalid(":key");
+        testInvalid("::key");
+        testInvalid("key:");
+        testInvalid("key::");
+        testInvalid("::");
+        testInvalid("key:value: hard");
     }
 
     private void test(String tagConstraint, String expectedPropertyName, boolean isAnti,

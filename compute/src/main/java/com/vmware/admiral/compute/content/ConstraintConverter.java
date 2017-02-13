@@ -27,7 +27,7 @@ import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
  */
 public class ConstraintConverter {
     private static final String TAG_CONSTRAINT_PATTERN =
-            "^(!)?([^\\:]+)(?:\\:([^\\:]*))??(?:\\:(\\bsoft\\b|\\bhard\\b))?$";
+            "^(!)?([^\\:]+)(?:\\:([^\\:]+))??(?:\\:(\\bsoft\\b|\\bhard\\b))?$";
     private static final Pattern tagConstraintPattern = Pattern.compile(TAG_CONSTRAINT_PATTERN,
             Pattern.CASE_INSENSITIVE);
 
