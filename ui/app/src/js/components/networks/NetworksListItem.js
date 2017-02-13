@@ -15,7 +15,6 @@ import constants from 'core/constants';
 import NetworksListItemVue from 'components/networks/NetworksListItemVue.html';
 import AlertItemMixin from 'components/common/AlertItemMixin';
 import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin';
-import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmation'; //eslint-disable-line
 import { NetworkActions, NavigationActions } from 'actions/Actions';
 
 const possibleDay2Operations = [

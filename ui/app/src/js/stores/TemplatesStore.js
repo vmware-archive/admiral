@@ -897,6 +897,7 @@ let TemplatesStore = Reflux.createStore({
           var networkDescriptions = [];
           var volumeDescriptions = [];
           var closureDescriptions = [];
+          var kubernetesDescriptions = [];
 
           for (let i = 0; i < descriptions.length; i++) {
             var desc = descriptions[i];
@@ -914,6 +915,9 @@ let TemplatesStore = Reflux.createStore({
             } else if (docSelfLink.indexOf(links.CLOSURE_DESCRIPTIONS) > -1) {
               // closure
               closureDescriptions.push(desc);
+            } else if (docSelfLink.indexOf(links.KUBERNETES_DESC) > -1) {
+              // k8s
+              kubernetesDescriptions.push(desc);
             }
           }
 
@@ -939,6 +943,8 @@ let TemplatesStore = Reflux.createStore({
           detailsObject.templateDetails.listView.volumeLinks = volumeLinks;
 
           detailsObject.templateDetails.listView.closures = closureDescriptions;
+
+          detailsObject.templateDetails.listView.kubernetes = kubernetesDescriptions;
 
           this.setInData(['selectedItemDetails'], detailsObject);
           this.emitChange();
@@ -993,6 +999,18 @@ let TemplatesStore = Reflux.createStore({
       editDefinitionSelectedNetworks: editDefinitionSelectedNetworks,
       definitionInstance: network || {}
     });
+    this.emitChange();
+  },
+
+  onOpenEditKubernetesDefinition: function(kubernetesDefinition) {
+    this.setInData(['selectedItemDetails', 'editKubernetes'], {
+      definitionInstance: kubernetesDefinition || {}
+    });
+    this.emitChange();
+  },
+
+  onCancelEditKubernetesDefinition: function() {
+    this.setInData(['selectedItemDetails', 'editKubernetes'], null);
     this.emitChange();
   },
 
@@ -1063,9 +1081,7 @@ let TemplatesStore = Reflux.createStore({
 
     let doDelete = function() {
       let closures = this.data.selectedItemDetails.templateDetails.listView.closures
-        .filter((item) => {
-          return item.documentSelfLink !== descriptionLink;
-        });
+        .filter(item => item.documentSelfLink !== descriptionLink);
 
       this.setInData(['selectedItemDetails', 'templateDetails', 'listView', 'closures'],
         closures);
@@ -1712,6 +1728,87 @@ let TemplatesStore = Reflux.createStore({
     }).catch(this.onGenericEditError);
   },
 
+  onSaveKubernetesDefinition: function(templateId, kubernetesContent, kubernetesDefinition) {
+    if (kubernetesDefinition && kubernetesDefinition.documentSelfLink) {
+      kubernetesDefinition = kubernetesDefinition.asMutable();
+      kubernetesDefinition.kubernetesEntity = kubernetesContent;
+      services.updateDocument(kubernetesDefinition.documentSelfLink, kubernetesDefinition)
+        .then((updatedDefinition) => {
+        if (this.data.selectedItemDetails &&
+          this.data.selectedItemDetails.documentId === templateId) {
+
+          var listViewItems = this.data.selectedItemDetails.templateDetails.listView.kubernetes.map(
+            (i) => {
+            if (i.documentSelfLink === updatedDefinition.documentSelfLink) {
+              return updatedDefinition;
+            }
+            return i;
+          });
+
+          this.setInData(['selectedItemDetails', 'editKubernetes'], null);
+          this.setInData(['selectedItemDetails', 'templateDetails', 'listView', 'kubernetes'],
+                            listViewItems);
+          this.emitChange();
+        }
+      }).catch(this.onGenericEditError);
+    } else {
+      services.importKubernetesDescriptions(kubernetesContent).then((createdDescriptionsLinks) => {
+        return services.loadContainerTemplate(templateId).then((template) => {
+          template.descriptionLinks = template.descriptionLinks.concat(createdDescriptionsLinks);
+
+          return services.updateContainerTemplate(template);
+        }).then(() => {
+          var getPromises = createdDescriptionsLinks.map(link => services.loadDocument(link));
+          return Promise.all(getPromises);
+        }).then((descriptions) => {
+          if (this.data.selectedItemDetails &&
+            this.data.selectedItemDetails.documentId === templateId) {
+
+            var listViewItems = this.data.selectedItemDetails.templateDetails
+              .listView.kubernetes.asMutable();
+
+            listViewItems = listViewItems.concat(descriptions);
+
+            this.setInData(['selectedItemDetails', 'editKubernetes'], null);
+            this.setInData(['selectedItemDetails', 'templateDetails', 'listView', 'kubernetes'],
+                              listViewItems);
+            this.emitChange();
+          }
+        }).catch(this.onGenericEditError);
+      }).catch(this.onGenericEditError);
+    }
+  },
+
+  onRemoveKubernetesDefinition: function(kubernetesDefinition) {
+    var templateId = this.data.selectedItemDetails.documentId;
+    var kubernetesDefinitionLink = kubernetesDefinition.documentSelfLink;
+
+    services.deleteDocument(kubernetesDefinitionLink).then(() => {
+      return services.loadContainerTemplate(templateId);
+
+    }).then((template) => {
+      var index = template.descriptionLinks.indexOf(kubernetesDefinitionLink);
+      template.descriptionLinks.splice(index, 1);
+
+      return services.updateContainerTemplate(template);
+
+    }).then(() => {
+
+      if (this.data.selectedItemDetails &&
+        this.data.selectedItemDetails.documentId === templateId) {
+
+        var listViewItems = this.data.selectedItemDetails.templateDetails.listView.kubernetes
+          .filter(item => item.documentSelfLink !== kubernetesDefinitionLink);
+
+
+        this.setInData(['selectedItemDetails', 'editKubernetes'], null);
+        this.setInData(['selectedItemDetails', 'templateDetails', 'listView', 'kubernetes'],
+          listViewItems);
+        this.emitChange();
+      }
+    }).catch(this.onContainerDescriptionDeleteError);
+  },
+
   // Modify cluster size
   onIncreaseClusterSize: function(containerDefinition) {
 
@@ -2181,30 +2278,22 @@ let TemplatesStore = Reflux.createStore({
 
   onGenericEditError: function(e) {
     var validationErrors = utils.getValidationErrors(e);
-    var currentInstanceSelector = this.selectFromData(['selectedItemDetails',
-      'newContainerDefinition',
-      'definitionInstance'
-    ]);
-    if (!currentInstanceSelector.get()) {
-      currentInstanceSelector = this.selectFromData(['selectedItemDetails',
-        'editContainerDefinition',
-        'definitionInstance'
-      ]);
+
+    var itemDetailsSelector = this.selectFromData(['selectedItemDetails']);
+    var itemDetails = itemDetailsSelector.get();
+    if (itemDetails) {
+      for (var key in itemDetails) {
+        if (!itemDetails.hasOwnProperty(key)) {
+          continue;
+        }
+        var value = itemDetails[key];
+        if (value && typeof value === 'object' && value.definitionInstance) {
+          itemDetailsSelector.select([key, 'definitionInstance']).setIn(['error'],
+            validationErrors);
+        }
+      }
     }
 
-    if (!currentInstanceSelector.get()) {
-      currentInstanceSelector = this.selectFromData(['selectedItemDetails',
-        'editNetwork',
-        'definitionInstance'
-      ]);
-    }
-
-    if (!currentInstanceSelector.get()) {
-      console.warn('Unknown edit state');
-      return;
-    }
-
-    currentInstanceSelector.setIn(['error'], validationErrors);
     this.emitChange();
   },
 

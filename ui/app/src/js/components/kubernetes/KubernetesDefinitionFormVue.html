@@ -1,0 +1,26 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="templateImport">
+  <div class="templateImport-header" v-if="showTitle">
+    <div class="title">{{i18n("app.template.details.editKubernetes.createEntities.title")}}</div>
+  </div>
+  <div class="templateImport-properties">
+    <div class="template-import-option">
+      <a class="btn btn-sm btn-secondary fileUpload" v-on:click="browseFile" v-bind:class="{'disabled': disabled}">
+        <span>{{i18n("app.template.import.loadButton")}}</span>
+      </a>
+      <input type="file" class="upload" v-on:change="onFileChange"/>
+      <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="right" v-tooltip="i18n('app.template.details.editKubernetes.createEntities.hint')"></i>
+    </div>
+    <textarea v-model="entitiesContent" class="template-input" v-bind:disabled="disabled" :placeholder="i18n('app.template.details.editKubernetes.createEntities.placeholder')"></textarea>
+  </div>
+</div>

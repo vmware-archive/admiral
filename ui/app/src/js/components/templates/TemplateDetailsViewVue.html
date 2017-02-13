@@ -82,7 +82,7 @@
         <grid sort-by-dom-index="true" v-bind:preferred-width="preferredGridWidth"
               v-on:layout-complete="layoutComplete" v-ref:container-grid
               v-bind:hide-partial-rows="false">
-          <grid-item v-for="item in model.templateDetails.listView.items" track-by="documentId">
+          <grid-item v-for="item in items" track-by="documentId">
             <container-template-item v-bind:model="item"
                                      v-bind:template-id="model.documentId"
                                      v-on:attached="containerAttached"
@@ -93,25 +93,29 @@
             <closure-template-item v-bind:model="item" v-bind:template-id="model.documentId">
             </closure-template-item>
           </grid-item>
+          <grid-item v-for="item in kubernetes" track-by="documentSelfLink">
+            <kubernetes-template-item v-bind:model="item" v-bind:template-id="model.documentId">
+            </kubernetes-template-item>
+          </grid-item>
           <grid-item class="new-item">
             <template-new-item-menu>
-              <div class="new-definition template-new-item" :disabled="templateHasKubernetesEntities ? 'disabled' : ''" v-on:click="openAddNewContainerDefinition">
+              <div class="new-definition template-new-item" :disabled="templateHasKubernetesEntities ? 'disabled' : false" v-on:click="openAddNewContainerDefinition">
                 <img src="image-assets/resource-icons/container.png"/>
                 <span class="label">{{i18n("app.template.details.newDefinition.newLabel")}}</span>
               </div>
-              <div class="template-new-item" :disabled="templateHasKubernetesEntities ? 'disabled' : ''" v-on:click="openAddNewNetwork">
+              <div class="template-new-item" :disabled="templateHasKubernetesEntities ? 'disabled' : false" v-on:click="openAddNewNetwork">
                 <img src="image-assets/resource-icons/network.png"/>
                 <span class="label">{{i18n("app.template.details.editNetwork.newLabel")}}</span>
               </div>
-              <div v-if="areClosuresAllowed" :disabled="templateHasKubernetesEntities ? 'disabled' : ''" class="template-new-item" v-on:click="openAddNewClosure">
+              <div v-if="areClosuresAllowed" :disabled="templateHasKubernetesEntities ? 'disabled' : false" class="template-new-item" v-on:click="openAddNewClosure">
                 <img src="image-assets/resource-icons/task.png"/>
                 <span class='label'>{{i18n('app.template.details.editClosures.newTitle')}}</span>
               </div>
-              <div class="template-new-item" v-on:click="openAddNewVolume" :disabled="templateHasKubernetesEntities ? 'disabled' : ''">
+              <div class="template-new-item" v-on:click="openAddNewVolume" :disabled="templateHasKubernetesEntities ? 'disabled' : false">
                 <img src="image-assets/resource-icons/volume.png"/>
                 <span class="label">{{i18n("app.template.details.editVolume.newLabel")}}</span>
               </div>
-              <div v-if="isKubernetesEnabled" class="template-new-item" :disabled="templateHasGenericEntities ? 'disabled' : ''" v-on:click="openAddNewKubernetes">
+              <div v-if="isKubernetesEnabled" class="template-new-item" :disabled="templateHasGenericEntities ? 'disabled' : false" v-on:click="openAddNewKubernetes">
                 <img src="image-assets/resource-icons/kubernetes.png"/>
                 <span class='label'>{{i18n('app.template.details.editKubernetes.newTitle')}}</span>
               </div>
@@ -203,7 +207,7 @@
       <div class="control-btns">
         <button class="btn btn-primary save-container-definition"
                 v-bind:class="{'loading': savingNetwork}"
-                v-bind:disabled="buttonNetworkDisabled"
+                v-bind:disabled="disableSavingNetworkButton"
                 v-on:click="saveNetwork($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
       </div>
     </div>
@@ -218,8 +222,23 @@
         ></volume-definition-form>
       <div class="control-btns">
         <button class="btn btn-primary save-container-definition" v-bind:class="{'loading': savingVolume}"
-                v-bind:disabled="buttonVolumeDisabled"
+                v-bind:disabled="disableSavingVolumeButton"
                 v-on:click="saveVolume($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
+      </div>
+    </div>
+  </div>
+  <div class="edit-kubernetes closable-view " v-if="!!model.editKubernetes" transition="slide-and-fade">
+    <div class="content">
+      <div class="title" v-if="model.editKubernetes.definitionInstance.documentSelfLink">{{i18n('app.template.details.editKubernetes.editTitle')}}</div>
+      <div class="title" v-else>{{i18n('app.template.details.editKubernetes.newTitle')}}</div>
+      <kubernetes-definition-form @content-change="kubernetesContentChange"
+                                  :show-title="false"
+                                  :model="model.editKubernetes.definitionInstance"></kubernetes-definition-form>
+      <div class="control-btns">
+        <button class="btn btn-primary"
+                v-bind:class="{'loading': savingKubernetes}"
+                v-bind:disabled="disableSavingKubernetesButton"
+                v-on:click="saveKubernetes($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
       </div>
     </div>
   </div>

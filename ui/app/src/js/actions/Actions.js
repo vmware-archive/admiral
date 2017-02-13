@@ -35,22 +35,31 @@ export var PlacementActions = Reflux.createActions([
   'deletePlacement'
 ]);
 
-export var TemplateActions = Reflux.createActions([
-  'openTemplates', 'openContainerRequest', 'openTemplateDetails', 'openAddNewContainerDefinition',
+const containerDefinitionTemplateActions = ['openAddNewContainerDefinition',
   'openEditContainerDefinition', 'resetContainerDefinitionEdit', 'cancelContainerDefinitionEdit',
   'searchImagesForContainerDefinition', 'selectImageForContainerDescription',
-  'addContainerDefinition', 'removeContainerDefinition', 'saveContainerDefinition',
+  'addContainerDefinition', 'removeContainerDefinition', 'saveContainerDefinition'];
+
+const networkTemplateActions = ['openEditNetwork', 'cancelEditNetwork', 'attachNetwork',
+'detachNetwork', 'attachDetachNetwork', 'saveNetwork', 'removeNetwork'];
+
+const closureTemplateActions = ['openAddClosure', 'removeClosure', 'saveClosure', 'runClosure',
+'cancelAddClosure', 'createClosureTemplate', 'resetMonitoredClosure'];
+
+const volumeTemplateActions = ['openEditVolume', 'cancelEditVolume', 'saveVolume', 'removeVolume',
+'attachVolume', 'detachVolume', 'attachDetachVolume', 'editAttachedVolume'];
+
+const kubernetesTemplateActions = ['openEditKubernetesDefinition', 'cancelEditKubernetesDefinition',
+  'saveKubernetesDefinition', 'removeKubernetesDefinition'];
+
+export var TemplateActions = Reflux.createActions([
+  'openTemplates', 'openContainerRequest', 'openTemplateDetails',
   'increaseClusterSize', 'decreaseClusterSize',
   'createContainer', 'createContainerWithDetails', 'createContainerTemplate',
   'removeTemplate', 'saveTemplateName', 'copyTemplate', 'publishTemplate', 'openImportTemplate',
-  'importTemplate', 'openEditNetwork', 'cancelEditNetwork', 'attachNetwork', 'detachNetwork',
-  'attachDetachNetwork', 'saveNetwork', 'removeNetwork',
-  'openAddClosure', 'removeClosure', 'saveClosure', 'runClosure', 'cancelAddClosure',
-  'createClosureTemplate', 'resetMonitoredClosure',
-  'openCreateNewTemplate', 'createNewTemplate',
-  'openEditVolume', 'cancelEditVolume', 'saveVolume', 'removeVolume', 'attachVolume',
-  'detachVolume', 'attachDetachVolume', 'editAttachedVolume'
-]);
+  'importTemplate', 'openCreateNewTemplate', 'createNewTemplate'
+].concat(containerDefinitionTemplateActions, networkTemplateActions, closureTemplateActions,
+  volumeTemplateActions, kubernetesTemplateActions));
 
 export var ContainerActions = Reflux.createActions([
   'openContainers', 'openContainersNext', 'openContainerDetails', 'openClusterDetails',

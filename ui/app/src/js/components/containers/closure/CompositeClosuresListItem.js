@@ -11,10 +11,9 @@
 
 import CompositeClosuresListItemVue from
   'components/containers/closure/CompositeClosuresListItemVue.html';
-import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin'; //eslint-disable-line
-import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmation'; //eslint-disable-line
+import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin';
 import utils from 'core/utils';
-import { NavigationActions } from 'actions/Actions'; //eslint-disable-line
+import { NavigationActions } from 'actions/Actions';
 
 var CompositeClosuresListItem = Vue.extend({
   template: CompositeClosuresListItemVue,

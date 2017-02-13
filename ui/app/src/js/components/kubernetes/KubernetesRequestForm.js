@@ -10,6 +10,7 @@
  */
 
 import KubernetesRequestFormVue from 'components/kubernetes/KubernetesRequestFormVue.html';
+import KubernetesDefinitionForm from 'components/kubernetes/KubernetesDefinitionForm';
 import ResourceGroupsMixin from 'components/templates/ResourceGroupsMixin';
 import { KubernetesActions } from 'actions/Actions';
 
@@ -38,46 +39,20 @@ var KubernetesRequestForm = Vue.extend({
     }
   },
   methods: {
-    browseFile: function($event) {
-      $event.preventDefault();
-      $event.stopImmediatePropagation();
-
-      $(this.$el).find('input.upload').trigger('click');
-    },
-    onFileChange: function($event) {
-      var files = $event.target.files;
-      if (!files.length) {
-        return;
-      }
-      this.loadFromFile(files[0]);
-    },
-    loadFromFile: function(file) {
-      //TODO: file size validation
-
-      var reader = new FileReader();
-
-      reader.onload = (e) => {
-        this.entitiesContent = e.target.result;
-      };
-      reader.readAsText(file);
+    handleContentChange: function(content) {
+      this.entitiesContent = content;
     },
     createEntities: function() {
       var content = this.entitiesContent && this.entitiesContent.trim();
       if (content) {
+        this.creating = true;
         this.handleGroup(KubernetesActions.createKubernetesEntities, [content]);
       }
     }
   },
-  attached: function() {
-    this.unwatchModel = this.$watch('model.definitionInstance', () => {
-      this.creating = false;
-    }, {immediate: true});
-  },
-  detached: function() {
-    this.unwatchModel();
+  components: {
+    kubernetesDefinitionForm: KubernetesDefinitionForm
   }
 });
-
-Vue.component('kubernetes-request-form', KubernetesRequestForm);
 
 export default KubernetesRequestForm;

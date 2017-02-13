@@ -33,3 +33,4 @@ import VueGrid from 'components/common/VueGrid';
 import VueAlert from 'components/common/VueAlert';
 import ContextSidePanelToolbarItem from 'components/ContextSidePanelToolbarItem';
 import ContextSidePanel from 'components/ContextSidePanel';
+import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmation';

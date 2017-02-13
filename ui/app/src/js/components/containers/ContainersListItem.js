@@ -10,10 +10,9 @@
  */
 
 import ContainersListItemVue from 'components/containers/ContainersListItemVue.html';
-import AlertItemMixin from 'components/common/AlertItemMixin'; //eslint-disable-line
-import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin'; //eslint-disable-line
-import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmation'; //eslint-disable-line
-import constants from 'core/constants'; //eslint-disable-line
+import AlertItemMixin from 'components/common/AlertItemMixin';
+import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin';
+import constants from 'core/constants';
 import utils from 'core/utils';
 import { ContainerActions, NavigationActions } from 'actions/Actions';
 
