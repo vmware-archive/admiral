@@ -9,8 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin'; //eslint-disable-line
-import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmation'; //eslint-disable-line
+import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin';
 import EnvironmentItemVue from 'components/environments/EnvironmentItemVue.html';
 import { EnvironmentsActions, NavigationActions } from 'actions/Actions';
 import utils from 'core/utils';

@@ -10,8 +10,7 @@
  */
 
 import HostItemVue from 'components/hosts/HostItemVue.html';
-import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin'; //eslint-disable-line
-import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmation'; //eslint-disable-line
+import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin';
 import { HostActions, NavigationActions } from 'actions/Actions';
 import constants from 'core/constants';
 import utils from 'core/utils';

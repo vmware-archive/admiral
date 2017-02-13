@@ -12,12 +12,11 @@
 import CompositeContainersListItemVue from
   'components/containers/composite/CompositeContainersListItemVue.html';
 import AlertItemMixin from 'components/common/AlertItemMixin';
-import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin'; //eslint-disable-line
-import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmation'; //eslint-disable-line
+import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin';
 import utils from 'core/utils';
 import links from 'core/links';
 import constants from 'core/constants';
-import { ContainerActions, NavigationActions } from 'actions/Actions'; //eslint-disable-line
+import { ContainerActions, NavigationActions } from 'actions/Actions';
 
 var CompositeContainersListItem = Vue.extend({
   template: CompositeContainersListItemVue,

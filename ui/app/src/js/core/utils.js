@@ -1147,7 +1147,7 @@ var utils = {
   },
 
   getErrorMessage: function(e) {
-    let errorMessage = e;
+    let errorMessage;
 
     if (e.status === constants.ERRORS.NOT_FOUND) {
       errorMessage = i18n.t('errors.itemNotFound');

@@ -357,6 +357,21 @@ textarea {
   margin-right: 25px;
 }
 
+.closable-view > .content.host-view {
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+
+.closable-view > .content.machine-edit-view {
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
 .host-view .control-btns,
 .compute-view .control-btns {
   padding-top: 10px;
@@ -435,7 +450,7 @@ $main-list-view-right: 10px;
 
 .list-view {
   @extend .position-expand;
-  margin: 35px 0 35px 45px;
+  margin: 20px 0 35px 20px;
 }
 
 .template-details .list-view {
@@ -1145,10 +1160,6 @@ form.placement-inline-edit-properties {
 }
 
 .templateImport {
-  margin-left: 20px;
-  margin-right: 20px;
-  margin-top: 50px;
-
   .template-input {
     margin-top: 10px;
   }
@@ -1337,7 +1348,26 @@ form.placement-inline-edit-properties {
 }
 
 .closable-view > .content {
-  @extend .position-expand;
+  position: absolute;
+  top: 50px;
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
+  overflow: auto;
+}
+
+.template-details .closable-view > .content {
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.environments-view .closable-view > .content {
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 .closable-view > .close-button {
@@ -1346,13 +1376,16 @@ form.placement-inline-edit-properties {
   left: 15px;
 }
 
-.closable-view .container-form,
-.closable-view .environment-form {
+.closable-view .environment-form,
+.closable-view.registry-view .list-holder {
   margin-top: 20px;
 }
 
-.closable-view .registry-view .list-holder {
-  margin-top: 20px;
+.closable-view.registry-view .content {
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 a.close-button {

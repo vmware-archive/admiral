@@ -758,35 +758,11 @@
     @include transition(left 0.4s);
     left: $margin-left + $width - $border-overlap-size;
   }
-  .create-network.closable-view {
-    .network-form {
-      position: absolute;
-      top: 40px;
-      left: 20px;
-      right: 20px;
-      bottom: 20px;
-    }
+  .closable-view {
     .title {
       font-size: 22px;
     }
   }
-
-  .create-volume.closable-view {
-    .volume-form {
-      position: absolute;
-      top: 40px;
-      left: 20px;
-      right: 20px;
-      bottom: 20px;
-    }
-    .title {
-      font-size: 22px;
-    }
-  }
-}
-
-.volume-form {
-  overflow: auto;
 }
 
 .volume-form .multicolumn-inputs-list-body-wrapper {
@@ -988,6 +964,7 @@
   .selected-context-holder.closable-view {
     > .content {
       top: 0;
+      left: 0;
     }
   }
 }
@@ -1138,15 +1115,8 @@
   }
 }
 
-$template-details-top: 40px;
-$template-details-left: 20px;
 $template-details-right: 20px;
 
-.template-details {
-  @extend .position-expand;
-  left: $template-details-left;
-  top: $template-details-top;
-}
 
 .template-details .list-view {
   top: 0;
@@ -1309,8 +1279,6 @@ $elements-side-margin: $elements-margin / 2;
 .template-details .edit-existing-container-definition-view,
 .template-details .new-container-definition-view,
 .template-details .edit-network {
-  margin-right: $template-details-right;
-  overflow: auto;
   z-index: 102;
 }
 
@@ -1537,6 +1505,15 @@ $elements-side-margin: $elements-margin / 2;
 
   border: 1px solid $main-border-color;
   border-radius: 5px;
+}
+
+.kubernetes-template-item {
+  .image-content {
+     max-height: 200px;
+     overflow: hidden;
+     white-space: pre-wrap;
+     word-wrap: break-word;
+  }
 }
 
 $container-stack-margin: 2px;

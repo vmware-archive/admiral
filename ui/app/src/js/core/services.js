@@ -1906,6 +1906,23 @@ services.loadConfigurationProperties = function() {
   return list(links.CONFIG_PROPS, true);
 };
 
+services.importKubernetesDescriptions = function(content) {
+  return new Promise(function(resolve, reject) {
+    $.ajax({
+      method: 'POST',
+      url: utils.serviceUrl(links.KUBERNETES_DESC_CONTENT),
+      data: content,
+      contentType: 'application/yaml',
+      dataType: 'text',
+      accepts: {
+        yaml: 'application/json'
+      }
+    }).done(function(data) {
+      resolve(JSON.parse(data));
+    }).fail(reject);
+  });
+};
+
 services.getContainerShellUri = function(containerId) {
   return new Promise(function(resolve, reject) {
     $.ajax({

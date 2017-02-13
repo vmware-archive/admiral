@@ -11,9 +11,8 @@
 
 import ClusterContainersListItemVue from
   'components/containers/cluster/ClusterContainersListItemVue.html';
-import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin'; //eslint-disable-line
-import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmation'; //eslint-disable-line
-import { ContainerActions, NavigationActions } from 'actions/Actions'; //eslint-disable-line
+import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin';
+import { ContainerActions, NavigationActions } from 'actions/Actions';
 import utils from 'core/utils';
 
 var ClusterContainersListItem = Vue.extend({

@@ -20,10 +20,9 @@ import ContainerRequestForm from 'components/containers/ContainerRequestForm'; /
 import ClosureRequestForm from 'components/closures/ClosureRequestForm'; // eslint-disable-line
 import RequestsList from 'components/requests/RequestsList'; //eslint-disable-line
 import EventLogList from 'components/eventlog/EventLogList'; //eslint-disable-line
-import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin'; //eslint-disable-line
-import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmation'; //eslint-disable-line
+import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin';
 import VueAdapter from 'components/common/VueAdapter';
-import ResourceGroupsMixin from 'components/templates/ResourceGroupsMixin'; // eslint-disable-line
+import ResourceGroupsMixin from 'components/templates/ResourceGroupsMixin';
 import GridHolderMixin from 'components/common/GridHolderMixin';
 import constants from 'core/constants';
 import utils from 'core/utils';

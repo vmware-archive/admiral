@@ -48,7 +48,11 @@ var links = Immutable({
   COMPOSITE_COMPONENTS: RESOURCES + '/composite-components',
   CONTAINER_NETWORKS: RESOURCES + '/container-networks',
   CONTAINER_VOLUMES: RESOURCES + '/container-volumes',
-  KUBERNETES_ENTITIES: RESOURCES + '/kubernetes-entities',
+  KUBERNETES_ENTITIES: RESOURCES + '/kubernetes',
+  KUBERNETES_DESC: RESOURCES + '/kubernetes-descriptions',
+  KUBERNETES_DESC_CONTENT: RESOURCES + '/kubernetes-templates',
+
+
   MANAGE_CONTAINERS_ENDPOINT: '/manage',
   DATA_COLLECTION: '/data-collection/types/App.Container',
 

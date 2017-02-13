@@ -13,25 +13,25 @@ import TemplateDetailsViewVue from 'components/templates/TemplateDetailsViewVue.
 import ListItemImageVue from 'components/templates/ListItemImageVue.html';
 import ContainerDefinitionVue from 'components/templates/ContainerDefinitionVue.html';
 import ClosureDefinitionVue from 'components/templates/ClosureDefinitionVue.html';
+import KubernetesTemplateItem from 'components/templates/kubernetes/KubernetesTemplateItem';
 import ContainerDefinitionForm from 'components/containers/ContainerDefinitionForm';
-import InlineDeleteConfirmationTemplate from 'components/common/InlineDeleteConfirmationTemplate.html'; //eslint-disable-line
-import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin'; //eslint-disable-line
-import ResourceGroupsMixin from 'components/templates/ResourceGroupsMixin'; // eslint-disable-line
+import InlineDeleteConfirmationTemplate from
+  'components/common/InlineDeleteConfirmationTemplate.html';
+import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin';
+import ResourceGroupsMixin from 'components/templates/ResourceGroupsMixin';
 import GridHolderMixin from 'components/common/GridHolderMixin';
-import ActionConfirmationSupportMixin from 'components/common/ActionConfirmationSupportMixin'; //eslint-disable-line
+import ActionConfirmationSupportMixin from 'components/common/ActionConfirmationSupportMixin';
 import ConnectorMixin from 'components/templates/ConnectorMixin';
 import ResourceConnectionsDataMixin from 'components/templates/ResourceConnectionsDataMixin';
-import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmation'; //eslint-disable-line
 import NetworkBox from 'components/networks/NetworkBox'; //eslint-disable-line
 import VolumeBox from 'components/volumes/VolumeBox'; //eslint-disable-line
 import NetworkDefinitionForm from 'components/networks/NetworkDefinitionForm'; //eslint-disable-line
 import VolumeDefinitionForm from 'components/volumes/VolumeDefinitionForm'; //eslint-disable-line
 import TemplateNewItemMenu from 'components/templates/TemplateNewItemMenu'; //eslint-disable-line
-// import ClosureBox from 'components/closures/ClosureBox'; //eslint-disable-line
 import exportHelper from 'components/templates/TemplateExportHelper';
+import KubernetesDefinitionForm from 'components/kubernetes/KubernetesDefinitionForm';
 import { TemplateActions } from 'actions/Actions';
 import utils from 'core/utils';
-import links from 'core/links';
 import ft from 'core/ft';
 import constants from 'core/constants';
 
@@ -50,13 +50,13 @@ var TemplateDetailsView = Vue.extend({
       addingContainer: false,
       savingNetwork: false,
       savingVolume: false,
+      savingKubernetes: false,
       disableSavingNetworkButton: true,
       disableSavingVolumeButton: true,
       editingTemplateName: false,
       templateName: '',
       networkType: 'bridge',
-      templateHasKubernetesEntities: false,
-      templateHasGenericEntities: false
+      kubernetesContent: ''
     };
   },
   computed: {
@@ -65,13 +65,11 @@ var TemplateDetailsView = Vue.extend({
     },
     buttonsDisabled: function() {
        return this.savingContainer || this.addingContainer || this.savingNetwork
-                || this.savingVolume;
+                || this.savingVolume || this.savingKubernetes;
     },
-    buttonNetworkDisabled: function() {
-       return this.disableSavingNetworkButton;
-    },
-    buttonVolumeDisabled: function() {
-      return this.disableSavingVolumeButton;
+    disableSavingKubernetesButton: function() {
+       var content = this.kubernetesContent && this.kubernetesContent.trim();
+      return !content;
     },
     networks: function() {
       var networks = this.model.templateDetails && this.model.templateDetails.listView.networks;
@@ -89,6 +87,10 @@ var TemplateDetailsView = Vue.extend({
     volumes: function() {
       var volumes = this.model.templateDetails && this.model.templateDetails.listView.volumes;
       return volumes || [];
+    },
+    kubernetes: function() {
+      var kubernetes = this.model.templateDetails && this.model.templateDetails.listView.kubernetes;
+      return kubernetes || [];
     },
     volumeLinks: function() {
       var volumeLinks = this.model.templateDetails
@@ -111,6 +113,12 @@ var TemplateDetailsView = Vue.extend({
     },
     isKubernetesEnabled: function() {
       return ft.isKubernetesHostOptionEnabled();
+    },
+    templateHasKubernetesEntities: function() {
+      return this.kubernetes.length > 0;
+    },
+    templateHasGenericEntities: function() {
+      return this.items.length > 0 || this.networks.length > 0 || this.volumes.length > 0;
     }
   },
   events: {
@@ -489,7 +497,9 @@ var TemplateDetailsView = Vue.extend({
           return this.newDefinitionForm;
         }
       }
-    }
+    },
+    'kubernetes-definition-form': KubernetesDefinitionForm,
+    'kubernetes-template-item': KubernetesTemplateItem
   },
   mixins: [GridHolderMixin, ConnectorMixin, ResourceConnectionsDataMixin, ResourceGroupsMixin,
             ActionConfirmationSupportMixin],
@@ -515,33 +525,12 @@ var TemplateDetailsView = Vue.extend({
       this.addingContainer = false;
       this.savingNetwork = false;
       this.savingVolume = false;
+      this.savingKubernetes = false;
 
       if (model.alert) {
         this.$dispatch('container-form-alert', model.alert.message, model.alert.type);
       } else {
         this.$dispatch('container-form-alert', null, null);
-      }
-    });
-
-    this.unwatchNetworksForEdit = this.$watch('networks', (networks, oldNetworks) => {
-      if (networks !== oldNetworks) {
-
-        if (this.networks.length > 0) {
-          this.templateHasGenericEntities = true;
-        }
-      }
-    });
-
-    this.unwatchItemsForEdit = this.$watch('items', (items, oldItems) => {
-      if (items !== oldItems) {
-        for (var i = 0; i < items.length; i++) {
-          var item = items[i];
-          if (item.documentSelfLink.indexOf(links.CONTAINER_DESCRIPTIONS) !== -1) {
-            this.templateHasGenericEntities = true;
-          } else if (item.documentSelfLink.indexOf(links.KUBERNETES_DESCRIPTIONS) !== -1) {
-            this.templateHasKubernetesEntities = true;
-          }
-        }
       }
     });
 
@@ -561,8 +550,6 @@ var TemplateDetailsView = Vue.extend({
   },
   detached: function() {
     this.unwatchExpanded();
-    this.unwatchNetworksForEdit();
-    this.unwatchItemsForEdit();
 
     var $detailsContent = $(this.$el);
     $detailsContent.off('transitionend MSTransitionEnd webkitTransitionEnd oTransitionEnd');
@@ -586,6 +573,11 @@ var TemplateDetailsView = Vue.extend({
 
       if (data.editVolume) {
         TemplateActions.cancelEditVolume();
+        return true;
+      }
+
+      if (data.editKubernetes) {
+        TemplateActions.cancelEditKubernetesDefinition();
         return true;
       }
 
@@ -638,6 +630,9 @@ var TemplateDetailsView = Vue.extend({
       TemplateActions.openEditNetwork();
       this.$dispatch('disableNetworkSaveButton', true);
     },
+    openAddNewKubernetes: function() {
+      TemplateActions.openEditKubernetesDefinition();
+    },
     saveNetwork: function($event) {
       $event.preventDefault();
 
@@ -675,6 +670,18 @@ var TemplateDetailsView = Vue.extend({
         this.savingVolume = true;
 
         TemplateActions.saveVolume(this.model.documentId, volume);
+      }
+    },
+
+    saveKubernetes: function($event) {
+      $event.preventDefault();
+
+      if (this.kubernetesContent) {
+        var kubernetisEntity = this.model.editKubernetes.definitionInstance;
+
+        this.savingKubernetes = true;
+        TemplateActions.saveKubernetesDefinition(this.model.documentId,
+          this.kubernetesContent, kubernetisEntity);
       }
     },
 
@@ -758,6 +765,9 @@ var TemplateDetailsView = Vue.extend({
       setTimeout(() => {
         this.onLayoutUpdate();
       }, 500);
+    },
+    kubernetesContentChange: function(content) {
+      this.kubernetesContent = content;
     }
   }
 });

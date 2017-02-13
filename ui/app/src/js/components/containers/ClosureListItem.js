@@ -9,10 +9,9 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import ClosureListItemVue from 'components/containers/ClosureListItemVue.html'; //eslint-disable-line
-import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin'; //eslint-disable-line
-import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmation'; //eslint-disable-line
-import constants from 'core/constants'; //eslint-disable-line
+import ClosureListItemVue from 'components/containers/ClosureListItemVue.html';
+import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin';
+import constants from 'core/constants';
 import utils from 'core/utils';
 import {
   ContainerActions, NavigationActions, AppActions
