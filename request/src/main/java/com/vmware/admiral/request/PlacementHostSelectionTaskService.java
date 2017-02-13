@@ -32,10 +32,18 @@ import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.serialization.ReleaseConstants;
+import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.compute.ComponentDescription;
 import com.vmware.admiral.compute.ContainerHostService;
-import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
+import com.vmware.admiral.compute.ContainerHostUtil;
+import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.compute.container.CompositeComponentRegistry;
+import com.vmware.admiral.compute.container.CompositeComponentRegistry.ComponentMeta;
+import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
+import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState.SubStage;
 import com.vmware.admiral.request.allocation.filter.AffinityFilters;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter;
@@ -50,6 +58,7 @@ import com.vmware.photon.controller.model.tasks.helpers.ResourcePoolQueryHelper;
 import com.vmware.photon.controller.model.tasks.helpers.ResourcePoolQueryHelper.QueryResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 
@@ -65,17 +74,14 @@ public class PlacementHostSelectionTaskService
     private static final int QUERY_RETRY_COUNT = Integer.getInteger(
             "com.vmware.admiral.service.placement.query.retries", 2);
 
-    // cached container description
-    private volatile ContainerDescription containerDescription;
+    // cached component description
+    private volatile ReservationComponentDescription description;
 
     public static class PlacementHostSelectionTaskState extends
             com.vmware.admiral.service.common.TaskServiceDocument<PlacementHostSelectionTaskState.SubStage> {
 
         public static enum SubStage {
-            CREATED,
-            FILTER,
-            COMPLETED,
-            ERROR;
+            CREATED, FILTER, COMPLETED, ERROR;
         }
 
         /** (Required) The description that defines the requested resource. */
@@ -113,7 +119,6 @@ public class PlacementHostSelectionTaskService
         @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Map<String, HostSelection> hostSelectionMap;
-
     }
 
     public PlacementHostSelectionTaskService() {
@@ -128,7 +133,7 @@ public class PlacementHostSelectionTaskService
     protected void handleStartedStagePatch(PlacementHostSelectionTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:
-            selectBasedOnDescAndResourcePool(state, containerDescription, QUERY_RETRY_COUNT);
+            selectBasedOnDescAndResourcePool(state, description, QUERY_RETRY_COUNT);
             break;
         case FILTER:
             selection(state, null);
@@ -147,7 +152,8 @@ public class PlacementHostSelectionTaskService
     @Override
     protected void validateStateOnStart(PlacementHostSelectionTaskState state) {
         if (state.resourceCount < 1) {
-            throw new LocalizableValidationException("'resourceCount' must be greater than 0.", "request.resource-count.zero");
+            throw new LocalizableValidationException("'resourceCount' must be greater than 0.",
+                    "request.resource-count.zero");
         }
     }
 
@@ -166,9 +172,9 @@ public class PlacementHostSelectionTaskService
     }
 
     private void selectBasedOnDescAndResourcePool(PlacementHostSelectionTaskState state,
-            ContainerDescription desc, int retries) {
+            ReservationComponentDescription desc, int retries) {
         if (desc == null) {
-            getContainerDescription(state,
+            getDescription(state,
                     (contDesc) -> this
                             .selectBasedOnDescAndResourcePool(state, contDesc, retries));
             return;
@@ -181,10 +187,11 @@ public class PlacementHostSelectionTaskService
                 .setTermMatchValue(state.resourceType);
         q.querySpec.query.addBooleanClause(hostTypeClause);
 
-        if (desc.zoneId != null && !desc.zoneId.isEmpty()) {
+        String zoneId = desc.getCommonDescription().zoneId;
+        if (zoneId != null && !zoneId.isEmpty()) {
             QueryTask.Query zoneIdClause = new QueryTask.Query()
                     .setTermPropertyName(ComputeDescription.FIELD_NAME_ZONE_ID)
-                    .setTermMatchValue(desc.zoneId);
+                    .setTermMatchValue(zoneId);
             q.querySpec.query.addBooleanClause(zoneIdClause);
         }
 
@@ -201,7 +208,8 @@ public class PlacementHostSelectionTaskService
                     failTask(null, new LocalizableValidationException(
                             "Available host ComputeDescription not found supporting the type: "
                                     + state.resourceType,
-                                    "request.placement.compute-description.unsupported", state.resourceType));
+                            "request.placement.compute-description.unsupported",
+                            state.resourceType));
                     return;
                 }
                 proceedComputeSelection(state, desc, computeDescriptionLinks, retries);
@@ -210,7 +218,7 @@ public class PlacementHostSelectionTaskService
     }
 
     private void proceedComputeSelection(PlacementHostSelectionTaskState state,
-            ContainerDescription desc,
+            ReservationComponentDescription desc,
             Collection<String> computeDescriptionLinks, int retries) {
 
         ResourcePoolQueryHelper helper = ResourcePoolQueryHelper.createForResourcePools(getHost(),
@@ -275,32 +283,87 @@ public class PlacementHostSelectionTaskService
                     .get(ContainerHostService.DOCKER_HOST_CLUSTER_STORE_PROP_NAME);
             hostSelection.plugins = computeState.customProperties
                     .get(ContainerHostService.DOCKER_HOST_PLUGINS_PROP_NAME);
+
+            hostSelection.hostType = ContainerHostUtil.getDeclaredContainerHostType(computeState);
+
             initHostSelectionMap.put(hostSelection.hostLink, hostSelection);
         }
         return initHostSelectionMap;
     }
 
     private void selection(final PlacementHostSelectionTaskState state,
-            final ContainerDescription desc) {
-        if (desc == null) {
-            getContainerDescription(state,
-                    (contDesc) -> this.selection(state, contDesc));
+            final ReservationComponentDescription description) {
+        if (description == null) {
+            getDescription(state,
+                    (desc) -> this.selection(state, desc));
             return;
         }
 
-        Map<String, HostSelection> filteredByMemory = filterHostsByMemory(desc,
+        Map<String, HostSelection> filteredByHostType = filterHostsByType(state, description,
                 state.hostSelectionMap);
 
-        final AffinityFilters filters = AffinityFilters.build(getHost(), desc);
+        Map<String, HostSelection> filteredByMemory = filterHostsByMemory(description,
+                filteredByHostType);
 
-        filter(state, desc, filteredByMemory, filters.getQueue());
+        try {
+            final AffinityFilters filters = AffinityFilters.build(getHost(),
+                    description.getServiceDocument());
+            filter(state, filteredByMemory, filters.getQueue());
+        } catch (Exception e) {
+            failTask(null, e);
+        }
+
+    }
+
+    private List<ContainerHostType> getSupportedHostTypes(
+            PlacementHostSelectionTaskState state, ComponentDescription desc) {
+        ServiceDocument serviceDocument = desc.getServiceDocument();
+        if (serviceDocument instanceof CompositeDescription) {
+            CompositeDescription cd = (CompositeDescription) serviceDocument;
+
+            List<ContainerHostType> commonSupportedHostTypes = null;
+
+            for (String descriptionLink : cd.descriptionLinks) {
+                ComponentMeta meta = CompositeComponentRegistry
+                        .metaByDescriptionLink(descriptionLink);
+                ResourceType resourceType = ResourceType.fromName(meta.resourceType);
+                List<ContainerHostType> supportedHostTypes = ContainerHostUtil
+                        .getContainerHostTypesForResourceType(resourceType);
+                if (commonSupportedHostTypes == null) {
+                    commonSupportedHostTypes = supportedHostTypes;
+                } else {
+                    AssertUtil.assertTrue(commonSupportedHostTypes.equals(supportedHostTypes),
+                            "supported host types are not the same for different components");
+                }
+            }
+
+            return commonSupportedHostTypes;
+        } else {
+            ResourceType resourceType = ResourceType.fromName(state.resourceType);
+            return ContainerHostUtil.getContainerHostTypesForResourceType(resourceType);
+        }
+    }
+
+    private Map<String, HostSelection> filterHostsByType(
+            PlacementHostSelectionTaskState state,
+            ComponentDescription desc,
+            Map<String, HostSelection> initHostSelectionMap) {
+
+        List<ContainerHostType> supportedHostTypes = getSupportedHostTypes(state, desc);
+        AssertUtil.assertNotEmpty(supportedHostTypes, "supportedHostTypes");
+
+        Map<String, HostSelection> map = initHostSelectionMap.entrySet().stream()
+                .filter(e -> supportedHostTypes.contains(e.getValue().hostType))
+                .collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue()));
+
+        return map;
     }
 
     private Map<String, HostSelection> filterHostsByMemory(
-            ContainerDescription desc,
+            ReservationComponentDescription desc,
             Map<String, HostSelection> initHostSelectionMap) {
 
-        Long memoryLimit = desc.memoryLimit;
+        Long memoryLimit = desc.getCommonDescription().memoryLimit;
 
         if (memoryLimit == null) {
             return initHostSelectionMap;
@@ -315,11 +378,11 @@ public class PlacementHostSelectionTaskService
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private void filter(final PlacementHostSelectionTaskState state,
-            final ContainerDescription desc,
             final Map<String, HostSelection> hostSelectionMap,
             final Queue<HostSelectionFilter> filters) {
         if (isNoSelection(hostSelectionMap)) {
-            failTask(null, new LocalizableValidationException("Compute state not found", "request.placement.compute.missing"));
+            failTask(null, new LocalizableValidationException("Compute state not found",
+                    "request.placement.compute.missing"));
             return;
         } else {
             final HostSelectionFilter filter = filters.poll();
@@ -335,7 +398,7 @@ public class PlacementHostSelectionTaskService
                         }
                         return;
                     }
-                    filter(state, desc, filteredHostSelectionMap, filters);
+                    filter(state, filteredHostSelectionMap, filters);
                 });
             }
         }
@@ -370,10 +433,10 @@ public class PlacementHostSelectionTaskService
         });
     }
 
-    private void getContainerDescription(PlacementHostSelectionTaskState state,
-            Consumer<ContainerDescription> callbackFunction) {
-        if (containerDescription != null) {
-            callbackFunction.accept(containerDescription);
+    private void getDescription(PlacementHostSelectionTaskState state,
+            Consumer<ReservationComponentDescription> callbackFunction) {
+        if (description != null) {
+            callbackFunction.accept(description);
             return;
         }
         sendRequest(Operation.createGet(this, state.resourceDescriptionLink)
@@ -383,9 +446,19 @@ public class PlacementHostSelectionTaskService
                         return;
                     }
 
-                    ContainerDescription desc = o.getBody(ContainerDescription.class);
-                    this.containerDescription = desc;
-                    callbackFunction.accept(desc);
+                    ReservationComponentDescription cd = new ReservationComponentDescription();
+
+                    if (state.resourceDescriptionLink
+                            .startsWith(CompositeDescriptionFactoryService.SELF_LINK)) {
+                        cd.updateServiceDocument(o.getBody(CompositeDescription.class));
+                    } else {
+                        ComponentMeta metaByDescriptionLink = CompositeComponentRegistry
+                                .metaByDescriptionLink(state.resourceDescriptionLink);
+                        cd.updateServiceDocument(o.getBody(metaByDescriptionLink.descriptionClass));
+                    }
+
+                    this.description = cd;
+                    callbackFunction.accept(cd);
                 }));
     }
 

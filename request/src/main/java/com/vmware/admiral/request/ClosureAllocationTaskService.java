@@ -60,10 +60,7 @@ public class ClosureAllocationTaskService extends
             com.vmware.admiral.service.common.TaskServiceDocument<ClosureAllocationTaskState.SubStage> {
 
         public static enum SubStage {
-            CREATED,
-            CONTEXT_PREPARED,
-            COMPLETED,
-            ERROR;
+            CREATED, CONTEXT_PREPARED, COMPLETED, ERROR;
         }
 
         @Documentation(description = "The description that defines the closure description.")
@@ -126,8 +123,8 @@ public class ClosureAllocationTaskService extends
         return finishedResponse;
     }
 
-    private void prepareContext(ClosureAllocationTaskState state, ClosureDescription
-            closureDescription) {
+    private void prepareContext(ClosureAllocationTaskState state,
+            ClosureDescription closureDescription) {
         assertNotNull(state, "state");
 
         if (closureDescription == null) {
@@ -171,34 +168,6 @@ public class ClosureAllocationTaskService extends
         default:
             break;
         }
-    }
-
-    @SuppressWarnings("unused")
-    private boolean createRequestTrackerIfNoneProvided(ClosureAllocationTaskState state,
-            Operation op) {
-        if (state.requestTrackerLink != null && !state.requestTrackerLink.isEmpty()) {
-            logFine("Request tracker link provided: %s", state.requestTrackerLink);
-            return false;
-        }
-        RequestStatusService.RequestStatus requestStatus = fromTask(
-                new RequestStatusService.RequestStatus(), state);
-        requestStatus.addTrackedTasks(DISPLAY_NAME);
-
-        sendRequest(Operation.createPost(this, RequestStatusFactoryService.SELF_LINK)
-                .setBody(requestStatus)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Failed to create request tracker for: "
-                                + state.documentSelfLink, e);
-                        op.fail(e);
-                        return;
-                    }
-                    logFine("Created request tracker: %s", requestStatus.documentSelfLink);
-                    state.requestTrackerLink = o
-                            .getBody(RequestStatusService.RequestStatus.class).documentSelfLink;
-                    op.complete(); /* complete the original start operation */
-                }));
-        return true;// don't complete the start operation
     }
 
     private void createClosure(ClosureAllocationTaskState state) {

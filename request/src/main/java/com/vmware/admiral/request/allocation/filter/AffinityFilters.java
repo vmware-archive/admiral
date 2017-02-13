@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
 import com.vmware.admiral.compute.BindingUtils;
 import com.vmware.admiral.compute.ComponentDescription;
+import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
@@ -69,6 +70,8 @@ public final class AffinityFilters {
             // TODO initialize(host, (ContainerVolumeDescription) desc)
         } else if (ClosureDescription.class.isInstance(desc)) {
             initialize(host, (ClosureDescription) desc);
+        } else if (CompositeDescription.class.isInstance(desc)) {
+            initialize(host, (CompositeDescription) desc);
         } else {
             throw new IllegalArgumentException("Unsupported type:" + desc.getClass());
         }
@@ -126,6 +129,10 @@ public final class AffinityFilters {
         // advanced policy filters
         filters.add(new BinpackAffinityHostFilter(host, desc));
         filters.add(new SpreadAffinityHostFilter(host, desc));
+
+    }
+
+    private void initialize(ServiceHost host, CompositeDescription desc) {
 
     }
 

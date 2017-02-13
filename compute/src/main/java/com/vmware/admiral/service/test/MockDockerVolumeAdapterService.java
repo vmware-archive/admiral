@@ -18,7 +18,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
@@ -26,12 +25,9 @@ import com.vmware.admiral.adapter.common.VolumeOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
-import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
-import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.ServiceHost;
-import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
@@ -40,7 +36,7 @@ import com.vmware.xenon.common.Utils;
 /**
  * Mock Docker Adapter service for volumes in order to be used in unit and integration tests.
  */
-public class MockDockerVolumeAdapterService extends StatelessService {
+public class MockDockerVolumeAdapterService extends BaseMockAdapterService {
 
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER_VOLUME;
 
@@ -115,14 +111,14 @@ public class MockDockerVolumeAdapterService extends StatelessService {
         logInfo("Request accepted for resource: %s", state.resourceReference);
         if (TaskStage.FAILED == taskInfo.stage) {
             logInfo("Failed request for resource:  %s", state.resourceReference);
-            patchProvisioningTask(state, taskInfo.failure);
+            patchTaskStage(state, taskInfo.failure);
             return;
         }
 
         // static way to define expected failure
         if (this.isFailureExpected) {
             logInfo("Expected failure request for resource:  %s", state.resourceReference);
-            patchProvisioningTask(state, new IllegalStateException("Simulated failure"));
+            patchTaskStage(state, new IllegalStateException("Simulated failure"));
             return;
         }
 
@@ -131,7 +127,7 @@ public class MockDockerVolumeAdapterService extends StatelessService {
                 && state.customProperties.containsKey(FAILURE_EXPECTED)) {
             logInfo("Expected failure request from custom props for resource:  %s",
                     state.resourceReference);
-            patchProvisioningTask(state, new IllegalStateException("Simulated failure"));
+            patchTaskStage(state, new IllegalStateException("Simulated failure"));
             return;
         }
 
@@ -143,7 +139,7 @@ public class MockDockerVolumeAdapterService extends StatelessService {
         if (TaskStage.FAILED == taskInfo.stage) {
             logInfo("Failed request based on volume resource:  %s",
                     state.resourceReference);
-            patchProvisioningTask(state, taskInfo.failure);
+            patchTaskStage(state, taskInfo.failure);
             return;
         }
 
@@ -156,7 +152,7 @@ public class MockDockerVolumeAdapterService extends StatelessService {
         // define expected failure dynamically for every request
         if (volume.customProperties != null
                 && volume.customProperties.remove(FAILURE_EXPECTED) != null) {
-            patchProvisioningTask(state, new IllegalStateException("Simulated failure"));
+            patchTaskStage(state, new IllegalStateException("Simulated failure"));
             return;
         }
 
@@ -170,79 +166,11 @@ public class MockDockerVolumeAdapterService extends StatelessService {
         if (state.isProvisioning()) {
             addVolume(Service.getId(volume.originatingHostLink),
                     state.resourceReference.toString(), volume.name);
-            patchProvisioningTask(state, (Throwable) null);
+            patchTaskStage(state, (Throwable) null);
         } else if (state.isDeprovisioning()) {
             removeVolumeByReference(state.resourceReference);
-            patchProvisioningTask(state, (Throwable) null);
+            patchTaskStage(state, (Throwable) null);
         }
-    }
-
-    private void patchProvisioningTask(MockAdapterRequest state, Throwable exception) {
-        patchProvisioningTask(state,
-                exception == null ? null : Utils.toServiceErrorResponse(exception));
-    }
-
-    private void patchProvisioningTask(MockAdapterRequest state,
-            ServiceErrorResponse errorResponse) {
-        if (state.serviceTaskCallback.isEmpty()) {
-            return;
-        }
-        ServiceTaskCallbackResponse callbackResponse = null;
-        if (errorResponse != null) {
-            callbackResponse = state.serviceTaskCallback.getFailedResponse(errorResponse);
-        } else {
-            callbackResponse = state.serviceTaskCallback.getFinishedResponse();
-        }
-
-        URI callbackReference = URI.create(state.serviceTaskCallback.serviceSelfLink);
-        if (callbackReference.getScheme() == null) {
-            callbackReference = UriUtils.buildUri(getHost(),
-                    state.serviceTaskCallback.serviceSelfLink);
-        }
-
-        // tell the parent we are done. We are a mock service, so we get things done, fast.
-        sendRequest(Operation
-                .createPatch(callbackReference)
-                .setBody(callbackResponse)
-                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        logWarning(
-                                "Notifying parent task %s from mock docker adapter failed: %s",
-                                o.getUri(), Utils.toString(e));
-                    }
-                }));
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> void getDocument(Class<T> type, URI reference, TaskState taskInfo,
-            Consumer<T> callbackFunction) {
-        final Object[] result = new Object[] { null };
-        sendRequest(Operation.createGet(reference)
-                .setCompletion(
-                        (o, e) -> {
-                            if (e != null) {
-                                logSevere(e);
-                                taskInfo.stage = TaskStage.FAILED;
-                                taskInfo.failure = Utils.toServiceErrorResponse(e);
-                            } else {
-                                result[0] = o.getBody(type);
-                                if (result[0] != null) {
-                                    logInfo("Get Document: [%s]", reference);
-                                    taskInfo.stage = TaskStage.FINISHED;
-                                } else {
-                                    String errMsg = String.format("Can't find resource: [%s]",
-                                            reference);
-                                    logSevere(errMsg);
-                                    taskInfo.stage = TaskStage.FAILED;
-                                    taskInfo.failure = Utils
-                                            .toServiceErrorResponse(new IllegalStateException(
-                                                    errMsg));
-                                }
-                            }
-                            callbackFunction.accept((T) result[0]);
-                        }));
-
     }
 
     public static synchronized void resetVolumes() {

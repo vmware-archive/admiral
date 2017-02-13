@@ -43,10 +43,7 @@ public class ClosureProvisionTaskService extends
             com.vmware.admiral.service.common.TaskServiceDocument<ClosureProvisionTaskState.SubStage> {
 
         public static enum SubStage {
-            CREATED,
-            CLOSURE_EXECUTING,
-            COMPLETED,
-            ERROR;
+            CREATED, CLOSURE_EXECUTING, COMPLETED, ERROR;
         }
 
         @Documentation(description = "The description that defines the closure description.")
@@ -117,35 +114,6 @@ public class ClosureProvisionTaskService extends
         for (String closureLink : state.resourceLinks) {
             startClosureExecution(state, closureLink);
         }
-    }
-
-    @SuppressWarnings("unused")
-    private boolean createRequestTrackerIfNoneProvided(ClosureProvisionTaskState state,
-            Operation op) {
-        if (state.requestTrackerLink != null && !state.requestTrackerLink.isEmpty()) {
-            logFine("Request tracker link provided: %s", state.requestTrackerLink);
-            return false;
-        }
-
-        RequestStatusService.RequestStatus requestStatus = fromTask(
-                new RequestStatusService.RequestStatus(), state);
-        requestStatus.addTrackedTasks(DISPLAY_NAME);
-
-        sendRequest(Operation.createPost(this, RequestStatusFactoryService.SELF_LINK)
-                .setBody(requestStatus)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Failed to create request tracker for: "
-                                + state.documentSelfLink, e);
-                        op.fail(e);
-                        return;
-                    }
-                    logFine("Created request tracker: %s", requestStatus.documentSelfLink);
-                    state.requestTrackerLink = o
-                            .getBody(RequestStatusService.RequestStatus.class).documentSelfLink;
-                    op.complete();
-                }));
-        return true;
     }
 
     private void startClosureExecution(ClosureProvisionTaskState state, String closureLink) {

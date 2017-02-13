@@ -12,6 +12,9 @@
 package com.vmware.admiral.compute;
 
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
@@ -37,7 +40,8 @@ public class ContainerHostUtil {
      * @return boolean value
      */
     public static boolean isSchedulerHost(ComputeState computeState) {
-        return ContainerHostUtil.isVicHost(computeState) || ContainerHostUtil.isKubernetesHost(computeState);
+        return ContainerHostUtil.isVicHost(computeState)
+                || ContainerHostUtil.isKubernetesHost(computeState);
     }
 
     /**
@@ -72,6 +76,21 @@ public class ContainerHostUtil {
                     hostTypeRaw);
             throw new LocalizableValidationException(ex, error,
                     CONTAINER_HOST_TYPE_NOT_SUPPORTED_MESSAGE_CODE, hostTypeRaw);
+        }
+    }
+
+    public static List<ContainerHostType> getContainerHostTypesForResourceType(
+            ResourceType resourceType) {
+
+        switch (resourceType) {
+        case KUBERNETES_DEPLOYMENT_TYPE:
+        case KUBERNETES_POD_TYPE:
+        case KUBERNETES_REPLICATION_CONTROLLER_TYPE:
+        case KUBERNETES_SERVICE_TYPE:
+            return Collections.singletonList(ContainerHostType.KUBERNETES);
+        default:
+            return Arrays.asList(ContainerHostType.DOCKER, ContainerHostType.VCH);
+
         }
     }
 

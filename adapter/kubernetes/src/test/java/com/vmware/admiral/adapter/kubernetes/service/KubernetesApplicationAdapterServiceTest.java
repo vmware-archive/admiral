@@ -30,10 +30,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.vmware.admiral.adapter.common.KubernetesOperationType;
+import com.vmware.admiral.adapter.common.ApplicationOperationType;
+import com.vmware.admiral.adapter.common.ApplicationRequest;
 import com.vmware.admiral.adapter.common.service.mock.MockTaskFactoryService;
 import com.vmware.admiral.adapter.common.service.mock.MockTaskService.MockTaskState;
-import com.vmware.admiral.adapter.kubernetes.ApplicationRequest;
 import com.vmware.admiral.adapter.kubernetes.mock.BaseKubernetesMockTest;
 import com.vmware.admiral.adapter.kubernetes.mock.MockKubernetesHostService;
 import com.vmware.admiral.common.DeploymentProfileConfig;
@@ -100,13 +100,13 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
 
     @Test
     public void testValidateServicesAreDeployedFirst() throws Throwable {
-        String wordpressTemplate = CommonTestStateFactory.getFileContent
-                ("WordPress_with_MySQL_kubernetes.yaml");
+        String wordpressTemplate = CommonTestStateFactory
+                .getFileContent("WordPress_with_MySQL_kubernetes.yaml");
 
         String compositeDescriptionLink = importTemplate(wordpressTemplate);
 
-        CompositeDescription compositeDescription = getCompositeDescription
-                (compositeDescriptionLink);
+        CompositeDescription compositeDescription = getCompositeDescription(
+                compositeDescriptionLink);
 
         CompositeComponent compositeComponent = new CompositeComponent();
         compositeComponent.name = compositeDescription.name + "-mcm-102";
@@ -166,8 +166,8 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
 
     @Test
     public void testDeleteApplication() throws Throwable {
-        String wordpressTemplate = CommonTestStateFactory.getFileContent
-                ("WordPress_with_MySQL_kubernetes.yaml");
+        String wordpressTemplate = CommonTestStateFactory
+                .getFileContent("WordPress_with_MySQL_kubernetes.yaml");
 
         String compositeDescriptionLink = importTemplate(wordpressTemplate);
 
@@ -190,7 +190,7 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
         // Delete the application
         createProvisioningTask();
         appRequest = createApplicationRequest(compositeComponent.documentSelfLink);
-        appRequest.operationTypeId = KubernetesOperationType.DELETE.id;
+        appRequest.operationTypeId = ApplicationOperationType.DELETE.id;
 
         doOperation(ManagementUriParts.ADAPTER_KUBERNETES_APPLICATION, appRequest);
         waitForPropertyValue(provisioningTaskLink, MockTaskState.class, "taskInfo.stage",
@@ -208,8 +208,8 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
 
     @Test
     public void testDeleteApplicationShouldFail() throws Throwable {
-        String wordpressTemplate = CommonTestStateFactory.getFileContent
-                ("WordPress_with_MySQL_kubernetes.yaml");
+        String wordpressTemplate = CommonTestStateFactory
+                .getFileContent("WordPress_with_MySQL_kubernetes.yaml");
 
         String compositeDescriptionLink = importTemplate(wordpressTemplate);
 
@@ -233,7 +233,7 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
 
         createProvisioningTask();
         appRequest = createApplicationRequest(compositeComponent.documentSelfLink);
-        appRequest.operationTypeId = KubernetesOperationType.DELETE.id;
+        appRequest.operationTypeId = ApplicationOperationType.DELETE.id;
 
         doOperation(ManagementUriParts.ADAPTER_KUBERNETES_APPLICATION, appRequest);
         waitForPropertyValue(provisioningTaskLink, MockTaskState.class, "taskInfo.stage",
@@ -252,10 +252,10 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
 
     private ApplicationRequest createApplicationRequest(String resourceReference) {
         ApplicationRequest appRequest = new ApplicationRequest();
-        appRequest.hostReference = UriUtils.buildUri(host, kubernetesHostState.documentSelfLink);
+        appRequest.hostLink = kubernetesHostState.documentSelfLink;
         appRequest.resourceReference = UriUtils.buildUri(host, resourceReference);
         appRequest.serviceTaskCallback = ServiceTaskCallback.create(provisioningTaskLink);
-        appRequest.operationTypeId = KubernetesOperationType.CREATE.id;
+        appRequest.operationTypeId = ApplicationOperationType.CREATE.id;
         return appRequest;
     }
 

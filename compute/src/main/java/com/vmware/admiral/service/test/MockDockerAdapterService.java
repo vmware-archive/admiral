@@ -27,7 +27,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import com.google.gson.JsonArray;
@@ -45,12 +44,9 @@ import com.vmware.admiral.compute.container.ShellContainerExecutorService;
 import com.vmware.admiral.compute.container.maintenance.ContainerStats;
 import com.vmware.admiral.compute.container.maintenance.ContainerStatsEvaluator;
 import com.vmware.admiral.service.common.LogService;
-import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
-import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.ServiceHost;
-import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
@@ -60,11 +56,10 @@ import com.vmware.xenon.services.common.ServiceHostLogService;
 /**
  * Mock Docker Adapter service to be used in unit and integration tests.
  */
-public class MockDockerAdapterService extends StatelessService {
+public class MockDockerAdapterService extends BaseMockAdapterService {
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER;
 
     public static final String MOCK_CURRENT_EXECUTED_OPERATION_KEY = "MOCK_CURRENT_EXECUTED_OPERATION_KEY";
-    public static final String FAILURE_EXPECTED = "FAILURE_EXPECTED";
     public static final String MOCK_HOST_ASSIGNED_ADDRESS = "127.0.0.1";
 
     public boolean isFailureExpected;
@@ -142,14 +137,14 @@ public class MockDockerAdapterService extends StatelessService {
         logInfo("Request accepted for resource: %s", state.resourceReference);
         if (TaskStage.FAILED == taskInfo.stage) {
             logInfo("Failed request for resource:  %s", state.resourceReference);
-            patchProvisioningTask(state, taskInfo.failure);
+            patchTaskStage(state, taskInfo.failure);
             return;
         }
 
         // static way to define expected failure
         if (this.isFailureExpected) {
             logInfo("Expected failure request for resource:  %s", state.resourceReference);
-            patchProvisioningTask(state, new IllegalStateException("Simulated failure"));
+            patchTaskStage(state, new IllegalStateException("Simulated failure"));
             return;
         }
 
@@ -158,7 +153,7 @@ public class MockDockerAdapterService extends StatelessService {
                 && state.customProperties.containsKey(FAILURE_EXPECTED)) {
             logInfo("Expected failure request from custom props for resource:  %s",
                     state.resourceReference);
-            patchProvisioningTask(state, new IllegalStateException("Simulated failure"));
+            patchTaskStage(state, new IllegalStateException("Simulated failure"));
             return;
         }
 
@@ -170,7 +165,7 @@ public class MockDockerAdapterService extends StatelessService {
         if (TaskStage.FAILED == taskInfo.stage) {
             logInfo("Failed request based on containerState resource:  %s",
                     state.resourceReference);
-            patchProvisioningTask(state, taskInfo.failure);
+            patchTaskStage(state, taskInfo.failure);
             return;
         }
 
@@ -183,7 +178,7 @@ public class MockDockerAdapterService extends StatelessService {
         // define expected failure dynamically for every request
         if (containerState.customProperties != null
                 && containerState.customProperties.remove(FAILURE_EXPECTED) != null) {
-            updateContainerState(containerState, () -> patchProvisioningTask(state,
+            updateContainerState(containerState, () -> patchTaskStage(state,
                     new IllegalStateException("Simulated failure")));
             return;
         }
@@ -199,7 +194,7 @@ public class MockDockerAdapterService extends StatelessService {
             patchContainerStateWithIPAddress(state, containerState, contDesc);
         } else if (state.isDeprovisioning()) {
             removeContainerIdByReference(state.resourceReference);
-            patchProvisioningTask(state, (Throwable) null);
+            patchTaskStage(state, (Throwable) null);
         } else if (ContainerOperationType.INSPECT.id.equals(state.operationTypeId)) {
             patchContainerInspect(state, containerState);
         } else if (ContainerOperationType.STATS.id.equals(state.operationTypeId)) {
@@ -262,7 +257,7 @@ public class MockDockerAdapterService extends StatelessService {
                         logSevere(e);
                         patchException = e;
                     }
-                    patchProvisioningTask(state, patchException);
+                    patchTaskStage(state, patchException);
                 }));
     }
 
@@ -290,43 +285,7 @@ public class MockDockerAdapterService extends StatelessService {
                         logSevere(e);
                         patchException = e;
                     }
-                    patchProvisioningTask(state, patchException);
-                }));
-    }
-
-    private void patchProvisioningTask(MockAdapterRequest state, Throwable exception) {
-        patchProvisioningTask(state,
-                exception == null ? null : Utils.toServiceErrorResponse(exception));
-    }
-
-    private void patchProvisioningTask(MockAdapterRequest state, ServiceErrorResponse errorResponse) {
-        if (state.serviceTaskCallback.isEmpty()) {
-            return;
-        }
-        ServiceTaskCallbackResponse callbackResponse = null;
-        if (errorResponse != null) {
-            callbackResponse = state.serviceTaskCallback.getFailedResponse(errorResponse);
-        } else {
-            callbackResponse = state.serviceTaskCallback.getFinishedResponse();
-        }
-
-        URI callbackReference = URI.create(state.serviceTaskCallback.serviceSelfLink);
-        if (callbackReference.getScheme() == null) {
-            callbackReference = UriUtils.buildUri(getHost(),
-                    state.serviceTaskCallback.serviceSelfLink);
-        }
-
-        // tell the parent we are done. We are a mock service, so we get things done, fast.
-        sendRequest(Operation
-                .createPatch(callbackReference)
-                .setBody(callbackResponse)
-                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        logWarning(
-                                "Notifying parent task %s from mock docker adapter failed: %s",
-                                o.getUri(), Utils.toString(e));
-                    }
+                    patchTaskStage(state, patchException);
                 }));
     }
 
@@ -351,7 +310,7 @@ public class MockDockerAdapterService extends StatelessService {
                         logSevere(ex);
                         patchException = ex;
                     }
-                    patchProvisioningTask(state, patchException);
+                    patchTaskStage(state, patchException);
                 }));
     }
 
@@ -370,7 +329,7 @@ public class MockDockerAdapterService extends StatelessService {
             try {
                 logServiceState.logs = Files.readAllBytes((new File(logFile)).toPath());
             } catch (Exception e) {
-                patchProvisioningTask(state, e);
+                patchTaskStage(state, e);
                 return;
             }
         }
@@ -383,7 +342,7 @@ public class MockDockerAdapterService extends StatelessService {
                         logSevere(ex);
                         patchException = ex;
                     }
-                    patchProvisioningTask(state, patchException);
+                    patchTaskStage(state, patchException);
                 }));
     }
 
@@ -453,7 +412,7 @@ public class MockDockerAdapterService extends StatelessService {
                         logSevere(ex);
                         patchException = ex;
                     }
-                    patchProvisioningTask(state, patchException);
+                    patchTaskStage(state, patchException);
                 }));
     }
 
@@ -466,37 +425,6 @@ public class MockDockerAdapterService extends StatelessService {
                     }
                     callbackFunc.run();
                 }));
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> void getDocument(Class<T> type, URI reference, TaskState taskInfo,
-            Consumer<T> callbackFunction) {
-        final Object[] result = new Object[] { null };
-        sendRequest(Operation.createGet(reference)
-                .setCompletion(
-                        (o, e) -> {
-                            if (e != null) {
-                                logSevere(e);
-                                taskInfo.stage = TaskStage.FAILED;
-                                taskInfo.failure = Utils.toServiceErrorResponse(e);
-                            } else {
-                                result[0] = o.getBody(type);
-                                if (result[0] != null) {
-                                    logInfo("Get Document: [%s]", reference);
-                                    taskInfo.stage = TaskStage.FINISHED;
-                                } else {
-                                    String errMsg = String.format("Can't find resource: [%s]",
-                                            reference);
-                                    logSevere(errMsg);
-                                    taskInfo.stage = TaskStage.FAILED;
-                                    taskInfo.failure = Utils
-                                            .toServiceErrorResponse(new IllegalStateException(
-                                                    errMsg));
-                                }
-                            }
-                            callbackFunction.accept((T) result[0]);
-                        }));
-
     }
 
     public static synchronized void resetContainers() {

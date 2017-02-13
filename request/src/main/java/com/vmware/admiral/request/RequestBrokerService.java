@@ -92,6 +92,7 @@ import com.vmware.admiral.request.compute.ComputeReservationTaskService;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService.ComputeReservationTaskState;
 import com.vmware.admiral.request.compute.ProvisionContainerHostsTaskService;
 import com.vmware.admiral.request.compute.ProvisionContainerHostsTaskService.ProvisionContainerHostsTaskState;
+import com.vmware.admiral.request.kubernetes.CompositeKubernetesProvisioningTaskService;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -124,16 +125,7 @@ public class RequestBrokerService extends
         public static final String CONFIGURE_HOST_OPERATION = "CONFIGURE_HOST";
 
         public static enum SubStage {
-            CREATED,
-            RESERVING,
-            RESERVED,
-            ALLOCATING,
-            ALLOCATED,
-            COMPLETED,
-            REQUEST_FAILED,
-            RESERVATION_CLEANUP,
-            RESERVATION_CLEANED_UP,
-            ERROR;
+            CREATED, RESERVING, RESERVED, ALLOCATING, ALLOCATED, COMPLETED, REQUEST_FAILED, RESERVATION_CLEANUP, RESERVATION_CLEANED_UP, ERROR;
 
             static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
                     Arrays.asList(RESERVING, ALLOCATING, RESERVATION_CLEANUP));
@@ -466,7 +458,8 @@ public class RequestBrokerService extends
             } else {
                 failTask(null, new LocalizableValidationException(
                         "Not supported operation for closure type: "
-                                + state.operation, "request.closure.operation.not.supported",
+                                + state.operation,
+                        "request.closure.operation.not.supported",
                         state.operation));
             }
         } else {
@@ -662,7 +655,7 @@ public class RequestBrokerService extends
 
         removalState.externalInspectOnly = (state.customProperties != null
                 && "true".equalsIgnoreCase(state.customProperties
-                .get(ContainerNetworkRemovalTaskService.EXTERNAL_INSPECT_ONLY_CUSTOM_PROPERTY)));
+                        .get(ContainerNetworkRemovalTaskService.EXTERNAL_INSPECT_ONLY_CUSTOM_PROPERTY)));
         removalState.cleanupRemoval = cleanupRemoval;
 
         sendRequest(Operation.createPost(this, ContainerNetworkRemovalTaskService.FACTORY_LINK)
@@ -706,7 +699,7 @@ public class RequestBrokerService extends
 
         removalState.externalInspectOnly = (state.customProperties != null
                 && "true".equalsIgnoreCase(state.customProperties
-                .get(ContainerVolumeRemovalTaskService.EXTERNAL_INSPECT_ONLY_CUSTOM_PROPERTY)));
+                        .get(ContainerVolumeRemovalTaskService.EXTERNAL_INSPECT_ONLY_CUSTOM_PROPERTY)));
         removalState.cleanupRemoval = cleanupRemoval;
 
         sendRequest(Operation.createPost(this, ContainerVolumeRemovalTaskService.FACTORY_LINK)
@@ -1512,12 +1505,12 @@ public class RequestBrokerService extends
     private boolean isPostAllocationOperation(RequestBrokerState state) {
         return (isContainerType(state) || isContainerNetworkType(state) || isComputeType(state)
                 || isContainerVolumeType(state) || isComputeNetworkType(state) || isClosureType(
-                state))
+                        state))
                 && (ContainerOperationType.CREATE.id.equals(state.operation)
-                || NetworkOperationType.CREATE.id.equals(state.operation)
-                || ComputeOperationType.CREATE.id.equals(state.operation)
-                || VolumeOperationType.CREATE.id.equals(state.operation)
-                || ClosureOperationType.CREATE.id.equals(state.operation));
+                        || NetworkOperationType.CREATE.id.equals(state.operation)
+                        || ComputeOperationType.CREATE.id.equals(state.operation)
+                        || VolumeOperationType.CREATE.id.equals(state.operation)
+                        || ClosureOperationType.CREATE.id.equals(state.operation));
     }
 
     private String getPostAllocationOperation(RequestBrokerState state) {
@@ -1644,6 +1637,11 @@ public class RequestBrokerService extends
                         Arrays.asList(ContainerVolumeProvisionTaskService.DISPLAY_NAME)));
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CLOSURE_TYPE, new ArrayList<>(
                 Arrays.asList(ClosureProvisionTaskService.DISPLAY_NAME)));
+
+        // A composite component that will be deployed/handled at once, instead of separating
+        // into sub tasks for it's components. Used for tracking purposes.
+        SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.JOIN_COMPOSITE_COMPONENT_TYPE,
+                new ArrayList<>(Arrays.asList(CompositeKubernetesProvisioningTaskService.DISPLAY_NAME)));
     }
 
     private static final Map<ResourceType, List<String>> SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE;
@@ -1665,7 +1663,7 @@ public class RequestBrokerService extends
         SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.COMPUTE_NETWORK_TYPE,
                 new ArrayList<>(
                         Arrays.asList(ComputeNetworkAllocationTaskService.DISPLAY_NAME,
-                        ResourceNamePrefixTaskService.DISPLAY_NAME)));
+                                ResourceNamePrefixTaskService.DISPLAY_NAME)));
         SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
                 .put(ResourceType.NETWORK_TYPE, new ArrayList<>(
                         Arrays.asList(ContainerNetworkAllocationTaskService.DISPLAY_NAME,
@@ -1718,6 +1716,10 @@ public class RequestBrokerService extends
             } else {
                 trackedTasks = new ArrayList<>();
                 for (List<String> vals : SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.values()) {
+                    trackedTasks.addAll(vals);
+                }
+
+                for (List<String> vals : SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.values()) {
                     trackedTasks.addAll(vals);
                 }
             }
