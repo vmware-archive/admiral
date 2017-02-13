@@ -92,7 +92,6 @@ public abstract class BaseIntegrationSupportIT {
             "test.state.change.wait.period.millis", 1000);
 
     private static final String ENDPOINT_ID = "endpoint";
-    private static final String TENANT_LINKS_KEY = "test.tenant.links";
     public static final String SUFFIX = "bel10";
 
     private static final Properties testProperties = loadTestProperties();

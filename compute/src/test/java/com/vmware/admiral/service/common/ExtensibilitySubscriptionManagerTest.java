@@ -105,7 +105,7 @@ public class ExtensibilitySubscriptionManagerTest extends BaseTestCase {
         return getPrivateField(f, manager);
     }
 
-    private void verifyMapSize(Map map, int count) throws Throwable {
+    private void verifyMapSize(@SuppressWarnings("rawtypes") Map map, int count) throws Throwable {
         waitFor(() -> map.size() == count);
     }
 

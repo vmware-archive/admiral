@@ -173,6 +173,7 @@ public class ClosureAllocationTaskService extends
         }
     }
 
+    @SuppressWarnings("unused")
     private boolean createRequestTrackerIfNoneProvided(ClosureAllocationTaskState state,
             Operation op) {
         if (state.requestTrackerLink != null && !state.requestTrackerLink.isEmpty()) {

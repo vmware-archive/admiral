@@ -128,6 +128,7 @@ public class BindingEvaluator {
                 compositeTemplate.bindings);
 
         for (Binding.ComponentBinding componentBinding : bindingByComponentName.values()) {
+            @SuppressWarnings("rawtypes")
             ComponentTemplate componentTemplate = componentNameToTemplate
                     .get(componentBinding.componentName);
 
@@ -226,10 +227,11 @@ public class BindingEvaluator {
         evaluatedBindings.put(binding.placeholder.bindingExpression, value);
     }
 
+    @SuppressWarnings("unchecked")
     private static void evaluateBinding(
             Binding binding,
             String componentName,
-            ComponentTemplate componentTemplate,
+            @SuppressWarnings("rawtypes") ComponentTemplate componentTemplate,
             Map<String, ComponentTemplate<?>> componentNameToTemplate,
             Map<String, Binding.ComponentBinding> allBindings,
             Set<String> visited) throws ReflectiveOperationException, IOException {
@@ -254,7 +256,7 @@ public class BindingEvaluator {
     }
 
     private static Object resolveValue(Binding binding, String templateName,
-            ComponentTemplate targetTemplate,
+            @SuppressWarnings("rawtypes") ComponentTemplate targetTemplate,
             Map<String, ComponentTemplate<?>> componentNameToDescription,
             Map<String, Binding.ComponentBinding> allBindings, Set<String> visited)
             throws ReflectiveOperationException {
@@ -273,6 +275,7 @@ public class BindingEvaluator {
         String sourceComponentName = BindingUtils
                 .extractComponentNameFromBindingExpression(bindingExpression);
 
+        @SuppressWarnings("rawtypes")
         ComponentTemplate sourceTemplate = componentNameToDescription.get(sourceComponentName);
 
         Object rootSourceValue = getFieldValueByPath(sourceFieldPath, sourceTemplate.data);
@@ -503,6 +506,7 @@ public class BindingEvaluator {
         return value;
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private static Object fromClosureMap(Object value, Field field) throws IllegalAccessException {
         Map values = (Map) field.get(value);
         Map convertedMap = new HashMap(values.size());

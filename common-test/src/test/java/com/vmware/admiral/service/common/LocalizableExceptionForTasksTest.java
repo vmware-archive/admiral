@@ -33,7 +33,7 @@ public class LocalizableExceptionForTasksTest extends BaseTestCase {
     private static final String ARG_VALUE = "argValue";
 
     private static LocalizableValidationException ex =
-            new LocalizableValidationException(ERROR_MESSAGE, ERROR_MESSAGE_CODE, new String[] { ARG_VALUE });
+            new LocalizableValidationException(ERROR_MESSAGE, ERROR_MESSAGE_CODE, ARG_VALUE);
 
     @Before
     public void setUp() throws Throwable {

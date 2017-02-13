@@ -30,7 +30,6 @@ import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
-
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
@@ -154,6 +153,7 @@ public class ContainerUtilTest extends ComputeBaseTest {
         HostPortProfileService.HostPortProfileState document = getDocument(
                 HostPortProfileService.HostPortProfileState.class, profileDescrLink);
         new ComparisonCriteria() {
+            @SuppressWarnings("unchecked")
             @Override
             protected void assertElementsEqual(Object expected, Object actual) {
                 Map.Entry<Long, String> expectedMapping = (Map.Entry<Long, String>) expected;

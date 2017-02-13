@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.google.gson.JsonPrimitive;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -495,6 +496,7 @@ public class BindingEvaluatorTest {
 
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public static CompositeTemplate createCompositeTemplate(
             List<? extends ResourceState> containerDescriptions,
             List<Binding.ComponentBinding> componentBindings) {

@@ -629,10 +629,9 @@ public abstract class BaseTestCase {
         return getDocument(type, selfLink, new String[0]);
     }
 
-    @SuppressWarnings("unchecked")
     protected <T> T getDocument(Class<T> type, String selfLink, String... keyValues)
             throws Throwable {
-        TestContext ctx = testCreate(1);
+        testCreate(1);
         URI uri = UriUtils.buildUri(host, selfLink);
         uri = UriUtils.extendUriWithQuery(uri, keyValues);
         return getDocument(type, uri);

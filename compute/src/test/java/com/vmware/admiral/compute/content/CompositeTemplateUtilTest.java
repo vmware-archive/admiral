@@ -309,6 +309,7 @@ public class CompositeTemplateUtilTest {
         assertEqualsYamls(expectedComposeYaml, compose2Yaml);
     }
 
+    @SuppressWarnings("rawtypes")
     public static void assertEqualsYamls(String expected, String actual) throws IOException {
         Map expectedMap = YamlMapper.objectMapper().readValue(expected, Map.class);
         Map actualMap = YamlMapper.objectMapper().readValue(actual, Map.class);

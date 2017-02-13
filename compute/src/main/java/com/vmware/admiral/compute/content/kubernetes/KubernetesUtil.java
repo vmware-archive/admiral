@@ -38,6 +38,7 @@ import com.vmware.admiral.compute.content.kubernetes.services.Service;
 
 public class KubernetesUtil {
 
+    @SuppressWarnings("unused")
     private static final ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory().enable(
             YAMLGenerator.Feature.MINIMIZE_QUOTES));
 

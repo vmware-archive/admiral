@@ -1152,7 +1152,8 @@ public class HostContainerListDataCollection extends StatefulService {
                 descriptionLink = SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK;
             } else {
                 throw new LocalizableValidationException("Unknown systemContainerName: "
-                        + systemContainerName, "compute.system-container.name.unknown", new String[] { systemContainerName });
+                        + systemContainerName, "compute.system-container.name.unknown",
+                        systemContainerName);
             }
 
             OperationUtil.getDocumentState(this, descriptionLink, ContainerDescription.class,

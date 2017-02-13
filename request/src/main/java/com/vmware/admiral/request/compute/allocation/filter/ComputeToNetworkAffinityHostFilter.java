@@ -45,6 +45,7 @@ public class ComputeToNetworkAffinityHostFilter
         implements HostSelectionFilter<FilterContext> {
     private final List<String> nicDescLinks;
     private final ServiceHost host;
+    @SuppressWarnings("unused")
     private List<String> tenantLinks;
 
     public ComputeToNetworkAffinityHostFilter(ServiceHost host, ComputeDescription desc) {
