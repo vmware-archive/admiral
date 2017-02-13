@@ -27,6 +27,10 @@ components:
       tagLinks:
        - key: key
          value: value
+      constraints:
+        - tag: "!location:eu:hard"
+        - tag: "location:us:soft"
+        - tag: "!windows"
   public-wpnet:
     type: "Compute.Network"
     data:
