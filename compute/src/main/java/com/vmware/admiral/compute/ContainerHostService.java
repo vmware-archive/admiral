@@ -123,6 +123,8 @@ public class ContainerHostService extends StatelessService {
     public static final String DOCKER_HOST_PLUGINS_VOLUME_PROP_NAME = "Volume";
     public static final String DOCKER_HOST_PLUGINS_NETWORK_PROP_NAME = "Network";
 
+    public static final String DEFAULT_VMDK_DATASTORE_PROP_NAME = "defaultVmdkDatastore";
+
     public enum ContainerHostType {
         DOCKER,
         VCH,

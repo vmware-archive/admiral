@@ -31,6 +31,8 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeService.Contai
  */
 public class ContainerVolumeStateMapper {
 
+    private static final String DATASTORE_PROP_NAME = "datastore";
+
     /**
      * Convert generic properties from the given {@link Map} to modeled properties in the given
      * {@link ContainerVolumeState}.
@@ -52,6 +54,15 @@ public class ContainerVolumeStateMapper {
         updateVolumeName(volumeState, properties);
 
         volumeState.powerState = PowerState.CONNECTED;
+    }
+
+    public static String getVmdkDatastoreName(Map<String, Object> properties) {
+        Map<String, String> status = getMap(properties, DOCKER_VOLUME_STATUS_PROP_NAME);
+        if (status != null) {
+            return status.get(DATASTORE_PROP_NAME);
+        }
+
+        return null;
     }
 
     private static void mapVolumeStatus(ContainerVolumeState volumeState,
@@ -87,7 +98,7 @@ public class ContainerVolumeStateMapper {
 
         String datastore;
         if (volumeState.status != null
-                && (datastore = volumeState.status.get("datastore")) != null) {
+                && (datastore = volumeState.status.get(DATASTORE_PROP_NAME)) != null) {
             String nameSuffix = "@" + datastore;
             if (!volumeState.name.endsWith(nameSuffix)) {
                 volumeState.name += nameSuffix;
