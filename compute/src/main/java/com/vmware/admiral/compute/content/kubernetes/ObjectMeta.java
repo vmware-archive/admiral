@@ -22,4 +22,5 @@ public class ObjectMeta {
     public String selfLink;
     public HashMap<String, Object> labels;
     public HashMap<String, String> annotations;
+    public String creationTimestamp;
 }

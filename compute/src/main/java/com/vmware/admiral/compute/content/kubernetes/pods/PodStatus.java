@@ -9,13 +9,17 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.adapter.kubernetes.service.apiobject;
+package com.vmware.admiral.compute.content.kubernetes.pods;
 
 import java.util.List;
 
-public class PodList {
-    // public String kind;
-    // public String apiVersion;
-    // public ListMeta metadata;
-    public List<Pod> items;
+public class PodStatus {
+    /*public String phase;
+    public List<PodCondition> conditions;
+    public String message;
+    public String reason;
+    public String hostIP;
+    public String podIP;
+    public String startTime;   //date-time*/
+    public List<PodContainerStatus> containerStatuses;
 }

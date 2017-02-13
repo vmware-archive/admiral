@@ -9,10 +9,14 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.adapter.kubernetes.service.apiobject;
+package com.vmware.admiral.compute.content.kubernetes.namespaces;
 
-import java.util.List;
+import com.vmware.admiral.compute.content.kubernetes.ObjectMeta;
 
-public class NamespaceSpec {
-    public List<String> finalizers;
+public class Namespace {
+    /*public String kind;
+    public String apiVersion;*/
+    public ObjectMeta metadata;
+    /*public NamespaceSpec spec;
+    public NamespaceStatus status;*/
 }

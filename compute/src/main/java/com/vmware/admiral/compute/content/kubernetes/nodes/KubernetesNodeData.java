@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,13 +9,14 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.adapter.kubernetes.service.apiobject;
+package com.vmware.admiral.compute.content.kubernetes.nodes;
 
-
-public class Namespace {
-    /*public String kind;
-    public String apiVersion;*/
-    public ObjectMeta metadata;
-    /*public NamespaceSpec spec;
-    public NamespaceStatus status;*/
+/**
+ * Not an object returned by any kubernetes Api.
+ */
+public class KubernetesNodeData {
+    public String name;
+    public Double usedCPU;
+    public Double availableMem;
+    public Double totalMem;
 }

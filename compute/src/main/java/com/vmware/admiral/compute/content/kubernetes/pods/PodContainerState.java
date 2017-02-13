@@ -9,10 +9,10 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.adapter.kubernetes.service.apiobject;
+package com.vmware.admiral.compute.content.kubernetes.pods;
 
-public class ContainerState {
-    public ContainerStateWaiting waiting;
-    public ContainerStateRunning running;
-    public ContainerStateTerminated terminated;
+public class PodContainerState {
+    public PodContainerStateWaiting waiting;
+    public PodContainerStateRunning running;
+    public PodContainerStateTerminated terminated;
 }

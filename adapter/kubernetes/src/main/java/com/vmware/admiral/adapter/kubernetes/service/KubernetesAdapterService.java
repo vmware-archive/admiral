@@ -15,14 +15,14 @@ import java.util.logging.Level;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
-import com.vmware.admiral.adapter.kubernetes.service.apiobject.Container;
-import com.vmware.admiral.adapter.kubernetes.service.apiobject.ContainerStatus;
-import com.vmware.admiral.adapter.kubernetes.service.apiobject.Pod;
-import com.vmware.admiral.adapter.kubernetes.service.apiobject.PodList;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
+import com.vmware.admiral.compute.content.kubernetes.pods.Pod;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainer;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerStatus;
+import com.vmware.admiral.compute.content.kubernetes.pods.PodList;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
@@ -177,8 +177,8 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
                             PodList podList = o.getBody(PodList.class);
                             boolean foundPod = false;
                             String created = null;
-                            ContainerStatus interestStatus = null;
-                            Container interestContainer = null;
+                            PodContainerStatus interestStatus = null;
+                            PodContainer interestContainer = null;
                             if (podList == null || podList.items == null) {
                                 patchTaskStage(context.request, TaskStage.FAILED,
                                         new IllegalStateException("No pods exists on the host"));
@@ -190,7 +190,7 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
                                         pod.spec.containers == null) {
                                     continue;
                                 }
-                                for (ContainerStatus status: pod.status.containerStatuses) {
+                                for (PodContainerStatus status: pod.status.containerStatuses) {
                                     if (status.containerID.equals(context.containerState.id) ||
                                             KubernetesContainerStateMapper.getId(status.containerID)
                                                     .equals(context.containerState.id)) {
@@ -201,7 +201,7 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
                                     }
                                 }
                                 if (foundPod) {
-                                    for (Container container: pod.spec.containers) {
+                                    for (PodContainer container: pod.spec.containers) {
                                         if (container.name.equals(interestStatus.name)) {
                                             interestContainer = container;
                                             break;
@@ -228,7 +228,7 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
     }
 
     private void patchContainerState(AdapterRequest request, ContainerState containerState,
-            Container container, ContainerStatus status, String created, RequestContext context) {
+            PodContainer container, PodContainerStatus status, String created, RequestContext context) {
 
         // start with a new ContainerState object because we don't want to overwrite with stale data
         ContainerState newContainerState = new ContainerState();
