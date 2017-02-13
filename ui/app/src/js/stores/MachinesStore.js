@@ -247,14 +247,16 @@ let MachinesStore = Reflux.createStore({
     this.setInData(['editingItemData', 'item'], {});
     this.emitChange();
   },
-  onCreateMachine: function(templateContent) {
+  onCreateMachine(templateContent) {
     services.importContainerTemplate(templateContent).then((templateSelfLink) => {
       let documentId = utils.getDocumentId(templateSelfLink);
       return services.loadContainerTemplate(documentId);
     }).then((template) => {
       return services.createMachine(template);
-    }).then(() => {
+    }).then((request) => {
       actions.NavigationActions.openMachines();
+      this.openToolbarItem(constants.CONTEXT_PANEL.REQUESTS, RequestsStore.getData());
+      actions.RequestsActions.requestCreated(request);
       this.setInData(['editingItemData'], null);
       this.emitChange();
     }).catch(this.onGenericEditError);
@@ -264,7 +266,7 @@ let MachinesStore = Reflux.createStore({
     this.setInData(['editingItemData', 'saving'], true);
     this.emitChange();
   },
-  onEditMachine: function(machineId) {
+  onEditMachine(machineId) {
     services.loadHost(machineId).then((document) => {
       let model = toViewModel(document);
       actions.PlacementZonesActions.retrievePlacementZones();
@@ -299,7 +301,7 @@ let MachinesStore = Reflux.createStore({
     this.setInData(['editingItemData', 'item'], {});
     this.emitChange();
   },
-  onUpdateMachine: function(model, tags) {
+  onUpdateMachine(model, tags) {
     let tagsPromises = [];
     tags.forEach((tag) => {
       tagsPromises.push(services.createTag(tag));
