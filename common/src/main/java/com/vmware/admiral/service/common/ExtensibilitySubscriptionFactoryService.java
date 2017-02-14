@@ -37,9 +37,15 @@ public class ExtensibilitySubscriptionFactoryService extends FactoryService {
         if (document == null) {
             throw new IllegalArgumentException("Body is required");
         }
+
         ExtensibilitySubscription state = (ExtensibilitySubscription) document;
-
-        return ExtensibilitySubscriptionService.constructKey(state);
+        // upon service restart a body with only documentSelfLink populated is received
+        if (state.task != null) {
+            return ExtensibilitySubscriptionService.constructKey(state);
+        }
+        if (state.documentSelfLink != null) {
+            return state.documentSelfLink;
+        }
+        return super.buildDefaultChildSelfLink();
     }
-
 }
