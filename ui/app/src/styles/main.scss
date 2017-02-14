@@ -129,11 +129,6 @@ textarea {
   float: left;
 }
 
-/* TODO */
-.homepage.homepage-compute > .top .logo-holder {
-  margin-top: -30px;
-}
-
 .homepage > .top .logo {
   margin: 0;
   position: relative;
@@ -170,10 +165,13 @@ textarea {
   padding: 50px 0 0px 75px;
 }
 
+.homepage .addEndpoint-btn {
+  max-width: 480px;
+}
+
 .docs-help .description {
   margin-top: 10px;
 }
-
 
 .loginpage {
   @extend .position-expand;
