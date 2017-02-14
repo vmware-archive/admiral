@@ -210,6 +210,12 @@ public class EnvironmentService extends StatefulService {
 
     @Override
     public void handlePut(Operation put) {
+        if (put.hasPragmaDirective(Operation.PRAGMA_DIRECTIVE_POST_TO_PUT)) {
+            logFine("Ignoring converted PUT.");
+            put.complete();
+            return;
+        }
+
         EnvironmentState newState = processInput(put);
         setState(put, newState);
         put.complete();
@@ -223,6 +229,7 @@ public class EnvironmentService extends StatefulService {
                     EnvironmentState.class, patch);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             patch.fail(e);
+            return;
         }
         patch.setBody(currentState);
         patch.complete();

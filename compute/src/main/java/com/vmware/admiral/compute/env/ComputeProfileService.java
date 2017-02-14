@@ -78,6 +78,7 @@ public class ComputeProfileService extends StatefulService {
                     ComputeProfile.class, patch);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             patch.fail(e);
+            return;
         }
         patch.setBody(currentState);
         patch.complete();

@@ -65,6 +65,7 @@ public class StorageProfileService extends StatefulService {
                     StorageProfile.class, patch);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             patch.fail(e);
+            return;
         }
         patch.setBody(currentState);
         patch.complete();

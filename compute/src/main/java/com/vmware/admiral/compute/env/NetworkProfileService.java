@@ -144,6 +144,7 @@ public class NetworkProfileService extends StatefulService {
                     NetworkProfile.class, patch);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             patch.fail(e);
+            return;
         }
         patch.setBody(currentState);
         patch.complete();

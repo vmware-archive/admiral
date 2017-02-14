@@ -244,7 +244,7 @@ public class GroupResourcePlacementService extends StatefulService {
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
+        super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
     }
 
     @Override
@@ -291,6 +291,12 @@ public class GroupResourcePlacementService extends StatefulService {
 
     @Override
     public void handlePut(Operation put) {
+        if (put.hasPragmaDirective(Operation.PRAGMA_DIRECTIVE_POST_TO_PUT)) {
+            logFine("Ignoring converted PUT.");
+            put.complete();
+            return;
+        }
+
         GroupResourcePlacementState currentState = getState(put);
         GroupResourcePlacementState putBody = put.getBody(GroupResourcePlacementState.class);
 
