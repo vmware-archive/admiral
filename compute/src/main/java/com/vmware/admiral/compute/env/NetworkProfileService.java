@@ -16,6 +16,7 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.service.common.MultiTenantDocument;
@@ -42,7 +43,7 @@ public class NetworkProfileService extends StatefulService {
 
         @Documentation(description = "TagStates associated with the network profile")
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
-        public List<String> tagLinks;
+        public Set<String> tagLinks;
 
         @Documentation(description = "SubnetStates included in this network profile")
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })

@@ -16,6 +16,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -41,6 +42,8 @@ import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.Compu
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.photon.controller.model.ComputeProperties;
+import com.vmware.photon.controller.model.Constraint.Condition;
+import com.vmware.photon.controller.model.Constraint.Condition.Enforcement;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -56,6 +59,7 @@ import com.vmware.photon.controller.model.resources.SubnetService;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
+import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 
 public class TestRequestStateFactory extends CommonTestStateFactory {
     public static final String COMPUTE_DESC_ID = "test-compute-desc-id";
@@ -223,6 +227,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         subnetState.documentSelfLink = "test-subnet-" + name;
         subnetState.subnetCIDR = "10.10.10.10/24";
         subnetState.tenantLinks = tenantLinks;
+        subnetState.tagLinks = new HashSet<>();
         return subnetState;
     }
 
@@ -234,6 +239,12 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         state.tenantLinks = getTenantLinks();
         state.customProperties = new HashMap<>();
         return state;
+    }
+
+    public static Condition createCondition(String tagKey, String tagValue, boolean isHard,
+            boolean isAnti) {
+        return Condition.forTag(tagKey, tagValue, isHard ? Enforcement.HARD : Enforcement.SOFT,
+                isAnti ? Occurance.MUST_NOT_OCCUR : Occurance.MUST_OCCUR);
     }
 
     public static ContainerVolumeDescription createContainerVolumeDescription(String name) {

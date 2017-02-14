@@ -60,7 +60,7 @@ public class EnvironmentQueryUtils {
 
     public static void queryEnvironments(ServiceHost host, URI referer,
             Set<String> resourcePoolsLinks, String endpointLink, List<String> tenantLinks,
-            Set<String> networkProfileLinks, BiConsumer<List<EnvEntry>, Throwable> consumer) {
+            List<String> environmentLinks, BiConsumer<List<EnvEntry>, Throwable> consumer) {
         Builder builder = Query.Builder.create()
                 .addKindFieldClause(ResourcePoolState.class)
                 .addInClause(ServiceDocument.FIELD_NAME_SELF_LINK, resourcePoolsLinks);
@@ -100,7 +100,7 @@ public class EnvironmentQueryUtils {
                             .thenApply(ep -> applyEndpoint(ep,
                                     entriesPerEndpoint.get(ep.documentSelfLink)))
                             .thenCompose(entries -> queryEnvironments(host, entries, tenantLinks,
-                                    networkProfileLinks)))
+                                    environmentLinks)))
                     .collect(Collectors.toList());
 
             DeferredResult.allOf(list).whenComplete((all, ex) -> {
@@ -126,7 +126,7 @@ public class EnvironmentQueryUtils {
     }
 
     private static DeferredResult<List<EnvEntry>> queryEnvironments(ServiceHost host,
-            List<EnvEntry> entries, List<String> tenantLinks, Set<String> networkProfileLinks) {
+            List<EnvEntry> entries, List<String> tenantLinks, List<String> environmentLinks) {
 
         if (entries == null || entries.isEmpty()) {
             return DeferredResult.completed(new ArrayList<>());
@@ -162,9 +162,8 @@ public class EnvironmentQueryUtils {
                                 .build())
                         .build());
 
-        if (networkProfileLinks != null && !networkProfileLinks.isEmpty()) {
-            query = query.addInClause(EnvironmentState.FIELD_NAME_NETWORK_PROFILE_LINK,
-                    networkProfileLinks);
+        if (environmentLinks != null && !environmentLinks.isEmpty()) {
+            query = query.addInClause(EnvironmentState.FIELD_NAME_SELF_LINK, environmentLinks);
         }
 
         QueryTask queryTask = QueryUtil.buildQuery(EnvironmentState.class, true, query.build());
@@ -182,7 +181,7 @@ public class EnvironmentQueryUtils {
                             } else {
                                 if (entry.envLinks.isEmpty()) {
                                     if (tl != null && !tl.isEmpty()) {
-                                        queryEnvironments(host, entries, null, networkProfileLinks)
+                                        queryEnvironments(host, entries, null, environmentLinks)
                                                 .whenComplete((envs, t) -> {
                                                     if (t != null) {
                                                         result.fail(t);

@@ -113,13 +113,13 @@ public class ComputeNetworkAllocationTaskService extends
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public String descName;
 
-        /** (Internal) Set by task with environments compatible with the network. */
-        @Documentation(description = "Set by task subnets compatible with the network.")
+        /** (Internal) Set by task environments that can be used to create compute network */
+        @Documentation(description = "Set by task environments that can be used to create compute network.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
                 PropertyUsageOption.SERVICE_USE,
                 PropertyUsageOption.SINGLE_ASSIGNMENT,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
-        public List<String> subnetLinks;
+        public List<String> environmentLinks;
 
     }
 
@@ -152,7 +152,7 @@ public class ComputeNetworkAllocationTaskService extends
             }
             break;
         case RESOURCES_NAMED:
-            selectSubnets(networkDescription);
+            selectEnvironments(networkDescription);
             break;
         case NETWORK_PROFILES_SELECTED:
             createComputeNetworkStates(state, networkDescription, null);
@@ -308,7 +308,7 @@ public class ComputeNetworkAllocationTaskService extends
             networkState.tenantLinks = state.tenantLinks;
             networkState.descriptionLink = networkDescription.documentSelfLink;
             networkState.customProperties = state.customProperties;
-            networkState.subnetLinks = state.subnetLinks;
+            networkState.environmentLinks = state.environmentLinks;
 
             String contextId;
             if (state.customProperties != null
@@ -368,17 +368,19 @@ public class ComputeNetworkAllocationTaskService extends
                 }));
     }
 
-    private void selectSubnets(ComputeNetworkDescription networkDescription) {
-        NetworkProfileQueryUtils.getSubnetsForNetworkDescription(getHost(),
+    private void selectEnvironments(ComputeNetworkDescription networkDescription) {
+        NetworkProfileQueryUtils.getEnvironmentsForNetworkDescription(getHost(),
                 UriUtils.buildUri(getHost(), getSelfLink()), networkDescription,
-                (subnetLinks, e) -> {
+                (environmentLinks, e) -> {
                     if (e != null) {
-                        failTask("Error selecting subnets for the for the network: ", e);
+                        failTask("Error selecting environments for the for the network: ", e);
                         return;
                     }
 
+                    logInfo("Selected environments for network '%s': %s", networkDescription.name,
+                            environmentLinks);
                     proceedTo(SubStage.NETWORK_PROFILES_SELECTED,
-                            s -> s.subnetLinks = subnetLinks);
+                            s -> s.environmentLinks = environmentLinks);
                 });
     }
 

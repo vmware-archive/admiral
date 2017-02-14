@@ -23,9 +23,9 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.YamlMapper;
+import com.vmware.admiral.compute.env.EnvironmentService;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.SecurityGroupService;
-import com.vmware.photon.controller.model.resources.SubnetService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
@@ -75,10 +75,10 @@ public class ComputeNetworkService extends StatefulService {
         public Set<String> securityGroupLinks;
 
         @JsonIgnore
-        @Documentation(description = "List of subnetStates, calculated during allocation, applicable for this network.")
+        @Documentation(description = "List of Environments, calculated during allocation, applicable for this network.")
         @PropertyOptions(usage = { PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL,
                 PropertyUsageOption.SERVICE_USE, PropertyUsageOption.OPTIONAL })
-        public List<String> subnetLinks;
+        public List<String> environmentLinks;
     }
 
     @Override
@@ -101,8 +101,8 @@ public class ComputeNetworkService extends StatefulService {
         nd.name = "My Network";
         nd.securityGroupLinks = new HashSet<>();
         nd.securityGroupLinks.add(SecurityGroupService.FACTORY_LINK + "/my-sec-group");
-        nd.subnetLinks = new ArrayList<>();
-        nd.subnetLinks.add(SubnetService.FACTORY_LINK + "/my-subnet");
+        nd.environmentLinks = new ArrayList<>();
+        nd.environmentLinks.add(EnvironmentService.FACTORY_LINK + "/my-env");
         return nd;
     }
 }

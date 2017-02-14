@@ -31,8 +31,6 @@ import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.Constraint;
-import com.vmware.photon.controller.model.Constraint.Condition;
-import com.vmware.photon.controller.model.Constraint.Condition.Enforcement;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -45,7 +43,6 @@ import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.TagService;
 import com.vmware.photon.controller.model.resources.TagService.TagState;
-import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 
 public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
 
@@ -404,9 +401,8 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
     private static void addConstraintToComputeDesc(ComputeDescription computeDesc, String tagKey,
             String tagValue, boolean isHard, boolean isAnti) {
         Constraint constraint = new Constraint();
-        constraint.conditions = Arrays.asList(
-                Condition.forTag(tagKey, tagValue, isHard ? Enforcement.HARD : Enforcement.SOFT,
-                        isAnti ? Occurance.MUST_NOT_OCCUR : Occurance.MUST_OCCUR));
+        constraint.conditions = Arrays.asList(TestRequestStateFactory.createCondition(tagKey,
+                tagValue, isHard, isAnti));
         computeDesc.constraints = new HashMap<>();
         computeDesc.constraints.put(ComputeConstants.COMPUTE_PLACEMENT_CONSTRAINT_KEY, constraint);
     }

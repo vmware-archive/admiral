@@ -147,21 +147,21 @@ public class EnvironmentQueryUtilsTest extends RequestBaseTest {
     }
 
     @Test
-    public void testFilterEnvByNetworkProfile() throws Throwable {
+    public void testFilterEnvByNetworkEnvConstraints() throws Throwable {
         pools = createResourcePools();
         Map<String, EnvironmentState> envs = createEnvironments();
-        Set<String> networkProfileLinks = new HashSet<>(1);
+        List<String> environmentLinks = new ArrayList<>(1);
         EnvironmentState awsEnv = envs.entrySet()
                 .stream()
                 .filter(e -> e.getValue().endpointType == EndpointType.aws.name())
                 .findAny()
                 .orElse(null).getValue();
-        networkProfileLinks.add(awsEnv.networkProfileLink);
+        environmentLinks.add(awsEnv.documentSelfLink);
 
         TestContext ctx = testCreate(1);
         List<EnvEntry> entries = new ArrayList<>();
         EnvironmentQueryUtils.queryEnvironments(host, referer, pools.keySet(),
-                endpoint.documentSelfLink, null, networkProfileLinks,
+                endpoint.documentSelfLink, null, environmentLinks,
                 (all, e) -> {
                     if (e != null) {
                         ctx.fail(e);
