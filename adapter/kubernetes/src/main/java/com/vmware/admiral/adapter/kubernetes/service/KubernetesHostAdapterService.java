@@ -20,6 +20,8 @@ import java.util.stream.Collectors;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
+import com.vmware.admiral.adapter.kubernetes.KubernetesContainerStateMapper;
+import com.vmware.admiral.adapter.kubernetes.KubernetesRemoteApiClient;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
@@ -64,7 +66,7 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
                     (context) -> directListContainers(request, context, op));
         } else if (request.operationTypeId.equals(ContainerHostOperationType.LIST_NETWORKS.id)
                 && request.serviceTaskCallback.isEmpty()) {
-                // direct list networks
+            // direct list networks
         } else {
             getContainerHost(request, op, request.resourceReference,
                     (context) -> processOperation(request, context));
@@ -216,7 +218,7 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
         });
     }
 
-    private void directWithCredentials (AdapterRequest request, Operation op,
+    private void directWithCredentials(AdapterRequest request, Operation op,
             Consumer<AuthCredentialsServiceState> callback) {
         String credentialsLink = request.customProperties.get(
                 ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME);
@@ -292,11 +294,11 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
         if (podList.items == null) {
             return result;
         }
-        for (Pod pod: podList.items) {
+        for (Pod pod : podList.items) {
             if (pod.status == null || pod.status.containerStatuses == null) {
                 continue;
             }
-            for (PodContainerStatus status: pod.status.containerStatuses) {
+            for (PodContainerStatus status : pod.status.containerStatuses) {
                 id = KubernetesContainerStateMapper.getId(status.containerID);
                 result.containerIdsAndNames.put(id, status.name);
                 result.containerIdsAndImage.put(id, status.image);
@@ -307,9 +309,12 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
 
     private void updateContext(AdapterRequest request, KubernetesContext context) {
         if (request.customProperties != null) {
-            context.SSLTrustCertificate = request.customProperties.get(ContainerHostService.SSL_TRUST_CERT_PROP_NAME);
-            context.SSLTrustAlias = request.customProperties.get(ContainerHostService.SSL_TRUST_ALIAS_PROP_NAME);
-            context.host.address = request.customProperties.get(ComputeConstants.HOST_URI_PROP_NAME);
+            context.SSLTrustCertificate = request.customProperties
+                    .get(ContainerHostService.SSL_TRUST_CERT_PROP_NAME);
+            context.SSLTrustAlias = request.customProperties
+                    .get(ContainerHostService.SSL_TRUST_ALIAS_PROP_NAME);
+            context.host.address = request.customProperties
+                    .get(ComputeConstants.HOST_URI_PROP_NAME);
             if (context.host.customProperties == null) {
                 context.host.customProperties = request.customProperties;
             }

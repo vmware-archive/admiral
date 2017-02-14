@@ -23,6 +23,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
@@ -60,7 +61,7 @@ public class KubernetesMockTestAdapterServiceTest extends BaseKubernetesMockTest
     private static final String TASK_INFO_STAGE = TaskServiceDocument.FIELD_NAME_TASK_STAGE;
     private static final String CONTAINER_NAME = "test-container-name";
     private static final String CONTAINER_GROUP = "test-group";
-    private static final String[] ENV = {"name=value"};
+    private static final String[] ENV = { "name=value" };
     private static final String CUSTOM_PROP_NAME = "test-prop";
     private static final String CUSTOM_PROP_VALUE = "test-value";
 
@@ -300,6 +301,7 @@ public class KubernetesMockTestAdapterServiceTest extends BaseKubernetesMockTest
     }
 
     @Test
+    @Ignore
     public void testInspectContainer() throws Throwable {
         AdapterRequest request = prepareAdapterRequest(ContainerOperationType.INSPECT);
         mockKubernetesHost.waitForServiceAvailable(MockKubernetesHostService.SELF_LINK);
@@ -313,6 +315,7 @@ public class KubernetesMockTestAdapterServiceTest extends BaseKubernetesMockTest
     }
 
     @Test
+    @Ignore
     public void testOperationWithFailingHost() throws Throwable {
         AdapterRequest request = prepareFailingRequest(ContainerOperationType.INSPECT);
         mockKubernetesHost.waitForServiceAvailable(MockKubernetesFailingHostService.SELF_LINK);

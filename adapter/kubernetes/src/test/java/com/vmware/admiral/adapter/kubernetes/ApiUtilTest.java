@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.adapter.kubernetes.service;
+package com.vmware.admiral.adapter.kubernetes;
 
 import java.util.HashMap;
 

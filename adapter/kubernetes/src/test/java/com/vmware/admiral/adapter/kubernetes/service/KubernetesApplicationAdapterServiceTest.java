@@ -24,9 +24,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.vmware.admiral.adapter.common.ApplicationOperationType;
+import com.vmware.admiral.adapter.common.KubernetesOperationType;
 import com.vmware.admiral.adapter.common.service.mock.MockTaskFactoryService;
 import com.vmware.admiral.adapter.common.service.mock.MockTaskService.MockTaskState;
+import com.vmware.admiral.adapter.kubernetes.ApplicationRequest;
 import com.vmware.admiral.adapter.kubernetes.mock.BaseKubernetesMockTest;
 import com.vmware.admiral.adapter.kubernetes.mock.MockKubernetesHostService;
 import com.vmware.admiral.common.DeploymentProfileConfig;
@@ -208,7 +209,7 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
         appRequest.hostReference = UriUtils.buildUri(host, kubernetesHostState.documentSelfLink);
         appRequest.resourceReference = UriUtils.buildUri(host, compositeComponent.documentSelfLink);
         appRequest.serviceTaskCallback = ServiceTaskCallback.create(provisioningTaskLink);
-        appRequest.operationTypeId = ApplicationOperationType.DELETE.id;
+        appRequest.operationTypeId = KubernetesOperationType.DELETE.id;
 
         doOperation(ManagementUriParts.ADAPTER_KUBERNETES_APPLICATION, appRequest);
 
@@ -257,7 +258,7 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
         appRequest.hostReference = UriUtils.buildUri(host, kubernetesHostState.documentSelfLink);
         appRequest.resourceReference = UriUtils.buildUri(host, compositeComponent.documentSelfLink);
         appRequest.serviceTaskCallback = ServiceTaskCallback.create(provisioningTaskLink);
-        appRequest.operationTypeId = ApplicationOperationType.DELETE.id;
+        appRequest.operationTypeId = KubernetesOperationType.DELETE.id;
 
         doOperation(ManagementUriParts.ADAPTER_KUBERNETES_APPLICATION, appRequest);
 
@@ -272,7 +273,7 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
         appRequest.hostReference = UriUtils.buildUri(host, kubernetesHostState.documentSelfLink);
         appRequest.resourceReference = UriUtils.buildUri(host, resourceReference);
         appRequest.serviceTaskCallback = ServiceTaskCallback.create(provisioningTaskLink);
-        appRequest.operationTypeId = ApplicationOperationType.CREATE.id;
+        appRequest.operationTypeId = KubernetesOperationType.CREATE.id;
         return appRequest;
     }
 

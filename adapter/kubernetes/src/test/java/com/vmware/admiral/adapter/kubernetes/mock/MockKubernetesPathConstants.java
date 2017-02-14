@@ -11,8 +11,8 @@
 
 package com.vmware.admiral.adapter.kubernetes.mock;
 
-import com.vmware.admiral.adapter.kubernetes.service.ApiUtil;
-import com.vmware.admiral.adapter.kubernetes.service.KubernetesRemoteApiClient;
+import com.vmware.admiral.adapter.kubernetes.ApiUtil;
+import com.vmware.admiral.adapter.kubernetes.KubernetesRemoteApiClient;
 
 /**
  * Constants for mock docker host and services
