@@ -13,6 +13,9 @@ package com.vmware.admiral.compute.container.volume;
 
 import static java.util.Collections.disjoint;
 
+import java.net.URI;
+
+import static com.vmware.admiral.compute.ContainerHostService.DEFAULT_VMDK_DATASTORE_PROP_NAME;
 import static com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.DEFAULT_VOLUME_DRIVER;
 
 import java.util.Arrays;
@@ -21,22 +24,40 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.vmware.admiral.adapter.common.AdapterRequest;
+import com.vmware.admiral.adapter.common.VolumeOperationType;
+import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ComponentDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState.PowerState;
+import com.vmware.admiral.service.common.AbstractCallbackServiceHandler;
+import com.vmware.admiral.service.common.AbstractCallbackServiceHandler.CallbackServiceHandlerState;
+import com.vmware.admiral.service.common.ServiceTaskCallback;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.LocalizableValidationException;
+import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceErrorResponse;
+import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
@@ -232,6 +253,138 @@ public class VolumeUtil {
         return queryTask;
     }
 
+    public static void groupByVmdkDatastore(ServiceHost serviceHost, Collection<String> hostLinks,
+            BiConsumer<Map<String, Set<String>>, Throwable> callback) {
+
+        if (hostLinks.size() == 0) {
+            callback.accept(Collections.emptyMap(), null);
+            return;
+        }
+
+        Map<String, Set<String>> hostLinksByDatastore = new ConcurrentHashMap<>();
+
+        final AtomicInteger counter = new AtomicInteger(hostLinks.size());
+        final AtomicBoolean hasError = new AtomicBoolean(false);
+
+        for (String hostLink : hostLinks) {
+            discoverVmdkDatastoreForHost(serviceHost, hostLink, (datastore, error) -> {
+                if (error != null) {
+                    serviceHost.log(Level.WARNING,
+                            "Failed to discover default vmdk datastore for host [%s]. Error: %s",
+                            hostLink, Utils.toString(error));
+                    if (hasError.compareAndSet(false, true)) {
+                        callback.accept(null, error);
+                    }
+                } else {
+                    hostLinksByDatastore
+                            .computeIfAbsent(datastore, d -> ConcurrentHashMap.newKeySet())
+                            .add(hostLink);
+
+                    if (counter.decrementAndGet() == 0 && !hasError.get()) {
+                        callback.accept(hostLinksByDatastore, null);
+                    }
+                }
+            });
+        }
+    }
+
+    private static void discoverVmdkDatastoreForHost(ServiceHost serviceHost, String hostLink,
+            BiConsumer<String, Throwable> consumer) {
+
+        fetchVmdkDatastoreForHost(serviceHost, hostLink, (datastore, err) -> {
+            if (err != null) {
+                consumer.accept(null, err);
+                return;
+            }
+
+            if (datastore != null) {
+                consumer.accept(datastore, null);
+                return;
+            }
+
+            performVmdkDatastoreDiscovery(serviceHost, hostLink, (discoveredDatastore, t) -> {
+                if (t != null) {
+                    consumer.accept(null, t);
+                    return;
+                }
+
+                consumer.accept(discoveredDatastore, null);
+            });
+        });
+    }
+
+    private static void fetchVmdkDatastoreForHost(ServiceHost serviceHost, String hostLink,
+            BiConsumer<String, Throwable> consumer) {
+
+        Operation getHostOp = Operation.createGet(serviceHost, hostLink)
+                .setReferer(serviceHost.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        consumer.accept(null, e);
+                        return;
+                    }
+
+                    ComputeState host = o.getBody(ComputeState.class);
+
+                    String datastore = null;
+                    if (host.customProperties != null) {
+                        datastore = host.customProperties.get(DEFAULT_VMDK_DATASTORE_PROP_NAME);
+                    }
+
+                    consumer.accept(datastore, null);
+                });
+        serviceHost.sendRequest(getHostOp);
+    }
+
+    private static void performVmdkDatastoreDiscovery(ServiceHost serviceHost, String hostLink,
+            BiConsumer<String, Throwable> consumer) {
+
+        // adapter result handler
+        BiConsumer<CallbackServiceHandlerState, ServiceErrorResponse> actualCallback = (o, e) -> {
+            if (e != null) {
+                consumer.accept(null, new Exception(e.message));
+                return;
+            }
+
+            fetchVmdkDatastoreForHost(serviceHost, hostLink, (datastore, err) -> {
+                if (err != null) {
+                    consumer.accept(null, err);
+                    return;
+                }
+
+                if (datastore == null) {
+                    String errMsg = String.format(
+                            "Could not fetch datastore name for host [%s]"
+                                    + " after performing datastore discovery.",
+                            hostLink);
+                    consumer.accept(null, new IllegalStateException(errMsg));
+                    return;
+                }
+
+                consumer.accept(datastore, null);
+            });
+        };
+
+        startAndCreateCallbackHandlerService(serviceHost, actualCallback, (taskCallback) -> {
+            AdapterRequest volumeRequest = new AdapterRequest();
+            volumeRequest.resourceReference = UriUtils.buildUri(serviceHost, hostLink);
+            volumeRequest.serviceTaskCallback = taskCallback;
+            volumeRequest.operationTypeId = VolumeOperationType.DISCOVER_VMDK_DATASTORE.id;
+
+            Operation adapterRequest = Operation
+                    .createPatch(serviceHost, ManagementUriParts.ADAPTER_DOCKER_VOLUME)
+                    .setReferer(serviceHost.getUri())
+                    .setBody(volumeRequest)
+                    .setCompletion((o, e) -> {
+                        if (e != null) {
+                            consumer.accept(null, e);
+                            return;
+                        }
+                    });
+            serviceHost.sendRequest(adapterRequest);
+        });
+    }
+
     private static void addAffinity(String affinityTo, ContainerDescription cd) {
         if (cd.affinity != null) {
             boolean alreadyIn = Arrays.stream(cd.affinity).anyMatch(af -> affinityTo.equals(af));
@@ -304,5 +457,75 @@ public class VolumeUtil {
         }
 
         return list;
+    }
+
+    private static void startAndCreateCallbackHandlerService(ServiceHost serviceHost,
+            BiConsumer<CallbackServiceHandlerState, ServiceErrorResponse> actualCallback,
+            Consumer<ServiceTaskCallback> caller) {
+        if (actualCallback == null) {
+            caller.accept(ServiceTaskCallback.createEmpty());
+            return;
+        }
+        CallbackServiceHandlerState body = new CallbackServiceHandlerState();
+        String callbackLink = ManagementUriParts.REQUEST_CALLBACK_HANDLER_TASKS
+                + UUID.randomUUID().toString();
+        body.documentSelfLink = callbackLink;
+        URI callbackUri = UriUtils.buildUri(serviceHost, callbackLink);
+        Operation startPost = Operation
+                .createPost(callbackUri)
+                .setBody(body)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        serviceHost.log(Level.WARNING,
+                                "Failure creating callback handler. Error %s",
+                                Utils.toString(e));
+                        return;
+                    }
+                    serviceHost.log(Level.FINE,
+                            "Callback task created with uri: %s, %s",
+                            callbackUri, o.getUri());
+                    caller.accept(ServiceTaskCallback.create(callbackUri.toString()));
+                });
+
+        VmdkDatastoreDiscoveredCallbackHandler service = new VmdkDatastoreDiscoveredCallbackHandler(
+                actualCallback);
+        service.setCompletionCallback(() -> serviceHost.stopService(service));
+        serviceHost.startService(startPost, service);
+    }
+
+    private static class VmdkDatastoreDiscoveredCallbackHandler extends
+            AbstractCallbackServiceHandler {
+
+        private final BiConsumer<CallbackServiceHandlerState, ServiceErrorResponse> consumer;
+
+        public VmdkDatastoreDiscoveredCallbackHandler(
+                BiConsumer<CallbackServiceHandlerState, ServiceErrorResponse> consumer) {
+
+            this.consumer = consumer;
+        }
+
+        @Override
+        protected void handleFailedStagePatch(CallbackServiceHandlerState state) {
+            ServiceErrorResponse err = state.taskInfo.failure;
+            logWarning("Failed updating host info");
+            if (err != null && err.stackTrace != null) {
+                logFine("Task failure stack trace: %s", err.stackTrace);
+                logWarning("Task failure error message: %s", err.message);
+                consumer.accept(state, err);
+
+                if (completionCallback != null) {
+                    completionCallback.run();
+                }
+            }
+        }
+
+        @Override
+        protected void handleFinishedStagePatch(CallbackServiceHandlerState state) {
+            consumer.accept(state, null);
+
+            if (completionCallback != null) {
+                completionCallback.run();
+            }
+        }
     }
 }
