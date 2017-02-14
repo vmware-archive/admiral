@@ -20,6 +20,7 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
+import com.vmware.admiral.adapter.kubernetes.KubernetesRemoteApiClient;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
@@ -98,8 +99,8 @@ public abstract class AbstractKubernetesAdapterService extends StatelessService 
         post.complete();
     }
 
-    protected void getContainerHost(AdapterRequest request, Operation op, URI
-            containerHostReference, Consumer<KubernetesContext> callbackFunction) {
+    protected void getContainerHost(AdapterRequest request, Operation op,
+            URI containerHostReference, Consumer<KubernetesContext> callbackFunction) {
         sendRequest(Operation.createGet(containerHostReference)
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
                 .setContextId(request.getRequestId())

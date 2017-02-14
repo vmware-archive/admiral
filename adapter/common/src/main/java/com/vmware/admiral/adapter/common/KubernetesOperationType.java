@@ -14,25 +14,25 @@ package com.vmware.admiral.adapter.common;
 import java.util.HashMap;
 import java.util.Map;
 
-public enum ApplicationOperationType {
-    CREATE("Application.Create"),
-    DELETE("Application.Delete");
+public enum KubernetesOperationType {
+    CREATE("Kubernetes.Create"),
+    DELETE("Kubernetes.Delete");
 
     public final String id;
 
-    ApplicationOperationType(String id) {
+    KubernetesOperationType(String id) {
         this.id = id;
     }
 
-    private static final Map<String, ApplicationOperationType> operationsById = new HashMap<>();
+    private static final Map<String, KubernetesOperationType> operationsById = new HashMap<>();
 
     static {
-        for (ApplicationOperationType opr : values()) {
+        for (KubernetesOperationType opr : values()) {
             operationsById.put(opr.id, opr);
         }
     }
 
-    public static ApplicationOperationType instanceById(String id) {
+    public static KubernetesOperationType instanceById(String id) {
         if (id == null) {
             return null;
         }

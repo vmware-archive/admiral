@@ -98,25 +98,12 @@ public class KubernetesService extends StatefulService {
         KubernetesState state = post.getBody(KubernetesState.class);
 
         try {
-            validateKubernetesState(state);
             post.setBody(state);
             post.complete();
         } catch (Throwable e) {
             logSevere(e);
             post.fail(e);
         }
-    }
-
-    private void validateKubernetesState(KubernetesState state) throws IOException {
-        CommonKubernetesEntity entity = state.getKubernetesEntity(CommonKubernetesEntity.class);
-        assertNotNullOrEmpty(entity.apiVersion, "apiVersion");
-        assertNotNullOrEmpty(entity.kind, "kind");
-        assertNotNull(entity.metadata, "metadata");
-        assertNotNullOrEmpty(entity.metadata.name, "name");
-        assertNotNullOrEmpty(entity.metadata.selfLink, "selfLink");
-        state.type = entity.kind;
-        state.selfLink = entity.metadata.selfLink;
-        state.name = entity.metadata.name;
     }
 
     @Override
@@ -136,8 +123,16 @@ public class KubernetesService extends StatefulService {
     public void handlePatch(Operation patch) {
         KubernetesState currentState = getState(patch);
         KubernetesState patchState = patch.getBody(KubernetesState.class);
+        validateKubernetesStateOnPatch(patchState);
 
         PropertyUtils.mergeServiceDocuments(currentState, patchState);
         patch.complete();
+    }
+
+    private void validateKubernetesStateOnPatch(KubernetesState state) {
+        assertNotNull(state, "kubernetesState");
+        assertNotNullOrEmpty(state.selfLink, "kubernetesState.selfLink");
+        assertNotNullOrEmpty(state.namespace, "kubernetesState.namespace");
+        assertNotNullOrEmpty(state.type, "kubernetesState.type");
     }
 }

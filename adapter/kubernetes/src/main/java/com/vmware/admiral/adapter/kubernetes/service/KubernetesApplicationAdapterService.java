@@ -14,12 +14,18 @@ package com.vmware.admiral.adapter.kubernetes.service;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesConverter.fromContainerDescriptionToDeployment;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesConverter.fromContainerDescriptionToService;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import com.vmware.admiral.adapter.common.ApplicationOperationType;
+import com.vmware.admiral.adapter.common.KubernetesOperationType;
+import com.vmware.admiral.adapter.kubernetes.ApplicationRequest;
+import com.vmware.admiral.adapter.kubernetes.KubernetesRemoteApiClient;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
@@ -28,9 +34,13 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.content.kubernetes.CommonKubernetesEntity;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesEntityList;
 import com.vmware.admiral.compute.content.kubernetes.deployments.Deployment;
 import com.vmware.admiral.compute.content.kubernetes.services.Service;
+import com.vmware.admiral.compute.kubernetes.KubernetesDescriptionService;
+import com.vmware.admiral.compute.kubernetes.KubernetesDescriptionService.KubernetesDescription;
+import com.vmware.admiral.compute.kubernetes.KubernetesService.KubernetesState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.TaskState.TaskStage;
@@ -53,7 +63,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
         context.request = op.getBody(ApplicationRequest.class);
         context.request.validate();
 
-        ApplicationOperationType operationType = context.request.getOperationtype();
+        KubernetesOperationType operationType = context.request.getOperationtype();
 
         logInfo("Processing application operation request %s for resource %s on host %s",
                 operationType, context.request.resourceReference, context.request.hostReference);
@@ -80,6 +90,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
     }
 
     public void createKubernetesContext(RequestContext context) {
+        // Get the kubernetes context and the api client.
         getContainerHost(
                 context.request,
                 null,
@@ -133,23 +144,154 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
     }
 
     private void processCreateApplication(RequestContext context) {
-        List<String> containerDescriptionLinks = context.compositeDescription.descriptionLinks
+        List<String> descriptionLinks = context.compositeDescription.descriptionLinks
                 .stream()
                 .filter(link -> link.startsWith(ContainerDescriptionService.FACTORY_LINK))
                 .collect(Collectors.toList());
 
-        List<Operation> getContainerDescriptionOps = containerDescriptionLinks.stream()
+        try {
+            if (isKubernetesTemplate(descriptionLinks)) {
+                getKubernetesDescriptions(context, descriptionLinks);
+            } else {
+                getContainerDescriptions(context, descriptionLinks);
+            }
+        } catch (Throwable e) {
+            fail(context.request, e);
+        }
+
+    }
+
+    private void getKubernetesDescriptions(RequestContext context, List<String> descriptionLinks) {
+        List<Operation> getKubernetesDescriptions = descriptionLinks.stream()
                 .map(link -> Operation.createGet(this, link))
                 .collect(Collectors.toList());
 
-        OperationJoin.create(getContainerDescriptionOps)
+        OperationJoin.create(getKubernetesDescriptions)
                 .setCompletion((ops, errors) -> {
                     if (errors != null) {
                         // Filter not null exceptions, fail the request with first one,
                         // log all others.
-                        List<Throwable> throwables = errors.entrySet().stream()
-                                .filter(e -> e.getValue() != null)
-                                .map(e -> e.getValue())
+                        List<Throwable> throwables = errors.values().stream()
+                                .filter(e -> e != null)
+                                .collect(Collectors.toList());
+                        fail(context.request, throwables.get(0));
+                        throwables.stream().skip(1)
+                                .forEach(e -> logWarning("%s", e.getMessage()));
+                    } else {
+                        List<KubernetesDescription> descriptions = ops.entrySet().stream()
+                                .map(desc -> desc.getValue().getBody(KubernetesDescription.class))
+                                .collect(Collectors.toList());
+
+                        try {
+                            processKubernetesDescriptions(context, descriptions);
+                        } catch (IOException e) {
+                            fail(context.request, e);
+                        }
+
+                    }
+                }).sendWith(this);
+    }
+
+    private void processKubernetesDescriptions(RequestContext context,
+            List<KubernetesDescription> descriptions) throws IOException {
+
+        final AtomicInteger counter = new AtomicInteger(descriptions.size());
+        final AtomicBoolean hasError = new AtomicBoolean(false);
+        // descriptionLink to kubernetesEntity map.
+        Map<String, String> kubernetesEntities = new HashMap<>();
+        for (KubernetesDescription description : descriptions) {
+            context.client.createEntity(description, context.kubernetesContext, (o, ex) -> {
+                if (ex != null) {
+                    if (hasError.compareAndSet(false, true)) {
+                        fail(context.request, ex);
+                    } else {
+                        logWarning("Failure creating kubernetes entity: %s", Utils.toString(ex));
+                    }
+                } else {
+                    String kubernetesEntity = o.getBody(String.class);
+                    kubernetesEntities.put(description.documentSelfLink, kubernetesEntity);
+                    if (counter.decrementAndGet() == 0 && !hasError.get()) {
+                        processKubernetesEntities(context, kubernetesEntities);
+                    }
+                }
+            });
+        }
+    }
+
+    private void processKubernetesEntities(RequestContext context,
+            Map<String, String> kubernetesEntities) {
+
+        List<Operation> getKubernetesStates = context.compositeComponent.componentLinks.stream()
+                .map(link -> Operation.createGet(this, link))
+                .collect(Collectors.toList());
+
+        OperationJoin.create(getKubernetesStates)
+                .setCompletion((ops, errors) -> {
+                    if (errors != null) {
+                        List<Throwable> throwables = errors.values().stream()
+                                .filter(e -> e != null)
+                                .collect(Collectors.toList());
+                        fail(context.request, throwables.get(0));
+                        throwables.stream().skip(1)
+                                .forEach(e -> logWarning("%s", e.getMessage()));
+                    } else {
+                        List<KubernetesState> states = ops.entrySet().stream()
+                                .map(desc -> desc.getValue().getBody(KubernetesState.class))
+                                .collect(Collectors.toList());
+
+                        try {
+                            patchKubernetesStates(context, kubernetesEntities, states);
+                        } catch (IOException e) {
+                            fail(context.request, e);
+                        }
+
+                    }
+                }).sendWith(this);
+    }
+
+    private void patchKubernetesStates(RequestContext context, Map<String, String>
+            kubernetesEntities, List<KubernetesState> kubernetesStates) throws IOException {
+
+        List<Operation> patchStatesOps = new ArrayList<>();
+
+        for (KubernetesState state : kubernetesStates) {
+            KubernetesState newState = new KubernetesState();
+            newState.kubernetesEntity = kubernetesEntities.get(state.descriptionLink);
+            CommonKubernetesEntity entity = state.getKubernetesEntity(CommonKubernetesEntity.class);
+            newState.selfLink = entity.metadata.selfLink;
+            newState.namespace = entity.metadata.namespace;
+            newState.type = entity.kind;
+            patchStatesOps.add(Operation.createPatch(this, state.documentSelfLink));
+        }
+
+        OperationJoin.create(patchStatesOps)
+                .setCompletion((ops, errors) -> {
+                    if (errors != null) {
+                        List<Throwable> throwables = errors.values().stream()
+                                .filter(e -> e != null)
+                                .collect(Collectors.toList());
+                        fail(context.request, throwables.get(0));
+                        throwables.stream().skip(1)
+                                .forEach(e -> logWarning("%s", e.getMessage()));
+                    } else {
+                        patchTaskStage(context.request, TaskStage.FINISHED, null);
+                    }
+                }).sendWith(this);
+
+    }
+
+    private void getContainerDescriptions(RequestContext context, List<String> descriptionLinks) {
+        List<Operation> getDescriptions = descriptionLinks.stream()
+                .map(link -> Operation.createGet(this, link))
+                .collect(Collectors.toList());
+
+        OperationJoin.create(getDescriptions)
+                .setCompletion((ops, errors) -> {
+                    if (errors != null) {
+                        // Filter not null exceptions, fail the request with first one,
+                        // log all others.
+                        List<Throwable> throwables = errors.values().stream()
+                                .filter(e -> e != null)
                                 .collect(Collectors.toList());
                         fail(context.request, throwables.get(0));
                         throwables.stream().skip(1)
@@ -163,7 +305,6 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
 
                     }
                 }).sendWith(this);
-
     }
 
     private void processContainerDescriptions(RequestContext context, List<ContainerDescription>
@@ -282,7 +423,8 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                     if (ex != null) {
                         fail(context.request, ex);
                     } else {
-                        KubernetesEntityList<Service> services = o.getBody(KubernetesEntityList.class);
+                        KubernetesEntityList<Service> services = o
+                                .getBody(KubernetesEntityList.class);
                         if (validateServicesToDelete(context, servicesToDelete, services)) {
                             // Validate the deployments
                             context.client.getDeployments(context.compositeComponent.name,
@@ -384,6 +526,24 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                             }
                         }
                     });
+        }
+    }
+
+    private boolean isKubernetesTemplate(List<String> descriptionLinks) {
+        int kubernetesDescriptionCounter = 0;
+        int otherDescriptionCounter = 0;
+        for (String link : descriptionLinks) {
+            if (!link.startsWith(KubernetesDescriptionService.FACTORY_LINK)) {
+                otherDescriptionCounter++;
+            } else {
+                kubernetesDescriptionCounter++;
+            }
+        }
+
+        if (kubernetesDescriptionCounter > 0 && otherDescriptionCounter > 0) {
+            throw new IllegalStateException("Template with mixed descriptions is not supported.");
+        } else {
+            return kubernetesDescriptionCounter > 0;
         }
     }
 }

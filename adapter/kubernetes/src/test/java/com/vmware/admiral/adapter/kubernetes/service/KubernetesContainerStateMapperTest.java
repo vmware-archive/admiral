@@ -14,6 +14,7 @@ package com.vmware.admiral.adapter.kubernetes.service;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.vmware.admiral.adapter.kubernetes.KubernetesContainerStateMapper;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.PortBinding;
@@ -75,7 +76,7 @@ public class KubernetesContainerStateMapperTest {
 
         inContainer.name = "test-name";
         inContainer.image = "test-image";
-        inContainer.command = new String[] {"cmd1", "cmd2"};
+        inContainer.command = new String[] { "cmd1", "cmd2" };
         PodContainerEnvVar e1 = new PodContainerEnvVar() {
             {
                 name = "name1";
@@ -88,7 +89,7 @@ public class KubernetesContainerStateMapperTest {
                 value = "val2";
             }
         };
-        inContainer.env = new PodContainerEnvVar[] {e1, e2};
+        inContainer.env = new PodContainerEnvVar[] { e1, e2 };
         PodContainerPort port1 = new PodContainerPort() {
             {
                 name = "portName1";
@@ -107,7 +108,7 @@ public class KubernetesContainerStateMapperTest {
                 containerPort = 81;
             }
         };
-        inContainer.ports = new PodContainerPort[] {port1, port2};
+        inContainer.ports = new PodContainerPort[] { port1, port2 };
 
         String id = "test-id-123";
         inStatus.containerID = "docker://" + id;

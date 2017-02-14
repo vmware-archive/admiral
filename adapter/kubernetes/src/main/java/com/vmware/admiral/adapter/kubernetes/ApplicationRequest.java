@@ -9,12 +9,12 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.adapter.kubernetes.service;
+package com.vmware.admiral.adapter.kubernetes;
 
 import java.net.URI;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
-import com.vmware.admiral.adapter.common.ApplicationOperationType;
+import com.vmware.admiral.adapter.common.KubernetesOperationType;
 
 public class ApplicationRequest extends AdapterRequest {
 
@@ -24,15 +24,15 @@ public class ApplicationRequest extends AdapterRequest {
     public void validate() {
         super.validate();
         if (operationTypeId != null) {
-            if (ApplicationOperationType.instanceById(operationTypeId) == null) {
+            if (KubernetesOperationType.instanceById(operationTypeId) == null) {
                 throw new IllegalArgumentException("Invalid application operationId: " +
                         operationTypeId);
             }
         }
     }
 
-    public ApplicationOperationType getOperationtype() {
-        return ApplicationOperationType.instanceById(operationTypeId);
+    public KubernetesOperationType getOperationtype() {
+        return KubernetesOperationType.instanceById(operationTypeId);
     }
 
     public URI getCompositeComponentReference() {

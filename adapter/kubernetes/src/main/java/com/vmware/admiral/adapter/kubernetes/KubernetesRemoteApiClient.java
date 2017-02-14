@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,13 +9,14 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.adapter.kubernetes.service;
+package com.vmware.admiral.adapter.kubernetes;
 
-import static com.vmware.admiral.adapter.kubernetes.service.ApiUtil.API_PREFIX_EXTENSIONS_V1BETA;
-import static com.vmware.admiral.adapter.kubernetes.service.ApiUtil.API_PREFIX_V1;
+import static com.vmware.admiral.adapter.kubernetes.ApiUtil.API_PREFIX_EXTENSIONS_V1BETA;
+import static com.vmware.admiral.adapter.kubernetes.ApiUtil.API_PREFIX_V1;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.KUBERNETES_LABEL_APP;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,7 +50,9 @@ import com.vmware.admiral.compute.content.kubernetes.namespaces.NamespaceList;
 import com.vmware.admiral.compute.content.kubernetes.nodes.KubernetesNodeData;
 import com.vmware.admiral.compute.content.kubernetes.nodes.Node;
 import com.vmware.admiral.compute.content.kubernetes.nodes.NodeList;
+import com.vmware.admiral.compute.kubernetes.KubernetesDescriptionService.KubernetesDescription;
 import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
+import com.vmware.admiral.compute.kubernetes.KubernetesService.KubernetesState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
 import com.vmware.xenon.common.Service;
@@ -182,7 +185,7 @@ public class KubernetesRemoteApiClient {
                 AtomicBoolean hasError = new AtomicBoolean();
                 List<KubernetesNodeData> nodes = new ArrayList<>(nodeList.items.size());
                 if (nodeList != null && nodeList.items != null) {
-                    for (Node node: nodeList.items) {
+                    for (Node node : nodeList.items) {
                         if (node == null || node.metadata == null || node.metadata.name == null) {
                             continue;
                         }
@@ -200,7 +203,8 @@ public class KubernetesRemoteApiClient {
                                 nodeData.name = node.metadata.name;
                                 if (data != null && data.containsKey("allocatedResources")) {
                                     @SuppressWarnings("unchecked")
-                                    Map<String, Double> resources = (Map<String, Double>) data.get("allocatedResources");
+                                    Map<String, Double> resources = (Map<String, Double>) data
+                                            .get("allocatedResources");
                                     Double val = null;
                                     if ((val = resources.get("cpuRequestsFraction")) != null) {
                                         Double totalForNode = resources.get("cpuCapacity");
@@ -371,6 +375,21 @@ public class KubernetesRemoteApiClient {
 
         sendRequest(Action.DELETE, uri, null, context, completionHandler);
 
+    }
+
+    public void createEntity(KubernetesDescription description, KubernetesContext context,
+            CompletionHandler completionHandler) throws IOException {
+        URI uri = ApiUtil.buildKubernetesUri(description, context);
+
+        sendRequest(Action.POST, uri, description.getKubernetesEntityAsJson(), context,
+                completionHandler);
+    }
+
+    public void deleteEntity(KubernetesState state, KubernetesContext context, CompletionHandler
+            completionHandler) {
+        URI uri = ApiUtil.buildKubernetesUri(state, context);
+
+        sendRequest(Action.DELETE, uri, null, context, completionHandler);
     }
 
     private void sendRequest(Service.Action action, URI uri, Object body, KubernetesContext context,
