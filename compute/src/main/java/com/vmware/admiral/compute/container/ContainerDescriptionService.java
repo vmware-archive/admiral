@@ -563,7 +563,7 @@ public class ContainerDescriptionService extends StatefulService {
 
         logFine("Performing maintenance for: %s", getUri());
 
-        new HealthChecker(getHost()).doHealthCheck(getSelfLink());
+        HealthChecker.getInstance().doHealthCheck(getHost(), getSelfLink());
 
         post.complete();
     }

@@ -877,7 +877,7 @@ public class ContainerAllocationTaskService extends AbstractTaskStatefulService
             return;
         }
 
-        new HealthChecker(getHost()).doHealthCheckRequest(containerState,
+        HealthChecker.getInstance().doHealthCheckRequest(getHost(), containerState,
                 this.containerDescription.healthConfig, (containerStats) -> {
                     if (containerStats != null
                             && Boolean.TRUE.equals(containerStats.healthCheckSuccess)) {

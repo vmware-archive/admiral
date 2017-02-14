@@ -56,6 +56,7 @@ import com.vmware.xenon.services.common.QueryTask;
  */
 
 public class HealthChecker {
+    private static volatile HealthChecker instance;
 
     public static class HealthConfig {
 
@@ -95,12 +96,21 @@ public class HealthChecker {
         public String command;
     }
 
-    private final ServiceHost host;
-
     private Bootstrap bootstrap;
 
-    public HealthChecker(ServiceHost host) {
-        this.host = host;
+    public static HealthChecker getInstance() {
+        if (instance == null) {
+            synchronized (HealthChecker.class) {
+                if (instance == null) {
+                    instance = new HealthChecker();
+                }
+            }
+        }
+
+        return instance;
+    }
+
+    private HealthChecker() {
         initialize();
     }
 
@@ -108,7 +118,7 @@ public class HealthChecker {
      * Initialize Netty bootstrap
      */
     private void initialize() {
-        bootstrap = new Bootstrap()
+        this.bootstrap = new Bootstrap()
                 .group(new NioEventLoopGroup())
                 .channel(NioSocketChannel.class)
                 .handler(new ChannelInitializer<Channel>() {
@@ -119,7 +129,7 @@ public class HealthChecker {
                 });
     }
 
-    void doHealthCheck(String containerDescriptionLink) {
+    void doHealthCheck(ServiceHost host, String containerDescriptionLink) {
         host.sendRequest(Operation
                 .createGet(host, containerDescriptionLink)
                 .setReferer(host.getPublicUri())
@@ -128,12 +138,12 @@ public class HealthChecker {
                         host.log(Level.SEVERE, "Failed to fetch %s : %s",
                                 containerDescriptionLink, Utils.toJson(ex));
                     } else {
-                        processContainerHealth(o.getBody(ContainerDescription.class));
+                        processContainerHealth(host, o.getBody(ContainerDescription.class));
                     }
                 }));
     }
 
-    public void doHealthCheckRequest(ContainerState containerState,
+    public void doHealthCheckRequest(ServiceHost host, ContainerState containerState,
             HealthConfig healthConfig, Consumer<ContainerStats> callback) {
         if (healthConfig == null || healthConfig.protocol == null) {
             return;
@@ -152,13 +162,13 @@ public class HealthChecker {
 
         switch (healthConfig.protocol) {
         case HTTP:
-            healthCheckHttp(containerState, healthConfig, null, callback);
+            healthCheckHttp(host, containerState, healthConfig, null, callback);
             break;
         case TCP:
-            healthCheckTcp(containerState, healthConfig, null, callback);
+            healthCheckTcp(host, containerState, healthConfig, null, callback);
             break;
         case COMMAND:
-            healthCheckExec(containerState, healthConfig, callback);
+            healthCheckExec(host, containerState, healthConfig, callback);
             break;
         default:
             host.log(Level.SEVERE, "Health config protocol not supported: %s",
@@ -167,7 +177,7 @@ public class HealthChecker {
         }
     }
 
-    private void processContainerHealth(ContainerDescription containerDescription) {
+    private void processContainerHealth(ServiceHost host, ContainerDescription containerDescription) {
 
         QueryTask compositeQueryTask = QueryUtil.buildQuery(ContainerState.class, true);
 
@@ -187,13 +197,13 @@ public class HealthChecker {
                                 "Failed to retrieve container's health config: %s - %s",
                                 r.getDocumentSelfLink(), r.getException());
                     } else if (r.hasResult()) {
-                        doHealthCheckRequest(r.getResult(), containerDescription.healthConfig,
+                        doHealthCheckRequest(host, r.getResult(), containerDescription.healthConfig,
                                 null);
                     }
                 });
     }
 
-    private void healthCheckExec(ContainerState containerState, HealthConfig healthConfig,
+    private void healthCheckExec(ServiceHost host, ContainerState containerState, HealthConfig healthConfig,
             Consumer<ContainerStats> callback) {
 
         ShellContainerExecutorState executorState = new ShellContainerExecutorState();
@@ -218,20 +228,21 @@ public class HealthChecker {
                                 String.format("Health check failed: %s",
                                         o.getBody(String.class)));
                     }
-                    handleHealthResponse(containerState, e, callback);
+                    handleHealthResponse(host, containerState, e, callback);
                 }));
     }
 
-    private void healthCheckTcp(ContainerState containerState, HealthConfig healthConfig,
+    private void healthCheckTcp(ServiceHost host, ContainerState containerState, HealthConfig healthConfig,
             String[] hostPortBinding, Consumer<ContainerStats> callback) {
         if (hostPortBinding == null) {
-            determineContainerHostPort(containerState, healthConfig,
-                    (bindings) -> healthCheckTcp(containerState, healthConfig,
+            determineContainerHostPort(host, containerState, healthConfig,
+                    (bindings) -> healthCheckTcp(host, containerState, healthConfig,
                             bindings, callback));
             return;
         }
 
-        bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, healthConfig.timeoutMillis);
+        this.bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, healthConfig.timeoutMillis);
+
         Integer configPort = Integer.valueOf(hostPortBinding[1]);
         int port = configPort > 0 ? configPort : 80;
 
@@ -242,19 +253,19 @@ public class HealthChecker {
         channelFuture.addListener((ChannelFutureListener) result -> {
             try {
                 OperationContext.setFrom(origContext);
-                handleHealthResponse(containerState, result.cause(), callback);
+                handleHealthResponse(host, containerState, result.cause(), callback);
             } finally {
                 result.channel().close();
             }
         });
     }
 
-    private void healthCheckHttp(ContainerState containerState, HealthConfig healthConfig,
+    private void healthCheckHttp(ServiceHost host, ContainerState containerState, HealthConfig healthConfig,
             String[] hostPortBinding, Consumer<ContainerStats> callback) {
 
         if (hostPortBinding == null) {
-            determineContainerHostPort(containerState, healthConfig,
-                    (bindings) -> healthCheckHttp(containerState, healthConfig,
+            determineContainerHostPort(host, containerState, healthConfig,
+                    (bindings) -> healthCheckHttp(host, containerState, healthConfig,
                             bindings, callback));
             return;
         }
@@ -273,7 +284,7 @@ public class HealthChecker {
                 .createGet(uri)
                 .setAction(healthConfig.httpMethod)
                 .setReferer(host.getPublicUri())
-                .setCompletion((o, ex) -> handleHealthResponse(containerState, ex, callback));
+                .setCompletion((o, ex) -> handleHealthResponse(host, containerState, ex, callback));
 
         if (healthConfig.httpVersion == HttpVersion.HTTP_v2) {
             op.setConnectionSharing(true);
@@ -304,7 +315,7 @@ public class HealthChecker {
         }
     }
 
-    private void determineContainerHostPort(ContainerState containerState,
+    private void determineContainerHostPort(ServiceHost host, ContainerState containerState,
             HealthConfig healthConfig, Consumer<String[]> callback) {
 
         if (containerState.ports != null) {
@@ -312,7 +323,7 @@ public class HealthChecker {
                 if (portBinding.hostPort != null && portBinding.containerPort != null
                         && !portBinding.hostPort.isEmpty()
                         && Integer.parseInt(portBinding.containerPort) == healthConfig.port) {
-                    getHostPortBinding(containerState, portBinding.hostPort, null,
+                    getHostPortBinding(host, containerState, portBinding.hostPort, null,
                             callback);
                     return;
                 }
@@ -323,18 +334,18 @@ public class HealthChecker {
         callback.accept(new String[] { containerState.address, String.valueOf(healthConfig.port) });
     }
 
-    private void getHostPortBinding(ContainerState containerState, String port,
+    private void getHostPortBinding(ServiceHost host, ContainerState containerState, String port,
             String hostAddress, Consumer<String[]> callback) {
         if (hostAddress == null || hostAddress.isEmpty()) {
-            getContainerHost(containerState.parentLink,
-                    (host) -> getHostPortBinding(containerState, port, host.address, callback));
+            getContainerHost(host, containerState.parentLink,
+                    (h) -> getHostPortBinding(host, containerState, port, h.address, callback));
             return;
         }
 
         callback.accept(new String[] { UriUtilsExtended.extractHost(hostAddress), port });
     }
 
-    private void getContainerHost(String parentLink, Consumer<ComputeState> callback) {
+    private void getContainerHost(ServiceHost host, String parentLink, Consumer<ComputeState> callback) {
         host.sendRequest(Operation
                 .createGet(UriUtils.buildUri(host, parentLink))
                 .setReferer(host.getPublicUri())
@@ -350,7 +361,7 @@ public class HealthChecker {
                         }));
     }
 
-    private void handleHealthResponse(ContainerState containerState, Throwable ex,
+    private void handleHealthResponse(ServiceHost host, ContainerState containerState, Throwable ex,
             Consumer<ContainerStats> callback) {
         if (ex != null) {
             host.log(Level.WARNING, "Health check status is failed for container %s : %s",
