@@ -11,18 +11,22 @@
 
 import VueFormInput from 'components/common/VueFormInput'; //eslint-disable-line
 
-export default Vue.component('password-input', {
+export default Vue.component('checkbox-input', {
   template: `
-    <form-input
-      type="password"
-      :class="class"
-      :disabled="disabled"
-      :label="label"
-      :name="name"
-      :required="required"
-      :value="value"
-      @change="onChange">
-    </form-input>
+    <div :class="['form-group', class]">
+      <label
+        :class="{'required': required}"
+        :for="name">
+        {{label}}
+      </label>
+      <input
+        type="checkbox"
+        :checked="value ? 'checked' : ''"
+        :disabled="disabled"
+        :id="name"
+        :name="name"
+        @change="onChange($event)">
+    </div>
   `,
   props: {
     class: {
@@ -49,12 +53,15 @@ export default Vue.component('password-input', {
     },
     value: {
       required: false,
-      type: String
+      type: Boolean
     }
   },
   methods: {
-    onChange(value, instance) {
-      this.$dispatch('change', value, instance);
+    onChange($event) {
+      $event.preventDefault();
+      $event.stopPropagation();
+
+      this.$dispatch('change', $event.currentTarget.checked, this);
     }
   }
 });

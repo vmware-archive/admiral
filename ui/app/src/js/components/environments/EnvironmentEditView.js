@@ -180,12 +180,21 @@ export default Vue.component('environment-edit-view', {
       }
     },
     renderSubnetwork(network) {
-      let cidrLabel = i18n.t('app.environment.edit.cidrLabel');
+      let props = [
+        i18n.t('app.environment.edit.cidrLabel') + ':' + network.subnetCIDR
+      ];
+      if (network.supportPublicIpAddress) {
+        props.push(i18n.t('app.environment.edit.supportPublicIpAddressLabel'));
+      }
+      if (network.defaultForZone) {
+        props.push(i18n.t('app.environment.edit.defaultForZoneLabel'));
+      }
+      let secondary = props.join(', ');
       return `
         <div>
           <div class="host-picker-item-primary" title="${network.name}">${network.name}</div>
-          <div class="host-picker-item-secondary" title="${network.subnetCIDR}">
-            ${cidrLabel}: ${network.subnetCIDR}
+          <div class="host-picker-item-secondary" title="${secondary}">
+            ${secondary}
           </div>
         </div>`;
     },

@@ -11,13 +11,15 @@
 
 export default Vue.component('form-input', {
   template: `
-    <div :class="['form-group', name]">
-      <label :class="{'required': required}">
+    <div :class="['form-group', class]">
+      <label
+        :class="{'required': required}"
+        :for="name">
         {{label}}
       </label>
       <input
         :disabled="disabled"
-        :id="name || id"
+        :id="name"
         :name="name"
         :type="type"
         :value="value"
@@ -26,6 +28,10 @@ export default Vue.component('form-input', {
     </div>
   `,
   props: {
+    class: {
+      required: false,
+      type: String
+    },
     disabled: {
       default: false,
       required: false,

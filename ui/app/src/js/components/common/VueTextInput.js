@@ -15,6 +15,7 @@ export default Vue.component('text-input', {
   template: `
     <form-input
       type="text"
+      :class="class"
       :disabled="disabled"
       :label="label"
       :name="name"
@@ -24,6 +25,10 @@ export default Vue.component('text-input', {
     </form-input>
   `,
   props: {
+    class: {
+      required: false,
+      type: String
+    },
     disabled: {
       default: false,
       required: false,

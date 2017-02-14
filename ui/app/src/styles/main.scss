@@ -614,6 +614,10 @@ $main-list-view-right: 10px;
   @include box-shadow(none);
 }
 
+.form-group input[type='checkbox'] {
+  margin: 12px 0;
+}
+
 .form-group .dropdown-holder {
   @extend .form-control;
   padding: 0;

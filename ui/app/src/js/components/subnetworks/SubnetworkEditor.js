@@ -9,6 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
+import VueCheckboxInput from 'components/common/VueCheckboxInput'; //eslint-disable-line
 import VueTextInput from 'components/common/VueTextInput'; //eslint-disable-line
 import SubnetworkEditorVue from 'components/subnetworks/SubnetworkEditorVue.html';
 import { SubnetworksActions } from 'actions/Actions';
@@ -30,8 +31,10 @@ export default Vue.component('subnetwork-editor', {
     return {
       name: this.model.item.name,
       cidr: this.model.item.subnetCIDR,
-      saveDisabled: !this.model.item.documentSelfLink,
-      tags: this.model.item.tags || []
+      supportPublicIpAddress: this.model.item.supportPublicIpAddress,
+      defaultForZone: this.model.item.defaultForZone,
+      tags: this.model.item.tags.asMutable() || [],
+      saveDisabled: !this.model.item.documentSelfLink
     };
   },
   methods: {
@@ -58,6 +61,12 @@ export default Vue.component('subnetwork-editor', {
       this.cidr = cidr;
       this.saveDisabled = this.isSaveDisabled();
     },
+    onSupportPublicIpAddressChange(supportPublicIpAddress) {
+      this.supportPublicIpAddress = supportPublicIpAddress;
+    },
+    onDefaultForZoneChange(defaultForZone) {
+      this.defaultForZone = defaultForZone;
+    },
     onTagsChange(tags) {
       this.tags = tags;
     },
@@ -67,7 +76,9 @@ export default Vue.component('subnetwork-editor', {
     getModel() {
       return $.extend({}, this.model.item, {
         name: this.name,
-        subnetCIDR: this.cidr
+        defaultForZone: this.defaultForZone,
+        subnetCIDR: this.cidr,
+        supportPublicIpAddress: this.supportPublicIpAddress
       });
     }
   }
