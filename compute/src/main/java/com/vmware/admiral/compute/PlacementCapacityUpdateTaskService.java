@@ -143,7 +143,7 @@ public class PlacementCapacityUpdateTaskService extends
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                 .setBody(task)
                 .setCompletion((o, e) -> {
-                    if (o.getStatusCode() == Operation.STATUS_CODE_CONFLICT) {
+                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_MODIFIED) {
                         sender.getHost().log(Level.FINE,
                                 "Capacity update task already running for " + resourcePoolLink);
                         return;
@@ -188,6 +188,7 @@ public class PlacementCapacityUpdateTaskService extends
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
+        super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
 
         // these are one-off tasks that are not needed upon completion
         this.setSelfDelete(true);
@@ -197,6 +198,12 @@ public class PlacementCapacityUpdateTaskService extends
 
     @Override
     public void handlePut(Operation put) {
+        if (put.hasPragmaDirective(Operation.PRAGMA_DIRECTIVE_POST_TO_PUT)) {
+            put.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
+            put.complete();
+            return;
+        }
+
         // unsupported op
         put.fail(Operation.STATUS_CODE_BAD_METHOD);
     }
