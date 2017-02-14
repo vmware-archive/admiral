@@ -255,8 +255,16 @@ crossroads.addRoute('/environments/{id*}', function(id) {
 });
 
 crossroads.addRoute('/endpoints', function() {
+  if (silenced) {
+    return;
+  }
   actions.AppActions.openView(computeConstants.VIEWS.ENDPOINTS.name);
   actions.EndpointsActions.retrieveEndpoints();
+});
+
+crossroads.addRoute('/endpoints/new', function() {
+  actions.AppActions.openView(computeConstants.VIEWS.ENDPOINTS.name);
+  actions.EndpointsActions.editEndpoint({});
 });
 
 crossroads.addRoute('/machines:?query:', function(query) {
@@ -304,6 +312,12 @@ actions.NavigationActions.openHosts.listen(function(queryOptions) {
 actions.NavigationActions.openHostsSilently.listen(function() {
   silenced = true;
   hasher.setHash('hosts');
+  silenced = false;
+});
+
+actions.NavigationActions.openEndpointsSilently.listen(function() {
+  silenced = true;
+  hasher.setHash('endpoints');
   silenced = false;
 });
 
@@ -424,6 +438,10 @@ actions.NavigationActions.openPlacements.listen(function() {
 
 actions.NavigationActions.openEndpoints.listen(function() {
   hasher.setHash('endpoints');
+});
+
+actions.NavigationActions.openAddEndpoint.listen(function() {
+  hasher.setHash('endpoints/new');
 });
 
 actions.NavigationActions.openEnvironments.listen(function(queryOptions) {

@@ -170,7 +170,7 @@ export var EnvironmentsActions = Reflux.createActions([
 
 export var EndpointsActions = Reflux.createActions([
   'retrieveEndpoints', 'editEndpoint', 'cancelEditEndpoint', 'createEndpoint',
-  'updateEndpoint', 'deleteEndpoint'
+  'updateEndpoint', 'deleteEndpoint', 'openAddEndpoint'
 ]);
 
 export var SubnetworksActions = Reflux.createActions([
@@ -202,5 +202,6 @@ export var NavigationActions = Reflux.createActions([
   'openTemplateDetails', 'showContainersPerPlacement', 'openPlacements', 'openEnvironments',
   'openAddEnvironment', 'editEnvironment', 'openMachines', 'openAddMachine', 'editMachine',
   'openCompute', 'editCompute', 'openClosures', 'openClosuresSilently', 'openAddClosure',
-  'openClosureDetails', 'openCompositeClosureDetails', 'openEndpoints', 'openVolumes'
+  'openClosureDetails', 'openCompositeClosureDetails', 'openEndpoints', 'openEndpointsSilently',
+  'openAddEndpoint', 'openVolumes'
 ]);

@@ -33,7 +33,10 @@ var HomeComputeVueComponent = Vue.extend({
   },
 
   methods: {
-    open: function() {
+    openAddEndpoint: function() {
+      NavigationActions.openAddEndpoint();
+    },
+    openEndpoints: function() {
       NavigationActions.openEndpoints();
     },
     goBack: function() {

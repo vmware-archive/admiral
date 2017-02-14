@@ -3,8 +3,10 @@
     "homepage": {
       "welcome": "Welcome!",
       "description": "This is the place for you to <b>create, provision, manage and monitor containerized applications.</b>",
+      "descriptionCompute": "This is the place for you to <b>create, provision, manage and monitor any application on any cloud.</b>",
       "start": "Let's get started now!",
       "addHost": "Add a Host",
+      "addEndpoint": "Add an Endpoint",
       "enter": "Enter",
       "helpCenter": "Help",
       "steps": {

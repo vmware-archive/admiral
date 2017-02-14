@@ -12,19 +12,23 @@
 <div class="homepage-wrapper">
   <div class="homepage homepage-compute" v-bind:class="{'blurred': model.loginView}">
     <div class="top">
-      <div class="logo-holder col-sm-4">
+      <div class="logo-holder">
         <div class="logo">
           <img src="image-assets/compute-home.png">
         </div>
       </div>
-      <div class="welcome-holder col-sm-8">
+      <div class="welcome-holder">
         <div class="welcome">
-          <div class="welcome-title">Welcome to Compute!</div>
+          <h1 class="welcome-title">{{i18n("app.homepage.welcome")}}</h1>
           <!-- Notice that the mustaches are triple in order to un-escape HTML bold tags -->
-          <div class="welcome-description">
-          </div>
+          <h2 class="welcome-description">
+            <div v-html="i18n('app.homepage.descriptionCompute')"></div>
+            <div v-html="i18n('app.homepage.start')"></div>
+          </h2>
           <div class="buttonBar" v-bind:class="{'buttonBar-hidden': model.loginView}">
-            <button class="btn btn-primary" v-on:click="open($event)">Open</button>
+            <button class="btn btn-primary enter-btn" v-on:click="openEndpoints($event)">{{i18n("app.homepage.enter")}}</button>
+            <button class="btn btn-outline addEndpoint-btn" v-on:click="openAddEndpoint($event)">{{i18n("app.homepage.addEndpoint")}}</button>
+            <a v-if="model.isContextAwareHelpAvailable" href="#" class="helpcenter-link" @click="openHelp($event)">{{i18n("app.homepage.helpCenter")}}</a>
           </div>
         </div>
       </div>
