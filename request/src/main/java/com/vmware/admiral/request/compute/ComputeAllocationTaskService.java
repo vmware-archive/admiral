@@ -287,16 +287,16 @@ public class ComputeAllocationTaskService
 
         if (environmentLink == null) {
             String contextId = RequestUtils.getContextId(state);
-            NetworkProfileQueryUtils.getNetworkProfileConstraintsForComputeNics(getHost(),
+            NetworkProfileQueryUtils.getEnvironmentsForComputeNics(getHost(),
                     UriUtils.buildUri(getHost(), getSelfLink()), state.tenantLinks, contextId,
                     computeDesc,
-                    (networkProfileLinks, e) -> {
+                    (environmentLinks, e) -> {
                         if (e != null) {
-                            failTask("Error getting network profile constraints: ", e);
+                            failTask("Error getting environment constraints: ", e);
                             return;
                         }
                         queryEnvironment(state, endpoint,
-                                QueryUtil.getTenantLinks(state.tenantLinks), networkProfileLinks,
+                                QueryUtil.getTenantLinks(state.tenantLinks), environmentLinks,
                                 (envLink) -> prepareContext(state, computeDesc, resourcePool,
                                         endpoint, envLink));
                     });
@@ -1002,7 +1002,7 @@ public class ComputeAllocationTaskService
     }
 
     private void queryEnvironment(ComputeAllocationTaskState state,
-            EndpointState endpoint, List<String> tenantLinks, Set<String> networkProfileLinks,
+            EndpointState endpoint, List<String> tenantLinks, List<String> environmentLinks,
             Consumer<String> callbackFunction) {
 
         if (tenantLinks == null || tenantLinks.isEmpty()) {
@@ -1029,9 +1029,8 @@ public class ComputeAllocationTaskService
                                 .build())
                         .build());
 
-        if (networkProfileLinks != null && !networkProfileLinks.isEmpty()) {
-            query = query.addInClause(EnvironmentState.FIELD_NAME_NETWORK_PROFILE_LINK,
-                    networkProfileLinks);
+        if (environmentLinks != null && !environmentLinks.isEmpty()) {
+            query = query.addInClause(EnvironmentState.FIELD_NAME_SELF_LINK, environmentLinks);
         }
 
         QueryTask task = QueryTask.Builder.createDirectTask()
@@ -1054,7 +1053,7 @@ public class ComputeAllocationTaskService
                                 if (foundEnvs.isEmpty()) {
                                     if (tenantLinks != null && !tenantLinks.isEmpty()) {
                                         queryEnvironment(state, endpoint, null,
-                                                networkProfileLinks, callbackFunction);
+                                                environmentLinks, callbackFunction);
                                     } else {
                                         failTask(String.format(
                                                 "No available environments for endpoint %s of type %s",
@@ -1062,15 +1061,21 @@ public class ComputeAllocationTaskService
                                                 null);
                                     }
                                 } else {
-                                    EnvironmentState envForTheEndpoint = foundEnvs.stream()
-                                            .filter(env -> endpoint.documentSelfLink
-                                                    .equals(env.endpointLink))
-                                            .findFirst().orElse(null);
-                                    if (envForTheEndpoint != null) {
-                                        callbackFunction.accept(envForTheEndpoint.documentSelfLink);
-                                    } else {
-                                        callbackFunction.accept(foundEnvs.get(0).documentSelfLink);
+                                    // Sort environments based on order of environmentLinks
+                                    List<EnvironmentState> sortedEnvs = foundEnvs;
+                                    if (environmentLinks != null && !environmentLinks.isEmpty()) {
+                                        sortedEnvs = sortedEnvs.stream().sorted((e1, e2) ->
+                                                environmentLinks.indexOf(e1.documentSelfLink)
+                                                        - environmentLinks.indexOf(e2.documentSelfLink))
+                                                .collect(Collectors.toList());
                                     }
+
+                                    Stream<EnvironmentState> envForTheEndpoint = sortedEnvs.stream()
+                                            .filter(env -> endpoint.documentSelfLink.equals(
+                                                    env.endpointLink));
+                                    callbackFunction.accept(envForTheEndpoint.findFirst()
+                                            .orElse(sortedEnvs.get(0))
+                                            .documentSelfLink);
                                 }
                             }
                         });

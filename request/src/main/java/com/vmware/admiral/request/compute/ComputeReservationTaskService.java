@@ -20,6 +20,7 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -52,13 +53,10 @@ import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.ComputeProperties;
-import com.vmware.photon.controller.model.Constraint;
 import com.vmware.photon.controller.model.Constraint.Condition;
 import com.vmware.photon.controller.model.adapterapi.EndpointConfigRequest;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
-import com.vmware.photon.controller.model.resources.TagFactoryService;
-import com.vmware.photon.controller.model.resources.TagService.TagState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -126,9 +124,9 @@ public class ComputeReservationTaskService
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public List<HostSelection> selectedComputePlacementHosts;
 
-        /** (Internal) Set by task network profiles that can be used to create compute networks */
+        /** (Internal) Set by task environments that can be used to create compute networks */
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
-        public Set<String> networkProfileConstraints;
+        public List<String> environmentConstraints;
     }
 
     public ComputeReservationTaskService() {
@@ -144,7 +142,7 @@ public class ComputeReservationTaskService
     protected void handleStartedStagePatch(ComputeReservationTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:
-            collectNetworkConstraints(state, null);
+            collectComputeNicsEnvironmentConstraints(state, null);
             break;
         case NETWORK_CONSTRAINTS_COLLECTED:
             queryGroupResourcePlacements(state, state.tenantLinks, this.computeDescription);
@@ -215,11 +213,12 @@ public class ComputeReservationTaskService
         String groupResourcePlacementLink;
     }
 
-    private void collectNetworkConstraints(ComputeReservationTaskState state,
+    private void collectComputeNicsEnvironmentConstraints(ComputeReservationTaskState state,
             ComputeDescription computeDesc) {
         if (computeDesc == null) {
             getComputeDescription(state.resourceDescriptionLink,
-                    (retrievedCompDesc) -> collectNetworkConstraints(state, retrievedCompDesc));
+                    (retrievedCompDesc) -> collectComputeNicsEnvironmentConstraints(state,
+                            retrievedCompDesc));
             return;
         }
 
@@ -230,16 +229,18 @@ public class ComputeReservationTaskService
         }
 
         String contextId = RequestUtils.getContextId(state);
-        NetworkProfileQueryUtils.getNetworkProfileConstraintsForComputeNics(getHost(),
-                UriUtils.buildUri(getHost(), getSelfLink()), state.tenantLinks, contextId,
-                computeDesc,
-                (networkProfileLinks, e) -> {
+        NetworkProfileQueryUtils.getEnvironmentsForComputeNics(getHost(),
+                UriUtils.buildUri(getHost(), getSelfLink()), state.tenantLinks, contextId, computeDesc,
+                (environmentConstraints, e) -> {
                     if (e != null) {
                         failTask("Error getting network profile constraints: ", e);
                         return;
                     }
+                    logInfo("Environment constraints of networks associated with the compute '%s': %s",
+                            computeDesc.name,
+                            environmentConstraints);
                     proceedTo(SubStage.NETWORK_CONSTRAINTS_COLLECTED, s -> {
-                        s.networkProfileConstraints = networkProfileLinks;
+                        s.environmentConstraints = environmentConstraints;
                     });
                 });
     }
@@ -400,7 +401,7 @@ public class ComputeReservationTaskService
 
         EnvironmentQueryUtils.queryEnvironments(getHost(),
                 UriUtils.buildUri(getHost(), getSelfLink()), placementsByRpLink.keySet(),
-                endpointLink, tenantLinks, state.networkProfileConstraints, (envs, e) -> {
+                endpointLink, tenantLinks, state.environmentConstraints, (envs, e) -> {
                     if (e != null) {
                         failTask("Error retrieving environments for the selected placements: ", e);
                         return;
@@ -468,13 +469,12 @@ public class ComputeReservationTaskService
             failTask(null, new IllegalStateException("No placements found"));
             return;
         }
+        // retrieve the tag links from constraint conditions
+        Map<Condition, String> tagLinkByCondition = TagQueryUtils.extractPlacementTagConditions(
+                computeDesc.constraints, computeDesc.tenantLinks);
 
         // check if requirements are stated in the compute description
-        Constraint placementConstraint = computeDesc.constraints != null
-                ? computeDesc.constraints.get(ComputeConstants.COMPUTE_PLACEMENT_CONSTRAINT_KEY)
-                : null;
-        if (placementConstraint == null || placementConstraint.conditions == null
-                || placementConstraint.conditions.isEmpty()) {
+        if (tagLinkByCondition == null) {
             proceedTo(isGlobal(state) ? SubStage.SELECTED_GLOBAL : SubStage.SELECTED, s -> {
                 s.resourcePoolsPerGroupPlacementLinks = placements.stream()
                         .sorted((g1, g2) -> g1.priority - g2.priority)
@@ -483,15 +483,6 @@ public class ComputeReservationTaskService
                                 LinkedHashMap::new));
             });
             return;
-        }
-
-        // retrieve the tag links from constraint conditions
-        Map<Condition, String> tagLinkByCondition = new HashMap<>();
-        for (Condition condition : placementConstraint.conditions) {
-            String tagLink = getTagLinkForCondition(condition, computeDesc.tenantLinks);
-            if (tagLink != null) {
-                tagLinkByCondition.put(condition, tagLink);
-            }
         }
 
         // retrieve resource pool instances in order to check which ones satisfy the constraint
@@ -518,59 +509,20 @@ public class ComputeReservationTaskService
             // remaining placements by listing first those with more soft constraints satisfied
             // (placement priority being used as a second criteria)
             proceedTo(isGlobal(state) ? SubStage.SELECTED_GLOBAL : SubStage.SELECTED, s -> {
-                s.resourcePoolsPerGroupPlacementLinks = placements.stream()
-                        .filter(gp -> checkRpSatisfyHardConstraints(
-                                resourcePoolsByLink.get(gp.resourcePoolLink), tagLinkByCondition))
-                        .sorted((gp1, gp2) -> {
-                            int softCount1 = getNumberOfSatisfiedSoftConstraints(
-                                    resourcePoolsByLink.get(gp1.resourcePoolLink),
-                                    tagLinkByCondition);
-                            int softCount2 = getNumberOfSatisfiedSoftConstraints(
-                                    resourcePoolsByLink.get(gp2.resourcePoolLink),
-                                    tagLinkByCondition);
-                            return softCount1 != softCount2 ? softCount1 - softCount2
-                                    : gp1.priority - gp2.priority;
-                        }).collect(Collectors.toMap(gp -> gp.documentSelfLink,
-                                gp -> gp.resourcePoolLink, (k1, k2) -> k1,
-                                LinkedHashMap::new));
+                s.resourcePoolsPerGroupPlacementLinks = TagQueryUtils.filterByRequirements(
+                        tagLinkByCondition, placements.stream(),
+                        p -> Arrays.asList(Pair.of(p, getResourcePoolTags(
+                                resourcePoolsByLink.get(p.resourcePoolLink)))).stream(),
+                        (g1, g2) -> g1.priority - g2.priority)
+                        .collect(Collectors.toMap(gp -> gp.documentSelfLink,
+                                gp -> gp.resourcePoolLink,
+                                (k1, k2) -> k1, LinkedHashMap::new));
             });
         }).sendWith(getHost());
     }
 
-    private static String getTagLinkForCondition(Condition condition,
-            List<String> tenantLinks) {
-        if (!Condition.Type.TAG.equals(condition.type) || condition.expression == null
-                || condition.expression.propertyName == null) {
-            return null;
-        }
-
-        String[] tagParts = condition.expression.propertyName.split(":");
-
-        TagState tag = new TagState();
-        tag.key = tagParts[0];
-        tag.value = tagParts.length > 1 ? tagParts[1] : "";
-        tag.tenantLinks = tenantLinks;
-
-        return TagFactoryService.generateSelfLink(tag);
-    }
-
-    private static boolean checkRpSatisfyHardConstraints(ResourcePoolState rp,
-            Map<Condition, String> tagLinkByCondition) {
-        return tagLinkByCondition.entrySet().stream()
-                .filter(e -> Condition.Enforcement.HARD.equals(e.getKey().enforcement))
-                .allMatch(e -> (rp != null && rp.tagLinks != null
-                        && rp.tagLinks.contains(e.getValue())) == !Occurance.MUST_NOT_OCCUR
-                                .equals(e.getKey().occurrence));
-    }
-
-    private static int getNumberOfSatisfiedSoftConstraints(ResourcePoolState rp,
-            Map<Condition, String> tagLinkByCondition) {
-        return (int) tagLinkByCondition.entrySet().stream()
-                .filter(e -> Condition.Enforcement.SOFT.equals(e.getKey().enforcement))
-                .filter(e -> (rp != null && rp.tagLinks != null
-                        && rp.tagLinks.contains(e.getValue())) == !Occurance.MUST_NOT_OCCUR
-                                .equals(e.getKey().occurrence))
-                .count();
+    private static Set<String> getResourcePoolTags(ResourcePoolState rp) {
+        return rp != null && rp.tagLinks != null ? rp.tagLinks : new HashSet<>();
     }
 
     private Stream<GroupResourcePlacementState> supportsCD(ComputeReservationTaskState state,
