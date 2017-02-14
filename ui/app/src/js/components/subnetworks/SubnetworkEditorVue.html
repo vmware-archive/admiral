@@ -31,6 +31,16 @@
         :disabled="!!model.item.documentSelfLink"
         @change="onCidrChange">
       </text-input>
+      <checkbox-input
+        :label="i18n('app.subnetwork.edit.supportPublicIpAddressLabel')"
+        :value="model.item.supportPublicIpAddress"
+        @change="onSupportPublicIpAddressChange">
+      </checkbox-input>
+      <checkbox-input
+        :label="i18n('app.subnetwork.edit.defaultForZoneLabel')"
+        :value="model.item.defaultForZone"
+        @change="onDefaultForZoneChange">
+      </checkbox-input>
       <div class="form-group">
         <label>{{i18n('app.subnetwork.edit.tagsTitle')}}
           <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="top"

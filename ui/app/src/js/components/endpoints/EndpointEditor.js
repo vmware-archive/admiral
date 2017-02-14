@@ -205,7 +205,7 @@ export default Vue.component('endpoint-editor', {
       if (value) {
         return {
           id: value,
-          name: value
+          name: getSupportedTypes().find((type) => type.id === value).name
         };
       }
     }

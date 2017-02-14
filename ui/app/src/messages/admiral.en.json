@@ -495,9 +495,11 @@
         "cpuCountLabel": "CPUs",
         "diskSizeMbLabel": "Disk size",
         "memoryMbLabel": "Memory",
-        "subnetsLabel": "Subnets",
+        "subnetworksLabel": "Subnetworks",
         "cidrLabel": "CIDR",
-        "cidrLabelHint": "0.0.0.0/0"
+        "cidrLabelHint": "0.0.0.0/0",
+        "supportPublicIpAddressLabel": "Support Public IP",
+        "defaultForZoneLabel": "Default for Zone"
       },
       "instanceType": {
         "aws": {
@@ -609,6 +611,8 @@
         "update": "Edit Subnetwork",
         "nameLabel": "Name",
         "cidrLabel": "CIDR",
+        "supportPublicIpAddressLabel": "Support Public IP",
+        "defaultForZoneLabel": "Default for Zone",
         "tagsTitle": "Tags",
         "tagsHint": "Enter key:value tags",
         "tagsPlaceholder": "Example: access:restricted"
