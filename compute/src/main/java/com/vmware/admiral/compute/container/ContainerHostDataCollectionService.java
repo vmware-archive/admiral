@@ -404,7 +404,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                     .setBody(resourcePoolState).setCompletion((op, e) -> {
                         if (e != null) {
                             logSevere("Unable to update the resource pool with link "
-                                    + resourcePoolState.documentSelfLink);
+                                    + resourcePoolState.documentSelfLink + ": " + e.toString());
                         }
                         updatePlacements(resourcePoolState);
                     }));
@@ -573,7 +573,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 .setBody(rpPutState).setCompletion((op, e) -> {
                     if (e != null) {
                         logSevere("Unable to update the resource pool with link "
-                                + rpPutState.documentSelfLink);
+                                + rpPutState.documentSelfLink + ": " + e.toString());
                     }
                     updatePlacements(rpPutState);
                 }));
