@@ -11,8 +11,11 @@
 
 package com.vmware.admiral.request.allocation.filter;
 
+import static java.util.Comparator.comparing;
+
 import static com.vmware.admiral.compute.ContainerHostService.DOCKER_HOST_PLUGINS_VOLUME_PROP_NAME;
 import static com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.DEFAULT_VOLUME_DRIVER;
+import static com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.VMDK_VOLUME_DRIVER;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,6 +37,7 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
+import com.vmware.admiral.compute.container.volume.VolumeUtil;
 import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.xenon.common.ServiceHost;
@@ -156,6 +160,10 @@ public class NamedVolumeAffinityHostFilter
         Set<String> hostLinks = new HashSet<>();
 
         for (List<ContainerVolumeState> volumes: externalVolumesByName.values()) {
+            // In case there are multiple volumes with the same name but on different hosts and
+            // another container must be attached to the current external volume, make sure the same
+            // single external volume is chosen for each such container
+            Collections.sort(volumes, comparing(v -> v.documentSelfLink));
             ContainerVolumeState selectedVolume = pickOnePerContext(state, volumes);
             hostLinks.addAll(selectedVolume.parentLinks);
         }
@@ -164,17 +172,13 @@ public class NamedVolumeAffinityHostFilter
         callback.run();
     }
 
-    private ContainerVolumeState pickOnePerContext(PlacementHostSelectionTaskState state,
-            List<ContainerVolumeState> volumes) {
-
-        // In case there are multiple volumes with the same name but on different hosts and another
-        // container must be attached to the current external volume, make sure the same single
-        // external volume is chosen for each such container
+    private <T> T pickOnePerContext(PlacementHostSelectionTaskState state,
+            List<T> items) {
 
         int idx = Math
                 .abs(state.customProperties.get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY).hashCode()
-                        % volumes.size());
-        return volumes.get(idx);
+                        % items.size());
+        return items.get(idx);
     }
 
     private void findVolumeDescriptions(PlacementHostSelectionTaskState state,
@@ -279,6 +283,50 @@ public class NamedVolumeAffinityHostFilter
                     "request.volumes.filter.hosts.unavailable", requiredDrivers.toString()));
             return;
         }
+
+        filterByVmdkDatastore(state, requiredDrivers, hostSelectionMap, callback);
+    }
+
+    private void filterByVmdkDatastore(PlacementHostSelectionTaskState state,
+            Map<String, Set<String>> requiredDrivers, Map<String, HostSelection> hostSelectionMap,
+            HostSelectionFilterCompletion callback) {
+
+        if (requiredDrivers.containsKey(VMDK_VOLUME_DRIVER)) {
+            List<String> vmdkHostLinks = hostSelectionMap.entrySet().stream()
+                    .filter(host -> supportsDrivers(requiredDrivers.keySet(), host.getValue()))
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toList());
+
+            VolumeUtil.groupByVmdkDatastore(host, vmdkHostLinks, (hostLinksByDatastore, error) -> {
+                if (error != null) {
+                    String errMsg = String.format(
+                            "Failure while performing vmdk datastore discovery. Error: [%s]",
+                            Utils.toString(error));
+                    callback.complete(null, new HostSelectionFilterException(errMsg,
+                            "request.volumes.filter.hosts.vmdk.error"));
+                    return;
+                }
+
+                List<String> datastoresSorted = hostLinksByDatastore.keySet().stream()
+                        .sorted()
+                        .collect(Collectors.toList());
+
+                String selectedDatastore = pickOnePerContext(state, datastoresSorted);
+                Set<String> selectedVmdkHosts = hostLinksByDatastore.get(selectedDatastore);
+
+                hostSelectionMap.entrySet().removeIf(e -> !selectedVmdkHosts.contains(e.getKey()));
+
+                filterByLocalDriver(state, requiredDrivers, hostSelectionMap, callback);
+            });
+
+        } else {
+            filterByLocalDriver(state, requiredDrivers, hostSelectionMap, callback);
+        }
+    }
+
+    private void filterByLocalDriver(PlacementHostSelectionTaskState state,
+            Map<String, Set<String>> requiredDrivers, Map<String, HostSelection> hostSelectionMap,
+            HostSelectionFilterCompletion callback) {
 
         Set<String> localVolumeNames = requiredDrivers.get(DEFAULT_VOLUME_DRIVER);
         if (localVolumeNames != null) {
