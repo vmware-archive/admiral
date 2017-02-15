@@ -29,6 +29,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
+import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
@@ -170,6 +171,7 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
         TagState tagState = new TagState();
         tagState.key = key;
         tagState.value = value;
+        tagState.tenantLinks = QueryUtil.getTenantLinks(this.endpoint.tenantLinks);
         return postDocument(TagService.FACTORY_LINK, tagState);
     }
 
@@ -183,6 +185,7 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
             epzState.resourcePoolState.customProperties.put(
                     ComputeProperties.ENDPOINT_LINK_PROP_NAME, endpoint.documentSelfLink);
         }
+        epzState.tenantLinks = endpoint.tenantLinks;
         epzState.epzState = new ElasticPlacementZoneState();
         epzState.epzState.tagLinksToMatch = new HashSet<>();
         for (TagState tag : tags) {
@@ -203,6 +206,7 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
         reservation.name = name;
         reservation.resourcePoolLink = rp.documentSelfLink;
         reservation.priority = priority;
+        reservation.tenantLinks = rp.tenantLinks;
         reservation.maxNumberInstances = maxInstances;
         return postDocument(GroupResourcePlacementService.FACTORY_LINK, reservation);
     }
@@ -309,6 +313,7 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
     private ComputeDescription createVmComputeDescription(String vmName) throws Exception {
         ComputeDescription cd = new ComputeDescription();
         cd.name = vmName;
+        cd.tenantLinks = this.endpoint.tenantLinks;
         cd.customProperties = new HashMap<>();
         cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "coreos");
         return postDocument(ComputeDescriptionService.FACTORY_LINK, cd);
@@ -323,7 +328,7 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
 
         requestBrokerState.resourceCount = count != null ? count : resourceLinks.size();
         requestBrokerState.resourceLinks = resourceLinks;
-        requestBrokerState.tenantLinks = getTenantLinks();
+        requestBrokerState.tenantLinks = this.endpoint.tenantLinks;
         requestBrokerState.customProperties = new HashMap<>();
         if (count != null) {
             requestBrokerState.customProperties.put(RequestUtils.FIELD_NAME_ALLOCATION_REQUEST,
