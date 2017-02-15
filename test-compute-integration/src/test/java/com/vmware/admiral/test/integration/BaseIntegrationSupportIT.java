@@ -283,6 +283,18 @@ public abstract class BaseIntegrationSupportIT {
         return doc;
     }
 
+    @SuppressWarnings("unchecked")
+    protected static <T extends ServiceDocument> T patchDocument(T document) throws Exception {
+
+        String body = sendRequest(HttpMethod.PATCH, document.documentSelfLink,
+                Utils.toJson(document));
+        if (body == null) {
+            return null;
+        }
+        T doc = (T) Utils.fromJson(body, document.getClass());
+        return doc;
+    }
+
     protected static ComputeState addHost(ComputeState computeState) throws Exception {
         if (computeState.id != null) {
             String documentSelfLink = buildServiceUri(ComputeService.FACTORY_LINK,

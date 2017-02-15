@@ -25,25 +25,38 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
+import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionFactoryService;
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
+import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
+import com.vmware.admiral.compute.container.ContainerDescriptionService;
+import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
+import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.compute.env.ComputeProfileService.ComputeProfile;
 import com.vmware.admiral.compute.env.NetworkProfileService.NetworkProfile;
 import com.vmware.admiral.compute.env.StorageProfileService.StorageProfile;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.request.RequestBrokerService;
 import com.vmware.admiral.test.integration.SimpleHttpsClient;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
 import com.vmware.admiral.test.integration.compute.aws.AwsComputeProvisionIT;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Utils;
@@ -52,7 +65,7 @@ import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
 @RunWith(Parameterized.class)
-@Ignore("There are changes to wordpress deps, so the scripts have to be updated.")
+// @Ignore("There are changes to wordpress deps, so the scripts have to be updated.")
 public class WordpressProvisionIT extends BaseComputeProvisionIT {
 
     private static final String WP_PATH = "mywordpresssite";
@@ -197,6 +210,34 @@ public class WordpressProvisionIT extends BaseComputeProvisionIT {
 
     @Override
     protected String getResourceDescriptionLink() throws Exception {
-        return importTemplate("WordPress_with_MySQL_compute_network.yaml");
+        String compositeDescriptionLink = importTemplate(
+                "WordPress_with_MySQL_compute_network.yaml");
+        CompositeDescription description = getDocument(compositeDescriptionLink,
+                CompositeDescription.class);
+        description.tenantLinks = getTenantLinks();
+        patchDocument(description);
+
+        for (String descriptionLink : description.descriptionLinks) {
+            ResourceState state;
+            if (descriptionLink.startsWith(ContainerNetworkDescriptionService.FACTORY_LINK)) {
+                state = new ContainerNetworkDescription();
+            } else if (descriptionLink.startsWith(ContainerVolumeDescriptionService.FACTORY_LINK)) {
+                state = new ContainerVolumeDescription();
+            } else if (descriptionLink.startsWith(ComputeNetworkDescriptionService.FACTORY_LINK)) {
+                state = new ComputeNetworkDescription();
+            } else if (descriptionLink.startsWith(ComputeDescriptionService.FACTORY_LINK)) {
+                state = new ComputeDescription();
+            } else if (descriptionLink.startsWith(ContainerDescriptionService.FACTORY_LINK)) {
+                state = new ContainerDescription();
+            } else if (descriptionLink.startsWith(ClosureDescriptionFactoryService.FACTORY_LINK)) {
+                state = new ClosureDescription();
+            } else {
+                throw new IllegalStateException("Unknown link found:" + descriptionLink);
+            }
+            state.documentSelfLink = descriptionLink;
+            state.tenantLinks = getTenantLinks();
+            patchDocument(state);
+        }
+        return compositeDescriptionLink;
     }
 }

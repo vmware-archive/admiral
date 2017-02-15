@@ -35,7 +35,6 @@ public class ComputeDescriptionEnhancers extends ComputeDescriptionEnhancer {
         this.enhancers.add(new CloudConfigLoaderEnhancer());
         this.enhancers.add(new GuestCredentialsComputeDescriptionEnhancer(host, referer));
         this.enhancers.add(new ContainerHostRemoteAPIComputeDescriptionEnhancer(host, referer));
-        this.enhancers.add(new NetworkInterfaceDescriptionEnhancer(host, referer));
         this.enhancers.add(new CloudConfigSerializeEnhancer(host));
     }
 
