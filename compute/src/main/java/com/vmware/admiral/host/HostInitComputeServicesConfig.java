@@ -61,6 +61,7 @@ import com.vmware.admiral.compute.env.EnvironmentMappingService;
 import com.vmware.admiral.compute.env.EnvironmentService;
 import com.vmware.admiral.compute.env.NetworkProfileService;
 import com.vmware.admiral.compute.env.StorageProfileService;
+import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionContentService;
@@ -110,6 +111,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
         startServiceFactories(host, CaSigningCertService.class,
                 ContainerDescriptionService.class,
                 GroupResourcePlacementService.class,
+                KubernetesEntityDataCollection.class,
                 HostContainerListDataCollection.class,
                 HostNetworkListDataCollection.class,
                 HostVolumeListDataCollection.class,

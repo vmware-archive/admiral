@@ -114,7 +114,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
 
 
         // Get the kubernetes context and the api client.
-        getContainerHost(
+        getComputeHost(
                 context.request,
                 null,
                 context.request.resolve(hostLink),

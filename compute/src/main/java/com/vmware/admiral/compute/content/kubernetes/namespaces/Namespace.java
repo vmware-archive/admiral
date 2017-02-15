@@ -11,12 +11,12 @@
 
 package com.vmware.admiral.compute.content.kubernetes.namespaces;
 
-import com.vmware.admiral.compute.content.kubernetes.ObjectMeta;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-public class Namespace {
-    /*public String kind;
-    public String apiVersion;*/
-    public ObjectMeta metadata;
+import com.vmware.admiral.compute.content.kubernetes.CommonKubernetesEntity;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class Namespace extends CommonKubernetesEntity {
     /*public NamespaceSpec spec;
     public NamespaceStatus status;*/
 }

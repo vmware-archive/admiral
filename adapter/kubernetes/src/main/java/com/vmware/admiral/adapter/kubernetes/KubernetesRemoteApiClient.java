@@ -251,6 +251,8 @@ public class KubernetesRemoteApiClient {
 
     public void getStats(KubernetesContext context, Node node, CompletionHandler
             completionHandler) {
+        // This url may not be accessible on every kubernetes setup. It requires that the dashboard
+        // service is running
         URI uri = UriUtils.buildUri(ApiUtil.apiPrefix(context, ApiUtil.API_PREFIX_V1)
                 + "/proxy/namespaces/kube-system/services/kubernetes-dashboard/api/v1/node/"
                 + node.metadata.name);

@@ -35,6 +35,10 @@ import com.vmware.admiral.compute.content.CompositeTemplate;
 import com.vmware.admiral.compute.content.kubernetes.deployments.Deployment;
 import com.vmware.admiral.compute.content.kubernetes.pods.Pod;
 import com.vmware.admiral.compute.content.kubernetes.services.Service;
+import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
+import com.vmware.admiral.compute.kubernetes.service.KubernetesService;
+import com.vmware.admiral.compute.kubernetes.service.KubernetesService.KubernetesState;
+import com.vmware.xenon.common.UriUtils;
 
 public class KubernetesUtil {
 
@@ -131,5 +135,48 @@ public class KubernetesUtil {
             }
         }
         return kubernetesTemplate;
+    }
+
+    public static KubernetesState makeStateFromJson(String json) {
+        KubernetesState result = new KubernetesState();
+        CommonKubernetesEntity entity = null;
+        try {
+            result.kubernetesEntity = YamlMapper.fromJsonToYaml(json);
+            entity = result.getKubernetesEntity(CommonKubernetesEntity.class);
+        } catch (IOException ignored) {
+            return null;
+        }
+        try {
+            result.type = entity.kind;
+            result.namespace = entity.metadata.namespace;
+            result.name = entity.metadata.name;
+            result.id = entity.metadata.uid;
+            return result;
+        } catch (NullPointerException ignored) {
+            return null;
+        }
+    }
+
+    public static KubernetesDescription createKubernetesEntityDescription(KubernetesState state) {
+
+        KubernetesDescription entityDescription = new KubernetesDescription();
+
+        entityDescription.documentSelfLink = state.descriptionLink;
+        entityDescription.documentDescription = state.documentDescription;
+        entityDescription.tenantLinks = state.tenantLinks;
+        entityDescription.name = state.name;
+        entityDescription.id = state.id;
+        entityDescription.customProperties = state.customProperties;
+
+        // TODO: double check these
+        return entityDescription;
+    }
+
+    public static String buildEntityLink(String name) {
+        return UriUtils.buildUriPath(KubernetesService.FACTORY_LINK, buildEntityId(name));
+    }
+
+    public static String buildEntityId(String name) {
+        return name.replaceAll(" ", "-");
     }
 }

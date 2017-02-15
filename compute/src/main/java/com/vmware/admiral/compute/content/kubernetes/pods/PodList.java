@@ -15,9 +15,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import com.vmware.admiral.compute.content.kubernetes.CommonKubernetesEntity;
-
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PodList extends CommonKubernetesEntity {
+public class PodList {
     public List<Pod> items;
 }

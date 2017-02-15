@@ -31,6 +31,7 @@ import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallback
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
+import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -99,7 +100,7 @@ public abstract class AbstractKubernetesAdapterService extends StatelessService 
         post.complete();
     }
 
-    protected void getContainerHost(AdapterRequest request, Operation op,
+    protected void getComputeHost(AdapterRequest request, Operation op,
             URI containerHostReference, Consumer<KubernetesContext> callbackFunction) {
         sendRequest(Operation.createGet(containerHostReference)
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
@@ -223,6 +224,15 @@ public abstract class AbstractKubernetesAdapterService extends StatelessService 
             logInfo("Patching adapter callback task %s with state %s for resource: %s",
                     request.serviceTaskCallback.serviceSelfLink, taskStage,
                     request.resourceReference);
+
+            if (callbackResponse != null) {
+                if (callbackResponse.taskInfo == null) {
+                    callbackResponse.taskInfo = new TaskState();
+                }
+                if (callbackResponse.taskInfo.stage == null) {
+                    callbackResponse.taskInfo.stage = taskStage;
+                }
+            }
 
             switch (taskStage) {
             case FINISHED:

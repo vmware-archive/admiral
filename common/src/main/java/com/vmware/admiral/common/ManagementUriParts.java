@@ -79,6 +79,8 @@ public interface ManagementUriParts {
     String HOST_CONTAINER_LIST_DATA_COLLECTION = RESOURCES + "/host-container-list-data-collection";
     String HOST_NETWORK_LIST_DATA_COLLECTION = RESOURCES + "/host-network-list-data-collection";
     String HOST_VOLUME_LIST_DATA_COLLECTION = RESOURCES + "/host-volume-list-data-collection";
+    String KUBERNETES_ENTITY_DATA_COLLECTION = RESOURCES
+            + "/host-kubernetes-entity-data-collection";
 
     String EVENT_LOG = RESOURCES + "/event-logs";
     String NOTIFICATIONS = RESOURCES + "/notifications";

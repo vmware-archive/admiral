@@ -11,7 +11,7 @@
 
 package com.vmware.admiral.adapter.kubernetes.mock;
 
-import static com.vmware.admiral.adapter.kubernetes.mock.MockKubernetesPathConstants.BASE_PATH;
+import static com.vmware.admiral.adapter.kubernetes.mock.KubernetesPathConstants.BASE_PATH;
 
 import java.net.URI;
 
@@ -29,27 +29,27 @@ public class MockKubernetesHostService extends StatefulService {
     @Override
     public void handleGet(Operation get) {
         URI uri = get.getUri();
-        if (uri.getPath().endsWith(MockKubernetesPathConstants.PING)) {
+        if (uri.getPath().endsWith(KubernetesPathConstants.PING)) {
             get.setBody("ok");
             get.complete();
-        } else if (uri.getPath().endsWith(MockKubernetesPathConstants.NAMESPACES)) {
-            get.setBody(namespaceMock());
+        } else if (uri.getPath().endsWith(KubernetesPathConstants.NAMESPACES)) {
+            get.setBody(namespaceStub());
             get.complete();
-        } else if (uri.getPath().endsWith(MockKubernetesPathConstants.PODS)) {
-            get.setBody(podsMock());
+        } else if (uri.getPath().endsWith(KubernetesPathConstants.PODS)) {
+            get.setBody(podsStub());
             get.complete();
-        } else if (uri.getPath().endsWith(MockKubernetesPathConstants.NODES)) {
-            get.setBody(nodesMock());
+        } else if (uri.getPath().endsWith(KubernetesPathConstants.NODES)) {
+            get.setBody(nodesStub());
             get.complete();
-        } else if (uri.getPath().contains(MockKubernetesPathConstants.DASHBOARD_PROXY_FOR_STATS)) {
-            get.setBody(statsProxyMock());
+        } else if (uri.getPath().contains(KubernetesPathConstants.DASHBOARD_PROXY_FOR_STATS)) {
+            get.setBody(statsProxyStub());
             get.complete();
         } else {
-            get.fail(new IllegalStateException("Operation not supported."));
+            get.fail(new IllegalStateException("Operation path not supported."));
         }
     }
 
-    private String namespaceMock() {
+    private String namespaceStub() {
         return "{\n"
                 + "  \"kind\": \"NamespaceList\",\n"
                 + "  \"apiVersion\": \"v1\",\n"
@@ -116,7 +116,7 @@ public class MockKubernetesHostService extends StatefulService {
                 + "}";
     }
 
-    private String podsMock() {
+    private String podsStub() {
         return "{\n"
                 + "  \"kind\": \"PodList\",\n"
                 + "  \"apiVersion\": \"v1\",\n"
@@ -280,7 +280,7 @@ public class MockKubernetesHostService extends StatefulService {
                 + "}";
     }
 
-    private String nodesMock() {
+    private String nodesStub() {
         return "{\n"
                 + "  \"kind\": \"NodeList\",\n"
                 + "  \"apiVersion\": \"v1\",\n"
@@ -353,7 +353,7 @@ public class MockKubernetesHostService extends StatefulService {
                 + "}";
     }
 
-    private String statsProxyMock() {
+    private String statsProxyStub() {
         return "{\n"
                 + "  \"objectMeta\": {\n"
                 + "   \"name\": \"127.0.0.1\",\n"

@@ -15,11 +15,11 @@ import com.vmware.admiral.adapter.kubernetes.ApiUtil;
 import com.vmware.admiral.adapter.kubernetes.KubernetesRemoteApiClient;
 
 /**
- * Constants for mock docker host and services
+ * Constants for stub kubernetes host and services
  */
-public interface MockKubernetesPathConstants {
-    String BASE_PATH = "/mock/kubernetes";
-    String BASE_FAILING_PATH = "/mock/failing-kubernetes";
+public interface KubernetesPathConstants {
+    String BASE_PATH = "/stub/kubernetes";
+    String BASE_FAILING_PATH = "/stub/failing-kubernetes";
     String PING = KubernetesRemoteApiClient.pingPath;
     String API_V1 = ApiUtil.API_PREFIX_V1;
     String NAMESPACES = API_V1 + "/namespaces";

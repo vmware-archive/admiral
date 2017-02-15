@@ -24,9 +24,15 @@ import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatefulService;
+import com.vmware.xenon.common.UriUtils;
 
 public class KubernetesDescriptionService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.KUBERNETES_DESC;
+
+    /* Instance to link to when existing entities are discovered on a host */
+    public static final String DISCOVERED_INSTANCE = "discovered";
+    public static final String DISCOVERED_DESCRIPTION_LINK = UriUtils.buildUriPath(FACTORY_LINK,
+            DISCOVERED_INSTANCE);
 
     public static class KubernetesDescription extends ResourceState {
 

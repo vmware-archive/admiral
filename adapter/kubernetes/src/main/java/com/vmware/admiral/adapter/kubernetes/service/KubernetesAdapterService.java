@@ -77,7 +77,7 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
             return;
         }
 
-        getContainerHost(
+        getComputeHost(
                 context.request,
                 null,
                 context.request.resolve(context.kubernetesState.parentLink),

@@ -19,7 +19,6 @@ import org.junit.Test;
 import com.vmware.admiral.compute.content.kubernetes.ObjectMeta;
 import com.vmware.admiral.compute.content.kubernetes.namespaces.Namespace;
 import com.vmware.admiral.compute.content.kubernetes.namespaces.NamespaceList;
-import com.vmware.admiral.compute.content.kubernetes.namespaces.NamespaceSpec;
 import com.vmware.xenon.common.Utils;
 
 public class ApiObjectSerializeTest {
@@ -213,14 +212,5 @@ public class ApiObjectSerializeTest {
         assertNotNull(list.metadata.selfLink);
         assertNotNull(list.metadata.resourceVersion);*/
         assertNotNull(list.items);
-    }
-
-    @Test
-    public void TestNamespaceSpecRegression() {
-        final String data = "{\"finalizers\":[]}";
-
-        NamespaceSpec spec = Utils.fromJson(data, NamespaceSpec.class);
-        assertNotNull(spec);
-        assertEquals(0, spec.finalizers.size());
     }
 }

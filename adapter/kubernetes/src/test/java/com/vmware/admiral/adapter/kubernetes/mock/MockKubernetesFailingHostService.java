@@ -11,7 +11,7 @@
 
 package com.vmware.admiral.adapter.kubernetes.mock;
 
-import static com.vmware.admiral.adapter.kubernetes.mock.MockKubernetesPathConstants.BASE_FAILING_PATH;
+import static com.vmware.admiral.adapter.kubernetes.mock.KubernetesPathConstants.BASE_FAILING_PATH;
 
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
