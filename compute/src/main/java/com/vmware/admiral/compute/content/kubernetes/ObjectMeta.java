@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class ObjectMeta {
     public String name;
     public String namespace;
+    public String uid;
     public String selfLink;
     public HashMap<String, Object> labels;
     public HashMap<String, String> annotations;

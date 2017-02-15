@@ -22,6 +22,7 @@ import com.vmware.admiral.compute.container.HostNetworkListDataCollection;
 import com.vmware.admiral.compute.container.HostVolumeListDataCollection;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.compute.env.EnvironmentService;
+import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection;
 import com.vmware.admiral.service.common.AbstractInitialBootService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
@@ -42,6 +43,7 @@ public class ComputeInitialBootService extends AbstractInitialBootService {
         states = new ArrayList<>();
         states.addAll(EnvironmentService.getAllDefaultDocuments());
         states.add(ContainerHostDataCollectionService.buildDefaultStateInstance());
+        states.add(KubernetesEntityDataCollection.buildDefaultStateInstance());
         states.add(HostContainerListDataCollection.buildDefaultStateInstance());
         states.add(HostNetworkListDataCollection.buildDefaultStateInstance());
         states.add(HostVolumeListDataCollection.buildDefaultStateInstance());

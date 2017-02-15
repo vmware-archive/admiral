@@ -71,10 +71,10 @@ public class BaseKubernetesMockTest extends BaseTestCase {
         mockKubernetesHost.setMaintenanceIntervalMicros(TimeUnit.MILLISECONDS
                 .toMicros(MAINTENANCE_INTERVAL_MILLIS));
         kubernetesUri = UriUtils.buildUri(mockKubernetesHost,
-                MockKubernetesPathConstants.BASE_PATH);
+                KubernetesPathConstants.BASE_PATH);
 
         kubernetesFailingUri = UriUtils.buildUri(mockKubernetesHost,
-                MockKubernetesPathConstants.BASE_FAILING_PATH);
+                KubernetesPathConstants.BASE_FAILING_PATH);
 
         kubernetesCredentials = new AuthCredentialsServiceState();
         kubernetesCredentials.type = AuthCredentialsType.Password.name();

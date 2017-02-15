@@ -18,6 +18,7 @@ public enum ContainerHostOperationType {
     INFO("Host.Container.Info"),
     VERSION("Host.Container.Version"),
     PING("Host.Container.Ping"),
+    LIST_ENTITIES("Host.Generic.ListEntities"),
     LIST_CONTAINERS("Host.Container.ListContainers"),
     LIST_NETWORKS("Host.Network.ListNetworks"),
     LIST_VOLUMES("Host.Volume.ListVolumes"),

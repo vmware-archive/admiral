@@ -13,6 +13,8 @@ package com.vmware.admiral.adapter.kubernetes.service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -20,15 +22,14 @@ import java.util.stream.Collectors;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
-import com.vmware.admiral.adapter.kubernetes.KubernetesContainerStateMapper;
 import com.vmware.admiral.adapter.kubernetes.KubernetesRemoteApiClient;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
-import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
+import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.content.kubernetes.pods.Pod;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerStatus;
 import com.vmware.admiral.compute.content.kubernetes.pods.PodList;
+import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection.EntityListCallback;
 import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -60,35 +61,26 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
         } else if (request.operationTypeId.equals(ContainerHostOperationType.INFO.id)
                 && ComputeService.FACTORY_LINK.equals(request.resourceReference.getPath())) {
             directInfo(request, op);
-        } else if (request.operationTypeId.equals(ContainerHostOperationType.LIST_CONTAINERS.id)
+        } else if (request.operationTypeId.equals(ContainerHostOperationType.LIST_ENTITIES.id)
                 && request.serviceTaskCallback.isEmpty()) {
-            getContainerHost(request, op, request.resourceReference,
-                    (context) -> directListContainers(request, context, op));
-        } else if (request.operationTypeId.equals(ContainerHostOperationType.LIST_NETWORKS.id)
-                && request.serviceTaskCallback.isEmpty()) {
-            // direct list networks
+            getComputeHost(request, op, request.resourceReference,
+                    context -> listEntities(request, context, op, direct));
         } else {
-            getContainerHost(request, op, request.resourceReference,
-                    (context) -> processOperation(request, context));
+            getComputeHost(request, op, request.resourceReference,
+                    context -> processOperation(request, context));
             op.complete();
         }
     }
 
     private void processOperation(AdapterRequest request, KubernetesContext context) {
-        if (request.operationTypeId.equals(ContainerHostOperationType.VERSION.id)) {
-            //doVersion(request, computeState, commandInput);
-        } else if (request.operationTypeId.equals(ContainerHostOperationType.INFO.id)) {
+        if (request.operationTypeId.equals(ContainerHostOperationType.INFO.id)) {
             doInfo(request, context);
         } else if (request.operationTypeId.equals(ContainerHostOperationType.PING.id)) {
             doPing(request, context);
-        } else if (request.operationTypeId.equals(ContainerHostOperationType.LIST_CONTAINERS.id)) {
-            doListContainers(request, context);
-        } else if (request.operationTypeId.equals(ContainerHostOperationType.LIST_NETWORKS.id)) {
-            //doListNetworks(request, computeState, commandInput);
-            logInfo("Simulating list networks");
-        } else if (request.operationTypeId.equals(ContainerHostOperationType.STATS.id)) {
-            //doStats(request, computeState);
-            logInfo("Simulating stats");
+        } else if (request.operationTypeId.equals(ContainerHostOperationType.LIST_ENTITIES.id)) {
+            listEntities(request, context, null, withCallback);
+        } else {
+            logWarning("Operation [%s] not supported.", request.operationTypeId);
         }
     }
 
@@ -142,8 +134,32 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
                 .setCompletion(callback));
     }
 
+    private CallbackHandler direct = new CallbackHandler() {
+        @Override
+        public void complete(AdapterRequest request, Operation op, EntityListCallback body) {
+            op.setBody(body);
+            op.complete();
+        }
+
+        @Override
+        public void fail(AdapterRequest request, Operation op, Throwable ex) {
+            op.fail(ex);
+        }
+    };
+
+    private CallbackHandler withCallback = new CallbackHandler() {
+        @Override
+        public void complete(AdapterRequest request, Operation op, EntityListCallback callback) {
+            patchTaskStage(request, TaskStage.FINISHED, null, callback);
+        }
+
+        @Override
+        public void fail(AdapterRequest request, Operation op, Throwable ex) {
+            KubernetesHostAdapterService.this.fail(request, op, ex);
+        }
+    };
+
     private void directPing(AdapterRequest request, Operation op) {
-        // URI link to the stored credentials
         KubernetesContext context = getDefaultContext(request);
         directWithCredentials(request, op, (credentials) -> {
             context.credentials = credentials;
@@ -238,73 +254,57 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
         }
     }
 
-    private void directListContainers(AdapterRequest request, KubernetesContext context,
-            Operation op) {
+    private void listEntities(AdapterRequest request, KubernetesContext context, Operation op,
+            CallbackHandler callbackHandler) {
         updateContext(request, context);
 
-        getApiClient().getPods(context, (o, ex) -> {
-            if (ex != null) {
-                op.fail(ex);
-            } else {
-                PodList podList = o.getBody(PodList.class);
-                ContainerListCallback callbackResponse = containerListCallbackFromPodList(podList);
-                callbackResponse.containerHostLink = context.host.documentSelfLink;
-                callbackResponse.hostAdapterReference = context.host.adapterManagementReference;
+        EntityListCallback callbackResponse = new EntityListCallback();
+        AtomicBoolean hasError = new AtomicBoolean(false);
+        AtomicBoolean allStarted = new AtomicBoolean(false);
+        AtomicInteger resultCount = new AtomicInteger(0);
+        ResultHandler resultHandler = (logic) -> {
+            resultCount.incrementAndGet();
+            return (o, ex) -> {
+                if (ex != null) {
+                    logWarning("Listing operation [%s] failed: %s",
+                            o == null ? "null" : o.getUri().toString(), ex.toString());
+                    if (hasError.compareAndSet(false, true)) {
+                        callbackHandler.fail(request, op, ex);
+                    }
+                } else {
+                    logic.accept(o);
+                    if (resultCount.decrementAndGet() == 0 && allStarted.get()) {
+                        if (Logger.getLogger(this.getClass().getName()).isLoggable(Level.FINE)) {
+                            logFine("Collection returned entity IDs: %s %s",
+                                    callbackResponse.entityIdsAndNames.keySet().stream()
+                                            .collect(Collectors.toList()),
+                                    request.getRequestTrackingLog());
+                        }
 
-                if (Logger.getLogger(this.getClass().getName()).isLoggable(Level.FINE)) {
-                    logFine("Collection returned container IDs: %s %s",
-                            callbackResponse.containerIdsAndNames.keySet().stream()
-                                    .collect(Collectors.toList()),
-                            request.getRequestTrackingLog());
+                        callbackHandler.complete(request, op, callbackResponse);
+                    }
                 }
+            };
+        };
 
-                op.setBody(callbackResponse);
-                op.complete();
-            }
-        });
-    }
-
-    private void doListContainers(AdapterRequest request, KubernetesContext context) {
-        updateContext(request, context);
-
-        getApiClient().getPods(context, (op, ex) -> {
-            if (ex != null) {
-                fail(request, op, ex);
-            } else {
-                PodList podList = op.getBody(PodList.class);
-                ContainerListCallback callbackResponse = containerListCallbackFromPodList(podList);
-                callbackResponse.containerHostLink = context.host.documentSelfLink;
-                callbackResponse.hostAdapterReference = context.host.adapterManagementReference;
-
-                if (Logger.getLogger(this.getClass().getName()).isLoggable(Level.FINE)) {
-                    logFine("Collection returned container IDs: %s %s",
-                            callbackResponse.containerIdsAndNames.keySet().stream()
-                                    .collect(Collectors.toList()),
-                            request.getRequestTrackingLog());
+        callbackResponse.computeHostLink = context.host.documentSelfLink;
+        getApiClient().getPods(context, resultHandler.appendResult((o) -> {
+            PodList podList = o.getBody(PodList.class);
+            if (podList.items != null) {
+                synchronized (callbackResponse) {
+                    for (Pod pod : podList.items) {
+                        if (pod != null && pod.metadata != null) {
+                            callbackResponse.entityIdsAndNames.put(
+                                    pod.metadata.uid, pod.metadata.name);
+                            callbackResponse.entityIdsAndTypes.put(
+                                    pod.metadata.uid, KubernetesUtil.POD_TYPE);
+                        }
+                    }
                 }
-
-                patchTaskStage(request, TaskStage.FINISHED, null, callbackResponse);
             }
-        });
-    }
-
-    private ContainerListCallback containerListCallbackFromPodList(PodList podList) {
-        ContainerListCallback result = new ContainerListCallback();
-        String id = null;
-        if (podList.items == null) {
-            return result;
-        }
-        for (Pod pod : podList.items) {
-            if (pod.status == null || pod.status.containerStatuses == null) {
-                continue;
-            }
-            for (PodContainerStatus status : pod.status.containerStatuses) {
-                id = KubernetesContainerStateMapper.getId(status.containerID);
-                result.containerIdsAndNames.put(id, status.name);
-                result.containerIdsAndImage.put(id, status.image);
-            }
-        }
-        return result;
+        }));
+        //TODO: Add other entities that should be listed. Deployments, ReplicationControllers, ...
+        allStarted.set(true);
     }
 
     private void updateContext(AdapterRequest request, KubernetesContext context) {
@@ -322,5 +322,21 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
                 logWarning(REQUIRED_PROPERTY_MISSING_MESSAGE, ComputeConstants.HOST_URI_PROP_NAME);
             }
         }
+    }
+
+    /**
+     * This interface is used to synchronize the result of asynchronous GET requests.
+     */
+    private interface ResultHandler {
+        CompletionHandler appendResult(Consumer<Operation> param);
+    }
+
+    /**
+     * This interface is used to pass different completion functionality as a parameter.
+     */
+    private interface CallbackHandler {
+        void complete(AdapterRequest r, Operation o, EntityListCallback c);
+
+        void fail(AdapterRequest r, Operation o, Throwable e);
     }
 }

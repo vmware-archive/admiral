@@ -47,6 +47,8 @@ import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupR
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection.NetworkListCallback;
 import com.vmware.admiral.compute.container.HostVolumeListDataCollection.VolumeListCallback;
+import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection;
+import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection.EntityListCallback;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
@@ -219,9 +221,15 @@ public class ContainerHostDataCollectionService extends StatefulService {
                                 updateResourcePool(computeState,
                                         qr.rpLinksByComputeLink.get(computeState.documentSelfLink),
                                         body.remove);
-                                updateContainerHostContainers(computeState);
-                                updateContainerHostNetworks(computeState);
-                                updateContainerHostVolumes(computeState.documentSelfLink);
+                                if (ContainerHostUtil.isKubernetesHost(computeState)) {
+                                    updateKubernetesEntities(computeState.documentSelfLink);
+                                } else {
+                                    // These can be changed back to accepting only the self link
+                                    // because the adapter can only be docker.
+                                    updateContainerHostContainers(computeState);
+                                    updateContainerHostNetworks(computeState);
+                                    updateContainerHostVolumes(computeState.documentSelfLink);
+                                }
                                 updateHostStats(computeState);
                             }
                         }, null);
@@ -693,9 +701,13 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 }, null);
 
                 if (PowerState.ON.equals(compute.powerState)) {
-                    updateContainerHostContainers(compute);
-                    updateContainerHostNetworks(compute);
-                    updateContainerHostVolumes(compute.documentSelfLink);
+                    if (ContainerHostUtil.isKubernetesHost(compute)) {
+                        updateKubernetesEntities(compute.documentSelfLink);
+                    } else {
+                        updateContainerHostContainers(compute);
+                        updateContainerHostNetworks(compute);
+                        updateContainerHostVolumes(compute.documentSelfLink);
+                    }
                 }
             }
 
@@ -785,6 +797,23 @@ public class ContainerHostDataCollectionService extends StatefulService {
         request.resourceReference = UriUtils.buildUri(getHost(), documentSelfLink);
         sendRequest(Operation.createPatch(computeState.adapterManagementReference)
                 .setBody(request)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        logWarning(Utils.toString(ex));
+                        return;
+                    }
+                }));
+    }
+
+    private void updateKubernetesEntities(String documentSelfLink) {
+        EntityListCallback body = new EntityListCallback();
+        body.computeHostLink = documentSelfLink;
+        sendRequest(Operation
+                .createPatch(
+                        this,
+                        KubernetesEntityDataCollection
+                                .DEFAULT_KUBERNETES_ENTITY_DATA_COLLECTION_LINK)
+                .setBody(body)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         logWarning(Utils.toString(ex));

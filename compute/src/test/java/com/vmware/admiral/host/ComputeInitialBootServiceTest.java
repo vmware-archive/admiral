@@ -31,6 +31,8 @@ import com.vmware.admiral.compute.container.HostNetworkListDataCollection.HostNe
 import com.vmware.admiral.compute.container.HostVolumeListDataCollection;
 import com.vmware.admiral.compute.container.HostVolumeListDataCollection.HostVolumeListDataCollectionState;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
+import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection;
+import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection.KubernetesEntityDataCollectionState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 
@@ -94,6 +96,17 @@ public class ComputeInitialBootServiceTest extends ComputeBaseTest {
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK);
 
         assertNotNull(dataCollectionState);
+    }
+
+    @Test
+    public void testKubernetesEntityListDataCollectionServiceCreatedOnStartUp() throws Throwable {
+        waitForServiceAvailability(KubernetesEntityDataCollection.DEFAULT_KUBERNETES_ENTITY_DATA_COLLECTION_LINK);
+        KubernetesEntityDataCollectionState dataCollectionState = getDocument(
+                KubernetesEntityDataCollectionState.class,
+                KubernetesEntityDataCollection.DEFAULT_KUBERNETES_ENTITY_DATA_COLLECTION_LINK);
+
+        assertNotNull(dataCollectionState);
+        assertEquals(TaskStage.STARTED, dataCollectionState.taskInfo.stage);
     }
 
     @Test

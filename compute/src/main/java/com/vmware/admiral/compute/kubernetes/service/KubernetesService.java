@@ -29,6 +29,7 @@ public class KubernetesService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.KUBERNETES;
 
     public static class KubernetesState extends ResourceState {
+        public static final String FIELD_NAME_PARENT_LINK = "parentLink";
 
         /**
          * Serialized kubernetes entity in YAML format.
@@ -55,9 +56,9 @@ public class KubernetesService extends StatefulService {
         public String selfLink;
 
         /**
-         * Defines the description of the entity
+         * Defines the description of the entity.
          */
-        @Documentation(description = "Defines the description of the container.")
+        @Documentation(description = "Defines the description of the entity.")
         public String descriptionLink;
 
         /**
@@ -67,7 +68,7 @@ public class KubernetesService extends StatefulService {
         public String compositeComponentLink;
 
         /**
-         * Entity host link
+         * Entity host link.
          */
         @Documentation(description = "Entity host link")
         public String parentLink;

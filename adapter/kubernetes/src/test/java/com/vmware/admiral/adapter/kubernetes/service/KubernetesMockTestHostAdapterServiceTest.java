@@ -34,7 +34,7 @@ import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
-import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
+import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection.EntityListCallback;
 import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.SslTrustCertificateService;
@@ -54,7 +54,6 @@ public class KubernetesMockTestHostAdapterServiceTest extends BaseKubernetesMock
     private static final String TASK_INFO_STAGE = TaskServiceDocument.FIELD_NAME_TASK_STAGE;
     private URI kubernetesHostAdapterServiceUri;
     private ComputeState kubernetesHostState;
-    // private ContainerState shellContainerState;
     private String testKubernetesCredentialsLink;
     private String provisioningTaskLink;
 
@@ -78,13 +77,14 @@ public class KubernetesMockTestHostAdapterServiceTest extends BaseKubernetesMock
                 Operation.createPost(UriUtils.buildUri(
                         mockKubernetesHost, MockKubernetesFailingHostService.SELF_LINK)),
                 failingService);
+        mockKubernetesHost.waitForServiceAvailable(MockKubernetesHostService.SELF_LINK);
+        mockKubernetesHost.waitForServiceAvailable(MockKubernetesFailingHostService.SELF_LINK);
     }
 
     @Before
     public void setUp() throws Throwable {
         createTestKubernetesAuthCredentials();
         createKubernetesHostComputeState();
-        // createHostShellContainer();
         createProvisioningTask();
 
         setupKubernetesAdapterService();
@@ -97,7 +97,6 @@ public class KubernetesMockTestHostAdapterServiceTest extends BaseKubernetesMock
 
     @After
     public void tearDown() throws Throwable {
-        // deleteHostShellContainer();
         deleteKubernetesHostComputeState();
     }
 
@@ -141,23 +140,6 @@ public class KubernetesMockTestHostAdapterServiceTest extends BaseKubernetesMock
         kubernetesHostState = doPost(computeState, ComputeService.FACTORY_LINK);
     }
 
-    /*protected void createHostShellContainer() throws Throwable {
-        ContainerState state = new ContainerState();
-        String hostId = Service.getId(kubernetesHostState.documentSelfLink);
-        state.documentSelfLink = SystemContainerDescriptions.getSystemContainerSelfLink(
-                SystemContainerDescriptions.AGENT_CONTAINER_NAME, hostId);
-        state.parentLink = kubernetesHostState.documentSelfLink;
-
-        PortBinding portBinding = new PortBinding();
-        portBinding.containerPort = "80";
-        portBinding.hostPort = "80";
-        state.ports = new ArrayList<>();
-        state.ports.add(portBinding);
-
-        waitForServiceAvailability(ContainerFactoryService.SELF_LINK);
-        shellContainerState = doPost(state, ContainerFactoryService.SELF_LINK);
-    }*/
-
     protected void createProvisioningTask() throws Throwable {
         MockTaskState provisioningTask = new MockTaskState();
         provisioningTaskLink = doPost(provisioningTask,
@@ -172,10 +154,6 @@ public class KubernetesMockTestHostAdapterServiceTest extends BaseKubernetesMock
                 new KubernetesHostAdapterService());
     }
 
-    /*protected void deleteHostShellContainer() throws Throwable {
-        doDelete(UriUtils.buildUri(host, shellContainerState.documentSelfLink), false);
-    }*/
-
     protected void deleteKubernetesHostComputeState() throws Throwable {
         doDelete(UriUtils.buildUri(host, kubernetesHostState.documentSelfLink), false);
     }
@@ -185,11 +163,11 @@ public class KubernetesMockTestHostAdapterServiceTest extends BaseKubernetesMock
     }
 
     protected TaskStage waitForTaskToFinish() throws Throwable {
-        MockTaskState stage = waitForPropertyValue(provisioningTaskLink, MockTaskState.class,
+        MockTaskState state = waitForPropertyValue(provisioningTaskLink, MockTaskState.class,
                 TASK_INFO_STAGE,
                 Arrays.asList(TaskStage.FINISHED, TaskStage.FAILED, TaskStage.CANCELLED),
                 true, new AtomicInteger(100));
-        return stage.taskInfo.stage;
+        return state.taskInfo.stage;
     }
 
     private AdapterRequest prepareAdapterRequest(ContainerHostOperationType opType) {
@@ -252,38 +230,49 @@ public class KubernetesMockTestHostAdapterServiceTest extends BaseKubernetesMock
     }
 
     @Test
-    public void testHostDirectPing() throws Throwable {
-        AdapterRequest request = prepareAdapterRequest(ContainerHostOperationType.PING);
-        mockKubernetesHost.waitForServiceAvailable(MockKubernetesHostService.SELF_LINK);
-        OperationResult r = sendAdapterRequest(request);
+    public void testHostPing() throws Throwable {
+        AdapterRequest request;
+        OperationResult r;
+
+        // Direct
+        request = prepareAdapterRequest(ContainerHostOperationType.PING);
+        r = sendAdapterRequest(request);
+        Assert.assertNull(r.ex);
+        Assert.assertEquals(200, r.op.getStatusCode());
+        // Without credentials
+        request.customProperties.remove(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME);
+        r = sendAdapterRequest(request);
         Assert.assertNull(r.ex);
         Assert.assertEquals(200, r.op.getStatusCode());
 
-        request.customProperties.remove(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME);
-        r = sendAdapterRequest(request);
+        // With resource reference
+        request = prepareAdapterRequest(ContainerHostOperationType.PING);
+        r = sendAdapterRequest(request, getKubernetesHostStateUri());
+        TaskStage stage = waitForTaskToFinish();
+        Assert.assertEquals(TaskStage.FINISHED, stage);
         Assert.assertNull(r.ex);
         Assert.assertEquals(200, r.op.getStatusCode());
     }
 
     @Test
     public void testHostDirectInfo() throws Throwable {
-        AdapterRequest request = prepareAdapterRequest(ContainerHostOperationType.INFO);
-        mockKubernetesHost.waitForServiceAvailable(MockKubernetesHostService.SELF_LINK);
-        OperationResult r = sendAdapterRequest(request);
+        AdapterRequest request;
+        OperationResult r;
+
+        // Direct
+        request = prepareAdapterRequest(ContainerHostOperationType.INFO);
+        r = sendAdapterRequest(request);
         Assert.assertNull(r.ex);
         Assert.assertEquals(200, r.op.getStatusCode());
-
+        // Without credentials
         request.customProperties.remove(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME);
         r = sendAdapterRequest(request);
         Assert.assertNull(r.ex);
         Assert.assertEquals(200, r.op.getStatusCode());
-    }
 
-    @Test
-    public void testPingWithResourceReference() throws Throwable {
-        AdapterRequest request = prepareAdapterRequest(ContainerHostOperationType.PING);
-        mockKubernetesHost.waitForServiceAvailable(MockKubernetesHostService.SELF_LINK);
-        OperationResult r = sendAdapterRequest(request, getKubernetesHostStateUri());
+        // With resource reference
+        request = prepareAdapterRequest(ContainerHostOperationType.INFO);
+        r = sendAdapterRequest(request, getKubernetesHostStateUri());
         TaskStage stage = waitForTaskToFinish();
         Assert.assertEquals(TaskStage.FINISHED, stage);
         Assert.assertNull(r.ex);
@@ -291,30 +280,25 @@ public class KubernetesMockTestHostAdapterServiceTest extends BaseKubernetesMock
     }
 
     @Test
-    public void testInfoWithResourceReference() throws Throwable {
-        AdapterRequest request = prepareAdapterRequest(ContainerHostOperationType.INFO);
-        mockKubernetesHost.waitForServiceAvailable(MockKubernetesHostService.SELF_LINK);
-        OperationResult r = sendAdapterRequest(request, getKubernetesHostStateUri());
-        TaskStage stage = waitForTaskToFinish();
-        Assert.assertEquals(TaskStage.FINISHED, stage);
-        Assert.assertNull(r.ex);
-        Assert.assertEquals(200, r.op.getStatusCode());
-    }
+    public void testListEntities() throws Throwable {
+        AdapterRequest request;
+        OperationResult r;
 
-    @Test
-    public void testListContainers() throws Throwable {
-        AdapterRequest request = prepareAdapterRequest(ContainerHostOperationType.LIST_CONTAINERS);
-        mockKubernetesHost.waitForServiceAvailable(MockKubernetesHostService.SELF_LINK);
-        OperationResult r = sendAdapterRequest(request, getKubernetesHostStateUri());
-        Assert.assertNull(r.ex);
-        Assert.assertEquals(200, r.op.getStatusCode());
-        Assert.assertNotNull(r.op.getBody(ContainerListCallback.class));
-
+        // Direct
+        request = prepareAdapterRequest(ContainerHostOperationType.LIST_ENTITIES);
         request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
         r = sendAdapterRequest(request, getKubernetesHostStateUri());
         Assert.assertNull(r.ex);
         Assert.assertEquals(200, r.op.getStatusCode());
-        Assert.assertNotNull(r.op.getBody(ContainerListCallback.class));
+        Assert.assertNotNull(r.op.getBody(EntityListCallback.class));
+
+        // With ServiceCallback
+        request = prepareAdapterRequest(ContainerHostOperationType.LIST_ENTITIES);
+        r = sendAdapterRequest(request, getKubernetesHostStateUri());
+        TaskStage stage = waitForTaskToFinish();
+        Assert.assertNull(r.ex);
+        Assert.assertEquals(200, r.op.getStatusCode());
+        Assert.assertEquals(TaskStage.FINISHED, stage);
     }
 
     @Test
@@ -351,15 +335,15 @@ public class KubernetesMockTestHostAdapterServiceTest extends BaseKubernetesMock
         Assert.assertEquals(200, r.op.getStatusCode());
         Assert.assertNull(r.ex);
 
-        // Direct list containers
-        request = prepareAdapterFailingRequest(ContainerHostOperationType.LIST_CONTAINERS);
+        // Direct list entities
+        request = prepareAdapterFailingRequest(ContainerHostOperationType.LIST_ENTITIES);
         request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
         r = sendAdapterRequest(request, getKubernetesHostStateUri());
         Assert.assertEquals(500, r.op.getStatusCode());
         Assert.assertNotNull(r.ex);
 
-        // List containers with callback reference
-        request = prepareAdapterFailingRequest(ContainerHostOperationType.LIST_CONTAINERS);
+        // List entities with service callback
+        request = prepareAdapterFailingRequest(ContainerHostOperationType.LIST_ENTITIES);
         r = sendAdapterRequest(request, getKubernetesHostStateUri());
         stage = waitForTaskToFinish();
         Assert.assertEquals(TaskStage.FAILED, stage);
