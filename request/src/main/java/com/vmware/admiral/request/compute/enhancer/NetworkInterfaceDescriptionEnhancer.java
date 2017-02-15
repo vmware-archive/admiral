@@ -28,14 +28,14 @@ import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
 import com.vmware.photon.controller.model.resources.SecurityGroupService;
 import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState;
 import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState.Rule;
+import com.vmware.photon.controller.model.tasks.QueryStrategy;
+import com.vmware.photon.controller.model.tasks.QueryUtils.QueryTop;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
-import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption;
-import com.vmware.xenon.services.common.ServiceUriPaths;
+import com.vmware.xenon.services.common.QueryTask.Query.Builder;
 
 public class NetworkInterfaceDescriptionEnhancer extends ComputeDescriptionEnhancer {
 
@@ -175,49 +175,31 @@ public class NetworkInterfaceDescriptionEnhancer extends ComputeDescriptionEnhan
 
     private DeferredResult<String> queryDefaultSecurityGroup(EnhanceContext context,
             ComputeDescription cd) {
-        Query query = Query.Builder.create()
+        Builder builder = Query.Builder.create()
                 .addKindFieldClause(SecurityGroupState.class)
                 .addClause(QueryUtil.addTenantClause(cd.tenantLinks))
                 .addFieldClause(SecurityGroupState.FIELD_NAME_NAME, DEFAULT_SECURITY_GROUP_NAME)
-                .addFieldClause(SecurityGroupState.FIELD_NAME_REGION_ID, context.regionId)
-                .build();
+                .addFieldClause(SecurityGroupState.FIELD_NAME_REGION_ID, context.regionId);
 
         if (context.endpointLink != null && !context.endpointLink.isEmpty()) {
-            query.addBooleanClause(Query.Builder.create()
-                    .addFieldClause(NetworkState.FIELD_NAME_ENDPOINT_LINK, context.endpointLink)
-                    .build());
+            builder.addFieldClause(NetworkState.FIELD_NAME_ENDPOINT_LINK, context.endpointLink);
         }
 
-        QueryTask queryTask = QueryTask.Builder.createDirectTask()
-                .addOption(QueryOption.TOP_RESULTS)
-                .setQuery(query)
-                .setResultLimit(20)
-                .build();
-        queryTask.tenantLinks = cd.tenantLinks;
+        QueryStrategy<SecurityGroupState> querySG = new QueryTop<>(
+                this.host, builder.build(), SecurityGroupState.class, null).setMaxResultsLimit(20);
 
-        return host.sendWithDeferredResult(
-                Operation.createPost(host, ServiceUriPaths.CORE_LOCAL_QUERY_TASKS)
-                        .setBody(queryTask)
-                        .setReferer(referer)
-                        .setConnectionSharing(true),
-                QueryTask.class)
-                .thenCompose(q -> {
+        return querySG.collectLinks(Collectors.toList())
+                .thenCompose(sgs -> {
                     DeferredResult<String> r = new DeferredResult<>();
-                    if (queryTask.results != null && queryTask.results.documentLinks != null) {
-                        r.complete(
-                                queryTask.results.documentLinks.stream().findFirst().orElse(null));
+                    if (!sgs.isEmpty()) {
+                        host.log(Level.FINE, () -> String.format("%d security group states found.",
+                                sgs.size()));
+                        r.complete(sgs.stream().findFirst().orElse(null));
                     } else {
                         r.complete(null);
                     }
-                    host.log(Level.FINE, () -> String.format("%d security group states found.",
-                            queryTask.results.documentCount));
                     return r;
                 });
-        // .exceptionally(e->{
-        // host.log(Level.SEVERE,() -> String.format("Failed retrieving query results: %s",
-        // e.toString()));
-        // return DeferredResult.completed((String)null);
-        // });
     }
 
 }
