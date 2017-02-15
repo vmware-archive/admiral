@@ -69,6 +69,18 @@ describe("ContainerStore test", function() {
         }, 0);
       });
     });
+    spyOn(services, 'loadContainerVolumes').and.callFake(function() {
+      return new Promise(function(resolve, reject){
+        setTimeout(function() {
+          var documents = {};
+          var resultToReturn = {
+            documents,
+            documentLinks: Object.keys(documents)
+          };
+          resolve(resultToReturn);
+        }, 0);
+      });
+    });
     spyOn(services, 'loadContainer').and.callFake(function(containerId) {
       return new Promise(function(resolve, reject){
         setTimeout(function() {
