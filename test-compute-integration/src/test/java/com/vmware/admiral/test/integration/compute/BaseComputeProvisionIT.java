@@ -352,21 +352,25 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         env.name = "wordpressEnv";
         env.documentSelfLink = UriUtils.buildUriPath(EnvironmentService.FACTORY_LINK, id);
         env.endpointLink = endpoint.documentSelfLink;
+        env.tenantLinks = getTenantLinks();
         docs.add(env);
 
         if (computeProfile != null) {
             env.computeProfileLink = UriUtils.buildUriPath(ComputeProfileService.FACTORY_LINK, id);
             computeProfile.documentSelfLink = env.computeProfileLink;
+            computeProfile.tenantLinks = env.tenantLinks;
             docs.add(computeProfile);
         }
         if (networkProfile != null) {
             env.networkProfileLink = UriUtils.buildUriPath(NetworkProfileService.FACTORY_LINK, id);
             networkProfile.documentSelfLink = env.networkProfileLink;
+            networkProfile.tenantLinks = env.tenantLinks;
             docs.add(networkProfile);
         }
         if (storageProfile != null) {
             env.storageProfileLink = UriUtils.buildUriPath(StorageProfileService.FACTORY_LINK, id);
             storageProfile.documentSelfLink = env.storageProfileLink;
+            storageProfile.tenantLinks = env.tenantLinks;
             docs.add(storageProfile);
         }
 
