@@ -18,7 +18,6 @@ components:
         value: wordpress
       - var: WORDPRESS_DB_HOST
         value: mysql:3306
-      network_mode: bridge
       ports:
       - container_port: 80
       depends_on:
@@ -33,7 +32,6 @@ components:
       env:
       - var: MYSQL_ROOT_PASSWORD
         value: pass@word01
-      network_mode: bridge
       ports:
       - container_port: 3306
       networks:

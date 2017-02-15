@@ -18,12 +18,15 @@ components:
         value: wordpress
       - var: WORDPRESS_DB_HOST
         value: mysql:3306
+      links:
+      - service: mysql
+        alias: mysql
       ports:
       - container_port: 80
       depends_on:
       - mysql
       volumes:
-        - myvolume:/tmp
+        - data-volume:/tmp/data
   mysql:
     type: App.Container
     data:
@@ -35,9 +38,9 @@ components:
       ports:
       - container_port: 3306
       volumes:
-      - myvolume:/var
-  myvolume:
+      - data-volume:/var/data
+  data-volume:
     type: App.Volume
     data:
-      name: myvolume
+      name: data-volume
       driver: local
