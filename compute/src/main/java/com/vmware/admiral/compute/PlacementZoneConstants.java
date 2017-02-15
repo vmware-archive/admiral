@@ -13,6 +13,17 @@ package com.vmware.admiral.compute;
 
 public class PlacementZoneConstants {
 
+    /**
+     * The name of the custom property under which to store the type of resources that might
+     * be deployed on participating resources of ResourcePoolState. The value of this property
+     * should be {@code ResourceType#name}.
+     *
+     * <p>
+     * The property is introduced by analogy with
+     * {@code com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState.resourceType}.
+     */
+    public static final String RESOURCE_TYPE_CUSTOM_PROP_NAME = "__resourceType";
+
     public static final String PLACEMENT_ZONE_TYPE_CUSTOM_PROP_NAME = "__placementZoneType";
 
     public enum PlacementZoneType {
