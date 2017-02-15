@@ -38,10 +38,10 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerShellService;
 import com.vmware.admiral.compute.container.DeploymentPolicyService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
-import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
-import com.vmware.admiral.compute.container.HostNetworkListDataCollection.HostNetworkListDataCollectionFactoryService;
+import com.vmware.admiral.compute.container.HostContainerListDataCollection;
+import com.vmware.admiral.compute.container.HostNetworkListDataCollection;
 import com.vmware.admiral.compute.container.HostPortProfileService;
-import com.vmware.admiral.compute.container.HostVolumeListDataCollection.HostVolumeListDataCollectionFactoryService;
+import com.vmware.admiral.compute.container.HostVolumeListDataCollection;
 import com.vmware.admiral.compute.container.ShellContainerExecutorService;
 import com.vmware.admiral.compute.container.TemplateSearchService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
@@ -87,9 +87,6 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
         startServices(host,
                 ContainerFactoryService.class,
                 EndpointAdapterService.class,
-                HostContainerListDataCollectionFactoryService.class,
-                HostNetworkListDataCollectionFactoryService.class,
-                HostVolumeListDataCollectionFactoryService.class,
                 RegistryHostConfigService.class,
                 CompositeDescriptionFactoryService.class,
                 CompositeDescriptionCloneService.class,
@@ -106,6 +103,9 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
         startServiceFactories(host, CaSigningCertService.class,
                 ContainerDescriptionService.class,
                 GroupResourcePlacementService.class,
+                HostContainerListDataCollection.class,
+                HostNetworkListDataCollection.class,
+                HostVolumeListDataCollection.class,
                 ContainerHostDataCollectionService.class,
                 EnvironmentService.class,
                 ComputeProfileService.class,

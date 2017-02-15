@@ -29,7 +29,6 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.compute.container.HostVolumeListDataCollection.HostVolumeListDataCollectionFactoryService;
 import com.vmware.admiral.compute.container.HostVolumeListDataCollection.HostVolumeListDataCollectionState;
 import com.vmware.admiral.compute.container.HostVolumeListDataCollection.VolumeListCallback;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
@@ -78,7 +77,7 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
         waitForServiceAvailability(MockDockerVolumeAdapterService.SELF_LINK);
         waitForServiceAvailability(MockDockerHostAdapterService.SELF_LINK);
         waitForServiceAvailability(
-                HostVolumeListDataCollectionFactoryService.DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK);
+                HostVolumeListDataCollection.DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK);
 
         volumeListCallback = new VolumeListCallback();
         volumeListCallback.containerHostLink = COMPUTE_HOST_LINK;
@@ -175,7 +174,7 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
         host.testStart(1);
         host.sendRequest(Operation
                 .createPatch(UriUtils.buildUri(host,
-                        HostVolumeListDataCollectionFactoryService.DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK))
+                        HostVolumeListDataCollection.DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK))
                 .setBody(volumeListCallback)
                 .setReferer(host.getUri())
                 .setCompletion(host.getCompletion()));
@@ -187,7 +186,7 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
     private void waitForDataCollectionFinished() throws Throwable {
         AtomicBoolean cotinue = new AtomicBoolean();
 
-        String dataCollectionLink = HostVolumeListDataCollectionFactoryService.DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK;
+        String dataCollectionLink = HostVolumeListDataCollection.DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK;
         waitFor(() -> {
             ServiceDocumentQuery<HostVolumeListDataCollectionState> query = new ServiceDocumentQuery<>(
                     host, HostVolumeListDataCollectionState.class);

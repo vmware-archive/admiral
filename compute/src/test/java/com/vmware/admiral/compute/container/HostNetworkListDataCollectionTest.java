@@ -28,7 +28,6 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.compute.container.HostNetworkListDataCollection.HostNetworkListDataCollectionFactoryService;
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection.HostNetworkListDataCollectionState;
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection.NetworkListCallback;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
@@ -76,7 +75,7 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
         waitForServiceAvailability(MockDockerNetworkAdapterService.SELF_LINK);
         waitForServiceAvailability(MockDockerHostAdapterService.SELF_LINK);
         waitForServiceAvailability(
-                HostNetworkListDataCollectionFactoryService.DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK);
+                HostNetworkListDataCollection.DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK);
 
         networkListCallback = new NetworkListCallback();
         networkListCallback.containerHostLink = COMPUTE_HOST_LINK;
@@ -161,7 +160,7 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
         host.testStart(1);
         host.sendRequest(Operation
                 .createPatch(UriUtils.buildUri(host,
-                        HostNetworkListDataCollectionFactoryService.DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK))
+                        HostNetworkListDataCollection.DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK))
                 .setBody(networkListCallback)
                 .setReferer(host.getUri())
                 .setCompletion(host.getCompletion()));
@@ -199,7 +198,7 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
     private void waitForDataCollectionFinished() throws Throwable {
         AtomicBoolean cotinue = new AtomicBoolean();
 
-        String dataCollectionLink = HostNetworkListDataCollectionFactoryService.DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK;
+        String dataCollectionLink = HostNetworkListDataCollection.DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK;
         waitFor(() -> {
             ServiceDocumentQuery<HostNetworkListDataCollectionState> query = new ServiceDocumentQuery<>(
                     host, HostNetworkListDataCollectionState.class);

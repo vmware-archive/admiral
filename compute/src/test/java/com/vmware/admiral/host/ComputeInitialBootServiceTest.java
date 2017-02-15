@@ -24,11 +24,11 @@ import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
-import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
+import com.vmware.admiral.compute.container.HostContainerListDataCollection;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionState;
-import com.vmware.admiral.compute.container.HostNetworkListDataCollection.HostNetworkListDataCollectionFactoryService;
+import com.vmware.admiral.compute.container.HostNetworkListDataCollection;
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection.HostNetworkListDataCollectionState;
-import com.vmware.admiral.compute.container.HostVolumeListDataCollection.HostVolumeListDataCollectionFactoryService;
+import com.vmware.admiral.compute.container.HostVolumeListDataCollection;
 import com.vmware.admiral.compute.container.HostVolumeListDataCollection.HostVolumeListDataCollectionState;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
@@ -98,10 +98,10 @@ public class ComputeInitialBootServiceTest extends ComputeBaseTest {
 
     @Test
     public void testHostContainerListDataCollectionServiceCreatedOnStartUp() throws Throwable {
-        waitForServiceAvailability(HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK);
+        waitForServiceAvailability(HostContainerListDataCollection.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK);
         HostContainerListDataCollectionState dataCollectionState = getDocument(
                 HostContainerListDataCollectionState.class,
-                HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK);
+                HostContainerListDataCollection.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK);
 
         assertNotNull(dataCollectionState);
         assertEquals(TaskStage.STARTED, dataCollectionState.taskInfo.stage);
@@ -109,10 +109,10 @@ public class ComputeInitialBootServiceTest extends ComputeBaseTest {
 
     @Test
     public void testHostNetworkListDataCollectionServiceCreatedOnStartUp() throws Throwable {
-        waitForServiceAvailability(HostNetworkListDataCollectionFactoryService.DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK);
+        waitForServiceAvailability(HostNetworkListDataCollection.DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK);
         HostNetworkListDataCollectionState dataCollectionState = getDocument(
                 HostNetworkListDataCollectionState.class,
-                HostNetworkListDataCollectionFactoryService.DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK);
+                HostNetworkListDataCollection.DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK);
 
         assertNotNull(dataCollectionState);
         assertEquals(TaskStage.STARTED, dataCollectionState.taskInfo.stage);
@@ -120,10 +120,10 @@ public class ComputeInitialBootServiceTest extends ComputeBaseTest {
 
     @Test
     public void testHostVolumeListDataCollectionServiceCreatedOnStartUp() throws Throwable {
-        waitForServiceAvailability(HostVolumeListDataCollectionFactoryService.DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK);
+        waitForServiceAvailability(HostVolumeListDataCollection.DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK);
         HostVolumeListDataCollectionState dataCollectionState = getDocument(
                 HostVolumeListDataCollectionState.class,
-                HostVolumeListDataCollectionFactoryService.DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK);
+                HostVolumeListDataCollection.DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK);
 
         assertNotNull(dataCollectionState);
         assertEquals(TaskStage.STARTED, dataCollectionState.taskInfo.stage);

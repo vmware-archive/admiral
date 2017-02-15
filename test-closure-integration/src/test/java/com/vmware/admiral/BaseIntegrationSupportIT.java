@@ -56,8 +56,8 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.container.HostContainerListDataCollection;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
-import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
@@ -238,7 +238,7 @@ public class BaseIntegrationSupportIT {
         // TODO remove when the issue with the locked data collection is fixed
         SimpleHttpsClient.execute(HttpMethod.PATCH,
                 getBaseUrl()
-                        + HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK,
+                        + HostContainerListDataCollection.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK,
                 Utils.toJson(body));
         HttpResponse httpResponse = SimpleHttpsClient.execute(HttpMethod.PUT,
                 getBaseUrl() + buildServiceUri(ContainerHostService.SELF_LINK),

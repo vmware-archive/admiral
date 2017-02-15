@@ -43,10 +43,8 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
-import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.StatefulService;
@@ -61,56 +59,14 @@ import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
  * Synchronize the ContainerVolumeStates with a list of volume names
  */
 public class HostVolumeListDataCollection extends StatefulService {
+    public static final String FACTORY_LINK = ManagementUriParts.HOST_VOLUME_LIST_DATA_COLLECTION;
+
+    public static final String DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_ID = "__default-list-data-collection";
+    public static final String DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK = UriUtils
+            .buildUriPath(FACTORY_LINK, DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_ID);
+
     public static final Integer MAX_DATACOLLECTION_FAILURES = Integer.getInteger(
             "com.vmware.admiral.compute.container.volume.max.datacollection.failures", 3);
-
-    public static class HostVolumeListDataCollectionFactoryService extends FactoryService {
-        public static final String SELF_LINK = ManagementUriParts.HOST_VOLUME_LIST_DATA_COLLECTION;
-
-        public static final String DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_ID = "__default-list-data-collection";
-        public static final String DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK = UriUtils
-                .buildUriPath(SELF_LINK, DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_ID);
-
-        public HostVolumeListDataCollectionFactoryService() {
-            super(HostVolumeListDataCollectionState.class);
-            super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
-        }
-
-        @Override
-        public void handlePost(Operation post) {
-            if (!post.hasBody()) {
-                post.fail(new IllegalArgumentException("body is required"));
-                return;
-            }
-
-            HostVolumeListDataCollectionState initState = post
-                    .getBody(HostVolumeListDataCollectionState.class);
-            if (initState.documentSelfLink == null
-                    || !initState.documentSelfLink
-                            .endsWith(DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_ID)) {
-                post.fail(new LocalizableValidationException(
-                        "Only one instance of list containers data collection can be started",
-                        "compute.volumes.data-collection.single"));
-                return;
-            }
-
-            post.setBody(initState).complete();
-        }
-
-        @Override
-        public Service createServiceInstance() throws Throwable {
-            return new HostVolumeListDataCollection();
-        }
-
-        public static ServiceDocument buildDefaultStateInstance() {
-            HostVolumeListDataCollectionState state = new HostVolumeListDataCollectionState();
-            state.documentSelfLink = DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK;
-            state.taskInfo = new TaskState();
-            state.taskInfo.stage = TaskStage.STARTED;
-            state.containerHostLinks = new HashSet<>();
-            return state;
-        }
-    }
 
     public static class HostVolumeListDataCollectionState extends
             TaskServiceDocument<DefaultSubStage> {
@@ -119,14 +75,6 @@ public class HostVolumeListDataCollection extends StatefulService {
                 PropertyIndexingOption.STORE_ONLY,
                 PropertyIndexingOption.EXCLUDE_FROM_SIGNATURE })
         public Set<String> containerHostLinks;
-    }
-
-    @Override
-    public ServiceDocument getDocumentTemplate() {
-        ServiceDocument template = super.getDocumentTemplate();
-        // don't keep any versions for the document
-        template.documentDescription.versionRetentionLimit = 1;
-        return template;
     }
 
     public static class VolumeListCallback extends ServiceTaskCallbackResponse {
@@ -140,12 +88,43 @@ public class HostVolumeListDataCollection extends StatefulService {
         }
     }
 
+    public static ServiceDocument buildDefaultStateInstance() {
+        HostVolumeListDataCollectionState state = new HostVolumeListDataCollectionState();
+        state.documentSelfLink = DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK;
+        state.taskInfo = new TaskState();
+        state.taskInfo.stage = TaskStage.STARTED;
+        state.containerHostLinks = new HashSet<>();
+        return state;
+    }
+
     public HostVolumeListDataCollection() {
         super(HostVolumeListDataCollectionState.class);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
+        super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
+    }
+
+    @Override
+    public void handlePost(Operation post) {
+        if (!post.hasBody()) {
+            post.fail(new IllegalArgumentException("body is required"));
+            return;
+        }
+
+        HostVolumeListDataCollectionState initState = post
+                .getBody(HostVolumeListDataCollectionState.class);
+        if (initState.documentSelfLink == null
+                || !initState.documentSelfLink
+                        .endsWith(DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_ID)) {
+            post.fail(new LocalizableValidationException(
+                    "Only one instance of list containers data collection can be started",
+                    "compute.volumes.data-collection.single"));
+            return;
+        }
+
+        post.setBody(initState).complete();
     }
 
     @Override
@@ -239,6 +218,12 @@ public class HostVolumeListDataCollection extends StatefulService {
 
     @Override
     public void handlePut(Operation put) {
+        if (put.hasPragmaDirective(Operation.PRAGMA_DIRECTIVE_POST_TO_PUT)) {
+            logFine("Ignoring converted PUT.");
+            put.complete();
+            return;
+        }
+
         if (!checkForBody(put)) {
             return;
         }

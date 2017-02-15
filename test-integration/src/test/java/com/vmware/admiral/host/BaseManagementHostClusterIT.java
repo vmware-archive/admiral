@@ -66,9 +66,9 @@ import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
-import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
+import com.vmware.admiral.compute.container.HostContainerListDataCollection;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionState;
-import com.vmware.admiral.compute.container.HostNetworkListDataCollection.HostNetworkListDataCollectionFactoryService;
+import com.vmware.admiral.compute.container.HostNetworkListDataCollection;
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection.HostNetworkListDataCollectionState;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
@@ -267,10 +267,10 @@ public abstract class BaseManagementHostClusterIT {
         defaultContent.put(ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK,
                 ContainerHostDataCollectionState.class);
         defaultContent.put(
-                HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK,
+                HostContainerListDataCollection.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK,
                 HostContainerListDataCollectionState.class);
         defaultContent.put(
-                HostNetworkListDataCollectionFactoryService.DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK,
+                HostNetworkListDataCollection.DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK,
                 HostNetworkListDataCollectionState.class);
 
         defaultContent.put("/config/props/__build.number", ConfigurationState.class);
@@ -997,7 +997,7 @@ public abstract class BaseManagementHostClusterIT {
     protected void disableDataCollection(ManagementHost host, String token, TestContext waiter) {
 
         Operation.createDelete(UriUtils.buildUri(host,
-                HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK))
+                HostContainerListDataCollection.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK))
                 .setReferer(host.getUri())
                 .addRequestHeader(Operation.REQUEST_AUTH_TOKEN_HEADER, token)
                 .setCompletion((o, e) -> {

@@ -61,7 +61,6 @@ import com.vmware.admiral.service.common.SslTrustImportService;
 import com.vmware.admiral.service.common.SslTrustImportService.SslTrustImportRequest;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
-import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
@@ -80,6 +79,12 @@ import com.vmware.xenon.services.common.QueryTask;
  * Synchronize the ContainerStates with a list of container IDs
  */
 public class HostContainerListDataCollection extends StatefulService {
+    public static final String FACTORY_LINK = ManagementUriParts.HOST_CONTAINER_LIST_DATA_COLLECTION;
+
+    public static final String DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_ID = "__default-list-data-collection";
+    public static final String DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK = UriUtils
+            .buildUriPath(FACTORY_LINK, DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_ID);
+
     private static final String SYSTEM_CONTAINER_NAME = "systemContainerName";
     protected static final long DATA_COLLECTION_LOCK_TIMEOUT_MILLISECONDS = Long.getLong(
             "com.vmware.admiral.data.collection.lock.timeout.milliseconds", 30000);
@@ -89,53 +94,6 @@ public class HostContainerListDataCollection extends StatefulService {
     private static final long SYSTEM_CONTAINER_SSL_RETRIES_WAIT = Long.getLong(
             "com.vmware.admiral.system.container.ssl.retries.wait.millis", 1000);
 
-    public static class HostContainerListDataCollectionFactoryService extends FactoryService {
-        public static final String SELF_LINK = ManagementUriParts.HOST_CONTAINER_LIST_DATA_COLLECTION;
-
-        public static final String DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_ID = "__default-list-data-collection";
-        public static final String DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK = UriUtils
-                .buildUriPath(SELF_LINK, DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_ID);
-
-        public HostContainerListDataCollectionFactoryService() {
-            super(HostContainerListDataCollectionState.class);
-        }
-
-        @Override
-        public void handlePost(Operation post) {
-            if (!post.hasBody()) {
-                post.fail(new IllegalArgumentException("body is required"));
-                return;
-            }
-
-            HostContainerListDataCollectionState initState = post
-                    .getBody(HostContainerListDataCollectionState.class);
-            if (initState.documentSelfLink == null
-                    || !initState.documentSelfLink
-                            .endsWith(DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_ID)) {
-                post.fail(new LocalizableValidationException(
-                        "Only one instance of containers data collection can be started",
-                        "compute.container.data-collection.single"));
-                return;
-            }
-
-            post.setBody(initState).complete();
-        }
-
-        @Override
-        public Service createServiceInstance() throws Throwable {
-            return new HostContainerListDataCollection();
-        }
-
-        public static ServiceDocument buildDefaultStateInstance() {
-            HostContainerListDataCollectionState state = new HostContainerListDataCollectionState();
-            state.documentSelfLink = DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK;
-            state.taskInfo = new TaskState();
-            state.taskInfo.stage = TaskStage.STARTED;
-            state.containerHostLinks = new HashMap<>();
-            return state;
-        }
-    }
-
     public static class HostContainerListDataCollectionState extends
             TaskServiceDocument<DefaultSubStage> {
         @Documentation(description = "The map of container host links.")
@@ -143,14 +101,6 @@ public class HostContainerListDataCollection extends StatefulService {
                 PropertyIndexingOption.STORE_ONLY,
                 PropertyIndexingOption.EXCLUDE_FROM_SIGNATURE })
         public Map<String, Long> containerHostLinks;
-    }
-
-    @Override
-    public ServiceDocument getDocumentTemplate() {
-        ServiceDocument template = super.getDocumentTemplate();
-        // don't keep any versions for the document
-        template.documentDescription.versionRetentionLimit = 1;
-        return template;
     }
 
     public static class ContainerListCallback extends ServiceTaskCallbackResponse {
@@ -296,12 +246,43 @@ public class HostContainerListDataCollection extends StatefulService {
         }
     }
 
+    public static ServiceDocument buildDefaultStateInstance() {
+        HostContainerListDataCollectionState state = new HostContainerListDataCollectionState();
+        state.documentSelfLink = DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK;
+        state.taskInfo = new TaskState();
+        state.taskInfo.stage = TaskStage.STARTED;
+        state.containerHostLinks = new HashMap<>();
+        return state;
+    }
+
     public HostContainerListDataCollection() {
         super(HostContainerListDataCollectionState.class);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
+        super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
+    }
+
+    @Override
+    public void handlePost(Operation post) {
+        if (!post.hasBody()) {
+            post.fail(new IllegalArgumentException("body is required"));
+            return;
+        }
+
+        HostContainerListDataCollectionState initState = post
+                .getBody(HostContainerListDataCollectionState.class);
+        if (initState.documentSelfLink == null
+                || !initState.documentSelfLink
+                        .endsWith(DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_ID)) {
+            post.fail(new LocalizableValidationException(
+                    "Only one instance of containers data collection can be started",
+                    "compute.container.data-collection.single"));
+            return;
+        }
+
+        post.setBody(initState).complete();
     }
 
     @Override
@@ -593,6 +574,12 @@ public class HostContainerListDataCollection extends StatefulService {
 
     @Override
     public void handlePut(Operation put) {
+        if (put.hasPragmaDirective(Operation.PRAGMA_DIRECTIVE_POST_TO_PUT)) {
+            logFine("Ignoring converted PUT.");
+            put.complete();
+            return;
+        }
+
         if (!checkForBody(put)) {
             return;
         }

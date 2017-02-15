@@ -46,10 +46,8 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
-import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.StatefulService;
@@ -67,53 +65,11 @@ import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
  */
 public class HostNetworkListDataCollection extends StatefulService {
 
-    public static class HostNetworkListDataCollectionFactoryService extends FactoryService {
-        public static final String SELF_LINK = ManagementUriParts.HOST_NETWORK_LIST_DATA_COLLECTION;
+    public static final String FACTORY_LINK = ManagementUriParts.HOST_NETWORK_LIST_DATA_COLLECTION;
 
-        public static final String DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_ID = "__default-list-data-collection";
-        public static final String DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK = UriUtils
-                .buildUriPath(SELF_LINK, DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_ID);
-
-        public HostNetworkListDataCollectionFactoryService() {
-            super(HostNetworkListDataCollectionState.class);
-            super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
-        }
-
-        @Override
-        public void handlePost(Operation post) {
-            if (!post.hasBody()) {
-                post.fail(new IllegalArgumentException("body is required"));
-                return;
-            }
-
-            HostNetworkListDataCollectionState initState = post
-                    .getBody(HostNetworkListDataCollectionState.class);
-            if (initState.documentSelfLink == null
-                    || !initState.documentSelfLink
-                            .endsWith(DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_ID)) {
-                post.fail(new LocalizableValidationException(
-                        "Only one instance of networks data collection can be started",
-                        "compute.networks.data-collection.single"));
-                return;
-            }
-
-            post.setBody(initState).complete();
-        }
-
-        @Override
-        public Service createServiceInstance() throws Throwable {
-            return new HostNetworkListDataCollection();
-        }
-
-        public static ServiceDocument buildDefaultStateInstance() {
-            HostNetworkListDataCollectionState state = new HostNetworkListDataCollectionState();
-            state.documentSelfLink = DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK;
-            state.taskInfo = new TaskState();
-            state.taskInfo.stage = TaskStage.STARTED;
-            state.containerHostLinks = new HashSet<>();
-            return state;
-        }
-    }
+    public static final String DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_ID = "__default-list-data-collection";
+    public static final String DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK = UriUtils
+            .buildUriPath(FACTORY_LINK, DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_ID);
 
     public static class HostNetworkListDataCollectionState extends
             TaskServiceDocument<DefaultSubStage> {
@@ -122,14 +78,6 @@ public class HostNetworkListDataCollection extends StatefulService {
                 PropertyIndexingOption.STORE_ONLY,
                 PropertyIndexingOption.EXCLUDE_FROM_SIGNATURE })
         public Set<String> containerHostLinks;
-    }
-
-    @Override
-    public ServiceDocument getDocumentTemplate() {
-        ServiceDocument template = super.getDocumentTemplate();
-        // don't keep any versions for the document
-        template.documentDescription.versionRetentionLimit = 1;
-        return template;
     }
 
     public static class NetworkListCallback extends ServiceTaskCallbackResponse {
@@ -144,12 +92,43 @@ public class HostNetworkListDataCollection extends StatefulService {
         }
     }
 
+    public static ServiceDocument buildDefaultStateInstance() {
+        HostNetworkListDataCollectionState state = new HostNetworkListDataCollectionState();
+        state.documentSelfLink = DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK;
+        state.taskInfo = new TaskState();
+        state.taskInfo.stage = TaskStage.STARTED;
+        state.containerHostLinks = new HashSet<>();
+        return state;
+    }
+
     public HostNetworkListDataCollection() {
         super(HostNetworkListDataCollectionState.class);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
+        super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
+    }
+
+    @Override
+    public void handlePost(Operation post) {
+        if (!post.hasBody()) {
+            post.fail(new IllegalArgumentException("body is required"));
+            return;
+        }
+
+        HostNetworkListDataCollectionState initState = post
+                .getBody(HostNetworkListDataCollectionState.class);
+        if (initState.documentSelfLink == null
+                || !initState.documentSelfLink
+                        .endsWith(DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_ID)) {
+            post.fail(new LocalizableValidationException(
+                    "Only one instance of networks data collection can be started",
+                    "compute.networks.data-collection.single"));
+            return;
+        }
+
+        post.setBody(initState).complete();
     }
 
     @Override
@@ -380,6 +359,12 @@ public class HostNetworkListDataCollection extends StatefulService {
 
     @Override
     public void handlePut(Operation put) {
+        if (put.hasPragmaDirective(Operation.PRAGMA_DIRECTIVE_POST_TO_PUT)) {
+            logFine("Ignoring converted PUT.");
+            put.complete();
+            return;
+        }
+
         if (!checkForBody(put)) {
             return;
         }

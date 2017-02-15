@@ -45,10 +45,7 @@ import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
-import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
-import com.vmware.admiral.compute.container.HostNetworkListDataCollection.HostNetworkListDataCollectionFactoryService;
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection.NetworkListCallback;
-import com.vmware.admiral.compute.container.HostVolumeListDataCollection.HostVolumeListDataCollectionFactoryService;
 import com.vmware.admiral.compute.container.HostVolumeListDataCollection.VolumeListCallback;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.log.EventLogService.EventLogState;
@@ -806,7 +803,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         sendRequest(Operation
                 .createPatch(
                         this,
-                        HostContainerListDataCollectionFactoryService
+                        HostContainerListDataCollection
                                 .DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK)
                 .setBody(body)
                 .setCompletion((o, ex) -> {
@@ -824,7 +821,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         sendRequest(Operation
                 .createPatch(
                         this,
-                        HostNetworkListDataCollectionFactoryService
+                        HostNetworkListDataCollection
                                 .DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK)
                 .setBody(body)
                 .setCompletion((o, ex) -> {
@@ -841,8 +838,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         sendRequest(Operation
                 .createPatch(
                         this,
-                        HostVolumeListDataCollectionFactoryService
-                                .DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK)
+                        HostVolumeListDataCollection.DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK)
                 .setBody(body)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
