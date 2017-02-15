@@ -97,13 +97,15 @@ func TestEnableDisableHost(t *testing.T) {
 	CheckTestError(err, t)
 	hostID, err := AddHost(tc.HostAddress, tc.PlacementZone, "", credentialsID, "", "", "", "", true, nil, nil)
 	CheckTestError(err, t)
+	// Wait because host is being in UNKNOWN power state
+	// by the time of disable attempt.
+	time.Sleep(500 * time.Millisecond)
 
 	// Testing phase 1
 	hostID, err = DisableHost(hostID)
 	CheckTestError(err, t)
 
 	// Validating phase 1
-	time.Sleep(500 * time.Millisecond)
 	hl := HostsList{}
 	hl.FetchHosts("")
 	for _, host := range hl.Documents {
