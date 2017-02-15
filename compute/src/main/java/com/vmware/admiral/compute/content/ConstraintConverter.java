@@ -14,7 +14,6 @@ package com.vmware.admiral.compute.content;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.vmware.admiral.compute.content.TemplateComputeDescription.StringEncodedConstraint;
 import com.vmware.photon.controller.model.Constraint.Condition;
 import com.vmware.photon.controller.model.Constraint.Condition.Enforcement;
 import com.vmware.photon.controller.model.Constraint.Condition.Type;

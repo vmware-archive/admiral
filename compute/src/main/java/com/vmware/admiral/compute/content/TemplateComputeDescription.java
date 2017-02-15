@@ -26,7 +26,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.photon.controller.model.Constraint;
-import com.vmware.photon.controller.model.Constraint.Condition;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.xenon.common.Utils;
 
@@ -39,27 +38,6 @@ public class TemplateComputeDescription extends ComputeDescriptionService.Comput
 
     public static final String CUSTOM_PROP_NAME_CLUSTER_SIZE = "_cluster";
     public static final String CUSTOM_PROP_NAME_AFFINITY = "affinity";
-
-    /**
-     * Definition of a constraint to be used in the template instead of the more complex
-     * underlying {@link Constraint}/{@link Condition} structure.
-     *
-     * This allows for yaml declaration like this:
-     * <pre>
-     *   constraints:
-     *     - tag: "!location:eu:hard"
-     *     - tag: "location:us:soft"
-     *     - tag: "!windows"
-     * </pre>
-     */
-    public static class StringEncodedConstraint {
-        /**
-         * Defines a tag constraint in a single string in the following format:
-         *
-         * {@code [!]tagKey[:tagValue]:[soft|hard]}
-         */
-        public String tag;
-    }
 
     @JsonAnyGetter
     private Map<String, String> getProperties() {

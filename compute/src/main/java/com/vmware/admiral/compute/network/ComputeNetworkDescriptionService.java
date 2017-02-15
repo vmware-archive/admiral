@@ -25,12 +25,12 @@ import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.photon.controller.model.Constraint;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.photon.controller.model.resources.ResourceUtils;
 import com.vmware.photon.controller.model.resources.SecurityGroupService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.StatefulService;
-import com.vmware.xenon.common.Utils;
 
 /**
  * The purpose of the ComputeNetworkDescription is to hold network information that later in the
@@ -85,14 +85,8 @@ public class ComputeNetworkDescriptionService extends StatefulService {
     @Override
     public void handlePatch(Operation patch) {
         ComputeNetworkDescription currentState = getState(patch);
-        try {
-            Utils.mergeWithStateAdvanced(getStateDescription(), currentState,
-                    ComputeNetworkDescription.class, patch);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            patch.fail(e);
-        }
-        patch.setBody(currentState);
-        patch.complete();
+        ResourceUtils.handlePatch(patch, currentState, getStateDescription(),
+                ComputeNetworkDescription.class, null);
     }
 
     private void validateState(ComputeNetworkDescription desc) {
