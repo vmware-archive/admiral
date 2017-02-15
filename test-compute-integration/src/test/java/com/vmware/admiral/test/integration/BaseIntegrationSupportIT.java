@@ -91,7 +91,6 @@ public abstract class BaseIntegrationSupportIT {
     protected static final int STATE_CHANGE_WAIT_POLLING_PERIOD_MILLIS = Integer.getInteger(
             "test.state.change.wait.period.millis", 1000);
 
-    private static final String ENDPOINT_ID = "endpoint";
     public static final String SUFFIX = "bel10";
 
     private static final Properties testProperties = loadTestProperties();
@@ -497,7 +496,7 @@ public abstract class BaseIntegrationSupportIT {
             throws Exception {
         EndpointState endpoint = new EndpointState();
         endpoint.endpointType = endpointType.name();
-        endpoint.name = name(endpointType, ENDPOINT_ID, SUFFIX);
+        endpoint.name = name(endpointType, getClass().getSimpleName().toLowerCase(), SUFFIX);
         endpoint.tenantLinks = getTenantLinks();
         endpoint.endpointProperties = new HashMap<>();
         extendEndpoint(endpoint);
