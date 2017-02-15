@@ -13,7 +13,6 @@ package com.vmware.admiral.service.test;
 
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -107,10 +106,8 @@ public class MockDockerHostAdapterService extends StatelessService {
             VolumeListCallback callbackResponse = new VolumeListCallback();
             callbackResponse.containerHostLink = request.resourceReference.getPath();
             String hostId = Service.getId(request.resourceReference.getPath());
-            callbackResponse.volumeNames = new ArrayList<>();
-            for (String name : MockDockerVolumeAdapterService.getVolumeNamesByHost(hostId)) {
-                callbackResponse.addName(name);
-            }
+            MockDockerVolumeAdapterService.getVolumesByHost(hostId)
+                    .forEach(volume -> callbackResponse.add(volume));
             patchTaskStage(request, null, callbackResponse);
             op.setBody(callbackResponse);
             op.complete();
@@ -205,5 +202,4 @@ public class MockDockerHostAdapterService extends StatelessService {
                             }
                         }));
     }
-
 }

@@ -11,12 +11,15 @@
 
 package com.vmware.admiral.compute.container;
 
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -53,6 +56,8 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
     private static final String TEST_HOST_ID = "test-host-id-234:2376";
     private static final String COMPUTE_HOST_LINK = UriUtils.buildUriPath(
             ComputeService.FACTORY_LINK, TEST_HOST_ID);
+    private static final String VMDK_DRIVER = "vmdk";
+    private static final String GLOBAL_SCOPE = "global";
 
     private VolumeListCallback volumeListCallback;
     private List<String> volumesForDeletion;
@@ -170,6 +175,53 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
         assertEquals(0, volumeStates.size());
     }
 
+    @Test
+    public void testDiscoverSharedVolumes() throws Throwable {
+        // 1. add a global volume to the volume adapter
+        String reference = UriUtils.buildUri(host, UriUtils
+                .buildUriPath(ContainerVolumeService.FACTORY_LINK, TEST_PREEXISTING_VOLUME_NAME))
+                .toString();
+        MockDockerVolumeAdapterService.addVolume(TEST_HOST_ID, reference,
+                TEST_PREEXISTING_VOLUME_NAME, VMDK_DRIVER, GLOBAL_SCOPE);
+
+        startAndWaitHostVolumeListDataCollection();
+
+        List<ContainerVolumeState> volumeStates = getVolumeStates();
+        assertEquals(volumeStates.size(), 1);
+        ContainerVolumeState volume = volumeStates.get(0);
+        assertEquals(TEST_PREEXISTING_VOLUME_NAME, volume.name);
+        // driver and scope must not be assigned during volume data collection
+        assertNull(VMDK_DRIVER, volume.driver);
+        assertNull(GLOBAL_SCOPE, volume.scope);
+        assertNotNull(volume.parentLinks);
+        assertEquals(1, volume.parentLinks.size());
+        assertEquals(COMPUTE_HOST_LINK, volume.parentLinks.get(0));
+
+        // simulate volume inspection by assigning scope and driver
+        volume.driver = VMDK_DRIVER;
+        volume.scope = GLOBAL_SCOPE;
+        doPatch(volume, volume.documentSelfLink);
+
+        // 2. add a second instance of the same volume on another host
+        String secondHostId = "test-host-id-999:2376";
+        String secondHostLink = UriUtils.buildUriPath(ComputeService.FACTORY_LINK, secondHostId);
+        MockDockerVolumeAdapterService.addVolume(secondHostId, reference,
+                TEST_PREEXISTING_VOLUME_NAME, VMDK_DRIVER, GLOBAL_SCOPE);
+
+        volumeListCallback.containerHostLink = secondHostLink;
+        startAndWaitHostVolumeListDataCollection();
+
+        volumeStates = getVolumeStates();
+        assertEquals(volumeStates.size(), 1);
+        volume = volumeStates.get(0);
+        assertEquals(TEST_PREEXISTING_VOLUME_NAME, volume.name);
+        assertEquals(VMDK_DRIVER, volume.driver);
+        assertEquals(GLOBAL_SCOPE, volume.scope);
+        assertNotNull(volume.parentLinks);
+        assertEquals(2, volume.parentLinks.size());
+        assertThat(volume.parentLinks, hasItems(COMPUTE_HOST_LINK, secondHostLink));
+    }
+
     private void startAndWaitHostVolumeListDataCollection() throws Throwable {
         host.testStart(1);
         host.sendRequest(Operation
@@ -244,12 +296,13 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
             volumeState.name = name;
         }
         volumeState.originatingHostLink = hostLink;
+        volumeState.parentLinks = Arrays.asList(hostLink);
         volumeState = doPost(volumeState, ContainerVolumeService.FACTORY_LINK);
         volumesForDeletion.add(volumeState.documentSelfLink);
         return volumeState;
     }
 
     private void addVolumeToMockAdapter(String hostId, String reference, String volumeName) {
-        MockDockerVolumeAdapterService.addVolumeName(hostId, reference, volumeName);
+        MockDockerVolumeAdapterService.addVolume(hostId, reference, volumeName);
     }
 }

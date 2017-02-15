@@ -11,12 +11,12 @@
 
 package com.vmware.admiral.compute.container;
 
-import static com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState.FIELD_NAME_ORIGINATING_HOST_LINK;
-
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
@@ -53,6 +53,8 @@ import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
 /**
@@ -79,12 +81,14 @@ public class HostVolumeListDataCollection extends StatefulService {
 
     public static class VolumeListCallback extends ServiceTaskCallbackResponse {
         public String containerHostLink;
-        public List<String> volumeNames = new ArrayList<>();
+        public Map<String, ContainerVolumeState> volumesByName = new HashMap<>();
         public boolean unlockDataCollectionForHost;
 
-        public void addName(String name) {
-            AssertUtil.assertNotNull(name, "volumeName");
-            volumeNames.add(name);
+        public void add(ContainerVolumeState volume) {
+            AssertUtil.assertNotNull(volume.name, "volumeName");
+            AssertUtil.assertNotNull(volume.driver, "volumeDriver");
+            AssertUtil.assertNotNull(volume.scope, "volumeScope");
+            volumesByName.put(volume.name, volume);
         }
     }
 
@@ -144,11 +148,11 @@ public class HostVolumeListDataCollection extends StatefulService {
             return;
         }
 
-        AssertUtil.assertNotNull(body.volumeNames, "volumeNames");
+        AssertUtil.assertNotNull(body.volumesByName, "volumesByName");
 
         if (Logger.getLogger(this.getClass().getName()).isLoggable(Level.FINE)) {
             logFine("Host volume list callback invoked for host [%s] with volume names: %s",
-                    body.containerHostLink, body.volumeNames);
+                    body.containerHostLink, body.volumesByName.keySet().toString());
         }
 
         // the patch will succeed regardless of the synchronization process
@@ -167,11 +171,29 @@ public class HostVolumeListDataCollection extends StatefulService {
 
         // Clause to find all volumes for the given host.
 
+        String parentLinksItemField = QueryTask.QuerySpecification
+                .buildCollectionItemName(ContainerVolumeState.FIELD_NAME_PARENT_LINKS);
         QueryTask.Query parentsClause = new QueryTask.Query()
-                .setTermPropertyName(FIELD_NAME_ORIGINATING_HOST_LINK)
+                .setTermPropertyName(parentLinksItemField)
                 .setTermMatchValue(body.containerHostLink)
-                .setTermMatchType(MatchType.TERM);
-        queryTask.querySpec.query.addBooleanClause(parentsClause);
+                .setTermMatchType(MatchType.TERM)
+                .setOccurance(Occurance.SHOULD_OCCUR);
+
+        // Clause to find all global (shared) volumes (that may already exist on different hosts).
+
+        QueryTask.Query globalScopeClause = new QueryTask.Query()
+                .setTermPropertyName(ContainerVolumeState.FIELD_NAME_SCOPE)
+                .setTermMatchValue("global")
+                .setTermMatchType(MatchType.TERM)
+                .setOccurance(Occurance.SHOULD_OCCUR);
+
+        // Intermediate query because of Xenon ?!
+
+        Query intermediate = new QueryTask.Query().setOccurance(Occurance.MUST_OCCUR);
+        intermediate.addBooleanClause(parentsClause);
+        intermediate.addBooleanClause(globalScopeClause);
+
+        queryTask.querySpec.query.addBooleanClause(intermediate);
 
         QueryUtil.addExpandOption(queryTask);
         QueryUtil.addBroadcastOption(queryTask);
@@ -240,15 +262,44 @@ public class HostVolumeListDataCollection extends StatefulService {
 
         for (ContainerVolumeState volumeState : volumeStates) {
 
-            boolean existsInCallbackHost = callback.volumeNames.contains(volumeState.name);
-            callback.volumeNames.remove(volumeState.name);
+            boolean isGlobal = "global".equals(volumeState.scope);
+
+            // note: since volume scope is updated after the first volume inspection, including the
+            // long VMDK volume name (@datastore) and power state (PROVISIONING to CONNECTED),
+            // existing volumes states in provisioning power state cannot be part of this query
+            // result. Worrying about a possible mismatch between VMDK long/short names is
+            // unnecessary.
+
+            ContainerVolumeState discoveredVolume = callback.volumesByName.get(volumeState.name);
+
+            boolean existsInCallbackHost = discoveredVolume != null
+                    && discoveredVolume.driver.equals(volumeState.driver);
+
+            if (existsInCallbackHost) {
+                callback.volumesByName.remove(volumeState.name);
+            }
 
             if (volumeState.parentLinks == null) {
                 volumeState.parentLinks = new ArrayList<>();
             }
 
             if (!existsInCallbackHost) {
-                handleMissingContainerVolume(volumeState);
+                if (!isGlobal) {
+                    handleMissingContainerVolume(volumeState);
+                } else {
+                    if (volumeState.parentLinks.contains(callbackHostLink)) {
+                        volumeState.parentLinks.remove(callbackHostLink);
+                        handleUpdateParentLinks(volumeState);
+                    } else if (volumeState.parentLinks.isEmpty()) {
+                        handleMissingContainerVolume(volumeState);
+                    }
+                }
+            } else {
+                if (isGlobal && volumeState.originatingHostLink != null
+                        && !volumeState.parentLinks.contains(callbackHostLink)) {
+                    volumeState.parentLinks.add(callbackHostLink);
+                    handleUpdateParentLinks(volumeState);
+                }
             }
         }
 
@@ -268,9 +319,10 @@ public class HostVolumeListDataCollection extends StatefulService {
                             ComputeState host = o.getBody(ComputeState.class);
                             List<String> group = host.tenantLinks;
 
-                            for (String volumeName : callback.volumeNames) {
+                            for (ContainerVolumeState volume : callback.volumesByName.values()) {
                                 ContainerVolumeState volumeState = new ContainerVolumeState();
-                                volumeState.name = volumeName;
+                                volumeState.name = volume.name;
+
                                 volumeState.external = true;
 
                                 volumeState.tenantLinks = group;
@@ -424,6 +476,33 @@ public class HostVolumeListDataCollection extends StatefulService {
                         logWarning("Self patch failed: %s",
                                 ex instanceof CancellationException ? ex.getMessage()
                                         : Utils.toString(ex));
+                    }
+                }));
+    }
+
+    private void handleUpdateParentLinks(ContainerVolumeState volumeState) {
+        ContainerVolumeState patchVolumeState = new ContainerVolumeState();
+        patchVolumeState.parentLinks = volumeState.parentLinks;
+
+        if ((volumeState.originatingHostLink != null) && !volumeState.parentLinks.isEmpty()
+                && (!volumeState.parentLinks.contains(volumeState.originatingHostLink))) {
+            // set another parent like the "owner" of the volume
+            patchVolumeState.originatingHostLink = volumeState.parentLinks.get(0);
+        }
+
+        sendRequest(Operation
+                .createPatch(this, volumeState.documentSelfLink)
+                .setBody(patchVolumeState)
+                .setCompletion((o, ex) -> {
+                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
+                        logFine("Volume %s not found to be updated its parent links.",
+                                volumeState.documentSelfLink);
+                    } else if (ex != null) {
+                        logWarning("Failed to update volume %s parent links: %s",
+                                volumeState.documentSelfLink, Utils.toString(ex));
+                    } else {
+                        logInfo("Updated volume parent links: %s",
+                                volumeState.documentSelfLink);
                     }
                 }));
     }

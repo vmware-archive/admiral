@@ -48,6 +48,7 @@ public class ContainerVolumeService extends StatefulService {
         public static final String FIELD_NAME_DESCRIPTION_LINK = "descriptionLink";
         public static final String FIELD_NAME_POWER_STATE = "powerState";
         public static final String FIELD_NAME_DRIVER = "driver";
+        public static final String FIELD_NAME_SCOPE = "scope";
         public static final String FIELD_NAME_PARENT_LINKS = "parentLinks";
         public static final String FIELD_NAME_ORIGINATING_HOST_LINK = "originatingHostLink";
         public static final String FIELD_NAME_ADAPTER_MANAGEMENT_REFERENCE = "adapterManagementReference";

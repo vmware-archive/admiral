@@ -51,8 +51,8 @@ public class MockDockerVolumeAdapterService extends StatelessService {
     public boolean isFailureExpected;
     public String computeHostIpAddress = MOCK_HOST_ASSIGNED_ADDRESS;
 
-    // Map of volume names by hostId. hostId -> Map of volumeReference -> volume name
-    private static final Map<String, Map<String, String>> VOLUME_NAMES = new ConcurrentHashMap<>();
+    // Map of volume names by hostId. hostId -> Map of volumeReference -> volume state
+    private static final Map<String, Map<String, ContainerVolumeState>> VOLUME_NAMES = new ConcurrentHashMap<>();
 
     private static class MockAdapterRequest extends AdapterRequest {
 
@@ -168,7 +168,7 @@ public class MockDockerVolumeAdapterService extends StatelessService {
         }
 
         if (state.isProvisioning()) {
-            addVolumeName(Service.getId(volume.originatingHostLink),
+            addVolume(Service.getId(volume.originatingHostLink),
                     state.resourceReference.toString(), volume.name);
             patchProvisioningTask(state, (Throwable) null);
         } else if (state.isDeprovisioning()) {
@@ -250,16 +250,18 @@ public class MockDockerVolumeAdapterService extends StatelessService {
     }
 
     private synchronized void removeVolumeByReference(URI volumeReference) {
-        Iterator<Map<String, String>> itHost = VOLUME_NAMES.values().iterator();
+        Iterator<Map<String, ContainerVolumeState>> itHost = VOLUME_NAMES.values().iterator();
         while (itHost.hasNext()) {
-            Map<String, String> volumeNamesByHost = itHost.next();
-            Iterator<Entry<String, String>> itVolumes = volumeNamesByHost.entrySet().iterator();
+            Map<String, ContainerVolumeState> volumeNamesByHost = itHost.next();
+            Iterator<Entry<String, ContainerVolumeState>> itVolumes = volumeNamesByHost.entrySet()
+                    .iterator();
             while (itVolumes.hasNext()) {
-                Entry<String, String> entry = itVolumes.next();
+                Entry<String, ContainerVolumeState> entry = itVolumes.next();
                 if (entry.getKey().endsWith(volumeReference.getPath())) {
                     Utils.log(MockDockerVolumeAdapterService.class,
                             MockDockerVolumeAdapterService.class.getSimpleName(), Level.INFO,
-                            "Volume with reference: %s and container name: %s removed.", entry.getKey(),
+                            "Volume with reference: %s and container name: %s removed.",
+                            entry.getKey(),
                             entry.getValue());
                     itVolumes.remove();
                     return;
@@ -270,16 +272,24 @@ public class MockDockerVolumeAdapterService extends StatelessService {
                 + volumeReference.getPath());
     }
 
-    public static synchronized void addVolumeName(String hostId, String reference, String volumeName) {
-        Utils.log(MockDockerAdapterService.class, MockDockerAdapterService.class.getSimpleName(),
-                Level.INFO, "Volume with name: %s created on host: %s.", volumeName, hostId);
-        if (!VOLUME_NAMES.containsKey(hostId)) {
-            VOLUME_NAMES.put(hostId, new ConcurrentHashMap<>());
-        }
-        VOLUME_NAMES.get(hostId).put(reference, volumeName);
+    public static synchronized void addVolume(String hostId, String reference, String volumeName) {
+        addVolume(hostId, reference, volumeName, "local", "local");
     }
 
-    public static synchronized Collection<String> getVolumeNamesByHost(String hostId) {
+    public static synchronized void addVolume(String hostId, String reference,
+            String volumeName, String driver, String scope) {
+
+        Utils.log(MockDockerAdapterService.class, MockDockerAdapterService.class.getSimpleName(),
+                Level.INFO, "Volume with name: %s created on host: %s.", volumeName, hostId);
+        ContainerVolumeState volume = new ContainerVolumeState();
+        volume.name = volumeName;
+        volume.driver = driver;
+        volume.scope = scope;
+        VOLUME_NAMES.computeIfAbsent(hostId, h -> new ConcurrentHashMap<>())
+                .put(reference, volume);
+    }
+
+    public static synchronized Collection<ContainerVolumeState> getVolumesByHost(String hostId) {
         if (VOLUME_NAMES.containsKey(hostId)) {
             return VOLUME_NAMES.get(hostId).values();
         } else {
