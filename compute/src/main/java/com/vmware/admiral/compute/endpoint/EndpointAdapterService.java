@@ -14,6 +14,7 @@ package com.vmware.admiral.compute.endpoint;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -21,11 +22,14 @@ import java.util.concurrent.TimeUnit;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.compute.PlacementZoneConstants;
+import com.vmware.admiral.compute.ResourceType;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.EndpointService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
+import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.tasks.EndpointAllocationTaskService;
 import com.vmware.photon.controller.model.tasks.EndpointAllocationTaskService.EndpointAllocationTaskState;
 import com.vmware.photon.controller.model.tasks.EndpointRemovalTaskService;
@@ -165,12 +169,27 @@ public class EndpointAdapterService extends StatelessService {
                         return;
                     }
 
-                    if (enumerate) {
-                        triggerStatsCollection(body);
-                    }
+                    // Patch ResourcePoolState created by EndpointAllocationTaskService
+                    ResourcePoolState patchRPWithComputeType = new ResourcePoolState();
+                    patchRPWithComputeType.customProperties = Collections.singletonMap(
+                            PlacementZoneConstants.RESOURCE_TYPE_CUSTOM_PROP_NAME,
+                            ResourceType.COMPUTE_TYPE.getName());
 
-                    post.setBody(body.endpointState);
-                    post.complete();
+                    sendRequest(Operation.createPatch(this, body.endpointState.resourcePoolLink)
+                            .setBody(patchRPWithComputeType)
+                            .setCompletion((op, ex) -> {
+                                if (ex != null) {
+                                    handleException(post, "creating", state.name, op.getStatusCode(), ex);
+                                    return;
+                                }
+
+                                // Once patch ResourcePoolState is done continue with EndpointState processing
+                                if (enumerate) {
+                                    triggerStatsCollection(body);
+                                }
+                                post.setBody(body.endpointState);
+                                post.complete();
+                            }));
                 })
                 .sendWith(this);
     }

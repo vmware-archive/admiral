@@ -474,6 +474,24 @@ services.loadPlacementZones = function(documentSelfLinks) {
       }),
       [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
     });
+  } else if (utils.isApplicationCompute()) {
+      // In Prelude filter COMPUTE only
+      params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+        'customProperties/__resourceType': [{
+          val: constants.RESOURCE_TYPES.COMPUTE,
+          op: 'eq'
+        }],
+        [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
+      });
+  } else {
+    // In Admiral filter non-COMPUTE only
+    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+      'customProperties/__resourceType': [{
+        val: constants.RESOURCE_TYPES.COMPUTE,
+        op: 'ne'
+      }],
+      [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
+    });
   }
   return list(links.EPZ_CONFIG, true, params);
 };

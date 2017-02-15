@@ -14,6 +14,8 @@ package com.vmware.admiral.compute.endpoint;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import static com.vmware.admiral.compute.PlacementZoneConstants.RESOURCE_TYPE_CUSTOM_PROP_NAME;
+
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.ArrayList;
@@ -26,12 +28,14 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.EndpointService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
+import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.tasks.EndpointAllocationTaskService.EndpointAllocationTaskState;
 import com.vmware.photon.controller.model.tasks.ScheduledTaskService;
 import com.vmware.photon.controller.model.tasks.ScheduledTaskService.ScheduledTaskState;
@@ -150,6 +154,16 @@ public class EndpointAdapterServiceTest extends ComputeBaseTest {
         assertNotNull(newEndpointState.documentSelfLink);
         assertNotNull(newEndpointState.authCredentialsLink);
         assertNotNull(newEndpointState.computeLink);
+
+        // Verify EP default ResourcePool has RESOURCE_TYPE_CUSTOM_PROP_NAME set.
+        ResourcePoolState epRp = getDocument(
+                ResourcePoolState.class,
+                newEndpointState.resourcePoolLink);
+        assertNotNull(epRp);
+        assertNotNull(epRp.customProperties);
+        assertEquals(RESOURCE_TYPE_CUSTOM_PROP_NAME + " custom property is not set.",
+                ResourceType.COMPUTE_TYPE.getName(),
+                epRp.customProperties.get(RESOURCE_TYPE_CUSTOM_PROP_NAME));
 
         documentLinksForDeletion.add(UriUtils.buildUriPath(EndpointAdapterService.SELF_LINK,
                 newEndpointState.documentSelfLink));
