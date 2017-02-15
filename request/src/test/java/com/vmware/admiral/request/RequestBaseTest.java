@@ -46,7 +46,7 @@ import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.RequestProtocol;
-import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
+import com.vmware.admiral.compute.container.HostContainerListDataCollection;
 import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
@@ -231,7 +231,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
         waitForServiceAvailability(h,
                 SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK);
         waitForServiceAvailability(h,
-                HostContainerListDataCollectionFactoryService
+                HostContainerListDataCollection
                         .DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK);
         waitForServiceAvailability(ManagementUriParts.AUTH_CREDENTIALS_CA_LINK);
 

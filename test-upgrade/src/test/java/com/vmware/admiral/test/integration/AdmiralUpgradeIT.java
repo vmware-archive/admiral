@@ -31,7 +31,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
@@ -39,8 +38,8 @@ import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
+import com.vmware.admiral.compute.container.HostContainerListDataCollection;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
-import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.service.common.NodeHealthCheckService;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
@@ -242,7 +241,7 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
                     }
                     try {
                         sendRequest(HttpMethod.PATCH,
-                                HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK,
+                                HostContainerListDataCollection.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK,
                                 Utils.toJson(dataCollectionBody));
                     } catch (Exception e) {
                         logger.error(String.format("Unable to trigger data collection: %s",
