@@ -935,9 +935,11 @@ public class ComputeAllocationTaskService
         ArrayList<String> prefered = new ArrayList<>();
         ArrayList<String> supportPublic = new ArrayList<>();
         return querySubnetStates.queryDocuments(s -> {
-            if (s.supportPublicIpAddress && s.defaultForZone) {
+            boolean supportsPublic = s.supportPublicIpAddress != null && s.supportPublicIpAddress;
+            boolean defaultForZone = s.defaultForZone != null && s.defaultForZone;
+            if (supportsPublic && defaultForZone) {
                 prefered.add(s.documentSelfLink);
-            } else if (s.supportPublicIpAddress) {
+            } else if (supportsPublic) {
                 supportPublic.add(s.documentSelfLink);
             } else {
                 links.add(s.documentSelfLink);
@@ -946,7 +948,7 @@ public class ComputeAllocationTaskService
             if (!prefered.isEmpty()) {
                 return prefered.get(0);
             }
-            if (supportPublic.isEmpty()) {
+            if (!supportPublic.isEmpty()) {
                 return supportPublic.get(0);
             }
             return links.stream().findFirst().orElse(null);
