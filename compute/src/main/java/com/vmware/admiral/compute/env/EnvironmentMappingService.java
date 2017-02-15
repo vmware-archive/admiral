@@ -27,8 +27,6 @@ import java.util.stream.Stream;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.env.ComputeProfileService.ComputeProfile;
-import com.vmware.admiral.compute.env.NetworkProfileService.NetworkProfile;
-import com.vmware.admiral.compute.env.StorageProfileService.StorageProfile;
 import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
@@ -46,8 +44,8 @@ public class EnvironmentMappingService extends StatelessService {
 
     {
         profiles.put(ComputeProfileService.FACTORY_LINK, ComputeProfile.class);
-        profiles.put(NetworkProfileService.FACTORY_LINK, NetworkProfile.class);
-        profiles.put(StorageProfileService.FACTORY_LINK, StorageProfile.class);
+        // profiles.put(NetworkProfileService.FACTORY_LINK, NetworkProfile.class);
+        // profiles.put(StorageProfileService.FACTORY_LINK, StorageProfile.class);
     }
 
     public static class EnvironmentMappingState extends MultiTenantDocument {
@@ -59,7 +57,8 @@ public class EnvironmentMappingService extends StatelessService {
         Stream<Operation> ops = profiles.keySet().stream()
                 .map(link -> Operation
                         .createGet(UriUtils
-                                .buildExpandLinksQueryUri(UriUtils.buildUri(getHost(), link, get.getUri().getQuery())))
+                                .buildExpandLinksQueryUri(UriUtils.buildUri(getHost(), link,
+                                        get.getUri().getQuery())))
                         .setReferer(SELF_LINK));
         OperationJoin.create(ops).setCompletion((os, es) -> {
             if (es != null && !es.isEmpty()) {
@@ -77,11 +76,14 @@ public class EnvironmentMappingService extends StatelessService {
                     Class<? extends MultiTenantDocument> type = profiles.get(o.getUri().getPath());
                     List<Field> fields = Arrays.asList(type.getDeclaredFields());
                     state.mappings = fields.stream()
-                            .map(field -> new AbstractMap.SimpleEntry<String, List<String>>(field.getName(),
+                            .filter(f -> Map.class.isAssignableFrom(f.getType()))
+                            .map(field -> new AbstractMap.SimpleEntry<String, List<String>>(
+                                    field.getName(),
                                     getMappingIntersection(type, field, values)))
                             .collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue()));
                     if (!values.isEmpty()) {
-                        state.tenantLinks = Utils.fromJson(values.iterator().next(), type).tenantLinks;
+                        state.tenantLinks = Utils.fromJson(values.iterator().next(),
+                                type).tenantLinks;
                     }
                 }
                 return state;
@@ -100,19 +102,21 @@ public class EnvironmentMappingService extends StatelessService {
         }
     }
 
-    private List<String> getMappingIntersection(Class<? extends MultiTenantDocument> type, Field field,
+    private List<String> getMappingIntersection(Class<? extends MultiTenantDocument> type,
+            Field field,
             Collection<Object> values) {
         return new ArrayList<>(values.stream().map(value -> {
             Object profile = Utils.fromJson(value, type);
             if (profile == null) {
                 return new LinkedHashSet<String>();
             }
-            return getMappingValue(field, profile);
+            return getMappingValue(field, profile).stream().map(k -> k.toLowerCase())
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
         }).reduce((a, b) -> {
             if (a == null) {
                 return new LinkedHashSet<String>(b);
             }
-            a.retainAll(b);
+            a.addAll(b);
             return a;
         }).get());
     }
