@@ -39,8 +39,8 @@ public class ContainerVolumesIT extends BaseProvisioningOnCoreOsIT {
 
     private static final String TEMPLATE_FILE = "WordPress_with_MySQL_volumes.yaml";
     private static final String WORDPRESS_CONTAINER_NAME = "wordpress";
-    private static final String WORDPRESS_VOLUME_NAME = "/tmp";
-    private static final String MYSQL_VOLUME_NAME = "/var";
+    private static final String WORDPRESS_VOLUME_PATH = "/tmp/data";
+    private static final String MYSQL_VOLUME_PATH = "/var/data";
 
     private String compositeDescriptionLink;
 
@@ -143,9 +143,9 @@ public class ContainerVolumesIT extends BaseProvisioningOnCoreOsIT {
             String containerPartOfVolume = currentContainer.volumes[0].split(":")[1];
 
             if (currentContainer.names.get(0).contains(WORDPRESS_CONTAINER_NAME)) {
-                assertEquals(containerPartOfVolume, WORDPRESS_VOLUME_NAME);
+                assertEquals(containerPartOfVolume, WORDPRESS_VOLUME_PATH);
             } else {
-                assertEquals(containerPartOfVolume, MYSQL_VOLUME_NAME);
+                assertEquals(containerPartOfVolume, MYSQL_VOLUME_PATH);
             }
 
             ComputeState host = getDocument(currentContainer.parentLink, ComputeState.class);
