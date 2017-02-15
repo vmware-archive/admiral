@@ -1319,6 +1319,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         ContainerVolumeState volumeState = new ContainerVolumeState();
         volumeState.id = UUID.randomUUID().toString();
         volumeState.name = volumeName;
+        volumeState.driver = "local";
+        volumeState.scope = "local";
         volumeState.documentSelfLink = VolumeUtil.buildVolumeLink(volumeState.id);
         volumeState.external = true;
 
@@ -1337,7 +1339,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         volumeState.options = new HashMap<>();
         volumeState = doPost(volumeState, ContainerVolumeService.FACTORY_LINK);
         addForDeletion(volumeState);
-        MockDockerVolumeAdapterService.addVolumeName(extractId(computeHost.documentSelfLink),
+        MockDockerVolumeAdapterService.addVolume(extractId(computeHost.documentSelfLink),
                 volumeState.id, volumeName);
 
         ContainerVolumeDescription volumeDesc = VolumeUtil
@@ -1456,7 +1458,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         ComputeState dockerHost2 = createDockerHost(dockerHostDesc, resourcePool, true);
         addForDeletion(dockerHost2);
 
-        // setup Composite description with 2 containers and 1 network
+        // setup Composite description with 2 containers and 1 volume
 
         String volumeName = "myvolume";
 

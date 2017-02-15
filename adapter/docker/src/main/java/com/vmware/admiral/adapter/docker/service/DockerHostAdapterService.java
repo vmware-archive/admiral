@@ -17,7 +17,9 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_ID_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORK_NAME_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_VOLUMES_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_VOLUME_DRIVER_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_VOLUME_NAME_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_VOLUME_SCOPE_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerNetworkAdapterService.DOCKER_PREDEFINED_NETWORKS;
 import static com.vmware.admiral.compute.ContainerHostService.SSL_TRUST_ALIAS_PROP_NAME;
 import static com.vmware.admiral.compute.ContainerHostService.SSL_TRUST_CERT_PROP_NAME;
@@ -40,6 +42,7 @@ import com.vmware.admiral.compute.container.HostContainerListDataCollection.Cont
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection.NetworkListCallback;
 import com.vmware.admiral.compute.container.HostVolumeListDataCollection.VolumeListCallback;
 import com.vmware.admiral.compute.container.ShellContainerExecutorService;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
@@ -408,7 +411,7 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
 
                         if (Logger.getLogger(this.getClass().getName()).isLoggable(Level.FINE)) {
                             logFine("Collection returned volume names: %s %s",
-                                    callbackResponse.volumeNames,
+                                    callbackResponse.volumesByName.keySet().toString(),
                                     request.getRequestTrackingLog());
                         }
 
@@ -432,7 +435,7 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
                                 computeState, o);
                         if (Logger.getLogger(this.getClass().getName()).isLoggable(Level.FINE)) {
                             logFine("Collection returned volume names: %s %s",
-                                    callbackResponse.volumeNames,
+                                    callbackResponse.volumesByName.keySet().toString(),
                                     request.getRequestTrackingLog());
                         }
                         op.setBody(callbackResponse);
@@ -452,8 +455,14 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
         List<Object> volumesList = volumesResponse.get(DOCKER_CONTAINER_VOLUMES_PROP_NAME);
         if (volumesList != null) {
             for (Object volumeData : volumesList) {
-                String name = ((Map<String, String>) volumeData).get(DOCKER_VOLUME_NAME_PROP_NAME);
-                callbackResponse.addName(name);
+                Map<String, String> dataMap = (Map<String, String>) volumeData;
+
+                ContainerVolumeState volume = new ContainerVolumeState();
+                volume.name = dataMap.get(DOCKER_VOLUME_NAME_PROP_NAME);
+                volume.driver = dataMap.get(DOCKER_VOLUME_DRIVER_PROP_NAME);
+                volume.scope = dataMap.get(DOCKER_VOLUME_SCOPE_PROP_NAME);
+
+                callbackResponse.add(volume);
             }
         }
 
