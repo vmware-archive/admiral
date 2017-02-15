@@ -869,20 +869,25 @@ public class ComputeAllocationTaskService
 
         DeferredResult<String> subnet = null;
         if ((env.networkProfile != null && env.networkProfile.subnetStates != null
-                && !env.networkProfile.subnetStates.isEmpty()) && (nid.customProperties == null
-                        || !nid.customProperties.containsKey(NetworkProfileQueryUtils.NO_NIC_VM))) {
-            DeferredResult<String> subnetDeferred = new DeferredResult<>();
-            NetworkProfileQueryUtils.getSubnetForComputeNic(getHost(),
-                    UriUtils.buildUri(getHost(), getSelfLink()), state.tenantLinks,
-                    RequestUtils.getContextId(state), nid, env,
-                    (link, ex) -> {
-                        if (ex != null) {
-                            subnetDeferred.fail(ex);
-                            return;
-                        }
-                        subnetDeferred.complete(link);
-                    });
-            subnet = subnetDeferred;
+                && !env.networkProfile.subnetStates.isEmpty())) {
+            if (nid.customProperties == null
+                    || !nid.customProperties.containsKey(NetworkProfileQueryUtils.NO_NIC_VM)) {
+                DeferredResult<String> subnetDeferred = new DeferredResult<>();
+                NetworkProfileQueryUtils.getSubnetForComputeNic(getHost(),
+                        UriUtils.buildUri(getHost(), getSelfLink()), state.tenantLinks,
+                        RequestUtils.getContextId(state), nid, env,
+                        (link, ex) -> {
+                            if (ex != null) {
+                                subnetDeferred.fail(ex);
+                                return;
+                            }
+                            subnetDeferred.complete(link);
+                        });
+                subnet = subnetDeferred;
+            } else {
+                subnet = DeferredResult.completed(
+                        env.networkProfile.subnetStates.get(0).documentSelfLink);
+            }
         } else if (subnetLink == null) {
             // TODO: filter also by NetworkProfile
             subnet = findSubnetBy(state, nid);

@@ -56,3 +56,5 @@ components:
     data:
       name: wpnet
       assignment: static
+      constraints:
+        - tag: "location:dmz:hard"

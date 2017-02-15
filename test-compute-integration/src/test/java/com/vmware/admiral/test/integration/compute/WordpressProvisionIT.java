@@ -11,65 +11,21 @@
 
 package com.vmware.admiral.test.integration.compute;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URL;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
-import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionFactoryService;
-import com.vmware.admiral.common.test.CommonTestStateFactory;
-import com.vmware.admiral.common.util.UriUtilsExtended;
-import com.vmware.admiral.common.util.YamlMapper;
-import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
-import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
-import com.vmware.admiral.compute.container.ContainerDescriptionService;
-import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
-import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
-import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
-import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
-import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
-import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
-import com.vmware.admiral.compute.env.ComputeProfileService.ComputeProfile;
-import com.vmware.admiral.compute.env.NetworkProfileService.NetworkProfile;
-import com.vmware.admiral.compute.env.StorageProfileService.StorageProfile;
-import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
-import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
-import com.vmware.admiral.request.RequestBrokerService;
-import com.vmware.admiral.test.integration.SimpleHttpsClient;
-import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
+import com.vmware.admiral.compute.env.StorageProfileService;
 import com.vmware.admiral.test.integration.compute.aws.AwsComputeProvisionIT;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
-import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
-import com.vmware.photon.controller.model.resources.ResourceState;
-import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
-import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.Utils;
-import com.vmware.xenon.services.common.QueryTask;
-import com.vmware.xenon.services.common.QueryTask.Query;
-import com.vmware.xenon.services.common.ServiceUriPaths;
 
 @RunWith(Parameterized.class)
 // @Ignore("There are changes to wordpress deps, so the scripts have to be updated.")
-public class WordpressProvisionIT extends BaseComputeProvisionIT {
-
-    private static final String WP_PATH = "mywordpresssite";
-    private static final int STATUS_CODE_WAIT_POLLING_RETRY_COUNT = 300; //5 min
+public class WordpressProvisionIT extends BaseWordpressComputeProvisionIT {
 
     private static Consumer<EndpointState> awsEndpointExtender = endpointState -> new AwsComputeProvisionIT()
             .extendEndpoint(endpointState);
@@ -98,55 +54,11 @@ public class WordpressProvisionIT extends BaseComputeProvisionIT {
     }
 
     @Override
-    protected void doSetUp() throws Exception {
+    protected void doSetUp() throws Throwable {
         setUp.run();
 
-        createEnvironment(loadComputeProfile(), createNetworkProfile(), new StorageProfile());
-    }
-
-    private NetworkProfile createNetworkProfile() throws Exception {
-        Query query = QueryTask.Query.Builder.create()
-                .addFieldClause(SubnetState.FIELD_NAME_ID, "subnet-ce01b5e4")
-                .build();
-        QueryTask qt = QueryTask.Builder.createDirectTask().setQuery(query).build();
-        String responseJson = sendRequest(HttpMethod.POST, ServiceUriPaths.CORE_QUERY_TASKS,
-                Utils.toJson(qt));
-        QueryTask result = Utils.fromJson(responseJson, QueryTask.class);
-
-        String subnetLink = result.results.documentLinks.get(0);
-        NetworkProfile np = new NetworkProfile();
-        np.subnetLinks = new ArrayList<>();
-        np.subnetLinks.add(subnetLink);
-        return np;
-    }
-
-    private ComputeProfile loadComputeProfile() {
-        URL r = getClass().getClassLoader().getResource("test-aws-compute-profile.yaml");
-        try (InputStream is = r.openStream()) {
-            return YamlMapper.objectMapper().readValue(is, ComputeProfile.class);
-        } catch (Exception e) {
-            logger.error("Failure reading default environment: %s, reason: %s", r,
-                    e.getMessage());
-            return null;
-        }
-    }
-
-    protected String importTemplate(String filePath) throws Exception {
-        String template = CommonTestStateFactory.getFileContent(filePath);
-
-        URI uri = URI.create(getBaseUrl()
-                + buildServiceUri(CompositeDescriptionContentService.SELF_LINK));
-
-        Map<String, String> headers = Collections
-                .singletonMap(Operation.CONTENT_TYPE_HEADER,
-                        UriUtilsExtended.MEDIA_TYPE_APPLICATION_YAML);
-
-        SimpleHttpsClient.HttpResponse httpResponse = SimpleHttpsClient
-                .execute(SimpleHttpsClient.HttpMethod.POST, uri.toString(), template, headers,
-                        null);
-        String location = httpResponse.headers.get(Operation.LOCATION_HEADER).get(0);
-        assertNotNull("Missing location header", location);
-        return URI.create(location).getPath();
+        createEnvironment(loadComputeProfile(), createNetworkProfile(AWS_DEFAULT_SUBNET_ID, null),
+                new StorageProfileService.StorageProfile());
     }
 
     @Override
@@ -160,84 +72,9 @@ public class WordpressProvisionIT extends BaseComputeProvisionIT {
     }
 
     @Override
-    protected RequestBrokerService.RequestBrokerState allocateAndProvision(
-            String resourceDescriptionLink) throws Exception {
-        RequestBrokerService.RequestBrokerState allocateRequest = requestCompute(
-                resourceDescriptionLink, true, null);
-
-        allocateRequest = getDocument(allocateRequest.documentSelfLink,
-                RequestBrokerService.RequestBrokerState.class);
-
-        assertNotNull(allocateRequest.resourceLinks);
-        System.out.println(allocateRequest.resourceLinks);
-        for (String link : allocateRequest.resourceLinks) {
-            ComputeState computeState = getDocument(link,
-                    ComputeState.class);
-            assertNotNull(computeState);
-        }
-
-        return allocateRequest;
-    }
-
-    @Override
-    protected void doWithResources(Set<String> resourceLinks) throws Throwable {
-        CompositeComponent compositeComponent = getDocument(resourceLinks.iterator().next(),
-                CompositeComponent.class);
-        ComputeState wordPress = null;
-        for (String link : compositeComponent.componentLinks) {
-            ComputeState computeState = getDocument(link, ComputeState.class);
-
-            if (computeState.name.contains("wordpress")) {
-                wordPress = computeState;
-                break;
-            }
-        }
-
-        if (wordPress == null) {
-            fail("Unable to find the ComputeState corresponding to the Wordpress node");
-        }
-
-        String address = wordPress.address;
-        URI uri = URI.create(String.format("http://%s/%s", address, WP_PATH));
-
-        try {
-            waitForStatusCode(uri, Operation.STATUS_CODE_OK, STATUS_CODE_WAIT_POLLING_RETRY_COUNT);
-        } catch (Exception eInner) {
-            logger.error("Failed to verify wordpress connection: %s", eInner.getMessage());
-            fail();
-        }
-    }
-
-    @Override
     protected String getResourceDescriptionLink() throws Exception {
         String compositeDescriptionLink = importTemplate(
-                "WordPress_with_MySQL_compute_network.yaml");
-        CompositeDescription description = getDocument(compositeDescriptionLink,
-                CompositeDescription.class);
-        description.tenantLinks = getTenantLinks();
-        patchDocument(description);
-
-        for (String descriptionLink : description.descriptionLinks) {
-            ResourceState state;
-            if (descriptionLink.startsWith(ContainerNetworkDescriptionService.FACTORY_LINK)) {
-                state = new ContainerNetworkDescription();
-            } else if (descriptionLink.startsWith(ContainerVolumeDescriptionService.FACTORY_LINK)) {
-                state = new ContainerVolumeDescription();
-            } else if (descriptionLink.startsWith(ComputeNetworkDescriptionService.FACTORY_LINK)) {
-                state = new ComputeNetworkDescription();
-            } else if (descriptionLink.startsWith(ComputeDescriptionService.FACTORY_LINK)) {
-                state = new ComputeDescription();
-            } else if (descriptionLink.startsWith(ContainerDescriptionService.FACTORY_LINK)) {
-                state = new ContainerDescription();
-            } else if (descriptionLink.startsWith(ClosureDescriptionFactoryService.FACTORY_LINK)) {
-                state = new ClosureDescription();
-            } else {
-                throw new IllegalStateException("Unknown link found:" + descriptionLink);
-            }
-            state.documentSelfLink = descriptionLink;
-            state.tenantLinks = getTenantLinks();
-            patchDocument(state);
-        }
+                "WordPress_with_MySQL_compute.yaml");
         return compositeDescriptionLink;
     }
 }

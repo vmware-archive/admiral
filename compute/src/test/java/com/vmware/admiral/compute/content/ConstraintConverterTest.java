@@ -16,7 +16,6 @@ import static org.junit.Assert.assertNull;
 
 import org.junit.Test;
 
-import com.vmware.admiral.compute.content.TemplateComputeDescription.StringEncodedConstraint;
 import com.vmware.photon.controller.model.Constraint.Condition;
 import com.vmware.photon.controller.model.Constraint.Condition.Enforcement;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
