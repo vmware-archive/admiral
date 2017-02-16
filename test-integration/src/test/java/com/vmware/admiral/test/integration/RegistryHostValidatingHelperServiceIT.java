@@ -243,6 +243,7 @@ public class RegistryHostValidatingHelperServiceIT extends BaseTestCase {
 
         f = DelegatingX509TrustManager.class.getDeclaredField("delegates");
         f.setAccessible(true);
+        @SuppressWarnings("rawtypes")
         Map delegates = (Map) f.get(delegatingX509TrustManager);
         delegates.clear();
     }

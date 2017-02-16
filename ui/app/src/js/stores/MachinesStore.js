@@ -179,6 +179,7 @@ let MachinesStore = Reflux.createStore({
 
           machines.forEach((machine) => {
             if (result[machine.descriptionLink]) {
+              machine.instanceType = result[machine.descriptionLink].instanceType;
               machine.cpuCount = result[machine.descriptionLink].cpuCount;
               machine.cpuMhzPerCore = result[machine.descriptionLink].cpuMhzPerCore;
               machine.memory =
@@ -226,6 +227,7 @@ let MachinesStore = Reflux.createStore({
 
           machines.forEach((machine) => {
             if (result[machine.descriptionLink]) {
+              machine.instanceType = result[machine.descriptionLink].instanceType;
               machine.cpuCount = result[machine.descriptionLink].cpuCount;
               machine.cpuMhzPerCore = result[machine.descriptionLink].cpuMhzPerCore;
               machine.memory =
