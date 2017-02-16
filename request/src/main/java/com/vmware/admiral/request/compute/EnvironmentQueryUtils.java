@@ -104,7 +104,7 @@ public class EnvironmentQueryUtils {
         }).thenCompose(endpoints -> {
 
             if (endpoints == null || endpoints.isEmpty()) {
-                return DeferredResult.completed(Collections.emptyList());
+                return DeferredResult.completed(Collections.<EndpointState>emptyList());
             }
 
             // get the compute states that back the endpoints
