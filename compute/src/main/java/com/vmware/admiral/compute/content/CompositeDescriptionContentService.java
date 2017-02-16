@@ -291,7 +291,9 @@ public class CompositeDescriptionContentService extends StatelessService {
                 .setBody(yamlContent)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        post.fail(ex);
+                        post.setContentType(Operation.MEDIA_TYPE_APPLICATION_JSON);
+                        post.setStatusCode(Operation.STATUS_CODE_BAD_REQUEST);
+                        post.fail(ex, Utils.toServiceErrorResponse(ex));
                     } else {
                         String[] resourceLinks = o.getBody(String[].class);
                         CompositeDescription description = new CompositeDescription();

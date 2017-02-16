@@ -37,7 +37,7 @@ public class KubernetesDescriptionServiceTest extends ComputeBaseTest {
             + "    app: wordpress\n"
             + "    tier: frontend\n";
 
-    private String sampleYamlDefinitionInvalid = "---\n"
+    private String sampleYamlInvalidKubernetesDefinition = "---\n"
             + "apiVersion: v1\n"
             + "#kind: Service\n"
             + "metadata:\n"
@@ -91,9 +91,9 @@ public class KubernetesDescriptionServiceTest extends ComputeBaseTest {
     }
 
     @Test
-    public void testCreateKubernetesDescriptionWithInvalidYamlShouldFail() {
+    public void testCreateKubernetesDescriptionWithInvalidKubernetesShouldFail() {
         KubernetesDescription description = new KubernetesDescription();
-        description.kubernetesEntity = sampleYamlDefinitionInvalid;
+        description.kubernetesEntity = sampleYamlInvalidKubernetesDefinition;
 
         Operation op = Operation.createPost(UriUtils.buildUri(host, KubernetesDescriptionService
                 .FACTORY_LINK))
@@ -103,6 +103,37 @@ public class KubernetesDescriptionServiceTest extends ComputeBaseTest {
                         host.log("Creating kubernetes description failed.");
                         host.completeIteration();
                         return;
+                    } else {
+                        host.failIteration(new IllegalStateException("Creation of Kubernetes "
+                                + "Description with invalid yaml succeeded"));
+                    }
+                });
+
+        host.testStart(1);
+        host.send(op);
+        host.testWait();
+    }
+
+    @Test
+    public void testCreateKubernetesDescriptionWithInvalidYamlInputShouldFail() {
+        KubernetesDescription description = new KubernetesDescription();
+        description.kubernetesEntity = "invalid\nyaml\ninput";
+
+        Operation op = Operation.createPost(UriUtils.buildUri(host, KubernetesDescriptionService
+                .FACTORY_LINK))
+                .setBody(description)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.log("Creating kubernetes description failed.");
+                        if (!ex.getMessage().startsWith("Invalid YAML input.")) {
+                            host.failIteration(
+                                    new IllegalStateException(
+                                            "Creation of kubernetes description failed with unexpected message: "
+                                                    + ex.getMessage()));
+                        } else {
+                            host.completeIteration();
+                            return;
+                        }
                     } else {
                         host.failIteration(new IllegalStateException("Creation of Kubernetes "
                                 + "Description with invalid yaml succeeded"));

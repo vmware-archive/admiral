@@ -16,6 +16,7 @@ import static com.vmware.admiral.compute.content.CompositeTemplateUtil.isNullOrE
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.ManagementUriParts;
@@ -59,7 +60,7 @@ public class KubernetesDescriptionContentService extends StatelessService {
                     if (errors != null) {
                         errors.values().forEach(e -> logWarning("Failed to create "
                                 + "KubernetesDescription: %s", Utils.toString(e)));
-                        cleanKubernetesDescriptionsAndFail(resourceLinks, post);
+                        cleanKubernetesDescriptionsAndFail(resourceLinks, errors, post);
                     } else {
                         post.setBody(resourceLinks);
                         post.complete();
@@ -78,9 +79,10 @@ public class KubernetesDescriptionContentService extends StatelessService {
         return ops;
     }
 
-    private void cleanKubernetesDescriptionsAndFail(List<String> selfLinks, Operation op) {
+    private void cleanKubernetesDescriptionsAndFail(List<String> selfLinks, Map<Long, Throwable>
+            errors, Operation op) {
         if (selfLinks == null || selfLinks.isEmpty()) {
-            op.fail(new IllegalStateException(FAIL_ON_CREATE_MSG));
+            failOperation(op, errors, new IllegalStateException(FAIL_ON_CREATE_MSG));
             return;
         }
         logWarning("Cleaning successfully created Kubernetes Descriptions");
@@ -89,11 +91,22 @@ public class KubernetesDescriptionContentService extends StatelessService {
             deleteOps.add(Operation.createDelete(this, selfLink));
         }
         OperationJoin.create(deleteOps)
-                .setCompletion((ops, errors) -> {
-                    if (errors != null) {
-                        errors.values().forEach(e -> logWarning(Utils.toString(e)));
+                .setCompletion((ops, errs) -> {
+                    if (errs != null) {
+                        errs.values().forEach(e -> logWarning(Utils.toString(e)));
                     }
                     op.fail(new IllegalStateException(FAIL_ON_CREATE_MSG));
                 }).sendWith(this);
+    }
+
+    private void failOperation(Operation op, Map<Long, Throwable> errors, Throwable defaultError) {
+        if (isNullOrEmpty(errors)) {
+            op.fail(defaultError);
+        } else {
+            List<Throwable> throwables = errors.values().stream()
+                    .filter(e -> e != null)
+                    .collect(Collectors.toList());
+            op.fail(throwables.get(0));
+        }
     }
 }

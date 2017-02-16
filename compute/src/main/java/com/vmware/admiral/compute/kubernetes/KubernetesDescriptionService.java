@@ -13,6 +13,7 @@ package com.vmware.admiral.compute.kubernetes;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNullOrEmpty;
+import static com.vmware.admiral.common.util.YamlMapper.isValidYaml;
 
 import java.io.IOException;
 
@@ -20,6 +21,7 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.content.kubernetes.CommonKubernetesEntity;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatefulService;
 
@@ -76,6 +78,11 @@ public class KubernetesDescriptionService extends StatefulService {
     }
 
     private void validateDescription(KubernetesDescription description) throws IOException {
+        if (!isValidYaml(description.kubernetesEntity)) {
+            throw new LocalizableValidationException("Invalid YAML input.",
+                    "compute.template.yaml.invalid");
+        }
+
         CommonKubernetesEntity kubernetesEntity = description
                 .getKubernetesEntity(CommonKubernetesEntity.class);
 
