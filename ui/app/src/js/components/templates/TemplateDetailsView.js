@@ -625,14 +625,28 @@ var TemplateDetailsView = Vue.extend({
     openAddNewContainerDefinition: function() {
       TemplateActions.openAddNewContainerDefinition();
     },
-    // Networks
     openAddNewNetwork: function() {
       TemplateActions.openEditNetwork();
       this.$dispatch('disableNetworkSaveButton', true);
     },
+    openAddNewVolume: function() {
+      TemplateActions.openEditVolume();
+
+      this.$dispatch('disableVolumeSaveButton', true);
+    },
     openAddNewKubernetes: function() {
       TemplateActions.openEditKubernetesDefinition();
     },
+    openAddNewClosure: function() {
+      TemplateActions.openAddClosure();
+    },
+    removeClosure: function(e) {
+      TemplateActions.removeClosure(e.model, this.model.documentId);
+    },
+    editClosureDescription: function(e) {
+      TemplateActions.openAddClosure(e.model);
+    },
+
     saveNetwork: function($event) {
       $event.preventDefault();
 
@@ -644,22 +658,7 @@ var TemplateDetailsView = Vue.extend({
         TemplateActions.saveNetwork(this.model.documentId, network);
       }
     },
-    // Closures
-    openAddNewClosure: function() {
-      TemplateActions.openAddClosure();
-    },
-    removeClosure: function(e) {
-      TemplateActions.removeClosure(e.model, this.model.documentId);
-    },
-    editClosureDescription: function(e) {
-      TemplateActions.openAddClosure(e.model);
-    },
-    // Volumes
-    openAddNewVolume: function() {
-      TemplateActions.openEditVolume();
 
-      this.$dispatch('disableVolumeSaveButton', true);
-    },
     saveVolume: function($event) {
       $event.preventDefault();
 

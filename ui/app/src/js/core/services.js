@@ -1757,7 +1757,7 @@ services.createVolumeDescription = function(volumeDescription) {
 };
 
 services.searchContainerNetworks = function(query, limit) {
-  services.searchEntities(links.CONTAINER_NETWORKS, query, limit);
+  return services.searchEntities(links.CONTAINER_NETWORKS, query, limit);
 };
 
 services.searchContainerVolumeDescriptions = function(query, limit) {

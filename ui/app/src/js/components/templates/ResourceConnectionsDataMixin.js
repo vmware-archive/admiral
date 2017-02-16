@@ -83,39 +83,8 @@ var ResourceConnectionsDataMixin = {
 
           var containerData = containerVueComponent.model;
           var containerDocumentSelfLink = containerData && containerData.documentSelfLink;
-          if (containerDocumentSelfLink) {
 
-            let containerVolumes = [];
-            if (containerData.containers) {
-              containerData.containers.forEach((container) => {
-                if (container.volumes) {
-                  containerVolumes = containerVolumes.concat(container.volumes);
-                }
-              });
-            } else {
-              containerVolumes = containerData.volumes;
-            }
-
-            var containerVolumePaths = {};
-            if (containerVolumes) {
-              containerVolumes.forEach((containerVolumeString) => {
-
-                let volume = utils.findVolume(containerVolumeString, volumes);
-
-                if (volume) {
-                  let idxContainerVolNameEnd = containerVolumeString.indexOf(':');
-
-                  let containerVolumePath = (idxContainerVolNameEnd > -1)
-                                    && containerVolumeString.substring(idxContainerVolNameEnd + 1);
-
-                  containerVolumePaths[volume.documentSelfLink] = containerVolumePath;
-                }
-              });
-            }
-
-            this.updateContainerEndpoints(volumes, containerDocumentSelfLink,
-              constants.RESOURCE_CONNECTION_TYPE.VOLUME, containerVolumePaths);
-          }
+          this.updateContainerVolumesEndpoints(containerDocumentSelfLink, containerData, volumes);
         }
       });
 
@@ -123,15 +92,16 @@ var ResourceConnectionsDataMixin = {
     },
 
     containerAttached: function(e) {
-      var containerDescriptionLink = e.model.documentSelfLink;
+      var containerDocumentLink = e.model.documentSelfLink;
 
       let $containerEl = $(e.$el);
       let $containerAnchorEl = $containerEl.find('.container-resource-relations')[0];
 
-      this.prepareContainerEndpoints($containerAnchorEl, containerDescriptionLink);
+      this.prepareContainerEndpoints($containerAnchorEl, containerDocumentLink);
 
-      // TODO Experimental fix for adding new container def: call
-      // this.updateContainerEndpoints();
+      this.updateContainerEndpoints(this.networks, containerDocumentLink,
+                                      constants.RESOURCE_CONNECTION_TYPE.NETWORK);
+      this.updateContainerVolumesEndpoints(containerDocumentLink, e.model, this.volumes);
     },
 
     // Networks
@@ -175,6 +145,41 @@ var ResourceConnectionsDataMixin = {
     },
     removeVolume: function(e) {
       TemplateActions.removeVolume(this.model.documentId, e.model);
+    },
+
+    updateContainerVolumesEndpoints: function(containerDocumentSelfLink, containerData, volumes) {
+      if (!containerDocumentSelfLink) {
+        return;
+      }
+
+      let containerVolumes = [];
+      if (containerData.containers) { // cluster
+        containerData.containers.forEach((container) => {
+          if (container.volumes) {
+            containerVolumes = containerVolumes.concat(container.volumes);
+          }
+        });
+      } else {
+        containerVolumes = containerData.volumes;
+      }
+
+      var containerVolumePaths = {};
+      if (containerVolumes) {
+        containerVolumes.forEach((containerVolumeString) => {
+
+          let volume = utils.findVolume(containerVolumeString, volumes);
+
+          if (volume) {
+            let idxContainerVolNameEnd = containerVolumeString.indexOf(':');
+
+            containerVolumePaths[volume.documentSelfLink] = (idxContainerVolNameEnd > -1)
+            && containerVolumeString.substring(idxContainerVolNameEnd + 1);
+          }
+        });
+
+        this.updateContainerEndpoints(volumes, containerDocumentSelfLink,
+          constants.RESOURCE_CONNECTION_TYPE.VOLUME, containerVolumePaths);
+      }
     }
   },
   filters: {

@@ -30,7 +30,6 @@ let constraints = {
 
 const NETWORK_RESULT_LIMIT = 10;
 const INITIAL_FILTER = '';
-var initialQueryPromise;
 
 function createTypeaheadSource($typeaheadHolder) {
   var timeout;
@@ -81,11 +80,14 @@ function createTypeaheadSource($typeaheadHolder) {
     };
 
     $typeaheadHolder.addClass('loading');
+
+    var searchContainerNetworks =
+                        services.searchContainerNetworks(q || INITIAL_FILTER, NETWORK_RESULT_LIMIT);
     if (!q) {
-      initialQueryPromise.then(promiseCallback);
+      searchContainerNetworks.then(promiseCallback);
     } else {
       timeout = setTimeout(() => {
-        services.searchContainerNetworks(q, NETWORK_RESULT_LIMIT).then(promiseCallback);
+        searchContainerNetworks.then(promiseCallback);
       }, 300);
     }
   };
@@ -242,10 +244,8 @@ var NetworkDefinitionForm = Vue.extend({
       toggleButtonsState.call(_this);
     });
 
-    initialQueryPromise = services.searchContainerNetworks(INITIAL_FILTER, NETWORK_RESULT_LIMIT);
-
     var typeaheadSource = createTypeaheadSource(
-      $(this.$el).find('.network-name-search .search-input'));
+                                    $(this.$el).find('.network-name-search .search-input'));
 
     this.$networksSearch.typeahead({
       minLength: 0
@@ -298,8 +298,8 @@ var NetworkDefinitionForm = Vue.extend({
         }
       }
     }).on('typeahead:selected', function() {
-        toggleButtonsState.call(_this);
-      });
+      toggleButtonsState.call(_this);
+    });
 
     this.unwatchModel = this.$watch('model', (network) => {
       if (network) {
@@ -309,46 +309,44 @@ var NetworkDefinitionForm = Vue.extend({
 
         this.existingNetwork = !!network.external;
         this.hasAdvancedSettings = !!(network.driver || network.customProperties ||
-          (network.ipam && (network.ipam.config || network.ipam.driver)));
+                                    (network.ipam && (network.ipam.config || network.ipam.driver)));
 
         var ipam = network.ipam || {};
-
         var ipamConfig = ipam.config || [];
 
         this.ipamConfigEditor.setData(ipamConfig);
 
         if (network.driver) {
-            if (network.customProperties == null) {
-                network.customProperties = {};
-            }
-            network.customProperties['containers.network.driver'] = network.driver;
+          if (network.customProperties == null) {
+            network.customProperties = {};
+          }
+          network.customProperties['containers.network.driver'] = network.driver;
         }
 
         if (network.ipam && network.ipam.driver) {
-            if (network.customProperties == null) {
-                network.customProperties = {};
-            }
-            network.customProperties['containers.ipam.driver'] = network.ipam.driver;
+          if (network.customProperties == null) {
+            network.customProperties = {};
+          }
+          network.customProperties['containers.ipam.driver'] = network.ipam.driver;
         }
 
         if (network.customProperties) {
+          var properties = [];
 
-            var properties = [];
-
-            for (var key in network.customProperties) {
-                if (network.customProperties.hasOwnProperty(key)) {
-                    var value = network.customProperties[key];
-                    var keyValuePair = {
-                        'key': key,
-                        'value': value
-                    };
-                    properties.push(keyValuePair);
-                }
+          for (var key in network.customProperties) {
+            if (network.customProperties.hasOwnProperty(key)) {
+              var value = network.customProperties[key];
+              var keyValuePair = {
+                'key': key,
+                'value': value
+              };
+              properties.push(keyValuePair);
             }
+          }
 
-            this.customProperties.setData(properties);
+          this.customProperties.setData(properties);
         } else {
-            this.customProperties.setData([]);
+          this.customProperties.setData([]);
         }
 
         var alertMessage = (network.error) ? network.error._generic : network.error;
