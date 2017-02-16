@@ -1,0 +1,1047 @@
+{
+  "app": {
+    "homepage": {
+      "welcome": "Приветствуем!",
+      "description": "Здесь вы можете <b>создавать, подготавливать, отслеживать приложения контейнерного исполнения, а также управлять ими.</b>",
+      "start": "Приступим!",
+      "addHost": "Добавление узла",
+      "enter": "Ввод",
+      "helpCenter": "Справка",
+      "steps": {
+        "description": "Процесс создания приложений состоит всего из нескольких действий",
+        "addHost": "Добавление узла",
+        "findImage": "Поиск образа",
+        "designApplication": "Проектирование приложения"
+      }
+    },
+    "navbar": {
+      "hosts": "Узлы",
+      "placements": "Размещения",
+      "templates": "Шаблоны",
+      "resources": "Ресурсы",
+      "containers": "Контейнеры",
+      "applications": "Приложения",
+      "networks": "Сети",
+      "closures": "Закрытия",
+      "eventlog": "Журнал событий",
+      "placementZones": "Зоны размещения",
+      "environments": "Среды",
+      "endpoints": "Конечные точки",
+      "machines": "Компьютеры",
+      "compute": "Вычисление"
+    },
+    "host": {
+      "entity": "узел",
+      "details": {
+        "title": {
+          "add": "Добавить узел",
+          "create": "Создать узел",
+          "edit": "Изменить узел"
+        },
+        "address": "Адрес",
+        "addressPlaceholder": "Пример: https://hostname:2376",
+        "addressHint": "Укажите соответствующие схему и порт, например https://myhost.com:2376. Схема, используемая по умолчанию: \"https\". Порты, используемые по умолчанию: https/443, http/80.",
+        "hostAlias": "Имя",
+        "hostAddress": "Адрес",
+        "placementZone": "Зона размещения",
+        "credential": "Учетные данные для входа",
+        "guestCredential": "Гостевые учетные данные",
+        "destination": "Пункт назначения",
+        "destinationPlaceholder": "Поиск пункта назначения",
+        "deploymentPolicy": "Политика развертывания",
+        "tags": "Теги",
+        "tagsPlaceholder": "Пример: расположение:запад",
+        "tagsHint": "Введите теги ключ:значение",
+        "autoConfigure": "Автоматическая конфигурация",
+        "autoConfigureInput":"Включить автоматическую конфигурацию узла",
+        "autoConfigureHint": "Узел будет настроен автоматически",
+        "reservationPolicy": "Политика резервирования",
+        "endpoint": "Конечная точка",
+        "connectionType": "Тип подключения",
+        "connectionTypeShort": "Подключение",
+        "customProperties": "Настраиваемые свойства",
+        "verify": "Проверить",
+        "verified": "Проверка успешно выполнена!",
+        "add": "Добавить",
+        "update": "Обновить",
+        "create": "Создать",
+        "certificateWarning": "Недействительный сертификат для __address__. Возможно, вы пытаетесь подключиться к веб-сайту, который выдает себя за __address__, из-за чего безопасность вашей конфиденциальной информации может оказаться под угрозой. Хотите все равно подключиться к этому веб-сайту?",
+        "showCertificate": "Показать сертификат",
+        "hideCertificate": "Скрыть сертификат",
+        "manageCertificates": "Управление сертификатами",
+        "containers": "Контейнеры",
+        "cpu": "ЦП",
+        "memory": "Память",
+        "storage": "Хранилище",
+        "providerType": "Тип облака",
+        "regionId": "Идентификатор области",
+        "name": "Имя",
+        "namePlaceholder": "Пример: host-name",
+        "instanceType": "Тип экземпляра",
+        "imageType": "ОС",
+        "port": "Порт",
+        "clusterSize": "Число экземпляров"
+      },
+      "list": {
+        "title": "Узлы",
+        "titleSearch": "Найденные узлы",
+        "searchPlaceholder": "Поиск узлов",
+        "dataCollect": "Сбор данных",
+        "dataCollectStart": "Инициирование сбора данных. Для завершения операции может потребоваться несколько минут.",
+        "dataCollectEnd": "Сбор данных завершен."
+      },
+      "actions": {
+        "start": "Пуск",
+        "stop": "Стоп",
+        "edit": "Изменить",
+        "enable": "Включить",
+        "disable": "Отключить",
+        "remove": "Удалить"
+      }
+    },
+    "placementZone": {
+      "createNew": "Новая зона размещения",
+      "manage": "Управление зонами размещения",
+      "entity": "зона размещения",
+      "list": {
+        "title": "Зоны размещения",
+        "addButton": "Добавить",
+        "nameColumn": "Имя",
+        "cpuColumn": "ЦП",
+        "memoryColumn": "Память",
+        "storageColumn": "Хранилище",
+        "hostsColumn": "Узлы"
+      },
+      "edit": {
+        "createNew": "Новая зона размещения",
+        "update": "Изменить зону размещения",
+        "nameTitle": "Имя зоны размещения",
+        "endpointTitle": "Конечная точка",
+        "dynamicTitle": "Динамическое выделение ресурсов для этой зоны",
+        "tagsToMatchTitle": "Теги для сопоставления",
+        "tagsToMatchHint": "Введите теги ключ:значение для сопоставления",
+        "tagsToMatchPlaceholder": "Пример: расположение:запад"
+      },
+      "contextPanelTooltip": "Зоны размещения"
+    },
+    "businessGroup": {
+      "entity": "бизнес-группа"
+    },
+    "group": {
+      "createNew": "Новый проект",
+      "manage": "Управление проектами",
+      "entity": "проект",
+      "contextPanelTooltip": "Проекты",
+      "list": {
+        "title": "Проект",
+        "addButton": "Добавить",
+        "nameColumn": "Имя",
+        "details": {
+          "title": "Сведения о проекте"
+        }
+      },
+      "edit": {
+        "createNew": "Новый проект",
+        "update": "Изменить проект",
+        "nameTitle": "Имя проекта"
+      }
+    },
+    "credential": {
+      "createNew": "Новые учетные данные",
+      "manage": "Управление учетными данными",
+      "entity": "учетные данные",
+      "contextPanelTooltip": "Учетные данные",
+      "list": {
+        "title": "Учетные данные",
+        "addButton": "Добавить",
+        "nameColumn": "Имя",
+        "typeColumn": "Тип",
+        "credentialsColumn": "Учетные данные"
+      },
+      "edit": {
+        "createNew": "Новые учетные данные",
+        "update": "Изменить учетные данные",
+        "nameTitle": "Имя",
+        "usernamePasswordTitle": "Имя пользователя",
+        "usernameTitle": "Имя пользователя",
+        "passwordTitle": "Пароль",
+        "showPassword": "Показать пароль",
+        "hidePassword": "Скрыть пароль",
+        "usePrivateKey": "Использовать закрытый ключ",
+        "usePassword": "Использовать пароль",
+        "certificateTitle": "Сертификат",
+        "publicTitle": "Общедоступный ключ",
+        "publicCertificateTitle": "Общедоступный сертификат",
+        "privateCertificateTitle": "Закрытый сертификат"
+      }
+    },
+    "deploymentPolicy": {
+      "createNew": "Новая политика развертывания",
+      "entity": "политика развертывания",
+      "manage": "Управление политиками развертывания",
+      "contextPanelTooltip": "Политики развертывания",
+      "list": {
+        "title": "Политики развертывания",
+        "addButton": "Добавить",
+        "nameColumn": "Имя",
+        "descriptionColumn": "Описание",
+        "details": {
+          "title": "Сведения о политике развертывания"
+        }
+      },
+      "edit": {
+        "createNew": "Новая политика развертывания",
+        "update": "Изменить политику развертывания",
+        "nameTitle": "Имя политики развертывания",
+        "descriptionTitle": "Описание политики развертывания"
+      }
+    },
+    "certificate": {
+      "createNew": "Новый сертификат",
+      "manage": "Управление сертификатами",
+      "entity": "сертификат",
+      "contextPanelTooltip": "Сертификаты",
+      "list": {
+        "title": "Сертификаты",
+        "addButton": "Добавить",
+        "nameColumn": "Имя",
+        "serialColumn": "Серийный номер",
+        "shaColumn": "SHA",
+        "expirationColumn": "Окончание срока действия",
+        "details": {
+          "title": "Сведения о сертификате",
+          "commonName": "Название компании",
+          "issuerName": "Имя издателя",
+          "serial": "Серийный номер",
+          "fingerprint": "Отпечаток пальца SHA",
+          "validSince": "Действителен с",
+          "validTo": "Действителен до"
+        }
+      },
+      "edit": {
+        "createNew": "Новый сертификат",
+        "update": "Изменить сертификат",
+        "urlTitle": "Введите URL-адрес",
+        "importOptionTitle": "Импортировать с URL-адреса",
+        "importOptionHint": "Чтобы не вводить сертификат вручную, воспользуйтесь командой \"Импортировать с URL-адреса\" и укажите URL-адрес. Затем наша система импортирует сертификат с указанного URL-адреса.",
+        "importButton": "Импортировать",
+        "certificateTitle": "Ввести сертификат"
+      }
+    },
+    "template": {
+      "list": {
+        "title": "Популярные шаблоны",
+        "titleSearch": "Найденные шаблоны",
+        "searchImagesTemplatesPlaceholder": "Поиск образов, шаблонов",
+        "searchImagesPlaceholder": "Поиск образов",
+        "searchTemplatesPlaceholder": "Поиск шаблонов",
+        "searchClosuresPlaceholder": "Поиск закрытий",
+        "manageRegistry": "Управление реестром",
+        "provision": "Подготовка",
+        "provisionAdditionalInfo": "Введите дополнительные сведения",
+        "editTemplate": "Изменение и просмотр сведений",
+        "official": "Официальный",
+        "trusted": "Доверенный",
+        "stars": "Звезды",
+        "linksLabel": "Ссылки",
+        "addLinkLabel": "Добавить ссылку",
+        "containers": "Выберите контейнер для установления зависимости",
+        "alias": "Введите псевдоним",
+        "true": "Да",
+        "false": "Нет",
+        "searchCategoryFilterTitle": "Представление:",
+        "partialResultWarning": "Отображается неполный список результатов поиска из-за одной или нескольких ошибок запроса.",
+        "searchCategory": {
+          "all": "Все",
+          "images": "Образы",
+          "templates": "Шаблоны",
+          "closures": "Закрытия"
+        }
+      },
+      "details": {
+        "create": "Создать шаблон",
+        "createNameHint": "Имя шаблона",
+        "createProceed": "Продолжить",
+        "edit": "Изменить шаблон",
+        "newDefinition": {
+          "newLabel": "Добавить контейнер",
+          "title": "Добавить определение контейнера",
+          "selectImage": "Выбрать образ",
+          "imageListTitle": "Популярные образы",
+          "imageListTitleSearch": "Найденные образы",
+          "containerDefinitionInfo": "Сведения об определении контейнера"
+        },
+        "editDefinition": {
+          "title": "Изменить определение контейнера"
+        },
+        "editNetwork" :{
+          "newLabel": "Добавить сеть",
+          "newTitle": "Добавить конфигурацию сети",
+          "newDropdownTitle": "Добавить сеть...",
+          "editTitle": "Изменить конфигурацию сети",
+          "name": "Имя",
+          "existingNetwork": "Имеющиеся",
+          "showingCount": "Отображается __count__ из __totalCount__",
+          "showingInstances": "экземпляры",
+          "noResults": "Сети не найдены",
+          "hosts": "Узлы",
+          "hostsSearchPlaceholder": "Поиск узла",
+          "create": "Создать",
+          "createTitle": "Создать сеть",
+          "ipamConfig": "Конфигурация управления IP-адресами",
+          "ipamConfigSubnet": "Подсеть",
+          "ipamConfigSubnetHint": "Пример: 172.16.238.0/24",
+          "ipamConfigIPRange": "Диапазон IP-адресов",
+          "ipamConfigIPRangeHint": "Пример: 172.28.5.0/24",
+          "ipamConfigGateway": "Шлюз",
+          "ipamConfigGatewayHint": "Пример: 172.16.238.1",
+          "customProperties": "Настраиваемые свойства"
+        },
+        "editClosures" :{
+          "newTitle": "Добавить закрытие",
+          "editTitle": "Изменить закрытие",
+          "name": "Имя"
+        },
+        "network": {
+          "drag": "Перетащите, чтобы прикрепить контейнер к этой сети",
+          "drop": "Отпустите, чтобы прикрепить контейнер к этой сети"
+        }
+      },
+      "actions": {
+        "edit": "Изменить",
+        "provision": "Подготовить",
+        "publish": "Поместить",
+        "export": "Экспортировать",
+        "import": "Импортировать",
+        "remove": "Удалить"
+      },
+      "publish": {
+        "tooltip": "Поместить в схему элементов",
+        "success": "Успешно помещен",
+        "fail": "Ошибка помещения шаблона в схему элементов"
+      },
+      "import": {
+        "title": "Импортировать шаблон",
+        "loadButton": "Загрузить из файла",
+        "importTemplateTooltip": "Импортировать шаблон или Docker Compose",
+        "importTemplateHint": "Импортируйте шаблон либо файл Docker Compose или вручную введите его содержимое.",
+        "contentPlaceholder": "Введите шаблон или Docker Compose...",
+        "importButton": "Импортировать"
+      },
+      "export": {
+        "formatPromptMessage": "Выберите формат, в котором следует экспортировать шаблон:",
+        "format": {
+          "compositeBlueprint": "Схема элементов YAML",
+          "dockerCompose": "Docker Compose"
+        }
+      }
+    },
+    "placement": {
+      "list": {
+        "title": "Размещения",
+        "addButton": "Добавить",
+        "nameColumn": "Имя",
+        "groupColumn": "Проект",
+        "businessGroupColumn": "Бизнес-группа",
+        "placementZoneColumn": "Зона размещения",
+        "deploymentPolicyColumn": "Политика развертывания",
+        "priorityColumn": "Приоритет",
+        "instancesColumn": "Экземпляры",
+        "cpuColumn": "Доли ЦП",
+        "memoryColumn": "Ограничение памяти",
+        "storageColumn": "Ограничение хранения",
+        "instancesPerPlacement": "Показать экземпляры на одно размещение",
+        "unlimitedInstances": "Без ограничений"
+      },
+      "edit": {
+        "createNew": "Новое размещение",
+        "update": "Изменить размещение",
+        "nameLabel": "Имя",
+        "groupLabel": "Проект",
+        "selectGroup": "Выберите проект",
+        "businessGroupLabel": "Бизнес-группа",
+        "selectBusinessGroup": "Выберите бизнес-группу",
+        "placementZoneLabel": "Зона размещения",
+        "selectPlacementZone": "Выберите зону размещения",
+        "deploymentPolicyLabel": "Политика развертывания",
+        "selectDeploymentPolicy": "Выберите политику развертывания",
+        "priorityLabel": "Приоритет",
+        "priorityPlaceholder": "Положительное число (дополнительно)",
+        "priorityHint": "Чтобы задать самый низкий приоритет, оставьте это поле пустым",
+        "instancesLabel": "Экземпляры",
+        "instancesPlaceholder": "Количество экземпляров (дополнительно)",
+        "instancesHint": "Положительное целое число, которое ограничивает максимальное количество экземпляров. Чтобы не использовать ограничение, оставьте это поле пустым или введите \"0\".",
+        "cpuSharesLabel": "Доли ЦП",
+        "memoryLimitLabel": "Ограничение памяти",
+        "storageLimitLabel": "Ограничение хранения"
+      }
+    },
+    "eventlog": {
+      "title": "События",
+      "tabs": {
+        "all": "Все",
+        "warnings": "Предупреждения",
+        "errors": "Ошибки"
+      },
+      "contextPanelTooltip": "Журнал событий"
+    },
+    "registry": {
+      "list": {
+        "title": "Существующие реестры",
+        "addButton": "Добавить",
+        "addressColumn": "Адрес",
+        "nameColumn": "Имя",
+        "statusColumn": "Состояние"
+      },
+      "edit": {
+        "createNew": "Новый реестр",
+        "update": "Изменить реестр",
+        "addressTitle": "Адрес",
+        "addressHint": "Укажите соответствующие схему и порт, например https://myregistry.com:5000. Схема, используемая по умолчанию: \"https\". Порты, используемые по умолчанию: https/443, http/80.",
+        "insecureRegistryHint": "Обнаружен простой http-реестр: убедитесь, что узлы правильно настроены и что подключение к ним возможно. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Подробнее</a>",
+        "nameTitle": "Имя",
+        "credentialTitle": "Учетные данные для входа",
+        "verifyButton": "Проверить",
+        "verified": "Проверка успешно выполнена!"
+      }
+    },
+    "environment": {
+      "list": {
+        "title": "Среды",
+        "titleSearch": "Найденные среды",
+        "searchPlaceholder": "Поиск сред",
+        "addButton": "Добавить среду",
+        "addPropertyButton": "Добавить свойство",
+        "nameColumn": "Имя",
+        "endpointTypeColumn": "Тип конечной точки",
+        "propertiesColumn": "Свойства",
+        "mappingsColumn": "Сопоставления"
+      },
+      "details": {
+        "endpoint": "Конечная точка"
+      },
+      "actions": {
+        "edit": "Изменить",
+        "remove": "Удалить"
+      },
+      "edit": {
+        "addTitle": "Добавить среду",
+        "editTitle": "Изменить среду",
+        "save": "Сохранить",
+        "basicTab": "Основные",
+        "computeTab": "Вычисление",
+        "networkTab": "Сеть",
+        "storageTab": "Хранилище",
+        "nameLabel": "Имя",
+        "tagsLabel": "Теги",
+        "endpointLabel": "Конечная точка",
+        "valueLabel": "Значение",
+        "instanceTypeLabel": "Тип экземпляра",
+        "imageTypeLabel": "Тип образа",
+        "bootDiskPropertyLabel": "Свойство загрузочного диска",
+        "cpuCountLabel": "Процессоры",
+        "diskSizeMbLabel": "Размер диска",
+        "memoryMbLabel": "Память"
+      },
+      "instanceType": {
+        "aws": {
+          "small": "Маленький (1 ЦП, 1 ГБ памяти)",
+          "medium": "Средний (1 ЦП, 2 ГБ памяти)",
+          "large": "Большой (2 ЦП, 8 ГБ памяти)",
+          "xlarge": "Очень большой (4 ЦП, 16 ГБ памяти)"
+        },
+        "azure": {
+          "small": "Маленький (1 ЦП, 0,75 ГБ памяти)",
+          "medium": "Средний (1 ЦП, 1,75 ГБ памяти)",
+          "large": "Большой (2 ЦП, 3,5 ГБ памяти)",
+          "xlarge": "Очень большой (4 ЦП, 14 ГБ памяти)"
+        },
+        "vsphere": {
+          "small": "Маленький (1 ЦП, 1 ГБ памяти)",
+          "medium": "Средний (1 ЦП, 2 ГБ памяти)",
+          "large": "Большой (2 ЦП, 8 ГБ памяти)",
+          "xlarge": "Очень большой (4 ЦП, 16 ГБ памяти)"
+        },
+        "nimbus": {
+          "small": "Маленький (1 ЦП, 1 ГБ памяти)"
+        }
+      },
+      "imageType": {
+        "coreos": "CoreOS",
+        "photon": "Photon OS",
+        "ubuntu-1604": "Ubuntu"
+      }
+    },
+    "endpoint": {
+      "list": {
+        "title": "Конечные точки",
+        "addButton": "Добавить",
+        "nameColumn": "Имя",
+        "typeColumn": "Тип"
+      },
+      "edit": {
+        "addNew": "Новая конечная точка",
+        "update": "Изменить конечную точку",
+        "nameLabel": "Имя",
+        "typeLabel": "Тип",
+        "accessKeyIdLabel": "Идентификатор ключа доступа",
+        "usernameLabel": "Имя пользователя",
+        "passwordLabel": "Пароль",
+        "secretAccessKeyLabel": "Секретный ключ доступа",
+        "regionIdLabel": "Идентификатор области",
+        "endpointHostLabel": "Имя узла или IP-адрес",
+        "subscriptionIdLabel": "Идентификатор подписки",
+        "tenantIdLabel": "Идентификатор арендатора",
+        "datacenterIdLabel": "Имя центра обработки данных"
+      },
+      "entity": "конечная точка",
+      "typeEntity": "тип",
+      "createNew": "Новая конечная точка",
+      "manage": "Управление конечными точками",
+      "contextPanelTooltip": "Конечные точки"
+    },
+    "machine": {
+      "list": {
+        "title": "Компьютеры",
+        "titleSearch": "Найденные компьютеры",
+        "searchPlaceholder": "Поиск компьютеров"
+      }
+    },
+    "compute": {
+      "entity": "пункт назначения",
+      "list": {
+        "title": "Вычисление",
+        "titleSearch": "Найденные вычисления",
+        "searchPlaceholder": "Поиск вычисления"
+      },
+      "details": {
+        "type": "Тип"
+      },
+      "edit": {
+        "title": "Изменить вычисление"
+      }
+    },
+    "resource": {
+      "list": {
+        "network": {
+          "name": "Сеть",
+          "connectedDateLabel": "Подключено",
+          "networkDriverLabel": "Драйвер сети",
+          "ipamDriverLabel": "Драйвер управления IP-адресами",
+          "subnetLabel": "Подсеть",
+          "gatewayLabel": "Шлюз",
+          "ipRangeLabel": "Диапазон IP-адресов",
+          "connectedContainers": "Контейнеры",
+          "parentHosts": "Узлы",
+          "external": "Внешние",
+          "create": "Создать сеть",
+          "state": {
+            "UNKNOWN": "НЕТ ДАННЫХ",
+            "PROVISIONING": "ПОДГОТОВКА",
+            "CONNECTED": "ПОДКЛЮЧЕНО",
+            "RETIRED": "СПИСАНО",
+            "ERROR": "ОШИБКА"
+          },
+          "operations": {
+            "errors": {
+              "remove": {
+                "containersConnected": "Есть подключенные контейнеры"
+              }
+            }
+          }
+        },
+        "container": {
+          "create": "Создать контейнер",
+          "operations": {
+            "errors": {
+              "managedByCatalog": "Под управлением каталога"
+            }
+          }
+        },
+        "application": {
+          "create": "Создать приложение"
+        },
+        "closure": {
+          "create": "Создать закрытие"
+        },
+        "titleSearch": {
+          "containers": "Контейнеры",
+          "applications": "Приложения",
+          "networks": "Сети",
+          "closures": "Закрытия"
+        },
+        "searchPlaceholder": {
+          "containers": "Поиск контейнеров",
+          "applications": "Поиск приложений",
+          "networks": "Поиск сетей",
+          "closures": "Поиск закрытий"
+        },
+        "searchCategory": {
+          "networks": "Сети"
+        },
+        "relations": {
+          "hosts": "Узлы",
+          "containers": "Контейнеры",
+          "applications": "Приложения",
+          "networks": "Сети",
+          "volumes": "Тома"
+        }
+      }
+    },
+    "container": {
+      "list": {
+        "title": "Элементы",
+        "titleSearchContainers": "Найденные контейнеры",
+        "titleSearchApplications": "Найденные приложения",
+        "searchPlaceholder": "Поиск контейнеров",
+        "createContainer": "Создать контейнер",
+        "hostLabel": "Узел",
+        "createdDateLabel": "Создано",
+        "portsLabel": "Порты",
+        "commandLabel": "Команда",
+        "logLabel": "Журнал",
+        "cluster": {
+          "name": "Кластер",
+          "sizeLabel": "Размер кластера",
+          "scaleLabel": "Изменение масштаба"
+        },
+        "composite": {
+          "name": "Приложение",
+          "servicesCountLabel": "Службы",
+          "containersCountLabel": "Контейнеры",
+          "networksCountLabel": "Сети",
+          "volumesCountLabel": "Тома",
+          "childContainersLabel": "Дочерние контейнеры"
+        },
+        "searchCategoryFilterTitle": "Представление:",
+        "searchCategory": {
+          "all": "Все",
+          "containers": "Контейнеры",
+          "applications": "Приложения"
+        }
+      },
+      "details": {
+        "usages": "Использование",
+        "properties": "Свойства",
+        "webview": "Веб-представление",
+        "logs": "Журналы",
+        "cpu": "ЦП",
+        "memory": "Память",
+        "network": "Сеть",
+        "networkTrafficSent": "Отправлено",
+        "networkTrafficReceived": "Получено",
+        "showingLogsSince": "Показаны журналы с",
+        "logsFormat": "Формат журналов",
+        "logsFormatAnsi": "ANSI",
+        "logsFormatRaw": "Raw",
+        "networkAddresses": "Сетевые адреса",
+        "attributes": {
+          "host": "Узел",
+          "createdDateLabel": "Создано",
+          "ports": "Порты",
+          "command": "Команда",
+          "ipaddress": "Адрес",
+          "image": "Образ",
+          "id": "идентификатор",
+          "restartCount": "Число перезапусков",
+          "memory": "Память",
+          "memorySwap": "Подкачка памяти",
+          "cpuShares": "Доли ЦП",
+          "cpusetCpus": "Cpu setCpus"
+        },
+        "operation": {
+          "pending": "Операция выполняется",
+          "failure": "Сбой операции"
+        }
+      },
+      "request": {
+        "title": "Подготовка контейнера",
+        "provision": "Подготовить",
+        "saveTemplate": "Сохранить как шаблон",
+        "tabs": {
+          "basic": "Основные",
+          "network": "Сеть",
+          "storage": "Хранилище",
+          "policy": "Политика",
+          "environment": "Среда",
+          "health": "Конфигурация работоспособности",
+          "logconfig": "Конфигурация журнала"
+        },
+        "inputs": {
+          "image": "Образ",
+          "imageTag": {
+            "searchHint": "Поиск тегов",
+            "loadingHint": "Загрузка тегов..."
+          },
+          "name": "Имя",
+          "group": "Проект",
+          "commands": "Команда",
+          "commandsDescription": "Массив команд для выполнения при запуске контейнера",
+          "commandsInputs": {
+            "command": "Команда",
+            "commandHint": "Пример: /startup.sh"
+          },
+          "deploymentPolicy": "Политика развертывания",
+          "links": "Ссылки",
+          "linksDescription": "Список служб (в шаблоне), от которых зависит контейнер",
+          "linksInputs": {
+            "alias": "Псевдоним",
+            "aliasHint": "Пример: db",
+            "service": "Служба"
+          },
+          "portBindings": "Привязки портов",
+          "portBindingsDescription": "Карта предоставляемых портов контейнеров и порт узла для сопоставления",
+          "portBindingsInputs": {
+            "hostPort": "Порт узла",
+            "hostPortHint": "Пример: 9080",
+            "containerPort": "Порт контейнера",
+            "containerPortHint": "Пример: 80"
+          },
+          "publishAll": "Опубликовать все порты",
+          "publishAllDescription": "Опубликовать все порты, предоставляемые образом.",
+          "hostname": "Имя узла",
+          "hostnameDescription": "Имя узла для контейнера",
+          "networkMode": "Режим сети",
+          "networkModeDescription": "Устанавливает режим сети для контейнера.",
+          "networkModeTypes": {
+            "none": "Нет",
+            "bridge": "Мост",
+            "host": "Узел"
+          },
+          "networks": "Сети",
+          "networksDescription": "Подключает контейнер к этим сетям (в дополнение к режиму сети).",
+          "networksInputs": {
+            "name": "Имя",
+            "nameHint": "Пример: mynet",
+            "aliases": "Псевдонимы",
+            "aliasesHint": "Пример: my-service, my-other-service",
+            "ipv4": "IPv4",
+            "ipv4Hint": "Пример: 172.16.1.8",
+            "ipv6": "IPv6",
+            "ipv6Hint": "Пример: fe80::42:31ff:fecf:83e2"
+          },
+          "volumes": "Тома",
+          "volumesDescription": "Пути точек подключения внутри контейнера. Поле контейнера является обязательным и должно содержать абсолютный путь. Поле узла должно содержать имя тома или абсолютный путь.",
+          "volumesInputs": {
+            "host": "Узел",
+            "hostHint": "Пример: /host/project/path",
+            "container": "Контейнер",
+            "containerHint": "Пример: /container/project/path",
+            "readOnly": "Только для чтения"
+          },
+          "volumesFrom": "Тома из",
+          "volumesFromDescription": "Список томов, которые будут унаследованы из другого контейнера.",
+          "volumesFromInputs": {
+            "volume": "Том",
+            "volumeHint": "Пример: datacontainer"
+          },
+          "workingDirectory": "Рабочий каталог",
+          "workingDirectoryDescription": "Рабочий каталог, в котором следует запускать команды",
+          "clusterSize": "Размер кластера",
+          "clusterSizeDescription": "Количество узлов, которые следует подготовить",
+          "restartPolicy": "Политика перезапуска",
+          "restartPolicyDescription": "Поведение, которое применяется при закрытии контейнера. Установите значение \"всегда\", чтобы перезапуск выполнялся всегда, или \"при сбое\", чтобы перезапуск выполнялся только тогда, когда код завершения контейнера не равен нулю. В случае использования значения \"при сбое\" максимальное число перезапусков определяет количество попыток. По умолчанию перезапуск не выполняется",
+          "restartPolicyType": {
+            "always": "Всегда",
+            "onFailure": "При сбое",
+            "none": "Нет"
+          },
+          "maxRestarts": "Максимальное число перезапусков",
+          "maxRestartsDescription": "Максимальное число перезапусков при сбоях контейнера",
+          "cpuShares": "Доли ЦП",
+          "cpuSharesDescription": "Целочисленное значение, которое содержит доли ЦП контейнера (т. е. относительный вес по сравнению с другими контейнерами)",
+          "memoryLimit": "Ограничение памяти",
+          "memoryLimitDescription": "Ограничение памяти в байтах",
+          "memorySwapLimit": "Ограничение подкачки памяти",
+          "memorySwapLimitDescription": "Общее ограничение памяти (память + подкачка); установите значение \"-1\", чтобы отключить подкачку. Используйте этот параметр для памяти; значение подкачки должно быть больше значения памяти",
+          "affinityConstraints": "Ограничения сходства",
+          "affinityConstraintsDescription": "Условия наличия или отсутствия сходства контейнеров, развернутых или не развернутых на одном узле. Формат: [!]serviceName[:soft|hard].",
+          "affinityInputs": {
+            "antiaffinity": "Отсутствие сходства",
+            "servicename": "Имя службы",
+            "servicenameHint": "Пример: webserver",
+            "constraint": "Ограничение"
+          },
+          "environmentVariables": "Переменные среды",
+          "environmentVariablesDescription": "Список переменных среды",
+          "environmentVariablesInputs": {
+            "name": "Имя",
+            "nameHint": "Пример: PROJECT_HOME",
+            "value": "Значение",
+            "valueHint": "Пример: /var/lib/project"
+          },
+          "customProperties": "Настраиваемые свойства",
+          "customPropertiesDescription": "Настраиваемые свойства позволяют добавлять атрибуты в подготавливаемые контейнеры.",
+          "healthMode": "Режим",
+          "healthConfigNone": "Нет",
+          "healthConfigTCP": "TCP-соединение",
+          "healthConfigHTTP": "HTTP",
+          "healthConfigCommand": "Команда",
+          "healthPath": "URL-путь",
+          "healthPathDescription": "URL-путь к интерфейсу API, используемому для проверки работоспособности",
+          "healthPort": "Порт",
+          "healthPortDescription": "Порт контейнера для использования",
+          "healthTimeout": "Время ожидания (мс)",
+          "healthTimeoutDescription": "Время ожидания в мс для выполнения операции проверки работоспособности",
+          "healthyThreshold": "Порог работоспособности",
+          "healthyThresholdDescription": "Пороговое значение успешной операции проверки работоспособности, при котором контейнер считается работоспособным",
+          "unhealthyThreshold": "Порог неработоспособности",
+          "unhealthyThresholdDescription": "Пороговое значение неудачной операции проверки работоспособности, при котором контейнер считается неработоспособным",
+          "command": "Команда",
+          "commandDescription": "Команда, которую следует выполнить в отношении контейнера. Состояние завершения используется для определения работоспособности контейнера.",
+          "logConfigDriver": "Драйвер",
+          "logConfigDriverDescription": "Драйвер ведения журнала для контейнера",
+          "logConfigDriverTypes": {
+            "none": "Нет",
+            "bridge": "Мост",
+            "host": "Узел"
+          },
+          "logConfigOptions": "Параметры",
+          "logConfigOptionsDescription": "Поддерживаемые параметры для каждого драйвера ведения журнала",
+          "logConfigOptionsInputs" : {
+            "name": "Имя",
+            "nameHint": "Пример: max-size",
+            "value": "Значение",
+            "valueHint": "Пример: 10m"
+           }
+        }
+      },
+      "state": {
+        "RUNNING": "ЗАПУЩЕНО",
+        "STOPPED": "ОСТАНОВЛЕНО",
+        "REBOOTING": "ПЕРЕЗАГРУЗКА",
+        "PAUSED": "ПРИОСТАНОВЛЕНО",
+        "ERROR": "ОШИБКА",
+        "UNKNOWN": "НЕТ ДАННЫХ",
+        "RETIRED": "СПИСАНО",
+        "PROVISIONING": "ПОДГОТОВКА",
+        "continuousStateSince": "__state__ на протяжении __duration__"
+      },
+      "actions": {
+        "start": "Пуск",
+        "reboot": "Перезагрузить",
+        "stop": "Остановить",
+        "remove": "Удалить",
+        "clone": "Клонировать",
+        "details": "Сведения",
+        "terminal": "Терминал",
+        "manage": "Управление",
+        "createTemplate": "Создать шаблон",
+        "openTemplate": "Открыть шаблон"
+      }
+    },
+    "request": {
+      "title": "Запросы",
+      "contextPanelTooltip": "Запросы",
+      "tabs": {
+        "all": "Все",
+        "running": "Запущено",
+        "failed": "Сбой"
+      },
+      "actions": {
+        "details": {
+          "show": "Сведения",
+          "hide": "Скрыть сведения"
+        },
+        "open": "Открыть"
+      }
+    },
+    "closure": {
+      "title": "Все закрытия",
+      "titleSearch": "Найденные закрытия",
+      "searchPlaceholder": "Поиск закрытий",
+      "placementZone": "Пул ресурсов",
+      "resultStatus": "Состояние результата",
+      "details": {
+        "name": "Имя",
+        "description": "Описание",
+        "runtime" : "Среда выполнения",
+        "state": "Состояние",
+        "id": "Идентификатор",
+        "inputs": "Ввод",
+        "outputs": "Вывод",
+        "errorMsg": "Ошибка",
+        "closureTitle": "Сведения о запуске закрытия",
+        "closureDescriptionTitle": "Сведения об описании закрытия",
+        "descriptionId": "Идентификатор",
+        "source": "Источник",
+        "sourceURL": "URL-адрес источника",
+        "resources": "Ресурсы"
+      },
+      "state": {
+        "CREATED": "СОЗДАНО",
+        "STARTED": "ЗАПУЩЕНО",
+        "FINISHED": "ЗАВЕРШЕНО",
+        "FAILED": "СБОЙ",
+        "CANCELLED": "ОТМЕНЕНО"
+      },
+      "list" : {
+        "name": "Закрытие",
+        "closuresCountLabel": "Закрытия",
+        "closureRunsLabel": "Запуск закрытий",
+        "memory": "Память:",
+        "timeout": "Время ожидания:"
+      },
+      "request": {
+        "title": "Определение закрытия",
+        "save": "Сохранить",
+        "run": "Запустить",
+        "inputs": {
+          "name": "Имя",
+          "description": "Описание",
+          "runtime": "Среда выполнения",
+          "source": "Исходный код",
+          "sourceURL": "URL-адрес источника",
+          "runtimeTypes": {
+            "nodejs": "Node.js 4.3.0",
+            "python": "Python 3.4.3"
+          },
+          "logConfigOptionsInputs" : {
+            "name": "Имя",
+            "nameHint": "Пример: max-size",
+            "value": "Значение",
+            "valueHint": "Пример: 10m"
+           },
+           "closureInputs" : {
+            "name": "Имя",
+            "nameHint": "Пример: a",
+            "value": "Значение",
+            "valueHint": "Пример: 1"
+           },
+           "closureOutputs" : {
+            "name": "Имя",
+            "nameHint": "Пример: result"
+           },
+          "memoryLimit": "Ограничение памяти (в мегабайтах)",
+          "timeout": "Время ожидания (в секундах)",
+          "entrypoint": "Обработчик точки входа",
+          "logConfigDriver": "Драйвер журнала",
+          "logConfigOptions": "Параметры журнала",
+          "sourceMode": "Режим",
+          "sourceProvided": "Предоставленный источник",
+          "sourceFromURL": "Источник из URL-адреса",
+          "inputs": "Ввод",
+          "outputs": "Вывод",
+          "dependencies": "Зависимости",
+          "nameDescription": "Имя закрытия. Если точка входа не задана, имя будет использоваться как имя функции для вызова.",
+          "descriptionDescription": "Описание закрытия",
+          "sourceDescription": "Исходный код для выполнения",
+          "sourceURLDescription": "Доступ к исходному коду можно получить через URL-адрес. Содержимым может быть сам код или ZIP-файл. Если используется URL-адрес источника, поле исходного кода использоваться не будет.",
+          "memoryLimitDescription": "Ограничение памяти в мегабайтах. Максимальное допустимое значение — 1536 МБ.",
+          "timeoutDescription": "Время ожидания выполнения в секундах. Если выполнение продолжается дольше времени ожидания, задача отменяется.",
+          "entrypointDescription": "Вызываемая основная функция должна иметь вид: file_name.function_name",
+          "logDriverDescription": "Драйвер ведения журнала для задачи закрытия",
+          "logConfigOptionsDescription": "Поддерживаемые параметры для каждого драйвера ведения журнала",
+          "dependenciesDescription": "Зависимости, которые следует установить до запуска кода",
+          "inputDescription": "Входной параметр для использования при запуске кода. Входной параметр должен быть примитивом или действительным объектом JSON.",
+          "outputDescription": "Имена выходных параметров для использования при заполнении результатов."
+        },
+        "logs": {
+          "title": "Журналы"
+        },
+        "tabs": {
+          "definition": "Определение",
+          "code": "Код",
+          "config": "Конфигурация"
+        }
+      },
+      "monitoredTask": {
+        "runStatus": "Состояние запуска",
+        "runId": "Идентификатор запуска:",
+        "runState": "Состояние:",
+        "outputs": "Вывод"
+      }
+    },
+    "help": {
+        "link": "Справка",
+        "description": "Функция \"Ансамбль\" позволяет получить доступ к необходимой информации о контексте задачи, которая выполняется в данный момент. По мере продолжения работы обновление выполняется автоматически с соблюдением инструкций. Используйте второй экран или разделенный экран для доступа к информации в режиме реального времени. Можно использовать мобильное устройство, телевизор или любой другой экран, независимо от того, подключен он к компьютеру или нет. Функцию \"Ансамбль\" можно использовать вне доверенной сети, продолжая получать при этом мгновенные обновления.",
+        "descriptionOpen": "Чтобы открыть функцию \"Ансамбль\", щелкните элемент <strong>Открыть в новой вкладке</strong> или отсканируйте QR-код с помощью мобильного устройства."
+      },
+      "resources": {
+        "selectMultiple": "Выбрать элементы",
+        "message": {
+          "selectShift": "Используйте клавишу Shift, чтобы выбрать несколько элементов"
+        }
+      }
+    },
+    "loginPanel": {
+      "login": "Вход",
+      "logout": "Выход",
+      "username": "Имя пользователя",
+      "password": "Пароль",
+      "success": "Проверка подлинности выполнена успешно",
+      "failure": "Ошибка проверки подлинности"
+    },
+    "dropdownSearchMenu": {
+      "title": "Выберите из списка __entity__",
+      "searchPlaceholder": "Поиск: __entity__",
+      "clear": "Очистить выбор",
+      "showingCount": "Отображается __count__ из __totalCount__",
+      "noResults": "Элементы не найдены"
+    },
+    "customProperties": {
+      "name": "Имя",
+      "nameHint": "Пример: speedchecker",
+      "value": "Значение",
+      "valueHint": "Пример: slow"
+    },
+    "yes": "Да",
+    "cancel": "Отмена",
+    "delete": "Удалить",
+    "enable": "Включить",
+    "enabled": "Включено",
+    "disable": "Отключить",
+    "disabled": "Отключено",
+    "close": "Закрыть",
+    "edit": "Изменить",
+    "remove": "Удалить",
+    "add": "Добавить",
+    "save": "Сохранить",
+    "back": "Назад",
+    "refresh": "Обновить",
+    "clear": "Очистить",
+    "deleteAll": "Удалить все",
+    "pendingOperationCancel": "операция в",
+    "openInNewTab": "Открыть в новой вкладке",
+    "unavailable": "Н/д",
+    "advanced": "Дополнительно",
+    "noSelection": "Нет выбранных элементов",
+    "buildNumber": "Номер сборки",
+    "errors": {
+      "hostIp": "В качестве значения должно быть указано имя узла или IP-адрес.",
+      "urlPath": "Недопустимый URL-путь.",
+      "propertyNameRequired": "Необходимо указать имя свойства.",
+      "propertyContainerNameInvalid": "Недопустимое имя контейнера, разрешены только символы: [a-zA-Z0-9][a-zA-Z0-9_.-].",
+      "propertyNamesNotUnique": "Имена свойств должны быть уникальными.",
+      "nonNegativeNumber": "Значение должно быть неотрицательным целым числом меньше 2147483648.",
+      "positiveNumber": "Значение должно быть положительным целым числом меньше 2147483648.",
+      "nonNegativeNumberAndMinusOne": "Значение должно быть целым числом между -1 и 2147483647.",
+      "portNumber": "Недействительный номер порта. Допустимый диапазон номеров портов — от 0 до 65535.",
+      "containerMemory": "Для памяти должно быть установлено значение \"0\" (без ограничений) или по крайней мере 4194304 байта (4 МБ).",
+      "required": "Необходимо указать значение.",
+      "requiredAll": "Все поля обязательны для заполнения.",
+      "serviceNameRequired": "Необходимо указать имя службы.",
+      "networkRequired": "Необходимо указать сеть.",
+      "itemNotFound": "Элемент не найден.",
+      "networkExists": "Сеть уже существует в шаблоне.",
+      "volumeDestinationRequired": "Необходимо указать пункт назначения тома.",
+      "invalidInputValue": "Недопустимое входное значение",
+      "invalidPath": "В качестве значения должен быть указан абсолютный путь.",
+      "invalidPathOrName": "В качестве значения должен быть указан абсолютный путь или действительное имя тома."
+    },
+    "infoMessages": {
+      "created": "Успешно создано!",
+      "updated": "Успешно обновлено!"
+    },
+    "occurrence": {
+      "all": "Сопоставить все",
+      "any": "Сопоставить любые"
+    },
+    "state": {
+      "ON": "ВКЛ.",
+      "OFF": "ВЫКЛ.",
+      "SUSPEND": "ОТКЛЮЧЕНО",
+      "UNKNOWN": "НЕТ ДАННЫХ",
+      "stateSinceMessage": "с __date__"
+    }
+}

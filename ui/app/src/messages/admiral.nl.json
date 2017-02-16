@@ -1,0 +1,1047 @@
+{
+  "app": {
+    "homepage": {
+      "welcome": "Welkom!",
+      "description": "Dit is de plaats waar u <b>toepassingen in containervorm kunt maken, inrichten, beheren en bewaken.</b>",
+      "start": "Laten we aan de slag gaan!",
+      "addHost": "Een host toevoegen",
+      "enter": "Invoer",
+      "helpCenter": "Help",
+      "steps": {
+        "description": "Een toepassing maken is ontzettend eenvoudig",
+        "addHost": "Een host toevoegen",
+        "findImage": "Een image zoeken",
+        "designApplication": "Een toepassing ontwerpen"
+      }
+    },
+    "navbar": {
+      "hosts": "Hosts",
+      "placements": "Plaatsingen",
+      "templates": "Sjablonen",
+      "resources": "Bronnen",
+      "containers": "Containers",
+      "applications": "Toepassingen",
+      "networks": "Netwerken",
+      "closures": "Sluitingen",
+      "eventlog": "Gebeurtenislogboek",
+      "placementZones": "Plaatsingszones",
+      "environments": "Omgevingen",
+      "endpoints": "Endpoints",
+      "machines": "Machines",
+      "compute": "Computer"
+    },
+    "host": {
+      "entity": "host",
+      "details": {
+        "title": {
+          "add": "Host toevoegen",
+          "create": "Host maken",
+          "edit": "Host bewerken"
+        },
+        "address": "Adres",
+        "addressPlaceholder": "Voorbeeld: https://hostname:2376",
+        "addressHint": "Specificeer het gepaste schema en de poort, bijv. https://myhost.com:2376. Standaardschema: 'https'. Standaardpoorten: https/443, http/80.",
+        "hostAlias": "Naam",
+        "hostAddress": "Adres",
+        "placementZone": "Plaatsingszone",
+        "credential": "Verificatiegegevens",
+        "guestCredential": "Verificatiegegevens gast",
+        "destination": "Bestemming",
+        "destinationPlaceholder": "Zoeken naar bestemming",
+        "deploymentPolicy": "Implementatiebeleid",
+        "tags": "Tags",
+        "tagsPlaceholder": "Voorbeeld: location:west",
+        "tagsHint": "Invoersleutel: waardetags",
+        "autoConfigure": "Automatische configuratie",
+        "autoConfigureInput":"Automatische configuratie host inschakelen",
+        "autoConfigureHint": "De host wordt automatisch geconfigureerd",
+        "reservationPolicy": "Reserveringsbeleid",
+        "endpoint": "Endpoint",
+        "connectionType": "Verbindingstype",
+        "connectionTypeShort": "Verbinding",
+        "customProperties": "Aangepaste eigenschappen",
+        "verify": "Verifiëren",
+        "verified": "Geverifieerd!",
+        "add": "Toevoegen",
+        "update": "Bijwerken",
+        "create": "Maken",
+        "certificateWarning": "Het certificaat voor __address__ is ongeldig. U maakt mogelijk verbinding met een website die zich voordoet als __address__ waardoor uw vertrouwelijke gegevens risico kunnen lopen. Wilt u toch verbinding maken met deze website?",
+        "showCertificate": "Certificaat weergeven",
+        "hideCertificate": "Certificaat verbergen",
+        "manageCertificates": "Certificaten beheren",
+        "containers": "Containers",
+        "cpu": "CPU",
+        "memory": "Geheugen",
+        "storage": "Opslag",
+        "providerType": "Cloudtype",
+        "regionId": "Regio-id",
+        "name": "Naam",
+        "namePlaceholder": "Voorbeeld: hostnaam",
+        "instanceType": "Instantietype",
+        "imageType": "OS",
+        "port": "Poort",
+        "clusterSize": "Aantal instanties"
+      },
+      "list": {
+        "title": "Hosts",
+        "titleSearch": "Hosts gevonden",
+        "searchPlaceholder": "Zoeken naar hosts",
+        "dataCollect": "Gegevens verzamelen",
+        "dataCollectStart": "Gegevensverzameling wordt getriggerd. Dit kan een paar minuten duren.",
+        "dataCollectEnd": "Gegevensverzameling is voltooid."
+      },
+      "actions": {
+        "start": "Beginnen",
+        "stop": "Stoppen",
+        "edit": "Bewerken",
+        "enable": "Inschakelen",
+        "disable": "Uitschakelen",
+        "remove": "Verwijderen"
+      }
+    },
+    "placementZone": {
+      "createNew": "Nieuwe plaatsingszone",
+      "manage": "Plaatsingszones beheren",
+      "entity": "plaatsingszone",
+      "list": {
+        "title": "Plaatsingszones",
+        "addButton": "Toevoegen",
+        "nameColumn": "Naam",
+        "cpuColumn": "CPU",
+        "memoryColumn": "Geheugen",
+        "storageColumn": "Opslag",
+        "hostsColumn": "Hosts"
+      },
+      "edit": {
+        "createNew": "Nieuwe plaatsingszone",
+        "update": "Plaatsingszone bewerken",
+        "nameTitle": "Naam plaatsingszone",
+        "endpointTitle": "Endpoint",
+        "dynamicTitle": "Dynamisch bronnen aan deze zone toewijzen",
+        "tagsToMatchTitle": "Tags voor overeenkomst",
+        "tagsToMatchHint": "Invoersleutel: waardetags voor overeenkomst",
+        "tagsToMatchPlaceholder": "Voorbeeld: location:west"
+      },
+      "contextPanelTooltip": "Plaatsingszones"
+    },
+    "businessGroup": {
+      "entity": "bedrijfsgroep"
+    },
+    "group": {
+      "createNew": "Nieuw project",
+      "manage": "Projecten beheren",
+      "entity": "project",
+      "contextPanelTooltip": "Projecten",
+      "list": {
+        "title": "Project",
+        "addButton": "Toevoegen",
+        "nameColumn": "Naam",
+        "details": {
+          "title": "Projectdetails"
+        }
+      },
+      "edit": {
+        "createNew": "Nieuw project",
+        "update": "Project bewerken",
+        "nameTitle": "Projectnaam"
+      }
+    },
+    "credential": {
+      "createNew": "Nieuwe verificatiegegevens",
+      "manage": "Verificatiegegevens beheren",
+      "entity": "verificatiegegevens",
+      "contextPanelTooltip": "Verificatiegegevens",
+      "list": {
+        "title": "Verificatiegegevens",
+        "addButton": "Toevoegen",
+        "nameColumn": "Naam",
+        "typeColumn": "Type",
+        "credentialsColumn": "Verificatiegegevens"
+      },
+      "edit": {
+        "createNew": "Nieuwe verificatiegegevens",
+        "update": "Verificatiegegevens bewerken",
+        "nameTitle": "Naam",
+        "usernamePasswordTitle": "Gebruikersnaam",
+        "usernameTitle": "Gebruikersnaam",
+        "passwordTitle": "Wachtwoord",
+        "showPassword": "Wachtwoord weergeven",
+        "hidePassword": "Wachtwoord verbergen",
+        "usePrivateKey": "Persoonlijke sleutel gebruiken",
+        "usePassword": "Wachtwoord gebruiken",
+        "certificateTitle": "Certificaat",
+        "publicTitle": "Openbare sleutel",
+        "publicCertificateTitle": "Openbaar certificaat",
+        "privateCertificateTitle": "Persoonlijk certificaat"
+      }
+    },
+    "deploymentPolicy": {
+      "createNew": "Nieuw implementatiebeleid",
+      "entity": "implementatiebeleid",
+      "manage": "Implementatiebeleid beheren",
+      "contextPanelTooltip": "Impl.beleid",
+      "list": {
+        "title": "Implementatiebeleid",
+        "addButton": "Toevoegen",
+        "nameColumn": "Naam",
+        "descriptionColumn": "Beschrijving",
+        "details": {
+          "title": "Details van implementatiebeleid"
+        }
+      },
+      "edit": {
+        "createNew": "Nieuw implementatiebeleid",
+        "update": "Implementatiebeleid bewerken",
+        "nameTitle": "Naam van implementatiebeleid",
+        "descriptionTitle": "Beschrijving van implementatiebeleid"
+      }
+    },
+    "certificate": {
+      "createNew": "Nieuw certificaat",
+      "manage": "Certificaten beheren",
+      "entity": "certificaat",
+      "contextPanelTooltip": "Certificaten",
+      "list": {
+        "title": "Certificaten",
+        "addButton": "Toevoegen",
+        "nameColumn": "Naam",
+        "serialColumn": "Serienummer",
+        "shaColumn": "SHA",
+        "expirationColumn": "Vervaldatum",
+        "details": {
+          "title": "Certificaatdetails",
+          "commonName": "Bedrijfsnaam",
+          "issuerName": "Naam verstrekker",
+          "serial": "Serienummer",
+          "fingerprint": "SHA-vingerafdruk",
+          "validSince": "Geldig vanaf",
+          "validTo": "Geldig tot"
+        }
+      },
+      "edit": {
+        "createNew": "Nieuw certificaat",
+        "update": "Certificaat bewerken",
+        "urlTitle": "URL invoeren",
+        "importOptionTitle": "Importeren vanaf URL",
+        "importOptionHint": "In plaats van het certificaat handmatig in te voeren, kunt u met 'Importeren vanaf URL' een URL invoeren. Ons systeem importeert het certificaat vervolgens vanaf de URL die u hebt ingevoerd.",
+        "importButton": "Importeren",
+        "certificateTitle": "Certificaat invoeren"
+      }
+    },
+    "template": {
+      "list": {
+        "title": "Populaire sjablonen",
+        "titleSearch": "Sjablonen gevonden",
+        "searchImagesTemplatesPlaceholder": "Zoeken naar images, sjablonen",
+        "searchImagesPlaceholder": "Zoeken naar images",
+        "searchTemplatesPlaceholder": "Zoeken naar sjablonen",
+        "searchClosuresPlaceholder": "Zoeken naar sluitingen",
+        "manageRegistry": "Register beheren",
+        "provision": "Inrichting",
+        "provisionAdditionalInfo": "Extra informatie invoeren",
+        "editTemplate": "Details bewerken/bekijken",
+        "official": "Officieel",
+        "trusted": "Vertrouwd",
+        "stars": "Sterren",
+        "linksLabel": "Koppelingen",
+        "addLinkLabel": "Een koppeling toevoegen",
+        "containers": "Een container selecteren waarop kan worden vertrouwd",
+        "alias": "Alias invoeren",
+        "true": "Ja",
+        "false": "Nee",
+        "searchCategoryFilterTitle": "Weergave:",
+        "partialResultWarning": "U krijgt onvolledige zoekresultaten te zien vanwege één of meerdere mislukte query's.",
+        "searchCategory": {
+          "all": "Alles",
+          "images": "Images",
+          "templates": "Sjablonen",
+          "closures": "Sluitingen"
+        }
+      },
+      "details": {
+        "create": "Sjabloon maken",
+        "createNameHint": "Naam van sjabloon",
+        "createProceed": "Doorgaan",
+        "edit": "Sjabloon bewerken",
+        "newDefinition": {
+          "newLabel": "Container toevoegen",
+          "title": "Containerdefinitie toevoegen",
+          "selectImage": "Een image selecteren",
+          "imageListTitle": "Populaire images",
+          "imageListTitleSearch": "Gevonden images",
+          "containerDefinitionInfo": "Containerdefinitiegegevens"
+        },
+        "editDefinition": {
+          "title": "Containerdefinitie bewerken"
+        },
+        "editNetwork" :{
+          "newLabel": "Netwerk toevoegen",
+          "newTitle": "Netwerkconfiguratie toevoegen",
+          "newDropdownTitle": "Netwerk toevoegen...",
+          "editTitle": "Netwerkconfiguratie bewerken",
+          "name": "Naam",
+          "existingNetwork": "Bestaand",
+          "showingCount": "__count__ van __totalCount__ wordt weergegeven",
+          "showingInstances": "instanties",
+          "noResults": "Geen netwerken gevonden",
+          "hosts": "Hosts",
+          "hostsSearchPlaceholder": "Zoeken naar host",
+          "create": "Maken",
+          "createTitle": "Netwerk maken",
+          "ipamConfig": "IPAM-config",
+          "ipamConfigSubnet": "Subnet",
+          "ipamConfigSubnetHint": "Voorbeeld: 172.16.238.0/24",
+          "ipamConfigIPRange": "IP-bereik",
+          "ipamConfigIPRangeHint": "Voorbeeld: 172.28.5.0/24",
+          "ipamConfigGateway": "Gateway",
+          "ipamConfigGatewayHint": "Voorbeeld: 172.16.238.1",
+          "customProperties": "Aangepaste eigenschappen"
+        },
+        "editClosures" :{
+          "newTitle": "Sluiting toevoegen",
+          "editTitle": "Sluiting bewerken",
+          "name": "Naam"
+        },
+        "network": {
+          "drag": "Slepen om container aan dit netwerk te koppelen",
+          "drop": "Neerzetten om container aan dit netwerk te koppelen"
+        }
+      },
+      "actions": {
+        "edit": "Bewerken",
+        "provision": "Inrichting",
+        "publish": "Pushen",
+        "export": "Exporteren",
+        "import": "Importeren",
+        "remove": "Verwijderen"
+      },
+      "publish": {
+        "tooltip": "Pushen naar blueprint",
+        "success": "Gepusht",
+        "fail": "Fout tijdens pushen van sjabloon naar blueprint"
+      },
+      "import": {
+        "title": "Sjabloon importeren",
+        "loadButton": "Laden vanuit bestand",
+        "importTemplateTooltip": "Sjabloon of Docker Compose importeren",
+        "importTemplateHint": "Importeer een sjabloon of een Docker Compose-bestand of voer de inhoud handmatig in.",
+        "contentPlaceholder": "Sjabloon of Docker Compose invoeren...",
+        "importButton": "Importeren"
+      },
+      "export": {
+        "formatPromptMessage": "Selecteer de indeling voor het exporteren van de sjabloon:",
+        "format": {
+          "compositeBlueprint": "YAML-blueprint",
+          "dockerCompose": "Docker Compose"
+        }
+      }
+    },
+    "placement": {
+      "list": {
+        "title": "Plaatsingen",
+        "addButton": "Toevoegen",
+        "nameColumn": "Naam",
+        "groupColumn": "Project",
+        "businessGroupColumn": "Bedrijfsgroep",
+        "placementZoneColumn": "Plaatsingszone",
+        "deploymentPolicyColumn": "Implementatiebeleid",
+        "priorityColumn": "Prioriteit",
+        "instancesColumn": "Instanties",
+        "cpuColumn": "CPU-gedeelten",
+        "memoryColumn": "Geheugenlimiet",
+        "storageColumn": "Opslaglimiet",
+        "instancesPerPlacement": "Instanties per plaatsing weergeven",
+        "unlimitedInstances": "Onbeperkt"
+      },
+      "edit": {
+        "createNew": "Nieuwe plaatsing",
+        "update": "Plaatsing bewerken",
+        "nameLabel": "Naam",
+        "groupLabel": "Project",
+        "selectGroup": "Project selecteren",
+        "businessGroupLabel": "Bedrijfsgroep",
+        "selectBusinessGroup": "Bedrijfsgroep selecteren",
+        "placementZoneLabel": "Plaatsingszone",
+        "selectPlacementZone": "Plaatsingszone selecteren",
+        "deploymentPolicyLabel": "Implementatiebeleid",
+        "selectDeploymentPolicy": "Implementatiebeleid selecteren",
+        "priorityLabel": "Prioriteit",
+        "priorityPlaceholder": "Positief getal (optioneel)",
+        "priorityHint": "Leeg laten om het de laagste prioriteit te geven",
+        "instancesLabel": "Instanties",
+        "instancesPlaceholder": "Aantal instanties (optioneel)",
+        "instancesHint": "Positief geheel getal om het maximum aantal instanties te beperken. Laat leeg of voer 0 in voor onbeperkt aantal.",
+        "cpuSharesLabel": "CPU-gedeelten",
+        "memoryLimitLabel": "Geheugenlimiet",
+        "storageLimitLabel": "Opslaglimiet"
+      }
+    },
+    "eventlog": {
+      "title": "Gebeurtenissen",
+      "tabs": {
+        "all": "Alles",
+        "warnings": "Waarschuwingen",
+        "errors": "Fouten"
+      },
+      "contextPanelTooltip": "Gebeurtenislogboek"
+    },
+    "registry": {
+      "list": {
+        "title": "Bestaande registers",
+        "addButton": "Toevoegen",
+        "addressColumn": "Adres",
+        "nameColumn": "Naam",
+        "statusColumn": "Status"
+      },
+      "edit": {
+        "createNew": "Nieuw register",
+        "update": "Register bewerken",
+        "addressTitle": "Adres",
+        "addressHint": "Specificeer het gepaste schema en de poort, bijv. https://myregistry.com:5000. Standaardschema: 'https'. Standaardpoorten: https/443, http/80.",
+        "insecureRegistryHint": "Gewoon http-register gedetecteerd: zorg dat uw hosts goed zijn geconfigureerd en ermee kunnen verbinden. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Meer informatie</a>",
+        "nameTitle": "Naam",
+        "credentialTitle": "Verificatiegegevens",
+        "verifyButton": "Verifiëren",
+        "verified": "Geverifieerd!"
+      }
+    },
+    "environment": {
+      "list": {
+        "title": "Omgevingen",
+        "titleSearch": "Gevonden omgevingen",
+        "searchPlaceholder": "Zoeken naar omgevingen",
+        "addButton": "Omgeving toevoegen",
+        "addPropertyButton": "Eigenschap toevoegen",
+        "nameColumn": "Naam",
+        "endpointTypeColumn": "Endpointtype",
+        "propertiesColumn": "Eigenschappen",
+        "mappingsColumn": "Toewijzingen"
+      },
+      "details": {
+        "endpoint": "Endpoint"
+      },
+      "actions": {
+        "edit": "Bewerken",
+        "remove": "Verwijderen"
+      },
+      "edit": {
+        "addTitle": "Omgeving toevoegen",
+        "editTitle": "Omgeving bewerken",
+        "save": "Opslaan",
+        "basicTab": "Basis",
+        "computeTab": "Computer",
+        "networkTab": "Netwerk",
+        "storageTab": "Opslag",
+        "nameLabel": "Naam",
+        "tagsLabel": "Tags",
+        "endpointLabel": "Endpoint",
+        "valueLabel": "Waarde",
+        "instanceTypeLabel": "Instantietype",
+        "imageTypeLabel": "Imagetype",
+        "bootDiskPropertyLabel": "Opstartschijfeigenschap",
+        "cpuCountLabel": "CPU's",
+        "diskSizeMbLabel": "Schijfgrootte",
+        "memoryMbLabel": "Geheugen"
+      },
+      "instanceType": {
+        "aws": {
+          "small": "Klein (1 CPU, 1 GB geheugen)",
+          "medium": "Medium (1 CPU, 2 GB geheugen)",
+          "large": "Groot (2 CPU's, 8 GB geheugen)",
+          "xlarge": "X-large (4 CPU's, 16 GB geheugen)"
+        },
+        "azure": {
+          "small": "Klein (1 CPU, 0,75 GB geheugen)",
+          "medium": "Medium (1 CPU, 1,75 GB geheugen)",
+          "large": "Groot (2 CPU's, 3,50 GB geheugen)",
+          "xlarge": "X-large (4 CPU's, 14 GB geheugen)"
+        },
+        "vsphere": {
+          "small": "Klein (1 CPU, 1 GB geheugen)",
+          "medium": "Medium (1 CPU, 2 GB geheugen)",
+          "large": "Groot (2 CPU's, 8 GB geheugen)",
+          "xlarge": "X-large (4 CPU's, 16 GB geheugen)"
+        },
+        "nimbus": {
+          "small": "Klein (1 CPU, 1 GB geheugen)"
+        }
+      },
+      "imageType": {
+        "coreos": "CoreOS",
+        "photon": "Photon OS",
+        "ubuntu-1604": "Ubuntu"
+      }
+    },
+    "endpoint": {
+      "list": {
+        "title": "Endpoints",
+        "addButton": "Toevoegen",
+        "nameColumn": "Naam",
+        "typeColumn": "Type"
+      },
+      "edit": {
+        "addNew": "Nieuw endpoint",
+        "update": "Endpoint bewerken",
+        "nameLabel": "Naam",
+        "typeLabel": "Type",
+        "accessKeyIdLabel": "Toegangssleutel-id",
+        "usernameLabel": "Gebruikersnaam",
+        "passwordLabel": "Wachtwoord",
+        "secretAccessKeyLabel": "Geheime toegangssleutel",
+        "regionIdLabel": "Regio-id",
+        "endpointHostLabel": "Hostnaam of IP",
+        "subscriptionIdLabel": "Abonnements-id",
+        "tenantIdLabel": "Tenant-id",
+        "datacenterIdLabel": "Datacenternaam"
+      },
+      "entity": "endpoint",
+      "typeEntity": "type",
+      "createNew": "Nieuw endpoint",
+      "manage": "Endpoints beheren",
+      "contextPanelTooltip": "Endpoints"
+    },
+    "machine": {
+      "list": {
+        "title": "Machines",
+        "titleSearch": "Machines gevonden",
+        "searchPlaceholder": "Zoeken naar machines"
+      }
+    },
+    "compute": {
+      "entity": "bestemming",
+      "list": {
+        "title": "Computer",
+        "titleSearch": "Computer gevonden",
+        "searchPlaceholder": "Zoeken naar computers"
+      },
+      "details": {
+        "type": "Type"
+      },
+      "edit": {
+        "title": "Computer bewerken"
+      }
+    },
+    "resource": {
+      "list": {
+        "network": {
+          "name": "Netwerk",
+          "connectedDateLabel": "Verbonden",
+          "networkDriverLabel": "Netwerkstuurprogramma",
+          "ipamDriverLabel": "IPAM-stuurprogramma",
+          "subnetLabel": "Subnet",
+          "gatewayLabel": "Gateway",
+          "ipRangeLabel": "IP-bereik",
+          "connectedContainers": "Containers",
+          "parentHosts": "Hosts",
+          "external": "Extern",
+          "create": "Netwerk maken",
+          "state": {
+            "UNKNOWN": "ONBEKEND",
+            "PROVISIONING": "INRICHTING",
+            "CONNECTED": "VERBONDEN",
+            "RETIRED": "UIT DE HANDEL GENOMEN",
+            "ERROR": "FOUT"
+          },
+          "operations": {
+            "errors": {
+              "remove": {
+                "containersConnected": "Er zijn verbonden containers"
+              }
+            }
+          }
+        },
+        "container": {
+          "create": "Container maken",
+          "operations": {
+            "errors": {
+              "managedByCatalog": "Beheerd per catalogus"
+            }
+          }
+        },
+        "application": {
+          "create": "Toepassing maken"
+        },
+        "closure": {
+          "create": "Sluiting maken"
+        },
+        "titleSearch": {
+          "containers": "Containers",
+          "applications": "Toepassingen",
+          "networks": "Netwerken",
+          "closures": "Sluitingen"
+        },
+        "searchPlaceholder": {
+          "containers": "Zoeken naar containers",
+          "applications": "Zoeken naar toepassingen",
+          "networks": "Zoeken naar netwerken",
+          "closures": "Zoeken naar sluitingen"
+        },
+        "searchCategory": {
+          "networks": "Netwerken"
+        },
+        "relations": {
+          "hosts": "Hosts",
+          "containers": "Containers",
+          "applications": "Toepassingen",
+          "networks": "Netwerken",
+          "volumes": "Volumes"
+        }
+      }
+    },
+    "container": {
+      "list": {
+        "title": "Items",
+        "titleSearchContainers": "Containers gevonden",
+        "titleSearchApplications": "Toepassingen gevonden",
+        "searchPlaceholder": "Zoeken naar containers",
+        "createContainer": "Container maken",
+        "hostLabel": "Host",
+        "createdDateLabel": "Gemaakt",
+        "portsLabel": "Poorten",
+        "commandLabel": "Opdracht",
+        "logLabel": "Logboek",
+        "cluster": {
+          "name": "Cluster",
+          "sizeLabel": "Clustergrootte",
+          "scaleLabel": "Schalen"
+        },
+        "composite": {
+          "name": "Toepassing",
+          "servicesCountLabel": "Services",
+          "containersCountLabel": "Containers",
+          "networksCountLabel": "Netwerken",
+          "volumesCountLabel": "Volumes",
+          "childContainersLabel": "Onderliggende containers"
+        },
+        "searchCategoryFilterTitle": "Weergave:",
+        "searchCategory": {
+          "all": "Alles",
+          "containers": "Containers",
+          "applications": "Toepassingen"
+        }
+      },
+      "details": {
+        "usages": "Aantal keer gebruikt",
+        "properties": "Eigenschappen",
+        "webview": "Webweergave",
+        "logs": "Logboeken",
+        "cpu": "CPU",
+        "memory": "Geheugen",
+        "network": "Netwerk",
+        "networkTrafficSent": "Verzonden",
+        "networkTrafficReceived": "Ontvangen",
+        "showingLogsSince": "Logboeken weergeven vanaf",
+        "logsFormat": "Logboekindeling",
+        "logsFormatAnsi": "ANSI",
+        "logsFormatRaw": "Raw",
+        "networkAddresses": "Netwerkadressen",
+        "attributes": {
+          "host": "Host",
+          "createdDateLabel": "Gemaakt",
+          "ports": "Poorten",
+          "command": "Opdracht",
+          "ipaddress": "Adres",
+          "image": "Image",
+          "id": "id",
+          "restartCount": "Aantal keer opnieuw gestart",
+          "memory": "Geheugen",
+          "memorySwap": "Wisselgeheugen",
+          "cpuShares": "CPU-gedeelten",
+          "cpusetCpus": "Cpu setCpus"
+        },
+        "operation": {
+          "pending": "Bewerking wordt uitgevoerd",
+          "failure": "Bewerking is mislukt"
+        }
+      },
+      "request": {
+        "title": "Een container inrichten",
+        "provision": "Inrichting",
+        "saveTemplate": "Opslaan als sjabloon",
+        "tabs": {
+          "basic": "Basis",
+          "network": "Netwerk",
+          "storage": "Opslag",
+          "policy": "Beleid",
+          "environment": "Omgeving",
+          "health": "Statusconfiguratie",
+          "logconfig": "Configuratie logboek"
+        },
+        "inputs": {
+          "image": "Image",
+          "imageTag": {
+            "searchHint": "Zoeken naar tags",
+            "loadingHint": "Tags laden..."
+          },
+          "name": "Naam",
+          "group": "Project",
+          "commands": "Opdracht",
+          "commandsDescription": "Opdrachtarray voor uitvoering na starten container",
+          "commandsInputs": {
+            "command": "Opdracht",
+            "commandHint": "Voorbeeld: /startup.sh"
+          },
+          "deploymentPolicy": "Implementatiebeleid",
+          "links": "Koppelingen",
+          "linksDescription": "Een lijst met services (in een sjabloon) waarvan de container afhankelijk is",
+          "linksInputs": {
+            "alias": "Alias",
+            "aliasHint": "Voorbeeld: db",
+            "service": "Service"
+          },
+          "portBindings": "Poortbindingen",
+          "portBindingsDescription": "Een kaart met beschikbare containerpoorten en de hostpoort waarnaar ze moeten verwijzen",
+          "portBindingsInputs": {
+            "hostPort": "Hostpoort",
+            "hostPortHint": "Voorbeeld: 9080",
+            "containerPort": "Containerpoort",
+            "containerPortHint": "Voorbeeld: 80"
+          },
+          "publishAll": "Alle poorten publiceren",
+          "publishAllDescription": "Alle poorten publiceren die beschikbaar worden gesteld door de image.",
+          "hostname": "Hostnaam",
+          "hostnameDescription": "De hostnaam die voor de container moet worden gebruikt",
+          "networkMode": "Netwerkmodus",
+          "networkModeDescription": "Stelt de netwerkmodus in voor de container.",
+          "networkModeTypes": {
+            "none": "Geen",
+            "bridge": "Bridge",
+            "host": "Host"
+          },
+          "networks": "Netwerken",
+          "networksDescription": "Verbindt de container met deze netwerken (naast de netwerkmodus).",
+          "networksInputs": {
+            "name": "Naam",
+            "nameHint": "Voorbeeld: mynet",
+            "aliases": "Aliassen",
+            "aliasesHint": "Voorbeeld: my-service, my-other-service",
+            "ipv4": "IPv4",
+            "ipv4Hint": "Voorbeeld: 172.16.1.8",
+            "ipv6": "IPv6",
+            "ipv6Hint": "Voorbeeld: fe80::42:31ff:fecf:83e2"
+          },
+          "volumes": "Volumes",
+          "volumesDescription": "Koppelpuntpaden in de container. Het containerveld is verplicht en moet een absoluut pad zijn. Het hostveld moet een volumenaam of een absoluut pad bevatten.",
+          "volumesInputs": {
+            "host": "Host",
+            "hostHint": "Voorbeeld: /host/project/path",
+            "container": "Container",
+            "containerHint": "Voorbeeld: /container/project/path",
+            "readOnly": "Alleen-lezen"
+          },
+          "volumesFrom": "Volumes van",
+          "volumesFromDescription": "Een lijst met volumes die worden overgenomen van een andere container.",
+          "volumesFromInputs": {
+            "volume": "Volume",
+            "volumeHint": "Voorbeeld: datacontainer"
+          },
+          "workingDirectory": "Werkdirectory",
+          "workingDirectoryDescription": "De werkdirectory om opdrachten in uit te voeren",
+          "clusterSize": "Clustergrootte",
+          "clusterSizeDescription": "Het aantal knooppunten dat moet worden ingericht",
+          "restartPolicy": "Beleid opnieuw starten",
+          "restartPolicyDescription": "Het gedrag dat moet worden toegepast als de container wordt afgesloten. De waarde 'altijd' om altijd opnieuw te starten of 'indien mislukt' om alleen opnieuw te starten wanneer de afsluitcode van de container niet nul is. Als 'indien mislukt' wordt gebruikt, bepaalt het maximum aantal keer opnieuw starten het aantal keer dat er opnieuw wordt geprobeerd, voordat er wordt opgegeven. De standaardinstelling is om niet opnieuw te starten",
+          "restartPolicyType": {
+            "always": "Altijd",
+            "onFailure": "Indien mislukt",
+            "none": "Geen"
+          },
+          "maxRestarts": "Max. aantal keer opnieuw starten",
+          "maxRestartsDescription": "Het maximum aantal keer dat opnieuw wordt gestart indien er een fout met de container is opgetreden",
+          "cpuShares": "CPU-gedeelten",
+          "cpuSharesDescription": "Een geheel getal dat de CPU-gedeelten van de container aangeeft (d.w.z. het relatieve gewicht t.o.v. andere containers)",
+          "memoryLimit": "Geheugenlimiet",
+          "memoryLimitDescription": "Geheugenlimiet in bytes",
+          "memorySwapLimit": "Limiet wisselgeheugen",
+          "memorySwapLimitDescription": "Totale geheugenlimiet (geheugen + wisselgeheugen); ingesteld op -1 om wisselgeheugen uit te schakelen U dient dit te gebruiken met geheugen en de wisselwaarde hoger in te stellen dan de geheugenwaarde",
+          "affinityConstraints": "Affiniteitsbeperkingen",
+          "affinityConstraintsDescription": "Affiniteits- of anti-affiniteitsvoorwaarden van containers geïmplementeerd of niet-geïmplementeerd op dezelfde host. Indeling: [!]serviceName[:soft|hard].",
+          "affinityInputs": {
+            "antiaffinity": "Anti-affiniteit",
+            "servicename": "Servicenaam",
+            "servicenameHint": "Voorbeeld: webserver",
+            "constraint": "Beperking"
+          },
+          "environmentVariables": "Omgevingsvariabelen",
+          "environmentVariablesDescription": "Een lijst met omgevingsvariabelen",
+          "environmentVariablesInputs": {
+            "name": "Naam",
+            "nameHint": "Voorbeeld: PROJECT_HOME",
+            "value": "Waarde",
+            "valueHint": "Voorbeeld: /var/lib/project"
+          },
+          "customProperties": "Aangepaste eigenschappen",
+          "customPropertiesDescription": "Aangepaste eigenschappen maken het mogelijk kenmerken toe te voegen aan de containers die worden ingericht.",
+          "healthMode": "Modus",
+          "healthConfigNone": "Geen",
+          "healthConfigTCP": "TCP-verbinding",
+          "healthConfigHTTP": "HTTP",
+          "healthConfigCommand": "Opdracht",
+          "healthPath": "URL-pad",
+          "healthPathDescription": "URL-pad naar de API die wordt gebruikt voor statuscontrole",
+          "healthPort": "Poort",
+          "healthPortDescription": "Containerpoort die moet worden gebruikt",
+          "healthTimeout": "Time-out (ms)",
+          "healthTimeoutDescription": "Time-out in ms voor de statuscontrolebewerking",
+          "healthyThreshold": "Drempelwaarde voor gezonde status",
+          "healthyThresholdDescription": "Drempelwaarde voor statuscontrole voor het aantal bewerkingen met goed gevolg dat nodig is om de container als gezond te beschouwen",
+          "unhealthyThreshold": "Drempelwaarde voor ongezonde status",
+          "unhealthyThresholdDescription": "Drempelwaarde voor statuscontrole voor het aantal bewerkingen met negatief resultaat dat nodig is om de container als ongezond te beschouwen",
+          "command": "Opdracht",
+          "commandDescription": "Opdracht die moet worden uitgevoerd voor de container. De afsluitstatus wordt gebruikt om de gezondheid van de container te bepalen.",
+          "logConfigDriver": "Stuurprogramma",
+          "logConfigDriverDescription": "Stuurprogramma logboekregistratie voor de container",
+          "logConfigDriverTypes": {
+            "none": "Geen",
+            "bridge": "Bridge",
+            "host": "Host"
+          },
+          "logConfigOptions": "Opties",
+          "logConfigOptionsDescription": "Ondersteunde opties per stuurprogramma logboekregistratie",
+          "logConfigOptionsInputs" : {
+            "name": "Naam",
+            "nameHint": "Voorbeeld: max-size",
+            "value": "Waarde",
+            "valueHint": "Voorbeeld: 10m"
+           }
+        }
+      },
+      "state": {
+        "RUNNING": "WORDT UITGEVOERD",
+        "STOPPED": "GESTOPT",
+        "REBOOTING": "WORDT OPNIEUW OPGESTART",
+        "PAUSED": "ONDERBROKEN",
+        "ERROR": "FOUT",
+        "UNKNOWN": "ONBEKEND",
+        "RETIRED": "UIT DE HANDEL GENOMEN",
+        "PROVISIONING": "INRICHTING",
+        "continuousStateSince": "__state__ for __duration__"
+      },
+      "actions": {
+        "start": "Beginnen",
+        "reboot": "Opnieuw opstarten",
+        "stop": "Stoppen",
+        "remove": "Verwijderen",
+        "clone": "Klonen",
+        "details": "Details",
+        "terminal": "Terminal",
+        "manage": "Beheren",
+        "createTemplate": "Sjabloon maken",
+        "openTemplate": "Sjabloon openen"
+      }
+    },
+    "request": {
+      "title": "Aanvragen",
+      "contextPanelTooltip": "Aanvragen",
+      "tabs": {
+        "all": "Alles",
+        "running": "Wordt uitgevoerd",
+        "failed": "Mislukt"
+      },
+      "actions": {
+        "details": {
+          "show": "Details",
+          "hide": "Details verbergen"
+        },
+        "open": "Openen"
+      }
+    },
+    "closure": {
+      "title": "Alle sluitingen",
+      "titleSearch": "Sluitingen gevonden",
+      "searchPlaceholder": "Zoeken naar sluitingen",
+      "placementZone": "Bronpool",
+      "resultStatus": "Resultaatstatus",
+      "details": {
+        "name": "Naam",
+        "description": "Beschrijving",
+        "runtime" : "Runtime",
+        "state": "Status",
+        "id": "Id",
+        "inputs": "Invoer",
+        "outputs": "Uitvoer",
+        "errorMsg": "Fout",
+        "closureTitle": "Informatie uitvoering sluiting",
+        "closureDescriptionTitle": "Informatie sluitingsbeschrijving",
+        "descriptionId": "Id",
+        "source": "Bron",
+        "sourceURL": "Bron-URL",
+        "resources": "Bronnen"
+      },
+      "state": {
+        "CREATED": "GEMAAKT",
+        "STARTED": "BEGONNEN",
+        "FINISHED": "VOLTOOID",
+        "FAILED": "MISLUKT",
+        "CANCELLED": "GEANNULEERD"
+      },
+      "list" : {
+        "name": "Sluiting",
+        "closuresCountLabel": "Sluitingen",
+        "closureRunsLabel": "Uitvoeringen sluiting",
+        "memory": "Geheugen:",
+        "timeout": "Time-out:"
+      },
+      "request": {
+        "title": "Sluitingsdefinitie",
+        "save": "Opslaan",
+        "run": "Uitvoeren",
+        "inputs": {
+          "name": "Naam",
+          "description": "Beschrijving",
+          "runtime": "Runtime",
+          "source": "Broncode",
+          "sourceURL": "Bron-URL",
+          "runtimeTypes": {
+            "nodejs": "Node.js 4.3.0",
+            "python": "Python 3.4.3"
+          },
+          "logConfigOptionsInputs" : {
+            "name": "Naam",
+            "nameHint": "Voorbeeld: max-size",
+            "value": "Waarde",
+            "valueHint": "Voorbeeld: 10m"
+           },
+           "closureInputs" : {
+            "name": "Naam",
+            "nameHint": "Voorbeeld: a",
+            "value": "Waarde",
+            "valueHint": "Voorbeeld: 1"
+           },
+           "closureOutputs" : {
+            "name": "Naam",
+            "nameHint": "Voorbeeld: resultaat"
+           },
+          "memoryLimit": "Geheugenlimiet (megabyte)",
+          "timeout": "Time-out (seconden)",
+          "entrypoint": "Verwerker entrypoint",
+          "logConfigDriver": "Logboekstuurprogramma",
+          "logConfigOptions": "Logboekopties",
+          "sourceMode": "Modus",
+          "sourceProvided": "Bron geleverd",
+          "sourceFromURL": "Bron vanaf URL",
+          "inputs": "Invoer",
+          "outputs": "Uitvoer",
+          "dependencies": "Afhankelijkheden",
+          "nameDescription": "Naam van de sluiting. Indien entrypoint niet is ingesteld, wordt de naam gebruikt als functienaam om aan te roepen.",
+          "descriptionDescription": "Beschrijving van sluiting",
+          "sourceDescription": "Broncode die moet worden uitgevoerd",
+          "sourceURLDescription": "Broncode toegankelijk via URL. De inhoud kan de code zelf zijn of een gecomprimeerd bestand. Indien de bron-URL wordt gebruikt, wordt de veldbroncode niet gebruikt.",
+          "memoryLimitDescription": "Geheugenlimiet in megabytes. Maximaal toegestane waarde is 1536 MB.",
+          "timeoutDescription": "Uitvoeringstime-out in seconden. Indien de uitvoering langer duurt dan de time-out, wordt de uitvoering van de taak geannuleerd.",
+          "entrypointDescription": "Hoofdfunctie die wordt aangeroepen in de vorm: file_name.function_name",
+          "logDriverDescription": "Stuurprogramma logboekregistratie voor de sluitingstaak",
+          "logConfigOptionsDescription": "Ondersteunde opties per stuurprogramma logboekregistratie",
+          "dependenciesDescription": "Afhankelijkheden die moeten worden geïnstalleerd voordat de code wordt uitgevoerd",
+          "inputDescription": "Invoer die moet worden gebruikt wanneer de code wordt uitgevoerd. De invoer moet een primitief of geldig JSON-object zijn.",
+          "outputDescription": "Namen van uitvoerparameters die moeten worden gebruikt bij het invullen van de resultaten."
+        },
+        "logs": {
+          "title": "Logboeken"
+        },
+        "tabs": {
+          "definition": "Definitie",
+          "code": "Code",
+          "config": "Configuratie"
+        }
+      },
+      "monitoredTask": {
+        "runStatus": "Uitvoeringsstatus",
+        "runId": "Uitvoerings-id:",
+        "runState": "Status:",
+        "outputs": "Uitvoer"
+      }
+    },
+    "help": {
+        "link": "Help",
+        "description": "Ensemble stelt u in staat relevante informatie te lezen voor de context van de taak die u op dit moment uitvoert. Het wordt automatisch vernieuwd met instructies terwijl u werkt. Gebruik een tweede scherm of een gedeeld scherm om de informatie in realtime te openen. U kunt een mobiel apparaat, een tv of een ander scherm gebruiken, ongeacht of deze/dit is verbonden met uw computer of niet. U kunt Ensemble buiten het vertrouwde netwerk gebruiken en toch directe updates ontvangen.",
+        "descriptionOpen": "Klik op <strong>Openen in nieuw tabblad</strong> of scan de QR-code met uw mobiele apparaat om Ensemble te openen."
+      },
+      "resources": {
+        "selectMultiple": "Items selecteren",
+        "message": {
+          "selectShift": "Gebruik Shift om verschillende items te selecteren"
+        }
+      }
+    },
+    "loginPanel": {
+      "login": "Aanmelden",
+      "logout": "Afmelden",
+      "username": "Gebruikersnaam",
+      "password": "Wachtwoord",
+      "success": "Verificatie gelukt",
+      "failure": "Verificatie mislukt"
+    },
+    "dropdownSearchMenu": {
+      "title": "Selecteer uit de lijst __entity__",
+      "searchPlaceholder": "Zoeken naar __entity__",
+      "clear": "Selectie wissen",
+      "showingCount": "__count__ van __totalCount__ wordt weergegeven",
+      "noResults": "Geen items gevonden"
+    },
+    "customProperties": {
+      "name": "Naam",
+      "nameHint": "Voorbeeld: speedchecker",
+      "value": "Waarde",
+      "valueHint": "Voorbeeld: slow"
+    },
+    "yes": "Ja",
+    "cancel": "Annuleren",
+    "delete": "Verwijderen",
+    "enable": "Inschakelen",
+    "enabled": "Ingeschakeld",
+    "disable": "Uitschakelen",
+    "disabled": "Uitgeschakeld",
+    "close": "Sluiten",
+    "edit": "Bewerken",
+    "remove": "Verwijderen",
+    "add": "Toevoegen",
+    "save": "Opslaan",
+    "back": "Terug",
+    "refresh": "Vernieuwen",
+    "clear": "Wissen",
+    "deleteAll": "Alles verwijderen",
+    "pendingOperationCancel": "bewerking in",
+    "openInNewTab": "Openen in nieuw tabblad",
+    "unavailable": "N.v.t.",
+    "advanced": "Geavanceerd",
+    "noSelection": "Geen selectie",
+    "buildNumber": "Versienummer",
+    "errors": {
+      "hostIp": "Waarde moet hostnaam of IP-adres zijn.",
+      "urlPath": "URL-pad is ongeldig.",
+      "propertyNameRequired": "Eigenschapnaam is verplicht.",
+      "propertyContainerNameInvalid": "Ongeldige containernaam, alleen [a-zA-Z0-9][a-zA-Z0-9_.-] zijn toegestaan.",
+      "propertyNamesNotUnique": "Eigenschapnamen moeten uniek zijn.",
+      "nonNegativeNumber": "Waarde moet een niet-negatief geheel getal zijn dat lager is dan 2147483648.",
+      "positiveNumber": "Waarde moet een positief geheel getal zijn dat lager is dan 2147483648.",
+      "nonNegativeNumberAndMinusOne": "Waarde moet een geheel getal zijn tussen -1 en 2147483647.",
+      "portNumber": "Ongeldig poortnummer. Een geldig poortnummer ligt tussen 0 en 65535.",
+      "containerMemory": "Geheugen moet 0 (geen limiet) of ten minste 4194304 byte (4 MB) zijn.",
+      "required": "Waarde is verplicht.",
+      "requiredAll": "Alle velden zijn verplicht.",
+      "serviceNameRequired": "Servicenaam is verplicht.",
+      "networkRequired": "Netwerk is verplicht.",
+      "itemNotFound": "Item is niet gevonden.",
+      "networkExists": "Netwerk bestaat al in sjabloon.",
+      "volumeDestinationRequired": "Volumebestemming is verplicht.",
+      "invalidInputValue": "Ongeldige invoerwaarde",
+      "invalidPath": "Waarde moet een absoluut pad zijn.",
+      "invalidPathOrName": "Waarde moet een absoluut pad of een geldige volumenaam zijn."
+    },
+    "infoMessages": {
+      "created": "Gemaakt!",
+      "updated": "Bijgewerkt!"
+    },
+    "occurrence": {
+      "all": "Alle overeenkomende",
+      "any": "Willekeurig overeenkomende"
+    },
+    "state": {
+      "ON": "AAN",
+      "OFF": "UIT",
+      "SUSPEND": "UITGESCHAKELD",
+      "UNKNOWN": "ONBEKEND",
+      "stateSinceMessage": "vanaf __date__"
+    }
+}
