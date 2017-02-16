@@ -25,15 +25,17 @@
            class="navigation-link">{{model.placementZoneName}}</a>
       </div>
     </div>
-    <div class="form-group">
-      <label class="col-xs-5">{{i18n("app.host.details.memory")}}</label>
-      <div class="col-xs-7 truncateText"
-           :title="model.memory">{{model.memory}} MB</div>
+    <div class="form-group" v-if="model.cpuCount <= 0">
+      <label class="col-xs-5">{{i18n("app.host.details.instanceType")}}</label>
+      <div class="col-xs-7 truncateText">{{model.instanceType}}</div>
     </div>
-    <div class="form-group">
+    <div class="form-group" v-if="model.cpuCount > 0">
+      <label class="col-xs-5">{{i18n("app.host.details.memory")}}</label>
+      <div class="col-xs-7 truncateText">{{model.memory}} MB</div>
+    </div>
+    <div class="form-group" v-if="model.cpuCount > 0">
       <label class="col-xs-5">{{i18n("app.host.details.cpu")}}</label>
-      <div class="col-xs-7 truncateText"
-           :title="model.cpuCount">{{model.cpuCount}} CPU{{ model.cpuCount > 1 ? 's' : '' }}, {{model.cpuMhzPerCore}} Mhz</div>
+      <div class="col-xs-7 truncateText">{{model.cpuCount}} CPU{{ model.cpuCount > 1 ? 's' : '' }}, {{model.cpuMhzPerCore}} Mhz</div>
     </div>
   </div>
   <div class="actions">
