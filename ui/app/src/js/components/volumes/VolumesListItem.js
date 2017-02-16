@@ -130,7 +130,7 @@ var VolumesListItem = Vue.extend({
       let hostIds = this.model.parentLinks.map((parentLink) => utils.getDocumentId(parentLink));
       let queryOptions = {
         $occurrence: constants.SEARCH_OCCURRENCE.ANY,
-        any: hostIds
+        documentId: hostIds
       };
 
       NavigationActions.openHosts(queryOptions);

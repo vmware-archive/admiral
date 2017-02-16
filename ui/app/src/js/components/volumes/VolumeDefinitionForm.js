@@ -240,6 +240,10 @@ var VolumeDefinitionForm = Vue.extend({
         this.existingVolume = !!volume.external;
         this.hasAdvancedSettings = !!(volume.options || volume.customProperties);
 
+        if (volume.driver) {
+          $(this.$el).find('.volume-driver .form-control').val(volume.driver);
+        }
+
         this.driverOptions.setData(utils.propertiesToArray(volume.options));
         this.customProperties.setData(utils.propertiesToArray(volume.customProperties));
 
