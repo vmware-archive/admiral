@@ -210,6 +210,12 @@ let toViewModel = function(dto) {
   if (hasCustomProperties && dto.customProperties.__Containers) {
     containers = Math.round(dto.customProperties.__Containers);
   }
+
+  var nodes = null;
+  if (hasCustomProperties && dto.customProperties.__nodes) {
+    nodes = JSON.parse(dto.customProperties.__nodes);
+  }
+
   return {
     dto: dto,
     id: dto.id,
@@ -226,7 +232,8 @@ let toViewModel = function(dto) {
     cpuPercentage: cpuUsagePct,
     customProperties: customProperties,
     selfLinkId: utils.getDocumentId(dto.documentSelfLink),
-    tagLinks: dto.tagLinks
+    tagLinks: dto.tagLinks,
+    nodes: nodes
   };
 };
 

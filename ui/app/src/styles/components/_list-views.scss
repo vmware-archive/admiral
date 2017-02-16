@@ -294,6 +294,12 @@
     @extend .item-delete-confirmation;
   }
 
+  .list-view .host-item {
+    > .title, > .status {
+      position: relative;
+    }
+  }
+
   .list-view .environment-item:hover .actions,
   .list-view .compute-item:hover .actions,
   .list-view .host-item:hover .actions,
@@ -850,12 +856,8 @@
       .status {
         display: none;
       }
-      .container-template-item-stack {
+      .card-item-stack {
         display: none;
-      }
-
-     .closure-template-item-stack {
-       display: none;
       }
       .container-containers-holder {
         display: none;
@@ -1047,11 +1049,7 @@
           @extend .item-hidden-for-collapse-animation;
         }
       }
-      .container-template-item-stack {
-        display: none;
-      }
-
-      .closure-template-item-stack {
+      .card-item-stack {
         display: none;
       }
     }
@@ -1452,7 +1450,7 @@ $elements-side-margin: $elements-margin / 2;
   }
 }
 
-.container-template-item-stack {
+.card-item-stack {
   position: absolute;
   /* Neutralize borders */
   top: -2px;
@@ -1464,39 +1462,13 @@ $elements-side-margin: $elements-margin / 2;
   border-radius: 5px;
 }
 
-.closure-template-item-stack {
+.card-item-stack > div {
   position: absolute;
-  /* Neutralize borders */
+
   top: -2px;
   left: -2px;
-  right: -2px;
-  bottom: -2px;
-  z-index: 0;
-
-  border-radius: 5px;
-}
-
-.container-template-item-stack > div {
-  position: absolute;
-
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-
-  background-color: #ffffff;
-
-  border: 1px solid $main-border-color;
-  border-radius: 5px;
-}
-
-.closure-template-item-stack > div {
-  position: absolute;
-
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  right: 3px;
+  bottom: 2px;
 
   background-color: #ffffff;
 
@@ -1524,21 +1496,12 @@ $thresshold: 5;
     $offset: $thresshold * $container-stack-margin + ($scaleContainer - $thresshold) * $small-container-stack-margin;
     /* smaller offset, so we have to lighten the border color, not to become too dark when items
     are too close */
-    .container-template-item-stack > div:nth-child(#{$container}) {
-      border-color: lighten($main-border-color, 7%)
-    }
-
-    .closure-template-item-stack > div:nth-child(#{$container}) {
+    .card-item-stack > div:nth-child(#{$container}) {
       border-color: lighten($main-border-color, 7%)
     }
   }
 
-  .container-template-item-stack > div:nth-child(#{$container}) {
-    transform: translateX($offset) translateY($offset);
-    z-index: 20-$container;
-  }
-
-  .closure-template-item-stack > div:nth-child(#{$container}) {
+  .card-item-stack > div:nth-child(#{$container}) {
     transform: translateX($offset) translateY($offset);
     z-index: 20-$container;
   }
