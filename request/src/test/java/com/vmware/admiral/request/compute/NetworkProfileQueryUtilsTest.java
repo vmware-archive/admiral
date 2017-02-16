@@ -152,7 +152,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
     @Test
     public void testGetComputeNetworkEnvironmentsForSystem() throws Throwable {
         ComputeNetworkDescription networkDescription = createNetworkDescription("my net", null);
-        List tenantLinks = Arrays.asList(UUID.randomUUID().toString());
+        List<String> tenantLinks = Arrays.asList(UUID.randomUUID().toString());
         List<String> subnets1 = Arrays.asList(
                 createSubnet("sub-1", tenantLinks, null).documentSelfLink,
                 createSubnet("sub-2", tenantLinks, null).documentSelfLink);

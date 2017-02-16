@@ -19,8 +19,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.tuple.Pair;
-
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.photon.controller.model.Constraint;
 import com.vmware.photon.controller.model.Constraint.Condition;
@@ -28,13 +26,13 @@ import com.vmware.photon.controller.model.resources.TagFactoryService;
 import com.vmware.photon.controller.model.resources.TagService;
 import com.vmware.xenon.services.common.QueryTask;
 
-public class TagQueryUtils {
+public class TagConstraintUtils {
 
     /** Get placement constraints. */
     public static Map<Condition, String> extractPlacementTagConditions(
             Map<String, Constraint> constraints,
             List<String> tenantLinks) {
-        // check if requirements are stated
+        // check if constraints are stated
         Constraint placementConstraint = constraints != null
                 ? constraints.get(ComputeConstants.COMPUTE_PLACEMENT_CONSTRAINT_KEY)
                 : null;
@@ -54,35 +52,34 @@ public class TagQueryUtils {
     }
 
     /**
-     * Filter service documents based on constraints.
-     * Remove document that do not satisfy hard constraints.
-     * Sort remaining documents based on how many soft constraints are satisfied.
-     * If documents satisfy the same number of soft constraints, sort by secondarySortCriteria
+     * Filters service documents based on constraints.
+     * Filters out documents that do not satisfy hard constraints.
+     * Sorts remaining documents based on how many soft constraints are satisfied.
+     * If documents satisfy the same number of soft constraints, sort by secondarySortCriteria,
+     * if provided.
      */
-    public static <K, T> Stream<T> filterByRequirements(
+    public static <T> Stream<T> filterByConstraints(
             Map<Condition, String> placementConstraints,
-            Stream<K> items,
-            Function<K, Stream<Pair<T, Set<String>>>> tagLinksSupplier,
+            Stream<T> items,
+            Function<T, Set<String>> tagLinksSupplier,
             Comparator<T> secondarySortCriteria) {
 
         if (placementConstraints == null) {
-            return items.flatMap(tagLinksSupplier).map(p -> p.getKey());
+            return items;
         }
 
         return items
-                .flatMap(tagLinksSupplier)
-                .filter(env -> TagQueryUtils.checkHardConstraintsSatisfied(
-                        env.getValue(), placementConstraints))
-                .sorted((env1, env2) -> {
-                    int softCount1 = TagQueryUtils.getNumberOfSatisfiedSoftConstraints(
-                            env1.getValue(), placementConstraints);
-                    int softCount2 = TagQueryUtils.getNumberOfSatisfiedSoftConstraints(
-                            env2.getValue(), placementConstraints);
+                .filter(item -> checkHardConstraintsSatisfied(tagLinksSupplier.apply(item),
+                        placementConstraints))
+                .sorted((item1, item2) -> {
+                    int softCount1 = getNumberOfSatisfiedSoftConstraints(
+                            tagLinksSupplier.apply(item1), placementConstraints);
+                    int softCount2 = getNumberOfSatisfiedSoftConstraints(
+                            tagLinksSupplier.apply(item2), placementConstraints);
                     return softCount1 == softCount2 && secondarySortCriteria != null ?
-                            secondarySortCriteria.compare(env1.getKey(), env2.getKey())
+                            secondarySortCriteria.compare(item1, item2)
                             : softCount2 - softCount1;
-                })
-                .map(env -> env.getKey());
+                });
     }
 
     private static boolean checkHardConstraintsSatisfied(Set<String> tagLinks,

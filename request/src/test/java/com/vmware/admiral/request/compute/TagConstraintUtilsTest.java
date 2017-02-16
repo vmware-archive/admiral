@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ComputeConstants;
@@ -34,7 +33,7 @@ import com.vmware.photon.controller.model.resources.TagService;
 import com.vmware.photon.controller.model.resources.TagService.TagState;
 import com.vmware.xenon.services.common.QueryTask;
 
-public class TagQueryUtilsTest extends RequestBaseTest {
+public class TagConstraintUtilsTest extends RequestBaseTest {
 
     @Test
     public void testSatisfiedHardRequirement() throws Throwable {
@@ -46,11 +45,11 @@ public class TagQueryUtilsTest extends RequestBaseTest {
         SubnetState subnet = TestRequestStateFactory.createSubnetState("my-subnet");
         subnet.tagLinks.add(tag);
 
-        List<SubnetState> filteredSubnets = TagQueryUtils.filterByRequirements(
-                TagQueryUtils.extractPlacementTagConditions(networkDescription.constraints,
+        List<SubnetState> filteredSubnets = TagConstraintUtils.filterByConstraints(
+                TagConstraintUtils.extractPlacementTagConditions(networkDescription.constraints,
                         networkDescription.tenantLinks),
                 Arrays.asList(subnet).stream(),
-                s -> Arrays.asList(Pair.of(s, s.tagLinks)).stream(), null)
+                s -> s.tagLinks, null)
                 .collect(Collectors.toList());
 
         assertNotNull(filteredSubnets);
@@ -66,11 +65,11 @@ public class TagQueryUtilsTest extends RequestBaseTest {
                 Arrays.asList(createCondition("cap", "pci", true, true)));
         SubnetState subnet = TestRequestStateFactory.createSubnetState("my-subnet");
 
-        List<SubnetState> filteredSubnets = TagQueryUtils.filterByRequirements(
-                TagQueryUtils.extractPlacementTagConditions(networkDescription.constraints,
+        List<SubnetState> filteredSubnets = TagConstraintUtils.filterByConstraints(
+                TagConstraintUtils.extractPlacementTagConditions(networkDescription.constraints,
                         networkDescription.tenantLinks),
                 Arrays.asList(subnet).stream(),
-                s -> Arrays.asList(Pair.of(s, s.tagLinks)).stream(), null)
+                s -> s.tagLinks, null)
                 .collect(Collectors.toList());
 
         assertNotNull(filteredSubnets);
@@ -88,11 +87,11 @@ public class TagQueryUtilsTest extends RequestBaseTest {
         SubnetState subnet = TestRequestStateFactory.createSubnetState("my-subnet");
         subnet.tagLinks.add(tag);
 
-        List<SubnetState> filteredSubnets = TagQueryUtils.filterByRequirements(
-                TagQueryUtils.extractPlacementTagConditions(networkDescription.constraints,
+        List<SubnetState> filteredSubnets = TagConstraintUtils.filterByConstraints(
+                TagConstraintUtils.extractPlacementTagConditions(networkDescription.constraints,
                         networkDescription.tenantLinks),
                 Arrays.asList(subnet).stream(),
-                s -> Arrays.asList(Pair.of(s, s.tagLinks)).stream(), null)
+                s -> s.tagLinks, null)
                 .collect(Collectors.toList());
 
         assertNotNull(filteredSubnets);
@@ -109,11 +108,11 @@ public class TagQueryUtilsTest extends RequestBaseTest {
         SubnetState subnet = TestRequestStateFactory.createSubnetState("my-subnet");
         subnet.tagLinks.add(tag);
 
-        List<SubnetState> filteredSubnets = TagQueryUtils.filterByRequirements(
-                TagQueryUtils.extractPlacementTagConditions(networkDescription.constraints,
+        List<SubnetState> filteredSubnets = TagConstraintUtils.filterByConstraints(
+                TagConstraintUtils.extractPlacementTagConditions(networkDescription.constraints,
                         networkDescription.tenantLinks),
                 Arrays.asList(subnet).stream(),
-                s -> Arrays.asList(Pair.of(s, s.tagLinks)).stream(), null)
+                s -> s.tagLinks, null)
                 .collect(Collectors.toList());
 
         assertNotNull(filteredSubnets);
@@ -132,11 +131,11 @@ public class TagQueryUtilsTest extends RequestBaseTest {
         SubnetState subnet2 = TestRequestStateFactory.createSubnetState("my-subnet2");
         subnet2.tagLinks.add(tag);
 
-        List<SubnetState> filteredSubnets = TagQueryUtils.filterByRequirements(
-                TagQueryUtils.extractPlacementTagConditions(networkDescription.constraints,
+        List<SubnetState> filteredSubnets = TagConstraintUtils.filterByConstraints(
+                TagConstraintUtils.extractPlacementTagConditions(networkDescription.constraints,
                         networkDescription.tenantLinks),
                 Arrays.asList(subnet1, subnet2).stream(),
-                s -> Arrays.asList(Pair.of(s, s.tagLinks)).stream(), null)
+                s -> s.tagLinks, null)
                 .collect(Collectors.toList());
 
         assertNotNull(filteredSubnets);
@@ -156,11 +155,11 @@ public class TagQueryUtilsTest extends RequestBaseTest {
         SubnetState subnet2 = TestRequestStateFactory.createSubnetState("my-subnet2");
         subnet2.tagLinks.add(tag);
 
-        List<SubnetState> filteredSubnets = TagQueryUtils.filterByRequirements(
-                TagQueryUtils.extractPlacementTagConditions(networkDescription.constraints,
+        List<SubnetState> filteredSubnets = TagConstraintUtils.filterByConstraints(
+                TagConstraintUtils.extractPlacementTagConditions(networkDescription.constraints,
                         networkDescription.tenantLinks),
                 Arrays.asList(subnet2, subnet1).stream(),
-                s -> Arrays.asList(Pair.of(s, s.tagLinks)).stream(),
+                s -> s.tagLinks,
                 (s1, s2) -> s1.documentSelfLink.compareTo(s2.documentSelfLink))
                 .collect(Collectors.toList());
 
