@@ -765,11 +765,6 @@
   }
 }
 
-.volume-form .multicolumn-inputs-list-body-wrapper {
-  overflow: visible;
-  max-height: initial;
-}
-
 .containers-view.left-list-hover, .composite-child-containers-view.left-list-hover {
   @include size-containers-view-context-selected(290px, 20px);
 }
@@ -1278,7 +1273,9 @@ $elements-side-margin: $elements-margin / 2;
 .template-details .edit-container-definition-view,
 .template-details .edit-existing-container-definition-view,
 .template-details .new-container-definition-view,
-.template-details .edit-network {
+.template-details .edit-network,
+.template-details .edit-volume,
+.template-details .edit-kubernetes {
   z-index: 102;
 }
 
