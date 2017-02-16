@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.logging.Level;
 
 import com.vmware.admiral.service.common.NodeHealthCheckService;
+import com.vmware.admiral.service.common.NodeMigrationService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.ServiceOption;
@@ -32,7 +33,7 @@ public abstract class HostInitServiceHelper {
     @SafeVarargs
     public static void startServiceFactories(ServiceHost host,
             Class<? extends Service>... serviceClasses) {
-        Set<String> servicesForHealthCheck = new HashSet<>();
+        Set<String> services = new HashSet<>();
         for (Class<? extends Service> serviceClass : serviceClasses) {
             Service serviceInstance;
             try {
@@ -41,16 +42,17 @@ public abstract class HostInitServiceHelper {
                 throw new RuntimeException("Failed to create factory for " + serviceClass, e);
             }
             populateServicesForHealthCheck(host, serviceInstance, serviceClass,
-                    servicesForHealthCheck, true);
+                    services, true);
             host.startFactory(serviceInstance);
         }
-        registerServiceForHelathcheck(host, servicesForHealthCheck);
+        registerServiceForHelathcheck(host, services);
+        registerServiceForMigration(host, services);
     }
 
     @SafeVarargs
     public static void startServices(ServiceHost host,
             Class<? extends Service>... serviceClasses) {
-        Set<String> servicesForHealthCheck = new HashSet<>();
+        Set<String> services = new HashSet<>();
         for (Class<? extends Service> serviceClass : serviceClasses) {
             Service serviceInstance;
             try {
@@ -61,11 +63,12 @@ public abstract class HostInitServiceHelper {
             }
 
             populateServicesForHealthCheck(host, serviceInstance, serviceClass,
-                    servicesForHealthCheck, false);
+                    services, false);
 
             startService(host, serviceClass, serviceInstance);
         }
-        registerServiceForHelathcheck(host, servicesForHealthCheck);
+        registerServiceForHelathcheck(host, services);
+        registerServiceForMigration(host, services);
     }
 
     public static void startService(ServiceHost host, Class<? extends Service> serviceClass,
@@ -122,6 +125,23 @@ public abstract class HostInitServiceHelper {
                     if (e != null) {
                         host.log(Level.SEVERE,
                                 "Exception while register services for healthcheck: %s", e);
+                    }
+                }));
+    }
+
+    private static void registerServiceForMigration(ServiceHost host, Set<String> services) {
+
+        NodeMigrationService nodeMigration = new NodeMigrationService();
+        nodeMigration.services = services;
+
+        host.sendRequest(Operation
+                .createPatch(UriUtils.buildUri(host, NodeMigrationService.SELF_LINK))
+                .setBody(nodeMigration)
+                .setReferer(host.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.log(Level.SEVERE,
+                                "Exception while register services for migration: %s", e);
                     }
                 }));
     }

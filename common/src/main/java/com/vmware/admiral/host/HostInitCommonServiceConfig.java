@@ -20,6 +20,7 @@ import com.vmware.admiral.service.common.CounterSubTaskService;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionFactoryService;
 import com.vmware.admiral.service.common.LogService;
 import com.vmware.admiral.service.common.NodeHealthCheckService;
+import com.vmware.admiral.service.common.NodeMigrationService;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ReverseProxyService;
@@ -33,7 +34,8 @@ import com.vmware.xenon.common.UriUtils;
 public class HostInitCommonServiceConfig extends HostInitServiceHelper {
 
     public static void startServices(ServiceHost host) {
-        startServices(host, NodeHealthCheckService.class, SslTrustImportService.class,
+        startServices(host, NodeMigrationService.class, NodeHealthCheckService.class,
+                SslTrustImportService.class,
                 ClusterMonitoringService.class,
                 ConfigurationFactoryService.class,
                 SslTrustCertificateFactoryService.class,
