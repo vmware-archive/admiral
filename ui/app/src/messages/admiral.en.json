@@ -321,7 +321,7 @@
           "editTitle": "Edit Volume",
           "name": "Name",
           "driver": "Driver",
-          "driverPlaceholder": "local",
+          "driverPlaceholder": "Example: local",
           "driverOptions": {
             "label": "Driver Options",
             "keyTitle": "Option",
