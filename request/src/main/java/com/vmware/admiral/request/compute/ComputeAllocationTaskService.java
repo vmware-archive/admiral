@@ -753,7 +753,9 @@ public class ComputeAllocationTaskService
                     state.groupResourcePlacementLink);
         }
         resource.customProperties.put(ComputeProperties.PLACEMENT_LINK, placementLink);
+        // TODO pmitrov: get rid of the __computeType custom prop
         resource.customProperties.put("__computeType", "VirtualMachine");
+        resource.type = ComputeType.VM_GUEST;
         resource.tenantLinks = state.tenantLinks;
         resource.powerState = ComputeService.PowerState.ON;
         resource.tagLinks = cd.tagLinks;
@@ -839,32 +841,20 @@ public class ComputeAllocationTaskService
 
         // get all network descriptions first, then create new network interfaces using the
         // description/template
-        DeferredResult<List<String>> result = DeferredResult.allOf(
-                cd.networkInterfaceDescLinks.stream()
-                        .map(nicDescLink -> {
-                            Operation op = Operation.createGet(this, nicDescLink);
+        List<DeferredResult<String>> drs = cd.networkInterfaceDescLinks.stream()
+                .map(nicDescLink -> this
+                        .sendWithDeferredResult(
+                                Operation.createGet(this, nicDescLink),
+                                NetworkInterfaceDescription.class)
+                        .thenCompose(nid -> createNicState(state, nid, env))
+                        .thenCompose(nic -> this.sendWithDeferredResult(
+                                Operation.createPost(this, NetworkInterfaceService.FACTORY_LINK)
+                                        .setBody(nic),
+                                NetworkInterfaceState.class))
+                        .thenCompose(nis -> DeferredResult.completed(nis.documentSelfLink)))
+                .collect(Collectors.toList());
 
-                            return this.sendWithDeferredResult(op,
-                                    NetworkInterfaceDescription.class);
-                        })
-                        .map(dr -> dr.thenCompose(nid -> {
-                            DeferredResult<NetworkInterfaceState> nic = createNicState(state, nid,
-                                    env);
-
-                            return nic.thenCompose(n -> {
-                                return this.sendWithDeferredResult(Operation
-                                        .createPost(this, NetworkInterfaceService.FACTORY_LINK)
-                                        .setBody(n),
-                                        NetworkInterfaceState.class);
-                            });
-
-                        }))
-                        .map(ncr -> ncr.thenCompose(nic -> {
-                            return DeferredResult.completed(nic.documentSelfLink);
-                        }))
-                        .collect(Collectors.toList()));
-
-        result.whenComplete((all, e) -> {
+        DeferredResult.allOf(drs).whenComplete((all, e) -> {
             if (e != null) {
                 completeSubTasksCounter(taskCallback, e);
                 return;
