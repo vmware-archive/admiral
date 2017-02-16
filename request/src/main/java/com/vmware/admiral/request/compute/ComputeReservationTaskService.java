@@ -20,7 +20,6 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -470,7 +469,7 @@ public class ComputeReservationTaskService
             return;
         }
         // retrieve the tag links from constraint conditions
-        Map<Condition, String> tagLinkByCondition = TagQueryUtils.extractPlacementTagConditions(
+        Map<Condition, String> tagLinkByCondition = TagConstraintUtils.extractPlacementTagConditions(
                 computeDesc.constraints, computeDesc.tenantLinks);
 
         // check if requirements are stated in the compute description
@@ -509,11 +508,12 @@ public class ComputeReservationTaskService
             // remaining placements by listing first those with more soft constraints satisfied
             // (placement priority being used as a second criteria)
             proceedTo(isGlobal(state) ? SubStage.SELECTED_GLOBAL : SubStage.SELECTED, s -> {
-                s.resourcePoolsPerGroupPlacementLinks = TagQueryUtils.filterByRequirements(
-                        tagLinkByCondition, placements.stream(),
-                        p -> Arrays.asList(Pair.of(p, getResourcePoolTags(
-                                resourcePoolsByLink.get(p.resourcePoolLink)))).stream(),
-                        (g1, g2) -> g1.priority - g2.priority)
+                s.resourcePoolsPerGroupPlacementLinks = TagConstraintUtils
+                        .filterByConstraints(
+                            tagLinkByCondition,
+                            placements.stream(),
+                            p -> getResourcePoolTags(resourcePoolsByLink.get(p.resourcePoolLink)),
+                            (g1, g2) -> g1.priority - g2.priority)
                         .collect(Collectors.toMap(gp -> gp.documentSelfLink,
                                 gp -> gp.resourcePoolLink,
                                 (k1, k2) -> k1, LinkedHashMap::new));

@@ -15,7 +15,6 @@ import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_I
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -24,6 +23,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -95,7 +95,7 @@ public class NetworkProfileQueryUtils {
                                     .setReferer(referer), ComputeNetworkDescription.class)
                             .thenCompose(networkDescription -> {
                                 // Validate network description constraints against selected environment
-                                Map<Condition, String> placementConstraints = TagQueryUtils
+                                Map<Condition, String> placementConstraints = TagConstraintUtils
                                         .extractPlacementTagConditions(
                                                 networkDescription.constraints,
                                                 networkDescription.tenantLinks);
@@ -104,12 +104,13 @@ public class NetworkProfileQueryUtils {
                                             .map(c -> ConstraintConverter.encodeCondition(c).tag)
                                             .collect(Collectors.toList()));
                                 }
-                                return DeferredResult.completed(
-                                        TagQueryUtils.filterByRequirements(placementConstraints,
-                                                Arrays.asList(environmentState).stream(),
-                                                env -> env.networkProfile.subnetStates.stream()
-                                                        .map(s -> Pair.of(s, combineTags(environmentState, s))),
-                                                null).findAny().orElse(null));
+                                return DeferredResult.completed(TagConstraintUtils
+                                        .filterByConstraints(
+                                                placementConstraints,
+                                                environmentState.networkProfile.subnetStates.stream(),
+                                                s -> combineTags(environmentState, s),
+                                                null)
+                                        .findAny().orElse(null));
                             })
                             .whenComplete((subnetLink, ex) -> {
                                 if (ex != null) {
@@ -183,14 +184,20 @@ public class NetworkProfileQueryUtils {
                             return;
                         }
                         // Filter environments based on network constraints
-                        Map<Condition, String> placementConstraints = TagQueryUtils
+                        Map<Condition, String> placementConstraints = TagConstraintUtils
                                 .extractPlacementTagConditions(networkDescription.constraints,
                                         networkDescription.tenantLinks);
-                        List<String> selectedEnvironments = TagQueryUtils.filterByRequirements(
-                                placementConstraints, all.stream(),
-                                env -> env.networkProfile.subnetStates.stream()
-                                        .map(s -> Pair.of(env, combineTags(env, s))), null)
-                                .map(s -> s.documentSelfLink)
+                        Stream<Pair<EnvironmentStateExpanded, SubnetState>> pairs = all.stream()
+                                .flatMap(env -> env.networkProfile.subnetStates.stream().map(
+                                        s -> Pair.of(env, s)));
+                        List<String> selectedEnvironments = TagConstraintUtils
+                                .filterByConstraints(
+                                        placementConstraints,
+                                        pairs,
+                                        p -> combineTags(p.getLeft(), p.getRight()),
+                                        null)
+                                .map(p -> p.getLeft().documentSelfLink)
+                                .distinct()
                                 .collect(Collectors.toList());
 
                         if (placementConstraints != null && !placementConstraints.isEmpty()
