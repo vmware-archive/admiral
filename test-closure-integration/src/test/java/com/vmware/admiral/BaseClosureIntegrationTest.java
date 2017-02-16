@@ -45,7 +45,7 @@ import com.vmware.xenon.common.Utils;
 /**
  * Base of integration tests.
  */
-public class BaseIntegrationTest extends BaseProvisioningOnCoreOsIT {
+public class BaseClosureIntegrationTest extends BaseProvisioningOnCoreOsIT {
 
     public static final int DOCKER_IMAGE_BUILD_TIMEOUT_SECONDS = 30 * 60;
 
@@ -186,7 +186,9 @@ public class BaseIntegrationTest extends BaseProvisioningOnCoreOsIT {
             throws Exception {
         Closure fetchedClosure = getClosure(link, serviceClient);
         long startTime = System.currentTimeMillis();
-        while (state != fetchedClosure.state && !isTimeoutElapsed(startTime, timeout)) {
+        while (state != fetchedClosure.state
+                && !isFinished(fetchedClosure.state)
+                && !isTimeoutElapsed(startTime, timeout)) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -194,7 +196,18 @@ public class BaseIntegrationTest extends BaseProvisioningOnCoreOsIT {
             }
             fetchedClosure = getClosure(link, serviceClient);
         }
-        logger.info("Closure state: %s", fetchedClosure.state);
+        logger.info("Closure state: %s link: %s", fetchedClosure.state,
+                fetchedClosure.documentSelfLink);
+    }
+
+    private boolean isFinished(TaskState.TaskStage state) {
+        if (state == TaskState.TaskStage.FINISHED
+                || state == TaskState.TaskStage.FAILED
+                || state == TaskState.TaskStage.CANCELLED) {
+            return true;
+        }
+
+        return false;
     }
 
     protected void waitForTaskState(String link, TaskState.TaskStage state,
