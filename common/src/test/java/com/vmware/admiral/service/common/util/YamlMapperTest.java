@@ -106,4 +106,16 @@ public class YamlMapperTest {
         assertEquals(expectedOutput.get(1), actualOutput.get(1));
     }
 
+    @Test
+    public void testIsValidYaml() {
+        String[] inputs = new String[] { sampleYamlDefinition,
+                "invalid\ninput", "{\"person\":{\"name\":\"test-name\",\"age\":14}}" };
+        boolean[] expectedOutputs = new boolean[] { true, false, false };
+
+        for (int i = 0; i < inputs.length; i++) {
+            assertEquals("Test failed on iteration: " + i,
+                    expectedOutputs[i], YamlMapper.isValidYaml(inputs[i]));
+        }
+    }
+
 }

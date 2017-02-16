@@ -18,6 +18,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -117,5 +118,17 @@ public class YamlMapper {
         }
 
         return counter > 1;
+    }
+
+    public static boolean isValidYaml(String yaml) {
+        if (yaml.startsWith("{")) {
+            return false;
+        }
+        try {
+            objectMapper().readValue(yaml, Map.class);
+        } catch (IOException ex) {
+            return false;
+        }
+        return true;
     }
 }
