@@ -10,6 +10,12 @@
   -->
 
 <div class="host-item">
+  <div v-if="!!model.nodes && model.nodes.length > 1" class="card-item-stack">
+    <template v-for="n in Math.min(model.nodes.length, 10)">
+      <div></div>
+    </template>
+  </div>
+
   <div :class="'status ' + hostStateMessage(model.powerState)"><span class="status-state">{{hostStateMessage(model.powerState)}}</span></div>
   <div :title="id" class="title truncateText">{{hostName}}</div>
   <div class="details form-horizontal">
@@ -35,6 +41,10 @@
     <div class="form-group">
       <label class="col-xs-5">{{i18n("app.host.details.containers")}}</label>
       <div class="col-xs-7"><a :href="'#/containers?parentId=' + model.selfLinkId" class="navigation-link">{{model.containers}}</a></div>
+    </div>
+    <div class="form-group" v-if="!!model.nodes">
+      <label class="col-xs-5">{{i18n("app.host.details.nodes")}}</label>
+      <div class="col-xs-7">{{model.nodes.length}}</div>
     </div>
     <div class="form-group">
       <label class="col-xs-5">{{i18n("app.host.details.memory")}}</label>
