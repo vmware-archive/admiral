@@ -1,0 +1,1047 @@
+{
+  "app": {
+    "homepage": {
+      "welcome": "환영합니다!",
+      "description": "이곳은 <b>컨테이너화된 애플리케이션을 생성, 프로비저닝, 관리 및 모니터링하는 장소입니다.</b>",
+      "start": "이제 시작하겠습니다!",
+      "addHost": "호스트 추가",
+      "enter": "입력",
+      "helpCenter": "도움말",
+      "steps": {
+        "description": "애플리케이션 만들기는 1-2-3과 같이 간단합니다.",
+        "addHost": "호스트 추가",
+        "findImage": "이미지 찾기",
+        "designApplication": "애플리케이션 설계"
+      }
+    },
+    "navbar": {
+      "hosts": "호스트",
+      "placements": "배치",
+      "templates": "템플릿",
+      "resources": "리소스",
+      "containers": "컨테이너",
+      "applications": "애플리케이션",
+      "networks": "네트워크",
+      "closures": "클로저",
+      "eventlog": "이벤트 로그",
+      "placementZones": "배치 영역",
+      "environments": "환경",
+      "endpoints": "끝점",
+      "machines": "시스템",
+      "compute": "계산"
+    },
+    "host": {
+      "entity": "호스트",
+      "details": {
+        "title": {
+          "add": "호스트 추가",
+          "create": "호스트 생성",
+          "edit": "호스트 편집"
+        },
+        "address": "주소",
+        "addressPlaceholder": "예: https://hostname:2376",
+        "addressHint": "적절한 체계와 포트를 지정하십시오(예: https://myhost.com:2376). 기본 체계: 'https'. 기본 포트: https/443, http/80.",
+        "hostAlias": "이름",
+        "hostAddress": "주소",
+        "placementZone": "배치 영역",
+        "credential": "로그인 자격 증명",
+        "guestCredential": "게스트 자격 증명",
+        "destination": "대상",
+        "destinationPlaceholder": "대상 검색",
+        "deploymentPolicy": "배포 정책",
+        "tags": "태그",
+        "tagsPlaceholder": "예: location:west",
+        "tagsHint": "입력 키: 값 태그",
+        "autoConfigure": "자동 구성",
+        "autoConfigureInput":"호스트 자동 구성 사용",
+        "autoConfigureHint": "호스트가 자동으로 구성됩니다.",
+        "reservationPolicy": "예약 정책",
+        "endpoint": "끝점",
+        "connectionType": "연결 유형",
+        "connectionTypeShort": "연결",
+        "customProperties": "사용자 지정 속성",
+        "verify": "확인",
+        "verified": "확인이 완료되었습니다!",
+        "add": "추가",
+        "update": "업데이트",
+        "create": "생성",
+        "certificateWarning": "__address__에 대한 인증서가 유효하지 않습니다. __address__(으)로 가장하는 웹 사이트에 연결하는 중일 수 있으며 이 경우 기밀 정보가 위험에 처할 수 있습니다. 그래도 웹 사이트에 연결하시겠습니까?",
+        "showCertificate": "인증서 표시",
+        "hideCertificate": "인증서 숨김",
+        "manageCertificates": "인증서 관리",
+        "containers": "컨테이너",
+        "cpu": "CPU",
+        "memory": "메모리",
+        "storage": "스토리지",
+        "providerType": "클라우드 유형",
+        "regionId": "영역 ID",
+        "name": "이름",
+        "namePlaceholder": "예: host-name",
+        "instanceType": "인스턴스 유형",
+        "imageType": "운영 체제",
+        "port": "포트",
+        "clusterSize": "인스턴스 수"
+      },
+      "list": {
+        "title": "호스트",
+        "titleSearch": "찾은 호스트",
+        "searchPlaceholder": "호스트 검색",
+        "dataCollect": "데이터 수집",
+        "dataCollectStart": "데이터 수집 실행 중입니다. 완료하는 데 몇 분이 걸릴 수 있습니다.",
+        "dataCollectEnd": "데이터 수집이 완료되었습니다."
+      },
+      "actions": {
+        "start": "시작",
+        "stop": "중지",
+        "edit": "편집",
+        "enable": "사용",
+        "disable": "사용 안 함",
+        "remove": "제거"
+      }
+    },
+    "placementZone": {
+      "createNew": "새 배치 영역",
+      "manage": "배치 영역 관리",
+      "entity": "배치 영역",
+      "list": {
+        "title": "배치 영역",
+        "addButton": "추가",
+        "nameColumn": "이름",
+        "cpuColumn": "CPU",
+        "memoryColumn": "메모리",
+        "storageColumn": "스토리지",
+        "hostsColumn": "호스트"
+      },
+      "edit": {
+        "createNew": "새 배치 영역",
+        "update": "배치 영역 편집",
+        "nameTitle": "배치 영역 이름",
+        "endpointTitle": "끝점",
+        "dynamicTitle": "동적으로 이 영역에 리소스 할당",
+        "tagsToMatchTitle": "일치시킬 태그",
+        "tagsToMatchHint": "일치시킬 키:값 태그 입력",
+        "tagsToMatchPlaceholder": "예: location:west"
+      },
+      "contextPanelTooltip": "배치 영역"
+    },
+    "businessGroup": {
+      "entity": "비즈니스 그룹"
+    },
+    "group": {
+      "createNew": "새 프로젝트",
+      "manage": "프로젝트 관리",
+      "entity": "프로젝트",
+      "contextPanelTooltip": "프로젝트",
+      "list": {
+        "title": "프로젝트",
+        "addButton": "추가",
+        "nameColumn": "이름",
+        "details": {
+          "title": "프로젝트 세부 정보"
+        }
+      },
+      "edit": {
+        "createNew": "새 프로젝트",
+        "update": "프로젝트 편집",
+        "nameTitle": "프로젝트 이름"
+      }
+    },
+    "credential": {
+      "createNew": "새 자격 증명",
+      "manage": "자격 증명 관리",
+      "entity": "자격 증명",
+      "contextPanelTooltip": "자격 증명",
+      "list": {
+        "title": "자격 증명",
+        "addButton": "추가",
+        "nameColumn": "이름",
+        "typeColumn": "유형",
+        "credentialsColumn": "자격 증명"
+      },
+      "edit": {
+        "createNew": "새 자격 증명",
+        "update": "자격 증명 편집",
+        "nameTitle": "이름",
+        "usernamePasswordTitle": "사용자 이름",
+        "usernameTitle": "사용자 이름",
+        "passwordTitle": "암호",
+        "showPassword": "암호 표시",
+        "hidePassword": "암호 숨김",
+        "usePrivateKey": "개인 키 사용",
+        "usePassword": "암호 사용",
+        "certificateTitle": "인증서",
+        "publicTitle": "공용 키",
+        "publicCertificateTitle": "공용 인증서",
+        "privateCertificateTitle": "개인 인증서"
+      }
+    },
+    "deploymentPolicy": {
+      "createNew": "새 배포 정책",
+      "entity": "배포 정책",
+      "manage": "배포 정책 관리",
+      "contextPanelTooltip": "배포 정책",
+      "list": {
+        "title": "배포 정책",
+        "addButton": "추가",
+        "nameColumn": "이름",
+        "descriptionColumn": "설명",
+        "details": {
+          "title": "배포 정책 세부 정보"
+        }
+      },
+      "edit": {
+        "createNew": "새 배포 정책",
+        "update": "배포 정책 편집",
+        "nameTitle": "배포 정책 이름",
+        "descriptionTitle": "배포 정책 설명"
+      }
+    },
+    "certificate": {
+      "createNew": "새 인증서",
+      "manage": "인증서 관리",
+      "entity": "인증서",
+      "contextPanelTooltip": "인증서",
+      "list": {
+        "title": "인증서",
+        "addButton": "추가",
+        "nameColumn": "이름",
+        "serialColumn": "일련 번호",
+        "shaColumn": "SHA",
+        "expirationColumn": "만료",
+        "details": {
+          "title": "인증서 세부 정보",
+          "commonName": "회사 이름",
+          "issuerName": "발급자 이름",
+          "serial": "일련 번호",
+          "fingerprint": "SHA 지문",
+          "validSince": "유효 기간 시작",
+          "validTo": "유효 기간 종료"
+        }
+      },
+      "edit": {
+        "createNew": "새 인증서",
+        "update": "인증서 편집",
+        "urlTitle": "URL 입력",
+        "importOptionTitle": "URL에서 가져오기",
+        "importOptionHint": "수동으로 인증서를 입력하는 대신 [URL에서 가져오기]를 사용하면 URL을 입력할 수 있습니다. 그러면 당사 시스템에서 사용자가 입력한 URL로부터 인증서를 가져옵니다.",
+        "importButton": "가져오기",
+        "certificateTitle": "인증서 입력"
+      }
+    },
+    "template": {
+      "list": {
+        "title": "인기 템플릿",
+        "titleSearch": "찾은 템플릿",
+        "searchImagesTemplatesPlaceholder": "이미지, 템플릿 검색",
+        "searchImagesPlaceholder": "이미지 검색",
+        "searchTemplatesPlaceholder": "템플릿 검색",
+        "searchClosuresPlaceholder": "클로저 검색",
+        "manageRegistry": "레지스트리 관리",
+        "provision": "프로비저닝",
+        "provisionAdditionalInfo": "추가 정보 입력",
+        "editTemplate": "세부 정보 편집/보기",
+        "official": "공식",
+        "trusted": "신뢰",
+        "stars": "스타",
+        "linksLabel": "링크",
+        "addLinkLabel": "링크 추가",
+        "containers": "종속 컨테이너 선택",
+        "alias": "별칭 입력",
+        "true": "예",
+        "false": "아니요",
+        "searchCategoryFilterTitle": "보기:",
+        "partialResultWarning": "하나 이상의 쿼리 실패로 인해 불완전한 검색 결과가 표시되었습니다.",
+        "searchCategory": {
+          "all": "모두",
+          "images": "이미지",
+          "templates": "템플릿",
+          "closures": "클로저"
+        }
+      },
+      "details": {
+        "create": "템플릿 생성",
+        "createNameHint": "템플릿 이름",
+        "createProceed": "진행",
+        "edit": "템플릿 편집",
+        "newDefinition": {
+          "newLabel": "컨테이너 추가",
+          "title": "컨테이너 정의 추가",
+          "selectImage": "이미지 선택",
+          "imageListTitle": "인기 이미지",
+          "imageListTitleSearch": "찾은 이미지",
+          "containerDefinitionInfo": "컨테이너 정의 정보"
+        },
+        "editDefinition": {
+          "title": "컨테이너 정의 편집"
+        },
+        "editNetwork" :{
+          "newLabel": "네트워크 추가",
+          "newTitle": "네트워크 구성 추가",
+          "newDropdownTitle": "네트워크 추가...",
+          "editTitle": "네트워크 구성 편집",
+          "name": "이름",
+          "existingNetwork": "기존",
+          "showingCount": "__count__ / __totalCount__ 표시 중",
+          "showingInstances": "개 인스턴스",
+          "noResults": "네트워크 없음",
+          "hosts": "호스트",
+          "hostsSearchPlaceholder": "호스트 검색",
+          "create": "생성",
+          "createTitle": "네트워크 생성",
+          "ipamConfig": "IPAM 구성",
+          "ipamConfigSubnet": "서브넷",
+          "ipamConfigSubnetHint": "예: 172.16.238.0/24",
+          "ipamConfigIPRange": "IP 범위",
+          "ipamConfigIPRangeHint": "예: 172.28.5.0/24",
+          "ipamConfigGateway": "게이트웨이",
+          "ipamConfigGatewayHint": "예: 172.16.238.1",
+          "customProperties": "사용자 지정 속성"
+        },
+        "editClosures" :{
+          "newTitle": "클로저 추가",
+          "editTitle": "클로저 편집",
+          "name": "이름"
+        },
+        "network": {
+          "drag": "드래그하여 이 네트워크에 컨테이너 연결",
+          "drop": "드롭하여 이 네트워크에 컨테이너 연결"
+        }
+      },
+      "actions": {
+        "edit": "편집",
+        "provision": "프로비저닝",
+        "publish": "푸시",
+        "export": "내보내기",
+        "import": "가져오기",
+        "remove": "제거"
+      },
+      "publish": {
+        "tooltip": "Blueprint로 푸시",
+        "success": "푸시 성공",
+        "fail": "템플릿을 Blueprint로 푸시하는 도중 오류 발생"
+      },
+      "import": {
+        "title": "템플릿 가져오기",
+        "loadButton": "파일에서 로드",
+        "importTemplateTooltip": "템플릿 또는 Docker Compose 가져오기",
+        "importTemplateHint": "템플릿 또는 Docker Compose 파일을 가져오거나 수동으로 해당 컨텐츠를 입력합니다.",
+        "contentPlaceholder": "템플릿 또는 Docker Compose 입력...",
+        "importButton": "가져오기"
+      },
+      "export": {
+        "formatPromptMessage": "템플릿을 내보내려는 형식 선택:",
+        "format": {
+          "compositeBlueprint": "YAML Blueprint",
+          "dockerCompose": "Docker Compose"
+        }
+      }
+    },
+    "placement": {
+      "list": {
+        "title": "배치",
+        "addButton": "추가",
+        "nameColumn": "이름",
+        "groupColumn": "프로젝트",
+        "businessGroupColumn": "비즈니스 그룹",
+        "placementZoneColumn": "배치 영역",
+        "deploymentPolicyColumn": "배포 정책",
+        "priorityColumn": "우선 순위",
+        "instancesColumn": "인스턴스",
+        "cpuColumn": "CPU 공유",
+        "memoryColumn": "메모리 제한",
+        "storageColumn": "스토리지 제한",
+        "instancesPerPlacement": "배치당 인스턴스 표시",
+        "unlimitedInstances": "제한 없음"
+      },
+      "edit": {
+        "createNew": "새 배치",
+        "update": "배치 편집",
+        "nameLabel": "이름",
+        "groupLabel": "프로젝트",
+        "selectGroup": "프로젝트 선택",
+        "businessGroupLabel": "비즈니스 그룹",
+        "selectBusinessGroup": "비즈니스 그룹 선택",
+        "placementZoneLabel": "배치 영역",
+        "selectPlacementZone": "배치 영역 선택",
+        "deploymentPolicyLabel": "배포 정책",
+        "selectDeploymentPolicy": "배포 정책 선택",
+        "priorityLabel": "우선 순위",
+        "priorityPlaceholder": "양수(옵션)",
+        "priorityHint": "가장 낮은 우선 순위가 되게 하려면 비워 두십시오.",
+        "instancesLabel": "인스턴스",
+        "instancesPlaceholder": "인스턴스 수(옵션)",
+        "instancesHint": "최대 인스턴스 수를 제한하는 양의 정수입니다. 칸을 비워 두거나 무제한 값에 대하여 0을 입력하십시오.",
+        "cpuSharesLabel": "CPU 공유",
+        "memoryLimitLabel": "메모리 제한",
+        "storageLimitLabel": "스토리지 제한"
+      }
+    },
+    "eventlog": {
+      "title": "이벤트",
+      "tabs": {
+        "all": "모두",
+        "warnings": "경고",
+        "errors": "오류"
+      },
+      "contextPanelTooltip": "이벤트 로그"
+    },
+    "registry": {
+      "list": {
+        "title": "기존 레지스트리",
+        "addButton": "추가",
+        "addressColumn": "주소",
+        "nameColumn": "이름",
+        "statusColumn": "상태"
+      },
+      "edit": {
+        "createNew": "새 레지스트리",
+        "update": "레지스트리 편집",
+        "addressTitle": "주소",
+        "addressHint": "적절한 체계와 포트를 지정하십시오(예: https://myregistry.com:5000). 기본 체계: 'https'. 기본 포트: https/443, http/80.",
+        "insecureRegistryHint": "일반 http 레지스트리가 감지되었습니다. 호스트가 올바로 구성 및 연결되었는지 확인하십시오.<a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">자세한 정보</a>",
+        "nameTitle": "이름",
+        "credentialTitle": "로그인 자격 증명",
+        "verifyButton": "확인",
+        "verified": "확인이 완료되었습니다!"
+      }
+    },
+    "environment": {
+      "list": {
+        "title": "환경",
+        "titleSearch": "찾은 환경",
+        "searchPlaceholder": "환경 검색",
+        "addButton": "환경 추가",
+        "addPropertyButton": "속성 추가",
+        "nameColumn": "이름",
+        "endpointTypeColumn": "끝점 유형",
+        "propertiesColumn": "속성",
+        "mappingsColumn": "매핑"
+      },
+      "details": {
+        "endpoint": "끝점"
+      },
+      "actions": {
+        "edit": "편집",
+        "remove": "제거"
+      },
+      "edit": {
+        "addTitle": "환경 추가",
+        "editTitle": "환경 편집",
+        "save": "저장",
+        "basicTab": "기본",
+        "computeTab": "계산",
+        "networkTab": "네트워크",
+        "storageTab": "스토리지",
+        "nameLabel": "이름",
+        "tagsLabel": "태그",
+        "endpointLabel": "끝점",
+        "valueLabel": "값",
+        "instanceTypeLabel": "인스턴스 유형",
+        "imageTypeLabel": "이미지 유형",
+        "bootDiskPropertyLabel": "부트 디스크 속성",
+        "cpuCountLabel": "CPU",
+        "diskSizeMbLabel": "디스크 크기",
+        "memoryMbLabel": "메모리"
+      },
+      "instanceType": {
+        "aws": {
+          "small": "소형(CPU 1개, 1GB 메모리)",
+          "medium": "중형(CPU 1개, 2GB 메모리)",
+          "large": "대형(CPU 2개, 8GB 메모리)",
+          "xlarge": "초대형(CPU 4개, 16GB 메모리)"
+        },
+        "azure": {
+          "small": "소형(CPU 1개, 0.75GB 메모리)",
+          "medium": "중형(CPU 1개, 1.75GB 메모리)",
+          "large": "대형(CPU 2개, 3.50GB 메모리)",
+          "xlarge": "초대형(CPU 4개, 14GB 메모리)"
+        },
+        "vsphere": {
+          "small": "소형(CPU 1개, 1GB 메모리)",
+          "medium": "중형(CPU 1개, 2GB 메모리)",
+          "large": "대형(CPU 2개, 8GB 메모리)",
+          "xlarge": "초대형(CPU 4개, 16GB 메모리)"
+        },
+        "nimbus": {
+          "small": "소형(CPU 1개, 1GB 메모리)"
+        }
+      },
+      "imageType": {
+        "coreos": "CoreOS",
+        "photon": "Photon OS",
+        "ubuntu-1604": "Ubuntu"
+      }
+    },
+    "endpoint": {
+      "list": {
+        "title": "끝점",
+        "addButton": "추가",
+        "nameColumn": "이름",
+        "typeColumn": "유형"
+      },
+      "edit": {
+        "addNew": "새 끝점",
+        "update": "끝점 편집",
+        "nameLabel": "이름",
+        "typeLabel": "유형",
+        "accessKeyIdLabel": "액세스 키 ID",
+        "usernameLabel": "사용자 이름",
+        "passwordLabel": "암호",
+        "secretAccessKeyLabel": "비밀 액세스 키",
+        "regionIdLabel": "영역 ID",
+        "endpointHostLabel": "호스트 이름 또는 IP",
+        "subscriptionIdLabel": "구독 ID",
+        "tenantIdLabel": "테넌트 ID",
+        "datacenterIdLabel": "데이터 센터 이름"
+      },
+      "entity": "끝점",
+      "typeEntity": "유형",
+      "createNew": "새 끝점",
+      "manage": "끝점 관리",
+      "contextPanelTooltip": "끝점"
+    },
+    "machine": {
+      "list": {
+        "title": "시스템",
+        "titleSearch": "찾은 시스템",
+        "searchPlaceholder": "시스템 검색"
+      }
+    },
+    "compute": {
+      "entity": "대상",
+      "list": {
+        "title": "계산",
+        "titleSearch": "찾은 계산",
+        "searchPlaceholder": "계산 검색"
+      },
+      "details": {
+        "type": "유형"
+      },
+      "edit": {
+        "title": "계산 편집"
+      }
+    },
+    "resource": {
+      "list": {
+        "network": {
+          "name": "네트워크",
+          "connectedDateLabel": "연결됨",
+          "networkDriverLabel": "네트워크 드라이버",
+          "ipamDriverLabel": "IPAM 드라이버",
+          "subnetLabel": "서브넷",
+          "gatewayLabel": "게이트웨이",
+          "ipRangeLabel": "IP 범위",
+          "connectedContainers": "컨테이너",
+          "parentHosts": "호스트",
+          "external": "외부",
+          "create": "네트워크 생성",
+          "state": {
+            "UNKNOWN": "알 수 없음",
+            "PROVISIONING": "프로비저닝",
+            "CONNECTED": "연결됨",
+            "RETIRED": "회수됨",
+            "ERROR": "오류"
+          },
+          "operations": {
+            "errors": {
+              "remove": {
+                "containersConnected": "연결된 컨테이너 있음"
+              }
+            }
+          }
+        },
+        "container": {
+          "create": "컨테이너 생성",
+          "operations": {
+            "errors": {
+              "managedByCatalog": "카탈로그별 관리"
+            }
+          }
+        },
+        "application": {
+          "create": "애플리케이션 생성"
+        },
+        "closure": {
+          "create": "클로저 생성"
+        },
+        "titleSearch": {
+          "containers": "컨테이너",
+          "applications": "애플리케이션",
+          "networks": "네트워크",
+          "closures": "클로저"
+        },
+        "searchPlaceholder": {
+          "containers": "컨테이너 검색",
+          "applications": "애플리케이션 검색",
+          "networks": "네트워크 검색",
+          "closures": "클로저 검색"
+        },
+        "searchCategory": {
+          "networks": "네트워크"
+        },
+        "relations": {
+          "hosts": "호스트",
+          "containers": "컨테이너",
+          "applications": "애플리케이션",
+          "networks": "네트워크",
+          "volumes": "볼륨"
+        }
+      }
+    },
+    "container": {
+      "list": {
+        "title": "항목",
+        "titleSearchContainers": "찾은 컨테이너",
+        "titleSearchApplications": "찾은 애플리케이션",
+        "searchPlaceholder": "컨테이너 검색",
+        "createContainer": "컨테이너 생성",
+        "hostLabel": "호스트",
+        "createdDateLabel": "생성일",
+        "portsLabel": "포트",
+        "commandLabel": "명령",
+        "logLabel": "로그",
+        "cluster": {
+          "name": "클러스터",
+          "sizeLabel": "클러스터 크기",
+          "scaleLabel": "배율 조정"
+        },
+        "composite": {
+          "name": "애플리케이션",
+          "servicesCountLabel": "서비스",
+          "containersCountLabel": "컨테이너",
+          "networksCountLabel": "네트워크",
+          "volumesCountLabel": "볼륨",
+          "childContainersLabel": "하위 항목"
+        },
+        "searchCategoryFilterTitle": "보기:",
+        "searchCategory": {
+          "all": "모두",
+          "containers": "컨테이너",
+          "applications": "애플리케이션"
+        }
+      },
+      "details": {
+        "usages": "사용",
+        "properties": "속성",
+        "webview": "웹 보기",
+        "logs": "로그",
+        "cpu": "CPU",
+        "memory": "메모리",
+        "network": "네트워크",
+        "networkTrafficSent": "발송됨",
+        "networkTrafficReceived": "수신됨",
+        "showingLogsSince": "다음 날짜 이후의 로그 표시:",
+        "logsFormat": "로그 형식",
+        "logsFormatAnsi": "ANSI",
+        "logsFormatRaw": "원시 형식",
+        "networkAddresses": "네트워크 주소",
+        "attributes": {
+          "host": "호스트",
+          "createdDateLabel": "생성일",
+          "ports": "포트",
+          "command": "명령",
+          "ipaddress": "주소",
+          "image": "이미지",
+          "id": "ID",
+          "restartCount": "다시 시작 횟수",
+          "memory": "메모리",
+          "memorySwap": "메모리 스왑",
+          "cpuShares": "CPU 공유",
+          "cpusetCpus": "Cpu setCpus"
+        },
+        "operation": {
+          "pending": "작업 진행 중",
+          "failure": "작업 실패"
+        }
+      },
+      "request": {
+        "title": "컨테이너 프로비저닝",
+        "provision": "프로비저닝",
+        "saveTemplate": "템플릿으로 저장",
+        "tabs": {
+          "basic": "기본",
+          "network": "네트워크",
+          "storage": "스토리지",
+          "policy": "정책",
+          "environment": "환경",
+          "health": "상태 구성",
+          "logconfig": "로그 구성"
+        },
+        "inputs": {
+          "image": "이미지",
+          "imageTag": {
+            "searchHint": "태그 검색",
+            "loadingHint": "태그 로딩 중..."
+          },
+          "name": "이름",
+          "group": "프로젝트",
+          "commands": "명령",
+          "commandsDescription": "컨테이너 시작 시 실행할 명령 어레이",
+          "commandsInputs": {
+            "command": "명령",
+            "commandHint": "예: /startup.sh"
+          },
+          "deploymentPolicy": "배포 정책",
+          "links": "링크",
+          "linksDescription": "컨테이너가 종속된 서비스 목록(템플릿 내)",
+          "linksInputs": {
+            "alias": "별칭",
+            "aliasHint": "예: db",
+            "service": "서비스"
+          },
+          "portBindings": "포트 바인딩",
+          "portBindingsDescription": "노출된 컨테이너 포트와 매핑할 호스트 포트의 맵",
+          "portBindingsInputs": {
+            "hostPort": "호스트 포트",
+            "hostPortHint": "예: 9080",
+            "containerPort": "컨테이너 포트",
+            "containerPortHint": "예: 80"
+          },
+          "publishAll": "모든 포트 게시",
+          "publishAllDescription": "이미지에서 노출된 모든 포트를 게시합니다.",
+          "hostname": "호스트 이름",
+          "hostnameDescription": "컨테이너에 사용할 도메인 이름",
+          "networkMode": "네트워크 모드",
+          "networkModeDescription": "컨테이너에 대한 네트워킹 모드를 설정합니다.",
+          "networkModeTypes": {
+            "none": "없음",
+            "bridge": "브리지",
+            "host": "호스트"
+          },
+          "networks": "네트워크",
+          "networksDescription": "컨테이너를 이 네트워크에 연결합니다(네트워크 모드 외).",
+          "networksInputs": {
+            "name": "이름",
+            "nameHint": "예: mynet",
+            "aliases": "별칭",
+            "aliasesHint": "예: my-service, my-other-service",
+            "ipv4": "IPv4",
+            "ipv4Hint": "예: 172.16.1.8",
+            "ipv6": "IPv6",
+            "ipv6Hint": "예: fe80::42:31ff:fecf:83e2"
+          },
+          "volumes": "볼륨",
+          "volumesDescription": "컨테이너 안의 마운트 지점 경로입니다. 컨테이너 필드는 필수이며 절대 경로여야 합니다. 호스트 필드는 볼륨 이름 또는 절대 경로여야 합니다.",
+          "volumesInputs": {
+            "host": "호스트",
+            "hostHint": "예: /host/project/path",
+            "container": "컨테이너",
+            "containerHint": "예: /container/project/path",
+            "readOnly": "읽기 전용"
+          },
+          "volumesFrom": "상속 볼륨",
+          "volumesFromDescription": "또 다른 컨테이너에서 상속할 볼륨 목록입니다.",
+          "volumesFromInputs": {
+            "volume": "볼륨",
+            "volumeHint": "예: datacontainer"
+          },
+          "workingDirectory": "작업 디렉토리",
+          "workingDirectoryDescription": "명령을 실행할 작업 디렉토리",
+          "clusterSize": "클러스터 크기",
+          "clusterSizeDescription": "프로비저닝할 노드 수",
+          "restartPolicy": "다시 시작 정책",
+          "restartPolicyDescription": "컨테이너가 종료할 때 적용되는 동작입니다. 항상 다시 시작하려면 [항상]을, 컨테이너 종료 코드가 0이 아닌 경우에만 다시 시작하려면 [실패 시]를 설정합니다. [실패 시]가 사용되면 [최대 다시 시작 횟수]는 포기하기 전까지 다시 시도할 횟수를 제어합니다. 기본값은 [다시 시작하지 않음]입니다.",
+          "restartPolicyType": {
+            "always": "항상",
+            "onFailure": "실패 시",
+            "none": "없음"
+          },
+          "maxRestarts": "최대 다시 시작 횟수",
+          "maxRestartsDescription": "컨테이너 오류 발생 시 최대 다시 시작 횟수",
+          "cpuShares": "CPU 공유",
+          "cpuSharesDescription": "컨테이너 CPU 공유을 포함하는 정수값(즉, 기타 컨테이너에 상대한 가중치)",
+          "memoryLimit": "메모리 제한",
+          "memoryLimitDescription": "메모리 제한(바이트)",
+          "memorySwapLimit": "메모리 스왑 제한",
+          "memorySwapLimitDescription": "총 메모리 제한(메모리 + 스왑). 스왑을 비활성화하려면 -1로 설정하십시오. 이 설정은 메모리와 함께 사용해야 하며 스왑 값을 메모리보다 크게 해야 합니다.",
+          "affinityConstraints": "선호도 제약 조건",
+          "affinityConstraintsDescription": "동일 호스트에 배포되었거나 배포되지 않은 컨테이너의 선호도 또는 반선호도 조건입니다. 형식은 [!]serviceName[:soft|hard]입니다.",
+          "affinityInputs": {
+            "antiaffinity": "반선호도",
+            "servicename": "서비스 이름",
+            "servicenameHint": "예: webserver",
+            "constraint": "제약 조건"
+          },
+          "environmentVariables": "환경 변수",
+          "environmentVariablesDescription": "환경 변수 목록",
+          "environmentVariablesInputs": {
+            "name": "이름",
+            "nameHint": "예: PROJECT_HOME",
+            "value": "값",
+            "valueHint": "예: /var/lib/project"
+          },
+          "customProperties": "사용자 지정 속성",
+          "customPropertiesDescription": "사용자 지정 속성을 사용하여 프로비저닝할 컨테이너에 속성을 추가할 수 있습니다.",
+          "healthMode": "모드",
+          "healthConfigNone": "없음",
+          "healthConfigTCP": "TCP 연결",
+          "healthConfigHTTP": "HTTP",
+          "healthConfigCommand": "명령",
+          "healthPath": "URL 경로",
+          "healthPathDescription": "상태 확인에 사용되는 API에 대한 URL 경로",
+          "healthPort": "포트",
+          "healthPortDescription": "사용할 컨테이너 포트",
+          "healthTimeout": "시간 제한(ms)",
+          "healthTimeoutDescription": "상태 검사 작업에 대한 시간 제한(ms)",
+          "healthyThreshold": "정상 상태 임계값",
+          "healthyThresholdDescription": "컨테이너가 정상인 것으로 간주하는 데 필요한 상태 검사 성공 작업에 대한 임계값",
+          "unhealthyThreshold": "비정상 상태 임계값",
+          "unhealthyThresholdDescription": "컨테이너가 비정상인 것으로 간주하는 데 필요한 상태 검사 실패 작업에 대한 임계값",
+          "command": "명령",
+          "commandDescription": "컨테이너에서 실행할 명령입니다. 종료 상태는 컨테이너 상태를 결정하는 데 사용됩니다.",
+          "logConfigDriver": "드라이버",
+          "logConfigDriverDescription": "컨테이너에 대한 로깅 드라이버",
+          "logConfigDriverTypes": {
+            "none": "없음",
+            "bridge": "브리지",
+            "host": "호스트"
+          },
+          "logConfigOptions": "옵션",
+          "logConfigOptionsDescription": "각 로깅 드라이버에 대한 지원 옵션",
+          "logConfigOptionsInputs" : {
+            "name": "이름",
+            "nameHint": "예: max-size",
+            "value": "값",
+            "valueHint": "예: 10m"
+           }
+        }
+      },
+      "state": {
+        "RUNNING": "실행 중",
+        "STOPPED": "중지됨",
+        "REBOOTING": "재부팅 중",
+        "PAUSED": "일시 중지됨",
+        "ERROR": "오류",
+        "UNKNOWN": "알 수 없음",
+        "RETIRED": "회수됨",
+        "PROVISIONING": "프로비저닝",
+        "continuousStateSince": "__state__(__duration__)"
+      },
+      "actions": {
+        "start": "시작",
+        "reboot": "재부팅",
+        "stop": "중지",
+        "remove": "제거",
+        "clone": "복제",
+        "details": "세부 정보",
+        "terminal": "터미널",
+        "manage": "관리",
+        "createTemplate": "템플릿 생성",
+        "openTemplate": "템플릿 열기"
+      }
+    },
+    "request": {
+      "title": "요청",
+      "contextPanelTooltip": "요청",
+      "tabs": {
+        "all": "모두",
+        "running": "실행 중",
+        "failed": "실패"
+      },
+      "actions": {
+        "details": {
+          "show": "세부 정보",
+          "hide": "세부 정보 숨기기"
+        },
+        "open": "열림"
+      }
+    },
+    "closure": {
+      "title": "모든 클로저",
+      "titleSearch": "찾은 클로저",
+      "searchPlaceholder": "클로저 검색",
+      "placementZone": "리소스 풀",
+      "resultStatus": "결과 상태",
+      "details": {
+        "name": "이름",
+        "description": "설명",
+        "runtime" : "런타임",
+        "state": "상태",
+        "id": "ID",
+        "inputs": "입력",
+        "outputs": "출력",
+        "errorMsg": "오류",
+        "closureTitle": "클로저 실행 정보",
+        "closureDescriptionTitle": "클로저 설명 정보",
+        "descriptionId": "ID",
+        "source": "소스",
+        "sourceURL": "소스 URL",
+        "resources": "리소스"
+      },
+      "state": {
+        "CREATED": "생성됨",
+        "STARTED": "시작됨",
+        "FINISHED": "완료됨",
+        "FAILED": "실패",
+        "CANCELLED": "취소됨"
+      },
+      "list" : {
+        "name": "클로저",
+        "closuresCountLabel": "클로저",
+        "closureRunsLabel": "클로저 실행",
+        "memory": "메모리:",
+        "timeout": "시간 제한:"
+      },
+      "request": {
+        "title": "클로저 정의",
+        "save": "저장",
+        "run": "실행",
+        "inputs": {
+          "name": "이름",
+          "description": "설명",
+          "runtime": "런타임",
+          "source": "소스 코드",
+          "sourceURL": "소스 URL",
+          "runtimeTypes": {
+            "nodejs": "Node.js 4.3.0",
+            "python": "Python 3.4.3"
+          },
+          "logConfigOptionsInputs" : {
+            "name": "이름",
+            "nameHint": "예: max-size",
+            "value": "값",
+            "valueHint": "예: 10m"
+           },
+           "closureInputs" : {
+            "name": "이름",
+            "nameHint": "예: a",
+            "value": "값",
+            "valueHint": "예: 1"
+           },
+           "closureOutputs" : {
+            "name": "이름",
+            "nameHint": "예: result"
+           },
+          "memoryLimit": "메모리 제한(MB)",
+          "timeout": "시간 제한(초)",
+          "entrypoint": "진입점 핸들러",
+          "logConfigDriver": "로그 드라이버",
+          "logConfigOptions": "로그 옵션",
+          "sourceMode": "모드",
+          "sourceProvided": "제공된 소스 코드",
+          "sourceFromURL": "URL의 소스 코드",
+          "inputs": "입력",
+          "outputs": "출력",
+          "dependencies": "종속성",
+          "nameDescription": "클로저의 이름입니다. 진입점가 설정되지 않았으면 해당 이름은 호출할 함수 이름으로 사용됩니다.",
+          "descriptionDescription": "클로저 설명",
+          "sourceDescription": "실행할 소스 코드",
+          "sourceURLDescription": "URL을 통해 액세스할 수 있는 소스 코드입니다. 컨텐츠는 코드 자체 또는 zip 파일이 될 수 있습니다. 소스 URL을 사용하면 필드 소스 코드는 사용되지 않습니다.",
+          "memoryLimitDescription": "메모리 제한(MB)입니다. 최대 허용값은 1536MB입니다.",
+          "timeoutDescription": "실행 시간 제한(초)입니다. 실행이 시간 제한을 초과하면 작업 실행이 취소됩니다.",
+          "entrypointDescription": "file_name.function_name 양식으로 호출되는 기본 함수",
+          "logDriverDescription": "클로저 작업에 대한 로깅 드라이버",
+          "logConfigOptionsDescription": "각 로깅 드라이버에 대한 지원 옵션",
+          "dependenciesDescription": "코드를 실행하기 전 설치할 종속성",
+          "inputDescription": "코드를 실행할 때 사용할 입력입니다. 이 입력은 원시 또는 유효한 JSON 개체여야 합니다.",
+          "outputDescription": "결과를 채울 때 사용할 출력 매개 변수의 이름입니다."
+        },
+        "logs": {
+          "title": "로그"
+        },
+        "tabs": {
+          "definition": "정의",
+          "code": "코드",
+          "config": "구성"
+        }
+      },
+      "monitoredTask": {
+        "runStatus": "실행 상태",
+        "runId": "실행 ID:",
+        "runState": "상태:",
+        "outputs": "출력"
+      }
+    },
+    "help": {
+        "link": "도움말",
+        "description": "Ensemble을 사용하면 현재 수행 중인 작업의 컨텍스트에 대한 관련 정보에 액세스할 수 있습니다. 이 정보는 작업을 계속하면서 지침에 따라 자동으로 새로 고쳐집니다. 실시간으로 정보에 액세스하려면 두 번째 화면 또는 분할 화면을 사용하십시오. 컴퓨터에 연결되었는지와 상관 없이 모바일 디바이스, TV 및 기타 화면을 사용할 수 있습니다. Ensemble은 신뢰할 수 있는 네트워크 외부에서 사용할 수 있으며 동시에 즉시 업데이트를 받을 수 있습니다.",
+        "descriptionOpen": "Ensemble을 열려면 <strong>새 탭에서 열기</strong>를 클릭하거나 모바일 디바이스로 QR 코드를 스캔하십시오."
+      },
+      "resources": {
+        "selectMultiple": "항목 선택",
+        "message": {
+          "selectShift": "여러 항목을 선택하려면 Shift 키를 사용하십시오."
+        }
+      }
+    },
+    "loginPanel": {
+      "login": "로그인",
+      "logout": "로그아웃",
+      "username": "사용자 이름",
+      "password": "암호",
+      "success": "인증 완료",
+      "failure": "인증 오류"
+    },
+    "dropdownSearchMenu": {
+      "title": "__entity__ 목록에서 선택",
+      "searchPlaceholder": "__entity__ 검색",
+      "clear": "선택 지우기",
+      "showingCount": "__count__ / __totalCount__ 표시 중",
+      "noResults": "항목 없음"
+    },
+    "customProperties": {
+      "name": "이름",
+      "nameHint": "예: speedchecker",
+      "value": "값",
+      "valueHint": "예: slow"
+    },
+    "yes": "예",
+    "cancel": "취소",
+    "delete": "삭제",
+    "enable": "사용",
+    "enabled": "사용 설정됨",
+    "disable": "사용 안 함",
+    "disabled": "사용 안 함으로 설정됨",
+    "close": "닫기",
+    "edit": "편집",
+    "remove": "제거",
+    "add": "추가",
+    "save": "저장",
+    "back": "뒤로",
+    "refresh": "새로 고침",
+    "clear": "지우기",
+    "deleteAll": "모두 삭제",
+    "pendingOperationCancel": "작업 위치",
+    "openInNewTab": "새 탭에서 열기",
+    "unavailable": "해당 없음",
+    "advanced": "고급",
+    "noSelection": "선택 항목 없음",
+    "buildNumber": "빌드 번호",
+    "errors": {
+      "hostIp": "값은 호스트 이름 또는 IP 주소여야 합니다.",
+      "urlPath": "URL 경로가 잘못되었습니다.",
+      "propertyNameRequired": "속성 이름은 필수입니다.",
+      "propertyContainerNameInvalid": "잘못된 컨테이너 이름입니다. [a-zA-Z0-9][a-zA-Z0-9_.-]만 허용됩니다.",
+      "propertyNamesNotUnique": "속성 이름은 고유해야 합니다.",
+      "nonNegativeNumber": "값은 2147483648 미만의 음이 아닌 정수여야 합니다.",
+      "positiveNumber": "값은 2147483648 미만인 양의 정수여야 합니다.",
+      "nonNegativeNumberAndMinusOne": "값은 -1과 2147483647 사이의 정수여야 합니다.",
+      "portNumber": "잘못된 포트 번호입니다. 유효한 포트 번호의 범위는 0 ~ 65535입니다.",
+      "containerMemory": "메모리는 0(무제한) 또는 4194304 바이트(4MB) 이상이어야 합니다.",
+      "required": "값은 필수입니다.",
+      "requiredAll": "모든 필드는 필수입니다.",
+      "serviceNameRequired": "서비스 이름은 필수입니다.",
+      "networkRequired": "네트워크는 필수입니다.",
+      "itemNotFound": "항목이 없습니다.",
+      "networkExists": "네트워크가 이미 템플릿에 있습니다.",
+      "volumeDestinationRequired": "볼륨 대상은 필수입니다.",
+      "invalidInputValue": "잘못된 입력 값",
+      "invalidPath": "값은 절대 경로여야 합니다.",
+      "invalidPathOrName": "값은 절대 경로이거나 유효한 볼륨 이름이어야 합니다."
+    },
+    "infoMessages": {
+      "created": "생성 완료!",
+      "updated": "업데이트 완료!"
+    },
+    "occurrence": {
+      "all": "모두 일치",
+      "any": "임의 일치"
+    },
+    "state": {
+      "ON": "켜짐",
+      "OFF": "꺼짐",
+      "SUSPEND": "사용 안 함",
+      "UNKNOWN": "알 수 없음",
+      "stateSinceMessage": "__date__ 이후"
+    }
+}

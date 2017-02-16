@@ -1,0 +1,1047 @@
+{
+  "app": {
+    "homepage": {
+      "welcome": "ようこそ。",
+      "description": "ここでは、<b>コンテナ化されたアプリケーションを作成して、プロビジョニング、管理および監視</b>を行うことができます。",
+      "start": "それでは、早速始めましょう。",
+      "addHost": "ホストの追加",
+      "enter": "開始",
+      "helpCenter": "ヘルプ",
+      "steps": {
+        "description": "アプリケーションの作成はとても簡単です",
+        "addHost": "ホストの追加",
+        "findImage": "イメージの検索",
+        "designApplication": "アプリケーションのデザイン"
+      }
+    },
+    "navbar": {
+      "hosts": "ホスト",
+      "placements": "配置",
+      "templates": "テンプレート",
+      "resources": "リソース",
+      "containers": "コンテナ",
+      "applications": "アプリケーション",
+      "networks": "ネットワーク",
+      "closures": "クロージャ",
+      "eventlog": "イベント ログ",
+      "placementZones": "配置ゾーン",
+      "environments": "環境",
+      "endpoints": "エンドポイント",
+      "machines": "マシン",
+      "compute": "コンピューティング"
+    },
+    "host": {
+      "entity": "ホスト",
+      "details": {
+        "title": {
+          "add": "ホストの追加",
+          "create": "ホストの作成",
+          "edit": "ホストの編集"
+        },
+        "address": "アドレス",
+        "addressPlaceholder": "例: https://hostname:2376",
+        "addressHint": "適切なスキームおよびポートを指定してください (例: https://myhost.com:2376)。デフォルト スキーム: 'https'。デフォルト ポート: https/443、http/80。",
+        "hostAlias": "名前",
+        "hostAddress": "アドレス",
+        "placementZone": "配置ゾーン",
+        "credential": "ログイン認証情報",
+        "guestCredential": "ゲストの認証情報",
+        "destination": "ターゲット",
+        "destinationPlaceholder": "ターゲットの検索",
+        "deploymentPolicy": "展開ポリシー",
+        "tags": "タグ",
+        "tagsPlaceholder": "例: location:west",
+        "tagsHint": "key:value タグを入力します",
+        "autoConfigure": "自動構成",
+        "autoConfigureInput":"ホストの自動構成の有効化",
+        "autoConfigureHint": "ホストは自動的に構成されます",
+        "reservationPolicy": "予約ポリシー",
+        "endpoint": "エンドポイント",
+        "connectionType": "接続タイプ",
+        "connectionTypeShort": "接続",
+        "customProperties": "カスタム プロパティ",
+        "verify": "検証",
+        "verified": "検証が正常に完了しました。",
+        "add": "追加",
+        "update": "更新",
+        "create": "作成",
+        "certificateWarning": "__address__ の証明書が無効です。接続先の Web サイトが __address_ になりすましている可能性があり、このために機密情報が危険にさらされる可能性があります。このまま Web サイトに接続しますか?",
+        "showCertificate": "証明書の表示",
+        "hideCertificate": "証明書を隠す",
+        "manageCertificates": "証明書の管理",
+        "containers": "コンテナ",
+        "cpu": "CPU",
+        "memory": "メモリ",
+        "storage": "ストレージ",
+        "providerType": "クラウド タイプ",
+        "regionId": "地域 ID",
+        "name": "名前",
+        "namePlaceholder": "例: host-name",
+        "instanceType": "インスタンス タイプ",
+        "imageType": "OS",
+        "port": "ポート",
+        "clusterSize": "インスタンス数"
+      },
+      "list": {
+        "title": "ホスト",
+        "titleSearch": "見つかったホスト",
+        "searchPlaceholder": "ホストの検索",
+        "dataCollect": "データ収集",
+        "dataCollectStart": "データ収集をトリガーしています。完了まで数分かかる場合があります。",
+        "dataCollectEnd": "データ収集が終了しました。"
+      },
+      "actions": {
+        "start": "開始",
+        "stop": "停止",
+        "edit": "編集",
+        "enable": "有効化",
+        "disable": "無効化",
+        "remove": "削除"
+      }
+    },
+    "placementZone": {
+      "createNew": "新規配置ゾーン",
+      "manage": "配置ゾーンの管理",
+      "entity": "配置ゾーン",
+      "list": {
+        "title": "配置ゾーン",
+        "addButton": "追加",
+        "nameColumn": "名前",
+        "cpuColumn": "CPU",
+        "memoryColumn": "メモリ",
+        "storageColumn": "ストレージ",
+        "hostsColumn": "ホスト"
+      },
+      "edit": {
+        "createNew": "新規配置ゾーン",
+        "update": "配置ゾーンの編集",
+        "nameTitle": "配置ゾーン名",
+        "endpointTitle": "エンドポイント",
+        "dynamicTitle": "このゾーンへのリソースの動的割り当て",
+        "tagsToMatchTitle": "一致するタグ",
+        "tagsToMatchHint": "一致する key:value タグを入力します",
+        "tagsToMatchPlaceholder": "例: location:west"
+      },
+      "contextPanelTooltip": "配置ゾーン"
+    },
+    "businessGroup": {
+      "entity": "ビジネス グループ"
+    },
+    "group": {
+      "createNew": "新規プロジェクト",
+      "manage": "プロジェクトの管理",
+      "entity": "プロジェクト",
+      "contextPanelTooltip": "プロジェクト",
+      "list": {
+        "title": "プロジェクト",
+        "addButton": "追加",
+        "nameColumn": "名前",
+        "details": {
+          "title": "プロジェクトの詳細"
+        }
+      },
+      "edit": {
+        "createNew": "新規プロジェクト",
+        "update": "プロジェクトの編集",
+        "nameTitle": "プロジェクト名"
+      }
+    },
+    "credential": {
+      "createNew": "新しい認証情報",
+      "manage": "認証情報の管理",
+      "entity": "認証情報",
+      "contextPanelTooltip": "認証情報",
+      "list": {
+        "title": "認証情報",
+        "addButton": "追加",
+        "nameColumn": "名前",
+        "typeColumn": "タイプ",
+        "credentialsColumn": "認証情報"
+      },
+      "edit": {
+        "createNew": "新しい認証情報",
+        "update": "認証情報の編集",
+        "nameTitle": "名前",
+        "usernamePasswordTitle": "ユーザー名",
+        "usernameTitle": "ユーザー名",
+        "passwordTitle": "パスワード",
+        "showPassword": "パスワードを表示",
+        "hidePassword": "パスワードを隠す",
+        "usePrivateKey": "プライベート キーを使用",
+        "usePassword": "パスワードを使用",
+        "certificateTitle": "証明書",
+        "publicTitle": "パブリック キー",
+        "publicCertificateTitle": "パブリック証明書",
+        "privateCertificateTitle": "プライベート証明書"
+      }
+    },
+    "deploymentPolicy": {
+      "createNew": "新規展開ポリシー",
+      "entity": "展開ポリシー",
+      "manage": "展開ポリシーの管理",
+      "contextPanelTooltip": "展開ポリシー",
+      "list": {
+        "title": "展開ポリシー",
+        "addButton": "追加",
+        "nameColumn": "名前",
+        "descriptionColumn": "説明",
+        "details": {
+          "title": "展開ポリシーの詳細"
+        }
+      },
+      "edit": {
+        "createNew": "新規展開ポリシー",
+        "update": "展開ポリシーの編集",
+        "nameTitle": "展開ポリシー名",
+        "descriptionTitle": "展開ポリシーの説明"
+      }
+    },
+    "certificate": {
+      "createNew": "新しい証明書",
+      "manage": "証明書の管理",
+      "entity": "証明書",
+      "contextPanelTooltip": "証明書",
+      "list": {
+        "title": "証明書",
+        "addButton": "追加",
+        "nameColumn": "名前",
+        "serialColumn": "シリアル",
+        "shaColumn": "SHA",
+        "expirationColumn": "有効期限",
+        "details": {
+          "title": "証明書の詳細",
+          "commonName": "会社名",
+          "issuerName": "発行者名",
+          "serial": "シリアル",
+          "fingerprint": "SHA フィンガープリント",
+          "validSince": "有効期間開始日",
+          "validTo": "有効期間終了日"
+        }
+      },
+      "edit": {
+        "createNew": "新しい証明書",
+        "update": "証明書の編集",
+        "urlTitle": "URL の入力",
+        "importOptionTitle": "URL からインポート",
+        "importOptionHint": "[URL からインポート] を選択すると、証明書を手動で入力する代わりに URL を入力できます。入力された URL からシステムが証明書をインポートします。",
+        "importButton": "インポート",
+        "certificateTitle": "証明書の入力"
+      }
+    },
+    "template": {
+      "list": {
+        "title": "よく使われるテンプレート",
+        "titleSearch": "見つかったテンプレート",
+        "searchImagesTemplatesPlaceholder": "イメージ、テンプレートの検索",
+        "searchImagesPlaceholder": "イメージの検索",
+        "searchTemplatesPlaceholder": "テンプレートの検索",
+        "searchClosuresPlaceholder": "クロージャの検索",
+        "manageRegistry": "レジストリの管理",
+        "provision": "プロビジョニング",
+        "provisionAdditionalInfo": "追加情報の入力",
+        "editTemplate": "詳細の編集/表示",
+        "official": "公式",
+        "trusted": "信頼済み",
+        "stars": "スター",
+        "linksLabel": "リンク",
+        "addLinkLabel": "リンクの追加",
+        "containers": "依存するコンテナの選択",
+        "alias": "エイリアスの入力",
+        "true": "はい",
+        "false": "いいえ",
+        "searchCategoryFilterTitle": "表示:",
+        "partialResultWarning": "1 つ以上のクエリが失敗したため、表示されている検索結果は不完全です。",
+        "searchCategory": {
+          "all": "すべて",
+          "images": "イメージ",
+          "templates": "テンプレート",
+          "closures": "クロージャ"
+        }
+      },
+      "details": {
+        "create": "テンプレートの作成",
+        "createNameHint": "テンプレート名",
+        "createProceed": "続行",
+        "edit": "テンプレートの編集",
+        "newDefinition": {
+          "newLabel": "コンテナの追加",
+          "title": "コンテナ定義の追加",
+          "selectImage": "イメージの選択",
+          "imageListTitle": "よく使われるイメージ",
+          "imageListTitleSearch": "見つかったイメージ",
+          "containerDefinitionInfo": "コンテナ定義の情報"
+        },
+        "editDefinition": {
+          "title": "コンテナ定義の編集"
+        },
+        "editNetwork" :{
+          "newLabel": "ネットワークの追加",
+          "newTitle": "ネットワーク構成の追加",
+          "newDropdownTitle": "ネットワークの追加...",
+          "editTitle": "ネットワーク構成の編集",
+          "name": "名前",
+          "existingNetwork": "既存",
+          "showingCount": "__totalCount__ 個中 __count__ 個を表示しています",
+          "showingInstances": "個のインスタンス",
+          "noResults": "ネットワークが見つかりませんでした",
+          "hosts": "ホスト",
+          "hostsSearchPlaceholder": "ホストの検索",
+          "create": "作成",
+          "createTitle": "ネットワークの作成",
+          "ipamConfig": "IP アドレス管理設定",
+          "ipamConfigSubnet": "サブネット",
+          "ipamConfigSubnetHint": "例: 172.16.238.0/24",
+          "ipamConfigIPRange": "IP アドレス範囲",
+          "ipamConfigIPRangeHint": "例: 172.28.5.0/24",
+          "ipamConfigGateway": "ゲートウェイ",
+          "ipamConfigGatewayHint": "例: 172.16.238.1",
+          "customProperties": "カスタム プロパティ"
+        },
+        "editClosures" :{
+          "newTitle": "クロージャの追加",
+          "editTitle": "クロージャの編集",
+          "name": "名前"
+        },
+        "network": {
+          "drag": "コンテナをドラッグして、このネットワークに接続します",
+          "drop": "コンテナをドロップして、このネットワークに接続します"
+        }
+      },
+      "actions": {
+        "edit": "編集",
+        "provision": "プロビジョニング",
+        "publish": "プッシュ",
+        "export": "エクスポート",
+        "import": "インポート",
+        "remove": "削除"
+      },
+      "publish": {
+        "tooltip": "ブループリントへのプッシュ",
+        "success": "プッシュが正常に完了しました",
+        "fail": "テンプレートのブループリントへのプッシュ時にエラーが発生しました"
+      },
+      "import": {
+        "title": "テンプレートのインポート",
+        "loadButton": "ファイルからロード",
+        "importTemplateTooltip": "テンプレートまたは Docker Compose のインポート",
+        "importTemplateHint": "テンプレートまたは Docker Compose ファイルをインポートするか、その内容を手動で入力します。",
+        "contentPlaceholder": "テンプレートまたは Docker Compose の入力...",
+        "importButton": "インポート"
+      },
+      "export": {
+        "formatPromptMessage": "テンプレートをエクスポートする形式を選択:",
+        "format": {
+          "compositeBlueprint": "YAML ブループリント",
+          "dockerCompose": "Docker Compose"
+        }
+      }
+    },
+    "placement": {
+      "list": {
+        "title": "配置",
+        "addButton": "追加",
+        "nameColumn": "名前",
+        "groupColumn": "プロジェクト",
+        "businessGroupColumn": "ビジネス グループ",
+        "placementZoneColumn": "配置ゾーン",
+        "deploymentPolicyColumn": "展開ポリシー",
+        "priorityColumn": "優先度",
+        "instancesColumn": "インスタンス",
+        "cpuColumn": "CPU シェア",
+        "memoryColumn": "メモリ制限",
+        "storageColumn": "ストレージ制限",
+        "instancesPerPlacement": "配置ごとのインスタンスの表示",
+        "unlimitedInstances": "制限なし"
+      },
+      "edit": {
+        "createNew": "新しい配置",
+        "update": "配置の編集",
+        "nameLabel": "名前",
+        "groupLabel": "プロジェクト",
+        "selectGroup": "プロジェクトの選択",
+        "businessGroupLabel": "ビジネス グループ",
+        "selectBusinessGroup": "ビジネス グループの選択",
+        "placementZoneLabel": "配置ゾーン",
+        "selectPlacementZone": "配置ゾーンの選択",
+        "deploymentPolicyLabel": "展開ポリシー",
+        "selectDeploymentPolicy": "展開ポリシーの選択",
+        "priorityLabel": "優先度",
+        "priorityPlaceholder": "正数 (オプション)",
+        "priorityHint": "空白にすると優先度が最低になります",
+        "instancesLabel": "インスタンス",
+        "instancesPlaceholder": "インスタンスの数 (オプション)",
+        "instancesHint": "インスタンスの最大数を制限するには正の整数を入力します。制限しない場合は空白または 0 にします。",
+        "cpuSharesLabel": "CPU シェア",
+        "memoryLimitLabel": "メモリ制限",
+        "storageLimitLabel": "ストレージ制限"
+      }
+    },
+    "eventlog": {
+      "title": "イベント",
+      "tabs": {
+        "all": "すべて",
+        "warnings": "警告",
+        "errors": "エラー"
+      },
+      "contextPanelTooltip": "イベント ログ"
+    },
+    "registry": {
+      "list": {
+        "title": "既存のレジストリ",
+        "addButton": "追加",
+        "addressColumn": "アドレス",
+        "nameColumn": "名前",
+        "statusColumn": "ステータス"
+      },
+      "edit": {
+        "createNew": "新規レジストリ",
+        "update": "レジストリの編集",
+        "addressTitle": "アドレス",
+        "addressHint": "適切なスキームおよびポートを指定してください (例: https://myregistry.com:5000)。デフォルト スキーム: 'https'。デフォルト ポート: https/443、http/80。",
+        "insecureRegistryHint": "プレーンな http レジストリが検出されました。ホストが適切に構成されており、接続可能であることを確認してください。<a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">詳細情報</a>",
+        "nameTitle": "名前",
+        "credentialTitle": "ログイン認証情報",
+        "verifyButton": "検証",
+        "verified": "検証が正常に完了しました。"
+      }
+    },
+    "environment": {
+      "list": {
+        "title": "環境",
+        "titleSearch": "見つかった環境",
+        "searchPlaceholder": "環境の検索",
+        "addButton": "環境の追加",
+        "addPropertyButton": "プロパティの追加",
+        "nameColumn": "名前",
+        "endpointTypeColumn": "エンドポイント タイプ",
+        "propertiesColumn": "プロパティ",
+        "mappingsColumn": "マッピング"
+      },
+      "details": {
+        "endpoint": "エンドポイント"
+      },
+      "actions": {
+        "edit": "編集",
+        "remove": "削除"
+      },
+      "edit": {
+        "addTitle": "環境の追加",
+        "editTitle": "環境の編集",
+        "save": "保存",
+        "basicTab": "基本",
+        "computeTab": "コンピューティング",
+        "networkTab": "ネットワーク",
+        "storageTab": "ストレージ",
+        "nameLabel": "名前",
+        "tagsLabel": "タグ",
+        "endpointLabel": "エンドポイント",
+        "valueLabel": "値",
+        "instanceTypeLabel": "インスタンス タイプ",
+        "imageTypeLabel": "イメージ タイプ",
+        "bootDiskPropertyLabel": "ブート ディスクのプロパティ",
+        "cpuCountLabel": "CPU",
+        "diskSizeMbLabel": "ディスク サイズ",
+        "memoryMbLabel": "メモリ"
+      },
+      "instanceType": {
+        "aws": {
+          "small": "小 (1 つの CPU、1 GB のメモリ)",
+          "medium": "中 (1 つの CPU、2 GB のメモリ)",
+          "large": "大 (2 つの CPU、8 GB のメモリ)",
+          "xlarge": "特大 (4 つの CPU、16 GB のメモリ)"
+        },
+        "azure": {
+          "small": "小 (1 つの CPU、0.75 GB のメモリ)",
+          "medium": "中 (1 つの CPU、1.75 GB のメモリ)",
+          "large": "大 (2 つの CPU、3.50 GB のメモリ)",
+          "xlarge": "特大 (4 つの CPU、14 GB のメモリ)"
+        },
+        "vsphere": {
+          "small": "小 (1 つの CPU、1 GB のメモリ)",
+          "medium": "中 (1 つの CPU、2 GB のメモリ)",
+          "large": "大 (2 つの CPU、8 GB のメモリ)",
+          "xlarge": "特大 (4 つの CPU、16 GB のメモリ)"
+        },
+        "nimbus": {
+          "small": "小 (1 つの CPU、1 GB のメモリ)"
+        }
+      },
+      "imageType": {
+        "coreos": "CoreOS",
+        "photon": "Photon OS",
+        "ubuntu-1604": "Ubuntu"
+      }
+    },
+    "endpoint": {
+      "list": {
+        "title": "エンドポイント",
+        "addButton": "追加",
+        "nameColumn": "名前",
+        "typeColumn": "タイプ"
+      },
+      "edit": {
+        "addNew": "新規エンドポイント",
+        "update": "エンドポイントの編集",
+        "nameLabel": "名前",
+        "typeLabel": "タイプ",
+        "accessKeyIdLabel": "アクセス キーの ID",
+        "usernameLabel": "ユーザー名",
+        "passwordLabel": "パスワード",
+        "secretAccessKeyLabel": "プライベート アクセス キー",
+        "regionIdLabel": "地域 ID",
+        "endpointHostLabel": "ホスト名または IP アドレス",
+        "subscriptionIdLabel": "サブスクリプション ID",
+        "tenantIdLabel": "テナント ID",
+        "datacenterIdLabel": "データセンター名"
+      },
+      "entity": "エンドポイント",
+      "typeEntity": "タイプ",
+      "createNew": "新規エンドポイント",
+      "manage": "エンドポイントの管理",
+      "contextPanelTooltip": "エンドポイント"
+    },
+    "machine": {
+      "list": {
+        "title": "マシン",
+        "titleSearch": "見つかったマシン",
+        "searchPlaceholder": "マシンの検索"
+      }
+    },
+    "compute": {
+      "entity": "ターゲット",
+      "list": {
+        "title": "コンピューティング",
+        "titleSearch": "見つかったコンピューティング",
+        "searchPlaceholder": "コンピューティングの検索"
+      },
+      "details": {
+        "type": "タイプ"
+      },
+      "edit": {
+        "title": "コンピューティングの編集"
+      }
+    },
+    "resource": {
+      "list": {
+        "network": {
+          "name": "ネットワーク",
+          "connectedDateLabel": "接続済み",
+          "networkDriverLabel": "ネットワーク ドライバ",
+          "ipamDriverLabel": "IP アドレス管理ドライバ",
+          "subnetLabel": "サブネット",
+          "gatewayLabel": "ゲートウェイ",
+          "ipRangeLabel": "IP アドレス範囲",
+          "connectedContainers": "コンテナ",
+          "parentHosts": "ホスト",
+          "external": "外部",
+          "create": "ネットワークの作成",
+          "state": {
+            "UNKNOWN": "不明",
+            "PROVISIONING": "プロビジョニング",
+            "CONNECTED": "接続済み",
+            "RETIRED": "使用中止",
+            "ERROR": "エラー"
+          },
+          "operations": {
+            "errors": {
+              "remove": {
+                "containersConnected": "接続済みのコネクタがあります"
+              }
+            }
+          }
+        },
+        "container": {
+          "create": "コンテナの作成",
+          "operations": {
+            "errors": {
+              "managedByCatalog": "カタログで管理されています"
+            }
+          }
+        },
+        "application": {
+          "create": "アプリケーションの作成"
+        },
+        "closure": {
+          "create": "クロージャの作成"
+        },
+        "titleSearch": {
+          "containers": "コンテナ",
+          "applications": "アプリケーション",
+          "networks": "ネットワーク",
+          "closures": "クロージャ"
+        },
+        "searchPlaceholder": {
+          "containers": "コンテナの検索",
+          "applications": "アプリケーションの検索",
+          "networks": "ネットワークの検索",
+          "closures": "クロージャの検索"
+        },
+        "searchCategory": {
+          "networks": "ネットワーク"
+        },
+        "relations": {
+          "hosts": "ホスト",
+          "containers": "コンテナ",
+          "applications": "アプリケーション",
+          "networks": "ネットワーク",
+          "volumes": "ボリューム"
+        }
+      }
+    },
+    "container": {
+      "list": {
+        "title": "アイテム",
+        "titleSearchContainers": "見つかったコンテナ",
+        "titleSearchApplications": "見つかったアプリケーション",
+        "searchPlaceholder": "コンテナの検索",
+        "createContainer": "コンテナの作成",
+        "hostLabel": "ホスト",
+        "createdDateLabel": "作成済み",
+        "portsLabel": "ポート",
+        "commandLabel": "コマンド",
+        "logLabel": "ログ",
+        "cluster": {
+          "name": "クラスタ",
+          "sizeLabel": "クラスタのサイズ",
+          "scaleLabel": "スケール"
+        },
+        "composite": {
+          "name": "アプリケーション",
+          "servicesCountLabel": "サービス",
+          "containersCountLabel": "コンテナ",
+          "networksCountLabel": "ネットワーク",
+          "volumesCountLabel": "ボリューム",
+          "childContainersLabel": "子コンテナ"
+        },
+        "searchCategoryFilterTitle": "表示:",
+        "searchCategory": {
+          "all": "すべて",
+          "containers": "コンテナ",
+          "applications": "アプリケーション"
+        }
+      },
+      "details": {
+        "usages": "使用量",
+        "properties": "プロパティ",
+        "webview": "Web ビュー",
+        "logs": "ログ",
+        "cpu": "CPU",
+        "memory": "メモリ",
+        "network": "ネットワーク",
+        "networkTrafficSent": "送信済み",
+        "networkTrafficReceived": "受信済み",
+        "showingLogsSince": "特定の日付以降のログを表示",
+        "logsFormat": "ログ形式",
+        "logsFormatAnsi": "ANSI",
+        "logsFormatRaw": "Raw",
+        "networkAddresses": "ネットワーク アドレス",
+        "attributes": {
+          "host": "ホスト",
+          "createdDateLabel": "作成済み",
+          "ports": "ポート",
+          "command": "コマンド",
+          "ipaddress": "アドレス",
+          "image": "イメージ",
+          "id": "ID",
+          "restartCount": "再起動回数",
+          "memory": "メモリ",
+          "memorySwap": "メモリ スワップ",
+          "cpuShares": "CPU シェア",
+          "cpusetCpus": "CPU setCpus"
+        },
+        "operation": {
+          "pending": "進行中の処理",
+          "failure": "失敗した処理"
+        }
+      },
+      "request": {
+        "title": "コンテナのプロビジョニング",
+        "provision": "プロビジョニング",
+        "saveTemplate": "テンプレートとして保存",
+        "tabs": {
+          "basic": "基本",
+          "network": "ネットワーク",
+          "storage": "ストレージ",
+          "policy": "ポリシー",
+          "environment": "環境",
+          "health": "健全性設定",
+          "logconfig": "ログ設定"
+        },
+        "inputs": {
+          "image": "イメージ",
+          "imageTag": {
+            "searchHint": "タグの検索",
+            "loadingHint": "タグをロードしています..."
+          },
+          "name": "名前",
+          "group": "プロジェクト",
+          "commands": "コマンド",
+          "commandsDescription": "コンテナの開始時に実行するコマンド アレイ",
+          "commandsInputs": {
+            "command": "コマンド",
+            "commandHint": "例: /startup.sh"
+          },
+          "deploymentPolicy": "展開ポリシー",
+          "links": "リンク",
+          "linksDescription": "コンテナが依存している (テンプレート内の) サービスのリスト",
+          "linksInputs": {
+            "alias": "エイリアス",
+            "aliasHint": "例: db",
+            "service": "サービス"
+          },
+          "portBindings": "ポート バインド",
+          "portBindingsDescription": "公開されたコンテナ ポートと、それらがマッピングするホスト ポートのマップ",
+          "portBindingsInputs": {
+            "hostPort": "ホスト ポート",
+            "hostPortHint": "例: 9080",
+            "containerPort": "コンテナ ポート",
+            "containerPortHint": "例: 80"
+          },
+          "publishAll": "すべてのポートを公開",
+          "publishAllDescription": "イメージで公開されたすべてのポートを公開します。",
+          "hostname": "ホスト名",
+          "hostnameDescription": "コンテナに使用するホスト名",
+          "networkMode": "ネットワーク モード",
+          "networkModeDescription": "コンテナのネットワーク モードを設定します。",
+          "networkModeTypes": {
+            "none": "なし",
+            "bridge": "ブリッジ",
+            "host": "ホスト"
+          },
+          "networks": "ネットワーク",
+          "networksDescription": "ネットワーク モードに加えて、コンテナをこれらのネットワークに接続します。",
+          "networksInputs": {
+            "name": "名前",
+            "nameHint": "例: mynet",
+            "aliases": "エイリアス",
+            "aliasesHint": "例: my-service、my-other-service",
+            "ipv4": "IPv4",
+            "ipv4Hint": "例: 172.16.1.8",
+            "ipv6": "IPv6",
+            "ipv6Hint": "例: fe80::42:31ff:fecf:83e2"
+          },
+          "volumes": "ボリューム",
+          "volumesDescription": "コンテナ内のマウント ポイント パス。コンテナ フィールドは必須で、絶対パスにする必要があります。ホスト フィールドは、ボリューム名または絶対パスにする必要があります。",
+          "volumesInputs": {
+            "host": "ホスト",
+            "hostHint": "例: /host/project/path",
+            "container": "コンテナ",
+            "containerHint": "例: /container/project/path",
+            "readOnly": "読み取り専用"
+          },
+          "volumesFrom": "継承するボリューム",
+          "volumesFromDescription": "別のコンテナから継承するボリュームのリスト。",
+          "volumesFromInputs": {
+            "volume": "ボリューム",
+            "volumeHint": "例: datacontainer"
+          },
+          "workingDirectory": "作業ディレクトリ",
+          "workingDirectoryDescription": "コマンドの実行場所となる作業ディレクトリ",
+          "clusterSize": "クラスタのサイズ",
+          "clusterSizeDescription": "プロビジョニングするノードの数",
+          "restartPolicy": "再起動ポリシー",
+          "restartPolicyDescription": "終了する際の動作。常に再起動する場合は値を [常時] にし、コンテナの終了コードがゼロ以外の値の場合にのみ再起動する場合は [障害時] と設定します。[障害時] を使用する場合、[再起動の最大回数] を設定します。デフォルトは「再起動なし」です。",
+          "restartPolicyType": {
+            "always": "常時",
+            "onFailure": "障害時",
+            "none": "なし"
+          },
+          "maxRestarts": "再起動の最大回数",
+          "maxRestartsDescription": "コンテナ障害時の再起動回数の最大値",
+          "cpuShares": "CPU シェア",
+          "cpuSharesDescription": "コンテナの CPU シェア (他のコンテナと比較した相対的な重み付け) が含まれる整数値",
+          "memoryLimit": "メモリ制限",
+          "memoryLimitDescription": "メモリ制限 (バイト単位)",
+          "memorySwapLimit": "メモリ スワップ制限",
+          "memorySwapLimitDescription": "メモリ制限の合計 (メモリとスワップを合算)。スワップを無効にするには -1 に設定します。これは、メモリに対して使用し、スワップの値をメモリよりも大きくする必要があります",
+          "affinityConstraints": "アフィニティ制約",
+          "affinityConstraintsDescription": "同じホストに展開されている、またはされていないコンテナの、アフィニティまたは非アフィニティの条件 ([!]serviceName[:soft|hard] の形式)。",
+          "affinityInputs": {
+            "antiaffinity": "非アフィニティ",
+            "servicename": "サービス名",
+            "servicenameHint": "例: webserver",
+            "constraint": "制約"
+          },
+          "environmentVariables": "環境変数",
+          "environmentVariablesDescription": "環境変数のリスト",
+          "environmentVariablesInputs": {
+            "name": "名前",
+            "nameHint": "例: PROJECT_HOME",
+            "value": "値",
+            "valueHint": "例: /var/lib/project"
+          },
+          "customProperties": "カスタム プロパティ",
+          "customPropertiesDescription": "[カスタム プロパティ] では、プロビジョニング対象となるコンテナに属性を追加できます。",
+          "healthMode": "モード",
+          "healthConfigNone": "なし",
+          "healthConfigTCP": "TCP 接続",
+          "healthConfigHTTP": "HTTP",
+          "healthConfigCommand": "コマンド",
+          "healthPath": "URL パス",
+          "healthPathDescription": "健全性チェックに使用する API への URL パス",
+          "healthPort": "ポート",
+          "healthPortDescription": "使用するコンテナ ポート",
+          "healthTimeout": "タイムアウト (ミリ秒)",
+          "healthTimeoutDescription": "健全性チェックのタイムアウト (ミリ秒)",
+          "healthyThreshold": "良好状態のしきい値",
+          "healthyThresholdDescription": "健全性チェックの成功回数のしきい値。これにより、コンテナの健全性が良好と見なされます。",
+          "unhealthyThreshold": "不良状態のしきい値",
+          "unhealthyThresholdDescription": "健全性チェックの失敗回数のしきい値。これにより、コンテナの健全性が不良と見なされます。",
+          "command": "コマンド",
+          "commandDescription": "のコンテナで実行するコマンド。コンテナの健全性が識別には、終了ステータスが使用されます。",
+          "logConfigDriver": "ドライバ",
+          "logConfigDriverDescription": "コンテナのログ ドライバ",
+          "logConfigDriverTypes": {
+            "none": "なし",
+            "bridge": "ブリッジ",
+            "host": "ホスト"
+          },
+          "logConfigOptions": "オプション",
+          "logConfigOptionsDescription": "各ログ ドライバでサポートされるオプション",
+          "logConfigOptionsInputs" : {
+            "name": "名前",
+            "nameHint": "例: max-size",
+            "value": "値",
+            "valueHint": "例: 10m"
+           }
+        }
+      },
+      "state": {
+        "RUNNING": "実行中",
+        "STOPPED": "停止",
+        "REBOOTING": "再起動中",
+        "PAUSED": "一時停止中",
+        "ERROR": "エラー",
+        "UNKNOWN": "不明",
+        "RETIRED": "使用中止",
+        "PROVISIONING": "プロビジョニング",
+        "continuousStateSince": "__state__ for __duration__"
+      },
+      "actions": {
+        "start": "開始",
+        "reboot": "再起動",
+        "stop": "停止",
+        "remove": "削除",
+        "clone": "クローン作成",
+        "details": "詳細",
+        "terminal": "ターミナル",
+        "manage": "管理",
+        "createTemplate": "テンプレートの作成",
+        "openTemplate": "テンプレートを開く"
+      }
+    },
+    "request": {
+      "title": "申請",
+      "contextPanelTooltip": "申請",
+      "tabs": {
+        "all": "すべて",
+        "running": "実行中",
+        "failed": "失敗"
+      },
+      "actions": {
+        "details": {
+          "show": "詳細",
+          "hide": "詳細を隠す"
+        },
+        "open": "オープン"
+      }
+    },
+    "closure": {
+      "title": "すべてのクロージャ",
+      "titleSearch": "見つかったクロージャ",
+      "searchPlaceholder": "クロージャの検索",
+      "placementZone": "リソース プール",
+      "resultStatus": "結果のステータス",
+      "details": {
+        "name": "名前",
+        "description": "説明",
+        "runtime" : "ランタイム",
+        "state": "状態",
+        "id": "ID",
+        "inputs": "入力",
+        "outputs": "出力",
+        "errorMsg": "エラー",
+        "closureTitle": "クロージャの実行情報",
+        "closureDescriptionTitle": "クロージャの説明",
+        "descriptionId": "ID",
+        "source": "ソース",
+        "sourceURL": "ソース URL",
+        "resources": "リソース"
+      },
+      "state": {
+        "CREATED": "作成済み",
+        "STARTED": "開始済み",
+        "FINISHED": "終了",
+        "FAILED": "失敗",
+        "CANCELLED": "キャンセル済み"
+      },
+      "list" : {
+        "name": "クロージャ",
+        "closuresCountLabel": "クロージャ",
+        "closureRunsLabel": "クロージャの実行",
+        "memory": "メモリ:",
+        "timeout": "タイムアウト:"
+      },
+      "request": {
+        "title": "クロージャの定義",
+        "save": "保存",
+        "run": "実行",
+        "inputs": {
+          "name": "名前",
+          "description": "説明",
+          "runtime": "ランタイム",
+          "source": "ソース コード",
+          "sourceURL": "ソース URL",
+          "runtimeTypes": {
+            "nodejs": "Node.js 4.3.0",
+            "python": "Python 3.4.3"
+          },
+          "logConfigOptionsInputs" : {
+            "name": "名前",
+            "nameHint": "例: max-size",
+            "value": "値",
+            "valueHint": "例: 10m"
+           },
+           "closureInputs" : {
+            "name": "名前",
+            "nameHint": "例: a",
+            "value": "値",
+            "valueHint": "例: 1"
+           },
+           "closureOutputs" : {
+            "name": "名前",
+            "nameHint": "例: result"
+           },
+          "memoryLimit": "メモリ制限 (MB)",
+          "timeout": "タイムアウト (秒)",
+          "entrypoint": "エントリポイント ハンドラ",
+          "logConfigDriver": "ログ ドライバ",
+          "logConfigOptions": "ログ オプション",
+          "sourceMode": "モード",
+          "sourceProvided": "指定されたソース",
+          "sourceFromURL": "ソースの URL",
+          "inputs": "入力",
+          "outputs": "出力",
+          "dependencies": "依存関係",
+          "nameDescription": "クロージャの名前。エントリポイントが設定されていない場合は、呼び出しのための関数名として名前が使用されます。",
+          "descriptionDescription": "クロージャの説明",
+          "sourceDescription": "実行するソース コード",
+          "sourceURLDescription": "URL からアクセス可能なソース コード。内容はコード自体、または zip ファイルの場合があります。ソース URL を使用する場合、フィールド ソース コードは使用されません。",
+          "memoryLimitDescription": "メモリ制限 (MB)。指定できる最大値は 1536 MB です。",
+          "timeoutDescription": "実行タイムアウト (秒)。実行がタイムアウトを超過すると、タスクの実行はキャンセルされます。",
+          "entrypointDescription": "呼び出されるメインの関数 (file_name.function_name の形式)。",
+          "logDriverDescription": "クロージャ タスクのログ ドライバ",
+          "logConfigOptionsDescription": "各ログ ドライバでサポートされるオプション",
+          "dependenciesDescription": "コードを実行する前に配置する依存関係歩いs",
+          "inputDescription": "コードの実行時に使用する入力。この入力は、プリミティブ オブジェクトまたは有効な JSON オブジェクトである必要があります。",
+          "outputDescription": "結果を入力する際に使用する出力パラメータ名。"
+        },
+        "logs": {
+          "title": "ログ"
+        },
+        "tabs": {
+          "definition": "定義",
+          "code": "コード",
+          "config": "構成"
+        }
+      },
+      "monitoredTask": {
+        "runStatus": "実行ステータス",
+        "runId": "実行 ID:",
+        "runState": "状態:",
+        "outputs": "出力"
+      }
+    },
+    "help": {
+        "link": "ヘルプ",
+        "description": "Ensemble を使用すると、現在実行中のタスクのコンテキストに関連する情報にアクセスできます。情報は作業の進行に合わせて自動的に更新されます。その際は相互参照が表示され、別画面を開いたり、画面を分割して、リアルタイムに情報を参照できます。モバイル デバイス、テレビなどの画面は、コンピュータに接続しているかどうかに関係なく使用できます。Ensemble は信頼されたネットワークの外で使用することが可能で、そのような環境でも更新情報をすばやく受信できます。",
+        "descriptionOpen": "Ensemble を開くには、<strong>[新しいタブで開く]</strong> をクリックするか、モバイル デバイスから QR コードをスキャンします。"
+      },
+      "resources": {
+        "selectMultiple": "アイテムの選択",
+        "message": {
+          "selectShift": "複数のアイテムを選択するには、Shift キーを使用します"
+        }
+      }
+    },
+    "loginPanel": {
+      "login": "ログイン",
+      "logout": "ログアウト",
+      "username": "ユーザー名",
+      "password": "パスワード",
+      "success": "認証に成功しました",
+      "failure": "認証エラー"
+    },
+    "dropdownSearchMenu": {
+      "title": "__entity__ リストから選択します",
+      "searchPlaceholder": "__entity__ の検索",
+      "clear": "選択をクリア",
+      "showingCount": "__totalCount__ 個中 __count__ 個を表示しています",
+      "noResults": "アイテムが見つかりませんでした"
+    },
+    "customProperties": {
+      "name": "名前",
+      "nameHint": "例: speedchecker",
+      "value": "値",
+      "valueHint": "例: slow"
+    },
+    "yes": "はい",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "enable": "有効化",
+    "enabled": "有効",
+    "disable": "無効化",
+    "disabled": "無効",
+    "close": "閉じる",
+    "edit": "編集",
+    "remove": "削除",
+    "add": "追加",
+    "save": "保存",
+    "back": "戻る",
+    "refresh": "更新",
+    "clear": "クリア",
+    "deleteAll": "すべて削除",
+    "pendingOperationCancel": "操作:",
+    "openInNewTab": "新しいタブで開く",
+    "unavailable": "N/A",
+    "advanced": "詳細",
+    "noSelection": "選択なし",
+    "buildNumber": "ビルド番号",
+    "errors": {
+      "hostIp": "値はホスト名または IP アドレスである必要があります。",
+      "urlPath": "URL パスが無効です。",
+      "propertyNameRequired": "プロパティ名が必要です。",
+      "propertyContainerNameInvalid": "コンテナ名が無効です。許可される文字は、[a-zA-Z0-9][a-zA-Z0-9_.-] のみです。",
+      "propertyNamesNotUnique": "プロパティ名は一意である必要があります。",
+      "nonNegativeNumber": "値は、2147483648 より小さい正の整数にする必要があります。",
+      "positiveNumber": "値は、2147483648 より小さい正の整数にする必要があります。",
+      "nonNegativeNumberAndMinusOne": "値は -1 ～ 2147483647 の整数にする必要があります。",
+      "portNumber": "ポート番号が無効です。有効なポート番号は、0 ～ 65535 の範囲です。",
+      "containerMemory": "メモリは、0 (リミットなし) または 4194304 バイト (4 MB) 以上にする必要があります。",
+      "required": "値を入力してください。",
+      "requiredAll": "すべてのフィールドは必須です。",
+      "serviceNameRequired": "サービス名が必要です。",
+      "networkRequired": "ネットワークが必要です。",
+      "itemNotFound": "アイテムが見つかりませんでした。",
+      "networkExists": "テンプレート内にネットワークがあります。",
+      "volumeDestinationRequired": "ボリュームのターゲットが必要です。",
+      "invalidInputValue": "入力値が無効です",
+      "invalidPath": "値は絶対パスにする必要があります。",
+      "invalidPathOrName": "値は、絶対パスまたは有効なボリューム名にする必要があります。"
+    },
+    "infoMessages": {
+      "created": "正常に作成されました。",
+      "updated": "正常に更新されました。"
+    },
+    "occurrence": {
+      "all": "すべてに一致",
+      "any": "いずれかに一致"
+    },
+    "state": {
+      "ON": "オン",
+      "OFF": "オフ",
+      "SUSPEND": "無効",
+      "UNKNOWN": "不明",
+      "stateSinceMessage": "__date__ 以降"
+    }
+}

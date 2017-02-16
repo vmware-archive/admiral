@@ -1,0 +1,1047 @@
+{
+  "app": {
+    "homepage": {
+      "welcome": "Benvenuto",
+      "description": "In questa pagina è possibile <b>creare, effettuare il provisioning, gestire e monitorare le applicazioni del contenitore.</b>",
+      "start": "Inizia subito.",
+      "addHost": "Aggiungi un host",
+      "enter": "Immetti",
+      "helpCenter": "Guida",
+      "steps": {
+        "description": "La creazione di un'applicazione è semplicissima",
+        "addHost": "Aggiunta di un host",
+        "findImage": "Individuazione di un'immagine",
+        "designApplication": "Progettazione di un'applicazione"
+      }
+    },
+    "navbar": {
+      "hosts": "Host",
+      "placements": "Posizionamenti",
+      "templates": "Modelli",
+      "resources": "Risorse",
+      "containers": "Contenitori",
+      "applications": "Applicazioni",
+      "networks": "Reti",
+      "closures": "Chiusure",
+      "eventlog": "Registro eventi",
+      "placementZones": "Zone di posizionamento",
+      "environments": "Ambienti",
+      "endpoints": "Endpoint",
+      "machines": "Macchine",
+      "compute": "Elaborazione"
+    },
+    "host": {
+      "entity": "host",
+      "details": {
+        "title": {
+          "add": "Aggiungi host",
+          "create": "Crea host",
+          "edit": "Modifica host"
+        },
+        "address": "Indirizzo",
+        "addressPlaceholder": "Esempio: https://hostname:2376",
+        "addressHint": "Specificare lo schema e la porta appropriati, ad esempio https://myhost.com:2376. Schema predefinito: 'https'. Porte predefinite: https/443, http/80.",
+        "hostAlias": "Nome",
+        "hostAddress": "Indirizzo",
+        "placementZone": "Zona di posizionamento",
+        "credential": "Credenziali di login",
+        "guestCredential": "Credenziali guest",
+        "destination": "Destinazione",
+        "destinationPlaceholder": "Cerca destinazione",
+        "deploymentPolicy": "Criterio di distribuzione",
+        "tags": "Tag",
+        "tagsPlaceholder": "Esempio: posizione:ovest",
+        "tagsHint": "Consente di immettere i tag chiave:valore",
+        "autoConfigure": "Configurazione automatica",
+        "autoConfigureInput":"Attiva configurazione automatica host",
+        "autoConfigureHint": "L'host verrà configurato automaticamente",
+        "reservationPolicy": "Criterio di prenotazione",
+        "endpoint": "Endpoint",
+        "connectionType": "Tipo di connessione",
+        "connectionTypeShort": "Connessione",
+        "customProperties": "Proprietà personalizzate",
+        "verify": "Verifica",
+        "verified": "Verifica completata.",
+        "add": "Aggiungi",
+        "update": "Aggiorna",
+        "create": "Crea",
+        "certificateWarning": "Il certificato per __address__ non è valido. È possibile che sia in corso la connessione a un sito Web che finge di essere __address__. Ciò potrebbe mettere a rischio le informazioni riservate dell'utente. Connettersi comunque al sito Web?",
+        "showCertificate": "Mostra certificato",
+        "hideCertificate": "Nascondi certificato",
+        "manageCertificates": "Gestisci certificati",
+        "containers": "Contenitori",
+        "cpu": "CPU",
+        "memory": "Memoria",
+        "storage": "Storage",
+        "providerType": "Tipo di cloud",
+        "regionId": "ID regione",
+        "name": "Nome",
+        "namePlaceholder": "Esempio: nome-host",
+        "instanceType": "Tipo di istanza",
+        "imageType": "Sistema operativo",
+        "port": "Porta",
+        "clusterSize": "Conteggio istanze"
+      },
+      "list": {
+        "title": "Host",
+        "titleSearch": "Host trovati",
+        "searchPlaceholder": "Cerca host",
+        "dataCollect": "Raccolta dati",
+        "dataCollectStart": "Attivazione della raccolta di dati. Potrebbero essere necessari alcuni minuti per completare l'operazione.",
+        "dataCollectEnd": "La raccolta di dati è terminata."
+      },
+      "actions": {
+        "start": "Avvia",
+        "stop": "Interrompi",
+        "edit": "Modifica",
+        "enable": "Attiva",
+        "disable": "Disattiva",
+        "remove": "Rimuovi"
+      }
+    },
+    "placementZone": {
+      "createNew": "Nuova zona di posizionamento",
+      "manage": "Gestisci zone di posizionamento",
+      "entity": "zona di posizionamento",
+      "list": {
+        "title": "Zone di posizionamento",
+        "addButton": "Aggiungi",
+        "nameColumn": "Nome",
+        "cpuColumn": "CPU",
+        "memoryColumn": "Memoria",
+        "storageColumn": "Storage",
+        "hostsColumn": "Host"
+      },
+      "edit": {
+        "createNew": "Nuova zona di posizionamento",
+        "update": "Modifica zona di posizionamento",
+        "nameTitle": "Nome zona di posizionamento",
+        "endpointTitle": "Endpoint",
+        "dynamicTitle": "Alloca risorse a questa zona in modo dinamico",
+        "tagsToMatchTitle": "Tag di cui trovare la corrispondenza",
+        "tagsToMatchHint": "Immettere i tag chiave:valore di cui trovare la corrispondenza",
+        "tagsToMatchPlaceholder": "Esempio: posizione:ovest"
+      },
+      "contextPanelTooltip": "Zone di posizionamento"
+    },
+    "businessGroup": {
+      "entity": "gruppo di business"
+    },
+    "group": {
+      "createNew": "Nuovo progetto",
+      "manage": "Gestisci progetti",
+      "entity": "progetto",
+      "contextPanelTooltip": "Progetti",
+      "list": {
+        "title": "Progetto",
+        "addButton": "Aggiungi",
+        "nameColumn": "Nome",
+        "details": {
+          "title": "Dettagli progetto"
+        }
+      },
+      "edit": {
+        "createNew": "Nuovo progetto",
+        "update": "Modifica progetto",
+        "nameTitle": "Nome progetto"
+      }
+    },
+    "credential": {
+      "createNew": "Nuove credenziali",
+      "manage": "Gestisci credenziali",
+      "entity": "credenziali",
+      "contextPanelTooltip": "Credenziali",
+      "list": {
+        "title": "Credenziali",
+        "addButton": "Aggiungi",
+        "nameColumn": "Nome",
+        "typeColumn": "Tipo",
+        "credentialsColumn": "Credenziali"
+      },
+      "edit": {
+        "createNew": "Nuove credenziali",
+        "update": "Modifica credenziali",
+        "nameTitle": "Nome",
+        "usernamePasswordTitle": "Nome utente",
+        "usernameTitle": "Nome utente",
+        "passwordTitle": "Password",
+        "showPassword": "Mostra password",
+        "hidePassword": "Nascondi password",
+        "usePrivateKey": "Utilizza chiave privata",
+        "usePassword": "Utilizza password",
+        "certificateTitle": "Certificato",
+        "publicTitle": "Chiave pubblica",
+        "publicCertificateTitle": "Certificato pubblico",
+        "privateCertificateTitle": "Certificato privato"
+      }
+    },
+    "deploymentPolicy": {
+      "createNew": "Nuovo criterio di distribuzione",
+      "entity": "criterio di distribuzione",
+      "manage": "Gestisci criteri di distribuzione",
+      "contextPanelTooltip": "Criteri di distribuzione",
+      "list": {
+        "title": "Criteri di distribuzione",
+        "addButton": "Aggiungi",
+        "nameColumn": "Nome",
+        "descriptionColumn": "Descrizione",
+        "details": {
+          "title": "Dettagli criterio di distribuzione"
+        }
+      },
+      "edit": {
+        "createNew": "Nuovo criterio di distribuzione",
+        "update": "Modifica criterio di distribuzione",
+        "nameTitle": "Nome criterio di distribuzione",
+        "descriptionTitle": "Descrizione criterio di distribuzione"
+      }
+    },
+    "certificate": {
+      "createNew": "Nuovo certificato",
+      "manage": "Gestisci certificati",
+      "entity": "certificato",
+      "contextPanelTooltip": "Certificati",
+      "list": {
+        "title": "Certificati",
+        "addButton": "Aggiungi",
+        "nameColumn": "Nome",
+        "serialColumn": "Seriale",
+        "shaColumn": "SHA",
+        "expirationColumn": "Scadenza",
+        "details": {
+          "title": "Dettagli certificato",
+          "commonName": "Nome società",
+          "issuerName": "Nome autorità emittente",
+          "serial": "Seriale",
+          "fingerprint": "Impronta digitale SHA",
+          "validSince": "Valido da",
+          "validTo": "Valido fino a"
+        }
+      },
+      "edit": {
+        "createNew": "Nuovo certificato",
+        "update": "Modifica certificato",
+        "urlTitle": "Immetti URL",
+        "importOptionTitle": "Importa da URL",
+        "importOptionHint": "Anziché immettere il certificato manualmente, \"Importa da URL\" consente di immettere un URL. Il sistema importerà quindi il certificato dall'URL immesso.",
+        "importButton": "Importa",
+        "certificateTitle": "Immettere il certificato"
+      }
+    },
+    "template": {
+      "list": {
+        "title": "Modelli popolari",
+        "titleSearch": "Modelli trovati",
+        "searchImagesTemplatesPlaceholder": "Cerca immagini, modelli",
+        "searchImagesPlaceholder": "Cerca immagini",
+        "searchTemplatesPlaceholder": "Cerca modelli",
+        "searchClosuresPlaceholder": "Cerca chiusure",
+        "manageRegistry": "Gestisci registro",
+        "provision": "Provisioning",
+        "provisionAdditionalInfo": "Immettere le informazioni aggiuntive",
+        "editTemplate": "Modifica/Visualizza dettagli",
+        "official": "Ufficiali",
+        "trusted": "Attendibili",
+        "stars": "Preferiti",
+        "linksLabel": "Collegamenti",
+        "addLinkLabel": "Aggiungi collegamento",
+        "containers": "Seleziona contenitore da cui dipendere",
+        "alias": "Immettere il alias",
+        "true": "Sì",
+        "false": "No",
+        "searchCategoryFilterTitle": "Visualizza:",
+        "partialResultWarning": "I risultati di ricerca visualizzati non sono completi a causa di uno o più errori relativi alla query.",
+        "searchCategory": {
+          "all": "Tutto",
+          "images": "Immagini",
+          "templates": "Modelli",
+          "closures": "Chiusure"
+        }
+      },
+      "details": {
+        "create": "Crea modello",
+        "createNameHint": "Nome modello",
+        "createProceed": "Avanti",
+        "edit": "Modifica modello",
+        "newDefinition": {
+          "newLabel": "Aggiungi contenitore",
+          "title": "Aggiungi definizione contenitore",
+          "selectImage": "Seleziona immagine",
+          "imageListTitle": "Immagini popolari",
+          "imageListTitleSearch": "Immagini trovate",
+          "containerDefinitionInfo": "Informazioni definizione contenitore"
+        },
+        "editDefinition": {
+          "title": "Modifica definizione contenitore"
+        },
+        "editNetwork" :{
+          "newLabel": "Aggiungi rete",
+          "newTitle": "Aggiungi configurazione di rete",
+          "newDropdownTitle": "Aggiungi rete...",
+          "editTitle": "Modifica configurazione di rete",
+          "name": "Nome",
+          "existingNetwork": "Esistente",
+          "showingCount": "Visualizzazione di __count__ di __totalCount__",
+          "showingInstances": "istanze",
+          "noResults": "Nessuna rete trovata",
+          "hosts": "Host",
+          "hostsSearchPlaceholder": "Cerca host",
+          "create": "Crea",
+          "createTitle": "Crea rete",
+          "ipamConfig": "Configurazione IPAM",
+          "ipamConfigSubnet": "Subnet",
+          "ipamConfigSubnetHint": "Esempio: 172.16.238.0/24",
+          "ipamConfigIPRange": "Intervallo IP",
+          "ipamConfigIPRangeHint": "Esempio: 172.28.5.0/24",
+          "ipamConfigGateway": "Gateway",
+          "ipamConfigGatewayHint": "Esempio: 172.16.238.1",
+          "customProperties": "Proprietà personalizzate"
+        },
+        "editClosures" :{
+          "newTitle": "Aggiungi chiusura",
+          "editTitle": "Modifica chiusura",
+          "name": "Nome"
+        },
+        "network": {
+          "drag": "Trascinare per collegare il contenitore a questa rete",
+          "drop": "Rilasciare per collegare il contenitore a questa rete"
+        }
+      },
+      "actions": {
+        "edit": "Modifica",
+        "provision": "Provisioning",
+        "publish": "Push",
+        "export": "Esporta",
+        "import": "Importa",
+        "remove": "Rimuovi"
+      },
+      "publish": {
+        "tooltip": "Consente di effettuare il push nel blueprint",
+        "success": "Push completato",
+        "fail": "Errore durante il push del modello nel blueprint"
+      },
+      "import": {
+        "title": "Importa modello",
+        "loadButton": "Carica da file",
+        "importTemplateTooltip": "Consente di importare il modello o Docker Compose",
+        "importTemplateHint": "Consente di importare un modello o un file di Docker Compose oppure di immetterne manualmente il contenuto.",
+        "contentPlaceholder": "Immettere il modello o Docker Compose...",
+        "importButton": "Importa"
+      },
+      "export": {
+        "formatPromptMessage": "Selezionare il formato in cui esportare il modello:",
+        "format": {
+          "compositeBlueprint": "Blueprint YAML",
+          "dockerCompose": "Docker Compose"
+        }
+      }
+    },
+    "placement": {
+      "list": {
+        "title": "Posizionamenti",
+        "addButton": "Aggiungi",
+        "nameColumn": "Nome",
+        "groupColumn": "Progetto",
+        "businessGroupColumn": "Gruppo di business",
+        "placementZoneColumn": "Zona di posizionamento",
+        "deploymentPolicyColumn": "Criterio di distribuzione",
+        "priorityColumn": "Priorità",
+        "instancesColumn": "Istanze",
+        "cpuColumn": "Quantità CPU",
+        "memoryColumn": "Limite di memoria",
+        "storageColumn": "Limite di storage",
+        "instancesPerPlacement": "Mostra istanze per posizionamento",
+        "unlimitedInstances": "Illimitate"
+      },
+      "edit": {
+        "createNew": "Nuovo posizionamento",
+        "update": "Modifica posizionamento",
+        "nameLabel": "Nome",
+        "groupLabel": "Progetto",
+        "selectGroup": "Seleziona progetto",
+        "businessGroupLabel": "Gruppo di business",
+        "selectBusinessGroup": "Seleziona gruppo di business",
+        "placementZoneLabel": "Zona di posizionamento",
+        "selectPlacementZone": "Seleziona zona di posizionamento",
+        "deploymentPolicyLabel": "Criterio di distribuzione",
+        "selectDeploymentPolicy": "Seleziona criterio di distribuzione",
+        "priorityLabel": "Priorità",
+        "priorityPlaceholder": "Numero positivo (facoltativo)",
+        "priorityHint": "Lasciare questo campo vuoto per assegnare la priorità più bassa",
+        "instancesLabel": "Istanze",
+        "instancesPlaceholder": "Numero di istanze (facoltativo)",
+        "instancesHint": "Numero intero positivo per limitare il numero massimo di istanze consentite. Lasciare questo campo vuoto o immettere 0 per impostare un numero illimitato.",
+        "cpuSharesLabel": "Quantità CPU",
+        "memoryLimitLabel": "Limite di memoria",
+        "storageLimitLabel": "Limite di storage"
+      }
+    },
+    "eventlog": {
+      "title": "Eventi",
+      "tabs": {
+        "all": "Tutti",
+        "warnings": "Avvisi",
+        "errors": "Errori"
+      },
+      "contextPanelTooltip": "Registro eventi"
+    },
+    "registry": {
+      "list": {
+        "title": "Registri esistenti",
+        "addButton": "Aggiungi",
+        "addressColumn": "Indirizzo",
+        "nameColumn": "Nome",
+        "statusColumn": "Stato"
+      },
+      "edit": {
+        "createNew": "Nuovo registro",
+        "update": "Modifica registro",
+        "addressTitle": "Indirizzo",
+        "addressHint": "Specificare lo schema e la porta appropriati, ad esempio https://myregistry.com:5000. Schema predefinito: 'https'. Porte predefinite: https/443, http/80.",
+        "insecureRegistryHint": "Rilevato registro http normale: assicurarsi che sia possibile connettersi agli host e che la loro configurazione sia corretta. <a target=\"_blank\" href=\"https://docs.docker.com/registry/insecure/#/deploying-a-plain-http-registry\">Ulteriori informazioni</a>",
+        "nameTitle": "Nome",
+        "credentialTitle": "Credenziali di login",
+        "verifyButton": "Verifica",
+        "verified": "Verifica completata."
+      }
+    },
+    "environment": {
+      "list": {
+        "title": "Ambienti",
+        "titleSearch": "Ambienti trovati",
+        "searchPlaceholder": "Cerca ambienti",
+        "addButton": "Aggiungi ambiente",
+        "addPropertyButton": "Aggiungi proprietà",
+        "nameColumn": "Nome",
+        "endpointTypeColumn": "Tipo di endpoint",
+        "propertiesColumn": "Proprietà",
+        "mappingsColumn": "Mappature"
+      },
+      "details": {
+        "endpoint": "Endpoint"
+      },
+      "actions": {
+        "edit": "Modifica",
+        "remove": "Rimuovi"
+      },
+      "edit": {
+        "addTitle": "Aggiungi ambiente",
+        "editTitle": "Modifica ambiente",
+        "save": "Salva",
+        "basicTab": "Di base",
+        "computeTab": "Elaborazione",
+        "networkTab": "Rete",
+        "storageTab": "Storage",
+        "nameLabel": "Nome",
+        "tagsLabel": "Tag",
+        "endpointLabel": "Endpoint",
+        "valueLabel": "Valore",
+        "instanceTypeLabel": "Tipo di istanza",
+        "imageTypeLabel": "Tipo di immagine",
+        "bootDiskPropertyLabel": "Proprietà disco di avvio",
+        "cpuCountLabel": "CPU",
+        "diskSizeMbLabel": "Dimensione disco",
+        "memoryMbLabel": "Memoria"
+      },
+      "instanceType": {
+        "aws": {
+          "small": "Piccolo (1 CPU, 1 GB di memoria)",
+          "medium": "Medio (1 CPU, 2 GB di memoria)",
+          "large": "Grande (2 CPU, 8 GB di memoria)",
+          "xlarge": "Molto grande (4 CPU, 16 GB di memoria)"
+        },
+        "azure": {
+          "small": "Piccolo (1 CPU, 0,75 GB di memoria)",
+          "medium": "Medio (1 CPU, 1,75 GB di memoria)",
+          "large": "Grande (2 CPU, 3,50 GB di memoria)",
+          "xlarge": "Molto grande (4 CPU, 14 GB di memoria)"
+        },
+        "vsphere": {
+          "small": "Piccolo (1 CPU, 1 GB di memoria)",
+          "medium": "Medio (1 CPU, 2 GB di memoria)",
+          "large": "Grande (2 CPU, 8 GB di memoria)",
+          "xlarge": "Molto grande (4 CPU, 16 GB di memoria)"
+        },
+        "nimbus": {
+          "small": "Piccolo (1 CPU, 1 GB di memoria)"
+        }
+      },
+      "imageType": {
+        "coreos": "Sistema operativo di base",
+        "photon": "Photon OS",
+        "ubuntu-1604": "Ubuntu"
+      }
+    },
+    "endpoint": {
+      "list": {
+        "title": "Endpoint",
+        "addButton": "Aggiungi",
+        "nameColumn": "Nome",
+        "typeColumn": "Tipo"
+      },
+      "edit": {
+        "addNew": "Nuovo endpoint",
+        "update": "Modifica endpoint",
+        "nameLabel": "Nome",
+        "typeLabel": "Tipo",
+        "accessKeyIdLabel": "ID chiave di accesso",
+        "usernameLabel": "Nome utente",
+        "passwordLabel": "Password",
+        "secretAccessKeyLabel": "Chiave di accesso segreta",
+        "regionIdLabel": "ID regione",
+        "endpointHostLabel": "Nome host o IP",
+        "subscriptionIdLabel": "ID sottoscrizione",
+        "tenantIdLabel": "ID tenant",
+        "datacenterIdLabel": "Nome data center"
+      },
+      "entity": "endpoint",
+      "typeEntity": "tipo",
+      "createNew": "Nuovo endpoint",
+      "manage": "Gestisci endpoint",
+      "contextPanelTooltip": "Endpoint"
+    },
+    "machine": {
+      "list": {
+        "title": "Macchine",
+        "titleSearch": "Macchine trovate",
+        "searchPlaceholder": "Cerca macchine"
+      }
+    },
+    "compute": {
+      "entity": "destinazione",
+      "list": {
+        "title": "Elaborazione",
+        "titleSearch": "Elaborazione trovata",
+        "searchPlaceholder": "Cerca elaborazione"
+      },
+      "details": {
+        "type": "Tipo"
+      },
+      "edit": {
+        "title": "Modifica elaborazione"
+      }
+    },
+    "resource": {
+      "list": {
+        "network": {
+          "name": "Rete",
+          "connectedDateLabel": "Data connessione",
+          "networkDriverLabel": "Driver di rete",
+          "ipamDriverLabel": "Driver IPAM",
+          "subnetLabel": "Subnet",
+          "gatewayLabel": "Gateway",
+          "ipRangeLabel": "Intervallo IP",
+          "connectedContainers": "Contenitori",
+          "parentHosts": "Host",
+          "external": "Esterna",
+          "create": "Crea rete",
+          "state": {
+            "UNKNOWN": "SCONOSCIUTA",
+            "PROVISIONING": "PROVISIONING",
+            "CONNECTED": "CONNESSA",
+            "RETIRED": "RITIRATA",
+            "ERROR": "ERRORE"
+          },
+          "operations": {
+            "errors": {
+              "remove": {
+                "containersConnected": "Esistono contenitori connessi"
+              }
+            }
+          }
+        },
+        "container": {
+          "create": "Crea contenitore",
+          "operations": {
+            "errors": {
+              "managedByCatalog": "Gestito dal catalogo"
+            }
+          }
+        },
+        "application": {
+          "create": "Crea applicazione"
+        },
+        "closure": {
+          "create": "Crea chiusura"
+        },
+        "titleSearch": {
+          "containers": "Contenitori",
+          "applications": "Applicazioni",
+          "networks": "Reti",
+          "closures": "Chiusure"
+        },
+        "searchPlaceholder": {
+          "containers": "Cerca contenitori",
+          "applications": "Cerca applicazioni",
+          "networks": "Cerca reti",
+          "closures": "Cerca chiusure"
+        },
+        "searchCategory": {
+          "networks": "Reti"
+        },
+        "relations": {
+          "hosts": "Host",
+          "containers": "Contenitori",
+          "applications": "Applicazioni",
+          "networks": "Reti",
+          "volumes": "Volumi"
+        }
+      }
+    },
+    "container": {
+      "list": {
+        "title": "Elementi",
+        "titleSearchContainers": "Contenitori trovati",
+        "titleSearchApplications": "Applicazioni trovate",
+        "searchPlaceholder": "Cerca contenitori",
+        "createContainer": "Crea contenitore",
+        "hostLabel": "Host",
+        "createdDateLabel": "Data creazione",
+        "portsLabel": "Porte",
+        "commandLabel": "Comando",
+        "logLabel": "Registro",
+        "cluster": {
+          "name": "Cluster",
+          "sizeLabel": "Dimensioni cluster",
+          "scaleLabel": "Scala"
+        },
+        "composite": {
+          "name": "Applicazione",
+          "servicesCountLabel": "Servizi",
+          "containersCountLabel": "Contenitori",
+          "networksCountLabel": "Reti",
+          "volumesCountLabel": "Volumi",
+          "childContainersLabel": "Contenitori figlio"
+        },
+        "searchCategoryFilterTitle": "Visualizza:",
+        "searchCategory": {
+          "all": "Tutto",
+          "containers": "Contenitori",
+          "applications": "Applicazioni"
+        }
+      },
+      "details": {
+        "usages": "Utilizzi",
+        "properties": "Proprietà",
+        "webview": "Visualizzazione Web",
+        "logs": "Registri",
+        "cpu": "CPU",
+        "memory": "Memoria",
+        "network": "Rete",
+        "networkTrafficSent": "Inviato",
+        "networkTrafficReceived": "Ricevuto",
+        "showingLogsSince": "Visualizzazione di registri da",
+        "logsFormat": "Formato registri",
+        "logsFormatAnsi": "ANSI",
+        "logsFormatRaw": "Non elaborato",
+        "networkAddresses": "Indirizzi di rete",
+        "attributes": {
+          "host": "Host",
+          "createdDateLabel": "Data creazione",
+          "ports": "Porte",
+          "command": "Comando",
+          "ipaddress": "Indirizzo",
+          "image": "Immagine",
+          "id": "ID",
+          "restartCount": "Conteggio riavvii",
+          "memory": "Memoria",
+          "memorySwap": "Scambio di memoria",
+          "cpuShares": "Quantità CPU",
+          "cpusetCpus": "Cpu setCpus"
+        },
+        "operation": {
+          "pending": "Operazione in corso",
+          "failure": "Operazione non riuscita"
+        }
+      },
+      "request": {
+        "title": "Provisioning di un contenitore",
+        "provision": "Provisioning",
+        "saveTemplate": "Salva come modello",
+        "tabs": {
+          "basic": "Di base",
+          "network": "Rete",
+          "storage": "Storage",
+          "policy": "Criterio",
+          "environment": "Ambiente",
+          "health": "Configurazione integrità",
+          "logconfig": "Configurazione registro"
+        },
+        "inputs": {
+          "image": "Immagine",
+          "imageTag": {
+            "searchHint": "Consente di cercare tag",
+            "loadingHint": "Caricamento dei tag in corso..."
+          },
+          "name": "Nome",
+          "group": "Progetto",
+          "commands": "Comando",
+          "commandsDescription": "Array del comando da eseguire all'avvio del contenitore",
+          "commandsInputs": {
+            "command": "Comando",
+            "commandHint": "Esempio: /startup.sh"
+          },
+          "deploymentPolicy": "Criterio di distribuzione",
+          "links": "Collegamenti",
+          "linksDescription": "Elenco di servizi (in un modello) da cui il contenitore dipende",
+          "linksInputs": {
+            "alias": "Alias",
+            "aliasHint": "Esempio: db",
+            "service": "Servizio"
+          },
+          "portBindings": "Binding porte",
+          "portBindingsDescription": "Mappa delle porte esposte del contenitore e la porta host a cui devono essere mappate",
+          "portBindingsInputs": {
+            "hostPort": "Porta host",
+            "hostPortHint": "Esempio: 9080",
+            "containerPort": "Porta contenitore",
+            "containerPortHint": "Esempio: 80"
+          },
+          "publishAll": "Pubblica tutte le porte",
+          "publishAllDescription": "Consente di pubblicare tutte le porte esposte dall'immagine.",
+          "hostname": "Nome host",
+          "hostnameDescription": "Nome host da utilizzare per il contenitore",
+          "networkMode": "Modalità di rete",
+          "networkModeDescription": "Consente di impostare la modalità di rete per il contenitore.",
+          "networkModeTypes": {
+            "none": "Nessuna",
+            "bridge": "Bridge",
+            "host": "Host"
+          },
+          "networks": "Reti",
+          "networksDescription": "Consente di connettere il contenitore a queste reti (oltre alla modalità di rete).",
+          "networksInputs": {
+            "name": "Nome",
+            "nameHint": "Esempio: rete personale",
+            "aliases": "Alias",
+            "aliasesHint": "Esempio: servizio-personale, altro-servizio-personale",
+            "ipv4": "IPv4",
+            "ipv4Hint": "Esempio: 172.16.1.8",
+            "ipv6": "IPv6",
+            "ipv6Hint": "Esempio: fe80::42:31ff:fecf:83e2"
+          },
+          "volumes": "Volumi",
+          "volumesDescription": "Percorsi dei punti di montaggio nel contenitore. Il campo Contenitore è obbligatorio e deve contenere un percorso assoluto. Il campo Host deve contenere il nome di un volume o un percorso assoluto.",
+          "volumesInputs": {
+            "host": "Host",
+            "hostHint": "Esempio: /host/progetto/percorso",
+            "container": "Contenitore",
+            "containerHint": "Esempio: /contenitore/progetto/percorso",
+            "readOnly": "Sola lettura"
+          },
+          "volumesFrom": "Volumi da",
+          "volumesFromDescription": "Elenco di volumi da ereditare da un altro contenitore.",
+          "volumesFromInputs": {
+            "volume": "Volume",
+            "volumeHint": "Esempio: contenitore dati"
+          },
+          "workingDirectory": "Directory di lavoro",
+          "workingDirectoryDescription": "Directory di lavoro in cui eseguire i comandi",
+          "clusterSize": "Dimensioni cluster",
+          "clusterSizeDescription": "Numero di nodi di cui effettuare il provisioning",
+          "restartPolicy": "Criterio di riavvio",
+          "restartPolicyDescription": "Comportamento da applicare quando si esce dal contenitore. Il valore \"Sempre\" consente di effettuare sempre il riavvio, mentre il valore \"In caso di errore\" consente di eseguire il riavvio solo quando il codice di uscita del contenitore è diverso da zero. Se viene utilizzata l'opzione \"In caso di errore\", il numero massimo di riavvii controlla il numero di tentativi da effettuare prima di rinunciare. L'impostazione predefinita non prevede il riavvio",
+          "restartPolicyType": {
+            "always": "Sempre",
+            "onFailure": "In caso di errore",
+            "none": "Nessuno"
+          },
+          "maxRestarts": "Numero massimo riavvii",
+          "maxRestartsDescription": "Numero massimo di riavvii quando si verificano errori relativi al contenitore",
+          "cpuShares": "Quantità CPU",
+          "cpuSharesDescription": "Valore intero contenente le quantità di CPU del contenitore, ovvero il peso relativo rispetto ad altri contenitori",
+          "memoryLimit": "Limite di memoria",
+          "memoryLimitDescription": "Limite di memoria in byte",
+          "memorySwapLimit": "Limite scambio memoria",
+          "memorySwapLimitDescription": "Limite di memoria totale (memoria + scambio). Impostare -1 per disattivare lo scambio. Deve essere utilizzato con la memoria e il valore dello scambio deve essere superiore a quello della memoria.",
+          "affinityConstraints": "Vincoli di affinità",
+          "affinityConstraintsDescription": "Condizioni di affinità o anti-affinità dei contenitori distribuiti o non distribuiti nello stesso host. Formato: [!]nomeServizio[:soft|hard].",
+          "affinityInputs": {
+            "antiaffinity": "Anti-affinità",
+            "servicename": "Nome servizio",
+            "servicenameHint": "Esempio: server Web",
+            "constraint": "Vincolo"
+          },
+          "environmentVariables": "Variabili di ambiente",
+          "environmentVariablesDescription": "Elenco delle variabili di ambiente",
+          "environmentVariablesInputs": {
+            "name": "Nome",
+            "nameHint": "Esempio: HOME_PROGETTO",
+            "value": "Valore",
+            "valueHint": "Esempio: /var/lib/progetto"
+          },
+          "customProperties": "Proprietà personalizzate",
+          "customPropertiesDescription": "Le proprietà personalizzate consentono di aggiungere attributi ai contenitori di cui verrà eseguito il provisioning.",
+          "healthMode": "Modalità",
+          "healthConfigNone": "Nessuna",
+          "healthConfigTCP": "Connessione TCP",
+          "healthConfigHTTP": "HTTP",
+          "healthConfigCommand": "Comando",
+          "healthPath": "Percorso URL",
+          "healthPathDescription": "Percorso URL dell'API utilizzata per il controllo dell'integrità",
+          "healthPort": "Porta",
+          "healthPortDescription": "Porta del contenitore da utilizzare",
+          "healthTimeout": "Timeout (ms)",
+          "healthTimeoutDescription": "Timeout in ms per l'operazione di controllo dell'integrità",
+          "healthyThreshold": "Soglia di integrità",
+          "healthyThresholdDescription": "Soglia delle operazioni di controllo dell'integrità completate, necessaria affinché il contenitore venga considerato integro",
+          "unhealthyThreshold": "Soglia di non integrità",
+          "unhealthyThresholdDescription": "Soglia delle operazioni di controllo dell'integrità non riuscite, necessaria affinché il contenitore venga considerato non integro",
+          "command": "Comando",
+          "commandDescription": "Comando da eseguire nel contenitore. Lo stato di uscita viene utilizzato per determinare l'integrità del contenitore.",
+          "logConfigDriver": "Driver",
+          "logConfigDriverDescription": "Driver di registrazione per il contenitore",
+          "logConfigDriverTypes": {
+            "none": "Nessuno",
+            "bridge": "Bridge",
+            "host": "Host"
+          },
+          "logConfigOptions": "Opzioni",
+          "logConfigOptionsDescription": "Opzioni supportate per ciascun driver di registrazione",
+          "logConfigOptionsInputs" : {
+            "name": "Nome",
+            "nameHint": "Esempio: dimensione-massima",
+            "value": "Valore",
+            "valueHint": "Esempio: 10 m"
+           }
+        }
+      },
+      "state": {
+        "RUNNING": "IN ESECUZIONE",
+        "STOPPED": "INTERROTTO",
+        "REBOOTING": "RIAVVIO IN CORSO",
+        "PAUSED": "IN PAUSA",
+        "ERROR": "ERRORE",
+        "UNKNOWN": "SCONOSCIUTO",
+        "RETIRED": "RITIRATO",
+        "PROVISIONING": "PROVISIONING",
+        "continuousStateSince": "__state__ for __duration__"
+      },
+      "actions": {
+        "start": "Avvia",
+        "reboot": "Riavvia",
+        "stop": "Interrompi",
+        "remove": "Rimuovi",
+        "clone": "Clona",
+        "details": "Dettagli",
+        "terminal": "Terminale",
+        "manage": "Gestisci",
+        "createTemplate": "Crea modello",
+        "openTemplate": "Apri modello"
+      }
+    },
+    "request": {
+      "title": "Richieste",
+      "contextPanelTooltip": "Richieste",
+      "tabs": {
+        "all": "Tutte",
+        "running": "In esecuzione",
+        "failed": "Operazione non riuscita"
+      },
+      "actions": {
+        "details": {
+          "show": "Dettagli",
+          "hide": "Nascondi dettagli"
+        },
+        "open": "Apri"
+      }
+    },
+    "closure": {
+      "title": "Tutte le chiusure",
+      "titleSearch": "Chiusure trovate",
+      "searchPlaceholder": "Cerca chiusure",
+      "placementZone": "Pool di risorse",
+      "resultStatus": "Stato risultato",
+      "details": {
+        "name": "Nome",
+        "description": "Descrizione",
+        "runtime" : "Runtime",
+        "state": "Stato",
+        "id": "ID",
+        "inputs": "Input",
+        "outputs": "Output",
+        "errorMsg": "Errore",
+        "closureTitle": "Informazioni esecuzione chiusura",
+        "closureDescriptionTitle": "Informazioni descrizione chiusura",
+        "descriptionId": "ID",
+        "source": "Origine",
+        "sourceURL": "URL origine",
+        "resources": "Risorse"
+      },
+      "state": {
+        "CREATED": "CREATA",
+        "STARTED": "AVVIATA",
+        "FINISHED": "TERMINATA",
+        "FAILED": "NON RIUSCITA",
+        "CANCELLED": "ANNULLATA"
+      },
+      "list" : {
+        "name": "Chiusura",
+        "closuresCountLabel": "Chiusure",
+        "closureRunsLabel": "Esecuzioni chiusure",
+        "memory": "Memoria:",
+        "timeout": "Timeout:"
+      },
+      "request": {
+        "title": "Definizione chiusura",
+        "save": "Salva",
+        "run": "Esegui",
+        "inputs": {
+          "name": "Nome",
+          "description": "Descrizione",
+          "runtime": "Runtime",
+          "source": "Codice origine",
+          "sourceURL": "URL origine",
+          "runtimeTypes": {
+            "nodejs": "Node.js 4.3.0",
+            "python": "Python 3.4.3"
+          },
+          "logConfigOptionsInputs" : {
+            "name": "Nome",
+            "nameHint": "Esempio: dimensione-massima",
+            "value": "Valore",
+            "valueHint": "Esempio: 10 m"
+           },
+           "closureInputs" : {
+            "name": "Nome",
+            "nameHint": "Esempio: a",
+            "value": "Valore",
+            "valueHint": "Esempio: 1"
+           },
+           "closureOutputs" : {
+            "name": "Nome",
+            "nameHint": "Esempio: risultato"
+           },
+          "memoryLimit": "Limite di memoria (megabyte)",
+          "timeout": "Timeout (secondi)",
+          "entrypoint": "Gestore punto di ingresso",
+          "logConfigDriver": "Driver registro",
+          "logConfigOptions": "Opzioni registro",
+          "sourceMode": "Modalità",
+          "sourceProvided": "Origine specificata",
+          "sourceFromURL": "Origine da URL",
+          "inputs": "Input",
+          "outputs": "Output",
+          "dependencies": "Dipendenze",
+          "nameDescription": "Nome della chiusura. Se il punto di ingresso non è impostato, il nome verrà utilizzato come nome della funzione da chiamare.",
+          "descriptionDescription": "Descrizione della chiusura",
+          "sourceDescription": "Codice di origine da eseguire",
+          "sourceURLDescription": "Codice di origine accessibile tramite URL. Il contenuto potrebbe essere il codice stesso o un file ZIP. Se viene utilizzato l'URL di origine, il campo Codice origine non verrà utilizzato.",
+          "memoryLimitDescription": "Limite di memoria in megabyte. Il valore massimo consentito è 1536 MB.",
+          "timeoutDescription": "Timeout dell'esecuzione in secondi. Se il tempo di esecuzione dell'attività supera il timeout, l'attività viene annullata.",
+          "entrypointDescription": "Funzione principale da chiamare nel formato: file_nome.funzione_nome",
+          "logDriverDescription": "Driver di registrazione per l'attività di chiusura",
+          "logConfigOptionsDescription": "Opzioni supportate per ciascun driver di registrazione",
+          "dependenciesDescription": "Dipendenze da installare prima di eseguire il codice",
+          "inputDescription": "Input da utilizzare quando si esegue il codice. L'input deve essere una primitiva o un oggetto JSON valido.",
+          "outputDescription": "Nomi dei parametri di output da utilizzare quando vengono compilati i risultati."
+        },
+        "logs": {
+          "title": "Registri"
+        },
+        "tabs": {
+          "definition": "Definizione",
+          "code": "Codice",
+          "config": "Configurazione"
+        }
+      },
+      "monitoredTask": {
+        "runStatus": "Stato esecuzione",
+        "runId": "ID esecuzione:",
+        "runState": "Stato:",
+        "outputs": "Output"
+      }
+    },
+    "help": {
+        "link": "Guida",
+        "description": "Ensemble consente di accedere alle informazioni rilevanti per il contesto dell'attività che si sta eseguendo. Viene aggiornato automaticamente con istruzioni durante l'esecuzione dell'attività. Dividere lo schermo oppure utilizzarne un altro per accedere alle informazioni in tempo reale. È possibile utilizzare un dispositivo mobile, un televisore o qualsiasi altro schermo, indipendentemente dal fatto che sia connesso o meno al computer. Ensemble può essere utilizzato al di fuori della rete attendibile e continua comunque a ricevere aggiornamenti istantanei.",
+        "descriptionOpen": "Per aprire Ensemble, fare clic su <strong>Apri in una nuova scheda</strong> oppure effettuare la scansione del codice QR con il dispositivo mobile."
+      },
+      "resources": {
+        "selectMultiple": "Seleziona elementi",
+        "message": {
+          "selectShift": "Utilizzare MAIUSC per selezionare più elementi"
+        }
+      }
+    },
+    "loginPanel": {
+      "login": "Login",
+      "logout": "Disconnetti",
+      "username": "Nome utente",
+      "password": "Password",
+      "success": "Autenticazione completata",
+      "failure": "Errore di autenticazione"
+    },
+    "dropdownSearchMenu": {
+      "title": "Selezionare dall'elenco __entity__",
+      "searchPlaceholder": "Cerca __entity__",
+      "clear": "Cancella selezione",
+      "showingCount": "Visualizzazione di __count__ di __totalCount__",
+      "noResults": "Nessun elemento trovato."
+    },
+    "customProperties": {
+      "name": "Nome",
+      "nameHint": "Esempio: controllo velocità",
+      "value": "Valore",
+      "valueHint": "Esempio: lento"
+    },
+    "yes": "Sì",
+    "cancel": "Annulla",
+    "delete": "Elimina",
+    "enable": "Attiva",
+    "enabled": "Attivato",
+    "disable": "Disattiva",
+    "disabled": "Disattivato",
+    "close": "Chiudi",
+    "edit": "Modifica",
+    "remove": "Rimuovi",
+    "add": "Aggiungi",
+    "save": "Salva",
+    "back": "Indietro",
+    "refresh": "Aggiorna",
+    "clear": "Cancella",
+    "deleteAll": "Elimina tutto",
+    "pendingOperationCancel": "operazione in",
+    "openInNewTab": "Apri in una nuova scheda",
+    "unavailable": "N/A",
+    "advanced": "Avanzate",
+    "noSelection": "Nessuna selezione",
+    "buildNumber": "Numero build",
+    "errors": {
+      "hostIp": "Il valore deve essere il nome host o l'indirizzo IP.",
+      "urlPath": "Il percorso dell'URL non è valido.",
+      "propertyNameRequired": "Il nome della proprietà è obbligatorio.",
+      "propertyContainerNameInvalid": "Nome del contenitore non valido. Sono consentiti solo [a-zA-Z0-9][a-zA-Z0-9_.-].",
+      "propertyNamesNotUnique": "I nomi delle proprietà devono essere univoci.",
+      "nonNegativeNumber": "Il valore deve essere un numero intero non negativo inferiore a 2147483648.",
+      "positiveNumber": "Il valore deve essere un numero intero positivo inferiore a 2147483648.",
+      "nonNegativeNumberAndMinusOne": "Il valore deve essere un numero intero compreso tra -1 e 2147483647.",
+      "portNumber": "Numero di porta non valido. Un numero di porta valido deve essere compreso tra 0 e 65535.",
+      "containerMemory": "La memoria deve essere 0 (nessun limite) o almeno 4194304 byte (4 MB).",
+      "required": "Il valore è obbligatorio.",
+      "requiredAll": "Tutti i campi sono obbligatori.",
+      "serviceNameRequired": "Il nome del servizio è obbligatorio.",
+      "networkRequired": "La rete è obbligatoria.",
+      "itemNotFound": "L'elemento non è stato trovato.",
+      "networkExists": "La rete esiste già nel modello.",
+      "volumeDestinationRequired": "La destinazione del volume è obbligatoria.",
+      "invalidInputValue": "Valore di input non valido",
+      "invalidPath": "Il valore deve essere un percorso assoluto.",
+      "invalidPathOrName": "Il valore deve essere un percorso assoluto o un nome di volume valido."
+    },
+    "infoMessages": {
+      "created": "Creazione completata.",
+      "updated": "Aggiornamento completato."
+    },
+    "occurrence": {
+      "all": "Trova tutte le corrispondenze",
+      "any": "Trova una corrispondenza qualsiasi"
+    },
+    "state": {
+      "ON": "ACCESO",
+      "OFF": "SPENTO",
+      "SUSPEND": "DISATTIVATO",
+      "UNKNOWN": "SCONOSCIUTO",
+      "stateSinceMessage": "da __date__"
+    }
+}
