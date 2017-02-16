@@ -2037,16 +2037,21 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
     ];
   }
 
+  var result = buildOdataQuery(qOps);
+
   if (onlyCompute === true) {
-    qOps.type = [
-      {
+    var computeOps = {
+      [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY,
+      type: [{
         op: 'eq',
         val: 'VM_HOST'
-      }
-    ];
+      }, {
+        op: 'eq',
+        val: 'ZONE'
+      }]
+    };
+    result += ' and (' + buildOdataQuery(computeOps) + ')';
   }
-
-  var result = buildOdataQuery(qOps);
 
   if (queryOptions) {
     var userQueryOps = {};
