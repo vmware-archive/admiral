@@ -924,9 +924,6 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         poolState.documentSelfLink = poolState.id;
         poolState.maxCpuCount = 1600L;
         poolState.minCpuCount = 16L;
-        poolState.currencyUnit = "Bitcoin";
-        poolState.maxCpuCostPerMinute = 1.0;
-        poolState.maxDiskCostPerMinute = 1.0;
         poolState.minMemoryBytes = MIN_MEMORY;
         poolState.maxMemoryBytes = poolState.minMemoryBytes * 2;
         poolState.minDiskCapacityBytes = poolState.maxDiskCapacityBytes = 1024L * 1024L * 1024L

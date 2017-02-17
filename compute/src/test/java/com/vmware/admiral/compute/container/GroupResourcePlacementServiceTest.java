@@ -825,9 +825,6 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
         poolState.documentSelfLink = poolState.id;
         poolState.maxCpuCount = 1600L;
         poolState.minCpuCount = 16L;
-        poolState.currencyUnit = "Bitcoin";
-        poolState.maxCpuCostPerMinute = 1.0;
-        poolState.maxDiskCostPerMinute = 1.0;
         poolState.minMemoryBytes = maxMemory / 2;
         poolState.maxMemoryBytes = maxMemory;
         poolState.minDiskCapacityBytes = poolState.maxDiskCapacityBytes = maxStorage;

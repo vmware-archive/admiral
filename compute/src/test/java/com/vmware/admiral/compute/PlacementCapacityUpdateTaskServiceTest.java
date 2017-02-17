@@ -54,12 +54,12 @@ public class PlacementCapacityUpdateTaskServiceTest extends ComputeBaseTest {
                 1_000_000L, null, null);
 
         startAndWaitForTask(rp.documentSelfLink);
-        validateFigures(rp.documentSelfLink, 12_000_000L, 0L, 7_000_000L,
+        validateFigures(rp.documentSelfLink, 12_000_000L, null, 7_000_000L,
                 (2 * 0.10 + 4 * 0.50 + 1 * 0.0) / 7);
 
         delete(c3.documentSelfLink);
         startAndWaitForTask(rp.documentSelfLink);
-        validateFigures(rp.documentSelfLink, 8_000_000L, 0L, 6_000_000L, (2 * 0.10 + 4 * 0.50) / 6);
+        validateFigures(rp.documentSelfLink, 8_000_000L, null, 6_000_000L, (2 * 0.10 + 4 * 0.50) / 6);
     }
 
     @Test
@@ -76,11 +76,11 @@ public class PlacementCapacityUpdateTaskServiceTest extends ComputeBaseTest {
         ComputeState c3 = createComputeState(cd3.documentSelfLink, rp.documentSelfLink);
 
         startAndWaitForTask(rp.documentSelfLink);
-        validateFigures(rp.documentSelfLink, 6_000_000L, 0L, 6_000_000L, 0.0);
+        validateFigures(rp.documentSelfLink, 6_000_000L, null, 6_000_000L, 0.0);
 
         delete(c3.documentSelfLink);
         startAndWaitForTask(rp.documentSelfLink);
-        validateFigures(rp.documentSelfLink, 3_000_000L, 0L, 3_000_000L, 0.0);
+        validateFigures(rp.documentSelfLink, 3_000_000L, null, 3_000_000L, 0.0);
     }
 
     private ComputeState createContainerHost(String descriptionLink, String rpLink,
@@ -147,11 +147,11 @@ public class PlacementCapacityUpdateTaskServiceTest extends ComputeBaseTest {
                 returnState.documentSelfLink) == null);
     }
 
-    private void validateFigures(String resourcePoolLink, long maxMemoryBytes, long minMemoryBytes,
+    private void validateFigures(String resourcePoolLink, long maxMemoryBytes, Long minMemoryBytes,
             long availableMemoryBytes, double cpuUsage) throws Throwable {
         ResourcePoolState rp = getDocument(ResourcePoolState.class, resourcePoolLink);
         assertEquals(maxMemoryBytes, rp.maxMemoryBytes.longValue());
-        assertEquals(minMemoryBytes, rp.minMemoryBytes.longValue());
+        assertEquals(minMemoryBytes, rp.minMemoryBytes);
         assertEquals(availableMemoryBytes,
                 Double.parseDouble(rp.customProperties.get(
                         ContainerHostDataCollectionService.RESOURCE_POOL_AVAILABLE_MEMORY_CUSTOM_PROP)),
