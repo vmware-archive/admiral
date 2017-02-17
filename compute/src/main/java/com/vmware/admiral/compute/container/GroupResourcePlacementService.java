@@ -64,22 +64,13 @@ public class GroupResourcePlacementService extends StatefulService {
 
     public static final long UNLIMITED_NUMBER_INSTANCES = 0;
     // Docker minimum memory limit is 4MB
-    public static final long MIN_MEMORY_LIMIT = 4_194_304;
+    public static final long MIN_MEMORY_LIMIT_BYTES = 4_194_304;
 
     public static ResourcePoolState buildDefaultResourcePool() {
         ResourcePoolState poolState = new ResourcePoolState();
         poolState.documentSelfLink = DEFAULT_RESOURCE_POOL_LINK;
         poolState.name = DEFAULT_RESOURCE_POOL_ID;
         poolState.id = poolState.name;
-        poolState.maxCpuCount = 1600L;
-        poolState.minCpuCount = 16L;
-        poolState.currencyUnit = "USD";
-        poolState.maxCpuCostPerMinute = 1.0;
-        poolState.maxDiskCostPerMinute = 1.0;
-        poolState.minMemoryBytes = 1024L * 1024L * 1024L * 46L;
-        poolState.maxMemoryBytes = poolState.minMemoryBytes * 2;
-        poolState.minDiskCapacityBytes = poolState.maxDiskCapacityBytes = 1024L * 1024L * 1024L
-                * 1024L;
 
         return poolState;
     }
@@ -574,11 +565,12 @@ public class GroupResourcePlacementService extends StatefulService {
             state.resourceType = ResourceType.CONTAINER_TYPE.getName();
         }
 
-        if (state.memoryLimit != 0 && state.memoryLimit < MIN_MEMORY_LIMIT) {
+        if (state.memoryLimit != 0 && state.memoryLimit < MIN_MEMORY_LIMIT_BYTES) {
+            long minMemoryLimitMb = MIN_MEMORY_LIMIT_BYTES / (1024 * 1024);
             throw new LocalizableValidationException(
-                    String.format("'memoryLimit' must be 0 (no limit) or at least %s bytes. (%sMB).",
-                            MIN_MEMORY_LIMIT, (MIN_MEMORY_LIMIT / 1024) / 1024),
-                    "compute.placements.validation.memory", MIN_MEMORY_LIMIT, (MIN_MEMORY_LIMIT / 1024) / 1024);
+                    String.format("'memoryLimit' must be 0 (no limit) or at least %s bytes (%sMB).",
+                            MIN_MEMORY_LIMIT_BYTES, minMemoryLimitMb),
+                    "compute.placements.validation.memory", MIN_MEMORY_LIMIT_BYTES, minMemoryLimitMb);
         }
 
         if (state.cpuShares < 0) {
@@ -616,12 +608,15 @@ public class GroupResourcePlacementService extends StatefulService {
                                 totalMemory = resourcePool.maxMemoryBytes.longValue();
                             }
 
-                            if (state.memoryLimit > totalMemory) {
-                                String errorMesg = String.format("Not enough memory in this placement zone. Total memory in placement zone: "
-                                        + "%s, requested: %s",
-                                        totalMemory, state.memoryLimit);
+                            if (totalMemory > 0 && state.memoryLimit > totalMemory) {
+                                String errorMesg = String.format(
+                                        "Not enough memory in this placement zone. "
+                                                + "Total memory in placement zone: %s, "
+                                                + "requested: %s",
+                                                totalMemory, state.memoryLimit);
                                 operation.fail(new LocalizableValidationException(errorMesg,
-                                        "compute.placements.not.enough.memory.in.zone", totalMemory, state.memoryLimit));
+                                        "compute.placements.not.enough.memory.in.zone",
+                                        totalMemory, state.memoryLimit));
                                 return;
                             }
 

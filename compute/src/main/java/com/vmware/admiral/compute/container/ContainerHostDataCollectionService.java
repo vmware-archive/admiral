@@ -454,17 +454,16 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 // group B has two placements with priorities 100 and 200 thus the normalized
                 // priorities will be: 0.33; 0.66 for A and 0.33 and 0.66 for B
                 Map<String, Integer> sumOfPrioritiesByGroup = placements
-                        .stream().collect(
-                                Collectors.groupingBy(
-                                        ContainerHostDataCollectionService::getGroup,
-                                        Collectors.summingInt(
-                                                (GroupResourcePlacementState placement) ->
-                                                        placement.priority)));
+                        .stream().collect(Collectors.groupingBy(
+                                ContainerHostDataCollectionService::getTenantAndGroupIdentifier,
+                                Collectors.summingInt(placement -> placement.priority)));
 
                 Comparator<GroupResourcePlacementService.GroupResourcePlacementState> comparator =
                         (q1, q2) -> Double.compare(
-                                ((double) q2.priority) / sumOfPrioritiesByGroup.get(getGroup(q2)),
-                                ((double) q1.priority) / sumOfPrioritiesByGroup.get(getGroup(q1)));
+                                ((double) q2.priority) /
+                                        sumOfPrioritiesByGroup.get(getTenantAndGroupIdentifier(q2)),
+                                ((double) q1.priority) /
+                                        sumOfPrioritiesByGroup.get(getTenantAndGroupIdentifier(q1)));
 
                 placements.sort(comparator);
                 Set<GroupResourcePlacementService.GroupResourcePlacementState> placementsToUpdate =
@@ -495,14 +494,12 @@ public class ContainerHostDataCollectionService extends StatefulService {
         });
     }
 
-    // Assume for now there's only one
-    private static String getGroup(
-            GroupResourcePlacementService.GroupResourcePlacementState placement) {
-        if (placement.tenantLinks != null) {
-            return placement.tenantLinks.get(0);
-        } else {
-            return "";
-        }
+    /**
+     * Retrieves a tenant+group string identifier for the given placement.
+     */
+    private static String getTenantAndGroupIdentifier(GroupResourcePlacementState placement) {
+        List<String> tenantAndGroupLinks = QueryUtil.getTenantAndGroupLinks(placement.tenantLinks);
+        return tenantAndGroupLinks != null ? String.join("/", tenantAndGroupLinks) : "";
     }
 
     private void updateResourcePool(ResourcePoolState resourcePoolState,
