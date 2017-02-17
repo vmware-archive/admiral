@@ -21,7 +21,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.container.ComputeBaseTest;
-import com.vmware.admiral.compute.kubernetes.KubernetesDescriptionService.KubernetesDescription;
+import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionContentService;
+import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService;
+import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;

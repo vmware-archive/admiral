@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.kubernetes;
+package com.vmware.admiral.compute.kubernetes.service;
 
 import static com.vmware.admiral.common.util.YamlMapper.splitYaml;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.isNullOrEmpty;
@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.compute.kubernetes.KubernetesDescriptionService.KubernetesDescription;
+import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
