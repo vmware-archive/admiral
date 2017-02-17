@@ -314,6 +314,8 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
         ComputeDescription cd = new ComputeDescription();
         cd.name = vmName;
         cd.tenantLinks = this.endpoint.tenantLinks;
+        cd.cpuCount = 1;
+        cd.totalMemoryBytes = (long) Math.pow(2, 30); // 1GB
         cd.customProperties = new HashMap<>();
         cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "coreos");
         return postDocument(ComputeDescriptionService.FACTORY_LINK, cd);

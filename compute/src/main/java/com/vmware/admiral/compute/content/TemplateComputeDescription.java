@@ -33,7 +33,10 @@ import com.vmware.xenon.common.Utils;
  * This class exists for serialization/deserialization purposes only
  */
 @JsonFilter(YamlMapper.SERVICE_DOCUMENT_FILTER)
-@JsonIgnoreProperties({ "customProperties", "networkInterfaceDescLinks", "authCredentialsLink" })
+@JsonIgnoreProperties(value = { "customProperties", "networkInterfaceDescLinks",
+        "authCredentialsLink", "endpointLink", "dataStoreId", "instanceAdapterReference",
+        "enumerationAdapterReference", "powerAdapterReference", "bootAdapterReference",
+        "healthAdapterReference", "statsAdapterReference", "statsAdapterReferences" })
 public class TemplateComputeDescription extends ComputeDescriptionService.ComputeDescription {
 
     public static final String CUSTOM_PROP_NAME_CLUSTER_SIZE = "_cluster";
@@ -62,7 +65,7 @@ public class TemplateComputeDescription extends ComputeDescriptionService.Comput
     }
 
     @JsonProperty("constraints")
-    public List<StringEncodedConstraint> getPlacementConstraints() {
+    public List<StringEncodedConstraint> getConstraints() {
         Constraint constraint = this.constraints != null
                 ? this.constraints.get(ComputeConstants.COMPUTE_PLACEMENT_CONSTRAINT_KEY) : null;
         if (constraint == null) {
@@ -76,7 +79,7 @@ public class TemplateComputeDescription extends ComputeDescriptionService.Comput
         return stringConstraints;
     }
 
-    public void setPlacementConstraints(List<StringEncodedConstraint> stringConstraints) {
+    public void setConstraints(List<StringEncodedConstraint> stringConstraints) {
         if (stringConstraints == null) {
             return;
         }
