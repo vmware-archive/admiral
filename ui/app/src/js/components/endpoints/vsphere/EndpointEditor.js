@@ -9,33 +9,33 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import VueDropdownSearchInput from 'components/common/VueDropdownSearchInput'; //eslint-disable-line
+import VueDropdownSearchControl from 'components/common/VueDropdownSearchControl'; //eslint-disable-line
 import services from 'core/services';
 import utils from 'core/utils';
 
 export default Vue.component('vsphere-endpoint-editor', {
   template: `
     <div>
-      <text-input
+      <text-control
         :disabled="!!model.documentSelfLink"
         :label="i18n('app.endpoint.edit.vsphere.hostNameLabel')"
         :required="true"
         :value="hostName"
         @change="onHostNameChange">
       </text-input>
-      <text-input
+      <text-control
         :label="i18n('app.endpoint.edit.vsphere.privateKeyIdLabel')"
         :required="true"
         :value="privateKeyId"
         @change="onPrivateKeyIdChange">
       </text-input>
-      <password-input
+      <password-control
         :label="i18n('app.endpoint.edit.vsphere.privateKeyLabel')"
         :required="true"
         :value="privateKey"
         @change="onPrivateKeyChange">
       </password-input>
-      <dropdown-search-input
+      <dropdown-search-control
         :disabled="!!model.documentSelfLink || !(regionIdLoading || regionIdValues.length)"
         :entity="i18n('app.endpoint.datacenterEntity')"
         :label="i18n('app.endpoint.edit.vsphere.regionIdLabel')"

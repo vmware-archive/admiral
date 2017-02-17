@@ -17,13 +17,13 @@
     <section class="form-block">
       <label class="title" v-if="model.item.documentSelfLink">{{i18n('app.endpoint.edit.update')}}</label>
       <label class="title" v-else>{{i18n('app.endpoint.edit.addNew')}}</label>
-      <text-input
+      <text-control
         :label="i18n('app.endpoint.edit.nameLabel')"
         :required="true"
         :value="model.item.name"
         @change="onNameChange">
       </text-input>
-      <dropdown-input
+      <dropdown-control
         :disabled="!!model.item.documentSelfLink"
         :entity="i18n('app.endpoint.typeEntity')"
         :label="i18n('app.endpoint.edit.typeLabel')"

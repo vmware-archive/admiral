@@ -9,8 +9,8 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import VueCheckboxInput from 'components/common/VueCheckboxInput'; //eslint-disable-line
-import VueTextInput from 'components/common/VueTextInput'; //eslint-disable-line
+import VueCheckboxControl from 'components/common/VueCheckboxControl'; //eslint-disable-line
+import VueTextControl from 'components/common/VueTextControl'; //eslint-disable-line
 import SubnetworkEditorVue from 'components/subnetworks/SubnetworkEditorVue.html';
 import { SubnetworksActions } from 'actions/Actions';
 

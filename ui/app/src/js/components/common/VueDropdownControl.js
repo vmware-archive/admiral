@@ -9,28 +9,33 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import VueDropdownSearch from 'components/common/VueDropdownSearch'; //eslint-disable-line
+import VueDropdown from 'components/common/VueDropdown'; //eslint-disable-line
+import VueFormControl from 'components/common/VueFormControl'; //eslint-disable-line
 
-export default Vue.component('dropdown-search-input', {
+export default Vue.component('dropdown-control', {
   template: `
-    <div :class="['form-group', name]">
-      <label :class="{'required': required}">
-        {{label}}
-      </label>
-      <dropdown-search
+    <form-control
+      :class="class"
+      :label="label"
+      :name="name"
+      :required="required">
+      <dropdown
           :disabled="disabled"
           :entity="entity"
-          :filter="filter"
           :loading="loading"
           :manage="manage"
           :options="options"
           :renderer="renderer"
           :value="value"
           @change="onChange">
-      </dropdown-search>
-    </div>
+      </dropdown>
+    </form-control>
   `,
   props: {
+    class: {
+      required: false,
+      type: String
+    },
     disabled: {
       default: false,
       required: false,
@@ -39,10 +44,6 @@ export default Vue.component('dropdown-search-input', {
     entity: {
       required: true,
       type: String
-    },
-    filter: {
-      required: false,
-      type: Function
     },
     label: {
       required: true,

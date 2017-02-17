@@ -9,43 +9,26 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import VueFormInput from 'components/common/VueFormInput'; //eslint-disable-line
-
 export default Vue.component('text-input', {
   template: `
-    <form-input
+    <input
       type="text"
-      :class="class"
       :disabled="disabled"
-      :label="label"
+      :id="name"
       :name="name"
-      :required="required"
       :value="value"
-      @change="onChange">
-    </form-input>
+      @change="onChange($event)"
+      @input="onChange($event)">
   `,
   props: {
-    class: {
-      required: false,
-      type: String
-    },
     disabled: {
       default: false,
       required: false,
       type: Boolean
     },
-    label: {
-      required: true,
-      type: String
-    },
     name: {
       required: false,
       type: String
-    },
-    required: {
-      default: false,
-      required: false,
-      type: Boolean
     },
     value: {
       required: false,
@@ -53,8 +36,11 @@ export default Vue.component('text-input', {
     }
   },
   methods: {
-    onChange(value, instance) {
-      this.$dispatch('change', value, instance);
+    onChange($event) {
+      $event.preventDefault();
+      $event.stopPropagation();
+
+      this.$dispatch('change', $event.currentTarget.value, this);
     }
   }
 });

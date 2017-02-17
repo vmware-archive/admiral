@@ -17,26 +17,26 @@
     <section class="form-block">
       <label class="title" v-if="model.item.documentSelfLink">{{i18n('app.subnetwork.edit.update')}}</label>
       <label class="title" v-else>{{i18n('app.subnetwork.edit.addNew')}}</label>
-      <text-input
+      <text-control
         :label="i18n('app.subnetwork.edit.nameLabel')"
         :required="true"
         :value="model.item.name"
         :disabled="!!model.item.documentSelfLink"
         @change="onNameChange">
       </text-input>
-      <text-input
+      <text-control
         :label="i18n('app.subnetwork.edit.cidrLabel')"
         :required="true"
         :value="model.item.subnetCIDR"
         :disabled="!!model.item.documentSelfLink"
         @change="onCidrChange">
       </text-input>
-      <checkbox-input
+      <checkbox-control
         :label="i18n('app.subnetwork.edit.supportPublicIpAddressLabel')"
         :value="model.item.supportPublicIpAddress"
         @change="onSupportPublicIpAddressChange">
       </checkbox-input>
-      <checkbox-input
+      <checkbox-control
         :label="i18n('app.subnetwork.edit.defaultForZoneLabel')"
         :value="model.item.defaultForZone"
         @change="onDefaultForZoneChange">

@@ -12,33 +12,33 @@
 export default Vue.component('azure-endpoint-editor', {
   template: `
     <div>
-      <text-input
+      <text-control
         :label="i18n('app.endpoint.edit.privateKeyIdLabel')"
         :required="true"
         :value="privateKeyId"
         @change="onPrivateKeyIdChange">
       </text-input>
-      <password-input
+      <password-control
         :label="i18n('app.endpoint.edit.privateKeyLabel')"
         :required="true"
         :value="privateKey"
         @change="onPrivateKeyChange">
       </password-input>
-      <text-input
+      <text-control
         :disabled="!!model.documentSelfLink"
         :label="i18n('app.endpoint.edit.azure.userLinkLabel')"
         :required="true"
         :value="userLink"
         @change="onUserLinkChange">
       </text-input>
-      <text-input
+      <text-control
         :disabled="!!model.documentSelfLink"
         :label="i18n('app.endpoint.edit.azure.tenantIdLabel')"
         :required="true"
         :value="azureTenantId"
         @change="onAzureTenantIdChange">
       </text-input>
-      <text-input
+      <text-control
         :disabled="!!model.documentSelfLink"
         :label="i18n('app.endpoint.edit.regionIdLabel')"
         :required="true"
