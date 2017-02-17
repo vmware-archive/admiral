@@ -61,11 +61,13 @@ import com.vmware.admiral.compute.env.EnvironmentMappingService;
 import com.vmware.admiral.compute.env.EnvironmentService;
 import com.vmware.admiral.compute.env.NetworkProfileService;
 import com.vmware.admiral.compute.env.StorageProfileService;
-import com.vmware.admiral.compute.kubernetes.KubernetesDescriptionContentService;
-import com.vmware.admiral.compute.kubernetes.KubernetesDescriptionService;
-import com.vmware.admiral.compute.kubernetes.KubernetesDescriptionService.KubernetesDescription;
-import com.vmware.admiral.compute.kubernetes.KubernetesService;
-import com.vmware.admiral.compute.kubernetes.KubernetesService.KubernetesState;
+import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionContentService;
+import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService;
+import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
+import com.vmware.admiral.compute.kubernetes.service.KubernetesService;
+import com.vmware.admiral.compute.kubernetes.service.KubernetesService.KubernetesState;
+import com.vmware.admiral.compute.kubernetes.service.PodService;
+import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.network.ComputeNetworkService;
@@ -125,7 +127,8 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 PlacementCapacityUpdateTaskService.class,
                 KubernetesDescriptionService.class,
                 EndpointHealthCheckTaskService.class,
-                KubernetesService.class);
+                KubernetesService.class,
+                PodService.class);
 
 
         if (startMockContainerHostService) {
@@ -177,5 +180,9 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
         CompositeComponentRegistry.registerComponent(ResourceType.KUBERNETES_ENTITY_TYPE.getName(),
                 KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
                 KubernetesService.FACTORY_LINK, KubernetesState.class);
+
+        CompositeComponentRegistry.registerComponent(ResourceType.KUBERNETES_POD_TYPE.getName(),
+                KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
+                PodService.FACTORY_LINK, PodState.class);
     }
 }

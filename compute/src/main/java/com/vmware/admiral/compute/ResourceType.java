@@ -27,7 +27,8 @@ public enum ResourceType {
     CLOSURE_TYPE("CLOSURE", "App.Closure"),
     CONFIGURE_HOST_TYPE("CONFIGURE_HOST", ""),
     COMPUTE_NETWORK_TYPE("COMPUTE_NETWORK", "Compute.Network"),
-    KUBERNETES_ENTITY_TYPE("KUBERNETES_ENTITY", "Kubernetes.Entity");
+    KUBERNETES_ENTITY_TYPE("KUBERNETES_ENTITY", "Kubernetes.Entity"),
+    KUBERNETES_POD_TYPE("KUBERNETES_POD", "Kubernetes.Pod");
 
     private final String name;
     private final String contentType;

@@ -22,9 +22,9 @@ import java.util.Map;
 import com.vmware.admiral.adapter.kubernetes.service.AbstractKubernetesAdapterService.KubernetesContext;
 import com.vmware.admiral.compute.content.kubernetes.CommonKubernetesEntity;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
-import com.vmware.admiral.compute.kubernetes.KubernetesDescriptionService.KubernetesDescription;
 import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
-import com.vmware.admiral.compute.kubernetes.KubernetesService.KubernetesState;
+import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
+import com.vmware.admiral.compute.kubernetes.service.KubernetesService.KubernetesState;
 import com.vmware.xenon.common.UriUtils;
 
 public class ApiUtil {
