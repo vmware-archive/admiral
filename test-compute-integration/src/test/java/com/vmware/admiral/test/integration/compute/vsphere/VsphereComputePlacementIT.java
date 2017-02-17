@@ -91,11 +91,6 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
         endpoint.endpointProperties.put("hostName", getTestRequiredProp(VsphereUtil.VC_HOST));
     }
 
-    @Override
-    protected List<String> getTenantLinks() {
-        return null;
-    }
-
     @Before
     public void endpointSetup() throws Exception {
         logger.info("Creating endpoint...");
@@ -315,7 +310,7 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
         cd.name = vmName;
         cd.tenantLinks = this.endpoint.tenantLinks;
         cd.cpuCount = 1;
-        cd.totalMemoryBytes = (long) Math.pow(2, 30); // 1GB
+        cd.totalMemoryBytes = 512 * 1024 * 1024; // 512MB
         cd.customProperties = new HashMap<>();
         cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "coreos");
         return postDocument(ComputeDescriptionService.FACTORY_LINK, cd);
