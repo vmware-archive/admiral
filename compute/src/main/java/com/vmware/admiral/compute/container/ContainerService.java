@@ -247,6 +247,15 @@ public class ContainerService extends StatefulService {
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public Integer cpuShares;
 
+        /**
+         * A list of resource limits to set in the container. The limit could be max open file
+         * descriptors or any other limitation.
+         */
+        @Documentation(description = "A list of resource limits to set in the container")
+        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
+        public List<Ulimit> ulimits;
+
         /** Unmodeled container attributes */
         @Documentation(description = "Unmodeled container attributes")
         @PropertyOptions(indexing = { PropertyIndexingOption.EXCLUDE_FROM_SIGNATURE,
@@ -398,6 +407,8 @@ public class ContainerService extends StatefulService {
         portBinding.containerPort = "5000";
         portBinding.hostPort = "5000";
         template.ports = Collections.singletonList(portBinding);
+
+        template.ulimits = new ArrayList<>();
 
         template.customProperties = new HashMap<String, String>(1);
         template.customProperties.put("propKey (string)", "customPropertyValue (string)");

@@ -107,6 +107,7 @@ public interface DockerAdapterCommandExecutor {
         String LINKS_PROP_NAME = "Links";
         String PID_MODE_PROP_NAME = "PidMode";
         String PUBLISH_ALL = "PublishAllPorts";
+        String ULIMITS = "Ulimits";
 
         interface DEVICE {
             String PATH_ON_HOST_PROP_NAME = "PathOnHost";

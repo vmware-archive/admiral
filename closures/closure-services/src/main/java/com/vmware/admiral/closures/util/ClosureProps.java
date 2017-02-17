@@ -51,6 +51,10 @@ public class ClosureProps {
             .getInteger("com.vmware.admiral.closures.max.log.size.bytes",
                     90 * 1024);
 
+    public static final int MAX_FILE_DESCRIPTORS = Integer
+            .getInteger("com.vmware.admiral.closures.max.file.descriptors",
+                    2048);
+
     public static final long DEFAULT_CLOSURE_EXPIRATION_DAYS = Integer
             .getInteger("com.vmware.admiral.closures.expiration.days", 10);
 
