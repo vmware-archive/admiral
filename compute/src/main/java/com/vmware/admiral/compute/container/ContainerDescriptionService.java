@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
+import com.esotericsoftware.kryo.serializers.VersionFieldSerializer;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonFilter;
@@ -43,6 +44,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
@@ -262,6 +264,16 @@ public class ContainerDescriptionService extends StatefulService {
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public PortBinding[] portBindings;
 
+        /**
+         * A list of resource limits to set in the container. The limit could be max open file
+         * descriptors or any other limitation.
+         */
+        @JsonProperty("ulimits")
+        @Documentation(description = "A list of resource limits to set in the container")
+        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        @VersionFieldSerializer.Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
+        public Ulimit[] ulimits;
+
         @JsonProperty("log_config")
         @Documentation(description = "Log configuration of the container")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
@@ -362,8 +374,9 @@ public class ContainerDescriptionService extends StatefulService {
          * policy will be deployed on hosts/policies with the same policy.
          */
         @JsonProperty("deployment_policy_id")
-        @Documentation(description = "Document link to the deployment policy if any. Container description with a deployment "
-                + "policy will be deployed on hosts/policies with the same policy.")
+        @Documentation(description =
+                "Document link to the deployment policy if any. Container description with a deployment "
+                        + "policy will be deployed on hosts/policies with the same policy.")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public String deploymentPolicyId;
 
@@ -747,6 +760,7 @@ public class ContainerDescriptionService extends StatefulService {
         logConfig.type = "json-file";
         logConfig.config = Collections.emptyMap();
         template.logConfig = logConfig;
+        template.ulimits = new Ulimit[0];
         template.dns = new String[] { "dns entries (string)" };
         template.env = new String[] {
                 "ENV_VAR=value (string)",

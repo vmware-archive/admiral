@@ -57,6 +57,7 @@ import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupR
 import com.vmware.admiral.compute.container.HealthChecker;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.ServiceNetwork;
+import com.vmware.admiral.compute.container.Ulimit;
 import com.vmware.admiral.compute.content.ServiceLinkSerializer;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState.SubStage;
 import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState;
@@ -686,6 +687,10 @@ public class ContainerAllocationTaskService extends AbstractTaskStatefulService
             if (containerDesc.portBindings != null) {
                 containerState.ports = new ArrayList<PortBinding>(
                         Arrays.asList(containerDesc.portBindings));
+            }
+            if (containerDesc.ulimits != null) {
+                containerState.ulimits = new ArrayList<Ulimit>(
+                        Arrays.asList(containerDesc.ulimits));
             }
 
             if (containerState.networks != null && !containerState.networks.isEmpty()) {

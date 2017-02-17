@@ -37,6 +37,7 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.RESTART_POLICY_NAME_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.RESTART_POLICY_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.RESTART_POLICY_RETRIES_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.ULIMITS;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.VOLUMES_FROM_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG.VOLUME_DRIVER;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_HOST_CONFIG_PROP_NAME;
@@ -429,7 +430,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                         handleExceptions(context.request, context.operation, () -> {
                             context.containerDescription = o.getBody(ContainerDescription.class);
 
-                            processAuthentication(context, () -> processContainerDescription(context));
+                            processAuthentication(context,
+                                    () -> processContainerDescription(context));
                         });
                     }
                 }));
@@ -629,8 +631,9 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                     fileName,
                     context.request.getRequestTrackingLog());
             this.logSevere(errMsg);
-            imageCompletionHandler.handle(null, new LocalizableValidationException(errMsg, "adapter.load.image.empty", fileName,
-                    context.request.getRequestTrackingLog()));
+            imageCompletionHandler.handle(null,
+                    new LocalizableValidationException(errMsg, "adapter.load.image.empty", fileName,
+                            context.request.getRequestTrackingLog()));
             return;
         }
 
@@ -657,7 +660,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         AtomicInteger retryCount = new AtomicInteger(retriesCount);
         context.executor.createImage(createImageCommandInput, (op, ex) -> {
             if (ex != null && RETRIABLE_HTTP_STATUSES.contains(op.getStatusCode())
-                        && retryCount.getAndIncrement() < maxRetryCount) {
+                    && retryCount.getAndIncrement() < maxRetryCount) {
                 String fullImageName = DockerImage.fromImageName(context.containerDescription.image)
                         .toString();
                 logWarning("Pulling image %s failed with %s. Retries left %d",
@@ -707,6 +710,9 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
         hostConfig.put(MEMORY_PROP_NAME, context.containerState.memoryLimit);
         hostConfig.put(CPU_SHARES_PROP_NAME, context.containerState.cpuShares);
+        if (context.containerState.ulimits != null) {
+            hostConfig.put(ULIMITS, context.containerState.ulimits);
+        }
 
         // TODO Can't limit the storage? https://github.com/docker/docker/issues/3804
 
@@ -735,7 +741,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         // Other container networks will be added after container is created.
         // Docker APIs fail if there is more than one network added to the container when it is created
         if (context.containerState.networks != null && !context.containerState.networks.isEmpty()) {
-            createNetworkConfig(createCommandInput, context.containerState.networks.entrySet().iterator().next());
+            createNetworkConfig(createCommandInput,
+                    context.containerState.networks.entrySet().iterator().next());
         }
 
         if (context.containerState.ports != null) {
@@ -800,7 +807,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                         logInfo("Unable to create container using local image. Will be fetched from a remote "
                                 + "location...");
                         context.containerDescription.customProperties
-                                .put(DOCKER_CONTAINER_CREATE_USE_LOCAL_IMAGE_WITH_PRIORITY, "false");
+                                .put(DOCKER_CONTAINER_CREATE_USE_LOCAL_IMAGE_WITH_PRIORITY,
+                                        "false");
                         processContainerDescription(context);
                     } else if (RETRIABLE_HTTP_STATUSES.contains(o.getStatusCode())
                             && retryCount.getAndIncrement() < retryCountProperty) {
@@ -858,7 +866,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
     }
 
-    private void mapContainerNetworkToNetworkConfig(ServiceNetwork network, Map<String, Object> endpointConfig) {
+    private void mapContainerNetworkToNetworkConfig(ServiceNetwork network,
+            Map<String, Object> endpointConfig) {
         Map<String, Object> ipamConfig = new HashMap<>();
         if (network.ipv4_address != null) {
             ipamConfig.put(
@@ -1113,7 +1122,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 .get(ShellContainerExecutorService.COMMAND_KEY);
         if (command == null) {
             context.operation.fail(new LocalizableValidationException("Command not provided"
-                    + context.request.getRequestTrackingLog(), "adapter.exec.container.command.missing",
+                    + context.request.getRequestTrackingLog(),
+                    "adapter.exec.container.command.missing",
                     context.request.getRequestTrackingLog()));
         }
 

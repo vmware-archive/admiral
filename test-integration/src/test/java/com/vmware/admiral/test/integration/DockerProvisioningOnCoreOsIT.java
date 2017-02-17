@@ -11,12 +11,6 @@
 
 package com.vmware.admiral.test.integration;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_COMMAND_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_CONFIG_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_DOMAINNAME_PROP_NAME;
@@ -55,6 +49,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
@@ -69,6 +69,7 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.LogConfig;
 import com.vmware.admiral.compute.container.PortBinding;
+import com.vmware.admiral.compute.container.Ulimit;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.service.common.LogService;
@@ -189,6 +190,7 @@ public class DockerProvisioningOnCoreOsIT extends BaseProvisioningOnCoreOsIT {
                 .fromDockerPortMapping(DockerPortMapping.fromString(TEST_PORT_BINDINGS)) };
 
         containerDesc.logConfig = createLogConfig();
+        containerDesc.ulimits = new Ulimit[] {new Ulimit("nofile", 10000, 10000)};
         containerDesc.env = TEST_ENV;
         containerDesc.restartPolicy = TEST_RESTART_POLICY_NAME;
         containerDesc.maximumRetryCount = TEST_RESTART_POLICY_RETRIES;

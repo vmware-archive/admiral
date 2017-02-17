@@ -71,6 +71,7 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.LogConfig;
+import com.vmware.admiral.compute.container.Ulimit;
 import com.vmware.admiral.request.ContainerAllocationTaskFactoryService;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter;
@@ -1112,6 +1113,8 @@ public class AdmiralAdapterService extends
         containerDesc.image = imageName + ":" + imageTag;
         containerDesc.memoryLimit = ClosureUtils.toBytes(configuration.memoryMB);
         containerDesc.cpuShares = configuration.cpuShares;
+        containerDesc.ulimits = new Ulimit[] { new Ulimit("nofile",
+                ClosureProps.MAX_FILE_DESCRIPTORS, ClosureProps.MAX_FILE_DESCRIPTORS) };
         containerDesc.env = configuration.envVars;
         containerDesc.logConfig = prepareLogConfig(configuration);
         containerDesc.customProperties = new HashMap<>();
