@@ -599,7 +599,9 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         switch (state.taskInfo.stage) {
         case CREATED:
         case STARTED:
-            String errMsg = String.format("Task expired in stage: %s", state.taskInfo.stage);
+            String errMsg = String.format(
+                    "Task expired in stage: %s, sub-stage: %s, expirationTime: %s",
+                    state.taskInfo.stage, state.taskSubStage, state.documentExpirationTimeMicros);
             logWarning(errMsg);
             if (!state.serviceTaskCallback.isEmpty()) {
                 sendRequest(Operation

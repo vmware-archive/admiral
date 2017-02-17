@@ -1741,7 +1741,11 @@ public class RequestBrokerService extends
             } else if (isClusteringOperation(state)) {
                 requestStatus.addTrackedTasks(ClusteringTaskService.DISPLAY_NAME);
             } else {
-                requestStatus.addTrackedTasks(ContainerOperationTaskService.DISPLAY_NAME);
+                if (isComputeType(state)) {
+                    requestStatus.addTrackedTasks(ComputeOperationTaskService.DISPLAY_NAME);
+                } else {
+                    requestStatus.addTrackedTasks(ContainerOperationTaskService.DISPLAY_NAME);
+                }
             }
         }
 
@@ -1754,8 +1758,8 @@ public class RequestBrokerService extends
                         op.fail(e);
                         return;
                     }
-                    logFine("Created request tracker: %s", requestStatus.documentSelfLink);
                     state.requestTrackerLink = o.getBody(RequestStatus.class).documentSelfLink;
+                    logInfo("Created request tracker: %s", state.requestTrackerLink);
                     op.complete(); /* complete the original start operation */
                 }));
         return true;// don't complete the start operation
