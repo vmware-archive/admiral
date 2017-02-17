@@ -104,7 +104,7 @@ public class EnvironmentQueryUtils {
         }).thenCompose(endpoints -> {
 
             if (endpoints == null || endpoints.isEmpty()) {
-                return DeferredResult.completed(Collections.<EndpointState>emptyList());
+                return DeferredResult.completed(Collections.<EndpointState> emptyList());
             }
 
             // get the compute states that back the endpoints
@@ -114,12 +114,18 @@ public class EnvironmentQueryUtils {
             Builder computeStatesQueryBuilder = Query.Builder.create()
                     .addKindFieldClause(ComputeState.class)
                     .addInClause(ServiceDocument.FIELD_NAME_SELF_LINK, computeLinks)
-                    .addFieldClause(ComputeState.FIELD_NAME_POWER_STATE, ComputeService.PowerState.ON);
+                    .addFieldClause(ComputeState.FIELD_NAME_POWER_STATE,
+                            ComputeService.PowerState.ON);
+
+            if (tenantLinks == null || tenantLinks.isEmpty()) {
+                builder.addClause(QueryUtil.addTenantClause(tenantLinks));
+            }
 
             QueryUtils.QueryByPages<ComputeState> q = new QueryUtils.QueryByPages<>(host,
-                    computeStatesQueryBuilder.build(), ComputeState.class, tenantLinks);
+                    computeStatesQueryBuilder.build(), ComputeState.class,
+                    QueryUtil.getTenantLinks(tenantLinks));
 
-            //return only the endpoints whose computestate's power state is on
+            // return only the endpoints whose computestate's power state is on
             DeferredResult<List<EndpointState>> filteredEndpoints = q
                     .collectLinks(Collectors.toSet())
                     .thenApply(cs -> {
@@ -131,12 +137,13 @@ public class EnvironmentQueryUtils {
 
             return filteredEndpoints;
         }).thenApply(eps -> {
-            return eps.stream().map(ep ->
-                    applyEndpoint(ep, entriesPerEndpoint.get(ep.documentSelfLink)));
+            return eps.stream()
+                    .map(ep -> applyEndpoint(ep, entriesPerEndpoint.get(ep.documentSelfLink)));
         }).thenCompose(entriesStream -> {
             List<DeferredResult<List<EnvEntry>>> list = entriesStream
                     .map(entries -> queryEnvironments(host, entries, tenantLinks,
-                            environmentLinks)).collect(Collectors.toList());
+                            environmentLinks))
+                    .collect(Collectors.toList());
             return DeferredResult.allOf(list);
         }).whenComplete((all, ex) -> {
             if (ex != null) {
@@ -233,4 +240,3 @@ public class EnvironmentQueryUtils {
         return result;
     }
 }
-
