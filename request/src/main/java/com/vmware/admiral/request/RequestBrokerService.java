@@ -83,6 +83,7 @@ import com.vmware.admiral.request.compute.ComputeNetworkRemovalTaskService.Compu
 import com.vmware.admiral.request.compute.ComputeOperationTaskService;
 import com.vmware.admiral.request.compute.ComputeOperationTaskService.ComputeOperationTaskState;
 import com.vmware.admiral.request.compute.ComputeOperationType;
+import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputeProvisionTaskState;
 import com.vmware.admiral.request.compute.ComputeRemovalTaskService;
@@ -1619,7 +1620,10 @@ public class RequestBrokerService extends
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CONTAINER_TYPE, new ArrayList<>(
                 Arrays.asList(ContainerAllocationTaskService.DISPLAY_NAME)));
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.COMPUTE_TYPE, new ArrayList<>(
-                Arrays.asList(ComputeAllocationTaskService.DISPLAY_NAME)));
+                Arrays.asList(ComputeProvisionTaskService.DISPLAY_NAME)));
+        SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.COMPUTE_NETWORK_TYPE,
+                new ArrayList<>(
+                        Arrays.asList(ComputeNetworkProvisionTaskService.DISPLAY_NAME)));
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE
                 .put(ResourceType.CONTAINER_NETWORK_TYPE, new ArrayList<>(
                         Arrays.asList(ContainerNetworkProvisionTaskService.DISPLAY_NAME)));
@@ -1643,7 +1647,11 @@ public class RequestBrokerService extends
         SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.COMPUTE_TYPE, new ArrayList<>(
                 Arrays.asList(ComputeAllocationTaskService.DISPLAY_NAME,
                         ReservationTaskService.DISPLAY_NAME,
-                        PlacementHostSelectionTaskService.DISPLAY_NAME,
+                        ComputePlacementSelectionTaskService.DISPLAY_NAME,
+                        ResourceNamePrefixTaskService.DISPLAY_NAME)));
+        SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.COMPUTE_NETWORK_TYPE,
+                new ArrayList<>(
+                        Arrays.asList(ComputeNetworkAllocationTaskService.DISPLAY_NAME,
                         ResourceNamePrefixTaskService.DISPLAY_NAME)));
         SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
                 .put(ResourceType.CONTAINER_NETWORK_TYPE, new ArrayList<>(
