@@ -2123,6 +2123,17 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
       }
     }
 
+    var compositeContextIdArray = toArrayIfDefined(queryOptions.compositeContextId);
+    if (compositeContextIdArray) {
+      userQueryOps['customProperties/__composition_context_id'] =
+          compositeContextIdArray.map((compositeContextId) => {
+            return {
+              val: compositeContextId,
+              op: 'eq'
+            };
+          });
+    }
+
     if (queryOptions.powerState) {
       userQueryOps.powerState = [{
         val: queryOptions.powerState.toUpperCase(),
