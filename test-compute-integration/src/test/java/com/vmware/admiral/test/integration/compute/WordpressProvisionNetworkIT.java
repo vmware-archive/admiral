@@ -17,6 +17,7 @@ import java.util.function.Consumer;
 
 import com.google.common.collect.Sets;
 
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -26,7 +27,7 @@ import com.vmware.photon.controller.model.constants.PhotonModelConstants.Endpoin
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 
 @RunWith(Parameterized.class)
-// @Ignore("There are changes to wordpress deps, so the scripts have to be updated.")
+@Ignore("There are changes to wordpress deps, so the scripts have to be updated.")
 public class WordpressProvisionNetworkIT extends BaseWordpressComputeProvisionIT {
 
     private static Consumer<EndpointState> awsEndpointExtender = endpointState -> new AwsComputeProvisionIT()

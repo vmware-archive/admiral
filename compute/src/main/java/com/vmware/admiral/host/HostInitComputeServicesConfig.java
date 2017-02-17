@@ -54,7 +54,6 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.compute.content.TemplateComputeDescription;
-import com.vmware.admiral.compute.content.TemplateComputeNetworkDescription;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
 import com.vmware.admiral.compute.endpoint.EndpointHealthCheckTaskService;
 import com.vmware.admiral.compute.env.ComputeProfileService;
@@ -68,6 +67,7 @@ import com.vmware.admiral.compute.kubernetes.KubernetesDescriptionService.Kubern
 import com.vmware.admiral.compute.kubernetes.KubernetesService;
 import com.vmware.admiral.compute.kubernetes.KubernetesService.KubernetesState;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.network.ComputeNetworkService;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
 import com.vmware.admiral.service.test.MockConfigureHostOverSshTaskServiceWithoutValidate;
@@ -171,7 +171,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ClosureFactoryService.FACTORY_LINK, Closure.class);
 
         CompositeComponentRegistry.registerComponent(ResourceType.COMPUTE_NETWORK_TYPE.getName(),
-                ComputeNetworkDescriptionService.FACTORY_LINK, TemplateComputeNetworkDescription.class,
+                ComputeNetworkDescriptionService.FACTORY_LINK, ComputeNetworkDescription.class,
                 ComputeNetworkService.FACTORY_LINK, ComputeNetwork.class);
 
         CompositeComponentRegistry.registerComponent(ResourceType.KUBERNETES_ENTITY_TYPE.getName(),
