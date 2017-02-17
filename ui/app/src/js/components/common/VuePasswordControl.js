@@ -9,26 +9,46 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-export default Vue.component('password-input', {
+import VueFormControl from 'components/common/VueFormControl'; //eslint-disable-line
+import VuePasswordInput from 'components/common/VuePasswordInput'; //eslint-disable-line
+
+export default Vue.component('password-control', {
   template: `
-    <input
-      type="password"
-      :disabled="disabled"
-      :id="name"
+    <form-control
+      :class="class"
+      :label="label"
       :name="name"
-      :value="value"
-      @change="onChange($event)"
-      @input="onChange($event)">
+      :required="required">
+      <password-input
+        :disabled="disabled"
+        :name="name"
+        :value="value"
+        @change="onChange">
+      </password-input>
+    </form-control>
   `,
   props: {
+    class: {
+      required: false,
+      type: String
+    },
     disabled: {
       default: false,
       required: false,
       type: Boolean
     },
+    label: {
+      required: true,
+      type: String
+    },
     name: {
       required: false,
       type: String
+    },
+    required: {
+      default: false,
+      required: false,
+      type: Boolean
     },
     value: {
       required: false,
@@ -36,11 +56,8 @@ export default Vue.component('password-input', {
     }
   },
   methods: {
-    onChange($event) {
-      $event.preventDefault();
-      $event.stopPropagation();
-
-      this.$dispatch('change', $event.currentTarget.value, this);
+    onChange(value) {
+      this.$dispatch('change', value, this);
     }
   }
 });

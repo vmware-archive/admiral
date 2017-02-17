@@ -9,47 +9,25 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import VueFormInput from 'components/common/VueFormInput'; //eslint-disable-line
-
 export default Vue.component('checkbox-input', {
   template: `
-    <div :class="['form-group', class]">
-      <label
-        :class="{'required': required}"
-        :for="name">
-        {{label}}
-      </label>
-      <input
-        type="checkbox"
-        :checked="value ? 'checked' : ''"
-        :disabled="disabled"
-        :id="name"
-        :name="name"
-        @change="onChange($event)">
-    </div>
+    <input
+      type="checkbox"
+      :checked="value ? 'checked' : ''"
+      :disabled="disabled"
+      :id="name"
+      :name="name"
+      @change="onChange($event)">
   `,
   props: {
-    class: {
-      required: false,
-      type: String
-    },
     disabled: {
       default: false,
       required: false,
       type: Boolean
     },
-    label: {
-      required: true,
-      type: String
-    },
     name: {
       required: false,
       type: String
-    },
-    required: {
-      default: false,
-      required: false,
-      type: Boolean
     },
     value: {
       required: false,
