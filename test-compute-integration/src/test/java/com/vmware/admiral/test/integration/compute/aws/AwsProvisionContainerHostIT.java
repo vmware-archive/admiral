@@ -19,6 +19,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
 import com.vmware.admiral.request.compute.ComputeRemovalTaskService;
 import com.vmware.admiral.request.compute.ComputeRemovalTaskService.ComputeRemovalTaskState;
@@ -92,6 +93,8 @@ public class AwsProvisionContainerHostIT extends BaseIntegrationSupportIT {
         state.resourceCount = 1;
         state.hostDescription = hostDescription;
         state.tenantLinks = getTenantLinks();
+        state.documentExpirationTimeMicros = ServiceUtils
+                .getDefaultTaskExpirationTimeInMicros();
         ProvisionContainerHostsTaskState request = postDocument(
                 ProvisionContainerHostsTaskService.FACTORY_LINK,
                 state);
