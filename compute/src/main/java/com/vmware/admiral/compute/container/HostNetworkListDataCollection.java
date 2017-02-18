@@ -12,14 +12,13 @@
 package com.vmware.admiral.compute.container;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -71,13 +70,16 @@ public class HostNetworkListDataCollection extends StatefulService {
     public static final String DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK = UriUtils
             .buildUriPath(FACTORY_LINK, DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_ID);
 
+    protected static final long DATA_COLLECTION_LOCK_TIMEOUT_MILLISECONDS = Long.getLong(
+            "com.vmware.admiral.compute.container.network.datacollection.lock.timeout.milliseconds", 30000);
+
     public static class HostNetworkListDataCollectionState extends
             TaskServiceDocument<DefaultSubStage> {
         @Documentation(description = "The list of container host links.")
         @PropertyOptions(indexing = {
                 PropertyIndexingOption.STORE_ONLY,
                 PropertyIndexingOption.EXCLUDE_FROM_SIGNATURE })
-        public Set<String> containerHostLinks;
+        public Map<String, Long> containerHostLinks;
     }
 
     public static class NetworkListCallback extends ServiceTaskCallbackResponse {
@@ -97,7 +99,7 @@ public class HostNetworkListDataCollection extends StatefulService {
         state.documentSelfLink = DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK;
         state.taskInfo = new TaskState();
         state.taskInfo.stage = TaskStage.STARTED;
-        state.containerHostLinks = new HashSet<>();
+        state.containerHostLinks = new HashMap<>();
         return state;
     }
 
@@ -161,11 +163,13 @@ public class HostNetworkListDataCollection extends StatefulService {
         }
 
         // the patch will succeed regardless of the synchronization process
-        if (state.containerHostLinks.contains(body.containerHostLink)) {
-            op.complete();
+        if (state.containerHostLinks.get(body.containerHostLink) != null &&
+                Instant.now().isBefore(Instant.ofEpochMilli(
+                        (state.containerHostLinks.get(body.containerHostLink))))) {
             return;// return since there is an active data collection for this host.
         } else {
-            state.containerHostLinks.add(body.containerHostLink);
+            state.containerHostLinks.put(body.containerHostLink,
+                    Instant.now().toEpochMilli() + DATA_COLLECTION_LOCK_TIMEOUT_MILLISECONDS);
             op.complete();
             // continue with the data collection.
         }
