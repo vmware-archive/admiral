@@ -29,7 +29,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
-import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
@@ -50,6 +49,7 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
+import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.TagService;
@@ -66,11 +66,9 @@ import com.vmware.xenon.services.common.ServiceUriPaths;
  * Validation is performed by examining local state instead of direct connection to the vSphere
  * endpoint.
  *
- * Possible additions:
- * - Tests with more complex business groups / tenant links.
- * - Validation through direct connection to vSphere.
- * - Test placement memory and cpu figures (not automatically updated yet).
- * - Test that removing a tag removes the host and VMs from the placement.
+ * Possible additions: - Tests with more complex business groups / tenant links. - Validation
+ * through direct connection to vSphere. - Test placement memory and cpu figures (not automatically
+ * updated yet). - Test that removing a tag removes the host and VMs from the placement.
  */
 public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
 
@@ -85,9 +83,11 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
 
     @Override
     protected void extendEndpoint(EndpointState endpoint) {
-        endpoint.endpointProperties.put("privateKeyId", getTestRequiredProp(VsphereUtil.VC_USERNAME));
+        endpoint.endpointProperties.put("privateKeyId",
+                getTestRequiredProp(VsphereUtil.VC_USERNAME));
         endpoint.endpointProperties.put("privateKey", getTestRequiredProp(VsphereUtil.VC_PASSWORD));
-        endpoint.endpointProperties.put("regionId", getTestRequiredProp(VsphereUtil.VC_DATACENTER_ID));
+        endpoint.endpointProperties.put("regionId",
+                getTestRequiredProp(VsphereUtil.VC_DATACENTER_ID));
         endpoint.endpointProperties.put("hostName", getTestRequiredProp(VsphereUtil.VC_HOST));
     }
 
@@ -124,9 +124,8 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
     }
 
     /**
-     *    placement A (pri 5, cap 2)           placement B (pri 10, cap unlimited)
-     *        zone A (sofia+dev)                          zone B (pa+qa)
-     *             compute0                            compute1, compute2
+     * placement A (pri 5, cap 2) placement B (pri 10, cap unlimited) zone A (sofia+dev) zone B
+     * (pa+qa) compute0 compute1, compute2
      *
      * 3 random computes are chosen from the vSphere endpoint and their local storage is used for
      * deploying an empty VM.
@@ -140,13 +139,14 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
         TagState tagQA = createTag("dept", "qa");
         ResourcePoolState rpA = createEpz("RP A", this.endpoint, tagSofia, tagDev);
         ResourcePoolState rpB = createEpz("RP B", this.endpoint, tagPA, tagQA);
-        GroupResourcePlacementState reservationA = createReservation("Placement A", rpA, 5, 2);
-        GroupResourcePlacementState reservationB = createReservation("Placement B", rpB, 10, 0);
 
         List<ComputeState> computes = selectComputes(this.endpoint.resourcePoolLink, 3);
         setTags(computes.get(0), tagSofia, tagDev);
         setTags(computes.get(1), tagPA, tagQA);
         setTags(computes.get(2), tagPA, tagQA);
+
+        GroupResourcePlacementState reservationA = createReservation("Placement A", rpA, 5, 2);
+        GroupResourcePlacementState reservationB = createReservation("Placement B", rpB, 10, 0);
 
         this.provisionRequest1 = provisionVm("placement-vm", 1, computes.subList(0, 1));
         validateReservations(reservationA, reservationB, 1, 0);
@@ -166,7 +166,7 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
         TagState tagState = new TagState();
         tagState.key = key;
         tagState.value = value;
-        tagState.tenantLinks = QueryUtil.getTenantLinks(this.endpoint.tenantLinks);
+        tagState.tenantLinks = this.endpoint.tenantLinks;
         return postDocument(TagService.FACTORY_LINK, tagState);
     }
 
@@ -175,6 +175,9 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
         ElasticPlacementZoneConfigurationState epzState = new ElasticPlacementZoneConfigurationState();
         epzState.resourcePoolState = new ResourcePoolState();
         epzState.resourcePoolState.name = name;
+        epzState.documentSelfLink = getLink(ResourcePoolService.FACTORY_LINK,
+                getClass().getSimpleName() + "-"
+                        + String.valueOf(System.currentTimeMillis() / 1000));
         epzState.resourcePoolState.customProperties = new HashMap<>();
         if (endpoint != null) {
             epzState.resourcePoolState.customProperties.put(
@@ -194,7 +197,8 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
         return returnedState.resourcePoolState;
     }
 
-    private GroupResourcePlacementState createReservation(String name, ResourcePoolState rp, int priority,
+    private GroupResourcePlacementState createReservation(String name, ResourcePoolState rp,
+            int priority,
             int maxInstances) throws Exception {
         GroupResourcePlacementState reservation = new GroupResourcePlacementState();
         reservation.resourceType = ResourceType.COMPUTE_TYPE.getName();
@@ -203,6 +207,9 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
         reservation.priority = priority;
         reservation.tenantLinks = rp.tenantLinks;
         reservation.maxNumberInstances = maxInstances;
+        reservation.documentSelfLink = getLink(GroupResourcePlacementService.FACTORY_LINK,
+                getClass().getSimpleName() + "-"
+                        + String.valueOf(System.currentTimeMillis() / 1000));
         return postDocument(GroupResourcePlacementService.FACTORY_LINK, reservation);
     }
 
@@ -217,7 +224,7 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
         assertEquals(expectedAllocated2, res2CurrentState.allocatedInstancesCount);
     }
 
-    private void setTags(ResourceState state, TagState ...tags) throws Exception {
+    private void setTags(ResourceState state, TagState... tags) throws Exception {
         state.tagLinks = new HashSet<>();
         for (TagState tag : tags) {
             state.tagLinks.add(tag.documentSelfLink);
@@ -241,7 +248,8 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
                 selected.add(cs);
             }
         });
-        assertTrue("Unsufficient compute resources on the vCenter server", selected.size() >= count);
+        assertTrue("Unsufficient compute resources on the vCenter server",
+                selected.size() >= count);
 
         Collections.shuffle(selected);
         if (selected.size() > count) {

@@ -130,7 +130,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     private static final String TEST_WORKING_DIR = "/tmp";
     private static final boolean TEST_PRIVILEGED = true;
 
-    protected final Set<ComputeState> computesToDelete = new HashSet<>();
+    protected final Map<String, ComputeState> computesToDelete = new HashMap<>();
     private final Set<String> containersToDelete = new HashSet<>();
     private GroupResourcePlacementState groupResourcePlacementState;
     private EndpointType endpointType;
@@ -181,7 +181,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
             }
         }
 
-        for (ComputeState compute : computesToDelete) {
+        for (ComputeState compute : computesToDelete.values()) {
             try {
                 logger.info("---------- Clean up: Request Delete the compute instance: %s --------",
                         compute.documentSelfLink);
@@ -265,7 +265,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         for (String link : allocateRequest.resourceLinks) {
             ComputeState computeState = getDocument(link, ComputeState.class);
             assertNotNull(computeState);
-            computesToDelete.add(computeState);
+            computesToDelete.put(link, computeState);
         }
 
         RequestBrokerState provisionRequest = requestCompute(resourceDescriptionLink, false,
@@ -274,6 +274,9 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         provisionRequest = getDocument(provisionRequest.documentSelfLink, RequestBrokerState.class);
         assertNotNull(provisionRequest);
         assertNotNull(provisionRequest.resourceLinks);
+        for (String link : allocateRequest.resourceLinks) {
+            computesToDelete.remove(link);
+        }
         return provisionRequest;
     }
 
@@ -313,10 +316,6 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         } else {
             return ResourceType.COMPUTE_TYPE.getName();
         }
-    }
-
-    private String getLink(String factoryLink, String name) {
-        return UriUtils.buildUriPath(factoryLink, name);
     }
 
     protected ResourcePoolState createResourcePool(EndpointType endpointType,
