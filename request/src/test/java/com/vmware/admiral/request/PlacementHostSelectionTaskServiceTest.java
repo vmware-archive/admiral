@@ -23,12 +23,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
@@ -45,7 +45,6 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.common.Utils;
 
 public class PlacementHostSelectionTaskServiceTest extends RequestBaseTest {
     private String contextId;
@@ -320,8 +319,8 @@ public class PlacementHostSelectionTaskServiceTest extends RequestBaseTest {
         placementTask.resourceType = ResourceType.CONTAINER_TYPE.getName();
         placementTask.contextId = contextId;
         placementTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();
-        placementTask.documentExpirationTimeMicros = Utils.getNowMicrosUtc()
-                + TimeUnit.HOURS.toMicros(5);
+        placementTask.documentExpirationTimeMicros = ServiceUtils
+                .getDefaultTaskExpirationTimeInMicros();
 
         return placeTask(placementTask, expectError);
     }

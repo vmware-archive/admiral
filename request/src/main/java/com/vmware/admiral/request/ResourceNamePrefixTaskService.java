@@ -100,7 +100,6 @@ public class ResourceNamePrefixTaskService
     private void queryResourceNamePrefixes(ResourceNamePrefixTaskState state, boolean globalSearch) {
         // match on group property:
         QueryTask q = QueryUtil.buildQuery(ResourceNamePrefixState.class, false);
-        q.documentExpirationTimeMicros = state.documentExpirationTimeMicros;
         q.tenantLinks = state.tenantLinks;
 
         List<String> documentLinks = new ArrayList<>();

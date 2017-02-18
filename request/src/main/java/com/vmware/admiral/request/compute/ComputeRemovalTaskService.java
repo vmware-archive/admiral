@@ -27,6 +27,7 @@ import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.common.util.SubscriptionUtils;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.request.ContainerHostRemovalTaskFactoryService;
@@ -310,6 +311,8 @@ public class ComputeRemovalTaskService extends
             removalServiceState.documentSelfLink = getSelfId();
             removalServiceState.resourceQuerySpec = qSpec;
             removalServiceState.options = state.resourceRemovalOptions;
+            removalServiceState.documentExpirationTimeMicros = ServiceUtils
+                    .getDefaultTaskExpirationTimeInMicros();
             removalServiceState.isMockRequest = DeploymentProfileConfig.getInstance().isTest();
             removalServiceState.tenantLinks = state.tenantLinks;
 

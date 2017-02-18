@@ -25,7 +25,6 @@ import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.maintenance.ContainerStats;
 import com.vmware.admiral.request.ContainerOperationTaskService.ContainerOperationTaskState.SubStage;
@@ -134,7 +133,6 @@ public class ContainerOperationTaskService extends
     private QueryTask createResourcesQuery(Class<? extends ServiceDocument> type,
             Set<String> resourceLinks) {
         QueryTask query = QueryUtil.buildQuery(type, false);
-        query.documentExpirationTimeMicros = ServiceUtils.getDefaultTaskExpirationTimeInMicros();
         query.querySpec.options = EnumSet.of(QueryOption.EXPAND_CONTENT);
 
         QueryUtil.addListValueClause(query, ServiceDocument.FIELD_NAME_SELF_LINK, resourceLinks);
