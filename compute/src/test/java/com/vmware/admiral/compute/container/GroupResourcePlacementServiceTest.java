@@ -290,7 +290,6 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
 
         // match on group property:
         QueryTask q = QueryUtil.buildQuery(GroupResourcePlacementState.class, false);
-        q.documentExpirationTimeMicros = state.documentExpirationTimeMicros;
 
         /**
          * When new policy is created it sets Project id in tenantLinks. In ReservationTaskService

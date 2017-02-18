@@ -527,7 +527,6 @@ public class GroupResourcePlacementService extends StatefulService {
 
     private QueryTask createGroupResourcePlacementQueryTask(GroupResourcePlacementState state) {
         QueryTask q = QueryUtil.buildQuery(GroupResourcePlacementState.class, false);
-        q.documentExpirationTimeMicros = state.documentExpirationTimeMicros;
 
         QueryTask.Query resourcePoolClause = new QueryTask.Query()
                 .setTermPropertyName(GroupResourcePlacementPoolState.FIELD_NAME_RESOURCE_POOL_LINK)

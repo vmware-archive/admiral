@@ -266,8 +266,6 @@ public class ComputeReservationTaskService
 
         // match on group property:
         QueryTask q = QueryUtil.buildQuery(GroupResourcePlacementState.class, false);
-        q.documentExpirationTimeMicros = state.documentExpirationTimeMicros;
-
         q.querySpec.query.addBooleanClause(QueryUtil.addTenantAndGroupClause(tgl));
         q.querySpec.query.addBooleanClause(Query.Builder.create()
                 .addFieldClause(GroupResourcePlacementState.FIELD_NAME_RESOURCE_TYPE,

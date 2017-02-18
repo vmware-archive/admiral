@@ -158,6 +158,11 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             }
         }
 
+        if (state.documentExpirationTimeMicros == 0) {
+            state.documentExpirationTimeMicros = ServiceUtils
+                    .getDefaultTaskExpirationTimeInMicros();
+        }
+
         if (startPost.getRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER) != null) {
             locale = startPost.getRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER);
         }
@@ -178,6 +183,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
     private boolean validateNewState(T state, Operation startPost) {
         if (state.documentVersion > 0) {
+            logWarning("Document version on create is : %s", state.documentVersion);
             return false;
         }
         if (state.serviceTaskCallback == null) {
@@ -425,6 +431,8 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             Consumer<String> callbackFunction) {
         CounterSubTaskState subTaskInitState = new CounterSubTaskState();
         subTaskInitState.completionsRemaining = count;
+        subTaskInitState.documentExpirationTimeMicros = ServiceUtils
+                .getDefaultTaskExpirationTimeInMicros();
         subTaskInitState.serviceTaskCallback = ServiceTaskCallback.create(
                 getSelfLink(), TaskStage.STARTED, substageComplete,
                 TaskStage.STARTED, DefaultSubStage.ERROR);

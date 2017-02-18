@@ -20,10 +20,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
+import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
@@ -37,7 +37,6 @@ import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.common.Utils;
 
 public class CompositionSubTaskServiceTest extends RequestBaseTest {
 
@@ -156,8 +155,8 @@ public class CompositionSubTaskServiceTest extends RequestBaseTest {
         compositionSubTaskState.resourceDescriptionLink = resourceDescriptionLink;
         compositionSubTaskState.requestId = UUID.randomUUID().toString();
         compositionSubTaskState.serviceTaskCallback = ServiceTaskCallback.createEmpty();
-        compositionSubTaskState.documentExpirationTimeMicros = Utils.getNowMicrosUtc()
-                + TimeUnit.HOURS.toMicros(5);
+        compositionSubTaskState.documentExpirationTimeMicros = ServiceUtils
+                .getDefaultTaskExpirationTimeInMicros();
         compositionSubTaskState.compositeDescriptionLink = compositeDescriptionLink;
         compositionSubTaskState.operation = RequestBrokerState.PROVISION_RESOURCE_OPERATION;
 

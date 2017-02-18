@@ -1034,7 +1034,6 @@ public class ComputeAllocationTaskService
                 .setQuery(query.build())
                 .addOption(QueryOption.EXPAND_CONTENT)
                 .build();
-        task.documentExpirationTimeMicros = state.documentExpirationTimeMicros;
 
         List<EnvironmentState> foundEnvs = new LinkedList<EnvironmentState>();
         new ServiceDocumentQuery<>(
