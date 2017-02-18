@@ -68,6 +68,7 @@ import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeStateWithDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
+import com.vmware.photon.controller.model.resources.EndpointService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.tasks.ResourceEnumerationTaskService;
 import com.vmware.photon.controller.model.tasks.ResourceEnumerationTaskService.ResourceEnumerationTaskState;
@@ -508,12 +509,19 @@ public abstract class BaseIntegrationSupportIT {
             throws Exception {
         EndpointState endpoint = new EndpointState();
         endpoint.endpointType = endpointType.name();
+        endpoint.documentSelfLink = getLink(EndpointService.FACTORY_LINK,
+                getClass().getSimpleName() + "-"
+                        + String.valueOf(System.currentTimeMillis() / 1000));
         endpoint.name = name(endpointType, getClass().getSimpleName().toLowerCase(), SUFFIX);
         endpoint.tenantLinks = getTenantLinks();
         endpoint.endpointProperties = new HashMap<>();
         extendEndpoint(endpoint);
 
         return postDocument(EndpointAdapterService.SELF_LINK, endpoint, documentLifeCycle);
+    }
+
+    protected String getLink(String factoryLink, String name) {
+        return UriUtils.buildUriPath(factoryLink, name);
     }
 
     protected void triggerAndWaitForEndpointEnumeration(EndpointState endpoint) throws Exception {

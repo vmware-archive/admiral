@@ -56,6 +56,7 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
         day2StartRequest.resourceType = ResourceType.COMPUTE_TYPE.getName();
         day2StartRequest.resourceLinks = resourceLinks;
         day2StartRequest.operation = computeOperation.id;
+        day2StartRequest.tenantLinks = endpoint.tenantLinks;
         day2StartRequest = executeRequest(day2StartRequest);
 
         day2StartRequest = getDocument(day2StartRequest.documentSelfLink, RequestBrokerState.class);
