@@ -519,6 +519,7 @@ public class RequestBrokerService extends
                 SubStage.COMPLETED, SubStage.ERROR);
         removalState.documentSelfLink = getSelfId();
         removalState.requestTrackerLink = state.requestTrackerLink;
+        removalState.tenantLinks = state.tenantLinks;
 
         Operation post = Operation
                 .createPost(this, CompositeComponentRemovalTaskService.FACTORY_LINK)
@@ -541,6 +542,7 @@ public class RequestBrokerService extends
         provisionContainerHostTask.resourceCount = state.resourceCount;
         provisionContainerHostTask.customProperties = state.customProperties;
         provisionContainerHostTask.requestTrackerLink = state.requestTrackerLink;
+        provisionContainerHostTask.tenantLinks = state.tenantLinks;
         provisionContainerHostTask.serviceTaskCallback = ServiceTaskCallback.create(
                 getSelfLink(),
                 TaskStage.STARTED, SubStage.ALLOCATED,
@@ -578,6 +580,7 @@ public class RequestBrokerService extends
                 TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,
                 TaskStage.FAILED, SubStage.ERROR);
         computeRemovalState.documentSelfLink = getSelfId();
+        computeRemovalState.tenantLinks = state.tenantLinks;
         computeRemovalState.customProperties = state.customProperties;
         computeRemovalState.skipReleaseResourceQuota = skipReleaseResourceQuota;
         computeRemovalState.requestTrackerLink = state.requestTrackerLink;
@@ -610,6 +613,7 @@ public class RequestBrokerService extends
                 TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,
                 TaskStage.FAILED, SubStage.ERROR);
         removalState.documentSelfLink = getSelfId();
+        removalState.tenantLinks = state.tenantLinks;
         removalState.customProperties = state.customProperties;
         if (!errorState) {
             removalState.requestTrackerLink = state.requestTrackerLink;
@@ -817,6 +821,7 @@ public class RequestBrokerService extends
         operationState.documentSelfLink = getSelfId();
         operationState.customProperties = state.customProperties;
         operationState.requestTrackerLink = state.requestTrackerLink;
+        operationState.tenantLinks = state.tenantLinks;
 
         sendRequest(Operation.createPost(this, ComputeOperationTaskService.FACTORY_LINK)
                 .setBody(operationState)
@@ -1363,6 +1368,7 @@ public class RequestBrokerService extends
         rsrvTask.resourceDescriptionLink = state.resourceDescriptionLink;
         rsrvTask.groupResourcePlacementLink = state.groupResourcePlacementLink;
         rsrvTask.requestTrackerLink = state.requestTrackerLink;
+        rsrvTask.tenantLinks = state.tenantLinks;
 
         sendRequest(Operation.createPost(this, ReservationRemovalTaskFactoryService.SELF_LINK)
                 .setBody(rsrvTask)
