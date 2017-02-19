@@ -13,21 +13,25 @@ package com.vmware.admiral.test.integration.compute.aws;
 
 import static org.junit.Assert.assertNotNull;
 
+import java.util.HashMap;
 import java.util.Set;
+import java.util.UUID;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.vmware.admiral.common.util.ServiceUtils;
+import com.vmware.admiral.compute.ComputeConstants;
+import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
-import com.vmware.admiral.request.compute.ComputeRemovalTaskService;
-import com.vmware.admiral.request.compute.ComputeRemovalTaskService.ComputeRemovalTaskState;
+import com.vmware.admiral.request.RequestBrokerFactoryService;
+import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.compute.ProvisionContainerHostsTaskService;
-import com.vmware.admiral.request.compute.ProvisionContainerHostsTaskService.DockerHostDescription;
-import com.vmware.admiral.request.compute.ProvisionContainerHostsTaskService.ProvisionContainerHostsTaskState;
 import com.vmware.admiral.test.integration.BaseIntegrationSupportIT;
+import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.xenon.common.UriUtils;
 
@@ -61,11 +65,13 @@ public class AwsProvisionContainerHostIT extends BaseIntegrationSupportIT {
         if (this.resourceLinks == null) {
             return;
         }
-        ComputeRemovalTaskState crts = new ComputeRemovalTaskState();
-        crts.resourceLinks = this.resourceLinks;
-        crts.skipReleaseResourceQuota = true;
-        crts.tenantLinks = getTenantLinks();
-        ComputeRemovalTaskState state = postDocument(ComputeRemovalTaskService.FACTORY_LINK, crts);
+        RequestBrokerState request = new RequestBrokerState();
+        request.resourceType = ResourceType.CONTAINER_HOST_TYPE.getName();
+        request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
+        request.resourceLinks = this.resourceLinks;
+        request.tenantLinks = getTenantLinks();
+
+        RequestBrokerState state = postDocument(RequestBrokerFactoryService.SELF_LINK, request);
         waitForTaskToComplete(state.documentSelfLink);
     }
 
@@ -83,28 +89,49 @@ public class AwsProvisionContainerHostIT extends BaseIntegrationSupportIT {
 
     @Test
     public void testProvision() throws Throwable {
-        DockerHostDescription hostDescription = new DockerHostDescription();
-        hostDescription.name = "belvm" + String.valueOf(System.currentTimeMillis() / 1000);
-        hostDescription.instanceType = "t2.micro";
-        hostDescription.imageType = "coreos";
+        ComputeDescription cd = createComputeDescription();
 
-        ProvisionContainerHostsTaskState state = new ProvisionContainerHostsTaskState();
-        state.endpointLink = endpoint.documentSelfLink;
-        state.resourceCount = 1;
-        state.hostDescription = hostDescription;
-        state.tenantLinks = getTenantLinks();
-        state.documentExpirationTimeMicros = ServiceUtils
-                .getDefaultTaskExpirationTimeInMicros();
-        ProvisionContainerHostsTaskState request = postDocument(
-                ProvisionContainerHostsTaskService.FACTORY_LINK,
-                state);
+        RequestBrokerState request = new RequestBrokerState();
+        request.resourceType = ResourceType.CONTAINER_HOST_TYPE.getName();
+        request.operation = ProvisionContainerHostsTaskService.PROVISION_CONTAINER_HOSTS_OPERATION;
+        request.resourceDescriptionLink = cd.documentSelfLink;
+        request.tenantLinks = getTenantLinks();
+        request.resourceCount = 1;
 
-        waitForTaskToComplete(request.documentSelfLink);
+        RequestBrokerState result = postDocument(RequestBrokerFactoryService.SELF_LINK, request);
 
-        ProvisionContainerHostsTaskState provisionRequest = getDocument(request.documentSelfLink,
-                ProvisionContainerHostsTaskState.class);
+        waitForTaskToComplete(result.documentSelfLink);
+
+        RequestBrokerState provisionRequest = getDocument(result.documentSelfLink,
+                RequestBrokerState.class);
         assertNotNull(provisionRequest);
         assertNotNull(provisionRequest.resourceLinks);
         this.resourceLinks = provisionRequest.resourceLinks;
+    }
+
+    protected ComputeDescription createComputeDescription()
+            throws Exception {
+
+        ComputeDescription computeDesc = prepareComputeDescription();
+
+        ComputeDescription computeDescription = postDocument(ComputeDescriptionService.FACTORY_LINK,
+                computeDesc, TestDocumentLifeCycle.FOR_DELETE);
+
+        return computeDescription;
+    }
+
+    protected ComputeDescription prepareComputeDescription() throws Exception {
+        String id = name(getEndpointType(), "test", UUID.randomUUID().toString());
+        ComputeDescription computeDesc = new ComputeDescription();
+        computeDesc.id = id;
+        computeDesc.name = "dockervm" + String.valueOf(System.currentTimeMillis() / 1000);
+        computeDesc.instanceType = "t2.micro";
+        computeDesc.tenantLinks = getTenantLinks();
+        computeDesc.customProperties = new HashMap<>();
+        computeDesc.customProperties
+                .put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "coreos");
+        computeDesc.customProperties.put(ComputeProperties.ENDPOINT_LINK_PROP_NAME,
+                endpoint.documentSelfLink);
+        return computeDesc;
     }
 }
