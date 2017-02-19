@@ -134,7 +134,7 @@ public class CompositionTaskService
             createResourcePrefixNameSelectionTask(state);
             break;
         case RESOURCES_NAMED:
-            crateComponentState(state, null);
+            createComponentState(state, null);
             break;
         case COMPONENT_CREATED:
             calculateResourceDependencyGraph(state, null);
@@ -555,11 +555,11 @@ public class CompositionTaskService
         });
     }
 
-    private void crateComponentState(final CompositionTaskState state,
+    private void createComponentState(final CompositionTaskState state,
             final CompositeDescriptionExpanded compositeDesc) {
         if (compositeDesc == null) {
             getCompositeDescription(state, true,
-                    (compDesc) -> this.crateComponentState(state, compDesc));
+                    (compDesc) -> this.createComponentState(state, compDesc));
             return;
         }
 

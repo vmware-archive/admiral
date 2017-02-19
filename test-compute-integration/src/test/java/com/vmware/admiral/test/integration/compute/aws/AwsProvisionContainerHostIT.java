@@ -69,7 +69,7 @@ public class AwsProvisionContainerHostIT extends BaseIntegrationSupportIT {
         request.resourceType = ResourceType.CONTAINER_HOST_TYPE.getName();
         request.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
         request.resourceLinks = this.resourceLinks;
-        request.tenantLinks = getTenantLinks();
+        request.tenantLinks = endpoint.tenantLinks;
 
         RequestBrokerState state = postDocument(RequestBrokerFactoryService.SELF_LINK, request);
         waitForTaskToComplete(state.documentSelfLink);
@@ -95,7 +95,7 @@ public class AwsProvisionContainerHostIT extends BaseIntegrationSupportIT {
         request.resourceType = ResourceType.CONTAINER_HOST_TYPE.getName();
         request.operation = ProvisionContainerHostsTaskService.PROVISION_CONTAINER_HOSTS_OPERATION;
         request.resourceDescriptionLink = cd.documentSelfLink;
-        request.tenantLinks = getTenantLinks();
+        request.tenantLinks = endpoint.tenantLinks;
         request.resourceCount = 1;
 
         RequestBrokerState result = postDocument(RequestBrokerFactoryService.SELF_LINK, request);
@@ -126,7 +126,7 @@ public class AwsProvisionContainerHostIT extends BaseIntegrationSupportIT {
         computeDesc.id = id;
         computeDesc.name = "dockervm" + String.valueOf(System.currentTimeMillis() / 1000);
         computeDesc.instanceType = "t2.micro";
-        computeDesc.tenantLinks = getTenantLinks();
+        computeDesc.tenantLinks = endpoint.tenantLinks;
         computeDesc.customProperties = new HashMap<>();
         computeDesc.customProperties
                 .put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "coreos");

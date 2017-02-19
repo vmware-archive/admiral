@@ -772,7 +772,7 @@ public class CompositionSubTaskService
                                 nameToResource);
 
                         // This will do a PUT on the whole tree
-                        evaluated.sendRequest(this, Action.PUT);
+                        updates.add(evaluated.sendRequest(this, Action.PUT));
                     }
                     return DeferredResult.allOf(updates);
                 })
