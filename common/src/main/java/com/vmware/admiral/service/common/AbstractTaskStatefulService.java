@@ -333,6 +333,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         final String refererLogPart = patch.getUri().equals(patch.getReferer()) ? "" :
                 String.format(" Caller: [%s]", patch.getReferer());
 
+        long currentExpiration = currentState.documentExpirationTimeMicros;
         if (patchBody.taskInfo == null || patchBody.taskInfo.stage == null) {
             patch.fail(new IllegalArgumentException("taskInfo and taskInfo.stage are required"));
             return true;
@@ -399,6 +400,9 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         adjustStat(patchBody.taskInfo.stage.toString(), 1);
 
         autoMergeState(patch, patchBody, currentState);
+        if (currentState.documentExpirationTimeMicros == 0) {
+            currentState.documentExpirationTimeMicros = currentExpiration;
+        }
         customStateValidationAndMerge(patch, patchBody, currentState);
 
         return false;
