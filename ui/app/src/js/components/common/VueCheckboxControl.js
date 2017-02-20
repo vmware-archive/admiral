@@ -9,47 +9,31 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import VueCheckboxInput from 'components/common/VueCheckboxInput'; //eslint-disable-line
-import VueFormControl from 'components/common/VueFormControl'; //eslint-disable-line
-
 export default Vue.component('checkbox-control', {
   template: `
-    <form-control
-      :class="class"
-      :label="label"
-      :labelPosition="'left'"
-      :name="name"
-      :required="required">
-      <checkbox-input
+    <i>
+      <input
+        type="checkbox"
+        :checked="value ? 'checked' : ''"
         :disabled="disabled"
+        :id="id"
         :name="name"
-        :value="value"
         @change="onChange">
-      </checkbox-input>
-    </form-control>
+    </i>
   `,
   props: {
-    class: {
-      required: false,
-      type: String
-    },
     disabled: {
       default: false,
       required: false,
       type: Boolean
     },
-    label: {
-      required: true,
+    id: {
+      required: false,
       type: String
     },
     name: {
       required: false,
       type: String
-    },
-    required: {
-      default: false,
-      required: false,
-      type: Boolean
     },
     value: {
       required: false,
@@ -57,8 +41,12 @@ export default Vue.component('checkbox-control', {
     }
   },
   methods: {
-    onChange(value) {
-      this.$dispatch('change', value, this);
+    onChange($event) {
+      $event.preventDefault();
+      $event.stopPropagation();
+
+      this.value = $event.currentTarget.checked;
+      this.$emit('change', this.value);
     }
   }
 });

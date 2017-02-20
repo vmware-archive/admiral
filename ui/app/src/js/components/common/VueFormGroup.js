@@ -9,40 +9,16 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-export default Vue.component('form-control', {
+export default Vue.component('form-group', {
   template: `
     <div :class="['form-group', class]">
-      <slot v-if="labelPosition === 'right'"></slot>
-      <label
-        :class="{'required': required}"
-        :for="name">
-        {{label}}
-      </label>
-      <slot v-if="labelPosition === 'left'"></slot>
+      <slot></slot>
     </div>
   `,
   props: {
     class: {
       required: false,
       type: String
-    },
-    label: {
-      required: true,
-      type: String
-    },
-    labelPosition: {
-      default: 'left',
-      required: false,
-      type: String
-    },
-    name: {
-      required: false,
-      type: String
-    },
-    required: {
-      default: false,
-      required: false,
-      type: Boolean
     }
   }
 });

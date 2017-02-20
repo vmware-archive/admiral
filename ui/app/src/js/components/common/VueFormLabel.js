@@ -9,38 +9,23 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-export default Vue.component('password-input', {
+export default Vue.component('form-label', {
   template: `
-    <input
-      type="password"
-      :disabled="disabled"
-      :id="name"
-      :name="name"
-      :value="value"
-      @change="onChange($event)"
-      @input="onChange($event)">
+    <label
+      :class="{'required': required}"
+      :for="for">
+      <slot></slot>
+    </label>
   `,
   props: {
-    disabled: {
+    for: {
+      required: false,
+      type: String
+    },
+    required: {
       default: false,
       required: false,
       type: Boolean
-    },
-    name: {
-      required: false,
-      type: String
-    },
-    value: {
-      required: false,
-      type: String
-    }
-  },
-  methods: {
-    onChange($event) {
-      $event.preventDefault();
-      $event.stopPropagation();
-
-      this.$dispatch('change', $event.currentTarget.value, this);
     }
   }
 });

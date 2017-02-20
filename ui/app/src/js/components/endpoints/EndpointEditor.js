@@ -9,9 +9,6 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import VueDropdownControl from 'components/common/VueDropdownControl'; //eslint-disable-line
-import VuePasswordControl from 'components/common/VuePasswordControl'; //eslint-disable-line
-import VueTextControl from 'components/common/VueTextControl'; //eslint-disable-line
 import AwsEndpointEditor from 'components/endpoints/aws/EndpointEditor'; //eslint-disable-line
 import AzureEndpointEditor from 'components/endpoints/azure/EndpointEditor'; //eslint-disable-line
 import VsphereEndpointEditor from 'components/endpoints/vsphere/EndpointEditor'; //eslint-disable-line

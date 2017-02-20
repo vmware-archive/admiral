@@ -12,25 +12,25 @@
 export default Vue.component('aws-endpoint-editor', {
   template: `
     <div>
-      <text-control
+      <text-group
         :label="i18n('app.endpoint.edit.privateKeyIdLabel')"
         :required="true"
         :value="privateKeyId"
         @change="onPrivateKeyIdChange">
-      </text-input>
-      <password-control
+      </text-group>
+      <password-group
         :label="i18n('app.endpoint.edit.privateKeyLabel')"
         :required="true"
         :value="privateKey"
         @change="onPrivateKeyChange">
-      </password-input>
-      <text-control
+      </password-group>
+      <text-group
         :disabled="!!model.documentSelfLink"
         :label="i18n('app.endpoint.edit.regionIdLabel')"
         :required="true"
         :value="regionId"
         @change="onRegionIdChange">
-      </text-input>
+      </text-group>
     </div>
   `,
   props: {

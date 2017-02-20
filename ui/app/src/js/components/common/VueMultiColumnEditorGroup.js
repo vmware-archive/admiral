@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,23 +9,21 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import VueFormControl from 'components/common/VueFormControl'; //eslint-disable-line
-import VuePasswordInput from 'components/common/VuePasswordInput'; //eslint-disable-line
-
-export default Vue.component('password-control', {
+export default Vue.component('multicolumn-editor-group', {
   template: `
-    <form-control
-      :class="class"
-      :label="label"
-      :name="name"
-      :required="required">
-      <password-input
+    <form-group
+      :class="class">
+      <form-label
+        :required="required">
+        {{label}}
+      </form-label>
+      <multicolumn-editor
         :disabled="disabled"
-        :name="name"
+        :headers="headers"
         :value="value"
-        @change="onChange">
-      </password-input>
-    </form-control>
+        @onChange="onChange">
+      </multicolumn-editor>
+    </form-group>
   `,
   props: {
     class: {
@@ -37,12 +35,12 @@ export default Vue.component('password-control', {
       required: false,
       type: Boolean
     },
+    headers: {
+      required: false,
+      type: Array
+    },
     label: {
       required: true,
-      type: String
-    },
-    name: {
-      required: false,
       type: String
     },
     required: {
@@ -51,13 +49,15 @@ export default Vue.component('password-control', {
       type: Boolean
     },
     value: {
-      required: false,
-      type: String
+      required: true,
+      type: Array
     }
   },
   methods: {
     onChange(value) {
-      this.$dispatch('change', value, this);
+      this.value = value;
+      this.$emit('change', this.value);
     }
   }
 });
+

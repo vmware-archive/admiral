@@ -17,13 +17,13 @@
     <section class="form-block">
       <label class="title" v-if="model.item.documentSelfLink">{{i18n('app.endpoint.edit.update')}}</label>
       <label class="title" v-else>{{i18n('app.endpoint.edit.addNew')}}</label>
-      <text-control
+      <text-group
         :label="i18n('app.endpoint.edit.nameLabel')"
         :required="true"
         :value="model.item.name"
         @change="onNameChange">
-      </text-input>
-      <dropdown-control
+      </text-group>
+      <dropdown-group
         :disabled="!!model.item.documentSelfLink"
         :entity="i18n('app.endpoint.typeEntity')"
         :label="i18n('app.endpoint.edit.typeLabel')"
@@ -31,7 +31,7 @@
         :required="true"
         :value="convertToObject(model.item.endpointType)"
         @change="onEndpointTypeChange">
-      </dropdown-input>
+      </dropdown-group>
       <div
         v-for="(index, editor) in supportedEditors"
         v-if="endpointType === supportedTypes[index].id"

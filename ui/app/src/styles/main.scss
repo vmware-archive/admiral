@@ -357,14 +357,8 @@ textarea {
   margin-right: 25px;
 }
 
-.closable-view > .content.host-view {
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-}
-
-
+.closable-view > .content.host-view,
+.closable-view > .content.compute-edit-view,
 .closable-view > .content.machine-edit-view {
   top: 0;
   left: 0;

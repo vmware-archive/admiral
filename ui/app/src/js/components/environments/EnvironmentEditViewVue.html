@@ -51,42 +51,33 @@
           <div class="tab-content">
             <div role="tabpanel" class="tab-pane" id="basic">
               <form>
-                <div class="form-group name">
-                  <label class="required">
-                    {{i18n('app.environment.edit.nameLabel')}}
-                  </label>
-                  <input
-                      class="form-control name-input"
-                      :value="model.item.name"
-                      @input="onNameChange($event)">
-                </div>
-
-                <div class="form-group" v-if="!model.item.endpointType">
-                  <label class="required">
-                    {{i18n("app.environment.edit.endpointLabel")}}
-                  </label>
-                  <div class="form-control">
-                    <dropdown-search
-                        :disabled="!!model.item.endpoint"
-                        :entity="i18n('app.endpoint.entity')"
-                        :loading="!model.endpoints"
-                        :manage="[{
-                          action: createEndpoint,
-                          icon: 'plus',
-                          name: i18n('app.endpoint.createNew')
-                        }, {
-                          action: manageEndpoints,
-                          icon: 'pencil',
-                          name: i18n('app.endpoint.manage')
-                        }]"
-                        :options="model.endpoints"
-                        :value="model.item.endpoint"
-                        @change="onEndpointChange">
-                    </dropdown-search>
-                  </div>
-                </div>
-
-                <div class="form-group tags" :class="{'has-error': validationErrors.tags}">
+                <text-group
+                  :label="i18n('app.environment.edit.nameLabel')"
+                  :required="true"
+                  :value="model.item.name"
+                  @change="onNameChange">
+                </text-group>
+                <dropdown-search-group
+                  v-if="!model.item.endpointType"
+                  :label="i18n('app.environment.edit.endpointLabel')"
+                  :disabled="!!model.item.endpoint"
+                  :entity="i18n('app.endpoint.entity')"
+                  :loading="!model.endpoints"
+                  :manage="[{
+                    action: createEndpoint,
+                    icon: 'plus',
+                    name: i18n('app.endpoint.createNew')
+                  }, {
+                    action: manageEndpoints,
+                    icon: 'pencil',
+                    name: i18n('app.endpoint.manage')
+                  }]"
+                  :options="model.endpoints"
+                  :required="true"
+                  :value="model.item.endpoint"
+                  @change="onEndpointChange">
+                </dropdown-search-group>
+                <div class="form-group tags">
                   <label>{{i18n("app.environment.edit.tagsLabel")}}</label>
                   <div class="form-control tags-holder">
                     <tags
@@ -98,7 +89,6 @@
                       v-tooltip="i18n('app.host.details.tagsHint')"></i>
                   <span class="help-block">{{i18n(validationErrors.tags)}}</span>
                 </div>
-
               </form>
             </div>
             <div role="tabpanel" class="tab-pane" id="compute">
@@ -108,32 +98,47 @@
                     {{i18n('app.environment.edit.instanceTypeLabel')}}
                   </label>
                   <div class="form-control">
-                    <multicolumn-inputs v-ref:instance-type v-if="endpointType === 'vsphere'"
+
+                    <multicolumn-editor
+                      v-if="endpointType === 'vsphere'"
+                      :headers="[
+                        i18n('app.environment.edit.nameLabel'),
+                        i18n('app.environment.edit.cpuCountLabel'),
+                        i18n('app.environment.edit.diskSizeMbLabel'),
+                        i18n('app.environment.edit.memoryMbLabel')
+                      ]"
                       :value="instanceTypeValue"
-                      :model="{
-                        name: {
-                          header: i18n('app.environment.edit.nameLabel')
-                        },
-                        cpuCount: {
-                          header: i18n('app.environment.edit.cpuCountLabel')
-                        },
-                        diskSizeMb: {
-                          header: i18n('app.environment.edit.diskSizeMbLabel')
-                        },
-                        memoryMb: {
-                          header: i18n('app.environment.edit.memoryMbLabel')
-                        }
-                      }"></multicolumn-inputs>
-                    <multicolumn-inputs v-ref:instance-type v-else
+                      @change="onInstanceTypeChange">
+                      <multicolumn-cell name="name">
+                        <text-control></text-control>
+                      </multicolumn-cell>
+                      <multicolumn-cell name="cpuCount">
+                        <number-control></number-control>
+                      </multicolumn-cell>
+                      <multicolumn-cell name="diskSizeMb">
+                        <number-control></number-control>
+                      </multicolumn-cell>
+                      <multicolumn-cell name="memoryMb">
+                        <number-control></number-control>
+                      </multicolumn-cell>
+                    </multicolumn-editor>
+
+                    <multicolumn-editor
+                      v-else
+                      :headers="[
+                        i18n('app.environment.edit.nameLabel'),
+                        i18n('app.environment.edit.valueLabel')
+                      ]"
                       :value="instanceTypeValue"
-                      :model="{
-                        name: {
-                          header: i18n('app.environment.edit.nameLabel')
-                        },
-                        value: {
-                          header: i18n('app.environment.edit.valueLabel')
-                        }
-                      }"></multicolumn-inputs>
+                      @change="onInstanceTypeChange">
+                      <multicolumn-cell name="name">
+                        <text-control></text-control>
+                      </multicolumn-cell>
+                      <multicolumn-cell name="value">
+                        <text-control></text-control>
+                      </multicolumn-cell>
+                    </multicolumn-editor>
+
                   </div>
                 </div>
 
@@ -142,16 +147,22 @@
                     {{i18n('app.environment.edit.imageTypeLabel')}}
                   </label>
                   <div class="form-control">
-                    <multicolumn-inputs v-ref:image-type
+
+                    <multicolumn-editor
+                      :headers="[
+                        i18n('app.environment.edit.nameLabel'),
+                        i18n('app.environment.edit.valueLabel')
+                      ]"
                       :value="imageTypeValue"
-                      :model="{
-                        name: {
-                          header: i18n('app.environment.edit.nameLabel')
-                        },
-                        value: {
-                          header: i18n('app.environment.edit.valueLabel')
-                        }
-                      }"></multicolumn-inputs>
+                      @change="onImageTypeChange">
+                      <multicolumn-cell name="name">
+                        <text-control></text-control>
+                      </multicolumn-cell>
+                      <multicolumn-cell name="value">
+                        <text-control></text-control>
+                      </multicolumn-cell>
+                    </multicolumn-editor>
+
                   </div>
                 </div>
 
@@ -159,76 +170,37 @@
             </div>
             <div role="tabpanel" class="tab-pane" id="network">
               <form>
-
-                <div class="form-group networkName">
-                  <label>
-                    {{i18n('app.environment.edit.nameLabel')}}
-                  </label>
-                  <input
-                      class="form-control name-input"
-                      :value="model.item.networkProfile && model.item.networkProfile.name"
-                      @input="onNetworkNameChange($event)">
-                </div>
+                <text-group
+                  :label="i18n('app.environment.edit.nameLabel')"
+                  :value="model.item.networkProfile && model.item.networkProfile.name"
+                  @change="onNetworkNameChange">
+                </text-group>
                 <div class="form-group subnetworks"
                     v-if="endpoint && (endpointType === 'aws' || endpointType === 'azure')">
                   <label>
                     {{i18n('app.environment.edit.subnetworksLabel')}}
                   </label>
-                  <div class="form-control">
-                    <div class="multicolumn-inputs">
-                      <div class="multicolumn-inputs-list">
-                        <div class="multicolumn-inputs-list-head">
-                          <div class="multicolumn-input-controls">
-                            <ul>
-                              <li>
-                                <div class="multicolumn-header">
-                                  <div class="multicolumn-header-label">{{i18n('app.environment.edit.nameLabel')}}</div>
-                                </div>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                        <div class="multicolumn-inputs-list-body-wrapper">
-                          <div class="multicolumn-inputs-list-body" v-for="subnetwork in subnetworks" track-by="$index">
-                            <div class="multicolumn-input">
-                              <div class="multicolumn-input-controls">
-                                <ul>
-                                  <li>
-                                    <div class="inline-input-holder">
-                                      <dropdown-search
-                                          :entity="i18n('app.network.entity')"
-                                          :filter="searchSubnetworks"
-                                          :index="$index"
-                                          :renderer="renderSubnetwork"
-                                          :value="subnetwork"
-                                          :manage="[{
-                                            action: manageSubnetworks,
-                                            icon: 'pencil',
-                                            name: i18n('app.subnetwork.manage')
-                                          }]"
-                                          @change="onSubnetworkChange">
-                                      </dropdown-search>
-                                    </div>
-                                  </li>
-                                </ul>
-                              </div>
-                              <div class="multicolumn-input-toolbar">
-                                <a href="#" tabindex="-1" class="multicolumn-input-remove"
-                                    @click="removeSubnetwork($event, $index)">
-                                  <i class="btn btn-circle fa fa-minus"></i>
-                                </a>
-                                <a :style="{'visibility': $index + 1 === subnetworks.length ? 'visible' : 'hidden'}"
-                                    href="#" class="multicolumn-input-add"
-                                    @click="addSubnetwork($event)">
-                                  <i class="btn btn-circle fa fa-plus"></i>
-                                </a>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+
+                  <multicolumn-editor
+                    :headers="[
+                      i18n('app.environment.edit.nameLabel')
+                    ]"
+                    :value="subnetworks"
+                    @change="onSubnetworkChange">
+                    <multicolumn-cell name="name">
+                      <dropdown-search
+                        :entity="i18n('app.network.entity')"
+                        :filter="searchSubnetworks"
+                        :renderer="renderSubnetwork"
+                        :manage="[{
+                          action: manageSubnetworks,
+                          icon: 'pencil',
+                          name: i18n('app.subnetwork.manage')
+                        }]">
+                      </dropdown-search>
+                    </multicolumn-cell>
+                  </multicolumn-editor>
+
                 </div>
               </form>
             </div>
@@ -238,18 +210,21 @@
                   <label>
                     {{i18n('app.environment.edit.bootDiskPropertyLabel')}}
                   </label>
-                  <div class="form-control">
-                    <multicolumn-inputs v-ref:boot-disk-property
-                      :value="bootDiskPropertyValue"
-                      :model="{
-                        name: {
-                          header: i18n('app.environment.edit.nameLabel')
-                        },
-                        value: {
-                          header: i18n('app.environment.edit.valueLabel')
-                        }
-                      }"></multicolumn-inputs>
-                  </div>
+
+                  <multicolumn-editor
+                    :headers="[
+                      i18n('app.environment.edit.nameLabel'),
+                      i18n('app.environment.edit.valueLabel')
+                    ]"
+                    :value="bootDiskPropertyValue"
+                    @change="onBootDiskPropertyChange">
+                    <multicolumn-cell name="name">
+                      <text-control></text-control>
+                    </multicolumn-cell>
+                    <multicolumn-cell name="value">
+                      <text-control></text-control>
+                    </multicolumn-cell>
+                  </multicolumn-editor>
                 </div>
               </form>
             </div>

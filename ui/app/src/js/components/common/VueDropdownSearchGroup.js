@@ -9,27 +9,30 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import VueDropdown from 'components/common/VueDropdown'; //eslint-disable-line
-import VueFormControl from 'components/common/VueFormControl'; //eslint-disable-line
+import VueDropdownSearch from 'components/common/VueDropdownSearch'; //eslint-disable-line
+import VueFormGroup from 'components/common/VueFormGroup'; //eslint-disable-line
+import VueFormLabel from 'components/common/VueFormLabel'; //eslint-disable-line
 
-export default Vue.component('dropdown-control', {
+export default Vue.component('dropdown-search-group', {
   template: `
-    <form-control
-      :class="class"
-      :label="label"
-      :name="name"
-      :required="required">
-      <dropdown
-          :disabled="disabled"
-          :entity="entity"
-          :loading="loading"
-          :manage="manage"
-          :options="options"
-          :renderer="renderer"
-          :value="value"
-          @change="onChange">
-      </dropdown>
-    </form-control>
+    <form-group
+      :class="class">
+      <form-label
+        :required="required">
+        {{label}}
+      </form-label>
+      <dropdown-search
+        :disabled="disabled"
+        :entity="entity"
+        :filter="filter"
+        :loading="loading"
+        :manage="manage"
+        :options="options"
+        :renderer="renderer"
+        :value="value"
+        @change="onChange">
+      </dropdown-search>
+    </form-group>
   `,
   props: {
     class: {
@@ -45,6 +48,10 @@ export default Vue.component('dropdown-control', {
       required: true,
       type: String
     },
+    filter: {
+      required: false,
+      type: Function
+    },
     label: {
       required: true,
       type: String
@@ -58,10 +65,6 @@ export default Vue.component('dropdown-control', {
       default: () => [],
       required: false,
       type: Array
-    },
-    name: {
-      required: false,
-      type: String
     },
     options: {
       default: () => [],
@@ -83,8 +86,9 @@ export default Vue.component('dropdown-control', {
     }
   },
   methods: {
-    onChange(value, instance) {
-      this.$dispatch('change', value, instance);
+    onChange(value) {
+      this.value = value;
+      this.$emit('change', this.value);
     }
   }
 });
