@@ -97,7 +97,7 @@ public abstract class BaseIntegrationSupportIT {
     private static final Properties testProperties = loadTestProperties();
 
     protected static final Queue<ServiceDocument> documentsForDeletionAfterClass = new LinkedBlockingQueue<>();
-    protected static final Queue<ServiceDocument> documentsForDeletion = new LinkedBlockingQueue<>();
+    protected Queue<ServiceDocument> documentsForDeletion = new LinkedBlockingQueue<>();
     protected final TestLogger logger;
 
     private List<String> tenantLinks;
@@ -146,7 +146,7 @@ public abstract class BaseIntegrationSupportIT {
         documentsForDeletionAfterClass.add(document);
     }
 
-    protected static void cleanUpAfter(ServiceDocument document) {
+    protected void cleanUpAfter(ServiceDocument document) {
         documentsForDeletion.add(document);
     }
 
@@ -250,13 +250,13 @@ public abstract class BaseIntegrationSupportIT {
         NO_DELETE
     }
 
-    protected static <T extends ServiceDocument> T postDocument(String fabricLink, T document)
+    protected <T extends ServiceDocument> T postDocument(String fabricLink, T document)
             throws Exception {
         return postDocument(fabricLink, document, TestDocumentLifeCycle.FOR_DELETE);
     }
 
     @SuppressWarnings("unchecked")
-    protected static <T extends ServiceDocument> T postDocument(String fabricLink, T document,
+    protected <T extends ServiceDocument> T postDocument(String fabricLink, T document,
             TestDocumentLifeCycle documentLifeCycle) throws Exception {
         if (document.documentSelfLink != null && !document.documentSelfLink.isEmpty()) {
             String servicePathUrl = buildServiceUri(fabricLink,
