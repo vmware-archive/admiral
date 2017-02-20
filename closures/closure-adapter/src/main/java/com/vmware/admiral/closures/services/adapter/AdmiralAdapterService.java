@@ -1066,7 +1066,7 @@ public class AdmiralAdapterService extends
     }
 
     private String prepareImageTag(ContainerConfiguration configuration, String... params) {
-        if (params.length <= 0) {
+        if (params != null && params.length <= 0) {
             if (ClosureUtils.isEmpty(configuration.dependencies)) {
                 // no dependencies
                 return "latest";

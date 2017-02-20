@@ -11,8 +11,6 @@
 
 package com.vmware.admiral;
 
-import static org.junit.Assert.assertEquals;
-
 import static com.vmware.admiral.TestPropertiesUtil.getTestRequiredProp;
 
 import java.io.IOException;
@@ -25,8 +23,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.google.gson.JsonArray;
+import static org.junit.Assert.assertEquals;
 
+import com.google.gson.JsonArray;
 import org.junit.Assert;
 
 import com.vmware.admiral.closures.services.closure.Closure;
@@ -154,20 +153,36 @@ public class BaseClosureIntegrationTest extends BaseProvisioningOnCoreOsIT {
         return TaskState.isFinished(imageRequest.taskInfo);
     }
 
-    private static String prepareImageName(String imagePrefix, ClosureDescription taskDef) {
-        return imagePrefix + ":" + prepareImageTag(taskDef);
+    private static String prepareImageName(String imagePrefix, ClosureDescription closureDesc)
+            throws CertificateException, NoSuchAlgorithmException, KeyStoreException,
+            KeyManagementException, IOException {
+        String imageTag;
+        if (!ClosureUtils.isEmpty(closureDesc.sourceURL)) {
+            SimpleHttpsClient.HttpResponse resp = SimpleHttpsClient.execute(
+                    SimpleHttpsClient.HttpMethod
+                            .GET, closureDesc.sourceURL, null);
+
+            String lastChanged = resp.headers.get("Last-Modified").get(0);
+            String contentLenght = resp.headers.get("Content-Length").get(0);
+            imageTag = prepareImageTag(closureDesc, closureDesc.sourceURL, lastChanged,
+                    contentLenght);
+        } else {
+            imageTag = prepareImageTag(closureDesc);
+        }
+        return imagePrefix + ":" + imageTag;
     }
 
-    private static String prepareImageTag(ClosureDescription closureDescription) {
-        if (ClosureUtils.isEmpty(closureDescription.sourceURL)) {
-            if (ClosureUtils.isEmpty(closureDescription.dependencies)) {
+    private static String prepareImageTag(ClosureDescription configuration, String... params) {
+        if (params != null && params.length <= 0) {
+            if (ClosureUtils.isEmpty(configuration.dependencies)) {
                 // no dependencies
                 return "latest";
             }
-            return ClosureUtils.calculateHash(new String[] { closureDescription.dependencies });
-        } else {
-            return ClosureUtils.calculateHash(new String[] { closureDescription.sourceURL });
+
+            return ClosureUtils.calculateHash(new String[] { configuration.dependencies });
         }
+
+        return ClosureUtils.calculateHash(params);
     }
 
     protected static String createImageBuildRequestUri(String imageName, String computeStateLink) {
