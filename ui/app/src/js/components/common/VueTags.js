@@ -32,7 +32,7 @@ export default Vue.component('tags', {
     }
     let tags = new Tags(el);
     tags.setValue(this.value);
-    tags.setChangeCallback(() => this.$dispatch('change', tags.getValue(), this));
+    tags.setChangeCallback(() => this.$emit('change', tags.getValue(), this));
     this.unwatchValue = this.$watch('value', (value) => {
       tags.setValue(value);
     });

@@ -11,7 +11,6 @@
 
 import { EnvironmentsActions, NavigationActions } from 'actions/Actions';
 import VueDropdownSearch from 'components/common/VueDropdownSearch'; //eslint-disable-line
-import VueMulticolumnInputs from 'components/common/VueMulticolumnInputs'; //eslint-disable-line
 import VueTags from 'components/common/VueTags'; //eslint-disable-line
 import EndpointsList from 'components/endpoints/EndpointsList'; //eslint-disable-line
 import SubnetworksList from 'components/subnetworks/SubnetworksList'; //eslint-disable-line
@@ -31,18 +30,56 @@ export default Vue.component('environment-edit-view', {
   },
   data() {
     let endpointType = this.model.item.endpoint && this.model.item.endpoint.endpointType ||
-          this.model.item.endpointType;
-    let subnetworks = this.model.item.subnetworks && this.model.item.subnetworks.asMutable() || [];
-    if (subnetworks.length === 0) {
-      subnetworks.push({});
-    }
+        this.model.item.endpointType;
+    let instanceTypeMapping = this.model.item.computeProfile &&
+        this.model.item.computeProfile.instanceTypeMapping &&
+        this.model.item.computeProfile.instanceTypeMapping.asMutable() || [];
+    let imageTypeMapping = this.model.item.computeProfile &&
+        this.model.item.computeProfile.imageMapping &&
+        this.model.item.computeProfile.imageMapping.asMutable() || [];
+    let subnetworks = this.model.item.subnetworks &&
+        this.model.item.subnetworks.asMutable() || [];
+    let bootDiskPropertyMapping = this.model.item.storageProfile &&
+        this.model.item.storageProfile.bootDiskPropertyMapping &&
+        this.model.item.storageProfile.bootDiskPropertyMapping.asMutable() || [];
     return {
+      bootDiskPropertyValue: Object.keys(bootDiskPropertyMapping).map((key) => {
+        return {
+          name: key,
+          value: bootDiskPropertyMapping[key]
+        };
+      }),
       currentView: 'basic',
       endpoint: this.model.item.endpoint,
       endpointType,
+      imageTypeValue: Object.keys(imageTypeMapping).map((key) => {
+        return {
+          name: key,
+          value: imageTypeMapping[key].image
+        };
+      }),
+      instanceTypeValue: Object.keys(instanceTypeMapping).map((key) => {
+        if (endpointType === 'vsphere') {
+          return {
+            name: key,
+            cpuCount: instanceTypeMapping[key].cpuCount,
+            diskSizeMb: instanceTypeMapping[key].diskSizeMb,
+            memoryMb: instanceTypeMapping[key].memoryMb
+          };
+        } else {
+          return {
+            name: key,
+            value: instanceTypeMapping[key].instanceType
+          };
+        }
+      }),
       name: this.model.item.name,
       networkName: this.model.item.networkProfile && this.model.item.networkProfile.name,
-      subnetworks,
+      subnetworks: subnetworks.map((subnetwork) => {
+        return {
+          name: subnetwork
+        };
+      }),
       tags: this.model.item.tags || []
     };
   },
@@ -59,53 +96,6 @@ export default Vue.component('environment-edit-view', {
     },
     contextExpanded() {
       return this.model.contextView && this.model.contextView.expanded;
-    },
-    instanceTypeValue() {
-      if (this.model.item.computeProfile) {
-        var mappings = this.model.item.computeProfile.instanceTypeMapping;
-        return Object.keys(mappings).map((key) => {
-          if (this.endpointType === 'vsphere') {
-            return {
-              name: key,
-              cpuCount: mappings[key].cpuCount,
-              diskSizeMb: mappings[key].diskSizeMb,
-              memoryMb: mappings[key].memoryMb
-            };
-          } else {
-            return {
-              name: key,
-              value: mappings[key].instanceType
-            };
-          }
-        });
-      }
-      return {};
-    },
-    imageTypeValue() {
-      if (this.model.item.computeProfile) {
-        var mappings = this.model.item.computeProfile.imageMapping;
-        return Object.keys(mappings).map((key) => {
-          return {
-            name: key,
-            value: mappings[key].image
-          };
-        });
-      }
-      return {};
-    },
-    bootDiskPropertyValue() {
-      if (this.model.item.storageProfile) {
-        var mappings = this.model.item.storageProfile.bootDiskPropertyMapping;
-        return Object.keys(mappings).map((key) => {
-          if (this.endpointType === 'azure') {
-            return {
-              name: key,
-              value: mappings[key]
-            };
-          }
-        });
-      }
-      return {};
     }
   },
   attached() {
@@ -150,8 +140,14 @@ export default Vue.component('environment-edit-view', {
     closeToolbar() {
       EnvironmentsActions.closeToolbar();
     },
-    onNameChange($event) {
-      this.name = $event.target.value;
+    onNameChange(value) {
+      this.name = value;
+    },
+    onInstanceTypeChange(value) {
+      this.instanceTypeValue = value;
+    },
+    onImageTypeChange(value) {
+      this.imageTypeValue = value;
     },
     onEndpointChange(endpoint) {
       this.endpoint = endpoint;
@@ -160,24 +156,11 @@ export default Vue.component('environment-edit-view', {
     onTagsChange(tags) {
       this.tags = tags;
     },
-    onNetworkNameChange($event) {
-      this.networkName = $event.target.value;
+    onNetworkNameChange(value) {
+      this.networkName = value;
     },
-    onSubnetworkChange(value, dropdown) {
-      let index = $(dropdown.$el).attr('index');
-      this.subnetworks[index] = value || {};
-    },
-    addSubnetwork($event) {
-      $event.stopImmediatePropagation();
-      $event.preventDefault();
-      this.subnetworks = this.subnetworks.concat({});
-    },
-    removeSubnetwork($event, $index) {
-      $event.stopImmediatePropagation();
-      $event.preventDefault();
-      if (this.subnetworks.length !== 1) {
-        this.subnetworks.splice($index, 1);
-      }
+    onSubnetworkChange(value) {
+      this.subnetworks = value;
     },
     renderSubnetwork(network) {
       let props = [
@@ -206,50 +189,49 @@ export default Vue.component('environment-edit-view', {
         }).catch(reject);
       });
     },
+    onBootDiskPropertyChange(value) {
+      this.bootDiskPropertyValue = value;
+    },
     getModel() {
       var toSave = $.extend({ properties: {} }, this.model.item.asMutable({deep: true}));
       toSave.name = this.name;
       toSave.endpointLink = this.endpoint && this.endpoint.documentSelfLink;
       toSave.computeProfile = toSave.computeProfile || {};
-      toSave.storageProfile = toSave.storageProfile || {};
+      toSave.computeProfile.instanceTypeMapping =
+          this.instanceTypeValue.reduce((previous, current) => {
+            if (this.endpointType === 'vsphere') {
+              previous[current.name] = {
+                cpuCount: current.cpuCount,
+                diskSizeMb: current.diskSizeMb,
+                memoryMb: current.memoryMb
+              };
+            } else {
+              previous[current.name] = {
+                instanceType: current.value
+              };
+            }
+            return previous;
+          }, {});
+      toSave.computeProfile.imageMapping = this.imageTypeValue.reduce((previous, current) => {
+        previous[current.name] = {
+          image: current.value
+        };
+        return previous;
+      }, {});
       toSave.networkProfile = toSave.networkProfile || {};
-
-      if (this.$refs.instanceType) {
-        var instanceType = this.$refs.instanceType.getData();
-        toSave.computeProfile.instanceTypeMapping = instanceType.reduce((previous, current) => {
-          if (this.endpointType === 'vsphere') {
-            previous[current.name] = {
-              cpuCount: current.cpuCount,
-              diskSizeMb: current.diskSizeMb,
-              memoryMb: current.memoryMb
-            };
-          } else {
-            previous[current.name] = {
-              instanceType: current.value
-            };
-          }
-          return previous;
-        }, {});
-      }
-
-      if (this.$refs.imageType) {
-        var imageType = this.$refs.imageType.getData();
-        toSave.computeProfile.imageMapping = imageType.reduce((previous, current) => {
-          previous[current.name] = {
-            image: current.value
-          };
-          return previous;
-        }, {});
-      }
-
       toSave.networkProfile.name = this.networkName;
       toSave.networkProfile.subnetLinks = [];
-      this.subnetworks
-        .filter((subnet) => subnet.documentSelfLink)
-        .forEach((subnet) => {
-          toSave.networkProfile.subnetLinks.push(subnet.documentSelfLink);
-        });
-
+      this.subnetworks.forEach((subnetwork) => {
+        if (subnetwork.name && subnetwork.name.documentSelfLink) {
+          toSave.networkProfile.subnetLinks.push(subnetwork.name.documentSelfLink);
+        }
+      });
+      toSave.storageProfile = toSave.storageProfile || {};
+      toSave.storageProfile.bootDiskPropertyMapping =
+          this.bootDiskPropertyValue.reduce((previous, current) => {
+            previous[current.name] = current.value;
+            return previous;
+          }, {});
       return toSave;
     }
   }

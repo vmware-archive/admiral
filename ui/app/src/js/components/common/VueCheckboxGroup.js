@@ -9,23 +9,28 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import VueFormControl from 'components/common/VueFormControl'; //eslint-disable-line
-import VueTextInput from 'components/common/VueTextInput'; //eslint-disable-line
+import VueFormGroup from 'components/common/VueFormGroup'; //eslint-disable-line
+import VueFormLabel from 'components/common/VueFormLabel'; //eslint-disable-line
+import utils from 'core/utils';
 
-export default Vue.component('text-control', {
+export default Vue.component('checkbox-group', {
   template: `
-    <form-control
-      :class="class"
-      :label="label"
-      :name="name"
-      :required="required">
-      <text-input
+    <form-group
+      :class="class">
+      <checkbox-control
         :disabled="disabled"
+        :id="id || name"
         :name="name"
         :value="value"
         @change="onChange">
-      </text-input>
-    </form-control>
+      </checkbox-control>
+      <span> </span>
+      <form-label
+        :for="name"
+        :required="required">
+        {{label}}
+      </form-label>
+    </form-group>
   `,
   props: {
     class: {
@@ -37,11 +42,16 @@ export default Vue.component('text-control', {
       required: false,
       type: Boolean
     },
+    id: {
+      required: false,
+      type: String
+    },
     label: {
       required: true,
       type: String
     },
     name: {
+      default: () => utils.uuid(),
       required: false,
       type: String
     },
@@ -52,12 +62,13 @@ export default Vue.component('text-control', {
     },
     value: {
       required: false,
-      type: String
+      type: Boolean
     }
   },
   methods: {
     onChange(value) {
-      this.$dispatch('change', value, this);
+      this.value = value;
+      this.$emit('change', this.value);
     }
   }
 });

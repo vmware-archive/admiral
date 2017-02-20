@@ -9,33 +9,32 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import VueDropdownSearchControl from 'components/common/VueDropdownSearchControl'; //eslint-disable-line
 import services from 'core/services';
 import utils from 'core/utils';
 
 export default Vue.component('vsphere-endpoint-editor', {
   template: `
     <div>
-      <text-control
+      <text-group
         :disabled="!!model.documentSelfLink"
         :label="i18n('app.endpoint.edit.vsphere.hostNameLabel')"
         :required="true"
         :value="hostName"
         @change="onHostNameChange">
-      </text-input>
-      <text-control
+      </text-group>
+      <text-group
         :label="i18n('app.endpoint.edit.vsphere.privateKeyIdLabel')"
         :required="true"
         :value="privateKeyId"
         @change="onPrivateKeyIdChange">
-      </text-input>
-      <password-control
+      </text-group>
+      <password-group
         :label="i18n('app.endpoint.edit.vsphere.privateKeyLabel')"
         :required="true"
         :value="privateKey"
         @change="onPrivateKeyChange">
-      </password-input>
-      <dropdown-search-control
+      </password-group>
+      <dropdown-search-group
         :disabled="!!model.documentSelfLink || !(regionIdLoading || regionIdValues.length)"
         :entity="i18n('app.endpoint.datacenterEntity')"
         :label="i18n('app.endpoint.edit.vsphere.regionIdLabel')"
@@ -44,7 +43,7 @@ export default Vue.component('vsphere-endpoint-editor', {
         :required="true"
         :value="convertToObject(regionId)"
         @change="onRegionIdChange">
-      </dropdown-search>
+      </dropdown-search-group>
     </div>
   `,
   props: {

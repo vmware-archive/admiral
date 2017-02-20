@@ -13,34 +13,34 @@
   <alert alert-type="danger"
          :show-alert="validationErrors"
          :alert-message="validationErrors"></alert>
-  <form class="inline-edit-properties">
+  <form>
     <section class="form-block">
       <label class="title" v-if="model.item.documentSelfLink">{{i18n('app.subnetwork.edit.update')}}</label>
       <label class="title" v-else>{{i18n('app.subnetwork.edit.addNew')}}</label>
-      <text-control
+      <text-group
         :label="i18n('app.subnetwork.edit.nameLabel')"
         :required="true"
         :value="model.item.name"
         :disabled="!!model.item.documentSelfLink"
         @change="onNameChange">
-      </text-input>
-      <text-control
+      </text-group>
+      <text-group
         :label="i18n('app.subnetwork.edit.cidrLabel')"
         :required="true"
         :value="model.item.subnetCIDR"
         :disabled="!!model.item.documentSelfLink"
         @change="onCidrChange">
-      </text-input>
-      <checkbox-control
+      </text-group>
+      <checkbox-group
         :label="i18n('app.subnetwork.edit.supportPublicIpAddressLabel')"
         :value="model.item.supportPublicIpAddress"
         @change="onSupportPublicIpAddressChange">
-      </checkbox-input>
-      <checkbox-control
+      </checkbox-group>
+      <checkbox-group
         :label="i18n('app.subnetwork.edit.defaultForZoneLabel')"
         :value="model.item.defaultForZone"
         @change="onDefaultForZoneChange">
-      </checkbox-input>
+      </checkbox-group>
       <div class="form-group">
         <label>{{i18n('app.subnetwork.edit.tagsTitle')}}
           <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="top"

@@ -66,9 +66,9 @@ export default Vue.component('dropdown-search', {
       })
     });
     dropdownSearchMenu.setOptionSelectCallback(() =>
-        this.$dispatch('change', dropdownSearchMenu.getSelectedOption(), this));
+        this.$emit('change', dropdownSearchMenu.getSelectedOption()));
     dropdownSearchMenu.setClearOptionSelectCallback(() =>
-        this.$dispatch('change', dropdownSearchMenu.getSelectedOption(), this));
+        this.$emit('change', dropdownSearchMenu.getSelectedOption()));
     dropdownSearchMenu.setDisabled(this.disabled);
     dropdownSearchMenu.setLoading(this.loading);
     if (this.renderer) {
