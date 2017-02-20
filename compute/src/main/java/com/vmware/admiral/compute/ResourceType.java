@@ -28,7 +28,11 @@ public enum ResourceType {
     CONFIGURE_HOST_TYPE("CONFIGURE_HOST", ""),
     COMPUTE_NETWORK_TYPE("COMPUTE_NETWORK", "Compute.Network"),
     KUBERNETES_ENTITY_TYPE("KUBERNETES_ENTITY", "Kubernetes.Entity"),
-    KUBERNETES_POD_TYPE("KUBERNETES_POD", "Kubernetes.Pod");
+    KUBERNETES_POD_TYPE("KUBERNETES_POD", "Kubernetes.Pod"),
+    KUBERNETES_DEPLOYMENT_TYPE("KUBERNETES_DEPLOYMENT", "Kubernetes.Deployment"),
+    KUBERNETES_SERVICE_TYPE("KUBERNETES_SERVICE", "Kubernetes.Service"),
+    KUBERNETES_REPLICATION_CONTROLLER_TYPE("KUBERNETES_REPLICATION_CONTROLLER",
+            "Kubernetes.ReplicationController");
 
     private final String name;
     private final String contentType;

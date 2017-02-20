@@ -9,18 +9,24 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.kubernetes.entities.volumes;
+package com.vmware.admiral.compute.kubernetes.entities.pods;
 
-import com.vmware.admiral.compute.kubernetes.entities.common.ObjectFieldSelector;
-import com.vmware.admiral.compute.kubernetes.entities.common.ResourceFieldSelector;
+/**
+ * ContainerStateTerminated is a terminated state of a container.
+ */
+public class ContainerStateTerminated {
 
-public class DownwardAPIVolumeFile {
+    public Integer exitCode;
 
-    public String path;
+    public Integer signal;
 
-    public ObjectFieldSelector fieldRef;
+    public String reason;
 
-    public ResourceFieldSelector resourceFieldRef;
+    public String message;
 
-    public Integer mode;
+    public String startedAt;
+
+    public String finishedAt;
+
+    public String containerID;
 }

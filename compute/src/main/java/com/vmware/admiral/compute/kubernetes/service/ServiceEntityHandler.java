@@ -12,23 +12,26 @@
 package com.vmware.admiral.compute.kubernetes.service;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.compute.kubernetes.entities.pods.Pod;
-import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
+import com.vmware.admiral.compute.kubernetes.entities.services.Service;
+import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.ServiceState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 
-public class PodService extends AbstractKubernetesObjectService<PodState> {
+public class ServiceEntityHandler extends AbstractKubernetesObjectService<ServiceState> {
 
-    public static final String FACTORY_LINK = ManagementUriParts.KUBERNETES_PODS;
+    public static final String FACTORY_LINK = ManagementUriParts.KUBERNETES_SERVICES;
 
-    public static class PodState extends ResourceState {
+    public static class ServiceState extends ResourceState {
 
         /**
-         * Pod is a collection of containers that can run on a host.
-         * This resource is created by clients and scheduled onto hosts.
+         * Service is a named abstraction of software service (for example, mysql) consisting of
+         * local port (for example 3306) that the proxy listens on, and the selector that determines
+         * which pods will answer requests sent through the proxy.
          */
-        @Documentation(description = "Pod is a collection of containers that can run on a host. "
-                + "This resource is created by clients and scheduled onto hosts.")
-        public Pod pod;
+        @Documentation(description =
+                "Service is a named abstraction of software service (for example, mysql)"
+                        + " consisting of local port (for example 3306) that the proxy listens on, "
+                        + "and the selector that determines which pods will answer requests sent through the proxy.")
+        public Service service;
 
         /**
          * Defines the description of the entity
@@ -50,7 +53,7 @@ public class PodService extends AbstractKubernetesObjectService<PodState> {
         public String parentLink;
     }
 
-    public PodService() {
-        super(PodState.class);
+    public ServiceEntityHandler() {
+        super(ServiceState.class);
     }
 }

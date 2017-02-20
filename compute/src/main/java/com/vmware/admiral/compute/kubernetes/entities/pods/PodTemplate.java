@@ -9,18 +9,15 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.kubernetes.entities.volumes;
+package com.vmware.admiral.compute.kubernetes.entities.pods;
 
-import com.vmware.admiral.compute.kubernetes.entities.common.ObjectFieldSelector;
-import com.vmware.admiral.compute.kubernetes.entities.common.ResourceFieldSelector;
+import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 
-public class DownwardAPIVolumeFile {
+/**
+ * PodTemplate describes a template for creating copies of a predefined pod.
+ */
+public class PodTemplate extends BaseKubernetesObject {
 
-    public String path;
+    public PodTemplateSpec template;
 
-    public ObjectFieldSelector fieldRef;
-
-    public ResourceFieldSelector resourceFieldRef;
-
-    public Integer mode;
 }

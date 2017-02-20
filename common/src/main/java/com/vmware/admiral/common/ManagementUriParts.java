@@ -95,6 +95,9 @@ public interface ManagementUriParts {
     String KUBERNETES_DESC = RESOURCES + "/kubernetes" + DESCRIPTION_SUFFIX;
     String KUBERNETES_DESC_CONTENT = RESOURCES + "/kubernetes-templates";
     String KUBERNETES_PODS = RESOURCES + "/kubernetes-pods";
+    String KUBERNETES_DEPLOYMENTS = RESOURCES + "/kubernetes-deployments";
+    String KUBERNETES_SERVICES = RESOURCES + "/kubernetes-services";
+    String KUBERNETES_REPLICATION_CONTROLLERS = RESOURCES + "/kubernetes-replication-controllers";
 
     // Request tasks:
     String REQUEST = "/request";
