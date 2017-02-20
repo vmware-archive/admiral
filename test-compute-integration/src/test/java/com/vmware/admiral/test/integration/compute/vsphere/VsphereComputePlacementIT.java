@@ -49,6 +49,7 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
+import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.TagService;
@@ -174,7 +175,7 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
         ElasticPlacementZoneConfigurationState epzState = new ElasticPlacementZoneConfigurationState();
         epzState.resourcePoolState = new ResourcePoolState();
         epzState.resourcePoolState.name = name;
-        epzState.documentSelfLink = getLink(name);
+        epzState.documentSelfLink = getExistingLink(ResourcePoolService.FACTORY_LINK, name);
         epzState.resourcePoolState.customProperties = new HashMap<>();
         if (endpoint != null) {
             epzState.resourcePoolState.customProperties.put(
@@ -204,7 +205,8 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
         reservation.priority = priority;
         reservation.tenantLinks = rp.tenantLinks;
         reservation.maxNumberInstances = maxInstances;
-        reservation.documentSelfLink = getLink(name);
+        reservation.documentSelfLink = getExistingLink(GroupResourcePlacementService.FACTORY_LINK,
+                name);
         return postDocument(GroupResourcePlacementService.FACTORY_LINK, reservation);
     }
 

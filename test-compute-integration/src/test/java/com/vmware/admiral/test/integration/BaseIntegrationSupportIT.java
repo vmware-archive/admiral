@@ -68,6 +68,7 @@ import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeStateWithDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
+import com.vmware.photon.controller.model.resources.EndpointService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.tasks.ResourceEnumerationTaskService;
 import com.vmware.photon.controller.model.tasks.ResourceEnumerationTaskService.ResourceEnumerationTaskState;
@@ -508,7 +509,7 @@ public abstract class BaseIntegrationSupportIT {
             throws Exception {
         EndpointState endpoint = new EndpointState();
         endpoint.endpointType = endpointType.name();
-        endpoint.documentSelfLink = getNewUniqueLink();
+        endpoint.documentSelfLink = getNewUniqueLink(EndpointService.FACTORY_LINK);
         endpoint.name = name(endpointType, getClass().getSimpleName().toLowerCase(), SUFFIX);
         endpoint.tenantLinks = getTenantLinks();
         endpoint.endpointProperties = new HashMap<>();
@@ -517,11 +518,12 @@ public abstract class BaseIntegrationSupportIT {
         return postDocument(EndpointAdapterService.SELF_LINK, endpoint, documentLifeCycle);
     }
 
-    protected String getNewUniqueLink() {
-        return getLink(String.valueOf(System.currentTimeMillis()));
+    protected String getNewUniqueLink(String factoryLink) {
+        return UriUtils.buildUriPath(factoryLink,
+                getLink(String.valueOf(System.currentTimeMillis())));
     }
 
-    protected String getLink(String name) {
+    private String getLink(String name) {
         return this.getClass().getSimpleName() + "-" + name.replaceAll("\\s", "_");
     }
 
