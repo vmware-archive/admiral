@@ -9,18 +9,12 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.kubernetes.entities.volumes;
+package com.vmware.admiral.compute.kubernetes.entities.services;
 
-import com.vmware.admiral.compute.kubernetes.entities.common.ObjectFieldSelector;
-import com.vmware.admiral.compute.kubernetes.entities.common.ResourceFieldSelector;
+/**
+ * ServiceStatus represents the current status of a service.
+ */
+public class ServiceStatus {
 
-public class DownwardAPIVolumeFile {
-
-    public String path;
-
-    public ObjectFieldSelector fieldRef;
-
-    public ResourceFieldSelector resourceFieldRef;
-
-    public Integer mode;
+    public LoadBalancerStatus loadBalancer;
 }

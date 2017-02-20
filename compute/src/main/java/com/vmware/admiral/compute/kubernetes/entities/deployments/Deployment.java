@@ -9,18 +9,20 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.kubernetes.entities.volumes;
+package com.vmware.admiral.compute.kubernetes.entities.deployments;
 
-import com.vmware.admiral.compute.kubernetes.entities.common.ObjectFieldSelector;
-import com.vmware.admiral.compute.kubernetes.entities.common.ResourceFieldSelector;
+/**
+ * Deployment enables declarative updates for Pods and ReplicaSets.
+ */
+public class Deployment {
 
-public class DownwardAPIVolumeFile {
+    /**
+     * Specification of the desired behavior of the Deployment.
+     */
+    public DeploymentSpec spec;
 
-    public String path;
-
-    public ObjectFieldSelector fieldRef;
-
-    public ResourceFieldSelector resourceFieldRef;
-
-    public Integer mode;
+    /**
+     * Most recently observed status of the Deployment.
+     */
+    public DeploymentStatus status;
 }

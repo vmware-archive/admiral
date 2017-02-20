@@ -13,7 +13,7 @@ package com.vmware.admiral.compute.kubernetes.entities.volumes;
 
 import java.util.List;
 
-import com.vmware.admiral.compute.kubernetes.entities.LocalObjectReference;
+import com.vmware.admiral.compute.kubernetes.entities.common.LocalObjectReference;
 
 /**
  * Represents a Rados Block Device mount that lasts the lifetime of a pod.

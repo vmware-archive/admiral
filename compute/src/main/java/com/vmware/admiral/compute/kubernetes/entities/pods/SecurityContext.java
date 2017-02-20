@@ -9,18 +9,20 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.kubernetes.entities.volumes;
+package com.vmware.admiral.compute.kubernetes.entities.pods;
 
-import com.vmware.admiral.compute.kubernetes.entities.common.ObjectFieldSelector;
-import com.vmware.admiral.compute.kubernetes.entities.common.ResourceFieldSelector;
+/**
+ * SecurityContext holds security configuration that will be applied to a container.
+ * Some fields are present in both SecurityContext and PodSecurityContext.
+ * When both are set, the values in SecurityContext take precedence.
+ */
+public class SecurityContext {
 
-public class DownwardAPIVolumeFile {
+    public Boolean priviliged;
 
-    public String path;
+    public Long runAsUser;
 
-    public ObjectFieldSelector fieldRef;
+    public Boolean runAsNonRoot;
 
-    public ResourceFieldSelector resourceFieldRef;
-
-    public Integer mode;
+    public Boolean readOnlyRootFilesystem;
 }

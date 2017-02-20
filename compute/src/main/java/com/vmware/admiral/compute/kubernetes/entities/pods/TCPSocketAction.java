@@ -9,18 +9,16 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.kubernetes.entities.volumes;
+package com.vmware.admiral.compute.kubernetes.entities.pods;
 
-import com.vmware.admiral.compute.kubernetes.entities.common.ObjectFieldSelector;
-import com.vmware.admiral.compute.kubernetes.entities.common.ResourceFieldSelector;
+/**
+ * TCPSocketAction describes an action based on opening a socket
+ */
+public class TCPSocketAction {
 
-public class DownwardAPIVolumeFile {
-
-    public String path;
-
-    public ObjectFieldSelector fieldRef;
-
-    public ResourceFieldSelector resourceFieldRef;
-
-    public Integer mode;
+    /**
+     * Number or name of the port to access on the container.
+     * Number must be in the range 1 to 65535. Name must be an IANA_SVC_NAME.
+     */
+    public String port;
 }

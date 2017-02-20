@@ -9,18 +9,17 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.kubernetes.entities.volumes;
+package com.vmware.admiral.compute.kubernetes.entities.pods;
 
-import com.vmware.admiral.compute.kubernetes.entities.common.ObjectFieldSelector;
-import com.vmware.admiral.compute.kubernetes.entities.common.ResourceFieldSelector;
+/**
+ * ExecAction describes a "run in container" action.
+ */
+public class ExecAction {
 
-public class DownwardAPIVolumeFile {
-
-    public String path;
-
-    public ObjectFieldSelector fieldRef;
-
-    public ResourceFieldSelector resourceFieldRef;
-
-    public Integer mode;
+    /**
+     * Command is the command line to execute inside the container, the working directory for the
+     * command is root (/) in the container’s filesystem. The command is simply exec’d,
+     * it is not run inside a shell, so traditional shell instructions
+     */
+    public String[] command;
 }

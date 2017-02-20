@@ -9,18 +9,21 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.kubernetes.entities.volumes;
+package com.vmware.admiral.compute.kubernetes.entities.replicationcontrollers;
 
-import com.vmware.admiral.compute.kubernetes.entities.common.ObjectFieldSelector;
-import com.vmware.admiral.compute.kubernetes.entities.common.ResourceFieldSelector;
+import java.util.List;
 
-public class DownwardAPIVolumeFile {
+public class ReplicationControllerStatus {
 
-    public String path;
+    public Integer replicas;
 
-    public ObjectFieldSelector fieldRef;
+    public Integer fullyLabeledReplicas;
 
-    public ResourceFieldSelector resourceFieldRef;
+    public Integer readyReplicas;
 
-    public Integer mode;
+    public Integer availableReplicas;
+
+    public Integer observedGeneration;
+
+    public List<ReplicationControllerCondition> conditions;
 }

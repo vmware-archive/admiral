@@ -13,7 +13,7 @@ package com.vmware.admiral.compute.kubernetes.entities.volumes;
 
 import java.util.Map;
 
-import com.vmware.admiral.compute.kubernetes.entities.LocalObjectReference;
+import com.vmware.admiral.compute.kubernetes.entities.common.LocalObjectReference;
 
 /**
  * FlexVolume represents a generic volume resource that is

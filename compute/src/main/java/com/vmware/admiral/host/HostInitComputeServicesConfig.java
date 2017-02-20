@@ -61,6 +61,8 @@ import com.vmware.admiral.compute.env.EnvironmentMappingService;
 import com.vmware.admiral.compute.env.EnvironmentService;
 import com.vmware.admiral.compute.env.NetworkProfileService;
 import com.vmware.admiral.compute.env.StorageProfileService;
+import com.vmware.admiral.compute.kubernetes.service.DeploymentService;
+import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionContentService;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
@@ -68,6 +70,10 @@ import com.vmware.admiral.compute.kubernetes.service.KubernetesService;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesService.KubernetesState;
 import com.vmware.admiral.compute.kubernetes.service.PodService;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
+import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService;
+import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService.ReplicationControllerState;
+import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler;
+import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.ServiceState;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.network.ComputeNetworkService;
@@ -128,8 +134,10 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 KubernetesDescriptionService.class,
                 EndpointHealthCheckTaskService.class,
                 KubernetesService.class,
-                PodService.class);
-
+                PodService.class,
+                DeploymentService.class,
+                ReplicationControllerService.class,
+                ServiceEntityHandler.class);
 
         if (startMockContainerHostService) {
             startServices(host, MockContainerHostService.class);
@@ -184,5 +192,17 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
         CompositeComponentRegistry.registerComponent(ResourceType.KUBERNETES_POD_TYPE.getName(),
                 KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
                 PodService.FACTORY_LINK, PodState.class);
+
+        CompositeComponentRegistry.registerComponent(ResourceType.KUBERNETES_DEPLOYMENT_TYPE.getName(),
+                KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
+                DeploymentService.FACTORY_LINK, DeploymentState.class);
+
+        CompositeComponentRegistry.registerComponent(ResourceType.KUBERNETES_SERVICE_TYPE.getName(),
+                KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
+                ServiceEntityHandler.FACTORY_LINK, ServiceState.class);
+
+        CompositeComponentRegistry.registerComponent(ResourceType.KUBERNETES_REPLICATION_CONTROLLER_TYPE.getName(),
+                KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
+                ReplicationControllerService.FACTORY_LINK, ReplicationControllerState.class);
     }
 }
