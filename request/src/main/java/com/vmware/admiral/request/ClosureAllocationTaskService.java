@@ -12,7 +12,7 @@
 package com.vmware.admiral.request;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeProperty;
+import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
@@ -140,14 +140,14 @@ public class ClosureAllocationTaskService extends
         proceedTo(ClosureAllocationTaskState.SubStage.CONTEXT_PREPARED,
                 s -> {
                     // merge request/allocation properties over the custom description properties
-                    state.customProperties = mergeProperty(closureDescription.customProperties,
-                            state.customProperties);
+                    s.customProperties = mergeCustomProperties(
+                            state.customProperties, closureDescription.customProperties);
 
                     if (state.getCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY) == null) {
-                        state.addCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY,
+                        s.addCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY,
                                 getSelfId());
                     }
-                    state.descName = closureDescription.name;
+                    s.descName = closureDescription.name;
                 });
     }
 

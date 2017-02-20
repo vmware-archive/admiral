@@ -58,7 +58,9 @@ public final class ClosureUtils {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
             for (String e : envs) {
-                md.update(e.getBytes("UTF-8"));
+                if (e != null) {
+                    md.update(e.getBytes("UTF-8"));
+                }
             }
 
             StringBuilder sb = new StringBuilder();

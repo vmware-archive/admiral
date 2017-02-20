@@ -629,7 +629,7 @@ public class AdmiralAdapterService extends
         buildImage.documentSelfLink = createImageBuildRequestUri(containerDesc.image,
                 computeStateLink);
 
-        logInfo("Creating docker build image request: %", uri);
+        logInfo("Creating docker build image request: %s", uri);
         getHost().sendRequest(OperationUtil.createForcedPost(uri)
                 .setBody(buildImage)
                 .setReferer(getHost().getUri())
@@ -1065,8 +1065,8 @@ public class AdmiralAdapterService extends
         }
     }
 
-    private String prepareImageTag(String containerImage, ContainerConfiguration configuration) {
-        if (ClosureUtils.isEmpty(configuration.sourceURL)) {
+    private String prepareImageTag(ContainerConfiguration configuration, String... params) {
+        if (params.length <= 0) {
             if (ClosureUtils.isEmpty(configuration.dependencies)) {
                 // no dependencies
                 return "latest";
@@ -1075,12 +1075,40 @@ public class AdmiralAdapterService extends
             return ClosureUtils.calculateHash(new String[] { configuration.dependencies });
         }
 
-        return ClosureUtils.calculateHash(new String[] { configuration.sourceURL });
+        return ClosureUtils.calculateHash(params);
     }
 
     private void proceedWithDescriptionCreation(AdmiralAdapterTaskState state,
             String configChecksum) {
-        String imageTag = prepareImageTag(state.containerImage, state.configuration);
+        if (!ClosureUtils.isEmpty(state.configuration.sourceURL)) {
+            URI sourceURI = UriUtils.buildUri(state.configuration.sourceURL);
+            // Replace with HEAD as soon as it is supported
+            getHost().sendRequest(Operation.createGet(sourceURI)
+                    .setReferer(getHost().getUri())
+                    .setCompletion((op, ex) -> {
+                        if (ex != null) {
+                            logWarning("Unable to fetch external source from uri: "
+                                    + sourceURI, ex);
+                            failTask("Unable to fetch external source from uri: "
+                                    + sourceURI, ex);
+                        } else {
+                            String lastChanged = op.getResponseHeader("Last-Modified");
+                            Long contentLenght = op.getContentLength();
+                            String imageTag = prepareImageTag(state.configuration, state
+                                            .configuration.sourceURL, lastChanged,
+                                    contentLenght.toString());
+                            createDescription(state, configChecksum, imageTag);
+
+                        }
+                    }));
+        } else {
+            String imageTag = prepareImageTag(state.configuration);
+            createDescription(state, configChecksum, imageTag);
+        }
+    }
+
+    private void createDescription(AdmiralAdapterTaskState state,
+            String configChecksum, String imageTag) {
         // Create container description
         ContainerDescription containerDesc = prepareContainerDescription(state.containerImage,
                 imageTag,
