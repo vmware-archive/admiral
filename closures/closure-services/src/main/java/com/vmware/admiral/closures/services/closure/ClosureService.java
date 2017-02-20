@@ -561,14 +561,18 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         op.complete();
     }
 
-    private void completeCancelTask(ClosureDescription taskDef, Closure closure) {
-        logInfo("Closure execution elapsed configured timeout. The closure will be cancelled...");
+    private void completeCancelTask(ClosureDescription closureDesc, Closure closure) {
+        String errorMsg = String.format("Configured timeout of [%s] seconds has expired. Closure "
+                        + "%s is cancelled.", closureDesc.resources.timeoutSeconds,
+                closure.documentSelfLink);
+        logInfo(errorMsg);
 
         closure.state = TaskStage.CANCELLED;
+        closure.errorMsg = errorMsg;
 
         sendSelfPatch(closure);
 
-        getExecutionDriver(taskDef)
+        getExecutionDriver(closureDesc)
                 .cleanClosure(closure,
                         (error) -> logWarning("Unable to clean resources for %s",
                                 closure.documentSelfLink));

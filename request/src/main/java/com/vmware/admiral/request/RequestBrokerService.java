@@ -194,7 +194,7 @@ public class RequestBrokerService extends
             throw new LocalizableValidationException(
                     String.format("Only [ %s ] resource types are supported.",
                             ResourceType.getAllTypesAsString()),
-                            "request.supported.resource-types", ResourceType.getAllTypesAsString());
+                    "request.supported.resource-types", ResourceType.getAllTypesAsString());
         }
 
         if (state.resourceCount <= 0) {
@@ -466,11 +466,13 @@ public class RequestBrokerService extends
             } else {
                 failTask(null, new LocalizableValidationException(
                         "Not supported operation for closure type: "
-                                + state.operation, "request.closure.operation.not.supported", state.operation));
+                                + state.operation, "request.closure.operation.not.supported",
+                        state.operation));
             }
         } else {
             failTask(null, new LocalizableValidationException("Not supported resourceType: "
-                    + state.resourceType, "request.resource-type.not.supported", state.resourceType));
+                    + state.resourceType, "request.resource-type.not.supported",
+                    state.resourceType));
         }
     }
 
@@ -660,7 +662,7 @@ public class RequestBrokerService extends
 
         removalState.externalInspectOnly = (state.customProperties != null
                 && "true".equalsIgnoreCase(state.customProperties
-                        .get(ContainerNetworkRemovalTaskService.EXTERNAL_INSPECT_ONLY_CUSTOM_PROPERTY)));
+                .get(ContainerNetworkRemovalTaskService.EXTERNAL_INSPECT_ONLY_CUSTOM_PROPERTY)));
         removalState.cleanupRemoval = cleanupRemoval;
 
         sendRequest(Operation.createPost(this, ContainerNetworkRemovalTaskService.FACTORY_LINK)
@@ -704,7 +706,7 @@ public class RequestBrokerService extends
 
         removalState.externalInspectOnly = (state.customProperties != null
                 && "true".equalsIgnoreCase(state.customProperties
-                        .get(ContainerVolumeRemovalTaskService.EXTERNAL_INSPECT_ONLY_CUSTOM_PROPERTY)));
+                .get(ContainerVolumeRemovalTaskService.EXTERNAL_INSPECT_ONLY_CUSTOM_PROPERTY)));
         removalState.cleanupRemoval = cleanupRemoval;
 
         sendRequest(Operation.createPost(this, ContainerVolumeRemovalTaskService.FACTORY_LINK)
@@ -1271,7 +1273,8 @@ public class RequestBrokerService extends
             }
         } else {
             failTask(null, new LocalizableValidationException("Not supported resourceType: "
-                    + state.resourceType, "request.resource-type.not.supported", state.resourceType));
+                    + state.resourceType, "request.resource-type.not.supported",
+                    state.resourceType));
         }
     }
 
@@ -1348,7 +1351,8 @@ public class RequestBrokerService extends
                     }));
         } else {
             failTask(null, new LocalizableValidationException("Not supported resourceType: "
-                    + state.resourceType, "request.resource-type.not.supported", state.resourceType));
+                    + state.resourceType, "request.resource-type.not.supported",
+                    state.resourceType));
         }
     }
 
@@ -1507,11 +1511,13 @@ public class RequestBrokerService extends
 
     private boolean isPostAllocationOperation(RequestBrokerState state) {
         return (isContainerType(state) || isContainerNetworkType(state) || isComputeType(state)
-                || isContainerVolumeType(state) || isComputeNetworkType(state))
+                || isContainerVolumeType(state) || isComputeNetworkType(state) || isClosureType(
+                state))
                 && (ContainerOperationType.CREATE.id.equals(state.operation)
-                        || NetworkOperationType.CREATE.id.equals(state.operation)
-                        || ComputeOperationType.CREATE.id.equals(state.operation)
-                        || VolumeOperationType.CREATE.id.equals(state.operation));
+                || NetworkOperationType.CREATE.id.equals(state.operation)
+                || ComputeOperationType.CREATE.id.equals(state.operation)
+                || VolumeOperationType.CREATE.id.equals(state.operation)
+                || ClosureOperationType.CREATE.id.equals(state.operation));
     }
 
     private String getPostAllocationOperation(RequestBrokerState state) {
@@ -1633,8 +1639,9 @@ public class RequestBrokerService extends
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE
                 .put(ResourceType.CONTAINER_NETWORK_TYPE, new ArrayList<>(
                         Arrays.asList(ContainerNetworkProvisionTaskService.DISPLAY_NAME)));
-        SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CONTAINER_VOLUME_TYPE, new ArrayList<>(
-                Arrays.asList(ContainerVolumeProvisionTaskService.DISPLAY_NAME)));
+        SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE
+                .put(ResourceType.CONTAINER_VOLUME_TYPE, new ArrayList<>(
+                        Arrays.asList(ContainerVolumeProvisionTaskService.DISPLAY_NAME)));
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CLOSURE_TYPE, new ArrayList<>(
                 Arrays.asList(ClosureProvisionTaskService.DISPLAY_NAME)));
     }
@@ -1663,9 +1670,10 @@ public class RequestBrokerService extends
                 .put(ResourceType.CONTAINER_NETWORK_TYPE, new ArrayList<>(
                         Arrays.asList(ContainerNetworkAllocationTaskService.DISPLAY_NAME,
                                 ResourceNamePrefixTaskService.DISPLAY_NAME)));
-        SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CONTAINER_VOLUME_TYPE, new ArrayList<>(
-                Arrays.asList(ContainerVolumeAllocationTaskService.DISPLAY_NAME,
-                        ResourceNamePrefixTaskService.DISPLAY_NAME)));
+        SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
+                .put(ResourceType.CONTAINER_VOLUME_TYPE, new ArrayList<>(
+                        Arrays.asList(ContainerVolumeAllocationTaskService.DISPLAY_NAME,
+                                ResourceNamePrefixTaskService.DISPLAY_NAME)));
         SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CLOSURE_TYPE, new ArrayList<>(
                 Arrays.asList(ClosureAllocationTaskService.DISPLAY_NAME,
                         ClosureProvisionTaskService.DISPLAY_NAME)));

@@ -18,6 +18,7 @@ import java.util.Map;
  * Clsoure operation types
  */
 public enum ClosureOperationType {
+    CREATE("Closure.Create"),
     DELETE("Closure.Delete");
 
     ClosureOperationType(String id) {
