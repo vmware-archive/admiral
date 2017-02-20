@@ -659,7 +659,7 @@
         },
         "volume": {
           "create": "Create Volume",
-          "connectedDateLabel": "Connected since",
+          "connectedDateLabel": "Connected",
           "driverLabel": "Driver",
           "driverOptionsLabel": "Driver Options",
           "scope": "Scope",

@@ -15,6 +15,7 @@ import static com.vmware.admiral.compute.container.volume.ContainerVolumeDescrip
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -147,6 +148,12 @@ public class ContainerVolumeService extends StatefulService {
                 PropertyUsageOption.OPTIONAL })
         public Map<String, String> status;
 
+        /** Volume connected time in milliseconds */
+        @Documentation(description = "Volume connected time in milliseconds")
+        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        public Long connected;
+
         /** The number of failures to update this volume state by the data collection service. */
         @Documentation(description = "The number of failures to update this volume state by the"
                 + " data collection service.")
@@ -171,6 +178,8 @@ public class ContainerVolumeService extends StatefulService {
         if (body.powerState == null) {
             body.powerState = ContainerVolumeState.PowerState.UNKNOWN;
         }
+
+        body.connected = new Date().getTime();
 
         // start the monitoring service instance for this network
         startMonitoringContainerVolumeState(body);
