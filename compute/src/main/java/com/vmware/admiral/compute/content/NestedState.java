@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -62,7 +63,7 @@ public class NestedState {
     }
 
     public ServiceDocument object;
-    public Map<String /** self link */, NestedState> children = new HashMap<>();
+    public Map<String /** self link */, NestedState> children = new ConcurrentHashMap<>();
     public String factoryLink;
 
     public NestedState() {
