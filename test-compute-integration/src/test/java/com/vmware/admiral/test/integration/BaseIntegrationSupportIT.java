@@ -520,9 +520,11 @@ public abstract class BaseIntegrationSupportIT {
     protected String getNewUniqueLink() {
         return getLink(String.valueOf(System.currentTimeMillis()));
     }
+
     protected String getLink(String name) {
         return this.getClass().getSimpleName() + "-" + name.replaceAll("\\s", "_");
     }
+
     protected String getExistingLink(String factoryLink, String name) {
         return UriUtils.buildUriPath(factoryLink, getLink(name));
     }
