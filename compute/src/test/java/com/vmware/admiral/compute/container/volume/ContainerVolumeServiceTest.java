@@ -90,6 +90,7 @@ public class ContainerVolumeServiceTest extends ComputeBaseTest {
                     assertTrue(volumeState.name.startsWith(prefix + "name"));
                     assertEquals(volumeState.mountpoint, MOUNTPOINT_DIR);
                     assertNotNull(volumeState.options);
+                    assertNotNull(volumeState.connected);
                     assertNotNull(volumeState.customProperties);
                     assertEquals(volumeState.customProperties, testCustomProperties);
                     assertEquals(volumeState.scope, CONTAINER_VOLUME_SCOPE);
