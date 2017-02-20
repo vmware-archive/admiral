@@ -16,7 +16,7 @@ import java.net.URI;
 import java.util.Properties;
 import java.util.logging.Level;
 
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Before;
 
 import com.vmware.admiral.adapter.common.service.mock.MockTaskFactoryService;
@@ -46,7 +46,7 @@ public class BaseMockDockerTestCase extends BaseTestCase {
     private static final String DOCKER_SERVER_CERTIFICATE = "test.docker.server.certificate";
     protected static final long FUTURE_TIMEOUT_SECONDS = 10;
 
-    protected static VerificationHost mockDockerHost;
+    protected VerificationHost mockDockerHost;
 
     protected static URI dockerUri;
     protected static URI dockerVersionedUri;
@@ -109,8 +109,8 @@ public class BaseMockDockerTestCase extends BaseTestCase {
 
     }
 
-    @AfterClass
-    public static void tearDownMockDockerHost() {
+    @After
+    public void tearDownMockDockerHost() {
         if (mockDockerHost != null) {
             mockDockerHost.tearDown();
         }

@@ -99,8 +99,7 @@ import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 
 public abstract class RequestBaseTest extends BaseTestCase {
 
-    protected static final String DEFAULT_GROUP_RESOURCE_POLICY =
-            GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK;
+    protected static final String DEFAULT_GROUP_RESOURCE_POLICY = GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK;
     protected static final int HEALTH_CHECK_PORT = 8800;
     protected static final String DEFAULT_HEALTH_CHECK_TIMEOUT = "5000";
     protected static final String DEFAULT_HEALTH_CHECK_DELAY = "1000";
@@ -121,7 +120,6 @@ public abstract class RequestBaseTest extends BaseTestCase {
     protected GroupResourcePlacementState computeGroupPlacementState;
     protected final Object initializationLock = new Object();
     private final List<ServiceDocument> documentsForDeletion = new ArrayList<>();
-
 
     static {
         System.setProperty(ContainerPortsAllocationTaskService.CONTAINER_PORT_ALLOCATION_ENABLED,
@@ -208,9 +206,6 @@ public abstract class RequestBaseTest extends BaseTestCase {
     }
 
     protected void startServices(VerificationHost h) throws Throwable {
-        // speed up the test (default is 500ms):
-        setFinalStatic(QueryUtil.class
-                .getDeclaredField("QUERY_RETRY_INTERVAL_MILLIS"), 20L);
         h.registerForServiceAvailability(CaSigningCertService.startTask(h), true,
                 CaSigningCertService.FACTORY_LINK);
         HostInitTestDcpServicesConfig.startServices(h);
@@ -231,8 +226,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
         waitForServiceAvailability(h,
                 SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK);
         waitForServiceAvailability(h,
-                HostContainerListDataCollection
-                        .DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK);
+                HostContainerListDataCollection.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK);
         waitForServiceAvailability(ManagementUriParts.AUTH_CREDENTIALS_CA_LINK);
 
         waitForInitialBootServiceToBeSelfStopped(ComputeInitialBootService.SELF_LINK);
@@ -401,8 +395,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 : null;
         containerHost.tenantLinks = computeDesc.tenantLinks;
         containerHost.descriptionLink = computeDesc.documentSelfLink;
-        containerHost.powerState = com.vmware.photon.controller.model.resources.ComputeService
-                .PowerState.ON;
+        containerHost.powerState = com.vmware.photon.controller.model.resources.ComputeService.PowerState.ON;
 
         if (containerHost.customProperties == null) {
             containerHost.customProperties = new HashMap<>();
@@ -453,8 +446,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
         }
         vmHostComputeState.documentSelfLink = vmHostComputeState.id;
         vmHostComputeState.resourcePoolLink = createComputeResourcePool().documentSelfLink;
-        vmHostComputeState.descriptionLink = createComputeDescriptionForVmGuestChildren()
-                .documentSelfLink;
+        vmHostComputeState.descriptionLink = createComputeDescriptionForVmGuestChildren().documentSelfLink;
         vmHostComputeState.type = ComputeType.VM_HOST;
         vmHostComputeState = getOrCreateDocument(vmHostComputeState, ComputeService.FACTORY_LINK);
         assertNotNull(vmHostComputeState);
@@ -486,8 +478,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
         }
         vmGuestComputeState.documentSelfLink = vmGuestComputeState.id;
         vmGuestComputeState.resourcePoolLink = createComputeResourcePool().documentSelfLink;
-        vmGuestComputeState.descriptionLink = createVmGuestComputeDescriptionWithRandomSelfLink()
-                .documentSelfLink;
+        vmGuestComputeState.descriptionLink = createVmGuestComputeDescriptionWithRandomSelfLink().documentSelfLink;
         vmGuestComputeState.type = type;
         vmGuestComputeState = getOrCreateDocument(vmGuestComputeState, ComputeService.FACTORY_LINK);
         assertNotNull(vmGuestComputeState);
@@ -644,13 +635,11 @@ public abstract class RequestBaseTest extends BaseTestCase {
             }
             if (desc instanceof ContainerDescriptionService.ContainerDescription) {
                 desc = doPost(desc, ContainerDescriptionService.FACTORY_LINK);
-            } else if (desc instanceof ContainerNetworkDescriptionService
-                    .ContainerNetworkDescription) {
+            } else if (desc instanceof ContainerNetworkDescriptionService.ContainerNetworkDescription) {
                 desc = doPost(desc, ContainerNetworkDescriptionService.FACTORY_LINK);
             } else if (desc instanceof ComputeDescriptionService.ComputeDescription) {
                 desc = doPost(desc, ComputeDescriptionService.FACTORY_LINK);
-            } else if (desc instanceof ContainerVolumeDescriptionService
-                    .ContainerVolumeDescription) {
+            } else if (desc instanceof ContainerVolumeDescriptionService.ContainerVolumeDescription) {
                 desc = doPost(desc, ContainerVolumeDescriptionService.FACTORY_LINK);
             } else {
                 throw new IllegalArgumentException(

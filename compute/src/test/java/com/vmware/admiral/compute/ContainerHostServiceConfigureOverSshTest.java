@@ -49,7 +49,6 @@ import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 
-
 public class ContainerHostServiceConfigureOverSshTest extends ComputeBaseTest {
 
     private MockDockerHostAdapterService dockerAdapterService;
@@ -71,7 +70,7 @@ public class ContainerHostServiceConfigureOverSshTest extends ComputeBaseTest {
 
         waitForServiceAvailability(ComputeInitialBootService.SELF_LINK);
         waitForInitialBootServiceToBeSelfStopped(ComputeInitialBootService.SELF_LINK);
-        waitForServiceAvailability(CaSigningCertService.FACTORY_LINK);
+        waitForServiceAvailability(ManagementUriParts.AUTH_CREDENTIALS_CA_LINK);
 
         dockerAdapterService = new MockDockerHostAdapterService();
         host.startService(Operation.createPost(UriUtils.buildUri(host,

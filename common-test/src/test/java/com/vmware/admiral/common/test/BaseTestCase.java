@@ -77,11 +77,11 @@ import com.vmware.xenon.services.common.QueryTask;
 public abstract class BaseTestCase {
 
     private static final int WAIT_FOR_STAGE_CHANGE_COUNT = Integer.getInteger(
-            "dcp.management.test.change.count", 100);
+            "dcp.management.test.change.count", 2500);
     private static final int WAIT_FOR_STAGE_CHANGE_COUNT_LONGER = Integer.getInteger(
-            "dcp.management.test.change.longer.count", 200);
+            "dcp.management.test.change.longer.count", 5000);
     protected static final int WAIT_THREAD_SLEEP_IN_MILLIS = Integer.getInteger(
-            "dcp.management.test.wait.thread.sleep.millis", 500);
+            "dcp.management.test.wait.thread.sleep.millis", 20);
     private static final int HOST_TIMEOUT_SECONDS = 60;
 
     protected static final int MAINTENANCE_INTERVAL_MILLIS = 20;
@@ -139,6 +139,9 @@ public abstract class BaseTestCase {
     @Before
     public void before() throws Throwable {
         host = createHost();
+        // speed up the test (default is 500ms):
+        setFinalStatic(QueryUtil.class
+                .getDeclaredField("QUERY_RETRY_INTERVAL_MILLIS"), 20L);
     }
 
     @After
@@ -177,8 +180,7 @@ public abstract class BaseTestCase {
         ServiceHost.Arguments args = new ServiceHost.Arguments();
         args.sandbox = null; // ask runtime to pick a random storage location
         args.port = 0; // ask runtime to pick a random port
-        Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains =
-                new HashMap<>();
+        Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains = new HashMap<>();
         customizeChains(chains);
 
         VerificationHost h = VerificationHost.initialize(new CustomizationVerificationHost(chains),
@@ -363,7 +365,7 @@ public abstract class BaseTestCase {
             assertTrue(childTemplate.documentDescription != null);
             assertTrue(childTemplate.documentDescription.propertyDescriptions != null
                     && childTemplate.documentDescription.propertyDescriptions
-                    .size() > 0);
+                            .size() > 0);
 
             if (!TaskServiceDocument.class.isAssignableFrom(childTemplate.getClass())) {
                 Field[] allFields = childTemplate.getClass().getDeclaredFields();
@@ -887,17 +889,17 @@ public abstract class BaseTestCase {
         List<String> result = new LinkedList<>();
         new ServiceDocumentQuery<>(
                 host, type).query(query,
-                    (r) -> {
-                        if (r.hasException()) {
-                            ctx.failIteration(r.getException());
-                            return;
-                        }
-                        if (r.hasResult()) {
-                            result.add(r.getDocumentSelfLink());
-                            return;
-                        }
-                        ctx.completeIteration();
-                    });
+                        (r) -> {
+                            if (r.hasException()) {
+                                ctx.failIteration(r.getException());
+                                return;
+                            }
+                            if (r.hasResult()) {
+                                result.add(r.getDocumentSelfLink());
+                                return;
+                            }
+                            ctx.completeIteration();
+                        });
         ctx.await();
 
         return result;
@@ -911,16 +913,16 @@ public abstract class BaseTestCase {
         List<String> result = new LinkedList<>();
         new ServiceDocumentQuery<>(
                 host, type).query(query,
-                    (r) -> {
-                        if (r.hasException()) {
-                            ctx.failIteration(r.getException());
-                            return;
-                        } else if (r.hasResult()) {
-                            result.add(r.getDocumentSelfLink());
-                        } else {
-                            ctx.completeIteration();
-                        }
-                    });
+                        (r) -> {
+                            if (r.hasException()) {
+                                ctx.failIteration(r.getException());
+                                return;
+                            } else if (r.hasResult()) {
+                                result.add(r.getDocumentSelfLink());
+                            } else {
+                                ctx.completeIteration();
+                            }
+                        });
         ctx.await();
 
         return result;
@@ -976,7 +978,7 @@ public abstract class BaseTestCase {
     protected void waitForInitialBootServiceToBeSelfStopped(String bootServiceSelfLink)
             throws Throwable {
         waitFor("Failed waiting for " + bootServiceSelfLink
-                        + " to self stop itself after all instances created.",
+                + " to self stop itself after all instances created.",
                 () -> {
                     TestContext ctx = testCreate(1);
                     URI uri = UriUtils.buildUri(host, bootServiceSelfLink);
