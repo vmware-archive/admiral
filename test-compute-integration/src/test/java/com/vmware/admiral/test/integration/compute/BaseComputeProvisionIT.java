@@ -329,7 +329,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
             throws Exception {
         String name = name(endpointType, poolId, SUFFIX);
         ResourcePoolState poolState = new ResourcePoolState();
-        poolState.documentSelfLink = getLink(ResourcePoolService.FACTORY_LINK, name);
+        poolState.documentSelfLink = getExistingLink(ResourcePoolService.FACTORY_LINK, name);
         poolState.name = name;
         poolState.id = poolState.name;
         poolState.projectName = endpointType.name();
@@ -448,7 +448,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         placementState.tenantLinks = getTenantLinks();
 
         GroupResourcePlacementState currentQuata = getDocument(
-                getLink(GroupResourcePlacementService.FACTORY_LINK, placementState.name),
+                getExistingLink(GroupResourcePlacementService.FACTORY_LINK, placementState.name),
                 GroupResourcePlacementState.class);
         if (currentQuata != null) {
             return currentQuata;
