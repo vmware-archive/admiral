@@ -15,10 +15,12 @@ import static org.junit.Assert.assertEquals;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.Before;
@@ -102,8 +104,8 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
     public void testDeployApplicationWithSingleContainer() throws Throwable {
         ContainerDescription containerDescription = createContainerDescription();
 
-        CompositeDescription compositeDescription = createCompositeDescription
-                (containerDescription);
+        CompositeDescription compositeDescription = createCompositeDescription(
+                containerDescription);
 
         CompositeComponent compositeComponent = createCompositeComponent(compositeDescription);
 
@@ -127,13 +129,13 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
 
     @Test
     public void testValidateServicesAreDeployedBeforeDeployments() throws Throwable {
-        String wordpressTemplate = CommonTestStateFactory.getFileContent
-                ("WordPress_with_MySQL_containers.yaml");
+        String wordpressTemplate = CommonTestStateFactory
+                .getFileContent("WordPress_with_MySQL_containers.yaml");
 
         String compositeDescriptionLink = importTemplate(wordpressTemplate);
 
-        CompositeDescription compositeDescription = getCompositeDescription
-                (compositeDescriptionLink);
+        CompositeDescription compositeDescription = getCompositeDescription(
+                compositeDescriptionLink);
 
         CompositeComponent compositeComponent = new CompositeComponent();
         compositeComponent.name = compositeDescription.name + "-mcm-102";
@@ -154,8 +156,8 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
         assertEquals(4, service.deployedElements.size());
 
         // Cast the deployedElements to CommonKubernetesEntity so we can assert their kind.
-        List<CommonKubernetesEntity> kubernetesElements = new ArrayList<>();
-        service.deployedElements.forEach(e -> kubernetesElements.add((CommonKubernetesEntity) e));
+        List<CommonKubernetesEntity> kubernetesElements = service.deployedElements.stream()
+                .map(el -> (CommonKubernetesEntity) el).collect(Collectors.toList());
 
         assertEquals(KubernetesUtil.SERVICE, kubernetesElements.get(0).kind);
         assertEquals(KubernetesUtil.SERVICE, kubernetesElements.get(1).kind);
@@ -181,8 +183,7 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
         compositeComponent.componentLinks = new ArrayList<>();
         compositeComponent.componentLinks.add(state1.documentSelfLink);
         compositeComponent.componentLinks.add(state2.documentSelfLink);
-        compositeComponent = doPost(compositeComponent, CompositeComponentFactoryService
-                .SELF_LINK);
+        compositeComponent = doPost(compositeComponent, CompositeComponentFactoryService.SELF_LINK);
 
         Deployment deployment1 = new Deployment();
         deployment1.kind = KubernetesUtil.DEPLOYMENT;
@@ -233,8 +234,7 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
         compositeComponent.componentLinks = new ArrayList<>();
         compositeComponent.componentLinks.add(state.documentSelfLink);
         compositeComponent.componentLinks.add(state.documentSelfLink);
-        compositeComponent = doPost(compositeComponent, CompositeComponentFactoryService
-                .SELF_LINK);
+        compositeComponent = doPost(compositeComponent, CompositeComponentFactoryService.SELF_LINK);
 
         Deployment deployment1 = new Deployment();
         deployment1.kind = KubernetesUtil.DEPLOYMENT;
@@ -284,8 +284,8 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
         compositeDescription.name = "application";
         compositeDescription.descriptionLinks = new ArrayList<>();
         compositeDescription.descriptionLinks.add(containerDescription.documentSelfLink);
-        compositeDescription = doPost(compositeDescription, CompositeDescriptionFactoryService
-                .SELF_LINK);
+        compositeDescription = doPost(compositeDescription,
+                CompositeDescriptionFactoryService.SELF_LINK);
         return compositeDescription;
     }
 
@@ -415,7 +415,7 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
 
         public MockKubernetesHost() {
             super(ServiceDocument.class);
-            deployedElements = new ArrayList<>();
+            deployedElements = Collections.synchronizedList(new ArrayList<Object>());
         }
 
         @Override
