@@ -178,11 +178,10 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         startPost.setBody(state);
         startPost.complete();
 
-        if (isExtensibilityResponse(startPost)) {
+        if (isExtensibilityResponse(state)) {
             handleStagePatch(state);
             return;
         }
-
         handleSubscriptions(state);
     }
 
@@ -253,7 +252,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
         patch.complete();
 
-        if (isExtensibilityResponse(patch)) {
+        if (isExtensibilityResponse(patchBody)) {
             handleStagePatch(state);
             return;
         }
@@ -263,11 +262,12 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
     // Check if Task allows subscription on this stage.
     private void handleSubscriptions(T state) {
-        // Check if Task allows subscription on this stage.
         if (subscriptionSubStages.contains(state.taskSubStage)) {
             ExtensibilitySubscriptionManager manager = getExtensibilityManager();
             if (manager != null) {
-                manager.handleStagePatch(this, state, this::handleStagePatch);
+                validateServiceNotificationPayload(this);
+                manager.handleStagePatch(this.notificationPayload(), this.replayPayload(), state,
+                        this::handleStagePatch);
             } else {
                 // ServiceHost is not instance of ManagementHost
                 handleStagePatch(state);
@@ -278,8 +278,17 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         }
     }
 
-    private boolean isExtensibilityResponse(Operation op) {
-        return op.getBodyRaw() instanceof ExtensibilitySubscriptionManager;
+    private boolean isExtensibilityResponse(T patchBody) {
+        return patchBody.customProperties != null && patchBody.customProperties
+                .containsKey(ExtensibilitySubscriptionCallbackService.EXTENSIBILITY_RESPONSE);
+    }
+
+    private void validateServiceNotificationPayload(AbstractTaskStatefulService<?, ?> taskService) {
+        if (taskService.notificationPayload() == null) {
+            this.failTask(String.format(
+                    "Task [%s] doesn't provide notification payload for extensibility.",
+                    taskService.getClass()), new Throwable());
+        }
     }
 
     protected void updateRequestTracker(T state) {
@@ -758,16 +767,17 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     }
 
     /**
-     * Modifies task state before sending it to subscriber. This method is called before notifying
-     * subscriber, and is used to 'hide' sensitive data that's not needed to be sent.
-     *
-     * @param taskToSend
-     *            task state
+     * Declares service fields which will be sent to client for information about the task.
      */
-    protected void processForExtensibility(T taskToSend) {
-        // hide properties from sending to subscriber
-        taskToSend.requestTrackerLink = null;
-        taskToSend.serviceTaskCallback = null;
+    protected ServiceTaskCallbackResponse notificationPayload() {
+        return null;
+    }
+
+    /**
+     * Declares service fields which will be merged once response from subscriber is received.
+     */
+    protected ServiceTaskCallbackResponse replayPayload() {
+        return notificationPayload();
     }
 
     private void sendRequestStateToExternalUrl(String callbackReference, T state) {

@@ -50,7 +50,6 @@ public class ExtensibilitySubscriptionCallbackServiceTest extends BaseTestCase {
         assertEquals(0L, (long) result.documentCount);
     }
 
-    @SuppressWarnings({ "rawtypes" })
     @Test()
     public void testCreateCallback() {
         ExtensibilitySubscriptionCallback state = createExtensibilityCallback(
@@ -65,7 +64,6 @@ public class ExtensibilitySubscriptionCallbackServiceTest extends BaseTestCase {
         assertNotNull(result.taskStateJson);
     }
 
-    @SuppressWarnings({ "rawtypes" })
     @Test(expected = RuntimeException.class)
     public void testPostValidation() {
         ExtensibilitySubscriptionCallback state = createExtensibilityCallback(
@@ -77,7 +75,6 @@ public class ExtensibilitySubscriptionCallbackServiceTest extends BaseTestCase {
         sender.sendPostAndWait(uri, state, ExtensibilitySubscriptionCallback.class);
     }
 
-    @SuppressWarnings({ "rawtypes" })
     @Test()
     public void testPut() {
         ExtensibilitySubscriptionCallback state = createExtensibilityCallback(
@@ -107,7 +104,6 @@ public class ExtensibilitySubscriptionCallbackServiceTest extends BaseTestCase {
 
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     private ExtensibilitySubscriptionCallback createExtensibilityCallback(
             ExtensibilitySubscriptionCallback.Status status) {
         ExtensibilitySubscriptionCallback callback = new ExtensibilitySubscriptionCallback();

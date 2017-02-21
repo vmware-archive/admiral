@@ -12,38 +12,40 @@
 package com.vmware.admiral.service.common;
 
 import java.net.URI;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.ServiceUtils;
+import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.StatefulService;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 /**
  * {@code ExtensibilitySubscriptionCallbackService} is used for resuming blocked task service.
  * <p>
- * When client has received blocking notification, it need to send a post request to this service
- * to resume the blocked task service.
+ * When client has received blocking notification, it need to send a post request to this service to
+ * resume the blocked task service.
  *
  * @see ExtensibilitySubscriptionManager
  */
 public class ExtensibilitySubscriptionCallbackService extends StatefulService {
 
+    public static final String DISPLAY_NAME = "Extensibility Callback";
+
     public static final String FACTORY_LINK = ManagementUriParts.EXTENSIBILITY_CALLBACKS;
 
-    private static final int RESUME_RETRY_COUNT = Integer.getInteger(
-            "com.vmware.admiral.service.extensibility.resume.retries", 3);
-    private static final int RESUME_RETRY_WAIT = Integer.getInteger(
-            "com.vmware.admiral.service.extensibility.resume.wait", 15);
+    public static final String EXTENSIBILITY_RESPONSE = "extensibilityResponse";
+
     private static final int PROCESSED_NOTIFICATION_EXPIRE_TIME = Integer.getInteger(
             "com.vmware.admiral.service.extensibility.expiration.processed", 60);
 
-    public static class ExtensibilitySubscriptionCallback<T extends TaskServiceDocument<?>>
-            extends MultiTenantDocument {
+    public static class ExtensibilitySubscriptionCallback
+            extends
+            com.vmware.admiral.service.common.TaskServiceDocument<DefaultSubStage> {
 
         public enum Status {
             BLOCKED, RESUME, DONE;
@@ -57,6 +59,10 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
         @UsageOption(option = PropertyUsageOption.REQUIRED)
         public String taskStateJson;
 
+        @Documentation(description = "Task class name")
+        @UsageOption(option = PropertyUsageOption.REQUIRED)
+        public String taskStateClassName;
+
         @Documentation(description = "State status")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public Status status;
@@ -65,11 +71,14 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public int retryCounter;
 
-        @Documentation(description = "Custom properties")
-        @UsageOption(option = PropertyUsageOption.OPTIONAL)
-        public Map<String, String> customProperties;
+        @Documentation(description = "Defines Task fields which will be sent to client for information about the task.")
+        @UsageOption(option = PropertyUsageOption.REQUIRED)
+        public ServiceTaskCallbackResponse notificationPayload;
 
-        public String taskStateClassName;
+        @Documentation(description = "Defines Task fields which will be merged when subscriber return response.")
+        @UsageOption(option = PropertyUsageOption.REQUIRED)
+        public ServiceTaskCallbackResponse replayPayload;
+
     }
 
     public ExtensibilitySubscriptionCallbackService() {
@@ -85,7 +94,7 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
             return;
         }
 
-        ExtensibilitySubscriptionCallback<?> body = getBody(post);
+        ExtensibilitySubscriptionCallback body = getBody(post);
 
         body.status = ExtensibilitySubscriptionCallback.Status.BLOCKED;
         body.retryCounter = 0;
@@ -101,18 +110,21 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
             return;
         }
 
-        ExtensibilitySubscriptionCallback<?> currentState = getState(post);
-        ExtensibilitySubscriptionCallback<?> body = getBody(post);
+        ExtensibilitySubscriptionCallback currentState = getState(post);
 
-        if (validatePost(currentState, body, post)) {
+        if (validatePost(currentState, post)) {
             return;
         }
 
-        syncTaskStates(currentState, body);
-        setState(post, currentState);
-        post.complete();
+        syncTaskStates(currentState, post);
 
-        resumeTaskService(currentState);
+        setState(post, currentState);
+
+        post.setBody(currentState).complete();
+
+        if (currentState.status == ExtensibilitySubscriptionCallback.Status.RESUME) {
+            markDone();
+        }
     }
 
     @Override
@@ -126,20 +138,33 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
             return;
         }
 
-        ExtensibilitySubscriptionCallback<?> patchBody = getBody(patch);
-        ExtensibilitySubscriptionCallback<?> state = getState(patch);
+        ExtensibilitySubscriptionCallback patchBody = getBody(patch);
+        ExtensibilitySubscriptionCallback state = getState(patch);
         if (validatePatch(patchBody, state, patch)) {
             return;
         }
 
-        PropertyUtils.mergeServiceDocuments(state, patchBody);
+        if (patchBody.status != null) {
+            state.status = patchBody.status;
+        }
+
+        if (patchBody.taskInfo != null) {
+            state.taskInfo = patchBody.taskInfo;
+        }
+
+        if (patchBody.taskSubStage != null) {
+            state.taskSubStage = patchBody.taskSubStage;
+        }
 
         patch.complete();
+
+        if (patchBody.status == ExtensibilitySubscriptionCallback.Status.DONE) {
+            notifyParentTask(state);
+        }
     }
 
     private boolean validatePost(
-            ExtensibilitySubscriptionCallback<?> currentState,
-            ExtensibilitySubscriptionCallback<?> body, Operation post) {
+            ExtensibilitySubscriptionCallback currentState, Operation post) {
         if (currentState.status.equals(ExtensibilitySubscriptionCallback.Status.DONE)) {
             post.fail(new IllegalStateException("Notification has already been processed."));
             return true;
@@ -149,16 +174,20 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
     }
 
     private boolean validatePatch(
-            ExtensibilitySubscriptionCallback<?> patchBody,
-            ExtensibilitySubscriptionCallback<?> state, Operation patch) {
+            ExtensibilitySubscriptionCallback patchBody,
+            ExtensibilitySubscriptionCallback state, Operation patch) {
 
-        if (patchBody.retryCounter < state.retryCounter) {
+        if (patchBody.retryCounter < state.retryCounter
+                && !ExtensibilitySubscriptionCallback.Status.DONE.equals(patchBody.status)) {
             patch.fail(new IllegalArgumentException("Decrease retry counter is not allowed"));
             return true;
         }
 
-        if (ExtensibilitySubscriptionCallback.Status.DONE.equals(state.status)
-                && !ExtensibilitySubscriptionCallback.Status.DONE.equals(patchBody.status)) {
+        // Once task has been marked as 'Done' it's status shouldn't be changed.
+        if ((patchBody.status != null)
+                && (ExtensibilitySubscriptionCallback.Status.DONE.equals(state.status)
+                        && !ExtensibilitySubscriptionCallback.Status.DONE
+                                .equals(patchBody.status))) {
             patch.fail(new IllegalArgumentException("Changing status is not allowed"));
             return true;
         }
@@ -173,60 +202,16 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
 
     @Override
     public void handleStart(Operation post) {
-        ExtensibilitySubscriptionCallback<?> body = getBody(post);
+        ExtensibilitySubscriptionCallback body = getBody(post);
         if (ExtensibilitySubscriptionCallback.Status.RESUME.equals(body.status)) {
-            resumeTaskService(body);
+            markDone();
         }
         post.complete();
     }
 
     /**
-     * Resumes task service by sending patch to it. Support retrying in case of
-     * an error. After successful patch marks the extensibility callback state
-     * as processed.
-     *
-     * @param state {@code LifecycleExtensibilityCallbackState}
-     */
-    private void resumeTaskService(ExtensibilitySubscriptionCallback<?> state) {
-        @SuppressWarnings("rawtypes")
-        ExtensibilitySubscriptionCallback<?> patch = new ExtensibilitySubscriptionCallback();
-        patch.retryCounter = ++state.retryCounter;
-        sendRequest(Operation.createPatch(this, state.documentSelfLink)
-                .setBody(patch)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        logWarning("Self patch to [%s] failed: %s",
-                                state.documentSelfLink, Utils.toString(e));
-                        return;
-                    }
-
-                    Operation.createPatch(state.serviceCallback)
-                            .setBody(state.taskStateJson)
-                            .setReferer(ExtensibilitySubscriptionManager.SELF_LINK)
-                            .setCompletion((op, ex) -> {
-                                if (ex != null) {
-                                    logFine("Cannot resume task [%s] : %s",
-                                            state.serviceCallback, ex.getMessage());
-                                    if (state.retryCounter >= RESUME_RETRY_COUNT) {
-                                        logSevere("Cannot resume task [%s] : %s",
-                                                state.serviceCallback, ex.getMessage());
-                                    } else {
-                                        getHost().schedule(() -> resumeTaskService(state),
-                                                RESUME_RETRY_WAIT, TimeUnit.SECONDS);
-                                    }
-                                    return;
-                                }
-
-                                markDone();
-                            })
-                            .sendWith(getHost());
-                }));
-    }
-
-    /**
      * Self-update with status done and sets expiration time.
      */
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     private void markDone() {
         ExtensibilitySubscriptionCallback patch = new ExtensibilitySubscriptionCallback();
         patch.status = ExtensibilitySubscriptionCallback.Status.DONE;
@@ -242,42 +227,50 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
                 }));
     }
 
+    private void notifyParentTask(ExtensibilitySubscriptionCallback body) {
+        sendRequest(Operation
+                .createPatch(UriUtils.buildUri(getHost(), body.serviceTaskCallback.serviceSelfLink))
+                .setReferer(getHost().getUri())
+                .setBody(body.replayPayload)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        getHost().log(Level.SEVERE,
+                                String.format("Notification to [%s] failed. Error: %s",
+                                        body.serviceTaskCallback.serviceSelfLink, e.getMessage()));
+                    }
+                }));
+    }
+
     /**
      * Merges received task state with the persisted one.
      *
-     * @param currentState  existing state
-     * @param receivedState received state from the client
+     * @param currentState
+     *            existing state
+     * @param receivedState
+     *            received state from the client
      */
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     private void syncTaskStates(
-            ExtensibilitySubscriptionCallback currentState,
-            ExtensibilitySubscriptionCallback receivedState) {
+            ExtensibilitySubscriptionCallback currentState, Operation op) {
 
         currentState.status = ExtensibilitySubscriptionCallback.Status.RESUME;
 
-        if (receivedState != null && receivedState.taskStateJson != null) {
-            mergeTaskState(currentState, receivedState);
-        }
-    }
+        // Original callback to task which has to be resumed.
+        ServiceTaskCallbackResponse serviceTaskCallbackResponse = currentState.serviceTaskCallback
+                .getFinishedResponse();
+        // Set custom property which defines that request has been sent from Extensibility client.
+        serviceTaskCallbackResponse.addProperty(EXTENSIBILITY_RESPONSE, Boolean.TRUE.toString());
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    private <T extends TaskServiceDocument<?>> void mergeTaskState(
-            ExtensibilitySubscriptionCallback currentState,
-            ExtensibilitySubscriptionCallback receivedState) {
-        try {
-            Class taskClass = Class.forName(currentState.taskStateClassName);
+        // Every service task which supports extensibility should provide it's own
+        // 'extensibilityCallbackRespons' which will define suitable for modification fields, once
+        // the response from subscriber is received. Here fields are merged from response to
+        // callback.
+        ServiceTaskCallbackResponse extensibilityResponse = op
+                .getBody(currentState.replayPayload.getClass());
+        // Inherit original callback in order to be aware which task stage should be resumed.
+        extensibilityResponse.copy(serviceTaskCallbackResponse);
+        // Store extensibility callback in order to be used as finished callback response.
+        currentState.replayPayload = extensibilityResponse;
 
-            T currentTask = (T) Utils.fromJson(currentState.taskStateJson, taskClass);
-            T receivedTask = (T) Utils.fromJson(receivedState.taskStateJson, taskClass);
-
-            PropertyUtils.mergeServiceDocuments(currentTask, receivedTask);
-
-            currentState.taskStateJson = Utils.toJson(currentTask);
-        } catch (Exception e) {
-            logSevere("Unable to merge extensibility response for [%s] : %s",
-                    getSelfLink(), Utils.toString(e));
-            throw new RuntimeException(e);
-        }
     }
 
 }

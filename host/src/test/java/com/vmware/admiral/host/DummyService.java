@@ -19,6 +19,9 @@ import java.util.Set;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.host.DummyService.DummyServiceTaskState.SubStage;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
+import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
+import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
+import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 
 /**
  * Service that is meant to be used for test purposes related to subscriptions. Currently it
@@ -36,17 +39,33 @@ public class DummyService
     public static class DummyServiceTaskState extends
             com.vmware.admiral.service.common.TaskServiceDocument<DummyServiceTaskState.SubStage> {
 
+        public static enum SubStage {
+            CREATED, FILTER, COMPLETED, ERROR;
+
+            static final Set<SubStage> SUBSCRIPTION_SUB_STAGES = new HashSet<>(
+                    Arrays.asList(FILTER, COMPLETED));
+
+        }
+
         /**
          * Container that will be manipulated by subscriber for DummyService.
          */
         public ContainerState containerState;
 
-        public enum SubStage {
-            CREATED, FILTER, COMPLETED, ERROR;
+        /** (Internal) Set by task with DummyServiceTaskState name. */
+        @Documentation(description = "Set by task with DummyServiceTaskState name.")
+        @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
+                PropertyUsageOption.SERVICE_USE,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        public String name;
 
-            static final Set<SubStage> SUBSCRIPTION_SUB_STAGES = new HashSet<>(
-                    Arrays.asList(CREATED, COMPLETED));
-        }
+        /** (Internal) If flag is provided blocking subscription will handle it. */
+        @Documentation(description = "Set by task with DummyServiceTaskState name.")
+        @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
+                PropertyUsageOption.SERVICE_USE,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        public Boolean blocking;
+
     }
 
     public DummyService() {
@@ -56,6 +75,41 @@ public class DummyService
 
     @Override
     protected void handleStartedStagePatch(DummyServiceTaskState state) {
-        complete();
+
+        switch (state.taskSubStage) {
+        case CREATED:
+            proceedTo(SubStage.FILTER, s -> {
+                s.name = SELF_LINK;
+            });
+            break;
+        case FILTER:
+            proceedTo(SubStage.COMPLETED);
+            break;
+        case COMPLETED:
+            complete();
+            break;
+        case ERROR:
+            completeWithError();
+            break;
+        default:
+            break;
+        }
     }
+
+    @Override
+    protected ServiceTaskCallbackResponse notificationPayload() {
+        return new CallbackCompleteResponse();
+    }
+
+    @Override
+    protected ServiceTaskCallbackResponse replayPayload() {
+        return new CallbackCompleteResponse();
+    }
+
+    protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
+        String name;
+        Boolean blocking;
+        ContainerState containerState;
+    }
+
 }
