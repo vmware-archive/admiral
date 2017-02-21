@@ -13,12 +13,12 @@ package com.vmware.admiral.compute.content.kubernetes;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.isNullOrEmpty;
-import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.DEPLOYMENT;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.DEPLOYMENT_TYPE;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.KUBERNETES_API_VERSION_V1;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.KUBERNETES_API_VERSION_V1_BETA1;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.KUBERNETES_LABEL_APP;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.KUBERNETES_LABEL_TIER;
-import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.SERVICE;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.SERVICE_TYPE;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -406,7 +406,7 @@ public class KubernetesConverter {
 
         Deployment deployment = new Deployment();
         deployment.apiVersion = KUBERNETES_API_VERSION_V1_BETA1;
-        deployment.kind = DEPLOYMENT;
+        deployment.kind = DEPLOYMENT_TYPE;
         deployment.metadata = new ObjectMeta();
         deployment.metadata.name = description.name;
         deployment.metadata.labels = new HashMap<>();
@@ -436,7 +436,7 @@ public class KubernetesConverter {
 
         Service service = new Service();
         service.apiVersion = KUBERNETES_API_VERSION_V1;
-        service.kind = SERVICE;
+        service.kind = SERVICE_TYPE;
         service.metadata = new ObjectMeta();
         service.metadata.name = description.name;
         service.metadata.labels = new HashMap<>();

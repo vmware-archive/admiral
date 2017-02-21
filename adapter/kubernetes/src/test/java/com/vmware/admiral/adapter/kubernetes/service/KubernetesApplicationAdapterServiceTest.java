@@ -13,14 +13,18 @@ package com.vmware.admiral.adapter.kubernetes.service;
 
 import static org.junit.Assert.assertEquals;
 
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.DEPLOYMENT_TYPE;
+
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.Before;
@@ -35,26 +39,21 @@ import com.vmware.admiral.adapter.kubernetes.mock.MockKubernetesHostService;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.test.CommonTestStateFactory;
+import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
-import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
-import com.vmware.admiral.compute.container.ContainerDescriptionService;
-import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
-import com.vmware.admiral.compute.container.ContainerFactoryService;
-import com.vmware.admiral.compute.container.ContainerService.ContainerState;
-import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
-import com.vmware.admiral.compute.content.kubernetes.CommonKubernetesEntity;
-import com.vmware.admiral.compute.content.kubernetes.KubernetesEntityList;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
-import com.vmware.admiral.compute.content.kubernetes.ObjectMeta;
-import com.vmware.admiral.compute.content.kubernetes.deployments.Deployment;
-import com.vmware.admiral.compute.content.kubernetes.services.Service;
 import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
+import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
+import com.vmware.admiral.compute.kubernetes.entities.deployments.Deployment;
+import com.vmware.admiral.compute.kubernetes.entities.services.Service;
+import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
+import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.ServiceState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
@@ -69,7 +68,6 @@ import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 
 public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockTest {
@@ -101,41 +99,14 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
     }
 
     @Test
-    public void testDeployApplicationWithSingleContainer() throws Throwable {
-        ContainerDescription containerDescription = createContainerDescription();
-
-        CompositeDescription compositeDescription = createCompositeDescription(
-                containerDescription);
-
-        CompositeComponent compositeComponent = createCompositeComponent(compositeDescription);
-
-        createProvisioningTask();
-
-        ApplicationRequest appRequest = createApplicationRequest(
-                compositeComponent.documentSelfLink);
-
-        doOperation(ManagementUriParts.ADAPTER_KUBERNETES_APPLICATION, appRequest);
-
-        // wait for provisioning task stage to change to finish
-        waitForPropertyValue(provisioningTaskLink, MockTaskState.class, "taskInfo.stage",
-                TaskState.TaskStage.FINISHED);
-
-        assertEquals(1, service.deployedElements.size());
-
-        Deployment d = (Deployment) service.deployedElements.get(0);
-        assertEquals(containerDescription.name, d.metadata.name);
-        assertEquals(compositeComponent.name, d.spec.template.metadata.labels.get("app"));
-    }
-
-    @Test
-    public void testValidateServicesAreDeployedBeforeDeployments() throws Throwable {
-        String wordpressTemplate = CommonTestStateFactory
-                .getFileContent("WordPress_with_MySQL_containers.yaml");
+    public void testValidateServicesAreDeployedFirst() throws Throwable {
+        String wordpressTemplate = CommonTestStateFactory.getFileContent
+                ("WordPress_with_MySQL_kubernetes.yaml");
 
         String compositeDescriptionLink = importTemplate(wordpressTemplate);
 
-        CompositeDescription compositeDescription = getCompositeDescription(
-                compositeDescriptionLink);
+        CompositeDescription compositeDescription = getCompositeDescription
+                (compositeDescriptionLink);
 
         CompositeComponent compositeComponent = new CompositeComponent();
         compositeComponent.name = compositeDescription.name + "-mcm-102";
@@ -155,117 +126,128 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
 
         assertEquals(4, service.deployedElements.size());
 
-        // Cast the deployedElements to CommonKubernetesEntity so we can assert their kind.
-        List<CommonKubernetesEntity> kubernetesElements = service.deployedElements.stream()
-                .map(el -> (CommonKubernetesEntity) el).collect(Collectors.toList());
+        List<BaseKubernetesObject> kubernetesElements = new ArrayList<>();
+        service.deployedElements.forEach(e -> kubernetesElements.add((BaseKubernetesObject) e));
 
-        assertEquals(KubernetesUtil.SERVICE, kubernetesElements.get(0).kind);
-        assertEquals(KubernetesUtil.SERVICE, kubernetesElements.get(1).kind);
-        assertEquals(KubernetesUtil.DEPLOYMENT, kubernetesElements.get(2).kind);
-        assertEquals(KubernetesUtil.DEPLOYMENT, kubernetesElements.get(3).kind);
+        assertEquals(KubernetesUtil.SERVICE_TYPE, kubernetesElements.get(0).kind);
+        assertEquals(KubernetesUtil.SERVICE_TYPE, kubernetesElements.get(1).kind);
+        assertEquals(DEPLOYMENT_TYPE, kubernetesElements.get(2).kind);
+        assertEquals(DEPLOYMENT_TYPE, kubernetesElements.get(3).kind);
 
+        // Assert that states are created and they have correct compositeComponentLink.
+        CompositeComponent finalCompositeComponent = compositeComponent;
+
+        List<String> resourceLinks = getDocumentLinksOfType(ServiceState.class);
+        resourceLinks.forEach(link -> doOperation(Operation.createGet(host, link)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.failIteration(ex);
+                    } else {
+                        ServiceState state = o.getBody(ServiceState.class);
+                        assertEquals(state.compositeComponentLink,
+                                finalCompositeComponent.documentSelfLink);
+                        host.completeIteration();
+                    }
+                })));
+
+        resourceLinks = getDocumentLinksOfType(DeploymentState.class);
+        resourceLinks.forEach(link -> doOperation(Operation.createGet(host, link)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.failIteration(ex);
+                    } else {
+                        DeploymentState state = o.getBody(DeploymentState.class);
+                        assertEquals(state.compositeComponentLink,
+                                finalCompositeComponent.documentSelfLink);
+                        host.completeIteration();
+                    }
+                })));
     }
 
     @Test
-    public void testSimpleApplicationDeletion() throws Throwable {
-        ContainerState state1 = new ContainerState();
-        state1.name = "testState1";
-        state1 = doPost(state1, ContainerFactoryService.SELF_LINK);
+    public void testDeleteApplication() throws Throwable {
+        String wordpressTemplate = CommonTestStateFactory.getFileContent
+                ("WordPress_with_MySQL_kubernetes.yaml");
 
-        ContainerState state2 = new ContainerState();
-        state2.name = "testState2";
-        state2.ports = new ArrayList<>();
-        state2.ports.add(new PortBinding());
-        state2 = doPost(state2, ContainerFactoryService.SELF_LINK);
+        String compositeDescriptionLink = importTemplate(wordpressTemplate);
 
-        CompositeComponent compositeComponent = new CompositeComponent();
-        compositeComponent.name = "testCompositeComponent";
-        compositeComponent.componentLinks = new ArrayList<>();
-        compositeComponent.componentLinks.add(state1.documentSelfLink);
-        compositeComponent.componentLinks.add(state2.documentSelfLink);
-        compositeComponent = doPost(compositeComponent, CompositeComponentFactoryService.SELF_LINK);
+        CompositeDescription compositeDescription = getCompositeDescription(
+                compositeDescriptionLink);
 
-        Deployment deployment1 = new Deployment();
-        deployment1.kind = KubernetesUtil.DEPLOYMENT;
-        deployment1.metadata = new ObjectMeta();
-        deployment1.metadata.name = state1.name;
-
-        Deployment deployment2 = new Deployment();
-        deployment2.metadata = new ObjectMeta();
-        deployment2.kind = KubernetesUtil.DEPLOYMENT;
-        deployment2.metadata.name = state2.name;
-
-        Service service2 = new Service();
-        service2.metadata = new ObjectMeta();
-        service2.kind = KubernetesUtil.SERVICE;
-        service2.metadata.name = state2.name;
-
-        service.deployedElements.add(deployment1);
-        service.deployedElements.add(deployment2);
-        service.deployedElements.add(service2);
+        CompositeComponent compositeComponent = createCompositeComponent(compositeDescription);
 
         createProvisioningTask();
 
-        ApplicationRequest appRequest = new ApplicationRequest();
-        appRequest.hostReference = UriUtils.buildUri(host, kubernetesHostState.documentSelfLink);
-        appRequest.resourceReference = UriUtils.buildUri(host, compositeComponent.documentSelfLink);
-        appRequest.serviceTaskCallback = ServiceTaskCallback.create(provisioningTaskLink);
-        appRequest.operationTypeId = KubernetesOperationType.DELETE.id;
+        ApplicationRequest appRequest = createApplicationRequest(
+                compositeComponent.documentSelfLink);
 
         doOperation(ManagementUriParts.ADAPTER_KUBERNETES_APPLICATION, appRequest);
 
+        // wait for provisioning task stage to change to finish
+        waitForPropertyValue(provisioningTaskLink, MockTaskState.class, "taskInfo.stage",
+                TaskState.TaskStage.FINISHED);
+
+        // Delete the application
+        createProvisioningTask();
+        appRequest = createApplicationRequest(compositeComponent.documentSelfLink);
+        appRequest.operationTypeId = KubernetesOperationType.DELETE.id;
+
+        doOperation(ManagementUriParts.ADAPTER_KUBERNETES_APPLICATION, appRequest);
         waitForPropertyValue(provisioningTaskLink, MockTaskState.class, "taskInfo.stage",
                 TaskStage.FINISHED);
 
-        assertEquals(0, service.deployedElements.size());
+        List<String> resourceLinks = getDocumentLinksOfType(DeploymentState.class);
+        assertEquals(0, resourceLinks.size());
+
+        resourceLinks = getDocumentLinksOfType(ServiceState.class);
+        assertEquals(0, resourceLinks.size());
+
+        assertEquals(0, service.deployedElementsMap.size());
 
     }
 
     @Test
-    public void testVerifyBeforeDeleteShouldFail() throws Throwable {
-        ContainerState state = new ContainerState();
-        state.name = "testState";
-        state.ports = new ArrayList<>();
-        state.ports.add(new PortBinding());
-        state = doPost(state, ContainerFactoryService.SELF_LINK);
+    public void testDeleteApplicationShouldFail() throws Throwable {
+        String wordpressTemplate = CommonTestStateFactory.getFileContent
+                ("WordPress_with_MySQL_kubernetes.yaml");
 
-        CompositeComponent compositeComponent = new CompositeComponent();
-        compositeComponent.name = "testCompositeComponent";
-        compositeComponent.componentLinks = new ArrayList<>();
-        compositeComponent.componentLinks.add(state.documentSelfLink);
-        compositeComponent.componentLinks.add(state.documentSelfLink);
-        compositeComponent = doPost(compositeComponent, CompositeComponentFactoryService.SELF_LINK);
+        String compositeDescriptionLink = importTemplate(wordpressTemplate);
 
-        Deployment deployment1 = new Deployment();
-        deployment1.kind = KubernetesUtil.DEPLOYMENT;
-        deployment1.metadata = new ObjectMeta();
-        deployment1.metadata.name = state.name;
+        CompositeDescription compositeDescription = getCompositeDescription(
+                compositeDescriptionLink);
 
-        Service service1 = new Service();
-        service1.metadata = new ObjectMeta();
-        service1.kind = KubernetesUtil.SERVICE;
-        service1.metadata.name = state.name;
-
-        service.deployedElements.add(deployment1);
-        service.deployedElements.add(service1);
-        // Add the service twice to intentionally make deletion fail.
-        // serviceToDelete != servicesOnHost
-        service.deployedElements.add(service1);
+        CompositeComponent compositeComponent = createCompositeComponent(compositeDescription);
 
         createProvisioningTask();
 
-        ApplicationRequest appRequest = new ApplicationRequest();
-        appRequest.hostReference = UriUtils.buildUri(host, kubernetesHostState.documentSelfLink);
-        appRequest.resourceReference = UriUtils.buildUri(host, compositeComponent.documentSelfLink);
-        appRequest.serviceTaskCallback = ServiceTaskCallback.create(provisioningTaskLink);
-        appRequest.operationTypeId = KubernetesOperationType.DELETE.id;
+        ApplicationRequest appRequest = createApplicationRequest(
+                compositeComponent.documentSelfLink);
 
         doOperation(ManagementUriParts.ADAPTER_KUBERNETES_APPLICATION, appRequest);
 
+        // wait for provisioning task stage to change to finish
+        waitForPropertyValue(provisioningTaskLink, MockTaskState.class, "taskInfo.stage",
+                TaskState.TaskStage.FINISHED);
+
+        service.failIntentionally = true;
+
+        createProvisioningTask();
+        appRequest = createApplicationRequest(compositeComponent.documentSelfLink);
+        appRequest.operationTypeId = KubernetesOperationType.DELETE.id;
+
+        doOperation(ManagementUriParts.ADAPTER_KUBERNETES_APPLICATION, appRequest);
         waitForPropertyValue(provisioningTaskLink, MockTaskState.class, "taskInfo.stage",
                 TaskStage.FAILED);
 
-        assertEquals(3, service.deployedElements.size());
+        // Assert nothing is deleted after task failed.
+        List<String> resourceLinks = getDocumentLinksOfType(DeploymentState.class);
+        assertEquals(2, resourceLinks.size());
+
+        resourceLinks = getDocumentLinksOfType(ServiceState.class);
+        assertEquals(2, resourceLinks.size());
+
+        assertEquals(4, service.deployedElementsMap.size());
+
     }
 
     private ApplicationRequest createApplicationRequest(String resourceReference) {
@@ -275,28 +257,6 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
         appRequest.serviceTaskCallback = ServiceTaskCallback.create(provisioningTaskLink);
         appRequest.operationTypeId = KubernetesOperationType.CREATE.id;
         return appRequest;
-    }
-
-    private CompositeDescription createCompositeDescription(
-            ContainerDescription containerDescription) throws Throwable {
-        // Create CompositeDescription
-        CompositeDescription compositeDescription = new CompositeDescription();
-        compositeDescription.name = "application";
-        compositeDescription.descriptionLinks = new ArrayList<>();
-        compositeDescription.descriptionLinks.add(containerDescription.documentSelfLink);
-        compositeDescription = doPost(compositeDescription,
-                CompositeDescriptionFactoryService.SELF_LINK);
-        return compositeDescription;
-    }
-
-    private ContainerDescription createContainerDescription() throws Throwable {
-        // Create ContainerDescription
-        ContainerDescription containerDescription = new ContainerDescription();
-        containerDescription.name = "new-deployment";
-        containerDescription.image = "test";
-        containerDescription = doPost(containerDescription,
-                ContainerDescriptionService.FACTORY_LINK);
-        return containerDescription;
     }
 
     private CompositeComponent createCompositeComponent(CompositeDescription compositeDescription)
@@ -343,6 +303,12 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
 
         host.testStart(1);
         host.send(startContainer);
+        host.testWait();
+    }
+
+    private void doOperation(Operation op) {
+        host.testStart(1);
+        host.send(op);
         host.testWait();
     }
 
@@ -413,33 +379,23 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
 
         private List<Object> deployedElements;
 
+        private Map<String, Object> deployedElementsMap;
+
+        private boolean failIntentionally;
+
         public MockKubernetesHost() {
             super(ServiceDocument.class);
-            deployedElements = Collections.synchronizedList(new ArrayList<Object>());
-        }
-
-        @Override
-        public void handleGet(Operation get) {
-            String uri = get.getUri().toString();
-            if (uri.contains("/services")) {
-                KubernetesEntityList services = getServiceList();
-                get.setBody(services);
-                get.complete();
-            } else if (uri.contains("/deployments")) {
-                get.setBody(getDeploymentList());
-                get.complete();
-            } else {
-                get.fail(404);
-            }
+            deployedElements = Collections.synchronizedList(new ArrayList<>());
+            deployedElementsMap = new ConcurrentHashMap<>();
         }
 
         @Override
         public void handlePost(Operation post) {
             String uri = post.getUri().toString();
             if (uri.endsWith("/services")) {
-                callbackRandomly(post, post.getBody(Service.class), "Status: success");
+                callbackRandomly(post, post.getBody(Service.class));
             } else if (uri.endsWith("/deployments")) {
-                callbackRandomly(post, post.getBody(Deployment.class), "Status: success");
+                callbackRandomly(post, post.getBody(Deployment.class));
             } else {
                 post.fail(new IllegalArgumentException("Unknown uri " + uri));
             }
@@ -450,69 +406,38 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
             String uri = delete.getUri().toString();
             String[] splittedUri = uri.split("/");
             String componentName = splittedUri[splittedUri.length - 1];
-            int index = -1;
-            if (uri.contains("/services")) {
-                index = getComponentIndex(componentName, KubernetesUtil.SERVICE);
-            } else if (uri.contains("/deployment")) {
-                index = getComponentIndex(componentName, KubernetesUtil.DEPLOYMENT);
-            }
 
-            if (index == -1) {
+            if (failIntentionally) {
                 delete.fail(404);
+            } else {
+                deployedElementsMap.remove(componentName);
+                delete.complete();
             }
-            deployedElements.remove(index);
-            delete.complete();
         }
 
-        private void callbackRandomly(Operation post, Object element, Object result) {
-            post.setBody(result);
+        private void callbackRandomly(Operation post, Object element) {
+            String responseBody;
+            try {
+                responseBody = YamlMapper.fromYamlToJson(post.getBody(String.class));
+            } catch (IOException e) {
+                post.fail(e);
+                return;
+            }
             if (Math.random() > 0.5) {
                 deployedElements.add(element);
+                deployedElementsMap.put(post.getBody(BaseKubernetesObject.class).metadata.name,
+                        element);
+                post.setBody(responseBody);
                 post.complete();
             } else {
                 getHost().schedule(() -> {
                     deployedElements.add(element);
+                    deployedElementsMap.put(post.getBody(BaseKubernetesObject.class).metadata.name,
+                            element);
+                    post.setBody(responseBody);
                     post.complete();
                 }, 20, TimeUnit.MILLISECONDS);
             }
-        }
-
-        private KubernetesEntityList<Deployment> getDeploymentList() {
-            KubernetesEntityList<Deployment> deployments = new KubernetesEntityList<>();
-            List<String> serializedDeployments = new ArrayList<>();
-            deployedElements.forEach(e -> {
-                CommonKubernetesEntity entity = (CommonKubernetesEntity) e;
-                if (entity.kind.equals(KubernetesUtil.DEPLOYMENT)) {
-                    serializedDeployments.add(Utils.toJson(e));
-                }
-            });
-            deployments.items = serializedDeployments;
-            return deployments;
-        }
-
-        private KubernetesEntityList<Service> getServiceList() {
-            KubernetesEntityList<Service> services = new KubernetesEntityList<>();
-            List<String> serializedServices = new ArrayList<>();
-            deployedElements.forEach(e -> {
-                CommonKubernetesEntity entity = (CommonKubernetesEntity) e;
-                if (entity.kind.equals(KubernetesUtil.SERVICE)) {
-                    serializedServices.add(Utils.toJson(e));
-                }
-            });
-            services.items = serializedServices;
-            return services;
-        }
-
-        private int getComponentIndex(String name, String kind) {
-            int index = -1;
-            for (int i = 0; i < deployedElements.size(); i++) {
-                CommonKubernetesEntity entity = (CommonKubernetesEntity) deployedElements.get(i);
-                if (entity.metadata.name.equals(name) && entity.kind.equals(kind)) {
-                    index = i;
-                    return index;
-                }
-            }
-            return index;
         }
     }
 }

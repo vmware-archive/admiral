@@ -14,13 +14,12 @@ package com.vmware.admiral.compute.kubernetes.service;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.kubernetes.entities.services.Service;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.ServiceState;
-import com.vmware.photon.controller.model.resources.ResourceState;
 
 public class ServiceEntityHandler extends AbstractKubernetesObjectService<ServiceState> {
 
     public static final String FACTORY_LINK = ManagementUriParts.KUBERNETES_SERVICES;
 
-    public static class ServiceState extends ResourceState {
+    public static class ServiceState extends BaseKubernetesState {
 
         /**
          * Service is a named abstraction of software service (for example, mysql) consisting of
@@ -33,24 +32,10 @@ public class ServiceEntityHandler extends AbstractKubernetesObjectService<Servic
                         + "and the selector that determines which pods will answer requests sent through the proxy.")
         public Service service;
 
-        /**
-         * Defines the description of the entity
-         */
-        @Documentation(description = "Defines the description of the container.")
-        public String descriptionLink;
-
-        /**
-         * Link to CompositeComponent when a entity is part of App/Composition request.
-         */
-        @Documentation(
-                description = "Link to CompositeComponent when a entity is part of App/Composition request.")
-        public String compositeComponentLink;
-
-        /**
-         * Entity host link
-         */
-        @Documentation(description = "Entity host link")
-        public String parentLink;
+        @Override
+        public String getKubernetesSelfLink() {
+            return this.service.metadata.selfLink;
+        }
     }
 
     public ServiceEntityHandler() {

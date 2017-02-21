@@ -11,10 +11,12 @@
 
 package com.vmware.admiral.compute.kubernetes.entities.deployments;
 
+import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
+
 /**
  * Deployment enables declarative updates for Pods and ReplicaSets.
  */
-public class Deployment {
+public class Deployment extends BaseKubernetesObject {
 
     /**
      * Specification of the desired behavior of the Deployment.

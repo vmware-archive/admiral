@@ -52,7 +52,6 @@ import com.vmware.admiral.compute.content.kubernetes.nodes.Node;
 import com.vmware.admiral.compute.content.kubernetes.nodes.NodeList;
 import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
-import com.vmware.admiral.compute.kubernetes.service.KubernetesService.KubernetesState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
 import com.vmware.xenon.common.Service;
@@ -385,9 +384,9 @@ public class KubernetesRemoteApiClient {
                 completionHandler);
     }
 
-    public void deleteEntity(KubernetesState state, KubernetesContext context, CompletionHandler
+    public void deleteEntity(String kubernetesSelfLink, KubernetesContext context, CompletionHandler
             completionHandler) {
-        URI uri = ApiUtil.buildKubernetesUri(state, context);
+        URI uri = ApiUtil.buildKubernetesUri(kubernetesSelfLink, context);
 
         sendRequest(Action.DELETE, uri, null, context, completionHandler);
     }

@@ -42,11 +42,11 @@ public class KubernetesUtil {
     private static final ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory().enable(
             YAMLGenerator.Feature.MINIMIZE_QUOTES));
 
-    public static final String POD = "Pod";
+    public static final String POD_TYPE = "Pod";
     public static final String POD_TEMPLATE = "PodTemplate";
-    public static final String REPLICATION_CONTROLLER = "ReplicationController";
-    public static final String DEPLOYMENT = "Deployment";
-    public static final String SERVICE = "Service";
+    public static final String REPLICATION_CONTROLLER_TYPE = "ReplicationController";
+    public static final String DEPLOYMENT_TYPE = "Deployment";
+    public static final String SERVICE_TYPE = "Service";
 
     public static final String KUBERNETES_API_VERSION_V1 = "v1";
     public static final String KUBERNETES_API_VERSION_V1_BETA1 = "extensions/v1beta1";
@@ -60,15 +60,15 @@ public class KubernetesUtil {
         CommonKubernetesEntity entity;
         try {
             entity = YamlMapper.objectMapper().readValue(yaml.trim(), CommonKubernetesEntity.class);
-            if (POD.equals(entity.kind)) {
+            if (POD_TYPE.equals(entity.kind)) {
                 entity = YamlMapper.objectMapper().readValue(yaml.trim(), Pod.class);
             } else if (POD_TEMPLATE.equals(entity.kind)) {
                 throw new IllegalArgumentException("Not implemented.");
-            } else if (REPLICATION_CONTROLLER.equals(entity.kind)) {
+            } else if (REPLICATION_CONTROLLER_TYPE.equals(entity.kind)) {
                 throw new IllegalArgumentException("Not implemented.");
-            } else if (DEPLOYMENT.equals(entity.kind)) {
+            } else if (DEPLOYMENT_TYPE.equals(entity.kind)) {
                 entity = YamlMapper.objectMapper().readValue(yaml.trim(), Deployment.class);
-            } else if (SERVICE.equals(entity.kind)) {
+            } else if (SERVICE_TYPE.equals(entity.kind)) {
                 entity = YamlMapper.objectMapper().readValue(yaml.trim(), Service.class);
             } else {
                 throw new IllegalArgumentException("Invalid kubernetes kind.");

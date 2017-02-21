@@ -14,13 +14,12 @@ package com.vmware.admiral.compute.kubernetes.service;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.kubernetes.entities.deployments.Deployment;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
-import com.vmware.photon.controller.model.resources.ResourceState;
 
 public class DeploymentService extends AbstractKubernetesObjectService<DeploymentState> {
 
     public static final String FACTORY_LINK = ManagementUriParts.KUBERNETES_DEPLOYMENTS;
 
-    public static class DeploymentState extends ResourceState {
+    public static class DeploymentState extends BaseKubernetesState {
 
         /**
          * Deployment enables declarative updates for Pods and ReplicaSets.
@@ -29,24 +28,10 @@ public class DeploymentService extends AbstractKubernetesObjectService<Deploymen
                 description = "Deployment enables declarative updates for Pods and ReplicaSets.")
         public Deployment deployment;
 
-        /**
-         * Defines the description of the entity
-         */
-        @Documentation(description = "Defines the description of the container.")
-        public String descriptionLink;
-
-        /**
-         * Link to CompositeComponent when a entity is part of App/Composition request.
-         */
-        @Documentation(
-                description = "Link to CompositeComponent when a entity is part of App/Composition request.")
-        public String compositeComponentLink;
-
-        /**
-         * Entity host link
-         */
-        @Documentation(description = "Entity host link")
-        public String parentLink;
+        @Override
+        public String getKubernetesSelfLink() {
+            return this.deployment.metadata.selfLink;
+        }
     }
 
     public DeploymentService() {

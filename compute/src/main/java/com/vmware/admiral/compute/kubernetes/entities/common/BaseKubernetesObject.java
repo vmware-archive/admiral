@@ -11,14 +11,14 @@
 
 package com.vmware.admiral.compute.kubernetes.entities.common;
 
-import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
-import com.vmware.photon.controller.model.resources.ResourceState;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * Base object which other states will extend.
  * Contains the common properties for all kubernetes objects
  */
-public class BaseKubernetesObject extends ResourceState {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class BaseKubernetesObject {
 
     /**
      * The api version of the object.

@@ -20,11 +20,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.vmware.admiral.adapter.kubernetes.service.AbstractKubernetesAdapterService.KubernetesContext;
-import com.vmware.admiral.compute.content.kubernetes.CommonKubernetesEntity;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
+import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
-import com.vmware.admiral.compute.kubernetes.service.KubernetesService.KubernetesState;
 import com.vmware.xenon.common.UriUtils;
 
 public class ApiUtil {
@@ -35,10 +34,10 @@ public class ApiUtil {
     private static Map<String, String> entityTypeToPath = new HashMap<>();
 
     static {
-        entityTypeToPath.put(KubernetesUtil.DEPLOYMENT, "/deployments/");
-        entityTypeToPath.put(KubernetesUtil.SERVICE, "/services/");
-        entityTypeToPath.put(KubernetesUtil.POD, "/pods/");
-        entityTypeToPath.put(KubernetesUtil.SERVICE, "/replicationcontrollers/");
+        entityTypeToPath.put(KubernetesUtil.DEPLOYMENT_TYPE, "/deployments");
+        entityTypeToPath.put(KubernetesUtil.SERVICE_TYPE, "/services");
+        entityTypeToPath.put(KubernetesUtil.POD_TYPE, "/pods");
+        entityTypeToPath.put(KubernetesUtil.REPLICATION_CONTROLLER_TYPE, "/replicationcontrollers");
     }
 
     static String apiPrefix(KubernetesContext context, String apiVersion) {
@@ -72,25 +71,25 @@ public class ApiUtil {
                             description.type));
         }
 
-        CommonKubernetesEntity entity = description.getKubernetesEntity(CommonKubernetesEntity
+        BaseKubernetesObject entity = description.getKubernetesEntity(BaseKubernetesObject
                 .class);
 
         String uriString = context.host.address;
 
-        if (KubernetesUtil.DEPLOYMENT.equals(description.type)) {
+        if (KubernetesUtil.DEPLOYMENT_TYPE.equals(description.type)) {
             uriString = uriString + API_PREFIX_EXTENSIONS_V1BETA;
         } else {
             uriString = uriString + API_PREFIX_V1;
         }
 
         uriString = uriString + NAMESPACES + entity.metadata.namespace +
-                entityTypeToPath.get(description.type) + description.name;
+                entityTypeToPath.get(description.type);
 
         return UriUtils.buildUri(uriString);
 
     }
 
-    public static URI buildKubernetesUri(KubernetesState state, KubernetesContext context) {
-        return UriUtils.buildUri(context.host.address + state.selfLink);
+    public static URI buildKubernetesUri(String kubernetesSelfLink, KubernetesContext context) {
+        return UriUtils.buildUri(context.host.address + kubernetesSelfLink);
     }
 }

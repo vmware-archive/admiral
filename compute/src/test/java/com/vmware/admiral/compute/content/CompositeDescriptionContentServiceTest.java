@@ -293,8 +293,8 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
                 ResourceState cd = o.getBody(ResourceState.class);
                 assertTrue("unexpected name",
                         Arrays.asList("wordpress", "mysql", "public-wpnet", "wpnet",
-                                "wordpress-mysql")
-                                .contains(cd.name));
+                                "wordpress-mysql-svc", "wordpress-mysql-dpl", "wordpress-svc",
+                                "wordpress-dpl").contains(cd.name));
             });
         }
     }
