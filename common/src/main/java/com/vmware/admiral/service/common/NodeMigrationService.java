@@ -78,7 +78,6 @@ public class NodeMigrationService extends StatelessService {
         // TODO Check why the migration fails for those services
         services.remove("/resources/host-container-list-data-collection");
         services.remove("/resources/hosts-data-collections");
-        services.remove("/request-status");
         services.remove("/resources/group-placements");
 
         patch.complete();

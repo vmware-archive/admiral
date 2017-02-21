@@ -603,7 +603,7 @@ public class CompositeTemplateUtil {
         assertNotNull(description, "description");
 
         ComponentTemplate<ContainerNetworkDescription> template = new ComponentTemplate<>();
-        template.type = ResourceType.CONTAINER_NETWORK_TYPE.getContentType();
+        template.type = ResourceType.NETWORK_TYPE.getContentType();
         template.data = description;
         transformDriversToComponentTemplate(description);
         template.data.id = null;
@@ -615,7 +615,7 @@ public class CompositeTemplateUtil {
         assertNotNull(description, "description");
 
         ComponentTemplate<ContainerVolumeDescription> template = new ComponentTemplate<>();
-        template.type = ResourceType.CONTAINER_VOLUME_TYPE.getContentType();
+        template.type = ResourceType.VOLUME_TYPE.getContentType();
         template.data = description;
         template.data.id = null;
         return template;

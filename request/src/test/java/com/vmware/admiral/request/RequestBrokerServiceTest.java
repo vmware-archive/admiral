@@ -557,7 +557,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // 1. Request a network with expected failure:
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
-                ResourceType.CONTAINER_NETWORK_TYPE.getName(),
+                ResourceType.NETWORK_TYPE.getName(),
                 containerNetworkDesc.documentSelfLink);
         request.tenantLinks = groupPlacementState.tenantLinks;
         request.customProperties.put(
@@ -708,7 +708,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // 1. Request a network with expected failure:
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
-                ResourceType.CONTAINER_NETWORK_TYPE.getName(), networkDesc.documentSelfLink);
+                ResourceType.NETWORK_TYPE.getName(), networkDesc.documentSelfLink);
         host.log("########  Start of request ######## ");
         request = startRequest(request);
 
@@ -1580,7 +1580,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // 1. Request a volume in the given host with expected failure:
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
-                ResourceType.CONTAINER_VOLUME_TYPE.getName(), volumeDesc.documentSelfLink);
+                ResourceType.VOLUME_TYPE.getName(), volumeDesc.documentSelfLink);
         request.customProperties.put(
                 ReservationAllocationTaskService.CONTAINER_HOST_ID_CUSTOM_PROPERTY, computeHost.id);
 

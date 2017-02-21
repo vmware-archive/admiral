@@ -163,7 +163,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ContainerDescriptionService.FACTORY_LINK,
                 ContainerDescription.class, ContainerFactoryService.SELF_LINK,
                 ContainerState.class);
-        CompositeComponentRegistry.registerComponent(ResourceType.CONTAINER_NETWORK_TYPE.getName(),
+        CompositeComponentRegistry.registerComponent(ResourceType.NETWORK_TYPE.getName(),
                 ContainerNetworkDescriptionService.FACTORY_LINK, ContainerNetworkDescription.class,
                 ContainerNetworkService.FACTORY_LINK, ContainerNetworkState.class);
         CompositeComponentRegistry.registerComponent(ResourceType.COMPUTE_TYPE.getName(),
@@ -173,7 +173,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ComputeState.class,
                 com.vmware.admiral.compute.content.TemplateComputeState.class);
 
-        CompositeComponentRegistry.registerComponent(ResourceType.CONTAINER_VOLUME_TYPE.getName(),
+        CompositeComponentRegistry.registerComponent(ResourceType.VOLUME_TYPE.getName(),
                 ContainerVolumeDescriptionService.FACTORY_LINK, ContainerVolumeDescription.class,
                 ContainerVolumeService.FACTORY_LINK, ContainerVolumeState.class);
 
