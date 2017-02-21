@@ -64,31 +64,31 @@ export default Vue.component('azure-endpoint-editor', {
     };
   },
   attached() {
-    this.dispatchChange();
+    this.emitChange();
   },
   methods: {
     onPrivateKeyIdChange(privateKeyId) {
       this.privateKeyId = privateKeyId;
-      this.dispatchChange();
+      this.emitChange();
     },
     onPrivateKeyChange(privateKey) {
       this.privateKey = privateKey;
-      this.dispatchChange();
+      this.emitChange();
     },
     onUserLinkChange(userLink) {
       this.userLink = userLink;
-      this.dispatchChange();
+      this.emitChange();
     },
     onAzureTenantIdChange(azureTenantId) {
       this.azureTenantId = azureTenantId;
-      this.dispatchChange();
+      this.emitChange();
     },
     onRegionIdChange(regionId) {
       this.regionId = regionId;
-      this.dispatchChange();
+      this.emitChange();
     },
-    dispatchChange() {
-      this.$dispatch('change', {
+    emitChange() {
+      this.$emit('change', {
         properties: {
           privateKeyId: this.privateKeyId,
           privateKey: this.privateKey,
@@ -98,7 +98,7 @@ export default Vue.component('azure-endpoint-editor', {
         },
         valid: this.privateKeyId && this.privateKey && this.userLink &&
           this.azureTenantId && this.regionId
-      }, this);
+      });
     }
   }
 });

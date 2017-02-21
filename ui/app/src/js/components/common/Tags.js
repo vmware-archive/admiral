@@ -11,14 +11,22 @@
 
 import services from 'core/services';
 
+function encode(value) {
+  return encodeURIComponent(value);
+}
+
+function decode(value) {
+  return decodeURIComponent(value);
+}
+
 function getValue(tag) {
   if (tag.value && tag.value.indexOf(':') === -1) {
-      return tag.key + ':' + tag.value;
+    return encode(tag.key) + ':' + encode(tag.value);
   }
   if (tag.value) {
-    return tag.value;
+    return encode(tag.value);
   }
-  return tag.key;
+  return encode(tag.key);
 }
 
 function Tags(el) {
@@ -45,7 +53,7 @@ function Tags(el) {
             suggestions.sort((a, b) => a.value === b.value ? 0 : +(a.value > b.value) || -1);
             if (values.length) {
               if (q.indexOf(':') === -1) {
-                suggestions = [{ value: values[0].key + ':'}, ...suggestions];
+                suggestions = [{ value: encode(values[0].key) + ':'}, ...suggestions];
               }
               if (!values.find((tag) => tag.key === q)) {
                 suggestions = [{ value: q + (q.indexOf(':') === -1 ? ':' : '')}, ...suggestions];
@@ -57,11 +65,11 @@ function Tags(el) {
           });
         },
         display: (tag) => {
-          return tag.value;
+          return decode(tag.value);
         },
         templates: {
           suggestion: (tag) => {
-            return '<div>' + tag.value + '</div>';
+            return '<div>' + decode(tag.value) + '</div>';
           }
         }
       }]
@@ -75,8 +83,8 @@ Tags.prototype.getValue = function() {
   return this.$el.tokenfield('getTokens').reduce((prev, curr) => {
     let pair = curr.value.split(':');
     let item = {
-      key: pair[0],
-      value: pair[1] || ''
+      key: decode(pair[0]),
+      value: decode(pair[1] || '')
     };
     if (prev.find((tag) => tag.key === item.key && tag.value === item.value)) {
       return prev;
@@ -87,6 +95,9 @@ Tags.prototype.getValue = function() {
 
 Tags.prototype.setValue = function(value) {
   value = value || [];
+  if (JSON.stringify(value) === JSON.stringify(this.getValue())) {
+    return;
+  }
   let tokens = [];
   value.forEach((tag) => {
     tokens.push({

@@ -48,30 +48,30 @@ export default Vue.component('aws-endpoint-editor', {
     };
   },
   attached() {
-    this.dispatchChange();
+    this.emitChange();
   },
   methods: {
     onPrivateKeyIdChange(privateKeyId) {
       this.privateKeyId = privateKeyId;
-      this.dispatchChange();
+      this.emitChange();
     },
     onPrivateKeyChange(privateKey) {
       this.privateKey = privateKey;
-      this.dispatchChange();
+      this.emitChange();
     },
     onRegionIdChange(regionId) {
       this.regionId = regionId;
-      this.dispatchChange();
+      this.emitChange();
     },
-    dispatchChange() {
-      this.$dispatch('change', {
+    emitChange() {
+      this.$emit('change', {
         properties: {
           privateKeyId: this.privateKeyId,
           privateKey: this.privateKey,
           regionId: this.regionId
         },
         valid: this.privateKeyId && this.privateKey && this.regionId
-      }, this);
+      });
     }
   }
 });
