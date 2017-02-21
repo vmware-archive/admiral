@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -12,7 +12,7 @@
 import utils from 'core/utils';
 
 var VueDeleteItemConfirmation = Vue.extend({
-  template: `<div class="delete-inline-item-confirmation-holder">
+  template: `<div class="delete-inline-item-confirmation-holder hide">
               <div class="delete-inline-item-confirmation">
                 <a href="#" class="delete-inline-item-confirmation-cancel"
                             v-on:click="cancelDelete($event)"><span>{{i18n('cancel')}}</span></a>
@@ -46,7 +46,7 @@ var VueDeleteItemConfirmation = Vue.extend({
             this.hideConfirmation();
           }
         }
-      });
+      }, {immediate: true});
   },
 
   detached: function() {
