@@ -1302,6 +1302,32 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertEquals(cc.documentSelfLink, cont2.compositeComponentLink);
         assertTrue(volume.compositeComponentLinks.size() == 1
                 && volume.compositeComponentLinks.contains(cc.documentSelfLink));
+
+        RequestBrokerState day2OperationClustering = TestRequestStateFactory.createRequestState();
+        day2OperationClustering.resourceDescriptionLink = cont2.descriptionLink;
+        day2OperationClustering.tenantLinks = groupPlacementState.tenantLinks;
+        day2OperationClustering.operation = RequestBrokerState.CLUSTER_RESOURCE_OPERATION;
+        day2OperationClustering.resourceCount = 2;
+        day2OperationClustering.documentDescription = container2Desc.documentDescription;
+        day2OperationClustering.customProperties = cont1.customProperties;
+        day2OperationClustering.addCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY,
+                Service.getId(cc.documentSelfLink));
+
+        host.log("########  Start of request ######## ");
+        request = startRequest(day2OperationClustering);
+
+        // wait for request completed state:
+        request = waitForRequestToComplete(request);
+
+        // Verify request status
+        rs = getDocument(RequestStatus.class, request.requestTrackerLink);
+        assertNotNull(rs);
+
+        assertEquals(Integer.valueOf(100), rs.progress);
+        assertEquals(1, request.resourceLinks.size());
+
+        cc = getDocument(CompositeComponent.class, cc.documentSelfLink);
+        assertEquals(4 /* 3 containers + 1 volume */, cc.componentLinks.size());
     }
 
     @Test
