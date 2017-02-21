@@ -32,8 +32,7 @@
                    v-bind:label="i18n('app.container.actions.remove')"
                    v-on:click="askConfirmation($event)"></action-button>
   </div>
-  <delete-confirmation v-if="!model.alert" v-bind:class="{'hide': !showDeleteConfirmation}"
-                       v-bind:show="showDeleteConfirmation"
+  <delete-confirmation v-if="!model.alert" v-bind:show="showDeleteConfirmation"
                        v-on:confirm-delete="removeKubernetesDescription($event)"
                        v-on:cancel-delete="cancelRemoval($event)"></delete-confirmation>
   <div style="clear: both;display: none;"></div>
