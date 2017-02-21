@@ -95,7 +95,7 @@ public class ComponentDescriptionDeserializationTest extends ComputeBaseTest {
         network.ipam = new Ipam();
         network.ipam.driver = "customIpam";
 
-        cd.type = ResourceType.CONTAINER_NETWORK_TYPE.getName();
+        cd.type = ResourceType.NETWORK_TYPE.getName();
         cd.updateServiceDocument(network);
 
         ComponentDescription serializedCd = Utils.fromJson(Utils.toJson(cd),

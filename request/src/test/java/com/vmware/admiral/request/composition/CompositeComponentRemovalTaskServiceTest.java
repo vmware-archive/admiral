@@ -137,10 +137,10 @@ public class CompositeComponentRemovalTaskServiceTest extends RequestBaseTest {
                     .endsWith(ResourceType.CONTAINER_TYPE.getName())) {
                 containerSubTaskState = compositionSubTaskState;
             } else if (compositionSubTaskState.documentSelfLink
-                    .endsWith(ResourceType.CONTAINER_NETWORK_TYPE.getName())) {
+                    .endsWith(ResourceType.NETWORK_TYPE.getName())) {
                 networkSubTaskState = compositionSubTaskState;
             } else if (compositionSubTaskState.documentSelfLink
-                    .endsWith(ResourceType.CONTAINER_VOLUME_TYPE.getName())) {
+                    .endsWith(ResourceType.VOLUME_TYPE.getName())) {
                 volumeSubTaskState = compositionSubTaskState;
             } else {
                 fail("Unexpected compositionSubTaskState: "

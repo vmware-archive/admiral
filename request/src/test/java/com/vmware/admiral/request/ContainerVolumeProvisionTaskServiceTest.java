@@ -263,7 +263,7 @@ public class ContainerVolumeProvisionTaskServiceTest extends RequestBaseTest {
         addForDeletion(dockerHost2);
 
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
-                ResourceType.CONTAINER_VOLUME_TYPE.getName(), volumeDesc.documentSelfLink);
+                ResourceType.VOLUME_TYPE.getName(), volumeDesc.documentSelfLink);
 
         String hostIds = dockerHost1.id + "," + dockerHost2.id;
         request.customProperties = new HashMap<>();

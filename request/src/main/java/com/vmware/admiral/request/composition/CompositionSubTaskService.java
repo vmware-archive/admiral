@@ -396,10 +396,10 @@ public class CompositionSubTaskService
     private void executeProvisionTask(CompositionSubTaskState state) {
         if (ResourceType.CONTAINER_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
             createContainerAllocationTaskState(state);
-        } else if (ResourceType.CONTAINER_NETWORK_TYPE.getName()
+        } else if (ResourceType.NETWORK_TYPE.getName()
                 .equalsIgnoreCase(state.resourceType)) {
             createContainerNetworkProvisionTaskState(state);
-        } else if (ResourceType.CONTAINER_VOLUME_TYPE.getName()
+        } else if (ResourceType.VOLUME_TYPE.getName()
                 .equalsIgnoreCase(state.resourceType)) {
             createContainerVolumeProvisionTaskState(state);
         } else if (ResourceType.COMPUTE_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
@@ -412,12 +412,12 @@ public class CompositionSubTaskService
         } else {
             String exMsg = String.format("Unsupported type. Must be: %s, %s, %s, %s or %s",
                     ResourceType.CONTAINER_TYPE, ResourceType.COMPUTE_TYPE,
-                    ResourceType.CONTAINER_NETWORK_TYPE, ResourceType.COMPUTE_NETWORK_TYPE,
+                    ResourceType.NETWORK_TYPE, ResourceType.COMPUTE_NETWORK_TYPE,
                     ResourceType.CLOSURE_TYPE);
             throw new LocalizableValidationException(exMsg,
                     "request.composition.unsupported.type",
                     ResourceType.CONTAINER_TYPE, ResourceType.COMPUTE_TYPE,
-                    ResourceType.CONTAINER_NETWORK_TYPE,
+                    ResourceType.NETWORK_TYPE,
                     ResourceType.COMPUTE_NETWORK_TYPE, ResourceType.CLOSURE_TYPE);
         }
     }
@@ -588,7 +588,7 @@ public class CompositionSubTaskService
         requestBrokerState.customProperties = state.customProperties;
 
         if (RequestBrokerState.REMOVE_RESOURCE_OPERATION.equals(requestBrokerState.operation)
-                && ResourceType.CONTAINER_NETWORK_TYPE.getName()
+                && ResourceType.NETWORK_TYPE.getName()
                         .equals(requestBrokerState.resourceType)) {
             if (requestBrokerState.customProperties == null) {
                 requestBrokerState.customProperties = new HashMap<>();
@@ -599,7 +599,7 @@ public class CompositionSubTaskService
         }
 
         if (RequestBrokerState.REMOVE_RESOURCE_OPERATION.equals(requestBrokerState.operation)
-                && ResourceType.CONTAINER_VOLUME_TYPE.getName()
+                && ResourceType.VOLUME_TYPE.getName()
                         .equals(requestBrokerState.resourceType)) {
             if (requestBrokerState.customProperties == null) {
                 requestBrokerState.customProperties = new HashMap<>();

@@ -1584,11 +1584,11 @@ public class RequestBrokerService extends
     }
 
     private boolean isContainerNetworkType(RequestBrokerState state) {
-        return ResourceType.CONTAINER_NETWORK_TYPE.getName().equals(state.resourceType);
+        return ResourceType.NETWORK_TYPE.getName().equals(state.resourceType);
     }
 
     private boolean isContainerVolumeType(RequestBrokerState state) {
-        return ResourceType.CONTAINER_VOLUME_TYPE.getName().equals(state.resourceType);
+        return ResourceType.VOLUME_TYPE.getName().equals(state.resourceType);
     }
 
     private boolean isCompositeComponentType(RequestBrokerState state) {
@@ -1637,10 +1637,10 @@ public class RequestBrokerService extends
                 new ArrayList<>(
                         Arrays.asList(ComputeNetworkProvisionTaskService.DISPLAY_NAME)));
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE
-                .put(ResourceType.CONTAINER_NETWORK_TYPE, new ArrayList<>(
+                .put(ResourceType.NETWORK_TYPE, new ArrayList<>(
                         Arrays.asList(ContainerNetworkProvisionTaskService.DISPLAY_NAME)));
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE
-                .put(ResourceType.CONTAINER_VOLUME_TYPE, new ArrayList<>(
+                .put(ResourceType.VOLUME_TYPE, new ArrayList<>(
                         Arrays.asList(ContainerVolumeProvisionTaskService.DISPLAY_NAME)));
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CLOSURE_TYPE, new ArrayList<>(
                 Arrays.asList(ClosureProvisionTaskService.DISPLAY_NAME)));
@@ -1667,11 +1667,11 @@ public class RequestBrokerService extends
                         Arrays.asList(ComputeNetworkAllocationTaskService.DISPLAY_NAME,
                         ResourceNamePrefixTaskService.DISPLAY_NAME)));
         SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
-                .put(ResourceType.CONTAINER_NETWORK_TYPE, new ArrayList<>(
+                .put(ResourceType.NETWORK_TYPE, new ArrayList<>(
                         Arrays.asList(ContainerNetworkAllocationTaskService.DISPLAY_NAME,
                                 ResourceNamePrefixTaskService.DISPLAY_NAME)));
         SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
-                .put(ResourceType.CONTAINER_VOLUME_TYPE, new ArrayList<>(
+                .put(ResourceType.VOLUME_TYPE, new ArrayList<>(
                         Arrays.asList(ContainerVolumeAllocationTaskService.DISPLAY_NAME,
                                 ResourceNamePrefixTaskService.DISPLAY_NAME)));
         SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CLOSURE_TYPE, new ArrayList<>(
@@ -1708,10 +1708,10 @@ public class RequestBrokerService extends
                         .get(ResourceType.COMPUTE_TYPE);
             } else if (isContainerNetworkType(state)) {
                 trackedTasks = SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
-                        .get(ResourceType.CONTAINER_NETWORK_TYPE);
+                        .get(ResourceType.NETWORK_TYPE);
             } else if (isContainerVolumeType(state)) {
                 trackedTasks = SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
-                        .get(ResourceType.CONTAINER_VOLUME_TYPE);
+                        .get(ResourceType.VOLUME_TYPE);
             } else if (isClosureType(state)) {
                 trackedTasks = SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
                         .get(ResourceType.CLOSURE_TYPE);
