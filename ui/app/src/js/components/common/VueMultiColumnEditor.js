@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-Vue.component('multicolumn-cell', {
+const MultiColumnCell = Vue.component('multicolumn-cell', {
   template: `
     <li>
       <slot></slot>
@@ -89,8 +89,13 @@ export default Vue.component('multicolumn-editor', {
   },
   methods: {
     render(start) {
-      let columns = this.$children.length / this.value.length;
-      this.$children.forEach((child, index) => {
+      let children = this.$children;
+      if (children.length === 0) {
+        children = this.$parent.$parent.$children.filter((child) =>
+            child instanceof MultiColumnCell);
+      }
+      let columns = children.length / this.value.length;
+      children.forEach((child, index) => {
         let row = Math.floor(index / columns);
         if (row >= start) {
           child.$children.forEach((comp) => {

@@ -9,13 +9,49 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
+import AwsComputeProfileEditor from 'components/environments/aws/ComputeProfileEditor'; //eslint-disable-line
+import AwsNetworkProfileEditor from 'components/environments/aws/NetworkProfileEditor'; //eslint-disable-line
+import AwsStorageProfileEditor from 'components/environments/aws/StorageProfileEditor'; //eslint-disable-line
+import AzureComputeProfileEditor from 'components/environments/azure/ComputeProfileEditor'; //eslint-disable-line
+import AzureNetworkProfileEditor from 'components/environments/azure/NetworkProfileEditor'; //eslint-disable-line
+import AzureStorageProfileEditor from 'components/environments/azure/StorageProfileEditor'; //eslint-disable-line
+import vSphereComputeProfileEditor from 'components/environments/vsphere/ComputeProfileEditor'; //eslint-disable-line
+import vSphereNetworkProfileEditor from 'components/environments/vsphere/NetworkProfileEditor'; //eslint-disable-line
+import vSphereStorageProfileEditor from 'components/environments/vsphere/StorageProfileEditor'; //eslint-disable-line
+
 import { EnvironmentsActions, NavigationActions } from 'actions/Actions';
-import VueDropdownSearch from 'components/common/VueDropdownSearch'; //eslint-disable-line
 import VueTags from 'components/common/VueTags'; //eslint-disable-line
 import EndpointsList from 'components/endpoints/EndpointsList'; //eslint-disable-line
 import SubnetworksList from 'components/subnetworks/SubnetworksList'; //eslint-disable-line
 import EnvironmentEditViewVue from 'components/environments/EnvironmentEditViewVue.html';
-import services from 'core/services';
+
+const OOTB_TYPES = [{
+  id: 'aws',
+  name: 'AWS',
+  iconSrc: 'image-assets/endpoints/aws.png'
+}, {
+  id: 'azure',
+  name: 'Azure',
+  iconSrc: 'image-assets/endpoints/azure.png'
+}, {
+  id: 'vsphere',
+  name: 'vSphere',
+  iconSrc: 'image-assets/endpoints/vsphere.png'
+}];
+
+const OOTB_EDITORS = [{
+  computeProfileEditor: 'aws-compute-profile-editor',
+  networkProfileEditor: 'aws-network-profile-editor',
+  storageProfileEditor: 'aws-storage-profile-editor'
+}, {
+  computeProfileEditor: 'azure-compute-profile-editor',
+  networkProfileEditor: 'azure-network-profile-editor',
+  storageProfileEditor: 'azure-storage-profile-editor'
+}, {
+  computeProfileEditor: 'vsphere-compute-profile-editor',
+  networkProfileEditor: 'vsphere-network-profile-editor',
+  storageProfileEditor: 'vsphere-storage-profile-editor'
+}];
 
 export default Vue.component('environment-edit-view', {
   template: EnvironmentEditViewVue,
@@ -29,58 +65,33 @@ export default Vue.component('environment-edit-view', {
     }
   },
   data() {
-    let endpointType = this.model.item.endpoint && this.model.item.endpoint.endpointType ||
-        this.model.item.endpointType;
-    let instanceTypeMapping = this.model.item.computeProfile &&
-        this.model.item.computeProfile.instanceTypeMapping &&
-        this.model.item.computeProfile.instanceTypeMapping.asMutable() || [];
-    let imageTypeMapping = this.model.item.computeProfile &&
-        this.model.item.computeProfile.imageMapping &&
-        this.model.item.computeProfile.imageMapping.asMutable() || [];
-    let subnetworks = this.model.item.subnetworks &&
-        this.model.item.subnetworks.asMutable() || [];
-    let bootDiskPropertyMapping = this.model.item.storageProfile &&
-        this.model.item.storageProfile.bootDiskPropertyMapping &&
-        this.model.item.storageProfile.bootDiskPropertyMapping.asMutable() || [];
+    let endpointType = this.model.item.endpoint &&
+        this.model.item.endpoint.endpointType || this.model.item.endpointType;
+    let tags = this.model.item.tags || [];
     return {
-      bootDiskPropertyValue: Object.keys(bootDiskPropertyMapping).map((key) => {
-        return {
-          name: key,
-          value: bootDiskPropertyMapping[key]
-        };
-      }),
+      computeProfileEditor: {
+        properties: this.model.item.computeProfile || {},
+        valid: false
+      },
+      networkProfileEditor: {
+        properties: this.model.item.networkProfile || {},
+        valid: false
+      },
+      storageProfileEditor: {
+        properties: this.model.item.storageProfile || {},
+        valid: false
+      },
       currentView: 'basic',
+      editorErrors: null,
       endpoint: this.model.item.endpoint,
       endpointType,
-      imageTypeValue: Object.keys(imageTypeMapping).map((key) => {
-        return {
-          name: key,
-          value: imageTypeMapping[key].image
-        };
-      }),
-      instanceTypeValue: Object.keys(instanceTypeMapping).map((key) => {
-        if (endpointType === 'vsphere') {
-          return {
-            name: key,
-            cpuCount: instanceTypeMapping[key].cpuCount,
-            diskSizeMb: instanceTypeMapping[key].diskSizeMb,
-            memoryMb: instanceTypeMapping[key].memoryMb
-          };
-        } else {
-          return {
-            name: key,
-            value: instanceTypeMapping[key].instanceType
-          };
-        }
-      }),
       name: this.model.item.name,
-      networkName: this.model.item.networkProfile && this.model.item.networkProfile.name,
-      subnetworks: subnetworks.map((subnetwork) => {
-        return {
-          name: subnetwork
-        };
-      }),
-      tags: this.model.item.tags || []
+      supportedEditors: OOTB_EDITORS,
+      supportedTypes: OOTB_TYPES,
+      tags: tags.map(({key, value}) => ({
+        key,
+        value
+      }))
     };
   },
   computed: {
@@ -88,7 +99,7 @@ export default Vue.component('environment-edit-view', {
       return !this.name || !this.endpointType;
     },
     validationErrors() {
-      return this.model.validationErrors || {};
+      return this.model.validationErrors || this.editorErrors || {};
     },
     activeContextItem() {
       return this.model.contextView && this.model.contextView.activeItem &&
@@ -128,26 +139,8 @@ export default Vue.component('environment-edit-view', {
         EnvironmentsActions.createEnvironment(model, this.tags);
       }
     },
-    createEndpoint() {
-      EnvironmentsActions.createEndpoint();
-    },
-    manageEndpoints() {
-      EnvironmentsActions.manageEndpoints();
-    },
-    manageSubnetworks() {
-      EnvironmentsActions.manageSubnetworks();
-    },
-    closeToolbar() {
-      EnvironmentsActions.closeToolbar();
-    },
     onNameChange(value) {
       this.name = value;
-    },
-    onInstanceTypeChange(value) {
-      this.instanceTypeValue = value;
-    },
-    onImageTypeChange(value) {
-      this.imageTypeValue = value;
     },
     onEndpointChange(endpoint) {
       this.endpoint = endpoint;
@@ -156,82 +149,43 @@ export default Vue.component('environment-edit-view', {
     onTagsChange(tags) {
       this.tags = tags;
     },
-    onNetworkNameChange(value) {
-      this.networkName = value;
+    onComputeProfileEditorChange(value) {
+      this.editorErrors = null;
+      this.computeProfileEditor = value;
     },
-    onSubnetworkChange(value) {
-      this.subnetworks = value;
+    onNetworkProfileEditorChange(value) {
+      this.editorErrors = null;
+      this.networkProfileEditor = value;
     },
-    renderSubnetwork(network) {
-      let props = [
-        i18n.t('app.environment.edit.cidrLabel') + ':' + network.subnetCIDR
-      ];
-      if (network.supportPublicIpAddress) {
-        props.push(i18n.t('app.environment.edit.supportPublicIpAddressLabel'));
-      }
-      if (network.defaultForZone) {
-        props.push(i18n.t('app.environment.edit.defaultForZoneLabel'));
-      }
-      let secondary = props.join(', ');
-      return `
-        <div>
-          <div class="host-picker-item-primary" title="${network.name}">${network.name}</div>
-          <div class="host-picker-item-secondary" title="${secondary}">
-            ${secondary}
-          </div>
-        </div>`;
+    onNetworkManageSubnetworks() {
+      EnvironmentsActions.manageSubnetworks();
     },
-    searchSubnetworks(...args) {
-      return new Promise((resolve, reject) => {
-        services.searchSubnetworks.apply(null,
-            [this.endpoint.documentSelfLink, ...args]).then((result) => {
-          resolve(result);
-        }).catch(reject);
-      });
+    onStorageProfileEditorChange(value) {
+      this.editorErrors = null;
+      this.storageProfileEditor = value;
     },
-    onBootDiskPropertyChange(value) {
-      this.bootDiskPropertyValue = value;
+    onEditorError(errors) {
+      this.editorErrors = errors;
+    },
+    createEndpoint() {
+      EnvironmentsActions.createEndpoint();
+    },
+    manageEndpoints() {
+      EnvironmentsActions.manageEndpoints();
+    },
+    closeToolbar() {
+      EnvironmentsActions.closeToolbar();
     },
     getModel() {
       var toSave = $.extend({ properties: {} }, this.model.item.asMutable({deep: true}));
       toSave.name = this.name;
       toSave.endpointLink = this.endpoint && this.endpoint.documentSelfLink;
-      toSave.computeProfile = toSave.computeProfile || {};
-      toSave.computeProfile.instanceTypeMapping =
-          this.instanceTypeValue.reduce((previous, current) => {
-            if (this.endpointType === 'vsphere') {
-              previous[current.name] = {
-                cpuCount: current.cpuCount,
-                diskSizeMb: current.diskSizeMb,
-                memoryMb: current.memoryMb
-              };
-            } else {
-              previous[current.name] = {
-                instanceType: current.value
-              };
-            }
-            return previous;
-          }, {});
-      toSave.computeProfile.imageMapping = this.imageTypeValue.reduce((previous, current) => {
-        previous[current.name] = {
-          image: current.value
-        };
-        return previous;
-      }, {});
-      toSave.networkProfile = toSave.networkProfile || {};
-      toSave.networkProfile.name = this.networkName;
-      toSave.networkProfile.subnetLinks = [];
-      this.subnetworks.forEach((subnetwork) => {
-        if (subnetwork.name && subnetwork.name.documentSelfLink) {
-          toSave.networkProfile.subnetLinks.push(subnetwork.name.documentSelfLink);
-        }
-      });
-      toSave.storageProfile = toSave.storageProfile || {};
-      toSave.storageProfile.bootDiskPropertyMapping =
-          this.bootDiskPropertyValue.reduce((previous, current) => {
-            previous[current.name] = current.value;
-            return previous;
-          }, {});
+      toSave.computeProfile = $.extend(toSave.computeProfile || {},
+          this.computeProfileEditor.properties);
+      toSave.networkProfile = $.extend(toSave.networkProfile || {},
+          this.networkProfileEditor.properties);
+      toSave.storageProfile = $.extend(toSave.storageProfile || {},
+          this.storageProfileEditor.properties);
       return toSave;
     }
   }

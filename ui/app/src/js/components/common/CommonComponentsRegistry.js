@@ -34,6 +34,8 @@ import VueCheckboxControl from 'components/common/VueCheckboxControl';
 import VueCheckboxGroup from 'components/common/VueCheckboxGroup';
 import VueInputControl from 'components/common/VueInputControl';
 import VueInputGroup from 'components/common/VueInputGroup';
+import VueTags from 'components/common/VueTags';
+import VueTagsGroup from 'components/common/VueTagsGroup';
 import VueActionButton from 'components/common/VueActionButton';
 import VueBigActionButton from 'components/common/VueBigActionButton';
 import VueNavigationLink from 'components/common/VueNavigationLink';

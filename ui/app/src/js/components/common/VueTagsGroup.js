@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-export default Vue.component('multicolumn-editor-group', {
+export default Vue.component('tags-group', {
   template: `
     <form-group
       :class="class">
@@ -17,13 +17,12 @@ export default Vue.component('multicolumn-editor-group', {
         :required="required">
         {{label}}
       </form-label>
-      <multicolumn-editor
+      <tags
         :disabled="disabled"
-        :headers="headers"
+        :placeholder="placeholder"
         :value="value"
         @change="onChange">
-        <slot></slot>
-      </multicolumn-editor>
+      </tags>
     </form-group>
   `,
   props: {
@@ -36,12 +35,12 @@ export default Vue.component('multicolumn-editor-group', {
       required: false,
       type: Boolean
     },
-    headers: {
-      required: false,
-      type: Array
-    },
     label: {
       required: true,
+      type: String
+    },
+    placeholder: {
+      required: false,
       type: String
     },
     required: {

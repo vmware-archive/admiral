@@ -179,7 +179,7 @@ let EnvironmentsStore = Reflux.createStore({
           document.endpoint = endpoint;
         }
         document.tags = tags ? Object.values(tags) : [];
-        document.subnetworks = subnetworks ? Object.values(subnetworks) : [];
+        document.networkProfile.subnetworks = subnetworks ? Object.values(subnetworks) : [];
 
         this.setInData(['editingItemData', 'item'], Immutable(document));
         this.setInData(['editingItemData', 'endpoints'], this.data.endpoints);

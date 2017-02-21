@@ -64,32 +64,32 @@ export default Vue.component('vsphere-endpoint-editor', {
     };
   },
   attached() {
-    this.dispatchChange();
+    this.emitChange();
   },
   methods: {
     onHostNameChange(hostName) {
       this.hostName = hostName;
       this.regionId = null;
       this.regionIdValues = [];
-      this.dispatchChange();
+      this.emitChange();
     },
     onPrivateKeyIdChange(privateKeyId) {
       this.privateKeyId = privateKeyId;
       this.regionId = null;
       this.regionIdValues = [];
-      this.dispatchChange();
+      this.emitChange();
     },
     onPrivateKeyChange(privateKey) {
       this.privateKey = privateKey;
       this.regionId = null;
       this.regionIdValues = [];
-      this.dispatchChange();
+      this.emitChange();
     },
     onRegionIdChange(regionIdObject) {
       this.regionId = regionIdObject && regionIdObject.id;
-      this.dispatchChange();
+      this.emitChange();
     },
-    dispatchChange() {
+    emitChange() {
       if (this.hostName && this.privateKeyId && this.privateKey) {
         if (!this.regionIdValues.length) {
           this.searchRegionIds();
@@ -98,7 +98,7 @@ export default Vue.component('vsphere-endpoint-editor', {
         this.regionId = null;
         this.regionIdValues = [];
       }
-      this.$dispatch('change', {
+      this.$emit('change', {
         properties: {
           hostName: this.hostName,
           privateKeyId: this.privateKeyId,
@@ -106,7 +106,7 @@ export default Vue.component('vsphere-endpoint-editor', {
           regionId: this.regionId
         },
         valid: this.hostName && this.privateKeyId && this.privateKey && this.regionId
-      }, this);
+      });
     },
     searchRegionIds() {
       let {hostName, privateKeyId, privateKey} = this;
@@ -121,7 +121,7 @@ export default Vue.component('vsphere-endpoint-editor', {
               privateKey !== this.privateKey) {
             this.searchRegionIds();
           } else {
-            this.$dispatch('error', utils.getValidationErrors(e), this);
+            this.$emit('error', utils.getValidationErrors(e));
           }
         });
       }

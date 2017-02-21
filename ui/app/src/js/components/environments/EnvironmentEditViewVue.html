@@ -74,157 +74,54 @@
                   }]"
                   :options="model.endpoints"
                   :required="true"
-                  :value="model.item.endpoint"
+                  :value="endpoint"
                   @change="onEndpointChange">
                 </dropdown-search-group>
-                <div class="form-group tags">
-                  <label>{{i18n("app.environment.edit.tagsLabel")}}</label>
-                  <div class="form-control tags-holder">
-                    <tags
-                      :value="model.item.tags"
-                      @change="onTagsChange">
-                    </tags>
-                  </div>
-                  <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="left"
-                      v-tooltip="i18n('app.host.details.tagsHint')"></i>
-                  <span class="help-block">{{i18n(validationErrors.tags)}}</span>
-                </div>
+                <tags-group
+                  :label="i18n('app.environment.edit.tagsLabel')"
+                  :placeholder="i18n('app.environment.edit.tagsPlaceholder')"
+                  :value="tags"
+                  @change="onTagsChange">
+                </tags-group>
               </form>
             </div>
             <div role="tabpanel" class="tab-pane" id="compute">
               <form>
-                <div class="form-group instanceType">
-                  <label>
-                    {{i18n('app.environment.edit.instanceTypeLabel')}}
-                  </label>
-                  <div class="form-control">
-
-                    <multicolumn-editor
-                      v-if="endpointType === 'vsphere'"
-                      :headers="[
-                        i18n('app.environment.edit.nameLabel'),
-                        i18n('app.environment.edit.cpuCountLabel'),
-                        i18n('app.environment.edit.diskSizeMbLabel'),
-                        i18n('app.environment.edit.memoryMbLabel')
-                      ]"
-                      :value="instanceTypeValue"
-                      @change="onInstanceTypeChange">
-                      <multicolumn-cell name="name">
-                        <text-control></text-control>
-                      </multicolumn-cell>
-                      <multicolumn-cell name="cpuCount">
-                        <number-control></number-control>
-                      </multicolumn-cell>
-                      <multicolumn-cell name="diskSizeMb">
-                        <number-control></number-control>
-                      </multicolumn-cell>
-                      <multicolumn-cell name="memoryMb">
-                        <number-control></number-control>
-                      </multicolumn-cell>
-                    </multicolumn-editor>
-
-                    <multicolumn-editor
-                      v-else
-                      :headers="[
-                        i18n('app.environment.edit.nameLabel'),
-                        i18n('app.environment.edit.valueLabel')
-                      ]"
-                      :value="instanceTypeValue"
-                      @change="onInstanceTypeChange">
-                      <multicolumn-cell name="name">
-                        <text-control></text-control>
-                      </multicolumn-cell>
-                      <multicolumn-cell name="value">
-                        <text-control></text-control>
-                      </multicolumn-cell>
-                    </multicolumn-editor>
-
-                  </div>
+                <div
+                  v-for="(index, editors) in supportedEditors"
+                  v-if="endpointType === supportedTypes[index].id"
+                  :endpoint="endpoint"
+                  :is="editors.computeProfileEditor"
+                  :model="model.item.computeProfile || {}"
+                  @change="onComputeProfileEditorChange"
+                  @error="onEditorError">
                 </div>
-
-                <div class="form-group imageType">
-                  <label>
-                    {{i18n('app.environment.edit.imageTypeLabel')}}
-                  </label>
-                  <div class="form-control">
-
-                    <multicolumn-editor
-                      :headers="[
-                        i18n('app.environment.edit.nameLabel'),
-                        i18n('app.environment.edit.valueLabel')
-                      ]"
-                      :value="imageTypeValue"
-                      @change="onImageTypeChange">
-                      <multicolumn-cell name="name">
-                        <text-control></text-control>
-                      </multicolumn-cell>
-                      <multicolumn-cell name="value">
-                        <text-control></text-control>
-                      </multicolumn-cell>
-                    </multicolumn-editor>
-
-                  </div>
-                </div>
-
               </form>
             </div>
             <div role="tabpanel" class="tab-pane" id="network">
               <form>
-                <text-group
-                  :label="i18n('app.environment.edit.nameLabel')"
-                  :value="model.item.networkProfile && model.item.networkProfile.name"
-                  @change="onNetworkNameChange">
-                </text-group>
-                <div class="form-group subnetworks"
-                    v-if="endpoint && (endpointType === 'aws' || endpointType === 'azure')">
-                  <label>
-                    {{i18n('app.environment.edit.subnetworksLabel')}}
-                  </label>
-
-                  <multicolumn-editor
-                    :headers="[
-                      i18n('app.environment.edit.nameLabel')
-                    ]"
-                    :value="subnetworks"
-                    @change="onSubnetworkChange">
-                    <multicolumn-cell name="name">
-                      <dropdown-search
-                        :entity="i18n('app.network.entity')"
-                        :filter="searchSubnetworks"
-                        :renderer="renderSubnetwork"
-                        :manage="[{
-                          action: manageSubnetworks,
-                          icon: 'pencil',
-                          name: i18n('app.subnetwork.manage')
-                        }]">
-                      </dropdown-search>
-                    </multicolumn-cell>
-                  </multicolumn-editor>
-
+                <div
+                  v-for="(index, editors) in supportedEditors"
+                  v-if="endpointType === supportedTypes[index].id"
+                  :endpoint="endpoint"
+                  :is="editors.networkProfileEditor"
+                  :model="model.item.networkProfile || {}"
+                  @change="onNetworkProfileEditorChange"
+                  @manage.subnetworks="onNetworkManageSubnetworks"
+                  @error="onEditorError">
                 </div>
               </form>
             </div>
             <div role="tabpanel" class="tab-pane" id="storage">
               <form>
-                <div class="form-group bootDiskProperty" v-if="endpointType === 'azure'">
-                  <label>
-                    {{i18n('app.environment.edit.bootDiskPropertyLabel')}}
-                  </label>
-
-                  <multicolumn-editor
-                    :headers="[
-                      i18n('app.environment.edit.nameLabel'),
-                      i18n('app.environment.edit.valueLabel')
-                    ]"
-                    :value="bootDiskPropertyValue"
-                    @change="onBootDiskPropertyChange">
-                    <multicolumn-cell name="name">
-                      <text-control></text-control>
-                    </multicolumn-cell>
-                    <multicolumn-cell name="value">
-                      <text-control></text-control>
-                    </multicolumn-cell>
-                  </multicolumn-editor>
+                <div
+                  v-for="(index, editors) in supportedEditors"
+                  v-if="endpointType === supportedTypes[index].id"
+                  :endpoint="endpoint"
+                  :is="editors.storageProfileEditor"
+                  :model="model.item.storageProfile || {}"
+                  @change="onStorageProfileEditorChange"
+                  @error="onEditorError">
                 </div>
               </form>
             </div>
