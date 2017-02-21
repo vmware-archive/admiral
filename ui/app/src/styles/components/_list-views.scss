@@ -962,11 +962,15 @@
     > .content {
       top: 0;
       left: 0;
+      bottom: 0;
+      right: 0;
+      overflow: initial;
     }
   }
 }
 
-.containers-view > .list-holder > .main-panel .list-view.context-selected, .composite-child-containers-view > .list-view.context-selected {
+.containers-view > .list-holder > .main-panel .list-view.context-selected,
+.composite-child-containers-view > .list-view.context-selected {
   top: 10px;
   margin-bottom: 0;
   margin-top: 0;
@@ -991,7 +995,8 @@
     }
 
     .grid-item:not(.context-selected) {
-      .container-item:not(:hover), .cluster-item:not(:hover), .composite-container-item:not(:hover), .composite-closure-item:not(:hover) {
+      .container-item:not(:hover), .cluster-item:not(:hover),
+      .composite-container-item:not(:hover), .composite-closure-item:not(:hover) {
         @extend .gray-filter;
       }
     }
