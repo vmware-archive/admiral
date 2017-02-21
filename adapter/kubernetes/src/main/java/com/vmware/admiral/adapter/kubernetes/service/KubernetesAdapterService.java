@@ -169,7 +169,7 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
     }
 
     private void processDeleteKubernetesEntity(RequestContext context) {
-        context.executor.deleteEntity(context.kubernetesState, context.k8sContext,
+        context.executor.deleteEntity(context.kubernetesState.selfLink, context.k8sContext,
                 (o, ex) -> {
                     if (ex != null) {
                         fail(context.request, ex);

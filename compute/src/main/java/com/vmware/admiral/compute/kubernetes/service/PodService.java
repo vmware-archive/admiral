@@ -14,13 +14,12 @@ package com.vmware.admiral.compute.kubernetes.service;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.kubernetes.entities.pods.Pod;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
-import com.vmware.photon.controller.model.resources.ResourceState;
 
 public class PodService extends AbstractKubernetesObjectService<PodState> {
 
     public static final String FACTORY_LINK = ManagementUriParts.KUBERNETES_PODS;
 
-    public static class PodState extends ResourceState {
+    public static class PodState extends BaseKubernetesState {
 
         /**
          * Pod is a collection of containers that can run on a host.
@@ -30,24 +29,10 @@ public class PodService extends AbstractKubernetesObjectService<PodState> {
                 + "This resource is created by clients and scheduled onto hosts.")
         public Pod pod;
 
-        /**
-         * Defines the description of the entity
-         */
-        @Documentation(description = "Defines the description of the container.")
-        public String descriptionLink;
-
-        /**
-         * Link to CompositeComponent when a entity is part of App/Composition request.
-         */
-        @Documentation(
-                description = "Link to CompositeComponent when a entity is part of App/Composition request.")
-        public String compositeComponentLink;
-
-        /**
-         * Entity host link
-         */
-        @Documentation(description = "Entity host link")
-        public String parentLink;
+        @Override
+        public String getKubernetesSelfLink() {
+            return this.pod.metadata.selfLink;
+        }
     }
 
     public PodService() {

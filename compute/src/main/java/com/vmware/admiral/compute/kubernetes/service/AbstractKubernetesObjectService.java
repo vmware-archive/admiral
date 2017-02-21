@@ -12,11 +12,12 @@
 package com.vmware.admiral.compute.kubernetes.service;
 
 import com.vmware.admiral.common.util.PropertyUtils;
-import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.admiral.compute.container.util.CompositeComponentNotifier;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatefulService;
 
-public abstract class AbstractKubernetesObjectService<T extends ResourceState> extends StatefulService {
+public abstract class AbstractKubernetesObjectService<T extends BaseKubernetesState>
+        extends StatefulService {
 
     private Class<T> stateType;
 
@@ -38,6 +39,8 @@ public abstract class AbstractKubernetesObjectService<T extends ResourceState> e
 
         try {
             post.setBody(state);
+            CompositeComponentNotifier.notifyCompositionComponent(this,
+                    state.compositeComponentLink, post.getAction());
             post.complete();
         } catch (Throwable e) {
             logSevere(e);
@@ -65,5 +68,13 @@ public abstract class AbstractKubernetesObjectService<T extends ResourceState> e
 
         PropertyUtils.mergeServiceDocuments(currentState, patchState);
         patch.complete();
+    }
+
+    @Override
+    public void handleDelete(Operation delete) {
+        T state = getState(delete);
+        CompositeComponentNotifier.notifyCompositionComponent(this,
+                state.compositeComponentLink, delete.getAction());
+        super.handleDelete(delete);
     }
 }

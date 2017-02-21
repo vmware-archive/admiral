@@ -21,6 +21,10 @@ import com.vmware.admiral.compute.container.CompositeComponentRegistry.Component
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerService;
 import com.vmware.admiral.compute.container.util.CompositeComponentNotifier;
+import com.vmware.admiral.compute.kubernetes.service.DeploymentService;
+import com.vmware.admiral.compute.kubernetes.service.PodService;
+import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService;
+import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.FactoryService;
@@ -145,6 +149,12 @@ public class CompositeComponentNotificationProcessingChain extends OperationProc
         chains.put(ComputeService.class, CompositeComponentNotificationProcessingChain.class);
         chains.put(ContainerService.class, CompositeComponentNotificationProcessingChain.class);
         chains.put(ClosureService.class, CompositeComponentNotificationProcessingChain.class);
+
+        chains.put(DeploymentService.class, CompositeComponentNotificationProcessingChain.class);
+        chains.put(PodService.class, CompositeComponentNotificationProcessingChain.class);
+        chains.put(ServiceEntityHandler.class, CompositeComponentNotificationProcessingChain.class);
+        chains.put(ReplicationControllerService.class,
+                CompositeComponentNotificationProcessingChain.class);
     }
 
     private String retrieveLink(ResourceState state) {

@@ -19,7 +19,7 @@ import java.io.IOException;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.YamlMapper;
-import com.vmware.admiral.compute.content.kubernetes.CommonKubernetesEntity;
+import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -42,7 +42,7 @@ public class KubernetesDescriptionService extends StatefulService {
         @Documentation(description = "The type of the kubernetes entity.")
         public String type;
 
-        public <T extends CommonKubernetesEntity> T getKubernetesEntity(Class<T> type)
+        public <T extends BaseKubernetesObject> T getKubernetesEntity(Class<T> type)
                 throws IOException {
             return YamlMapper.objectMapper().readValue(kubernetesEntity, type);
         }
@@ -83,8 +83,8 @@ public class KubernetesDescriptionService extends StatefulService {
                     "compute.template.yaml.invalid");
         }
 
-        CommonKubernetesEntity kubernetesEntity = description
-                .getKubernetesEntity(CommonKubernetesEntity.class);
+        BaseKubernetesObject kubernetesEntity = description
+                .getKubernetesEntity(BaseKubernetesObject.class);
 
         assertNotNullOrEmpty(kubernetesEntity.apiVersion, "apiVersion");
         assertNotNullOrEmpty(kubernetesEntity.kind, "kind");

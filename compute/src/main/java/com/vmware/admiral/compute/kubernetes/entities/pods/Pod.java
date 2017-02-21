@@ -12,6 +12,7 @@
 package com.vmware.admiral.compute.kubernetes.entities.pods;
 
 import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
+import com.vmware.xenon.common.ServiceDocument.Documentation;
 
 /**
  * Pod is a collection of containers that can run on a host. T

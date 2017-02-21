@@ -67,7 +67,6 @@ import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionConten
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesService;
-import com.vmware.admiral.compute.kubernetes.service.KubernetesService.KubernetesState;
 import com.vmware.admiral.compute.kubernetes.service.PodService;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
 import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService;
@@ -184,10 +183,6 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
         CompositeComponentRegistry.registerComponent(ResourceType.COMPUTE_NETWORK_TYPE.getName(),
                 ComputeNetworkDescriptionService.FACTORY_LINK, ComputeNetworkDescription.class,
                 ComputeNetworkService.FACTORY_LINK, ComputeNetwork.class);
-
-        CompositeComponentRegistry.registerComponent(ResourceType.KUBERNETES_ENTITY_TYPE.getName(),
-                KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
-                KubernetesService.FACTORY_LINK, KubernetesState.class);
 
         CompositeComponentRegistry.registerComponent(ResourceType.KUBERNETES_POD_TYPE.getName(),
                 KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
