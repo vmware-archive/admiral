@@ -400,7 +400,7 @@ public class NamedVolumeAffinityHostFilter
         QueryUtil.addListValueClause(q,
                 ContainerState.FIELD_NAME_DESCRIPTION_LINK, containersDescLinks);
 
-        final List<String> parentLinks = new ArrayList<>();
+        final Set<String> parentLinks = new HashSet<>();
         new ServiceDocumentQuery<>(host, ContainerState.class)
                 .query(q, (r) -> {
                     if (r.hasException()) {
@@ -427,7 +427,7 @@ public class NamedVolumeAffinityHostFilter
                                             + " but placed on different hosts.",
                                             "request.volumes.filter.multiple.containers"));
                         } else {
-                            HostSelection host = hostSelectionMap.get(parentLinks.get(0));
+                            HostSelection host = hostSelectionMap.get(parentLinks.iterator().next());
                             if (host == null) {
                                 callback.complete(null, new HostSelectionFilterException(
                                         "Unable to place containers sharing local volumes"
@@ -435,7 +435,7 @@ public class NamedVolumeAffinityHostFilter
                                                 "request.volumes.filter.no.host"));
                             } else {
                                 callback.complete(Collections.singletonMap(
-                                        parentLinks.get(0), host), null);
+                                        host.hostLink, host), null);
                             }
                         }
                     }
