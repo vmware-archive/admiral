@@ -22,10 +22,11 @@ import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.Utils;
 
 /**
- * ExtensibilitySubscriptionService is service for registering callbacks for
- * stage and substage for given task.
+ * ExtensibilitySubscriptionService is service for registering callbacks for stage and substage for
+ * given task.
  *
- * <p/> It is used for persistence, check {@link ExtensibilitySubscriptionManager}
+ * <p/>
+ * It is used for persistence, check {@link ExtensibilitySubscriptionManager}
  */
 public class ExtensibilitySubscriptionService extends StatefulService {
 
@@ -37,7 +38,7 @@ public class ExtensibilitySubscriptionService extends StatefulService {
 
     public static class ExtensibilitySubscription extends MultiTenantDocument {
 
-        @Documentation(description = "Task type")
+        @Documentation(description = "Task name")
         @UsageOption(option = PropertyUsageOption.REQUIRED)
         public String task;
 
@@ -57,6 +58,7 @@ public class ExtensibilitySubscriptionService extends StatefulService {
                 + "and substage, a POST request with the task state will be sent to the subscriber")
         @UsageOption(option = PropertyUsageOption.REQUIRED)
         public URI callbackReference;
+
     }
 
     public ExtensibilitySubscriptionService() {

@@ -26,9 +26,11 @@ import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFacto
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionCallbackService.ExtensibilitySubscriptionCallback;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionService.ExtensibilitySubscription;
+import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatelessService;
+import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
@@ -76,7 +78,8 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
     }
 
     <T extends TaskServiceDocument<?>> void handleStagePatch(
-            AbstractTaskStatefulService<?, ?> taskService, T state,
+            ServiceTaskCallbackResponse notificationPayload,
+            ServiceTaskCallbackResponse replayPayload, T state,
             Consumer<T> callback) {
 
         ExtensibilitySubscription extensibilitySubscription = getExtensibilitySubscription(state);
@@ -89,13 +92,16 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
 
         if (extensibilitySubscription.blocking) {
             // blocking notification
-            sendBlockingNotificationCall(taskService, extensibilitySubscription, state);
+            sendExternalNotificationCall(notificationPayload, replayPayload, extensibilitySubscription,
+                    state);
         } else {
             // asynchronous notification
-            sendAsyncNotificationCall(extensibilitySubscription, state);
-            // continue task execution
+            sendAsyncNotificationCall(notificationPayload, replayPayload, extensibilitySubscription,
+                    state);
+            // continue task execution with original state
             callback.accept(state);
         }
+
     }
 
     /**
@@ -173,6 +179,57 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
     }
 
     /**
+     * Sends notification to subscriber. Client should post to the callback state to resume the task
+     * execution.
+     *
+     * @param notificationPayload
+     *            payload that task sent to subscriber,
+     * @param replayPayload
+     *            payload which task accept for response
+     * @param extensibility
+     *            subscription info.
+     * @param state
+     *            task state to send
+     */
+    @SuppressWarnings({ "rawtypes" })
+    private <T extends TaskServiceDocument> void sendExternalNotificationCall(
+            ServiceTaskCallbackResponse notificationPayload,
+            ServiceTaskCallbackResponse replayPayload,
+            ExtensibilitySubscription extensibility, T state) {
+
+        logFine("Sending blocking notification to [%s] for [%s]",
+                extensibility.callbackReference, state.documentSelfLink);
+
+        // Create callback which will handle response from subscriber client.
+        ExtensibilitySubscriptionCallback callbackState = new ExtensibilitySubscriptionCallback();
+        callbackState.taskStateJson = Utils.toJson(state);
+        callbackState.taskStateClassName = state.getClass().getName();
+        // Set callback to service task which will be resumed, once subscriber finished.
+        callbackState.serviceTaskCallback = ServiceTaskCallback.create(
+                state.documentSelfLink,
+                state.taskInfo.stage, state.taskSubStage,
+                TaskStage.STARTED, DefaultSubStage.ERROR);
+        callbackState.replayPayload = replayPayload;
+
+        sendRequest(Operation
+                .createPost(this, ExtensibilitySubscriptionCallbackService.FACTORY_LINK)
+                .setBody(callbackState)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logSevere("Failure creating extensibility callback: %s", Utils.toJson(e));
+                        return;
+                    }
+
+                    ExtensibilitySubscriptionCallback result = o
+                            .getBody(ExtensibilitySubscriptionCallback.class);
+
+                    sendExternalNotification(extensibility,
+                            buildDataToSend(notificationPayload, replayPayload, result),
+                            NOTIFICATION_RETRY_COUNT);
+                }));
+    }
+
+    /**
      * Sends notification to subscriber
      *
      * @param service
@@ -182,57 +239,28 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
      * @param state
      *            task state to send
      */
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({ "rawtypes" })
     private <T extends TaskServiceDocument> void sendAsyncNotificationCall(
-            ExtensibilitySubscription extensibility,
-            T state) {
+            ServiceTaskCallbackResponse notificationPayload,
+            ServiceTaskCallbackResponse replayPayload,
+            ExtensibilitySubscription extensibility, T state) {
         logFine("Sending async notification to [%s] for [%s]",
                 extensibility.callbackReference, state.documentSelfLink);
-
-        sendExternalNotification(extensibility, state, NOTIFICATION_RETRY_COUNT);
+        // Task is filtered to provide only fields declared as notification payload.
+        T notificationPayloadState = prepareTaskNotificationPayload(notificationPayload, state);
+        sendExternalNotification(extensibility, notificationPayloadState, NOTIFICATION_RETRY_COUNT);
     }
 
-    /**
-     * Sends notification to subscriber. Client should post to the callback state to resume the task
-     * execution.
-     *
-     * @param service
-     *            task service
-     * @param extensibility
-     *            extensibility state
-     * @param state
-     *            task state to send
-     */
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    private <T extends TaskServiceDocument> void sendBlockingNotificationCall(
-            AbstractTaskStatefulService service,
-            ExtensibilitySubscription extensibility, T state) {
-
-        logFine("Sending blocking notification to [%s] for [%s]",
-                extensibility.callbackReference, state.documentSelfLink);
-
-        ExtensibilitySubscriptionCallback callbackState = new ExtensibilitySubscriptionCallback();
-        callbackState.taskStateJson = Utils.toJson(state);
-
-        sendRequest(Operation
-                .createPost(this, ExtensibilitySubscriptionCallbackService.FACTORY_LINK)
-                .setBody(callbackState)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        logSevere("Failure creating extensibility callback: %s", Utils.toJson(e));
-                        service.failTask("Failure creating extensibility callback", e);
-                        return;
-                    }
-
-                    ExtensibilitySubscriptionCallback result = o
-                            .getBody(ExtensibilitySubscriptionCallback.class);
-
-                    T taskToSend = (T) Utils.fromJson(result.taskStateJson, service.getStateType());
-                    service.processForExtensibility(taskToSend);
-
-                    sendExternalNotification(extensibility, buildDataToSend(result, taskToSend),
-                            NOTIFICATION_RETRY_COUNT);
-                }));
+    @SuppressWarnings("unchecked")
+    private <T> T prepareTaskNotificationPayload(ServiceTaskCallbackResponse notificationPayload,
+            T state) {
+        String stateAsJson = Utils.toJson(state);
+        ServiceTaskCallbackResponse notificationPayloadData = Utils.fromJson(
+                stateAsJson, notificationPayload.getClass());
+        String payLoadAsJson = Utils.toJson(notificationPayloadData);
+        // Filter task fields in order to leave only notification payload fields.
+        T filteredTask = (T) Utils.fromJson(payLoadAsJson, state.getClass());
+        return filteredTask;
     }
 
     /**
@@ -245,10 +273,14 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
      *            document to send
      * @param retriesLeft
      *            number of retries left before give up
+     *
+     * @param notificationPayload
+     *            task fields which subscriber will use for information.
      */
     private void sendExternalNotification(ExtensibilitySubscription extensibility,
-            ServiceDocument body, int retriesLeft) {
-        //URI uri = URI.create(extensibility.callbackReference);
+            ServiceDocument body,
+            int retriesLeft) {
+
         sendRequest(Operation.createPost(extensibility.callbackReference)
                 .setBody(body)
                 .setReferer(getUri())
@@ -256,25 +288,45 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
                     if (e != null) {
                         if (retriesLeft <= 1) {
                             logWarning("Cannot notify [%s] for task [%s]. Error: %s",
-                                    extensibility.callbackReference.toString(), body.documentSelfLink, e.getMessage());
-                            // TODO log to eventlogs
-                            // TODO fail task or something?
+                                    extensibility.callbackReference, body.documentSelfLink,
+                                    e.getMessage());
+                            // TODO Notification failed. Resume task service?
+                        } else if (o.getStatusCode() == Operation.STATUS_CODE_TIMEOUT) {
+                            // Call to ExtensibilitySubscriptionCallback will resume the service
+                            // task.
+                            logWarning("Request to [%s] for task [%s] expired! ",
+                                    extensibility.callbackReference, body.documentSelfLink);
                         } else {
                             getHost().schedule(() -> {
-                                sendExternalNotification(extensibility, body, retriesLeft - 1);
+                                sendExternalNotification(extensibility, body,
+                                        retriesLeft - 1);
                             }, NOTIFICATION_RETRY_WAIT, TimeUnit.SECONDS);
+
                         }
                     }
+
                 }));
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings("rawtypes")
     private <T extends TaskServiceDocument> ServiceDocument buildDataToSend(
-            ExtensibilitySubscriptionCallback result, T taskToSend) {
-        ExtensibilitySubscriptionCallback data = new ExtensibilitySubscriptionCallback();
+            ServiceTaskCallbackResponse notificationPayload,
+            ServiceTaskCallbackResponse replayPayload,
+            ExtensibilitySubscriptionCallback result) {
 
-        data.serviceCallback = UriUtils.buildUri(result.documentSelfLink);
-        data.taskStateJson = Utils.toJson(taskToSend);
+        // Notification payload will give information about the task to subscriber.
+        ServiceTaskCallbackResponse notificationPayloadData = Utils.fromJson(
+                result.taskStateJson, notificationPayload.getClass());
+
+        // Get service replay payload in order to notify subscriber which fields are acceptable for
+        // response.
+        ServiceTaskCallbackResponse replayPayloadData = Utils.fromJson(
+                result.taskStateJson, replayPayload.getClass());
+
+        ExtensibilitySubscriptionCallback data = new ExtensibilitySubscriptionCallback();
+        data.serviceCallback = UriUtils.buildUri(getHost(), result.documentSelfLink);
+        data.notificationPayload = notificationPayloadData;
+        data.replayPayload = replayPayloadData;
 
         return data;
     }
@@ -313,22 +365,16 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
     private void addExtensibilitySubscription(ExtensibilitySubscription state) {
         logFine("Added extensibility [%s] with callback [%s]",
                 state.documentSelfLink, state.callbackReference);
-        subscriptions.put(state.documentSelfLink, state);
+        subscriptions.put(UriUtils.getLastPathSegment(state.documentSelfLink), state);
     }
 
     private void removeExtensibilitySubscription(String extensibilityLink) {
         logFine("Remove extensibility for [%s]", extensibilityLink);
-        subscriptions.remove(extensibilityLink);
+        subscriptions.remove(UriUtils.getLastPathSegment(extensibilityLink));
     }
 
-    /**
-     * Construct documentSelfLink of Task state by adding {@link ExtensibilitySubscriptionService}
-     * FACTORY_LINK for prefix. For example: DummyServiceTaskState:FINISHED:COMPLETED will be
-     * converted to: [/config/extensibility-subscriptions/DummyServiceTaskState:FINISHED:COMPLETED]
-     */
     private <T extends TaskServiceDocument<?>> String constructKey(T state) {
-        return String.format("%s/%s:%s:%s", ExtensibilitySubscriptionService.FACTORY_LINK,
-                state.getClass().getSimpleName(),
+        return String.format("%s:%s:%s", state.getClass().getSimpleName(),
                 state.taskInfo.stage.name(), state.taskSubStage.name());
     }
 

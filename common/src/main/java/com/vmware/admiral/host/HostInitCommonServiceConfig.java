@@ -16,6 +16,7 @@ import com.vmware.admiral.service.common.ClusterMonitoringService;
 import com.vmware.admiral.service.common.CommonInitialBootService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.CounterSubTaskService;
+import com.vmware.admiral.service.common.ExtensibilitySubscriptionCallbackService;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionFactoryService;
 import com.vmware.admiral.service.common.LogService;
 import com.vmware.admiral.service.common.NodeHealthCheckService;
@@ -40,12 +41,12 @@ public class HostInitCommonServiceConfig extends HostInitServiceHelper {
                 SslTrustCertificateFactoryService.class,
                 CommonInitialBootService.class,
                 ReverseProxyService.class,
-                ExtensibilitySubscriptionFactoryService.class
-        );
+                ExtensibilitySubscriptionFactoryService.class);
 
         startServiceFactories(host, ResourceNamePrefixService.class, RegistryService.class,
                 LogService.class, EventLogService.class,
-                CounterSubTaskService.class);
+                CounterSubTaskService.class,
+                ExtensibilitySubscriptionCallbackService.class);
 
         // start initialization of system documents, posting with pragma to queue a request,
         // for a service to become available

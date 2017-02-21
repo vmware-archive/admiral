@@ -19,9 +19,13 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -29,10 +33,12 @@ import org.junit.rules.TemporaryFolder;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.host.DummyService.DummyServiceTaskState;
+import com.vmware.admiral.host.DummyService.DummyServiceTaskState.SubStage;
 import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionFactoryService;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionService.ExtensibilitySubscription;
 import com.vmware.xenon.common.Service.Action;
+import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
@@ -75,7 +81,8 @@ public class ManagementHostExtensibilityManagerTest extends ManagementHostBaseTe
                 // Target task.When it is finished subscriber will start.
                 DummyServiceTaskState.class.getSimpleName(),
                 // Subscription stage.
-                TaskStage.STARTED.name());
+                TaskStage.STARTED.name(),
+                false);
 
         subscription = sendOperation(host, subscriptionUri,
                 subscription, ExtensibilitySubscription.class, Action.POST);
@@ -92,7 +99,8 @@ public class ManagementHostExtensibilityManagerTest extends ManagementHostBaseTe
                 // Target task.When it is finished subscriber will start.
                 DummyServiceTaskState.class.getSimpleName(),
                 // Subscription stage.
-                TaskStage.STARTED.name());
+                TaskStage.STARTED.name(),
+                false);
 
         subscription = sendOperation(host, subscriptionUri,
                 subscription, ExtensibilitySubscription.class, Action.POST);
@@ -109,7 +117,8 @@ public class ManagementHostExtensibilityManagerTest extends ManagementHostBaseTe
                 // Target task.When it is finished subscriber will start.
                 DummyServiceTaskState.class.getSimpleName(),
                 // Subscription stage.
-                null);
+                null,
+                false);
 
         subscription = sendOperation(host, subscriptionUri,
                 subscription, ExtensibilitySubscription.class, Action.POST);
@@ -129,7 +138,9 @@ public class ManagementHostExtensibilityManagerTest extends ManagementHostBaseTe
                 // Target task.When it is finished subscriber will start.
                 DummyServiceTaskState.class.getSimpleName(),
                 // Subscription stage.
-                TaskStage.FINISHED.name());
+                TaskStage.FINISHED.name(),
+                // Subscription will be async (won't block task).
+                false);
 
         subscription = sendOperation(host, subscriptionUri,
                 subscription, ExtensibilitySubscription.class, Action.POST);
@@ -142,19 +153,72 @@ public class ManagementHostExtensibilityManagerTest extends ManagementHostBaseTe
                 UriUtils.buildUri(host, ContainerFactoryService.SELF_LINK), containerState,
                 ContainerState.class, Action.POST);
 
+        // Create customProperties which DummySubscriber will use to make a diff between blocking
+        // and non-blocking.
+        Map<String, String> customProperties = new HashMap<>();
+        customProperties.put("blocking", Boolean.TRUE.toString());
+
         // Create dummy task which will trigger subscriber when it is FINISHED(COMPLETED).
         DummyServiceTaskState dummyState = new DummyServiceTaskState();
         dummyState.containerState = containerState;
+        dummyState.blocking = false;
+        dummyState.customProperties = customProperties;
         URI dummyServiceUri = UriUtils.buildUri(host, DummyService.SELF_LINK);
 
         // Initialize CountDownWatch to wait for subscriber.
-        TestContext context = new TestContext(1, Duration.ofSeconds(30));
+        TestContext context = new TestContext(1, Duration.ofSeconds(330));
         sendOperation(host, dummyServiceUri, dummyState,
                 DummyServiceTaskState.class, Action.POST);
 
         // Wait for subscriber to change the above container's name.
         verifyContainerNameHasBeenUpdated(containerState.documentSelfLink, context);
         context.await();
+    }
+
+    @Test
+    public void testBlockingSubscription() throws InterruptedException {
+
+        ExtensibilitySubscription subscription = createExtensibilityState(
+                // Subscription sub stage.
+                DummyServiceTaskState.SubStage.FILTER.name(),
+                // URI to Subscriber which will change container's name.
+                UriUtils.buildUri(host, DummySubscriber.SELF_LINK),
+                // Target task.When it is finished subscriber will start.
+                DummyServiceTaskState.class.getSimpleName(),
+                // Subscription stage.
+                TaskStage.STARTED.name(),
+                // Subscription will block the task until subscriber finished and notifies it.
+                true);
+
+        subscription = sendOperation(host, subscriptionUri,
+                subscription, ExtensibilitySubscription.class, Action.POST);
+
+        // Create dummy task which will trigger subscriber when it reaches STARTED(FILTER).
+        DummyServiceTaskState dummyState = new DummyServiceTaskState();
+        dummyState.documentSelfLink = "dummy-self-link";
+
+        // This name will be patched once task is created and than from subscriber, prior FILTER
+        // subStage is started.
+        dummyState.name = "before-subscription";
+        dummyState.blocking = true;
+
+        URI dummyServiceUri = UriUtils.buildUri(host, DummyService.SELF_LINK);
+
+        // Create task in order to track modification of its name across different stages.
+        dummyState = sendOperation(host, dummyServiceUri, dummyState,
+                DummyServiceTaskState.class, Action.POST);
+
+        verifyDummyStateServiceCompletes(dummyState.documentSelfLink);
+
+        DummyServiceTaskState completedDummyState = sendOperation(host,
+                UriUtils.buildUri(host, dummyState.documentSelfLink),
+                null, DummyServiceTaskState.class, Action.GET);
+
+        Assert.assertNotNull(completedDummyState.name);
+        Assert.assertNotEquals(dummyState.name, completedDummyState.name);
+
+        Assert.assertEquals(DummySubscriber.SELF_LINK, completedDummyState.name);
+
     }
 
     private void verifyContainerNameHasBeenUpdated(String containerLink, TestContext context) {
@@ -173,14 +237,34 @@ public class ManagementHostExtensibilityManagerTest extends ManagementHostBaseTe
         context.completeIteration();
     }
 
+    private void verifyDummyStateServiceCompletes(String dummyTaskSelfLink)
+            throws InterruptedException {
+        TestContext context = new TestContext(1, Duration.ofSeconds(320));
+        // Get container and verify that its name has been updated by subscriber.
+        DummyServiceTaskState dummyState = sendOperation(host,
+                UriUtils.buildUri(host, dummyTaskSelfLink),
+                null, DummyServiceTaskState.class, Action.GET);
+
+        while (dummyState.taskInfo.stage != TaskState.TaskStage.FINISHED
+                && dummyState.taskSubStage != SubStage.COMPLETED) {
+            host.log(Level.WARNING, "Not ready yet!");
+            Thread.sleep(3000L);
+            dummyState = sendOperation(host,
+                    UriUtils.buildUri(host, dummyTaskSelfLink),
+                    null, DummyServiceTaskState.class, Action.GET);
+        }
+        context.completeIteration();
+    }
+
     private ExtensibilitySubscription createExtensibilityState(String substage, URI uri,
-            String task, String stage) {
+            String task, String stage, boolean blocking) {
+
         ExtensibilitySubscription state = new ExtensibilitySubscription();
         state.task = task;
         state.stage = stage;
         state.substage = substage;
         state.callbackReference = uri;
-        state.blocking = false;
+        state.blocking = blocking;
         return state;
     }
 
