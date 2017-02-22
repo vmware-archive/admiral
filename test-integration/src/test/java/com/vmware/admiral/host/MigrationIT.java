@@ -13,14 +13,18 @@ package com.vmware.admiral.host;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
+import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
+import com.vmware.admiral.compute.ElasticPlacementZoneService;
+import com.vmware.admiral.compute.ElasticPlacementZoneService.ElasticPlacementZoneState;
 import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.service.common.NodeMigrationService;
 import com.vmware.admiral.service.common.NodeMigrationService.MigrationRequest;
@@ -29,7 +33,9 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
+import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.VerificationHost;
 import com.vmware.xenon.services.common.MigrationTaskService;
@@ -41,25 +47,31 @@ public class MigrationIT extends RequestBaseTest {
 
     private VerificationHost targetHost;
     private List<String> computeStates = new ArrayList<String>();
+    private String resourcePoolStateLink;
+    private String epzStateLink;
 
     @Override
     @Before
     public void setUp() throws Throwable {
         MockDockerAdapterService.resetContainers();
+
         startServices(host);
-        host.waitForServiceAvailable(ComputeService.FACTORY_LINK, ResourcePoolService.FACTORY_LINK);
+        host.waitForServiceAvailable(ComputeService.FACTORY_LINK, ResourcePoolService.FACTORY_LINK,
+                ElasticPlacementZoneConfigurationService.SELF_LINK,
+                ElasticPlacementZoneService.FACTORY_LINK);
+
         targetHost = createHost();
         startServices(targetHost);
         targetHost.waitForServiceAvailable(ComputeService.FACTORY_LINK,
                 NodeMigrationService.SELF_LINK, ResourcePoolService.FACTORY_LINK);
-        targetHost.waitForServiceAvailable(ComputeService.FACTORY_LINK,
-                NodeMigrationService.SELF_LINK, ResourcePoolService.FACTORY_LINK);
+
         startMigrationService(targetHost);
 
         setUpDockerHostAuthentication();
         // setup Docker Host:
         createResourcePool();
         createMultipleDockerHosts();
+        createResourcePoolAndEPZ();
     }
 
     protected void createMultipleDockerHosts() throws Throwable {
@@ -72,13 +84,27 @@ public class MigrationIT extends RequestBaseTest {
         }
     }
 
+    protected void createResourcePoolAndEPZ() throws Throwable {
+        ElasticPlacementZoneConfigurationState state = new ElasticPlacementZoneConfigurationState();
+        state.resourcePoolState = new ResourcePoolState();
+        state.epzState = new ElasticPlacementZoneState();
+
+        state.resourcePoolState.name = "rp-1";
+        state.epzState.tagLinksToMatch = new HashSet<>(Arrays.asList("tag1", "tag2"));
+
+        state = doOperation(state,
+                UriUtils.buildUri(host, ElasticPlacementZoneConfigurationService.SELF_LINK),
+                ElasticPlacementZoneConfigurationState.class, false, Action.POST);
+        Assert.assertNotNull(state.resourcePoolState);
+        Assert.assertNotNull(state.resourcePoolState.documentSelfLink);
+        resourcePoolStateLink = state.resourcePoolState.documentSelfLink;
+        Assert.assertNotNull(state.epzState);
+        Assert.assertNotNull(state.epzState.documentSelfLink);
+        epzStateLink = state.epzState.documentSelfLink;
+    }
+
     @Test
     public void testMigration() throws Throwable {
-        NodeMigrationService state = new NodeMigrationService();
-        Set<String> services = new HashSet<>();
-        services.add(ComputeService.FACTORY_LINK);
-        state.services = services;
-
         // do the migration
         MigrationRequest request = new MigrationRequest();
         request.sourceNodeGroup = host.getPublicUriAsString() + DEAFULT_NODE_GROUP;
@@ -96,6 +122,20 @@ public class MigrationIT extends RequestBaseTest {
         this.targetHost.send(post);
         this.targetHost.testWait();
 
+        verifyComputeStatesExist();
+        // EPZ depends on RP to be migrated, so verify these states are copied
+        verifyResourcePoolExists();
+        verifyElasticPlacementZoneExists();
+    }
+
+    private void startMigrationService(VerificationHost host) throws Throwable {
+        URI u = UriUtils.buildUri(host, MigrationTaskService.FACTORY_LINK);
+        Operation post = Operation.createPost(u);
+        host.startService(post, MigrationTaskService.createFactory());
+        host.waitForServiceAvailable(MigrationTaskService.FACTORY_LINK);
+    }
+
+    private void verifyComputeStatesExist() {
         for (String selfLink : computeStates) {
             this.targetHost.testStart(1);
             Operation get = Operation.createGet(UriUtils.buildUri(targetHost.getUri(),
@@ -114,11 +154,37 @@ public class MigrationIT extends RequestBaseTest {
         }
     }
 
-    private void startMigrationService(VerificationHost host) throws Throwable {
-        URI u = UriUtils.buildUri(host, MigrationTaskService.FACTORY_LINK);
-        Operation post = Operation.createPost(u);
-        host.startService(post, MigrationTaskService.createFactory());
-        host.waitForServiceAvailable(MigrationTaskService.FACTORY_LINK);
+    private void verifyResourcePoolExists() {
+        this.targetHost.testStart(1);
+        Operation get = Operation.createGet(UriUtils.buildUri(targetHost.getUri(),
+                resourcePoolStateLink));
+        get.setCompletion((o, e) -> {
+            if (e != null) {
+                targetHost.failIteration(e);
+                return;
+            }
+            ResourcePoolState body = o.getBody(ResourcePoolState.class);
+            Assert.assertTrue(body != null);
+            this.targetHost.completeIteration();
+        });
+        this.targetHost.send(get);
+        this.targetHost.testWait();
     }
 
+    private void verifyElasticPlacementZoneExists() {
+        this.targetHost.testStart(1);
+        Operation get = Operation.createGet(UriUtils.buildUri(targetHost.getUri(),
+                epzStateLink));
+        get.setCompletion((o, e) -> {
+            if (e != null) {
+                targetHost.failIteration(e);
+                return;
+            }
+            ElasticPlacementZoneState body = o.getBody(ElasticPlacementZoneState.class);
+            Assert.assertTrue(body != null);
+            this.targetHost.completeIteration();
+        });
+        this.targetHost.send(get);
+        this.targetHost.testWait();
+    }
 }
