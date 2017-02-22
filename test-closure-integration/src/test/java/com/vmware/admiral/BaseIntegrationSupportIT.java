@@ -11,8 +11,6 @@
 
 package com.vmware.admiral;
 
-import static org.junit.Assert.assertNotNull;
-
 import static com.vmware.admiral.TestPropertiesUtil.getSystemOrTestProp;
 
 import java.net.HttpURLConnection;
@@ -29,16 +27,16 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
-
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import static org.junit.Assert.assertNotNull;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -113,7 +111,7 @@ public class BaseIntegrationSupportIT {
                 ContainerDescriptionService.FACTORY_LINK,
                 ContainerDescription.class, ContainerFactoryService.SELF_LINK,
                 ContainerState.class);
-        CompositeComponentRegistry.registerComponent(ResourceType.CONTAINER_NETWORK_TYPE.getName(),
+        CompositeComponentRegistry.registerComponent(ResourceType.NETWORK_TYPE.getName(),
                 ContainerNetworkDescriptionService.FACTORY_LINK, ContainerNetworkDescription.class,
                 ContainerNetworkService.FACTORY_LINK, ContainerNetworkState.class);
         CompositeComponentRegistry.registerComponent(ResourceType.COMPUTE_TYPE.getName(),
