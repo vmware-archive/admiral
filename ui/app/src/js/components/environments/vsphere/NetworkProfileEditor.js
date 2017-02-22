@@ -17,6 +17,21 @@ export default Vue.component('vsphere-network-profile-editor', {
         :value="name"
         @change="onNameChange">
       </text-group>
+      <multicolumn-editor-group
+        v-if="endpoint"
+        :headers="[
+          i18n('app.environment.edit.nameLabel')
+        ]"
+        :label="i18n('app.environment.edit.subnetworksLabel')"
+        :value="subnetworks"
+        @change="onSubnetworkChange">
+        <multicolumn-cell name="name">
+          <subnetwork-search
+            :endpoint="endpoint"
+            :manage-action="manageSubnetworks">
+          </subnetwork-search>
+        </multicolumn-cell>
+      </multicolumn-editor-group>
     </div>
   `,
   props: {
@@ -30,8 +45,15 @@ export default Vue.component('vsphere-network-profile-editor', {
     }
   },
   data() {
+    let subnetworks = this.model.subnetworks &&
+        this.model.subnetworks.asMutable() || [];
     return {
-      name: this.model.name
+      name: this.model.name,
+      subnetworks: subnetworks.map((subnetwork) => {
+        return {
+          name: subnetwork
+        };
+      })
     };
   },
   attached() {
@@ -42,10 +64,23 @@ export default Vue.component('vsphere-network-profile-editor', {
       this.name = value;
       this.emitChange();
     },
+    onSubnetworkChange(value) {
+      this.subnetworks = value;
+      this.emitChange();
+    },
+    manageSubnetworks() {
+      this.$emit('manage.subnetworks');
+    },
     emitChange() {
       this.$emit('change', {
         properties: {
-          name: this.name
+          name: this.name,
+          subnetLinks: this.subnetworks.reduce((previous, current) => {
+            if (current.name && current.name.documentSelfLink) {
+              previous.push(current.name.documentSelfLink);
+            }
+            return previous;
+          }, [])
         },
         valid: true
       });

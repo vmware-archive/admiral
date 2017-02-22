@@ -9,8 +9,6 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import services from 'core/services';
-
 export default Vue.component('azure-network-profile-editor', {
   template: `
     <div>
@@ -28,16 +26,10 @@ export default Vue.component('azure-network-profile-editor', {
         :value="subnetworks"
         @change="onSubnetworkChange">
         <multicolumn-cell name="name">
-          <dropdown-search
-            :entity="i18n('app.network.entity')"
-            :filter="searchSubnetworks"
-            :renderer="renderSubnetwork"
-            :manage="[{
-              action: manageSubnetworks,
-              icon: 'pencil',
-              name: i18n('app.subnetwork.manage')
-            }]">
-          </dropdown-search>
+          <subnetwork-search
+            :endpoint="endpoint"
+            :manage-action="manageSubnetworks">
+          </subnetwork-search>
         </multicolumn-cell>
       </multicolumn-editor-group>
     </div>
@@ -75,33 +67,6 @@ export default Vue.component('azure-network-profile-editor', {
     onSubnetworkChange(value) {
       this.subnetworks = value;
       this.emitChange();
-    },
-    renderSubnetwork(network) {
-      let props = [
-        i18n.t('app.environment.edit.cidrLabel') + ':' + network.subnetCIDR
-      ];
-      if (network.supportPublicIpAddress) {
-        props.push(i18n.t('app.environment.edit.supportPublicIpAddressLabel'));
-      }
-      if (network.defaultForZone) {
-        props.push(i18n.t('app.environment.edit.defaultForZoneLabel'));
-      }
-      let secondary = props.join(', ');
-      return `
-        <div>
-          <div class="host-picker-item-primary" title="${network.name}">${network.name}</div>
-          <div class="host-picker-item-secondary" title="${secondary}">
-            ${secondary}
-          </div>
-        </div>`;
-    },
-    searchSubnetworks(...args) {
-      return new Promise((resolve, reject) => {
-        services.searchSubnetworks.apply(null,
-            [this.endpoint.documentSelfLink, ...args]).then((result) => {
-          resolve(result);
-        }).catch(reject);
-      });
     },
     manageSubnetworks() {
       this.$emit('manage.subnetworks');

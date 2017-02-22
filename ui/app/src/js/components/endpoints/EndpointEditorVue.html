@@ -27,15 +27,15 @@
         :disabled="!!model.item.documentSelfLink"
         :entity="i18n('app.endpoint.typeEntity')"
         :label="i18n('app.endpoint.edit.typeLabel')"
-        :options="supportedTypes"
+        :options="adapters"
         :required="true"
         :value="convertToObject(model.item.endpointType)"
         @change="onEndpointTypeChange">
       </dropdown-group>
       <div
-        v-for="(index, editor) in supportedEditors"
-        v-if="endpointType === supportedTypes[index].id"
-        :is="editor"
+        v-for="adapter in adapters"
+        v-if="endpointType === adapter.id"
+        :is="adapter.endpointEditor"
         :model="model.item"
         v-on:change="onEditorChange"
         v-on:error="onEditorError">

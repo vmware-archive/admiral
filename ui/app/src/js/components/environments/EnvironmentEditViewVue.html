@@ -88,10 +88,10 @@
             <div role="tabpanel" class="tab-pane" id="compute">
               <form>
                 <div
-                  v-for="(index, editors) in supportedEditors"
-                  v-if="endpointType === supportedTypes[index].id"
+                  v-for="adapter in adapters"
+                  v-if="endpointType === adapter.id"
                   :endpoint="endpoint"
-                  :is="editors.computeProfileEditor"
+                  :is="adapter.computeProfileEditor"
                   :model="model.item.computeProfile || {}"
                   @change="onComputeProfileEditorChange"
                   @error="onEditorError">
@@ -101,10 +101,10 @@
             <div role="tabpanel" class="tab-pane" id="network">
               <form>
                 <div
-                  v-for="(index, editors) in supportedEditors"
-                  v-if="endpointType === supportedTypes[index].id"
+                  v-for="adapter in adapters"
+                  v-if="endpointType === adapter.id"
                   :endpoint="endpoint"
-                  :is="editors.networkProfileEditor"
+                  :is="adapter.networkProfileEditor"
                   :model="model.item.networkProfile || {}"
                   @change="onNetworkProfileEditorChange"
                   @manage.subnetworks="onNetworkManageSubnetworks"
@@ -115,10 +115,10 @@
             <div role="tabpanel" class="tab-pane" id="storage">
               <form>
                 <div
-                  v-for="(index, editors) in supportedEditors"
-                  v-if="endpointType === supportedTypes[index].id"
+                  v-for="adapter in adapters"
+                  v-if="endpointType === adapter.id"
                   :endpoint="endpoint"
-                  :is="editors.storageProfileEditor"
+                  :is="adapter.storageProfileEditor"
                   :model="model.item.storageProfile || {}"
                   @change="onStorageProfileEditorChange"
                   @error="onEditorError">

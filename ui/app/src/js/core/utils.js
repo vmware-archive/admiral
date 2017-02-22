@@ -28,6 +28,7 @@ var isSingleView = window.isSingleView;
 
 var byteUnits = ['Bytes', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
 
+var configurationAdapters = null;
 var configurationProperties = null;
 
 var isInteger = function(integer, min, max) {
@@ -38,15 +39,32 @@ var isInteger = function(integer, min, max) {
 };
 
 var utils = {
+  initializeAdapters: function(adapters) {
+    if (configurationAdapters) {
+      throw new Error('Adapters already set');
+    }
+    configurationAdapters = adapters;
+  },
+
+  getAdapters: function() {
+    return configurationAdapters;
+  },
+
+  getAdapter: function(id) {
+    return configurationAdapters.find((adapter) => adapter.id === id);
+  },
+
   initializeConfigurationProperties: function(props) {
     if (configurationProperties) {
       throw new Error('Properties already set');
     }
     configurationProperties = props;
   },
+
   getConfigurationProperty: function(property) {
     return configurationProperties && configurationProperties[property];
   },
+
   getConfigurationPropertyBoolean: function(property) {
     return configurationProperties && configurationProperties[property] === 'true';
   },
@@ -54,6 +72,7 @@ var utils = {
   existsConfigurationProperty: function(property) {
     return configurationProperties.hasOwnProperty(property);
   },
+
   showResourcesView: function(viewName) {
    return viewName === constants.VIEWS.RESOURCES.name
             || viewName === constants.VIEWS.RESOURCES.VIEWS.PROJECTS.name

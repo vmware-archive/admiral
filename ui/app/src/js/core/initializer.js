@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import templateHelpers from 'core/templateHelpers';
+ import templateHelpers from 'core/templateHelpers';
 
 var initializer = {};
 initializer.init = function(callback) {
@@ -20,20 +20,47 @@ initializer.init = function(callback) {
 
   var initI18N = function() {
     i18n.init({
-        ns: {
-          namespaces: ['admiral'],
-          defaultNs: 'admiral'
-        },
+      ns: {
+        namespaces: ['admiral'],
+        defaultNs: 'admiral'
+      },
 
-        // Will load messages/admiral.en-EN.json for example and fallback to
-        // messages/admiral.en.json
-        resGetPath: 'messages/__ns__.__lng__.json',
-        useCookie: false,
-        fallbackLng: 'en',
-        debug: true
-      }, callback);
+      // Will load messages/admiral.en-EN.json for example and fallback to
+      // messages/admiral.en.json
+      resGetPath: 'messages/__ns__.__lng__.json',
+      useCookie: false,
+      fallbackLng: 'en',
+      debug: true
+    }, callback);
   };
 
+  const DEFAULT_ADAPTERS = [{
+    id: 'aws',
+    name: 'AWS',
+    iconSrc: 'image-assets/endpoints/aws.png',
+    endpointEditor: 'aws-endpoint-editor',
+    computeProfileEditor: 'aws-compute-profile-editor',
+    networkProfileEditor: 'aws-network-profile-editor',
+    storageProfileEditor: 'aws-storage-profile-editor'
+  }, {
+    id: 'azure',
+    name: 'Azure',
+    iconSrc: 'image-assets/endpoints/azure.png',
+    endpointEditor: 'azure-endpoint-editor',
+    computeProfileEditor: 'azure-compute-profile-editor',
+    networkProfileEditor: 'azure-network-profile-editor',
+    storageProfileEditor: 'azure-storage-profile-editor'
+  }, {
+    id: 'vsphere',
+    name: 'vSphere',
+    iconSrc: 'image-assets/endpoints/vsphere.png',
+    endpointEditor: 'vsphere-endpoint-editor',
+    computeProfileEditor: 'vsphere-compute-profile-editor',
+    networkProfileEditor: 'vsphere-network-profile-editor',
+    storageProfileEditor: 'vsphere-storage-profile-editor'
+  }];
+
+  var ft = require('core/ft').default;
   var services = require('core/services').default;
   var utils = require('core/utils').default;
   require('components/common/CommonComponentsRegistry').default; //eslint-disable-line
@@ -46,9 +73,25 @@ initializer.init = function(callback) {
       }
     }
     utils.initializeConfigurationProperties(configurationProperties);
+    return ft.isExternalPhotonAdaptersEnabled() ? services.loadAdapters() : Promise.resolve([]);
+  }).then((adapters) => {
+    utils.initializeAdapters(DEFAULT_ADAPTERS.concat(Object.values(adapters).map((adapter) => {
+      return {
+        id: adapter.id,
+        name: adapter.name,
+        iconSrc: adapter.customProperties.icon.replace(/^\//, ''),
+        endpointEditor: adapter.customProperties.endpointEditor,
+        computeProfileEditor: adapter.customProperties.computeProfileEditor,
+        networkProfileEditor: adapter.customProperties.networkProfileEditor,
+        storageProfileEditor: adapter.customProperties.storageProfileEditor
+      };
+    })));
+    initI18N();
+    return Promise.all(Object.values(adapters).map((adapter) =>
+      services.loadScript(adapter.customProperties.uiLink.replace(/^\//, ''))));
   }).catch((err) => {
-    console.warn('Error when loading configuration properties! Error: ' + err);
-  }).then(initI18N);
+    console.warn('Error when loading configuration! Error: ' + err);
+  });
 };
 
 export default initializer;

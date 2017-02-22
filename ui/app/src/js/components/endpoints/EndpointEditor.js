@@ -14,90 +14,7 @@ import AzureEndpointEditor from 'components/endpoints/azure/EndpointEditor'; //e
 import VsphereEndpointEditor from 'components/endpoints/vsphere/EndpointEditor'; //eslint-disable-line
 import EndpointEditorVue from 'components/endpoints/EndpointEditorVue.html';
 import { EndpointsActions } from 'actions/Actions';
-import ft from 'core/ft';
-import services from 'core/services';
-
-const OOTB_TYPES = [
-  {
-    id: 'aws',
-    name: 'AWS',
-    iconSrc: 'image-assets/endpoints/aws.png'
-  },
-  {
-    id: 'azure',
-    name: 'Azure',
-    iconSrc: 'image-assets/endpoints/azure.png'
-  },
-  {
-    id: 'vsphere',
-    name: 'vSphere',
-    iconSrc: 'image-assets/endpoints/vsphere.png'
-  }
-];
-
-var externalAdapters = null;
-
-var loadExternalAdapters = function() {
-  return services.loadAdapters().then((adapters) => {
-    externalAdapters = [];
-    if (adapters) {
-      for (var k in adapters) {
-        if (!adapters.hasOwnProperty(k)) {
-          continue;
-        }
-        var doc = adapters[k];
-
-        var icon = doc.customProperties && doc.customProperties.icon;
-        if (icon && icon[0] === '/') {
-          // Remove slash, as UI is not always served at /, e.g. in CAFE embedded.
-          // So instead use relative path.
-          icon = icon.substring(1);
-        }
-
-        var uiLink = doc.customProperties && doc.customProperties.uiLink;
-        if (uiLink && uiLink[0] === '/') {
-          // Remove slash, as UI is not always served at /, e.g. in CAFE embedded.
-          // So instead use relative path.
-          uiLink = uiLink.substring(1);
-        }
-
-        var endpointEditor = doc.customProperties && doc.customProperties.endpointEditor;
-
-        externalAdapters.push({
-          id: doc.id,
-          name: doc.name,
-          iconSrc: icon,
-          uiLink: uiLink,
-          endpointEditor: endpointEditor
-        });
-      }
-    }
-
-    return Promise.all(externalAdapters.map(({uiLink}) =>
-        services.loadScript(uiLink)));
-  });
-};
-
-var getSupportedEditors = function() {
-  let supportedEditors = [
-    'aws-endpoint-editor',
-    'azure-endpoint-editor',
-    'vsphere-endpoint-editor'
-  ];
-  if (externalAdapters) {
-    supportedEditors = supportedEditors.concat(
-        externalAdapters.map(({endpointEditor}) => endpointEditor));
-  }
-  return supportedEditors;
-};
-
-var getSupportedTypes = function() {
-  let supportedTypes = OOTB_TYPES.slice();
-  if (externalAdapters) {
-    supportedTypes = supportedTypes.concat(externalAdapters);
-  }
-  return supportedTypes;
-};
+import utils from 'core/utils';
 
 export default Vue.component('endpoint-editor', {
   template: EndpointEditorVue,
@@ -113,36 +30,9 @@ export default Vue.component('endpoint-editor', {
           (this.editorErrors && this.editorErrors._generic);
     }
   },
-  attached() {
-    let supportedEditors = getSupportedEditors();
-    let supportedTypes = getSupportedTypes();
-
-    if (!externalAdapters) {
-      if (ft.isExternalPhotonAdaptersEnabled()) {
-        var loading = {
-          id: 'loading',
-          name: 'Loading',
-          isBusy: true
-        };
-
-        supportedTypes.push(loading);
-        loadExternalAdapters().then(() => {
-          this.supportedEditors = getSupportedEditors();
-          this.supportedTypes = getSupportedTypes();
-        }).catch(() => {
-          this.supportedEditors = getSupportedEditors();
-          this.supportedTypes = getSupportedTypes();
-        });
-      } else {
-        externalAdapters = [];
-      }
-    }
-
-    this.supportedEditors = supportedEditors;
-    this.supportedTypes = supportedTypes;
-  },
   data() {
     return {
+      adapters: utils.getAdapters(),
       editor: {
         properties: this.model.item.endpointProperties || {},
         valid: false
@@ -150,9 +40,7 @@ export default Vue.component('endpoint-editor', {
       editorErrors: null,
       endpointType: this.model.item.endpointType,
       name: this.model.item.name,
-      saveDisabled: !this.model.item.documentSelfLink,
-      supportedEditors: [],
-      supportedTypes: []
+      saveDisabled: !this.model.item.documentSelfLink
     };
   },
   methods: {
@@ -202,7 +90,7 @@ export default Vue.component('endpoint-editor', {
       if (value) {
         return {
           id: value,
-          name: getSupportedTypes().find((type) => type.id === value).name
+          name: this.adapters.find((type) => type.id === value).name
         };
       }
     }

@@ -70,7 +70,7 @@
                     <tbody>
                       <td class="truncateText primary-cell" :title="item.name">{{item.name}}</td>
                       <td class="endpoint-icon" :title="item.endpointType">
-                        <img v-bind:src="'image-assets/endpoints/' + item.endpointType + '.png'">
+                        <img v-bind:src="getIconSrc(item.endpointType)">
                         <span class="truncateText">{{item.endpointType}}</span>
                       </td>
                       <!-- Actions column -->
@@ -88,7 +88,7 @@
             <template v-if="!isEditingOrHighlightedItem(item)">
               <td class="truncateText primary-cell" :title="item.name">{{item.name}}</td>
               <td class="endpoint-icon" :title="item.endpointType">
-                <img v-bind:src="'image-assets/endpoints/' + item.endpointType + '.png'">
+                <img v-bind:src="getIconSrc(item.endpointType)">
                 <span class="truncateText">{{item.endpointType}}</span>
               </td>
               <!-- Actions column -->
