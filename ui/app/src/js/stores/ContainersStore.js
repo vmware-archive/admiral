@@ -473,7 +473,8 @@ let ContainersStore = Reflux.createStore({
     actions.VolumeActions,
     actions.KubernetesActions,
     actions.RegistryActions,
-    actions.ContainersContextToolbarActions
+    actions.ContainersContextToolbarActions,
+    actions.ResourceGroupsActions
   ],
 
   decorateContainers: function(result, category, mergeWithExisting) {
@@ -1297,6 +1298,18 @@ let ContainersStore = Reflux.createStore({
       actions.ContainerActions.refreshContainer();
     } else {
       return this.refreshView(cursor, false, operationType, resourceIds);
+    }
+  },
+
+  onProjectOperationCompleted: function(operationType) {
+    if (operationType === constants.RESOURCES.PROJECTS.OPERATION.REMOVE) {
+      this.navigateToContainersListView(false);
+    }
+  },
+
+  onProjectOperationFailed: function(operationType) {
+    if (operationType === constants.RESOURCES.PROJECTS.OPERATION.REMOVE) {
+      this.navigateToContainersListView(false);
     }
   },
 
