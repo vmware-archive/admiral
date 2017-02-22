@@ -77,7 +77,7 @@
         <xenon.group>com.vmware.xenon</xenon.group>
 
         <!-- Photon Model -->
-        <photon.model.version>0.6.5</photon.model.version>
+        <photon.model.version>0.6.6-SNAPSHOT</photon.model.version>
 
         <!-- other -->
         <bouncycastle.version>1.54</bouncycastle.version>
