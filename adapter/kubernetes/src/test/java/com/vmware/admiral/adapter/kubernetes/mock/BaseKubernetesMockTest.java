@@ -12,16 +12,21 @@
 package com.vmware.admiral.adapter.kubernetes.mock;
 
 import java.net.URI;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 
 import com.vmware.admiral.adapter.common.service.mock.MockTaskFactoryService;
 import com.vmware.admiral.common.AuthCredentialsType;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
+import com.vmware.admiral.compute.kubernetes.service.DeploymentService;
+import com.vmware.admiral.compute.kubernetes.service.PodService;
+import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService;
+import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler;
+import com.vmware.admiral.host.CompositeComponentNotificationProcessingChain;
 import com.vmware.admiral.host.ComputeInitialBootService;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
@@ -29,6 +34,8 @@ import com.vmware.admiral.host.HostInitKubernetesAdapterServiceConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.OperationProcessingChain;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.VerificationHost;
@@ -57,6 +64,23 @@ public class BaseKubernetesMockTest extends BaseTestCase {
 
     @Before
     public void setUpMockKubernetesHost() throws Throwable {
+        ServiceHost.Arguments args = new ServiceHost.Arguments();
+        args.sandbox = null;
+        args.port = 0;
+        mockKubernetesHost = createHost();
+        mockKubernetesHost.setMaintenanceIntervalMicros(TimeUnit.MILLISECONDS
+                .toMicros(MAINTENANCE_INTERVAL_MILLIS));
+        kubernetesUri = UriUtils.buildUri(mockKubernetesHost,
+                MockKubernetesPathConstants.BASE_PATH);
+
+        kubernetesFailingUri = UriUtils.buildUri(mockKubernetesHost,
+                MockKubernetesPathConstants.BASE_FAILING_PATH);
+
+        kubernetesCredentials = new AuthCredentialsServiceState();
+        kubernetesCredentials.type = AuthCredentialsType.Password.name();
+        kubernetesCredentials.userEmail = "test@admiral";
+        kubernetesCredentials.privateKey = "password";
+
         HostInitTestDcpServicesConfig.startServices(host);
         HostInitPhotonModelServiceConfig.startServices(host);
         HostInitCommonServiceConfig.startServices(host);
@@ -75,32 +99,21 @@ public class BaseKubernetesMockTest extends BaseTestCase {
 
     }
 
-    @AfterClass
-    public static void tearDownMockDockerHost() {
+    @After
+    public void tearDownMockDockerHost() {
         if (mockKubernetesHost != null) {
             mockKubernetesHost.tearDown();
         }
     }
 
-    @BeforeClass
-    public static void startMockKubernetesHost() throws Throwable {
-        ServiceHost.Arguments args = new ServiceHost.Arguments();
-        args.sandbox = null;
-        args.port = 0;
-        mockKubernetesHost = VerificationHost.create(args);
-        mockKubernetesHost.start();
-        mockKubernetesHost.setMaintenanceIntervalMicros(TimeUnit.MILLISECONDS
-                .toMicros(MAINTENANCE_INTERVAL_MILLIS));
-        kubernetesUri = UriUtils.buildUri(mockKubernetesHost,
-                MockKubernetesPathConstants.BASE_PATH);
-
-        kubernetesFailingUri = UriUtils.buildUri(mockKubernetesHost,
-                MockKubernetesPathConstants.BASE_FAILING_PATH);
-
-        kubernetesCredentials = new AuthCredentialsServiceState();
-        kubernetesCredentials.type = AuthCredentialsType.Password.name();
-        kubernetesCredentials.userEmail = "test@admiral";
-        kubernetesCredentials.privateKey = "password";
+    @Override
+    protected void customizeChains(
+            Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains) {
+        chains.put(DeploymentService.class, CompositeComponentNotificationProcessingChain.class);
+        chains.put(PodService.class, CompositeComponentNotificationProcessingChain.class);
+        chains.put(ServiceEntityHandler.class, CompositeComponentNotificationProcessingChain.class);
+        chains.put(ReplicationControllerService.class,
+                CompositeComponentNotificationProcessingChain.class);
     }
 
     protected static AuthCredentialsServiceState getKubernetesCredentials() {

@@ -96,6 +96,27 @@ public abstract class BaseTestCase {
         }
 
         @Override
+        public ServiceHost startFactory(Service service) {
+            Class<? extends Service> serviceClass = service.getClass();
+            if (!applyOperationChainIfNeed(service, serviceClass, serviceClass, false)) {
+                if (service instanceof FactoryService) {
+                    try {
+                        Service actualInstance = ((FactoryService) service).createServiceInstance();
+                        Class<? extends Service> instanceClass = actualInstance.getClass();
+                        applyOperationChainIfNeed(service, instanceClass, FactoryService.class,
+                                false);
+                    } catch (Throwable e) {
+                        log(Level.SEVERE, "Failure: %s", Utils.toString(e));
+                    }
+                } else if (service instanceof StatefulService) {
+                    applyOperationChainIfNeed(service, serviceClass, StatefulService.class,
+                            true);
+                }
+            }
+            return super.startFactory(service);
+        }
+
+        @Override
         public ServiceHost startService(Operation post, Service service) {
             Class<? extends Service> serviceClass = service.getClass();
             if (!applyOperationChainIfNeed(service, serviceClass, serviceClass, false)) {

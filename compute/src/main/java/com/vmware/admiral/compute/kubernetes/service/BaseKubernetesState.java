@@ -11,13 +11,14 @@
 
 package com.vmware.admiral.compute.kubernetes.service;
 
+import com.vmware.admiral.compute.Composable;
 import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.photon.controller.model.resources.ResourceState;
 
 /**
  * Base class to keep the common properties of all Kubernetes States.
  */
-public abstract class BaseKubernetesState extends ResourceState {
+public abstract class BaseKubernetesState extends ResourceState implements Composable {
 
     public BaseKubernetesObject kubernetesEntity;
 
@@ -41,4 +42,9 @@ public abstract class BaseKubernetesState extends ResourceState {
     public String parentLink;
 
     public abstract String getKubernetesSelfLink();
+
+    @Override
+    public String retrieveCompositeComponentLink() {
+        return this.compositeComponentLink;
+    }
 }
