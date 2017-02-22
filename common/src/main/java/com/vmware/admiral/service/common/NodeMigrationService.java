@@ -16,6 +16,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
 import com.vmware.admiral.common.ManagementUriParts;
@@ -38,8 +39,8 @@ public class NodeMigrationService extends StatelessService {
 
     public Set<String> services = ConcurrentHashMap.newKeySet();
 
-    private Set<String> migrationTasksInProgress;
-    private boolean failure;
+    // Services that must be migrated last because their states depend on others
+    private Set<String> dependentServices = ConcurrentHashMap.newKeySet();
 
     public static class MigrationRequest {
         public String sourceNodeGroup;
@@ -48,8 +49,6 @@ public class NodeMigrationService extends StatelessService {
 
     @Override
     public void handlePost(Operation post) {
-        migrationTasksInProgress = ConcurrentHashMap.newKeySet();
-        failure = false;
         MigrationRequest body = post.getBody(MigrationRequest.class);
         if (services == null || services.isEmpty()) {
             getHost().log(Level.INFO, "No registered services for migration found!");
@@ -60,6 +59,7 @@ public class NodeMigrationService extends StatelessService {
             post.complete();
             return;
         }
+        setDependentServices();
         migrateData(body, post);
     }
 
@@ -74,24 +74,32 @@ public class NodeMigrationService extends StatelessService {
         services.add("/core/auth/credentials");
         services.add("/resources/compute");
         services.add("/resources/pools");
+        services.add("/resources/groups");
+        services.add("/resources/tags");
 
-        // TODO Check why the migration fails for those services
+        // Do not migrate these services
         services.remove("/resources/host-container-list-data-collection");
         services.remove("/resources/container-control-loop");
         services.remove("/resources/hosts-data-collections");
-        services.remove("/resources/group-placements");
 
         patch.complete();
     }
 
+    private void setDependentServices() {
+        // elastic placement zones depend on resource pools
+        services.remove(ManagementUriParts.ELASTIC_PLACEMENT_ZONES);
+        dependentServices.add(ManagementUriParts.ELASTIC_PLACEMENT_ZONES);
+    }
+
     private void migrateData(MigrationRequest body, Operation post) {
-        Iterator<String> servicesIterator = services.iterator();
         State migrationState = new State();
+        migrationState.continuousMigration = false;
         try {
             migrationState.sourceNodeGroupReference = new URI(body.sourceNodeGroup);
         } catch (Exception e) {
             getHost().log(Level.SEVERE, "Invalid sourceNodeGroupReference", e.getMessage());
             post.fail(e);
+            return;
         }
         if (body.destinationNodeGroup == null || body.destinationNodeGroup.isEmpty()) {
             try {
@@ -101,6 +109,7 @@ public class NodeMigrationService extends StatelessService {
                 getHost().log(Level.SEVERE, "Invalid destinationNodeGroupReference",
                         e.getMessage());
                 post.fail(e);
+                return;
             }
         } else {
             try {
@@ -109,14 +118,28 @@ public class NodeMigrationService extends StatelessService {
                 getHost().log(Level.SEVERE, "Invalid destinationNodeGroupReference",
                         e.getMessage());
                 post.fail(e);
+                return;
             }
         }
 
+        performMigration(post, services, migrationState, () -> {
+            performMigration(post, dependentServices, migrationState, () -> {
+                logInfo("Migration completed successfully");
+                post.complete();
+            });
+        });
+    }
+
+    private void performMigration(Operation post, Set<String> services, State migrationState,
+            Runnable callback) {
+
+        Set<String> migrationTasksInProgress = ConcurrentHashMap.newKeySet();
+        AtomicBoolean hasError = new AtomicBoolean(false);
+
+        Iterator<String> servicesIterator = services.iterator();
         servicesIterator.forEachRemaining(currentService -> {
             migrationState.destinationFactoryLink = currentService;
             migrationState.sourceFactoryLink = currentService;
-
-            migrationState.continuousMigration = false;
 
             sendRequest(Operation.createPost(this, MigrationTaskService.FACTORY_LINK)
                     .setBody(migrationState)
@@ -125,6 +148,9 @@ public class NodeMigrationService extends StatelessService {
                             getHost().log(Level.SEVERE,
                                     "Failure when calling migration task. Error: %s",
                                     ex.getMessage());
+                            if (hasError.compareAndSet(false, true)) {
+                                post.fail(ex);
+                            }
                         } else {
                             State state = o.getBody(State.class);
                             migrationTasksInProgress.add(state.documentSelfLink);
@@ -133,7 +159,7 @@ public class NodeMigrationService extends StatelessService {
                             if (migrationTasksInProgress.size() == services.size()) {
                                 getHost().log(Level.INFO, "All migration tasks created.");
                                 waitForMigrationToComplete(MIGRATION_CHECK_RETRIES,
-                                        migrationTasksInProgress, post);
+                                        migrationTasksInProgress, post, callback);
                             }
                         }
                     }));
@@ -141,49 +167,47 @@ public class NodeMigrationService extends StatelessService {
     }
 
     private void waitForMigrationToComplete(int retryCount, Set<String> migrationTasksInProgress,
-            Operation post) {
-        getHost().schedule(
-                () -> {
-                    Iterator<String> tasksIterator = migrationTasksInProgress.iterator();
-                    tasksIterator.forEachRemaining(currentTask -> {
-                        sendRequest(Operation.createGet(this, currentTask)
-                                .setCompletion((o, ex) -> {
-                                    if (ex != null) {
-                                        getHost().log(Level.SEVERE,
-                                                "Failure getting migration task: %s. Error: %s",
-                                                currentTask, ex.getMessage());
-                                    } else {
-                                        State state = o.getBody(State.class);
-                                        if (state.taskInfo.stage == TaskStage.FINISHED) {
-                                            logInfo("Migration task completed: %s", currentTask);
-                                            migrationTasksInProgress.remove(currentTask);
-                                        } else if (state.taskInfo.stage == TaskStage.FAILED) {
-                                            logInfo("Migration task failed: %s", currentTask);
-                                            migrationTasksInProgress.remove(currentTask);
-                                            failure = true;
-                                        }
-                                    }
-                                }));
-                    });
-                    int retriesRemaining = retryCount - 1;
-                    if (migrationTasksInProgress.isEmpty() && !failure) {
-                        logInfo("Migration completed successfully");
-                        post.complete();
-                        return;
-                    } else if (migrationTasksInProgress.isEmpty() && failure) {
-                        logSevere("Migration failed");
-                        post.fail(
-                                new Throwable(String.format("One or more migration tasks failed")));
-                        return;
-                    }
-                    if (retryCount > 0) {
-                        waitForMigrationToComplete(retriesRemaining, migrationTasksInProgress,
-                                post);
-                    } else {
-                        post.fail(new Throwable(String
-                                .format("Migration did not finish in the expected time frame")));
-                        logSevere("Migration did not finish in the expected time frame");
-                    }
-                }, MIGRATION_CHECK_DELAY_SECONDS, TimeUnit.SECONDS);
+            Operation post, Runnable callback) {
+
+        final AtomicBoolean hasError = new AtomicBoolean(false);
+
+        getHost().schedule(() -> {
+            Iterator<String> tasksIterator = migrationTasksInProgress.iterator();
+            tasksIterator.forEachRemaining(currentTask -> {
+                sendRequest(Operation.createGet(this, currentTask)
+                        .setCompletion((o, ex) -> {
+                            if (ex != null) {
+                                getHost().log(Level.SEVERE,
+                                        "Failure getting migration task: %s. Error: %s",
+                                        currentTask, ex.getMessage());
+                            } else {
+                                State state = o.getBody(State.class);
+                                if (state.taskInfo.stage == TaskStage.FINISHED) {
+                                    logInfo("Migration task completed: %s", currentTask);
+                                    migrationTasksInProgress.remove(currentTask);
+                                } else if (state.taskInfo.stage == TaskStage.FAILED) {
+                                    logInfo("Migration task failed: %s", currentTask);
+                                    hasError.set(true);
+                                    migrationTasksInProgress.remove(currentTask);
+                                }
+                            }
+                        }));
+            });
+            if (migrationTasksInProgress.isEmpty() && !hasError.get()) {
+                callback.run();
+                return;
+            } else if (migrationTasksInProgress.isEmpty() && hasError.get()) {
+                logSevere("Migration failed");
+                post.fail(new Throwable("One or more migration tasks failed"));
+                return;
+            }
+            if (retryCount > 0) {
+                waitForMigrationToComplete(retryCount - 1, migrationTasksInProgress,
+                        post, callback);
+            } else {
+                post.fail(new Throwable("Migration did not finish in the expected time frame"));
+                logSevere("Migration did not finish in the expected time frame");
+            }
+        }, MIGRATION_CHECK_DELAY_SECONDS, TimeUnit.SECONDS);
     }
 }
