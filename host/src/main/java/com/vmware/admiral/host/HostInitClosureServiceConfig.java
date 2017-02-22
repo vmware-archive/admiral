@@ -24,6 +24,7 @@ import com.vmware.admiral.closures.services.adapter.AdmiralAdapterFactoryService
 import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionFactoryService;
 import com.vmware.admiral.closures.services.images.DockerImageFactoryService;
+import com.vmware.admiral.service.test.MockClosureFactoryService;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
@@ -35,20 +36,26 @@ public class HostInitClosureServiceConfig extends HostInitServiceHelper {
 
     private static final DriverRegistry driverRegistry = new DriverRegistryImpl();
 
-    public static void startServices(ServiceHost host) {
-        List<FactoryService> factoryServices = initializeFactoryService();
+    public static void startServices(ServiceHost host, boolean startMockHostAdapterInstance) {
+        List<FactoryService> factoryServices = initializeFactoryService(
+                startMockHostAdapterInstance);
 
         registerExecutionDrivers(host);
 
         HostInitClosureServiceConfig.startFactoryServices(host, factoryServices);
     }
 
-    private static List<FactoryService> initializeFactoryService() {
+    private static List<FactoryService> initializeFactoryService(
+            boolean startMockHostAdapterInstance) {
         List<FactoryService> factoryServices = new ArrayList<>(3);
 
         factoryServices.add(new ClosureDescriptionFactoryService());
         factoryServices.add(new DockerImageFactoryService(driverRegistry));
-        factoryServices.add(new ClosureFactoryService(driverRegistry));
+        if (startMockHostAdapterInstance) {
+            factoryServices.add(new MockClosureFactoryService(driverRegistry));
+        } else {
+            factoryServices.add(new ClosureFactoryService(driverRegistry));
+        }
         factoryServices.add(new AdmiralAdapterFactoryService());
 
         return factoryServices;

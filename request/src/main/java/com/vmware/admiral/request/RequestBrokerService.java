@@ -246,8 +246,6 @@ public class RequestBrokerService extends
                     createContainerNetworkRemovalTask(state, true);
                 } else if (isContainerVolumeType(state)) {
                     createContainerVolumeRemovalTask(state, true);
-                } else if (isClosureType(state)) {
-                    createClosureRemovalTasks(state);
                 } else {
                     createContainerRemovalTasks(state, false);
                 }

@@ -67,16 +67,15 @@ public class AdmiralDockerClient implements ClosureDockerClient {
                 .setReferer(getHost().getUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        logError("Unable to build image on docker host: ", ex);
+                        logError("Unable to send provisioning request: ", ex);
                         errorHandler.accept(ex);
                         return;
                     }
 
                     logInfo("Docker provisioning request sent. image: %s, host: %s", containerImage,
                             configuration);
+                    errorHandler.accept(null);
                 }));
-
-        logInfo("Provisioning request of execution container has been sent.");
     }
 
     @Override

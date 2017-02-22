@@ -642,7 +642,7 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         }
     }
 
-    private Closure updateState(Operation patch, Closure requestedState) {
+    protected Closure updateState(Operation patch, Closure requestedState) {
         Closure currentState = this.getState(patch);
 
         if (requestedState.resourceLinks != null) {
@@ -749,9 +749,11 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
 
         String token = getToken(op);
         execDriver.executeClosure(closure, closureDesc, token, (error) -> {
-            closure.state = TaskStage.FAILED;
-            closure.errorMsg = error.getMessage();
-            sendSelfPatch(closure);
+            if (error != null) {
+                closure.state = TaskStage.FAILED;
+                closure.errorMsg = error.getMessage();
+                sendSelfPatch(closure);
+            }
         });
 
         this.setState(op, closure);

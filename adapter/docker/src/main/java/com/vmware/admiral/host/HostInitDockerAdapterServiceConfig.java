@@ -23,6 +23,7 @@ import com.vmware.admiral.adapter.docker.service.DockerVolumeAdapterService;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.service.test.MockComputeHostInstanceAdapter;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
+import com.vmware.admiral.service.test.MockDockerHostAdapterImageService;
 import com.vmware.admiral.service.test.MockDockerHostAdapterService;
 import com.vmware.admiral.service.test.MockDockerNetworkAdapterService;
 import com.vmware.admiral.service.test.MockDockerVolumeAdapterService;
@@ -51,6 +52,10 @@ public class HostInitDockerAdapterServiceConfig {
 
             host.startService(Operation.createPost(UriUtils.buildUri(host,
                     MockDockerVolumeAdapterService.class)), new MockDockerVolumeAdapterService());
+            host.startService(
+                    Operation.createPost(
+                            UriUtils.buildUri(host, MockDockerHostAdapterImageService.class)),
+                    new MockDockerHostAdapterImageService());
         } else {
             URI instanceReference = null;
             String remoteAdapterReference = System

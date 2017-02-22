@@ -76,7 +76,7 @@ import com.vmware.xenon.services.common.QueryTask;
 
 public abstract class BaseTestCase {
 
-    private static final int WAIT_FOR_STAGE_CHANGE_COUNT = Integer.getInteger(
+    protected static final int WAIT_FOR_STAGE_CHANGE_COUNT = Integer.getInteger(
             "dcp.management.test.change.count", 2500);
     private static final int WAIT_FOR_STAGE_CHANGE_COUNT_LONGER = Integer.getInteger(
             "dcp.management.test.change.longer.count", 5000);
@@ -386,7 +386,7 @@ public abstract class BaseTestCase {
             assertTrue(childTemplate.documentDescription != null);
             assertTrue(childTemplate.documentDescription.propertyDescriptions != null
                     && childTemplate.documentDescription.propertyDescriptions
-                            .size() > 0);
+                    .size() > 0);
 
             if (!TaskServiceDocument.class.isAssignableFrom(childTemplate.getClass())) {
                 Field[] allFields = childTemplate.getClass().getDeclaredFields();
