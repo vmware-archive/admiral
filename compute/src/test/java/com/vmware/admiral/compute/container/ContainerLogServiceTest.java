@@ -16,10 +16,8 @@ import static org.junit.Assert.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.UUID;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -31,13 +29,11 @@ import com.vmware.xenon.common.UriUtils;
 
 public class ContainerLogServiceTest extends ComputeBaseTest {
     private static final String TEST_LOG_CONTENT = "Test-file234";
-    private List<String> documentLinksForDeletion;
     private ContainerState container;
     private LogServiceState logState;
 
     @Before
     public void setUp() throws Throwable {
-        documentLinksForDeletion = new ArrayList<>();
         waitForServiceAvailability(LogService.FACTORY_LINK);
         waitForServiceAvailability(ContainerFactoryService.SELF_LINK);
         waitForServiceAvailability(ContainerLogService.SELF_LINK);
@@ -46,18 +42,10 @@ public class ContainerLogServiceTest extends ComputeBaseTest {
         container.id = UUID.randomUUID().toString();
         container.names = new ArrayList<>(Arrays.asList("test-name"));
         container = doPost(container, ContainerFactoryService.SELF_LINK);
-        documentLinksForDeletion.add(container.documentSelfLink);
 
         logState = new LogServiceState();
         logState.logs = TEST_LOG_CONTENT.getBytes();
         logState.documentSelfLink = extractId(container.documentSelfLink);
-    }
-
-    @After
-    public void tearDown() throws Throwable {
-        for (String selfLink : documentLinksForDeletion) {
-            delete(selfLink);
-        }
     }
 
     @Test
@@ -69,7 +57,6 @@ public class ContainerLogServiceTest extends ComputeBaseTest {
     @Test
     public void testLog() throws Throwable {
         logState = doPost(logState, LogService.FACTORY_LINK);
-        documentLinksForDeletion.add(logState.documentSelfLink);
 
         LogServiceState currentLogState = getContainerLog();
         assertEquals(TEST_LOG_CONTENT, new String(currentLogState.logs));

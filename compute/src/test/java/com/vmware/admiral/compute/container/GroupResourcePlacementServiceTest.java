@@ -31,7 +31,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -50,7 +49,6 @@ import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service.Action;
-import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.VerificationHost;
@@ -62,7 +60,6 @@ import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
 public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
 
-    private List<ServiceDocument> documentsForDeletion;
     private ContainerDescription containerDescription;
     private URI requestReservationTaskURI;
     private ResourcePoolState resourcePool;
@@ -72,7 +69,6 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
 
     @Before
     public void setUp() throws Throwable {
-        documentsForDeletion = new ArrayList<>();
         waitForServiceAvailability(GroupResourcePlacementService.FACTORY_LINK);
         waitForServiceAvailability(ResourcePoolService.FACTORY_LINK);
         requestReservationTaskURI = UriUtils.buildUri(host,
@@ -83,17 +79,6 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
         containerDescription = createAndStoreContainerDescription("test-link");
         resourcePool = createResourcePool();
         CONTAINER_MEMORY = ContainerDescriptionService.getContainerMinMemoryLimit();
-    }
-
-    @After
-    public void tearDown() throws Throwable {
-        for (ServiceDocument doc : documentsForDeletion) {
-            try {
-                delete(doc.documentSelfLink);
-            } catch (Throwable e) {
-                host.log("Exception during cleanup for: " + doc.documentSelfLink);
-            }
-        }
     }
 
     @Test
@@ -666,7 +651,6 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
         });
         countDownLatch.await();
         assertTrue(deleted.get());
-        documentsForDeletion.remove(placementState);
     }
 
     @Test
@@ -749,7 +733,6 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
 
         containerDesc = doPost(containerDesc, ContainerDescriptionService.FACTORY_LINK);
         assertNotNull(containerDesc);
-        documentsForDeletion.add(containerDesc);
         return containerDesc;
     }
 
@@ -792,7 +775,6 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
 
         if (result[0] != null) {
             placementState = result[0];
-            documentsForDeletion.add(placementState);
         }
 
         return placementState;
@@ -829,7 +811,6 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
         poolState.minDiskCapacityBytes = poolState.maxDiskCapacityBytes = maxStorage;
         ResourcePoolState outResPoolState = doPost(poolState, ResourcePoolService.FACTORY_LINK);
         assertNotNull(outResPoolState);
-        documentsForDeletion.add(outResPoolState);
         return outResPoolState;
     }
 

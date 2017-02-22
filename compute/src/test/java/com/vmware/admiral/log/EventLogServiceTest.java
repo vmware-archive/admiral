@@ -13,10 +13,6 @@ package com.vmware.admiral.log;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -24,19 +20,10 @@ import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 
 public class EventLogServiceTest extends ComputeBaseTest {
-    private List<String> eventLogsForDeletion;
 
     @Before
     public void setUp() throws Throwable {
         waitForServiceAvailability(EventLogService.FACTORY_LINK);
-        eventLogsForDeletion = new ArrayList<>();
-    }
-
-    @After
-    public void tearDown() throws Throwable {
-        for (String selfLink : eventLogsForDeletion) {
-            delete(selfLink);
-        }
     }
 
     @Test
@@ -47,7 +34,6 @@ public class EventLogServiceTest extends ComputeBaseTest {
         eventLogState.description = "Host config failed.";
 
         EventLogState newEventLogState = doPost(eventLogState, EventLogService.FACTORY_LINK);
-        eventLogsForDeletion.add(newEventLogState.documentSelfLink);
 
         assertEquals(eventLogState.resourceType, newEventLogState.resourceType);
         assertEquals(eventLogState.eventLogType, newEventLogState.eventLogType);

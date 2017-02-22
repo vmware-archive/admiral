@@ -22,7 +22,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -67,19 +66,6 @@ public class EpzComputeEnumerationTaskServiceTest extends ComputeBaseTest {
         this.cs5 = createComputeState("desc2", "addr-pa-5", null);
         this.cs6 = createComputeState("desc2", "addr-pa-6", this.epz3.documentSelfLink);
         this.cs7 = createComputeState("desc1", "addr-sof-1", this.epz2.documentSelfLink, "tag1");
-    }
-
-    @After
-    public void deleteTestModel() throws Throwable {
-        for (ElasticPlacementZoneConfigurationState epz : Arrays.asList(this.epz1, this.epz2,
-                this.epz3)) {
-            delete(ElasticPlacementZoneConfigurationService.SELF_LINK + epz.documentSelfLink);
-        }
-
-        for (ComputeState cs : Arrays.asList(this.cs1, this.cs2, this.cs3, this.cs4, this.cs5,
-                this.cs6, this.cs7)) {
-            delete(cs.documentSelfLink);
-        }
     }
 
     public void setUp() throws Throwable {

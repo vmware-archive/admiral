@@ -22,7 +22,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Consumer;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -63,11 +62,6 @@ public class SubscriptionManagementTest extends ComputeBaseTest {
         waitForServiceAvailability(service.getSelfLink());
     }
 
-    @After
-    public void tearDown() throws Throwable {
-        unsubscribe();
-    }
-
     private String subscribe() throws Throwable {
         TestContext ctx = testCreate(1);
         subscriptionManager.setCompletionHandler((e) -> {
@@ -82,23 +76,6 @@ public class SubscriptionManagementTest extends ComputeBaseTest {
         // reset completion handler
         subscriptionManager.setCompletionHandler(null);
         return subscriptionId;
-    }
-
-    private void unsubscribe() throws Throwable {
-        if (this.subscriptionManager == null) {
-            return;
-        }
-
-        TestContext ctx = testCreate(1);
-        subscriptionManager.setCompletionHandler((e) -> {
-            if (e != null) {
-                ctx.failIteration(e);
-                return;
-            }
-            ctx.completeIteration();
-        });
-        subscriptionManager.close();
-        testWait(ctx);
     }
 
     @Test

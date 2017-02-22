@@ -25,7 +25,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -42,19 +41,10 @@ import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 
 public class ContainerServiceTest extends ComputeBaseTest {
-    private List<String> containersForDeletion;
 
     @Before
     public void setUp() throws Throwable {
         waitForServiceAvailability(ContainerFactoryService.SELF_LINK);
-        containersForDeletion = new ArrayList<>();
-    }
-
-    @After
-    public void tearDown() throws Throwable {
-        for (String selfLink : containersForDeletion) {
-            delete(selfLink);
-        }
     }
 
     @Test
@@ -79,7 +69,6 @@ public class ContainerServiceTest extends ComputeBaseTest {
                 },
                 (prefix, serviceDocument) -> {
                     ContainerState containerState = (ContainerState) serviceDocument;
-                    containersForDeletion.add(containerState.documentSelfLink);
                     assertTrue(containerState.id.startsWith(prefix + "id"));
                     assertTrue(containerState.names.get(0).startsWith(prefix + "name"));
                     assertArrayEquals(new String[] { "cat" }, containerState.command);
@@ -134,15 +123,17 @@ public class ContainerServiceTest extends ComputeBaseTest {
     @Test
     public void testODataWithManyEntities() throws Throwable {
         int numberOfContainers = 6000;
+        List<String> containers = new ArrayList<>();
         for (int i = 0; i <= numberOfContainers; i++) {
-            createContainer("/parent/1", "tenant1");
+            ContainerState state = createContainer("/parent/1", "tenant1");
+            containers.add(state.documentSelfLink);
         }
 
         for (int i = 0; i <= numberOfContainers; i++) {
             ContainerState containerState = new ContainerState();
             containerState.customProperties = new HashMap<String, String>();
             containerState.customProperties.put("keyTestProp", "valueTestProp");
-            doPatch(containerState, containersForDeletion.get(i));
+            doPatch(containerState, containers.get(i));
         }
         queryContainers(numberOfContainers + 1);
         countQueryContainers(numberOfContainers + 1);
@@ -186,7 +177,6 @@ public class ContainerServiceTest extends ComputeBaseTest {
         containerState.tenantLinks = Collections.singletonList(group);
 
         containerState = doPost(containerState, ContainerFactoryService.SELF_LINK);
-        containersForDeletion.add(containerState.documentSelfLink);
 
         return containerState;
     }

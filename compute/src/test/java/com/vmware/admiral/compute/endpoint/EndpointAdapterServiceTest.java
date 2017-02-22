@@ -18,8 +18,6 @@ import static com.vmware.admiral.compute.PlacementZoneConstants.RESOURCE_TYPE_CU
 
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.After;
@@ -48,11 +46,8 @@ import com.vmware.xenon.services.common.AuthCredentialsService;
 
 public class EndpointAdapterServiceTest extends ComputeBaseTest {
 
-    private List<String> documentLinksForDeletion;
-
     @Before
     public void setUp() throws Throwable {
-        documentLinksForDeletion = new ArrayList<>();
         waitForServiceAvailability(EndpointService.FACTORY_LINK);
         waitForServiceAvailability(ComputeDescriptionService.FACTORY_LINK);
         waitForServiceAvailability(ComputeService.FACTORY_LINK);
@@ -62,23 +57,16 @@ public class EndpointAdapterServiceTest extends ComputeBaseTest {
 
     @After
     public void tearDown() throws Throwable {
-        for (String selfLink : documentLinksForDeletion) {
-            delete(selfLink);
-        }
         DeploymentProfileConfig.getInstance().setTest(false);
     }
 
     @Test
     public void testListEndpoints() throws Throwable {
         EndpointState endpoint1 = createEndpoint("ep1");
-
-        EndpointAllocationTaskState newEndpointState1 = allocateEndpoint(endpoint1);
-        documentLinksForDeletion.add(newEndpointState1.endpointState.documentSelfLink);
+        allocateEndpoint(endpoint1);
 
         EndpointState endpoint2 = createEndpoint("ep2");
-
-        EndpointAllocationTaskState newEndpointState2 = allocateEndpoint(endpoint2);
-        documentLinksForDeletion.add(newEndpointState2.endpointState.documentSelfLink);
+        allocateEndpoint(endpoint2);
 
         ServiceDocumentQueryResult queryResult = getDocument(ServiceDocumentQueryResult.class,
                 EndpointAdapterService.SELF_LINK);
@@ -90,14 +78,10 @@ public class EndpointAdapterServiceTest extends ComputeBaseTest {
     @Test
     public void testListEndpointsExpanded() throws Throwable {
         EndpointState endpoint1 = createEndpoint("ep1");
-
-        EndpointAllocationTaskState newEndpointState1 = allocateEndpoint(endpoint1);
-        documentLinksForDeletion.add(newEndpointState1.endpointState.documentSelfLink);
+        allocateEndpoint(endpoint1);
 
         EndpointState endpoint2 = createEndpoint("ep2");
-
-        EndpointAllocationTaskState newEndpointState2 = allocateEndpoint(endpoint2);
-        documentLinksForDeletion.add(newEndpointState2.endpointState.documentSelfLink);
+        allocateEndpoint(endpoint2);
 
         TestContext ctx = testCreate(1);
         AtomicReference<ServiceDocumentQueryResult> result = new AtomicReference<>();
@@ -131,7 +115,6 @@ public class EndpointAdapterServiceTest extends ComputeBaseTest {
         EndpointState endpoint1 = createEndpoint("ep1");
 
         EndpointAllocationTaskState newEndpointState1 = allocateEndpoint(endpoint1);
-        documentLinksForDeletion.add(newEndpointState1.endpointState.documentSelfLink);
 
         String uriPath = UriUtils.buildUriPath(EndpointAdapterService.SELF_LINK,
                 newEndpointState1.endpointState.documentSelfLink);
@@ -164,9 +147,6 @@ public class EndpointAdapterServiceTest extends ComputeBaseTest {
         assertEquals(RESOURCE_TYPE_CUSTOM_PROP_NAME + " custom property is not set.",
                 ResourceType.COMPUTE_TYPE.getName(),
                 epRp.customProperties.get(RESOURCE_TYPE_CUSTOM_PROP_NAME));
-
-        documentLinksForDeletion.add(UriUtils.buildUriPath(EndpointAdapterService.SELF_LINK,
-                newEndpointState.documentSelfLink));
     }
 
     @Test
@@ -237,9 +217,6 @@ public class EndpointAdapterServiceTest extends ComputeBaseTest {
         ScheduledTaskState scheduledTaskState = getDocument(ScheduledTaskState.class,
                 schedTaskLink);
         assertNotNull(scheduledTaskState);
-
-        documentLinksForDeletion.add(UriUtils.buildUriPath(EndpointAdapterService.SELF_LINK,
-                newEndpointState.documentSelfLink));
     }
 
     @Test
@@ -252,8 +229,6 @@ public class EndpointAdapterServiceTest extends ComputeBaseTest {
         assertNotNull(endpointAllocationTask.endpointState.documentSelfLink);
         delete(UriUtils.buildUriPath(EndpointAdapterService.SELF_LINK,
                 endpointAllocationTask.endpointState.documentSelfLink));
-
-        documentLinksForDeletion.add(endpointAllocationTask.endpointState.documentSelfLink);
     }
 
 }

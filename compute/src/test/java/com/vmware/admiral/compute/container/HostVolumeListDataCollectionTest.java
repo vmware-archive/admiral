@@ -60,7 +60,6 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
     private static final String GLOBAL_SCOPE = "global";
 
     private VolumeListCallback volumeListCallback;
-    private List<String> volumesForDeletion;
 
     @Before
     public void setUp() throws Throwable {
@@ -97,15 +96,10 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
         cs.customProperties = new HashMap<String, String>();
 
         doPost(cs, ComputeService.FACTORY_LINK);
-
-        volumesForDeletion = new ArrayList<>();
     }
 
     @After
     public void tearDown() throws Throwable {
-        for (String selfLink : volumesForDeletion) {
-            delete(selfLink);
-        }
         MockDockerVolumeAdapterService.resetVolumes();
     }
 
@@ -298,7 +292,6 @@ public class HostVolumeListDataCollectionTest extends ComputeBaseTest {
         volumeState.originatingHostLink = hostLink;
         volumeState.parentLinks = Arrays.asList(hostLink);
         volumeState = doPost(volumeState, ContainerVolumeService.FACTORY_LINK);
-        volumesForDeletion.add(volumeState.documentSelfLink);
         return volumeState;
     }
 

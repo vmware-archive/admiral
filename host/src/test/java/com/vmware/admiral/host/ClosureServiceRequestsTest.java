@@ -11,6 +11,10 @@
 
 package com.vmware.admiral.host;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,12 +26,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-
 import com.google.gson.JsonPrimitive;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -55,7 +54,6 @@ public class ClosureServiceRequestsTest extends BaseTestCase {
 
     private static final int DEFAULT_OPERATION_TIMEOUT = 30;
 
-    private ComputeService.ComputeState compute;
 
     @Before
     public void setUp() throws Exception {
@@ -64,16 +62,11 @@ public class ClosureServiceRequestsTest extends BaseTestCase {
 
             waitForServiceAvailability(ComputeInitialBootService.SELF_LINK);
             waitForInitialBootServiceToBeSelfStopped(ComputeInitialBootService.SELF_LINK);
-            compute = createTestHostState();
+            createTestHostState();
 
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @After
-    public void after() throws Throwable {
-        clean(UriUtils.buildUri(this.host, compute.documentSelfLink));
     }
 
     @Override
