@@ -360,9 +360,9 @@ public class ComputeReservationTaskService
             return;
         }
 
-        final Set<String> resourcePools = new HashSet<>();
-        state.selectedComputePlacementHosts
-                .forEach(hs -> resourcePools.addAll(hs.resourcePoolLinks));
+        final Set<String> resourcePools = state.selectedComputePlacementHosts.stream()
+                .flatMap(hs -> hs.resourcePoolLinks.stream())
+                .collect(Collectors.toSet());
 
         if (state.resourcePoolsPerGroupPlacementLinks != null) {
             state.resourcePoolsPerGroupPlacementLinks = state.resourcePoolsPerGroupPlacementLinks
@@ -403,6 +403,17 @@ public class ComputeReservationTaskService
                         failTask("Error retrieving environments for the selected placements: ", e);
                         return;
                     }
+
+                    logInfo(() -> String.format("Found %d endpoints with configured environments:",
+                            envs.size()));
+                    if (envs.isEmpty()) {
+                        failTask(null, new IllegalStateException(
+                                "No environments found for the selected candidate placements"));
+                        return;
+                    }
+                    envs.forEach(envEntry -> logInfo(
+                            () -> String.format("Endpoint %s, environments: %s",
+                                    envEntry.endpoint.documentSelfLink, envEntry.envLinks)));
 
                     EnvironmentComputeDescriptionEnhancer enhancer = new EnvironmentComputeDescriptionEnhancer(
                             getHost(), UriUtils.buildUri(getHost().getPublicUri(), getSelfLink()));
@@ -453,6 +464,12 @@ public class ComputeReservationTaskService
                         logInfo("Remaining candidate placements after endpoint filtering: "
                                 + filteredPlacements);
 
+                        if (filteredPlacements.isEmpty()) {
+                            failTask(null, new IllegalStateException(
+                                    "No candidate placements left after endpoint filtering"));
+                            return;
+                        }
+
                         filterPlacementsByRequirements(state, filteredPlacements, tenantLinks,
                                 computeDesc);
                     });
@@ -462,10 +479,6 @@ public class ComputeReservationTaskService
     private void filterPlacementsByRequirements(ComputeReservationTaskState state,
             List<GroupResourcePlacementState> placements, List<String> tenantLinks,
             ComputeDescription computeDesc) {
-        if (placements == null) {
-            failTask(null, new IllegalStateException("No placements found"));
-            return;
-        }
         // retrieve the tag links from constraint conditions
         Map<Condition, String> tagLinkByCondition = TagConstraintUtils.extractPlacementTagConditions(
                 computeDesc.constraints, computeDesc.tenantLinks);
