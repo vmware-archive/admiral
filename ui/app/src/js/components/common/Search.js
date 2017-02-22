@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -283,6 +283,10 @@ var setQueryCategory = function(categoryName) {
     var placeholderHint = this.properties.placeholderHintByCategory[categoryName];
     this.$input.attr('placeholder', placeholderHint);
     this.$el.find('.token-input.tt-input').attr('placeholder', placeholderHint);
+  }
+  if (this.properties.suggestionPropertiesByCategory) {
+    this.properties.suggestionProperties =
+      this.properties.suggestionPropertiesByCategory[categoryName];
   }
 };
 

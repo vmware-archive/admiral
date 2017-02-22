@@ -50,6 +50,10 @@ var ft = {
   areClosuresAllowed: function() {
     return utils.getConfigurationPropertyBoolean('allow.closures') &&
       !utils.isApplicationEmbedded();
+  },
+
+  showProjectsInNavigation: function() {
+    return utils.getConfigurationPropertyBoolean('allow.ft.projects.in.navigation');
   }
 };
 

@@ -1,0 +1,51 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="container-item">
+  <alert v-bind:alert-type="alert.type"
+          v-bind:show-alert="alert.show"
+          v-bind:alert-message="alert.message"
+          v-bind:alert-timeout="3000"
+          v-on:alert-closed="closeAlert()"></alert>
+  <div class="status">
+    <span class="status-state">{{i18n("app.resource.list.project.name")}}</span>
+  </div>
+  <div class="container-header">
+    <img v-bind:src="model.icon"/>
+    <div class="title-holder">
+      <div class="title truncateText" :title="model.name">{{model.name}}</div>
+      <div class="image-tag truncateText" :title="model.image">{{model.image}}</div>
+    </div>
+  </div>
+  <hr/>
+  <div class="container-content">
+    <div class="project-description-holder">
+      <span class="container-label">{{i18n("app.resource.list.project.description")}}</span>
+      <span>{{model.description}}</span>
+    </div>
+    <div class="project-private-flag-holder">
+      <span class="container-label">{{i18n("app.resource.list.project.private")}}</span>
+      <span>{{model.isPrivate}}</span>
+    </div>
+  </div>
+  <!-- TODO not fully implemented yet
+  <div class="container-actions"
+       v-bind:class="{'hide': showDeleteConfirmation || alert.show}">
+    <action-button name="remove" icon-name="trash"
+                   v-bind:label="i18n('app.container.actions.remove')"
+                   v-bind:supported="operationSupported('REMOVE')"
+                   v-on:click="removeProjectClicked($event)"></action-button>
+  </div>
+  <delete-confirmation v-bind:show="showDeleteConfirmation"
+                       v-on:confirm-delete="doRemoveProject"
+                       v-on:cancel-delete="cancelRemoval($event)"></delete-confirmation>
+  -->
+</div>

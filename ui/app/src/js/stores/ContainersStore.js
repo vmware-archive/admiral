@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -160,6 +160,13 @@ function enhanceClosureWithDescription(closure, closureDescription) {
   closure.descriptionId = closureDescription.documentSelfLink;
   closure.resources = closureDescription.resources;
   return closure;
+}
+
+function enhanceProject(project) {
+  project.icon = imageUtils.getImageIconLink(project.name);
+  project.documentId = utils.getDocumentId(project.documentSelfLink);
+  project.type = constants.RESOURCES.TYPES.PROJECT;
+  return project;
 }
 
 function getSelectedItemDetailsCursor() {
@@ -480,7 +487,8 @@ let ContainersStore = Reflux.createStore({
     if (category === constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS ||
         category === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS ||
         category === constants.RESOURCES.SEARCH_CATEGORY.VOLUMES ||
-        category === constants.RESOURCES.SEARCH_CATEGORY.CLOSURES) {
+        category === constants.RESOURCES.SEARCH_CATEGORY.CLOSURES ||
+        category === constants.RESOURCES.SEARCH_CATEGORY.PROJECTS) {
 
       let enhanceFunction;
       switch (category) {
@@ -495,6 +503,9 @@ let ContainersStore = Reflux.createStore({
           break;
         case constants.RESOURCES.SEARCH_CATEGORY.CLOSURES:
           enhanceFunction = enhanceClosureDesc;
+          break;
+        case constants.RESOURCES.SEARCH_CATEGORY.PROJECTS:
+          enhanceFunction = enhanceProject;
           break;
       }
 
@@ -632,6 +643,10 @@ let ContainersStore = Reflux.createStore({
 
         case constants.RESOURCES.SEARCH_CATEGORY.KUBERNETES:
           loadResourceFunction = services.loadKubernetesEntities;
+          break;
+
+        case constants.RESOURCES.SEARCH_CATEGORY.PROJECTS:
+          loadResourceFunction = services.loadProjects;
           break;
 
         default:

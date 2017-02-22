@@ -21,6 +21,7 @@
       "placements": "Placements",
       "templates": "Templates",
       "resources": "Resources",
+      "projects": "Projects",
       "containers": "Containers",
       "applications": "Applications",
       "networks": "Networks",
@@ -646,6 +647,11 @@
             "ERROR": "ERROR"
           }
         },
+        "project": {
+          "name": "Project",
+          "description": "Description",
+          "private": "Private"
+        },
         "container": {
           "create": "Create Container"
         },
@@ -677,6 +683,7 @@
           }
         },
         "titleSearch": {
+          "projects": "Projects",
           "containers": "Containers",
           "applications": "Applications",
           "networks": "Networks",
@@ -685,6 +692,7 @@
           "kubernetes": "Kubernetes"
         },
         "searchPlaceholder": {
+          "projects": "Search for projects",
           "containers": "Search for containers",
           "applications": "Search for applications",
           "networks": "Search for networks",

@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~ Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
   ~
   ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
   ~ You may not use this product except in compliance with the License.
@@ -16,7 +16,7 @@
            v-if="model.listView">
         <a class="close-button" v-on:click="goBack($event)"><i class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
         <div class="toolbar">
-          <search v-bind:suggestion-properties="searchSuggestions"
+          <search v-bind:suggestion-properties-by-category="searchSuggestionsByCategoryMap"
                   v-bind:placeholder-by-category="placeholderByCategoryMap"
                   v-bind:query-options="model.listView.queryOptions"
                   v-bind:occurrence-properties="
@@ -29,6 +29,7 @@
                     }]"
                   v-on:search-change="search"
                   ></search>
+          <!-- TODO add Create button for projects -->
           <a href="#/containers/new" class="btn btn-primary create-resource-btn" v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS">
             <i class="fa fa-plus-circle"></i>{{i18n("app.resource.list.container.create")}}
           </a>
@@ -97,8 +98,12 @@
               <grid-item v-for="item in model.listView.items"
                          v-bind:class="{'context-selected': item.documentId == selectedItemDocumentId}"
                          track-by="documentId"
-                         v-bind:select-mode-on="selectionMode"   git
+                         v-bind:select-mode-on="selectionMode"
                          v-bind:is-marked="isMarked(item)">
+                <project-grid-item v-if="item.type === constants.RESOURCES.TYPES.PROJECT"
+                                     v-bind:model="item"
+                                     v-on:click="handleItemClick($event, item)">
+                </project-grid-item>
                 <container-grid-item v-if="item.type === constants.CONTAINERS.TYPES.SINGLE"
                                      v-bind:model="item"
                                      v-bind:show-alert-managed-by-catalog="hasManagedByCatalogAlert(item.documentId)"

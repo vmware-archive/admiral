@@ -56,6 +56,7 @@ var utils = {
   },
   showResourcesView: function(viewName) {
    return viewName === constants.VIEWS.RESOURCES.name
+            || viewName === constants.VIEWS.RESOURCES.VIEWS.PROJECTS.name
             || viewName === constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name
             || viewName === constants.VIEWS.RESOURCES.VIEWS.APPLICATIONS.name
             || viewName === constants.VIEWS.RESOURCES.VIEWS.NETWORKS.name

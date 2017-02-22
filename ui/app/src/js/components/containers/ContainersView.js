@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -15,6 +15,7 @@ import ClosureListItem from 'components/containers/ClosureListItem'; //eslint-di
 import ClusterContainersListItem from 'components/containers/cluster/ClusterContainersListItem';  //eslint-disable-line
 import CompositeContainersListItem from 'components/containers/composite/CompositeContainersListItem'; //eslint-disable-line
 import CompositeClosuresListItem from 'components/containers/closure/CompositeClosuresListItem'; //eslint-disable-line
+import ProjectsListItem from 'components/projects/ProjectsListItem'; //eslint-disable-line
 import NetworksListItem from 'components/networks/NetworksListItem'; //eslint-disable-line
 import VolumesListItem from 'components/volumes/VolumesListItem'; //eslint-disable-line
 import ContainerDetails from 'components/containers/ContainerDetails';//eslint-disable-line
@@ -61,6 +62,7 @@ var ContainersViewVueComponent = Vue.extend({
     },
     placeholderByCategoryMap: function() {
       return {
+        'projects': i18n.t('app.resource.list.searchPlaceholder.projects'),
         'containers': i18n.t('app.resource.list.searchPlaceholder.containers'),
         'applications': i18n.t('app.resource.list.searchPlaceholder.applications'),
         'networks': i18n.t('app.resource.list.searchPlaceholder.networks'),
@@ -151,7 +153,20 @@ var ContainersViewVueComponent = Vue.extend({
         this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.KUBERNETES;
     },
     searchSuggestions: function() {
-      return constants.CONTAINERS.SEARCH_SUGGESTIONS;
+      return this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.PROJECTS ?
+        constants.RESOURCES.PROJECTS.SEARCH_SUGGESTIONS :
+        constants.CONTAINERS.SEARCH_SUGGESTIONS;
+    },
+    searchSuggestionsByCategoryMap: function() {
+      return {
+        'projects': constants.RESOURCES.PROJECTS.SEARCH_SUGGESTIONS,
+        'containers': constants.CONTAINERS.SEARCH_SUGGESTIONS,
+        'applications': constants.RESOURCES.APPLICATIONS.SEARCH_SUGGESTIONS,
+        'networks': constants.RESOURCES.NETWORKS.SEARCH_SUGGESTIONS,
+        'closures': constants.CLOSURES.SEARCH_SUGGESTIONS,
+        'volumes': constants.RESOURCES.VOLUMES.SEARCH_SUGGESTIONS,
+        'kubernetes': constants.RESOURCES.KUBERNETES.SEARCH_SUGGESTIONS
+      };
     },
     creatingClosure: function() {
       return this.model.creatingResource &&
@@ -305,7 +320,8 @@ var ContainersViewVueComponent = Vue.extend({
 
     multiSelectionSupported: function() {
       return this.hasItems
-       && this.selectedCategory !== constants.RESOURCES.SEARCH_CATEGORY.CLOSURES;
+       && this.selectedCategory !== constants.RESOURCES.SEARCH_CATEGORY.CLOSURES
+       && this.selectedCategory !== constants.RESOURCES.SEARCH_CATEGORY.PROJECTS;
     },
 
     multiSelectionOperationSupported: function(operation) {
