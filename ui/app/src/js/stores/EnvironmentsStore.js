@@ -50,7 +50,7 @@ let EnvironmentsStore = Reflux.createStore({
 
       let endpoints = (endpointsData.items || []).map((item) =>
         $.extend({
-          iconSrc: `image-assets/endpoints/${item.endpointType}.png`
+          iconSrc: utils.getAdapter(item.endpointType).iconSrc
         }, item));
       this.setInData(['endpoints'], endpoints);
 

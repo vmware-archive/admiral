@@ -14,7 +14,7 @@ import EnvironmentItemVue from 'components/environments/EnvironmentItemVue.html'
 import { EnvironmentsActions, NavigationActions } from 'actions/Actions';
 import utils from 'core/utils';
 
-var EnvironmentItem = Vue.extend({
+export default Vue.component('environment-grid-item', {
   template: EnvironmentItemVue,
   mixins: [DeleteConfirmationSupportMixin],
   props: {
@@ -23,27 +23,24 @@ var EnvironmentItem = Vue.extend({
     }
   },
   computed: {
-    endpointName: function() {
+    endpointName() {
       return (this.model.endpoint && this.model.endpoint.name) || '';
     },
-    endpointType: function() {
+    endpointType() {
       return (this.model.endpoint && this.model.endpoint.endpointType) || this.model.endpointType;
+    },
+    iconSrc() {
+      return utils.getAdapter(this.endpointType).iconSrc;
     }
   },
-  attached: function() {
-  },
   methods: {
-    removeEnvironment: function() {
+    removeEnvironment() {
       this.confirmRemoval(EnvironmentsActions.deleteEnvironment, [this.model]);
     },
-    editEnvironment: function(event) {
+    editEnvironment(event) {
       event.preventDefault();
 
       NavigationActions.editEnvironment(utils.getDocumentId(this.model.documentSelfLink));
     }
   }
 });
-
-Vue.component('environment-grid-item', EnvironmentItem);
-
-export default EnvironmentItem;

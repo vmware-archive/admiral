@@ -20,38 +20,11 @@ import vSphereNetworkProfileEditor from 'components/environments/vsphere/Network
 import vSphereStorageProfileEditor from 'components/environments/vsphere/StorageProfileEditor'; //eslint-disable-line
 
 import { EnvironmentsActions, NavigationActions } from 'actions/Actions';
-import VueTags from 'components/common/VueTags'; //eslint-disable-line
 import EndpointsList from 'components/endpoints/EndpointsList'; //eslint-disable-line
+import SubnetworkSearch from 'components/subnetworks/SubnetworkSearch'; //eslint-disable-line
 import SubnetworksList from 'components/subnetworks/SubnetworksList'; //eslint-disable-line
 import EnvironmentEditViewVue from 'components/environments/EnvironmentEditViewVue.html';
-
-const OOTB_TYPES = [{
-  id: 'aws',
-  name: 'AWS',
-  iconSrc: 'image-assets/endpoints/aws.png'
-}, {
-  id: 'azure',
-  name: 'Azure',
-  iconSrc: 'image-assets/endpoints/azure.png'
-}, {
-  id: 'vsphere',
-  name: 'vSphere',
-  iconSrc: 'image-assets/endpoints/vsphere.png'
-}];
-
-const OOTB_EDITORS = [{
-  computeProfileEditor: 'aws-compute-profile-editor',
-  networkProfileEditor: 'aws-network-profile-editor',
-  storageProfileEditor: 'aws-storage-profile-editor'
-}, {
-  computeProfileEditor: 'azure-compute-profile-editor',
-  networkProfileEditor: 'azure-network-profile-editor',
-  storageProfileEditor: 'azure-storage-profile-editor'
-}, {
-  computeProfileEditor: 'vsphere-compute-profile-editor',
-  networkProfileEditor: 'vsphere-network-profile-editor',
-  storageProfileEditor: 'vsphere-storage-profile-editor'
-}];
+import utils from 'core/utils';
 
 export default Vue.component('environment-edit-view', {
   template: EnvironmentEditViewVue,
@@ -69,6 +42,7 @@ export default Vue.component('environment-edit-view', {
         this.model.item.endpoint.endpointType || this.model.item.endpointType;
     let tags = this.model.item.tags || [];
     return {
+      adapters: utils.getAdapters(),
       computeProfileEditor: {
         properties: this.model.item.computeProfile || {},
         valid: false
@@ -86,8 +60,6 @@ export default Vue.component('environment-edit-view', {
       endpoint: this.model.item.endpoint,
       endpointType,
       name: this.model.item.name,
-      supportedEditors: OOTB_EDITORS,
-      supportedTypes: OOTB_TYPES,
       tags: tags.map(({key, value}) => ({
         key,
         value

@@ -12,6 +12,7 @@
 import EndpointsListVue from 'components/endpoints/EndpointsListVue.html';
 import EndpointEditor from 'components/endpoints/EndpointEditor'; //eslint-disable-line
 import { EndpointsActions } from 'actions/Actions';
+import utils from 'core/utils';
 
 export default Vue.component('endpoints-list', {
   template: EndpointsListVue,
@@ -101,6 +102,9 @@ export default Vue.component('endpoints-list', {
     },
     refresh() {
       EndpointsActions.retrieveEndpoints();
+    },
+    getIconSrc(endpointType) {
+      return utils.getAdapter(endpointType).iconSrc;
     }
   },
   filters: {
