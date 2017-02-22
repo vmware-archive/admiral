@@ -36,7 +36,8 @@ var ProjectsListItem = Vue.extend({
     },
 
     doRemoveProject: function() {
-      this.confirmRemoval(ResourceGroupsActions.deleteGroup, [this.model]);
+      let invokedFromCenterView = true;
+      this.confirmRemoval(ResourceGroupsActions.deleteGroup, [this.model, invokedFromCenterView]);
     }
 
   }

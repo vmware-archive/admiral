@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -88,22 +88,42 @@ let ResourceGroupsStore = Reflux.createStore({
     }).catch(this.onGenericEditError);
   },
 
-  onDeleteGroup: function(group) {
-    services.deleteResourceGroup(group).then(() => {
-      let groups = this.data.items.filter((gr) => gr.documentSelfLink !== group.documentSelfLink);
+  onDeleteGroup: function(group, fromCenterView) {
 
-      this.setInData(['items'], groups);
-      this.emitChange();
+    services.deleteResourceGroup(group).then(() => {
+      if (fromCenterView) {
+        // delete was invoked from the center view
+        actions.ResourceGroupsActions.projectOperationCompleted(
+          constants.RESOURCES.PROJECTS.OPERATION.REMOVE);
+
+      } else {
+        // delete was invoked from the right context view
+
+        let groups = this.data.items.filter((gr) => gr.documentSelfLink !== group.documentSelfLink);
+
+        this.setInData(['items'], groups);
+        this.emitChange();
+
+      }
 
     }).catch((e) => {
-      var validationErrors = utils.getValidationErrors(e);
-      this.setInData(['updatedItem'], group);
-      this.setInData(['validationErrors'], validationErrors);
-      this.emitChange();
+      if (fromCenterView) {
 
-      // After we notify listeners, the updated item is no longer actual
-      this.setInData(['updatedItem'], null);
-      this.setInData(['validationErrors'], null);
+        actions.ResourceGroupsActions.projectOperationCompleted(
+          constants.RESOURCES.PROJECTS.OPERATION.REMOVE);
+
+      } else {
+
+        var validationErrors = utils.getValidationErrors(e);
+        this.setInData(['updatedItem'], group);
+        this.setInData(['validationErrors'], validationErrors);
+        this.emitChange();
+
+        // After we notify listeners, the updated item is no longer actual
+        this.setInData(['updatedItem'], null);
+        this.setInData(['validationErrors'], null);
+
+      }
     });
   },
 
@@ -113,6 +133,11 @@ let ResourceGroupsStore = Reflux.createStore({
     console.error(e);
 
     this.emitChange();
+  },
+
+  refreshCenterView: function() {
+    var queryOptions = utils.getIn(this.data, ['listView', 'queryOptions']);
+    actions.ContainerActions.openContainers(queryOptions, true);
   }
 
 });
