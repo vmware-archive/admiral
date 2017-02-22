@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -536,7 +536,7 @@ services.countNetworksPerHost = function(hostLink) {
   let params = {
     [DOCUMENT_TYPE_PROP_NAME]: true,
     [ODATA_COUNT_PROP_NAME]: true,
-    [ODATA_FILTER_PROP_NAME]: buildContainersSearchQuery(queryOptions)
+    [ODATA_FILTER_PROP_NAME]: buildResourcesSearchQuery(queryOptions)
   };
 
   return get(mergeUrl(links.CONTAINER_NETWORKS, params)).then((result) => {
@@ -1237,7 +1237,7 @@ services.loadClosureDescriptionById = function(closureDescriptionId) {
 };
 
 services.loadContainers = function(queryOptions) {
-  var filter = buildContainersSearchQuery(queryOptions);
+  var filter = buildResourcesSearchQuery(queryOptions);
   var url = buildPaginationUrl(links.CONTAINERS, filter, true, 'created asc');
   return get(url);
 };
@@ -1271,7 +1271,7 @@ services.loadCompositeComponent = function(compositeComponentId) {
 };
 
 services.loadCompositeComponents = function(queryOptions) {
-  var filter = queryOptions ? buildContainersSearchQuery(queryOptions) : '';
+  var filter = queryOptions ? buildResourcesSearchQuery(queryOptions) : '';
   let url = buildPaginationUrl(links.COMPOSITE_COMPONENTS, filter, true,
       'documentUpdateTimeMicros asc');
   return get(url);
@@ -1294,19 +1294,19 @@ services.loadCompositeComponentsByLinks = function(documentSelfLinks) {
 };
 
 services.loadContainerNetworks = function(queryOptions) {
-  var filter = buildContainersSearchQuery(queryOptions);
+  var filter = buildResourcesSearchQuery(queryOptions);
   var url = buildPaginationUrl(links.CONTAINER_NETWORKS, filter, true);
   return get(url);
 };
 
 services.loadContainerVolumes = function(queryOptions) {
-  var filter = buildContainersSearchQuery(queryOptions);
+  var filter = buildResourcesSearchQuery(queryOptions);
   var url = buildPaginationUrl(links.CONTAINER_VOLUMES, filter, true);
   return get(url);
 };
 
 services.loadKubernetesEntities = function(queryOptions) {
-  var filter = buildContainersSearchQuery(queryOptions);
+  var filter = buildResourcesSearchQuery(queryOptions);
   var url = buildPaginationUrl(links.KUBERNETES_ENTITIES, filter, true);
   return get(url);
 };
@@ -1341,7 +1341,7 @@ services.loadContainerLogs = function(containerId, sinceMs) {
 services.loadClosures = function(queryOptions) {
   // console.log('Calling service api: ' + links.CLOSURE_DESCRIPTIONS);
   // return list(links.CLOSURE_DESCRIPTIONS, true);
-    var filter = buildContainersSearchQuery(queryOptions);
+    var filter = buildResourcesSearchQuery(queryOptions);
   var url = buildPaginationUrl(links.CLOSURE_DESCRIPTIONS, filter, true);
   return get(url).then(function(result) {
     return result;
@@ -1349,7 +1349,7 @@ services.loadClosures = function(queryOptions) {
 };
 
 services.loadClosureRuns = function(closureDescriptionLink) {
-  // var filter = buildContainersSearchQuery(queryOptions);
+  // var filter = buildResourcesSearchQuery(queryOptions);
   let filter = buildOdataQuery({
     descriptionLink: [{
       val: closureDescriptionLink + '*',
@@ -1896,6 +1896,16 @@ services.loadGroups = function() {
   return list(links.GROUPS);
 };
 
+services.loadProjects = function(queryOptions) {
+  var filter = buildResourcesSearchQuery(queryOptions);
+  var url = buildPaginationUrl(links.RESOURCE_GROUPS, filter, true);
+  return get(url);
+};
+
+services.loadProject = function(projectLink) {
+  return get(projectLink);
+};
+
 services.loadResourceGroups = function() {
   return list(links.RESOURCE_GROUPS, true, {});
 };
@@ -2202,8 +2212,7 @@ var buildClusterQuery = function(descriptionLink, compositionContextId) {
   return buildOdataQuery(qOps);
 };
 
-// TODO consider renaming to buildResourcesSearchQuery
-var buildContainersSearchQuery = function(queryOptions) {
+var buildResourcesSearchQuery = function(queryOptions) {
   var newQueryOptions = {};
   if (queryOptions) {
     newQueryOptions[constants.SEARCH_OCCURRENCE.PARAM] =
@@ -2262,6 +2271,9 @@ var buildContainersSearchQuery = function(queryOptions) {
           break;
         case constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS:
           link = links.COMPOSITE_COMPONENTS;
+          break;
+        case constants.RESOURCES.SEARCH_CATEGORY.PROJECTS:
+          link = links.RESOURCE_GROUPS;
           break;
 
         default:

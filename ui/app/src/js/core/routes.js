@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -66,6 +66,14 @@ crossroads.addRoute('/hosts/{hostId*}', function(hostId) {
 crossroads.addRoute('/placements', function() {
   actions.AppActions.openView(constants.VIEWS.PLACEMENTS.name);
   actions.PlacementActions.openPlacements();
+});
+
+crossroads.addRoute('/projects:?query:', function(query) {
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.PROJECTS.name);
+
+  query = query || {};
+  query.$category = 'projects';
+  actions.ContainerActions.openContainers(query, true);
 });
 
 crossroads.addRoute('/applications:?query:', function(query) {

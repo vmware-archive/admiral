@@ -42,6 +42,9 @@ var constants = Immutable({
     RESOURCES: {
       name: 'resources',
       VIEWS: {
+        PROJECTS: {
+          name: 'projects'
+        },
         CONTAINERS: {
           name: 'containers'
         },
@@ -103,6 +106,7 @@ var constants = Immutable({
   // TODO move all entries from CONTAINERS to RESOURCES.CONTAINER
   RESOURCES: {
     TYPES: {
+      PROJECT: 'PROJECT',
       NETWORK: 'NETWORK',
       VOLUME: 'VOLUME',
       CLOSURE: 'CLOSURE'
@@ -114,9 +118,14 @@ var constants = Immutable({
       NETWORKS: 'networks',
       VOLUMES: 'volumes',
       CLOSURES: 'closures',
-      KUBERNETES: 'kubernetes'
+      KUBERNETES: 'kubernetes',
+      PROJECTS: 'projects'
+    },
+    KUBERNETES: {
+      SEARCH_SUGGESTIONS: []
     },
     NETWORKS: {
+      SEARCH_SUGGESTIONS: ['name', 'documentId', 'status'],
       OPERATION: {
         REMOVE: 'REMOVE',
         MANAGE: 'MANAGE'
@@ -130,6 +139,7 @@ var constants = Immutable({
       }
     },
     VOLUMES: {
+      SEARCH_SUGGESTIONS: ['name', 'documentId', 'status'],
       OPERATION: {
         REMOVE: 'REMOVE',
         MANAGE: 'MANAGE'
@@ -141,6 +151,12 @@ var constants = Immutable({
         UNKNOWN: 'UNKNOWN',
         RETIRED: 'RETIRED'
       }
+    },
+    PROJECTS: {
+      SEARCH_SUGGESTIONS: ['name', 'documentId']
+    },
+    APPLICATIONS: {
+      SEARCH_SUGGESTIONS: ['name', 'documentId']
     }
   },
   CONTAINERS: {
@@ -202,6 +218,7 @@ var constants = Immutable({
     DOCKER_HOST_PORT: 443
   },
   CLOSURES: {
+    SEARCH_SUGGESTIONS: ['name', 'documentId'],
     OPERATION: {
       DETAILS: 'DETAILS'
     }
