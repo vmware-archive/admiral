@@ -24,7 +24,6 @@ import java.util.UUID;
 
 import javax.net.ssl.TrustManager;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -103,12 +102,6 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
                         mockDockerHost,
                         MockDockerHostService.SELF_LINK + MockDockerPathConstants.INFO)),
                 new MockDockerHostService());
-    }
-
-    @After
-    public void tearDown() throws Throwable {
-        deleteHostShellContainer();
-        deleteDockerHostComputeState();
     }
 
     @Test

@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -43,21 +42,11 @@ public class ComputeNotificationTest extends ComputeBaseTest {
     public static final String COMPUTE_DESC_ID = "test-host-compute-desc-id";
     public static final String RESOURCE_POOL_ID = "test-host-resource-pool";
     private CompositeComponent compositeComponent;
-    private List<String> forDeletion;
 
     @Before
     public void setUp() throws Throwable {
         waitForServiceAvailability(CompositeComponentFactoryService.SELF_LINK);
         waitForServiceAvailability(ComputeService.FACTORY_LINK);
-
-        forDeletion = new ArrayList<>();
-    }
-
-    @After
-    public void tearDown() throws Throwable {
-        for (String selfLink : forDeletion) {
-            delete(selfLink);
-        }
     }
 
     @Test
@@ -215,8 +204,6 @@ public class ComputeNotificationTest extends ComputeBaseTest {
                 compositeComponentLink);
 
         ComputeState created = doPost(cs, ComputeService.FACTORY_LINK);
-
-        forDeletion.add(created.documentSelfLink);
 
         return created;
     }

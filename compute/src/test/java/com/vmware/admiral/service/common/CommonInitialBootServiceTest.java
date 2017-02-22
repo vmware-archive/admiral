@@ -15,7 +15,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-import org.junit.After;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.container.ComputeBaseTest;
@@ -23,11 +22,6 @@ import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.admiral.service.common.ResourceNamePrefixService.ResourceNamePrefixState;
 
 public class CommonInitialBootServiceTest extends ComputeBaseTest {
-
-    @After
-    public void cleanup() throws Throwable {
-        //        delete(ResourceNamePrefixService.DEFAULT_RESOURCE_NAME_PREFIX_SELF_LINK);
-    }
 
     @Test
     public void testVerifyInitialBootServiceWillStopAfterAllInstancesCreated() throws Throwable {

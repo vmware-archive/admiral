@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,7 +33,6 @@ import com.vmware.admiral.host.ComputeInitialBootService;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
-import com.vmware.admiral.service.test.MockConfigureHostOverSshTaskService;
 import com.vmware.admiral.service.test.MockDockerHostAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
@@ -52,10 +50,6 @@ import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 public class ContainerHostServiceConfigureOverSshTest extends ComputeBaseTest {
 
     private MockDockerHostAdapterService dockerAdapterService;
-    private MockConfigureHostOverSshTaskService configureHostOverSshTaskService;
-
-    private AuthCredentialsService authCredentialsService;
-    private ResourcePoolState placementZone;
 
     @Override
     @Before
@@ -77,7 +71,12 @@ public class ContainerHostServiceConfigureOverSshTest extends ComputeBaseTest {
                 MockDockerHostAdapterService.class)), dockerAdapterService);
         waitForServiceAvailability(MockDockerHostAdapterService.SELF_LINK);
 
-        placementZone = createPlacementZone();
+        createPlacementZone();
+    }
+
+    private ResourcePoolState createPlacementZone() throws Throwable {
+        return doPost(ContainerHostServiceTest.createResourcePoolState(),
+                ResourcePoolService.FACTORY_LINK);
     }
 
     @Test
@@ -120,20 +119,6 @@ public class ContainerHostServiceConfigureOverSshTest extends ComputeBaseTest {
 
         List<ComputeState> hosts = getHosts();
         Assert.assertEquals("No host expected", 0, hosts.size());
-    }
-
-    @After
-    public void tearDown() throws Throwable {
-        delete(placementZone.documentSelfLink);
-
-        stopService(dockerAdapterService);
-        stopService(configureHostOverSshTaskService);
-        stopService(authCredentialsService);
-    }
-
-    private ResourcePoolState createPlacementZone() throws Throwable {
-        return doPost(ContainerHostServiceTest.createResourcePoolState(),
-                ResourcePoolService.FACTORY_LINK);
     }
 
     private ConfigureHostOverSshTaskServiceState createContainerHostSpecOverSsh(

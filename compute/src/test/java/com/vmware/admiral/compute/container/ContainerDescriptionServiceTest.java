@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,21 +35,10 @@ public class ContainerDescriptionServiceTest extends ComputeBaseTest {
 
     private static final String VOLUME_DRIVER = "flocker";
 
-    private List<String> linksToDelete;
-
     @Before
     public void setUp() throws Throwable {
         waitForServiceAvailability(ContainerDescriptionService.FACTORY_LINK);
         waitForServiceAvailability(CompositeDescriptionFactoryService.SELF_LINK);
-
-        linksToDelete = new ArrayList<String>();
-    }
-
-    @After
-    public void tearDown() throws Throwable {
-        for (String link : linksToDelete) {
-            delete(link);
-        }
     }
 
     @Test
@@ -244,7 +232,6 @@ public class ContainerDescriptionServiceTest extends ComputeBaseTest {
         composite.descriptionLinks = Collections
                 .singletonList(containerDescription.documentSelfLink);
         composite = doPost(composite, CompositeDescriptionFactoryService.SELF_LINK);
-        linksToDelete.add(composite.documentSelfLink);
 
         delete(containerDescription.documentSelfLink);
 
@@ -271,7 +258,6 @@ public class ContainerDescriptionServiceTest extends ComputeBaseTest {
 
         containerDesc2 = doPost(containerDesc2,
                 ContainerDescriptionService.FACTORY_LINK);
-        linksToDelete.add(containerDesc2.documentSelfLink);
         final String testContainerLink = containerDesc2.documentSelfLink;
 
         CompositeDescription composite = new CompositeDescription();
@@ -281,7 +267,6 @@ public class ContainerDescriptionServiceTest extends ComputeBaseTest {
         composite.descriptionLinks.add(containerDesc2.documentSelfLink);
 
         composite = doPost(composite, CompositeDescriptionFactoryService.SELF_LINK);
-        linksToDelete.add(composite.documentSelfLink);
 
         delete(containerDesc1.documentSelfLink);
 
@@ -320,7 +305,6 @@ public class ContainerDescriptionServiceTest extends ComputeBaseTest {
 
         containerDescComposite1 = doPost(containerDescComposite1,
                 ContainerDescriptionService.FACTORY_LINK);
-        linksToDelete.add(containerDescComposite1.documentSelfLink);
         final String testContainerComposite1 = containerDescComposite1.documentSelfLink;
 
         ContainerDescription containerDescComposite2 = createContainerDescription();
@@ -330,7 +314,6 @@ public class ContainerDescriptionServiceTest extends ComputeBaseTest {
 
         containerDescComposite2 = doPost(containerDescComposite2,
                 ContainerDescriptionService.FACTORY_LINK);
-        linksToDelete.add(containerDescComposite2.documentSelfLink);
         final String testContainerComposite2 = containerDescComposite2.documentSelfLink;
 
         CompositeDescription composite1 = new CompositeDescription();
@@ -340,7 +323,6 @@ public class ContainerDescriptionServiceTest extends ComputeBaseTest {
         composite1.descriptionLinks.add(sharedDesc.documentSelfLink);
 
         composite1 = doPost(composite1, CompositeDescriptionFactoryService.SELF_LINK);
-        linksToDelete.add(composite1.documentSelfLink);
 
         CompositeDescription composite2 = new CompositeDescription();
         composite2.name = "composite1";
@@ -349,7 +331,6 @@ public class ContainerDescriptionServiceTest extends ComputeBaseTest {
         composite2.descriptionLinks.add(containerDescComposite2.documentSelfLink);
 
         composite2 = doPost(composite2, CompositeDescriptionFactoryService.SELF_LINK);
-        linksToDelete.add(composite2.documentSelfLink);
 
         delete(sharedDesc.documentSelfLink);
 

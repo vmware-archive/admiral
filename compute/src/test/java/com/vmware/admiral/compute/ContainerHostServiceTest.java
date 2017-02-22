@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -65,9 +64,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
 
     private MockDockerHostAdapterService dockerAdapterService;
 
-    private ResourcePoolState placementZone;
     private List<String> tenantLinks;
-    private List<String> forDeletion;
 
     @Before
     public void setUp() throws Throwable {
@@ -80,25 +77,16 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
                 MockDockerHostAdapterService.class)), dockerAdapterService);
         waitForServiceAvailability(MockDockerHostAdapterService.SELF_LINK);
 
-        placementZone = createPlacementZone();
+        createPlacementZone();
 
         tenantLinks = Arrays.asList(
                 FIRST_TENANT_ID,
                 FIRST_SUB_TENANT_ID,
                 FIRST_USER_ID);
-        forDeletion = new ArrayList<>();
     }
 
-    @After
-    public void tearDown() throws Throwable {
-
-        for (String selfLink : forDeletion) {
-            delete(selfLink);
-        }
-
-        delete(placementZone.documentSelfLink);
-
-        stopService(dockerAdapterService);
+    private ResourcePoolState createPlacementZone() throws Throwable {
+        return doPost(createResourcePoolState(), ResourcePoolService.FACTORY_LINK);
     }
 
     // there is already created host with tenant links "[/tenants/tenant1]"
@@ -109,8 +97,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
                 FIRST_TENANT_ID);
 
         ComputeState cs = createComputeHost(tenantLinks, FIRST_COMPUTE_DESC_ID);
-        ComputeState created = doPost(cs, ComputeService.FACTORY_LINK);
-        forDeletion.add(created.documentSelfLink);
+        doPost(cs, ComputeService.FACTORY_LINK);
 
         ContainerHostSpec hostSpec = createContainerHostSpec(tenantLinks, SECOND_COMPUTE_DESC_ID);
 
@@ -133,8 +120,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
                 FIRST_TENANT_ID);
 
         ComputeState cs = createComputeHost(tenantLinks, FIRST_COMPUTE_DESC_ID);
-        ComputeState created = doPost(cs, ComputeService.FACTORY_LINK);
-        forDeletion.add(created.documentSelfLink);
+        doPost(cs, ComputeService.FACTORY_LINK);
 
         List<String> tenantLinksWithDifferentTenant = Arrays.asList(
                 SECOND_TENANT_ID);
@@ -155,8 +141,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
                 FIRST_SUB_TENANT_ID);
 
         ComputeState cs = createComputeHost(tenantLinks, FIRST_COMPUTE_DESC_ID);
-        ComputeState created = doPost(cs, ComputeService.FACTORY_LINK);
-        forDeletion.add(created.documentSelfLink);
+        doPost(cs, ComputeService.FACTORY_LINK);
 
         ContainerHostSpec hostSpec = createContainerHostSpec(tenantLinks, SECOND_COMPUTE_DESC_ID);
 
@@ -180,8 +165,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
                 FIRST_SUB_TENANT_ID);
 
         ComputeState cs = createComputeHost(tenantLinks, FIRST_COMPUTE_DESC_ID);
-        ComputeState created = doPost(cs, ComputeService.FACTORY_LINK);
-        forDeletion.add(created.documentSelfLink);
+        doPost(cs, ComputeService.FACTORY_LINK);
 
         List<String> tenantLinksWithDifferentGroup = Arrays.asList(
                 FIRST_TENANT_ID,
@@ -204,8 +188,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
                 FIRST_USER_ID);
 
         ComputeState cs = createComputeHost(tenantLinks, FIRST_COMPUTE_DESC_ID);
-        ComputeState created = doPost(cs, ComputeService.FACTORY_LINK);
-        forDeletion.add(created.documentSelfLink);
+        doPost(cs, ComputeService.FACTORY_LINK);
 
         ContainerHostSpec hostSpec = createContainerHostSpec(tenantLinks, SECOND_COMPUTE_DESC_ID);
 
@@ -229,8 +212,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
                 FIRST_USER_ID);
 
         ComputeState cs = createComputeHost(tenantLinks, FIRST_COMPUTE_DESC_ID);
-        ComputeState created = doPost(cs, ComputeService.FACTORY_LINK);
-        forDeletion.add(created.documentSelfLink);
+        doPost(cs, ComputeService.FACTORY_LINK);
 
         List<String> tenantLinksWithDifferentUser = Arrays.asList(
                 FIRST_TENANT_ID,
@@ -253,8 +235,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
                 FIRST_USER_ID);
 
         ComputeState cs = createComputeHost(tenantLinks, FIRST_COMPUTE_DESC_ID);
-        ComputeState created = doPost(cs, ComputeService.FACTORY_LINK);
-        forDeletion.add(created.documentSelfLink);
+        doPost(cs, ComputeService.FACTORY_LINK);
 
         List<String> tenantLinksWithDifferentGroup = Arrays.asList(
                 SECOND_TENANT_ID,
@@ -275,9 +256,8 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
     @Test
     public void testPutFromSameTenantSameGroupDifferentUser() throws Throwable {
         ComputeState cs = createComputeHost(tenantLinks, FIRST_COMPUTE_DESC_ID);
-        ComputeState created = doPost(cs, ComputeService.FACTORY_LINK);
+        doPost(cs, ComputeService.FACTORY_LINK);
 
-        forDeletion.add(created.documentSelfLink);
 
         List<String> tenantLinksWithSecondTenant = Arrays.asList(
                 FIRST_TENANT_ID,
@@ -299,9 +279,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
     @Test
     public void testPutFromSameTenantDifferentGroupSameUser() throws Throwable {
         ComputeState cs = createComputeHost(tenantLinks, FIRST_COMPUTE_DESC_ID);
-        ComputeState created = doPost(cs, ComputeService.FACTORY_LINK);
-
-        forDeletion.add(created.documentSelfLink);
+        doPost(cs, ComputeService.FACTORY_LINK);
 
         List<String> tenantLinksWithSecondTenant = Arrays.asList(
                 FIRST_TENANT_ID,
@@ -375,10 +353,6 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
         host.testStart(1);
         host.send(getCompositeDesc);
         host.testWait();
-    }
-
-    private ResourcePoolState createPlacementZone() throws Throwable {
-        return doPost(createResourcePoolState(), ResourcePoolService.FACTORY_LINK);
     }
 
     private void assertComputeStateExists(ContainerHostSpec hostSpec) {

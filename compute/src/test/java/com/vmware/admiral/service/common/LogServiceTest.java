@@ -13,10 +13,6 @@ package com.vmware.admiral.service.common;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -25,20 +21,11 @@ import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.service.common.LogService.LogServiceState;
 
 public class LogServiceTest extends ComputeBaseTest {
-    private List<String> documentLinksForDeletion;
 
     @Before
     public void setUp() throws Throwable {
-        documentLinksForDeletion = new ArrayList<>();
         waitForServiceAvailability(LogService.FACTORY_LINK);
         waitForServiceAvailability(ContainerFactoryService.SELF_LINK);
-    }
-
-    @After
-    public void tearDown() throws Throwable {
-        for (String selfLink : documentLinksForDeletion) {
-            delete(selfLink);
-        }
     }
 
     @Test
@@ -47,7 +34,6 @@ public class LogServiceTest extends ComputeBaseTest {
         logState.logs = "Test-file234".getBytes();
 
         LogServiceState newLogState = doPost(logState, LogService.FACTORY_LINK);
-        documentLinksForDeletion.add(newLogState.documentSelfLink);
 
         assertEquals(new String(logState.logs), new String(newLogState.logs));
     }

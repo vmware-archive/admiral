@@ -142,8 +142,6 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
     @After
     public void tearDownContainerState() throws Throwable {
         DeploymentProfileConfig.getInstance().setTest(true);
-        removeContainer();
-        deleteParentComputeState();
     }
 
     @Test

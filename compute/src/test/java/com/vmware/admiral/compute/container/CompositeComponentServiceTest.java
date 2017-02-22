@@ -15,11 +15,9 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,22 +33,12 @@ import com.vmware.xenon.common.UriUtils;
 
 public class CompositeComponentServiceTest extends ComputeBaseTest {
 
-    private List<String> forDeletion;
     private CompositeComponent compositeComponent;
 
     @Before
     public void setUp() throws Throwable {
         waitForServiceAvailability(CompositeComponentFactoryService.SELF_LINK);
         waitForServiceAvailability(ContainerFactoryService.SELF_LINK);
-
-        forDeletion = new ArrayList<>();
-    }
-
-    @After
-    public void tearDown() throws Throwable {
-        for (String selfLink : forDeletion) {
-            delete(selfLink);
-        }
     }
 
     @Test
@@ -293,7 +281,6 @@ public class CompositeComponentServiceTest extends ComputeBaseTest {
         compositeComponent = new CompositeComponent();
         compositeComponent.name = "test-name";
         compositeComponent = doPost(compositeComponent, CompositeComponentFactoryService.SELF_LINK);
-        forDeletion.add(compositeComponent.documentSelfLink);
         return compositeComponent;
     }
 
@@ -304,7 +291,6 @@ public class CompositeComponentServiceTest extends ComputeBaseTest {
         containerState.compositeComponentLink = compositeComponentLink;
 
         containerState = doPost(containerState, ContainerFactoryService.SELF_LINK);
-        forDeletion.add(containerState.documentSelfLink);
 
         return containerState;
     }
@@ -318,7 +304,6 @@ public class CompositeComponentServiceTest extends ComputeBaseTest {
         networkState.external = external;
 
         networkState = doPost(networkState, ContainerNetworkService.FACTORY_LINK);
-        forDeletion.add(networkState.documentSelfLink);
 
         return networkState;
     }
@@ -332,7 +317,6 @@ public class CompositeComponentServiceTest extends ComputeBaseTest {
         volumeState.external = external;
 
         volumeState = doPost(volumeState, ContainerVolumeService.FACTORY_LINK);
-        forDeletion.add(volumeState.documentSelfLink);
 
         return volumeState;
     }

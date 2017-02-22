@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -53,7 +52,6 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
-import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.QueryTask;
@@ -64,7 +62,6 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
 
     private ContainerState missingContainerState;
     private MockDockerAdapterService mockAdapterService;
-    private List<ServiceDocument> documentsForDeletion;
     private String preexistingContainerId;
     private String preexistingContainerName = "PreexistingName";
     private String createdContainerName = "ContainerName";
@@ -83,7 +80,6 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
     @Before
     public void setUp() throws Throwable {
         DeploymentProfileConfig.getInstance().setTest(true);
-        documentsForDeletion = new ArrayList<>();
         preexistingContainerId = TEST_PREEXISTING_CONTAINER_ID
                 + UUID.randomUUID().toString();
 
@@ -110,12 +106,6 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         MockDockerAdapterService.resetContainers();
     }
 
-    @After
-    public void tearDown() throws Throwable {
-        MockDockerAdapterService.resetContainers();
-        DeploymentProfileConfig.getInstance().setTest(true);
-    }
-
     @Test
     public void testContainersCountOnHostWithContainersNoSystem() throws Throwable {
         String hostId = UUID.randomUUID().toString();
@@ -128,12 +118,10 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         hostDescription.supportedChildren = new ArrayList<>(
                 Arrays.asList(ComputeType.DOCKER_CONTAINER.toString()));
         hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
-        documentsForDeletion.add(hostDescription);
 
         ComputeState cs = createComputeState(hostId, hostDescription);
 
         cs = doPost(cs, ComputeService.FACTORY_LINK);
-        documentsForDeletion.add(cs);
 
         ContainerState containerState = new ContainerState();
         containerState.id = UUID.randomUUID().toString();
@@ -144,7 +132,6 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         containerState.powerState = PowerState.STOPPED;
         containerState = doPost(containerState, ContainerFactoryService.SELF_LINK);
         addContainerToMockAdapter(hostId, containerState.id, containerState.names);
-        documentsForDeletion.add(containerState);
 
         doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
@@ -174,13 +161,11 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         hostDescription.supportedChildren = new ArrayList<>(
                 Arrays.asList(ComputeType.DOCKER_CONTAINER.toString()));
         hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
-        documentsForDeletion.add(hostDescription);
 
         String hostId = UUID.randomUUID().toString();
         ComputeState cs = createComputeState(hostId, hostDescription);
 
         cs = doPost(cs, ComputeService.FACTORY_LINK);
-        documentsForDeletion.add(cs);
 
         doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
@@ -208,13 +193,11 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         hostDescription.supportedChildren = new ArrayList<>(
                 Arrays.asList(ComputeType.DOCKER_CONTAINER.toString()));
         hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
-        documentsForDeletion.add(hostDescription);
 
         String hostId = UUID.randomUUID().toString();
         ComputeState cs = createComputeState(hostId, hostDescription);
 
         cs = doPost(cs, ComputeService.FACTORY_LINK);
-        documentsForDeletion.add(cs);
 
         ContainerState containerState = new ContainerState();
         containerState.id = UUID.randomUUID().toString();
@@ -226,7 +209,6 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         containerState.system = Boolean.TRUE;
         containerState = doPost(containerState, ContainerFactoryService.SELF_LINK);
         addContainerToMockAdapter(hostId, containerState.id, containerState.names);
-        documentsForDeletion.add(containerState);
 
         doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
@@ -259,12 +241,10 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         hostDescription.supportedChildren = new ArrayList<>(
                 Arrays.asList(ComputeType.DOCKER_CONTAINER.toString()));
         hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
-        documentsForDeletion.add(hostDescription);
 
         ComputeState cs = createComputeState(hostId, hostDescription);
 
         cs = doPost(cs, ComputeService.FACTORY_LINK);
-        documentsForDeletion.add(cs);
 
         ContainerState containerState = new ContainerState();
         containerState.id = UUID.randomUUID().toString();
@@ -275,7 +255,6 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         containerState.system = Boolean.TRUE;
         containerState = doPost(containerState, ContainerFactoryService.SELF_LINK);
         addContainerToMockAdapter(hostId, containerState.id, containerState.names);
-        documentsForDeletion.add(containerState);
 
         doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
@@ -320,12 +299,10 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
             hostDescription.supportedChildren = new ArrayList<>(
                     Arrays.asList(ComputeType.DOCKER_CONTAINER.toString()));
             hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
-            documentsForDeletion.add(hostDescription);
 
             ComputeState cs = createComputeState(hostId, hostDescription);
 
             cs = doPost(cs, ComputeService.FACTORY_LINK);
-            documentsForDeletion.add(cs);
 
             // container being provisioned should not be discovered by the data collection
             // Do not set id - the container is still being provisioned
@@ -337,7 +314,6 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
             containerState.powerState = PowerState.PROVISIONING;
             containerState = doPost(containerState, ContainerFactoryService.SELF_LINK);
             addContainerToMockAdapter(hostId, containerBeingProvisioned, containerState.names);
-            documentsForDeletion.add(containerState);
 
             doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                     ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
@@ -380,7 +356,6 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         hostDescription.supportedChildren = new ArrayList<>(
                 Arrays.asList(ComputeType.DOCKER_CONTAINER.toString()));
         hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
-        documentsForDeletion.add(hostDescription);
 
         // create a dummy ContainerState on the ComputeState (that will be marked as missing by the
         // collection)
@@ -393,12 +368,10 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         missingContainerState.powerState = PowerState.STOPPED;
         missingContainerState.system = false;
         missingContainerState = doPost(missingContainerState, ContainerFactoryService.SELF_LINK);
-        documentsForDeletion.add(missingContainerState);
 
         ComputeState cs = createComputeState(hostId, hostDescription);
 
         cs = doPost(cs, ComputeService.FACTORY_LINK);
-        documentsForDeletion.add(cs);
 
         doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
@@ -508,10 +481,8 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         hostDescription.supportedChildren = new ArrayList<>(
                 Arrays.asList(ComputeType.DOCKER_CONTAINER.toString()));
         hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
-        documentsForDeletion.add(hostDescription);
 
         ResourcePoolService.ResourcePoolState resourcePoolState = createAndStoreResourcePool();
-        documentsForDeletion.add(resourcePoolState);
 
         //Create a host with 1000 memory and 1000 storage
         ComputeState first = createAndStoreComputeState(hostDescription, resourcePoolState,
@@ -624,10 +595,9 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         });
 
         //Expect the RP to have Long.MAX_VALUE memory if there's a host with no memory data
-        ComputeState noMemoryData = createAndStoreComputeState(hostDescription,
+        createAndStoreComputeState(hostDescription,
                 resourcePoolState,
                 null, null, 0L, 0.0, 1);
-        documentsForDeletion.add(noMemoryData);
 
         doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
@@ -652,10 +622,8 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         hostDescription.supportedChildren = new ArrayList<>(
                 Arrays.asList(ComputeType.DOCKER_CONTAINER.toString()));
         hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
-        documentsForDeletion.add(hostDescription);
 
         ResourcePoolService.ResourcePoolState resourcePoolState = createAndStoreResourcePool();
-        documentsForDeletion.add(resourcePoolState);
 
         //Create a host with 1000 memory and 1000 storage
         createAndStoreComputeState(hostDescription, resourcePoolState, MIN_MEMORY, 1000L, 0L, 0.0, 1);
@@ -752,12 +720,10 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
             hostDescription.supportedChildren = new ArrayList<>(
                     Arrays.asList(ComputeType.DOCKER_CONTAINER.toString()));
             hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
-            documentsForDeletion.add(hostDescription);
 
             ComputeState cs = createComputeState(hostId, hostDescription);
 
             cs = doPost(cs, ComputeService.FACTORY_LINK);
-            documentsForDeletion.add(cs);
 
             doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                     ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
@@ -814,9 +780,6 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
             final URI containerStateUri = UriUtils.buildPublicUri(host,
                     containerStateSelfLink.get());
             host.log(">>>> Created ContainerState with uri: " + containerStateUri);
-            ContainerState containerState = getDocument(ContainerState.class,
-                    containerStateSelfLink.get());
-            documentsForDeletion.add(containerState);
 
             DeploymentProfileConfig.getInstance().setTest(false);
 
@@ -844,16 +807,13 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         hostDescription.supportedChildren = new ArrayList<>(
                 Arrays.asList(ComputeType.DOCKER_CONTAINER.toString()));
         hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
-        documentsForDeletion.add(hostDescription);
 
         //Add the same host for different tenants
         ComputeState cs1 = createComputeState("qe::" + hostId, hostDescription);
         ComputeState cs2 = createComputeState("test::" + hostId, hostDescription);
 
         cs1 = doPost(cs1, ComputeService.FACTORY_LINK);
-        documentsForDeletion.add(cs1);
         cs2 = doPost(cs2, ComputeService.FACTORY_LINK);
-        documentsForDeletion.add(cs2);
 
         ContainerState containerState = new ContainerState();
         containerState.id = UUID.randomUUID().toString();
@@ -867,8 +827,6 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
                 .getSystemContainerNames());
         addContainerToMockAdapter(cs2.id, containerState.id, SystemContainerDescriptions
                 .getSystemContainerNames());
-
-        documentsForDeletion.add(containerState);
 
         doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),

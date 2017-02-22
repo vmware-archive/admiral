@@ -15,11 +15,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -32,19 +29,9 @@ import com.vmware.xenon.common.UriUtils;
 
 public class ComputeNetworkServiceTest extends ComputeBaseTest {
 
-    private List<String> networksForDeletion;
-
     @Before
     public void setUp() throws Throwable {
         waitForServiceAvailability(ComputeNetworkService.FACTORY_LINK);
-        networksForDeletion = new ArrayList<>();
-    }
-
-    @After
-    public void tearDown() throws Throwable {
-        for (String selfLink : networksForDeletion) {
-            delete(selfLink);
-        }
     }
 
     @Test
@@ -69,7 +56,6 @@ public class ComputeNetworkServiceTest extends ComputeBaseTest {
                 },
                 (prefix, serviceDocument) -> {
                     ComputeNetwork networkState = (ComputeNetwork) serviceDocument;
-                    networksForDeletion.add(networkState.documentSelfLink);
                     assertTrue(networkState.id.startsWith(prefix + "id"));
                     assertTrue(networkState.name.startsWith(prefix + "name"));
                     assertNotNull(networkState.securityGroupLinks);

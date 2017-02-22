@@ -16,14 +16,11 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,8 +32,6 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 public class ContainerNetworkServiceTest extends ComputeBaseTest {
-    private List<String> networksForDeletion;
-
     private static final String SUBNET_TEMPLATE = "10.%d.0.0/16";
     private static final String IP_RANGE_TEMPLATE = "10.%d.%d.0/24";
     private static final String GATEWAY_TEMPLATE = "10.%d.0.1";
@@ -53,14 +48,6 @@ public class ContainerNetworkServiceTest extends ComputeBaseTest {
     @Before
     public void setUp() throws Throwable {
         waitForServiceAvailability(ContainerNetworkService.FACTORY_LINK);
-        networksForDeletion = new ArrayList<>();
-    }
-
-    @After
-    public void tearDown() throws Throwable {
-        for (String selfLink : networksForDeletion) {
-            delete(selfLink);
-        }
     }
 
     @Test
@@ -96,7 +83,6 @@ public class ContainerNetworkServiceTest extends ComputeBaseTest {
                 },
                 (prefix, serviceDocument) -> {
                     ContainerNetworkState networkState = (ContainerNetworkState) serviceDocument;
-                    networksForDeletion.add(networkState.documentSelfLink);
                     assertTrue(networkState.id.startsWith(prefix + "id"));
                     assertTrue(networkState.name.startsWith(prefix + "name"));
                     assertTrue(networkState.ipam != null);
@@ -247,7 +233,6 @@ public class ContainerNetworkServiceTest extends ComputeBaseTest {
         networkState.tenantLinks = Collections.singletonList(group);
 
         networkState = doPost(networkState, ContainerNetworkService.FACTORY_LINK);
-        networksForDeletion.add(networkState.documentSelfLink);
 
         return networkState;
     }

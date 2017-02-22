@@ -53,7 +53,6 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
     private static final String COMPUTE_HOST_LINK = UriUtils.buildUriPath(
             ComputeService.FACTORY_LINK, TEST_HOST_ID);
     private NetworkListCallback networkListCallback;
-    private List<String> networksForDeletion;
 
     @Before
     public void setUp() throws Throwable {
@@ -91,14 +90,10 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
 
         doPost(cs, ComputeService.FACTORY_LINK);
 
-        networksForDeletion = new ArrayList<>();
     }
 
     @After
     public void tearDown() throws Throwable {
-        for (String selfLink : networksForDeletion) {
-            delete(selfLink);
-        }
         MockDockerNetworkAdapterService.resetNetworks();
     }
 
@@ -112,7 +107,7 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
 
         // ContainerNetworkState preexistingNetwork = waitForNetwork(preexistingNetworkLink);
         List<ContainerNetworkState> networkStates = getNetworkStates();
-        assertEquals(networkStates.size(), 1);
+        assertEquals(1, networkStates.size());
         ContainerNetworkState preexistingNetworkState = networkStates.get(0);
         assertNotNull("Preexisting network not created or can't be retrieved.", preexistingNetworkState);
         assertEquals(TEST_PREEXISTING_NETWORK_ID, preexistingNetworkState.id);
@@ -142,6 +137,7 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
 
     @Test
     public void testDiscoveredAndCreatedNetworksWithSameNames() throws Throwable {
+        getNetworkStates();
         // add preexisting network to the adapter service
         addNetworkToMockAdapter(TEST_HOST_ID, TEST_PREEXISTING_NETWORK_ID, TEST_PREEXISTING_NETWORK_NAME);
         // provision network
@@ -150,7 +146,7 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
         // run data collection on preexisting network
         startAndWaitHostNetworkListDataCollection();
         List<ContainerNetworkState> networkStates = getNetworkStates();
-        assertEquals(networkStates.size(), 2);
+        assertEquals(2, networkStates.size());
         assertEquals(networkStates.get(0).name, networkStates.get(1).name);
         assertTrue(networkStates.get(0).name != networkStates.get(1).name);
         assertTrue(networkStates.get(0).documentSelfLink != networkStates.get(1).documentSelfLink);
@@ -230,7 +226,6 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
             networkState.name = name;
         }
         networkState = doPost(networkState, ContainerNetworkService.FACTORY_LINK);
-        networksForDeletion.add(networkState.documentSelfLink);
         return networkState;
     }
 

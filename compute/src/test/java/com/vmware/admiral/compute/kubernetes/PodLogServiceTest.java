@@ -17,12 +17,10 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -41,22 +39,13 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 public class PodLogServiceTest extends ComputeBaseTest {
-    private List<String> documentLinksForDeletion;
 
     @Before
     public void setUp() throws Throwable {
-        documentLinksForDeletion = new ArrayList<>();
         waitForServiceAvailability(LogService.FACTORY_LINK);
         waitForServiceAvailability(PodService.FACTORY_LINK);
         waitForServiceAvailability(PodLogService.SELF_LINK);
 
-    }
-
-    @After
-    public void tearDown() throws Throwable {
-        for (String selfLink : documentLinksForDeletion) {
-            delete(selfLink);
-        }
     }
 
     @Test
@@ -129,7 +118,6 @@ public class PodLogServiceTest extends ComputeBaseTest {
         podState.pod.metadata = new ObjectMeta();
         podState.pod.metadata.selfLink = "/api/v1/namespaces/default/pods/test-pod";
         podState = doPost(podState, PodService.FACTORY_LINK);
-        documentLinksForDeletion.add(podState.documentSelfLink);
         return podState;
     }
 
@@ -140,7 +128,6 @@ public class PodLogServiceTest extends ComputeBaseTest {
             logState.documentSelfLink = podState.documentSelfLink + "-" + podState.pod.spec
                     .containers.get(i).name;
             logState = doPost(logState, LogService.FACTORY_LINK);
-            documentLinksForDeletion.add(logState.documentSelfLink);
         }
     }
 

@@ -15,10 +15,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -34,20 +31,11 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.VerificationHost;
 
 public class ReservationRemovalTaskServiceTest extends RequestBaseTest {
-    private List<GroupResourcePlacementState> placementsForDeletion;
 
     @Override
     @Before
     public void setUp() throws Throwable {
         super.setUp();
-        placementsForDeletion = new ArrayList<>();
-    }
-
-    @After
-    public void tearDown() throws Throwable {
-        for (GroupResourcePlacementState groupResourcePlacementState : placementsForDeletion) {
-            delete(groupResourcePlacementState.documentSelfLink);
-        }
     }
 
     // This test is failing occasionally. Added additional logging for monitoring and debugging.
@@ -55,7 +43,6 @@ public class ReservationRemovalTaskServiceTest extends RequestBaseTest {
     public void testReservationRemovalTaskLife() throws Throwable {
         GroupResourcePlacementState placementState = doPost(TestRequestStateFactory
                 .createGroupResourcePlacementState(), GroupResourcePlacementService.FACTORY_LINK);
-        placementsForDeletion.add(placementState);
 
         String descLink = containerDesc.documentSelfLink;
         int count = 5;

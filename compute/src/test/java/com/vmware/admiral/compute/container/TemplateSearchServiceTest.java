@@ -21,7 +21,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -58,18 +57,6 @@ public class TemplateSearchServiceTest extends ComputeBaseTest {
         createCompositeDescription(null, false);
 
         waitForServiceAvailability(TemplateSearchService.SELF_LINK);
-    }
-
-    @After
-    public void tearDown() throws Throwable {
-        // we want tear down operations to succeed even if the test failed
-        clearFailure();
-
-        verifyOperation(Operation.createDelete(UriUtils.buildUri(host, containerDescSelfLink))
-                .setBody(Operation.EMPTY_JSON_BODY));
-
-        verifyOperation(Operation.createDelete(UriUtils.buildUri(host, compositeDescSelfLink))
-                .setBody(Operation.EMPTY_JSON_BODY));
     }
 
     @Test

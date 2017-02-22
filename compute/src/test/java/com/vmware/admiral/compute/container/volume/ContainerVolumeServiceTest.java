@@ -20,11 +20,9 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -41,8 +39,6 @@ public class ContainerVolumeServiceTest extends ComputeBaseTest {
     private static final String CONTAINER_VOLUME_FLOCKER_DRIVER = "flocker";
     private static final String CONTAINER_VOLUME_VMDK_DRIVER = "vmdk";
 
-    private List<String> volumesForDeletion;
-
     @SuppressWarnings("serial")
     private static Map<String, String> testCustomProperties = new HashMap<String, String>() {
         {
@@ -54,14 +50,6 @@ public class ContainerVolumeServiceTest extends ComputeBaseTest {
     @Before
     public void setUp() throws Throwable {
         waitForServiceAvailability(ContainerVolumeService.FACTORY_LINK);
-        volumesForDeletion = new ArrayList<>();
-    }
-
-    @After
-    public void tearDown() throws Throwable {
-        for (String selfLink : volumesForDeletion) {
-            delete(selfLink);
-        }
     }
 
     @Test
@@ -159,7 +147,6 @@ public class ContainerVolumeServiceTest extends ComputeBaseTest {
         volumeState.tenantLinks = Collections.singletonList(group);
 
         volumeState = doPost(volumeState, ContainerVolumeService.FACTORY_LINK);
-        volumesForDeletion.add(volumeState.documentSelfLink);
 
         return volumeState;
     }

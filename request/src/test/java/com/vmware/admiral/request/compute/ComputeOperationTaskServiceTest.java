@@ -46,12 +46,10 @@ import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption
 public class ComputeOperationTaskServiceTest extends ComputeRequestBaseTest {
 
     private RequestBrokerState request;
-    private List<String> documentLinksForDeletion;
 
     @Override
     public void setUp() throws Throwable {
         super.setUp();
-        documentLinksForDeletion = new ArrayList<>();
         DeploymentProfileConfig.getInstance().setTest(true);
 
         // create a single powered-on compute available for placement
@@ -65,9 +63,6 @@ public class ComputeOperationTaskServiceTest extends ComputeRequestBaseTest {
 
     @After
     public void tearDown() throws Throwable {
-        for (String selfLink : documentLinksForDeletion) {
-            delete(selfLink);
-        }
         DeploymentProfileConfig.getInstance().setTest(false);
     }
 
