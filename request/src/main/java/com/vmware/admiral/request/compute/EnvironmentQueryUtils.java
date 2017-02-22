@@ -91,17 +91,12 @@ public class EnvironmentQueryUtils {
 
             entriesPerEndpoint.computeIfAbsent(epl, k -> new ArrayList<>())
                     .add(new EnvEntry(rp.documentSelfLink, null));
-        }).thenCompose(v -> {
-
-            List<DeferredResult<EndpointState>> endpointsDeferred = entriesPerEndpoint.keySet()
-                    .stream()
-                    .map(epl -> host.sendWithDeferredResult(
-                            Operation.createGet(host, epl).setReferer(referer),
-                            EndpointState.class))
-                    .collect(Collectors.toList());
-
-            return DeferredResult.allOf(endpointsDeferred);
-        }).thenCompose(endpoints -> {
+        }).thenCompose(v -> DeferredResult.allOf(entriesPerEndpoint.keySet().stream()
+                .map(epl -> host.sendWithDeferredResult(
+                        Operation.createGet(host, epl).setReferer(referer),
+                        EndpointState.class))
+                .collect(Collectors.toList()))
+        ).thenCompose(endpoints -> {
 
             if (endpoints == null || endpoints.isEmpty()) {
                 return DeferredResult.completed(Collections.<EndpointState> emptyList());
@@ -136,16 +131,12 @@ public class EnvironmentQueryUtils {
                     });
 
             return filteredEndpoints;
-        }).thenApply(eps -> {
-            return eps.stream()
-                    .map(ep -> applyEndpoint(ep, entriesPerEndpoint.get(ep.documentSelfLink)));
-        }).thenCompose(entriesStream -> {
-            List<DeferredResult<List<EnvEntry>>> list = entriesStream
-                    .map(entries -> queryEnvironments(host, entries, tenantLinks,
-                            environmentLinks))
-                    .collect(Collectors.toList());
-            return DeferredResult.allOf(list);
-        }).whenComplete((all, ex) -> {
+        }).thenApply(eps -> eps.stream()
+                .map(ep -> applyEndpoint(ep, entriesPerEndpoint.get(ep.documentSelfLink)))
+        ).thenCompose(entriesStream -> DeferredResult.allOf(entriesStream
+                .map(entries -> queryEnvironments(host, entries, tenantLinks, environmentLinks))
+                .collect(Collectors.toList()))
+        ).whenComplete((all, ex) -> {
             if (ex != null) {
                 consumer.accept(null, ex);
             } else {
