@@ -135,7 +135,7 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
 
         startFabricServices();
         startManagementServices();
-        startClosureServices(this);
+        startClosureServices(this, startMockHostAdapterInstance);
         startSwaggerService();
 
         log(Level.INFO, "**** Management host started. ****");
@@ -179,10 +179,11 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
     /**
      * Start all services related to closures support.
      */
-    protected void startClosureServices(ServiceHost host) throws Throwable {
-        host.log(Level.INFO, "Starting closure services ...");
-        HostInitClosureServiceConfig.startServices(host);
-        host.log(Level.INFO, "Starting closure started");
+    protected void startClosureServices(ServiceHost host, boolean startMockHostAdapterInstance)
+            throws Throwable {
+        host.log(Level.INFO, "Closure services starting...");
+        HostInitClosureServiceConfig.startServices(host, startMockHostAdapterInstance);
+        host.log(Level.INFO, "Closure services started.");
     }
 
     /**

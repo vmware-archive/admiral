@@ -12,7 +12,6 @@
 package com.vmware.admiral.closures.services.closure;
 
 import com.vmware.admiral.closures.drivers.DriverRegistry;
-import com.vmware.admiral.closures.drivers.DriverRegistry;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Service;
@@ -20,12 +19,13 @@ import com.vmware.xenon.common.Service;
 public class ClosureFactoryService extends FactoryService {
 
     public static final String FACTORY_LINK = ManagementUriParts.CLOSURES;
+    public static final String SELF_LINK = ManagementUriParts.CLOSURES;
 
     private static final long DEFAULT_MAINTENANCE_TIMEOUT = 5 * 1000 * 1000; // 5 seconds
 
-    private long maintenanceTimeout = DEFAULT_MAINTENANCE_TIMEOUT;
+    protected long maintenanceTimeout = DEFAULT_MAINTENANCE_TIMEOUT;
 
-    private DriverRegistry driverRegistry;
+    protected DriverRegistry driverRegistry;
 
     public ClosureFactoryService() {
         super(Closure.class);
