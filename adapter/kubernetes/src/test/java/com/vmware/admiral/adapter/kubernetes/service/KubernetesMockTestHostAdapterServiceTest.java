@@ -20,7 +20,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
@@ -61,8 +60,8 @@ public class KubernetesMockTestHostAdapterServiceTest extends BaseKubernetesMock
 
     private KubernetesContext context;
 
-    @BeforeClass
-    public static void startServices() throws Throwable {
+    @Before
+    public void startServices() throws Throwable {
         DeploymentProfileConfig.getInstance().setTest(true);
 
         MockKubernetesHostService service = new MockKubernetesHostService();
@@ -166,7 +165,8 @@ public class KubernetesMockTestHostAdapterServiceTest extends BaseKubernetesMock
     }
 
     protected void setupKubernetesAdapterService() {
-        kubernetesHostAdapterServiceUri = UriUtils.buildUri(host, KubernetesHostAdapterService.class);
+        kubernetesHostAdapterServiceUri = UriUtils
+                .buildUri(host, KubernetesHostAdapterService.class);
 
         host.startService(Operation.createPost(kubernetesHostAdapterServiceUri),
                 new KubernetesHostAdapterService());

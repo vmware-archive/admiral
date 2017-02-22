@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
+
 import javax.net.ssl.SSLContext;
 
 import io.swagger.models.Info;
@@ -55,7 +56,9 @@ import com.vmware.xenon.swagger.SwaggerDescriptorService;
  */
 public class ManagementHost extends ServiceHost implements IExtensibilityRegistryHost {
 
-    /** Flag to start a mock adapter instance useful for integration tests */
+    /**
+     * Flag to start a mock adapter instance useful for integration tests
+     */
     public boolean startMockHostAdapterInstance;
 
     /**
@@ -174,7 +177,6 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
 
     /**
      * Start all services related to closures support.
-     *
      */
     protected void startClosureServices(ServiceHost host) throws Throwable {
         host.log(Level.INFO, "Starting closure services ...");
@@ -320,7 +322,18 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
     }
 
     @Override
+    public ServiceHost startFactory(Service service) {
+        checkForOperationChain(service);
+        return super.startFactory(service);
+    }
+
+    @Override
     public ServiceHost startService(Operation post, Service service) {
+        checkForOperationChain(service);
+        return super.startService(post, service);
+    }
+
+    private void checkForOperationChain(Service service) {
         Class<? extends Service> serviceClass = service.getClass();
         if (!applyOperationChainIfNeed(service, serviceClass, serviceClass, false)) {
             if (service instanceof FactoryService) {
@@ -337,7 +350,6 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
                         true);
             }
         }
-        return super.startService(post, service);
     }
 
     private boolean applyOperationChainIfNeed(Service service,
