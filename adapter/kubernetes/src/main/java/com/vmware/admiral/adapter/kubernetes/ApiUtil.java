@@ -42,10 +42,6 @@ public class ApiUtil {
 
     static String apiPrefix(KubernetesContext context, String apiVersion) {
         assert (context.host != null);
-        assert (context.host.customProperties != null);
-        String namespace = context.host.customProperties.get(
-                KubernetesHostConstants.KUBERNETES_HOST_NAMESPACE_PROP_NAME);
-        assert (namespace != null && !namespace.isEmpty());
         return context.host.address + apiVersion;
     }
 
@@ -58,8 +54,21 @@ public class ApiUtil {
         return apiPrefix(context, apiVersion) + NAMESPACES + namespace;
     }
 
-    public static URI buildKubernetesUri(KubernetesDescription description, KubernetesContext
-            context) throws IOException {
+    static String namespacePrefix(KubernetesContext context, String apiVersion,
+            BaseKubernetesObject kubernetesObject) {
+        assert (context.host != null);
+        assert (kubernetesObject != null);
+
+        String namespace = kubernetesObject.metadata.namespace;
+        if (namespace == null || namespace.isEmpty()) {
+            return namespacePrefix(context, apiVersion);
+        } else {
+            return apiPrefix(context, apiVersion) + NAMESPACES + namespace;
+        }
+    }
+
+    public static URI buildKubernetesUri(KubernetesDescription description,
+            KubernetesContext context) throws IOException {
         assertNotNull(context.host, "context.host");
         assertNotNullOrEmpty(context.host.address, "context.host.address");
         assertNotNull(description, "kubernetesDescription");
@@ -71,19 +80,17 @@ public class ApiUtil {
                             description.type));
         }
 
-        BaseKubernetesObject entity = description.getKubernetesEntity(BaseKubernetesObject
-                .class);
+        BaseKubernetesObject entity = description.getKubernetesEntity(BaseKubernetesObject.class);
 
-        String uriString = context.host.address;
+        String uriString;
 
         if (KubernetesUtil.DEPLOYMENT_TYPE.equals(description.type)) {
-            uriString = uriString + API_PREFIX_EXTENSIONS_V1BETA;
+            uriString = namespacePrefix(context, API_PREFIX_EXTENSIONS_V1BETA, entity);
         } else {
-            uriString = uriString + API_PREFIX_V1;
+            uriString = namespacePrefix(context, API_PREFIX_V1, entity);
         }
 
-        uriString = uriString + NAMESPACES + entity.metadata.namespace +
-                entityTypeToPath.get(description.type);
+        uriString = uriString + entityTypeToPath.get(description.type);
 
         return UriUtils.buildUri(uriString);
 

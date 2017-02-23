@@ -137,30 +137,31 @@ public abstract class AbstractKubernetesAdapterService extends StatelessService 
 
         new ServiceDocumentQuery<>(getHost(),
                 AuthCredentialsServiceState.class)
-                .queryDocument(credentialsLink, (r) -> {
-                    if (r.hasException()) {
-                        fail(request, r.getException());
-                        if (op != null) {
-                            op.fail(r.getException());
-                        }
-                    } else if (r.hasResult()) {
-                        credentialsFound.set(true);
+                        .queryDocument(credentialsLink, (r) -> {
+                            if (r.hasException()) {
+                                fail(request, r.getException());
+                                if (op != null) {
+                                    op.fail(r.getException());
+                                }
+                            } else if (r.hasResult()) {
+                                credentialsFound.set(true);
 
-                        context.credentials = r.getResult();
+                                context.credentials = r.getResult();
 
-                        callbackFunction.accept(context);
-                    } else {
-                        if (!credentialsFound.get()) {
-                            Throwable t = new IllegalArgumentException(
-                                    "AuthCredentialsState not found with link: "
-                                            + credentialsLink + request.getRequestTrackingLog());
-                            if (op != null) {
-                                op.fail(t);
+                                callbackFunction.accept(context);
+                            } else {
+                                if (!credentialsFound.get()) {
+                                    Throwable t = new IllegalArgumentException(
+                                            "AuthCredentialsState not found with link: "
+                                                    + credentialsLink
+                                                    + request.getRequestTrackingLog());
+                                    if (op != null) {
+                                        op.fail(t);
+                                    }
+                                    fail(request, t);
+                                }
                             }
-                            fail(request, t);
-                        }
-                    }
-                });
+                        });
 
         getHost().log(Level.FINE, "Fetching AuthCredentials: %s %s", credentialsLink,
                 request.getRequestTrackingLog());
@@ -175,12 +176,7 @@ public abstract class AbstractKubernetesAdapterService extends StatelessService 
     }
 
     protected void fail(AdapterRequest request, Throwable e) {
-        if (e.getMessage().contains(NOT_FOUND_EXCEPTION_MESSAGE)) {
-            logWarning(e.getMessage());
-        } else {
-            logWarning(Utils.toString(e));
-        }
-
+        logWarning(Utils.toString(e));
         patchTaskStage(request, TaskStage.FAILED, e);
     }
 
@@ -270,4 +266,3 @@ public abstract class AbstractKubernetesAdapterService extends StatelessService 
         }
     }
 }
-
