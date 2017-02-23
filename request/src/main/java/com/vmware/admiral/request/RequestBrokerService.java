@@ -126,7 +126,7 @@ public class RequestBrokerService extends
         public static final String CONFIGURE_HOST_OPERATION = "CONFIGURE_HOST";
 
         public static enum SubStage {
-            CREATED, RESERVING, RESERVED, ALLOCATING, ALLOCATED, COMPLETED, REQUEST_FAILED, RESERVATION_CLEANUP, RESERVATION_CLEANED_UP, ERROR;
+            CREATED, RESERVING, RESERVED, ALLOCATING, ALLOCATED, REQUEST_FAILED, RESERVATION_CLEANUP, RESERVATION_CLEANED_UP, COMPLETED, ERROR;
 
             static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
                     Arrays.asList(RESERVING, ALLOCATING, RESERVATION_CLEANUP));
@@ -1501,6 +1501,11 @@ public class RequestBrokerService extends
         return RequestBrokerState.PROVISION_RESOURCE_OPERATION.equals(state.operation);
     }
 
+    private boolean isAllocationOperation(RequestBrokerState state) {
+        return isProvisionOperation(state) && Boolean.TRUE.toString()
+                .equals(state.getCustomProperty(RequestUtils.FIELD_NAME_ALLOCATION_REQUEST));
+    }
+
     private boolean isPostAllocationOperation(RequestBrokerState state) {
         return (isContainerType(state) || isContainerNetworkType(state) || isComputeType(state)
                 || isContainerVolumeType(state) || isComputeNetworkType(state) || isClosureType(
@@ -1692,37 +1697,59 @@ public class RequestBrokerService extends
 
         // add tracked leaf tasks depending on the request type
         if (isProvisionOperation(state)) {
+            boolean allocationOnly = isAllocationOperation(state);
 
             requestStatus.trackedExecutionTasksByResourceType = SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE;
             requestStatus.trackedAllocationTasksByResourceType = SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE;
 
-            List<String> trackedTasks;
+            List<String> trackedTasks = new ArrayList<>();
 
             if (isContainerType(state)) {
-                trackedTasks = SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
-                        .get(ResourceType.CONTAINER_TYPE);
+                trackedTasks.addAll(SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
+                        .get(ResourceType.CONTAINER_TYPE));
+                if (!allocationOnly) {
+                    trackedTasks.addAll(
+                            SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.get(ResourceType.CONTAINER_TYPE));
+                }
             } else if (isComputeType(state)) {
-                trackedTasks = SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
-                        .get(ResourceType.COMPUTE_TYPE);
+                trackedTasks.addAll(SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
+                        .get(ResourceType.COMPUTE_TYPE));
+                if (!allocationOnly) {
+                    trackedTasks.addAll(SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE
+                            .get(ResourceType.COMPUTE_TYPE));
+                }
             } else if (isContainerNetworkType(state)) {
-                trackedTasks = SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
-                        .get(ResourceType.NETWORK_TYPE);
+                trackedTasks.addAll(SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
+                        .get(ResourceType.NETWORK_TYPE));
+                if (!allocationOnly) {
+                    trackedTasks.addAll(SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE
+                            .get(ResourceType.NETWORK_TYPE));
+                }
             } else if (isContainerVolumeType(state)) {
-                trackedTasks = SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
-                        .get(ResourceType.VOLUME_TYPE);
+                trackedTasks.addAll(SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
+                        .get(ResourceType.VOLUME_TYPE));
+                if (!allocationOnly) {
+                    trackedTasks.addAll(SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE
+                            .get(ResourceType.VOLUME_TYPE));
+                }
             } else if (isClosureType(state)) {
-                trackedTasks = SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
-                        .get(ResourceType.CLOSURE_TYPE);
+                trackedTasks.addAll(SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
+                        .get(ResourceType.CLOSURE_TYPE));
+                if (!allocationOnly) {
+                    trackedTasks.addAll(SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE
+                            .get(ResourceType.CLOSURE_TYPE));
+                }
             } else {
-                trackedTasks = new ArrayList<>();
                 for (List<String> vals : SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.values()) {
                     trackedTasks.addAll(vals);
                 }
-
-                for (List<String> vals : SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.values()) {
-                    trackedTasks.addAll(vals);
+                if (!allocationOnly) {
+                    for (List<String> vals : SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.values()) {
+                        trackedTasks.addAll(vals);
+                    }
                 }
             }
+            trackedTasks.add(RequestBrokerService.DISPLAY_NAME);
             requestStatus.addTrackedTasks(trackedTasks.toArray(new String[0]));
         } else if (isPostAllocationOperation(state)) {
             if (isContainerType(state)) {
