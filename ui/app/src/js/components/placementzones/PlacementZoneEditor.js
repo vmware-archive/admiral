@@ -114,7 +114,7 @@ var PlacementZoneEditor = Vue.extend({
       return new Promise((resolve, reject) => {
         services.searchEndpoints.apply(null, args).then((result) => {
           result.items.forEach((item) =>
-            item.iconSrc = `image-assets/endpoints/${item.endpointType}.png`);
+            item.iconSrc = utils.getAdapter(item.endpointType).iconSrc);
           resolve(result);
         }).catch(reject);
       });

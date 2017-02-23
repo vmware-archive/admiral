@@ -764,6 +764,54 @@ services.searchCompute = function(resourcePoolLink, query, limit) {
   });
 };
 
+services.loadNetworks = function(endpointLink, documentSelfLinks) {
+  var params = {};
+  if (documentSelfLinks && documentSelfLinks.length) {
+    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+      documentSelfLink: documentSelfLinks.map((link) => {
+        return {
+          val: link,
+          op: 'eq'
+        };
+      }),
+      [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
+    });
+  } else if (endpointLink) {
+    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+      endpointLink: [{
+        val: endpointLink,
+        op: 'eq'
+      }]
+    });
+    params[ODATA_ORDERBY_PROP_NAME] = 'documentUpdateTimeMicros desc';
+  }
+  return list(links.NETWORKS, true, params);
+};
+
+services.searchNetworks = function(endpointLink, query, limit) {
+  var qOps = {
+    any: query.toLowerCase(),
+    endpoint: endpointLink
+  };
+
+  let filter = buildSearchQuery(qOps);
+  let url = buildPaginationUrl(links.NETWORKS, filter, true,
+                               'documentUpdateTimeMicros desc', limit);
+  return get(url).then(function(data) {
+    var documentLinks = data.documentLinks || [];
+
+    var result = {
+      totalCount: data.totalCount
+    };
+
+    result.items = documentLinks.map((link) => {
+      return data.documents[link];
+    });
+
+    return result;
+  });
+};
+
 services.loadSubnetworks = function(endpointLink, documentSelfLinks) {
   var params = {};
   if (documentSelfLinks && documentSelfLinks.length) {

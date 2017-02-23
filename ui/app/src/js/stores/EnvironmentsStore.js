@@ -317,6 +317,12 @@ let EnvironmentsStore = Reflux.createStore({
         EndpointsStore.getData(), true);
   },
 
+  onCreateSubnetwork() {
+    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.SUBNETWORKS,
+        SubnetworksStore.getData(), true);
+    SubnetworksActions.editSubnetwork({});
+  },
+
   onManageSubnetworks() {
     onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.SUBNETWORKS,
         SubnetworksStore.getData(), true);

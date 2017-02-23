@@ -41,6 +41,7 @@ export default Reflux.createStore({
           }
         }
 
+        var networkLinks = subnetworks.map((subnetwork) => subnetwork.networkLink);
         var tagsPromises = subnetworks.map((subnetwork) => {
           if (subnetwork.tagLinks && subnetwork.tagLinks.length) {
             return services.loadTags(subnetwork.tagLinks).then((tags) => {
@@ -53,7 +54,12 @@ export default Reflux.createStore({
           }
         });
 
-        Promise.all(tagsPromises).then(() => {
+        services.loadNetworks(endpointLink, networkLinks).then((networks) => {
+          subnetworks.forEach((subnetwork) => {
+            subnetwork.network = networks[subnetwork.networkLink];
+          });
+          return Promise.all(tagsPromises);
+        }).then(() => {
           this.setInData(['endpointLink'], endpointLink);
           this.setInData(['items'], subnetworks);
           this.setInData(['itemsLoading'], false);
