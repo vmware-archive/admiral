@@ -37,17 +37,23 @@
         v-if="endpointType === adapter.id"
         :is="adapter.endpointEditor"
         :model="model.item"
-        v-on:change="onEditorChange"
-        v-on:error="onEditorError">
+        @change="onEditorChange"
+        @error="onEditorError">
       </div>
     </section>
   </form>
   <div class="inline-edit-toolbar">
-    <a href="#" class="btn btn-circle" v-bind:class="{'loading': model.saving}" v-on:click="save($event)" v-bind:disabled="saveDisabled">
+    <a href="#"
+      class="btn btn-circle"
+      :class="{'loading': model.saving}"
+      :disabled="saveDisabled || model.saving"
+      @click="save($event)">
       <i class="fa fa-check"></i>
       <i class="fa fa-spinner fa-spin loader"></i>
     </a>
-    <a href="#" class="btn btn-circle" v-on:click="cancel($event)">
+    <a href="#"
+      class="btn btn-circle"
+      @click="cancel($event)">
       <i class="fa fa-times"></i>
     </a>
   </div>
