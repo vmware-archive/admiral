@@ -27,7 +27,7 @@ export default Vue.component('aws-endpoint-editor', {
       <text-group
         :disabled="!!model.documentSelfLink"
         :label="i18n('app.endpoint.edit.regionIdLabel')"
-        :required="true"
+        :required="false"
         :value="regionId"
         @change="onRegionIdChange">
       </text-group>
@@ -70,7 +70,7 @@ export default Vue.component('aws-endpoint-editor', {
           privateKey: this.privateKey,
           regionId: this.regionId
         },
-        valid: this.privateKeyId && this.privateKey && this.regionId
+        valid: this.privateKeyId && this.privateKey
       });
     }
   }
