@@ -16,7 +16,7 @@ export default Vue.component('subnetwork-search', {
     <div>
       <dropdown-search
         :disabled="disabled"
-        :entity="i18n('app.network.entity')"
+        :entity="i18n('app.subnetwork.entity')"
         :filter="searchSubnetworks"
         :renderer="renderSubnetwork"
         :manage="manage"
@@ -26,7 +26,7 @@ export default Vue.component('subnetwork-search', {
     </div>
   `,
   props: {
-    createNewAction: {
+    createAction: {
       required: false,
       type: Function
     },
@@ -50,11 +50,11 @@ export default Vue.component('subnetwork-search', {
   },
   data() {
     let manage = [];
-    if (this.createNewAction) {
+    if (this.createAction) {
       manage.push({
-        action: this.createNewAction,
+        action: this.createAction,
         icon: 'plus',
-        name: i18n.t('app.subnetwork.createNew')
+        name: i18n.t('app.subnetwork.create')
       });
     }
     if (this.manageAction) {

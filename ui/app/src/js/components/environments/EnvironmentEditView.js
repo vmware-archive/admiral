@@ -95,6 +95,13 @@ export default Vue.component('environment-edit-view', {
     $(this.$el).find('.nav-item a[href="#' + this.currentView + '"]').tab('show');
     EnvironmentsActions.selectView(this.currentView,
         this.endpoint && this.endpoint.documentSelfLink);
+
+    this.unwatchEndpoint = this.$watch('model.item.endpoint', (endpoint) => {
+      this.endpoint = endpoint;
+    });
+  },
+  detached() {
+    this.unwatchEndpoint();
   },
   methods: {
     goBack() {
@@ -129,6 +136,9 @@ export default Vue.component('environment-edit-view', {
       this.editorErrors = null;
       this.networkProfileEditor = value;
     },
+    onNetworkCreateSubnetwork() {
+      EnvironmentsActions.createSubnetwork();
+    },
     onNetworkManageSubnetworks() {
       EnvironmentsActions.manageSubnetworks();
     },
@@ -144,6 +154,9 @@ export default Vue.component('environment-edit-view', {
     },
     manageEndpoints() {
       EnvironmentsActions.manageEndpoints();
+    },
+    manageSubnetworks() {
+      EnvironmentsActions.manageSubnetworks();
     },
     closeToolbar() {
       EnvironmentsActions.closeToolbar();

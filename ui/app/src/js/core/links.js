@@ -34,6 +34,7 @@ var links = Immutable({
   DEPLOYMENT_POLICIES: RESOURCES + '/deployment-policies',
   TAGS: RESOURCES + '/tags',
   EPZ_CONFIG: RESOURCES + '/elastic-placement-zones-config',
+  NETWORKS: RESOURCES + '/networks',
   SUBNETWORKS: RESOURCES + '/sub-networks',
 
   CONTAINER_HOSTS: RESOURCES + '/hosts',

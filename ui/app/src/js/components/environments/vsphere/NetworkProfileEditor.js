@@ -28,6 +28,7 @@ export default Vue.component('vsphere-network-profile-editor', {
         <multicolumn-cell name="name">
           <subnetwork-search
             :endpoint="endpoint"
+            :create-action="createSubnetwork"
             :manage-action="manageSubnetworks">
           </subnetwork-search>
         </multicolumn-cell>
@@ -67,6 +68,9 @@ export default Vue.component('vsphere-network-profile-editor', {
     onSubnetworkChange(value) {
       this.subnetworks = value;
       this.emitChange();
+    },
+    createSubnetwork() {
+      this.$emit('create.subnetwork');
     },
     manageSubnetworks() {
       this.$emit('manage.subnetworks');

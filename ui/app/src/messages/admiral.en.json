@@ -613,6 +613,7 @@
       "edit": {
         "addNew": "Add Subnetwork",
         "update": "Edit Subnetwork",
+        "networkLabel": "Network",
         "nameLabel": "Name",
         "cidrLabel": "CIDR",
         "supportPublicIpAddressLabel": "Support Public IP",
@@ -622,6 +623,7 @@
         "tagsPlaceholder": "Example: access:restricted"
       },
       "entity": "Subnetwork",
+      "create": "New Subnetwork",
       "manage": "Manage Subnetworks",
       "contextPanelTooltip": "Subnetworks"
     },

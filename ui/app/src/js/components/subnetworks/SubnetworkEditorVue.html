@@ -17,6 +17,19 @@
     <section class="form-block">
       <label class="title" v-if="model.item.documentSelfLink">{{i18n('app.subnetwork.edit.update')}}</label>
       <label class="title" v-else>{{i18n('app.subnetwork.edit.addNew')}}</label>
+
+
+      <dropdown-search-group
+        v-if="!model.item.endpointType"
+        :label="i18n('app.subnetwork.edit.networkLabel')"
+        :disabled="!!model.item.network"
+        :entity="i18n('app.network.entity')"
+        :filter="searchNetworks"
+        :required="true"
+        :value="network"
+        @change="onNetworkChange">
+      </dropdown-search-group>
+
       <text-group
         :label="i18n('app.subnetwork.edit.nameLabel')"
         :required="true"

@@ -11,10 +11,15 @@
 
 import SubnetworkEditorVue from 'components/subnetworks/SubnetworkEditorVue.html';
 import { SubnetworksActions } from 'actions/Actions';
+import services from 'core/services';
 
 export default Vue.component('subnetwork-editor', {
   template: SubnetworkEditorVue,
   props: {
+    endpointLink: {
+      required: true,
+      type: String
+    },
     model: {
       required: true,
       type: Object
@@ -27,11 +32,12 @@ export default Vue.component('subnetwork-editor', {
   },
   data() {
     return {
+      network: this.model.item.network,
       name: this.model.item.name,
       cidr: this.model.item.subnetCIDR,
       supportPublicIpAddress: this.model.item.supportPublicIpAddress,
       defaultForZone: this.model.item.defaultForZone,
-      tags: this.model.item.tags.asMutable() || [],
+      tags: this.model.item.tags && this.model.item.tags.asMutable() || [],
       saveDisabled: !this.model.item.documentSelfLink
     };
   },
@@ -51,6 +57,17 @@ export default Vue.component('subnetwork-editor', {
         SubnetworksActions.createSubnetwork(toSave, this.tags);
       }
     },
+    searchNetworks(...args) {
+      return new Promise((resolve, reject) => {
+        services.searchNetworks.apply(null,
+            [this.endpointLink, ...args]).then((result) => {
+          resolve(result);
+        }).catch(reject);
+      });
+    },
+    onNetworkChange(network) {
+      this.network = network;
+    },
     onNameChange(name) {
       this.name = name;
       this.saveDisabled = this.isSaveDisabled();
@@ -69,10 +86,12 @@ export default Vue.component('subnetwork-editor', {
       this.tags = tags;
     },
     isSaveDisabled() {
-      return !this.name || !this.cidr;
+      return !this.network || !this.name || !this.cidr;
     },
     getModel() {
       return $.extend({}, this.model.item, {
+        endpointLink: this.endpointLink,
+        networkLink: this.network.documentSelfLink,
         name: this.name,
         defaultForZone: this.defaultForZone,
         subnetCIDR: this.cidr,

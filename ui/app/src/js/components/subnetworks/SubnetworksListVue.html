@@ -17,12 +17,10 @@
     </list-title>
 
     <div class="toolbar">
-      <!--
       <a href="#" class="btn btn-circle new-item"
          @click="addNewItem($event)"><i class="fa fa-plus"></i></a>
       <a href="#" class="new-item"
          @click="addNewItem($event)">{{i18n('app.subnetwork.list.addButton')}}</a>
-      -->
     </div>
 
     <div class="inline-editable-list-table">
@@ -46,7 +44,10 @@
         <tbody>
           <tr v-if="isEditingNewItem()">
             <td colspan="3" class="inline-edit-holder">
-              <subnetwork-editor :model="model.editingItemData"></subnetwork-editor>
+              <subnetwork-editor
+                :endpoint-link="model.endpointLink"
+                :model="model.editingItemData">
+              </subnetwork-editor>
             </td>
           </tr>
           <tr class="item" v-for="item in model.items | orderBy sortKey sortOrders[sortKey]" track-by="documentSelfLink">
@@ -81,7 +82,10 @@
             </template>
             <template v-if="isEditingItem(item)">
               <td colspan="3" class="inline-edit-holder">
-                <subnetwork-editor :model="model.editingItemData"></subnetwork-editor>
+                <subnetwork-editor
+                    :endpoint-link="model.endpointLink"
+                    :model="model.editingItemData">
+                </subnetwork-editor>
               </td>
             </template>
             <template v-if="!isEditingOrHighlightedItem(item)">

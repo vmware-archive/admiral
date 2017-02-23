@@ -60,7 +60,7 @@
                 <dropdown-search-group
                   v-if="!model.item.endpointType"
                   :label="i18n('app.environment.edit.endpointLabel')"
-                  :disabled="!!model.item.endpoint"
+                  :disabled="!!model.item.documentSelfLink"
                   :entity="i18n('app.endpoint.entity')"
                   :loading="!model.endpoints"
                   :manage="[{
@@ -107,6 +107,7 @@
                   :is="adapter.networkProfileEditor"
                   :model="model.item.networkProfile || {}"
                   @change="onNetworkProfileEditorChange"
+                  @create.subnetwork="onNetworkCreateSubnetwork"
                   @manage.subnetworks="onNetworkManageSubnetworks"
                   @error="onEditorError">
                 </div>
