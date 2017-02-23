@@ -312,6 +312,13 @@ public class ComputeReservationTaskService
                     }
                     return;
                 }
+
+                logInfo(() -> String.format(
+                        "Candidate placements for compute '%s' before filtering: %s",
+                        computeDesc.name,
+                        placements.stream().map(ps -> ps.documentSelfLink)
+                                .collect(Collectors.toList())));
+
                 // pass the final tenantLinks, e.g. if global GroupResourcePlacement is selected,
                 // then only global endpoints and deployment profiles must be used.
                 filterSelectedByEndpoint(state, placements, tgl, computeDesc);
@@ -384,12 +391,6 @@ public class ComputeReservationTaskService
     private void filterSelectedByEndpoint(ComputeReservationTaskState state,
             List<GroupResourcePlacementState> placements, List<String> tenantLinks,
             ComputeDescription computeDesc) {
-        if (placements == null) {
-            failTask(null, new LocalizableValidationException("No placements found",
-                    "request.compute.reservation.placements.missing"));
-            return;
-        }
-
         HashMap<String, List<GroupResourcePlacementState>> placementsByRpLink = new HashMap<>();
         placements.forEach(p -> placementsByRpLink
                 .computeIfAbsent(p.resourcePoolLink, k -> new ArrayList<>()).add(p));

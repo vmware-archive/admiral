@@ -99,6 +99,10 @@ public class EnvironmentQueryUtils {
         ).thenCompose(endpoints -> {
 
             if (endpoints == null || endpoints.isEmpty()) {
+                host.log(Level.INFO,
+                        () -> String.format(
+                                "No applicable endpoints found for resource pools %s and endpointLink '%s'",
+                                resourcePoolsLinks, endpointLink));
                 return DeferredResult.completed(Collections.<EndpointState> emptyList());
             }
 
@@ -124,10 +128,21 @@ public class EnvironmentQueryUtils {
             DeferredResult<List<EndpointState>> filteredEndpoints = q
                     .collectLinks(Collectors.toSet())
                     .thenApply(cs -> {
-                        List<EndpointState> collect = endpoints.stream()
+                        List<EndpointState> poweredOnEndpoints = endpoints.stream()
                                 .filter(ep -> cs.contains(ep.computeLink))
                                 .collect(Collectors.toList());
-                        return collect;
+
+                        if (poweredOnEndpoints.size() < endpoints.size()) {
+                            host.log(Level.INFO,
+                                    () -> String.format(
+                                            "%d powered-off endpoints filtered out; remaining: %s",
+                                            endpoints.size() - poweredOnEndpoints.size(),
+                                            poweredOnEndpoints.stream()
+                                                    .map(es -> es.documentSelfLink)
+                                                    .collect(Collectors.toList())));
+                        }
+
+                        return poweredOnEndpoints;
                     });
 
             return filteredEndpoints;
@@ -140,12 +155,25 @@ public class EnvironmentQueryUtils {
             if (ex != null) {
                 consumer.accept(null, ex);
             } else {
-                consumer.accept(
-                        all.stream()
-                                .flatMap(l -> l.stream())
-                                .filter(env -> !env.envLinks.isEmpty())
-                                .collect(Collectors.toList()),
-                        null);
+                List<String> endpointsWithNoEnv = new ArrayList<>();
+                List<EnvEntry> envs = all.stream()
+                        .flatMap(l -> l.stream())
+                        .filter(env -> {
+                            if (env.envLinks.isEmpty()) {
+                                endpointsWithNoEnv.add(env.endpoint.documentSelfLink);
+                                return false;
+                            }
+                            return true;
+                        })
+                        .collect(Collectors.toList());
+
+                if (!endpointsWithNoEnv.isEmpty()) {
+                    host.log(Level.INFO,
+                            () -> String.format("Endpoints without environments filtered out: %s",
+                                    endpointsWithNoEnv));
+                }
+
+                consumer.accept(envs, null);
             }
         });
     }
