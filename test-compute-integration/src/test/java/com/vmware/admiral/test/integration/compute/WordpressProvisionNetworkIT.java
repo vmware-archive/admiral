@@ -16,7 +16,6 @@ import java.util.Collection;
 import java.util.function.Consumer;
 
 import com.google.common.collect.Sets;
-
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -34,10 +33,13 @@ public class WordpressProvisionNetworkIT extends BaseWordpressComputeProvisionIT
     private static Runnable awsSetUp = () -> {
     };
 
+    private final String templateFilename;
+
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
-                { EndpointType.aws, awsEndpointExtender, awsSetUp }
+                { EndpointType.aws, awsEndpointExtender, awsSetUp, "WordPress_with_MySQL_compute_network.yaml" },
+                { EndpointType.aws, awsEndpointExtender, awsSetUp, "WordPress_with_MySQL_compute_public_network.yaml" }
                 //TODO uncomment once the vsphere issues are resolved
                 //{ EndpointType.vsphere, vSphereEndpointExtender, vSphereSetUp }
         });
@@ -48,10 +50,11 @@ public class WordpressProvisionNetworkIT extends BaseWordpressComputeProvisionIT
     private final Runnable setUp;
 
     public WordpressProvisionNetworkIT(EndpointType endpointType,
-            Consumer<EndpointState> endpointExtender, Runnable setUp) {
+            Consumer<EndpointState> endpointExtender, Runnable setUp, String templateFilename) {
         this.endpointType = endpointType;
         this.endpointExtender = endpointExtender;
         this.setUp = setUp;
+        this.templateFilename = templateFilename;
     }
 
     @Override
@@ -60,6 +63,7 @@ public class WordpressProvisionNetworkIT extends BaseWordpressComputeProvisionIT
 
         createEnvironment(loadComputeProfile(), createNetworkProfile(AWS_SECONDARY_SUBNET_ID, null),
                 new StorageProfile());
+
         createEnvironment(loadComputeProfile(), createNetworkProfile(AWS_DEFAULT_SUBNET_ID,
                 Sets.newHashSet(createTag("location", "dmz"))), new StorageProfile());
     }
@@ -76,6 +80,6 @@ public class WordpressProvisionNetworkIT extends BaseWordpressComputeProvisionIT
 
     @Override
     protected String getResourceDescriptionLink() throws Exception {
-        return importTemplate("WordPress_with_MySQL_compute_network.yaml");
+        return importTemplate(templateFilename);
     }
 }

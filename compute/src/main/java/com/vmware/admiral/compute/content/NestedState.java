@@ -14,11 +14,15 @@ package com.vmware.admiral.compute.content;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
+import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService;
@@ -149,28 +153,39 @@ public class NestedState {
                     // The field is a collection
                     if (Collection.class.isAssignableFrom(field.getType())) {
 
-                        List<DeferredResult<String>> documentLinks = new ArrayList<>();
+                        List<DeferredResult<Pair<Integer, String>>> documentLinks = new ArrayList<>();
 
-                        ((Collection<String>) fieldValue).forEach(link -> {
+                        Iterator<String> iterator = ((Collection<String>) fieldValue).iterator();
+                        int idx = 0;
+                        while (iterator.hasNext()) {
+                            String link = iterator.next();
 
                             NestedState child = children.get(link);
 
                             DeferredResult<Operation> childPersistDeferredResult = child
                                     .sendRequest(sender, action);
 
+                            Integer index = idx;
                             documentLinks.add(childPersistDeferredResult.thenApply(operation -> {
                                 ServiceDocument childDocument = operation
                                         .getBody(child.object.getClass());
                                 NestedState current = children.remove(link);
                                 children.put(childDocument.documentSelfLink, current);
-                                return childDocument.documentSelfLink;
-                            }));
-                        });
 
-                        // Order of lists will be lost. This can be fixed if there is a use-case
+                                // return a pair of index, selfLink to preserve the order
+                                return Pair.of(index, childDocument.documentSelfLink);
+                            }));
+                            ++idx;
+                        };
+
                         allChildren.add(DeferredResult.allOf(documentLinks).thenAccept(links -> {
+                            // add the entries sorted in the original order in case the collection is a list
+                            List<String> sortedLinks = links.stream()
+                                    .sorted(Comparator.comparing(p -> p.left))
+                                    .map(p -> p.right)
+                                    .collect(Collectors.toList());
                             ((Collection) fieldValue).clear();
-                            ((Collection) fieldValue).addAll(links);
+                            ((Collection) fieldValue).addAll(sortedLinks);
                         }));
                     }
 

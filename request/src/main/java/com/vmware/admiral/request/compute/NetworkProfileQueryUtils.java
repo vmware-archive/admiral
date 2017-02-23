@@ -26,15 +26,16 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.content.ConstraintConverter;
 import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentState;
 import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentStateExpanded;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.NetworkType;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
 import com.vmware.photon.controller.model.Constraint.Condition;
+import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.NetworkInterfaceDescription;
@@ -70,7 +71,7 @@ public class NetworkProfileQueryUtils {
     /** Select Subnet that is applicable for compute network interface. */
     public static void getSubnetForComputeNic(ServiceHost host, URI referer,
             List<String> tenantLinks, String contextId, NetworkInterfaceDescription nid,
-            EnvironmentStateExpanded environmentState, BiConsumer<String, Throwable> consumer) {
+            EnvironmentStateExpanded environmentState, BiConsumer<Pair<ComputeNetwork, SubnetState>, Throwable> consumer) {
         // Get all context networks
         getContextComputeNetworks(host, referer, tenantLinks, contextId,
                 (contextNetworks, e) -> {
@@ -104,18 +105,27 @@ public class NetworkProfileQueryUtils {
                                             .map(c -> ConstraintConverter.encodeCondition(c).tag)
                                             .collect(Collectors.toList()));
                                 }
-                                return DeferredResult.completed(TagConstraintUtils
+                                Stream<SubnetState> subnetsStream = TagConstraintUtils
                                         .filterByConstraints(
                                                 placementConstraints,
-                                                environmentState.networkProfile.subnetStates.stream(),
+                                                environmentState.networkProfile.subnetStates
+                                                        .stream(),
                                                 s -> combineTags(environmentState, s),
-                                                null)
-                                        .findAny().orElse(null));
+                                                null);
+
+
+                                if (computeNetwork.networkType == NetworkType.PUBLIC) {
+                                    subnetsStream = subnetsStream.filter(subnet -> Boolean.TRUE
+                                            .equals(subnet.supportPublicIpAddress));
+                                }
+
+                                SubnetState subnet = subnetsStream.findAny().orElse(null);
+                                return DeferredResult.completed(Pair.of(computeNetwork, subnet));
                             })
-                            .whenComplete((subnetLink, ex) -> {
+                            .whenComplete((pair, ex) -> {
                                 if (ex != null) {
                                     consumer.accept(null, ex);
-                                } else if (subnetLink == null) {
+                                } else if (pair == null || pair.right == null) {
                                     consumer.accept(null, new LocalizableValidationException(
                                             String.format(
                                                     "Selected environment '%s' doesn't satisfy network '%s' constraints %s.",
@@ -123,7 +133,7 @@ public class NetworkProfileQueryUtils {
                                             "compute.network.constraints.not.satisfied.by.environment",
                                             environmentState.name, nid.name, constraints));
                                 } else {
-                                    consumer.accept(subnetLink.documentSelfLink, null);
+                                    consumer.accept(pair, null);
                                 }
                             });
                 });
@@ -190,15 +200,20 @@ public class NetworkProfileQueryUtils {
                         Stream<Pair<EnvironmentStateExpanded, SubnetState>> pairs = all.stream()
                                 .flatMap(env -> env.networkProfile.subnetStates.stream().map(
                                         s -> Pair.of(env, s)));
+
+                        if (networkDescription.networkType == NetworkType.PUBLIC) {
+                            pairs = pairs.filter(p -> p.right.supportPublicIpAddress);
+                        }
+
                         List<String> selectedEnvironments = TagConstraintUtils
-                                .filterByConstraints(
-                                        placementConstraints,
-                                        pairs,
-                                        p -> combineTags(p.getLeft(), p.getRight()),
-                                        null)
-                                .map(p -> p.getLeft().documentSelfLink)
-                                .distinct()
-                                .collect(Collectors.toList());
+                                    .filterByConstraints(
+                                            placementConstraints,
+                                            pairs,
+                                            p -> combineTags(p.left, p.right),
+                                            null)
+                                    .map(p -> p.left.documentSelfLink)
+                                    .distinct()
+                                    .collect(Collectors.toList());
 
                         if (placementConstraints != null && !placementConstraints.isEmpty()
                                 && selectedEnvironments.isEmpty()) {
@@ -231,19 +246,19 @@ public class NetworkProfileQueryUtils {
                             return host.sendWithDeferredResult(op,
                                     NetworkInterfaceDescription.class);
                         })
-                        .map(nidr -> nidr.thenCompose(nid -> {
+                        .map(nidr -> nidr.thenApply(nid -> {
                             if (nid.customProperties != null
                                     && nid.customProperties.containsKey(NO_NIC_VM)) {
                                 // VM was requested without NIC then simply return a no constraint
                                 // compute network
-                                return DeferredResult.completed(new ComputeNetwork());
+                                return new ComputeNetwork();
                             }
 
                             ComputeNetwork computeNetwork = contextComputeNetworks.get(nid.name);
                             if (computeNetwork == null) {
                                 throw getContextNetworkNotFoundError(nid.name);
                             }
-                            return DeferredResult.completed(computeNetwork);
+                            return computeNetwork;
                         }))
                         .collect(Collectors.toList()));
 
@@ -266,7 +281,7 @@ public class NetworkProfileQueryUtils {
         });
     }
 
-    private static void getContextComputeNetworks(ServiceHost host, URI referer,
+    public static void getContextComputeNetworks(ServiceHost host, URI referer,
             List<String> tenantLinks, String contextId, BiConsumer<List<String>, Throwable> consumer,
             Consumer<Map<String, ComputeNetwork>> callbackFunction) {
         Map<String, ComputeNetwork> contextNetworks = new HashMap<>();
@@ -295,15 +310,11 @@ public class NetworkProfileQueryUtils {
                     .map(cn -> host.sendWithDeferredResult(
                             Operation.createGet(host, cn.descriptionLink).setReferer(referer),
                             ComputeNetworkDescription.class)
-                            .thenCompose(cnd -> {
-                                DeferredResult<Pair<String, ComputeNetwork>> r = new DeferredResult<>();
-                                r.complete(Pair.of(cnd.name, cn));
-                                return r;
-                            }))
+                            .thenApply(cnd -> Pair.of(cnd.name, cn)))
                     .collect(Collectors.toList());
             // Create a map of ComputeNetworkDescription.name to ComputeNetworkState
             DeferredResult.allOf(list).whenComplete((all, t) -> {
-                all.forEach(p -> contextNetworks.put(p.getKey(), p.getValue()));
+                all.forEach(p -> contextNetworks.put(p.left, p.right));
                 callbackFunction.accept(contextNetworks);
             });
         });

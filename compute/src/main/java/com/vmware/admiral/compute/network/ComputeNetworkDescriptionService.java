@@ -74,6 +74,12 @@ public class ComputeNetworkDescriptionService extends StatefulService {
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public Boolean external = Boolean.FALSE;
 
+
+        @JsonInclude(value = Include.NON_EMPTY)
+        @Documentation(description = "Composite Template use only. Specifies the network type e.g public or isolated")
+        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        public NetworkType networkType;
+
         /**
          * Constraints of compute network to the network profile and subnet profile. If not
          * specified a default subnet will be calculated based on other components and placement
@@ -87,6 +93,7 @@ public class ComputeNetworkDescriptionService extends StatefulService {
         @PropertyOptions(usage = { PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL,
                 PropertyUsageOption.OPTIONAL })
         public Set<String> securityGroupLinks;
+
 
         @JsonAnyGetter
         private Map<String, String> getProperties() {
@@ -135,11 +142,21 @@ public class ComputeNetworkDescriptionService extends StatefulService {
         }
     }
 
+    public enum NetworkType {
+        @JsonProperty("public")
+        PUBLIC,
+        @JsonProperty("isolated")
+        ISOLATED
+    }
+
     @Override
     public void handleCreate(Operation post) {
-        validateState(post.getBody(ComputeNetworkDescription.class));
-
-        post.complete();
+        try {
+            validateState(post.getBody(ComputeNetworkDescription.class));
+            post.complete();
+        } catch (Throwable e) {
+            post.fail(e);
+        }
     }
 
     @Override
@@ -157,6 +174,7 @@ public class ComputeNetworkDescriptionService extends StatefulService {
     public ServiceDocument getDocumentTemplate() {
         ComputeNetworkDescription nd = (ComputeNetworkDescription) super.getDocumentTemplate();
         nd.name = "My Network";
+        nd.networkType = NetworkType.PUBLIC;
         nd.securityGroupLinks = new HashSet<>();
         nd.constraints = new HashMap<>();
         nd.securityGroupLinks.add(SecurityGroupService.FACTORY_LINK + "/my-sec-group");
