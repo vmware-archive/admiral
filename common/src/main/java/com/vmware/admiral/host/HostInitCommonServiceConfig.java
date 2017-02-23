@@ -12,7 +12,6 @@
 package com.vmware.admiral.host;
 
 import com.vmware.admiral.log.EventLogService;
-import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.admiral.service.common.ClusterMonitoringService;
 import com.vmware.admiral.service.common.CommonInitialBootService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
@@ -46,7 +45,7 @@ public class HostInitCommonServiceConfig extends HostInitServiceHelper {
 
         startServiceFactories(host, ResourceNamePrefixService.class, RegistryService.class,
                 LogService.class, EventLogService.class,
-                CounterSubTaskService.class, AuthBootstrapService.class);
+                CounterSubTaskService.class);
 
         // start initialization of system documents, posting with pragma to queue a request,
         // for a service to become available
