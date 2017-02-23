@@ -2485,5 +2485,15 @@ var buildSearchQuery = function(queryOptions) {
   return buildOdataQuery(userQueryOps);
 };
 
+var client = {
+  delete: deleteEntity,
+  get: get,
+  patch: patch,
+  post: post,
+  put: put
+};
+
+window.api = window.api || {};
+window.api.client = client;
 
 export default services;
