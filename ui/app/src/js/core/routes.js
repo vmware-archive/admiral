@@ -178,6 +178,14 @@ crossroads.addRoute('/applications/new', function() {
   actions.TemplateActions.openCreateNewTemplate();
 });
 
+crossroads.addRoute('/projects/new', function() {
+  actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.PROJECTS.name);
+  actions.ContainerActions.openContainers({
+    '$category': 'projects'
+  }, true);
+  actions.ResourceGroupsActions.openCreateProject();
+});
+
 crossroads.addRoute('/networks/new', function() {
   actions.AppActions.openView(constants.VIEWS.RESOURCES.VIEWS.NETWORKS.name);
   actions.ContainerActions.openContainers({

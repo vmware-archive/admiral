@@ -25,6 +25,7 @@ import CompositeContainerDetails from 'components/containers/composite/Composite
 import CompositeClosuresDetails from 'components/containers/closure/CompositeClosuresDetails';//eslint-disable-line
 import RequestsList from 'components/requests/RequestsList';//eslint-disable-line
 import EventLogList from 'components/eventlog/EventLogList';//eslint-disable-line
+import ProjectRequestForm from 'components/projects/ProjectRequestForm';
 import ClosureRequestForm from 'components/closures/ClosureRequestForm';
 import ContainerRequestForm from 'components/containers/ContainerRequestForm';
 import NetworkRequestForm from 'components/networks/NetworkRequestForm';
@@ -74,22 +75,15 @@ var ContainersViewVueComponent = Vue.extend({
     hasContainerDetailsError: function() {
       return this.model.selectedItemDetails.error && this.model.selectedItemDetails.error._generic;
     },
-    hasNetworkCreateError: function() {
-      return this.model.creatingResource && this.model.creatingResource.error
-        && this.model.creatingResource.error._generic;
-    },
-    hasVolumeCreateError: function() {
+    hasResourceCreateError: function() {
       return this.model.creatingResource && this.model.creatingResource.error
         && this.model.creatingResource.error._generic;
     },
     containerDetailsError: function() {
       return this.hasContainerDetailsError ? this.model.selectedItemDetails.error._generic : '';
     },
-    networkCreateError: function() {
-      return this.hasNetworkCreateError ? this.model.creatingResource.error._generic : '';
-    },
-    volumeCreateError: function() {
-      return this.hasVolumeCreateError ? this.model.creatingResource.error._generic : '';
+    resourceCreateError: function() {
+      return this.hasResourceCreateError ? this.model.creatingResource.error._generic : '';
     },
     showContextPanel: function() {
       var selectedItemDetails = this.model.selectedItemDetails;
@@ -135,6 +129,10 @@ var ContainersViewVueComponent = Vue.extend({
         return contextView.notifications.eventlogs;
       }
       return 0;
+    },
+    creatingProject: function() {
+      return this.model.creatingResource &&
+        this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.PROJECTS;
     },
     creatingContainer: function() {
       return this.model.creatingResource &&
@@ -539,6 +537,12 @@ var ContainersViewVueComponent = Vue.extend({
       }
     },
 
+    getItemError: function(documentId) {
+      return this.model && this.model.listView
+        && this.model.listView.projectErrors
+        && this.model.listView.projectErrors[documentId];
+    },
+
     openToolbarRequests: ContainersContextToolbarActions.openToolbarRequests,
     openToolbarEventLogs: ContainersContextToolbarActions.openToolbarEventLogs,
     openToolbarClosureResults: ContainersContextToolbarActions.openToolbarClosureResults,
@@ -568,6 +572,7 @@ var ContainersViewVueComponent = Vue.extend({
     }
   },
   components: {
+    projectRequestForm: ProjectRequestForm,
     containerRequestForm: ContainerRequestForm,
     networkRequestForm: NetworkRequestForm,
     volumeRequestForm: VolumeRequestForm,

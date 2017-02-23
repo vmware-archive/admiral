@@ -289,7 +289,12 @@
         "editDefinition": {
           "title": "Edit Container Definition"
         },
-        "editNetwork" :{
+        "editProject": {
+          "createTitle": "Create Project",
+          "name": "Name",
+          "create": "Create"
+        },
+        "editNetwork": {
           "newLabel": "Add Network",
           "newTitle": "Add Network Configuration",
           "newDropdownTitle": "Add Network...",
@@ -653,7 +658,8 @@
         "project": {
           "name": "Project",
           "description": "Description",
-          "private": "Private"
+          "private": "Private",
+          "create": "Create Project"
         },
         "container": {
           "create": "Create Container"
@@ -1169,7 +1175,8 @@
       "invalidPath": "Value must be an absolute path.",
       "invalidPathOrName": "Value must be an absolute path or a valid volume name.",
       "containersConnected": "There are connected containers.",
-      "managedByCatalog": "Managed by catalog"
+      "managedByCatalog": "Managed by catalog",
+      "projectsUnexpectedError": "An unexpected error has occured"
     },
     "infoMessages": {
       "created": "Created Successfully!",

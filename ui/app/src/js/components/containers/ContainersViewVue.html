@@ -29,7 +29,9 @@
                     }]"
                   v-on:search-change="search"
                   ></search>
-          <!-- TODO add Create button for projects -->
+          <a href="#/projects/new" class="btn btn-primary create-resource-btn" v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.PROJECTS">
+            <i class="fa fa-plus-circle"></i>{{i18n("app.resource.list.project.create")}}
+          </a>
           <a href="#/containers/new" class="btn btn-primary create-resource-btn" v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS">
             <i class="fa fa-plus-circle"></i>{{i18n("app.resource.list.container.create")}}
           </a>
@@ -102,6 +104,7 @@
                          v-bind:is-marked="isMarked(item)">
                 <project-grid-item v-if="item.type === constants.RESOURCES.TYPES.PROJECT"
                                      v-bind:model="item"
+                                     v-bind:error="getItemError(item.documentId)"
                                      v-on:click="handleItemClick($event, item)">
                 </project-grid-item>
                 <container-grid-item v-if="item.type === constants.CONTAINERS.TYPES.SINGLE"
@@ -224,10 +227,23 @@
     </div>
   </div>
 
+  <div class="mask" v-if="creatingProject"></div>
+  <div class="create-project closable-view" v-if="creatingProject" transition="slide-and-fade">
+    <alert alert-type="danger" v-bind:show-alert="hasResourceCreateError"
+                             v-bind:alert-message="resourceCreateError"></alert>
+    <a class="close-button" v-on:click="goBack($event)">
+      <i class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span>
+    </a>
+
+    <div class="content">
+      <project-request-form v-bind:model="model.creatingResource"></project-request-form>
+    </div>
+  </div>
+
   <div class="mask" v-if="creatingNetwork"></div>
   <div class="create-network closable-view" v-if="creatingNetwork" transition="slide-and-fade">
-    <alert alert-type="danger" v-bind:show-alert="hasNetworkCreateError"
-                             v-bind:alert-message="networkCreateError"></alert>
+    <alert alert-type="danger" v-bind:show-alert="hasResourceCreateError"
+                             v-bind:alert-message="resourceCreateError"></alert>
     <a class="close-button" v-on:click="goBack($event)">
       <i class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span>
     </a>
@@ -239,8 +255,8 @@
 
   <div class="mask" v-if="creatingVolume"></div>
   <div class="create-volume closable-view" v-if="creatingVolume" transition="slide-and-fade">
-    <alert alert-type="danger" v-bind:show-alert="hasVolumeCreateError"
-                               v-bind:alert-message="volumeCreateError"></alert>
+    <alert alert-type="danger" v-bind:show-alert="hasResourceCreateError"
+                               v-bind:alert-message="resourceCreateError"></alert>
     <a class="close-button" v-on:click="goBack($event)">
       <i class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span>
     </a>
@@ -263,8 +279,8 @@
 
   <div class="mask" v-if="creatingKubernetes"></div>
   <div class="create-kubernetes closable-view" v-if="creatingKubernetes" transition="slide-and-fade">
-    <alert alert-type="danger" v-bind:show-alert="hasVolumeCreateError"
-                               v-bind:alert-message="volumeCreateError"></alert>
+    <alert alert-type="danger" v-bind:show-alert="hasResourceCreateError"
+                               v-bind:alert-message="resourceCreateError"></alert>
     <a class="close-button" v-on:click="goBack($event)">
       <i class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span>
     </a>
