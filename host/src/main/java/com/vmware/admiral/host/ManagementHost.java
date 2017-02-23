@@ -22,6 +22,7 @@ import javax.net.ssl.SSLContext;
 
 import io.swagger.models.Info;
 
+import com.vmware.admiral.auth.HostInitAuthServiceConfig;
 import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
@@ -191,6 +192,7 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         this.log(Level.INFO, "Common service starting ...");
 
         HostInitCommonServiceConfig.startServices(this);
+        HostInitAuthServiceConfig.startServices(this);
 
         registerForServiceAvailability(AuthBootstrapService.startTask(this), true,
                 AuthBootstrapService.FACTORY_LINK);
