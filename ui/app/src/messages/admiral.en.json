@@ -490,6 +490,7 @@
         "storageTab": "Storage",
         "nameLabel": "Name",
         "tagsLabel": "Tags",
+        "tagsHint": "Enter key:value tags",
         "tagsPlaceholder": "Example: compliance:yes",
         "endpointLabel": "Endpoint",
         "valueLabel": "Value",

@@ -23,6 +23,12 @@ export default Vue.component('tags-group', {
         :value="value"
         @change="onChange">
       </tags>
+      <i class="fa fa-question-circle"
+        data-toggle="tooltip"
+        data-placement="left"
+        v-if="hint"
+        v-tooltip="hint">
+      </i>
     </form-group>
   `,
   props: {
@@ -34,6 +40,10 @@ export default Vue.component('tags-group', {
       default: false,
       required: false,
       type: Boolean
+    },
+    hint: {
+      required: false,
+      type: String
     },
     label: {
       required: true,
