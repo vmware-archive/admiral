@@ -305,8 +305,11 @@ public class ComputeNetworkAllocationTaskService extends
             final ComputeNetwork networkState = new ComputeNetwork();
             networkState.documentSelfLink = buildNetworkLink(resourceName);
             networkState.name = resourceName;
-            networkState.tenantLinks = state.tenantLinks;
+
             networkState.descriptionLink = networkDescription.documentSelfLink;
+            networkState.networkType = networkDescription.networkType;
+
+            networkState.tenantLinks = state.tenantLinks;
             networkState.customProperties = state.customProperties;
             networkState.environmentLinks = state.environmentLinks;
 

@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.env.EnvironmentService;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.NetworkType;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.SecurityGroupService;
 import com.vmware.xenon.common.Operation;
@@ -57,6 +58,11 @@ public class ComputeNetworkService extends StatefulService {
                 + "this network exists outside of the Composite Template.")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public Boolean external = Boolean.TRUE;
+
+        @JsonInclude(value = Include.NON_EMPTY)
+        @Documentation(description = "Specifies the network type e.g. public or isolated")
+        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        public NetworkType networkType;
 
         /** Defines the description of the network */
         @Documentation(description = "Defines the description of the network.")
@@ -99,6 +105,7 @@ public class ComputeNetworkService extends StatefulService {
     public ServiceDocument getDocumentTemplate() {
         ComputeNetwork nd = (ComputeNetwork) super.getDocumentTemplate();
         nd.name = "My Network";
+        nd.networkType = NetworkType.PUBLIC;
         nd.securityGroupLinks = new HashSet<>();
         nd.securityGroupLinks.add(SecurityGroupService.FACTORY_LINK + "/my-sec-group");
         nd.environmentLinks = new ArrayList<>();

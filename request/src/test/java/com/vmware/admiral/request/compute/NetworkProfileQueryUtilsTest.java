@@ -287,7 +287,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
                         ctx.fail(e);
                         return;
                     }
-                    subnets.add(all);
+                    subnets.add(all.right.documentSelfLink);
                     ctx.complete();
                 });
         ctx.await();
@@ -327,7 +327,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
                         ctx.complete();
                         return;
                     }
-                    subnets.add(all);
+                    subnets.add(all.right.documentSelfLink);
                     ctx.complete();
                 });
         ctx.await();
@@ -369,7 +369,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
                         ctx.fail(e);
                         return;
                     }
-                    subnets.add(all);
+                    subnets.add(all.right.documentSelfLink);
                     ctx.complete();
                 });
         ctx.await();

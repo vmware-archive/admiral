@@ -49,6 +49,7 @@ import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentState;
 import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentStateExpanded;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.NetworkType;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService.ResourceNamePrefixTaskState;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
@@ -820,12 +821,24 @@ public class ComputeAllocationTaskService
                 NetworkProfileQueryUtils.getSubnetForComputeNic(getHost(),
                         UriUtils.buildUri(getHost(), getSelfLink()), state.tenantLinks,
                         RequestUtils.getContextId(state), nid, env,
-                        (link, ex) -> {
+                        (networkAndSubnet, ex) -> {
                             if (ex != null) {
                                 subnetDeferred.fail(ex);
                                 return;
                             }
-                            subnetDeferred.complete(link);
+
+                            String chosenSubnetLink = networkAndSubnet.right.documentSelfLink;
+
+                            if (networkAndSubnet.left.networkType == NetworkType.PUBLIC) {
+                                nid.assignPublicIpAddress = true;
+
+                                this.sendWithDeferredResult(
+                                        Operation.createPatch(this, nid.documentSelfLink).setBody(nid))
+                                        .thenAccept(v -> subnetDeferred.complete(chosenSubnetLink));
+                                return;
+                            }
+
+                            subnetDeferred.complete(chosenSubnetLink);
                         });
                 subnet = subnetDeferred;
             } else {

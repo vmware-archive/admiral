@@ -22,7 +22,6 @@ import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.request.allocation.filter.AffinityConstraint;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -39,7 +38,7 @@ import com.vmware.xenon.services.common.ServiceUriPaths;
 
 /**
  * A filter implementing {@link HostSelectionFilter} in order to provide affinity and network name
- * resolution in case the {@link ContainerDescription} specifies <code>networks</code> property.
+ * resolution in case the {@link ComputeDescription} specifies <code>networks</code> property.
  */
 public class ComputeToNetworkAffinityHostFilter
         implements HostSelectionFilter<FilterContext> {
