@@ -813,6 +813,13 @@ let ContainersStore = Reflux.createStore({
     this.emitChange();
   },
 
+  onOpenCreateProject: function() {
+    this.setInData(['creatingResource'], {});
+    this.setInData(['listView', 'queryOptions', '$category'],
+                   constants.RESOURCES.SEARCH_CATEGORY.PROJECTS);
+    this.emitChange();
+  },
+
   openCreateNetwork: function() {
     this.setInData(['creatingResource'], {});
     this.setInData(['listView', 'queryOptions', '$category'],
@@ -1302,14 +1309,22 @@ let ContainersStore = Reflux.createStore({
   },
 
   onProjectOperationCompleted: function(operationType) {
-    if (operationType === constants.RESOURCES.PROJECTS.OPERATION.REMOVE) {
+    if (operationType === constants.RESOURCES.PROJECTS.OPERATION.CREATE) {
+      this.navigateToContainersListView(true);
+    } else if (operationType === constants.RESOURCES.PROJECTS.OPERATION.REMOVE) {
       this.navigateToContainersListView(false);
     }
   },
 
-  onProjectOperationFailed: function(operationType) {
-    if (operationType === constants.RESOURCES.PROJECTS.OPERATION.REMOVE) {
-      this.navigateToContainersListView(false);
+  onProjectOperationFailed: function(operationType, error, documentId) {
+    if (operationType === constants.RESOURCES.PROJECTS.OPERATION.CREATE) {
+      this.onGenericCreateError(error);
+    } else if (operationType === constants.RESOURCES.PROJECTS.OPERATION.REMOVE) {
+      if (documentId) {
+        this.setItemError('projectErrors', documentId, error);
+      } else {
+        this.navigateToContainersListView(false);
+      }
     }
   },
 
@@ -2020,6 +2035,12 @@ let ContainersStore = Reflux.createStore({
 
     this.setInData(['creatingResource', 'error'], errorMessage);
     this.emitChange();
+  },
+  setItemError(errorType, itemDocumentId, error) {
+    if (errorType && itemDocumentId) {
+      this.setInData(['listView', errorType, itemDocumentId], error);
+      this.emitChange();
+    }
   },
   // Exposed only for testing, not to be used in the actual application
   _clearData: function() {

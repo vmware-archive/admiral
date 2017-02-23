@@ -22,22 +22,46 @@ var ProjectsListItem = Vue.extend({
   props: {
     model: {
       required: true
+    },
+    error: {
+      required: true
     }
   },
 
+  attached: function() {
+    this.unwatchError = this.$watch('error', (error) => {
+      if (error) {
+        this.cancelRemoval();
+        if (error._generic) {
+          this.showCustomAlertMessage(error._generic);
+        } else {
+          this.showAlert('errors.projectsUnexpectedError');
+        }
+      }
+    });
+  },
+
+  detached: function() {
+    this.unwatchError();
+  },
+
   methods: {
+
+    showCustomAlertMessage: function(message) {
+      this.alert.message = message;
+      this.alert.show = true;
+    },
 
     operationSupported: function(op) {
       return utils.operationSupported(op, this.model);
     },
 
     removeProjectClicked: function($event) {
-        this.askConfirmation($event);
+      this.askConfirmation($event);
     },
 
     doRemoveProject: function() {
-      let invokedFromCenterView = true;
-      this.confirmRemoval(ResourceGroupsActions.deleteGroup, [this.model, invokedFromCenterView]);
+      this.confirmRemoval(ResourceGroupsActions.deleteGroup, [this.model, true]);
     }
 
   }

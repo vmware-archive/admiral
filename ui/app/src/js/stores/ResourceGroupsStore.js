@@ -48,21 +48,36 @@ let ResourceGroupsStore = Reflux.createStore({
     this.emitChange();
   },
 
-  onCreateGroup: function(group) {
+  onCreateGroup: function(group, fromCenterView) {
     services.createResourceGroup(group).then((createdGroup) => {
-      var immutableGroup = Immutable(createdGroup);
+      if (fromCenterView) {
+        // create was invoked from the center view
+        actions.ResourceGroupsActions.projectOperationCompleted(
+          constants.RESOURCES.PROJECTS.OPERATION.CREATE);
 
-      var groups = this.data.items.asMutable();
-      groups.push(immutableGroup);
+      } else {
+        // create was invoked from the right context menu
+        var immutableGroup = Immutable(createdGroup);
 
-      this.setInData(['items'], groups);
-      this.setInData(['newItem'], immutableGroup);
-      this.setInData(['editingItemData'], null);
-      this.emitChange();
+        var groups = this.data.items.asMutable();
+        groups.push(immutableGroup);
 
-      // After we notify listeners, the new item is no longer actual
-      this.setInData(['newItem'], null);
-    }).catch(this.onGenericEditError);
+        this.setInData(['items'], groups);
+        this.setInData(['newItem'], immutableGroup);
+        this.setInData(['editingItemData'], null);
+        this.emitChange();
+
+        // After we notify listeners, the new item is no longer actual
+        this.setInData(['newItem'], null);
+      }
+    }).catch((e) => {
+      if (fromCenterView) {
+        actions.ResourceGroupsActions.projectOperationFailed(
+          constants.RESOURCES.PROJECTS.OPERATION.CREATE, e);
+      } else {
+        this.onGenericEditError(e);
+      }
+    });
   },
 
   onUpdateGroup: function(group) {
@@ -89,7 +104,6 @@ let ResourceGroupsStore = Reflux.createStore({
   },
 
   onDeleteGroup: function(group, fromCenterView) {
-
     services.deleteResourceGroup(group).then(() => {
       if (fromCenterView) {
         // delete was invoked from the center view
@@ -99,7 +113,8 @@ let ResourceGroupsStore = Reflux.createStore({
       } else {
         // delete was invoked from the right context view
 
-        let groups = this.data.items.filter((gr) => gr.documentSelfLink !== group.documentSelfLink);
+        let groups = this.data.items.filter((gr) =>
+            gr.documentSelfLink !== group.documentSelfLink);
 
         this.setInData(['items'], groups);
         this.emitChange();
@@ -109,8 +124,8 @@ let ResourceGroupsStore = Reflux.createStore({
     }).catch((e) => {
       if (fromCenterView) {
 
-        actions.ResourceGroupsActions.projectOperationCompleted(
-          constants.RESOURCES.PROJECTS.OPERATION.REMOVE);
+        actions.ResourceGroupsActions.projectOperationFailed(
+          constants.RESOURCES.PROJECTS.OPERATION.REMOVE, e, group.documentId);
 
       } else {
 
@@ -133,11 +148,6 @@ let ResourceGroupsStore = Reflux.createStore({
     console.error(e);
 
     this.emitChange();
-  },
-
-  refreshCenterView: function() {
-    var queryOptions = utils.getIn(this.data, ['listView', 'queryOptions']);
-    actions.ContainerActions.openContainers(queryOptions, true);
   }
 
 });
