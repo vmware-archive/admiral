@@ -22,7 +22,6 @@ import javax.net.ssl.SSLContext;
 
 import io.swagger.models.Info;
 
-import com.vmware.admiral.auth.HostInitAuthServiceConfig;
 import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;

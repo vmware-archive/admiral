@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.auth;
+package com.vmware.admiral.host;
 
 import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.host.HostInitServiceHelper;

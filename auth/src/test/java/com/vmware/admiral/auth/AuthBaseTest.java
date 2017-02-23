@@ -19,6 +19,7 @@ import org.junit.Before;
 import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.common.test.BaseTestCase;
+import com.vmware.admiral.host.HostInitAuthServiceConfig;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 
@@ -51,7 +52,8 @@ public abstract class AuthBaseTest extends BaseTestCase {
         return projectState;
     }
 
-    protected ProjectState patchProject(ProjectState patchState, String projectSelfLink) throws Throwable {
+    protected ProjectState patchProject(ProjectState patchState, String projectSelfLink)
+            throws Throwable {
         ProjectState patchedState = doPatch(patchState, projectSelfLink);
 
         return patchedState;

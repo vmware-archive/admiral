@@ -35,8 +35,8 @@
 
     <modules>
         <module>common-test</module>
-        <module>auth</module>
         <module>common</module>
+        <module>auth</module>
         <module>compute</module>
         <module>request</module>
         <module>closures</module>
@@ -98,6 +98,7 @@
         <!-- TEST -->
         <junit.version>4.12</junit.version>
         <mockito.version>2.0.36-beta</mockito.version>
+        <jacoco.version>0.7.5.201505241946</jacoco.version>
 
         <!-- Jacoco -->
         <jacocoSkipReport>false</jacocoSkipReport>
@@ -410,7 +411,7 @@
                     <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
-                        <version>0.7.5.201505241946</version>
+                        <version>${jacoco.version}</version>
                         <executions>
                             <execution>
                                 <id>prepare-agent</id>
