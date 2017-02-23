@@ -11,25 +11,26 @@
 
 <div class="inline-edit">
   <alert alert-type="danger"
-         v-bind:show-alert="model.validationErrors && model.validationErrors._generic"
-         v-bind:alert-message="model.validationErrors && model.validationErrors._generic"></alert>
+         :show-alert="model.validationErrors && model.validationErrors._generic"
+         :alert-message="model.validationErrors && model.validationErrors._generic"></alert>
   <form class="inline-edit-properties">
     <section class="form-block">
       <label v-if="model.item.name">{{i18n('app.placementZone.edit.update')}}</label>
       <label v-else>{{i18n('app.placementZone.edit.createNew')}}</label>
       <div class="form-group row">
         <input class="name-input"
-            v-bind:value="model.item.name" v-on:input="onNameChange()"
+            :value="model.item.name" @input="onNameChange()"
             :placeholder="i18n('app.placementZone.edit.nameTitle')">
       </div>
       <div class="form-group row" v-if="showEndpoint">
         <div class="subtitle">{{i18n('app.placementZone.edit.endpointTitle')}}</div>
         <dropdown-search
-            v-bind:disabled="!!model.item.documentSelfLink"
-            v-bind:entity="i18n('app.endpoint.entity')"
-            v-bind:filter="searchEndpoints"
-            v-bind:value="model.item.endpoint"
-            v-on:change="onEndpointChange"></dropdown-search>
+            :disabled="!!model.item.documentSelfLink"
+            :entity="i18n('app.endpoint.entity')"
+            :filter="searchEndpoints"
+            :value="model.item.endpoint"
+            @change="onEndpointChange">
+        </dropdown-search>
       </div>
       <div v-if="isDockerPlacementZone" class="form-group row">
         <div class="subtitle">{{i18n('app.placementZone.edit.placementPolicy')}}
@@ -37,14 +38,14 @@
               v-tooltip="i18n('app.placementZone.edit.placementPolicyHint')"></i>
         </div>
         <dropdown
-            v-bind:entity="i18n('app.placementZone.edit.placementPolicy')"
-            v-bind:options="[{
+            :entity="i18n('app.placementZone.edit.placementPolicy')"
+            :options="[{
               name: 'BINPACK'
             }, {
               name: 'SPREAD'
             }]"
-            v-bind:value="{'name': model.item.epzState && model.item.epzState.placementPolicy}"
-            v-on:change="onPlacementPolicyChange"></dropdown>
+            :value="{'name': model.item.epzState && model.item.epzState.placementPolicy}"
+            @change="onPlacementPolicyChange"></dropdown>
       </div>
       <div v-if="isDockerPlacementZone" class="tags form-group row">
         <div class="form-control">
@@ -61,7 +62,7 @@
       </div>
       <div class="form-group row">
         <div v-if="isDockerPlacementZone" class="checkbox-inline">
-          <input id="dynamic-input" class="dynamic-input" type="checkbox" v-on:change="onDynamicChange()">
+          <input id="dynamic-input" class="dynamic-input" type="checkbox" @change="onDynamicChange()">
           <label for="dynamic-input">{{i18n('app.placementZone.edit.dynamicTitle')}}</label>
         </div>
       </div>
@@ -81,11 +82,17 @@
     </section>
   </form>
   <div class="inline-edit-toolbar">
-    <a href="#" class="inline-edit-save btn btn-circle placementZoneEdit-save" v-bind:class="{'loading': model.saving}" v-on:click="save($event)" v-bind:disabled="saveDisabled">
+    <a href="#"
+        class="inline-edit-save btn btn-circle placementZoneEdit-save"
+        :class="{'loading': model.saving}"
+        :disabled="saveDisabled || model.saving"
+        @click="save($event)">
       <i class="fa fa-check"></i>
       <i class="fa fa-spinner fa-spin loader"></i>
     </a>
-    <a href="#" class="inline-edit-cancel btn btn-circle" v-on:click="cancel($event)">
+    <a href="#"
+        class="inline-edit-cancel btn btn-circle"
+        @click="cancel($event)">
       <i class="fa fa-times"></i>
     </a>
   </div>
