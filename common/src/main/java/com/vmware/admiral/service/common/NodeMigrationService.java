@@ -25,6 +25,7 @@ import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.services.common.MigrationTaskService;
 import com.vmware.xenon.services.common.MigrationTaskService.State;
+import com.vmware.xenon.services.common.ServiceUriPaths;
 
 /**
  * Service is meant to do a migration of the documents/states from another xenon node.
@@ -33,7 +34,6 @@ public class NodeMigrationService extends StatelessService {
 
     public static final String SELF_LINK = ManagementUriParts.MIGRATION;
 
-    private static final String DEFAULT_NODE_GROUP = "/core/node-groups/default";
     private static final int MIGRATION_CHECK_DELAY_SECONDS = 6;
     private static final int MIGRATION_CHECK_RETRIES = 100;
 
@@ -104,7 +104,7 @@ public class NodeMigrationService extends StatelessService {
         if (body.destinationNodeGroup == null || body.destinationNodeGroup.isEmpty()) {
             try {
                 migrationState.destinationNodeGroupReference = new URI(
-                        getHost().getPublicUriAsString() + DEFAULT_NODE_GROUP);
+                        getHost().getPublicUriAsString() + ServiceUriPaths.DEFAULT_NODE_GROUP);
             } catch (Exception e) {
                 getHost().log(Level.SEVERE, "Invalid destinationNodeGroupReference",
                         e.getMessage());
