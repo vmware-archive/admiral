@@ -39,6 +39,19 @@
             <groupId>${xenon.group}</groupId>
             <artifactId>xenon-common</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.vmware.photon.controller</groupId>
+            <artifactId>photon-model</artifactId>
+        </dependency>
+
+        <!-- TEST -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>admiral-common-test</artifactId>
+            <version>${project.version}</version>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 </project>

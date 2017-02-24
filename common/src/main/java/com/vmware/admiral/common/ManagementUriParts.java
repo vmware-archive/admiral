@@ -54,6 +54,8 @@ public interface ManagementUriParts {
     String PLACEMENT_CAPACITY_UPDATE = RESOURCES + "/placement-capacity-update";
     String PLACEMENT_UPDATE_TASKS = RESOURCES + "/placement-update-tasks";
 
+    String PROJECTS = "/projects";
+
     String EPZ_COMPUTE_ENUMERATION_TASKS = RESOURCES + "/epz-compute-enumeration-tasks";
     String EPZ_PERIODIC_ENUMERATION = RESOURCES + "/epz-periodic-enumeration";
     String PLACEMENT_PERIODIC_UPDATE = RESOURCES + "/placement-periodic-update";

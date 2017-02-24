@@ -20,12 +20,13 @@ import com.vmware.xenon.common.LocalizableValidationException;
 
 public class AssertUtil {
 
+    public static final String PROPERTY_CANNOT_BE_NULL_MESSAGE_FORMAT = "'%s' is required";
     public static final String PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT = "'%s' cannot be empty";
     public static final String PROPERTY_MUST_BE_EMPTY_MESSAGE_FORMAT = "'%s' must be empty";
 
     public static void assertNotNull(Object value, String propertyName) {
         if (value == null) {
-            throw new LocalizableValidationException("'" + propertyName + "' is required",
+            throw new LocalizableValidationException(String.format(PROPERTY_CANNOT_BE_NULL_MESSAGE_FORMAT, propertyName),
                     "common.assertion.property.required", propertyName);
         }
     }
