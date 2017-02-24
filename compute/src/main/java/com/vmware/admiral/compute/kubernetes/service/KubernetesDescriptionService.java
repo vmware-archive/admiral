@@ -16,6 +16,9 @@ import static com.vmware.admiral.common.util.AssertUtil.assertNotNullOrEmpty;
 import static com.vmware.admiral.common.util.YamlMapper.isValidYaml;
 
 import java.io.IOException;
+import java.util.Map;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.YamlMapper;
@@ -25,6 +28,7 @@ import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 
 public class KubernetesDescriptionService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.KUBERNETES_DESC;
@@ -55,6 +59,29 @@ public class KubernetesDescriptionService extends StatefulService {
 
         public String getKubernetesEntityAsJson() throws IOException {
             return YamlMapper.fromYamlToJson(kubernetesEntity);
+        }
+
+        @SuppressWarnings("unchecked")
+        public void merge(BaseKubernetesObject copyFrom) {
+            Map<String, Object> copyTo;
+            try {
+                copyTo = YamlMapper.objectMapper().readValue(kubernetesEntity,
+                        Map.class);
+            } catch (Exception e) {
+                Utils.logWarning("Could not read value of kubernetes entity from yaml, reason :%s",
+                        e);
+                return;
+            }
+            Map<String, Object> copyFromMap = YamlMapper.objectMapper().convertValue(copyFrom,
+                    Map.class);
+
+            copyTo.putAll(copyFromMap);
+
+            try {
+                kubernetesEntity = YamlMapper.objectMapper().writeValueAsString(copyTo);
+            } catch (JsonProcessingException e) {
+                Utils.logWarning("Could not write of kubernetes entity to yaml, reason :%s", e);
+            }
         }
     }
 

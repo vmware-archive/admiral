@@ -69,6 +69,7 @@ import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 
 public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockTest {
@@ -421,25 +422,34 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
             }
         }
 
+        @SuppressWarnings("unchecked")
         private void callbackRandomly(Operation post, Object element) {
+            String name = post.getBody(BaseKubernetesObject.class).metadata.name;
+
             String responseBody;
             try {
-                responseBody = YamlMapper.fromYamlToJson(post.getBody(String.class));
+                Map<String, Object> map = YamlMapper.objectMapper().readValue(
+                        post.getBody(String.class), Map.class);
+                Object metadata = map.get("metadata");
+                if (metadata != null) {
+                    Map<String, Object> mapMeta = (Map<String, Object>) metadata;
+                    mapMeta.put("selfLink", post.getUri().getPath() + "/" + name);
+                }
+                responseBody = Utils.toJson(map);
+
             } catch (IOException e) {
                 post.fail(e);
                 return;
             }
             if (Math.random() > 0.5) {
                 deployedElements.add(element);
-                deployedElementsMap.put(post.getBody(BaseKubernetesObject.class).metadata.name,
-                        element);
+                deployedElementsMap.put(name, element);
                 post.setBody(responseBody);
                 post.complete();
             } else {
                 getHost().schedule(() -> {
                     deployedElements.add(element);
-                    deployedElementsMap.put(post.getBody(BaseKubernetesObject.class).metadata.name,
-                            element);
+                    deployedElementsMap.put(name, element);
                     post.setBody(responseBody);
                     post.complete();
                 }, 20, TimeUnit.MILLISECONDS);

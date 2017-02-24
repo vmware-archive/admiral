@@ -42,6 +42,7 @@ import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.HttpVersion;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.RequestProtocol;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesTemplate;
+import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.content.kubernetes.deployments.Deployment;
 import com.vmware.admiral.compute.content.kubernetes.pods.PodContainer;
 import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerProbe;
@@ -50,6 +51,7 @@ import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerProbeHTTPG
 import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerProbeTCPSocketAction;
 import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerResources;
 import com.vmware.admiral.compute.content.kubernetes.services.Service;
+import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.xenon.common.Service.Action;
 
@@ -121,8 +123,8 @@ public class KubernetesUtilTest {
         expectedHealthConfig.port = 8080;
         expectedHealthConfig.timeoutMillis = 3000;
 
-        HealthConfig actualHealthConfig = fromPodContainerProbeToContainerDescriptionHealthConfig
-                (podContainer);
+        HealthConfig actualHealthConfig = fromPodContainerProbeToContainerDescriptionHealthConfig(
+                podContainer);
 
         assertNotNull(actualHealthConfig);
         assertEquals(actualHealthConfig.protocol, expectedHealthConfig.protocol);
@@ -147,8 +149,8 @@ public class KubernetesUtilTest {
         expectedHealthConfig.port = 8080;
         expectedHealthConfig.timeoutMillis = 3000;
 
-        HealthConfig actualHealthConfig = fromPodContainerProbeToContainerDescriptionHealthConfig
-                (podContainer);
+        HealthConfig actualHealthConfig = fromPodContainerProbeToContainerDescriptionHealthConfig(
+                podContainer);
 
         assertNotNull(actualHealthConfig);
         assertEquals(actualHealthConfig.protocol, expectedHealthConfig.protocol);
@@ -286,14 +288,14 @@ public class KubernetesUtilTest {
         healthConfig3.protocol = RequestProtocol.TCP;
         healthConfig3.port = 32000;
 
-        PodContainerProbe actualProbe1 = fromContainerDescriptionHealthConfigToPodContainerProbe
-                (healthConfig1);
+        PodContainerProbe actualProbe1 = fromContainerDescriptionHealthConfigToPodContainerProbe(
+                healthConfig1);
 
-        PodContainerProbe actualProbe2 = fromContainerDescriptionHealthConfigToPodContainerProbe
-                (healthConfig2);
+        PodContainerProbe actualProbe2 = fromContainerDescriptionHealthConfigToPodContainerProbe(
+                healthConfig2);
 
-        PodContainerProbe actualProbe3 = fromContainerDescriptionHealthConfigToPodContainerProbe
-                (healthConfig3);
+        PodContainerProbe actualProbe3 = fromContainerDescriptionHealthConfigToPodContainerProbe(
+                healthConfig3);
 
         assertNotNull(actualProbe1.exec);
         for (int i = 0; i < expectedProbe1.exec.command.length; i++) {
@@ -315,16 +317,16 @@ public class KubernetesUtilTest {
     public void testFromPodContainerCommandToContainerDescriptionCommand() {
         assertNull(fromPodContainerCommandToContainerDescriptionCommand(null, null));
 
-        assertNull(fromPodContainerCommandToContainerDescriptionCommand(new String[] {}, new
-                String[] { "ps" }));
+        assertNull(fromPodContainerCommandToContainerDescriptionCommand(new String[] {},
+                new String[] { "ps" }));
 
         String[] podCommand = new String[] { "admiral", "rm" };
         String[] podCommandArgs = new String[] { "container1", "container2", "container3" };
 
         String[] expectedContainerDescriptionCmd = new String[] { "admiral", "rm", "container1",
                 "container2", "container3" };
-        String[] actualContainerDescriptionCmd =
-                fromPodContainerCommandToContainerDescriptionCommand(podCommand, podCommandArgs);
+        String[] actualContainerDescriptionCmd = fromPodContainerCommandToContainerDescriptionCommand(
+                podCommand, podCommandArgs);
 
         for (int i = 0; i < expectedContainerDescriptionCmd.length; i++) {
             assertEquals(expectedContainerDescriptionCmd[i], actualContainerDescriptionCmd[i]);
@@ -332,8 +334,8 @@ public class KubernetesUtilTest {
 
         String[] podCommand1 = new String[] { "admiral", "login" };
         String[] expectedContainerDescriptionCmd1 = new String[] { "admiral", "login" };
-        String[] actualContainerDescriptionCmd1 =
-                fromPodContainerCommandToContainerDescriptionCommand(podCommand1, null);
+        String[] actualContainerDescriptionCmd1 = fromPodContainerCommandToContainerDescriptionCommand(
+                podCommand1, null);
 
         assertEquals(expectedContainerDescriptionCmd1.length,
                 actualContainerDescriptionCmd1.length);
@@ -341,5 +343,37 @@ public class KubernetesUtilTest {
         for (int i = 0; i < expectedContainerDescriptionCmd1.length; i++) {
             assertEquals(expectedContainerDescriptionCmd1[i], actualContainerDescriptionCmd1[i]);
         }
+    }
+
+    @Test
+    public void testMapApplicationSuffix() throws IOException {
+        String suffix = "generate-mcm-10";
+
+        String serviceYamlFormat = "---\n" +
+                "apiVersion: \"v1\"\n" +
+                "kind: \"Service\"\n" +
+                "metadata:\n" +
+                "  name: \"db_sufix\"\n" +
+                "  labels:\n" +
+                "    app: \"my-app\"\n" +
+                "spec:\n" +
+                "  ports:\n" +
+                "  - name: \"3306\"\n" +
+                "    port: 3306\n" +
+                "    protocol: \"TCP\"\n" +
+                "    targetPort: 3306\n" +
+                "  selector:\n" +
+                "    app: \"my-app\"\n" +
+                "    tier: \"db\"\n";
+
+        String serviceYaml = serviceYamlFormat.replaceAll("_sufix", "");
+        String expetedMappedServiceYaml = serviceYamlFormat.replaceAll("_sufix", "-" + suffix);
+
+        KubernetesDescription kd = new KubernetesDescription();
+        kd.kubernetesEntity = serviceYaml;
+
+        kd = KubernetesUtil.mapApplicationAffix(kd, suffix);
+
+        assertEquals(expetedMappedServiceYaml, kd.kubernetesEntity);
     }
 }
