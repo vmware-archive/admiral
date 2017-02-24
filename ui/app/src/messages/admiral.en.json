@@ -291,8 +291,10 @@
         },
         "editProject": {
           "createTitle": "Create Project",
+          "updateTitle": "Update Project",
           "name": "Name",
-          "create": "Create"
+          "create": "Create",
+          "update": "Update"
         },
         "editNetwork": {
           "newLabel": "Add Network",
@@ -659,7 +661,11 @@
           "name": "Project",
           "description": "Description",
           "private": "Private",
-          "create": "Create Project"
+          "create": "Create Project",
+          "actions": {
+            "edit": "Edit",
+            "remove": "Remove"
+          }
         },
         "container": {
           "create": "Create Container"

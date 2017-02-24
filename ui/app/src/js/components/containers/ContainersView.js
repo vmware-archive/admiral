@@ -130,8 +130,13 @@ var ContainersViewVueComponent = Vue.extend({
       }
       return 0;
     },
-    creatingProject: function() {
+    creatingOrUpdatingProject: function() {
       return this.model.creatingResource &&
+        this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.PROJECTS;
+    },
+    updatingProject: function() {
+      return this.model.creatingResource &&
+        this.model.creatingResource.documentSelfLink &&
         this.selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.PROJECTS;
     },
     creatingContainer: function() {
@@ -247,6 +252,14 @@ var ContainersViewVueComponent = Vue.extend({
   methods: {
     goBack: function() {
       NavigationActions.openContainers(this.queryOptions);
+    },
+
+    goBackFromProjects: function() {
+      if (this.updatingProject) {
+        ContainerActions.openContainers(this.queryOptions);
+      } else {
+        this.goBack();
+      }
     },
 
     goBackFromClosures: function() {

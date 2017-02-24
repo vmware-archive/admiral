@@ -23,18 +23,41 @@ var ProjectRequestForm = Vue.extend({
   },
   data: function() {
     return {
-      creatingProject: false,
+      operationInProgress: false,
       disableCreateButton: true
     };
   },
+  computed: {
+    isUpdate: function() {
+      return this.model && this.model.documentSelfLink;
+    },
+    titleText: function() {
+      if (this.isUpdate) {
+        return i18n.t('app.template.details.editProject.updateTitle');
+      } else {
+        return i18n.t('app.template.details.editProject.createTitle');
+      }
+    },
+    createOrUpdateButtonText: function() {
+      if (this.isUpdate) {
+        return i18n.t('app.template.details.editProject.update');
+      } else {
+        return i18n.t('app.template.details.editProject.create');
+      }
+    }
+  },
   methods: {
-    createProject: function() {
+    createOrUpdateProject: function() {
       var projectForm = this.$refs.projectEditForm;
       var validationErrors = projectForm.validate();
       if (!validationErrors) {
         var project = projectForm.getProjectDefinition();
-        this.creatingProject = true;
-        ResourceGroupsActions.createGroup(project, true);
+        this.operationInProgress = true;
+        if (this.isUpdate) {
+          ResourceGroupsActions.updateGroup(project, true);
+        } else {
+          ResourceGroupsActions.createGroup(project, true);
+        }
       }
     },
 
@@ -46,7 +69,7 @@ var ProjectRequestForm = Vue.extend({
   attached: function() {
     this.unwatchModel = this.$watch('model.error', (error) => {
       if (error) {
-        this.creatingProject = false;
+        this.operationInProgress = false;
       }
     }, {immediate: true});
   },

@@ -26,7 +26,7 @@ var ProjectDefinitionForm = Vue.extend({
   template: ProjectDefinitionFormVue,
   props: {
     model: {
-      required: false,
+      required: true,
       type: Object
     }
   },
@@ -43,7 +43,7 @@ var ProjectDefinitionForm = Vue.extend({
       var project = {
         name: this.projectName
       };
-      if (this.model) {
+      if (this.model && this.model.documentSelfLink) {
         project.documentSelfLink = this.model.documentSelfLink;
       }
       return project;
@@ -69,6 +69,10 @@ var ProjectDefinitionForm = Vue.extend({
         filledRequiredInputs = true;
       }
       this.$dispatch('required-input-changed', filledRequiredInputs);
+    },
+
+    fillInputsFromData: function(project) {
+      this.projectName = (project && project.name) || '';
     }
   },
 
@@ -79,10 +83,11 @@ var ProjectDefinitionForm = Vue.extend({
   },
 
   attached: function() {
+
+    this.fillInputsFromData(this.model);
+
     this.unwatchModel = this.$watch('model', (project) => {
       if (project) {
-        this.projectName = project.name;
-
         var alertMessage = project.error && project.error._generic;
         if (alertMessage) {
           this.$dispatch('container-form-alert', alertMessage, constants.ALERTS.TYPE.FAIL);

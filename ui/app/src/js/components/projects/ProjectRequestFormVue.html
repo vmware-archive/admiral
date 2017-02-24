@@ -10,16 +10,16 @@
   -->
 
 <div class="project-form">
-  <div class="title" v-else>{{i18n('app.template.details.editProject.createTitle')}}</div>
+  <div class="title">{{titleText}}</div>
   <project-definition-form v-ref:project-edit-form
-                           v-bind:model="model.definitionInstance"
+                           v-bind:model="model"
                            v-on:required-input-changed="requiredInputChanged">
   </project-definition-form>
   <div class="control-btns">
     <button class="btn btn-primary"
-            v-bind:class="{'loading': creatingProject}"
+            v-bind:class="{'loading': operationInProgress}"
             v-bind:disabled="disableCreateButton"
-            v-on:click="createProject()">{{i18n('app.template.details.editProject.create')}}<i
+            v-on:click="createOrUpdateProject()">{{createOrUpdateButtonText}}<i
                 class="fa fa-spinner fa-spin loader-inline"></i></button>
   </div>
 </div>

@@ -183,7 +183,7 @@ crossroads.addRoute('/projects/new', function() {
   actions.ContainerActions.openContainers({
     '$category': 'projects'
   }, true);
-  actions.ResourceGroupsActions.openCreateProject();
+  actions.ResourceGroupsActions.openCreateOrEditProject();
 });
 
 crossroads.addRoute('/networks/new', function() {
