@@ -61,6 +61,7 @@ import com.vmware.admiral.host.ComputeInitialBootService;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.admiral.host.HostInitDockerAdapterServiceConfig;
+import com.vmware.admiral.host.HostInitKubernetesAdapterServiceConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.admiral.host.HostInitRequestServicesConfig;
 import com.vmware.admiral.host.RequestInitialBootService;
@@ -219,6 +220,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
         HostInitComputeServicesConfig.startServices(h, true);
         HostInitRequestServicesConfig.startServices(h);
         HostInitDockerAdapterServiceConfig.startServices(h, true);
+        HostInitKubernetesAdapterServiceConfig.startServices(h, true);
 
         for (String factoryLink : getFactoryServiceList()) {
             waitForServiceAvailability(factoryLink);

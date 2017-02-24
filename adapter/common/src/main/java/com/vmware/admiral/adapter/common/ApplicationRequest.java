@@ -15,8 +15,6 @@ import java.net.URI;
 
 public class ApplicationRequest extends AdapterRequest {
 
-    public String hostLink;
-
     @Override
     public void validate() {
         super.validate();
@@ -28,7 +26,7 @@ public class ApplicationRequest extends AdapterRequest {
         }
     }
 
-    public ApplicationOperationType getOperationtype() {
+    public ApplicationOperationType getOperationType() {
         return ApplicationOperationType.instanceById(operationTypeId);
     }
 

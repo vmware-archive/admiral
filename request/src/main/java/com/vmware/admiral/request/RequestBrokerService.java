@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.vmware.admiral.adapter.common.ApplicationOperationType;
 import com.vmware.admiral.adapter.common.ClosureOperationType;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.adapter.common.NetworkOperationType;
@@ -1544,7 +1545,8 @@ public class RequestBrokerService extends
         }
 
         if (isContainerType(state) || isCompositeComponentType(state)) {
-            return ContainerOperationType.DELETE.id.equals(state.operation);
+            return ContainerOperationType.DELETE.id.equals(state.operation) ||
+                    ApplicationOperationType.DELETE.id.equals(state.operation);
         }
 
         if (isComputeType(state)) {

@@ -13,6 +13,7 @@ package com.vmware.admiral.service.kubernetes.test;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -31,7 +32,8 @@ import com.vmware.xenon.common.Utils;
 public class MockKubernetesApplicationAdapterService extends BaseMockAdapterService {
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_KUBERNETES_APPLICATION;
 
-    private static final List<CompositeComponent> PROVISIONED_COMPONENTS = new ArrayList<>();
+    private static final List<CompositeComponent> PROVISIONED_COMPONENTS = Collections
+            .synchronizedList(new ArrayList<>());
 
     private static class MockAdapterRequest extends ApplicationRequest {
 
@@ -166,8 +168,11 @@ public class MockKubernetesApplicationAdapterService extends BaseMockAdapterServ
     }
 
     private synchronized void deprovisionCompositeComponent(MockAdapterRequest state) {
+
         removeCompositeComponent(state.getCompositeComponentReference());
+
         patchTaskStage(state, (Throwable) null);
+
     }
 
     private synchronized void removeCompositeComponent(URI compositeComponentReference) {
@@ -182,6 +187,10 @@ public class MockKubernetesApplicationAdapterService extends BaseMockAdapterServ
 
     public static List<CompositeComponent> getProvisionedComponents() {
         return new ArrayList<>(PROVISIONED_COMPONENTS);
+    }
+
+    public static synchronized void addCompositeComponent(CompositeComponent component) {
+        PROVISIONED_COMPONENTS.add(component);
     }
 
     public static void clear() {

@@ -13,12 +13,14 @@ package com.vmware.admiral.request.kubernetes;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
+import static com.vmware.admiral.compute.container.CompositeComponentService.FIELD_NAME_HOST_LINK;
 import static com.vmware.admiral.request.utils.RequestUtils.getContextId;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.function.Consumer;
@@ -78,20 +80,27 @@ public class CompositeKubernetesProvisioningTaskService extends
             CREATED, CONTEXT_PREPARED, RESERVING, RESERVED, PLACEMENT_HOST_SELECTED, COMPLETED, ERROR
         }
 
-        /** (Required) The description that defines the requested resource. */
+        /**
+         * (Required) The description that defines the requested resource.
+         */
         @PropertyOptions(usage = { PropertyUsageOption.REQUIRED,
                 PropertyUsageOption.SINGLE_ASSIGNMENT }, indexing = STORE_ONLY)
         public String resourceDescriptionLink;
 
-        /** (Required) The link of the composite component that will be provisioned. */
-        @Documentation(description = "The link of the composite component that will be provisioned.")
+        /**
+         * (Required) The link of the composite component that will be provisioned.
+         */
+        @Documentation(
+                description = "The link of the composite component that will be provisioned.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
                 PropertyUsageOption.REQUIRED,
                 PropertyUsageOption.SINGLE_ASSIGNMENT })
         public String compositeComponentLink;
 
         // Service use fields:
-        /** (Internal) Set by task with KuberneteskDescription name. */
+        /**
+         * (Internal) Set by task with KuberneteskDescription name.
+         */
         @Documentation(description = "Set by task with KuberneteskDescription name.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
                 PropertyUsageOption.SERVICE_USE,
@@ -99,11 +108,15 @@ public class CompositeKubernetesProvisioningTaskService extends
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public String descName;
 
-        /** (Internal) Set by task after the ComputeState is found to host the entities */
+        /**
+         * (Internal) Set by task after the ComputeState is found to host the entities
+         */
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public List<HostSelection> hostSelections;
 
-        /** (Internal) the groupResourcePlacementState that links to ResourcePool */
+        /**
+         * (Internal) the groupResourcePlacementState that links to ResourcePool
+         */
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String groupResourcePlacementLink;
 
@@ -144,7 +157,7 @@ public class CompositeKubernetesProvisioningTaskService extends
             }
             break;
         case PLACEMENT_HOST_SELECTED:
-            createAdapterRequest(state);
+            patchCompositeComponentWithHostLink(state, null);
             break;
         case COMPLETED:
             complete();
@@ -300,7 +313,6 @@ public class CompositeKubernetesProvisioningTaskService extends
                 TaskStage.STARTED, SubStage.ERROR);
         adapterRequest.operationTypeId = ApplicationOperationType.CREATE.id;
         adapterRequest.customProperties = state.customProperties;
-        adapterRequest.hostLink = state.hostSelections.get(0).hostLink;
 
         sendRequest(
                 Operation.createPatch(getHost(), ManagementUriParts.ADAPTER_KUBERNETES_APPLICATION)
@@ -317,6 +329,33 @@ public class CompositeKubernetesProvisioningTaskService extends
                             logInfo("Kubernetes provisioning started for: "
                                     + state.compositeComponentLink);
                         }));
+    }
+
+    private void patchCompositeComponentWithHostLink(KubernetesProvisioningTaskState state,
+            CompositeComponent cc) {
+        if (cc == null) {
+            getCompositeComponent(state, (component) -> patchCompositeComponentWithHostLink
+                    (state, component));
+            return;
+        }
+
+        if (cc.customProperties == null) {
+            cc.customProperties = new HashMap<>();
+        }
+
+        cc.customProperties.put(FIELD_NAME_HOST_LINK, state.hostSelections.get(0)
+                .hostLink);
+
+        sendRequest(Operation
+                .createPatch(this, state.compositeComponentLink)
+                .setBody(cc)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        failTask("Failure when patching composite component", ex);
+                    } else {
+                        createAdapterRequest(state);
+                    }
+                }));
     }
 
     private void getCompositeComponent(KubernetesProvisioningTaskState state,

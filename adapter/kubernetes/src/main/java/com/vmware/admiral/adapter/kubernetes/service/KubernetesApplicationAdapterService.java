@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.adapter.kubernetes.service;
 
+import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
+import static com.vmware.admiral.compute.container.CompositeComponentService.FIELD_NAME_HOST_LINK;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.DEPLOYMENT_TYPE;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.POD_TYPE;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.REPLICATION_CONTROLLER_TYPE;
@@ -70,10 +72,10 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
         context.request = op.getBody(ApplicationRequest.class);
         context.request.validate();
 
-        ApplicationOperationType operationType = context.request.getOperationtype();
+        ApplicationOperationType operationType = context.request.getOperationType();
 
-        logInfo("Processing application operation request %s for resource %s on host %s",
-                operationType, context.request.resourceReference, context.request.hostLink);
+        logInfo("Processing application operation request %s for resource %s", operationType,
+                context.request.resourceReference);
 
         op.complete();
 
@@ -97,11 +99,25 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
     }
 
     public void createKubernetesContext(RequestContext context) {
+        assertNotNull(context.compositeComponent.customProperties,
+                "compositeComponent.customProperties.");
+
+        CompositeComponent component = context.compositeComponent;
+
+        if (!component.customProperties.containsKey(FIELD_NAME_HOST_LINK)) {
+            fail(context.request, new IllegalStateException("Composite component is missing "
+                    + "custom property with host link"));
+            return;
+        }
+
+        String hostLink = component.customProperties.get(FIELD_NAME_HOST_LINK);
+
+
         // Get the kubernetes context and the api client.
         getContainerHost(
                 context.request,
                 null,
-                context.request.resolve(context.request.hostLink),
+                context.request.resolve(hostLink),
                 (k8sContext) -> {
                     context.kubernetesContext = k8sContext;
                     context.client = getApiClient();
@@ -112,7 +128,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
 
     private void processOperation(RequestContext context) {
         try {
-            switch (context.request.getOperationtype()) {
+            switch (context.request.getOperationType()) {
             case CREATE:
                 processCompositeComponent(context);
                 break;
@@ -123,7 +139,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
 
             default:
                 fail(context.request, new IllegalArgumentException(
-                        "Unexpected request type: " + context.request.getOperationtype()));
+                        "Unexpected request type: " + context.request.getOperationType()));
             }
         } catch (Throwable e) {
             fail(context.request, e);
