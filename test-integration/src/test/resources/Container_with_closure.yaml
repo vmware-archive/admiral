@@ -28,18 +28,21 @@ components:
         module.exports = function test(ctx) {
           var m = ctx.inputs.a;
           console.log('Hello number: ' + m.p);
+          console.log('Hello test: ' + ctx.inputs.testIn);
           ctx.outputs.resultInt = m.p + ctx.inputs.b;
           ctx.outputs.resultObj = {};
           ctx.outputs.resultObj.a = m.p + ctx.inputs.b;
           console.log('Hello int result: ' + ctx.outputs.resultInt);
           console.log('Hello obj result: ' + ctx.outputs.resultObj);
           ctx.outputs.address = ctx.inputs.address;
+          ctx.outputs.testOut = ctx.inputs.testIn;
         };
 
       outputNames:
         - resultInt
         - resultObj
         - address
+        - testOut
       logConfiguration:
         type: "json-file"
         config:
@@ -50,6 +53,7 @@ components:
         b: ${_resource~kitematicBeforeClosure~b}
         address: ${_resource~kitematicBeforeClosure~address}
         invalid: ${_resource~kitematicBeforeClosure~invalid-property}
+        testIn: "test-value"
   kitematicAfterClosure:
     type: App.Container
     data:

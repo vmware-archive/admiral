@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -32,6 +33,7 @@ import com.fasterxml.jackson.databind.ser.FilterProvider;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 
 import com.vmware.admiral.closures.services.closure.Closure;
@@ -172,8 +174,18 @@ public class BindingEvaluator {
         }
 
         try {
-            Map<String, Object> resultBindingMap = TemplateSerializationUtils
-                    .serializeNestedState(state, objectMapper, objectAsStringWriter);
+            final Map<String, Object> resultBindingMap = new HashMap<>();
+            sanitizeState(state, (normalizedState) -> {
+                try {
+                    resultBindingMap.putAll(TemplateSerializationUtils
+                            .serializeNestedState(normalizedState, objectMapper,
+                                    objectAsStringWriter));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+            });
+
             applyEvaluatedState(resultBindingMap, evaluatedBindingMap, bindings);
             if (!evaluatedBindingMap.isEmpty()) {
                 result = TemplateSerializationUtils.deserializeServiceDocument(resultBindingMap,
@@ -184,6 +196,33 @@ public class BindingEvaluator {
         }
 
         return result;
+    }
+
+    private static void sanitizeState(NestedState state, Consumer<NestedState> serializationCall)
+            throws IOException {
+        if (state.object instanceof Closure) {
+            // Temporary remove closures inputs & outputs
+            Map<String, JsonElement> closureInputs = new HashMap<>();
+            Map<String, JsonElement> closureOutputs = new HashMap<>();
+
+            Closure closureState = (Closure) state.object;
+            if (closureState.inputs != null) {
+                closureInputs.putAll(closureState.inputs);
+                closureState.inputs.clear();
+            }
+            if (closureState.outputs != null) {
+                closureOutputs.putAll(closureState.outputs);
+                closureState.outputs.clear();
+            }
+
+            serializationCall.accept(state);
+
+            closureState.inputs = closureInputs;
+            closureState.outputs = closureOutputs;
+        } else {
+            serializationCall.accept(state);
+        }
+
     }
 
     private static void applyEvaluatedState(Map<String, Object> resultBindingMap,
@@ -266,7 +305,8 @@ public class BindingEvaluator {
         String componentName = templateName;
 
         if (visited.contains(componentName)) {
-            throw new LocalizableValidationException("Cyclic bindings cannot be evaluated", "compute.cyclic.bindings");
+            throw new LocalizableValidationException("Cyclic bindings cannot be evaluated",
+                    "compute.cyclic.bindings");
         }
         visited.add(componentName);
 
