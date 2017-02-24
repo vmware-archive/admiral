@@ -62,6 +62,11 @@ var ProjectsListItem = Vue.extend({
 
     doRemoveProject: function() {
       this.confirmRemoval(ResourceGroupsActions.deleteGroup, [this.model, true]);
+    },
+
+    openEditProject: function($event) {
+      $event.preventDefault();
+      ResourceGroupsActions.openCreateOrEditProject(this.model);
     }
 
   }

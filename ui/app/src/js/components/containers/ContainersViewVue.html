@@ -227,11 +227,12 @@
     </div>
   </div>
 
-  <div class="mask" v-if="creatingProject"></div>
-  <div class="create-project closable-view" v-if="creatingProject" transition="slide-and-fade">
+  <div class="mask" v-if="creatingOrUpdatingProject"></div>
+  <div class="create-project closable-view" v-if="creatingOrUpdatingProject"
+       transition="slide-and-fade">
     <alert alert-type="danger" v-bind:show-alert="hasResourceCreateError"
                              v-bind:alert-message="resourceCreateError"></alert>
-    <a class="close-button" v-on:click="goBack($event)">
+    <a class="close-button" v-on:click="goBackFromProjects($event)">
       <i class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span>
     </a>
 

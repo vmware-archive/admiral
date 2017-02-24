@@ -160,7 +160,7 @@ export var CredentialsActions = Reflux.createActions([
 export var ResourceGroupsActions = Reflux.createActions([
   'retrieveGroups', 'editGroup', 'cancelEditGroup', 'createGroup', 'updateGroup', 'deleteGroup',
   'projectOperationCompleted', 'projectOperationFailed',
-  'openCreateProject'
+  'openCreateOrEditProject'
 ]);
 
 export var DeploymentPolicyActions = Reflux.createActions([

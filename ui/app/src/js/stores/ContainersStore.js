@@ -590,15 +590,17 @@ let ContainersStore = Reflux.createStore({
   },
 
   onOpenContainers: function(queryOptions, forceReload, keepContext) {
+    this.setInData(['selectedItem'], null);
+    this.setInData(['creatingResource'], null);
+    this.setInData(['selectedItemDetails'], null);
+
     var items = utils.getIn(this.data, ['listView', 'items']);
     if (!forceReload && items) {
+      this.emitChange();
       return;
     }
 
     this.setInData(['listView', 'queryOptions'], queryOptions);
-    this.setInData(['selectedItem'], null);
-    this.setInData(['creatingResource'], null);
-    this.setInData(['selectedItemDetails'], null);
 
     if (!keepContext) {
       this.setInData(['contextView'], {});
@@ -813,8 +815,9 @@ let ContainersStore = Reflux.createStore({
     this.emitChange();
   },
 
-  onOpenCreateProject: function() {
-    this.setInData(['creatingResource'], {});
+  onOpenCreateOrEditProject: function(project) {
+    project = project || {};
+    this.setInData(['creatingResource'], project);
     this.setInData(['listView', 'queryOptions', '$category'],
                    constants.RESOURCES.SEARCH_CATEGORY.PROJECTS);
     this.emitChange();
@@ -1311,13 +1314,15 @@ let ContainersStore = Reflux.createStore({
   onProjectOperationCompleted: function(operationType) {
     if (operationType === constants.RESOURCES.PROJECTS.OPERATION.CREATE) {
       this.navigateToContainersListView(true);
-    } else if (operationType === constants.RESOURCES.PROJECTS.OPERATION.REMOVE) {
+    } else if (operationType === constants.RESOURCES.PROJECTS.OPERATION.EDIT
+            || operationType === constants.RESOURCES.PROJECTS.OPERATION.REMOVE) {
       this.navigateToContainersListView(false);
     }
   },
 
   onProjectOperationFailed: function(operationType, error, documentId) {
-    if (operationType === constants.RESOURCES.PROJECTS.OPERATION.CREATE) {
+    if (operationType === constants.RESOURCES.PROJECTS.OPERATION.CREATE
+        || operationType === constants.RESOURCES.PROJECTS.OPERATION.EDIT) {
       this.onGenericCreateError(error);
     } else if (operationType === constants.RESOURCES.PROJECTS.OPERATION.REMOVE) {
       if (documentId) {

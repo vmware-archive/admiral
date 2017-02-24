@@ -156,7 +156,8 @@ var constants = Immutable({
       SEARCH_SUGGESTIONS: ['name', 'documentId'],
       OPERATION: {
         CREATE: 'CREATE',
-        REMOVE: 'REMOVE'
+        REMOVE: 'REMOVE',
+        EDIT: 'EDIT'
       }
     },
     APPLICATIONS: {

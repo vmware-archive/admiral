@@ -80,27 +80,41 @@ let ResourceGroupsStore = Reflux.createStore({
     });
   },
 
-  onUpdateGroup: function(group) {
+  onUpdateGroup: function(group, fromCenterView) {
     services.updateResourceGroup(group).then((updatedGroup) => {
-      // If the backend did not make any changes, the response will be empty
-      updatedGroup = updatedGroup || group;
-      var immutableGroup = Immutable(updatedGroup);
+      if (fromCenterView) {
+        // update was invoked from center view
+        actions.ResourceGroupsActions.projectOperationCompleted(
+          constants.RESOURCES.PROJECTS.OPERATION.EDIT);
+      } else {
+        // update was invoked from right context menu
+        // If the backend did not make any changes, the response will be empty
+        updatedGroup = updatedGroup || group;
+        var immutableGroup = Immutable(updatedGroup);
 
-      var groups = this.data.items.asMutable();
-      for (var i = 0; i < groups.length; i++) {
-        if (groups[i].documentSelfLink === immutableGroup.documentSelfLink) {
-          groups[i] = immutableGroup;
+        var groups = this.data.items.asMutable();
+        for (var i = 0; i < groups.length; i++) {
+          if (groups[i].documentSelfLink === immutableGroup.documentSelfLink) {
+            groups[i] = immutableGroup;
+          }
         }
+
+        this.setInData(['items'], groups);
+        this.setInData(['updatedItem'], immutableGroup);
+        this.setInData(['editingItemData'], null);
+        this.emitChange();
+
+        // After we notify listeners, the updated item is no longer actual
+        this.setInData(['updatedItem'], null);
       }
-
-      this.setInData(['items'], groups);
-      this.setInData(['updatedItem'], immutableGroup);
-      this.setInData(['editingItemData'], null);
-      this.emitChange();
-
-      // After we notify listeners, the updated item is no longer actual
-      this.setInData(['updatedItem'], null);
-    }).catch(this.onGenericEditError);
+    }).catch((e) => {
+      if (fromCenterView) {
+        actions.ResourceGroupsActions.projectOperationFailed(
+          constants.RESOURCES.PROJECTS.OPERATION.EDIT, e);
+      } else {
+        this.onGenericEditError(e);
+      }
+    });
   },
 
   onDeleteGroup: function(group, fromCenterView) {

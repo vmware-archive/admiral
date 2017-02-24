@@ -27,6 +27,8 @@
   </div>
   <hr/>
   <div class="container-content">
+    <!--
+    TODO uncomment and adjust when description and public/private flags are added in backend
     <div class="project-description-holder">
       <span class="container-label">{{i18n("app.resource.list.project.description")}}</span>
       <span>{{model.description}}</span>
@@ -35,11 +37,16 @@
       <span class="container-label">{{i18n("app.resource.list.project.private")}}</span>
       <span>{{model.isPrivate}}</span>
     </div>
+    -->
   </div>
   <div class="container-actions"
        v-bind:class="{'hide': showDeleteConfirmation || alert.show}">
+    <action-button name="edit" icon-name="pencil"
+                   v-bind:label="i18n('app.resource.list.project.actions.edit')"
+                   v-bind:supported="operationSupported('EDIT')"
+                   v-on:click="openEditProject($event)"></action-button>
     <action-button name="remove" icon-name="trash"
-                   v-bind:label="i18n('app.container.actions.remove')"
+                   v-bind:label="i18n('app.resource.list.project.actions.remove')"
                    v-bind:supported="operationSupported('REMOVE')"
                    v-on:click="removeProjectClicked($event)"></action-button>
   </div>
