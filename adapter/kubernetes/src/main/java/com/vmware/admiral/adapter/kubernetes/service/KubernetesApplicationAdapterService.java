@@ -34,6 +34,7 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
+import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.entities.deployments.Deployment;
 import com.vmware.admiral.compute.kubernetes.entities.pods.Pod;
 import com.vmware.admiral.compute.kubernetes.entities.replicationcontrollers.ReplicationController;
@@ -111,7 +112,6 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
         }
 
         String hostLink = component.customProperties.get(FIELD_NAME_HOST_LINK);
-
 
         // Get the kubernetes context and the api client.
         getComputeHost(
@@ -213,6 +213,13 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                 return;
             }
         }
+
+        String affix = getApplicationUniqueAffix(context.compositeComponent,
+                context.compositeDescription);
+
+        descriptions = descriptions.stream()
+                .map(desc -> KubernetesUtil.mapApplicationAffix(desc, affix))
+                .collect(Collectors.toList());
 
         List<KubernetesDescription> serviceDescriptions = descriptions.stream()
                 .filter(d -> SERVICE_TYPE.equals(d.type)).collect(Collectors.toList());
@@ -411,5 +418,10 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                         callBack.accept(entity);
                     }
                 }));
+    }
+
+    private static String getApplicationUniqueAffix(CompositeComponent cc,
+            CompositeDescription cd) {
+        return cc.name.replace(cd.name, "");
     }
 }

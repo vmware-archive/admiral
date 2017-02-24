@@ -84,6 +84,23 @@ public class PropertyUtils {
      */
     public static void mergeServiceDocuments(ServiceDocument copyTo, ServiceDocument copyFrom,
             BinaryOperator<Object> fieldMergeStrategy) {
+        mergeObjects(copyTo, copyFrom, fieldMergeStrategy);
+        // the expiration time could be updated
+        long exp = copyFrom.documentExpirationTimeMicros;
+        if (exp != 0) {
+            copyTo.documentExpirationTimeMicros = exp < 0 ? 0 : exp;
+        }
+    }
+
+    /**
+     * Perform merge of Objects using the given strategy
+     *
+     * @param copyTo
+     * @param copyFrom
+     * @param fieldMergeStrategy
+     */
+    public static void mergeObjects(Object copyTo, Object copyFrom,
+            BinaryOperator<Object> fieldMergeStrategy) {
 
         for (Field field : copyFrom.getClass().getFields()) {
             // skip framework and static fields
@@ -100,11 +117,6 @@ public class PropertyUtils {
             } catch (IllegalArgumentException | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
-        }
-        // the expiration time could be updated
-        long exp = copyFrom.documentExpirationTimeMicros;
-        if (exp != 0) {
-            copyTo.documentExpirationTimeMicros = exp < 0 ? 0 : exp;
         }
     }
 

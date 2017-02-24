@@ -35,10 +35,13 @@ import com.vmware.admiral.compute.content.CompositeTemplate;
 import com.vmware.admiral.compute.content.kubernetes.deployments.Deployment;
 import com.vmware.admiral.compute.content.kubernetes.pods.Pod;
 import com.vmware.admiral.compute.content.kubernetes.services.Service;
+import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesService;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesService.KubernetesState;
+import com.vmware.admiral.service.common.ResourceNamePrefixService.ResourceNamePrefixState;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 
 public class KubernetesUtil {
 
@@ -119,11 +122,11 @@ public class KubernetesUtil {
         if (!isNullOrEmpty(template.components)) {
             kubernetesTemplate.deployments = new LinkedHashMap<>();
             kubernetesTemplate.services = new LinkedHashMap<>();
-            Map<String, ComponentTemplate<ContainerDescription>> containerComponents =
-                    filterComponentTemplates(template.components, ContainerDescription.class);
+            Map<String, ComponentTemplate<ContainerDescription>> containerComponents = filterComponentTemplates(
+                    template.components, ContainerDescription.class);
 
-            for (Entry<String, ComponentTemplate<ContainerDescription>> container :
-                    containerComponents.entrySet()) {
+            for (Entry<String, ComponentTemplate<ContainerDescription>> container : containerComponents
+                    .entrySet()) {
                 Deployment deployment = fromContainerDescriptionToDeployment(
                         container.getValue().data, template.name);
                 kubernetesTemplate.deployments.put(deployment.metadata.name, deployment);
@@ -178,5 +181,31 @@ public class KubernetesUtil {
 
     public static String buildEntityId(String name) {
         return name.replaceAll(" ", "-");
+    }
+
+    public static KubernetesDescription mapApplicationAffix(KubernetesDescription desc,
+            String affix) {
+        BaseKubernetesObject object;
+        try {
+            object = desc.getKubernetesEntity(BaseKubernetesObject.class);
+        } catch (IOException e) {
+            Utils.logWarning("Could not get kubernetes entity, reason %s", e);
+            return desc;
+        }
+
+        if (affix.startsWith(ResourceNamePrefixState.PREFIX_DELIMITER)) {
+            object.metadata.name = object.metadata.name + affix;
+        } else if (affix.endsWith(ResourceNamePrefixState.PREFIX_DELIMITER)) {
+            object.metadata.name = affix + object.metadata.name;
+        } else {
+            object.metadata.name = object.metadata.name + ResourceNamePrefixState.PREFIX_DELIMITER
+                    + affix;
+        }
+
+        // TODO: consider label and selector
+
+        desc.merge(object);
+
+        return desc;
     }
 }
