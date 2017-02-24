@@ -1,0 +1,20 @@
+---
+name: "admiral-0.9+master"
+components:
+  admiral-branch:
+    type: "App.Container"
+    data:
+      name: "admiral-branch"
+      image: "registry.hub.docker.com/vmware/admiral:0.9.1"
+      _cluster: 1
+      volumes:
+      - "/usr/tmp/admiral:/var/admiral"
+      publish_all: true
+  admiral-master:
+    type: "App.Container"
+    data:
+      name: "admiral-master"
+      image: "vmware/bellevue:upgrade"
+      _cluster: 1
+      publish_all: true
+      UseLocalImageWithPriority: "true"
