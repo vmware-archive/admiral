@@ -19,7 +19,6 @@ import static com.vmware.admiral.test.integration.TestPropertiesUtil.getSystemOr
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import com.google.gson.JsonArray;
@@ -39,9 +38,6 @@ import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
-import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
-import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
-import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.service.common.NodeHealthCheckService;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
@@ -54,11 +50,12 @@ import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
+import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
-    private static final String TEMPLATE_FILE_BRANCH = "Admiral_0.9.1_release.yaml";
-    private static final String TEMPLATE_FILE_MASTER = "Admiral_master.yaml";
-    private static final String ADMIRAL_NAME = "admiral";
+    private static final String TEMPLATE_FILE = "Admiral_master_and_0.9.1_release.yaml";
+    private static final String ADMIRAL_BRANCH_NAME = "admiral-branch";
+    private static final String ADMIRAL_MASTER_NAME = "admiral-master";
 
     private static final String SEPARATOR = "/";
 
@@ -74,7 +71,6 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
     private static ServiceClient serviceClient;
 
     private String compositeDescriptionLink;
-    private boolean dataInitialized;
 
     @BeforeClass
     public static void beforeClass() {
@@ -88,7 +84,7 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
 
     @Before
     public void setUp() throws Exception {
-        compositeDescriptionLink = importTemplate(serviceClient, TEMPLATE_FILE_BRANCH);
+        compositeDescriptionLink = importTemplate(serviceClient, TEMPLATE_FILE);
     }
 
     @After
@@ -98,17 +94,7 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
 
     @Test
     public void testUpgradeCampatibility() throws Exception {
-        String skipInitialize = getSystemOrTestProp(UPGRADE_SKIP_INITIALIZE, "false");
-        if (skipInitialize.equals(Boolean.FALSE.toString())) {
-            doProvisionDockerContainerOnCoreOS(false, DockerAdapterType.API);
-        }
-
-        String skipValidate = getSystemOrTestProp(UPGRADE_SKIP_VALIDATE, "false");
-        if (skipValidate.equals(Boolean.FALSE.toString())) {
-            dataInitialized = true;
-            compositeDescriptionLink = importTemplate(serviceClient, TEMPLATE_FILE_MASTER);
-            doProvisionDockerContainerOnCoreOS(false, DockerAdapterType.API);
-        }
+        doProvisionDockerContainerOnCoreOS(false, DockerAdapterType.API);
     }
 
     @Override
@@ -126,26 +112,62 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         CompositeComponent cc = getDocument(request.resourceLinks.iterator().next(),
                 CompositeComponent.class);
 
-        String admiralContainerLink = cc.componentLinks.stream()
-                .filter((l) -> l.contains(ADMIRAL_NAME))
+        String admiralBranchContainerLink = cc.componentLinks.stream()
+                .filter((l) -> l.contains(ADMIRAL_BRANCH_NAME))
                 .collect(Collectors.toList()).get(0);
-        waitForStatusCode(URI.create(getBaseUrl() + admiralContainerLink),
+        waitForStatusCode(URI.create(getBaseUrl() + admiralBranchContainerLink),
                 Operation.STATUS_CODE_OK);
-        ContainerState admiralContainer = getDocument(admiralContainerLink, ContainerState.class);
-        if (!dataInitialized) {
-            addContentToTheProvisionedAdmiral(admiralContainer);
-            shutDownAdmiralContainer(admiralContainer);
-        } else {
-            validateCompatibility(admiralContainer);
-            removeData(admiralContainer);
+        ContainerState admiralBranchContainer = getDocument(admiralBranchContainerLink,
+                ContainerState.class);
+
+        String admiralMasterContainerLink = cc.componentLinks.stream()
+                .filter((l) -> l.contains(ADMIRAL_MASTER_NAME))
+                .collect(Collectors.toList()).get(0);
+        waitForStatusCode(URI.create(getBaseUrl() + admiralMasterContainerLink),
+                Operation.STATUS_CODE_OK);
+        ContainerState admiralMasterContainer = getDocument(admiralMasterContainerLink,
+                ContainerState.class);
+
+        String skipInit = getSystemOrTestProp(UPGRADE_SKIP_INITIALIZE, "false");
+        if (skipInit.equals(Boolean.FALSE.toString())) {
+            addContentToTheProvisionedAdmiral(admiralBranchContainer);
         }
+
+        String skipValidate = getSystemOrTestProp(UPGRADE_SKIP_VALIDATE, "false");
+        if (skipValidate.equals(Boolean.FALSE.toString())) {
+            migrateData(admiralBranchContainer, admiralMasterContainer);
+            validateCompatibility(admiralMasterContainer);
+            removeData(admiralMasterContainer);
+        }
+    }
+
+    private void migrateData(ContainerState sourceContainer, ContainerState targetContainer)
+            throws Exception {
+        // wait for the admiral container to start. In 0.9.1 health check service is not available.
+        // This is needed in case only validated is run
+        Thread.sleep(20000);
+        String parent = targetContainer.parentLink;
+        ComputeState computeState = getDocument(parent, ComputeState.class);
+        String source = String.format("http://%s:%s", computeState.address,
+                sourceContainer.ports.get(0).hostPort) + ServiceUriPaths.DEFAULT_NODE_GROUP;
+
+        changeBaseURI(targetContainer);
+
+        MigrationRequest migrationRequest = new MigrationRequest();
+        migrationRequest.sourceNodeGroup = source;
+        try {
+            sendRequest(HttpMethod.POST, "/config/migration",
+                    Utils.toJson(migrationRequest));
+        } finally {
+            setBaseURI(null);
+        }
+
     }
 
     private void removeData(ContainerState admiralContainer) throws Exception {
         changeBaseURI(admiralContainer);
         delete(COMPUTE_SELF_LINK);
         delete(CREDENTIALS_SELF_LINK);
-
         setBaseURI(null);
     }
 
@@ -215,38 +237,11 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         AuthCredentialsServiceState credentials = IntegratonTestStateFactory
                 .createAuthCredentials(false);
         postDocument(AuthCredentialsService.FACTORY_LINK, credentials);
-
-        dataInitialized = true;
+        setBaseURI(null);
     }
 
-    private void shutDownAdmiralContainer(ContainerState admiralContainer) throws Exception {
-
-        // send stop request to the admiral container before deleting it
-        delete("/core/management");
-        setBaseURI(null);
-
-        ContainerListCallback dataCollectionBody = new ContainerListCallback();
-        dataCollectionBody.containerHostLink = COMPUTE_SELF_LINK;
-        AtomicInteger counter = new AtomicInteger();
-        waitForStateChange(
-                admiralContainer.documentSelfLink,
-                t -> {
-                    ContainerState container = Utils.fromJson(t,
-                            ContainerState.class);
-                    if (counter.getAndIncrement() == 10) {
-                        logger.warning(
-                                "Container power state was not changed to STOPPED after 10 second");
-                        return true;
-                    }
-                    try {
-                        sendRequest(HttpMethod.PATCH,
-                                HostContainerListDataCollectionFactoryService.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK,
-                                Utils.toJson(dataCollectionBody));
-                    } catch (Exception e) {
-                        logger.error(String.format("Unable to trigger data collection: %s",
-                                e.getMessage()));
-                    }
-                    return container.powerState.equals(PowerState.STOPPED);
-                });
+    public static class MigrationRequest {
+        public String sourceNodeGroup;
+        public String destinationNodeGroup;
     }
 }
