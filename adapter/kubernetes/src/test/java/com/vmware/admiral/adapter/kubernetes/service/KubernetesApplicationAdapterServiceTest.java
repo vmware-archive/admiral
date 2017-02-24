@@ -13,6 +13,7 @@ package com.vmware.admiral.adapter.kubernetes.service;
 
 import static org.junit.Assert.assertEquals;
 
+import static com.vmware.admiral.compute.container.CompositeComponentService.FIELD_NAME_HOST_LINK;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.DEPLOYMENT_TYPE;
 
 import java.io.IOException;
@@ -111,6 +112,9 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
         CompositeComponent compositeComponent = new CompositeComponent();
         compositeComponent.name = compositeDescription.name + "-mcm-102";
         compositeComponent.compositeDescriptionLink = compositeDescription.documentSelfLink;
+        compositeComponent.customProperties = new HashMap<>();
+        compositeComponent.customProperties.put(FIELD_NAME_HOST_LINK,
+                kubernetesHostState.documentSelfLink);
         compositeComponent = doPost(compositeComponent, CompositeComponentFactoryService.SELF_LINK);
 
         createProvisioningTask();
@@ -252,7 +256,6 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
 
     private ApplicationRequest createApplicationRequest(String resourceReference) {
         ApplicationRequest appRequest = new ApplicationRequest();
-        appRequest.hostLink = kubernetesHostState.documentSelfLink;
         appRequest.resourceReference = UriUtils.buildUri(host, resourceReference);
         appRequest.serviceTaskCallback = ServiceTaskCallback.create(provisioningTaskLink);
         appRequest.operationTypeId = ApplicationOperationType.CREATE.id;
@@ -265,6 +268,9 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
         CompositeComponent compositeComponent = new CompositeComponent();
         compositeComponent.name = compositeDescription.name + "-mcm-102";
         compositeComponent.compositeDescriptionLink = compositeDescription.documentSelfLink;
+        compositeComponent.customProperties = new HashMap<>();
+        compositeComponent.customProperties.put(FIELD_NAME_HOST_LINK,
+                kubernetesHostState.documentSelfLink);
         compositeComponent = doPost(compositeComponent, CompositeComponentFactoryService.SELF_LINK);
         return compositeComponent;
     }

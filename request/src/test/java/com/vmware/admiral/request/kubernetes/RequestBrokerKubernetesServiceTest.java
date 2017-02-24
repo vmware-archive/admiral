@@ -42,6 +42,7 @@ import com.vmware.admiral.request.composition.CompositionTaskFactoryService;
 import com.vmware.admiral.request.composition.CompositionTaskService.CompositionTaskState;
 import com.vmware.admiral.request.kubernetes.CompositeKubernetesProvisioningTaskService.KubernetesProvisioningTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
+import com.vmware.admiral.service.kubernetes.test.MockKubernetesApplicationAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -56,6 +57,7 @@ public class RequestBrokerKubernetesServiceTest extends RequestBaseTest {
     @Before
     public void setup() {
         HostInitKubernetesAdapterServiceConfig.startServices(host, true);
+        MockKubernetesApplicationAdapterService.clear();
     }
 
     private static final String WP_K8S_TEMPLATE = "WordPress_with_MySQL_kubernetes.yaml";

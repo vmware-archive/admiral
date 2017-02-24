@@ -12,15 +12,12 @@
 package com.vmware.admiral.compute.kubernetes.service;
 
 import com.vmware.admiral.compute.Composable;
-import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.photon.controller.model.resources.ResourceState;
 
 /**
  * Base class to keep the common properties of all Kubernetes States.
  */
 public abstract class BaseKubernetesState extends ResourceState implements Composable {
-
-    public BaseKubernetesObject kubernetesEntity;
 
     /**
      * Defines the description of the entity

@@ -15,13 +15,18 @@ import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
+
+import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
@@ -47,6 +52,8 @@ import com.vmware.xenon.services.common.QueryTask;
  */
 public class CompositeComponentService extends StatefulService {
 
+    public static final String FIELD_NAME_HOST_LINK = "__hostLink";
+
     public static class CompositeComponent extends
             com.vmware.admiral.service.common.MultiTenantDocument {
 
@@ -68,6 +75,15 @@ public class CompositeComponentService extends StatefulService {
         @Documentation(description = "Composite creation time in milliseconds")
         @UsageOption(option = PropertyUsageOption.SINGLE_ASSIGNMENT)
         public long created;
+
+        /**
+         * Custom property bag that can be used to store resource specific properties.
+         */
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
+        @UsageOption(option = PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL)
+        @PropertyOptions(indexing = { PropertyIndexingOption.CASE_INSENSITIVE, PropertyIndexingOption.EXPAND,
+                PropertyIndexingOption.FIXED_ITEM_NAME })
+        public Map<String, String> customProperties;
     }
 
     public CompositeComponentService() {
@@ -376,6 +392,7 @@ public class CompositeComponentService extends StatefulService {
         template.compositeDescriptionLink = "compositeDescriptionLink (string) (optional)";
         template.componentLinks = new ArrayList<String>(1);
         template.componentLinks.add("componentLink (string)");
+        template.customProperties = new HashMap<>();
 
         return template;
     }

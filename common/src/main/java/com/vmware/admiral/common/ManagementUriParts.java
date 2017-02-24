@@ -133,6 +133,8 @@ public interface ManagementUriParts {
     String REQUEST_COMPUTE_RESOURCE_OPERATIONS = REQUEST + "/compute-resource-operations";
     String REQUEST_COMPOSITION_TASK = REQUEST + "/composition-tasks";
     String REQUEST_COMPOSITION_REMOVAL_TASK = REQUEST + "/composition-removal-tasks";
+    String REQUEST_COMPOSITION_REMOVAL_KUBERNETES_TASK = REQUEST +
+            "/composition-removal-kubernetes-tasks";
     String REQUEST_COMPOSITION_SUB_TASK = REQUEST + "/composition-sub-tasks";
     String REQUEST_RESOURCE_CLUSTERING_TASK = REQUEST + "/clustering-task";
     String REQUEST_PROVISION_CONTAINER_HOSTS = REQUEST + "/provision-container-hosts-tasks";

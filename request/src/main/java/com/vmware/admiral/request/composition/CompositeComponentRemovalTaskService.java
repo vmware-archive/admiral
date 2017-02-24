@@ -33,10 +33,13 @@ import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry.ComponentMeta;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
+import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
 import com.vmware.admiral.request.ContainerRemovalTaskService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.composition.CompositeComponentRemovalTaskService.CompositeComponentRemovalTaskState.SubStage;
 import com.vmware.admiral.request.composition.CompositionSubTaskService.CompositionSubTaskState;
+import com.vmware.admiral.request.kubernetes.CompositeKubernetesRemovalTaskService;
+import com.vmware.admiral.request.kubernetes.CompositeKubernetesRemovalTaskService.CompositeKubernetesRemovalTaskState;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.xenon.common.Operation;
@@ -68,7 +71,8 @@ public class CompositeComponentRemovalTaskService
                     Arrays.asList(INSTANCES_REMOVING));
         }
 
-        @Documentation(description = "(Required) The composites on which the given operation will be applied.")
+        @Documentation(
+                description = "(Required) The composites on which the given operation will be applied.")
         @PropertyOptions(usage = { REQUIRED }, indexing = STORE_ONLY)
         public Set<String> resourceLinks;
     }
@@ -78,6 +82,9 @@ public class CompositeComponentRemovalTaskService
             ResourceType.CONTAINER_TYPE, ResourceType.COMPUTE_TYPE,
             ResourceType.NETWORK_TYPE, ResourceType.COMPUTE_NETWORK_TYPE,
             ResourceType.VOLUME_TYPE, ResourceType.CLOSURE_TYPE);
+
+    private static final List<ResourceType> TYPES_SUPPORTING_PARALLEL_REMOVAL = Arrays.asList(
+            ResourceType.JOIN_COMPOSITE_COMPONENT_TYPE);
 
     public CompositeComponentRemovalTaskService() {
         super(CompositeComponentRemovalTaskState.class, SubStage.class, DISPLAY_NAME);
@@ -118,16 +125,25 @@ public class CompositeComponentRemovalTaskService
                 state.resourceLinks);
 
         List<String> resourceLinks = new ArrayList<String>();
+        Map<String, String> externalSchedulerTaskPerResourceLink = new HashMap<>();
+
         new ServiceDocumentQuery<CompositeComponent>(getHost(), CompositeComponent.class)
                 .query(compositeQueryTask,
                         (r) -> {
                             if (r.hasException()) {
                                 logSevere("Failed to create operation task for %s - %s",
-                                        r.getDocumentSelfLink(), r.getException());
+                                        r.getDocumentSelfLink(), Utils.toString(r.getException()));
                             } else if (r.hasResult()) {
-                                List<String> componentLinks = r.getResult().componentLinks;
-                                if (componentLinks != null) {
-                                    resourceLinks.addAll(componentLinks);
+                                CompositeComponent cc = r.getResult();
+                                if (isKubernetesComposite(cc)) {
+                                    resourceLinks.add(cc.documentSelfLink);
+                                    externalSchedulerTaskPerResourceLink.put(cc.documentSelfLink,
+                                            CompositeKubernetesRemovalTaskService.FACTORY_LINK);
+                                } else {
+                                    List<String> componentLinks = r.getResult().componentLinks;
+                                    if (componentLinks != null) {
+                                        resourceLinks.addAll(componentLinks);
+                                    }
                                 }
                             } else {
                                 if (resourceLinks.isEmpty()) {
@@ -136,7 +152,8 @@ public class CompositeComponentRemovalTaskService
                                     return;
                                 }
 
-                                performResourceRemovalOperations(state, resourceLinks);
+                                performResourceRemovalOperations(state, resourceLinks,
+                                        externalSchedulerTaskPerResourceLink);
                             }
                         });
     }
@@ -165,12 +182,22 @@ public class CompositeComponentRemovalTaskService
     }
 
     private void performResourceRemovalOperations(CompositeComponentRemovalTaskState state,
-            List<String> resourceLinks) {
+            List<String> resourceLinks, Map<String, String> externalSchedulerTaskPerResourceLink) {
+
         Map<ResourceType, Set<String>> resourceLinksByResourceType = new HashMap<>();
 
         for (String link : resourceLinks) {
-            ComponentMeta metaByStateLink = CompositeComponentRegistry.metaByStateLink(link);
-            ResourceType rt = ResourceType.fromName(metaByStateLink.resourceType);
+            ResourceType rt;
+
+            if (externalSchedulerTaskPerResourceLink.containsKey(link)) {
+                // Will handle the composite component at once, instead of separating on it's
+                // sub components
+                rt = ResourceType.JOIN_COMPOSITE_COMPONENT_TYPE;
+            } else {
+                ComponentMeta metaByStateLink = CompositeComponentRegistry.metaByStateLink(link);
+                rt = ResourceType.fromName(metaByStateLink.resourceType);
+            }
+
             Set<String> list = resourceLinksByResourceType.get(rt);
             if (list == null) {
                 list = new HashSet<>();
@@ -202,28 +229,54 @@ public class CompositeComponentRemovalTaskService
             resourceLinksByNodeOrder.add(currNode);
         }
 
+        Map<String, ResourceTypeRemovalNode> resourceLinksForParallelRemoval = new HashMap<>();
+
+        Set<String> joinedCompositeComponentLinks = resourceLinksByResourceType.remove
+                (ResourceType.JOIN_COMPOSITE_COMPONENT_TYPE);
+        if (joinedCompositeComponentLinks != null) {
+            for (String link : joinedCompositeComponentLinks) {
+                String externalSchedulerLink = externalSchedulerTaskPerResourceLink.get(link);
+                ResourceTypeRemovalNode node = resourceLinksForParallelRemoval.get
+                        (externalSchedulerLink);
+                if (node == null) {
+                    node = new ResourceTypeRemovalNode();
+                    node.name = externalSchedulerLink;
+                    node.type = ResourceType.JOIN_COMPOSITE_COMPONENT_TYPE;
+                    node.resourceLinks = new HashSet<>();
+                    node.externalSchedulerRemovalTaskLink = externalSchedulerLink;
+                    resourceLinksForParallelRemoval.put(externalSchedulerLink, node);
+                }
+                node.resourceLinks.add(link);
+            }
+        }
+
         if (!resourceLinksByResourceType.isEmpty()) {
             failTask(
                     "Unknown order of removal for resource types: "
                             + resourceLinksByResourceType.keySet(), null);
         }
 
-        performResourceRemovalOperations(state, resourceLinksByNodeOrder, resourceLinks.size(),
+        List<ResourceTypeRemovalNode> resourceLinksForRemoval = new ArrayList<>(
+                resourceLinksByNodeOrder);
+        resourceLinksForRemoval.addAll(resourceLinksForParallelRemoval.values());
+
+        performResourceRemovalOperations(state, resourceLinksForRemoval, resourceLinks.size(),
                 null);
     }
 
     private void performResourceRemovalOperations(CompositeComponentRemovalTaskState state,
-            List<ResourceTypeRemovalNode> resourceLinksByNodeOrder, int resourceCount,
+            List<ResourceTypeRemovalNode> resourceLinksForRemoval, int resourceCount,
             ServiceTaskCallback taskCallback) {
         if (taskCallback == null) {
             createCounterSubTaskCallback(
                     state,
-                    resourceLinksByNodeOrder.size(),
+                    resourceLinksForRemoval.size(),
                     false,
                     true,
                     SubStage.COMPOSITE_REMOVING,
                     (serviceTask) -> performResourceRemovalOperations(state,
-                            resourceLinksByNodeOrder, resourceCount, serviceTask));
+                            resourceLinksForRemoval,
+                            resourceCount, serviceTask));
             return;
         }
 
@@ -231,7 +284,7 @@ public class CompositeComponentRemovalTaskService
 
         try {
             logInfo("Starting removal of %d resources", resourceCount);
-            for (ResourceTypeRemovalNode node : resourceLinksByNodeOrder) {
+            for (ResourceTypeRemovalNode node : resourceLinksForRemoval) {
                 sendResourceRemovalRequest(state, node, taskCallback, (o, e) -> {
                     if (e != null) {
                         if (error.compareAndSet(false, true)) {
@@ -249,6 +302,21 @@ public class CompositeComponentRemovalTaskService
     }
 
     private void sendResourceRemovalRequest(final CompositeComponentRemovalTaskState state,
+            ResourceTypeRemovalNode removalNode,
+            ServiceTaskCallback taskCallback,
+            final CompletionHandler completionHandler) {
+        if (CompositeKubernetesRemovalTaskService.FACTORY_LINK.equals(removalNode
+                .externalSchedulerRemovalTaskLink)) {
+            sendToKubernetesScheduler(state, removalNode, taskCallback,
+                    completionHandler);
+        } else {
+            sendResourceRemovalRequestForComponent(state, removalNode, taskCallback,
+                    completionHandler);
+        }
+    }
+
+    private void sendResourceRemovalRequestForComponent(final CompositeComponentRemovalTaskState
+            state,
             ResourceTypeRemovalNode removalNode,
             ServiceTaskCallback taskCallback,
             final CompletionHandler completionHandler) {
@@ -286,11 +354,50 @@ public class CompositeComponentRemovalTaskService
                 compositionSubTaskId);
     }
 
+    private void sendToKubernetesScheduler(CompositeComponentRemovalTaskState state,
+            ResourceTypeRemovalNode removalNode,
+            ServiceTaskCallback taskCallback,
+            final CompletionHandler completionHandler) {
+
+        if (removalNode.resourceLinks.size() == 0) {
+            throw new IllegalStateException(
+                    "Kubernetes composite component with 0 resource links.");
+        }
+
+        CompositeKubernetesRemovalTaskState task = new CompositeKubernetesRemovalTaskState();
+        task.documentSelfLink = getSelfId();
+        task.serviceTaskCallback = taskCallback;
+        task.customProperties = state.customProperties;
+        task.resourceLinks = removalNode.resourceLinks;
+        task.tenantLinks = state.tenantLinks;
+        task.requestTrackerLink = state.requestTrackerLink;
+
+        sendRequest(Operation
+                .createPost(this, CompositeKubernetesRemovalTaskService.FACTORY_LINK)
+                .setBody(task)
+                .setContextId(getSelfId())
+                .setCompletion(completionHandler));
+    }
+
+    private boolean isKubernetesComposite(CompositeComponent component) {
+        if (component.componentLinks == null || component.componentLinks.isEmpty()) {
+            return false;
+        }
+        for (String link : component.componentLinks) {
+            Class componentClass = CompositeComponentRegistry.metaByStateLink(link).stateClass;
+            if (!BaseKubernetesState.class.isAssignableFrom(componentClass)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private static class ResourceTypeRemovalNode {
         private String name;
         private ResourceType type;
         private String prevNode;
         private String nextNode;
         private Set<String> resourceLinks;
+        private String externalSchedulerRemovalTaskLink;
     }
 }

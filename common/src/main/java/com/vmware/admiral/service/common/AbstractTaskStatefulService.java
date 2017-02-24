@@ -768,8 +768,6 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             taskStatus.progress = 100;
         }
 
-        System.out.println(taskStatus.progress);
-
         return taskStatus;
     }
 }
