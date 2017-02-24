@@ -86,7 +86,8 @@ public class BindingEvaluatorTest {
 
         List<Binding> bindings = Arrays.asList(
                 binding(Arrays.asList("hostname"), "Closure~inputs~hostname"));
-        Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("Container", bindings);
+        Binding.ComponentBinding componentBinding = new Binding.ComponentBinding("Container",
+                bindings);
 
         CompositeTemplate compositeTemplate = createCompositeTemplate(Arrays
                 .asList(closure, secondDescription), Arrays.asList(componentBinding));
@@ -98,6 +99,28 @@ public class BindingEvaluatorTest {
                 .get("Container").data;
 
         assertEquals(closure.inputs.get("hostname").getAsString(), secondDescription.hostname);
+    }
+
+    @Test
+    public void testEvaluateSimpleClosureTimingBindingToObject() {
+
+        List<Binding> bindings = Arrays
+                .asList(binding(Arrays.asList("inputs", "test"),
+                        "_resource~A~inputs~hostname"));
+        Map<String, NestedState> closures = new HashMap<>();
+        Closure closure = new Closure();
+        closure.name = "Closure";
+        JsonPrimitive inStr = new JsonPrimitive("localhost");
+        closure.inputs = new HashMap<>();
+        closure.inputs.put("hostname", inStr);
+
+        closures.put("A", new NestedState(closure));
+
+        NestedState nestedState = new NestedState(closure);
+
+        NestedState evalObj = BindingEvaluator
+                .evaluateProvisioningTimeBindings(nestedState, bindings, closures);
+        assertNotNull(evalObj);
     }
 
     @Test

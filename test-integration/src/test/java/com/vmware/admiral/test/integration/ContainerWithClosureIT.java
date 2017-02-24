@@ -101,6 +101,8 @@ public class ContainerWithClosureIT extends BaseProvisioningOnCoreOsIT {
         Closure closureState = getDocument(closureLink, Closure.class);
         assertEquals(TaskState.TaskStage.FINISHED, closureState.state);
         assertEquals(expectedClosureResult, closureState.outputs.get("resultInt").getAsInt());
+        assertEquals(closureState.inputs.get("testIn").getAsString(), closureState.outputs.get
+                ("testOut").getAsString());
         assertEquals(expectedClosureResult,
                 closureState.outputs.get("resultObj").getAsJsonObject().get("a").getAsInt
                         ());
