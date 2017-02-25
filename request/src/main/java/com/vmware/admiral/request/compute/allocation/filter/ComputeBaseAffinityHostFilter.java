@@ -216,7 +216,7 @@ public abstract class ComputeBaseAffinityHostFilter
             descClause.addBooleanClause(otherComputesWithAffinityToThis);
 
             QueryTask.Query listValueClause = QueryUtil
-                    .addListValueClause(ComputeDescription.FIELD_NAME_NAME,
+                    .addCaseInsensitiveListValueClause(ComputeDescription.FIELD_NAME_NAME,
                             affinity, QueryTask.QueryTerm.MatchType.TERM);
 
             listValueClause.occurance = QueryTask.Query.Occurance.SHOULD_OCCUR;
