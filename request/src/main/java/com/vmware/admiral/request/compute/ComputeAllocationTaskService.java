@@ -355,6 +355,7 @@ public class ComputeAllocationTaskService
             rootDisk.name = diskName;
             rootDisk.type = DiskType.HDD;
             rootDisk.bootOrder = 1;
+            rootDisk.capacityMBytes = 8 * 1024;// 8GB
 
             String imageId = computeDesc.customProperties
                     .get(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);

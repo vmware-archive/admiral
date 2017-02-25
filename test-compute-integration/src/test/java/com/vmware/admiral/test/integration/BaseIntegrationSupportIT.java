@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -72,6 +73,7 @@ import com.vmware.photon.controller.model.resources.EndpointService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.tasks.ResourceEnumerationTaskService;
 import com.vmware.photon.controller.model.tasks.ResourceEnumerationTaskService.ResourceEnumerationTaskState;
+import com.vmware.photon.controller.model.tasks.TaskOption;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.TaskState;
@@ -540,6 +542,7 @@ public abstract class BaseIntegrationSupportIT {
         enumTask.endpointLink = endpoint.documentSelfLink;
         enumTask.adapterManagementReference = parentCompute.adapterManagementReference;
         enumTask.tenantLinks = endpoint.tenantLinks;
+        enumTask.options = EnumSet.of(TaskOption.PRESERVE_MISSING_RESOUCES);
 
         ResourceEnumerationTaskState returnedState = postDocument(
                 ResourceEnumerationTaskService.FACTORY_LINK, enumTask);

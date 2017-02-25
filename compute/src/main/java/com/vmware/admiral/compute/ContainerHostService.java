@@ -539,7 +539,11 @@ public class ContainerHostService extends StatelessService {
             cs.descriptionLink = getDescriptionForType(hostType);
         }
 
-        cs.adapterManagementReference = getAdapterManagementReferenceForType(hostType);
+        // If Compute state has endpointLink, it's not a manually added host, so don't override it's
+        // adapterManagementReference
+        if (cs.endpointLink == null) {
+            cs.adapterManagementReference = getAdapterManagementReferenceForType(hostType);
+        }
 
         Operation store = null;
         if (cs.id == null) {

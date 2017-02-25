@@ -127,6 +127,36 @@ public class QueryUtil {
         return inClause;
     }
 
+    public static QueryTask.Query addCaseInsensitiveListValueClause(String propName,
+            Collection<String> values,
+            MatchType termMatchType) {
+
+        QueryTask.Query inClause = new QueryTask.Query();
+
+        for (String value : values) {
+            QueryTask.Query clause = new QueryTask.Query()
+                    .setTermPropertyName(propName)
+                    .setCaseInsensitiveTermMatchValue(value)
+                    .setTermMatchType(termMatchType);
+
+            clause.occurance = Occurance.SHOULD_OCCUR;
+
+            if (value.contains(TENANT_IDENTIFIER) || value.contains(GROUP_IDENTIFIER)
+                    || value.contains(USER_IDENTIFIER)) {
+                clause.occurance = Occurance.MUST_OCCUR;
+            }
+
+            inClause.addBooleanClause(clause);
+            if (values.size() == 1) {
+                // if we only have one value then change it to single value clause.
+                inClause = clause;
+                inClause.occurance = Occurance.MUST_OCCUR;
+            }
+        }
+
+        return inClause;
+    }
+
     public static void addListValueExcludeClause(QueryTask q, String propName,
             Collection<String> values) {
 

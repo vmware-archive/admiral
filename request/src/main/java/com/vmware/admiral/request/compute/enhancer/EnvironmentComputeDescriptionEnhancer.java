@@ -35,6 +35,8 @@ import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
+import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class EnvironmentComputeDescriptionEnhancer extends ComputeDescriptionEnhancer {
@@ -152,7 +154,8 @@ public class EnvironmentComputeDescriptionEnhancer extends ComputeDescriptionEnh
         } else {
             Query q = Query.Builder.create()
                     .addKindFieldClause(NetworkState.class)
-                    .addFieldClause(NetworkState.FIELD_NAME_NAME, networkId)
+                    .addCaseInsensitiveFieldClause(NetworkState.FIELD_NAME_NAME, networkId,
+                            MatchType.TERM, Occurance.MUST_OCCUR)
                     .addFieldClause(NetworkState.FIELD_NAME_REGION_ID, context.regionId)
                     .build();
 
