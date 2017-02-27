@@ -33,17 +33,6 @@ body {
   overflow: auto;
 }
 
-body.admiral-default {
-  background: $vmw_blue_top;
-  background: -moz-linear-gradient(top, $vmw_blue_top 0%, $vmw_blue_bottom 100%);
-  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, $vmw_blue_top), color-stop(100%, $vmw_blue_bottom));
-  background: -webkit-linear-gradient(top, $vmw_blue_top 0%, $vmw_blue_bottom 100%);
-  background: -o-linear-gradient(top, $vmw_blue_top 0%, $vmw_blue_bottom 100%);
-  background: -ms-linear-gradient(top, $vmw_blue_top 0%, $vmw_blue_bottom 100%);
-  background: linear-gradient(to bottom, $vmw_blue_top 0%, $vmw_blue_bottom 100%);
-  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='$vmw_blue_top', endColorstr='$vmw_blue_bottom', GradientType=0);
-}
-
 a, a:focus, a:visited {
   color: $link_color
 }
@@ -2224,4 +2213,19 @@ $alert-text-color: #ffffff;
   span:not(:last-child):after {
     content:', ';
   }
+}
+
+header .header-nav::before {
+  position: absolute;
+  content: "";
+  display: inline-block;
+  background: #fafafa;
+  opacity: .15;
+  height: 40px;
+  width: 1px;
+  top: 10px;
+}
+
+header .branding img {
+  height: 24px;
 }
