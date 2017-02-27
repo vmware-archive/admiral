@@ -12,6 +12,7 @@
 import constants from 'core/constants';
 import utils from 'core/utils';
 import links from 'core/links';
+import ft from 'core/ft';
 
 const IMAGES_SEARCH_QUERY_PROP_NAME = 'q';
 const IMAGES_SEARCH_LIMIT_PROP_NAME = 'limit';
@@ -1946,7 +1947,8 @@ services.loadGroups = function() {
 
 services.loadProjects = function(queryOptions) {
   var filter = buildResourcesSearchQuery(queryOptions);
-  var url = buildPaginationUrl(links.RESOURCE_GROUPS, filter, true);
+  var path = ft.showProjectsInNavigation() ? links.PROJECTS : links.RESOURCE_GROUPS;
+  var url = buildPaginationUrl(path, filter, true);
   return get(url);
 };
 
@@ -1955,7 +1957,8 @@ services.loadProject = function(projectLink) {
 };
 
 services.loadResourceGroups = function() {
-  return list(links.RESOURCE_GROUPS, true, {});
+  var path = ft.showProjectsInNavigation() ? links.PROJECTS : links.RESOURCE_GROUPS;
+  return list(path, true, {});
 };
 
 services.loadResourceGroup = function(groupLink) {
@@ -1963,7 +1966,8 @@ services.loadResourceGroup = function(groupLink) {
 };
 
 services.createResourceGroup = function(group) {
-  return post(links.RESOURCE_GROUPS, group);
+  var path = ft.showProjectsInNavigation() ? links.PROJECTS : links.RESOURCE_GROUPS;
+  return post(path, group);
 };
 
 services.updateResourceGroup = function(group) {
@@ -2321,7 +2325,7 @@ var buildResourcesSearchQuery = function(queryOptions) {
           link = links.COMPOSITE_COMPONENTS;
           break;
         case constants.RESOURCES.SEARCH_CATEGORY.PROJECTS:
-          link = links.RESOURCE_GROUPS;
+          link = ft.showProjectsInNavigation() ? links.PROJECTS : links.RESOURCE_GROUPS;
           break;
 
         default:

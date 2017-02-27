@@ -69,6 +69,7 @@ var links = Immutable({
 
   GROUPS: '/groups',
   RESOURCE_GROUPS: RESOURCES + '/groups',
+  PROJECTS: '/projects',
 
   BASIC_AUTH: '/core/authn/basic',
   USER_SESSION: '/user-session',
