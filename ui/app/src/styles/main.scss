@@ -525,7 +525,7 @@ $main-list-view-right: 10px;
   }
 }
 
-.host-view.certificate-confirm i {
+.certificate-warning i {
   position: relative;
   top: 4px;
 
@@ -533,56 +533,40 @@ $main-list-view-right: 10px;
 
   font-size: 26px;
   color: $main_color;
-}
 
-.host-view.certificate-confirm .modal-body .modal-help-icon {
   float: left;
 }
 
-.host-view.certificate-confirm .modal-body .certificate-warning-text {
+.certificate-warning-text {
   margin-left: $modal-with-help-icon-left-padding;
 }
 
-.host-view.certificate-confirm .certificate-content-holder, .host-view.certificate-confirm .hide-certificate-btn {
-  display: none;
-}
-
-.host-view.certificate-confirm.active .certificate-content-holder, .host-view.certificate-confirm.active .hide-certificate-btn {
-  display: block;
-}
-
-.host-view.certificate-confirm.active .show-certificate-btn {
-  display: none;
-}
-
-.host-view.certificate-confirm .certificate-content-holder {
-  margin-left: -$modal-inner-padding;
-  margin-right: -$modal-inner-padding;
-  margin-top: 15px;
+.certificate-content-holder {
+  margin-top: 12px;
   border-top: 1px solid $modal-footer-border-color;
   border-bottom: 1px solid $modal-footer-border-color;
   background-color: $context-view-background-color;
   overflow: auto;
 }
 
-.host-view.certificate-confirm .certificate-content-holder .certificate-content {
-  margin-top: $modal-inner-padding;
-  margin-right: $modal-inner-padding;
-  margin-bottom: $modal-inner-padding;
-  margin-left: $modal-inner-padding + $modal-with-help-icon-left-padding;
-}
+.certificate-content-holder .certificate-content {
+  margin-left: 15px + $modal-with-help-icon-left-padding;
+  margin-right: 15px;
+  margin-top: 15px;
+  margin-bottom: 15px;
 
-.host-view.certificate-confirm .certificate-content-holder .certificate-content label {
-  color: $secondary_hint_title_color;
-}
+  .form-group {
+    font-size: 14px;
 
-.host-view.certificate-confirm .modal-footer {
-  border-top: none;
-}
+    label {
+      color: $secondary_hint_title_color;
+    }
+  }
 
-.host-view.certificate-confirm .modal-footer .show-certificate-btn, .host-view.certificate-confirm .modal-footer .hide-certificate-btn {
-  float: left;
-  margin-left: $modal-with-help-icon-left-padding;
+  .manage-certificates {
+    margin-top: 20px;
+    margin-left: -15px;
+  }
 }
 
 .focus {
@@ -701,24 +685,6 @@ $main-list-view-right: 10px;
 
 .form-control label, .form-control-static label {
   font-weight: normal;
-}
-
-/* Centers a Bootstrap modal vertically */
-.modal {
-  text-align: center;
-}
-
-.modal:before {
-  display: inline-block;
-  vertical-align: middle;
-  content: " ";
-  height: 100%;
-}
-
-.modal-dialog {
-  display: inline-block;
-  text-align: left;
-  vertical-align: middle;
 }
 
 .right-context-panel {
@@ -861,14 +827,12 @@ $main-list-view-right: 10px;
 .registry-view {
   > .main-panel {
     @extend .position-expand;
-    z-index: 1;
     > .mask {
       display: none;
     }
   }
   > .right-context-panel {
     @extend .position-expand;
-    z-index: 2;
     left: 100%;
   }
 }
@@ -880,11 +844,13 @@ $main-list-view-right: 10px;
 .registry-view.right-context-expanded {
   > .main-panel {
     > .mask {
+      z-index: 1;
       display: block;
     }
   }
   > .right-context-panel {
     left: 55%;
+    z-index: 2;
   }
 }
 
@@ -923,7 +889,6 @@ $main-list-view-right: 10px;
   > .main-panel {
     @extend .position-expand;
     background-color: $context-view-background-color;
-    z-index: 1;
     > .mask {
       display: none;
     }
@@ -987,11 +952,9 @@ $main-list-view-right: 10px;
 .app-view {
   .side-view {
     @extend .position-expand;
-    z-index: 2;
   }
   .center-view {
     @extend .position-expand;
-    z-index: 1;
   }
 }
 
@@ -1874,6 +1837,11 @@ $alert-text-color: #ffffff;
   }
 }
 
+.modal-header .close {
+  width: 24px;
+  height: 24px;
+}
+
 .actions {
   position: absolute;
   top: -1px;
@@ -2144,7 +2112,6 @@ $alert-text-color: #ffffff;
 .closures-view {
   > .main-panel {
     @extend .position-expand;
-    z-index: 1;
     > .mask {
       display: none;
     }

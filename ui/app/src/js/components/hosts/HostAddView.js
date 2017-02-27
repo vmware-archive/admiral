@@ -15,15 +15,13 @@ import PlacementZonesView from 'components/placementzones/PlacementZonesView'; /
 import CredentialsList from 'components/credentials/CredentialsList'; //eslint-disable-line
 import CertificatesList from 'components/certificates/CertificatesList'; //eslint-disable-line
 import DeploymentPoliciesList from 'components/deploymentpolicies/DeploymentPoliciesList'; //eslint-disable-line
-import HostCertificateConfirmTemplate from
-  'components/hosts/HostCertificateConfirmTemplate.html';
+import AcceptCertificate from 'components/hosts/AcceptCertificate'; //eslint-disable-line
 import MulticolumnInputs from 'components/common/MulticolumnInputs';
 import Tags from 'components/common/Tags';
 import { HostActions, HostContextToolbarActions } from 'actions/Actions';
 import constants from 'core/constants';
 import utils from 'core/utils';
 import ft from 'core/ft';
-import modal from 'core/modal';
 
 const placementZoneManageOptions = [{
   id: 'rp-create',
@@ -77,7 +75,8 @@ var HostAddView = Vue.extend({
       connectionType: 'API',
       autoConfigure: false,
       selectedHostType: constants.HOST.TYPE.DOCKER,
-      schedulerPlacementZoneName: null
+      schedulerPlacementZoneName: null,
+      showAcceptCertificate: false
     };
   },
 
@@ -372,7 +371,7 @@ var HostAddView = Vue.extend({
 
     // Should accept certificate
     this.unwatchShouldAcceptCertificate = this.$watch('model.shouldAcceptCertificate', () => {
-      this.updateCertificateModal(this.model.shouldAcceptCertificate);
+      this.showAcceptCertificate = true;
     });
   },
 
@@ -401,59 +400,7 @@ var HostAddView = Vue.extend({
       var addressInput = $(e.currentTarget);
       addressInput.val(utils.populateDefaultSchemeAndPort(addressInput.val()));
     },
-    updateCertificateModal: function(shouldAcceptCertificate) {
-      if (shouldAcceptCertificate) {
 
-        this.createAndShowCertificateConfirm(shouldAcceptCertificate.certificateHolder,
-          shouldAcceptCertificate.verify);
-      } else {
-
-        modal.hide();
-      }
-    },
-    createAndShowCertificateConfirm: function(certificateHolder, isVerify) {
-      // TODO make this more vue like with component
-      var $certificateConfirm = $(HostCertificateConfirmTemplate(certificateHolder));
-
-      modal.show($certificateConfirm);
-
-      var certificateWarning = i18n.t('app.host.details.certificateWarning', {
-        address: this.address
-      });
-      $certificateConfirm.find('.certificate-warning-text').html(certificateWarning);
-
-      $certificateConfirm.find('.manage-certificates-button').click(function(e) {
-        e.preventDefault();
-        HostContextToolbarActions.manageCertificates();
-        modal.hide();
-      });
-
-      $certificateConfirm.find('.show-certificate-btn').click(function(e) {
-        e.preventDefault();
-        $certificateConfirm.addClass('active');
-      });
-
-      $certificateConfirm.find('.hide-certificate-btn').click(function(e) {
-        e.preventDefault();
-        $certificateConfirm.removeClass('active');
-      });
-
-      $certificateConfirm.find('.confirmAddHost').click((e) => {
-        e.preventDefault();
-        let hostModel = this.getHostData();
-        let tags = this.tagsInput.getValue();
-        if (isVerify) {
-          HostActions.acceptCertificateAndVerifyHost(certificateHolder, hostModel, tags);
-        } else {
-          HostActions.acceptCertificateAndAddHost(certificateHolder, hostModel, tags);
-        }
-      });
-
-      $certificateConfirm.find('.confirmCancel').click(function(e) {
-        e.preventDefault();
-        modal.hide();
-      });
-    },
     disableInput: function(inputId, elemType, value) {
       var inputEl = $(this.$el).find('#' + inputId + ' ' + elemType);
       inputEl.replaceWith($('<label data-name="host-edit-value">'
@@ -538,6 +485,37 @@ var HostAddView = Vue.extend({
       } else {
         HostActions.addHost(hostData, tags);
       }
+    },
+
+    showModal: function() {
+      if (!this.showAcceptCertificate) {
+        this.showAcceptCertificate = true;
+      }
+    },
+
+    confirmAcceptCertificate: function() {
+      this.showAcceptCertificate = false;
+
+      let certificateHolder = this.model.shouldAcceptCertificate.certificateHolder;
+      let hostModel = this.getHostData();
+      let tags = this.tagsInput.getValue();
+
+      if (certificateHolder.isVerify) {
+        HostActions.acceptCertificateAndVerifyHost(certificateHolder, hostModel, tags);
+      } else {
+        HostActions.acceptCertificateAndAddHost(certificateHolder, hostModel, tags);
+      }
+    },
+
+    cancelAcceptCertificate: function() {
+      this.showAcceptCertificate = false;
+    }
+  },
+  events: {
+    'manage-certificates': function() {
+      HostContextToolbarActions.manageCertificates();
+
+      this.showAcceptCertificate = false;
     }
   }
 });

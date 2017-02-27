@@ -1,0 +1,59 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<modal :show="true" size="lg" :closable="false" :has-header="false">
+  <span slot="title"></span>
+  <div slot="body">
+    <div class="certificate-warning">
+      <i class="fa fa-exclamation-circle modal-help-icon"></i>
+      <div class="certificate-warning-text">{{warningMessage}}</div>
+    </div>
+    <div class="certificate-content-holder" v-if="certificateShown">
+      <div class="certificate-content">
+        <div class="form-group">
+          <label>{{i18n("app.certificate.list.details.commonName")}}</label>
+          <div>{{model.commonName}}</div>
+        </div>
+        <div class="form-group">
+          <label>{{i18n("app.certificate.list.details.issuerName")}}</label>
+          <div>{{model.issuerName}}</div>
+        </div>
+        <div class="form-group">
+          <label>{{i18n("app.certificate.list.details.serial")}}</label>
+          <div>{{model.serial}}</div>
+        </div>
+        <div class="form-group">
+          <label>{{i18n("app.certificate.list.details.fingerprint")}}</label>
+          <div>{{model.fingerprint}}</div>
+        </div>
+        <div class="form-group">
+          <label>{{i18n("app.certificate.list.details.validSince")}}</label>
+          <div>{{model.timestampToDate validSince}}</div>
+        </div>
+        <div class="form-group">
+          <label>{{i18n("app.certificate.list.details.validTo")}}</label>
+          <div>{{model.timestampToDate validTo}}</div>
+        </div>
+        <div class="manage-certificates">
+          <a href="#" @click="manageCertificates($event)">{{i18n("app.host.details.manageCertificates")}}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div slot="footer">
+    <button v-if="!certificateShown" class="btn btn-outline" type="button"
+            @click="showCertificate($event)">{{i18n("app.host.details.showCertificate")}}</button>
+    <button v-else class="btn btn-outline" type="button"
+            @click="hideCertificate($event)">{{i18n("app.host.details.hideCertificate")}}</button>
+    <button class="btn btn-outline" type="button" @click="$emit('cancel')">{{i18n("cancel")}}</button>
+    <button class="btn btn-primary" type="button" @click="$emit('confirm')">{{i18n("ok")}}</button>
+  </div>
+</modal>

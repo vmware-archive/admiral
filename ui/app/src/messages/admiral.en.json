@@ -1142,6 +1142,7 @@
       "valueHint": "Example: slow"
     },
     "yes": "Yes",
+    "ok": "Ok",
     "cancel": "Cancel",
     "delete": "Delete",
     "enable": "Enable",

@@ -1,0 +1,24 @@
+<div class="modal" transition="fade" v-if="show">
+  <div class="modal-dialog {{modalSize}}" role="dialog" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-header" v-if="hasHeader">
+        <button v-if="closable" :aria-label="i18n('close')" class="close" type="button"
+                @click="$emit('close')">
+          <!--clr-icon aria-hidden="true" shape="close"></clr-icon-->
+          <clr-icon-close></clr-icon-close>
+        </button>
+        <h3 class="modal-title"><slot name="title"></slot></h3>
+      </div>
+      <div class="modal-body">
+        <slot name="body"></slot>
+      </div>
+      <div class="modal-footer">
+        <slot name="footer">
+          <button class="btn btn-outline" type="button" @click="$emit('cancel')">{{i18n("cancel")}}</button>
+          <button class="btn btn-primary" type="button" @click="$emit('confirm')">{{i18n("ok")}}</button>
+        </slot>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop" aria-hidden="true"></div>
+</div>
