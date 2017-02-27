@@ -50,8 +50,7 @@ public class EndpointHealthCheckPeriodicService extends StatelessService {
                         .createPost(this, EndpointHealthCheckTaskService.FACTORY_LINK)
                         .setBody(state);
 
-                // TODO: temporary disabling health check
-                //this.sendWithDeferredResult(startTaskOperation);
+                this.sendWithDeferredResult(startTaskOperation);
             });
         });
 
