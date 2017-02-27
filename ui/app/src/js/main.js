@@ -14,6 +14,9 @@
 */
 
 import initializer from 'core/initializer';
+import utils from 'core/utils';
+import DefaultTemplate from 'components/headers/DefaultTemplate.html';
+import VICTemplate from 'components/headers/VICTemplate.html';
 
 var $loadingEl = $('body > .loading');
 
@@ -29,6 +32,29 @@ var appInitializer = function(App, Store) {
   });
 };
 
+var updateHeaderLink = function(registryUrl) {
+  if (registryUrl) {
+    $('body').append($(VICTemplate()));
+    $('body > .header .registry-link').attr('href', registryUrl);
+    $('body > .header #search_input').change(function(e) {
+      window.location.hash = '#/templates?any=' + this.value;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    });
+    $('body > .header #search_input').keydown(function(event) {
+      if (event.keyCode === 13) {
+        window.location.hash = '#/templates?any=' + this.value;
+        event.preventDefault();
+        return false;
+      }
+    });
+    $('head title').html('VIC');
+  } else {
+    $('body').append($(DefaultTemplate()));
+    $('head title').html('Admiral');
+  }
+};
+
 initializer.init(() => {
   var locationSearch = window.location.search || '';
   if (locationSearch.indexOf('compute') !== -1) {
@@ -38,4 +64,6 @@ initializer.init(() => {
     appInitializer(require('components/App').default,
                      require('stores/AppStore').default);
   }
+
+  updateHeaderLink(utils.getConfigurationProperty('vic.registry.tab.url'));
 });

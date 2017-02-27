@@ -1,5 +1,9 @@
 {
   "app": {
+    "header": {
+      "management": "Management",
+      "registry": "Registry"
+    },
     "homepage": {
       "welcome": "Welcome!",
       "description": "This is the place for you to <b>create, provision, manage and monitor containerized applications.</b>",
