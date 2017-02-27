@@ -24,7 +24,7 @@ var VueBigActionButton = Vue.extend({
       type: String
     },
     iconName: {
-      required: true,
+      required: false,
       type: String
     },
     iconSrc: {

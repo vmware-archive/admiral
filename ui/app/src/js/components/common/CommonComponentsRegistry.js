@@ -45,3 +45,5 @@ import VueAlert from 'components/common/VueAlert';
 import ContextSidePanelToolbarItem from 'components/ContextSidePanelToolbarItem';
 import ContextSidePanel from 'components/ContextSidePanel';
 import VueDeleteItemConfirmation from 'components/common/VueDeleteItemConfirmation';
+import VueModal from 'components/common/VueModal';
+import VueClrIconClose from 'components/common/VueClrIconClose';

@@ -218,7 +218,6 @@
   .list-holder {
     > .main-panel {
       @extend .position-expand;
-      z-index: 1;
     }
     > .right-context-panel {
       @extend .position-expand;
