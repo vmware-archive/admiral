@@ -43,6 +43,8 @@ import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.test.integration.BaseIntegrationSupportIT;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
 import com.vmware.photon.controller.model.ComputeProperties;
+import com.vmware.photon.controller.model.adapters.vsphere.CustomProperties;
+import com.vmware.photon.controller.model.adapters.vsphere.util.VimNames;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -57,6 +59,8 @@ import com.vmware.photon.controller.model.resources.TagService.TagState;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
@@ -232,8 +236,18 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
     private List<ComputeState> selectComputes(String resourcePoolLink, int count) throws Exception {
         ResourcePoolState rp = getDocument(resourcePoolLink, ResourcePoolState.class);
 
+        // filter out VC resource pools as their capacity is typically too small and error-prone
+        Query computeQuery = Query.Builder.create().addClause(rp.query)
+                .addInClause(
+                        QuerySpecification.buildCompositeFieldName(
+                                ResourceState.FIELD_NAME_CUSTOM_PROPERTIES, CustomProperties.TYPE),
+                        Arrays.asList(VimNames.TYPE_CLUSTER_COMPUTE_RESOURCE,
+                                VimNames.TYPE_COMPUTE_RESOURCE,
+                                VimNames.TYPE_HOST))
+                .build();
+
         QueryTask queryTask = QueryTask.Builder.createDirectTask()
-                .setQuery(rp.query).addOption(QueryOption.EXPAND_CONTENT).build();
+                .setQuery(computeQuery).addOption(QueryOption.EXPAND_CONTENT).build();
         String responseJson = sendRequest(HttpMethod.POST, ServiceUriPaths.CORE_QUERY_TASKS,
                 Utils.toJson(queryTask));
         QueryTask returnedTask = Utils.fromJson(responseJson, QueryTask.class);
