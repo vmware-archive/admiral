@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -35,6 +36,8 @@ public class MockKubernetesHost extends StatelessService {
 
     public Map<String, String> containerNamesToLogs;
 
+    public Map<BaseKubernetesObject, BaseKubernetesObject> inspectMap;
+
     public boolean failIntentionally;
 
     public MockKubernetesHost() {
@@ -42,6 +45,7 @@ public class MockKubernetesHost extends StatelessService {
         deployedElements = Collections.synchronizedList(new ArrayList<>());
         deployedElementsMap = new ConcurrentHashMap<>();
         containerNamesToLogs = new ConcurrentHashMap<>();
+        inspectMap = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -50,7 +54,7 @@ public class MockKubernetesHost extends StatelessService {
         if (uri.contains("/log?container=")) {
             handleFetchLog(get);
         } else {
-            super.handleGet(get);
+            handleGetResource(get);
         }
     }
 
@@ -110,5 +114,21 @@ public class MockKubernetesHost extends StatelessService {
         String containerName = uri.split("log\\?container=")[1];
         get.setBody(containerNamesToLogs.get(containerName));
         get.complete();
+    }
+
+    private void handleGetResource(Operation get) {
+        String resourceName = extractName(get);
+        for (Entry<BaseKubernetesObject, BaseKubernetesObject> entity : inspectMap.entrySet()) {
+            if (entity.getKey().metadata.name.equals(resourceName)) {
+                get.setBody(entity.getValue()).complete();
+                return;
+            }
+        }
+        get.fail(404);
+    }
+
+    private String extractName(Operation op) {
+        String[] elements = op.getUri().getPath().split("/");
+        return elements[elements.length - 1];
     }
 }

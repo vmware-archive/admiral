@@ -14,6 +14,7 @@ package com.vmware.admiral.compute.kubernetes.service;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.kubernetes.entities.services.Service;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.ServiceState;
+import com.vmware.xenon.common.Utils;
 
 public class ServiceEntityHandler extends AbstractKubernetesObjectService<ServiceState> {
 
@@ -35,6 +36,11 @@ public class ServiceEntityHandler extends AbstractKubernetesObjectService<Servic
         @Override
         public String getKubernetesSelfLink() {
             return this.service.metadata.selfLink;
+        }
+
+        @Override
+        public void setKubernetesEntityFromJson(String json) {
+            this.service = Utils.fromJson(json, Service.class);
         }
     }
 

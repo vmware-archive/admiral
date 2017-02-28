@@ -38,10 +38,12 @@ public abstract class BaseKubernetesState extends ResourceState implements Compo
     @Documentation(description = "Entity host link")
     public String parentLink;
 
-    public abstract String getKubernetesSelfLink();
-
     @Override
     public String retrieveCompositeComponentLink() {
         return this.compositeComponentLink;
     }
+
+    public abstract String getKubernetesSelfLink();
+
+    public abstract void setKubernetesEntityFromJson(String json);
 }

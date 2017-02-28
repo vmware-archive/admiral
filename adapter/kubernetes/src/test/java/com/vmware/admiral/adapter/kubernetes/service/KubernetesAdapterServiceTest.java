@@ -113,4 +113,56 @@ public class KubernetesAdapterServiceTest extends BaseKubernetesMockTest {
         }
 
     }
+
+    @Test
+    public void testInspect() throws Throwable {
+        PodState podState = new PodState();
+        podState.pod = new Pod();
+        podState.pod.spec = new PodSpec();
+        podState.pod.spec.containers = new ArrayList<>();
+        Container container1 = new Container();
+        container1.name = "container1";
+        container1.image = "test-image";
+        podState.pod.spec.containers.add(container1);
+        podState.pod.metadata = new ObjectMeta();
+        podState.pod.metadata.selfLink = "/api/v1/namespaces/default/pods/test-pod";
+        podState.pod.metadata.name = "test-pod";
+        podState.parentLink = kubernetesHostState.documentSelfLink;
+        podState = doPost(podState, PodService.FACTORY_LINK);
+
+        Pod updatedPod = new Pod();
+        updatedPod.metadata = new ObjectMeta();
+        updatedPod.metadata.name = "test-pod";
+        updatedPod.metadata.selfLink = "/api/v1/namespaces/default/pods/test-pod";
+        updatedPod.spec = new PodSpec();
+        updatedPod.spec.containers = new ArrayList<>();
+        Container updatedContainer = new Container();
+        updatedContainer.name = "new-container1";
+        updatedContainer.image = "new-test-image";
+        updatedPod.spec.containers.add(updatedContainer);
+
+        service.inspectMap.put(podState.pod, updatedPod);
+
+        provisioningTaskLink = createProvisioningTask();
+
+        AdapterRequest request = new AdapterRequest();
+        request.resourceReference = UriUtils.buildUri(host, podState.documentSelfLink);
+        request.serviceTaskCallback = ServiceTaskCallback.create(provisioningTaskLink);
+        request.operationTypeId = KubernetesOperationType.INSPECT.id;
+        doOperation(KubernetesAdapterService.SELF_LINK, request);
+
+        waitForPropertyValue(provisioningTaskLink, MockTaskState.class, "taskInfo.stage",
+                TaskState.TaskStage.FINISHED);
+
+        PodState patchedPod = getDocument(PodState.class, podState.documentSelfLink);
+
+        assertEquals(podState.descriptionLink, patchedPod.descriptionLink);
+        assertEquals(podState.compositeComponentLink, patchedPod.compositeComponentLink);
+        assertEquals(podState.parentLink, patchedPod.parentLink);
+
+        assertEquals(updatedContainer.name, patchedPod.pod.spec.containers.get(0).name);
+        assertEquals(updatedContainer.image, patchedPod.pod.spec.containers.get(0).image);
+
+
+    }
 }

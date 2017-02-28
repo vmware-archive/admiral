@@ -17,7 +17,8 @@ import java.util.Map;
 public enum KubernetesOperationType {
     CREATE("Kubernetes.Create"),
     DELETE("Kubernetes.Delete"),
-    FETCH_LOGS("Kubernetes.Logs");
+    FETCH_LOGS("Kubernetes.Logs"),
+    INSPECT("Kubernetes.Inspect");
 
     public final String id;
 

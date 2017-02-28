@@ -40,6 +40,7 @@ import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesService;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesService.KubernetesState;
+import com.vmware.admiral.service.common.LogService;
 import com.vmware.admiral.service.common.ResourceNamePrefixService.ResourceNamePrefixState;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -220,5 +221,10 @@ public class KubernetesUtil {
 
         return clazz;
 
+    }
+
+    public static String buildLogUriPath(BaseKubernetesState state, String containerName) {
+        return UriUtils.buildUriPath(LogService.FACTORY_LINK, state.documentSelfLink + "-" +
+                containerName);
     }
 }
