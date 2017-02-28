@@ -127,6 +127,25 @@ public class QueryUtil {
         return inClause;
     }
 
+    public static void addCaseInsensitiveListValueClause(QueryTask q, String propName, Collection<String> values) {
+        addCaseInsensitiveListValueClause(q, propName, values, MatchType.TERM);
+    }
+
+    public static void addCaseInsensitiveListValueClause(QueryTask q, String propName,
+            Collection<String> values,
+            MatchType termMatchType) {
+        Query inClause = addCaseInsensitiveListValueClause(propName, values, termMatchType);
+        q.querySpec.query.addBooleanClause(inClause);
+    }
+
+    public static void addCaseInsensitiveListValueClause(QueryTask.Query q, String propName,
+            Collection<String> values,
+            MatchType termMatchType) {
+        QueryTask.Query inClause = addCaseInsensitiveListValueClause(propName, values, termMatchType);
+
+        q.addBooleanClause(inClause);
+    }
+
     public static QueryTask.Query addCaseInsensitiveListValueClause(String propName,
             Collection<String> values,
             MatchType termMatchType) {

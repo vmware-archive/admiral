@@ -107,8 +107,8 @@ public class NamedVolumeAffinityHostFilter
 
         final QueryTask volumeQuery = QueryUtil.buildQuery(ContainerVolumeState.class, false);
 
-        QueryUtil.addListValueClause(volumeQuery, ContainerVolumeState.FIELD_NAME_NAME,
-                volumeNames);
+        QueryUtil.addCaseInsensitiveListValueClause(volumeQuery,
+                ContainerVolumeState.FIELD_NAME_NAME, volumeNames);
 
         if (tenantLinks != null && !tenantLinks.isEmpty()) {
             volumeQuery.querySpec.query
@@ -127,7 +127,8 @@ public class NamedVolumeAffinityHostFilter
                         failureCallback.accept(r.getException());
                     } else if (r.hasResult()) {
                         ContainerVolumeState volume = r.getResult();
-                        if (volume.external != null && volume.external) {
+                        if (volumeNames.contains(volume.name) && volume.external != null
+                                && volume.external) {
                             externalVolumesByName
                                     .computeIfAbsent(volume.name, v -> new ArrayList<>())
                                     .add(volume);
@@ -191,7 +192,8 @@ public class NamedVolumeAffinityHostFilter
 
         final QueryTask q = QueryUtil.buildQuery(ContainerVolumeDescription.class, false);
 
-        QueryUtil.addListValueClause(q, ContainerVolumeDescription.FIELD_NAME_NAME, volumeNames);
+        QueryUtil.addCaseInsensitiveListValueClause(q, ContainerVolumeDescription.FIELD_NAME_NAME,
+                volumeNames);
         QueryUtil.addExpandOption(q);
 
         final Map<String, DescName> descLinksWithNames = new HashMap<>();
@@ -204,10 +206,12 @@ public class NamedVolumeAffinityHostFilter
                         callback.complete(null, r.getException());
                     } else if (r.hasResult()) {
                         final ContainerVolumeDescription desc = r.getResult();
-                        final DescName descName = new DescName();
-                        descName.descLink = desc.documentSelfLink;
-                        descName.descriptionName = desc.name;
-                        descLinksWithNames.put(descName.descLink, descName);
+                        if (volumeNames.contains(desc.name)) {
+                            final DescName descName = new DescName();
+                            descName.descLink = desc.documentSelfLink;
+                            descName.descriptionName = desc.name;
+                            descLinksWithNames.put(descName.descLink, descName);
+                        }
                     } else {
                         if (descLinksWithNames.isEmpty()) {
                             callback.complete(hostSelectionMap, null);

@@ -79,7 +79,7 @@ public class ContainerToNetworkAffinityHostFilter
 
         final QueryTask q = QueryUtil.buildQuery(ContainerNetworkDescription.class, false);
 
-        QueryUtil.addListValueClause(q, ContainerNetworkDescription.FIELD_NAME_NAME,
+        QueryUtil.addCaseInsensitiveListValueClause(q, ContainerNetworkDescription.FIELD_NAME_NAME,
                 networks.keySet());
         QueryUtil.addExpandOption(q);
 
@@ -93,10 +93,12 @@ public class ContainerToNetworkAffinityHostFilter
                         callback.complete(null, r.getException());
                     } else if (r.hasResult()) {
                         final ContainerNetworkDescription desc = r.getResult();
-                        final DescName descName = new DescName();
-                        descName.descLink = desc.documentSelfLink;
-                        descName.descriptionName = desc.name;
-                        descLinksWithNames.put(descName.descLink, descName);
+                        if (networks.keySet().contains(desc.name)) {
+                            final DescName descName = new DescName();
+                            descName.descLink = desc.documentSelfLink;
+                            descName.descriptionName = desc.name;
+                            descLinksWithNames.put(descName.descLink, descName);
+                        }
                     } else {
                         if (descLinksWithNames.isEmpty()) {
                             callback.complete(hostSelectionMap, null);
