@@ -38,7 +38,7 @@
   </div>
   <div class="btn-group">
     <template v-if="readOnly">
-      <button type="button" class="btn select-image-btn">Continue</button>
+      <button type="button" class="btn select-image-btn">{{i18n("app.template.list.continue")}}</button>
     </template>
     <template v-else>
       <button v-if="model.provisioning" type="button" class="btn create-container-btn

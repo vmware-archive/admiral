@@ -191,7 +191,8 @@
         "certificateTitle": "Certificate",
         "publicTitle": "Public key",
         "publicCertificateTitle": "Public certificate",
-        "privateCertificateTitle": "Private certificate"
+        "privateCertificateTitle": "Private certificate",
+        "customProperties": "Custom properties"
       }
     },
     "deploymentPolicy": {
@@ -270,6 +271,7 @@
         "false": "No",
         "searchCategoryFilterTitle": "View:",
         "partialResultWarning": "You are seeing incomplete search results due to one or more query failures.",
+        "continue": "Continue",
         "searchCategory": {
           "all": "All",
           "images": "Images",
