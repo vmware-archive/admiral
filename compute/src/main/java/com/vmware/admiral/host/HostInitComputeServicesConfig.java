@@ -68,6 +68,7 @@ import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionConten
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesService;
+import com.vmware.admiral.compute.kubernetes.service.PodLogService;
 import com.vmware.admiral.compute.kubernetes.service.PodService;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
 import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService;
@@ -106,7 +107,8 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ComputeInitialBootService.class,
                 ElasticPlacementZoneConfigurationService.class,
                 EnvironmentMappingService.class,
-                KubernetesDescriptionContentService.class);
+                KubernetesDescriptionContentService.class,
+                PodLogService.class);
 
         startServiceFactories(host, CaSigningCertService.class,
                 ContainerDescriptionService.class,

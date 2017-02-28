@@ -3,7 +3,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: wordpress-svc
-  selfLink: /api/v1/namespaces/default/services/wordpress-svc
+  selfLink: /api/v1/namespaces/default/services/wordpress-svc-mcm-102
   labels:
     app: wordpress
 spec:
@@ -17,7 +17,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: wordpress-dpl
-  selfLink: /apis/extensions/v1beta1/namespaces/default/deployments/wordpress-dpl
+  selfLink: /apis/extensions/v1beta1/namespaces/default/deployments/wordpress-dpl-mcm-102
   labels:
     app: wordpress
 spec:
@@ -45,7 +45,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: wordpress-mysql-svc
-  selfLink: /api/v1/namespaces/default/services/wordpress-mysql-svc
+  selfLink: /api/v1/namespaces/default/services/wordpress-mysql-svc-mcm-102
   labels:
     app: wordpress
 spec:
@@ -58,7 +58,7 @@ spec:
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  selfLink: /apis/extensions/v1beta1/namespaces/default/deployments/wordpress-mysql-dpl
+  selfLink: /apis/extensions/v1beta1/namespaces/default/deployments/wordpress-mysql-dpl-mcm-102
   name: wordpress-mysql-dpl
   labels:
     app: wordpress

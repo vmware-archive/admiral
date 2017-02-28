@@ -11,34 +11,44 @@
 
 package com.vmware.admiral.adapter.kubernetes.service;
 
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.fromResourceStateToBaseKubernetesState;
+
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.KubernetesOperationType;
 import com.vmware.admiral.adapter.kubernetes.KubernetesRemoteApiClient;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.content.kubernetes.CommonKubernetesEntity;
+import com.vmware.admiral.compute.kubernetes.entities.pods.Container;
+import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesService.KubernetesState;
-import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.admiral.compute.kubernetes.service.PodService;
+import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
+import com.vmware.admiral.service.common.LogService;
+import com.vmware.admiral.service.common.LogService.LogServiceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.TaskState.TaskStage;
 
 public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_KUBERNETES;
 
-    private static class RequestContext {
+    private static final String LOG_FETCH_FAILED_FORMAT = "Unable to fetch logs for container: %s"
+            + " error: %s";
+
+    private static class RequestContext<T extends BaseKubernetesState> {
         public AdapterRequest request;
-        public ComputeState computeState;
-        public KubernetesState kubernetesState;
+        public BaseKubernetesState kubernetesState;
         public KubernetesDescription kubernetesDescription;
         public KubernetesContext k8sContext;
         public KubernetesRemoteApiClient executor;
-        /**
-         * Flags the request as already failed. Used to avoid patching a FAILED task to FINISHED
-         * state after inspecting a container.
-         */
-        public boolean requestFailed;
     }
 
     @Override
@@ -59,13 +69,23 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
     }
 
     private void processKubernetesRequest(RequestContext context) {
+
         sendRequest(Operation
                 .createGet(context.request.resourceReference)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         fail(context.request, ex);
                     } else {
-                        context.kubernetesState = o.getBody(KubernetesState.class);
+                        Class<? extends BaseKubernetesState> stateType = null;
+                        try {
+                            stateType = fromResourceStateToBaseKubernetesState(
+                                    CompositeComponentRegistry.metaByStateLink(
+                                            context.request.resourceReference
+                                                    .getPath()).stateClass);
+                        } catch (IllegalArgumentException iae) {
+                            fail(context.request, iae);
+                        }
+                        context.kubernetesState = o.getBody(stateType);
                         processKubernetesState(context);
                     }
                 }));
@@ -84,7 +104,6 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
                 (k8sContext) -> {
                     context.k8sContext = k8sContext;
                     context.executor = getApiClient();
-                    context.computeState = k8sContext.host;
 
                     processOperation(context);
                 });
@@ -101,6 +120,10 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
 
             case DELETE:
                 processDeleteKubernetesEntity(context);
+                break;
+
+            case FETCH_LOGS:
+                processFetchPodLogs(context);
                 break;
 
             default:
@@ -169,14 +192,82 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
     }
 
     private void processDeleteKubernetesEntity(RequestContext context) {
-        context.executor.deleteEntity(context.kubernetesState.selfLink, context.k8sContext,
-                (o, ex) -> {
-                    if (ex != null) {
-                        fail(context.request, ex);
-                    } else {
-                        patchTaskStage(context.request, TaskStage.FINISHED, null);
-                    }
-                });
+        context.executor
+                .deleteEntity(context.kubernetesState.getKubernetesSelfLink(), context.k8sContext,
+                        (o, ex) -> {
+                            if (ex != null) {
+                                fail(context.request, ex);
+                            } else {
+                                patchTaskStage(context.request, TaskStage.FINISHED, null);
+                            }
+                        });
     }
 
+    private void processFetchPodLogs(RequestContext context) {
+        if (!context.kubernetesState.documentSelfLink.startsWith(PodService.FACTORY_LINK)) {
+            throw new IllegalArgumentException("Cannot fetch logs for types that are not pods.");
+        }
+
+        PodState podState = (PodState) context.kubernetesState;
+
+        Map<String, String> containerNamesToLogLinks = new HashMap<>();
+        for (Container container : podState.pod.spec.containers) {
+            String logLink = podState.getKubernetesSelfLink() + "/log?container=" + container.name;
+            containerNamesToLogLinks.put(container.name, logLink);
+        }
+
+        Map<String, String> containerNameToLogOutput = new HashMap<>();
+
+        AtomicInteger counter = new AtomicInteger(containerNamesToLogLinks.size());
+
+        for (Entry<String, String> containerNameToLogLink : containerNamesToLogLinks.entrySet()) {
+            String name = containerNameToLogLink.getKey();
+            String logLink = containerNameToLogLink.getValue();
+            context.executor.fetchLogs(logLink, context.k8sContext, (o, ex) -> {
+                if (ex != null) {
+                    containerNameToLogOutput.put(name, String.format(LOG_FETCH_FAILED_FORMAT,
+                            name, ex.getMessage()));
+                } else {
+                    String log = o.getBody(String.class);
+                    if (log == null || log.isEmpty()) {
+                        log = "--";
+                    }
+                    containerNameToLogOutput.put(name, log);
+                }
+                if (counter.decrementAndGet() == 0) {
+                    processFetchedLogs(context, containerNameToLogOutput);
+                }
+            });
+        }
+
+    }
+
+    private void processFetchedLogs(RequestContext context, Map<String, String> logs) {
+        AtomicInteger counter = new AtomicInteger(logs.size());
+        AtomicBoolean hasError = new AtomicBoolean(false);
+
+        for (Entry<String, String> log : logs.entrySet()) {
+            LogServiceState logServiceState = new LogServiceState();
+            logServiceState.documentSelfLink = context.kubernetesState.documentSelfLink + "-" +
+                    log.getKey();
+            logServiceState.logs = log.getValue().getBytes();
+            logServiceState.tenantLinks = context.kubernetesState.tenantLinks;
+
+            sendRequest(Operation.createPost(this, LogService.FACTORY_LINK)
+                    .setBody(logServiceState)
+                    .setContextId(context.request.getRequestId())
+                    .setCompletion((o, ex) -> {
+                        if (ex != null) {
+                            if (hasError.compareAndSet(false, true)) {
+                                fail(context.request, ex);
+                            }
+                        } else {
+                            if (counter.decrementAndGet() == 0 && !hasError.get()) {
+                                patchTaskStage(context.request, TaskStage.FINISHED, null);
+                            }
+                        }
+                    }));
+        }
+
+    }
 }
