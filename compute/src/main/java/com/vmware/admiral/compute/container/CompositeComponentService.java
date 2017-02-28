@@ -145,6 +145,8 @@ public class CompositeComponentService extends StatefulService {
         currentState.name = PropertyUtils.mergeProperty(currentState.name, patchBody.name);
         currentState.compositeDescriptionLink = PropertyUtils.mergeProperty(
                 currentState.compositeDescriptionLink, patchBody.compositeDescriptionLink);
+        currentState.customProperties = PropertyUtils.mergeCustomProperties(currentState
+                .customProperties, patchBody.customProperties);
 
         boolean deletePatch = patch.getUri().getQuery() != null
                 && patch.getUri().getQuery().contains(UriUtils.URI_PARAM_INCLUDE_DELETED);

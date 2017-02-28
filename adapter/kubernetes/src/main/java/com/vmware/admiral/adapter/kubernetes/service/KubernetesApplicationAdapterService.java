@@ -244,6 +244,10 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
     private void processServiceDescriptions(RequestContext context,
             List<KubernetesDescription> serviceDescriptions, Runnable callback) throws IOException {
 
+        if (serviceDescriptions.isEmpty()) {
+            callback.run();
+        }
+
         final AtomicInteger counter = new AtomicInteger(serviceDescriptions.size());
         final AtomicBoolean hasError = new AtomicBoolean(false);
 
@@ -409,7 +413,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         fail(context.request, new IllegalStateException(String.format("Unable to "
-                                + "get resource state for %s, reason: %s", selfLink,
+                                        + "get resource state for %s, reason: %s", selfLink,
                                 Utils.toString(ex))));
                     } else {
                         Class stateClass = CompositeComponentRegistry
