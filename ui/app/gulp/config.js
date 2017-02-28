@@ -23,7 +23,6 @@ var jsLibsToCopy = [
   './node_modules/vue/dist/vue.js',
   './node_modules/vue-infinite-scroll/vue-infinite-scroll.js',
   './node_modules/jsplumb/dist/js/jsPlumb-2.1.5.js',
-  './node_modules/d3/d3.js',
   './node_modules/moment/min/moment-with-locales.js',
   './node_modules/ace-builds/src-noconflict/ace.js',
   './node_modules/ace-builds/src-noconflict/ext-language_tools.js',
@@ -56,7 +55,6 @@ var jsLibsToCopyMinified = [
   './node_modules/vue/dist/vue.min.js',
   './node_modules/vue-infinite-scroll/vue-infinite-scroll.js',
   './node_modules/jsplumb/dist/js/jsPlumb-2.1.5-min.js',
-  './node_modules/d3/d3.min.js',
   './node_modules/moment/min/moment-with-locales.min.js',
   './node_modules/ace-builds/src-min-noconflict/ace.js',
   './node_modules/ace-builds/src-min-noconflict/ext-language_tools.js',
@@ -167,10 +165,14 @@ module.exports = {
       src + '/styles/**/*.{sass,scss,css}',
       './node_modules/bootstrap-tokenfield/dist/css/*.css',
       './node_modules/clarity-ui/*.css',
-      './node_modules/font-awesome/css/*.css'
+      './node_modules/font-awesome/css/*.css',
+      './node_modules/admiral-ui-common/css/*.css'
     ],
     dest: dest + '/styles',
-    includePaths:  ['./node_modules/bootstrap-sass/assets/stylesheets', './node_modules/clarity-ui/src']
+    includePaths:  [
+      './node_modules/bootstrap-sass/assets/stylesheets',
+      './node_modules/clarity-ui/src'
+    ]
   },
   i18n: {
     src: src + '/messages/**/*.json',

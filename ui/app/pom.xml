@@ -51,7 +51,7 @@
                             <goal>npm</goal>
                         </goals>
                         <configuration>
-                            <arguments>install node-sass phantomjs-prebuilt</arguments>
+                            <arguments>install node-sass phantomjs-prebuilt admiral-ui-common</arguments>
                         </configuration>
                     </execution>
 

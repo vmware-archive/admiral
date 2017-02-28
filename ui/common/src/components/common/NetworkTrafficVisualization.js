@@ -9,7 +9,8 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import utils from 'core/utils';
+var utils = require('../../core/formatUtils');
+var d3 = require('d3');
 
 const ARROW_UP = '\uf062';
 const ARROW_DOWN = '\uf063';
@@ -33,9 +34,9 @@ const labelHolderWidth = 120;
 const labelHolderHeight = 150;
 const labelHolderY = labelHolderWidth + 24;
 
-class NetworkTrafficVisualization {
-  constructor($parent) {
-    var labelHolder = d3.select($parent[0]).append('svg')
+module.exports = class NetworkTrafficVisualization {
+  constructor(parent, i18n) {
+    var labelHolder = d3.select(parent).append('svg')
       .attr('width', '100%')
       .attr('height', '100%')
       .attr('viewBox', '0, 0, ' + labelHolderWidth + ', ' + labelHolderHeight);
@@ -47,7 +48,7 @@ class NetworkTrafficVisualization {
       .attr('y', labelHolderY)
       .text(i18n.t('app.container.details.network'));
 
-    this.svg = d3.select($parent[0]).append('svg')
+    this.svg = d3.select(parent).append('svg')
       .attr('width', '100%')
       .attr('height', '100%')
       .attr('viewBox', '0, 0, ' + width + ', ' + height);
@@ -143,5 +144,3 @@ function configureIOLabels(labels, className, underneathText, isLeft) {
    .style('font-size', smallFontSize + 'px')
    .text(underneathText);
 }
-
-export default NetworkTrafficVisualization;

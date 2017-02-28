@@ -26,8 +26,6 @@ const VERSION_REG_EX = /^(\*|\d+(\.\d+){0,2}(\.\*)?)/g;
 var isEmbedded = window.isEmbedded;
 var isSingleView = window.isSingleView;
 
-var byteUnits = ['Bytes', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-
 var configurationAdapters = null;
 var configurationProperties = null;
 
@@ -334,41 +332,6 @@ var utils = {
     return !!(view && view.contextView && view.contextView.expanded);
   },
 
-  // Formats a numeric bytes value to the most appropriate (close) string metric
-  // http://stackoverflow.com/a/18650828
-  formatBytes: function(bytes) {
-    var size = utils.fromBytes(bytes);
-    return size.value + ' ' + size.unit;
-  },
-
-  toBytes: function(value, unit) {
-    var k = 1024;
-    var i = byteUnits.indexOf(unit);
-    return value * Math.pow(k, i);
-  },
-
-  fromBytes: function(bytes) {
-    if (bytes === 0) {
-      return {
-        value: 0,
-        unit: byteUnits[0]
-      };
-    }
-
-    var k = 1024;
-    var i = Math.floor(Math.log(bytes) / Math.log(k));
-
-    var value = (bytes / Math.pow(k, i));
-    if (Math.round(value) !== value) {
-      value = value.toFixed(2);
-    }
-
-    return {
-      value: value,
-      unit: byteUnits[i]
-    };
-  },
-
   getIntValue: function(value) {
     return $.isNumeric(value) ? parseInt(value, 10) : null;
   },
@@ -385,22 +348,6 @@ var utils = {
     };
 
     return validator.isInt(intValue, limitValueRange);
-  },
-
-  calculateMemorySize: function(bytes) {
-    let size = utils.fromBytes(bytes);
-    // KB is the smallest unit shown in the UI
-    if (size.unit === byteUnits[0]) {
-      let k = 1024;
-
-      let value = (size.value / k);
-      if (Math.round(value) !== value) {
-        value = value.toFixed();
-      }
-      size.unit = byteUnits[1]; // kB
-    }
-
-    return size;
   },
 
   containerStatusDisplay: function(state, timestamp) {
