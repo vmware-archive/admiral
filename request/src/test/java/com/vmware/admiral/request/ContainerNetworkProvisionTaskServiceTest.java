@@ -50,22 +50,23 @@ public class ContainerNetworkProvisionTaskServiceTest extends RequestBaseTest {
     @Test
     public void testNetworkProvisioningTask() throws Throwable {
 
+        String networkName = "My-Net";
         ContainerNetworkDescription networkDesc = TestRequestStateFactory
-                .createContainerNetworkDescription("my-net");
+                .createContainerNetworkDescription(networkName);
         networkDesc.documentSelfLink = UUID.randomUUID().toString();
 
         // Create ContainerDescription with above network.
         ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
         container1Desc.name = "container1";
         container1Desc.networks = new HashMap<>();
-        container1Desc.networks.put("my-net", new ServiceNetwork());
+        container1Desc.networks.put(networkName, new ServiceNetwork());
 
         // Create ContainerDescription with above network.
         ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
         container2Desc.name = "container2";
         container2Desc.affinity = new String[] { "!container1:hard" };
         container2Desc.networks = new HashMap<>();
-        container2Desc.networks.put("my-net", new ServiceNetwork());
+        container2Desc.networks.put(networkName, new ServiceNetwork());
 
         // Setup Docker host and resource pool.
         ResourcePoolState resourcePool = createResourcePool();
@@ -246,7 +247,7 @@ public class ContainerNetworkProvisionTaskServiceTest extends RequestBaseTest {
     public void testNetworkProvisioningTaskWithProvidedHostIds() throws Throwable {
 
         ContainerNetworkDescription networkDesc = TestRequestStateFactory
-                .createContainerNetworkDescription("my-net");
+                .createContainerNetworkDescription("My-Net");
         networkDesc.documentSelfLink = UUID.randomUUID().toString();
         networkDesc = doPost(networkDesc, ContainerNetworkDescriptionService.FACTORY_LINK);
 

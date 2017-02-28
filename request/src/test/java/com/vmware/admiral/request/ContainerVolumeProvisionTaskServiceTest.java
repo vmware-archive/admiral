@@ -46,14 +46,15 @@ public class ContainerVolumeProvisionTaskServiceTest extends RequestBaseTest {
     @Test
     public void testVolumeProvisioningTask() throws Throwable {
 
+        String volumeName = "Posgres";
         ContainerVolumeDescription volumeDesc = TestRequestStateFactory
-                .createContainerVolumeDescription("postgres");
+                .createContainerVolumeDescription(volumeName);
         volumeDesc.documentSelfLink = UUID.randomUUID().toString();
 
         // Create ContainerDescription with above volume.
         ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
         container1Desc.name = "container1";
-        container1Desc.volumes = new String[] { "postgres:/etc/pgdata/postgres" };
+        container1Desc.volumes = new String[] { volumeName + ":/etc/pgdata/postgres" };
 
 
         // Create another ContainerDescription without volume and placed it in different host.
@@ -148,22 +149,22 @@ public class ContainerVolumeProvisionTaskServiceTest extends RequestBaseTest {
     @Test
     public void testVolumeProvisioningTaskWithSoftAntiaffinity() throws Throwable {
 
+        String volumeName = "Posgres";
         ContainerVolumeDescription volumeDesc = TestRequestStateFactory
-                .createContainerVolumeDescription("postgres");
+                .createContainerVolumeDescription(volumeName);
         volumeDesc.documentSelfLink = UUID.randomUUID().toString();
 
         // Create ContainerDescription with above volume.
         ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
         container1Desc.name = "container1";
-        container1Desc.volumes = new String[] { "postgres:/etc/pgdata/postgres" };
-
+        container1Desc.volumes = new String[] { volumeName + ":/etc/pgdata/postgres" };
 
         // Create another ContainerDescription with same local volume and try to place it in
         // different host (soft antiaffinity).
         ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
         container2Desc.name = "container2";
         container2Desc.affinity = new String[] { "!container1:soft" };
-        container2Desc.volumes = new String[] { "postgres:/etc/pgdata/postgres" };
+        container2Desc.volumes = new String[] { volumeName + ":/etc/pgdata/postgres" };
 
         // Setup 2 Docker hosts and resource pool.
         ResourcePoolState resourcePool = createResourcePool();
@@ -247,7 +248,7 @@ public class ContainerVolumeProvisionTaskServiceTest extends RequestBaseTest {
     public void testVolumeProvisioningTaskWithProvidedHostIds() throws Throwable {
 
         ContainerVolumeDescription volumeDesc = TestRequestStateFactory
-                .createContainerVolumeDescription("my-vol");
+                .createContainerVolumeDescription("My-Vol");
         volumeDesc.documentSelfLink = UUID.randomUUID().toString();
         volumeDesc = doPost(volumeDesc, ContainerVolumeDescriptionService.FACTORY_LINK);
 
