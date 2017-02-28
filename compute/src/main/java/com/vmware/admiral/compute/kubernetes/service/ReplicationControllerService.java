@@ -12,6 +12,7 @@
 package com.vmware.admiral.compute.kubernetes.service;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
 import com.vmware.admiral.compute.kubernetes.entities.replicationcontrollers.ReplicationController;
@@ -35,6 +36,11 @@ public class ReplicationControllerService
         @Override
         public String getKubernetesSelfLink() {
             return this.replicationController.metadata.selfLink;
+        }
+
+        @Override
+        public String getType() {
+            return KubernetesUtil.REPLICATION_CONTROLLER_TYPE;
         }
 
         @Override

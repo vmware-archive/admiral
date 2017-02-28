@@ -27,10 +27,16 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
-import com.vmware.admiral.compute.content.kubernetes.pods.Pod;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodList;
 import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection.EntityListCallback;
 import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
+import com.vmware.admiral.compute.kubernetes.entities.deployments.Deployment;
+import com.vmware.admiral.compute.kubernetes.entities.deployments.DeploymentList;
+import com.vmware.admiral.compute.kubernetes.entities.pods.Pod;
+import com.vmware.admiral.compute.kubernetes.entities.pods.PodList;
+import com.vmware.admiral.compute.kubernetes.entities.replicationcontrollers.ReplicationController;
+import com.vmware.admiral.compute.kubernetes.entities.replicationcontrollers.ReplicationControllerList;
+import com.vmware.admiral.compute.kubernetes.entities.services.Service;
+import com.vmware.admiral.compute.kubernetes.entities.services.ServiceList;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
@@ -288,7 +294,8 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
         };
 
         callbackResponse.computeHostLink = context.host.documentSelfLink;
-        getApiClient().getPods(context, resultHandler.appendResult((o) -> {
+        KubernetesRemoteApiClient client = getApiClient();
+        client.getPods(context, resultHandler.appendResult(o -> {
             PodList podList = o.getBody(PodList.class);
             if (podList.items != null) {
                 synchronized (callbackResponse) {
@@ -303,7 +310,51 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
                 }
             }
         }));
-        //TODO: Add other entities that should be listed. Deployments, ReplicationControllers, ...
+        client.getServices(null, context, resultHandler.appendResult(o -> {
+            ServiceList serviceList = o.getBody(ServiceList.class);
+            if (serviceList.items != null) {
+                synchronized (callbackResponse) {
+                    for (Service service : serviceList.items) {
+                        if (service != null && service.metadata != null) {
+                            callbackResponse.entityIdsAndNames.put(
+                                    service.metadata.uid, service.metadata.name);
+                            callbackResponse.entityIdsAndTypes.put(
+                                    service.metadata.uid, KubernetesUtil.SERVICE_TYPE);
+                        }
+                    }
+                }
+            }
+        }));
+        client.getDeployments(null, context, resultHandler.appendResult(o -> {
+            DeploymentList deploymentList = o.getBody(DeploymentList.class);
+            if (deploymentList.items != null) {
+                synchronized (callbackResponse) {
+                    for (Deployment deployment : deploymentList.items) {
+                        if (deployment != null && deployment.metadata != null) {
+                            callbackResponse.entityIdsAndNames.put(
+                                    deployment.metadata.uid, deployment.metadata.name);
+                            callbackResponse.entityIdsAndTypes.put(
+                                    deployment.metadata.uid, KubernetesUtil.DEPLOYMENT_TYPE);
+                        }
+                    }
+                }
+            }
+        }));
+        client.getReplicationControllers(null, context, resultHandler.appendResult(o -> {
+            ReplicationControllerList rcList = o.getBody(ReplicationControllerList.class);
+            if (rcList.items != null) {
+                synchronized (callbackResponse) {
+                    for (ReplicationController rc : rcList.items) {
+                        if (rc != null && rc.metadata != null) {
+                            callbackResponse.entityIdsAndNames.put(
+                                    rc.metadata.uid, rc.metadata.name);
+                            callbackResponse.entityIdsAndTypes.put(
+                                    rc.metadata.uid, KubernetesUtil.REPLICATION_CONTROLLER_TYPE);
+                        }
+                    }
+                }
+            }
+        }));
         allStarted.set(true);
     }
 

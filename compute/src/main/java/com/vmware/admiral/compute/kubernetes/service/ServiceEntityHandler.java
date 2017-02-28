@@ -12,6 +12,7 @@
 package com.vmware.admiral.compute.kubernetes.service;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
 import com.vmware.admiral.compute.kubernetes.entities.services.Service;
@@ -38,6 +39,11 @@ public class ServiceEntityHandler extends AbstractKubernetesObjectService<Servic
         @Override
         public String getKubernetesSelfLink() {
             return this.service.metadata.selfLink;
+        }
+
+        @Override
+        public String getType() {
+            return KubernetesUtil.SERVICE_TYPE;
         }
 
         @Override

@@ -40,6 +40,12 @@ public class ObjectMeta {
     public String selfLink;
 
     /**
+     * UID is the unique in time and space value for this object. Populated by the system.
+     * Read-only.
+     */
+    public String uid;
+
+    /**
      * Map of string keys and values that can be used to organize and categorize
      * (scope and select) objects. May match selectors of replication controllers and services.
      */

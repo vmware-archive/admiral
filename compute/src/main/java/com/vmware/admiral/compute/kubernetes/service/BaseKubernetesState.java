@@ -20,6 +20,7 @@ import com.vmware.photon.controller.model.resources.ResourceState;
  * Base class to keep the common properties of all Kubernetes States.
  */
 public abstract class BaseKubernetesState extends ResourceState implements Composable {
+    public static final String FIELD_NAME_PARENT_LINK = "parentLink";
 
     /**
      * Defines the description of the entity
@@ -39,6 +40,8 @@ public abstract class BaseKubernetesState extends ResourceState implements Compo
      */
     @Documentation(description = "Entity host link")
     public String parentLink;
+
+    public abstract String getType();
 
     @Override
     public String retrieveCompositeComponentLink() {

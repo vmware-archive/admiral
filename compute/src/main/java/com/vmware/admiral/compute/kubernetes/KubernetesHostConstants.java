@@ -14,7 +14,7 @@ package com.vmware.admiral.compute.kubernetes;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.xenon.common.UriUtils;
 
-public class KubernetesHostConstants {
+public interface KubernetesHostConstants {
     public static final String KUBERNETES_COMPUTE_DESC_ID = "kubernetes-host-compute-desc-id";
     public static final String KUBERNETES_COMPUTE_DESC_LINK = UriUtils.buildUriPath(
             ComputeDescriptionService.FACTORY_LINK, KUBERNETES_COMPUTE_DESC_ID);

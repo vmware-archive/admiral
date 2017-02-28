@@ -25,6 +25,9 @@ public interface KubernetesPathConstants {
     String NAMESPACES = API_V1 + "/namespaces";
     String PODS = "/pods";
     String NODES = API_V1 + "/nodes";
+    String SERVICES = "/services";
+    String DEPLOYMENTS = "/deployments";
+    String REPLICATION_CONTROLLERS = "/replicationcontrollers";
 
     String DASHBOARD_PROXY_FOR_STATS = API_V1 +
             "/proxy/namespaces/kube-system/services/kubernetes-dashboard/api/v1/node/";

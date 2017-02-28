@@ -18,8 +18,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.KubernetesOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.compute.container.CompositeComponentRegistry;
+import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
+import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
-import com.vmware.admiral.compute.kubernetes.service.KubernetesService.KubernetesState;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.TaskState;
@@ -40,7 +43,7 @@ public class MockKubernetesAdapterService extends BaseMockAdapterService {
     // kubernetesComponentName -> kubernetesComponentType
     private static final Map<String, String> KUBERNETES_COMPONENTS = new ConcurrentHashMap<>();
 
-    private static final Map<String, KubernetesState> KUBERNETES_ENTITIES = new ConcurrentHashMap<>();
+    private static final Map<String, BaseKubernetesState> KUBERNETES_ENTITIES = new ConcurrentHashMap<>();
 
     private static class MockAdapterRequest extends AdapterRequest {
 
@@ -94,8 +97,7 @@ public class MockKubernetesAdapterService extends BaseMockAdapterService {
 
         op.setStatusCode(Operation.STATUS_CODE_ACCEPTED).complete();
 
-        MockKubernetesAdapterService.MockAdapterRequest state = op
-                .getBody(MockKubernetesAdapterService.MockAdapterRequest.class);
+        MockAdapterRequest state = op.getBody(MockAdapterRequest.class);
 
         TaskState taskInfo = state.validateMock();
 
@@ -125,9 +127,8 @@ public class MockKubernetesAdapterService extends BaseMockAdapterService {
         processRequest(state, taskInfo, null, null);
     }
 
-    private void processRequest(MockKubernetesAdapterService.MockAdapterRequest state,
-            TaskState taskInfo,
-            KubernetesState kubernetesState, KubernetesDescription kubernetesDesc) {
+    private void processRequest(MockAdapterRequest state, TaskState taskInfo,
+            BaseKubernetesState kubernetesState, KubernetesDescription kubernetesDesc) {
         if (TaskStage.FAILED == taskInfo.stage) {
             logInfo("Failed request based on resource:  %s",
                     state.resourceReference);
@@ -142,8 +143,18 @@ public class MockKubernetesAdapterService extends BaseMockAdapterService {
         }
 
         if (kubernetesState == null) {
-            getDocument(KubernetesState.class, state.resourceReference, taskInfo,
-                    (k8sState) -> processRequest(state, taskInfo, k8sState, kubernetesDesc));
+            getDocument(String.class, state.resourceReference, taskInfo,
+                    (json) -> {
+                        BaseKubernetesObject obj = Utils.fromJson(json, BaseKubernetesObject.class);
+                        assert (obj != null);
+                        assert (obj.kind != null);
+                        assert (!obj.kind.isEmpty());
+                        Class<? extends ResourceState> clazz =
+                                CompositeComponentRegistry.metaByType(obj.kind).stateClass;
+                        BaseKubernetesState k8sState =
+                                (BaseKubernetesState) Utils.fromJson(json, clazz);
+                        processRequest(state, taskInfo, k8sState, kubernetesDesc);
+                    });
             return;
         }
 
@@ -175,11 +186,11 @@ public class MockKubernetesAdapterService extends BaseMockAdapterService {
         return KUBERNETES_COMPONENTS;
     }
 
-    public static void addEntity(KubernetesState entity) {
+    public static void addEntity(BaseKubernetesState entity) {
         KUBERNETES_ENTITIES.put(entity.id, entity);
     }
 
-    public static Collection<KubernetesState> getKubernetesEntities() {
+    public static Collection<BaseKubernetesState> getKubernetesEntities() {
         return KUBERNETES_ENTITIES.values();
     }
 

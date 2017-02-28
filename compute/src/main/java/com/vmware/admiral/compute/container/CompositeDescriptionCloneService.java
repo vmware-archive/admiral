@@ -152,7 +152,7 @@ public class CompositeDescriptionCloneService extends StatelessService {
     private Operation createCloneOperation(String resourceType, ServiceDocument component) {
         if (component instanceof ResourceState) {
             String factoryLink = CompositeComponentRegistry
-                    .factoryLinkByDescriptionLink(component.documentSelfLink);
+                    .descriptionFactoryLinkByDescriptionLink(component.documentSelfLink);
             if (factoryLink == null) {
                 throw new LocalizableValidationException("Cannot clone unsupported type " + resourceType,
                         "compute.clone.unsupported.type", resourceType);

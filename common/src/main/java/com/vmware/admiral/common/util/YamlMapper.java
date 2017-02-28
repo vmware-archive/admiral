@@ -121,7 +121,7 @@ public class YamlMapper {
     }
 
     public static boolean isValidYaml(String yaml) {
-        if (yaml.startsWith("{")) {
+        if (yaml == null || yaml.startsWith("{")) {
             return false;
         }
         try {

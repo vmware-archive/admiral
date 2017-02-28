@@ -12,7 +12,9 @@
 package com.vmware.admiral.compute.container;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
@@ -55,96 +57,75 @@ public class CompositeComponentRegistry {
      * Retrieve meta data for a Component by component's description link.
      */
     public static ComponentMeta metaByDescriptionLink(String descriptionLink) {
-        if (null == descriptionLink) {
-            return null;
-        }
-        List<RegistryEntry> list = entries.stream()
-                .filter(m -> descriptionLink.startsWith(m.descriptionFactoryLink))
-                .collect(Collectors.toList());
-        if (list.isEmpty()) {
-            return null;
-        }
-        return list.get(0).componentMeta;
+        return getEntry(descriptionFactoryPrefix(descriptionLink)).componentMeta;
     }
 
     /**
      * Retrieve factory link for a Component by component's description link.
      */
-    public static String factoryLinkByDescriptionLink(String descriptionLink) {
-        if (null == descriptionLink) {
-            return null;
-        }
-        List<RegistryEntry> list = entries.stream()
-                .filter(m -> descriptionLink.startsWith(m.descriptionFactoryLink))
-                .collect(Collectors.toList());
-        if (list.isEmpty()) {
-            return null;
-        }
-        return list.get(0).descriptionFactoryLink;
+    public static String descriptionFactoryLinkByDescriptionLink(String descriptionLink) {
+        return getEntry(descriptionFactoryPrefix(descriptionLink)).descriptionFactoryLink;
     }
 
     /**
      * Retrieve factory link for a Component by component's description link.
      */
-    public static String factoryLinkByType(String type) {
-        if (null == type) {
-            return null;
-        }
-        List<RegistryEntry> list = entries.stream()
-                .filter(m -> type.equals(m.componentMeta.resourceType))
-                .collect(Collectors.toList());
-        if (list.isEmpty()) {
-            return null;
-        }
-        return list.get(0).descriptionFactoryLink;
+    public static String descriptionFactoryLinkByType(String type) {
+        return getEntry(equalsType(type)).descriptionFactoryLink;
     }
 
     /**
      * Retrieve meta data for a Component description by component's state(instance) Link.
      */
     public static ComponentMeta metaByStateLink(String stateLink) {
-        if (null == stateLink) {
-            return null;
-        }
-        List<RegistryEntry> list = entries.stream()
-                .filter(m -> stateLink.startsWith(m.stateFactoryLink))
-                .collect(Collectors.toList());
-        if (list.isEmpty()) {
-            return null;
-        }
-        return list.get(0).componentMeta;
+        return getEntry(stateFactoryPrefix(stateLink)).componentMeta;
     }
 
     /**
      * Retrieve meta data for a Component description by component's state(instance) Link.
      */
     public static ComponentMeta metaByType(String type) {
-        if (null == type) {
-            return null;
-        }
-        List<RegistryEntry> list = entries.stream()
-                .filter(m -> type.equals(m.componentMeta.resourceType))
-                .collect(Collectors.toList());
-        if (list.isEmpty()) {
-            return null;
-        }
-        return list.get(0).componentMeta;
+        return getEntry(equalsType(type)).componentMeta;
     }
 
     /**
      * Retrieve factory link for a Component state by component's state(instance) Link.
      */
-    public static String factoryLinkByStateLink(String stateLink) {
-        if (null == stateLink) {
-            return null;
+    public static String stateFactoryLinkByStateLink(String stateLink) {
+        return getEntry(stateFactoryPrefix(stateLink)).stateFactoryLink;
+    }
+
+    public static String stateFactoryLinkByType(String type) {
+        return getEntry(equalsType(type)).stateFactoryLink;
+    }
+
+    private static RegistryEntry emptyEntry = new RegistryEntry(null, null, null, null, null, null);
+
+    private static RegistryEntry getEntry(Predicate<RegistryEntry> predicate) {
+        for (RegistryEntry entry: entries) {
+            if (predicate.test(entry)) {
+                return entry;
+            }
         }
-        List<RegistryEntry> list = entries.stream()
-                .filter(m -> stateLink.startsWith(m.stateFactoryLink))
-                .collect(Collectors.toList());
-        if (list.isEmpty()) {
-            return null;
-        }
-        return list.get(0).stateFactoryLink;
+        return emptyEntry;
+    }
+
+    private static Predicate<RegistryEntry> descriptionFactoryPrefix(String descriptionLink) {
+        return r -> descriptionLink != null && descriptionLink.startsWith(r.descriptionFactoryLink);
+    }
+
+    private static Predicate<RegistryEntry> stateFactoryPrefix (String stateLink) {
+        return r -> stateLink != null && stateLink.startsWith(r.stateFactoryLink);
+    }
+
+    private static Predicate<RegistryEntry> equalsType(String type) {
+        return r -> type != null && type.equals(r.componentMeta.resourceType);
+    }
+
+    public static Iterator<Class<? extends ResourceState>> getClasses() {
+        List<Class<? extends ResourceState>> r = entries.stream()
+                .map(entry -> entry.componentMeta.stateClass).collect(Collectors.toList());
+        return r.iterator();
     }
 
     public static class ComponentMeta {

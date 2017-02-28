@@ -335,7 +335,7 @@ public class CompositeDescriptionContentService extends StatelessService {
         nestedState.children = component.children;
 
         ResourceType resourceType = ResourceType.fromContentType(component.type);
-        String factoryLink = CompositeComponentRegistry.factoryLinkByType(resourceType.getName());
+        String factoryLink = CompositeComponentRegistry.descriptionFactoryLinkByType(resourceType.getName());
         nestedState.factoryLink = factoryLink;
 
         return nestedState.sendRequest(this, Action.POST);

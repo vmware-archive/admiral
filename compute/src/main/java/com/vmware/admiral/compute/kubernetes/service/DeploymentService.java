@@ -12,6 +12,7 @@
 package com.vmware.admiral.compute.kubernetes.service;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
 import com.vmware.admiral.compute.kubernetes.entities.deployments.Deployment;
@@ -34,6 +35,11 @@ public class DeploymentService extends AbstractKubernetesObjectService<Deploymen
         @Override
         public String getKubernetesSelfLink() {
             return this.deployment.metadata.selfLink;
+        }
+
+        @Override
+        public String getType() {
+            return KubernetesUtil.DEPLOYMENT_TYPE;
         }
 
         @Override

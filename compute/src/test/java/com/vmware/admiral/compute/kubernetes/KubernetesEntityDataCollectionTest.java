@@ -29,16 +29,20 @@ import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection.EntityListCallback;
 import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection.KubernetesEntityDataCollectionState;
-import com.vmware.admiral.compute.kubernetes.entities.pods.Pod;
-import com.vmware.admiral.compute.kubernetes.service.KubernetesService.KubernetesState;
+import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
+import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
 import com.vmware.admiral.compute.kubernetes.service.PodService;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
+import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService.ReplicationControllerState;
+import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler;
+import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.ServiceState;
 import com.vmware.admiral.service.test.MockKubernetesAdapterService;
 import com.vmware.admiral.service.test.MockKubernetesHostAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -49,6 +53,7 @@ public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
     private static final String COMPUTE_HOST_ID = "k8s-host";
     private static final String COMPUTE_HOST_LINK = UriUtils.buildUriPath(
             ComputeService.FACTORY_LINK, COMPUTE_HOST_ID);
+    private static List<String> forDelete = new ArrayList<>();
     private EntityListCallback listCallback;
 
     @Before
@@ -86,6 +91,21 @@ public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
     @After
     public void tearDown() {
         MockKubernetesAdapterService.clearKubernetesEntities();
+        if (forDelete.size() != 0) {
+            host.testStart(forDelete.size());
+            forDelete.forEach(link -> host.sendRequest(
+                    Operation
+                            .createDelete(UriUtils.buildUri(host, link))
+                            .setReferer(host.getUri())
+                            .setCompletion(host.getCompletion())
+            ));
+            forDelete.clear();
+            host.testWait();
+        }
+    }
+
+    private synchronized void addForDelete(String link) {
+        forDelete.add(link);
     }
 
     private void startDataCollectionAndWait() throws Throwable {
@@ -126,14 +146,16 @@ public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
         });
     }
 
-    private List<KubernetesState> getEntities() throws Throwable {
-        List<KubernetesState> entitiesFound = new ArrayList<>();
+    private <T extends BaseKubernetesState> List<T> getEntities(Class<T> tClass)
+            throws Throwable {
+        List<T> entitiesFound = new ArrayList<>();
         TestContext ctx = testCreate(1);
-        ServiceDocumentQuery<KubernetesState> query = new ServiceDocumentQuery<>(host,
-                KubernetesState.class);
+        ServiceDocumentQuery<T> query = new ServiceDocumentQuery<>(host, tClass);
 
-        QueryTask queryTask = QueryUtil.buildPropertyQuery(KubernetesState.class);
+        QueryTask queryTask = QueryUtil.buildPropertyQuery(tClass,
+                BaseKubernetesState.FIELD_NAME_PARENT_LINK, COMPUTE_HOST_LINK);
         QueryUtil.addExpandOption(queryTask);
+        QueryUtil.addBroadcastOption(queryTask);
 
         query.query(queryTask, (r) -> {
             if (r.hasException()) {
@@ -152,29 +174,29 @@ public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
         return entitiesFound;
     }
 
-    private KubernetesState makeEntity(String id, String name, String type) {
-        KubernetesState result = new KubernetesState();
-        result.id = id;
-        result.name = name;
-        result.type = type;
+    private BaseKubernetesState makeEntity(String id, String name, String type) {
+        BaseKubernetesState result = KubernetesUtil.createKubernetesEntityState(type);
+        if (result != null) {
+            result.id = id;
+            result.name = name;
+            result.parentLink = COMPUTE_HOST_LINK;
+        }
         return result;
     }
 
     @Test
     public void testDiscoverSingleEntity() throws Throwable {
-        KubernetesState entity = new KubernetesState();
+        BaseKubernetesState entity = new PodState();
         entity.name = "entity";
         entity.id = "id";
-        entity.type = KubernetesUtil.POD_TYPE;
         MockKubernetesAdapterService.addEntity(entity);
 
         startDataCollectionAndWait();
 
-        List<KubernetesState> entities = getEntities();
+        List<PodState> entities = getEntities(PodState.class);
         Assert.assertEquals(1, entities.size());
         Assert.assertEquals(entity.id, entities.get(0).id);
         Assert.assertEquals(entity.name, entities.get(0).name);
-        Assert.assertEquals(entity.type, entities.get(0).type);
     }
 
     @Test
@@ -192,47 +214,82 @@ public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
 
     @Test
     public void testDiscoverMultipleEntities() throws Throwable {
-        List<KubernetesState> testEntities = new ArrayList<>();
+        List<BaseKubernetesState> testEntities = new ArrayList<>();
         testEntities.add(makeEntity("pod-1", "my_prog_1", KubernetesUtil.POD_TYPE));
         testEntities.add(makeEntity("depl-1", "my_app_1", KubernetesUtil.DEPLOYMENT_TYPE));
-        testEntities.add(makeEntity("pod-2", "missing_type", null));
+        testEntities.add(makeEntity("pod-2", "name-for-pod", KubernetesUtil.POD_TYPE));
         testEntities.add(makeEntity("no-name", null, KubernetesUtil.POD_TYPE));
         testEntities.add(makeEntity("ser-1", "my_service_1", KubernetesUtil.SERVICE_TYPE));
 
         testEntities.forEach(MockKubernetesAdapterService::addEntity);
         startDataCollectionAndWait();
 
-        List<KubernetesState> result = getEntities();
+        List<PodState> pods = getEntities(PodState.class);
+        List<ServiceState> services = getEntities(ServiceState.class);
+        List<DeploymentState> deployments = getEntities(DeploymentState.class);
 
-        // Two of them are invalid
-        Assert.assertEquals(3, result.size());
+        Assert.assertEquals(2, pods.size());
+        Assert.assertEquals(1, services.size());
+        Assert.assertEquals(1, deployments.size());
     }
 
     @Test
     public void testDiscoveredEntitiesWillNotDuplicateExisting() throws Throwable {
-        KubernetesState existingPod = new KubernetesState();
-        existingPod.type = KubernetesUtil.POD_TYPE;
-        existingPod.id = "pod-1";
-        existingPod.name = "my_prog_1";
+        BaseKubernetesState pod = new PodState();
+        pod.id = "pod-1";
+        pod.name = "my_prog_1";
 
-        List<KubernetesState> testEntities = new ArrayList<>();
-        testEntities.add(makeEntity(existingPod.id, existingPod.name, KubernetesUtil.POD_TYPE));
+        List<BaseKubernetesState> testEntities = new ArrayList<>();
+        testEntities.add(makeEntity(pod.id, pod.name, KubernetesUtil.POD_TYPE));
+        testEntities.add(makeEntity("service-2", "bread-baker", KubernetesUtil.SERVICE_TYPE));
+        testEntities.add(makeEntity("rc-1", "test-controller", KubernetesUtil.REPLICATION_CONTROLLER_TYPE));
 
-        PodState pod = new PodState();
-        pod.id = existingPod.id;
-        pod.name = existingPod.name;
-        pod.pod = new Pod();
+        PodState existingPod = new PodState();
+        existingPod.id = pod.id;
+        existingPod.name = pod.name + "_second";
+        existingPod.parentLink = COMPUTE_HOST_LINK;
 
-        host.testStart(1);
+        ServiceState existingService = new ServiceState();
+        existingService.id = "service-1";
+        existingService.name = "my-test-service";
+        existingService.parentLink = COMPUTE_HOST_LINK;
+
+        host.testStart(2);
         host.sendRequest(
                 Operation.createPost(UriUtils.buildUri(host, PodService.FACTORY_LINK))
+                        .setBody(existingPod)
                         .setReferer(host.getUri())
-                        .setCompletion(host.getCompletion()));
+                        .setCompletion((o, ex) -> {
+                            if (ex != null) {
+                                host.failIteration(ex);
+                            } else {
+                                addForDelete(o.getBody(ResourceState.class).documentSelfLink);
+                                host.completeIteration();
+                            }
+                        }));
+        host.sendRequest(
+                Operation.createPost(UriUtils.buildUri(host, ServiceEntityHandler.FACTORY_LINK))
+                        .setBody(existingService)
+                        .setReferer(host.getUri())
+                        .setCompletion((o, ex) -> {
+                            if (ex != null) {
+                                host.failIteration(ex);
+                            } else {
+                                addForDelete(o.getBody(ResourceState.class).documentSelfLink);
+                                host.completeIteration();
+                            }
+                        }));
         host.testWait();
 
         testEntities.forEach(MockKubernetesAdapterService::addEntity);
         startDataCollectionAndWait();
-        List<KubernetesState> result = getEntities();
-        Assert.assertEquals(testEntities.size(), result.size());
+        List<PodState> pods = getEntities(PodState.class);
+        List<ServiceState> services = getEntities(ServiceState.class);
+        List<ReplicationControllerState> rcs = getEntities(ReplicationControllerState.class);
+
+        Assert.assertEquals(1, pods.size());
+        // Only service-2 is listed, so service-1 will be deleted
+        Assert.assertEquals(1, services.size());
+        Assert.assertEquals(1, rcs.size());
     }
 }
