@@ -75,6 +75,7 @@ import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionS
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService.NetworkInterfaceState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.photon.controller.model.resources.TagFactoryService;
 import com.vmware.photon.controller.model.resources.TagService;
@@ -924,8 +925,12 @@ public class ComputeAllocationTaskService
         if (state.tenantLinks == null || state.tenantLinks.isEmpty()) {
             builder.addClause(QueryUtil.addTenantClause(state.tenantLinks));
         }
+        builder.addCompositeFieldClause(ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
+                ComputeProperties.INFRASTRUCTURE_USE_PROP_NAME, Boolean.TRUE.toString(),
+                Occurance.MUST_NOT_OCCUR);
+
         QueryByPages<SubnetState> querySubnetStates = new QueryByPages<>(getHost(), builder.build(),
-                SubnetState.class, QueryUtil.getTenantLinks(state.tenantLinks));
+                SubnetState.class, QueryUtil.getTenantLinks(state.tenantLinks), state.endpointLink);
 
         ArrayList<String> links = new ArrayList<>();
         ArrayList<String> prefered = new ArrayList<>();

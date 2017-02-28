@@ -13,16 +13,8 @@ computeProfile:
       instanceType: "m4.xlarge"
   imageMapping:
     coreos:
-      imageByRegion:
-        us-east-1: "ami-220f2b35"
-        us-east-2: "ami-4a5c062f"
-        us-west-1: "ami-5f52183f"
-        us-west-2: "ami-5ab5143a"
-        eu-west-1: "ami-5e71242d"
-        eu-central-1: "ami-65e51e0a"
+      image: "ami-eba777fd"
     ubuntu-1604:
-      image: "ami-40d28157"
-    photon:
-      image: "ami-d63c1ac1"
+      image: "ami-f4cc1de2"
 storageProfile: {}
 networkProfile: {}

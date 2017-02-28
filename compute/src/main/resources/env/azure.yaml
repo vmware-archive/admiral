@@ -13,7 +13,7 @@ computeProfile:
       instanceType: "Basic_A4"
   imageMapping:
     coreos:
-      image: "CoreOS:coreos:Beta:1192.2.0"
+      image: "CoreOS:coreos:Beta:1298.4.0"
     ubuntu-1604:
       image: "canonical:ubuntuserver:16.04.0-LTS:latest"
 storageProfile:
