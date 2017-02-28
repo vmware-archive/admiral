@@ -223,6 +223,10 @@ var ContainerDetailsVueComponent = Vue.extend({
 
     refresh: function() {
       ContainerActions.refreshContainer();
+    },
+
+    goBack: function() {
+      this.$dispatch('go-back', 'container-details');
     }
   },
   components: {

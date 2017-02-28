@@ -39,8 +39,7 @@ var ClusterContainerDetails = Vue.extend({
   },
   data: function() {
     return {
-      constants: constants,
-      listMouseover: false
+      constants: constants
     };
   },
   computed: {
@@ -49,6 +48,10 @@ var ClusterContainerDetails = Vue.extend({
     }
   },
   methods: {
+    goBack: function() {
+      this.$dispatch('go-back', 'cluster-details');
+    },
+
     openContainerDetails: function(containerId) {
       NavigationActions.openContainerDetails(containerId, this.model.documentId,
                                               this.parentCompositeComponentId);
@@ -59,30 +62,6 @@ var ClusterContainerDetails = Vue.extend({
                                               this.parentCompositeComponentId);
     },
 
-    onListMouseEnter: function() {
-      if (this.model && this.model.selectedItem) {
-        this.listMouseover = true;
-        this.repositionListView();
-      }
-    },
-    onListMouseLeave: function() {
-      this.listMouseover = false;
-      this.repositionListView();
-    },
-    repositionListView: function() {
-      Vue.nextTick(() => {
-        var $el = $(this.$el);
-        var $smallContextHolder = $el
-          .children('.list-view').children('.selected-context-small-holder');
-        var top = 0;
-        if ($smallContextHolder.length === 1) {
-          top = $smallContextHolder.position().top + $smallContextHolder.height();
-        }
-        $(this.$el)
-          .children('.list-view').children('.grid-container')
-          .css({transform: 'translate(0px,' + top + 'px)'});
-      });
-    },
     refresh: function() {
       ContainerActions.openClusterDetails(this.model.documentId);
     },
@@ -110,13 +89,13 @@ var ClusterContainerDetails = Vue.extend({
       ContainerActions.removeCluster(this.model.listView.items);
     }
   },
-  attached: function() {
-    this.unwatchSelectedItem = this.$watch('model.selectedItem', () => {
-      this.repositionListView();
-    });
-  },
-  detached: function() {
-    this.unwatchSelectedItem();
+
+  events: {
+    'go-back': function(fromViewName) {
+      if (fromViewName === 'container-details') {
+        return this.openClusterDetails();
+      }
+    }
   }
 });
 

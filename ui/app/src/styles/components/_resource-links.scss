@@ -193,13 +193,6 @@ $resource-details-size: 150px;
   }
 }
 
-.composite-child-containers-view > .containers-list.context-selected {
-  .resource, .jsplumb-endpoint, .jsplumb-connector {
-    opacity: 0;
-    @include transition(opacity 0.5s);
-  }
-}
-
 .resource-link-value {
   padding: 2px;
   margin-left: 50px;

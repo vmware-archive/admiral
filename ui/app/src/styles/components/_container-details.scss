@@ -5,6 +5,12 @@ $elements-side-margin: $elements-margin / 2;
   @extend .position-expand;
   background-color: $context-view-background-color;
 
+  > .close-button {
+    position: absolute;
+    top: 5px;
+    left: 15px;
+  }
+
   > div {
     margin-left: $elements-margin;
     margin-right: $elements-margin;

@@ -503,7 +503,7 @@ var HostAddView = Vue.extend({
       let hostModel = this.getHostData();
       let tags = this.tagsInput.getValue();
 
-      if (this.model.shouldAcceptCertificate.verify) {
+      if (certificateHolder.isVerify) {
         HostActions.acceptCertificateAndVerifyHost(certificateHolder, hostModel, tags);
       } else {
         HostActions.acceptCertificateAndAddHost(certificateHolder, hostModel, tags);

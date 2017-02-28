@@ -10,51 +10,55 @@
   -->
 
 <div>
-<alert alert-type="danger" v-bind:show-alert="hasGeneralError" v-bind:alert-message="generalError"></alert>
-<div class="container-details"
-     v-if="model.instance">
-  <alert alert-type="danger" v-bind:show-alert="hasOperationError"
-                             v-bind:alert-message="i18n('app.container.details.operation.failure')"></alert>
+  <alert alert-type="danger" v-bind:show-alert="hasGeneralError" v-bind:alert-message="generalError"></alert>
+
+  <div class="container-details" v-if="model.instance">
+    <alert alert-type="danger" :show-alert="hasOperationError"
+                               :alert-message="i18n('app.container.details.operation.failure')"
+                               ></alert>
+
+    <a class="close-button" v-on:click="goBack($event)"><i
+      class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
+
   <div class="container-details-header">
     <div class="title">{{model.instance.names}}<refresh-button v-on:click="refresh()"></refresh-button></div>
     <div :class="'status ' + model.instance.powerState">{{containerStatusDisplay(model.instance.powerState, model.instance.started)}}</div>
     <div class="toolbar-actions">
       <template v-if="hasOperationInProgress() || confirmationOperation">
         <div class="progress-holder">
-          <action-confirmation v-bind:action-name="confirmationOperation"
-                               v-bind:action-title="i18n('app.container.actions.remove')"></action-confirmation>
+          <action-confirmation :action-name="confirmationOperation"
+                               :action-title="i18n('app.container.actions.remove')"></action-confirmation>
 
-          <div class="loading" v-bind:class="{'hide': !hasOperationInProgress()}">
+          <div class="loading" :class="{'hide': !hasOperationInProgress()}">
             {{i18n('app.container.details.operation.pending')}}<i class="fa fa-spinner fa-2x fa-spin"></i></div>
         </div>
       </template>
       <template v-else>
-        <big-action-button name="stop" icon-name="stop" v-bind:label="i18n('app.container.actions.stop')"
-                               v-bind:supported="operationSupported('STOP')"
-                               v-on:click="stopContainer($event)"></big-action-button>
+        <big-action-button name="stop" icon-name="stop" :supported="operationSupported('STOP')"
+                           :label="i18n('app.container.actions.stop')"
+                           @click="stopContainer($event)"></big-action-button>
 
-        <big-action-button name="start" icon-name="play" v-bind:label="i18n('app.container.actions.start')"
-                               v-bind:supported="operationSupported('START')"
-                               v-on:click="startContainer($event)"></big-action-button>
+        <big-action-button name="start" icon-name="play" :supported="operationSupported('START')"
+                           :label="i18n('app.container.actions.start')"
+                           @click="startContainer($event)"></big-action-button>
 
-        <big-action-button name="remove" icon-name="trash" v-bind:label="i18n('app.container.actions.remove')"
-                               v-bind:supported="operationSupported('REMOVE')"
-                               v-on:click="askConfirmation($event, 'removeContainer')"
-                                ></big-action-button>
+        <big-action-button name="remove" icon-name="trash" :supported="operationSupported('REMOVE')"
+                           :label="i18n('app.container.actions.remove')"
+                           @click="askConfirmation($event, 'removeContainer')"></big-action-button>
 
-        <big-action-button name="terminal" icon-name="terminal" v-bind:label="i18n('app.container.actions.terminal')"
-                               v-bind:supported="operationSupported('SHELL')"
-                               v-on:click="openShell($event)"></big-action-button>
+        <big-action-button name="terminal" icon-name="terminal" :supported="operationSupported('SHELL')"
+                           :label="i18n('app.container.actions.terminal')"
+                           @click="openShell($event)"></big-action-button>
 
         <big-action-button name="openTemplate" icon-src="image-assets/templates-blue.png"
-                               v-bind:label="i18n('app.container.actions.openTemplate')"
-                               v-bind:supported="!!model.templateLink"
-                               v-on:click="openTemplate($event)"></big-action-button>
+                           :label="i18n('app.container.actions.openTemplate')"
+                           :supported="!!model.templateLink"
+                           @click="openTemplate($event)"></big-action-button>
 
         <big-action-button name="createTemplate" icon-src="image-assets/templates-create.png"
-                               v-bind:label="i18n('app.container.actions.createTemplate')"
-                               v-bind:supported="!!model.descriptionLinkToConvertToTemplate"
-                               v-on:click="createTemplateFromContainer($event)"></big-action-button>
+                           :label="i18n('app.container.actions.createTemplate')"
+                           :supported="!!model.descriptionLinkToConvertToTemplate"
+                           @click="createTemplateFromContainer($event)"></big-action-button>
       </template>
     </div>
   </div>

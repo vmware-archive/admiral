@@ -49,11 +49,13 @@
     </div>
   </div>
   <div slot="footer">
-    <button v-if="!certificateShown" class="btn btn-outline" type="button"
+    <button v-if="!certificateShown" class="btn btn-outline" type="button" data-cmd="show-certificate"
             @click="showCertificate($event)">{{i18n("app.host.details.showCertificate")}}</button>
-    <button v-else class="btn btn-outline" type="button"
+    <button v-else class="btn btn-outline" type="button" data-cmd="hide-certificate"
             @click="hideCertificate($event)">{{i18n("app.host.details.hideCertificate")}}</button>
-    <button class="btn btn-outline" type="button" @click="$emit('cancel')">{{i18n("cancel")}}</button>
-    <button class="btn btn-primary" type="button" @click="$emit('confirm')">{{i18n("ok")}}</button>
+    <button class="btn btn-outline cancelBtn" type="button" data-cmd="cancel-accept-certificate"
+            @click="$emit('cancel')">{{i18n("cancel")}}</button>
+    <button class="btn btn-primary confirmAddHost" type="button" data-cmd="confirm-accept-certificate"
+            @click="$emit('confirm')">{{i18n("ok")}}</button>
   </div>
 </modal>

@@ -22,13 +22,10 @@ let shallowCloneFromChildToParent = function($child, $parent, $cloneChild) {
   }
 };
 
-const LIST_MOUSE_OVER_DELAY = 200;
-
 var GridHolderMixin = {
   data: function() {
     return {
-      preferredGridWidth: '',
-      listMouseover: false
+      preferredGridWidth: ''
     };
   },
   methods: {
@@ -60,26 +57,6 @@ var GridHolderMixin = {
 
     unsetPostTransitionGridTargetWidth: function() {
       this.preferredGridWidth = '';
-    },
-
-    onListMouseEnter: function() {
-      if (this.model && this.model.selectedItem) {
-        clearTimeout(this.listMouseoverTimeout);
-        this.listMouseoverTimeout = setTimeout(this.onListMouseOverActual, LIST_MOUSE_OVER_DELAY);
-      }
-    },
-
-    onListMouseOverActual: function() {
-      this.listMouseover = true;
-      this.repositionListView();
-    },
-
-    onListMouseLeave: function() {
-      clearTimeout(this.listMouseoverTimeout);
-      if (this.listMouseover) {
-        this.listMouseover = false;
-        this.repositionListView();
-      }
     }
   },
   computed: {

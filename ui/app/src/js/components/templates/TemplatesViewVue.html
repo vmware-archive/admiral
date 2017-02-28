@@ -106,10 +106,8 @@
     <template-importer-view v-bind:model="model.importTemplate" class="content"></template-importer-view>
   </div>
 
-  <div v-if="model.selectedItemDetails"
-       transition="slide-and-fade"
-       class="selected-context-holder closable-view"
-       v-bind:class="{'expanded': model.selectedItemDetails.expanded}">
+  <div v-if="model.selectedItemDetails" transition="slide-and-fade" class="closable-view"
+       :class="{'expanded': model.selectedItemDetails.expanded}">
 
     <a class="close-button" v-on:click="goBack($event)"><i
       class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>

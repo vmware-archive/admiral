@@ -26,9 +26,17 @@ var NetworksListItem = Vue.extend({
   template: NetworksListItemVue,
   mixins: [AlertItemMixin, DeleteConfirmationSupportMixin],
   props: {
-    model: {required: true},
-    showAlertContainersConnected: {required: true},
-    showAlertManagedByCatalog: {required: true}
+    model: {
+      required: true
+    },
+    showAlertContainersConnected: {
+      required: false,
+      type: Boolean
+    },
+    showAlertManagedByCatalog: {
+      required: false,
+      type: Boolean
+    }
   },
 
   computed: {
