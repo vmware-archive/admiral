@@ -43,9 +43,37 @@
      class="nav-item inner closures" href="#/closures">
     <span>{{i18n("app.navbar.closures")}}</span>
   </a>
-  <a v-if="isKubernetesEnabled()" v-bind:class="{'active': currentView === constants.VIEWS.RESOURCES.VIEWS.KUBERNETES.name, 'hide': isCollapsed(constants.VIEWS.RESOURCES)}"
-     class="nav-item inner kubernetes" href="#/kubernetes">
-    <span>{{i18n("app.navbar.kubernetes")}}</span>
+  <a class="nav-item resources"
+    v-if="isKubernetesEnabled()"
+    v-bind:class="{'expanded': isExpanded(constants.VIEWS.KUBERNETES_RESOURCES)}"
+    v-bind:href="'#/kubernetes/' + lastActiveViewByCategory[constants.VIEWS.KUBERNETES_RESOURCES.name]">
+    <span><span class="nav-category"><i class="fa" v-bind:class="{'fa-chevron-down': isExpanded(constants.VIEWS.KUBERNETES_RESOURCES),
+            'fa-chevron-right': isCollapsed(constants.VIEWS.KUBERNETES_RESOURCES)}"></i></span><span>{{i18n("app.navbar.kubernetesResources")}}</span></span>
+  </a>
+  <a v-bind:class="{'active': currentView === constants.VIEWS.KUBERNETES_RESOURCES.VIEWS.APPLICATIONS.name, 'hide': isCollapsed(constants.VIEWS.KUBERNETES_RESOURCES)}"
+     v-if="isKubernetesEnabled()"
+     class="nav-item inner containers" href="#/kubernetes/applications">
+    <span>{{i18n("app.navbar.applications")}}</span>
+  </a>
+  <a v-bind:class="{'active': currentView === constants.VIEWS.KUBERNETES_RESOURCES.VIEWS.DEPLOYMENTS.name, 'hide': isCollapsed(constants.VIEWS.KUBERNETES_RESOURCES)}"
+     v-if="isKubernetesEnabled()"
+     class="nav-item inner containers" href="#/kubernetes/deployments">
+    <span>{{i18n("app.navbar.kubernetesDeployments")}}</span>
+  </a>
+  <a v-bind:class="{'active': currentView === constants.VIEWS.KUBERNETES_RESOURCES.VIEWS.SERVICES.name, 'hide': isCollapsed(constants.VIEWS.KUBERNETES_RESOURCES)}"
+     v-if="isKubernetesEnabled()"
+     class="nav-item inner containers" href="#/kubernetes/services">
+    <span>{{i18n("app.navbar.kubernetesServices")}}</span>
+  </a>
+  <a v-bind:class="{'active': currentView === constants.VIEWS.KUBERNETES_RESOURCES.VIEWS.REPLICATION_CONTROLLERS.name, 'hide': isCollapsed(constants.VIEWS.KUBERNETES_RESOURCES)}"
+     v-if="isKubernetesEnabled()"
+     class="nav-item inner containers" href="#/kubernetes/replication-controllers">
+    <span>{{i18n("app.navbar.kubernetesReplicationControllers")}}</span>
+  </a>
+  <a v-bind:class="{'active': currentView === constants.VIEWS.KUBERNETES_RESOURCES.VIEWS.PODS.name, 'hide': isCollapsed(constants.VIEWS.KUBERNETES_RESOURCES)}"
+     v-if="isKubernetesEnabled()"
+     class="nav-item inner containers" href="#/kubernetes/pods">
+    <span>{{i18n("app.navbar.kubernetesPods")}}</span>
   </a>
   </template>
   <template v-if="app === 'compute'">

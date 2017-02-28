@@ -1,1 +1,6 @@
 /* You can add global styles to this file, and also import other style files */
+
+.main-container {
+  /* Fix for fixed positioned elements http://stackoverflow.com/questions/36855473/position-fixed-not-working-is-working-like-absolute */
+  -webkit-transform: none;
+}

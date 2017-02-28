@@ -43,6 +43,10 @@
                        v-bind:model="model.centerView.data"
                        v-ref:center-view >
       </containers-view>
+      <ng-view v-if="showNgView"
+                       v-bind:view-route="viewRoute"
+                       v-ref:center-view >
+      </ng-view>
       <div class="core-build-number" v-if="buildNumberSupported()">{{i18n("buildNumber")}} {{buildNumber}}</div>
     </div>
   </div>

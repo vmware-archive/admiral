@@ -113,6 +113,13 @@ var getTestDcpUrl = function() {
 
 var ADMIRAL_URL = getTestDcpUrl();
 
+var NG_URL = 'http://127.0.0.1:4200/';
+if (TEST_ENV.dcp && TEST_ENV.dcp.ngurl) {
+  NG_URL = TEST_ENV.dcp.ngurl;
+}
+
+gutil.log('Using NG URL: ' + NG_URL);
+
 var pathsToProxy = ["/config", "/core", "/images", "/popular-images", "/requests", "/delete-tasks", "/request-status", "/resources", "/provisioning", "/templates", "/user-session", "/container-image-icons", "/rp", "/projects"];
 
 /* Utilities to proxy calls from "/path" to "ADMIRAL/path".
@@ -128,6 +135,10 @@ var getDevServerProxies = function() {
     options.route = path;
     proxies.push(proxyMiddleware(options));
   }
+
+  var ngoptions = url.parse(NG_URL);
+  ngoptions.route = '/ng';
+  proxies.push(proxyMiddleware(ngoptions));
 
   return proxies;
 };

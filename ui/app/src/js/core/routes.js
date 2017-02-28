@@ -308,6 +308,19 @@ crossroads.addRoute('/compute/{computeId*}', function(computeId) {
   actions.ComputeActions.editCompute(computeId);
 });
 
+function addNgRoute(route, view) {
+  crossroads.addRoute(route, () => {
+    actions.AppActions.openView(view.name, routes.getHash());
+  });
+}
+
+const K8SViews = constants.VIEWS.KUBERNETES_RESOURCES.VIEWS;
+addNgRoute('/kubernetes/pods/:query*:', K8SViews.PODS);
+addNgRoute('/kubernetes/services/:query*:', K8SViews.SERVICES);
+addNgRoute('/kubernetes/deployments/:query*:', K8SViews.DEPLOYMENTS);
+addNgRoute('/kubernetes/replication-controllers/:query*:', K8SViews.REPLICATION_CONTROLLERS);
+addNgRoute('/kubernetes/applications/:query*:', K8SViews.APPLICATIONS);
+
 // Nothing from the above is matched, redirect to main
 crossroads.bypassed.add(function() {
   hasher.setHash('');

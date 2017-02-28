@@ -43,28 +43,60 @@ var constants = Immutable({
       name: 'resources',
       VIEWS: {
         PROJECTS: {
-          name: 'projects'
+          name: 'projects',
+          route: 'projects'
         },
         CONTAINERS: {
-          name: 'containers'
+          name: 'containers',
+          route: 'containers',
+          default: true
         },
         APPLICATIONS: {
-          name: 'applications'
+          name: 'applications',
+          route: 'applications'
         },
         NETWORKS: {
-          name: 'networks'
+          name: 'networks',
+          route: 'networks'
         },
         VOLUMES: {
-          name: 'volumes'
+          name: 'volumes',
+          route: 'volumes'
         },
         CLOSURES: {
-          name: 'closures'
+          name: 'closures',
+          route: 'closures'
         },
         CLOSURES_DESC: {
-          name: 'closures_desc'
+          name: 'closures_desc',
+          route: 'closures_desc'
+        }
+      }
+    },
+    KUBERNETES_RESOURCES: {
+      name: 'kubernetesResources',
+      ng: true,
+      VIEWS: {
+        APPLICATIONS: {
+          name: 'kubernetesApplications',
+          route: 'applications',
+          default: true
         },
-        KUBERNETES: {
-          name: 'kubernetes'
+        PODS: {
+          name: 'kubernetesPods',
+          route: 'pods'
+        },
+        DEPLOYMENTS: {
+          name: 'kubernetesDeployments',
+          route: 'deployments'
+        },
+        SERVICES: {
+          name: 'kubernetesServices',
+          route: 'services'
+        },
+        REPLICATION_CONTROLLERS: {
+          name: 'kubernetesReplicationControllers',
+          route: 'replication-controllers'
         }
       }
     }

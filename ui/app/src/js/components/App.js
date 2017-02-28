@@ -17,6 +17,7 @@ import HostsView from 'components/hosts/HostsView';//eslint-disable-line
 import TemplatesView from 'components/templates/TemplatesView';//eslint-disable-line
 import PlacementsView from 'components/placements/PlacementsView';//eslint-disable-line
 import ContainersView from 'components/containers/ContainersView';//eslint-disable-line
+import NgView from 'components/ng/NgView';//eslint-disable-line
 
 var AppVueComponent = Vue.extend({
   template: AppVue,

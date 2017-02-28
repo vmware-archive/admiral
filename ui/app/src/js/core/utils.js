@@ -36,6 +36,24 @@ var isInteger = function(integer, min, max) {
   return validator.isInt(integer, range);
 };
 
+var isNgViewFromViews = function(views, viewName, hasNgParent) {
+  if (views) {
+    for (var v in views) {
+      if (!views.hasOwnProperty(v)) {
+        continue;
+      }
+      var view = views[v];
+      if (view.name === viewName) {
+        return hasNgParent || view.ng;
+      }
+      if (isNgViewFromViews(view.VIEWS, viewName, hasNgParent || view.ng)) {
+        return true;
+      }
+    }
+  }
+  return false;
+};
+
 var utils = {
   initializeAdapters: function(adapters) {
     if (configurationAdapters) {
@@ -72,14 +90,20 @@ var utils = {
   },
 
   showResourcesView: function(viewName) {
-   return viewName === constants.VIEWS.RESOURCES.name
-            || viewName === constants.VIEWS.RESOURCES.VIEWS.PROJECTS.name
-            || viewName === constants.VIEWS.RESOURCES.VIEWS.CONTAINERS.name
-            || viewName === constants.VIEWS.RESOURCES.VIEWS.APPLICATIONS.name
-            || viewName === constants.VIEWS.RESOURCES.VIEWS.NETWORKS.name
-            || viewName === constants.VIEWS.RESOURCES.VIEWS.VOLUMES.name
-            || viewName === constants.VIEWS.RESOURCES.VIEWS.CLOSURES.name
-            || viewName === constants.VIEWS.RESOURCES.VIEWS.KUBERNETES.name;
+    if (viewName === constants.VIEWS.RESOURCES.name) {
+        return true;
+    }
+
+    for (var view in constants.VIEWS.RESOURCES.VIEWS) {
+        if (viewName === constants.VIEWS.RESOURCES.VIEWS[view].name) {
+            return true;
+        }
+    }
+    return false;
+  },
+
+  isNgView: function(viewName) {
+    return isNgViewFromViews(constants.VIEWS, viewName);
   },
 
   validate: function(model, constraints) {

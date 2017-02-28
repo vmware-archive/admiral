@@ -14,6 +14,29 @@ import constants from 'core/constants';
 import computeConstants from 'core/computeConstants';
 import ft from 'core/ft';
 
+var getDefaultViewsByCategory = function(views) {
+  var defaultViewByCategory = {};
+  for (var v in views) {
+    if (!views.hasOwnProperty(v)) {
+      continue;
+    }
+    var view = views[v];
+    var innerViews = view.VIEWS;
+    if (innerViews) {
+      for (var iv in innerViews) {
+        if (!innerViews.hasOwnProperty(iv)) {
+          continue;
+        }
+        var innerView = innerViews[iv];
+        if (innerView.default) {
+          defaultViewByCategory[view.name] = innerView.route;
+        }
+      }
+    }
+  }
+  return defaultViewByCategory;
+};
+
 var Navigation = Vue.extend({
   template: NavigationVue,
 
@@ -38,12 +61,8 @@ var Navigation = Vue.extend({
     return {
       constants: constants,
       computeConstants: computeConstants,
-      lastActiveViewByCategory: {
-        [constants.VIEWS.RESOURCES.name]: 'containers'
-      },
-      computeLastActiveViewByCategory: {
-        [computeConstants.VIEWS.RESOURCES.name]: 'machines'
-      }
+      lastActiveViewByCategory: getDefaultViewsByCategory(constants.VIEWS),
+      computeLastActiveViewByCategory: getDefaultViewsByCategory(computeConstants.VIEWS)
     };
   },
 
@@ -66,7 +85,7 @@ var Navigation = Vue.extend({
           }
 
           if (activeItem) {
-            lastActiveViewByCategory[item.name] = activeItem.name;
+            lastActiveViewByCategory[item.name] = activeItem.route;
           }
         }
       });

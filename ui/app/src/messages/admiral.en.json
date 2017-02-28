@@ -38,7 +38,12 @@
       "environments": "Profiles",
       "endpoints": "Endpoints",
       "machines": "Machines",
-      "compute": "Compute"
+      "compute": "Compute",
+      "kubernetesResources": "K8S Resources",
+      "kubernetesDeployments": "Deployments",
+      "kubernetesPods": "Pods",
+      "kubernetesServices": "Services",
+      "kubernetesReplicationControllers": "Replication Controllers"
     },
     "host": {
       "entity": "host",
