@@ -167,8 +167,12 @@ AppStore = Reflux.createStore({
     }
   },
 
-  onOpenView: function(viewName) {
-    updateCenterViewIfNeeded.call(this, viewName, {});
+  onOpenView: function(viewName, viewRoute) {
+    var data = {};
+    if (viewRoute) {
+      data.viewRoute = viewRoute;
+    }
+    updateCenterViewIfNeeded.call(this, viewName, data);
     updateSideView.call(this, viewName);
   },
 

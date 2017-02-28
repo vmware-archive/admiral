@@ -36,10 +36,13 @@ var computeConstants = Immutable({
       name: 'resources',
       VIEWS: {
         MACHINES: {
-          name: 'machines'
+          name: 'machines',
+          route: 'machines',
+          default: true
         },
         NETWORKS: {
-          name: 'networks'
+          name: 'networks',
+          route: 'networks'
         }
       }
     }

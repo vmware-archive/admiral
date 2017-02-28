@@ -102,6 +102,12 @@ var AppMixin = {
     },
     showResources: function() {
       return utils.showResourcesView(this.model.centerView.name);
+    },
+    showNgView: function() {
+      return utils.isNgView(this.model.centerView.name);
+    },
+    viewRoute: function() {
+      return this.model.centerView.data && this.model.centerView.data.viewRoute;
     }
   }
 };
