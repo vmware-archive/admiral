@@ -73,7 +73,7 @@ public class ComputeProvisionTaskService extends
 
         public static enum SubStage {
             CREATED,
-            CUSTOMIZED_COMPUTE,
+            CUSTOMIZING_COMPUTE,
             PROVISIONING_COMPUTE,
             PROVISIONING_COMPUTE_COMPLETED,
             COMPLETED,
@@ -105,7 +105,7 @@ public class ComputeProvisionTaskService extends
         case CREATED:
             customizeCompute(state);
             break;
-        case CUSTOMIZED_COMPUTE:
+        case CUSTOMIZING_COMPUTE:
             provisionResources(state, null);
             break;
         case PROVISIONING_COMPUTE:
@@ -164,7 +164,7 @@ public class ComputeProvisionTaskService extends
                 failTask("Error patching compute states", exs.values().iterator().next());
                 return;
             }
-            proceedTo(SubStage.CUSTOMIZED_COMPUTE);
+            proceedTo(SubStage.CUSTOMIZING_COMPUTE);
         };
         Stream<Operation> patchComputeOperations = comps.stream()
                 .map(cs -> Operation.createPatch(this, cs.documentSelfLink).setBody(cs));
