@@ -903,7 +903,8 @@ let ContainersStore = Reflux.createStore({
   },
 
   onRefreshContainerStats: function() {
-    var selectedContainerDetails = getSelectedContainerDetailsCursor.call(this).get();
+    let selectedItemDetailsCursor = getSelectedContainerDetailsCursor.call(this);
+    var selectedContainerDetails = selectedItemDetailsCursor && selectedItemDetailsCursor.get();
 
     if (!selectedContainerDetails || !selectedContainerDetails.documentId) {
       return;
@@ -921,7 +922,8 @@ let ContainersStore = Reflux.createStore({
   },
 
   onRefreshContainerLogs: function() {
-    var selectedContainerDetails = getSelectedContainerDetailsCursor.call(this).get();
+    let selectedItemDetailsCursor = getSelectedContainerDetailsCursor.call(this);
+    var selectedContainerDetails = selectedItemDetailsCursor && selectedItemDetailsCursor.get();
 
     if (!selectedContainerDetails || !selectedContainerDetails.documentId) {
       return;

@@ -12,12 +12,9 @@
 <div class="environments-view">
   <div class="environments-list-holder">
     <div class="main-panel">
-      <div class="list-view environments-list scroll-view" v-bind:class="{'context-selected': model.selectedItem}"
-           v-if="model.listView">
-
-        <a class="close-button hide" v-on:click="goBack($event)"><i
+      <div class="list-view environments-list scroll-view" v-if="model.listView">
+        <a class="close-button hide" @click="goBack($event)"><i
           class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
-
 
         <div class="toolbar">
           <search v-bind:suggestion-properties="searchSuggestions"

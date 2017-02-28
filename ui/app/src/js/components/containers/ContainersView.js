@@ -203,10 +203,6 @@ var ContainersViewVueComponent = Vue.extend({
       }
     );
 
-    this.unwatchSelectedItem = this.$watch('model.selectedItem', () => {
-        this.repositionListView();
-    });
-
     this.unwatchExpanded = this.$watch('contextExpanded', () => {
       Vue.nextTick(() => {
         this.setPreTransitionGridTargetWidth($mainPanel);
@@ -234,8 +230,6 @@ var ContainersViewVueComponent = Vue.extend({
       }, {immediate: true});
   },
   detached: function() {
-    this.unwatchSelectedItem();
-
     this.unwatchExpanded();
 
     var $mainPanel = $(this.$el).children('.list-holder').children('.main-panel');
@@ -303,19 +297,6 @@ var ContainersViewVueComponent = Vue.extend({
 
     openClosureDescriptionDetails: function(documentId) {
       NavigationActions.openCompositeClosureDetails(documentId);
-    },
-
-    repositionListView: function() {
-      Vue.nextTick(() => {
-        var $smallContextHolder = $(this.$el)
-          .find('.main-panel > .list-view > .selected-context-small-holder');
-        var top = 0;
-        if ($smallContextHolder.length === 1) {
-          top = $smallContextHolder.position().top + $smallContextHolder.height();
-        }
-        $(this.$el).find('.main-panel > .list-view > .grid-container')
-          .css({transform: 'translate(0px,' + top + 'px)'});
-      });
     },
 
     refresh: function() {
@@ -406,13 +387,12 @@ var ContainersViewVueComponent = Vue.extend({
     },
 
     hasManagedByCatalogAlert: function(documentId) {
-      return this.managedByCatalogAlerts
-        && this.managedByCatalogAlerts.indexOf(documentId) > -1;
+      return this.managedByCatalogAlerts && this.managedByCatalogAlerts.indexOf(documentId) > -1;
     },
 
     hasContainersConnectedAlert: function(documentId) {
       return this.containerConnectedAlerts
-        && this.containerConnectedAlerts.indexOf(documentId) > -1;
+                && this.containerConnectedAlerts.indexOf(documentId) > -1;
     },
 
     deselectUnsupportedRemoval: function() {
@@ -581,6 +561,14 @@ var ContainersViewVueComponent = Vue.extend({
 
       } else if (actionName === 'multiRemove') {
         this.performDeleteBatchOperation();
+      }
+    },
+
+    'go-back': function(fromViewName) {
+      if (fromViewName === 'container-details'
+        || fromViewName === 'application-details') {
+
+        NavigationActions.openContainers(this.queryOptions, true);
       }
     }
   },

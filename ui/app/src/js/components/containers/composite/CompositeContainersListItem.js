@@ -23,7 +23,11 @@ var CompositeContainersListItem = Vue.extend({
   mixins: [AlertItemMixin, DeleteConfirmationSupportMixin],
   props: {
     model: {required: true},
-    showAlertManagedByCatalog: {required: true}
+    showAlertManagedByCatalog: {
+      required: true,
+      type: Boolean,
+      default: false
+    }
   },
   computed: {
     showNumbers: function() {

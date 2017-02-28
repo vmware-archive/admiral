@@ -62,10 +62,6 @@ var CompositeClosuresDetails = Vue.extend({
         }
       }
     );
-
-    this.unwatchSelectedItem = this.$watch('model.selectedItem', () => {
-      this.repositionListView();
-    });
     this.unwatchExpanded = this.$watch('contextExpanded', () => {
       Vue.nextTick(() => {
         this.setPreTransitionGridTargetWidth($detailsContent);
@@ -73,7 +69,6 @@ var CompositeClosuresDetails = Vue.extend({
     });
   },
   detached: function() {
-    this.unwatchSelectedItem();
     this.unwatchExpanded();
     var $detailsContent = $(this.$el);
     $detailsContent.off('transitionend MSTransitionEnd webkitTransitionEnd oTransitionEnd');
@@ -81,21 +76,6 @@ var CompositeClosuresDetails = Vue.extend({
   methods: {
     openClosureChildDetails: function(childId) {
       NavigationActions.openClosureDetails(childId, this.model.documentId);
-    },
-
-    repositionListView: function() {
-      Vue.nextTick(() => {
-        var $el = $(this.$el);
-        var $smallContextHolder = $el
-          .children('.list-view').children('.selected-context-small-holder');
-        var top = 0;
-        if ($smallContextHolder.length === 1) {
-          top = $smallContextHolder.position().top + $smallContextHolder.height();
-        }
-        $(this.$el)
-          .children('.list-view').children('.grid-container')
-          .css({transform: 'translate(0px,' + top + 'px)'});
-      });
     },
 
     refresh: function() {
@@ -232,7 +212,6 @@ var CompositeClosuresDetails = Vue.extend({
       }
     }
   }
-
 });
 
 Vue.component('composite-closure-details', CompositeClosuresDetails);

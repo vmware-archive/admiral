@@ -76,10 +76,6 @@ var CompositeContainerDetails = Vue.extend({
         }
       }
     );
-
-    this.unwatchSelectedItem = this.$watch('model.selectedItem', () => {
-      this.repositionListView();
-    });
     this.unwatchExpanded = this.$watch('contextExpanded', () => {
       Vue.nextTick(() => {
         this.setPreTransitionGridTargetWidth($detailsContent);
@@ -89,7 +85,6 @@ var CompositeContainerDetails = Vue.extend({
     this.setResourcesReadOnly(true);
   },
   detached: function() {
-    this.unwatchSelectedItem();
     this.unwatchExpanded();
     this.unwatchNetworks();
     this.unwatchNetworkLinks();
@@ -97,6 +92,9 @@ var CompositeContainerDetails = Vue.extend({
     $detailsContent.off('transitionend MSTransitionEnd webkitTransitionEnd oTransitionEnd');
   },
   methods: {
+    goBack: function() {
+      this.$dispatch('go-back', 'application-details');
+    },
     openCompositeContainerDetails: function() {
       NavigationActions.openCompositeContainerDetails(this.model.documentId);
     },
@@ -107,21 +105,6 @@ var CompositeContainerDetails = Vue.extend({
 
     openCompositeContainerClusterDetails: function(clusterId) {
       NavigationActions.openClusterDetails(clusterId, this.model.documentId);
-    },
-
-    repositionListView: function() {
-      Vue.nextTick(() => {
-        var $el = $(this.$el);
-        var $smallContextHolder = $el
-          .children('.list-view').children('.selected-context-small-holder');
-        var top = 0;
-        if ($smallContextHolder.length === 1) {
-          top = $smallContextHolder.position().top + $smallContextHolder.height();
-        }
-        $(this.$el)
-          .children('.list-view').children('.grid-container')
-          .css({transform: 'translate(0px,' + top + 'px)'});
-      });
     },
 
     refresh: function() {
@@ -155,6 +138,17 @@ var CompositeContainerDetails = Vue.extend({
       setTimeout(() => {
         this.onLayoutUpdate();
       }, 500);
+    }
+  },
+
+  events: {
+
+    'go-back': function(fromViewName) {
+      if (fromViewName === 'container-details'
+        || fromViewName === 'cluster-details') {
+
+        return this.openCompositeContainerDetails();
+      }
     }
   }
 });

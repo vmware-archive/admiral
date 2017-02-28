@@ -66,11 +66,6 @@
   border-bottom: 60px solid transparent;
 }
 
-.scroll-view.context-selected .grid-container .content {
-  margin-bottom: -10px;
-  border-bottom: 10px solid transparent;
-}
-
 .scroll-view .grid-container .content + .loading,  {
   height: 100%;
   margin-bottom: -60px;
@@ -120,7 +115,7 @@
   a:hover {
     text-decoration: none;
     color: $link_color;
- }
+  }
   a.active, a.active:hover, a.active:focus {
     color: #000000;
     pointer-events: none;
@@ -198,7 +193,7 @@
   }
 }
 
-.list-view:not(.context-selected) > .grid-container {
+.list-view > .grid-container {
   > .content > .grid > .grid-item,
   > .grid > .grid-item {
     @include transition(width 0.4s, transform 0.4s);
@@ -206,7 +201,7 @@
 }
 
 .list-view .grid-item:hover {
- -webkit-box-shadow: 0px 2px 10px 1px $main-border-color;
+  -webkit-box-shadow: 0px 2px 10px 1px $main-border-color;
   -moz-box-shadow: 0px 2px 10px 1px $main-border-color;
   box-shadow: 0px 2px 10px 1px $main-border-color;
 }
@@ -696,89 +691,6 @@
   }
 }
 
-@mixin size-containers-view-context-selected ($width, $margin-left) {
-  $border-overlap-size: 1px;
-  > .list-holder > .main-panel .list-view.context-selected,
-  /* composite container */
-  > .list-view.context-selected {
-    width: $width;
-    @include transition(width 0.4s);
-    margin-left: $margin-left;
-    .grid-container {
-      .grid-item {
-        width: $width;
-        padding: 0 12px;
-        margin-left: 7px;
-      }
-    }
-
-    .selected-context-small-holder {
-      width: $width;
-    }
-
-    .selected-context-small-holder {
-      .grid-item {
-        /* Trick so that the selected context items looks like being overlapped with the closable view */
-        border-right: $border-overlap-size solid $context-view-background-color;
-        width: $width + $border-overlap-size;
-        position: static;
-      }
-
-      .container-item .relations-holder {
-        display: none;
-      }
-
-      .composite-container-item {
-        .container-content {
-          margin-right: 0;
-        }
-        .relations-holder {
-          display: none;
-        }
-        .child-containers {
-          .child-container {
-            /* Trick so that the selected context items looks like being overlapped with the closable view */
-            border-right: $border-overlap-size solid $context-view-background-color;
-          }
-        }
-      }
-
-      .composite-closure-item {
-        .container-content {
-          margin-right: 0;
-
-          .relations-holder {
-            display: none;
-          }
-        }
-        .child-containers {
-          .child-container {
-            /* Trick so that the selected context items looks like being overlapped with the closable view */
-            border-right: $border-overlap-size solid $context-view-background-color;
-          }
-        }
-      }
-    }
-  }
-  > .selected-context-holder {
-    @include transition(left 0.4s);
-    left: $margin-left + $width - $border-overlap-size;
-  }
-  .closable-view {
-    .title {
-      font-size: 22px;
-    }
-  }
-}
-
-.containers-view.left-list-hover, .composite-child-containers-view.left-list-hover {
-  @include size-containers-view-context-selected(290px, 20px);
-}
-
-.containers-view:not(.left-list-hover), .composite-child-containers-view:not(.left-list-hover) {
-  @include size-containers-view-context-selected(70px, 20px);
-}
-
 .images-view.right-context-expanded {
   > .selected-context-holder > .content > .template-details > .details-contents > .list-view {
     right: 30%;
@@ -817,14 +729,18 @@
     .grid-container {
       @include transition(transform 0.4s);
       > .title, > .title-search {
-         @extend .item-shown-for-collapse-animation;
+        @extend .item-shown-for-collapse-animation;
       }
     }
   }
 
   .closable-view {
-    border-left: 2px solid $main-border-color;
     background-color: $main_background_color;
+
+    .content {
+      right: 0px;
+      bottom: 0px;
+    }
   }
 
   .closable-view.expanded {
@@ -844,93 +760,25 @@
     }
   }
 
-  .selected-context-small-holder {
-    opacity: 0;
-    @include transition(all 0.4s);
-
-    .grid-item {
-      margin: 0;
-      border-top-right-radius: 0;
-      border-bottom-right-radius: 0;
-
-      .status {
-        display: none;
-      }
-      .card-item-stack {
-        display: none;
-      }
-      .container-containers-holder {
-        display: none;
-      }
-      .container-cluster-actions-holder .container-secondary-actions {
-        display: none;
-      }
-    }
-
-    .grid-item:hover {
-      -webkit-box-shadow: none;
-      -moz-box-shadow: none;
-      box-shadow: none;
-    }
-
-    .grid-item:hover .container-actions {
-      display: none;
-    }
-
-    .composite-container-item {
-      .container-content {
-        margin-right: 0;
-      }
-      .child-containers {
-        .child-container:not(.context-selected) {
-          .container-item:not(:hover), .cluster-item:not(:hover), .composite-container-item:not(:hover) {
-            @extend .gray-filter;
-          }
-          .container-item {
-            .container-content, .container-actions, hr, .status {
-              @extend .item-hidden-for-collapse-animation;
-            }
-          }
-
-          border-bottom-right-radius: 0;
-          border-bottom-left-radius: 0;
-          border-top: 0;
-          border-left: 0;
-          border-right: 0;
-        }
-        .child-container.context-selected {
-          // Overlap the upper border
-          margin-top: -2px;
-        }
-        .child-container {
-          display: block;
-          border: 1px solid $main-border-color;
-          border-radius: 5px;
-          border-top-right-radius: 0;
-          border-bottom-right-radius: 0;
-
-          margin-left: 20px;
-          width: auto;
-          margin-bottom: 0;
-          margin-right: 0;
-
-          cursor: pointer;
-        }
-      }
-    }
-  }
-
   .composite-child-containers-view {
     @extend .position-expand;
     background-color: $main_background_color;
 
     @include transition(background-color 0.4s);
+    .list-view {
+      margin-top: 0px;
+    }
+
+    .list-view .close-button {
+      display: block;
+      margin: 5px 0px 5px 0px;
+    }
 
     .list-view .grid-container {
-      top: 10px;
+      top: 35px;
 
       .grid-item {
-        background-color: #FFFFFF;
+        background-color: #ffffff;
 
         .container-item .relations-holder {
           display: none;
@@ -965,135 +813,6 @@
       bottom: 0;
       right: 0;
       overflow: initial;
-    }
-  }
-}
-
-.containers-view > .list-holder > .main-panel .list-view.context-selected,
-.composite-child-containers-view > .list-view.context-selected {
-  top: 10px;
-  margin-bottom: 0;
-  margin-top: 0;
-  right: auto;
-
-  .close-button {
-    display: block;
-  }
-  .toolbar {
-    @extend .item-hidden-for-collapse-animation;
-  }
-  .grid-container {
-    overflow-x: hidden;
-    overflow-y: auto;
-    top: 0;
-    > .title, > .title-search {
-      @extend .item-hidden-for-collapse-animation;
-    }
-
-    > .category-filter {
-      @extend .item-hidden-for-collapse-animation;
-    }
-
-    .grid-item:not(.context-selected) {
-      .container-item:not(:hover), .cluster-item:not(:hover),
-      .composite-container-item:not(:hover), .composite-closure-item:not(:hover) {
-        @extend .gray-filter;
-      }
-    }
-    .grid-item.context-selected {
-      height: 0;
-      display: none;
-    }
-
-    .grid-item {
-      margin-bottom: 0;
-      margin-right: 0;
-      border-bottom-right-radius: 0;
-      border-bottom-left-radius: 0;
-      border-top-right-radius: 0;
-      border-top-left-radius: 0;
-      border-top: 0;
-      border-left: 0;
-      border-right: 0;
-      cursor: pointer;
-      border-width: 1px;
-      .container-item, .cluster-item, .composite-container-item, .composite-closure-item {
-        margin: 5px 0;
-        .container-header {
-          margin-top: 20px;
-          height: 40px;
-          margin-left: 0;
-          margin-right: 0;
-          .title-holder .title.truncateText {
-            font-size: 19px;
-            font-weight: 300;
-            width: 200px;
-          }
-          .title-holder .image-tag.truncateText {
-            font-weight: 300;
-            font-size: 13px;
-          }
-        }
-        .relations-holder {
-          display: none;
-        }
-        @include container-image-header-icons(40px);
-      }
-      .container-item:not(:hover) {
-        .container-header {
-          img {
-            opacity: 0.5;
-          }
-          .title-holder {
-            opacity: 0.8;
-          }
-        }
-      }
-      .container-item, .cluster-item, .composite-container-item, .composite-closure-item {
-        .container-content, .container-actions, hr, .status {
-          @extend .item-hidden-for-collapse-animation;
-        }
-      }
-      .card-item-stack {
-        display: none;
-      }
-    }
-    .grid-item:hover .container-actions {
-      display: none;
-    }
-    .resource {
-      display: none;
-    }
-    .resource-link-value {
-      display: none;
-    }
-  }
-
-  .selected-context-small-holder {
-    opacity: 1;
-    background-color: #fff;
-    overflow: hidden;
-  }
-}
-
-.containers-view:not(.left-list-hover) {
-  .main-panel > .list-view .selected-context-small-holder {
-    .container-item, .cluster-item, .composite-container-item, .composite-closure-item {
-      .container-content, .container-actions, hr, .status {
-        @extend .item-hidden-for-collapse-animation;
-      }
-    }
-  }
-}
-
-/* looks pretty much like the .containers-view:not(.left-list-hover), but more specific, so that the
-2 rules don't interrupt */
-.composite-child-containers-view:not(.left-list-hover) {
-  > .list-view .selected-context-small-holder {
-    .container-item, .cluster-item, .composite-container-item, .composite-closure-item {
-      .container-content, .container-actions, hr, .status {
-        @extend .item-hidden-for-collapse-animation;
-      }
     }
   }
 }
@@ -1209,7 +928,7 @@ $template-details-right: 20px;
     cursor: pointer;
   }
   .template-name:hover + .editBtn {
-      color: #224662;
+    color: #224662;
   }
 
   .template-name-input {
@@ -1489,10 +1208,10 @@ $elements-side-margin: $elements-margin / 2;
 
 .kubernetes-template-item {
   .image-content {
-     max-height: 200px;
-     overflow: hidden;
-     white-space: pre-wrap;
-     word-wrap: break-word;
+    max-height: 200px;
+    overflow: hidden;
+    white-space: pre-wrap;
+    word-wrap: break-word;
   }
 }
 

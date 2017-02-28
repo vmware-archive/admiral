@@ -20,8 +20,13 @@ var ContainersListItem = Vue.extend({
   template: ContainersListItemVue,
   mixins: [AlertItemMixin, DeleteConfirmationSupportMixin],
   props: {
-    model: {required: true},
-    showAlertManagedByCatalog: {required: true}
+    model: {
+      required: true
+    },
+    showAlertManagedByCatalog: {
+      required: false,
+      type: Boolean
+    }
   },
   computed: {
     portsDisplayTexts: function() {

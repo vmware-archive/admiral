@@ -109,14 +109,13 @@ var VueGrid = Vue.extend({
           width: itemWidth,
           transition: null
         });
-        if (!item.hasClass('context-selected')) {
-          var itemHeight = itemsHeight[i];
-          if (item.is(':hidden') && itemHeight !== 0) {
-            item.show();
-          }
-          if (itemHeight !== 0) {
-            count++;
-          }
+
+        var itemHeight = itemsHeight[i];
+        if (item.is(':hidden') && itemHeight !== 0) {
+          item.show();
+        }
+        if (itemHeight !== 0) {
+          count++;
         }
       }
 
