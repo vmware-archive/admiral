@@ -18,20 +18,33 @@ import org.junit.Before;
 
 import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
+import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.host.HostInitAuthServiceConfig;
-import com.vmware.xenon.common.ServiceHost;
+import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.test.VerificationHost;
 
 public abstract class AuthBaseTest extends BaseTestCase {
 
     @Before
-    public void beforeForComputeBase() throws Throwable {
+    public void beforeForAuthBase() throws Throwable {
         startServices(host);
+
+        waitForServiceAvailability(AuthInitialBootService.SELF_LINK);
+        waitForInitialBootServiceToBeSelfStopped(AuthInitialBootService.SELF_LINK);
     }
 
-    private static void startServices(ServiceHost serviceHost) throws Throwable {
-        HostInitAuthServiceConfig.startServices(serviceHost);
+    @Override
+    protected boolean getPeerSynchronizationEnabled() {
+        return true;
+    }
+
+    private static void startServices(VerificationHost host) throws Throwable {
+        DeploymentProfileConfig.getInstance().setTest(true);
+
+        HostInitCommonServiceConfig.startServices(host);
+        HostInitAuthServiceConfig.startServices(host);
     }
 
     protected ProjectState createProject(String name) throws Throwable {

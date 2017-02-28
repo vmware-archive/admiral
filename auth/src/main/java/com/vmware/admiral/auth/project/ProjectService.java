@@ -20,6 +20,7 @@ import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.StatefulService;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 /**
@@ -28,6 +29,18 @@ import com.vmware.xenon.common.Utils;
 public class ProjectService extends StatefulService {
 
     public static final String FACTORY_LINK = ManagementUriParts.PROJECTS;
+    public static final String DEFAULT_PROJECT_ID = "default-project";
+    public static final String DEFAULT_PROJECT_LINK = UriUtils.buildUriPath(
+            ProjectService.FACTORY_LINK, DEFAULT_PROJECT_ID);
+
+    public static ProjectState buildDefaultProjectInstance() {
+        ProjectState project = new ProjectState();
+        project.documentSelfLink = DEFAULT_PROJECT_LINK;
+        project.name = DEFAULT_PROJECT_ID;
+        project.id = project.name;
+
+        return project;
+    }
 
     /**
      * This class represents the document state associated with a
