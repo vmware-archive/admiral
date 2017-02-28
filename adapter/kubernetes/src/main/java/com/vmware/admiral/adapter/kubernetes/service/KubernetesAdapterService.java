@@ -26,6 +26,7 @@ import com.vmware.admiral.adapter.kubernetes.KubernetesRemoteApiClient;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.content.kubernetes.CommonKubernetesEntity;
+import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.entities.pods.Container;
 import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
@@ -35,6 +36,7 @@ import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
 import com.vmware.admiral.service.common.LogService;
 import com.vmware.admiral.service.common.LogService.LogServiceState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Operation.CompletionHandler;
 import com.vmware.xenon.common.TaskState.TaskStage;
 
 public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
@@ -43,7 +45,7 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
     private static final String LOG_FETCH_FAILED_FORMAT = "Unable to fetch logs for container: %s"
             + " error: %s";
 
-    private static class RequestContext<T extends BaseKubernetesState> {
+    private static class RequestContext {
         public AdapterRequest request;
         public BaseKubernetesState kubernetesState;
         public KubernetesDescription kubernetesDescription;
@@ -124,6 +126,10 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
 
             case FETCH_LOGS:
                 processFetchPodLogs(context);
+                break;
+
+            case INSPECT:
+                inspectKubernetesEntity(context);
                 break;
 
             default:
@@ -248,8 +254,8 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
 
         for (Entry<String, String> log : logs.entrySet()) {
             LogServiceState logServiceState = new LogServiceState();
-            logServiceState.documentSelfLink = context.kubernetesState.documentSelfLink + "-" +
-                    log.getKey();
+            logServiceState.documentSelfLink = KubernetesUtil.buildLogUriPath(context
+                    .kubernetesState, log.getKey());
             logServiceState.logs = log.getValue().getBytes();
             logServiceState.tenantLinks = context.kubernetesState.tenantLinks;
 
@@ -268,6 +274,37 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
                         }
                     }));
         }
+    }
 
+    private void inspectKubernetesEntity(RequestContext context) {
+        context.executor.inspectEntity(context.kubernetesState.getKubernetesSelfLink(),
+                context.k8sContext, (o, ex) -> {
+                    if (ex != null) {
+                        fail(context.request, ex);
+                    } else {
+                        patchKubernetesEntity(context, o, (op, err) -> {
+                            if (err != null) {
+                                fail(context.request, err);
+                            } else {
+                                patchTaskStage(context.request, TaskStage.FINISHED, null);
+                            }
+                        });
+                    }
+                });
+    }
+
+    private void patchKubernetesEntity(RequestContext context, Operation inspectResponse,
+            CompletionHandler handler) {
+        String jsonResponse = inspectResponse.getBody(String.class);
+        BaseKubernetesState newState = null;
+        try {
+            newState = context.kubernetesState.getClass().newInstance();
+            newState.setKubernetesEntityFromJson(jsonResponse);
+        } catch (Throwable ex) {
+            fail(context.request, ex);
+        }
+        sendRequest(Operation.createPatch(this, context.kubernetesState.documentSelfLink)
+                .setBody(newState)
+                .setCompletion(handler));
     }
 }

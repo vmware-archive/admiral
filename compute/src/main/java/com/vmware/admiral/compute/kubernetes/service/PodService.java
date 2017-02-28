@@ -14,6 +14,7 @@ package com.vmware.admiral.compute.kubernetes.service;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.kubernetes.entities.pods.Pod;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
+import com.vmware.xenon.common.Utils;
 
 public class PodService extends AbstractKubernetesObjectService<PodState> {
 
@@ -32,6 +33,11 @@ public class PodService extends AbstractKubernetesObjectService<PodState> {
         @Override
         public String getKubernetesSelfLink() {
             return this.pod.metadata.selfLink;
+        }
+
+        @Override
+        public void setKubernetesEntityFromJson(String json) {
+            this.pod = Utils.fromJson(json, Pod.class);
         }
     }
 

@@ -393,8 +393,16 @@ public class KubernetesRemoteApiClient {
         sendRequest(Action.DELETE, uri, null, context, completionHandler);
     }
 
-    public void fetchLogs(String kubernetesSelfLink, KubernetesContext context, CompletionHandler
+    public void fetchLogs(String logLink, KubernetesContext context, CompletionHandler
             completionHandler) {
+
+        URI uri = ApiUtil.buildKubernetesUri(logLink, context);
+
+        sendRequest(Action.GET, uri, null, context, completionHandler);
+    }
+
+    public void inspectEntity(String kubernetesSelfLink, KubernetesContext context,
+            CompletionHandler completionHandler) {
 
         URI uri = ApiUtil.buildKubernetesUri(kubernetesSelfLink, context);
 

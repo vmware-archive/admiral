@@ -19,9 +19,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.KubernetesOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.entities.pods.Container;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
-import com.vmware.admiral.service.common.LogService;
 import com.vmware.admiral.service.common.LogService.LogServiceState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.xenon.common.Operation;
@@ -65,8 +65,7 @@ public class PodLogService extends StatelessService {
         AtomicBoolean hasError = new AtomicBoolean(false);
 
         for (Container container : podState.pod.spec.containers) {
-            String podLogLink = UriUtils.buildUriPath(LogService.FACTORY_LINK, podState
-                    .documentSelfLink + "-" + container.name);
+            String podLogLink = KubernetesUtil.buildLogUriPath(podState, container.name);
 
             sendRequest(Operation.createGet(this, podLogLink)
                     .setCompletion((o, ex) -> {

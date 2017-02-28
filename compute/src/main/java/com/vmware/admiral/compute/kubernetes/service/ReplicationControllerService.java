@@ -14,6 +14,7 @@ package com.vmware.admiral.compute.kubernetes.service;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.kubernetes.entities.replicationcontrollers.ReplicationController;
 import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService.ReplicationControllerState;
+import com.vmware.xenon.common.Utils;
 
 public class ReplicationControllerService
         extends AbstractKubernetesObjectService<ReplicationControllerState> {
@@ -32,6 +33,11 @@ public class ReplicationControllerService
         @Override
         public String getKubernetesSelfLink() {
             return this.replicationController.metadata.selfLink;
+        }
+
+        @Override
+        public void setKubernetesEntityFromJson(String json) {
+            this.replicationController = Utils.fromJson(json, ReplicationController.class);
         }
     }
 
