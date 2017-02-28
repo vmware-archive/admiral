@@ -28,7 +28,6 @@ import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
-import com.vmware.admiral.adapter.common.service.mock.MockTaskFactoryService;
 import com.vmware.admiral.adapter.common.service.mock.MockTaskService.MockTaskState;
 import com.vmware.admiral.adapter.kubernetes.mock.BaseKubernetesMockTest;
 import com.vmware.admiral.adapter.kubernetes.mock.MockKubernetesFailingHostService;
@@ -44,8 +43,6 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
-import com.vmware.admiral.service.common.SslTrustCertificateService;
-import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -55,7 +52,6 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service.ServiceOption;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.services.common.AuthCredentialsService;
 
 public class KubernetesMockTestAdapterServiceTest extends BaseKubernetesMockTest {
     private static final String TASK_INFO_STAGE = TaskServiceDocument.FIELD_NAME_TASK_STAGE;
@@ -97,12 +93,13 @@ public class KubernetesMockTestAdapterServiceTest extends BaseKubernetesMockTest
 
     @Before
     public void setupContainerState() throws Throwable {
-        createTestKubernetesAuthCredentials();
-        createKubernetesHostComputeState();
+        testKubernetesCredentialsLink = createTestKubernetesAuthCredentials();
+        kubernetesFailingHostState = createKubernetesHostComputeState(
+                testKubernetesCredentialsLink);
         createContainerDescription();
         createContainerState();
         createFailing();
-        createProvisioningTask();
+        provisioningTaskLink = createProvisioningTask();
 
         setupKubernetesAdapterService();
     }
@@ -116,46 +113,6 @@ public class KubernetesMockTestAdapterServiceTest extends BaseKubernetesMockTest
     @Override
     protected boolean getPeerSynchronizationEnabled() {
         return true;
-    }
-
-    private void createTestKubernetesAuthCredentials() throws Throwable {
-        testKubernetesCredentialsLink = doPost(getKubernetesCredentials(),
-                AuthCredentialsService.FACTORY_LINK).documentSelfLink;
-        SslTrustCertificateState kubernetesServerTrust = getKubernetesServerTrust();
-        if (kubernetesServerTrust != null && kubernetesServerTrust.certificate != null
-                && !kubernetesServerTrust.certificate.isEmpty()) {
-            doPost(kubernetesServerTrust, SslTrustCertificateService.FACTORY_LINK);
-        }
-    }
-
-    private void createKubernetesHostComputeState() throws Throwable {
-        ComputeDescription computeDescription = new ComputeDescription();
-        computeDescription.customProperties = new HashMap<>();
-        computeDescription.id = UUID.randomUUID().toString();
-
-        waitForServiceAvailability(ComputeDescriptionService.FACTORY_LINK);
-        String computeDescriptionLink = doPost(computeDescription,
-                ComputeDescriptionService.FACTORY_LINK).documentSelfLink;
-
-        ComputeState computeState = new ComputeState();
-        computeState.id = "testParentComputeState";
-        computeState.descriptionLink = computeDescriptionLink;
-        computeState.customProperties = new HashMap<>();
-        computeState.customProperties.put(
-                ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME, testKubernetesCredentialsLink);
-        computeState.customProperties.put(
-                ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
-                ContainerHostService.DockerAdapterType.API.name());
-        computeState.customProperties.put(
-                ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME,
-                ContainerHostType.KUBERNETES.name());
-        computeState.customProperties.put(
-                KubernetesHostConstants.KUBERNETES_HOST_NAMESPACE_PROP_NAME,
-                KubernetesHostConstants.KUBERNETES_HOST_DEFAULT_NAMESPACE);
-        computeState.address = kubernetesUri.toString();
-
-        waitForServiceAvailability(ComputeService.FACTORY_LINK);
-        kubernetesHostState = doPost(computeState, ComputeService.FACTORY_LINK);
     }
 
     private void createContainerDescription() throws Throwable {
@@ -240,12 +197,6 @@ public class KubernetesMockTestAdapterServiceTest extends BaseKubernetesMockTest
         waitForServiceAvailability(ContainerFactoryService.SELF_LINK);
         ContainerState container = doPost(containerState, ContainerFactoryService.SELF_LINK);
         containerWithFailingParentState = UriUtils.buildUri(host, container.documentSelfLink);
-    }
-
-    private void createProvisioningTask() throws Throwable {
-        MockTaskState provisioningTask = new MockTaskState();
-        provisioningTaskLink = doPost(provisioningTask,
-                MockTaskFactoryService.SELF_LINK).documentSelfLink;
     }
 
     private void setupKubernetesAdapterService() {

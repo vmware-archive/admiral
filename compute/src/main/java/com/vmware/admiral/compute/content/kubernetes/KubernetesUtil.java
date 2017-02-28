@@ -36,6 +36,7 @@ import com.vmware.admiral.compute.content.kubernetes.deployments.Deployment;
 import com.vmware.admiral.compute.content.kubernetes.pods.Pod;
 import com.vmware.admiral.compute.content.kubernetes.services.Service;
 import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
+import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesService;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesService.KubernetesState;
@@ -207,5 +208,17 @@ public class KubernetesUtil {
         desc.merge(object);
 
         return desc;
+    }
+
+    public static <T extends BaseKubernetesState> Class<T> fromResourceStateToBaseKubernetesState(
+            Class clazz) {
+
+        if (!BaseKubernetesState.class.isAssignableFrom(clazz)) {
+            throw new IllegalArgumentException(String.format("Class: %s is not child of "
+                    + "BaseKubernetesState.", clazz.getName()));
+        }
+
+        return clazz;
+
     }
 }

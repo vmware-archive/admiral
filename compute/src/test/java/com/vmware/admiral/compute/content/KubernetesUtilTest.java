@@ -28,6 +28,7 @@ import static com.vmware.admiral.compute.content.kubernetes.KubernetesConverter.
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesConverter.setContainerDescriptionResourcesToPodContainerResources;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesConverter.setPodContainerResourcesToContainerDescriptionResources;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.fromCompositeTemplateToKubernetesTemplate;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.fromResourceStateToBaseKubernetesState;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.serializeKubernetesEntity;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.serializeKubernetesTemplate;
 
@@ -37,7 +38,9 @@ import java.util.HashMap;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.HttpVersion;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.RequestProtocol;
@@ -343,6 +346,27 @@ public class KubernetesUtilTest {
         for (int i = 0; i < expectedContainerDescriptionCmd1.length; i++) {
             assertEquals(expectedContainerDescriptionCmd1[i], actualContainerDescriptionCmd1[i]);
         }
+
+    }
+
+    @Test
+    public void testFromResourceStateToBaseKubernetesStateShouldFail() {
+        Class containerClass = CompositeComponentRegistry.metaByStateLink("/resources/containers")
+                .stateClass;
+
+        String expectedExceptionMsg = "Class: " + ContainerState.class.getName() + " is not child"
+                + " of BaseKubernetesState.";
+
+        boolean shouldFail = true;
+
+        try {
+            fromResourceStateToBaseKubernetesState(containerClass);
+        } catch (IllegalArgumentException iae) {
+            assertEquals(expectedExceptionMsg, iae.getMessage());
+            shouldFail = false;
+        }
+
+        assertEquals(false, shouldFail);
     }
 
     @Test
