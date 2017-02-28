@@ -12,6 +12,7 @@
 package com.vmware.admiral.compute.kubernetes.service;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
 import com.vmware.admiral.compute.kubernetes.entities.pods.Pod;
@@ -35,6 +36,11 @@ public class PodService extends AbstractKubernetesObjectService<PodState> {
         @Override
         public String getKubernetesSelfLink() {
             return this.pod.metadata.selfLink;
+        }
+
+        @Override
+        public String getType() {
+            return KubernetesUtil.POD_TYPE;
         }
 
         @Override

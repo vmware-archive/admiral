@@ -356,6 +356,20 @@ public class KubernetesRemoteApiClient {
         sendRequest(Action.GET, uri, null, context, completionHandler);
     }
 
+    public void getReplicationControllers(String appName, KubernetesContext context,
+            CompletionHandler completionHandler) {
+        URI uri = UriUtils.buildUri(
+                ApiUtil.namespacePrefix(context, API_PREFIX_V1)
+                        + "/replicationcontrollers");
+
+        if (appName != null) {
+            uri = UriUtils.extendUriWithQuery(uri, LABEL_SELECTOR_QUERY, String
+                    .format("%s=%s", KUBERNETES_LABEL_APP, appName));
+        }
+
+        sendRequest(Action.GET, uri, null, context, completionHandler);
+    }
+
     public void deleteService(String serviceName, KubernetesContext context, CompletionHandler
             completionHandler) {
         assertNotNull(serviceName, "serviceName");

@@ -18,6 +18,7 @@ import static com.vmware.admiral.compute.content.kubernetes.KubernetesConverter.
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesConverter.fromContainerDescriptionToService;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -29,6 +30,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 
 import com.vmware.admiral.common.util.YamlMapper;
+import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.content.ComponentTemplate;
@@ -38,9 +40,13 @@ import com.vmware.admiral.compute.content.kubernetes.pods.Pod;
 import com.vmware.admiral.compute.content.kubernetes.services.Service;
 import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
+import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesService;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesService.KubernetesState;
+import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
+import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService.ReplicationControllerState;
+import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.ServiceState;
 import com.vmware.admiral.service.common.LogService;
 import com.vmware.admiral.service.common.ResourceNamePrefixService.ResourceNamePrefixState;
 import com.vmware.photon.controller.model.resources.ResourceState;
@@ -64,6 +70,19 @@ public class KubernetesUtil {
 
     public static final String KUBERNETES_LABEL_APP = "app";
     public static final String KUBERNETES_LABEL_TIER = "tier";
+
+    private static final Map<String, ResourceType> kindToInternalType = new HashMap<>();
+
+    static {
+        kindToInternalType.put(POD_TYPE, ResourceType.KUBERNETES_POD_TYPE);
+        kindToInternalType.put(SERVICE_TYPE, ResourceType.KUBERNETES_SERVICE_TYPE);
+        kindToInternalType.put(DEPLOYMENT_TYPE, ResourceType.KUBERNETES_DEPLOYMENT_TYPE);
+        kindToInternalType.put(REPLICATION_CONTROLLER_TYPE, ResourceType.KUBERNETES_REPLICATION_CONTROLLER_TYPE);
+    }
+
+    public static ResourceType getResourceType(String type) {
+        return kindToInternalType.get(type);
+    }
 
     public static CommonKubernetesEntity deserializeKubernetesEntity(String yaml)
             throws IOException {
@@ -164,7 +183,22 @@ public class KubernetesUtil {
         }
     }
 
-    public static KubernetesDescription createKubernetesEntityDescription(KubernetesState state) {
+    public static BaseKubernetesState createKubernetesEntityState(String type) {
+        switch (type) {
+        case KubernetesUtil.POD_TYPE:
+            return new PodState();
+        case KubernetesUtil.SERVICE_TYPE:
+            return new ServiceState();
+        case KubernetesUtil.DEPLOYMENT_TYPE:
+            return new DeploymentState();
+        case KubernetesUtil.REPLICATION_CONTROLLER_TYPE:
+            return new ReplicationControllerState();
+        default:
+            return null;
+        }
+    }
+
+    public static KubernetesDescription createKubernetesEntityDescription(BaseKubernetesState state) {
 
         KubernetesDescription entityDescription = new KubernetesDescription();
 
@@ -173,6 +207,7 @@ public class KubernetesUtil {
         entityDescription.tenantLinks = state.tenantLinks;
         entityDescription.name = state.name;
         entityDescription.id = state.id;
+        entityDescription.type = state.getType();
         entityDescription.customProperties = state.customProperties;
 
         // TODO: double check these

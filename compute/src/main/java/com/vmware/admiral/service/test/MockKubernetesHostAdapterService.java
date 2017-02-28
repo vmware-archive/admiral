@@ -19,7 +19,7 @@ import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection.EntityListCallback;
-import com.vmware.admiral.compute.kubernetes.service.KubernetesService.KubernetesState;
+import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
@@ -63,10 +63,10 @@ public class MockKubernetesHostAdapterService extends BaseMockAdapterService {
             callbackResponse.computeHostLink = request.resourceReference.getPath();
             // String hostId = Service.getId(request.resourceReference.getPath());
             callbackResponse.entityIdsAndNames = new HashMap<>();
-            for (KubernetesState entity : MockKubernetesAdapterService
+            for (BaseKubernetesState entity : MockKubernetesAdapterService
                     .getKubernetesEntities()) {
                 callbackResponse.entityIdsAndNames.put(entity.id, entity.name);
-                callbackResponse.entityIdsAndTypes.put(entity.id, entity.type);
+                callbackResponse.entityIdsAndTypes.put(entity.id, entity.getType());
             }
             patchTaskStage(request, null, callbackResponse);
             op.setBody(callbackResponse);

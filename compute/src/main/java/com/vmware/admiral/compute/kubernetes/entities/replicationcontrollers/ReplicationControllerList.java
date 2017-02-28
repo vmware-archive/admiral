@@ -9,13 +9,12 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.content.kubernetes.pods;
+package com.vmware.admiral.compute.kubernetes.entities.replicationcontrollers;
 
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesList;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class PodList {
-    public List<Pod> items;
+public class ReplicationControllerList extends BaseKubernetesList {
+    public List<ReplicationController> items;
 }
