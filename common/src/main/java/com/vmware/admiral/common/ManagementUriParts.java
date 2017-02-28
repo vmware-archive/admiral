@@ -163,8 +163,6 @@ public interface ManagementUriParts {
     String REQUEST_ENDPOINT_HEALTHCHECK_TASKS = REQUEST + "/endpoint-healthcheck-tasks";
     String ENDPOINT_PERIODIC_HEALTHCHECK = REQUEST + "/endpoint-periodic-healthcheck";
 
-
-
     String CONFIGURE_HOST = REQUEST + "/configure-host/";
 
     String DELETE_SERVICE_DOCUMENTS = "/delete-tasks";
@@ -202,6 +200,8 @@ public interface ManagementUriParts {
     String KV_STORE = "/kv-store";
     // UI Service:
     String UI_SERVICE = System.getProperty("dcp.management.ui.path", "/");
+    String UI_NG_SERVICE = UI_SERVICE + "ng";
+
     String CONTAINER_ICONS_RESOURCE_PATH = UI_SERVICE + "/container-icons";
     String CONTAINER_IDENTICONS_RESOURCE_PATH = UI_SERVICE + "/container-identicons";
     String CONTAINER_IMAGE_ICONS = UI_SERVICE + "/container-image-icons";

@@ -42,6 +42,11 @@
             <artifactId>admiral-ui-app</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>admiral-ui-ng-app</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
     <build>
         <resources>
@@ -103,6 +108,12 @@
                                     <artifactId>admiral-ui-app</artifactId>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${project.build.directory}/generated-resources/ui/com/vmware/admiral/UiService</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>admiral-ui-ng-app</artifactId>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${project.build.directory}/generated-resources/ui/com/vmware/admiral/UiNgService</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>

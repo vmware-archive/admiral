@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -13,6 +13,6 @@ package com.vmware.admiral;
 
 import com.vmware.admiral.common.ManagementUriParts;
 
-public class UiService extends BaseUiService {
-    public static final String SELF_LINK = ManagementUriParts.UI_SERVICE;
+public class UiNgService extends BaseUiService {
+    public static final String SELF_LINK = ManagementUriParts.UI_NG_SERVICE;
 }
