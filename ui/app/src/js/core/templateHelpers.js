@@ -10,6 +10,7 @@
  */
 
 import utils from 'core/utils';
+import { formatUtils } from 'admiral-ui-common';
 import constants from 'core/constants';
 import Handlebars from 'handlebars/runtime';
 
@@ -53,7 +54,7 @@ templateHelpers.register = function() {
 
   Handlebars.registerHelper('containerStatus', utils.containerStatusDisplay);
 
-  Handlebars.registerHelper('formatBytes', utils.formatBytes);
+  Handlebars.registerHelper('formatBytes', formatUtils.formatBytes);
 
   Handlebars.registerHelper('getDocumentId', utils.getDocumentId);
 

@@ -18,6 +18,7 @@ import DropdownSearchMenu from 'components/common/DropdownSearchMenu';
 import Alert from 'components/common/Alert';
 import constants from 'core/constants';
 import utils from 'core/utils';
+import { formatUtils } from 'admiral-ui-common';
 
 const placementZoneManageOptions = [{
   id: 'pz-create',
@@ -119,7 +120,7 @@ PlacementsRowEditor.prototype.getEl = function() {
 
 PlacementsRowEditor.prototype.setMemoryInputValue = function(valueBytes, selector) {
   if (valueBytes && utils.isValidNonNegativeIntValue(valueBytes)) {
-    let size = utils.calculateMemorySize(valueBytes);
+    let size = formatUtils.calculateMemorySize(valueBytes);
 
     this.$el.find(selector + ' input').val(size.value);
     this.$el.find(selector + ' select').val(size.unit);

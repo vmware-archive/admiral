@@ -1,0 +1,13 @@
+{
+  "name": "admiral-ui-common",
+  "version": "0.9.5-SNAPSHOT",
+  "description": "",
+  "main": "dist/index.js",
+  "typings": "src/index.d.ts",
+  "scripts": {
+    "tsc": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "2.2.1"
+  }
+}

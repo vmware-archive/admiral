@@ -9,9 +9,9 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import RadialProgress from 'components/common/RadialProgress';
-import NetworkTrafficVisualization from 'components/common/NetworkTrafficVisualization';
-import utils from 'core/utils';
+import { RadialProgress } from 'admiral-ui-common';
+import { NetworkTrafficVisualization } from 'admiral-ui-common';
+import { formatUtils } from 'admiral-ui-common';
 
 const TEMPLATE = `
 <div class="container-stats">
@@ -37,7 +37,8 @@ var ContainerStats = Vue.extend({
       .majorTitle(NA).label(i18n.t('app.container.details.cpu')).render();
     this.memoryStats = new RadialProgress($(this.$el).find('.memory-stats')[0]).diameter(150)
       .value(0).majorTitle(NA).label(i18n.t('app.container.details.memory')).render();
-    this.networkStats = new NetworkTrafficVisualization($(this.$el).find('.network-stats'));
+    this.networkStats = new NetworkTrafficVisualization($(this.$el)
+        .find('.network-stats')[0], i18n);
     resetStats.call(this);
 
     this.modelUnwatch = this.$watch('model.instance.powerState', this.onContainerUpdate);
@@ -93,8 +94,8 @@ var ContainerStats = Vue.extend({
         this.cpuPercentage = cpuPercentage;
         this.memoryPercentage = memoryPercentage;
 
-        var memoryUsage = utils.formatBytes(newData.memUsage);
-        var memoryLimit = utils.formatBytes(newData.memLimit);
+        var memoryUsage = formatUtils.formatBytes(newData.memUsage);
+        var memoryLimit = formatUtils.formatBytes(newData.memLimit);
         this.memoryStats.majorTitle(memoryUsage).minorTitle(memoryLimit).value(memoryPercentage)
           .render();
 
