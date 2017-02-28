@@ -27,6 +27,7 @@
 
     <modules>
         <module>app</module>
+        <module>ng-app</module>
         <module>service</module>
     </modules>
 </project>

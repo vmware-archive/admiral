@@ -12,6 +12,7 @@
 package com.vmware.admiral.host;
 
 import com.vmware.admiral.ContainerImageIconService;
+import com.vmware.admiral.UiNgService;
 import com.vmware.admiral.UiService;
 import com.vmware.admiral.UserSessionService;
 import com.vmware.xenon.common.ServiceHost;
@@ -19,7 +20,7 @@ import com.vmware.xenon.common.ServiceHost;
 public class HostInitUiServicesConfig extends HostInitServiceHelper {
 
     public static void startServices(ServiceHost host) {
-        startServices(host, UiService.class, UserSessionService.class,
+        startServices(host, UiService.class, UiNgService.class, UserSessionService.class,
                 ContainerImageIconService.class);
         startServices(host, com.vmware.xenon.ui.UiService.class);
     }

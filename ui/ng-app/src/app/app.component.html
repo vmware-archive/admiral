@@ -1,0 +1,44 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<clr-main-container>
+  <clr-header>
+    <div class="branding">
+      <a href="#" class="nav-link">
+        <span class="clr-icon clr-clarity-logo"></span>
+        <span class="title">Clarity</span>
+      </a>
+    </div>
+    <form class="search">
+      <label for="search_input">
+        <input id="search_input" type="text" placeholder="Search for Components...">
+      </label>
+    </form>
+    <div class="header-actions">
+    </div>
+  </clr-header>
+  <nav class="sub-nav" [clr-nav-level]="1">
+    <ul class="nav">
+      <li class="nav-item">
+        <a class="nav-link" href="#" [routerLink]="['/home']"
+           [class.active]="router.url==='/home' || router.url==='/'">Home</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#" [routerLink]="['/about']" [class.active]="router.url==='/about'">About</a>
+      </li>
+    </ul>
+  </nav>
+  <div class="content-container">
+    <div class="content-area">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</clr-main-container>
