@@ -370,9 +370,12 @@ var HostAddView = Vue.extend({
     }, {immediate: true});
 
     // Should accept certificate
-    this.unwatchShouldAcceptCertificate = this.$watch('model.shouldAcceptCertificate', () => {
-      this.showAcceptCertificate = true;
-    });
+    this.unwatchShouldAcceptCertificate = this.$watch('model.shouldAcceptCertificate',
+      (shouldAcceptCertificate) => {
+        if (shouldAcceptCertificate && shouldAcceptCertificate.certificateHolder) {
+          this.showAcceptCertificate = true;
+        }
+      });
   },
 
   detached: function() {
@@ -500,7 +503,7 @@ var HostAddView = Vue.extend({
       let hostModel = this.getHostData();
       let tags = this.tagsInput.getValue();
 
-      if (certificateHolder.isVerify) {
+      if (this.model.shouldAcceptCertificate.verify) {
         HostActions.acceptCertificateAndVerifyHost(certificateHolder, hostModel, tags);
       } else {
         HostActions.acceptCertificateAndAddHost(certificateHolder, hostModel, tags);
