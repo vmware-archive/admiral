@@ -34,7 +34,7 @@ import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.UriUtils;
 
 public class VolumesFromAffinityHostFilterTest extends BaseAffinityHostFilterTest {
-    private static final String CONTAINER_NAME = "test-container23";
+    private static final String CONTAINER_NAME = "Test-Container23";
 
     @Test
     public void testReturnInitialHostListWhenNoContainerDescWithVolumesFrom() throws Throwable {

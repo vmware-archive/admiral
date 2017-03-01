@@ -234,7 +234,9 @@ public class ContainerNetworkProvisionTaskService
                                             + networkName + "' in host '" + host.documentSelfLink
                                             + "'!", r.getException());
                                 } else if (r.hasResult()) {
-                                    networkStates.add(r.getResult());
+                                    if (networkName.equals(r.getResult().name)) {
+                                        networkStates.add(r.getResult());
+                                    }
                                 } else {
                                     if (networkStates.size() == 1) {
                                         callback.accept(networkStates.get(0));

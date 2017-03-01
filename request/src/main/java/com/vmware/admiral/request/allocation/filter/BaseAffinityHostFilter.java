@@ -63,7 +63,7 @@ public abstract class BaseAffinityHostFilter
 
     protected QueryTask getDescQuery() {
         final QueryTask q = QueryUtil.buildQuery(ContainerDescription.class, false);
-        QueryUtil.addListValueClause(q, ContainerDescription.FIELD_NAME_NAME, getAffinity());
+        QueryUtil.addCaseInsensitiveListValueClause(q, ContainerDescription.FIELD_NAME_NAME, getAffinity());
         QueryUtil.addExpandOption(q);
         return q;
     }
@@ -89,12 +89,13 @@ public abstract class BaseAffinityHostFilter
                                 final DescName descName = new DescName();
                                 if (desc == null) {
                                     descName.descLink = r.getDocumentSelfLink();
-                                } else {
+                                    containerDescLinksWithNames.put(descName.descLink, descName);
+                                } else if (getAffinity().isEmpty() || getAffinity().contains(desc.name)) {
                                     descName.descLink = desc.documentSelfLink;
                                     descName.descriptionName = desc.name;
                                     descName.affinities = desc.affinity;
-                                }
-                                containerDescLinksWithNames.put(descName.descLink, descName);
+                                    containerDescLinksWithNames.put(descName.descLink, descName);
+                                } // desc.name case mismatch is ignored (not added to the map)
                             } else {
                                 if (containerDescLinksWithNames.isEmpty()) {
                                     completeWhenNoContainerDescriptionsFound(state,
@@ -219,7 +220,7 @@ public abstract class BaseAffinityHostFilter
             descClause.addBooleanClause(otherContainersWithAffinityToThis);
 
             QueryTask.Query listValueClause = QueryUtil
-                    .addListValueClause(ContainerDescription.FIELD_NAME_NAME,
+                    .addCaseInsensitiveListValueClause(ContainerDescription.FIELD_NAME_NAME,
                             affinity, QueryTask.QueryTerm.MatchType.TERM);
 
             listValueClause.occurance = QueryTask.Query.Occurance.SHOULD_OCCUR;

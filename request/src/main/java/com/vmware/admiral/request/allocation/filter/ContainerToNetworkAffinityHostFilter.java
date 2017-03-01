@@ -187,10 +187,11 @@ public class ContainerToNetworkAffinityHostFilter
 
         Map<String, HostSelection> filteredHosts = new TreeMap<>();
 
+        String networkName = getNetworkName(hostSelectionMap, descLinksWithNames);
         QueryTask networkStateQuery = QueryUtil.buildPropertyQuery(
                 ContainerNetworkState.class,
                 ContainerNetworkState.FIELD_NAME_NAME,
-                getNetworkName(hostSelectionMap, descLinksWithNames));
+                networkName.toLowerCase());
 
         QueryUtil.addExpandOption(networkStateQuery);
 
@@ -203,10 +204,12 @@ public class ContainerToNetworkAffinityHostFilter
                                 res.getException().getMessage());
                         callback.complete(null, res.getException());
                     } else if (res.hasResult()) {
-                        List<String> parentLinks = res.getResult().parentLinks;
-                        if (parentLinks != null) {
-                            for (String parentLink : parentLinks) {
-                                filteredHosts.put(parentLink, hostSelectionMap.get(parentLink));
+                        if (networkName.equals(res.getResult().name)) {
+                            List<String> parentLinks = res.getResult().parentLinks;
+                            if (parentLinks != null) {
+                                for (String parentLink : parentLinks) {
+                                    filteredHosts.put(parentLink, hostSelectionMap.get(parentLink));
+                                }
                             }
                         }
                     } else {

@@ -281,7 +281,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // setup Composite description with 2 containers and 1 network
 
-        String networkName = "mynet";
+        String networkName = "MyNet";
 
         ContainerNetworkDescription networkDesc = TestRequestStateFactory
                 .createContainerNetworkDescription(networkName);
@@ -289,14 +289,14 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
         container1Desc.documentSelfLink = UUID.randomUUID().toString();
-        container1Desc.name = "container1";
+        container1Desc.name = "Container1";
         container1Desc.networks = new HashMap<>();
         container1Desc.networks.put(networkName, new ServiceNetwork());
 
         ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
         container2Desc.documentSelfLink = UUID.randomUUID().toString();
-        container2Desc.name = "container2";
-        container2Desc.affinity = new String[] { "!container1:hard" };
+        container2Desc.name = "Container2";
+        container2Desc.affinity = new String[] { "!Container1:hard" };
         container2Desc.networks = new HashMap<>();
         container2Desc.networks.put(networkName, new ServiceNetwork());
 
@@ -413,7 +413,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // setup Composite description with 2 containers and 1 external network
 
-        String networkName = "external-net";
+        String networkName = "External-Net";
 
         // create external network (same as HostNetworkListDataCollection discovers external
         // networks)
@@ -456,7 +456,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
         container1Desc.documentSelfLink = UUID.randomUUID().toString();
-        container1Desc.name = "container1";
+        container1Desc.name = "Container1";
         container1Desc._cluster = 2;
         container1Desc.networks = new HashMap<>();
         container1Desc.networks.put(networkName, new ServiceNetwork());
@@ -612,7 +612,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // setup Composite description with 2 containers and 1 network
 
-        String networkName = "mynet";
+        String networkName = "MyNet";
 
         ContainerNetworkDescription networkDesc = TestRequestStateFactory
                 .createContainerNetworkDescription(networkName);
@@ -620,14 +620,14 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
         container1Desc.documentSelfLink = UUID.randomUUID().toString();
-        container1Desc.name = "container1";
+        container1Desc.name = "Container1";
         container1Desc.networks = new HashMap<>();
         container1Desc.networks.put(networkName, new ServiceNetwork());
 
         ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
         container2Desc.documentSelfLink = UUID.randomUUID().toString();
-        container2Desc.name = "container2";
-        container2Desc.affinity = new String[] { "!container1:hard" };
+        container2Desc.name = "Container2";
+        container2Desc.affinity = new String[] { "!Container1:hard" };
         container2Desc.networks = new HashMap<>();
         container2Desc.networks.put(networkName, new ServiceNetwork());
         container2Desc.customProperties.put(MockDockerAdapterService.FAILURE_EXPECTED,
@@ -755,20 +755,20 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // setup Composite description with 2 containers and 1 network
 
-        String networkName = "mynet";
+        String networkName = "MyNet";
 
         ContainerNetworkDescription networkDesc = TestRequestStateFactory
                 .createContainerNetworkDescription(networkName);
         networkDesc.documentSelfLink = UUID.randomUUID().toString();
 
-        ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription("container1");
+        ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription("Container1");
         container1Desc.documentSelfLink = UUID.randomUUID().toString();
         container1Desc.networks = new HashMap<>();
         container1Desc.networks.put(networkName, new ServiceNetwork());
 
-        ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription("container2");
+        ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription("Container2");
         container2Desc.documentSelfLink = UUID.randomUUID().toString();
-        container2Desc.affinity = new String[] { "!container1:hard" };
+        container2Desc.affinity = new String[] { "!Container1:hard" };
         container2Desc.networks = new HashMap<>();
         container2Desc.networks.put(networkName, new ServiceNetwork());
 
@@ -868,7 +868,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // setup Composite description with 2 containers and 1 network
 
-        String networkName = "mynet";
+        String networkName = "MyNet";
 
         ContainerNetworkDescription networkDesc = TestRequestStateFactory
                 .createContainerNetworkDescription(networkName);
@@ -876,13 +876,13 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
         container1Desc.documentSelfLink = UUID.randomUUID().toString();
-        container1Desc.name = "container1";
+        container1Desc.name = "Container1";
         container1Desc.networks = new HashMap<>();
         container1Desc.networks.put(networkName, new ServiceNetwork());
 
         ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
         container2Desc.documentSelfLink = UUID.randomUUID().toString();
-        container2Desc.name = "container2";
+        container2Desc.name = "Container2";
         container2Desc.networks = new HashMap<>();
         container2Desc.networks.put(networkName, new ServiceNetwork());
 
@@ -1055,7 +1055,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // setup Composite description with 2 containers and 1 network
 
-        String networkName = "mynet";
+        String networkName = "MyNet";
 
         ContainerNetworkDescription networkDesc = TestRequestStateFactory
                 .createContainerNetworkDescription(networkName);
@@ -1064,14 +1064,14 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         ContainerDescription container1Desc = TestRequestStateFactory
                 .createContainerDescriptionWithPortBindingsHostPortSet();
         container1Desc.documentSelfLink = UUID.randomUUID().toString();
-        container1Desc.name = "container1";
+        container1Desc.name = "Container1";
         container1Desc.networks = new HashMap<>();
         container1Desc.networks.put(networkName, new ServiceNetwork());
 
         ContainerDescription container2Desc = TestRequestStateFactory
                 .createContainerDescriptionWithPortBindingsHostPortSet();
         container2Desc.documentSelfLink = UUID.randomUUID().toString();
-        container2Desc.name = "container2";
+        container2Desc.name = "Container2";
         container2Desc.networks = new HashMap<>();
         container2Desc.networks.put(networkName, new ServiceNetwork());
 
@@ -1205,7 +1205,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         ComputeState dockerHost2 = createDockerHost(dockerHostDesc, resourcePool, true);
         addForDeletion(dockerHost2);
 
-        String sharedVolumeName = "postgres";
+        String sharedVolumeName = "Postgres";
         String volumeName = String.format("%s:/etc/pgdata/postgres", sharedVolumeName);
 
         ContainerVolumeDescription volumeDesc = TestRequestStateFactory
@@ -1214,13 +1214,13 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
         container1Desc.documentSelfLink = UUID.randomUUID().toString();
-        container1Desc.name = "container1";
+        container1Desc.name = "Container1";
         container1Desc.volumes = new String[] { volumeName };
 
         ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
         container2Desc.documentSelfLink = UUID.randomUUID().toString();
-        container2Desc.name = "container2";
-        container2Desc.affinity = new String[] { "!container1:hard" };
+        container2Desc.name = "Container2";
+        container2Desc.affinity = new String[] { "!Container1:hard" };
 
         // setup Composite description with 2 containers and 1 network
         CompositeDescription compositeDesc = createCompositeDesc(volumeDesc, container1Desc,
@@ -1338,7 +1338,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // setup Composite description with 2 containers and 1 external volume
 
-        String volumeName = "external-vol";
+        String volumeName = "External-Vol";
 
         // create external volume (same as HostVolumeListDataCollection discovers external
         // volumes)
@@ -1374,7 +1374,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
         container1Desc.documentSelfLink = UUID.randomUUID().toString();
-        container1Desc.name = "container1";
+        container1Desc.name = "Container1";
         container1Desc._cluster = 2;
         container1Desc.volumes = new String[] { volumeName + ":/tmp" };
 
@@ -1486,7 +1486,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // setup Composite description with 2 containers and 1 volume
 
-        String volumeName = "myvolume";
+        String volumeName = "MyVolume";
 
         ContainerVolumeDescription volumeDesc = TestRequestStateFactory
                 .createContainerVolumeDescription(volumeName);
@@ -1494,12 +1494,12 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
         container1Desc.documentSelfLink = UUID.randomUUID().toString();
-        container1Desc.name = "container1";
+        container1Desc.name = "Container1";
         container1Desc.volumes = new String[] { volumeName + ":/tmp" };
 
         ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
         container2Desc.documentSelfLink = UUID.randomUUID().toString();
-        container2Desc.name = "container2";
+        container2Desc.name = "Container2";
         container1Desc.portBindings = null;
         container2Desc.volumes = new String[] { volumeName + ":/tmp" };
         container2Desc.customProperties.put(MockDockerAdapterService.FAILURE_EXPECTED,
@@ -2062,9 +2062,9 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         Iterator<String> iterator = cc.componentLinks.iterator();
         while (iterator.hasNext()) {
             String link = iterator.next();
-            if (link.startsWith(ContainerFactoryService.SELF_LINK + "/container1")) {
+            if (link.startsWith(ContainerFactoryService.SELF_LINK + "/Container1")) {
                 containerLink1 = link;
-            } else if (link.startsWith(ContainerFactoryService.SELF_LINK + "/container2")) {
+            } else if (link.startsWith(ContainerFactoryService.SELF_LINK + "/Container2")) {
                 containerLink2 = link;
             }
         }
@@ -2091,9 +2091,9 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         Iterator<String> iterator = cc.componentLinks.iterator();
         while (iterator.hasNext()) {
             String link = iterator.next();
-            if (link.startsWith(ContainerFactoryService.SELF_LINK + "/container1")) {
+            if (link.startsWith(ContainerFactoryService.SELF_LINK + "/Container1")) {
                 containerLink1 = link;
-            } else if (link.startsWith(ContainerFactoryService.SELF_LINK + "/container2")) {
+            } else if (link.startsWith(ContainerFactoryService.SELF_LINK + "/Container2")) {
                 containerLink2 = link;
             }
         }
@@ -2105,7 +2105,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         String[] links = cont2.networks.values().iterator().next().links;
 
         assertEquals(1, links.length);
-        assertEquals("container1:mycontainer", links[0]);
+        assertEquals("Container1:mycontainer", links[0]);
 
         // Containers are placed on multiple hosts when using user define network links
     }
@@ -2140,19 +2140,19 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         ComputeState dockerHost2 = createDockerHost(dockerHostDesc, resourcePool, true);
         addForDeletion(dockerHost2);
 
-        ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription("container1");
+        ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription("Container1");
         container1Desc.documentSelfLink = UUID.randomUUID().toString();
         container1Desc.portBindings = null;
 
-        ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription("container2");
+        ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription("Container2");
         container2Desc.documentSelfLink = UUID.randomUUID().toString();
-        container2Desc.links = new String[] { "container1:mycontainer" };
+        container2Desc.links = new String[] { "Container1:mycontainer" };
         container1Desc.portBindings = null;
 
         CompositeDescription compositeDesc;
         if (includeNetwork) {
             ContainerNetworkDescription networkDesc = TestRequestStateFactory
-                    .createContainerNetworkDescription("testnet");
+                    .createContainerNetworkDescription("TestNet");
             networkDesc.documentSelfLink = UUID.randomUUID().toString();
 
             container1Desc.networks = Collections.singletonMap(networkDesc.name,
