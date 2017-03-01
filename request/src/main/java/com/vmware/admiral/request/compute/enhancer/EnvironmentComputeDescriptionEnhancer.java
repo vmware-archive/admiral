@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 
+import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.env.ComputeImageDescription;
 import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentState;
@@ -78,9 +79,8 @@ public class EnvironmentComputeDescriptionEnhancer extends ComputeDescriptionEnh
                     if (absImageId != null) {
                         String imageId = null;
                         if (env.computeProfile != null && env.computeProfile.imageMapping != null
-                                && env.computeProfile.imageMapping.containsKey(absImageId)) {
-                            ComputeImageDescription imageDesc = env.computeProfile.imageMapping
-                                    .get(absImageId);
+                                && PropertyUtils.getPropertyCaseInsensitive(env.computeProfile.imageMapping, absImageId) != null) {
+                            ComputeImageDescription imageDesc = PropertyUtils.getPropertyCaseInsensitive(env.computeProfile.imageMapping, absImageId);
                             if (imageDesc.image != null) {
                                 imageId = imageDesc.image;
                             } else if (imageDesc.imageByRegion != null) {
@@ -127,7 +127,7 @@ public class EnvironmentComputeDescriptionEnhancer extends ComputeDescriptionEnh
     private void applyInstanceType(ComputeDescription cd, EnvironmentStateExpanded env) {
         InstanceTypeDescription instanceTypeDescription = null;
         if (env.computeProfile != null && env.computeProfile.instanceTypeMapping != null) {
-            instanceTypeDescription = env.computeProfile.instanceTypeMapping.get(cd.instanceType);
+            instanceTypeDescription = PropertyUtils.getPropertyCaseInsensitive(env.computeProfile.instanceTypeMapping, cd.instanceType);
         }
 
         if (instanceTypeDescription == null) {

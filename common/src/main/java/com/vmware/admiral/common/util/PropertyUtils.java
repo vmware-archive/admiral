@@ -16,6 +16,7 @@ import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.function.BinaryOperator;
 
 import com.vmware.xenon.common.ReflectionUtils;
@@ -182,5 +183,14 @@ public class PropertyUtils {
             searchType = searchType.getSuperclass();
         }
         return null;
+    }
+
+    public static <T> T getPropertyCaseInsensitive(Map<String, T> map, String key) {
+        if (key == null) {
+            return map.get(null);
+        }
+        TreeMap<String, T> caseInsensitiveMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        caseInsensitiveMap.putAll(map);
+        return caseInsensitiveMap.get(key);
     }
 }
