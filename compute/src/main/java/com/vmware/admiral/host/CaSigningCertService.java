@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -25,7 +25,6 @@ import java.util.logging.Level;
 
 import com.vmware.admiral.common.AuthCredentialsType;
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.security.EncryptionUtils;
 import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.CertificateUtil.CertChainKeyPair;
 import com.vmware.admiral.common.util.KeyUtil;
@@ -39,7 +38,6 @@ import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
-
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
@@ -178,7 +176,7 @@ public class CaSigningCertService extends StatefulService {
         authCredentials.type = AuthCredentialsType.PublicKeyCA.name();
         authCredentials.userEmail = "core";
         authCredentials.publicKey = caCert;
-        authCredentials.privateKey = EncryptionUtils.encrypt(caKey);
+        authCredentials.privateKey = caKey;
         return Operation.createPost(this, AuthCredentialsService.FACTORY_LINK)
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                 .setBody(authCredentials);
@@ -197,8 +195,7 @@ public class CaSigningCertService extends StatefulService {
         CertChainKeyPair signedForClient = CertificateUtil.generateSignedForClient("computeClient",
                 caCertificate, caKeyPair.getPrivate());
         authCredentials.publicKey = CertificateUtil.toPEMformat(signedForClient.getCertificate());
-        authCredentials.privateKey = EncryptionUtils.encrypt(
-                KeyUtil.toPEMFormat(signedForClient.getPrivateKey()));
+        authCredentials.privateKey = KeyUtil.toPEMFormat(signedForClient.getPrivateKey());
         return Operation.createPost(this, AuthCredentialsService.FACTORY_LINK)
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                 .setBody(authCredentials);

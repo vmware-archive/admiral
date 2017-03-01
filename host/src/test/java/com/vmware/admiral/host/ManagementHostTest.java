@@ -244,7 +244,8 @@ public class ManagementHostTest {
                 doDelete(host, UriUtils.buildUri(host, credentials.documentSelfLink));
                 fail("expect validation error during deletion");
             } catch (LocalizableValidationException e) {
-                assertEquals("Auth Credentials are in use", e.getMessage());
+                assertEquals(AuthCredentialsOperationProcessingChain.CREDENTIALS_IN_USE_MESSAGE,
+                        e.getMessage());
             }
             doDelete(host, UriUtils.buildUri(host, compute.documentSelfLink));
             doDelete(host, UriUtils.buildUri(host, computeDescription.documentSelfLink));
