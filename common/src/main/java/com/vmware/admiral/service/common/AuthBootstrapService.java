@@ -18,7 +18,6 @@ import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -60,7 +59,7 @@ public class AuthBootstrapService extends StatefulService {
 
     public static final String LOCAL_USERS_FILE = "localUsers";
 
-    private static final String PROPERTY_SCOPE = "scope";
+    public static final String PROPERTY_SCOPE = "scope";
 
     public static enum CredentialsScope {
         SYSTEM
@@ -251,41 +250,41 @@ public class AuthBootstrapService extends StatefulService {
                                         email, Utils.toString(r.getException()));
                                 throw new IllegalStateException(r.getException());
                             } else if (r.hasResult()) {
-                                Map<String, String> properties = r.getResult().customProperties;
-                                if (properties != null) {
-                                    String scope = properties.get(PROPERTY_SCOPE);
-                                    // Shouldn't update users which already have been updated.
-                                    if (!properties.containsKey(PROPERTY_SCOPE)
-                                            || !scope.equals(CredentialsScope.SYSTEM.toString())) {
-                                        patchStateType(host, email, r.getDocumentSelfLink());
-                                    }
-                                } else {
-                                    patchStateType(host, email, r.getDocumentSelfLink());
-                                }
+                                patchStateType(host, r.getResult());
                             } else {
                                 // nothing to do here
                             }
                         });
     }
 
-    private static void patchStateType(ServiceHost host, Object email, String credentialsPath) {
+    private static void patchStateType(ServiceHost host, AuthCredentialsServiceState currentState) {
+        // Shouldn't update users which already have been updated.
+        if ((currentState.customProperties != null) && (CredentialsScope.SYSTEM.toString().equals(
+                currentState.customProperties.get(AuthBootstrapService.PROPERTY_SCOPE)))) {
+            return;
+        }
+
         AuthCredentialsServiceState patch = new AuthCredentialsServiceState();
-        Map<String, String> customProperties = new HashMap<String, String>();
-        customProperties.put(PROPERTY_SCOPE, CredentialsScope.SYSTEM.toString());
-        patch.customProperties = customProperties;
+        patch.customProperties = new HashMap<>();
+        patch.customProperties.put(PROPERTY_SCOPE, CredentialsScope.SYSTEM.toString());
 
-        host.log(Level.INFO, "patchStateType - User '%s'...", email);
+        // Credentials with SYSTEM scope need the password in plain text or they can't be used to
+        // login into Admiral!
+        patch.privateKey = EncryptionUtils.decrypt(currentState.privateKey);
 
-        Operation.createPatch(UriUtils.buildUri(host, credentialsPath))
+        host.log(Level.INFO, "patchStateType - User '%s'...", currentState.userEmail);
+
+        Operation.createPatch(UriUtils.buildUri(host, currentState.documentSelfLink))
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
                 .setReferer(host.getUri())
                 .setBody(patch)
                 .setCompletion((o, e) -> {
                     if (e == null) {
-                        host.log(Level.INFO, "User '%s' initialized!", email);
+                        host.log(Level.INFO, "User '%s' initialized!", currentState.userEmail);
                     } else {
                         host.log(Level.SEVERE, "Could not patch user '%s' credentials '%s': %s",
-                                email, credentialsPath, Utils.toString(e));
+                                currentState.userEmail, currentState.documentSelfLink,
+                                Utils.toString(e));
                         throw new IllegalStateException(e);
                     }
                 })

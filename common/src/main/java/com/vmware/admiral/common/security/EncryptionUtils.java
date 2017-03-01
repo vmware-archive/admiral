@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -44,7 +44,8 @@ public class EncryptionUtils {
             try {
                 encryptionService.encrypt(ENCRYPTION_PREFIX);
             } catch (Exception e) {
-                throw new LocalizableValidationException(e, "Error validating the encryption key!", "common.encryption.file.validation");
+                throw new LocalizableValidationException(e, "Error validating the encryption key!",
+                        "common.encryption.file.validation");
             }
         }
     }
@@ -84,10 +85,11 @@ public class EncryptionUtils {
      * @param input
      *            String (UTF-8 encoded) to be encrypted
      * @return The encrypted version of the input string, or directly the input string if no
-     *         encryption key is configured.
+     *         encryption key is configured or the string is already encrypted.
      */
     public static String encrypt(String input) {
-        if (encryptionService == null || input == null || input.length() == 0) {
+        if (encryptionService == null || input == null || input.length() == 0
+                || input.startsWith(ENCRYPTION_PREFIX)) {
             return input;
         }
         return ENCRYPTION_PREFIX + encryptionService.encrypt(input);
