@@ -27,17 +27,14 @@
   </div>
   <hr/>
   <div class="container-content">
-    <!--
-    TODO uncomment and adjust when description and public/private flags are added in backend
     <div class="project-description-holder">
       <span class="container-label">{{i18n("app.resource.list.project.description")}}</span>
       <span>{{model.description}}</span>
     </div>
     <div class="project-private-flag-holder">
-      <span class="container-label">{{i18n("app.resource.list.project.private")}}</span>
-      <span>{{model.isPrivate}}</span>
+      <span class="container-label">{{i18n("app.resource.list.project.public")}}</span>
+      <span>{{model.isPublic | booleanToYesNo}}</span>
     </div>
-    -->
   </div>
   <div class="container-actions"
        v-bind:class="{'hide': showDeleteConfirmation || alert.show}">
