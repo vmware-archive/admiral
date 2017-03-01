@@ -2,6 +2,7 @@ import { Component, AfterViewInit, OnChanges, Input, ViewChild, Pipe, PipeTransf
 import { RadialProgress } from 'admiral-ui-common';
 import { NetworkTrafficVisualization } from 'admiral-ui-common';
 import { formatUtils } from 'admiral-ui-common';
+import * as I18n from 'i18next';
 
 const NA = 'N/A';
 
@@ -46,11 +47,8 @@ export class StatsComponent implements AfterViewInit, OnChanges {
     this.memoryStats = new RadialProgress(this.memoryStatsEl.nativeElement);
     this.memoryStats.diameter(150).label('Memory');
 
-    this.networkStats = new NetworkTrafficVisualization(this.networkStatsEl.nativeElement, {
-        t: function(s) {
-            return s;
-        }
-    });
+
+    this.networkStats = new NetworkTrafficVisualization(this.networkStatsEl.nativeElement, I18n);
 
     this.setCpuUsage();
     this.setMemoryUsage();

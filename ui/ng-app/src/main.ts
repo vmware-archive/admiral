@@ -15,9 +15,23 @@ import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 import { enableProdMode } from '@angular/core';
 import { environment } from './environments/environment';
 import { AppModule } from './app/app.module';
+import * as I18n from 'i18next';
+import * as I18nXhrBackend from 'i18next-xhr-backend';
+import * as I18nLanguageDetector from 'i18next-browser-languagedetector';
 
 if (environment.production) {
   enableProdMode();
 }
 
-platformBrowserDynamic().bootstrapModule(AppModule);
+I18n.use(I18nXhrBackend)
+  .use(I18nLanguageDetector)
+  .init({
+    ns: ['admiral'],
+    defaultNS: 'admiral',
+    fallbackLng: 'en',
+    backend: {
+      loadPath: '/messages/{{ns}}.{{lng}}.json'
+    }
+  },() => {
+    platformBrowserDynamic().bootstrapModule(AppModule);
+  });
