@@ -324,6 +324,9 @@ let MachinesStore = Reflux.createStore({
     this.setInData(['editingItemData', 'saving'], true);
     this.emitChange();
   },
+  onOperationCompleted() {
+    this.onOpenMachines(this.data.listView && this.data.listView.queryOptions, true);
+  },
   onGenericEditError(e) {
     var validationErrors = utils.getValidationErrors(e);
     this.setInData(['editingItemData', 'validationErrors'], validationErrors);
