@@ -77,6 +77,7 @@ public class PodLogServiceTest extends ComputeBaseTest {
         });
     }
 
+    @SuppressWarnings("unchecked")
     private void getPodLogs(PodState podState, Consumer<Map<String, LogServiceState>> callback)
             throws Throwable {
 

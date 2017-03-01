@@ -29,6 +29,7 @@ import static com.vmware.admiral.compute.content.kubernetes.KubernetesConverter.
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesConverter.setPodContainerResourcesToContainerDescriptionResources;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.fromCompositeTemplateToKubernetesTemplate;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.fromResourceStateToBaseKubernetesState;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.getStateTypeFromSelfLink;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.serializeKubernetesEntity;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.serializeKubernetesTemplate;
 
@@ -55,6 +56,7 @@ import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerProbeTCPSo
 import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerResources;
 import com.vmware.admiral.compute.content.kubernetes.services.Service;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
+import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.xenon.common.Service.Action;
 
@@ -361,6 +363,33 @@ public class KubernetesUtilTest {
 
         try {
             fromResourceStateToBaseKubernetesState(containerClass);
+        } catch (IllegalArgumentException iae) {
+            assertEquals(expectedExceptionMsg, iae.getMessage());
+            shouldFail = false;
+        }
+
+        assertEquals(false, shouldFail);
+    }
+
+    @Test
+    public void testGetStateTypeFromSelfLink() {
+        String selfLink = "/resources/kubernetes-pods/376fdq673";
+        Class expectedClass = PodState.class;
+        Class actualClass = getStateTypeFromSelfLink(selfLink);
+        assertEquals(expectedClass, actualClass);
+    }
+
+    @Test
+    public void testGetStateTypeFromSelfLinkShouldFail() {
+        String selfLink = "/resources/containers/376fdq673";
+
+        String expectedExceptionMsg = "Class: " + ContainerState.class.getName() + " is not child"
+                + " of BaseKubernetesState.";
+
+        boolean shouldFail = true;
+
+        try {
+            getStateTypeFromSelfLink(selfLink);
         } catch (IllegalArgumentException iae) {
             assertEquals(expectedExceptionMsg, iae.getMessage());
             shouldFail = false;

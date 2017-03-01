@@ -34,6 +34,9 @@ public class MockKubernetesAdapterService extends BaseMockAdapterService {
     public static final String FAILURE_EXPECTED = "FAILURE_EXPECTED";
     public boolean isFailureExpected;
 
+    // Keep the request in case of INSPECT for test purposes.
+    public static AdapterRequest requestOnInspect;
+
     // kubernetesComponentName -> kubernetesComponentType
     private static final Map<String, String> KUBERNETES_COMPONENTS = new ConcurrentHashMap<>();
 
@@ -47,6 +50,10 @@ public class MockKubernetesAdapterService extends BaseMockAdapterService {
 
         public boolean isDeprovisioning() {
             return KubernetesOperationType.DELETE.id.equals(operationTypeId);
+        }
+
+        public boolean isInspecting() {
+            return KubernetesOperationType.INSPECT.id.equals(operationTypeId);
         }
 
         public TaskState validateMock() {
@@ -122,9 +129,15 @@ public class MockKubernetesAdapterService extends BaseMockAdapterService {
             TaskState taskInfo,
             KubernetesState kubernetesState, KubernetesDescription kubernetesDesc) {
         if (TaskStage.FAILED == taskInfo.stage) {
-            logInfo("Failed request based on volume resource:  %s",
+            logInfo("Failed request based on resource:  %s",
                     state.resourceReference);
             patchTaskStage(state, taskInfo.failure);
+            return;
+        }
+
+        if (state.isInspecting()) {
+            requestOnInspect = state;
+            patchTaskStage(state, (Throwable) null);
             return;
         }
 

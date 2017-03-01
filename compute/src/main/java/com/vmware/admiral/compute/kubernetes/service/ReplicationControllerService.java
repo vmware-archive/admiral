@@ -12,6 +12,8 @@
 package com.vmware.admiral.compute.kubernetes.service;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
+import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
 import com.vmware.admiral.compute.kubernetes.entities.replicationcontrollers.ReplicationController;
 import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService.ReplicationControllerState;
 import com.vmware.xenon.common.Utils;
@@ -38,6 +40,16 @@ public class ReplicationControllerService
         @Override
         public void setKubernetesEntityFromJson(String json) {
             this.replicationController = Utils.fromJson(json, ReplicationController.class);
+        }
+
+        @Override
+        public ObjectMeta getMetadata() {
+            return this.replicationController.metadata;
+        }
+
+        @Override
+        public BaseKubernetesObject getEntityAsBaseKubernetesObject() {
+            return this.replicationController;
         }
     }
 

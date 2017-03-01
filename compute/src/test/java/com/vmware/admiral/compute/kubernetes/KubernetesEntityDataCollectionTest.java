@@ -22,12 +22,14 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection.EntityListCallback;
 import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection.KubernetesEntityDataCollectionState;
+import com.vmware.admiral.compute.kubernetes.entities.pods.Pod;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesService.KubernetesState;
 import com.vmware.admiral.compute.kubernetes.service.PodService;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
@@ -51,6 +53,7 @@ public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
 
     @Before
     public void setUp() throws Throwable {
+        DeploymentProfileConfig.getInstance().setTest(true);
         host.startService(Operation.createPost(UriUtils.buildUri(host,
                 MockKubernetesAdapterService.class)), new MockKubernetesAdapterService());
         host.startService(Operation.createPost(UriUtils.buildUri(host,
@@ -218,6 +221,7 @@ public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
         PodState pod = new PodState();
         pod.id = existingPod.id;
         pod.name = existingPod.name;
+        pod.pod = new Pod();
 
         host.testStart(1);
         host.sendRequest(
