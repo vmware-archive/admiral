@@ -12,6 +12,8 @@
 package com.vmware.admiral.compute.kubernetes.service;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
+import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
 import com.vmware.admiral.compute.kubernetes.entities.pods.Pod;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
 import com.vmware.xenon.common.Utils;
@@ -38,6 +40,16 @@ public class PodService extends AbstractKubernetesObjectService<PodState> {
         @Override
         public void setKubernetesEntityFromJson(String json) {
             this.pod = Utils.fromJson(json, Pod.class);
+        }
+
+        @Override
+        public ObjectMeta getMetadata() {
+            return this.pod.metadata;
+        }
+
+        @Override
+        public BaseKubernetesObject getEntityAsBaseKubernetesObject() {
+            return this.pod;
         }
     }
 

@@ -12,6 +12,8 @@
 package com.vmware.admiral.compute.kubernetes.service;
 
 import com.vmware.admiral.compute.Composable;
+import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
+import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
 import com.vmware.photon.controller.model.resources.ResourceState;
 
 /**
@@ -46,4 +48,9 @@ public abstract class BaseKubernetesState extends ResourceState implements Compo
     public abstract String getKubernetesSelfLink();
 
     public abstract void setKubernetesEntityFromJson(String json);
+
+    public abstract ObjectMeta getMetadata();
+
+    public abstract BaseKubernetesObject getEntityAsBaseKubernetesObject();
+
 }

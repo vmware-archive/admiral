@@ -29,6 +29,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 
 import com.vmware.admiral.common.util.YamlMapper;
+import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.content.ComponentTemplate;
 import com.vmware.admiral.compute.content.CompositeTemplate;
@@ -42,6 +43,7 @@ import com.vmware.admiral.compute.kubernetes.service.KubernetesService;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesService.KubernetesState;
 import com.vmware.admiral.service.common.LogService;
 import com.vmware.admiral.service.common.ResourceNamePrefixService.ResourceNamePrefixState;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
@@ -211,15 +213,26 @@ public class KubernetesUtil {
         return desc;
     }
 
+    @SuppressWarnings("unchecked")
     public static <T extends BaseKubernetesState> Class<T> fromResourceStateToBaseKubernetesState(
-            Class clazz) {
+            Class<? extends ResourceState> clazz) {
 
         if (!BaseKubernetesState.class.isAssignableFrom(clazz)) {
             throw new IllegalArgumentException(String.format("Class: %s is not child of "
                     + "BaseKubernetesState.", clazz.getName()));
         }
 
-        return clazz;
+        return (Class<T>) clazz;
+
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T extends BaseKubernetesState> Class<T> getStateTypeFromSelfLink(String
+            selfLink) {
+
+        Class resourceStateClass = CompositeComponentRegistry.metaByStateLink(selfLink).stateClass;
+
+        return fromResourceStateToBaseKubernetesState(resourceStateClass);
 
     }
 

@@ -12,12 +12,15 @@
 package com.vmware.admiral.compute.kubernetes.service;
 
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.admiral.compute.container.maintenance.ContainerMaintenance;
+import com.vmware.admiral.compute.kubernetes.maintenance.KubernetesMaintenance;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatefulService;
 
 public abstract class AbstractKubernetesObjectService<T extends BaseKubernetesState>
         extends StatefulService {
 
+    private volatile KubernetesMaintenance kubernetesMaintenance;
     private Class<T> stateType;
 
     protected AbstractKubernetesObjectService(Class<T> stateType) {
@@ -25,6 +28,8 @@ public abstract class AbstractKubernetesObjectService<T extends BaseKubernetesSt
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
+        super.toggleOption(ServiceOption.PERIODIC_MAINTENANCE, true);
+        super.setMaintenanceIntervalMicros(ContainerMaintenance.MAINTENANCE_INTERVAL_MICROS);
         this.stateType = stateType;
     }
 
@@ -35,6 +40,7 @@ public abstract class AbstractKubernetesObjectService<T extends BaseKubernetesSt
         }
 
         T state = post.getBody(stateType);
+        startMonitoringState(state);
 
         try {
             post.setBody(state);
@@ -66,4 +72,32 @@ public abstract class AbstractKubernetesObjectService<T extends BaseKubernetesSt
         PropertyUtils.mergeServiceDocuments(currentState, patchState);
         patch.complete();
     }
+
+    private void startMonitoringState(T body) {
+        if (body.getEntityAsBaseKubernetesObject() != null && body.getMetadata() != null &&
+                body.getKubernetesSelfLink() != null) {
+            getHost().registerForServiceAvailability((o, ex) -> {
+                if (ex != null) {
+                    logWarning("Skipping maintenance because service failed to start: "
+                            + ex.getMessage());
+                } else {
+                    handlePeriodicMaintenance(o);
+                }
+            }, getSelfLink());
+        }
+    }
+
+    @Override
+    public void handlePeriodicMaintenance(Operation post) {
+        if (getProcessingStage() != ProcessingStage.AVAILABLE) {
+            logFine("Skipping maintenance since service is not available: %s ", getUri());
+            return;
+        }
+
+        if (kubernetesMaintenance == null) {
+            kubernetesMaintenance = KubernetesMaintenance.create(getHost(), getSelfLink());
+        }
+        kubernetesMaintenance.handlePeriodicMaintenance(post);
+    }
+
 }

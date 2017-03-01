@@ -12,6 +12,8 @@
 package com.vmware.admiral.compute.kubernetes.service;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
+import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
 import com.vmware.admiral.compute.kubernetes.entities.deployments.Deployment;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
 import com.vmware.xenon.common.Utils;
@@ -37,6 +39,16 @@ public class DeploymentService extends AbstractKubernetesObjectService<Deploymen
         @Override
         public void setKubernetesEntityFromJson(String json) {
             this.deployment = Utils.fromJson(json, Deployment.class);
+        }
+
+        @Override
+        public ObjectMeta getMetadata() {
+            return this.deployment.metadata;
+        }
+
+        @Override
+        public BaseKubernetesObject getEntityAsBaseKubernetesObject() {
+            return this.deployment;
         }
     }
 

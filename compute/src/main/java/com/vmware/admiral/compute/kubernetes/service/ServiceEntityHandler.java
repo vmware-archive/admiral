@@ -12,6 +12,8 @@
 package com.vmware.admiral.compute.kubernetes.service;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
+import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
 import com.vmware.admiral.compute.kubernetes.entities.services.Service;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.ServiceState;
 import com.vmware.xenon.common.Utils;
@@ -41,6 +43,16 @@ public class ServiceEntityHandler extends AbstractKubernetesObjectService<Servic
         @Override
         public void setKubernetesEntityFromJson(String json) {
             this.service = Utils.fromJson(json, Service.class);
+        }
+
+        @Override
+        public ObjectMeta getMetadata() {
+            return this.service.metadata;
+        }
+
+        @Override
+        public BaseKubernetesObject getEntityAsBaseKubernetesObject() {
+            return this.service;
         }
     }
 
