@@ -157,9 +157,8 @@ public class NodeMigrationService extends StatelessService {
                             getHost().log(Level.INFO, "Migration task created: %s",
                                     state.documentSelfLink);
                             if (migrationTasksInProgress.size() == services.size()) {
-                                getHost().log(Level.INFO, "All migration tasks created.");
                                 waitForMigrationToComplete(MIGRATION_CHECK_RETRIES,
-                                        migrationTasksInProgress, post, callback);
+                                        migrationTasksInProgress, hasError, post, callback);
                             }
                         }
                     }));
@@ -167,9 +166,7 @@ public class NodeMigrationService extends StatelessService {
     }
 
     private void waitForMigrationToComplete(int retryCount, Set<String> migrationTasksInProgress,
-            Operation post, Runnable callback) {
-
-        final AtomicBoolean hasError = new AtomicBoolean(false);
+            AtomicBoolean hasError, Operation post, Runnable callback) {
 
         getHost().schedule(() -> {
             Iterator<String> tasksIterator = migrationTasksInProgress.iterator();
@@ -187,8 +184,10 @@ public class NodeMigrationService extends StatelessService {
                                     migrationTasksInProgress.remove(currentTask);
                                 } else if (state.taskInfo.stage == TaskStage.FAILED) {
                                     logInfo("Migration task failed: %s", currentTask);
-                                    hasError.set(true);
-                                    migrationTasksInProgress.remove(currentTask);
+                                    if (hasError.compareAndSet(false, true)) {
+                                        logSevere("Migration failed");
+                                        post.fail(new Throwable("One or more migration tasks failed"));
+                                    }
                                 }
                             }
                         }));
@@ -196,15 +195,11 @@ public class NodeMigrationService extends StatelessService {
             if (migrationTasksInProgress.isEmpty() && !hasError.get()) {
                 callback.run();
                 return;
-            } else if (migrationTasksInProgress.isEmpty() && hasError.get()) {
-                logSevere("Migration failed");
-                post.fail(new Throwable("One or more migration tasks failed"));
-                return;
             }
             if (retryCount > 0) {
-                waitForMigrationToComplete(retryCount - 1, migrationTasksInProgress,
+                waitForMigrationToComplete(retryCount - 1, migrationTasksInProgress, hasError,
                         post, callback);
-            } else {
+            } else if (!hasError.get()) {
                 post.fail(new Throwable("Migration did not finish in the expected time frame"));
                 logSevere("Migration did not finish in the expected time frame");
             }
