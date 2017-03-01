@@ -77,15 +77,12 @@ var PlacementZoneEditor = Vue.extend({
           this.model.item.placementZoneType;
       }
 
-      if (!item.documentSelfLink) {
-        // Create scenario
-        item.resourcePoolState.customProperties.__resourceType =
-          utils.isApplicationCompute()
-            // Prelude UI
-            ? constants.RESOURCE_TYPES.COMPUTE
-            // Admiral UI
-            : constants.RESOURCE_TYPES.CONTAINER;
-      }
+      item.resourcePoolState.customProperties.__resourceType =
+        utils.isApplicationCompute()
+          // Prelude UI
+          ? constants.RESOURCE_TYPES.COMPUTE
+          // Admiral UI
+          : constants.RESOURCE_TYPES.CONTAINER;
 
       if (this.endpoint) {
         item.resourcePoolState.customProperties.__endpointLink =
