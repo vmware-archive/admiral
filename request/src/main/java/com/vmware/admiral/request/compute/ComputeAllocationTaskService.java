@@ -77,14 +77,10 @@ import com.vmware.photon.controller.model.resources.NetworkInterfaceService.Netw
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
-import com.vmware.photon.controller.model.resources.TagFactoryService;
-import com.vmware.photon.controller.model.resources.TagService;
-import com.vmware.photon.controller.model.resources.TagService.TagState;
 import com.vmware.photon.controller.model.tasks.QueryUtils.QueryByPages;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.OperationSequence;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.TaskState.TaskStage;
@@ -575,6 +571,7 @@ public class ComputeAllocationTaskService
         computePlacementSelection.resourceCount = state.resourceCount;
         computePlacementSelection.resourcePoolLinks = new ArrayList<>();
         computePlacementSelection.resourcePoolLinks.add(state.resourcePoolLink);
+        computePlacementSelection.endpointLink = state.endpointLink;
         computePlacementSelection.tenantLinks = state.tenantLinks;
         computePlacementSelection.contextId = getContextId(state);
         computePlacementSelection.customProperties = state.customProperties;
@@ -676,63 +673,8 @@ public class ComputeAllocationTaskService
             return;
         }
 
-        if (cd.tagLinks == null) {
-            createTags(state, cd, tl -> {
-                cd.tagLinks = tl;
-                createComputeResource(state, cd, env, parentLink, placementLink, computeResourceId,
-                        computeName, diskLinks, networkLinks, taskCallback);
-            });
-            return;
-        }
-
         createComputeHost(state, cd, parentLink, placementLink, computeResourceId, computeName,
                 diskLinks, networkLinks, taskCallback);
-    }
-
-    private void createTags(ComputeAllocationTaskState state, ComputeDescription cd,
-            Consumer<Set<String>> tagLinksConsumer) {
-        String tagsString = cd.customProperties.get(ComputeConstants.CUSTOM_PROP_TAGS_KEY);
-        String[] parts = tagsString != null ? tagsString.split(",") : new String[0];
-        if (parts.length == 0) {
-            tagLinksConsumer.accept(new HashSet<>());
-            return;
-        }
-
-        List<TagState> tags = new ArrayList<>();
-        Set<String> tagLinks = new HashSet<>();
-        for (String part : parts) {
-            if (part.isEmpty()) {
-                continue;
-            }
-            // we want only the first "~", if there are more we assume it's part of the value
-            String[] keyValue = part.split("~", 2);
-            TagState tag = new TagState();
-            if (keyValue.length > 0) {
-                tag.key = keyValue[0];
-            }
-            if (keyValue.length == 2) {
-                tag.value = keyValue[1];
-            }
-            tag.tenantLinks = cd.tenantLinks;
-            tag.documentSelfLink = TagFactoryService.generateSelfLink(tag);
-            tagLinks.add(tag.documentSelfLink);
-            tags.add(tag);
-        }
-        tagLinksConsumer.accept(tagLinks);
-
-        if (tags.isEmpty()) {
-            return;
-        }
-
-        Stream<Operation> tagsOps = tags.stream()
-                .map(t -> Operation.createPost(this, TagService.FACTORY_LINK)
-                        .setBody(t));
-        OperationJoin.create(tagsOps).setCompletion((ops, exs) -> {
-            if (exs != null && !exs.isEmpty()) {
-                logWarning("Unable to create tags, reason %s", Utils.toString(exs));
-                return;
-            }
-        }).sendWith(this);
     }
 
     private void createComputeHost(ComputeAllocationTaskState state, ComputeDescription cd,

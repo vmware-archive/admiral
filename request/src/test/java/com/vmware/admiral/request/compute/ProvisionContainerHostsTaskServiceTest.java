@@ -17,23 +17,25 @@ import static org.junit.Assert.assertNotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.UUID;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ResourceType;
-import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
+import com.vmware.photon.controller.model.resources.NetworkService;
+import com.vmware.photon.controller.model.resources.SubnetService;
+import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 
-public class ProvisionContainerHostsTaskServiceTest extends RequestBaseTest {
+public class ProvisionContainerHostsTaskServiceTest extends ComputeRequestBaseTest {
     // AWS instance type.
     private static final String T2_MICRO_INSTANCE_TYPE = "t2.micro";
 
@@ -42,9 +44,9 @@ public class ProvisionContainerHostsTaskServiceTest extends RequestBaseTest {
     public void setUp() throws Throwable {
         DeploymentProfileConfig.getInstance().setTest(true);
         super.setUp();
+        createSubnet();
     }
 
-    @Ignore("Fails around 10 times per day on Bellevue and Bellevue-gerrit jobs. Jira task - https://jira-hzn.eng.vmware.com/browse/VBV-858")
     @Test
     public void testProvisionDockerHostVMsOnAWS() throws Throwable {
 
@@ -66,6 +68,7 @@ public class ProvisionContainerHostsTaskServiceTest extends RequestBaseTest {
         computeDesc.instanceType = T2_MICRO_INSTANCE_TYPE;
         computeDesc.supportedChildren = new ArrayList<>(
                 Arrays.asList(ComputeType.DOCKER_CONTAINER.toString()));
+        computeDesc.tenantLinks = endpoint.tenantLinks;
         computeDesc.customProperties = new HashMap<>();
         computeDesc.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "coreos");
         computeDesc.customProperties.put(ComputeProperties.ENDPOINT_LINK_PROP_NAME,
@@ -73,11 +76,12 @@ public class ProvisionContainerHostsTaskServiceTest extends RequestBaseTest {
         return computeDesc;
     }
 
-    public static RequestBrokerState createRequestState(String resourceDescLink) {
+    private RequestBrokerState createRequestState(String resourceDescLink) {
         RequestBrokerState request = new RequestBrokerState();
         request.resourceType = ResourceType.CONTAINER_HOST_TYPE.getName();
         request.operation = ProvisionContainerHostsTaskService.PROVISION_CONTAINER_HOSTS_OPERATION;
         request.resourceDescriptionLink = resourceDescLink;
+        request.tenantLinks = endpoint.tenantLinks;
         request.resourceCount = 3;
 
         return request;
@@ -89,4 +93,16 @@ public class ProvisionContainerHostsTaskServiceTest extends RequestBaseTest {
         assertNotNull(requestState);
         return requestState;
     }
+
+    private void createSubnet() throws Throwable {
+        SubnetState sub = new SubnetState();
+        sub.id = UUID.randomUUID().toString();
+        sub.name = "subnetworkName";
+        sub.subnetCIDR = "10.0.0.0/10";
+        sub.networkLink = NetworkService.FACTORY_LINK + "/mynet";
+        sub.tenantLinks = endpoint.tenantLinks;
+        sub.endpointLink = endpoint.documentSelfLink;
+        doPost(sub, SubnetService.FACTORY_LINK);
+    }
+
 }
