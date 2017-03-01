@@ -377,6 +377,30 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         assertTrue(value.contains("ListenStream=2376"));
     }
 
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testEnhanceImageInstanceTypeCaseInsensitive() throws JsonProcessingException {
+        context.imageType = "CoreOs";
+        cd.instanceType = "xLarge";
+
+        TestContext ctx = testCreate(1);
+        DeferredResult<ComputeDescription> result = ComputeDescriptionEnhancers
+                .build(host, UriUtils.buildUri(host, "test")).enhance(context,
+                        cd);
+        result.whenComplete((desc, t) -> {
+            if (t != null) {
+                ctx.failIteration(t);
+                return;
+            }
+            ctx.completeIteration();
+        });
+        ctx.await();
+
+        assertNotNull(cd.instanceType);
+        assertNotNull(cd.customProperties.get(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME));
+    }
+
     @Test
     public void testEnhanceFull() {
         cd.customProperties.put(ComputeConstants.CUSTOM_PROP_ENABLE_SSH_ACCESS_NAME,
