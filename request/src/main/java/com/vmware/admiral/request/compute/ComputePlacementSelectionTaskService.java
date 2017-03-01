@@ -15,6 +15,7 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexin
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.LINK;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.LINKS;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.OPTIONAL;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
@@ -35,7 +36,6 @@ import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.QueryUtil;
-import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.request.allocation.filter.AffinityFilters;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter;
@@ -48,12 +48,14 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
+import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
+import com.vmware.photon.controller.model.tasks.QueryUtils.QueryByPages;
 import com.vmware.photon.controller.model.tasks.helpers.ResourcePoolQueryHelper;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.Query.Builder;
 
 /**
  * Task implementing compute placement selection for provisioning a given number of instances of a
@@ -75,7 +77,10 @@ public class ComputePlacementSelectionTaskService extends
             com.vmware.admiral.service.common.TaskServiceDocument<ComputePlacementSelectionTaskState.SubStage> {
 
         public static enum SubStage {
-            CREATED, FILTER, COMPLETED, ERROR;
+            CREATED,
+            FILTER,
+            COMPLETED,
+            ERROR;
         }
 
         @Documentation(description = "The description that defines the requested resource.")
@@ -89,6 +94,10 @@ public class ComputePlacementSelectionTaskService extends
         @Documentation(description = "The resource pool to be used for this placement.")
         @PropertyOptions(usage = { REQUIRED }, indexing = STORE_ONLY)
         public List<String> resourcePoolLinks;
+
+        @Documentation(description = "The endpoint to be used for this placement.")
+        @PropertyOptions(usage = { OPTIONAL }, indexing = STORE_ONLY)
+        public String endpointLink;
 
         @Documentation(description = "Set by the task as result of the selection algorithm filters."
                 + " The number of selected computes matches the given resourceCount.")
@@ -155,7 +164,8 @@ public class ComputePlacementSelectionTaskService extends
     @Override
     protected void validateStateOnStart(ComputePlacementSelectionTaskState state) {
         if (state.resourceCount < 1) {
-            throw new LocalizableValidationException("'resourceCount' must be greater than 0.", "request.resource-count.zero");
+            throw new LocalizableValidationException("'resourceCount' must be greater than 0.",
+                    "request.resource-count.zero");
         }
     }
 
@@ -170,35 +180,31 @@ public class ComputePlacementSelectionTaskService extends
 
     private void selectPlacement(ComputePlacementSelectionTaskState state) {
 
-        Query.Builder queryBuilder = Query.Builder.create()
-                .addKindFieldClause(ComputeDescription.class)
-                .addClause(QueryUtil.addTenantClause(state.tenantLinks))
-                .addCollectionItemClause(
-                        ComputeDescription.FIELD_NAME_SUPPORTED_CHILDREN,
-                        ComputeType.VM_GUEST.toString());
+        Builder builder = Query.Builder.create().addKindFieldClause(ComputeDescription.class);
+        if (state.tenantLinks == null || state.tenantLinks.isEmpty()) {
+            builder.addClause(QueryUtil.addTenantClause(state.tenantLinks));
+        }
+        builder.addCollectionItemClause(ComputeDescription.FIELD_NAME_SUPPORTED_CHILDREN,
+                ComputeType.VM_GUEST.toString());
 
-
-        QueryTask queryTask = QueryTask.Builder.create().setQuery(queryBuilder.build()).build();
+        QueryByPages<SubnetState> queryCDs = new QueryByPages<>(getHost(), builder.build(),
+                SubnetState.class, QueryUtil.getTenantLinks(state.tenantLinks), state.endpointLink);
 
         final List<String> computeDescriptionLinks = new ArrayList<>();
-
-        ServiceDocumentQuery<ComputeDescription> query = new ServiceDocumentQuery<ComputeDescription>(
-                getHost(), ComputeDescription.class);
-        query.query(queryTask, (r) -> {
-            if (r.hasException()) {
-                failTask("Error querying for placement compute description.", r.getException());
-            } else if (r.hasResult()) {
-                computeDescriptionLinks.add(r.getDocumentSelfLink());
-            } else {
-                if (computeDescriptionLinks.isEmpty()) {
-                    failTask(null, new LocalizableValidationException(
-                            "No ComputeDescription found for compute placement",
-                            "request.compute.placement.compute-description.missing"));
-                    return;
-                }
-                proceedComputeSelection(state, computeDescriptionLinks);
-            }
-        });
+        queryCDs.queryLinks(cdLink -> computeDescriptionLinks.add(cdLink))
+                .whenComplete((ignore, e) -> {
+                    if (e != null) {
+                        failTask("Error querying for placement compute description.", e);
+                        return;
+                    }
+                    if (computeDescriptionLinks.isEmpty()) {
+                        failTask(null, new LocalizableValidationException(
+                                "No ComputeDescription found for compute placement",
+                                "request.compute.placement.compute-description.missing"));
+                        return;
+                    }
+                    proceedComputeSelection(state, computeDescriptionLinks);
+                });
     }
 
     private void proceedComputeSelection(ComputePlacementSelectionTaskState state,
@@ -266,7 +272,7 @@ public class ComputePlacementSelectionTaskService extends
             failTask(null, new LocalizableValidationException(
                     "No compute placement candidates found in placement zones: "
                             + state.resourcePoolLinks,
-                            "request.compute.placement.placements.unavailable", state.resourcePoolLinks));
+                    "request.compute.placement.placements.unavailable", state.resourcePoolLinks));
             return;
         }
 

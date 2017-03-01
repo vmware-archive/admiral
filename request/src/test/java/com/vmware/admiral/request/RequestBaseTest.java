@@ -348,6 +348,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 hostDesc = TestRequestStateFactory.createDockerHostDescription();
                 hostDesc.instanceAdapterReference = UriUtils.buildUri(host,
                         MockComputeHostInstanceAdapter.SELF_LINK);
+                hostDesc.endpointLink = endpoint != null ? endpoint.documentSelfLink : null;
                 hostDesc = doPost(hostDesc,
                         ComputeDescriptionService.FACTORY_LINK);
                 assertNotNull(hostDesc);
@@ -378,6 +379,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 vmGuestComputeDescription = TestRequestStateFactory
                         .createComputeDescriptionForVmGuestChildren();
                 vmGuestComputeDescription.authCredentialsLink = endpoint.authCredentialsLink;
+                vmGuestComputeDescription.endpointLink = endpoint.documentSelfLink;
                 vmGuestComputeDescription = getOrCreateDocument(vmGuestComputeDescription,
                         ComputeDescriptionService.FACTORY_LINK);
                 assertNotNull(vmGuestComputeDescription);
@@ -429,6 +431,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 : null;
         containerHost.tenantLinks = computeDesc.tenantLinks;
         containerHost.descriptionLink = computeDesc.documentSelfLink;
+        containerHost.endpointLink = computeDesc.endpointLink;
         containerHost.powerState = com.vmware.photon.controller.model.resources.ComputeService.PowerState.ON;
 
         if (containerHost.customProperties == null) {
@@ -482,6 +485,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
         vmHostComputeState.resourcePoolLink = createComputeResourcePool().documentSelfLink;
         vmHostComputeState.descriptionLink = createComputeDescriptionForVmGuestChildren().documentSelfLink;
         vmHostComputeState.type = ComputeType.VM_HOST;
+        vmHostComputeState.endpointLink = endpoint.documentSelfLink;
         vmHostComputeState = getOrCreateDocument(vmHostComputeState, ComputeService.FACTORY_LINK);
         assertNotNull(vmHostComputeState);
         if (generateId) {
