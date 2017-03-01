@@ -16,17 +16,10 @@ import { HttpModule } from '@angular/http';
 import { ClarityModule } from 'clarity-angular';
 import { AppComponent } from './app.component';
 import { ROUTING } from "./app.routing";
-import { HomeComponent } from "./home/home.component";
-import { AboutComponent } from "./about/about.component";
-import { StatsComponent } from "./stats/stats.component";
+import { ADMIRAL_DECLARATIONS } from './admiral';
 
 @NgModule({
-    declarations: [
-        AppComponent,
-        AboutComponent,
-        HomeComponent,
-        StatsComponent
-    ],
+    declarations: ADMIRAL_DECLARATIONS,
     imports: [
         BrowserModule,
         FormsModule,
