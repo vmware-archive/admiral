@@ -19,7 +19,6 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputeProvisionTaskState;
 import com.vmware.admiral.request.compute.ProvisionContainerHostsTaskService.ProvisionContainerHostsTaskState.SubStage;
@@ -28,11 +27,9 @@ import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.ComputeProperties;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
-import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
@@ -73,10 +70,6 @@ public class ProvisionContainerHostsTaskService
                         PropertyIndexingOption.STORE_ONLY })
         public String endpointLink;
 
-        @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT },
-                indexing = { PropertyIndexingOption.STORE_ONLY })
-        public DockerHostDescription hostDescription;
-
         /** (Optional- default 1) Number of resources to provision. */
         @Documentation(description = "Number of resources to provision.")
         @PropertyOptions(usage = { PropertyUsageOption.SINGLE_ASSIGNMENT }, indexing = {
@@ -97,13 +90,6 @@ public class ProvisionContainerHostsTaskService
         public String computeDescriptionLink;
     }
 
-    public static class DockerHostDescription extends ResourceState {
-        public String instanceType;
-        public String imageType;
-        public int cpu;
-        public int memory;
-    }
-
     public ProvisionContainerHostsTaskService() {
         super(ProvisionContainerHostsTaskState.class, SubStage.class, DISPLAY_NAME);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
@@ -116,12 +102,9 @@ public class ProvisionContainerHostsTaskService
     @Override
     protected void validateStateOnStart(ProvisionContainerHostsTaskState state)
             throws IllegalArgumentException {
-        if (state.computeDescriptionLink == null && state.hostDescription == null) {
+        if (state.computeDescriptionLink == null) {
             throw new LocalizableValidationException(
-                    "'computeDescriptionLink' or 'hostDescription' is required", "request.provision.links.empty");
-        }
-        if (state.hostDescription != null && (state.endpointLink == null || state.endpointLink.isEmpty())) {
-            throw new LocalizableValidationException("'endpointLink' must not be empty", "request.provision.endpoint-link.empty");
+                    "'computeDescriptionLink' is required", "request.provision.links.empty");
         }
 
         if (state.resourceCount < 1) {
@@ -161,11 +144,7 @@ public class ProvisionContainerHostsTaskService
     protected void handleStartedStagePatch(ProvisionContainerHostsTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:
-            if (state.computeDescriptionLink == null) {
-                createComputeDescription(state, SubStage.DESCRIPTION_CREATED);
-            } else {
-                processComputeDescription(state, SubStage.DESCRIPTION_CREATED, null);
-            }
+            processComputeDescription(state, SubStage.DESCRIPTION_CREATED, null);
             break;
         case DESCRIPTION_CREATED:
             createAllocationTask(state, this.endpointState);
@@ -186,40 +165,6 @@ public class ProvisionContainerHostsTaskService
         default:
             break;
         }
-    }
-
-    private void createComputeDescription(ProvisionContainerHostsTaskState state,
-            SubStage nextStage) {
-
-        logInfo("Creating compute description: %s", state.hostDescription.name);
-        ComputeDescription cd = new ComputeDescription();
-        cd.name = state.hostDescription.name;
-        cd.supportedChildren = new ArrayList<>(
-                Arrays.asList(ComputeType.DOCKER_CONTAINER.name()));
-
-        cd.instanceType = state.hostDescription.instanceType;
-        cd.tenantLinks = state.tenantLinks;
-        cd.customProperties = new HashMap<>();
-        cd.customProperties
-                .put(ComputeAllocationTaskState.ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME, "true");
-        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME,
-                state.hostDescription.imageType);
-
-        sendRequest(Operation.createPost(this, ComputeDescriptionService.FACTORY_LINK)
-                .setBody(cd)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask(String.format("Can't create compute description in task: %s",
-                                getSelfLink()), e);
-                        return;
-                    }
-                    String descLink = o.getBody(ComputeDescription.class).documentSelfLink;
-
-                    logInfo("ComputeDescription created: %s", descLink);
-                    proceedTo(nextStage, s -> {
-                        s.computeDescriptionLink = descLink;
-                    });
-                }));
     }
 
     private void processComputeDescription(ProvisionContainerHostsTaskState state,
