@@ -27,6 +27,7 @@
       "resources": "Resources",
       "projects": "Projects",
       "containers": "Containers",
+      "containers": "Containers",
       "applications": "Applications",
       "networks": "Networks",
       "volumes": "Volumes",
@@ -300,7 +301,8 @@
           "updateTitle": "Update Project",
           "name": "Name",
           "create": "Create",
-          "update": "Update"
+          "update": "Update",
+          "publicCheckboxLabel": "Make this project public"
         },
         "editNetwork": {
           "newLabel": "Add Network",
@@ -666,6 +668,7 @@
         "project": {
           "name": "Project",
           "description": "Description",
+          "public": "Public",
           "private": "Private",
           "create": "Create Project",
           "actions": {

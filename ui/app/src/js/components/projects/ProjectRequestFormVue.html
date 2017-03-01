@@ -9,17 +9,24 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div class="project-form">
-  <div class="title">{{titleText}}</div>
-  <project-definition-form v-ref:project-edit-form
-                           v-bind:model="model"
-                           v-on:required-input-changed="requiredInputChanged">
-  </project-definition-form>
-  <div class="control-btns">
+<modal :show="true"
+       @close="$emit('cancel')">
+  <span slot="title">{{titleText}}</span>
+  <div class="project-form" slot="body">
+    <alert alert-type="danger" v-bind:show-alert="hasError"
+                               v-bind:alert-message="error"></alert>
+    <project-definition-form v-ref:project-edit-form
+                             v-bind:model="model"
+                             v-on:required-input-changed="requiredInputChanged">
+    </project-definition-form>
+  </div>
+  <div class="control-btns" slot="footer">
+    <button class="btn btn-outline" type="button" @click="$emit('cancel')">{{i18n("cancel")}}</button>
     <button class="btn btn-primary"
             v-bind:class="{'loading': operationInProgress}"
             v-bind:disabled="disableCreateButton"
             v-on:click="createOrUpdateProject()">{{createOrUpdateButtonText}}<i
-                class="fa fa-spinner fa-spin loader-inline"></i></button>
+                class="fa fa-spinner fa-spin loader-inline"></i>
+    </button>
   </div>
-</div>
+</modal>

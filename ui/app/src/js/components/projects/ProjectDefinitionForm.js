@@ -33,7 +33,9 @@ var ProjectDefinitionForm = Vue.extend({
 
   data: function() {
     return {
-      projectName: ''
+      projectName: '',
+      projectDescription: '',
+      publicProject: false
     };
   },
 
@@ -41,11 +43,18 @@ var ProjectDefinitionForm = Vue.extend({
 
     getProjectDefinition: function() {
       var project = {
-        name: this.projectName
+        name: this.projectName,
+        isPublic: this.publicProject
       };
+
       if (this.model && this.model.documentSelfLink) {
         project.documentSelfLink = this.model.documentSelfLink;
       }
+
+      if (this.projectDescription) {
+        project.description = this.projectDescription;
+      }
+
       return project;
     },
 
@@ -73,6 +82,8 @@ var ProjectDefinitionForm = Vue.extend({
 
     fillInputsFromData: function(project) {
       this.projectName = (project && project.name) || '';
+      this.projectDescription = (project && project.description) || '';
+      this.publicProject = (project && project.isPublic) || false;
     }
   },
 

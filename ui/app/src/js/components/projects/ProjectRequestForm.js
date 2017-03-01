@@ -19,6 +19,9 @@ var ProjectRequestForm = Vue.extend({
     model: {
       required: true,
       type: Object
+    },
+    error: {
+      required: true
     }
   },
   data: function() {
@@ -28,6 +31,9 @@ var ProjectRequestForm = Vue.extend({
     };
   },
   computed: {
+    hasError: function() {
+      return this.error && this.error.trim() !== '';
+    },
     isUpdate: function() {
       return this.model && this.model.documentSelfLink;
     },

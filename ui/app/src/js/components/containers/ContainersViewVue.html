@@ -222,19 +222,11 @@
     </div>
   </div>
 
-  <div class="mask" v-if="creatingOrUpdatingProject"></div>
-  <div class="create-project closable-view" v-if="creatingOrUpdatingProject"
-       transition="slide-and-fade">
-    <alert alert-type="danger" v-bind:show-alert="hasResourceCreateError"
-                             v-bind:alert-message="resourceCreateError"></alert>
-    <a class="close-button" v-on:click="goBackFromProjects($event)">
-      <i class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span>
-    </a>
-
-    <div class="content">
-      <project-request-form v-bind:model="model.creatingResource"></project-request-form>
-    </div>
-  </div>
+  <project-request-form v-if="creatingOrUpdatingProject"
+                        :model="model.creatingResource"
+                        :error="resourceCreateError"
+                        @cancel="goBackFromProjects($event)">
+  </project-request-form>
 
   <div class="mask" v-if="creatingNetwork"></div>
   <div class="create-network closable-view" v-if="creatingNetwork" transition="slide-and-fade">

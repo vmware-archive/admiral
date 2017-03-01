@@ -52,6 +52,14 @@ templateHelpers.register = function() {
     }
   });
 
+  Handlebars.registerHelper('booleanToYesNo', function(booleanValue) {
+    if (booleanValue) {
+      return i18n.t('app.template.list.true'); // yes
+    } else {
+      return i18n.t('app.template.list.false'); // no
+    }
+  });
+
   Handlebars.registerHelper('containerStatus', utils.containerStatusDisplay);
 
   Handlebars.registerHelper('formatBytes', formatUtils.formatBytes);
@@ -142,6 +150,14 @@ templateHelpers.register = function() {
     if (timestamp) {
       // Formats based on locale, like August 27, 2015 2:25 PM
       return moment(timestamp).format('LLL');
+    }
+  });
+
+  Vue.filter('booleanToYesNo', function(booleanValue) {
+    if (booleanValue) {
+      return i18n.t('app.template.list.true'); // yes
+    } else {
+      return i18n.t('app.template.list.false'); // no
     }
   });
 
