@@ -190,20 +190,19 @@ public class ComputePlacementSelectionTaskService extends
         QueryByPages<SubnetState> queryCDs = new QueryByPages<>(getHost(), builder.build(),
                 SubnetState.class, QueryUtil.getTenantLinks(state.tenantLinks), state.endpointLink);
 
-        final List<String> computeDescriptionLinks = new ArrayList<>();
-        queryCDs.queryLinks(cdLink -> computeDescriptionLinks.add(cdLink))
-                .whenComplete((ignore, e) -> {
+        queryCDs.collectLinks(Collectors.toSet())
+                .whenComplete((cdLinks, e) -> {
                     if (e != null) {
                         failTask("Error querying for placement compute description.", e);
                         return;
                     }
-                    if (computeDescriptionLinks.isEmpty()) {
+                    if (cdLinks.isEmpty()) {
                         failTask(null, new LocalizableValidationException(
                                 "No ComputeDescription found for compute placement",
                                 "request.compute.placement.compute-description.missing"));
                         return;
                     }
-                    proceedComputeSelection(state, computeDescriptionLinks);
+                    proceedComputeSelection(state, cdLinks);
                 });
     }
 
