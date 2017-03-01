@@ -144,6 +144,14 @@ AppComputeStore = Reflux.createStore({
   onOpenView: function(viewName) {
     updateCenterViewIfNeeded.call(this, viewName, {});
     updateSideView.call(this, viewName);
+  },
+
+  onOpenToolbarEventLogs: function(highlightedItemLink) {
+    if (this.data.centerView &&
+        this.data.centerView.name === constants.VIEWS.RESOURCES.VIEWS.MACHINES.name) {
+      actions.MachinesContextToolbarActions.openToolbarEventLogs(highlightedItemLink);
+      return;
+    }
   }
 });
 

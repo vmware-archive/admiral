@@ -12,6 +12,7 @@
 import * as actions from 'actions/Actions';
 import services from 'core/services';
 import constants from 'core/constants';
+import links from 'core/links';
 import utils from 'core/utils';
 import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
 
@@ -235,10 +236,15 @@ let RequestsStore = Reflux.createStore({
       if (req && utils.isRequestFinished(req)) {
         // remove from active
         activeRequests.splice(idxReq, 1);
-
         if (req.requestProgressByComponent.hasOwnProperty('Compute Provision')) {
-          // Host Created
-          return this.hostOperationSuccess();
+          if (resourceLinks && resourceLinks.length &&
+              resourceLinks[0].indexOf(links.COMPOSITE_COMPONENTS) !== -1) {
+            // Machines Created
+            return this.machineOperationSuccess();
+          } else {
+            // Host Created
+            return this.hostOperationSuccess();
+          }
         } else if (req.requestProgressByComponent.hasOwnProperty('Host Removal')) {
           // Host Removed
           return this.hostOperationSuccess();
@@ -315,6 +321,10 @@ let RequestsStore = Reflux.createStore({
         }
       }
     }
+  },
+
+  machineOperationSuccess: function() {
+    actions.MachineActions.operationCompleted();
   },
 
   hostOperationSuccess: function() {
