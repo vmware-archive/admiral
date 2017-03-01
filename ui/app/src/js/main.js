@@ -33,6 +33,10 @@ var appInitializer = function(App, Store) {
 };
 
 var updateHeaderLink = function(registryUrl) {
+  if (utils.isApplicationEmbedded() ||
+      utils.isApplicationSingleView()) {
+      return;
+  }
   if (registryUrl) {
     $('body').append($(VICTemplate()));
     $('body > .header .registry-link').attr('href', registryUrl);
