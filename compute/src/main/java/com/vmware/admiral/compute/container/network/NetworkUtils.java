@@ -233,7 +233,9 @@ public class NetworkUtils {
                                             networkName, container.parentLink,
                                             Utils.toString(r.getException()));
                                 } else if (r.hasResult()) {
-                                    networkStates.add(r.getResult());
+                                    if (networkName.equals(r.getResult().name)) {
+                                        networkStates.add(r.getResult());
+                                    }
                                 } else {
                                     if (networkStates.size() == 1) {
                                         patchConnectedContainersCountIncrement(host,
@@ -263,7 +265,7 @@ public class NetworkUtils {
 
         QueryTask.Query nameClause = new QueryTask.Query()
                 .setTermPropertyName(ContainerNetworkState.FIELD_NAME_NAME)
-                .setTermMatchValue(networkName)
+                .setCaseInsensitiveTermMatchValue(networkName)
                 .setTermMatchType(MatchType.TERM)
                 .setOccurance(Occurance.MUST_OCCUR);
 

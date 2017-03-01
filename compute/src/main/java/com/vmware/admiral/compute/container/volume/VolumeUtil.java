@@ -230,7 +230,7 @@ public class VolumeUtil {
 
         QueryTask.Query nameClause = new QueryTask.Query()
                 .setTermPropertyName(ContainerVolumeState.FIELD_NAME_NAME)
-                .setTermMatchValue(volumeName)
+                .setCaseInsensitiveTermMatchValue(volumeName)
                 .setTermMatchType(MatchType.TERM)
                 .setOccurance(Occurance.MUST_OCCUR);
 

@@ -216,7 +216,9 @@ public class ContainerVolumeProvisionTaskService
                                             + volumeName + "' in host '" + host.documentSelfLink
                                             + "'!", r.getException());
                                 } else if (r.hasResult()) {
-                                    volumeStates.add(r.getResult());
+                                    if (volumeName.equals(r.getResult().name)) {
+                                        volumeStates.add(r.getResult());
+                                    }
                                 } else {
                                     if (volumeStates.size() == 1) {
                                         callback.accept(volumeStates.get(0));

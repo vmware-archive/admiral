@@ -32,7 +32,7 @@ public class ClusterServiceLinkAffinityHostFilterTest extends BaseAffinityHostFi
     @Test
     public void testSelectHostWhenNoClustering() throws Throwable {
         // create composite component
-        CompositeComponent component = createComponent("app-with-links-test");
+        CompositeComponent component = createComponent("App-With-Links-Test");
 
         // create 2 container descriptions with links wordpress -> mysql
         ContainerDescription desc1 = createDescription("mysql", null);
@@ -52,7 +52,7 @@ public class ClusterServiceLinkAffinityHostFilterTest extends BaseAffinityHostFi
     @Test
     public void testSelectHostExistingContainerWithLink() throws Throwable {
         // create composite component
-        CompositeComponent component = createComponent("app-with-links-test");
+        CompositeComponent component = createComponent("App-With-Links-Test");
 
         // create 2 container descriptions with links wordpress -> mysql
         ContainerDescription desc1 = createDescription("mysql", null);
@@ -81,7 +81,7 @@ public class ClusterServiceLinkAffinityHostFilterTest extends BaseAffinityHostFi
     @Test
     public void testSelectHostExistingContainerWithLinkNoAlias() throws Throwable {
         // create composite component
-        CompositeComponent component = createComponent("app-with-links-test");
+        CompositeComponent component = createComponent("App-With-Links-Test");
 
         // create 2 container descriptions with links wordpress -> mysql
         ContainerDescription desc1 = createDescription("mysql", null);
@@ -111,7 +111,7 @@ public class ClusterServiceLinkAffinityHostFilterTest extends BaseAffinityHostFi
     @Test
     public void testSelectHostExistingContainerWithoutLink() throws Throwable {
         // create composite component
-        CompositeComponent component = createComponent("app-with-links-test");
+        CompositeComponent component = createComponent("App-With-Links-Test");
 
         // create 2 container descriptions (no links between them)
         ContainerDescription desc1 = createDescription("mysql", null);
