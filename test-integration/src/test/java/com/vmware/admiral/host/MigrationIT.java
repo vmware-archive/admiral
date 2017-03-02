@@ -54,7 +54,6 @@ public class MigrationIT extends RequestBaseTest {
     @Before
     public void setUp() throws Throwable {
         MockDockerAdapterService.resetContainers();
-
         startServices(host);
         host.waitForServiceAvailable(ComputeService.FACTORY_LINK, ResourcePoolService.FACTORY_LINK,
                 ElasticPlacementZoneConfigurationService.SELF_LINK,
@@ -64,8 +63,8 @@ public class MigrationIT extends RequestBaseTest {
         startServices(targetHost);
         targetHost.waitForServiceAvailable(ComputeService.FACTORY_LINK,
                 NodeMigrationService.SELF_LINK, ResourcePoolService.FACTORY_LINK);
-
         startMigrationService(targetHost);
+        targetHost.addPrivilegedService(NodeMigrationService.class);
 
         setUpDockerHostAuthentication();
         // setup Docker Host:

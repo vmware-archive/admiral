@@ -35,7 +35,7 @@ public class NodeMigrationService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.MIGRATION;
 
     private static final int MIGRATION_CHECK_DELAY_SECONDS = 6;
-    private static final int MIGRATION_CHECK_RETRIES = 100;
+    private static final int MIGRATION_CHECK_RETRIES = 200;
 
     public Set<String> services = ConcurrentHashMap.newKeySet();
 
@@ -141,7 +141,7 @@ public class NodeMigrationService extends StatelessService {
             migrationState.destinationFactoryLink = currentService;
             migrationState.sourceFactoryLink = currentService;
 
-            sendRequest(Operation.createPost(this, MigrationTaskService.FACTORY_LINK)
+            Operation operation = Operation.createPost(this, MigrationTaskService.FACTORY_LINK)
                     .setBody(migrationState)
                     .setCompletion((o, ex) -> {
                         if (ex != null) {
@@ -161,7 +161,9 @@ public class NodeMigrationService extends StatelessService {
                                         migrationTasksInProgress, hasError, post, callback);
                             }
                         }
-                    }));
+                    });
+            super.setAuthorizationContext(operation, this.getSystemAuthorizationContext());
+            sendRequest(operation);
         });
     }
 
