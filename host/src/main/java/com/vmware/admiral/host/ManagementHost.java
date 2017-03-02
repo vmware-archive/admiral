@@ -28,6 +28,7 @@ import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.admiral.service.common.ConfigurationService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
+import com.vmware.admiral.service.common.EventTopicRegistrationBootstrapService;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionManager;
 import com.vmware.admiral.service.common.NodeMigrationService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
@@ -212,6 +213,9 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
 
         registerForServiceAvailability(CaSigningCertService.startTask(this), true,
                 CaSigningCertService.FACTORY_LINK);
+
+        registerForServiceAvailability(EventTopicRegistrationBootstrapService.startTask(this), true,
+                EventTopicRegistrationBootstrapService.FACTORY_LINK);
 
         HostInitComputeServicesConfig.startServices(this, false);
         HostInitComputeBackgroundServicesConfig.startServices(this);
