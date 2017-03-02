@@ -51,7 +51,6 @@ public class ComputeConstants {
     public static final String OVA_URI = "ova.uri";
     public static final String OVF_PROP_PREFIX = "ovf.prop:";
     public static final String OVF_COREOS_CLOUD_INIT_PROP = "guestinfo.coreos.config.data";
-    public static final String OVF_LINUX_CLOUD_INIT_PROP = "user-data";
 
     public enum AdapterType {
         INSTANCE_ADAPTER("instance-adapter"),
