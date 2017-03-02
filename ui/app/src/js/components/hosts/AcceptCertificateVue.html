@@ -9,7 +9,7 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<modal :show="true" size="lg" :closable="false" :has-header="false">
+<modal :show="true" :closable="false" :has-header="false">
   <span slot="title"></span>
   <div slot="body">
     <div class="certificate-warning">
@@ -55,7 +55,7 @@
             @click="hideCertificate($event)">{{i18n("app.host.details.hideCertificate")}}</button>
     <button class="btn btn-outline cancelBtn" type="button" data-cmd="cancel-accept-certificate"
             @click="$emit('cancel')">{{i18n("cancel")}}</button>
-    <button class="btn btn-primary confirmAddHost" type="button" data-cmd="confirm-accept-certificate"
+    <button class="btn btn-primary" type="button" data-cmd="confirm-accept-certificate"
             @click="$emit('confirm')">{{i18n("ok")}}</button>
   </div>
 </modal>
