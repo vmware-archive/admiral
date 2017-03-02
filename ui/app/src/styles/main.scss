@@ -985,10 +985,8 @@ $main-list-view-right: 10px;
   }
 }
 
-.app-view > .side-view > .nav-bar {
-  padding-top: 15px;
-  border-radius: 2px 0 0 2px;
-  @include box-shadow(inset -1px 0px 7px 0px rgba(0, 0, 0, 0.20));
+.app-view > .side-view > .sidenav {
+  height: 100%;
 }
 
 .app-view > .side-view .nav-item:not(.inner) > span {

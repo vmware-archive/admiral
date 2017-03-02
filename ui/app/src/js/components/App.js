@@ -12,7 +12,6 @@
 import AppVue from 'components/AppVue.html';
 import AppMixin from 'components/AppMixin';
 import Home from 'components/Home';//eslint-disable-line
-import Navigation from 'components/common/Navigation';//eslint-disable-line
 import HostsView from 'components/hosts/HostsView';//eslint-disable-line
 import TemplatesView from 'components/templates/TemplatesView';//eslint-disable-line
 import PlacementsView from 'components/placements/PlacementsView';//eslint-disable-line
