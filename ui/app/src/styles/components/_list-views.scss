@@ -734,6 +734,17 @@
     }
   }
 
+  .create-container > .content, .create-project  > .content,
+  .create-network > .content, .create-volume > .content,
+  .create-kubernetes > .content {
+    top: 35px;
+    left: 20px;
+
+    .title {
+      font-size: 26px;
+    }
+  }
+
   .closable-view {
     background-color: $main_background_color;
 
@@ -959,7 +970,7 @@ $elements-side-margin: $elements-margin / 2;
   }
 
   .template-details-header .title {
-    font-size: 24px;
+    font-size: 26px;
     line-height: 50px;
     float: left;
     max-width: 50%;
