@@ -41,5 +41,16 @@
       <router-outlet></router-outlet>
     </div>
   </div>
-  <compute-stats [cpuUsage]="99" [memUsage]="1024" [memLimit]="2048" [networkIn]="120" [networkOut]="329"></compute-stats>
+  <!--<compute-stats [cpuUsage]="99" [memUsage]="1024" [memLimit]="2048" [networkIn]="120" [networkOut]="329"></compute-stats>-->
+  <button (click)="opened = true" style="margin-top:20px; margin-left: 20px">Open modal</button>
+  <clr-modal [(clrModalOpen)]="opened" breakOutModal>
+    <h3 class="modal-title">I have a nice title</h3>
+    <div class="modal-body">
+      <p>But not much to say...</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" (click)="opened = false">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="opened = false">Ok</button>
+    </div>
+  </clr-modal>
 </clr-main-container>

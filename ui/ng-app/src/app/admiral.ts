@@ -14,11 +14,13 @@ import { TranslatePipe } from './utils/i18n.pipe';
 import { HomeComponent } from "./home/home.component";
 import { AboutComponent } from "./about/about.component";
 import { StatsComponent } from "./stats/stats.component";
+import { BreakOutModalDirective } from "./directives/shared/break-out-modal.directive";
 
 export const ADMIRAL_DECLARATIONS = [
   AppComponent,
   TranslatePipe,
   HomeComponent,
   AboutComponent,
-  StatsComponent
+  StatsComponent,
+  BreakOutModalDirective
 ];
