@@ -39,6 +39,9 @@ public interface ManagementUriParts {
     String EXTENSIBILITY_MANAGER = CONFIG + "/extensibility-manager";
     String EXTENSIBILITY_CALLBACKS = CONFIG + "/extensibility-callbacks";
 
+    String EVENT_TOPIC_REGISTRY = CONFIG + "/event-topic";
+    String EVENT_TOPIC_REGISTRY_BOOTSTRAP = CONFIG + "/event-topic-registry";
+
     // Resources:
     String DESCRIPTION_SUFFIX = "-descriptions";
     String CLONE_SUFFIX = "-clone";
