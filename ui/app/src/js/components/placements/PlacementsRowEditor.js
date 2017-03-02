@@ -19,6 +19,7 @@ import Alert from 'components/common/Alert';
 import constants from 'core/constants';
 import utils from 'core/utils';
 import { formatUtils } from 'admiral-ui-common';
+import ft from 'core/ft';
 
 const placementZoneManageOptions = [{
   id: 'pz-create',
@@ -361,7 +362,12 @@ class GroupInput {
         })
       });
 
-      this.groupInput.setManageOptions(GROUPS_MANAGE_OPTIONS);
+      // Hide 'Manage' and 'New' option if projects are not displayed
+      // in the context toolbar
+      if (!ft.showProjectsInNavigation()) {
+        this.groupInput.setManageOptions(GROUPS_MANAGE_OPTIONS);
+      }
+
       this.groupInput.setManageOptionSelectCallback(function(option) {
         if (option.id === 'group-create') {
           PlacementContextToolbarActions.createResourceGroup();
