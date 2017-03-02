@@ -20,7 +20,7 @@
 
   <div class="app-view" v-bind:class="[sideClass]" v-if="model.centerView">
     <div class="side-view">
-      <navigation v-bind:model="model.sideView" app="admiral"></navigation>
+      <sidenav :model="model.sideView" application="admiral"></sidenav>
     </div>
     <div v-if="model.centerView.name === constants.VIEWS.HOME.name"
          class="center-view" transition="fade">
