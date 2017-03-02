@@ -29,6 +29,7 @@ import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.admiral.service.common.ConfigurationService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionManager;
+import com.vmware.admiral.service.common.NodeMigrationService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.FactoryService;
@@ -146,6 +147,9 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         log(Level.INFO, "**** Dynamic service loading enabled. ****");
         log(Level.INFO, "**** Migration service starting... ****");
         super.startFactory(new MigrationTaskService());
+        // The service need to be privileged in order to not get forbidden during the migration
+        // process
+        super.addPrivilegedService(NodeMigrationService.class);
         // Clean up authorization context to avoid privileged access.
         setAuthorizationContext(null);
 
