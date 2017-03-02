@@ -19,6 +19,7 @@ import ResourceGroupsList from 'components/resourcegroups/ResourceGroupsList'; /
 import DeploymentPoliciesList from 'components/deploymentpolicies/DeploymentPoliciesList'; //eslint-disable-line
 import { PlacementActions, PlacementContextToolbarActions } from 'actions/Actions';
 import utils from 'core/utils';
+import ft from 'core/ft';
 
 var PlacementsView = Vue.extend({
   template: PlacementsViewVue,
@@ -55,6 +56,12 @@ var PlacementsView = Vue.extend({
     },
     itemsCount: function() {
       return this.model.placements && this.model.placements.items.length;
+    },
+    isStandaloneMode: function() {
+      return !utils.isApplicationEmbedded();
+    },
+    showProjectsToolbarItem: function() {
+      return this.isStandaloneMode && !ft.showProjectsInNavigation();
     }
   },
   attached: function() {
@@ -66,7 +73,7 @@ var PlacementsView = Vue.extend({
     this.placementsList.setDeleteCallback(PlacementActions.deletePlacement);
     this.placementsList.setEditCallback(PlacementActions.editPlacement);
 
-    if (this.isStandaloneMode()) {
+    if (this.isStandaloneMode) {
       $('th#deploymentPolicy').hide();
       $('th.th-wide').css('width', '15%');
       $('th.th-medium').css('width', '13%');
@@ -90,10 +97,7 @@ var PlacementsView = Vue.extend({
     openToolbarResourceGroups: PlacementContextToolbarActions.openToolbarResourceGroups,
     openToolbarDeploymentPolicies: PlacementContextToolbarActions.openToolbarDeploymentPolicies,
     closeToolbar: PlacementContextToolbarActions.closeToolbar,
-    refresh: PlacementActions.openPlacements,
-    isStandaloneMode: function() {
-      return !utils.isApplicationEmbedded();
-    }
+    refresh: PlacementActions.openPlacements
   }
 });
 

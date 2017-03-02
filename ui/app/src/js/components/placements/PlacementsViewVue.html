@@ -32,14 +32,14 @@
         v-on:open="openToolbarPlacementZones()" v-on:close="closeToolbar()">
       </context-sidepanel-toolbar-item>
 
-      <context-sidepanel-toolbar-item v-if="isStandaloneMode()"
+      <context-sidepanel-toolbar-item v-if="showProjectsToolbarItem"
         v-bind:active="activeContextItem === 'resourceGroups'"
         v-bind:icon-class="'fa fa-users'"
         v-bind:label="i18n('app.group.contextPanelTooltip')"
         v-on:open="openToolbarResourceGroups()" v-on:close="closeToolbar()">
       </context-sidepanel-toolbar-item>
 
-      <context-sidepanel-toolbar-item v-if="!isStandaloneMode()"
+      <context-sidepanel-toolbar-item v-if="!isStandaloneMode"
         v-bind:active="activeContextItem === 'deploymentPolicies'"
         v-bind:icon-class="'fa fa-file-text'"
         v-bind:label="i18n('app.deploymentPolicy.contextPanelTooltip')"
@@ -50,7 +50,7 @@
     <div slot="content" class="content">
       <placement-zones-view v-if="activeContextItem === 'placementZones'"
         v-bind:model="model.contextView.activeItem.data"></placement-zones-view>
-      <resource-groups-list v-if="isStandaloneMode() && activeContextItem === 'resourceGroups'"
+      <resource-groups-list v-if="isStandaloneMode && activeContextItem === 'resourceGroups'"
         v-bind:model="model.contextView.activeItem.data"></resource-groups-list>
       <deployment-policies-list v-if="activeContextItem === 'deploymentPolicies'"
         v-bind:model="model.contextView.activeItem.data"></deployment-policies-list>
