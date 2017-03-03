@@ -66,6 +66,7 @@ import com.vmware.admiral.compute.profile.ComputeProfileService;
 import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
 import com.vmware.admiral.compute.profile.NetworkProfileService;
 import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile;
+import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile.IsolationSupportType;
 import com.vmware.admiral.compute.profile.ProfileService;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
 import com.vmware.admiral.compute.profile.StorageProfileService;
@@ -86,6 +87,7 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
+import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.ResourceState;
@@ -360,33 +362,33 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
                 documentLifeCycle);
     }
 
-    protected void createEnvironment(ComputeProfile computeProfile, NetworkProfile networkProfile,
+    protected void createProfile(ComputeProfile computeProfile, NetworkProfile networkProfile,
             StorageProfile storageProfile) {
         List<ServiceDocument> docs = new ArrayList<>();
         String id = UUID.randomUUID().toString();
-        ProfileState env = new ProfileState();
-        env.name = "wordpressEnv";
-        env.documentSelfLink = UriUtils.buildUriPath(ProfileService.FACTORY_LINK, id);
-        env.endpointLink = endpoint.documentSelfLink;
-        env.tenantLinks = getTenantLinks();
-        docs.add(env);
+        ProfileState profile = new ProfileState();
+        profile.name = "wordpressEnv";
+        profile.documentSelfLink = UriUtils.buildUriPath(ProfileService.FACTORY_LINK, id);
+        profile.endpointLink = endpoint.documentSelfLink;
+        profile.tenantLinks = getTenantLinks();
+        docs.add(profile);
 
         if (computeProfile != null) {
-            env.computeProfileLink = UriUtils.buildUriPath(ComputeProfileService.FACTORY_LINK, id);
-            computeProfile.documentSelfLink = env.computeProfileLink;
-            computeProfile.tenantLinks = env.tenantLinks;
+            profile.computeProfileLink = UriUtils.buildUriPath(ComputeProfileService.FACTORY_LINK, id);
+            computeProfile.documentSelfLink = profile.computeProfileLink;
+            computeProfile.tenantLinks = profile.tenantLinks;
             docs.add(computeProfile);
         }
         if (networkProfile != null) {
-            env.networkProfileLink = UriUtils.buildUriPath(NetworkProfileService.FACTORY_LINK, id);
-            networkProfile.documentSelfLink = env.networkProfileLink;
-            networkProfile.tenantLinks = env.tenantLinks;
+            profile.networkProfileLink = UriUtils.buildUriPath(NetworkProfileService.FACTORY_LINK, id);
+            networkProfile.documentSelfLink = profile.networkProfileLink;
+            networkProfile.tenantLinks = profile.tenantLinks;
             docs.add(networkProfile);
         }
         if (storageProfile != null) {
-            env.storageProfileLink = UriUtils.buildUriPath(StorageProfileService.FACTORY_LINK, id);
-            storageProfile.documentSelfLink = env.storageProfileLink;
-            storageProfile.tenantLinks = env.tenantLinks;
+            profile.storageProfileLink = UriUtils.buildUriPath(StorageProfileService.FACTORY_LINK, id);
+            storageProfile.documentSelfLink = profile.storageProfileLink;
+            storageProfile.tenantLinks = profile.tenantLinks;
             docs.add(storageProfile);
         }
 
@@ -708,6 +710,25 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         np.subnetLinks = new ArrayList<>();
         np.tagLinks = tagLinks;
         np.subnetLinks.add(subnetLink);
+        return np;
+    }
+
+    protected NetworkProfile createIsolatedNetworkProfile(String isolatedNetworkName) throws Exception {
+        QueryTask.Query query = QueryTask.Query.Builder.create()
+                .addFieldClause(NetworkState.FIELD_NAME_ID, isolatedNetworkName)
+                .build();
+        QueryTask qt = QueryTask.Builder.createDirectTask().setQuery(query).build();
+        String responseJson = sendRequest(SimpleHttpsClient.HttpMethod.POST,
+                ServiceUriPaths.CORE_QUERY_TASKS,
+                Utils.toJson(qt));
+        QueryTask result = Utils.fromJson(responseJson, QueryTask.class);
+
+        String networkLink = result.results.documentLinks.get(0);
+
+        NetworkProfile np = new NetworkProfile();
+        np.subnetLinks = new ArrayList<>();
+        np.isolationType = IsolationSupportType.SUBNET;
+        np.isolationNetworkLink = networkLink;
         return np;
     }
 

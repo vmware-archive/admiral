@@ -56,7 +56,7 @@ public class WordpressProvisionIT extends BaseWordpressComputeProvisionIT {
     protected void doSetUp() throws Throwable {
         setUp.run();
 
-        createEnvironment(loadComputeProfile(), createNetworkProfile(AWS_DEFAULT_SUBNET_ID, null),
+        createProfile(loadComputeProfile(), createNetworkProfile(AWS_DEFAULT_SUBNET_ID, null),
                 new StorageProfileService.StorageProfile());
     }
 

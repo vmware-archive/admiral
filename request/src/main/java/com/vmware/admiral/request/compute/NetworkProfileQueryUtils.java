@@ -32,6 +32,7 @@ import com.vmware.admiral.compute.content.ConstraintConverter;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.NetworkType;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
+import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile.IsolationSupportType;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
 import com.vmware.photon.controller.model.Constraint.Condition;
@@ -96,32 +97,41 @@ public class NetworkProfileQueryUtils {
                             Operation.createGet(host, computeNetwork.descriptionLink)
                                     .setReferer(referer), ComputeNetworkDescription.class)
                             .thenCompose(networkDescription -> {
-                                // Validate network description constraints against selected profile
-                                Map<Condition, String> placementConstraints = TagConstraintUtils
-                                        .extractPlacementTagConditions(
-                                                networkDescription.constraints,
-                                                networkDescription.tenantLinks);
-                                if (placementConstraints != null) {
-                                    constraints.addAll(placementConstraints.keySet().stream()
-                                            .map(c -> ConstraintConverter.encodeCondition(c).tag)
-                                            .collect(Collectors.toList()));
+                                DeferredResult<Pair<ComputeNetwork, SubnetState>> result;
+                                if (networkDescription.networkType == NetworkType.ISOLATED) {
+                                    result = getSubnetForIsolatedNetwork(host, profileState,
+                                            computeNetwork, referer)
+                                            .thenApply(subnetState ->
+                                                    Pair.of(computeNetwork, subnetState));
+                                } else {
+                                     // Validate network description constraints against selected profile
+                                    Map<Condition, String> placementConstraints = TagConstraintUtils
+                                            .extractPlacementTagConditions(
+                                                    networkDescription.constraints,
+                                                    networkDescription.tenantLinks);
+                                    if (placementConstraints != null) {
+                                        constraints.addAll(placementConstraints.keySet().stream()
+                                                .map(c -> ConstraintConverter.encodeCondition(c).tag)
+                                                .collect(Collectors.toList()));
+                                    }
+                                    Stream<SubnetState> subnetsStream = TagConstraintUtils
+                                            .filterByConstraints(
+                                                    placementConstraints,
+                                                    profileState.networkProfile.subnetStates
+                                                            .stream(),
+                                                    s -> combineTags(profileState, s),
+                                                    null);
+
+                                    if (computeNetwork.networkType == NetworkType.PUBLIC) {
+                                        subnetsStream = subnetsStream.filter(s -> Boolean.TRUE
+                                                .equals(s.supportPublicIpAddress));
+                                    }
+
+                                    SubnetState subnet = subnetsStream.findAny().orElse(null);
+                                    result = DeferredResult.completed(
+                                            Pair.of(computeNetwork, subnet));
                                 }
-                                Stream<SubnetState> subnetsStream = TagConstraintUtils
-                                        .filterByConstraints(
-                                                placementConstraints,
-                                                profileState.networkProfile.subnetStates
-                                                        .stream(),
-                                                s -> combineTags(profileState, s),
-                                                null);
-
-
-                                if (computeNetwork.networkType == NetworkType.PUBLIC) {
-                                    subnetsStream = subnetsStream.filter(subnet -> Boolean.TRUE
-                                            .equals(subnet.supportPublicIpAddress));
-                                }
-
-                                SubnetState subnet = subnetsStream.findAny().orElse(null);
-                                return DeferredResult.completed(Pair.of(computeNetwork, subnet));
+                                return result;
                             })
                             .whenComplete((pair, ex) -> {
                                 if (ex != null) {
@@ -138,6 +148,28 @@ public class NetworkProfileQueryUtils {
                                 }
                             });
                 });
+    }
+
+    private static DeferredResult<SubnetState> getSubnetForIsolatedNetwork(ServiceHost host,
+            ProfileStateExpanded profile, ComputeNetwork computeNetwork, URI referer) {
+
+        if (profile.networkProfile.isolationType != IsolationSupportType
+                .SUBNET) {
+            // Environment doesn't support new subnetc ase.
+            return DeferredResult.completed(null);
+        }
+
+        if (computeNetwork.subnetLink == null) {
+            // Template subnet should be already allocated by
+            // ComputeNetworkAllocationTaskService.
+            return DeferredResult.completed(null);
+        } else {
+            // There is already allocated template subnet.
+            return host.sendWithDeferredResult(
+                    Operation.createGet(host, computeNetwork.subnetLink)
+                            .setReferer(referer),
+                    SubnetState.class);
+        }
     }
 
     /** Get profiles that can be used to provision compute networks. */
@@ -198,15 +230,30 @@ public class NetworkProfileQueryUtils {
                         Map<Condition, String> placementConstraints = TagConstraintUtils
                                 .extractPlacementTagConditions(networkDescription.constraints,
                                         networkDescription.tenantLinks);
-                        Stream<Pair<ProfileStateExpanded, SubnetState>> pairs = all.stream()
-                                .flatMap(profile -> profile.networkProfile.subnetStates.stream().map(
-                                        s -> Pair.of(profile, s)));
 
-                        if (networkDescription.networkType == NetworkType.PUBLIC) {
-                            pairs = pairs.filter(p -> p.right.supportPublicIpAddress);
-                        }
+                        List<String> selectedProfiles;
+                        if (networkDescription.networkType == NetworkType.ISOLATED) {
+                            // Filter environments that match the tags and support isolation.
+                            selectedProfiles = TagConstraintUtils
+                                    .filterByConstraints(
+                                            placementConstraints,
+                                            all.stream(),
+                                            env -> combineTags(env),
+                                            null)
+                                    .filter(env -> env.networkProfile.isolationType != IsolationSupportType.NONE)
+                                    .map(env -> env.documentSelfLink)
+                                    .distinct()
+                                    .collect(Collectors.toList());
+                        } else {
+                            Stream<Pair<ProfileStateExpanded, SubnetState>> pairs = all.stream()
+                                    .flatMap(profile -> profile.networkProfile.subnetStates.stream().map(
+                                            s -> Pair.of(profile, s)));
 
-                        List<String> selectedProfiles = TagConstraintUtils
+                            if (networkDescription.networkType == NetworkType.PUBLIC) {
+                                pairs = pairs.filter(p -> p.right.supportPublicIpAddress);
+                            }
+
+                            selectedProfiles = TagConstraintUtils
                                     .filterByConstraints(
                                             placementConstraints,
                                             pairs,
@@ -215,7 +262,7 @@ public class NetworkProfileQueryUtils {
                                     .map(p -> p.left.documentSelfLink)
                                     .distinct()
                                     .collect(Collectors.toList());
-
+                        }
                         if (placementConstraints != null && !placementConstraints.isEmpty()
                                 && selectedProfiles.isEmpty()) {
                             List<String> constraints = placementConstraints.keySet().stream()
@@ -332,15 +379,22 @@ public class NetworkProfileQueryUtils {
 
     private static Set<String> combineTags(ProfileStateExpanded profile,
             SubnetState subnetState) {
+        Set<String> tagLinks = combineTags(profile);
+
+        if (subnetState.tagLinks != null) {
+            tagLinks.addAll(subnetState.tagLinks);
+        }
+
+        return tagLinks;
+    }
+
+    private static Set<String> combineTags(ProfileStateExpanded profile) {
         Set<String> tagLinks = new HashSet<>();
         if (profile.tagLinks != null) {
             tagLinks.addAll(profile.tagLinks);
         }
         if (profile.networkProfile.tagLinks != null) {
             tagLinks.addAll(profile.networkProfile.tagLinks);
-        }
-        if (subnetState.tagLinks != null) {
-            tagLinks.addAll(subnetState.tagLinks);
         }
 
         return tagLinks;

@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.NetworkType;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
 import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.compute.ComputeNetworkAllocationTaskService.ComputeNetworkAllocationTaskState;
@@ -31,7 +32,7 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 
 public class ComputeNetworkAllocationTaskServiceTest extends RequestBaseTest {
 
-    protected ComputeNetworkDescription computeNetworkDesc;
+    private ComputeNetworkDescription computeNetworkDesc;
 
     @Override
     @Before
@@ -43,7 +44,6 @@ public class ComputeNetworkAllocationTaskServiceTest extends RequestBaseTest {
 
     @Test
     public void testAllocationTaskServiceLifeCycle() throws Throwable {
-
         ComputeNetworkAllocationTaskState allocationTask = createComputeNetworkAllocationTask(
                 computeNetworkDesc.documentSelfLink, 1);
         allocationTask = allocate(allocationTask);
@@ -55,12 +55,12 @@ public class ComputeNetworkAllocationTaskServiceTest extends RequestBaseTest {
         assertEquals(computeNetworkDesc.documentSelfLink, networkState.descriptionLink);
         assertTrue(networkState.name.contains(computeNetworkDesc.name));
         assertEquals(allocationTask.resourceLinks.iterator().next(), networkState.documentSelfLink);
-
     }
 
     @Test
     public void testExternalNetworkAllocation() throws Throwable {
-        ComputeNetworkDescription networkDescription = createNetworkDescription("my net", true);
+        ComputeNetworkDescription networkDescription = createNetworkDescription("my net", true,
+                null);
         networkDescription = doPost(networkDescription,
                 ComputeNetworkDescriptionService.FACTORY_LINK);
 
@@ -74,6 +74,29 @@ public class ComputeNetworkAllocationTaskServiceTest extends RequestBaseTest {
 
         assertNotNull(networkState);
         assertEquals(networkDescription.documentSelfLink, networkState.descriptionLink);
+
+        assertTrue(networkState.name.contains(networkDescription.name));
+    }
+
+    @Test
+    public void testIsolatedNetworkAllocation() throws Throwable {
+        ComputeNetworkDescription networkDescription = createNetworkDescription("isolated net",
+                false, NetworkType.ISOLATED);
+        networkDescription = doPost(networkDescription,
+                ComputeNetworkDescriptionService.FACTORY_LINK);
+
+        ComputeNetworkAllocationTaskState allocationTask = createComputeNetworkAllocationTask(
+                networkDescription.documentSelfLink, 1);
+
+        allocationTask = allocate(allocationTask);
+
+        ComputeNetwork networkState = getDocument(ComputeNetwork.class,
+                allocationTask.resourceLinks.iterator().next());
+
+        assertNotNull(networkState);
+        assertEquals(networkDescription.documentSelfLink, networkState.descriptionLink);
+        assertNotNull("subnetLink should be non empty in case of isolated netwrok.",
+                networkState.subnetLink);
 
         assertTrue(networkState.name.contains(networkDescription.name));
     }
@@ -115,11 +138,11 @@ public class ComputeNetworkAllocationTaskServiceTest extends RequestBaseTest {
         return outAllocationTask;
     }
 
-    protected ComputeNetworkDescription createComputeNetworkDescription(String name)
+    private ComputeNetworkDescription createComputeNetworkDescription(String name)
             throws Throwable {
         synchronized (initializationLock) {
             if (computeNetworkDesc == null) {
-                ComputeNetworkDescription desc = createNetworkDescription(name, false);
+                ComputeNetworkDescription desc = createNetworkDescription(name, false, null);
                 computeNetworkDesc = doPost(desc,
                         ComputeNetworkDescriptionService.FACTORY_LINK);
                 assertNotNull(containerNetworkDesc);
@@ -128,11 +151,13 @@ public class ComputeNetworkAllocationTaskServiceTest extends RequestBaseTest {
         }
     }
 
-    private ComputeNetworkDescription createNetworkDescription(String name, boolean external) {
+    private ComputeNetworkDescription createNetworkDescription(String name, boolean external,
+            NetworkType networkType) {
         ComputeNetworkDescription desc = TestRequestStateFactory
                 .createComputeNetworkDescription(name);
         desc.documentSelfLink = UUID.randomUUID().toString();
         desc.external = external;
+        desc.networkType = networkType;
         return desc;
     }
 }

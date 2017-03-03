@@ -48,6 +48,8 @@ import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.NetworkType;
+import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
+import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile.IsolationSupportType;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService;
@@ -121,7 +123,8 @@ public class ComputeAllocationTaskService
         @Documentation(description = "Type of resource to create")
         @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
         public String resourceType;
-        @Documentation(description = "(Required) the groupResourcePlacementState that links to ResourcePool")
+        @Documentation(
+                description = "(Required) the groupResourcePlacementState that links to ResourcePool")
         @PropertyOptions(usage = { SINGLE_ASSIGNMENT, OPTIONAL, LINK }, indexing = STORE_ONLY)
         public String groupResourcePlacementLink;
         @Documentation(description = "(Optional) the resourcePoolLink to ResourcePool")
@@ -431,7 +434,6 @@ public class ComputeAllocationTaskService
                             s.resourceLinks = computeResourceLinks;
                         });
                     }
-
                 });
     }
 
@@ -494,15 +496,15 @@ public class ComputeAllocationTaskService
                     }
                     SubStage nextStage = cd.customProperties
                             .containsKey(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME)
-                                    ? SubStage.COMPUTE_DESCRIPTION_RECONFIGURED
-                                    : SubStage.RESOURCES_NAMES;
+                            ? SubStage.COMPUTE_DESCRIPTION_RECONFIGURED
+                            : SubStage.RESOURCES_NAMES;
 
                     Operation.createPut(this, state.resourceDescriptionLink)
                             .setBody(cd)
                             .setCompletion((o, e) -> {
                                 if (e != null) {
                                     failTask("Failed patching compute description : "
-                                            + Utils.toString(e),
+                                                    + Utils.toString(e),
                                             null);
                                     return;
                                 }
@@ -813,8 +815,14 @@ public class ComputeAllocationTaskService
         boolean noNicVM = nid.customProperties != null
                 && nid.customProperties.containsKey(NetworkProfileQueryUtils.NO_NIC_VM);
         DeferredResult<String> subnet = null;
-        if ((profile.networkProfile != null && profile.networkProfile.subnetStates != null
-                && !profile.networkProfile.subnetStates.isEmpty())) {
+        boolean isIsolatedNetworkEnvironment = profile.networkProfile != null &&
+                profile.networkProfile.isolationType == IsolationSupportType
+                        .SUBNET;
+        boolean hasSubnetStates = profile.networkProfile != null && profile.networkProfile
+                .subnetStates !=
+                null
+                && !profile.networkProfile.subnetStates.isEmpty();
+        if (hasSubnetStates || isIsolatedNetworkEnvironment) {
             if (!noNicVM) {
                 DeferredResult<String> subnetDeferred = new DeferredResult<>();
                 NetworkProfileQueryUtils.getSubnetForComputeNic(getHost(),
@@ -826,18 +834,26 @@ public class ComputeAllocationTaskService
                                 return;
                             }
 
-                            String chosenSubnetLink = networkAndSubnet.right.documentSelfLink;
+                            patchComputeNetwork(networkAndSubnet.left, profile)
+                                    .whenComplete((operation, t) -> {
+                                        if (t != null) {
+                                            subnetDeferred.fail(t);
+                                            return;
+                                        }
+                                        String chosenSubnetLink = networkAndSubnet.right.documentSelfLink;
 
-                            if (networkAndSubnet.left.networkType == NetworkType.PUBLIC) {
-                                nid.assignPublicIpAddress = true;
+                                        if (networkAndSubnet.left.networkType == NetworkType.PUBLIC) {
+                                            nid.assignPublicIpAddress = true;
 
-                                this.sendWithDeferredResult(
-                                        Operation.createPatch(this, nid.documentSelfLink).setBody(nid))
-                                        .thenAccept(v -> subnetDeferred.complete(chosenSubnetLink));
-                                return;
-                            }
+                                            this.sendWithDeferredResult(
+                                                    Operation.createPatch(this, nid.documentSelfLink)
+                                                            .setBody(nid))
+                                                    .thenAccept(v -> subnetDeferred.complete(chosenSubnetLink));
+                                            return;
+                                        }
 
-                            subnetDeferred.complete(chosenSubnetLink);
+                                        subnetDeferred.complete(chosenSubnetLink);
+                                    });
                         });
                 subnet = subnetDeferred;
             } else {
@@ -873,6 +889,16 @@ public class ComputeAllocationTaskService
             return DeferredResult.completed(nic);
         });
         return n;
+    }
+
+    private DeferredResult<Operation> patchComputeNetwork(ComputeNetwork
+            computeNetwork,
+            ProfileStateExpanded profile) {
+
+        computeNetwork.provisionProfileLink = profile.documentSelfLink;
+        return this.sendWithDeferredResult(
+                Operation.createPatch(this, computeNetwork.documentSelfLink)
+                    .setBody(computeNetwork));
     }
 
     private DeferredResult<String> findSubnetBy(ComputeAllocationTaskState state,

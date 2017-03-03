@@ -35,11 +35,13 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.NetworkType;
 import com.vmware.admiral.compute.network.ComputeNetworkService;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
 import com.vmware.admiral.compute.profile.ComputeProfileService;
 import com.vmware.admiral.compute.profile.NetworkProfileService;
 import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile;
+import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile.IsolationSupportType;
 import com.vmware.admiral.compute.profile.ProfileService;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
@@ -298,6 +300,46 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
     }
 
     @Test
+    public void testGetSubnetStateForComputeNicIsolatedNetwork() throws Throwable {
+        ComputeNetworkDescription networkDescription = createNetworkDescription("my net", null,
+                NetworkType.ISOLATED);
+        List<String> subnets1 = Arrays.asList(
+                createSubnet("sub-1", networkDescription.tenantLinks, null).documentSelfLink,
+                createSubnet("sub-2", networkDescription.tenantLinks, null).documentSelfLink);
+        NetworkProfile networkProfile = createNetworkProfile(subnets1,
+                networkDescription.tenantLinks, null, IsolationSupportType
+                        .SUBNET);
+        ProfileStateExpanded profileState = createProfile(
+                networkProfile.documentSelfLink, networkProfile.tenantLinks, null);
+
+        String contextId = UUID.randomUUID().toString();
+        String isolatedSubnetLink = createSubnet("isolatedSubnet", networkDescription.tenantLinks,
+                null).documentSelfLink;
+        createComputeNetwork(networkDescription, contextId, null, isolatedSubnetLink);
+
+        NetworkInterfaceDescription nid = createComputeNetworkInterfaceDescription("my net");
+        createComputeDescription(contextId, Arrays.asList(nid.documentSelfLink));
+
+        TestContext ctx = testCreate(1);
+        Set<String> subnets = new HashSet<>();
+        NetworkProfileQueryUtils.getSubnetForComputeNic(host, referer, nid.tenantLinks, contextId,
+                nid, profileState,
+                (all, e) -> {
+                    if (e != null) {
+                        ctx.fail(e);
+                        return;
+                    }
+                    subnets.add(all.right.documentSelfLink);
+                    ctx.complete();
+                });
+        ctx.await();
+
+        assertFalse(subnets.isEmpty());
+        assertEquals(1, subnets.size());
+        assertEquals(isolatedSubnetLink, subnets.iterator().next());
+    }
+
+    @Test
     public void testGetSubnetStateForComputeNicNotFound() throws Throwable {
         ComputeNetworkDescription networkDescription = createNetworkDescription("my net", null);
         NetworkProfile networkProfile1 = createNetworkProfile(null, networkDescription.tenantLinks,
@@ -381,8 +423,14 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
 
     private ComputeNetworkDescription createNetworkDescription(String name,
             List<Condition> conditions) throws Throwable {
+        return createNetworkDescription(name, conditions, null);
+    }
+
+    private ComputeNetworkDescription createNetworkDescription(String name,
+            List<Condition> conditions, NetworkType networkType) throws Throwable {
         ComputeNetworkDescription desc = TestRequestStateFactory.createComputeNetworkDescription(
                 name);
+        desc.networkType = networkType;
         desc.documentSelfLink = UUID.randomUUID().toString();
         if (conditions != null) {
             Constraint constraint = new Constraint();
@@ -433,24 +481,36 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
     }
 
     private NetworkProfile createNetworkProfile(List<String> subnetLinks, List<String> tenantLinks,
-            Set<String> tagLinks)
-            throws Throwable {
+            Set<String> tagLinks) throws Throwable {
+        return createNetworkProfile(subnetLinks, tenantLinks, tagLinks, IsolationSupportType.NONE);
+    }
+
+    private NetworkProfile createNetworkProfile(List<String> subnetLinks, List<String> tenantLinks,
+            Set<String> tagLinks, IsolationSupportType isolationSupportType) throws Throwable {
         NetworkProfile networkProfile = TestRequestStateFactory.createNetworkProfile("net-prof");
         networkProfile.documentSelfLink = UUID.randomUUID().toString();
         networkProfile.subnetLinks = subnetLinks;
         networkProfile.tenantLinks = tenantLinks;
         networkProfile.tagLinks = tagLinks;
+        networkProfile.isolationType = isolationSupportType;
         return doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
     }
 
     private ComputeNetwork createComputeNetwork(ComputeNetworkDescription computeNetworkDescription,
-            String contextId, List<String> profileLinks)
+            String contextId, List<String> environmentLinks) throws Throwable {
+        return createComputeNetwork(computeNetworkDescription, contextId, environmentLinks, null);
+    }
+
+    private ComputeNetwork createComputeNetwork(ComputeNetworkDescription computeNetworkDescription,
+            String contextId, List<String> profileLinks, String subnetLink)
             throws Throwable {
         ComputeNetwork net = TestRequestStateFactory.createComputeNetworkState(
                 "my-net", computeNetworkDescription.documentSelfLink);
         net.documentSelfLink = UUID.randomUUID().toString();
         net.customProperties.put(FIELD_NAME_CONTEXT_ID_KEY, contextId);
         net.profileLinks = profileLinks;
+        net.networkType = computeNetworkDescription.networkType;
+        net.subnetLink = subnetLink;
         return doPost(net, ComputeNetworkService.FACTORY_LINK);
     }
 

@@ -12,6 +12,7 @@
 package com.vmware.admiral.compute.profile;
 
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.OPTIONAL;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -49,6 +50,23 @@ public class NetworkProfileService extends StatefulService {
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
         public List<String> subnetLinks;
 
+        @Documentation(description = "Specifies the isolation support type e.g. none, subnet or "
+                + "security group")
+        @PropertyOptions(usage = {AUTO_MERGE_IF_NOT_NULL, OPTIONAL})
+        public IsolationSupportType isolationType = IsolationSupportType.NONE;
+
+        @Documentation(description = "Link to the network used for creating isolated subnets. "
+                + "This field should be populated only when isolation Type is SUBNET.")
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL, OPTIONAL })
+        public String isolationNetworkLink;
+
+        /**
+         * Defines the isolation network support this network profile provides.
+         */
+        public enum IsolationSupportType {
+            NONE, SUBNET, SECURITY_GROUP
+        }
+
         public void copyTo(MultiTenantDocument target) {
             super.copyTo(target);
             if (target instanceof NetworkProfile) {
@@ -57,6 +75,8 @@ public class NetworkProfileService extends StatefulService {
                 targetState.tenantLinks = this.tenantLinks;
                 targetState.tagLinks = this.tagLinks;
                 targetState.subnetLinks = this.subnetLinks;
+                targetState.isolationType = this.isolationType;
+                targetState.isolationNetworkLink = this.isolationNetworkLink;
             }
         }
     }
