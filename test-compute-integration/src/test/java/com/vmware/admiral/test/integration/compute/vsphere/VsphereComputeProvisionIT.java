@@ -13,9 +13,11 @@ package com.vmware.admiral.test.integration.compute.vsphere;
 
 import static org.junit.Assert.assertNotNull;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
+import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
@@ -23,16 +25,18 @@ import com.vmware.admiral.request.compute.ComputeOperationType;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
 import com.vmware.admiral.test.integration.compute.BaseComputeProvisionIT;
 import com.vmware.photon.controller.model.ComputeProperties;
-import com.vmware.photon.controller.model.adapters.vsphere.CustomProperties;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption;
+import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
@@ -92,9 +96,11 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
 
     @Override
     public void extendEndpoint(EndpointState endpoint) {
-        endpoint.endpointProperties.put("privateKeyId", getTestRequiredProp(VsphereUtil.VC_USERNAME));
+        endpoint.endpointProperties.put("privateKeyId",
+                getTestRequiredProp(VsphereUtil.VC_USERNAME));
         endpoint.endpointProperties.put("privateKey", getTestRequiredProp(VsphereUtil.VC_PASSWORD));
-        endpoint.endpointProperties.put("regionId", getTestRequiredProp(VsphereUtil.VC_DATACENTER_ID));
+        endpoint.endpointProperties.put("regionId",
+                getTestRequiredProp(VsphereUtil.VC_DATACENTER_ID));
         endpoint.endpointProperties.put("hostName", getTestRequiredProp(VsphereUtil.VC_HOST));
     }
 
@@ -121,8 +127,14 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
         String computePlacementName = getTestRequiredProp(VsphereUtil.VC_TARGET_COMPUTE_NAME);
         ResourcePoolState rp = getDocument(this.endpoint.resourcePoolLink, ResourcePoolState.class);
 
+        Query query = rp.query;
+        query.addBooleanClause(QueryUtil.addListValueClause(ComputeState.FIELD_NAME_TYPE,
+                Arrays.asList(ComputeType.VM_HOST.name(), ComputeType.ZONE.name()),
+                MatchType.TERM));
+
         QueryTask queryTask = QueryTask.Builder.createDirectTask()
-                .setQuery(rp.query).addOption(QueryOption.EXPAND_CONTENT).build();
+                .setQuery(query).addOption(QueryOption.EXPAND_CONTENT).build();
+
         String responseJson = sendRequest(HttpMethod.POST, ServiceUriPaths.CORE_QUERY_TASKS,
                 Utils.toJson(queryTask));
         QueryTask returnedTask = Utils.fromJson(responseJson, QueryTask.class);
@@ -130,13 +142,6 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
         for (Object computeJson : returnedTask.results.documents.values()) {
             ComputeState compute = Utils.fromJson(computeJson, ComputeState.class);
             if (computePlacementName.equals(compute.name)) {
-                continue;
-            }
-
-            if (compute.customProperties != null &&
-                    compute.customProperties.containsKey(CustomProperties.TYPE) &&
-                    compute.customProperties.get(CustomProperties.TYPE).equals(
-                            "VirtualMachine")) {
                 continue;
             }
 

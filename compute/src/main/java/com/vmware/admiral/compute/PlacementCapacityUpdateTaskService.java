@@ -71,7 +71,7 @@ public class PlacementCapacityUpdateTaskService extends
             "com.vmware.admiral.service.EpzComputeEnumerationTaskService.log.level",
             Level.FINE.getName()));
 
-    private static final int COMPUTE_PAGE_SIZE = 16;
+    private static final int COMPUTE_PAGE_SIZE = 100;
 
     /**
      * Task parameters and internal state.
