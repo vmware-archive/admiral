@@ -217,7 +217,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                             } else {
                                 handleHostAvailable(computeState);
                                 // TODO multiple operations in parallel for the same RP;
-                                //      needs to be reworked
+                                // needs to be reworked
                                 updateResourcePool(computeState,
                                         qr.rpLinksByComputeLink.get(computeState.documentSelfLink),
                                         body.remove);
@@ -235,7 +235,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                         }, null);
                     } else {
                         // TODO multiple operations in parallel for the same RP;
-                        //      needs to be reworked
+                        // needs to be reworked
                         updateResourcePool(computeState,
                                 qr.rpLinksByComputeLink.get(computeState.documentSelfLink),
                                 body.remove);
@@ -256,7 +256,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         countString = countString == null ? "0" : countString;
 
         if (PowerState.SUSPEND.equals(computeState.powerState) && "0".equals(countString)) {
-             // when a host is disabled manually the state should not be changed to ON
+            // when a host is disabled manually the state should not be changed to ON
             return;
         }
 
@@ -325,12 +325,12 @@ public class ContainerHostDataCollectionService extends StatefulService {
         if (PowerState.OFF.equals(patchPowerState)) {
             eventLog.description = String.format(
                     "Host [%s] has been marked [OFF] after exceeding the maximum number [%s] of"
-                    + " failed data collections. Error message is: %s",
+                            + " failed data collections. Error message is: %s",
                     computeState.address, MAX_RETRIES_COUNT, error.message);
         } else {
             eventLog.description = String.format(
                     "Host [%s] has been marked [DISABLED] after failure to perform data"
-                    + " collection. Error message is: %s",
+                            + " collection. Error message is: %s",
                     computeState.address, error.message);
         }
 
@@ -432,8 +432,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
     private void updatePlacements(ResourcePoolService.ResourcePoolState resourcePoolState) {
         QueryTask queryTask = QueryUtil.buildPropertyQuery(
                 GroupResourcePlacementService.GroupResourcePlacementState.class,
-                GroupResourcePlacementService.GroupResourcePlacementState
-                        .FIELD_NAME_RESOURCE_POOL_LINK,
+                GroupResourcePlacementService.GroupResourcePlacementState.FIELD_NAME_RESOURCE_POOL_LINK,
                 resourcePoolState.documentSelfLink);
         QueryUtil.addExpandOption(queryTask);
         ServiceDocumentQuery<GroupResourcePlacementState> query = new ServiceDocumentQuery<>(
@@ -466,18 +465,17 @@ public class ContainerHostDataCollectionService extends StatefulService {
                                 ContainerHostDataCollectionService::getTenantAndGroupIdentifier,
                                 Collectors.summingInt(placement -> placement.priority)));
 
-                Comparator<GroupResourcePlacementService.GroupResourcePlacementState> comparator =
-                        (q1, q2) -> Double.compare(
+                Comparator<GroupResourcePlacementService.GroupResourcePlacementState> comparator = (
+                        q1, q2) -> Double.compare(
                                 ((double) q2.priority) /
                                         sumOfPrioritiesByGroup.get(getTenantAndGroupIdentifier(q2)),
                                 ((double) q1.priority) /
-                                        sumOfPrioritiesByGroup.get(getTenantAndGroupIdentifier(q1)));
+                                        sumOfPrioritiesByGroup
+                                                .get(getTenantAndGroupIdentifier(q1)));
 
                 placements.sort(comparator);
-                Set<GroupResourcePlacementService.GroupResourcePlacementState> placementsToUpdate =
-                        new HashSet<>();
-                for (GroupResourcePlacementService.GroupResourcePlacementState placement :
-                        placements) {
+                Set<GroupResourcePlacementService.GroupResourcePlacementState> placementsToUpdate = new HashSet<>();
+                for (GroupResourcePlacementService.GroupResourcePlacementState placement : placements) {
                     if (placement.availableMemory == 0 || placement.memoryLimit == 0) {
                         continue;
                     }
@@ -492,8 +490,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                     }
                 }
 
-                for (GroupResourcePlacementService.GroupResourcePlacementState placementToUpdate :
-                        placementsToUpdate) {
+                for (GroupResourcePlacementService.GroupResourcePlacementState placementToUpdate : placementsToUpdate) {
                     sendRequest(Operation.createPut(this, placementToUpdate.documentSelfLink)
                             .setBody(placementToUpdate));
                 }
@@ -586,7 +583,9 @@ public class ContainerHostDataCollectionService extends StatefulService {
         request.operationTypeId = ContainerHostOperationType.STATS.id;
         request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
         request.resourceReference = UriUtils.buildUri(getHost(), computeHost.documentSelfLink);
-        sendRequest(Operation.createPatch(computeHost.adapterManagementReference)
+        URI adapterManagementReference = computeHost.endpointLink == null
+                ? computeHost.adapterManagementReference : getDefaultHostAdapter(getHost());
+        sendRequest(Operation.createPatch(adapterManagementReference)
                 .setBody(request)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -676,7 +675,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         rpHelper.setAdditionalQueryClausesProvider(qb -> {
             qb.addInClause(ComputeState.FIELD_NAME_DESCRIPTION_LINK, computeDescriptionLinks);
             qb.addCompositeFieldClause(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
-                        ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME, "true");
+                    ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME, "true");
         });
 
         rpHelper.query(qr -> {
@@ -766,28 +765,33 @@ public class ContainerHostDataCollectionService extends StatefulService {
             return;
         }
 
-        if (computeState.adapterManagementReference == null) {
-            ComputeState patchState = new ComputeState();
-            patchState.adapterManagementReference = getDefaultHostAdapter(getHost());
-            computeState.adapterManagementReference = patchState.adapterManagementReference;
-            sendRequest(
-                    Operation.createPatch(this, computeState.documentSelfLink)
-                            .setBody(patchState)
-                            .setCompletion((op, ex) -> {
-                                if (ex != null) {
-                                    logSevere(ex);
-                                } else {
-                                    updateContainerHostInfo(computeState, consumer, serviceTaskCallback);
-                                }
-                            }));
-            return;
+        if (computeState.endpointLink == null) {
+            if (computeState.adapterManagementReference == null) {
+                ComputeState patchState = new ComputeState();
+                patchState.adapterManagementReference = getDefaultHostAdapter(getHost());
+                computeState.adapterManagementReference = patchState.adapterManagementReference;
+                sendRequest(
+                        Operation.createPatch(this, computeState.documentSelfLink)
+                                .setBody(patchState)
+                                .setCompletion((op, ex) -> {
+                                    if (ex != null) {
+                                        logSevere(ex);
+                                    } else {
+                                        updateContainerHostInfo(computeState, consumer,
+                                                serviceTaskCallback);
+                                    }
+                                }));
+                return;
+            }
         }
-
         if (serviceTaskCallback == null) {
             startAndCreateCallbackHandlerService(consumer,
                     (callback) -> updateContainerHostInfo(computeState, consumer, callback));
             return;
         }
+
+        URI adapterURI = computeState.endpointLink == null ? computeState.adapterManagementReference
+                : getDefaultHostAdapter(getHost());
 
         String documentSelfLink = computeState.documentSelfLink;
 
@@ -795,7 +799,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         request.operationTypeId = ContainerHostOperationType.INFO.id;
         request.serviceTaskCallback = serviceTaskCallback;
         request.resourceReference = UriUtils.buildUri(getHost(), documentSelfLink);
-        sendRequest(Operation.createPatch(computeState.adapterManagementReference)
+        sendRequest(Operation.createPatch(adapterURI)
                 .setBody(request)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -811,8 +815,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         sendRequest(Operation
                 .createPatch(
                         this,
-                        KubernetesEntityDataCollection
-                                .DEFAULT_KUBERNETES_ENTITY_DATA_COLLECTION_LINK)
+                        KubernetesEntityDataCollection.DEFAULT_KUBERNETES_ENTITY_DATA_COLLECTION_LINK)
                 .setBody(body)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -825,12 +828,12 @@ public class ContainerHostDataCollectionService extends StatefulService {
     private void updateContainerHostContainers(ComputeState cs) {
         ContainerListCallback body = new ContainerListCallback();
         body.containerHostLink = cs.documentSelfLink;
-        body.hostAdapterReference = cs.adapterManagementReference;
+        body.hostAdapterReference = cs.endpointLink == null ? cs.adapterManagementReference
+                : getDefaultHostAdapter(getHost());
         sendRequest(Operation
                 .createPatch(
                         this,
-                        HostContainerListDataCollection
-                                .DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK)
+                        HostContainerListDataCollection.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK)
                 .setBody(body)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -843,12 +846,12 @@ public class ContainerHostDataCollectionService extends StatefulService {
     private void updateContainerHostNetworks(ComputeState cs) {
         NetworkListCallback body = new NetworkListCallback();
         body.containerHostLink = cs.documentSelfLink;
-        body.hostAdapterReference = cs.adapterManagementReference;
+        body.hostAdapterReference = cs.endpointLink == null ? cs.adapterManagementReference
+                : getDefaultHostAdapter(getHost());
         sendRequest(Operation
                 .createPatch(
                         this,
-                        HostNetworkListDataCollection
-                                .DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK)
+                        HostNetworkListDataCollection.DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK)
                 .setBody(body)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
