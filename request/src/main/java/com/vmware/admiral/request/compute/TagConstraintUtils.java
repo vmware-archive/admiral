@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.photon.controller.model.Constraint;
 import com.vmware.photon.controller.model.Constraint.Condition;
@@ -41,8 +42,9 @@ public class TagConstraintUtils {
             return null;
         }
         Map<Condition, String> tagLinkByCondition = new HashMap<>();
+        List<String> tl = QueryUtil.getTenantLinks(tenantLinks);
         for (Condition condition : placementConstraint.conditions) {
-            String tagLink = getTagLinkForCondition(condition, tenantLinks);
+            String tagLink = getTagLinkForCondition(condition, tl);
             if (tagLink != null) {
                 tagLinkByCondition.put(condition, tagLink);
             }
