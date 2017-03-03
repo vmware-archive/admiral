@@ -19,6 +19,7 @@ import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_I
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import com.vmware.admiral.common.ManagementUriParts;
@@ -26,6 +27,7 @@ import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.NetworkType;
 import com.vmware.admiral.compute.network.ComputeNetworkService;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService;
@@ -37,6 +39,10 @@ import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
+import com.vmware.photon.controller.model.resources.SubnetService;
+import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
+import com.vmware.photon.controller.model.support.LifecycleState;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
@@ -64,7 +70,7 @@ public class ComputeNetworkAllocationTaskService extends
     public static class ComputeNetworkAllocationTaskState extends
             com.vmware.admiral.service.common.TaskServiceDocument<ComputeNetworkAllocationTaskState.SubStage> {
 
-        public static enum SubStage {
+        public enum SubStage {
             CREATED,
             CONTEXT_PREPARED,
             RESOURCES_NAMED,
@@ -73,14 +79,18 @@ public class ComputeNetworkAllocationTaskService extends
             ERROR
         }
 
-        /** (Required) The description that defines the requested resource. */
+        /**
+         * (Required) The description that defines the requested resource.
+         */
         @Documentation(description = "The description that defines the requested resource.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
                 PropertyUsageOption.REQUIRED,
                 PropertyUsageOption.SINGLE_ASSIGNMENT })
         public String resourceDescriptionLink;
 
-        /** (Required) Number of resources to provision. */
+        /**
+         * (Required) Number of resources to provision.
+         */
         @Documentation(description = "Number of resources to provision.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
                 PropertyUsageOption.REQUIRED,
@@ -88,7 +98,9 @@ public class ComputeNetworkAllocationTaskService extends
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public Long resourceCount;
 
-        /** Set by a Task with the links of the provisioned resources. */
+        /**
+         * Set by a Task with the links of the provisioned resources.
+         */
         @Documentation(description = "Set by a Task with the links of the provisioned resources.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
                 PropertyUsageOption.SINGLE_ASSIGNMENT,
@@ -98,14 +110,18 @@ public class ComputeNetworkAllocationTaskService extends
 
         // Service use fields:
 
-        /** (Internal) Set by task after resource name prefixes requested. */
+        /**
+         * (Internal) Set by task after resource name prefixes requested.
+         */
         @Documentation(description = "Set by task after resource name prefixes requested.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
                 PropertyUsageOption.SERVICE_USE,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public Set<String> resourceNames;
 
-        /** (Internal) Set by task with ComputeNetworkDescription name. */
+        /**
+         * (Internal) Set by task with ComputeNetworkDescription name.
+         */
         @Documentation(description = "Set by task with ComputeNetworkDescription name.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
                 PropertyUsageOption.SERVICE_USE,
@@ -113,8 +129,11 @@ public class ComputeNetworkAllocationTaskService extends
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public String descName;
 
-        /** (Internal) Set by task profiles that can be used to create compute network */
-        @Documentation(description = "Set by task profiles that can be used to create compute network.")
+        /**
+         * (Internal) Set by task profiles that can be used to create compute network
+         */
+        @Documentation(
+                description = "Set by task environments that can be used to create compute network.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
                 PropertyUsageOption.SERVICE_USE,
                 PropertyUsageOption.SINGLE_ASSIGNMENT,
@@ -134,7 +153,8 @@ public class ComputeNetworkAllocationTaskService extends
     @Override
     protected void validateStateOnStart(ComputeNetworkAllocationTaskState state) {
         if (state.resourceCount < 1) {
-            throw new LocalizableValidationException("'resourceCount' must be greater than 0.", "request.resource-count.zero");
+            throw new LocalizableValidationException("'resourceCount' must be greater than 0.",
+                    "request.resource-count.zero");
         }
     }
 
@@ -288,13 +308,13 @@ public class ComputeNetworkAllocationTaskService extends
         }
 
         for (String resourceName : state.resourceNames) {
-            createComputeNetworkState(state, networkDesc, resourceName, taskCallback);
+            createComputeNetworkState(state, networkDesc, resourceName, taskCallback, null);
         }
     }
 
     private void createComputeNetworkState(ComputeNetworkAllocationTaskState state,
             ComputeNetworkDescription networkDescription,
-            String resourceName, ServiceTaskCallback taskCallback) {
+            String resourceName, ServiceTaskCallback taskCallback, SubnetState subnetState) {
 
         assertNotNull(state, "state");
         assertNotNull(networkDescription, "networkDescription");
@@ -302,6 +322,21 @@ public class ComputeNetworkAllocationTaskService extends
         assertNotNull(taskCallback, "taskCallback");
 
         try {
+            if (networkDescription.networkType == NetworkType.ISOLATED && subnetState == null) {
+                // If isolation will be based on a new subnet create a state now that
+                // can be used when allocating the compute resources.
+
+                createTemplateSubnetState(state, resourceName)
+                        .whenComplete((createdSubnet, e) -> {
+                            if (e != null) {
+                                completeSubTasksCounter(taskCallback, e);
+                                return;
+                            }
+                            createComputeNetworkState(state, networkDescription, resourceName,
+                                    taskCallback, createdSubnet);
+                        });
+                return;
+            }
             final ComputeNetwork networkState = new ComputeNetwork();
             networkState.documentSelfLink = buildNetworkLink(resourceName);
             networkState.name = resourceName;
@@ -324,31 +359,58 @@ public class ComputeNetworkAllocationTaskService extends
                                 CompositeComponentFactoryService.SELF_LINK, contextId));
             }
 
+            if (subnetState != null) {
+                networkState.subnetLink = subnetState.documentSelfLink;
+            }
+
             sendRequest(OperationUtil
                     .createForcedPost(this, ComputeNetworkService.FACTORY_LINK)
                     .setBody(networkState)
                     .setCompletion(
                             (o, e) -> {
-                                if (e == null) {
-                                    ComputeNetwork body = o.getBody(ComputeNetwork.class);
-                                    logInfo("Created ComputeNetworkState: %s ",
-                                            body.documentSelfLink);
+                                if (e != null) {
+                                    completeSubTasksCounter(taskCallback, e);
+                                    return;
                                 }
-                                completeSubTasksCounter(taskCallback, e);
+                                ComputeNetwork body = o.getBody(ComputeNetwork.class);
+                                logInfo("Created ComputeNetworkState: %s ",
+                                        body.documentSelfLink);
+                                completeSubTasksCounter(taskCallback, null);
                             }));
-
         } catch (Throwable e) {
             failTask("System failure creating ComputeNetworkState", e);
         }
     }
 
+    private DeferredResult<SubnetState> createTemplateSubnetState(
+            ComputeNetworkAllocationTaskState state, String name) {
+
+        // Create a new subnet to attach to VM NICs
+        SubnetState subnet = new SubnetState();
+        subnet.id = UUID.randomUUID().toString();
+        subnet.name = name;
+        // Add dummy CIDR for now.
+        subnet.subnetCIDR = "0.0.0.0/24";
+        // Dummy network link -> this should be updated after the provisioning environment is
+        // selected and before the request to provision the subnet is made.
+        subnet.networkLink = "dummyNetworkLink";
+        subnet.tenantLinks = state.tenantLinks;
+
+        subnet.lifecycleState = LifecycleState.PROVISIONING;
+
+        subnet.customProperties = state.customProperties;
+        subnet.customProperties
+                .put(FIELD_NAME_CONTEXT_ID_KEY, RequestUtils.getContextId(state));
+        return this.sendWithDeferredResult(
+                OperationUtil.createForcedPost(this, SubnetService.FACTORY_LINK)
+                        .setBody(subnet), SubnetState.class);
+    }
+
     private void updateResourcesAndComplete(ComputeNetworkAllocationTaskState state) {
         getComputeNetworkDescription(state,
-                (networkDescription) -> {
-                    complete(SubStage.COMPLETED, s -> {
-                        s.resourceLinks = buildResourceLinks(state.resourceNames);
-                    });
-                });
+                (networkDescription) ->
+                        complete(SubStage.COMPLETED,
+                            s -> s.resourceLinks = buildResourceLinks(state.resourceNames)));
     }
 
     private void getComputeNetworkDescription(ComputeNetworkAllocationTaskState state,

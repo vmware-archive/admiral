@@ -85,6 +85,16 @@ public class ComputeNetworkService extends StatefulService {
         @PropertyOptions(usage = { PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL,
                 PropertyUsageOption.SERVICE_USE, PropertyUsageOption.OPTIONAL })
         public List<String> profileLinks;
+
+        @Documentation(description = "Link to a new subnet state to provision.")
+        @PropertyOptions(usage = { PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL,
+                PropertyUsageOption.OPTIONAL })
+        public String subnetLink;
+
+        @Documentation(description = "Link to a profile where the network will be provisioned.")
+        @PropertyOptions(usage = { PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL,
+                PropertyUsageOption.OPTIONAL })
+        public String provisionProfileLink;
     }
 
     @Override
@@ -95,6 +105,21 @@ public class ComputeNetworkService extends StatefulService {
         validateState(post.getBody(ComputeNetwork.class));
 
         post.complete();
+    }
+
+    @Override
+    public void handlePatch(Operation patch) {
+        if (!patch.hasBody()) {
+            throw (new IllegalArgumentException("body is required"));
+        }
+        ComputeNetwork newState = patch.getBody(ComputeNetwork.class);
+        validateState(newState);
+
+        ComputeNetwork currentState = getState(patch);
+
+        updateState(currentState, newState);
+
+        patch.setBody(currentState).complete();
     }
 
     private void validateState(ComputeNetwork desc) {
@@ -111,5 +136,9 @@ public class ComputeNetworkService extends StatefulService {
         nd.profileLinks = new ArrayList<>();
         nd.profileLinks.add(ProfileService.FACTORY_LINK + "/my-profile");
         return nd;
+    }
+
+    private void updateState(ComputeNetwork currentState, ComputeNetwork newState) {
+        currentState.provisionProfileLink = newState.provisionProfileLink;
     }
 }

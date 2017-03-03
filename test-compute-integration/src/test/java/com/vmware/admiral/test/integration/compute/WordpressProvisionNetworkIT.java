@@ -61,11 +61,14 @@ public class WordpressProvisionNetworkIT extends BaseWordpressComputeProvisionIT
     protected void doSetUp() throws Throwable {
         setUp.run();
 
-        createEnvironment(loadComputeProfile(), createNetworkProfile(AWS_SECONDARY_SUBNET_ID, null),
+        createProfile(loadComputeProfile(), createNetworkProfile(AWS_SECONDARY_SUBNET_ID, null),
                 new StorageProfile());
 
-        createEnvironment(loadComputeProfile(), createNetworkProfile(AWS_DEFAULT_SUBNET_ID,
+        createProfile(loadComputeProfile(), createNetworkProfile(AWS_DEFAULT_SUBNET_ID,
                 Sets.newHashSet(createTag("location", "dmz"))), new StorageProfile());
+
+        createProfile(loadComputeProfile(), createIsolatedNetworkProfile(AWS_ISOLATED_VPC_ID),
+                new StorageProfile());
     }
 
     @Override
