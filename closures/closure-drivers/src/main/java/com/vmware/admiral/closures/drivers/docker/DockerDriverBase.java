@@ -25,6 +25,8 @@ import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
 import com.vmware.admiral.closures.util.ClosureProps;
 import com.vmware.admiral.closures.util.ClosureUtils;
+import com.vmware.admiral.common.util.ConfigurationUtil;
+import com.vmware.admiral.common.util.FileUtil;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
@@ -38,6 +40,11 @@ public abstract class DockerDriverBase implements ExecutionDriver {
 
     private final ServiceHost serviceHost;
     private final ClosureDockerClientFactory dockerClientFactory;
+
+    private static final String TRUST_CERT_PATH = ConfigurationUtil.getProperty(ClosureProps
+            .CALLBACK_TRUST_CERT_FILE_PATH);
+    private static final String CLOSURE_SERVICE_CALLBACK_URI = ConfigurationUtil.getProperty
+            (ClosureProps.CLOSURE_SERVICE_CALLBACK_URI);
 
     public abstract String getDockerImage();
 
@@ -163,41 +170,48 @@ public abstract class DockerDriverBase implements ExecutionDriver {
     private List<String> populateEnvs(Closure closure, String token) {
         List<String> vars = new ArrayList<>();
 
-        URI taskUri = prepareTaskUri(closure);
-        vars.add("TASK_URI=" + taskUri);
-        logInfo("Setting TASK_URI %s for closure: %s", taskUri, closure.descriptionLink);
+        URI callbackUri = prepareCallbackUri(closure);
+        vars.add(ClosureProps.ENV_PROP_TASK_URI + "=" + callbackUri);
+        logInfo("Setting TASK_URI %s for closure: %s", callbackUri, closure.descriptionLink);
         if (!ClosureUtils.isEmpty(token)) {
-            vars.add("TOKEN=" + token);
+            vars.add(ClosureProps.ENV_PROP_TOKEN + "=" + token);
         }
+        String cert = "";
+        if (TRUST_CERT_PATH != null) {
+            cert = FileUtil.getResourceAsString(TRUST_CERT_PATH, false);
+        }
+        vars.add(ClosureProps.ENV_TRUST_CERTS + "=" + cert);
+
         return vars;
     }
 
-    private URI prepareTaskUri(Closure closure) {
-        URI taskUri = null;
-        if (ClosureProps.PUBLIC_ADMIRAl_ACCESS_URI_PROP != null) {
-            taskUri = buildPublicAccessUri(ClosureProps.PUBLIC_ADMIRAl_ACCESS_URI_PROP,
+    private URI prepareCallbackUri(Closure closure) {
+        URI callbackUri = null;
+        if (CLOSURE_SERVICE_CALLBACK_URI != null) {
+            callbackUri = buildConfiguredCallbackUri(CLOSURE_SERVICE_CALLBACK_URI,
                     closure.documentSelfLink);
         }
 
-        if (taskUri == null) {
+        if (callbackUri == null) {
             // fallback to publicUri as defined in xenon
-            taskUri = UriUtils.buildPublicUri(getServiceHost(), closure.documentSelfLink);
+            callbackUri = UriUtils.buildPublicUri(getServiceHost(), closure.documentSelfLink);
         }
-        logFine("Closure callback URI: %s, closure: %s", taskUri, closure.documentSelfLink);
-        return taskUri;
+        logFine("Computed closure callback URI: %s, closure: %s", callbackUri, closure
+                .documentSelfLink);
+        return callbackUri;
     }
 
-    public URI buildPublicAccessUri(String accessUri, String linkPath) {
+    public URI buildConfiguredCallbackUri(String callbackUri, String linkPath) {
         try {
-            if (accessUri != null) {
-                if (accessUri.endsWith("/")) {
-                    accessUri = accessUri.substring(0, accessUri.lastIndexOf('/'));
+            if (callbackUri != null) {
+                if (callbackUri.endsWith("/")) {
+                    callbackUri = callbackUri.substring(0, callbackUri.lastIndexOf('/'));
                 }
-                return URI.create(accessUri + linkPath);
+                return URI.create(callbackUri + linkPath);
             }
         } catch (Throwable e) {
             Utils.log(Utils.class, DockerDriverBase.class.getSimpleName(), Level.SEVERE,
-                    "Failure in building public access %s, %s, %s", accessUri, linkPath, Utils
+                    "Failure in building callback uri %s, %s, %s", callbackUri, linkPath, Utils
                             .toString(e));
         }
         return null;

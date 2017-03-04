@@ -100,7 +100,7 @@ class Context:
             op = operation.upper()
             target_uri = build_closure_description_uri(self.closure_uri, link)
             if op == 'GET':
-                resp = requests.get(target_uri, stream=True, verify=False)
+                resp = requests.get(target_uri, stream=True)
             elif op == 'POST':
                 resp = requests.post(target_uri, data=json.dumps(body), headers=headers)
             elif op == 'PATCH':
@@ -190,7 +190,7 @@ def proceed_with_closure_description(closure_uri, closure_desc_uri, inputs, clos
                'Accept': 'application/json',
                'x-xenon-auth-token': os.environ['TOKEN']
                }
-    closure_desc_response = requests.get(closure_desc_uri, headers=headers, verify=False)
+    closure_desc_response = requests.get(closure_desc_uri, headers=headers)
     if closure_desc_response.ok:
         closure_description = json.loads(closure_desc_response.content.decode('utf-8'))
         (module_name, handler_name) = create_entry_point(closure_description)
@@ -216,8 +216,10 @@ def proceed_with_closure_description(closure_uri, closure_desc_uri, inputs, clos
 
 
 def build_closure_description_uri(closure_uri, closure_desc_link):
-    parsed_obj = urlparse(closure_uri)
-    return parsed_obj.scheme + "://" + parsed_obj.netloc + closure_desc_link
+    # parsed_obj = urlparse(closure_uri)
+    pattern = "/resources/closures/"
+    uri_head = closure_uri.split(pattern,1)[0]
+    return uri_head + closure_desc_link
 
 
 def patch_closure_started(closure_uri, closure_semaphore):
@@ -251,7 +253,7 @@ def proceed_with_closure_execution(skip_execution=False):
                'Accept': 'application/json',
                'x-xenon-auth-token': os.environ['TOKEN']
                }
-    closure_response = requests.get(closure_uri, headers=headers, verify=False)
+    closure_response = requests.get(closure_uri, headers=headers)
     if closure_response.ok:
         closure_data = json.loads(closure_response.content.decode('utf-8'))
         closure_semaphore = closure_data['closureSemaphore']
