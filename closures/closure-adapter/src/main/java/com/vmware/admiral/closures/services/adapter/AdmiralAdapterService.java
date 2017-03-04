@@ -767,7 +767,8 @@ public class AdmiralAdapterService extends
             int sepIndex = env.indexOf("=");
             if (sepIndex > 0) {
                 String key = env.split("=")[0].trim();
-                if (setTaskUri && "TASK_URI".equalsIgnoreCase(key)) {
+                if ((setTaskUri && ClosureProps.ENV_PROP_TASK_URI.equalsIgnoreCase(key))
+                        || ClosureProps.ENV_TRUST_CERTS.equalsIgnoreCase(key)) {
                     String value = env.substring(sepIndex + 1).trim();
                     buildArgsObj.addProperty(key, value);
                 }

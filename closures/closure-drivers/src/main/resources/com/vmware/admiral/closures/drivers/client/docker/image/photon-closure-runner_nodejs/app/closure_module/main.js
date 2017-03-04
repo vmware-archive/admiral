@@ -1,7 +1,7 @@
 "use strict";
 /*jslint node: true, stupid: true */
 
-var restler = require('restler');
+var request = require('request');
 var fs = require('fs');
 var moment = require('moment');
 var url = require('url');
@@ -201,9 +201,20 @@ function getProceedWithTaskDef(closureDescUri, internalCtx, context) {
     var headers = {
         'x-xenon-auth-token': process.env.TOKEN
     }
-    restler.get(closureDescUri, {
-        headers: headers
-      }).on('complete', function(data, response) {
+    request.get({
+        url: closureDescUri,
+        json: true,
+        headers: headers,
+        ca: fs.readFileSync('/app/trust.pem')
+      }, (err, res, data) => {
+        if (err || res.statusCode !== 200) {
+            var msg = "Unable to get closure description from URI: " + closureDescUri;
+            if (res) {
+                msg += " Reason: " + err;
+            }
+            console.error(msg);
+            throw msg;
+        } else {
             if (internalCtx) {
                 internalCtx.outputNames = data.outputNames;
             }
@@ -226,7 +237,8 @@ function getProceedWithTaskDef(closureDescUri, internalCtx, context) {
 
                 executeScript(scriptDeps, entrypoint, functionName, context);
             }
-        });
+        }
+    });
 }
 
 function getClosureSemaphore() {
@@ -251,8 +263,11 @@ function initExitCallbacks(context, internalCtx) {
 
 
 function buildUri(closureUri, descriptionLink) {
-    var closureUrl = url.parse(closureUri);
-    return closureUrl.protocol + "//" + closureUrl.host + descriptionLink;
+    var compuitedUri = closureUri.substring(0, closureUri.indexOf("/resources/closures"));
+    if (compuitedUri.endsWith('/')) {
+        return compuitedUri.substring(0, compuitedUri.length - 1) + descriptionLink;
+    }
+    return compuitedUri + descriptionLink;
 }
 
 function proceedWithExecution(closureUri, internalCtx, context, closure) {
@@ -270,27 +285,32 @@ function proceedWithExecution(closureUri, internalCtx, context, closure) {
         var headers = {
             'x-xenon-auth-token': process.env.TOKEN
         }
-        restler.patchJson(closureUri, runningState, {
-            headers: headers
-            }).on('complete', function(data, response) {
-                if (response.statusCode !== 200) {
-                    console.error("Unable to start closure with URI: " + closureUri);
 
-                    process.exit(1);
-                }
+        request.patch({
+            url: closureUri,
+            json: true,
+            headers: headers,
+            ca: fs.readFileSync('/app/trust.pem'),
+            body: runningState
+          }, (err, res, data) => {
+            if (err || res.statusCode !== 200) {
+                console.error("Unable to start closure with URI: " + closureUri);
+
+                process.exit(1);
+            } else {
                 // handle response
                 // console.info("Entered RUNNING state for: " + closureUri);
 
                 // Persist script source to disk
                 var closureDescUriLink = closure.descriptionLink,
                     closureDescUri = buildUri(closureUri, closureDescUriLink);
-
                 // inject inputs
                 context.inputs = closure.inputs;
 
                 getProceedWithTaskDef(closureDescUri, internalCtx, context);
-            });
-       }
+            }
+        });
+   }
 }
 
 function proceedWithTask(closureUri, internalCtx, context) {
@@ -298,22 +318,27 @@ function proceedWithTask(closureUri, internalCtx, context) {
     var headers = {
         'x-xenon-auth-token': process.env.TOKEN
     }
-    restler.get(closureUri, {
-        headers: headers
-      }).on('complete', function(data, response) {
-            if (!response || response.statusCode !== 200) {
-                var msg = "Unable to get closure source from URI: " + closureUri;
-                if (response) {
-                    msg += " code: " + response.statusCode;
-                }
-                console.error(msg);
-                throw msg;
-            }
 
-            // semaphore fetched ...assign the value
-            closureSemaphore = data.closureSemaphore;
-            proceedWithExecution(closureUri, internalCtx, context, data);
-        });
+    request.get({
+        url: closureUri,
+        json: true,
+        headers: headers,
+        ca: fs.readFileSync('/app/trust.pem')
+      }, (err, res, data) => {
+        if (err || res.statusCode !== 200) {
+            var msg = "Unable to get closure source from URI: " + closureUri;
+            if (res) {
+                msg += " Reason: " + err;
+            }
+            console.error(msg);
+            throw msg;
+        } else {
+          // data is already parsed as JSON:
+          // semaphore fetched ...assign the value
+          closureSemaphore = data.closureSemaphore;
+          proceedWithExecution(closureUri, internalCtx, context, data);
+        }
+    });
 }
 
 function js2rest(obj) {
@@ -382,25 +407,36 @@ function executeFunc(token, link, operation, body, handler) {
     }
     let op = _.toUpper(operation);
     let targetUri = buildUri(process.env.TASK_URI, link);
+    let method = op;
     if (_.isEqual(op, 'GET')) {
-        restler.get(targetUri, {
-            headers: headers
-        }).on('complete', arguments.length > 4 ? handler : body);
-    } else if (_.isEqual(op, 'PATCH')) {
-        restler.patch(targetUri, body, {
-            headers: headers
-        }).on('complete', handler);
-    } else if (_.isEqual(op, 'POST')) {
-        restler.post(targetUri, body, {
-            headers: headers
-        }).on('complete', handler);
-    } else if (_.isEqual(op, 'PUT')) {
-        restler.post(targetUri, body, {
-            headers: headers
-        }).on('complete', handler);
-    } else {
+        request.get({
+            url: targetUri,
+            json: true,
+            headers: headers,
+            ca: fs.readFileSync('/app/trust.pem')
+          }, (err, res, data) => {
+            if (arguments.length > 4) {
+                handler(res, data);
+            } else {
+                body(res, data);
+            }
+        });
+    } else if (!_.isEqual(op, 'PATCH')
+               || !_.isEqual(op, 'POST')
+               || !_.isEqual(op, 'PUT')) {
         throw 'Unsupported operation on ctx.execute() function: ' + operation;
     }
+
+    request.get({
+        url: targetUri,
+        json: true,
+        method: method,
+        headers: headers,
+        body: body,
+        ca: fs.readFileSync('/app/trust.pem')
+      }, (err, res, data) => {
+        handler(res, data);
+    });
 }
 
 function main() {

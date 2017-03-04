@@ -4,7 +4,7 @@
     "private": "true",
     "dependencies": {
         "lodash": "4.11.1",
-        "restler": "3.4.0",
+        "request": "2.80.0",
         "moment": "2.12.0",
         "unzip": "0.1.11"
     },

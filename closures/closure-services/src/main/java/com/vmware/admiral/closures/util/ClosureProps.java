@@ -63,8 +63,15 @@ public class ClosureProps {
      * used by closure runtime execution to callback Admiral services instead of xenon publicUri
      * property.
      */
-    public static final String PUBLIC_ADMIRAl_ACCESS_URI_PROP =
-            System.getProperty("closure.service.public.access.uri");
+    public static final String CLOSURE_SERVICE_CALLBACK_URI = "closure.service.callback.uri";
+    /**
+     * Trust certificates to use when talking to callback uri
+     */
+    public static final String CALLBACK_TRUST_CERT_FILE_PATH = "closure.service.callback.trust.certificate";
+
+    public static final String ENV_PROP_TASK_URI = "TASK_URI";
+    public static final String ENV_PROP_TOKEN = "TOKEN";
+    public static final String ENV_TRUST_CERTS = "TRUST_CERTS";
 
     public static final String MAX_LOG_FILE_SIZE = (MAX_LOG_SIZE_BYTES / 1024) + "k";
 
