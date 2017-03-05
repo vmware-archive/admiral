@@ -47,4 +47,18 @@ public interface DriverRegistry {
      */
     Map<String, String> getSupportedRuntimes();
 
+    /**
+     * Returns current image version for a specific runtime
+     *
+     * @return current version of image
+     */
+    String getImageVersion(String runtime);
+
+    /**
+     * Returns current base image version for a specific runtime
+     *
+     * @return current version of a base image
+     */
+    String getBaseImageVersion(String runtime);
+
 }

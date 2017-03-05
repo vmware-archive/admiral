@@ -13,8 +13,6 @@ package com.vmware.admiral.closures.drivers;
 
 import java.util.function.Consumer;
 
-import com.vmware.admiral.closures.drivers.ContainerConfiguration;
-
 /**
  * Interface represents docker client.
  */
@@ -30,10 +28,12 @@ public interface ClosureDockerClient {
     /**
      * Creates and starts the container according to the provided configuration properties.
      *
-     * @param containerImage Image to use
+     * @param imageConfig Image configuration to use
      * @param configuration Configuration properties to use
      */
-    void createAndStartContainer(String closureLink, String containerImage, ContainerConfiguration configuration,
+    void createAndStartContainer(String closureLink, ImageConfiguration imageConfig,
+            ContainerConfiguration
+            configuration,
             Consumer<Throwable> errorHandler);
 
     /**

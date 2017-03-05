@@ -64,7 +64,8 @@ public class HostInitClosureServiceConfig extends HostInitServiceHelper {
     private static void registerExecutionDrivers(ServiceHost host) {
         Map<String, String> runtimes = driverRegistry.getSupportedRuntimes();
         runtimes.forEach((r, image) -> driverRegistry
-                .register(r, new DockerDriverBase(host, new ClosureDockerClientFactoryImpl(host)) {
+                .register(r, new DockerDriverBase(host, driverRegistry, new
+                        ClosureDockerClientFactoryImpl(host)) {
                     @Override
                     public String getDockerImage() {
                         return image;

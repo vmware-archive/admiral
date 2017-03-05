@@ -35,7 +35,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;

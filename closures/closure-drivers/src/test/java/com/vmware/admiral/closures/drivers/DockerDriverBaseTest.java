@@ -29,7 +29,9 @@ public class DockerDriverBaseTest {
     @Before
     public void setup() {
         ServiceHost host = mock(ServiceHost.class);
-        dockerDriver = new DockerDriverBase(host, new ClosureDockerClientFactoryImpl(host)) {
+        DriverRegistry driverRegistry = mock(DriverRegistry.class);
+        dockerDriver = new DockerDriverBase(host, driverRegistry, new
+                ClosureDockerClientFactoryImpl(host)) {
             @Override
             public String getDockerImage() {
                 return "test_image";

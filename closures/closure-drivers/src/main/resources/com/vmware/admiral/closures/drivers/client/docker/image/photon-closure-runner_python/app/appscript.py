@@ -153,7 +153,7 @@ def download_and_save_source(source_url, module_name, closure_description, skip_
     if not os.path.exists(SRC_DIR):
         os.makedirs(SRC_DIR)
     # print 'Downloading source from: ', source_url
-    resp = requests.get(source_url, stream=True, verify=False)
+    resp = requests.get(source_url, stream=True)
     content_type = resp.headers['content-type']
     if resp.status_code != 200:
         raise Exception('Unable to fetch script source from: ', source_url)

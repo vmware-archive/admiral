@@ -26,6 +26,11 @@ public final class DriverRegistryImpl implements DriverRegistry {
 
     private static final Logger logger = LoggerFactory.getLogger(DriverRegistryImpl.class);
 
+    private final String NODEJS_IMAGE_VERSION = "1.0";
+    private final String NODEJS_BASE_IMAGE_VERSION = "1.0";
+    private final String PYTHON_IMAGE_VERSION = "1.0";
+    private final String PYTHON_BASE_IMAGE_VERSION = "1.0";
+
     private final Map<String, String> supportedRuntimes = new HashMap<>();
     private final Map<String, ExecutionDriver> executionDrivers = new HashMap<>();
 
@@ -41,6 +46,29 @@ public final class DriverRegistryImpl implements DriverRegistry {
         executionDrivers.put(runtime, driver);
     }
 
+    @Override
+    public String getImageVersion(String runtime) {
+        if (DriverConstants.RUNTIME_NODEJS_4.equalsIgnoreCase(runtime)) {
+            return NODEJS_IMAGE_VERSION;
+        } else if (DriverConstants.RUNTIME_PYTHON_3.equalsIgnoreCase(runtime)) {
+            return PYTHON_IMAGE_VERSION;
+        }
+
+        throw new IllegalArgumentException("No available image for runtime: " + runtime);
+    }
+
+    @Override
+    public String getBaseImageVersion(String runtime) {
+        if (DriverConstants.RUNTIME_NODEJS_4.equalsIgnoreCase(runtime)) {
+            return NODEJS_BASE_IMAGE_VERSION;
+        } else if (DriverConstants.RUNTIME_PYTHON_3.equalsIgnoreCase(runtime)) {
+            return PYTHON_BASE_IMAGE_VERSION;
+        }
+
+        throw new IllegalArgumentException("No available base image for runtime: " + runtime);
+    }
+
+    @Override
     public ExecutionDriver getDriver(String runtime) {
         if (executionDrivers.containsKey(runtime)) {
             return executionDrivers.get(runtime);
@@ -55,7 +83,8 @@ public final class DriverRegistryImpl implements DriverRegistry {
             return executionDrivers.get(DriverConstants.RUNTIME_NODEJS_4);
         }
 
-        throw new IllegalArgumentException("No available execution driver!" + executionDrivers.size());
+        throw new IllegalArgumentException(
+                "No available execution driver!" + executionDrivers.size());
     }
 
     @Override

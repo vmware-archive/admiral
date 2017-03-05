@@ -20,7 +20,6 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_IMAGE_NAME_PROP_NAME;
 import static com.vmware.admiral.closures.util.ClosureUtils.loadDockerImageData;
 import static com.vmware.admiral.common.ManagementUriParts.CLOSURES_CONTAINER_DESC;
-import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.ServiceDocumentQuery.error;
 import static com.vmware.admiral.common.util.ServiceDocumentQuery.noResult;
@@ -55,6 +54,7 @@ import com.vmware.admiral.adapter.common.ImageOperationType;
 import com.vmware.admiral.adapter.docker.service.DockerImageHostRequest;
 import com.vmware.admiral.closures.drivers.ContainerConfiguration;
 import com.vmware.admiral.closures.drivers.DriverConstants;
+import com.vmware.admiral.closures.drivers.ImageConfiguration;
 import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
 import com.vmware.admiral.closures.services.images.DockerImage;
 import com.vmware.admiral.closures.services.images.DockerImageFactoryService;
@@ -113,7 +113,7 @@ public class AdmiralAdapterService extends
     public static class AdmiralAdapterTaskState extends
             com.vmware.admiral.service.common.TaskServiceDocument<AdmiralAdapterTaskState.SubStage> {
 
-        private static final String FIELD_NAME_CONTAINER_IMAGE = "containerImage";
+        private static final String FIELD_NAME_CONTAINER_IMAGE = "imageConfig";
         private static final String FIELD_NAME_CONFIGURATION = "configuration";
 
         public static enum SubStage {
@@ -124,9 +124,9 @@ public class AdmiralAdapterService extends
             ERROR;
         }
 
-        /** Image name to use */
-        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, LINK }, indexing = STORE_ONLY)
-        public String containerImage;
+        /** Image configuration to use */
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT }, indexing = STORE_ONLY)
+        public ImageConfiguration imageConfig;
 
         /** Container configuration to be applied. */
         @PropertyOptions(usage = { SINGLE_ASSIGNMENT }, indexing = STORE_ONLY)
@@ -215,7 +215,7 @@ public class AdmiralAdapterService extends
     @Override
     protected void validateStateOnStart(AdmiralAdapterTaskState state)
             throws IllegalArgumentException {
-        assertNotEmpty(state.containerImage, AdmiralAdapterTaskState.FIELD_NAME_CONTAINER_IMAGE);
+        assertNotNull(state.imageConfig, AdmiralAdapterTaskState.FIELD_NAME_CONTAINER_IMAGE);
         assertNotNull(state.configuration, AdmiralAdapterTaskState.FIELD_NAME_CONFIGURATION);
     }
 
@@ -237,24 +237,25 @@ public class AdmiralAdapterService extends
         logInfo("Checking docker build image request for image: %s host: %s", containerDesc.image,
                 state.selectedComputeLink);
         String baseImageName = createBaseImageName(containerDesc.image);
-        String dockerBuildImageLink = createImageBuildRequestUri(baseImageName,
+        String dockerBuildImageLink = createImageBuildRequestUri(
+                createBaseImageDockerName(state.imageConfig),
                 state.selectedComputeLink);
         getHost().sendRequest(Operation.createGet(getHost(), dockerBuildImageLink)
                 .setReferer(getHost().getUri())
                 .setCompletion((op, ex) -> {
                     if (ex != null) {
                         if (op.getStatusCode() == 404) {
-                            logWarning("No build image found! image: %s compute state: %s",
+                            logWarning("No base image found! image: %s compute state: %s",
                                     baseImageName,
                                     state.selectedComputeLink);
                             // proceed with images creation
                             proceedWithBaseImageCreation(containerDesc, state, 0);
                         } else {
-                            logWarning("Unable to fetch docker image requests:", ex);
-                            failTask("Unable to fetch docker image requests", ex);
+                            logWarning("Unable to fetch base image requests:", ex);
+                            failTask("Unable to fetch base image requests", ex);
                         }
                     } else {
-                        logInfo("Docker build image request already created.");
+                        logInfo("Docker base image request already created.");
                         DockerImage imageRequest = op.getBody(DockerImage.class);
                         handleBaseDockerBuildImageRequest(containerDesc, state, imageRequest,
                                 retriesCount);
@@ -318,10 +319,10 @@ public class AdmiralAdapterService extends
 
         DockerImage buildImage = new DockerImage();
         String baseImageName = createBaseImageName(containerDesc.image);
-        buildImage.name = baseImageName;
+        buildImage.name = createBaseImageDockerName(state.imageConfig);
         buildImage.computeStateLink = state.selectedComputeLink;
         buildImage.taskInfo = TaskState.create();
-        buildImage.documentSelfLink = createImageBuildRequestUri(baseImageName,
+        buildImage.documentSelfLink = createImageBuildRequestUri(buildImage.name,
                 state.selectedComputeLink);
 
         logInfo("Creating docker build image request: %s ", uri);
@@ -337,7 +338,7 @@ public class AdmiralAdapterService extends
 
                     logInfo("Docker build image request has been created successfully.");
                     // 2. Send image load request
-                    loadBaseImage(baseImageName, containerDesc, state.selectedComputeLink);
+                    loadBaseImage(baseImageName, state.imageConfig, state.selectedComputeLink);
                     // 3. Poll for completion
                     getHost().schedule(
                             () -> proceedWithBaseDockerImage(containerDesc, state, retriesCount), 5,
@@ -345,11 +346,12 @@ public class AdmiralAdapterService extends
                 }));
     }
 
-    private void loadBaseImage(String baseImageName, ContainerDescription containerDesc, String
+    private void loadBaseImage(String baseImageName, ImageConfiguration imageConfig, String
             computeStateLink) {
         DockerImageHostRequest request = new DockerImageHostRequest();
         request.operationTypeId = ImageOperationType.LOAD.id;
-        String completionServiceCallBack = createImageBuildRequestUri(baseImageName,
+        String baseDockerName = createBaseImageDockerName(imageConfig);
+        String completionServiceCallBack = createImageBuildRequestUri(baseDockerName,
                 computeStateLink);
         request.serviceTaskCallback = ServiceTaskCallback.create(completionServiceCallBack);
         request.resourceReference = UriUtils.buildUri(getHost(), computeStateLink);
@@ -384,13 +386,18 @@ public class AdmiralAdapterService extends
         return baseName + "_base.tar.xz";
     }
 
+    private String createBaseImageDockerName(ImageConfiguration imageConfig) {
+        return String.format("%s:%s", imageConfig.baseImageName, imageConfig.baseImageVersion);
+    }
+
     private void seedWithBaseDockerImage(ContainerDescription containerDesc,
             String computeStateLink,
             AdmiralAdapterTaskState state) {
         String baseImageName = createBaseImageName(containerDesc.image);
         logInfo("Checking docker build image request for base image: %s host: %s", baseImageName,
                 computeStateLink);
-        String dockerBuildImageLink = createImageBuildRequestUri(baseImageName, computeStateLink);
+        String dockerBuildImageLink = createImageBuildRequestUri(createBaseImageDockerName
+                (state.imageConfig), computeStateLink);
         getHost().sendRequest(Operation.createGet(getHost(), dockerBuildImageLink)
                 .setReferer(getHost().getUri())
                 .setCompletion((op, ex) -> {
@@ -466,7 +473,7 @@ public class AdmiralAdapterService extends
 
                     logInfo("Docker build image request has been created successfully.");
                     // 2. Send image build request
-                    loadBaseImage(baseImageName, containerDesc, computeStateLink);
+                    loadBaseImage(baseImageName, state.imageConfig, computeStateLink);
                     // 3. Poll for completion
                     getHost().schedule(
                             () -> seedWithBaseDockerImage(containerDesc, computeStateLink, state),
@@ -569,7 +576,7 @@ public class AdmiralAdapterService extends
             logInfo("Initiating provisioning closure for: {}", containerDesc.env[0]);
             startAllocationTask(allocationTask);
 
-            proceedTo(AdmiralAdapterService.AdmiralAdapterTaskState.SubStage.COMPLETED);
+            proceedTo(AdmiralAdapterTaskState.SubStage.COMPLETED);
         } catch (Throwable ex) {
             logWarning("Unable to initiate provisioning closure: " + containerDesc.env[0], ex);
             throw new RuntimeException(ex);
@@ -992,8 +999,7 @@ public class AdmiralAdapterService extends
     }
 
     private void fetchGroupPlacement(AdmiralAdapterTaskState state,
-            Consumer<ServiceDocumentQuery.ServiceDocumentQueryElementResult<GroupResourcePlacementService
-                    .GroupResourcePlacementState>> callbackFunction) {
+            Consumer<ServiceDocumentQuery.ServiceDocumentQueryElementResult<GroupResourcePlacementState>> callbackFunction) {
         String placementId = computePlacementId(state.configuration);
         logInfo("Fetching group placement: %s", placementId);
         try {
@@ -1066,19 +1072,6 @@ public class AdmiralAdapterService extends
         }
     }
 
-    private String prepareImageTag(ContainerConfiguration configuration, String... params) {
-        if (params != null && params.length <= 0) {
-            if (ClosureUtils.isEmpty(configuration.dependencies)) {
-                // no dependencies
-                return "latest";
-            }
-
-            return ClosureUtils.calculateHash(new String[] { configuration.dependencies });
-        }
-
-        return ClosureUtils.calculateHash(params);
-    }
-
     private void proceedWithDescriptionCreation(AdmiralAdapterTaskState state,
             String configChecksum) {
         if (!ClosureUtils.isEmpty(state.configuration.sourceURL)) {
@@ -1095,25 +1088,25 @@ public class AdmiralAdapterService extends
                         } else {
                             String lastChanged = op.getResponseHeader("Last-Modified");
                             Long contentLenght = op.getContentLength();
-                            String imageTag = prepareImageTag(state.configuration, state
-                                            .configuration.sourceURL, lastChanged,
+                            String imageTag = ClosureUtils.prepareImageTag(state.configuration,
+                                    state.imageConfig.imageNameVersion,
+                                    state.configuration.sourceURL, lastChanged,
                                     contentLenght.toString());
-                            createDescription(state, configChecksum, imageTag);
+                            createContainerDescription(state, configChecksum, imageTag);
 
                         }
                     }));
         } else {
-            String imageTag = prepareImageTag(state.configuration);
-            createDescription(state, configChecksum, imageTag);
+            //            String imageTag = prepareImageTag(state.configuration);
+            createContainerDescription(state, configChecksum, state.imageConfig.imageNameVersion);
         }
     }
 
-    private void createDescription(AdmiralAdapterTaskState state,
+    private void createContainerDescription(AdmiralAdapterTaskState state,
             String configChecksum, String imageTag) {
         // Create container description
-        ContainerDescription containerDesc = prepareContainerDescription(state.containerImage,
-                imageTag,
-                state.configuration, configChecksum);
+        ContainerDescription containerDesc = prepareContainerDescription(state.imageConfig, state
+                .configuration, configChecksum, imageTag);
         URI uri = UriUtils.buildUri(getHost(), ContainerDescriptionService.FACTORY_LINK);
 
         logInfo("Creating execution container description: %s", uri);
@@ -1132,14 +1125,14 @@ public class AdmiralAdapterService extends
                 }));
     }
 
-    private ContainerDescription prepareContainerDescription(String imageName, String imageTag,
-            ContainerConfiguration configuration, String configChecksum) {
+    private ContainerDescription prepareContainerDescription(ImageConfiguration imageConfig,
+            ContainerConfiguration configuration, String configChecksum, String imageTag) {
         ContainerDescription containerDesc = new ContainerDescription();
 
         containerDesc.documentSelfLink = CLOSURES_CONTAINER_DESC + "-" +
                 configChecksum;
         containerDesc.name = configuration.name;
-        containerDesc.image = imageName + ":" + imageTag;
+        containerDesc.image = imageConfig.imageName + ":" + imageTag;
         containerDesc.memoryLimit = ClosureUtils.toBytes(configuration.memoryMB);
         containerDesc.cpuShares = configuration.cpuShares;
         containerDesc.ulimits = new Ulimit[] { new Ulimit("nofile",

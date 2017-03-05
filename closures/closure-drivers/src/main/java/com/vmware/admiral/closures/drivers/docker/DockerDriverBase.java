@@ -20,7 +20,9 @@ import java.util.logging.Level;
 import com.vmware.admiral.closures.drivers.ClosureDockerClient;
 import com.vmware.admiral.closures.drivers.ClosureDockerClientFactory;
 import com.vmware.admiral.closures.drivers.ContainerConfiguration;
+import com.vmware.admiral.closures.drivers.DriverRegistry;
 import com.vmware.admiral.closures.drivers.ExecutionDriver;
+import com.vmware.admiral.closures.drivers.ImageConfiguration;
 import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
 import com.vmware.admiral.closures.util.ClosureProps;
@@ -39,6 +41,7 @@ import com.vmware.xenon.common.Utils;
 public abstract class DockerDriverBase implements ExecutionDriver {
 
     private final ServiceHost serviceHost;
+    private final DriverRegistry driverRegistry;
     private final ClosureDockerClientFactory dockerClientFactory;
 
     private static final String TRUST_CERT_PATH = ConfigurationUtil.getProperty(ClosureProps
@@ -48,9 +51,10 @@ public abstract class DockerDriverBase implements ExecutionDriver {
 
     public abstract String getDockerImage();
 
-    public DockerDriverBase(ServiceHost serviceHost,
+    public DockerDriverBase(ServiceHost serviceHost, DriverRegistry driverRegistry,
             ClosureDockerClientFactory dockerClientFactory) {
         this.serviceHost = serviceHost;
+        this.driverRegistry = driverRegistry;
         this.dockerClientFactory = dockerClientFactory;
     }
 
@@ -60,10 +64,7 @@ public abstract class DockerDriverBase implements ExecutionDriver {
                     errorHandler) {
         ClosureDockerClient dockerClient = dockerClientFactory.getClient();
 
-        String containerImage = getDockerImage();
         String containerName = generateContainerName(closure);
-
-        logInfo("Creating container with name: %s image: %s", containerName, containerImage);
 
         ContainerConfiguration configuration = new ContainerConfiguration(containerName);
 
@@ -79,8 +80,18 @@ public abstract class DockerDriverBase implements ExecutionDriver {
         configuration.envVars = vars.toArray(new String[vars.size()]);
         logInfo("Creating closure with envs: %s", vars.get(0));
 
+        String containerImage = getDockerImage();
+
+        ImageConfiguration imageConfig = new ImageConfiguration();
+        imageConfig.imageName = containerImage;
+        String imageVersion = driverRegistry.getImageVersion(closureDesc.runtime);
+        imageConfig.imageNameVersion = ClosureUtils.prepareImageTag(configuration, imageVersion);
+        imageConfig.baseImageName = containerImage + "_base";
+        imageConfig.baseImageVersion = driverRegistry.getBaseImageVersion(closureDesc.runtime);
+
+        logInfo("Creating container with name: %s image: %s", containerName, containerImage);
         dockerClient
-                .createAndStartContainer(closure.documentSelfLink, containerImage, configuration,
+                .createAndStartContainer(closure.documentSelfLink, imageConfig, configuration,
                         errorHandler);
         logInfo("Code execution request sent.");
     }
@@ -166,6 +177,19 @@ public abstract class DockerDriverBase implements ExecutionDriver {
         String taskID = Service.getId(closure.documentSelfLink);
         return taskID + "_" + closure.documentVersion;
     }
+
+    //    private String prepareImageTag(ContainerConfiguration configuration, String... params) {
+    //        if (params != null && params.length <= 0) {
+    //            if (ClosureUtils.isEmpty(configuration.dependencies)) {
+    //                // no dependencies
+    //                return "latest";
+    //            }
+    //
+    //            return ClosureUtils.calculateHash(new String[] { configuration.dependencies });
+    //        }
+    //
+    //        return ClosureUtils.calculateHash(params);
+    //    }
 
     private List<String> populateEnvs(Closure closure, String token) {
         List<String> vars = new ArrayList<>();

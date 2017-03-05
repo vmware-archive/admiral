@@ -38,7 +38,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.vmware.admiral.closures.drivers.ContainerConfiguration;
 import com.vmware.admiral.closures.drivers.DriverConstants;
+import com.vmware.admiral.closures.drivers.DriverRegistry;
+import com.vmware.admiral.closures.drivers.DriverRegistryImpl;
 import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
@@ -68,6 +71,8 @@ public class ClosuresIT extends BaseProvisioningOnCoreOsIT {
 
     private static String dockerBuildImageLink;
     private static String dockerBuildBaseImageLink;
+
+    protected static DriverRegistry driverRegistry = new DriverRegistryImpl();
 
     @BeforeClass
     public static void beforeClass() {
@@ -101,10 +106,10 @@ public class ClosuresIT extends BaseProvisioningOnCoreOsIT {
         triggerExecutionImageBuildWithoutDependencies();
         dockerBuildImageLink = getBaseUrl()
                 + createImageBuildRequestUri(IMAGE_NAME + ":latest", dockerHostCompute
-                        .documentSelfLink);
+                .documentSelfLink);
         dockerBuildBaseImageLink = getBaseUrl()
                 + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
-                        .documentSelfLink);
+                .documentSelfLink);
     }
 
     @Test
@@ -325,7 +330,7 @@ public class ClosuresIT extends BaseProvisioningOnCoreOsIT {
             throws Exception {
         SimpleHttpsClient.HttpResponse imageRequestResponse = SimpleHttpsClient.execute(
                 SimpleHttpsClient.HttpMethod
-                .GET, serviceHostUri + dockerBuildImageLink, null);
+                        .GET, serviceHostUri + dockerBuildImageLink, null);
         if (imageRequestResponse == null || imageRequestResponse.responseBody == null) {
             return false;
         }
@@ -341,20 +346,12 @@ public class ClosuresIT extends BaseProvisioningOnCoreOsIT {
         return TaskState.isFinished(imageRequest.taskInfo);
     }
 
-    private static String prepareImageName(String imagePrefix, ClosureDescription taskDef) {
-        return imagePrefix + ":" + prepareImageTag(taskDef);
-    }
-
-    private static String prepareImageTag(ClosureDescription closureDescription) {
-        if (ClosureUtils.isEmpty(closureDescription.sourceURL)) {
-            if (ClosureUtils.isEmpty(closureDescription.dependencies)) {
-                // no dependencies
-                return "latest";
-            }
-            return ClosureUtils.calculateHash(new String[] { closureDescription.dependencies });
-        } else {
-            return ClosureUtils.calculateHash(new String[] { closureDescription.sourceURL });
-        }
+    private static String prepareImageName(String imagePrefix, ClosureDescription closureDesc) {
+        ContainerConfiguration containerConfiguration = new ContainerConfiguration();
+        containerConfiguration.dependencies = closureDesc.dependencies;
+        String imageVersion = driverRegistry.getImageVersion(closureDesc.runtime);
+        return imagePrefix + ":" + ClosureUtils
+                .prepareImageTag(containerConfiguration, imageVersion);
     }
 
     protected static String createImageBuildRequestUri(String imageName, String computeStateLink) {
