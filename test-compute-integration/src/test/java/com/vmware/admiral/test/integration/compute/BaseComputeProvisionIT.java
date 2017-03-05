@@ -442,23 +442,18 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         placementState.maxNumberInstances = 30;
         placementState.resourcePoolLink = resourcePoolLink;
         placementState.name = name(endpointType, name, SUFFIX);
-        placementState.documentSelfLink = placementState.name;
+        placementState.documentSelfLink = getExistingLink(
+                GroupResourcePlacementService.FACTORY_LINK, placementState.name);
         placementState.availableInstancesCount = 1000000;
         placementState.priority = 1;
         placementState.tenantLinks = getTenantLinks();
 
-        GroupResourcePlacementState currentQuata = getDocument(
-                getExistingLink(GroupResourcePlacementService.FACTORY_LINK, placementState.name),
-                GroupResourcePlacementState.class);
-        if (currentQuata != null) {
-            return currentQuata;
-        }
-        GroupResourcePlacementState resourcePolicyState = postDocument(
+        GroupResourcePlacementState groupResourcePlacementState = postDocument(
                 GroupResourcePlacementService.FACTORY_LINK, placementState, documentLifeCycle);
 
-        assertNotNull(resourcePolicyState);
+        assertNotNull(groupResourcePlacementState);
 
-        return resourcePolicyState;
+        return groupResourcePlacementState;
     }
 
     protected void requestContainerAndDelete(String resourceDescLink) throws Exception {
