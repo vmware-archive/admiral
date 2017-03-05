@@ -11,15 +11,20 @@
 
 package com.vmware.admiral.host;
 
-import java.io.File;
+import static com.vmware.xenon.common.CommandLineArgumentParser.ARGUMENT_ASSIGNMENT;
+import static com.vmware.xenon.common.CommandLineArgumentParser.ARGUMENT_PREFIX;
+
 import java.io.IOException;
 import java.net.URI;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
@@ -38,9 +43,15 @@ public class ManagementHostExtensibilityManagerTest extends ManagementHostBaseTe
 
     private URI subscriptionUri;
 
+    private static final TemporaryFolder SANDBOX = new TemporaryFolder();
+
     @Before
     public void setUp() throws Throwable {
-        host = createManagementHost(new String[] {}, true);
+        SANDBOX.create();
+        List<String> args = new ArrayList<>(Arrays.asList(
+                // generate a random sandbox
+                ARGUMENT_PREFIX + "sandbox" + ARGUMENT_ASSIGNMENT + SANDBOX.getRoot().toPath()));
+        host = createManagementHost(args.toArray(new String[args.size()]), true);
         subscriptionUri = UriUtils.buildUri(host,
                 ExtensibilitySubscriptionFactoryService.SELF_LINK);
     }
@@ -49,11 +60,8 @@ public class ManagementHostExtensibilityManagerTest extends ManagementHostBaseTe
     public void tearDown() throws Throwable {
         if (host != null && host.getStorageSandbox() != null) {
             host.stop();
-            File storage = new File(host.getStorageSandbox().getPath());
-            if (storage.isDirectory()) {
-                FileUtils.deleteDirectory(storage);
-            }
         }
+        SANDBOX.delete();
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -158,7 +166,7 @@ public class ManagementHostExtensibilityManagerTest extends ManagementHostBaseTe
 
         // If subscriber doesn't update container's name within 30 seconds, context will expire.
         while (!containerState.name.equals(DummySubscriber.class.getSimpleName())) {
-            containerState = (ContainerState) sendOperation(host,
+            containerState = sendOperation(host,
                     UriUtils.buildUri(host, containerLink),
                     null, ContainerState.class, Action.GET);
         }

@@ -110,6 +110,7 @@ public abstract class BaseIntegrationSupportIT {
 
     @Rule
     public Timeout globalTimeout = Timeout.seconds(TimeUnit.MINUTES.toSeconds(15));
+    private String tenantSuffix;
 
     @BeforeClass
     public static void baseBeforeClass() {
@@ -522,7 +523,7 @@ public abstract class BaseIntegrationSupportIT {
 
     protected String getNewUniqueLink(String factoryLink) {
         return UriUtils.buildUriPath(factoryLink,
-                getLink(String.valueOf(System.currentTimeMillis())));
+                getLink(Utils.buildUUID(Utils.computeHash(factoryLink))));
     }
 
     private String getLink(String name) {
@@ -530,7 +531,8 @@ public abstract class BaseIntegrationSupportIT {
     }
 
     protected String getExistingLink(String factoryLink, String name) {
-        return UriUtils.buildUriPath(factoryLink, getLink(name));
+        return UriUtils.buildUriPath(factoryLink,
+                getLink(name + Utils.buildUUID(Utils.computeHash(name))));
     }
 
     protected void triggerAndWaitForEndpointEnumeration(EndpointState endpoint) throws Exception {
@@ -560,9 +562,13 @@ public abstract class BaseIntegrationSupportIT {
 
     protected List<String> getTenantLinks() {
         if (this.tenantLinks == null) {
+            String name = getClass().getSimpleName().toLowerCase();
+            if (this.tenantSuffix == null) {
+                this.tenantSuffix = Utils.buildUUID(Utils.computeHash(name));
+            }
             this.tenantLinks = new ArrayList<>();
             this.tenantLinks.add(UriUtils.buildUriPath(QueryUtil.TENANT_IDENTIFIER,
-                    getClass().getSimpleName().toLowerCase()));
+                    name + this.tenantSuffix));
         }
         return tenantLinks;
     }

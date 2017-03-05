@@ -12,12 +12,12 @@
 package com.vmware.admiral.request.compute.allocation.filter;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -27,14 +27,9 @@ import com.vmware.admiral.request.allocation.filter.HostSelectionFilter;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.NetworkInterfaceDescription;
 import com.vmware.photon.controller.model.resources.ResourceState;
-import com.vmware.xenon.common.Operation;
+import com.vmware.photon.controller.model.tasks.QueryUtils.QueryTop;
 import com.vmware.xenon.common.ServiceHost;
-import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.common.Utils;
-import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
-import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption;
-import com.vmware.xenon.services.common.ServiceUriPaths;
 
 /**
  * A filter implementing {@link HostSelectionFilter} in order to provide affinity and network name
@@ -42,14 +37,14 @@ import com.vmware.xenon.services.common.ServiceUriPaths;
  */
 public class ComputeToNetworkAffinityHostFilter
         implements HostSelectionFilter<FilterContext> {
-    private final List<String> nicDescLinks;
     private final ServiceHost host;
     @SuppressWarnings("unused")
     private List<String> tenantLinks;
+    private ComputeDescription desc;
 
     public ComputeToNetworkAffinityHostFilter(ServiceHost host, ComputeDescription desc) {
         this.host = host;
-        this.nicDescLinks = desc.networkInterfaceDescLinks;
+        this.desc = desc;
         this.tenantLinks = desc.tenantLinks;
     }
 
@@ -76,7 +71,7 @@ public class ComputeToNetworkAffinityHostFilter
 
     @Override
     public boolean isActive() {
-        return nicDescLinks != null && nicDescLinks.size() > 0;
+        return desc.networkInterfaceDescLinks != null && desc.networkInterfaceDescLinks.size() > 0;
     }
 
     @Override
@@ -89,12 +84,16 @@ public class ComputeToNetworkAffinityHostFilter
             if (t != null) {
                 f.completeExceptionally(t);
             } else {
+                host.log(Level.INFO, "Network affinity map component: %s [%s].", desc.name, m);
                 f.complete(m);
             }
         });
         try {
-            return f.get(5, TimeUnit.SECONDS).entrySet().stream().collect(
+            return f.get(120, TimeUnit.SECONDS).entrySet().stream().collect(
                     Collectors.toMap(p -> p.getKey(), p -> new AffinityConstraint(p.getKey())));
+        } catch (TimeoutException e) {
+            host.log(Level.WARNING, "Timeout loading network definitions.");
+            return Collections.emptyMap();
         } catch (Exception e) {
             host.log(Level.WARNING, "Error loading network definitions, reason:%s", e.getMessage());
             return Collections.emptyMap();
@@ -102,43 +101,20 @@ public class ComputeToNetworkAffinityHostFilter
     }
 
     private final void loadNicDescs(BiConsumer<Map<String, DescName>, Throwable> callback) {
-
         Query query = Query.Builder.create()
                 .addKindFieldClause(NetworkInterfaceDescription.class)
-                .addInClause(ResourceState.FIELD_NAME_SELF_LINK, nicDescLinks)
-                .build();
-        QueryTask queryTask = QueryTask.Builder.createDirectTask()
-                .addOption(QueryOption.EXPAND_CONTENT)
-                .addOption(QueryOption.TOP_RESULTS)
-                .setQuery(query)
-                .setResultLimit(nicDescLinks.size())
+                .addInClause(ResourceState.FIELD_NAME_SELF_LINK, desc.networkInterfaceDescLinks)
                 .build();
 
-        host.sendWithDeferredResult(Operation.createPost(host, ServiceUriPaths.CORE_QUERY_TASKS)
-                .setBody(queryTask)
-                .setConnectionSharing(true)
-                .setReferer(UriUtils.buildUri(host, getClass().getSimpleName())), QueryTask.class)
-                .whenComplete((qt, e) -> {
-                    if (e != null) {
-                        host.log(Level.WARNING,
-                                "Exception while filtering network descriptions. Error: [%s]", e);
-                        callback.accept(null, e);
-                        return;
-                    }
-                    Map<String, DescName> descLinksWithNames = new HashMap<>();
-                    if (qt.results.documents != null) {
-                        descLinksWithNames = qt.results.documents.values().stream()
-                                .map(json -> Utils.fromJson(json,
-                                        NetworkInterfaceDescription.class))
-                                .map(nid -> {
-                                    final DescName descName = new DescName();
-                                    descName.descLink = nid.documentSelfLink;
-                                    descName.descriptionName = nid.name;
-                                    return descName;
-                                })
-                                .collect(Collectors.toMap(d -> d.descriptionName, d -> d));
-                    }
-                    callback.accept(descLinksWithNames, null);
-                });
+        QueryTop<NetworkInterfaceDescription> queryNids = new QueryTop<>(host, query,
+                NetworkInterfaceDescription.class, null)
+                        .setMaxResultsLimit(desc.networkInterfaceDescLinks.size());
+        queryNids.collectDocuments(Collectors.toMap(d -> d.name, d -> {
+            DescName descName = new DescName();
+            descName.descLink = d.documentSelfLink;
+            descName.descriptionName = d.name;
+            return descName;
+        })).whenComplete((map, t) -> callback.accept(map, t));
+
     }
 }
