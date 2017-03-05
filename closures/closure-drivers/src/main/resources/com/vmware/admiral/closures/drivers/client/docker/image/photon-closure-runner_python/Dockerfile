@@ -14,7 +14,7 @@ COPY app/*.* /app/
 ENTRYPOINT ["./run.sh"]
 
 RUN chmod +x /app/*.sh && \
-    python3 -u /app/dep_install.py
+    /app/dep_install.sh
 
 
 

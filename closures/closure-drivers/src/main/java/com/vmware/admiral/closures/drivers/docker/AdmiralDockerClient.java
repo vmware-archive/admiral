@@ -24,6 +24,7 @@ import com.vmware.admiral.adapter.docker.service.DockerHostAdapterImageService;
 import com.vmware.admiral.adapter.docker.service.DockerImageHostRequest;
 import com.vmware.admiral.closures.drivers.ClosureDockerClient;
 import com.vmware.admiral.closures.drivers.ContainerConfiguration;
+import com.vmware.admiral.closures.drivers.ImageConfiguration;
 import com.vmware.admiral.closures.services.adapter.AdmiralAdapterFactoryService;
 import com.vmware.admiral.closures.services.adapter.AdmiralAdapterService;
 import com.vmware.admiral.closures.services.adapter.AdmiralAdapterService.AdmiralAdapterTaskState;
@@ -51,12 +52,13 @@ public class AdmiralDockerClient implements ClosureDockerClient {
     }
 
     @Override
-    public void createAndStartContainer(String closureLink, String containerImage, ContainerConfiguration configuration,
+    public void createAndStartContainer(String closureLink, ImageConfiguration imageConfig,
+            ContainerConfiguration configuration,
             Consumer<Throwable> errorHandler) {
         logInfo("Sending provisioning request of execution container...%s", closureLink);
 
         AdmiralAdapterService.AdmiralAdapterTaskState provisioningRequest = new AdmiralAdapterTaskState();
-        provisioningRequest.containerImage = containerImage;
+        provisioningRequest.imageConfig = imageConfig;
         provisioningRequest.configuration = configuration;
 
         provisioningRequest.serviceTaskCallback = ServiceTaskCallback.create(closureLink);
@@ -72,7 +74,7 @@ public class AdmiralDockerClient implements ClosureDockerClient {
                         return;
                     }
 
-                    logInfo("Docker provisioning request sent. image: %s, host: %s", containerImage,
+                    logInfo("Docker provisioning request sent. image: %s, host: %s", imageConfig,
                             configuration);
                     errorHandler.accept(null);
                 }));

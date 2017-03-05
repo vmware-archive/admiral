@@ -11,6 +11,8 @@
 
 package com.vmware.admiral;
 
+import static org.junit.Assert.assertEquals;
+
 import static com.vmware.admiral.TestPropertiesUtil.getTestRequiredProp;
 
 import java.io.IOException;
@@ -23,11 +25,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.junit.Assert.assertEquals;
-
 import com.google.gson.JsonArray;
 import org.junit.Assert;
 
+import com.vmware.admiral.closures.drivers.ContainerConfiguration;
+import com.vmware.admiral.closures.drivers.DriverRegistry;
+import com.vmware.admiral.closures.drivers.DriverRegistryImpl;
 import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
@@ -49,6 +52,8 @@ public class BaseClosureIntegrationTest extends BaseProvisioningOnCoreOsIT {
     public static final int DOCKER_IMAGE_BUILD_TIMEOUT_SECONDS = 30 * 60;
 
     protected static final String TEST_WEB_SERVER_URL_PROP_NAME = "test.webserver.url";
+
+    protected static DriverRegistry driverRegistry = new DriverRegistryImpl();
 
     @Override
     protected String getResourceDescriptionLink(boolean downloadImage, RegistryType registryType)
@@ -127,7 +132,7 @@ public class BaseClosureIntegrationTest extends BaseProvisioningOnCoreOsIT {
                 e.printStackTrace();
             }
         }
-        logger.info("Docker image " + imageName + " build on host: "
+        logger.info("Docker image " + imageName + " built on host: "
                 + dockerHostCompute.documentSelfLink);
 
         return dockerBuildImageLink;
@@ -157,6 +162,8 @@ public class BaseClosureIntegrationTest extends BaseProvisioningOnCoreOsIT {
             throws CertificateException, NoSuchAlgorithmException, KeyStoreException,
             KeyManagementException, IOException {
         String imageTag;
+        ContainerConfiguration containerConfiguration = new ContainerConfiguration();
+        containerConfiguration.dependencies = closureDesc.dependencies;
         if (!ClosureUtils.isEmpty(closureDesc.sourceURL)) {
             SimpleHttpsClient.HttpResponse resp = SimpleHttpsClient.execute(
                     SimpleHttpsClient.HttpMethod
@@ -164,25 +171,17 @@ public class BaseClosureIntegrationTest extends BaseProvisioningOnCoreOsIT {
 
             String lastChanged = resp.headers.get("Last-Modified").get(0);
             String contentLenght = resp.headers.get("Content-Length").get(0);
-            imageTag = prepareImageTag(closureDesc, closureDesc.sourceURL, lastChanged,
-                    contentLenght);
+            imageTag = ClosureUtils
+                    .prepareImageTag(containerConfiguration, driverRegistry.getImageVersion
+                                    (closureDesc.runtime), closureDesc
+                                    .sourceURL, lastChanged,
+                            contentLenght);
         } else {
-            imageTag = prepareImageTag(closureDesc);
+            imageTag = ClosureUtils
+                    .prepareImageTag(containerConfiguration, driverRegistry.getImageVersion
+                            (closureDesc.runtime));
         }
         return imagePrefix + ":" + imageTag;
-    }
-
-    private static String prepareImageTag(ClosureDescription configuration, String... params) {
-        if (params != null && params.length <= 0) {
-            if (ClosureUtils.isEmpty(configuration.dependencies)) {
-                // no dependencies
-                return "latest";
-            }
-
-            return ClosureUtils.calculateHash(new String[] { configuration.dependencies });
-        }
-
-        return ClosureUtils.calculateHash(params);
     }
 
     protected static String createImageBuildRequestUri(String imageName, String computeStateLink) {

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "${TRUST_CERTS}" >> trust.pem
+echo "${TRUST_CERTS}" > trust.pem
 
 node ./appmain.js
 

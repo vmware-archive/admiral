@@ -6,6 +6,7 @@ var fs = require('fs');
 var moment = require('moment');
 var url = require('url');
 var _ = require('lodash');
+var https = require('https');
 var http = require('http');
 var unzip = require('unzip');
 var child_process = require('child_process');
@@ -156,15 +157,23 @@ function generateModuleFileName(entrypoint) {
 }
 
 function proceedWithSourceUrl(data, context) {
-    var URL = data.sourceURL,
+    var sourceURL = data.sourceURL,
         scriptDeps = data.dependencies,
         entrypoint = data.entrypoint,
         request;
-    request = http.get(URL, function(response) {
+    let sourceURLObj = url.parse(sourceURL);
+    let options = {
+        hostname: sourceURLObj.hostname,
+        port: sourceURLObj.port,
+        path: sourceURLObj.path,
+        ca: fs.readFileSync('/app/trust.pem')
+    };
+    let httpFunction = sourceURL.startsWith('https') ? https : http;
+    request = httpFunction.get(options, function(response) {
         if (response.statusCode !== 200) {
-            console.error("Unable to fetch closure source from URI: " + URL);
+            console.error("Unable to fetch closure source from URL: " + sourceURL);
 
-            throw 'Unable to fetch closure sources from URL: ' + URL;
+            throw 'Unable to fetch closure sources from URL: ' + sourceURL;
         }
 
         var contentType = response.headers["content-type"];
@@ -172,7 +181,7 @@ function proceedWithSourceUrl(data, context) {
             response.pipe(unzip.Extract({
                 path: './' + userScriptSrcFolder
             }).on('close', function() {
-                console.log("File downloaded from: " + URL);
+                console.log("File downloaded from: " + sourceURL);
 
                 executeScriptAsZIP(data, context);
             }).on('error', function(error) {

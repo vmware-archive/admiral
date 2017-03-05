@@ -18,6 +18,7 @@ import com.vmware.admiral.closures.drivers.ExecutionDriver;
 import com.vmware.admiral.closures.util.ClosureProps;
 import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.Utils;
@@ -37,9 +38,19 @@ public class DockerImageService extends StatefulService {
 
         super.toggleOption(ServiceOption.PERIODIC_MAINTENANCE, true);
 
-        super.setMaintenanceIntervalMicros(TimeUnit.SECONDS.toMicros(ClosureProps.MAINTENANCE_TIMEOUT_SECONDS));
+        super.setMaintenanceIntervalMicros(
+                TimeUnit.SECONDS.toMicros(ClosureProps.MAINTENANCE_TIMEOUT_SECONDS));
 
         this.driverRegistry = driverRegistry;
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+
+        // instruct the index to only keep the most recent N versions
+        template.documentDescription.versionRetentionLimit = 1;
+        return template;
     }
 
     @Override
@@ -53,7 +64,8 @@ public class DockerImageService extends StatefulService {
                 .createGet(getUri())
                 .setCompletion((op, ex) -> {
                     if (ex != null) {
-                        logWarning("Failed to fetch image requests state. Reason: " + ex.getMessage());
+                        logWarning(
+                                "Failed to fetch image requests state. Reason: " + ex.getMessage());
                         post.fail(new Exception("Unable to fetch image requests state."));
                     } else {
                         DockerImage imageRequest = op.getBody(DockerImage.class);
@@ -61,7 +73,8 @@ public class DockerImageService extends StatefulService {
                             if (isBuildImageExpired(imageRequest)) {
                                 logInfo("Image is expired: %s", imageRequest.documentSelfLink);
                                 cleanImage(imageRequest);
-                                imageRequest.documentExpirationTimeMicros = TimeUnit.MICROSECONDS.toMicros(1);
+                                imageRequest.documentExpirationTimeMicros = TimeUnit.MICROSECONDS
+                                        .toMicros(1);
                                 sendSelfPatch(imageRequest);
                             } else {
                                 checkDockerHost(imageRequest);
@@ -95,16 +108,18 @@ public class DockerImageService extends StatefulService {
         DockerImage requestedImageState = patch.getBody(DockerImage.class);
         DockerImage currentImageState = this.getState(patch);
         if (requestedImageState.taskInfo != null) {
-            if (!(TaskState.isFailed(requestedImageState.taskInfo) && TaskState.isFinished(currentImageState
-                    .taskInfo))) {
+            if (!(TaskState.isFailed(requestedImageState.taskInfo) && TaskState
+                    .isFinished(currentImageState
+                            .taskInfo))) {
                 currentImageState.taskInfo = requestedImageState.taskInfo;
             } else {
                 logInfo("Requested state not allowed!");
             }
         }
         if (TaskState.isFailed(currentImageState.taskInfo)) {
-            currentImageState.documentExpirationTimeMicros = ServiceUtils.getExpirationTimeFromNowInMicros(TimeUnit
-                    .SECONDS.toMicros(ClosureProps.KEEP_FAILED_BUILDS_TIMEOUT_SECONDS));
+            currentImageState.documentExpirationTimeMicros = ServiceUtils
+                    .getExpirationTimeFromNowInMicros(TimeUnit
+                            .SECONDS.toMicros(ClosureProps.KEEP_FAILED_BUILDS_TIMEOUT_SECONDS));
         } else {
             currentImageState.lastAccessedTimeMillis = System.currentTimeMillis();
             currentImageState.documentExpirationTimeMicros = requestedImageState.documentExpirationTimeMicros;
@@ -123,14 +138,23 @@ public class DockerImageService extends StatefulService {
 
         logInfo("Verifying image: %s link: %s", imageRequest.name, imageRequest.documentSelfLink);
         executionDriver.inspectImage(imageRequest.name, imageRequest.computeStateLink,
-                (error) -> logWarning("Unable to check docker image: %s on host: %s", imageRequest.name,
-                        imageRequest.computeStateLink));
+                (error) -> {
+                    logWarning("Unable to check docker image: %s on host: %s. Reason: %s",
+                            imageRequest.name,
+                            imageRequest.computeStateLink,
+                            error.getMessage());
+                    imageRequest.documentExpirationTimeMicros = ServiceUtils
+                            .getExpirationTimeFromNowInMicros(TimeUnit
+                                    .MILLISECONDS.toMicros(1));
+                    sendSelfPatch(imageRequest);
+                });
     }
 
     private void cleanImage(DockerImage imageRequest) {
         ExecutionDriver executionDriver = driverRegistry.getDriver();
         executionDriver.cleanImage(imageRequest.name, imageRequest.computeStateLink,
-                (error) -> logWarning("Unable to clean docker image: %s on host: %s", imageRequest.name,
+                (error) -> logWarning("Unable to clean docker image: %s on host: %s",
+                        imageRequest.name,
                         imageRequest.computeStateLink));
     }
 
@@ -146,7 +170,8 @@ public class DockerImageService extends StatefulService {
         long timeout = TimeUnit.SECONDS.toMillis(ClosureProps.BUILD_IMAGE_EXPIRE_TIMEOUT_SECONDS);
         long timeElapsed = System.currentTimeMillis() - imageRequest.lastAccessedTimeMillis;
         if (timeElapsed >= timeout) {
-            logInfo("Timeout elapsed = %s ms, timeout = %s ms of imageRequest = %s", timeElapsed, timeout,
+            logInfo("Timeout elapsed = %s ms, timeout = %s ms of imageRequest = %s", timeElapsed,
+                    timeout,
                     imageRequest.documentSelfLink);
             return true;
         }

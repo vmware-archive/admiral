@@ -37,6 +37,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 
+import com.vmware.admiral.closures.drivers.ContainerConfiguration;
 import com.vmware.xenon.common.Utils;
 
 /**
@@ -52,6 +53,20 @@ public final class ClosureUtils {
 
     public static boolean isEmpty(String str) {
         return str == null || str.trim().length() <= 0;
+    }
+
+    public static String prepareImageTag(ContainerConfiguration configuration, String
+            imageVersion, String... params) {
+        if (params != null && params.length <= 0) {
+            if (ClosureUtils.isEmpty(configuration.dependencies)) {
+                // no dependencies
+                return imageVersion;
+            }
+
+            return ClosureUtils.calculateHash(new String[] { configuration.dependencies });
+        }
+
+        return ClosureUtils.calculateHash(params);
     }
 
     public static String calculateHash(String[] envs) {

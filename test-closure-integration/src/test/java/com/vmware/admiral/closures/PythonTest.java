@@ -1453,6 +1453,7 @@ public class PythonTest extends BaseClosureIntegrationTest {
     }
 
     @Test
+    @Ignore("Dependency problem")
     public void executePythonWithBilliardDependencyTest() throws Throwable {
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
@@ -1609,6 +1610,7 @@ public class PythonTest extends BaseClosureIntegrationTest {
     }
 
     @Test
+    @Ignore("Dependency problem")
     public void executePythonWithDependencyUsingSourceURLasZIPTest() throws Throwable {
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
