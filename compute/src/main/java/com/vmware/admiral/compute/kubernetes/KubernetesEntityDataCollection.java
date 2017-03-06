@@ -295,7 +295,7 @@ public class KubernetesEntityDataCollection extends StatefulService {
 
                                 entity.id = entry.getKey();
                                 entity.name = entry.getValue();
-                                entity.documentSelfLink = KubernetesUtil.buildEntityLink(entity.id);
+                                entity.documentSelfLink = entry.getKey();
 
                                 entity.tenantLinks = group;
                                 entity.descriptionLink = String.format("%s-%s",

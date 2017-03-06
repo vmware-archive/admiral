@@ -32,7 +32,8 @@ public enum ResourceType {
     KUBERNETES_DEPLOYMENT_TYPE("KUBERNETES_DEPLOYMENT", "Kubernetes.Deployment"),
     KUBERNETES_SERVICE_TYPE("KUBERNETES_SERVICE", "Kubernetes.Service"),
     KUBERNETES_REPLICATION_CONTROLLER_TYPE("KUBERNETES_REPLICATION_CONTROLLER",
-            "Kubernetes.ReplicationController");
+            "Kubernetes.ReplicationController"),
+    KUBERNETES_REPLICA_SET_TYPE("KUBERNETES_REPLICA_SET", "Kubernetes.ReplicaSet");
 
     private final String name;
     private final String contentType;

@@ -29,6 +29,7 @@ public abstract class AbstractKubernetesObjectService<T extends BaseKubernetesSt
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
         super.toggleOption(ServiceOption.PERIODIC_MAINTENANCE, true);
+        super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
         super.setMaintenanceIntervalMicros(ContainerMaintenance.MAINTENANCE_INTERVAL_MICROS);
         this.stateType = stateType;
     }
@@ -70,6 +71,7 @@ public abstract class AbstractKubernetesObjectService<T extends BaseKubernetesSt
         T patchState = patch.getBody(stateType);
 
         PropertyUtils.mergeServiceDocuments(currentState, patchState);
+
         patch.complete();
     }
 

@@ -14,7 +14,9 @@ package com.vmware.admiral.adapter.kubernetes.mock;
 import static com.vmware.admiral.adapter.kubernetes.mock.KubernetesPathConstants.BASE_PATH;
 
 import java.net.URI;
+import java.util.ArrayList;
 
+import com.vmware.admiral.compute.kubernetes.entities.replicaset.ReplicaSetList;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatefulService;
@@ -52,6 +54,12 @@ public class MockKubernetesHostService extends StatefulService {
             get.complete();
         } else if (uri.getPath().contains(KubernetesPathConstants.DASHBOARD_PROXY_FOR_STATS)) {
             get.setBody(statsProxyStub());
+            get.complete();
+        } else if (uri.getPath().contains(KubernetesPathConstants.REPLICA_SETS)) {
+            ReplicaSetList emptyList = new ReplicaSetList();
+            emptyList.items = new ArrayList<>();
+            emptyList.kind = "ReplicaSetList";
+            get.setBody(emptyList);
             get.complete();
         } else {
             get.fail(new IllegalStateException("Operation path not supported."));

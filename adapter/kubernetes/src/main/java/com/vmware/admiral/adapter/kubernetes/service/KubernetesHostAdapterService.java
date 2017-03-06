@@ -33,6 +33,8 @@ import com.vmware.admiral.compute.kubernetes.entities.deployments.Deployment;
 import com.vmware.admiral.compute.kubernetes.entities.deployments.DeploymentList;
 import com.vmware.admiral.compute.kubernetes.entities.pods.Pod;
 import com.vmware.admiral.compute.kubernetes.entities.pods.PodList;
+import com.vmware.admiral.compute.kubernetes.entities.replicaset.ReplicaSet;
+import com.vmware.admiral.compute.kubernetes.entities.replicaset.ReplicaSetList;
 import com.vmware.admiral.compute.kubernetes.entities.replicationcontrollers.ReplicationController;
 import com.vmware.admiral.compute.kubernetes.entities.replicationcontrollers.ReplicationControllerList;
 import com.vmware.admiral.compute.kubernetes.entities.services.Service;
@@ -295,7 +297,8 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
 
         callbackResponse.computeHostLink = context.host.documentSelfLink;
         KubernetesRemoteApiClient client = getApiClient();
-        client.getPods(context, resultHandler.appendResult(o -> {
+
+        client.getPods(context, null, resultHandler.appendResult((o) -> {
             PodList podList = o.getBody(PodList.class);
             if (podList.items != null) {
                 synchronized (callbackResponse) {
@@ -310,7 +313,7 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
                 }
             }
         }));
-        client.getServices(null, context, resultHandler.appendResult(o -> {
+        client.getServices(context, null, resultHandler.appendResult(o -> {
             ServiceList serviceList = o.getBody(ServiceList.class);
             if (serviceList.items != null) {
                 synchronized (callbackResponse) {
@@ -325,7 +328,7 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
                 }
             }
         }));
-        client.getDeployments(null, context, resultHandler.appendResult(o -> {
+        client.getDeployments(context, null, resultHandler.appendResult(o -> {
             DeploymentList deploymentList = o.getBody(DeploymentList.class);
             if (deploymentList.items != null) {
                 synchronized (callbackResponse) {
@@ -340,7 +343,7 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
                 }
             }
         }));
-        client.getReplicationControllers(null, context, resultHandler.appendResult(o -> {
+        client.getReplicationControllers(context, null, resultHandler.appendResult(o -> {
             ReplicationControllerList rcList = o.getBody(ReplicationControllerList.class);
             if (rcList.items != null) {
                 synchronized (callbackResponse) {
@@ -350,6 +353,21 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
                                     rc.metadata.uid, rc.metadata.name);
                             callbackResponse.entityIdsAndTypes.put(
                                     rc.metadata.uid, KubernetesUtil.REPLICATION_CONTROLLER_TYPE);
+                        }
+                    }
+                }
+            }
+        }));
+        client.getReplicaSets(context, null, resultHandler.appendResult(o -> {
+            ReplicaSetList rsList = o.getBody(ReplicaSetList.class);
+            if (rsList.items != null) {
+                synchronized (callbackResponse) {
+                    for (ReplicaSet rc : rsList.items) {
+                        if (rc != null && rc.metadata != null) {
+                            callbackResponse.entityIdsAndNames.put(
+                                    rc.metadata.uid, rc.metadata.name);
+                            callbackResponse.entityIdsAndTypes.put(
+                                    rc.metadata.uid, KubernetesUtil.REPLICA_SET_TYPE);
                         }
                     }
                 }

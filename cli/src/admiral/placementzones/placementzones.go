@@ -416,7 +416,9 @@ func GetPZName(link string) (string, error) {
 		return "", respErr
 	}
 	err := json.Unmarshal(respBody, pzs)
-	utils.CheckBlockingError(err)
+	if err != nil {
+		return "", err
+	}
 	return pzs.Name, nil
 }
 

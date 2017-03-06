@@ -66,7 +66,7 @@ type Host struct {
 
 func (h *Host) GetName() string {
 	if strings.TrimSpace(h.Name) != "" {
-		return h.Name;
+		return h.Name
 	}
 
 	if val, ok := h.CustomProperties["__hostAlias"]; ok && val != nil && strings.TrimSpace(*val) != "" {
@@ -93,6 +93,9 @@ func (h *Host) GetCredentialsID() string {
 }
 
 func (h *Host) GetContainersCount() int {
+	if val, ok := h.CustomProperties["__Container"]; !ok && val == nil {
+		return 0
+	}
 	count, _ := strconv.Atoi(*h.CustomProperties["__Containers"])
 	//Returning count - 1, because we exclude the system container.
 	return count - 1
@@ -301,7 +304,10 @@ func (hl *HostsList) GetOutputString() string {
 	buffer.WriteString("ID\tADDRESS\tNAME\tSTATE\tCONTAINERS\tPLACEMENT ZONE\tTAGS")
 	buffer.WriteString("\n")
 	for _, val := range hl.Documents {
-		pzName, _ := placementzones.GetPZName(val.ResourcePoolLink)
+		pzName, err := placementzones.GetPZName(val.ResourcePoolLink)
+		if err != nil {
+			pzName = "n/a"
+		}
 		tagsStr := tags.TagsToString(val.TagLinks)
 		output := utils.GetTabSeparatedString(val.GetID(), val.Address, val.GetName(), val.PowerState,
 			val.GetContainersCount(), pzName, tagsStr)
