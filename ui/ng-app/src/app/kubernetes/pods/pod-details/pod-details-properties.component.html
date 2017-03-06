@@ -1,0 +1,57 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<table class="table table-hover">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Name</td>
+      <td>{{pod.names}}</td>
+    </tr>
+    <tr>
+      <td>Self link</td>
+      <td>{{pod.documentSelfLink}}</td>
+    </tr>
+    <tr>
+      <td>Created</td>
+      <td>{{pod.created}}</td>
+    </tr>
+    <tr>
+      <td>Image</td>
+      <td>{{pod.image}}</td>
+    </tr>
+    <tr>
+      <td>Restart count</td>
+      <td>{{pod.attributes && pod.attributes.RestartCount}}</td>
+    </tr>
+    <tr>
+      <td>Memory</td>
+      <td>{{pod.attributes && pod.attributes.HostConfig.Memory}}</td>
+    </tr>
+    <tr>
+      <td>Memory swap</td>
+      <td>{{pod.attributes && pod.attributes.HostConfig.MemorySwap}}</td>
+    </tr>
+    <tr>
+      <td>CPU shares</td>
+      <td>{{pod.attributes && pod.attributes.HostConfig.CpuShares}}</td>
+    </tr>
+    <tr>
+      <td>CPUs</td>
+      <td>{{pod.attributes && pod.attributes.HostConfig.CpusetCpus}}</td>
+    </tr>
+  </tbody>
+</table>

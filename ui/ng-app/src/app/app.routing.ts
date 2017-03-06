@@ -12,10 +12,19 @@
 import { ModuleWithProviders } from '@angular/core/src/metadata/ng_module';
 import { Routes, RouterModule } from '@angular/router';
 
+import { PodListComponent } from './kubernetes/pods/pod-list/pod-list.component';
+import { PodDetailsComponent } from './kubernetes/pods/pod-details/pod-details.component';
+
 
 export const ROUTES: Routes = [
     {
         path: '', redirectTo: 'kubernetes/pods', pathMatch: 'full'
+    },
+    {
+        path: 'kubernetes/pods', component: PodListComponent,
+        children: [
+            { path: ':id', component: PodDetailsComponent }
+        ]
     }
 ];
 

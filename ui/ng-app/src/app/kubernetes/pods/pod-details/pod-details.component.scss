@@ -1,0 +1,83 @@
+@import 'node_modules/admiral-ui-common/css/variables';
+
+pod-details .content{
+  @extend .position-expand;
+  top: 50px;
+}
+
+$elements-margin: 20px;
+$elements-side-margin: $elements-margin / 2;
+
+$title-top-margin: 30px;
+
+pod-details:hover .maximizableControl .maximizableControlToggle {
+  display: block;
+}
+
+.details-properties .maximizableControl {
+  position: absolute;
+  top: 34%;
+  bottom: 0;
+  left: 0;
+  right: 50%;
+  margin-right: $elements-side-margin;
+  overflow: auto;
+  z-index: 1;
+}
+
+.details-properties .content {
+  top: $title-top-margin;
+  background-color: #FFFFFF;
+  overflow: auto;
+}
+
+.details-usages .maximizableControl {
+  position: absolute;
+  top: 0;
+  bottom: 67%;
+  left: 0;
+  right: 50%;
+  margin-right: $elements-side-margin;
+  overflow: auto;
+  z-index: 1;
+}
+
+.details-usages .content {
+  top: $title-top-margin;
+  background-color: #FFFFFF;
+}
+
+.details-usages compute-stats {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
+}
+
+.details-logs .maximizableControl {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 50%;
+  margin-left: $elements-side-margin;
+  bottom: 0;
+  z-index: 1;
+}
+
+.details-logs .content {
+  @extend .font-mono;
+  top: $title-top-margin;
+  background-color: #353434;
+  color: #A6A6A6;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  bottom: 25px;
+}
+
+.logs-settings {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
