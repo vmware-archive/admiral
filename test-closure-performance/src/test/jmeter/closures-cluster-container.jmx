@@ -642,7 +642,7 @@ log.info(&quot;Sending task execution request N &quot; + counter);
           <hashTree/>
           <CounterConfig guiclass="CounterConfigGui" testclass="CounterConfig" testname="Counter" enabled="true">
             <stringProp name="CounterConfig.start">0</stringProp>
-            <stringProp name="CounterConfig.end">30</stringProp>
+            <stringProp name="CounterConfig.end">60</stringProp>
             <stringProp name="CounterConfig.incr">1</stringProp>
             <stringProp name="CounterConfig.name">counter</stringProp>
             <stringProp name="CounterConfig.format"></stringProp>

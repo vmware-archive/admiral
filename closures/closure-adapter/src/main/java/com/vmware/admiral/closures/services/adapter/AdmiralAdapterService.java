@@ -415,8 +415,18 @@ public class AdmiralAdapterService extends
                     } else {
                         logInfo("Docker build base image request already created.");
                         DockerImage imageRequest = op.getBody(DockerImage.class);
-                        touchDockerImage(dockerBuildImageLink, imageRequest);
-                        seedWithDockerImage(containerDesc, computeStateLink, state);
+                        if (TaskState.isFailed(imageRequest.taskInfo)
+                                || TaskState.isCancelled(imageRequest.taskInfo)) {
+                            logWarning("Failed to seed docker base image: %s", imageRequest);
+                        } else if (TaskState.isFinished(imageRequest.taskInfo)) {
+                            seedWithDockerImage(containerDesc, computeStateLink, state);
+                            touchDockerImage(dockerBuildImageLink, imageRequest);
+                        } else {
+                            getHost().schedule(
+                                    () -> seedWithBaseDockerImage(containerDesc, computeStateLink,
+                                            state),
+                                    5, TimeUnit.SECONDS);
+                        }
                     }
                 }));
     }
@@ -455,12 +465,12 @@ public class AdmiralAdapterService extends
         URI uri = UriUtils.buildUri(getHost(), DockerImageFactoryService.FACTORY_LINK);
 
         DockerImage buildImage = new DockerImage();
-        buildImage.name = baseImageName;
+        buildImage.name = createBaseImageDockerName(state.imageConfig);
         buildImage.computeStateLink = computeStateLink;
         buildImage.taskInfo = TaskState.create();
-        buildImage.documentSelfLink = createImageBuildRequestUri(baseImageName, computeStateLink);
+        buildImage.documentSelfLink = createImageBuildRequestUri(buildImage.name, computeStateLink);
 
-        logInfo("Creating docker build image request: %s", uri);
+        logInfo("Creating docker build base image request: %s", uri);
         getHost().sendRequest(OperationUtil.createForcedPost(uri)
                 .setBody(buildImage)
                 .setReferer(getHost().getUri())

@@ -31,12 +31,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.BaseClosureIntegrationTest;
@@ -1300,7 +1298,6 @@ public class PythonTest extends BaseClosureIntegrationTest {
     }
 
     @Test
-    @Ignore
     public void executePythonWithKeyringDependencyTest() throws Throwable {
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
@@ -1386,7 +1383,6 @@ public class PythonTest extends BaseClosureIntegrationTest {
     }
 
     @Test
-    @Ignore
     public void executePythonWithNumpyDependencyTest() throws Throwable {
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
@@ -1453,7 +1449,6 @@ public class PythonTest extends BaseClosureIntegrationTest {
     }
 
     @Test
-    @Ignore("Dependency problem")
     public void executePythonWithBilliardDependencyTest() throws Throwable {
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
@@ -1482,7 +1477,7 @@ public class PythonTest extends BaseClosureIntegrationTest {
                 + "\n";
 
         closureDescState.runtime = RUNTIME_PYTHON;
-        closureDescState.dependencies = "requests >= 2.9.1\nbilliard >= 3.3.0.13";
+        closureDescState.dependencies = "requests >= 2.9.1\nbilliard == 3.3.0.13";
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 40;
@@ -1610,7 +1605,6 @@ public class PythonTest extends BaseClosureIntegrationTest {
     }
 
     @Test
-    @Ignore("Dependency problem")
     public void executePythonWithDependencyUsingSourceURLasZIPTest() throws Throwable {
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
