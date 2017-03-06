@@ -1,0 +1,31 @@
+.maximizableControl {
+  position: absolute;
+  transition: all 0.4s;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.maximizableControl.maximized {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-color: #FFFFFF;
+  z-index: 100;
+  margin: 0;
+}
+.maximizableControl .maximizableControlToggle {
+  display: none;
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  cursor: pointer;
+  color: #333333;
+  font-size: 20px;
+}
+
+.maximizableControl .maximizableControlToggle:hover {
+  color: #555555;
+}
