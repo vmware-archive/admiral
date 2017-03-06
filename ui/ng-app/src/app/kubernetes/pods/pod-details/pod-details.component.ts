@@ -39,7 +39,9 @@ export class PodDetailsComponent implements OnInit {
        this.getLogs();
 
        clearInterval(this.podLogsTimeout);
-       this.podLogsTimeout = setInterval(this.getLogs, )
+       this.podLogsTimeout = setInterval(() => {
+         this.getLogs();
+       }, 10000);
     });
   }
 

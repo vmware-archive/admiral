@@ -15,6 +15,12 @@ var NgViewVueComponent = Vue.extend({
   template: NgViewVue,
   props: {
     viewRoute: {}
+  },
+  attached: function() {
+    this.$watch('viewRoute', () => {
+      var iframe = $(this.$el).find('iframe')[0];
+      iframe.src = 'ng/#/' + this.viewRoute;
+    }, {immediate: true});
   }
 });
 
