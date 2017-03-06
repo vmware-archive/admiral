@@ -11,8 +11,6 @@
 
 import { AppComponent } from './app.component';
 import { TranslatePipe } from './utils/i18n.pipe';
-import { HomeComponent } from "./home/home.component";
-import { AboutComponent } from "./about/about.component";
 import { BreakOutModalDirective } from "./directives/shared/break-out-modal.directive";
 
 import { GridViewComponent } from './components/grid-view/grid-view.component';
@@ -26,9 +24,6 @@ import { BackButtonComponent } from "./components/back-button/back-button.compon
 export const ADMIRAL_DECLARATIONS = [
   AppComponent,
   TranslatePipe,
-  HomeComponent,
-  AboutComponent,
-
   BreakOutModalDirective,
 
   GridViewComponent,
