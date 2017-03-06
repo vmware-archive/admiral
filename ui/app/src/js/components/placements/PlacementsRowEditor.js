@@ -136,7 +136,7 @@ PlacementsRowEditor.prototype.getMemoryInputValue = function(selector) {
   var memoryLimitUnit = this.$el.find(selector + ' select').val();
 
   if (memoryLimitVal && utils.isValidNonNegativeIntValue(memoryLimitVal)) {
-    let bytesValue = utils.toBytes(memoryLimitVal, memoryLimitUnit);
+    let bytesValue = formatUtils.toBytes(memoryLimitVal, memoryLimitUnit);
     if (utils.isValidNonNegativeIntValue(bytesValue)) {
       return bytesValue;
     }
