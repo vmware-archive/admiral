@@ -13,11 +13,14 @@ import { AppComponent } from './app.component';
 import { TranslatePipe } from './utils/i18n.pipe';
 import { HomeComponent } from "./home/home.component";
 import { AboutComponent } from "./about/about.component";
-import { StatsComponent } from "./stats/stats.component";
 import { BreakOutModalDirective } from "./directives/shared/break-out-modal.directive";
 
 import { GridViewComponent } from './components/grid-view/grid-view.component';
 import { CardComponent } from './components/card/card.component';
+import { StatsComponent } from "./components/stats/stats.component";
+import { LogsScrollComponent } from "./components/logs/logs-scroll.component";
+import { MaximizableBehaviourComponent } from "./components/maximizable-behaviour/maximizable-behaviour.component";
+import { BackButtonComponent } from "./components/back-button/back-button.component";
 
 
 export const ADMIRAL_DECLARATIONS = [
@@ -25,9 +28,13 @@ export const ADMIRAL_DECLARATIONS = [
   TranslatePipe,
   HomeComponent,
   AboutComponent,
-  StatsComponent,
+
   BreakOutModalDirective,
+
   GridViewComponent,
   CardComponent,
-
+  StatsComponent,
+  LogsScrollComponent,
+  MaximizableBehaviourComponent,
+  BackButtonComponent
 ];

@@ -1,0 +1,6 @@
+<div [ngClass]="{'maximized' : !!maximized}" class="maximizableControl">
+  <ng-content></ng-content>
+  <a class="maximizableControlToggle" (click)="maximized = !maximized">
+    <i [ngClass]="{'fa': true, 'fa-compress': !!maximized, 'fa-expand': !maximized}"></i>
+  </a>
+</div>
