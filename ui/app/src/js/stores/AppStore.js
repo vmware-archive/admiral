@@ -180,7 +180,7 @@ AppStore = Reflux.createStore({
     if (viewRoute) {
       data.viewRoute = viewRoute;
     }
-    updateCenterViewIfNeeded.call(this, viewName, data);
+    updateCenterViewIfNeeded.call(this, viewName, data, !!viewRoute);
     updateSideView.call(this, viewName);
   },
 

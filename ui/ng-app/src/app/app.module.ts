@@ -11,6 +11,7 @@
 
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 import { ClarityModule } from 'clarity-angular';
@@ -38,4 +39,12 @@ import { ADMIRAL_DECLARATIONS } from './admiral';
     bootstrap: [AppComponent]
 })
 export class AppModule {
+
+    constructor(router: Router) {
+        router.events.subscribe((val) => {
+            if (val instanceof NavigationEnd && window.parent !== window) {
+                window.parent.location.hash = window.location.hash;
+            }
+        });
+    }
 }
