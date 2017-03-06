@@ -15,7 +15,6 @@ import static com.vmware.admiral.compute.container.ContainerDescriptionService.C
 
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -268,8 +267,8 @@ public class ContainerHostService extends StatelessService {
     }
 
     /**
-     * Fetches server certificate and stores its fingerprint as custom property. It is then used as
-     * a hash key to get the client certificate when handshaking.
+     * Fetches server certificate and stores its fingerprint as custom property. It is then used
+     * as a hash key to get the client certificate when handshaking.
      *
      * @return <code>false</code> ONLY if there's exception getting the server certificate. For all
      * other cases this method will return <code>true</code> (even if http us used).
@@ -307,14 +306,6 @@ public class ContainerHostService extends StatelessService {
         final ComputeState cs = hostSpec.hostState;
         AssertUtil.assertNotNull(cs, "computeState");
         AssertUtil.assertNotEmpty(cs.address, "address");
-        URI asUri = null;
-        try {
-            asUri = new URI(cs.address);
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Address must be valid URI");
-        }
-        AssertUtil.assertTrue(asUri.getPath().length() == 0,
-                "Address must be formatted as http(s)://<ip or hostname>(:port)");
         AssertUtil.assertNotEmpty(cs.customProperties, "customProperties");
         String adapterDockerType = cs.customProperties.get(HOST_DOCKER_ADAPTER_TYPE_PROP_NAME);
         AssertUtil.assertNotEmpty(adapterDockerType, HOST_DOCKER_ADAPTER_TYPE_PROP_NAME);
@@ -849,8 +840,7 @@ public class ContainerHostService extends StatelessService {
     private void createHostPortProfile(ComputeState computeState, Operation operation) {
         HostPortProfileService.HostPortProfileState hostPortProfileState = new HostPortProfileService.HostPortProfileState();
         hostPortProfileState.hostLink = computeState.documentSelfLink;
-        // Make sure there is only one HostPortProfile per Host by generating profile id based on
-        // host id
+        // Make sure there is only one HostPortProfile per Host by generating profile id based on host id
         hostPortProfileState.id = computeState.id;
         hostPortProfileState.documentSelfLink = HostPortProfileService.getHostPortProfileLink(
                 computeState.documentSelfLink);
