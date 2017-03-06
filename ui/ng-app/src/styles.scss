@@ -1,6 +1,16 @@
 /* You can add global styles to this file, and also import other style files */
+@import 'node_modules/admiral-ui-common/css/variables';
 
 .main-container {
   /* Fix for fixed positioned elements http://stackoverflow.com/questions/36855473/position-fixed-not-working-is-working-like-absolute */
   -webkit-transform: none;
+}
+
+.details-view {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: white;
 }

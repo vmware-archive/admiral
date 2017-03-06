@@ -1,4 +1,5 @@
-@import "color/color.clarity";
+@import "node_modules/clarity-ui/src/color/color.clarity";
+@import "mixins";
 
 /* bootstrap mixin feature toggles */
 $enable-shadows: true;
@@ -139,4 +140,24 @@ $nav-side-panel-width: 216px;
   -webkit-animation-duration: 1s;
   animation-duration: 1s;
   transform-origin: 46% 46%;
+}
+
+.font-mono {
+  font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New;
+}
+
+.central-block-loading {
+  @extend .position-expand;
+  @include animation(fadein 0.4s);
+  text-align: center;
+  > .vertical-helper {
+    display: inline-block;
+    height: 100%;
+    vertical-align: middle;
+  }
+  > .spinner {
+    width: 100px;
+    height: 100px;
+    vertical-align: middle;
+  }
 }
