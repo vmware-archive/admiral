@@ -34,10 +34,17 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
+import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.entities.deployments.Deployment;
+import com.vmware.admiral.compute.kubernetes.entities.deployments.DeploymentList;
 import com.vmware.admiral.compute.kubernetes.entities.pods.Pod;
+import com.vmware.admiral.compute.kubernetes.entities.pods.PodList;
+import com.vmware.admiral.compute.kubernetes.entities.replicaset.ReplicaSet;
+import com.vmware.admiral.compute.kubernetes.entities.replicaset.ReplicaSetList;
 import com.vmware.admiral.compute.kubernetes.entities.replicationcontrollers.ReplicationController;
+import com.vmware.admiral.compute.kubernetes.entities.replicationcontrollers.ReplicationControllerList;
 import com.vmware.admiral.compute.kubernetes.entities.services.Service;
+import com.vmware.admiral.compute.kubernetes.entities.services.ServiceList;
 import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
@@ -45,6 +52,8 @@ import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionServic
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
 import com.vmware.admiral.compute.kubernetes.service.PodService;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
+import com.vmware.admiral.compute.kubernetes.service.ReplicaSetService;
+import com.vmware.admiral.compute.kubernetes.service.ReplicaSetService.ReplicaSetState;
 import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService;
 import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService.ReplicationControllerState;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler;
@@ -53,6 +62,7 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.TaskState.TaskStage;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapterService {
@@ -213,6 +223,13 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
             }
         }
 
+        String compositeComponentId = UriUtils.getLastPathSegment(context.compositeComponent
+                .documentSelfLink);
+
+        descriptions = descriptions.stream()
+                .map(desc -> KubernetesUtil.setApplicationLabel(desc, compositeComponentId))
+                .collect(Collectors.toList());
+
         List<KubernetesDescription> serviceDescriptions = descriptions.stream()
                 .filter(d -> SERVICE_TYPE.equals(d.type)).collect(Collectors.toList());
 
@@ -282,13 +299,268 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                     createSpecificKubernetesState(context, description, o,
                             (o1, ex1) -> {
                                 if (counter.decrementAndGet() == 0 && !hasError.get()) {
-                                    patchTaskStage(context.request, TaskStage.FINISHED, null);
+                                    startEntityDiscovery(context);
                                 }
                             });
 
                 }
             });
         }
+    }
+
+    private void startEntityDiscovery(RequestContext context) {
+
+        AtomicInteger parallelDiscoveryCounter = new AtomicInteger(5);
+        AtomicBoolean hasError = new AtomicBoolean(false);
+
+        Consumer<Throwable> failureCallback = (ex) -> {
+            if (hasError.compareAndSet(false, true)) {
+                fail(context.request, ex);
+            }
+        };
+
+        Runnable successfulCallback = () -> {
+            if (parallelDiscoveryCounter.decrementAndGet() == 0 && !hasError.get()) {
+                patchTaskStage(context.request, TaskStage.FINISHED, null);
+            }
+        };
+
+        discoverDeployments(context, failureCallback, successfulCallback);
+        discoverReplicationControllers(context, failureCallback,
+                successfulCallback);
+        discoverServices(context, failureCallback, successfulCallback);
+        discoverReplicaSets(context, failureCallback, successfulCallback);
+        discoverPods(context, failureCallback, successfulCallback);
+
+    }
+
+    private void discoverDeployments(RequestContext context, Consumer<Throwable> failureCallback,
+            Runnable successfulCallback) {
+        String compositeComponentId = UriUtils.getLastPathSegment(context.compositeComponent
+                .documentSelfLink);
+
+        context.client.getDeployments(context.kubernetesContext, compositeComponentId, (o, ex) -> {
+            if (ex != null) {
+                failureCallback.accept(ex);
+            } else {
+                DeploymentList deployments = o.getBody(DeploymentList.class);
+                if (deployments.items == null || deployments.items.isEmpty()) {
+                    successfulCallback.run();
+                    return;
+                }
+                AtomicInteger counter = new AtomicInteger(deployments.items.size());
+                AtomicBoolean hasError = new AtomicBoolean(false);
+                for (Deployment deployment : deployments.items) {
+                    DeploymentState deploymentState = new DeploymentState();
+                    deploymentState.deployment = deployment;
+                    deploymentState.name = deployment.metadata.name;
+                    deploymentState.compositeComponentLink = context.compositeComponent.documentSelfLink;
+                    deploymentState.parentLink = context.kubernetesContext.host.documentSelfLink;
+                    deploymentState.documentSelfLink = deployment.metadata.uid;
+                    sendRequest(Operation.createPost(this, DeploymentService.FACTORY_LINK)
+                            .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
+                            .setBody(deploymentState)
+                            .setCompletion((op, err) -> {
+                                if (err != null) {
+                                    if (hasError.compareAndSet(false, true)) {
+                                        failureCallback.accept(err);
+                                    } else {
+                                        logWarning("Failure creating kubernetes entity: %s",
+                                                Utils.toString(err));
+                                    }
+                                } else {
+                                    if (counter.decrementAndGet() == 0 && !hasError.get()) {
+                                        successfulCallback.run();
+                                    }
+                                }
+                            }));
+                }
+            }
+        });
+    }
+
+    private void discoverReplicationControllers(RequestContext context,
+            Consumer<Throwable> failureCallback, Runnable successfulCallback) {
+        String compositeComponentId = UriUtils.getLastPathSegment(context.compositeComponent
+                .documentSelfLink);
+
+        context.client.getReplicationControllers(context.kubernetesContext, compositeComponentId,
+                (o, ex) -> {
+                    if (ex != null) {
+                        failureCallback.accept(ex);
+                    } else {
+                        ReplicationControllerList controllers = o
+                                .getBody(ReplicationControllerList.class);
+                        if (controllers.items == null || controllers.items.isEmpty()) {
+                            successfulCallback.run();
+                            return;
+                        }
+                        AtomicInteger counter = new AtomicInteger(controllers.items.size());
+                        AtomicBoolean hasError = new AtomicBoolean(false);
+                        for (ReplicationController controller : controllers.items) {
+                            ReplicationControllerState controllerState = new ReplicationControllerState();
+                            controllerState.replicationController = controller;
+                            controllerState.name = controller.metadata.name;
+                            controllerState.compositeComponentLink = context.compositeComponent.documentSelfLink;
+                            controllerState.parentLink = context.kubernetesContext.host.documentSelfLink;
+                            controllerState.documentSelfLink = controller.metadata.uid;
+                            sendRequest(Operation
+                                    .createPost(this, ReplicationControllerService.FACTORY_LINK)
+                                    .addPragmaDirective(
+                                            Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
+                                    .setBody(controllerState)
+                                    .setCompletion((op, err) -> {
+                                        if (err != null) {
+                                            if (hasError.compareAndSet(false, true)) {
+                                                failureCallback.accept(err);
+                                            } else {
+                                                logWarning("Failure creating kubernetes entity: %s",
+                                                        Utils.toString(err));
+                                            }
+                                        } else {
+                                            if (counter.decrementAndGet() == 0 && !hasError.get()) {
+                                                successfulCallback.run();
+                                            }
+                                        }
+                                    }));
+                        }
+                    }
+                });
+    }
+
+    private void discoverServices(RequestContext context, Consumer<Throwable> failureCallback,
+            Runnable successfulCallback) {
+        String compositeComponentId = UriUtils.getLastPathSegment(context.compositeComponent
+                .documentSelfLink);
+
+        context.client.getServices(context.kubernetesContext, compositeComponentId, (o, ex) -> {
+            if (ex != null) {
+                failureCallback.accept(ex);
+            } else {
+                ServiceList services = o.getBody(ServiceList.class);
+                if (services.items == null || services.items.isEmpty()) {
+                    successfulCallback.run();
+                    return;
+                }
+                AtomicInteger counter = new AtomicInteger(services.items.size());
+                AtomicBoolean hasError = new AtomicBoolean(false);
+                for (Service service : services.items) {
+                    ServiceState serviceState = new ServiceState();
+                    serviceState.service = service;
+                    serviceState.name = service.metadata.name;
+                    serviceState.compositeComponentLink = context.compositeComponent.documentSelfLink;
+                    serviceState.parentLink = context.kubernetesContext.host.documentSelfLink;
+                    serviceState.documentSelfLink = service.metadata.uid;
+                    sendRequest(Operation.createPost(this, ServiceEntityHandler.FACTORY_LINK)
+                            .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
+                            .setBody(serviceState)
+                            .setCompletion((op, err) -> {
+                                if (err != null) {
+                                    if (hasError.compareAndSet(false, true)) {
+                                        failureCallback.accept(err);
+                                    } else {
+                                        logWarning("Failure creating kubernetes entity: %s",
+                                                Utils.toString(err));
+                                    }
+                                } else {
+                                    if (counter.decrementAndGet() == 0 && !hasError.get()) {
+                                        successfulCallback.run();
+                                    }
+                                }
+                            }));
+                }
+            }
+        });
+    }
+
+    private void discoverReplicaSets(RequestContext context, Consumer<Throwable> failureCallback,
+            Runnable successfulCallback) {
+        String compositeComponentId = UriUtils.getLastPathSegment(context.compositeComponent
+                .documentSelfLink);
+
+        context.client.getReplicaSets(context.kubernetesContext, compositeComponentId, (o, ex) -> {
+            if (ex != null) {
+                failureCallback.accept(ex);
+            } else {
+                ReplicaSetList replicas = o.getBody(ReplicaSetList.class);
+                if (replicas.items == null || replicas.items.isEmpty()) {
+                    successfulCallback.run();
+                    return;
+                }
+                AtomicInteger counter = new AtomicInteger(replicas.items.size());
+                AtomicBoolean hasError = new AtomicBoolean(false);
+                for (ReplicaSet replicaSet : replicas.items) {
+                    ReplicaSetState replicaSetState = new ReplicaSetState();
+                    replicaSetState.replicaSet = replicaSet;
+                    replicaSetState.name = replicaSet.metadata.name;
+                    replicaSetState.compositeComponentLink = context.compositeComponent.documentSelfLink;
+                    replicaSetState.parentLink = context.kubernetesContext.host.documentSelfLink;
+                    replicaSetState.documentSelfLink = replicaSet.metadata.uid;
+                    sendRequest(Operation.createPost(this, ReplicaSetService.FACTORY_LINK)
+                            .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
+                            .setBody(replicaSetState)
+                            .setCompletion((op, err) -> {
+                                if (err != null) {
+                                    if (hasError.compareAndSet(false, true)) {
+                                        failureCallback.accept(err);
+                                    } else {
+                                        logWarning("Failure creating kubernetes entity: %s",
+                                                Utils.toString(err));
+                                    }
+                                } else {
+                                    if (counter.decrementAndGet() == 0 && !hasError.get()) {
+                                        successfulCallback.run();
+                                    }
+                                }
+                            }));
+                }
+            }
+        });
+    }
+
+    private void discoverPods(RequestContext context, Consumer<Throwable> failureCallback,
+            Runnable successfulCallback) {
+        String compositeComponentId = UriUtils.getLastPathSegment(context.compositeComponent
+                .documentSelfLink);
+
+        context.client.getPods(context.kubernetesContext, compositeComponentId, (o, ex) -> {
+            if (ex != null) {
+                failureCallback.accept(ex);
+            } else {
+                PodList pods = o.getBody(PodList.class);
+                if (pods.items == null || pods.items.isEmpty()) {
+                    successfulCallback.run();
+                    return;
+                }
+                AtomicInteger counter = new AtomicInteger(pods.items.size());
+                AtomicBoolean hasError = new AtomicBoolean(false);
+                for (Pod pod : pods.items) {
+                    PodState podState = new PodState();
+                    podState.pod = pod;
+                    podState.name = pod.metadata.name;
+                    podState.compositeComponentLink = context.compositeComponent.documentSelfLink;
+                    podState.parentLink = context.kubernetesContext.host.documentSelfLink;
+                    podState.documentSelfLink = pod.metadata.uid;
+                    sendRequest(Operation.createPost(this, PodService.FACTORY_LINK)
+                            .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
+                            .setBody(podState)
+                            .setCompletion((op, err) -> {
+                                if (err != null) {
+                                    if (hasError.compareAndSet(false, true)) {
+                                        failureCallback.accept(err);
+                                    } else {
+                                        logWarning("Failure creating kubernetes entity: %s",
+                                                Utils.toString(err));
+                                    }
+                                } else {
+                                    if (counter.decrementAndGet() == 0 && !hasError.get()) {
+                                        successfulCallback.run();
+                                    }
+                                }
+                            }));
+                }
+            }
+        });
     }
 
     private void createSpecificKubernetesState(RequestContext context,
@@ -335,27 +607,63 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                     "Unsupported kubernetes type: " + description.type));
             return;
         }
-
+        state.documentSelfLink = state.getMetadata().uid;
         state.compositeComponentLink = component.documentSelfLink;
         state.descriptionLink = description.documentSelfLink;
         state.parentLink = context.kubernetesContext.host.documentSelfLink;
 
         sendRequest(Operation.createPost(this, factoryLink)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                 .setBody(state)
                 .setCompletion(handler));
     }
 
     private void processApplicationDelete(RequestContext context) {
+        List<String> deploymentComponents = context.compositeComponent.componentLinks.stream()
+                .filter(c -> c.startsWith(DeploymentService.FACTORY_LINK))
+                .collect(Collectors.toList());
 
-        final AtomicInteger counter = new AtomicInteger(
-                context.compositeComponent.componentLinks.size());
-        final AtomicBoolean hasError = new AtomicBoolean(false);
+        List<String> replicationControllerComponents = context.compositeComponent.componentLinks
+                .stream().filter(c -> c.startsWith(ReplicationControllerService.FACTORY_LINK))
+                .collect(Collectors.toList());
 
-        Runnable successfulCallback = () -> {
-            if (counter.decrementAndGet() == 0 && !hasError.get()) {
-                patchTaskStage(context.request, TaskStage.FINISHED, null);
-            }
-        };
+        List<String> serviceComponents = context.compositeComponent.componentLinks.stream()
+                .filter(c -> c.startsWith(ServiceEntityHandler.FACTORY_LINK))
+                .collect(Collectors.toList());
+
+        List<String> replicaSetComponents = context.compositeComponent.componentLinks.stream()
+                .filter(c -> c.startsWith(ReplicaSetService.FACTORY_LINK))
+                .collect(Collectors.toList());
+
+        List<String> podComponents = context.compositeComponent.componentLinks.stream()
+                .filter(c -> c.startsWith(PodService.FACTORY_LINK))
+                .collect(Collectors.toList());
+
+        // Delete deployments.
+        deleteComponents(context, deploymentComponents, () ->
+                // Delete replication controllers.
+                deleteComponents(context, replicationControllerComponents, () ->
+                        // Delete services.
+                        deleteComponents(context, serviceComponents, () ->
+                                // Delete replica sets.
+                                deleteComponents(context, replicaSetComponents, () ->
+                                        // Delete pods.
+                                        deleteComponents(context, podComponents, () ->
+                                                // Finished.
+                                                patchTaskStage(context.request, TaskStage.FINISHED,
+                                                        null))))));
+    }
+
+    private void deleteComponents(RequestContext context, List<String> componentLinks, Runnable
+            callback) {
+
+        if (componentLinks == null || componentLinks.isEmpty()) {
+            callback.run();
+            return;
+        }
+
+        AtomicInteger counter = new AtomicInteger(componentLinks.size());
+        AtomicBoolean hasError = new AtomicBoolean(false);
 
         Consumer<Throwable> failureCallback = (ex) -> {
             if (hasError.compareAndSet(false, true)) {
@@ -365,30 +673,30 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
             }
         };
 
-        for (String componentLink : context.compositeComponent.componentLinks) {
+        Consumer<String> successfulCallback = (link) -> {
+            deleteState(link, (o, ex) -> {
+                if (ex != null) {
+                    failureCallback.accept(ex);
+                } else {
+                    if (counter.decrementAndGet() == 0 && !hasError.get()) {
+                        callback.run();
+                    }
+                }
+            });
+        };
+
+        for (String componentLink : componentLinks) {
             getState(context, componentLink,
                     (state) -> context.client.deleteEntity(state.getKubernetesSelfLink(),
-                            context.kubernetesContext, getDeleteStateHandler(componentLink,
-                                    successfulCallback, failureCallback)));
+                            context.kubernetesContext,
+                            (o, ex) -> {
+                                if (ex != null) {
+                                    failureCallback.accept(ex);
+                                } else {
+                                    successfulCallback.accept(componentLink);
+                                }
+                            }));
         }
-    }
-
-    private CompletionHandler getDeleteStateHandler(String selfLink, Runnable successfulCallback,
-            Consumer<Throwable> failureCallback) {
-        CompletionHandler handler = (o, ex) -> {
-            if (ex != null) {
-                failureCallback.accept(ex);
-            } else {
-                deleteState(selfLink, (o1, ex1) -> {
-                    if (ex1 != null) {
-                        failureCallback.accept(ex1);
-                    } else {
-                        successfulCallback.run();
-                    }
-                });
-            }
-        };
-        return handler;
     }
 
     private void deleteState(String selfLink, CompletionHandler handler) {

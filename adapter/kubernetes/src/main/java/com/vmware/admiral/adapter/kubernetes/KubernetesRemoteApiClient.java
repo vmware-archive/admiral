@@ -15,6 +15,7 @@ import static com.vmware.admiral.adapter.kubernetes.ApiUtil.API_PREFIX_EXTENSION
 import static com.vmware.admiral.adapter.kubernetes.ApiUtil.API_PREFIX_V1;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.KUBERNETES_LABEL_APP;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.KUBERNETES_LABEL_APP_ID;
 
 import java.io.IOException;
 import java.net.URI;
@@ -298,9 +299,16 @@ public class KubernetesRemoteApiClient {
         });
     }
 
-    public void getPods(KubernetesContext context, CompletionHandler completionHandler) {
+    public void getPods(KubernetesContext context, String appId, CompletionHandler
+            completionHandler) {
         URI uri = UriUtils
                 .buildUri(ApiUtil.namespacePrefix(context, ApiUtil.API_PREFIX_V1) + "/pods");
+
+        if (appId != null) {
+            uri = UriUtils.extendUriWithQuery(uri, LABEL_SELECTOR_QUERY, String
+                    .format("%s=%s", KUBERNETES_LABEL_APP_ID, appId));
+        }
+
         sendRequest(Action.GET, uri, null, context, completionHandler);
     }
 
@@ -329,42 +337,56 @@ public class KubernetesRemoteApiClient {
         sendRequest(Action.POST, uri, deployment, context, completionHandler);
     }
 
-    public void getServices(String appName, KubernetesContext context, CompletionHandler
+    public void getServices(KubernetesContext context, String appId, CompletionHandler
             completionHandler) {
         URI uri = UriUtils.buildUri(ApiUtil.namespacePrefix(context, ApiUtil.API_PREFIX_V1) +
                 "/services");
 
-        if (appName != null) {
+        if (appId != null) {
             uri = UriUtils.extendUriWithQuery(uri, LABEL_SELECTOR_QUERY, String
-                    .format("%s=%s", KUBERNETES_LABEL_APP, appName));
+                    .format("%s=%s", KUBERNETES_LABEL_APP_ID, appId));
         }
 
         sendRequest(Action.GET, uri, null, context, completionHandler);
     }
 
-    public void getDeployments(String appName, KubernetesContext context, CompletionHandler
+    public void getDeployments(KubernetesContext context, String appId, CompletionHandler
             completionHandler) {
         URI uri = UriUtils.buildUri(
                 ApiUtil.namespacePrefix(context, API_PREFIX_EXTENSIONS_V1BETA)
                         + "/deployments");
 
-        if (appName != null) {
+        if (appId != null) {
             uri = UriUtils.extendUriWithQuery(uri, LABEL_SELECTOR_QUERY, String
-                    .format("%s=%s", KUBERNETES_LABEL_APP, appName));
+                    .format("%s=%s", KUBERNETES_LABEL_APP_ID, appId));
         }
 
         sendRequest(Action.GET, uri, null, context, completionHandler);
     }
 
-    public void getReplicationControllers(String appName, KubernetesContext context,
+    public void getReplicaSets(KubernetesContext context, String appId, CompletionHandler
+            completionHandler) {
+        URI uri = UriUtils.buildUri(
+                ApiUtil.namespacePrefix(context, API_PREFIX_EXTENSIONS_V1BETA)
+                        + "/replicasets");
+
+        if (appId != null) {
+            uri = UriUtils.extendUriWithQuery(uri, LABEL_SELECTOR_QUERY, String
+                    .format("%s=%s", KUBERNETES_LABEL_APP_ID, appId));
+        }
+
+        sendRequest(Action.GET, uri, null, context, completionHandler);
+    }
+
+    public void getReplicationControllers(KubernetesContext context, String appId,
             CompletionHandler completionHandler) {
         URI uri = UriUtils.buildUri(
                 ApiUtil.namespacePrefix(context, API_PREFIX_V1)
                         + "/replicationcontrollers");
 
-        if (appName != null) {
+        if (appId != null) {
             uri = UriUtils.extendUriWithQuery(uri, LABEL_SELECTOR_QUERY, String
-                    .format("%s=%s", KUBERNETES_LABEL_APP, appName));
+                    .format("%s=%s", KUBERNETES_LABEL_APP, appId));
         }
 
         sendRequest(Action.GET, uri, null, context, completionHandler);

@@ -108,6 +108,7 @@ public interface ManagementUriParts {
     String KUBERNETES_DEPLOYMENTS = RESOURCES + "/kubernetes-deployments";
     String KUBERNETES_SERVICES = RESOURCES + "/kubernetes-services";
     String KUBERNETES_REPLICATION_CONTROLLERS = RESOURCES + "/kubernetes-replication-controllers";
+    String KUBERNETES_REPLICA_SETS = RESOURCES + "/kubernetes-replica-sets";
     String KUBERNETES_POD_LOGS = RESOURCES + "/kubernetes-pod-logs";
 
     // Request tasks:

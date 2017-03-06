@@ -28,6 +28,7 @@ public interface KubernetesPathConstants {
     String SERVICES = "/services";
     String DEPLOYMENTS = "/deployments";
     String REPLICATION_CONTROLLERS = "/replicationcontrollers";
+    String REPLICA_SETS = "/replicasets";
 
     String DASHBOARD_PROXY_FOR_STATS = API_V1 +
             "/proxy/namespaces/kube-system/services/kubernetes-dashboard/api/v1/node/";

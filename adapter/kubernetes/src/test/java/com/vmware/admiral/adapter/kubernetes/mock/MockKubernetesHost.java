@@ -11,26 +11,35 @@
 
 package com.vmware.admiral.adapter.kubernetes.mock;
 
-import java.io.IOException;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.DEPLOYMENT_TYPE;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.POD_TYPE;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.REPLICATION_CONTROLLER_TYPE;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.REPLICA_SET_TYPE;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.SERVICE_TYPE;
+
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
-import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.admiral.compute.kubernetes.entities.deployments.Deployment;
 import com.vmware.admiral.compute.kubernetes.entities.services.Service;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatelessService;
+import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 
 public class MockKubernetesHost extends StatelessService {
 
-    public List<Object> deployedElements;
+    public List<BaseKubernetesObject> deployedElements;
 
     public Map<String, Object> deployedElementsMap;
 
@@ -53,6 +62,16 @@ public class MockKubernetesHost extends StatelessService {
         String uri = get.getUri().toString();
         if (uri.contains("/log?container=")) {
             handleFetchLog(get);
+        } else if (uri.contains("/pods?labelSelector=")) {
+            getEntitiesMatchingLabel(get, POD_TYPE);
+        } else if (uri.contains("/replicasets?labelSelector=")) {
+            getEntitiesMatchingLabel(get, REPLICA_SET_TYPE);
+        } else if (uri.contains("/deployments?labelSelector=")) {
+            getEntitiesMatchingLabel(get, DEPLOYMENT_TYPE);
+        } else if (uri.contains("/services?labelSelector=")) {
+            getEntitiesMatchingLabel(get, SERVICE_TYPE);
+        } else if (uri.contains("/replicationcontrollers?labelSelector=")) {
+            getEntitiesMatchingLabel(get, REPLICATION_CONTROLLER_TYPE);
         } else {
             handleGetResource(get);
         }
@@ -62,8 +81,12 @@ public class MockKubernetesHost extends StatelessService {
     public void handlePost(Operation post) {
         String uri = post.getUri().toString();
         if (uri.endsWith("/services")) {
+            Service service = post.getBody(Service.class);
+            service.metadata.uid = UUID.randomUUID().toString();
             callbackRandomly(post, post.getBody(Service.class));
         } else if (uri.endsWith("/deployments")) {
+            Deployment deployment = post.getBody(Deployment.class);
+            deployment.metadata.uid = UUID.randomUUID().toString();
             callbackRandomly(post, post.getBody(Deployment.class));
         } else {
             post.fail(new IllegalArgumentException("Unknown uri " + uri));
@@ -84,14 +107,9 @@ public class MockKubernetesHost extends StatelessService {
         }
     }
 
-    private void callbackRandomly(Operation post, Object element) {
-        String responseBody;
-        try {
-            responseBody = YamlMapper.fromYamlToJson(post.getBody(String.class));
-        } catch (IOException e) {
-            post.fail(e);
-            return;
-        }
+    private void callbackRandomly(Operation post, BaseKubernetesObject element) {
+        String responseBody = Utils.toJson(element);
+
         if (Math.random() > 0.5) {
             deployedElements.add(element);
             deployedElementsMap.put(post.getBody(BaseKubernetesObject.class).metadata.name,
@@ -125,6 +143,25 @@ public class MockKubernetesHost extends StatelessService {
             }
         }
         get.fail(404);
+    }
+
+    private void getEntitiesMatchingLabel(Operation get, String objectType) {
+        Map<String, String> queryParams = UriUtils.parseUriQueryParams(get.getUri());
+        String labelSelectorKey = queryParams.get("labelSelector").split("=")[0];
+        String labelSelectorValue = queryParams.get("labelSelector").split("=")[1];
+        List<BaseKubernetesObject> items = deployedElements.stream()
+                .filter(e -> e.kind.equals(objectType))
+                .filter(e -> {
+                    if (e.metadata.labels.containsKey(labelSelectorKey) && e.metadata.labels.get
+                            (labelSelectorKey).equals(labelSelectorValue)) {
+                        return true;
+                    }
+                    return false;
+                }).collect(Collectors.toList());
+
+        HashMap<String, Object> response = new HashMap<>();
+        response.put("items", items);
+        get.setBody(response).complete();
     }
 
     private String extractName(Operation op) {

@@ -67,6 +67,8 @@ import com.vmware.admiral.compute.kubernetes.service.KubernetesService;
 import com.vmware.admiral.compute.kubernetes.service.PodLogService;
 import com.vmware.admiral.compute.kubernetes.service.PodService;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
+import com.vmware.admiral.compute.kubernetes.service.ReplicaSetService;
+import com.vmware.admiral.compute.kubernetes.service.ReplicaSetService.ReplicaSetState;
 import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService;
 import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService.ReplicationControllerState;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler;
@@ -144,7 +146,11 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 DeploymentService.class,
                 ReplicationControllerService.class,
                 ServiceEntityHandler.class,
+                ReplicaSetService.class,
                 EventTopicRegistrationBootstrapService.class);
+
+
+
 
         if (startMockContainerHostService) {
             startServices(host, MockContainerHostService.class);
@@ -207,5 +213,9 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
         CompositeComponentRegistry.registerComponent(ResourceType.KUBERNETES_REPLICATION_CONTROLLER_TYPE.getName(),
                 KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
                 ReplicationControllerService.FACTORY_LINK, ReplicationControllerState.class);
+
+        CompositeComponentRegistry.registerComponent(ResourceType.KUBERNETES_REPLICA_SET_TYPE.getName(),
+                KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
+                ReplicaSetService.FACTORY_LINK, ReplicaSetState.class);
     }
 }

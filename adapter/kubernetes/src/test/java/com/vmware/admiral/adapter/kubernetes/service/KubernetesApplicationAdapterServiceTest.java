@@ -15,6 +15,8 @@ import static org.junit.Assert.assertEquals;
 
 import static com.vmware.admiral.compute.container.CompositeComponentService.FIELD_NAME_HOST_LINK;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.DEPLOYMENT_TYPE;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.POD_TYPE;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.REPLICA_SET_TYPE;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -40,7 +42,12 @@ import com.vmware.admiral.compute.container.CompositeDescriptionService.Composit
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
+import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
+import com.vmware.admiral.compute.kubernetes.entities.pods.Pod;
+import com.vmware.admiral.compute.kubernetes.entities.replicaset.ReplicaSet;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
+import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
+import com.vmware.admiral.compute.kubernetes.service.ReplicaSetService.ReplicaSetState;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.ServiceState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -97,6 +104,8 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
                 kubernetesHostState.documentSelfLink);
         compositeComponent = doPost(compositeComponent, CompositeComponentFactoryService.SELF_LINK);
 
+        addPodsAndRSForWordpressApp(extractId(compositeComponent.documentSelfLink));
+
         provisioningTaskLink = createProvisioningTask();
 
         ApplicationRequest appRequest = createApplicationRequest(
@@ -108,20 +117,25 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
         waitForPropertyValue(provisioningTaskLink, MockTaskState.class, "taskInfo.stage",
                 TaskState.TaskStage.FINISHED);
 
-        assertEquals(4, service.deployedElements.size());
+        assertEquals(8, service.deployedElements.size());
 
         List<BaseKubernetesObject> kubernetesElements = new ArrayList<>();
-        service.deployedElements.forEach(e -> kubernetesElements.add((BaseKubernetesObject) e));
+        service.deployedElements.forEach(e -> kubernetesElements.add(e));
 
-        assertEquals(KubernetesUtil.SERVICE_TYPE, kubernetesElements.get(0).kind);
-        assertEquals(KubernetesUtil.SERVICE_TYPE, kubernetesElements.get(1).kind);
-        assertEquals(DEPLOYMENT_TYPE, kubernetesElements.get(2).kind);
-        assertEquals(DEPLOYMENT_TYPE, kubernetesElements.get(3).kind);
+        // Assert that services are deployed first.
+        // Checking on 4, 5, 6, 7 index because pods and replica sets are
+        // added manually before everything else, in the real case k8s
+        // will create them once deployments are created.
+        assertEquals(KubernetesUtil.SERVICE_TYPE, kubernetesElements.get(4).kind);
+        assertEquals(KubernetesUtil.SERVICE_TYPE, kubernetesElements.get(5).kind);
+        assertEquals(DEPLOYMENT_TYPE, kubernetesElements.get(6).kind);
+        assertEquals(DEPLOYMENT_TYPE, kubernetesElements.get(7).kind);
 
         // Assert that states are created and they have correct compositeComponentLink.
         CompositeComponent finalCompositeComponent = compositeComponent;
 
         List<String> resourceLinks = getDocumentLinksOfType(ServiceState.class);
+        assertEquals(2, resourceLinks.size());
         resourceLinks.forEach(link -> doOperation(Operation.createGet(host, link)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -135,12 +149,41 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
                 })));
 
         resourceLinks = getDocumentLinksOfType(DeploymentState.class);
+        assertEquals(2, resourceLinks.size());
         resourceLinks.forEach(link -> doOperation(Operation.createGet(host, link)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         host.failIteration(ex);
                     } else {
                         DeploymentState state = o.getBody(DeploymentState.class);
+                        assertEquals(state.compositeComponentLink,
+                                finalCompositeComponent.documentSelfLink);
+                        host.completeIteration();
+                    }
+                })));
+
+        resourceLinks = getDocumentLinksOfType(PodState.class);
+        assertEquals(2, resourceLinks.size());
+        resourceLinks.forEach(link -> doOperation(Operation.createGet(host, link)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.failIteration(ex);
+                    } else {
+                        PodState state = o.getBody(PodState.class);
+                        assertEquals(state.compositeComponentLink,
+                                finalCompositeComponent.documentSelfLink);
+                        host.completeIteration();
+                    }
+                })));
+
+        resourceLinks = getDocumentLinksOfType(ReplicaSetState.class);
+        assertEquals(2, resourceLinks.size());
+        resourceLinks.forEach(link -> doOperation(Operation.createGet(host, link)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.failIteration(ex);
+                    } else {
+                        ReplicaSetState state = o.getBody(ReplicaSetState.class);
                         assertEquals(state.compositeComponentLink,
                                 finalCompositeComponent.documentSelfLink);
                         host.completeIteration();
@@ -294,6 +337,38 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
         host.send(op);
         host.testWait();
         return result.op.getBody(CompositeDescription.class);
+    }
+
+    private void addPodsAndRSForWordpressApp(String compositeComponentId) {
+        Pod wpPod = new Pod();
+        wpPod.kind = POD_TYPE;
+        wpPod.metadata = new ObjectMeta();
+        wpPod.metadata.labels = new HashMap<>();
+        wpPod.metadata.labels.put("app_id", compositeComponentId);
+
+        Pod mysqlPod = new Pod();
+        mysqlPod.kind = POD_TYPE;
+        mysqlPod.metadata = new ObjectMeta();
+        mysqlPod.metadata.labels = new HashMap<>();
+        mysqlPod.metadata.labels.put("app_id", compositeComponentId);
+
+        ReplicaSet wpRs = new ReplicaSet();
+        wpRs.kind = REPLICA_SET_TYPE;
+        wpRs.metadata = new ObjectMeta();
+        wpRs.metadata.labels = new HashMap<>();
+        wpRs.metadata.labels.put("app_id", compositeComponentId);
+
+        ReplicaSet mysqlRs = new ReplicaSet();
+        mysqlRs.kind = REPLICA_SET_TYPE;
+        mysqlRs.metadata = new ObjectMeta();
+        mysqlRs.metadata.labels = new HashMap<>();
+        mysqlRs.metadata.labels.put("app_id", compositeComponentId);
+
+        service.deployedElements.add(wpPod);
+        service.deployedElements.add(mysqlPod);
+        service.deployedElements.add(wpRs);
+        service.deployedElements.add(mysqlRs);
+
     }
 
 }

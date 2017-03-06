@@ -23,6 +23,7 @@ import com.vmware.admiral.compute.container.ContainerService;
 import com.vmware.admiral.compute.container.util.CompositeComponentNotifier;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService;
 import com.vmware.admiral.compute.kubernetes.service.PodService;
+import com.vmware.admiral.compute.kubernetes.service.ReplicaSetService;
 import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -154,6 +155,8 @@ public class CompositeComponentNotificationProcessingChain extends OperationProc
         chains.put(PodService.class, CompositeComponentNotificationProcessingChain.class);
         chains.put(ServiceEntityHandler.class, CompositeComponentNotificationProcessingChain.class);
         chains.put(ReplicationControllerService.class,
+                CompositeComponentNotificationProcessingChain.class);
+        chains.put(ReplicaSetService.class,
                 CompositeComponentNotificationProcessingChain.class);
     }
 
