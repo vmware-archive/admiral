@@ -1,0 +1,19 @@
+<ng-content select="[title]"></ng-content>
+<div class="toolbar">
+  <button (click)="toggleCardView(true)" class="btn" title="Card View"><i class="fa fa-th"></i></button>
+  <button (click)="toggleCardView(false)" class="btn" title="List View"><i class="fa fa-list"></i></button>
+</div>
+
+<div [ngClass]="{'items': true, 'list': !showCardView}" [ngStyle]="itemsHolderStyle" #itemsHolder>
+  <span *ngFor="let item of items; let i = index" class='card-item' [ngStyle]="getStyle(i)" #cardItem>
+    <template [ngTemplateOutlet]="gridItemTmpl" [ngOutletContext]="{item: item}">
+    </template>
+  </span>
+  <span *ngIf="items.length === 0 && !loading" class="title-empty">
+    No items
+  </span>
+  <div *ngIf="loading" class="loading">
+    <span class="vertical-helper"></span>
+    <div class="spinner"></div>
+  </div>
+</div>

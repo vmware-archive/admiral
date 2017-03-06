@@ -1,0 +1,23 @@
+<div class="card clickable">
+    <div class="card-header">
+        <ng-content select="[card-header]"></ng-content>
+    </div>
+    <div class="card-block">
+        <div class="card-media-block">
+            <img class="card-media-image" [src]="imageSrc" />
+            <div class="card-media-description">
+                <span class="card-media-title">
+                    <ng-content select="[card-title]"></ng-content>
+                </span>
+                <span class="card-media-text">
+                    <ng-content select="[card-subtitle]"></ng-content>
+                </span>
+            </div>
+        </div>
+        <div class="card-text"><ng-content select="[card-text]"></ng-content></div>
+    </div>
+    <ng-content select="[card-content]"></ng-content>
+    <div class="card-footer">
+        <ng-content select="[card-footer]"></ng-content>
+    </div>
+</div>

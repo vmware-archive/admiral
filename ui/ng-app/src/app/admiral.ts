@@ -16,11 +16,18 @@ import { AboutComponent } from "./about/about.component";
 import { StatsComponent } from "./stats/stats.component";
 import { BreakOutModalDirective } from "./directives/shared/break-out-modal.directive";
 
+import { GridViewComponent } from './components/grid-view/grid-view.component';
+import { CardComponent } from './components/card/card.component';
+
+
 export const ADMIRAL_DECLARATIONS = [
   AppComponent,
   TranslatePipe,
   HomeComponent,
   AboutComponent,
   StatsComponent,
-  BreakOutModalDirective
+  BreakOutModalDirective,
+  GridViewComponent,
+  CardComponent,
+
 ];
