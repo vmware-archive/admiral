@@ -21,7 +21,8 @@
                 "../node_modules/clarity-icons/clarity-icons.min.css",
                 "../node_modules/clarity-ui/clarity-ui.min.css",
                 "../node_modules/admiral-ui-common/css/radialProgress.css",
-                "styles.css"
+                "../node_modules/font-awesome/css/font-awesome.min.css",
+                "styles.scss"
             ],
             "scripts": [
                 "../node_modules/core-js/client/shim.min.js",

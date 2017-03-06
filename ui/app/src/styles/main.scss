@@ -1,6 +1,6 @@
 @import "font-awesome.css";
-@import "variables";
-@import "mixins";
+@import "node_modules/admiral-ui-common/css/variables";
+@import "node_modules/admiral-ui-common/css/mixins";
 
 @import "components/multicolumn-inputs";
 @import "components/table-sort";
@@ -45,10 +45,6 @@ a[disabled] {
 
 button:focus {
   outline: 0;
-}
-
-.font-mono {
-  font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New;
 }
 
 .core-build-number {
@@ -1325,22 +1321,6 @@ a.close-button i.fa-chevron-circle-left {
   text-align: center;
 }
 
-.central-block-loading {
-  @extend .position-expand;
-  @include animation(fadein 0.4s);
-  text-align: center;
-  > .vertical-helper {
-    display: inline-block;
-    height: 100%;
-    vertical-align: middle;
-  }
-  > .spinner {
-    width: 100px;
-    height: 100px;
-    vertical-align: middle;
-  }
-}
-
 .grid-container .loading, .inline-editable-list > .loading, .eventlog-list > .loading, .requests-list > .loading {
   @extend .central-block-loading;
   background: rgba(255, 255, 255, 0.5);
@@ -2282,11 +2262,11 @@ header .branding img {
 .ng-view {
   width: 100%;
   height: 100%;
-  z-index: 1;
-  position: relative;
+
   iframe {
     height: 100%;
     width: 100%;
     border: 0;
+    padding: 20px;
   }
 }
