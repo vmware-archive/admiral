@@ -1,0 +1,53 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div *ngIf="pod">
+  <div class="details-header">
+    <div class="title">{{pod.names}}</div>
+    <div class="status {{pod.powerState}}"></div>
+    <div class="toolbar-actions">
+    </div>
+  </div>
+  <div class="content">
+    <maximizable-behaviour class="details-properties">
+      <div class="title">Properties</div>
+      <div class="content">
+        <pod-details-properties [pod]="pod"></pod-details-properties>
+      </div>
+    </maximizable-behaviour>
+    <maximizable-behaviour class="details-usages">
+      <div class="title">Usages</div>
+      <div class="content">
+        <compute-stats [cpuUsage]="99" [memUsage]="1024" [memLimit]="2048" [networkIn]="120" [networkOut]="329"></compute-stats>
+      </div>
+      <div class="central-block-loading loading-background hide">
+        <span class="vertical-helper"></span>
+        <div class="spinner"></div>
+      </div>
+    </maximizable-behaviour>
+    <maximizable-behaviour class="details-logs">
+      <div class="title">Logs</div>
+      <logs-scroll class="content" [logs]="podLogs"></logs-scroll>
+      <div class="central-block-loading hide">
+        <span class="vertical-helper"></span>
+        <div class="spinner"></div>
+      </div>
+      <div class="logs-settings">
+        <span>Logs since</span>
+        <select v-on:change="onLogsSinceChange($event)" v-if="logsSettings">
+          <option v-for="duration in logsSinceDurations"
+                  v-bind:value="duration"
+                  v-bind:selected="duration === logsSettings.sinceDuration">{{duration}}</option>
+        </select>
+      </div>
+    </maximizable-behaviour>
+  </div>
+</div>

@@ -16,6 +16,9 @@ import { HttpModule } from '@angular/http';
 import { ClarityModule } from 'clarity-angular';
 import { AppComponent } from './app.component';
 import { ROUTING } from "./app.routing";
+import { Ajax, SessionTimedOutSubject } from './utils/ajax.service';
+import { DocumentService } from './utils/document.service';
+
 import { ADMIRAL_DECLARATIONS } from './admiral';
 
 @NgModule({
@@ -27,7 +30,11 @@ import { ADMIRAL_DECLARATIONS } from './admiral';
         ClarityModule.forRoot(),
         ROUTING
     ],
-    providers: [],
+    providers: [
+        Ajax,
+        SessionTimedOutSubject,
+        DocumentService
+    ],
     bootstrap: [AppComponent]
 })
 export class AppModule {

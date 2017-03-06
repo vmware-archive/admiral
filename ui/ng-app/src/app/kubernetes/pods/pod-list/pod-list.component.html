@@ -1,0 +1,42 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div>
+  <grid-view [items]="pods" [loading]="loadingPods">
+    <div title>Pods</div>
+    <template let-item="item">
+      <card [routerLink]="['./' + item.documentId]" [imageSrc]="getImageIconLink(item.image)">
+        <div card-header>{{item.powerState}}</div>
+        <div card-title>{{item.names}}</div>
+        <div card-footer>
+          <clr-dropdown [clrMenuPosition]="'bottom-left'" (click)="$event.stopPropagation()">
+            <button class="btn btn-sm btn-link" clrDropdownToggle>
+                Actions
+                <clr-icon shape="caret down"></clr-icon>
+            </button>
+            <div class="dropdown-menu">
+                <label class="dropdown-header">Dropdown header</label>
+                <a href="..." clrDropdownItem [routerLink]="['./' + item.documentId]">Details</a>
+                <a href="..." clrDropdownItem>Delete</a>
+                <a href="..." class="disabled" clrDropdownItem>Disabled Action</a>
+                <div class="dropdown-divider"></div>
+            </div>
+          </clr-dropdown>
+        </div>
+      </card>
+    </template>
+  </grid-view>
+  <div class="details-view" [@slideAndFade]="!isRouteActive('/kubernetes/pods') && 'active'">
+    <back-button [routerLink]="['./']"></back-button>
+    <router-outlet></router-outlet>
+  </div>
+</div>
+
