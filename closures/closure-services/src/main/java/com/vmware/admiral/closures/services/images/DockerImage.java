@@ -39,4 +39,12 @@ public class DockerImage
     @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY)
     public JsonElement imageDetails;
 
+    @Override public String toString() {
+        return "DockerImage{" +
+                "name='" + name + '\'' +
+                ", computeStateLink='" + computeStateLink + '\'' +
+                ", lastAccessedTimeMillis=" + lastAccessedTimeMillis +
+                ", imageDetails=" + imageDetails +
+                '}';
+    }
 }

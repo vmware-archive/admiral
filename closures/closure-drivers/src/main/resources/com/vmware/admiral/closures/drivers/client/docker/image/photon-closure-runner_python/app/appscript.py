@@ -16,7 +16,7 @@ import requests
 
 SRC_DIR = './user_scripts'
 SRC_REQ_FILE = 'requirements.txt'
-
+TRUSTED_CERTS = '/app/trust.pem'
 
 def save_source_in_file(closure_description, module_name):
     src_file = None
@@ -54,7 +54,7 @@ def install_dependencies():
     requirements_path = SRC_DIR + os.sep + SRC_REQ_FILE
     if os.path.exists(requirements_path):
         try:
-            subprocess.run(['pip3', 'install', '-r', requirements_path],
+            subprocess.run(['pip3', 'install', '--upgrade', '-r', requirements_path],
                            check=True, stderr=subprocess.PIPE)
         except subprocess.CalledProcessError as e:
             print ('Unable to install dependencies: %s' % str(e.stderr))
@@ -77,7 +77,7 @@ def patch_results(outputs, closure_semaphore, token):
         "closureSemaphore": closure_semaphore,
         "outputs": outputs
     }
-    patch_resp = requests.patch(closure_uri, data=json.dumps(data), headers=headers)
+    patch_resp = requests.patch(closure_uri, data=json.dumps(data), headers=headers, verify = TRUSTED_CERTS)
     if patch_resp.ok:
         print ('Script run state: ' + state)
     else:
@@ -100,15 +100,15 @@ class Context:
             op = operation.upper()
             target_uri = build_closure_description_uri(self.closure_uri, link)
             if op == 'GET':
-                resp = requests.get(target_uri, stream=True)
+                resp = requests.get(target_uri, stream=True, verify = TRUSTED_CERTS)
             elif op == 'POST':
-                resp = requests.post(target_uri, data=json.dumps(body), headers=headers)
+                resp = requests.post(target_uri, data=json.dumps(body), headers=headers, verify = TRUSTED_CERTS)
             elif op == 'PATCH':
-                resp = requests.patch(target_uri, data=json.dumps(body), headers=headers)
+                resp = requests.patch(target_uri, data=json.dumps(body), headers=headers, verify = TRUSTED_CERTS)
             elif op == 'PUT':
-                resp = requests.put(target_uri, data=json.dumps(body), headers=headers)
+                resp = requests.put(target_uri, data=json.dumps(body), headers=headers, verify = TRUSTED_CERTS)
             elif op == 'DELETE':
-                resp = requests.delete(target_uri, headers=headers)
+                resp = requests.delete(target_uri, headers=headers, verify = TRUSTED_CERTS)
             else:
                 print ('Unsupported operation on ctx.execute()!', operation)
                 patch_failure(self.closure_semaphore, Exception('Unsupported operation: ', operation), token)
@@ -153,7 +153,7 @@ def download_and_save_source(source_url, module_name, closure_description, skip_
     if not os.path.exists(SRC_DIR):
         os.makedirs(SRC_DIR)
     # print 'Downloading source from: ', source_url
-    resp = requests.get(source_url, stream=True)
+    resp = requests.get(source_url, stream=True, verify = TRUSTED_CERTS)
     content_type = resp.headers['content-type']
     if resp.status_code != 200:
         raise Exception('Unable to fetch script source from: ', source_url)
@@ -190,7 +190,7 @@ def proceed_with_closure_description(closure_uri, closure_desc_uri, inputs, clos
                'Accept': 'application/json',
                'x-xenon-auth-token': os.environ['TOKEN']
                }
-    closure_desc_response = requests.get(closure_desc_uri, headers=headers)
+    closure_desc_response = requests.get(closure_desc_uri, headers=headers, verify = TRUSTED_CERTS)
     if closure_desc_response.ok:
         closure_description = json.loads(closure_desc_response.content.decode('utf-8'))
         (module_name, handler_name) = create_entry_point(closure_description)
@@ -232,7 +232,7 @@ def patch_closure_started(closure_uri, closure_semaphore):
         "state": state,
         "closureSemaphore": closure_semaphore
     }
-    patch_resp = requests.patch(closure_uri, data=json.dumps(data), headers=headers)
+    patch_resp = requests.patch(closure_uri, data=json.dumps(data), headers=headers, verify = TRUSTED_CERTS)
     if not patch_resp.ok:
         patch_resp.raise_for_status()
 
@@ -253,7 +253,7 @@ def proceed_with_closure_execution(skip_execution=False):
                'Accept': 'application/json',
                'x-xenon-auth-token': os.environ['TOKEN']
                }
-    closure_response = requests.get(closure_uri, headers=headers)
+    closure_response = requests.get(closure_uri, headers=headers, verify = TRUSTED_CERTS)
     if closure_response.ok:
         closure_data = json.loads(closure_response.content.decode('utf-8'))
         closure_semaphore = closure_data['closureSemaphore']
@@ -293,7 +293,7 @@ def patch_failure(closure_semaphore, error, token=None):
             "errorMsg": repr(error)
         }
 
-    patch_resp = requests.patch(closure_uri, data=json.dumps(data), headers=headers)
+    patch_resp = requests.patch(closure_uri, data=json.dumps(data), headers=headers, verify = TRUSTED_CERTS)
     if patch_resp.ok:
         print ('Script run state: ' + state)
     else:
