@@ -14,6 +14,7 @@ import ContainerDefinitionFormTemplate from
 import MulticolumnInputs from 'components/common/MulticolumnInputs';
 import Component from 'components/common/Component';
 import utils from 'core/utils';
+import { formatUtils } from 'admiral-ui-common';
 import imageUtils from 'core/imageUtils';
 import services from 'core/services';
 import constants from 'core/constants';
@@ -524,7 +525,7 @@ class ContainerDefinitionForm extends Component {
       null;
     result.memoryLimit = null;
     if ($.isNumeric(memoryLimitVal)) {
-      result.memoryLimit = utils.toBytes(memoryLimitVal, memoryLimitUnit);
+      result.memoryLimit = formatUtils.toBytes(memoryLimitVal, memoryLimitUnit);
     }
     var memorySwapLimitVal = this.$el.find('.container-memory-swap-input input').val() ||
       null;
@@ -532,7 +533,7 @@ class ContainerDefinitionForm extends Component {
       null;
     result.memorySwapLimit = null;
     if ($.isNumeric(memorySwapLimitVal)) {
-      result.memorySwapLimit = utils.toBytes(memorySwapLimitVal, memorySwapLimitUnit);
+      result.memorySwapLimit = formatUtils.toBytes(memorySwapLimitVal, memorySwapLimitUnit);
     }
     result.affinity = this.affinityConstraintsEditor.getData();
     result.env = this.environmentEditor.getData();
@@ -1050,7 +1051,7 @@ var updateForm = function(data, oldData) {
 
   if (data.memoryLimit !== oldData.memoryLimit) {
     if ($.isNumeric(data.memoryLimit)) {
-      let size = utils.fromBytes(data.memoryLimit);
+      let size = formatUtils.fromBytes(data.memoryLimit);
       normalizeToKB(size);
       this.$el.find('.container-memory-limit-input input').val(size.value);
       this.$el.find('.container-memory-limit-input select').val(size.unit);
@@ -1062,7 +1063,7 @@ var updateForm = function(data, oldData) {
 
   if (data.memorySwapLimit !== oldData.memorySwapLimit) {
     if ($.isNumeric(data.memorySwapLimit)) {
-      let size = utils.fromBytes(data.memorySwapLimit);
+      let size = formatUtils.fromBytes(data.memorySwapLimit);
       normalizeToKB(size);
       this.$el.find('.container-memory-swap-input input').val(size.value);
       this.$el.find('.container-memory-swap-input select').val(size.unit);
