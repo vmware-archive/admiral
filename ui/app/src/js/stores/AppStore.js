@@ -12,6 +12,7 @@
 import HostsStore from 'stores/HostsStore';
 import PlacementsStore from 'stores/PlacementsStore';
 import TemplatesStore from 'stores/TemplatesStore';
+import RegistryStore from 'stores/RegistryStore';
 import ContainersStore from 'stores/ContainersStore';
 import * as actions from 'actions/Actions';
 import routes from 'core/routes';
@@ -96,6 +97,13 @@ let initializeStoreListeners = function() {
   TemplatesStore.listen((templatesData) => {
     if (this.data.centerView && this.data.centerView.name === constants.VIEWS.TEMPLATES.name) {
       this.setInData(['centerView', 'data'], templatesData);
+      this.emitChange();
+    }
+  });
+
+  RegistryStore.listen((regitriesData) => {
+    if (this.data.centerView && this.data.centerView.name === constants.VIEWS.REGISTRIES.name) {
+      this.setInData(['centerView', 'data'], regitriesData);
       this.emitChange();
     }
   });

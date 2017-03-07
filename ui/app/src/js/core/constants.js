@@ -39,6 +39,9 @@ var constants = Immutable({
       name: 'templates',
       NEW: {name: 'templates/new'}
     },
+    REGISTRIES: {
+      name: 'registries'
+    },
     RESOURCES: {
       name: 'resources',
       VIEWS: {

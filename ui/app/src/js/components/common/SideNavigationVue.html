@@ -14,7 +14,7 @@
     </section>
     <section class="nav-group collapsible">
       <input id="nav-category-policies" type="checkbox">
-      <label for="nav-category-policies">Policies</label>
+      <label for="nav-category-policies">{{i18n("app.navbar.policies")}}</label>
       <ul class="nav-list">
         <li><a class="nav-link" data-cmd="navigation-{{constants.VIEWS.PLACEMENTS.name}}"
                :class="{'active': currentView === constants.VIEWS.PLACEMENTS.name}"
@@ -29,14 +29,14 @@
         <li><a class="nav-link" data-cmd="navigation-{{constants.VIEWS.TEMPLATES.name}}"
                :class="{'active': currentView === constants.VIEWS.TEMPLATES.name}"
                href="#/templates">{{i18n("app.navbar.templates")}}</a></li>
-        <!--li><a class="nav-link" data-cmd="navigation-{{constants.VIEWS.REGISTRIES.name}}"
+        <li><a class="nav-link" data-cmd="navigation-{{constants.VIEWS.REGISTRIES.name}}"
                :class="{'active': currentView === constants.VIEWS.REGISTRIES.name}"
-              href="#/registries">Registries</a></li-->
+              href="#/registries">{{i18n("app.navbar.registries")}}</a></li>
       </ul>
     </section>
     <section class="nav-group collapsible">
       <input id="nav-category-deployment" type="checkbox">
-      <label for="nav-category-deployment">Deployment</label>
+      <label for="nav-category-deployment">{{i18n("app.navbar.deployment")}}</label>
       <ul class="nav-list">
         <li v-if="isFeatureEnabled('projects')"><a class="nav-link"
                data-cmd="navigation-{{constants.VIEWS.RESOURCES.VIEWS.PROJECTS.name}}"

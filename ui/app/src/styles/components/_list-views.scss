@@ -1096,7 +1096,7 @@ $elements-side-margin: $elements-margin / 2;
   margin-top: 20px;
 }
 
-.placements-view, .environments-view, .center-view > .endpoints-view {
+.placements-view, .environments-view, .center-view > .endpoints-view, .registry-view {
   > .main-panel {
     @extend .position-expand;
     z-index: 1;
