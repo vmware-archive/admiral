@@ -84,12 +84,7 @@
 }
 
 .list-view .grid-container > .title, .list-view .grid-container > .title-search,  {
-  font-size: 28px;
-  height: 40px;
-  margin-bottom: 20px;
-  margin-left: 5px;
-  letter-spacing: 0.02em;
-  font-weight: 300;
+  @include view-title();
 }
 
 .list-view .grid-container .total-items {
@@ -143,7 +138,7 @@
   max-width: 370px;
   border: 2px solid $main-border-color;
   border-radius: 5px;
-  margin: 0 40px 40px 5px;
+  margin: 0 40px 40px 0;
   .fa-lock {
     color: #cccccc;
     margin-left: -5px;
@@ -1101,11 +1096,8 @@ $elements-side-margin: $elements-margin / 2;
     @extend .position-expand;
     z-index: 1;
     > .title {
-      font-size: 28px;
-      height: 40px;
+      @include view-title();
       margin: 30px 0 20px 45px;
-      letter-spacing: 0.02em;
-      font-weight: 300;
       z-index: 1;
       position: absolute;
       > .total-items {
