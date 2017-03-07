@@ -159,7 +159,7 @@ func TestAddAndUpdatePlacementZoneWithTags(t *testing.T) {
 	}
 
 	expectedTagsOutput := "[test:test][test1:test1]"
-	actualTagsOutput := tags.TagsToString(actualPZ.EpzState.TagLinksToMatch)
+	actualTagsOutput := tags.TagsToString(actualPZ.ResourcePoolState.TagLinks)
 
 	if expectedTagsOutput != actualTagsOutput {
 		t.Errorf("Expected placement zone tags: %s, actual placement zone tags: %s", expectedTagsOutput, actualTagsOutput)
@@ -189,7 +189,7 @@ func TestAddAndUpdatePlacementZoneWithTags(t *testing.T) {
 	}
 
 	expectedTagsOutput = "[newTag:newTag]"
-	actualTagsOutput = tags.TagsToString(actualPZ.EpzState.TagLinksToMatch)
+	actualTagsOutput = tags.TagsToString(actualPZ.ResourcePoolState.TagLinks)
 
 	if expectedTagsOutput != actualTagsOutput {
 		t.Errorf("Expected updated placement zone tags: %s, actual updated placement zone tags: %s", expectedTagsOutput, actualTagsOutput)

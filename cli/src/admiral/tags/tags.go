@@ -12,14 +12,15 @@
 package tags
 
 import (
-	"admiral/client"
-	"admiral/config"
-	"admiral/utils"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
+
+	"admiral/client"
+	"admiral/config"
+	"admiral/utils"
 )
 
 type TagError struct {
@@ -95,7 +96,7 @@ func GetTagIdByEqualKeyVals(input string, createIfNotExist bool) (string, error)
 	}
 
 	filterUrl := config.URL + "/resources/tags?documentType=true&expand=true&$filter=key+eq+'%s'+and+value+eq+'%s'"
-	filterUrl = fmt.Sprintf(filterUrl, tagToMatch.Key, tagToMatch.Value)
+	filterUrl = fmt.Sprintf(filterUrl, strings.ToLower(tagToMatch.Key), strings.ToLower(tagToMatch.Value))
 
 	req, _ := http.NewRequest("GET", filterUrl, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -126,6 +127,7 @@ func AddTag(tag *Tag) (string, error) {
 	utils.CheckBlockingError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
+
 	if respErr != nil {
 		return "", respErr
 	}
