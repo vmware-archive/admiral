@@ -1,0 +1,13 @@
+@import 'node_modules/admiral-ui-common/css/variables';
+
+deployment-details {
+  .table {
+    th, td {
+      text-align: left;
+
+      .table {
+        margin-bottom: 24px;
+      }
+    }
+  }
+}

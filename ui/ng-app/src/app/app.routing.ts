@@ -12,8 +12,12 @@
 import { ModuleWithProviders } from '@angular/core/src/metadata/ng_module';
 import { Routes, RouterModule } from '@angular/router';
 
-import { PodListComponent } from './kubernetes/pods/pod-list/pod-list.component';
-import { PodDetailsComponent } from './kubernetes/pods/pod-details/pod-details.component';
+import { PodListComponent } from './kubernetes/pods/list/pod-list.component';
+import { PodDetailsComponent } from './kubernetes/pods/details/pod-details.component';
+import { DeploymentListComponent } from './kubernetes/deployments/list/deployment-list.component';
+import { DeploymentDetailsComponent } from './kubernetes/deployments/details/deployment-details.component';
+import { ServiceListComponent } from './kubernetes/services/list/service-list.component';
+import { ServiceDetailsComponent } from './kubernetes/services/details/service-details.component';
 
 
 export const ROUTES: Routes = [
@@ -24,6 +28,18 @@ export const ROUTES: Routes = [
         path: 'kubernetes/pods', component: PodListComponent,
         children: [
             { path: ':id', component: PodDetailsComponent }
+        ]
+    },
+    {
+        path: 'kubernetes/deployments', component: DeploymentListComponent,
+        children: [
+            { path: ':id', component: DeploymentDetailsComponent }
+        ]
+    },
+    {
+        path: 'kubernetes/services', component: ServiceListComponent,
+        children: [
+            { path: ':id', component: ServiceDetailsComponent }
         ]
     }
 ];

@@ -9,9 +9,9 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, OnInit, ViewChild, TemplateRef, ViewContainerRef } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import {containsTree} from '@angular/router/src/url_tree';
+import { BaseListComponent } from '../../../components/base/base-list.component';
 import { slideAndFade } from '../../../utils/transitions';
 import { Links } from '../../../utils/links';
 import { DocumentService } from '../../../utils/document.service';
@@ -45,33 +45,9 @@ function getImageNamespaceAndNameFromParts(namespace, imageAndTag) {
   styleUrls: ['./pod-list.component.scss'],
   animations: [slideAndFade()]
 })
-export class PodListComponent implements OnInit {
-
-  @ViewChild('templateRef', {read: TemplateRef}) public templateRef: TemplateRef<any>;
-
-  private service: DocumentService;
-  private pods = [];
-  private loadingPods = false;
-  private opened;
-  private router;
-
+export class PodListComponent extends BaseListComponent {
   constructor(service: DocumentService, router: Router) {
-    this.service = service;
-    this.router = router;
-  }
-
-  ngOnInit() {
-    this.loadingPods = true;
-    this.service.list(Links.PODS).then(result => {
-      this.pods = result;
-      this.loadingPods = false;
-    });
-  }
-
-  isRouteActive(route) {
-    const currentUrlTree = this.router.parseUrl(this.router.url);
-    const routeUrlTree = this.router.createUrlTree([route]);
-    return containsTree(currentUrlTree, routeUrlTree, true);
+    super(service, router, Links.PODS);
   }
 
   getImageNamespaceAndName(image) {

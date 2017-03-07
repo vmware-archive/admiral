@@ -9,10 +9,10 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div *ngIf="pod">
+<div *ngIf="entity">
   <div class="details-header">
-    <div class="title">{{pod.names}}</div>
-    <div class="status {{pod.powerState}}"></div>
+    <div class="title">{{entity.names}}</div>
+    <div class="status {{entity.powerState}}"></div>
     <div class="toolbar-actions">
     </div>
   </div>
@@ -20,7 +20,7 @@
     <maximizable-behaviour class="details-properties">
       <div class="title">Properties</div>
       <div class="content">
-        <pod-details-properties [pod]="pod"></pod-details-properties>
+        <pod-details-properties [entity]="entity"></pod-details-properties>
       </div>
     </maximizable-behaviour>
     <maximizable-behaviour class="details-usages">
@@ -35,7 +35,7 @@
     </maximizable-behaviour>
     <maximizable-behaviour class="details-logs">
       <div class="title">Logs</div>
-      <logs-scroll class="content" [logs]="podLogs"></logs-scroll>
+      <logs-scroll class="content" [logs]="logs"></logs-scroll>
       <div class="central-block-loading hide">
         <span class="vertical-helper"></span>
         <div class="spinner"></div>

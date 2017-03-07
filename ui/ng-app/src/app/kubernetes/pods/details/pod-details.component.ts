@@ -9,8 +9,9 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { BaseDetailsComponent } from '../../../components/base/base-details.component';
 import { DocumentService } from '../../../utils/document.service';
 import { Links } from '../../../utils/links';
 
@@ -20,38 +21,30 @@ import { Links } from '../../../utils/links';
   styleUrls: ['./pod-details.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class PodDetailsComponent implements OnInit {
+export class PodDetailsComponent extends BaseDetailsComponent {
+  private logs;
+  private logsTimeout;
 
-  private id;
-  private pod;
-  private podLogs;
-  private podLogsTimeout;
+  constructor(route: ActivatedRoute, service: DocumentService) {
+    super(route, service, Links.PODS);
+  }
 
-  constructor(private route: ActivatedRoute, private service: DocumentService) {}
+  protected entityInitialized() {
+    this.getLogs();
 
-  ngOnInit() {
-    this.route.params.subscribe(params => {
-       this.id = params['id'];
-       this.service.getById(Links.PODS, this.id).then(pod => {
-         this.pod = pod;
-       });
-
-       this.getLogs();
-
-       clearInterval(this.podLogsTimeout);
-       this.podLogsTimeout = setInterval(() => {
-         this.getLogs();
-       }, 10000);
-    });
+    clearInterval(this.logsTimeout);
+    this.logsTimeout = setInterval(() => {
+      this.getLogs();
+    }, 10000);
   }
 
   ngOnDestroy() {
-    clearInterval(this.podLogsTimeout);
+    clearInterval(this.logsTimeout);
   }
 
   getLogs() {
     this.service.getLogs(this.id, 10000).then(logs => {
-      this.podLogs = logs;
+      this.logs = logs;
     });
   }
 }

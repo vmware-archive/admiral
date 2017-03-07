@@ -9,7 +9,9 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<ng-content select="[title]"></ng-content>
+<div class="title">
+  <ng-content select="[title]"></ng-content>
+</div>
 <div class="toolbar">
   <button (click)="toggleCardView(true)" class="btn" title="Card View"><i class="fa fa-th"></i></button>
   <button (click)="toggleCardView(false)" class="btn" title="List View"><i class="fa fa-list"></i></button>
@@ -20,10 +22,10 @@
     <template [ngTemplateOutlet]="gridItemTmpl" [ngOutletContext]="{item: item}">
     </template>
   </span>
-  <span *ngIf="items.length === 0 && !loading" class="title-empty">
+  <span *ngIf="items.length === 0 && !loading" class="content-empty">
     No items
   </span>
-  <div *ngIf="loading" class="loading">
+  <div *ngIf="loading" class="central-block-loading">
     <span class="vertical-helper"></span>
     <div class="spinner"></div>
   </div>

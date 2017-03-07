@@ -19,39 +19,39 @@
   <tbody>
     <tr>
       <td>Name</td>
-      <td>{{pod.names}}</td>
+      <td>{{entity.names}}</td>
     </tr>
     <tr>
       <td>Self link</td>
-      <td>{{pod.documentSelfLink}}</td>
+      <td>{{entity.documentSelfLink}}</td>
     </tr>
     <tr>
       <td>Created</td>
-      <td>{{pod.created}}</td>
+      <td>{{entity.created}}</td>
     </tr>
     <tr>
       <td>Image</td>
-      <td>{{pod.image}}</td>
+      <td>{{entity.image}}</td>
     </tr>
     <tr>
       <td>Restart count</td>
-      <td>{{pod.attributes && pod.attributes.RestartCount}}</td>
+      <td>{{entity.attributes && entity.attributes.RestartCount}}</td>
     </tr>
     <tr>
       <td>Memory</td>
-      <td>{{pod.attributes && pod.attributes.HostConfig.Memory}}</td>
+      <td>{{entity.attributes && entity.attributes.HostConfig.Memory}}</td>
     </tr>
     <tr>
       <td>Memory swap</td>
-      <td>{{pod.attributes && pod.attributes.HostConfig.MemorySwap}}</td>
+      <td>{{entity.attributes && entity.attributes.HostConfig.MemorySwap}}</td>
     </tr>
     <tr>
       <td>CPU shares</td>
-      <td>{{pod.attributes && pod.attributes.HostConfig.CpuShares}}</td>
+      <td>{{entity.attributes && entity.attributes.HostConfig.CpuShares}}</td>
     </tr>
     <tr>
       <td>CPUs</td>
-      <td>{{pod.attributes && pod.attributes.HostConfig.CpusetCpus}}</td>
+      <td>{{entity.attributes && entity.attributes.HostConfig.CpusetCpus}}</td>
     </tr>
   </tbody>
 </table>
