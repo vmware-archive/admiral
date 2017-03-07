@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.host;
 
+import static org.junit.Assert.assertEquals;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,7 +65,6 @@ public class MigrationIT extends RequestBaseTest {
         startServices(targetHost);
         targetHost.waitForServiceAvailable(ComputeService.FACTORY_LINK,
                 NodeMigrationService.SELF_LINK, ResourcePoolService.FACTORY_LINK);
-        startMigrationService(targetHost);
         targetHost.addPrivilegedService(NodeMigrationService.class);
 
         setUpDockerHostAuthentication();
@@ -104,6 +105,8 @@ public class MigrationIT extends RequestBaseTest {
 
     @Test
     public void testMigration() throws Throwable {
+        startMigrationTaskService(targetHost);
+
         // do the migration
         MigrationRequest request = new MigrationRequest();
         request.sourceNodeGroup = host.getPublicUriAsString() + DEAFULT_NODE_GROUP;
@@ -127,7 +130,60 @@ public class MigrationIT extends RequestBaseTest {
         verifyElasticPlacementZoneExists();
     }
 
-    private void startMigrationService(VerificationHost host) throws Throwable {
+    @Test
+    public void testMigrationTaskFailure() throws Throwable {
+        startMigrationTaskService(targetHost);
+
+        // stop compute service in order to produce migration task failure
+        ComputeService computeService = new ComputeService();
+        computeService.setSelfLink(ComputeService.FACTORY_LINK);
+        targetHost.stopService(computeService);
+
+        MigrationRequest request = new MigrationRequest();
+        request.sourceNodeGroup = host.getPublicUriAsString() + DEAFULT_NODE_GROUP;
+        this.targetHost.testStart(1);
+        Operation post = Operation
+                .createPost(UriUtils.buildUri(targetHost.getUri(), NodeMigrationService.SELF_LINK));
+        post.setBody(request);
+        post.setCompletion((o, e) -> {
+            if (e != null) {
+                // failure is expected!
+                assertEquals("One or more migration tasks failed", e.getMessage());
+                this.targetHost.completeIteration();
+                return;
+            }
+
+            this.targetHost.failIteration(new Exception("expected failure but got success"));
+        });
+        this.targetHost.send(post);
+        this.targetHost.testWait();
+    }
+
+    @Test
+    public void testMigrationServiceNotAvailable() {
+        // Do not start migration service on target host
+
+        MigrationRequest request = new MigrationRequest();
+        request.sourceNodeGroup = host.getPublicUriAsString() + DEAFULT_NODE_GROUP;
+        this.targetHost.testStart(1);
+        Operation post = Operation
+                .createPost(UriUtils.buildUri(targetHost.getUri(), NodeMigrationService.SELF_LINK));
+        post.setBody(request);
+        post.setCompletion((o, e) -> {
+            if (e != null) {
+                // failure is expected!
+                assertEquals("Failure when calling migration task", e.getMessage());
+                this.targetHost.completeIteration();
+                return;
+            }
+
+            this.targetHost.failIteration(new Exception("expected failure but got success"));
+        });
+        this.targetHost.send(post);
+        this.targetHost.testWait();
+    }
+
+    private void startMigrationTaskService(VerificationHost host) throws Throwable {
         URI u = UriUtils.buildUri(host, MigrationTaskService.FACTORY_LINK);
         Operation post = Operation.createPost(u);
         host.startService(post, MigrationTaskService.createFactory());
