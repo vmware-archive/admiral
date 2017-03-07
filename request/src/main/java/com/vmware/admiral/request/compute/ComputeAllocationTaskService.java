@@ -68,6 +68,7 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeStateWithDescription;
+import com.vmware.photon.controller.model.resources.ComputeService.LifecycleState;
 import com.vmware.photon.controller.model.resources.DiskService;
 import com.vmware.photon.controller.model.resources.DiskService.DiskState;
 import com.vmware.photon.controller.model.resources.DiskService.DiskType;
@@ -686,6 +687,8 @@ public class ComputeAllocationTaskService
         resource.parentLink = parentLink;
         resource.name = computeName;
         resource.type = ComputeType.VM_GUEST;
+        resource.powerState = ComputeService.PowerState.ON;
+        resource.lifecycleState = LifecycleState.PROVISIONING;
         resource.descriptionLink = state.resourceDescriptionLink;
         resource.resourcePoolLink = state.getCustomProperty(
                 ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_RESOURCE_POOL_LINK);
@@ -700,9 +703,7 @@ public class ComputeAllocationTaskService
         resource.customProperties.put(ComputeProperties.PLACEMENT_LINK, placementLink);
         // TODO pmitrov: get rid of the __computeType custom prop
         resource.customProperties.put("__computeType", "VirtualMachine");
-        resource.type = ComputeType.VM_GUEST;
         resource.tenantLinks = state.tenantLinks;
-        resource.powerState = ComputeService.PowerState.ON;
         resource.tagLinks = cd.tagLinks;
 
         sendRequest(Operation
