@@ -812,11 +812,12 @@ public class ComputeAllocationTaskService
             NetworkInterfaceDescription nid, EnvironmentStateExpanded env) {
         String subnetLink = nid.subnetLink;
 
+        boolean noNicVM = nid.customProperties != null
+                && nid.customProperties.containsKey(NetworkProfileQueryUtils.NO_NIC_VM);
         DeferredResult<String> subnet = null;
         if ((env.networkProfile != null && env.networkProfile.subnetStates != null
                 && !env.networkProfile.subnetStates.isEmpty())) {
-            if (nid.customProperties == null
-                    || !nid.customProperties.containsKey(NetworkProfileQueryUtils.NO_NIC_VM)) {
+            if (!noNicVM) {
                 DeferredResult<String> subnetDeferred = new DeferredResult<>();
                 NetworkProfileQueryUtils.getSubnetForComputeNic(getHost(),
                         UriUtils.buildUri(getHost(), getSelfLink()), state.tenantLinks,
@@ -845,6 +846,8 @@ public class ComputeAllocationTaskService
                 subnet = DeferredResult.completed(
                         env.networkProfile.subnetStates.get(0).documentSelfLink);
             }
+        } else if (noNicVM && nid.networkLink != null) {
+            subnet = DeferredResult.completed(subnetLink);
         } else if (subnetLink == null) {
             // TODO: filter also by NetworkProfile
             subnet = findSubnetBy(state, nid);

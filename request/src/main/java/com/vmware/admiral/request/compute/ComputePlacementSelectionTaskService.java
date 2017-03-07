@@ -48,7 +48,6 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
-import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.photon.controller.model.tasks.QueryUtils.QueryByPages;
 import com.vmware.photon.controller.model.tasks.helpers.ResourcePoolQueryHelper;
 import com.vmware.xenon.common.LocalizableValidationException;
@@ -187,8 +186,9 @@ public class ComputePlacementSelectionTaskService extends
         builder.addCollectionItemClause(ComputeDescription.FIELD_NAME_SUPPORTED_CHILDREN,
                 ComputeType.VM_GUEST.toString());
 
-        QueryByPages<SubnetState> queryCDs = new QueryByPages<>(getHost(), builder.build(),
-                SubnetState.class, QueryUtil.getTenantLinks(state.tenantLinks), state.endpointLink);
+        QueryByPages<ComputeDescription> queryCDs = new QueryByPages<>(getHost(), builder.build(),
+                ComputeDescription.class, QueryUtil.getTenantLinks(state.tenantLinks),
+                state.endpointLink);
 
         queryCDs.collectLinks(Collectors.toSet())
                 .whenComplete((cdLinks, e) -> {
