@@ -699,12 +699,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         body.taskInfo.stage = TaskStage.FAILED;
         body.taskSubStage = DefaultSubStage.ERROR;
         if (t != null) {
-            Operation operation = null;
-            if (locale != null) {
-                operation = (new Operation().addRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER,
-                        locale));
-            }
-            body.taskInfo.failure = Utils.toValidationErrorResponse(t, operation);
+            body.taskInfo.failure = getServiceErrorResponse(t);
         } else {
             ServiceErrorResponse rsp = new ServiceErrorResponse();
             rsp.message = errMsg;
@@ -718,6 +713,15 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                         logWarning("Self patch failed: %s", Utils.toString(ex));
                     }
                 }));
+    }
+
+    protected ServiceErrorResponse getServiceErrorResponse(Throwable t) {
+        Operation operation = null;
+        if (locale != null) {
+            operation = new Operation().addRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER,
+                    locale);
+        }
+        return Utils.toValidationErrorResponse(t, operation);
     }
 
     protected void notifyCallerService(T state) {

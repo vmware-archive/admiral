@@ -61,7 +61,6 @@ public class ConfigureHostOverSshTaskService extends
 
     public static final String ADDRESS_NOT_SET_ERROR_MESSAGE = "Address is not set";
     public static final String PORT_NOT_SET_ERROR_MESSAGE = "Port is not set";
-    public static final String CONNECTION_REFUSED_ERROR_MESSAGE = "Connection refused or user is not a sudoer.";
 
     public static final String DISPLAY_NAME = "Configure Host";
     public static final String FACTORY_LINK = ManagementUriParts.CONFIGURE_HOST;

@@ -200,44 +200,6 @@ public class ServiceDocumentQuery<T extends ServiceDocument> {
                 }));
     }
 
-    /*
-    public void query(Collection<QueryTask> queries, Consumer<ServiceDocumentQueryElementResult<T>> completionHandler) {
-        Collection<Operation> operations = new ArrayList<>(queries.size());
-        for (QueryTask q: queries) {
-            if (q.documentExpirationTimeMicros == 0) {
-                q.documentExpirationTimeMicros = getDefaultQueryExpiration();
-            }
-            operations.add(Operation
-                    .createPost(UriUtils.buildUri(host, ServiceUriPaths.CORE_QUERY_TASKS))
-                    .setBody(q)
-                    .setReferer(host.getUri())
-            );
-        }
-        OperationJoin.create(operations).setCompletion((opMap, errMap) -> {
-            long responseCount = 0;
-            Operation lastOp = null;
-            QueryTask lastQt = null;
-            for (Long key: opMap.keySet()) {
-                if (errMap.get(key) == null) {
-                    responseCount += 1;
-                    lastOp = opMap.get(key);
-                    lastQt = lastOp.getBody(QueryTask.class);
-                    this.host.log(Level.FINE, "Response from uri '%s'", lastOp.getUri().toString());
-                }
-            }
-            if (responseCount == 0) {
-                completionHandler.accept(error(new IllegalStateException("Could not recognise host type.")));
-            } else {
-                if (responseCount > 1) {
-                    this.host.log(Level.WARNING, "More than one uri responded.");
-                }
-                assert (lastQt != null);
-                processQuery(lastQt, completionHandler);
-            }
-        }).sendWith(host);
-    }
-    */
-
     private void processQuery(QueryTask q,
             Consumer<ServiceDocumentQueryElementResult<T>> handler) {
         if (TaskState.isFailed(q.taskInfo)) {

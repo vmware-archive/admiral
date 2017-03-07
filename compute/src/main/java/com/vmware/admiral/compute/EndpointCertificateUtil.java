@@ -17,6 +17,7 @@ import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.admiral.service.common.SslTrustImportService;
 import com.vmware.admiral.service.common.SslTrustImportService.SslTrustImportRequest;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceErrorResponse;
@@ -59,9 +60,11 @@ public class EndpointCertificateUtil {
                 .setBody(sslTrustRequest)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        ServiceErrorResponse rsp = Utils.toServiceErrorResponse(e);
-                        rsp.message = String.format("Error connecting to %s : %s",
-                                hostSpec.uri.toString(), rsp.message);
+                        String message = String.format("Error connecting to %s : %s",
+                                hostSpec.uri.toString(), e.getMessage());
+                        LocalizableValidationException ex = new LocalizableValidationException(message,
+                                "compute.add.host.connection.error", hostSpec.uri.toString(), e.getMessage());
+                        ServiceErrorResponse rsp = Utils.toValidationErrorResponse(ex, op);
                         logger.severe(rsp.message);
                         op.setStatusCode(o.getStatusCode());
                         op.fail(e, rsp);

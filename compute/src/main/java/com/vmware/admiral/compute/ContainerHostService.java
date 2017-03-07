@@ -772,10 +772,12 @@ public class ContainerHostService extends StatelessService {
                 .setContextId(Service.getId(getSelfLink()))
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        ServiceErrorResponse rsp = Utils.toServiceErrorResponse(ex);
-                        toReadableErrorMessage(ex, rsp);
-                        rsp.message = String.format("Error connecting to %s : %s",
-                                cs.address, rsp.message);
+                        String innerMessage = toReadableErrorMessage(ex, op);
+                        String message = String.format("Error connecting to %s : %s",
+                                cs.address, innerMessage);
+                        LocalizableValidationException validationEx = new LocalizableValidationException(ex,
+                                message, "compute.add.host.connection.error", cs.address, innerMessage);
+                        ServiceErrorResponse rsp = Utils.toValidationErrorResponse(validationEx, op);
 
                         logWarning(rsp.message);
                         postEventlogError(cs, rsp.message);
@@ -811,15 +813,23 @@ public class ContainerHostService extends StatelessService {
         sendAdapterRequest(request, cs, op, callbackFunction, ComputeState.class);
     }
 
-    private void toReadableErrorMessage(Throwable e, ServiceErrorResponse response) {
+    private String toReadableErrorMessage(Throwable e, Operation op) {
+
+        LocalizableValidationException localizedEx = null;
         if (e instanceof io.netty.handler.codec.DecoderException) {
-            if (response.message.contains("Received fatal alert: bad_certificate")) {
-                response.message = "Check login credentials";
+            if (e.getMessage().contains("Received fatal alert: bad_certificate")) {
+                localizedEx = new LocalizableValidationException("Check login credentials", "compute.check.credentials");
             }
         } else if (e instanceof IllegalStateException) {
-            if (response.message.contains("Socket channel closed:")) {
-                response.message = "Check login credentials";
+            if (e.getMessage().contains("Socket channel closed:")) {
+                localizedEx = new LocalizableValidationException("Check login credentials", "compute.check.credentials");
             }
+        }
+
+        if (localizedEx != null) {
+            return Utils.toValidationErrorResponse(localizedEx, op).message;
+        } else {
+            return e.getMessage();
         }
     }
 
