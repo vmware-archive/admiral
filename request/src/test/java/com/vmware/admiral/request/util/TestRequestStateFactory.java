@@ -36,10 +36,10 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
-import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentState;
-import com.vmware.admiral.compute.env.NetworkProfileService.NetworkProfile;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
+import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile;
+import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.Constraint.Condition;
@@ -204,17 +204,17 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         return networkProfile;
     }
 
-    public static EnvironmentState createEnvironment(String name, String networkProfileLink,
+    public static ProfileState createProfile(String name, String networkProfileLink,
             String storageProfileLink, String computeProfileLink) {
-        EnvironmentState environmentState = new EnvironmentState();
-        environmentState.documentSelfLink = "test-env-" + name;
-        environmentState.name = name;
-        environmentState.tenantLinks = getTenantLinks();
-        environmentState.networkProfileLink = networkProfileLink;
-        environmentState.computeProfileLink = computeProfileLink;
-        environmentState.storageProfileLink = storageProfileLink;
-        environmentState.endpointType = EndpointType.aws.name();
-        return environmentState;
+        ProfileState profileState = new ProfileState();
+        profileState.documentSelfLink = "test-profile-" + name;
+        profileState.name = name;
+        profileState.tenantLinks = getTenantLinks();
+        profileState.networkProfileLink = networkProfileLink;
+        profileState.computeProfileLink = computeProfileLink;
+        profileState.storageProfileLink = storageProfileLink;
+        profileState.endpointType = EndpointType.aws.name();
+        return profileState;
     }
 
     public static SubnetState createSubnetState(String name) {

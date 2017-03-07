@@ -20,8 +20,8 @@ var computeConstants = Immutable({
   },
   VIEWS: {
     HOME: {name: 'home'},
-    ENVIRONMENTS: {
-      name: 'environments'
+    PROFILES: {
+      name: 'profiles'
     },
     ENDPOINTS: {
       name: 'endpoints'

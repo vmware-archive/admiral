@@ -27,7 +27,7 @@
       <home-compute-view v-bind:model="model.centerView.data"></home-compute-view>
     </div>
     <div v-else class="center-view" transition="fade">
-      <environments-view v-if="model.centerView.name === computeConstants.VIEWS.ENVIRONMENTS.name"
+      <environments-view v-if="model.centerView.name === computeConstants.VIEWS.PROFILES.name"
                    v-bind:model="model.centerView.data"
                    v-ref:center-view>
       </environments-view>

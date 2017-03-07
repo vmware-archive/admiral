@@ -21,7 +21,7 @@ import java.util.Set;
 
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
-import com.vmware.admiral.compute.env.ComputeProfileService.ComputeProfile;
+import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService.NetworkInterfaceState;

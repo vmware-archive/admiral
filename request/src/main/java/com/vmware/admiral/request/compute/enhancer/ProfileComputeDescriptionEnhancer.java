@@ -20,10 +20,10 @@ import java.util.logging.Level;
 
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.compute.ComputeConstants;
-import com.vmware.admiral.compute.env.ComputeImageDescription;
-import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentState;
-import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentStateExpanded;
-import com.vmware.admiral.compute.env.InstanceTypeDescription;
+import com.vmware.admiral.compute.profile.ComputeImageDescription;
+import com.vmware.admiral.compute.profile.InstanceTypeDescription;
+import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
+import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
 import com.vmware.admiral.request.compute.NetworkProfileQueryUtils;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService;
@@ -40,13 +40,13 @@ import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
-public class EnvironmentComputeDescriptionEnhancer extends ComputeDescriptionEnhancer {
+public class ProfileComputeDescriptionEnhancer extends ComputeDescriptionEnhancer {
     static final String TEMPLATE_LINK = "__templateComputeLink";
 
     private ServiceHost host;
     private URI referer;
 
-    public EnvironmentComputeDescriptionEnhancer(ServiceHost host, URI referer) {
+    public ProfileComputeDescriptionEnhancer(ServiceHost host, URI referer) {
         this.host = host;
         this.referer = referer;
     }
@@ -55,21 +55,21 @@ public class EnvironmentComputeDescriptionEnhancer extends ComputeDescriptionEnh
     public DeferredResult<ComputeDescription> enhance(EnhanceContext context,
             ComputeDescription cd) {
 
-        return getEnvironmentState(context.environmentLink)
-                .thenCompose(env -> {
+        return getProfileState(context.profileLink)
+                .thenCompose(profile -> {
                     DeferredResult<ComputeDescription> result = new DeferredResult<>();
-                    applyInstanceType(cd, env);
+                    applyInstanceType(cd, profile);
 
                     if (cd.dataStoreId == null) {
-                        cd.dataStoreId = env.getStringMiscValue("placement", "dataStoreId");
+                        cd.dataStoreId = profile.getStringMiscValue("placement", "dataStoreId");
                     }
 
                     if (cd.authCredentialsLink == null) {
-                        cd.authCredentialsLink = env.getStringMiscValue("authentication",
+                        cd.authCredentialsLink = profile.getStringMiscValue("authentication",
                                 "guestAuthLink");
                     }
                     if (cd.zoneId == null) {
-                        cd.zoneId = env.getStringMiscValue("placement", "zoneId");
+                        cd.zoneId = profile.getStringMiscValue("placement", "zoneId");
                     }
                     if (cd.zoneId == null && context.zoneId != null) {
                         cd.zoneId = context.zoneId;
@@ -78,9 +78,9 @@ public class EnvironmentComputeDescriptionEnhancer extends ComputeDescriptionEnh
                     String absImageId = context.imageType;
                     if (absImageId != null) {
                         String imageId = null;
-                        if (env.computeProfile != null && env.computeProfile.imageMapping != null
-                                && PropertyUtils.getPropertyCaseInsensitive(env.computeProfile.imageMapping, absImageId) != null) {
-                            ComputeImageDescription imageDesc = PropertyUtils.getPropertyCaseInsensitive(env.computeProfile.imageMapping, absImageId);
+                        if (profile.computeProfile != null && profile.computeProfile.imageMapping != null
+                                && PropertyUtils.getPropertyCaseInsensitive(profile.computeProfile.imageMapping, absImageId) != null) {
+                            ComputeImageDescription imageDesc = PropertyUtils.getPropertyCaseInsensitive(profile.computeProfile.imageMapping, absImageId);
                             if (imageDesc.image != null) {
                                 imageId = imageDesc.image;
                             } else if (imageDesc.imageByRegion != null) {
@@ -115,7 +115,7 @@ public class EnvironmentComputeDescriptionEnhancer extends ComputeDescriptionEnh
 
                     if (!context.skipNetwork && (cd.networkInterfaceDescLinks == null
                             || cd.networkInterfaceDescLinks.isEmpty())) {
-                        attachNetworkInterfaceDescription(context, cd, env, result);
+                        attachNetworkInterfaceDescription(context, cd, profile, result);
                     } else {
                         result.complete(cd);
                     }
@@ -124,10 +124,11 @@ public class EnvironmentComputeDescriptionEnhancer extends ComputeDescriptionEnh
 
     }
 
-    private void applyInstanceType(ComputeDescription cd, EnvironmentStateExpanded env) {
+    private void applyInstanceType(ComputeDescription cd, ProfileStateExpanded profile) {
         InstanceTypeDescription instanceTypeDescription = null;
-        if (env.computeProfile != null && env.computeProfile.instanceTypeMapping != null) {
-            instanceTypeDescription = PropertyUtils.getPropertyCaseInsensitive(env.computeProfile.instanceTypeMapping, cd.instanceType);
+        if (profile.computeProfile != null && profile.computeProfile.instanceTypeMapping != null) {
+            instanceTypeDescription = PropertyUtils.getPropertyCaseInsensitive(
+                    profile.computeProfile.instanceTypeMapping, cd.instanceType);
         }
 
         if (instanceTypeDescription == null) {
@@ -143,9 +144,9 @@ public class EnvironmentComputeDescriptionEnhancer extends ComputeDescriptionEnh
     }
 
     private void attachNetworkInterfaceDescription(EnhanceContext context, ComputeDescription cd,
-            EnvironmentState env, DeferredResult<ComputeDescription> result) {
+            ProfileState profile, DeferredResult<ComputeDescription> result) {
 
-        String networkId = env.getStringMiscValue("placement", "networkId");
+        String networkId = profile.getStringMiscValue("placement", "networkId");
 
         if (networkId == null) {
             // For now keep it here, optionally we will support it as direct placement decision.
@@ -218,12 +219,12 @@ public class EnvironmentComputeDescriptionEnhancer extends ComputeDescriptionEnh
                 .sendWith(host);
     }
 
-    private DeferredResult<EnvironmentStateExpanded> getEnvironmentState(String uriLink) {
+    private DeferredResult<ProfileStateExpanded> getProfileState(String uriLink) {
         host.log(Level.INFO, "Loading state for %s", uriLink);
 
-        URI envUri = UriUtils.buildUri(host, uriLink);
+        URI profileUri = UriUtils.buildUri(host, uriLink);
         return host.sendWithDeferredResult(
-                Operation.createGet(EnvironmentStateExpanded.buildUri(envUri)).setReferer(referer),
-                EnvironmentStateExpanded.class);
+                Operation.createGet(ProfileStateExpanded.buildUri(profileUri)).setReferer(referer),
+                ProfileStateExpanded.class);
     }
 }

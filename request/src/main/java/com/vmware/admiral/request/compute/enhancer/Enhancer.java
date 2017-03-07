@@ -28,7 +28,7 @@ public interface Enhancer<T extends ResourceState> {
     DeferredResult<T> enhance(EnhanceContext context, T resource);
 
     static class EnhanceContext {
-        public String environmentLink;
+        public String profileLink;
         public String endpointLink;
         public String resourcePoolLink;
         public String regionId;

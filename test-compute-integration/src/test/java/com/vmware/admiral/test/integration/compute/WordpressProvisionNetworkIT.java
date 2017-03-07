@@ -19,7 +19,7 @@ import com.google.common.collect.Sets;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import com.vmware.admiral.compute.env.StorageProfileService.StorageProfile;
+import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfile;
 import com.vmware.admiral.test.integration.compute.aws.AwsComputeProvisionIT;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;

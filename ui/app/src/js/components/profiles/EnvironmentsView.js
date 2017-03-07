@@ -9,9 +9,9 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import EnvironmentsViewVue from 'components/environments/EnvironmentsViewVue.html';
-import EnvironmentItem from 'components/environments/EnvironmentItem'; //eslint-disable-line
-import EnvironmentEditView from 'components/environments/EnvironmentEditView'; //eslint-disable-line
+import EnvironmentsViewVue from 'components/profiles/EnvironmentsViewVue.html';
+import EnvironmentItem from 'components/profiles/EnvironmentItem'; //eslint-disable-line
+import EnvironmentEditView from 'components/profiles/EnvironmentEditView'; //eslint-disable-line
 import GridHolderMixin from 'components/common/GridHolderMixin';
 import constants from 'core/constants';
 import { EnvironmentsActions, NavigationActions } from 'actions/Actions';
@@ -54,7 +54,7 @@ var EnvironmentsView = Vue.extend({
 
   computed: {
     searchSuggestions: function() {
-      return constants.ENVIRONMENTS.SEARCH_SUGGESTIONS;
+      return constants.PROFILES.SEARCH_SUGGESTIONS;
     }
   },
 

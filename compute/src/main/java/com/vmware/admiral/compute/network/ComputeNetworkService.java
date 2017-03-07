@@ -23,8 +23,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.YamlMapper;
-import com.vmware.admiral.compute.env.EnvironmentService;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.NetworkType;
+import com.vmware.admiral.compute.profile.ProfileService;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.SecurityGroupService;
 import com.vmware.xenon.common.Operation;
@@ -81,10 +81,10 @@ public class ComputeNetworkService extends StatefulService {
         public Set<String> securityGroupLinks;
 
         @JsonIgnore
-        @Documentation(description = "List of Environments, calculated during allocation, applicable for this network.")
+        @Documentation(description = "List of profiles, calculated during allocation, applicable for this network.")
         @PropertyOptions(usage = { PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL,
                 PropertyUsageOption.SERVICE_USE, PropertyUsageOption.OPTIONAL })
-        public List<String> environmentLinks;
+        public List<String> profileLinks;
     }
 
     @Override
@@ -108,8 +108,8 @@ public class ComputeNetworkService extends StatefulService {
         nd.networkType = NetworkType.PUBLIC;
         nd.securityGroupLinks = new HashSet<>();
         nd.securityGroupLinks.add(SecurityGroupService.FACTORY_LINK + "/my-sec-group");
-        nd.environmentLinks = new ArrayList<>();
-        nd.environmentLinks.add(EnvironmentService.FACTORY_LINK + "/my-env");
+        nd.profileLinks = new ArrayList<>();
+        nd.profileLinks.add(ProfileService.FACTORY_LINK + "/my-profile");
         return nd;
     }
 }

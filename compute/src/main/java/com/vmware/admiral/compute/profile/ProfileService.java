@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.env;
+package com.vmware.admiral.compute.profile;
 
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
@@ -29,9 +29,9 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.PropertyMapping;
-import com.vmware.admiral.compute.env.ComputeProfileService.ComputeProfile;
-import com.vmware.admiral.compute.env.NetworkProfileService.NetworkProfileExpanded;
-import com.vmware.admiral.compute.env.StorageProfileService.StorageProfile;
+import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
+import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfileExpanded;
+import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfile;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.FileUtils;
@@ -44,38 +44,38 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 /**
- * CRUD service for managing environments.
+ * CRUD service for managing deployment profiles.
  */
-public class EnvironmentService extends StatefulService {
-    public static final String FACTORY_LINK = ManagementUriParts.ENVIRONMENTS;
+public class ProfileService extends StatefulService {
+    public static final String FACTORY_LINK = ManagementUriParts.PROFILES;
 
     /**
-     * Describes an environment - compute/storage/network configuration and mapping for a specific
+     * Describes a profile - compute/storage/network configuration and mapping for a specific
      * endpoint that allows compute provisioning that is agnostic on the target endpoint type.
      */
-    public static class EnvironmentState extends ResourceState {
+    public static class ProfileState extends ResourceState {
         public static final String FIELD_NAME_ENDPOINT_LINK = "endpointLink";
         public static final String FIELD_NAME_ENDPOINT_TYPE = "endpointType";
         public static final String FIELD_NAME_MISC = "misc";
         public static final String FIELD_NAME_NETWORK_PROFILE_LINK = "networkProfileLink";
 
-        @Documentation(description = "Link to the endpoint this environment is associated with")
+        @Documentation(description = "Link to the endpoint this profile is associated with")
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
         public String endpointLink;
 
-        @Documentation(description = "The endpoint type if this environment is not for a specific endpoint ")
+        @Documentation(description = "The endpoint type if this profile is not for a specific endpoint ")
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
         public String endpointType;
 
-        @Documentation(description = "Link to the compute profile for this environment")
+        @Documentation(description = "Link to the compute profile for this profile")
         @PropertyOptions(usage = { REQUIRED, AUTO_MERGE_IF_NOT_NULL })
         public String computeProfileLink;
 
-        @Documentation(description = "Link to the storage profile for this environment")
+        @Documentation(description = "Link to the storage profile for this profile")
         @PropertyOptions(usage = { REQUIRED, AUTO_MERGE_IF_NOT_NULL })
         public String storageProfileLink;
 
-        @Documentation(description = "Link to the network profile for this environment")
+        @Documentation(description = "Link to the network profile for this profile")
         @PropertyOptions(usage = { REQUIRED, AUTO_MERGE_IF_NOT_NULL })
         public String networkProfileLink;
 
@@ -103,8 +103,8 @@ public class EnvironmentService extends StatefulService {
         @Override
         public void copyTo(ResourceState target) {
             super.copyTo(target);
-            if (target instanceof EnvironmentState) {
-                EnvironmentState targetState = (EnvironmentState) target;
+            if (target instanceof ProfileState) {
+                ProfileState targetState = (ProfileState) target;
                 targetState.endpointLink = this.endpointLink;
                 targetState.endpointType = this.endpointType;
                 targetState.computeProfileLink = this.computeProfileLink;
@@ -115,19 +115,19 @@ public class EnvironmentService extends StatefulService {
         }
     }
 
-    public static class EnvironmentStateExpanded extends EnvironmentState {
+    public static class ProfileStateExpanded extends ProfileState {
         public EndpointState endpoint;
         public ComputeProfile computeProfile;
         public StorageProfile storageProfile;
         public NetworkProfileExpanded networkProfile;
 
-        public static URI buildUri(URI envStateUri) {
-            return UriUtils.buildExpandLinksQueryUri(envStateUri);
+        public static URI buildUri(URI profileStateUri) {
+            return UriUtils.buildExpandLinksQueryUri(profileStateUri);
         }
     }
 
-    public EnvironmentService() {
-        super(EnvironmentState.class);
+    public ProfileService() {
+        super(ProfileState.class);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
@@ -136,7 +136,7 @@ public class EnvironmentService extends StatefulService {
 
     @Override
     public void handleGet(Operation get) {
-        EnvironmentState currentState = getState(get);
+        ProfileState currentState = getState(get);
         boolean doExpand = get.getUri().getQuery() != null &&
                 UriUtils.hasODataExpandParamValue(get.getUri());
 
@@ -145,7 +145,7 @@ public class EnvironmentService extends StatefulService {
             return;
         }
 
-        EnvironmentStateExpanded expanded = new EnvironmentStateExpanded();
+        ProfileStateExpanded expanded = new ProfileStateExpanded();
         currentState.copyTo(expanded);
 
         List<Operation> getOps = new ArrayList<>(4);
@@ -216,17 +216,17 @@ public class EnvironmentService extends StatefulService {
             return;
         }
 
-        EnvironmentState newState = processInput(put);
+        ProfileState newState = processInput(put);
         setState(put, newState);
         put.complete();
     }
 
     @Override
     public void handlePatch(Operation patch) {
-        EnvironmentState currentState = getState(patch);
+        ProfileState currentState = getState(patch);
         try {
             Utils.mergeWithStateAdvanced(getStateDescription(), currentState,
-                    EnvironmentState.class, patch);
+                    ProfileState.class, patch);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             patch.fail(e);
             return;
@@ -235,32 +235,32 @@ public class EnvironmentService extends StatefulService {
         patch.complete();
     }
 
-    public static List<EnvironmentStateExpanded> getDefaultEnvironments() {
+    public static List<ProfileStateExpanded> getDefaultProfiles() {
         try {
             ObjectMapper mapper = YamlMapper.objectMapper();
-            List<EnvironmentStateExpanded> envs = FileUtils
-                    .findResources(EnvironmentStateExpanded.class, "env").stream()
+            List<ProfileStateExpanded> profiles = FileUtils
+                    .findResources(ProfileStateExpanded.class, "profiles").stream()
                     .filter(r -> r.url != null)
                     .map(r -> {
                         try (InputStream is = r.url.openStream()) {
-                            return mapper.readValue(is, EnvironmentStateExpanded.class);
+                            return mapper.readValue(is, ProfileStateExpanded.class);
                         } catch (Exception e) {
-                            Utils.log(EnvironmentService.class,
-                                    EnvironmentService.class.getSimpleName(), Level.WARNING,
-                                    "Failure reading default environment: %s, reason: %s", r.url,
+                            Utils.log(ProfileService.class,
+                                    ProfileService.class.getSimpleName(), Level.WARNING,
+                                    "Failure reading default profile: %s, reason: %s", r.url,
                                     e.getMessage());
                             return null;
                         }
-                    }).filter(env -> env != null)
+                    }).filter(profile -> profile != null)
                     .collect(Collectors.toList());
 
             // populate pre-defined self links
-            envs.forEach(env -> setDefaultSelfLinks(env));
+            profiles.forEach(profile -> setDefaultSelfLinks(profile));
 
-            return envs;
+            return profiles;
         } catch (Exception e) {
-            Utils.log(EnvironmentService.class, EnvironmentService.class.getSimpleName(),
-                    Level.SEVERE, "Failure reading default environments, reason: %s",
+            Utils.log(ProfileService.class, ProfileService.class.getSimpleName(),
+                    Level.SEVERE, "Failure reading default profiles, reason: %s",
                     e.getMessage());
             return Collections.emptyList();
         }
@@ -268,47 +268,47 @@ public class EnvironmentService extends StatefulService {
 
     public static List<ServiceDocument> getAllDefaultDocuments() {
         List<ServiceDocument> docs = new ArrayList<>();
-        getDefaultEnvironments().forEach(env -> {
-            if (env.computeProfile != null) {
-                docs.add(env.computeProfile);
+        getDefaultProfiles().forEach(profile -> {
+            if (profile.computeProfile != null) {
+                docs.add(profile.computeProfile);
             }
-            if (env.storageProfile != null) {
-                docs.add(env.storageProfile);
+            if (profile.storageProfile != null) {
+                docs.add(profile.storageProfile);
             }
-            if (env.networkProfile != null) {
-                docs.add(env.networkProfile);
+            if (profile.networkProfile != null) {
+                docs.add(profile.networkProfile);
             }
-            docs.add(env);
+            docs.add(profile);
         });
         return docs;
     }
 
-    private static void setDefaultSelfLinks(EnvironmentStateExpanded env) {
-        env.documentSelfLink = UriUtils.buildUriPath(EnvironmentService.FACTORY_LINK,
-                env.endpointType);
+    private static void setDefaultSelfLinks(ProfileStateExpanded profile) {
+        profile.documentSelfLink = UriUtils.buildUriPath(ProfileService.FACTORY_LINK,
+                profile.endpointType);
 
-        if (env.computeProfile != null) {
-            env.computeProfileLink = UriUtils.buildUriPath(ComputeProfileService.FACTORY_LINK,
-                    env.endpointType);
-            env.computeProfile.documentSelfLink = env.computeProfileLink;
+        if (profile.computeProfile != null) {
+            profile.computeProfileLink = UriUtils.buildUriPath(ComputeProfileService.FACTORY_LINK,
+                    profile.endpointType);
+            profile.computeProfile.documentSelfLink = profile.computeProfileLink;
         }
-        if (env.storageProfile != null) {
-            env.storageProfileLink = UriUtils.buildUriPath(StorageProfileService.FACTORY_LINK,
-                    env.endpointType);
-            env.storageProfile.documentSelfLink = env.storageProfileLink;
+        if (profile.storageProfile != null) {
+            profile.storageProfileLink = UriUtils.buildUriPath(StorageProfileService.FACTORY_LINK,
+                    profile.endpointType);
+            profile.storageProfile.documentSelfLink = profile.storageProfileLink;
         }
-        if (env.networkProfile != null) {
-            env.networkProfileLink = UriUtils.buildUriPath(NetworkProfileService.FACTORY_LINK,
-                    env.endpointType);
-            env.networkProfile.documentSelfLink = env.networkProfileLink;
+        if (profile.networkProfile != null) {
+            profile.networkProfileLink = UriUtils.buildUriPath(NetworkProfileService.FACTORY_LINK,
+                    profile.endpointType);
+            profile.networkProfile.documentSelfLink = profile.networkProfileLink;
         }
     }
 
-    private EnvironmentState processInput(Operation op) {
+    private ProfileState processInput(Operation op) {
         if (!op.hasBody()) {
             throw new IllegalArgumentException("body is required");
         }
-        EnvironmentState state = op.getBody(EnvironmentState.class);
+        ProfileState state = op.getBody(ProfileState.class);
         AssertUtil.assertNotNull(state.name, "name");
         Utils.validateState(getStateDescription(), state);
         if (state.endpointLink == null && state.endpointType == null) {

@@ -31,13 +31,13 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
-import com.vmware.admiral.compute.env.ComputeProfileService;
-import com.vmware.admiral.compute.env.EnvironmentService;
-import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentState;
-import com.vmware.admiral.compute.env.NetworkProfileService;
-import com.vmware.admiral.compute.env.StorageProfileService;
+import com.vmware.admiral.compute.profile.ComputeProfileService;
+import com.vmware.admiral.compute.profile.NetworkProfileService;
+import com.vmware.admiral.compute.profile.ProfileService;
+import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
+import com.vmware.admiral.compute.profile.StorageProfileService;
 import com.vmware.admiral.request.RequestBaseTest;
-import com.vmware.admiral.request.compute.EnvironmentQueryUtils.EnvEntry;
+import com.vmware.admiral.request.compute.ProfileQueryUtils.ProfileEntry;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
@@ -46,7 +46,7 @@ import com.vmware.photon.controller.model.resources.ResourcePoolService.Resource
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
 
-public class EnvironmentQueryUtilsTest extends RequestBaseTest {
+public class ProfileQueryUtilsTest extends RequestBaseTest {
 
     private Map<String, ResourcePoolState> pools;
     private URI referer;
@@ -57,17 +57,17 @@ public class EnvironmentQueryUtilsTest extends RequestBaseTest {
         startServices(host);
         createEndpoint();
         waitForServiceAvailability(host, ManagementUriParts.AUTH_CREDENTIALS_CLIENT_LINK);
-        referer = UriUtils.buildUri(host, EnvironmentQueryUtilsTest.class.getSimpleName());
+        referer = UriUtils.buildUri(host, ProfileQueryUtilsTest.class.getSimpleName());
     }
 
     @Test
     public void testSuccessBehaviour() throws Throwable {
         pools = createResourcePools();
-        createEnvironments();
+        createProfiles();
 
         TestContext ctx = testCreate(1);
-        List<EnvEntry> entries = new ArrayList<>();
-        EnvironmentQueryUtils.queryEnvironments(host, referer, pools.keySet(),
+        List<ProfileEntry> entries = new ArrayList<>();
+        ProfileQueryUtils.queryProfiles(host, referer, pools.keySet(),
                 endpoint.documentSelfLink, null, null,
                 (all, e) -> {
                     if (e != null) {
@@ -84,8 +84,8 @@ public class EnvironmentQueryUtilsTest extends RequestBaseTest {
         entries.forEach(e -> {
             assertEquals(endpoint.documentSelfLink, e.endpoint.documentSelfLink);
             assertEquals(EndpointType.aws.name(), e.endpoint.endpointType);
-            assertNotNull(e.envLinks);
-            assertEquals(4, e.envLinks.size());
+            assertNotNull(e.profileLinks);
+            assertEquals(4, e.profileLinks.size());
         });
     }
 
@@ -96,8 +96,8 @@ public class EnvironmentQueryUtilsTest extends RequestBaseTest {
         pools.add(pool.documentSelfLink);
 
         TestContext ctx = testCreate(1);
-        List<EnvEntry> entries = new ArrayList<>();
-        EnvironmentQueryUtils.queryEnvironments(host, referer, pools, endpoint.documentSelfLink,
+        List<ProfileEntry> entries = new ArrayList<>();
+        ProfileQueryUtils.queryProfiles(host, referer, pools, endpoint.documentSelfLink,
                 null, null,
                 (all, e) -> {
                     if (e != null) {
@@ -113,12 +113,12 @@ public class EnvironmentQueryUtilsTest extends RequestBaseTest {
     }
 
     @Test
-    public void testPoolWithNoEnvMapping() throws Throwable {
-        String vsphereEnvLink = UriUtils.buildUriPath(EnvironmentService.FACTORY_LINK,
+    public void testPoolWithNoProfileMapping() throws Throwable {
+        String vsphereProfileLink = UriUtils.buildUriPath(ProfileService.FACTORY_LINK,
                 EndpointType.vsphere.name());
 
-        doDelete(UriUtils.buildUri(host, vsphereEnvLink), false);
-        EnvironmentState state = getDocumentNoWait(EnvironmentState.class, vsphereEnvLink);
+        doDelete(UriUtils.buildUri(host, vsphereProfileLink), false);
+        ProfileState state = getDocumentNoWait(ProfileState.class, vsphereProfileLink);
         assertNull(state);
 
         EndpointState endpoint = TestRequestStateFactory
@@ -130,8 +130,8 @@ public class EnvironmentQueryUtilsTest extends RequestBaseTest {
         pools.add(pool.documentSelfLink);
 
         TestContext ctx = testCreate(1);
-        List<EnvEntry> entries = new ArrayList<>();
-        EnvironmentQueryUtils.queryEnvironments(host, referer, pools, endpoint.documentSelfLink,
+        List<ProfileEntry> entries = new ArrayList<>();
+        ProfileQueryUtils.queryProfiles(host, referer, pools, endpoint.documentSelfLink,
                 null, null,
                 (all, e) -> {
                     if (e != null) {
@@ -147,21 +147,21 @@ public class EnvironmentQueryUtilsTest extends RequestBaseTest {
     }
 
     @Test
-    public void testFilterEnvByNetworkEnvConstraints() throws Throwable {
+    public void testFilterProfilesByNetworkProfileConstraints() throws Throwable {
         pools = createResourcePools();
-        Map<String, EnvironmentState> envs = createEnvironments();
-        List<String> environmentLinks = new ArrayList<>(1);
-        EnvironmentState awsEnv = envs.entrySet()
+        Map<String, ProfileState> profiles = createProfiles();
+        List<String> profileLinks = new ArrayList<>(1);
+        ProfileState awsProfile = profiles.entrySet()
                 .stream()
                 .filter(e -> e.getValue().endpointType == EndpointType.aws.name())
                 .findAny()
                 .orElse(null).getValue();
-        environmentLinks.add(awsEnv.documentSelfLink);
+        profileLinks.add(awsProfile.documentSelfLink);
 
         TestContext ctx = testCreate(1);
-        List<EnvEntry> entries = new ArrayList<>();
-        EnvironmentQueryUtils.queryEnvironments(host, referer, pools.keySet(),
-                endpoint.documentSelfLink, null, environmentLinks,
+        List<ProfileEntry> entries = new ArrayList<>();
+        ProfileQueryUtils.queryProfiles(host, referer, pools.keySet(),
+                endpoint.documentSelfLink, null, profileLinks,
                 (all, e) -> {
                     if (e != null) {
                         ctx.fail(e);
@@ -177,9 +177,9 @@ public class EnvironmentQueryUtilsTest extends RequestBaseTest {
         entries.forEach(e -> {
             assertEquals(endpoint.documentSelfLink, e.endpoint.documentSelfLink);
             assertEquals(EndpointType.aws.name(), e.endpoint.endpointType);
-            assertNotNull(e.envLinks);
-            assertEquals(1, e.envLinks.size());
-            assertEquals(awsEnv.documentSelfLink, e.envLinks.iterator().next());
+            assertNotNull(e.profileLinks);
+            assertEquals(1, e.profileLinks.size());
+            assertEquals(awsProfile.documentSelfLink, e.profileLinks.iterator().next());
         });
     }
 
@@ -203,31 +203,31 @@ public class EnvironmentQueryUtilsTest extends RequestBaseTest {
         return pool;
     }
 
-    private Map<String, EnvironmentState> createEnvironments() throws Throwable {
-        Map<String, EnvironmentState> envs = new HashMap<>();
+    private Map<String, ProfileState> createProfiles() throws Throwable {
+        Map<String, ProfileState> profiles = new HashMap<>();
         for (int i = 0; i < 2; i++) {
-            EnvironmentState env = doCreateEnvironmentState(endpoint.documentSelfLink, null);
-            envs.put(env.documentSelfLink, env);
+            ProfileState profile = doCreateProfileState(endpoint.documentSelfLink, null);
+            profiles.put(profile.documentSelfLink, profile);
         }
 
-        EnvironmentState awsEnv = doCreateEnvironmentState(null, EndpointType.aws);
-        envs.put(awsEnv.documentSelfLink, awsEnv);
+        ProfileState awsProfile = doCreateProfileState(null, EndpointType.aws);
+        profiles.put(awsProfile.documentSelfLink, awsProfile);
 
-        EnvironmentState vsphereEnv = doCreateEnvironmentState(null, EndpointType.vsphere);
-        envs.put(vsphereEnv.documentSelfLink, vsphereEnv);
+        ProfileState vsphereProfile = doCreateProfileState(null, EndpointType.vsphere);
+        profiles.put(vsphereProfile.documentSelfLink, vsphereProfile);
 
-        return envs;
+        return profiles;
     }
 
-    private EnvironmentState doCreateEnvironmentState(String endpointLink,
+    private ProfileState doCreateProfileState(String endpointLink,
             EndpointType endpointType) throws Throwable {
-        EnvironmentState state = createEnvironmentState(endpointLink, endpointType);
-        return doPost(state, EnvironmentService.FACTORY_LINK);
+        ProfileState state = createProfileState(endpointLink, endpointType);
+        return doPost(state, ProfileService.FACTORY_LINK);
     }
 
-    private EnvironmentState createEnvironmentState(String endpointLink,
+    private ProfileState createProfileState(String endpointLink,
             EndpointType endpointType) {
-        EnvironmentState state = new EnvironmentState();
+        ProfileState state = new ProfileState();
         state.name = UUID.randomUUID().toString();
         state.computeProfileLink = UriUtils.buildUriPath(ComputeProfileService.FACTORY_LINK,
                 state.name);

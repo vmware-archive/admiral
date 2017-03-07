@@ -17,7 +17,7 @@ var links = Immutable({
   RESOURCES: '/resources',
   REGISTRIES: CONFIG + '/registries',
   REGISTRY_HOSTS: CONFIG + '/registry-spec',
-  ENVIRONMENTS: CONFIG + '/environments',
+  PROFILES: CONFIG + '/profiles',
   ENDPOINTS: CONFIG + '/endpoints',
   COMPUTE_PROFILES: CONFIG + '/compute-profiles',
   NETWORK_PROFILES: CONFIG + '/network-profiles',

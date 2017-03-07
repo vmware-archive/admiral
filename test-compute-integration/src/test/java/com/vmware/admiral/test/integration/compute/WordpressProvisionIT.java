@@ -18,7 +18,7 @@ import java.util.function.Consumer;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import com.vmware.admiral.compute.env.StorageProfileService;
+import com.vmware.admiral.compute.profile.StorageProfileService;
 import com.vmware.admiral.test.integration.compute.aws.AwsComputeProvisionIT;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;

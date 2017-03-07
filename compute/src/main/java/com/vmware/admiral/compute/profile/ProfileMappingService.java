@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.env;
+package com.vmware.admiral.compute.profile;
 
 import java.lang.reflect.Field;
 import java.util.AbstractMap;
@@ -26,7 +26,7 @@ import java.util.stream.Stream;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
-import com.vmware.admiral.compute.env.ComputeProfileService.ComputeProfile;
+import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
 import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
@@ -36,10 +36,10 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 /**
- * Provides an intersection of mappings available across all environments.
+ * Provides an intersection of mappings available across all profiles.
  */
-public class EnvironmentMappingService extends StatelessService {
-    public static final String SELF_LINK = ManagementUriParts.ENVIRONMENT_MAPPINGS;
+public class ProfileMappingService extends StatelessService {
+    public static final String SELF_LINK = ManagementUriParts.PROFILE_MAPPINGS;
     private static Map<String, Class<? extends MultiTenantDocument>> profiles = new HashMap<>();
 
     {
@@ -48,7 +48,7 @@ public class EnvironmentMappingService extends StatelessService {
         // profiles.put(StorageProfileService.FACTORY_LINK, StorageProfile.class);
     }
 
-    public static class EnvironmentMappingState extends MultiTenantDocument {
+    public static class ProfileMappingState extends MultiTenantDocument {
         public Map<String, List<String>> mappings;
     }
 
@@ -65,8 +65,8 @@ public class EnvironmentMappingService extends StatelessService {
                 get.fail(es.values().iterator().next());
                 return;
             }
-            List<EnvironmentMappingState> states = os.values().stream().map(o -> {
-                EnvironmentMappingState state = new EnvironmentMappingState();
+            List<ProfileMappingState> states = os.values().stream().map(o -> {
+                ProfileMappingState state = new ProfileMappingState();
                 state.documentSelfLink = o.getUri().getPath();
                 ServiceDocumentQueryResult body = o.getBody(ServiceDocumentQueryResult.class);
                 if (body == null || body.documents == null) {

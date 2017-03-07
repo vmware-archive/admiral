@@ -79,7 +79,7 @@ let initializeStoreListeners = function() {
   });
 
   EnvironmentsStore.listen((data) => {
-    if (this.data.centerView && this.data.centerView.name === constants.VIEWS.ENVIRONMENTS.name) {
+    if (this.data.centerView && this.data.centerView.name === constants.VIEWS.PROFILES.name) {
       this.setInData(['centerView', 'data'], data);
       this.emitChange();
     }

@@ -255,18 +255,18 @@ crossroads.addRoute('/closure/{closureId*}', function(closureId) {
   actions.ContainerActions.openClosureDetails(closureId);
 });
 
-crossroads.addRoute('/environments:?query:', function(query) {
-  actions.AppActions.openView(computeConstants.VIEWS.ENVIRONMENTS.name);
+crossroads.addRoute('/profiles:?query:', function(query) {
+  actions.AppActions.openView(computeConstants.VIEWS.PROFILES.name);
   actions.EnvironmentsActions.openEnvironments(query);
 });
 
-crossroads.addRoute('/environments/new', function() {
-  actions.AppActions.openView(computeConstants.VIEWS.ENVIRONMENTS.name);
+crossroads.addRoute('/profiles/new', function() {
+  actions.AppActions.openView(computeConstants.VIEWS.PROFILES.name);
   actions.EnvironmentsActions.openAddEnvironment();
 });
 
-crossroads.addRoute('/environments/{id*}', function(id) {
-  actions.AppActions.openView(computeConstants.VIEWS.ENVIRONMENTS.name);
+crossroads.addRoute('/profiles/{id*}', function(id) {
+  actions.AppActions.openView(computeConstants.VIEWS.PROFILES.name);
   actions.EnvironmentsActions.editEnvironment(id);
 });
 
@@ -478,11 +478,11 @@ actions.NavigationActions.openEnvironments.listen(function(queryOptions) {
 });
 
 actions.NavigationActions.openAddEnvironment.listen(function() {
-  hasher.setHash('environments/new');
+  hasher.setHash('profiles/new');
 });
 
 actions.NavigationActions.editEnvironment.listen(function(id) {
-  hasher.setHash('environments/' + id);
+  hasher.setHash('profiles/' + id);
 });
 
 actions.NavigationActions.openMachines.listen(function(queryOptions) {
