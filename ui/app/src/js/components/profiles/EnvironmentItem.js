@@ -10,7 +10,7 @@
  */
 
 import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin';
-import EnvironmentItemVue from 'components/environments/EnvironmentItemVue.html';
+import EnvironmentItemVue from 'components/profiles/EnvironmentItemVue.html';
 import { EnvironmentsActions, NavigationActions } from 'actions/Actions';
 import utils from 'core/utils';
 

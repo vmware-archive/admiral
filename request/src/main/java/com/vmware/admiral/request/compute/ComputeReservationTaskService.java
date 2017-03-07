@@ -44,9 +44,9 @@ import com.vmware.admiral.compute.container.GroupResourcePlacementService.Resour
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
 import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService.ComputeReservationTaskState.SubStage;
-import com.vmware.admiral.request.compute.EnvironmentQueryUtils.EnvEntry;
+import com.vmware.admiral.request.compute.ProfileQueryUtils.ProfileEntry;
 import com.vmware.admiral.request.compute.enhancer.Enhancer.EnhanceContext;
-import com.vmware.admiral.request.compute.enhancer.EnvironmentComputeDescriptionEnhancer;
+import com.vmware.admiral.request.compute.enhancer.ProfileComputeDescriptionEnhancer;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -123,9 +123,9 @@ public class ComputeReservationTaskService
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public List<HostSelection> selectedComputePlacementHosts;
 
-        /** (Internal) Set by task environments that can be used to create compute networks */
+        /** (Internal) Set by task profiles that can be used to create compute networks */
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
-        public List<String> environmentConstraints;
+        public List<String> profileConstraints;
     }
 
     public ComputeReservationTaskService() {
@@ -141,7 +141,7 @@ public class ComputeReservationTaskService
     protected void handleStartedStagePatch(ComputeReservationTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:
-            collectComputeNicsEnvironmentConstraints(state, null);
+            collectComputeNicsProfileConstraints(state, null);
             break;
         case NETWORK_CONSTRAINTS_COLLECTED:
             queryGroupResourcePlacements(state, state.tenantLinks, this.computeDescription);
@@ -212,11 +212,11 @@ public class ComputeReservationTaskService
         String groupResourcePlacementLink;
     }
 
-    private void collectComputeNicsEnvironmentConstraints(ComputeReservationTaskState state,
+    private void collectComputeNicsProfileConstraints(ComputeReservationTaskState state,
             ComputeDescription computeDesc) {
         if (computeDesc == null) {
             getComputeDescription(state.resourceDescriptionLink,
-                    (retrievedCompDesc) -> collectComputeNicsEnvironmentConstraints(state,
+                    (retrievedCompDesc) -> collectComputeNicsProfileConstraints(state,
                             retrievedCompDesc));
             return;
         }
@@ -228,18 +228,18 @@ public class ComputeReservationTaskService
         }
 
         String contextId = RequestUtils.getContextId(state);
-        NetworkProfileQueryUtils.getEnvironmentsForComputeNics(getHost(),
+        NetworkProfileQueryUtils.getProfilesForComputeNics(getHost(),
                 UriUtils.buildUri(getHost(), getSelfLink()), state.tenantLinks, contextId, computeDesc,
-                (environmentConstraints, e) -> {
+                (profileConstraints, e) -> {
                     if (e != null) {
                         failTask("Error getting network profile constraints: ", e);
                         return;
                     }
-                    logInfo("Environment constraints of networks associated with the compute '%s': %s",
+                    logInfo("Profile constraints of networks associated with the compute '%s': %s",
                             computeDesc.name,
-                            environmentConstraints);
+                            profileConstraints);
                     proceedTo(SubStage.NETWORK_CONSTRAINTS_COLLECTED, s -> {
-                        s.environmentConstraints = environmentConstraints;
+                        s.profileConstraints = profileConstraints;
                     });
                 });
     }
@@ -397,41 +397,41 @@ public class ComputeReservationTaskService
         String endpointLink = getProp(computeDesc.customProperties,
                 ComputeProperties.ENDPOINT_LINK_PROP_NAME);
 
-        EnvironmentQueryUtils.queryEnvironments(getHost(),
+        ProfileQueryUtils.queryProfiles(getHost(),
                 UriUtils.buildUri(getHost(), getSelfLink()), placementsByRpLink.keySet(),
-                endpointLink, tenantLinks, state.environmentConstraints, (envs, e) -> {
+                endpointLink, tenantLinks, state.profileConstraints, (profileEntries, e) -> {
                     if (e != null) {
-                        failTask("Error retrieving environments for the selected placements: ", e);
+                        failTask("Error retrieving profiles for the selected placements: ", e);
                         return;
                     }
 
-                    logInfo(() -> String.format("Found %d endpoints with configured environments:",
-                            envs.size()));
-                    if (envs.isEmpty()) {
+                    logInfo(() -> String.format("Found %d endpoints with configured profiles",
+                            profileEntries.size()));
+                    if (profileEntries.isEmpty()) {
                         failTask(null, new IllegalStateException(
-                                "No environments found for the selected candidate placements"));
+                                "No profiles found for the selected candidate placements"));
                         return;
                     }
-                    envs.forEach(envEntry -> logInfo(
-                            () -> String.format("Endpoint %s, environments: %s",
-                                    envEntry.endpoint.documentSelfLink, envEntry.envLinks)));
+                    profileEntries.forEach(profileEntry -> logInfo(
+                            () -> String.format("Endpoint %s, profiles: %s",
+                                    profileEntry.endpoint.documentSelfLink, profileEntry.profileLinks)));
 
-                    EnvironmentComputeDescriptionEnhancer enhancer = new EnvironmentComputeDescriptionEnhancer(
+                    ProfileComputeDescriptionEnhancer enhancer = new ProfileComputeDescriptionEnhancer(
                             getHost(), UriUtils.buildUri(getHost().getPublicUri(), getSelfLink()));
 
-                    List<DeferredResult<Pair<ComputeDescription, EnvEntry>>> list = envs
+                    List<DeferredResult<Pair<ComputeDescription, ProfileEntry>>> list = profileEntries
                             .stream()
-                            .flatMap(envEntry -> envEntry.envLinks.stream().map(envLink -> {
+                            .flatMap(profileEntry -> profileEntry.profileLinks.stream().map(profileLink -> {
                                 ComputeDescription cloned = Utils.cloneObject(computeDesc);
                                 EnhanceContext context = new EnhanceContext();
-                                context.environmentLink = envLink;
+                                context.profileLink = profileLink;
                                 context.imageType = cloned.customProperties
                                         .remove(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
                                 context.skipNetwork = true;
-                                context.regionId = envEntry.endpoint.endpointProperties
+                                context.regionId = profileEntry.endpoint.endpointProperties
                                         .get(EndpointConfigRequest.REGION_KEY);
 
-                                DeferredResult<Pair<ComputeDescription, EnvEntry>> r = new DeferredResult<>();
+                                DeferredResult<Pair<ComputeDescription, ProfileEntry>> r = new DeferredResult<>();
                                 enhancer.enhance(context, cloned).whenComplete((cd, t) -> {
                                     if (t != null) {
                                         r.complete(Pair.of(cd, null));
@@ -444,15 +444,14 @@ public class ComputeReservationTaskService
                                         r.complete(Pair.of(cd, null));
                                         return;
                                     }
-                                    r.complete(Pair.of(cd, envEntry));
+                                    r.complete(Pair.of(cd, profileEntry));
                                 });
                                 return r;
                             })).collect(Collectors.toList());
 
                     DeferredResult.allOf(list).whenComplete((all, t) -> {
                         if (t != null) {
-                            failTask("Error retrieving environments for the selected placements: ",
-                                    t);
+                            failTask("Error retrieving profiles for the selected placements: ", t);
                             return;
                         }
 
@@ -539,7 +538,7 @@ public class ComputeReservationTaskService
 
     private Stream<GroupResourcePlacementState> supportsCD(ComputeReservationTaskState state,
             HashMap<String, List<GroupResourcePlacementState>> placementsByRpLink,
-            Pair<ComputeDescription, EnvEntry> pair) {
+            Pair<ComputeDescription, ProfileEntry> pair) {
         return placementsByRpLink.get(pair.getRight().rpLink).stream()
                 .filter(p -> {
                     if (p.memoryLimit == 0) {

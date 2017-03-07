@@ -1165,7 +1165,7 @@ services.deletePlacement = function(placement) {
 
 services.loadEnvironments = function(queryOptions) {
   let filter = buildSearchQuery(queryOptions);
-  let url = buildPaginationUrl(links.ENVIRONMENTS, filter, true,
+  let url = buildPaginationUrl(links.PROFILES, filter, true,
       'documentExpirationTimeMicros desc');
   return get(url).then(function(result) {
     return result;
@@ -1173,11 +1173,11 @@ services.loadEnvironments = function(queryOptions) {
 };
 
 services.loadEnvironment = function(environmentId) {
-  return get(links.ENVIRONMENTS + '/' + environmentId + '?' + EXPAND_QUERY_PROP_NAME);
+  return get(links.PROFILES + '/' + environmentId + '?' + EXPAND_QUERY_PROP_NAME);
 };
 
 services.createEnvironment = function(environment) {
-  return post(links.ENVIRONMENTS, environment);
+  return post(links.PROFILES, environment);
 };
 
 services.updateEnvironment = function(environment) {

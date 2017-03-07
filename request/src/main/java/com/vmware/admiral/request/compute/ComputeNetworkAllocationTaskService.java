@@ -113,13 +113,13 @@ public class ComputeNetworkAllocationTaskService extends
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public String descName;
 
-        /** (Internal) Set by task environments that can be used to create compute network */
-        @Documentation(description = "Set by task environments that can be used to create compute network.")
+        /** (Internal) Set by task profiles that can be used to create compute network */
+        @Documentation(description = "Set by task profiles that can be used to create compute network.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
                 PropertyUsageOption.SERVICE_USE,
                 PropertyUsageOption.SINGLE_ASSIGNMENT,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
-        public List<String> environmentLinks;
+        public List<String> profileLinks;
 
     }
 
@@ -152,7 +152,7 @@ public class ComputeNetworkAllocationTaskService extends
             }
             break;
         case RESOURCES_NAMED:
-            selectEnvironments(networkDescription);
+            selectProfiles(networkDescription);
             break;
         case NETWORK_PROFILES_SELECTED:
             createComputeNetworkStates(state, networkDescription, null);
@@ -311,7 +311,7 @@ public class ComputeNetworkAllocationTaskService extends
 
             networkState.tenantLinks = state.tenantLinks;
             networkState.customProperties = state.customProperties;
-            networkState.environmentLinks = state.environmentLinks;
+            networkState.profileLinks = state.profileLinks;
 
             String contextId;
             if (state.customProperties != null
@@ -371,19 +371,19 @@ public class ComputeNetworkAllocationTaskService extends
                 }));
     }
 
-    private void selectEnvironments(ComputeNetworkDescription networkDescription) {
-        NetworkProfileQueryUtils.getEnvironmentsForNetworkDescription(getHost(),
+    private void selectProfiles(ComputeNetworkDescription networkDescription) {
+        NetworkProfileQueryUtils.getProfilesForNetworkDescription(getHost(),
                 UriUtils.buildUri(getHost(), getSelfLink()), networkDescription,
-                (environmentLinks, e) -> {
+                (profileLinks, e) -> {
                     if (e != null) {
-                        failTask("Error selecting environments for the for the network: ", e);
+                        failTask("Error selecting profiles for the for the network: ", e);
                         return;
                     }
 
-                    logInfo("Selected environments for network '%s': %s", networkDescription.name,
-                            environmentLinks);
+                    logInfo("Selected profiles for network '%s': %s", networkDescription.name,
+                            profileLinks);
                     proceedTo(SubStage.NETWORK_PROFILES_SELECTED,
-                            s -> s.environmentLinks = environmentLinks);
+                            s -> s.profileLinks = profileLinks);
                 });
     }
 

@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentState;
+import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -44,26 +44,26 @@ import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
-public class EnvironmentQueryUtils {
+public class ProfileQueryUtils {
 
-    public static class EnvEntry {
+    public static class ProfileEntry {
         public String rpLink;
         public EndpointState endpoint;
-        public Set<String> envLinks = new HashSet<>();
+        public Set<String> profileLinks = new HashSet<>();
 
-        public EnvEntry(String rpLink, EndpointState endpoint) {
+        public ProfileEntry(String rpLink, EndpointState endpoint) {
             this.rpLink = rpLink;
             this.endpoint = endpoint;
         }
 
-        void addEnvLink(String link) {
-            this.envLinks.add(link);
+        void addProfileLink(String link) {
+            this.profileLinks.add(link);
         }
     }
 
-    public static void queryEnvironments(ServiceHost host, URI referer,
+    public static void queryProfiles(ServiceHost host, URI referer,
             Set<String> resourcePoolsLinks, String endpointLink, List<String> tenantLinks,
-            List<String> environmentLinks, BiConsumer<List<EnvEntry>, Throwable> consumer) {
+            List<String> profileLinks, BiConsumer<List<ProfileEntry>, Throwable> consumer) {
         Builder builder = Query.Builder.create()
                 .addKindFieldClause(ResourcePoolState.class)
                 .addInClause(ServiceDocument.FIELD_NAME_SELF_LINK, resourcePoolsLinks);
@@ -85,12 +85,12 @@ public class EnvironmentQueryUtils {
         QueryUtils.QueryByPages<ResourcePoolState> query = new QueryUtils.QueryByPages<>(host,
                 builder.build(), ResourcePoolState.class, QueryUtil.getTenantLinks(tenantLinks));
 
-        final Map<String, List<EnvEntry>> entriesPerEndpoint = new HashMap<>();
+        final Map<String, List<ProfileEntry>> entriesPerEndpoint = new HashMap<>();
         query.queryDocuments(rp -> {
             String epl = rp.customProperties.get(ComputeProperties.ENDPOINT_LINK_PROP_NAME);
 
             entriesPerEndpoint.computeIfAbsent(epl, k -> new ArrayList<>())
-                    .add(new EnvEntry(rp.documentSelfLink, null));
+                    .add(new ProfileEntry(rp.documentSelfLink, null));
         }).thenCompose(v -> DeferredResult.allOf(entriesPerEndpoint.keySet().stream()
                 .map(epl -> host.sendWithDeferredResult(
                         Operation.createGet(host, epl).setReferer(referer),
@@ -149,36 +149,36 @@ public class EnvironmentQueryUtils {
         }).thenApply(eps -> eps.stream()
                 .map(ep -> applyEndpoint(ep, entriesPerEndpoint.get(ep.documentSelfLink)))
         ).thenCompose(entriesStream -> DeferredResult.allOf(entriesStream
-                .map(entries -> queryEnvironments(host, entries, tenantLinks, environmentLinks))
+                .map(entries -> queryProfiles(host, entries, tenantLinks, profileLinks))
                 .collect(Collectors.toList()))
         ).whenComplete((all, ex) -> {
             if (ex != null) {
                 consumer.accept(null, ex);
             } else {
-                List<String> endpointsWithNoEnv = new ArrayList<>();
-                List<EnvEntry> envs = all.stream()
+                List<String> endpointsWithNoProfile = new ArrayList<>();
+                List<ProfileEntry> profileEntries = all.stream()
                         .flatMap(l -> l.stream())
-                        .filter(env -> {
-                            if (env.envLinks.isEmpty()) {
-                                endpointsWithNoEnv.add(env.endpoint.documentSelfLink);
+                        .filter(profileEntry -> {
+                            if (profileEntry.profileLinks.isEmpty()) {
+                                endpointsWithNoProfile.add(profileEntry.endpoint.documentSelfLink);
                                 return false;
                             }
                             return true;
                         })
                         .collect(Collectors.toList());
 
-                if (!endpointsWithNoEnv.isEmpty()) {
+                if (!endpointsWithNoProfile.isEmpty()) {
                     host.log(Level.INFO,
-                            () -> String.format("Endpoints without environments filtered out: %s",
-                                    endpointsWithNoEnv));
+                            () -> String.format("Endpoints without profiles filtered out: %s",
+                                    endpointsWithNoProfile));
                 }
 
-                consumer.accept(envs, null);
+                consumer.accept(profileEntries, null);
             }
         });
     }
 
-    private static List<EnvEntry> applyEndpoint(EndpointState e, List<EnvEntry> entries) {
+    private static List<ProfileEntry> applyEndpoint(EndpointState e, List<ProfileEntry> entries) {
         if (entries == null) {
             return new ArrayList<>();
         }
@@ -186,68 +186,68 @@ public class EnvironmentQueryUtils {
         return entries;
     }
 
-    private static DeferredResult<List<EnvEntry>> queryEnvironments(ServiceHost host,
-            List<EnvEntry> entries, List<String> tenantLinks, List<String> environmentLinks) {
+    private static DeferredResult<List<ProfileEntry>> queryProfiles(ServiceHost host,
+            List<ProfileEntry> entries, List<String> tenantLinks, List<String> profileLinks) {
 
         if (entries == null || entries.isEmpty()) {
             return DeferredResult.completed(new ArrayList<>());
         }
 
         // Endpoint link and type will be the same for all entries.
-        EnvEntry entry = entries.get(0);
+        ProfileEntry entry = entries.get(0);
 
         List<String> tl = QueryUtil.getTenantLinks(tenantLinks);
         if (tl == null || tl.isEmpty()) {
             host.log(Level.INFO,
-                    "Quering for global environments for endpoint [%s] of type [%s]...",
+                    "Quering for global profiles for endpoint [%s] of type [%s]...",
                     entry.endpoint.documentSelfLink, entry.endpoint.endpointType);
         } else {
             host.log(Level.INFO,
-                    "Quering for group [%s] environments for endpoint [%s] of type [%s]...",
+                    "Quering for group [%s] profiles for endpoint [%s] of type [%s]...",
                     tl, entry.endpoint.documentSelfLink, entry.endpoint.endpointType);
         }
         Query tenantLinksQuery = QueryUtil.addTenantClause(tl);
 
         // link=LINK || (link=unset && type=TYPE)
         Builder query = Query.Builder.create()
-                .addKindFieldClause(EnvironmentState.class)
+                .addKindFieldClause(ProfileState.class)
                 .addClause(tenantLinksQuery)
                 .addClause(Query.Builder.create()
-                        .addFieldClause(EnvironmentState.FIELD_NAME_ENDPOINT_LINK,
+                        .addFieldClause(ProfileState.FIELD_NAME_ENDPOINT_LINK,
                                 entry.endpoint.documentSelfLink, Occurance.SHOULD_OCCUR)
                         .addClause(Query.Builder.create(Occurance.SHOULD_OCCUR)
-                                .addFieldClause(EnvironmentState.FIELD_NAME_ENDPOINT_LINK,
+                                .addFieldClause(ProfileState.FIELD_NAME_ENDPOINT_LINK,
                                         "", MatchType.PREFIX, Occurance.MUST_NOT_OCCUR)
-                                .addFieldClause(EnvironmentState.FIELD_NAME_ENDPOINT_TYPE,
+                                .addFieldClause(ProfileState.FIELD_NAME_ENDPOINT_TYPE,
                                         entry.endpoint.endpointType)
                                 .build())
                         .build());
 
-        if (environmentLinks != null && !environmentLinks.isEmpty()) {
-            query = query.addInClause(EnvironmentState.FIELD_NAME_SELF_LINK, environmentLinks);
+        if (profileLinks != null && !profileLinks.isEmpty()) {
+            query = query.addInClause(ProfileState.FIELD_NAME_SELF_LINK, profileLinks);
         }
 
-        QueryTask queryTask = QueryUtil.buildQuery(EnvironmentState.class, true, query.build());
+        QueryTask queryTask = QueryUtil.buildQuery(ProfileState.class, true, query.build());
         queryTask.tenantLinks = tenantLinks;
 
-        DeferredResult<List<EnvEntry>> result = new DeferredResult<>();
+        DeferredResult<List<ProfileEntry>> result = new DeferredResult<>();
         new ServiceDocumentQuery<>(
-                host, EnvironmentState.class).query(queryTask,
+                host, ProfileState.class).query(queryTask,
                         (r) -> {
                             if (r.hasException()) {
                                 result.fail(r.getException());
                                 return;
                             } else if (r.hasResult()) {
-                                entries.forEach(e -> e.addEnvLink(r.getDocumentSelfLink()));
+                                entries.forEach(e -> e.addProfileLink(r.getDocumentSelfLink()));
                             } else {
-                                if (entry.envLinks.isEmpty()) {
+                                if (entry.profileLinks.isEmpty()) {
                                     if (tl != null && !tl.isEmpty()) {
-                                        queryEnvironments(host, entries, null, environmentLinks)
-                                                .whenComplete((envs, t) -> {
+                                        queryProfiles(host, entries, null, profileLinks)
+                                                .whenComplete((profileEntries, t) -> {
                                                     if (t != null) {
                                                         result.fail(t);
                                                     } else {
-                                                        result.complete(envs);
+                                                        result.complete(profileEntries);
                                                     }
                                                 });
                                         return;

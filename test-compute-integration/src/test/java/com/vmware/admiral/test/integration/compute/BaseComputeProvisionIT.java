@@ -60,16 +60,16 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionSer
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
-import com.vmware.admiral.compute.env.ComputeProfileService;
-import com.vmware.admiral.compute.env.ComputeProfileService.ComputeProfile;
-import com.vmware.admiral.compute.env.EnvironmentService;
-import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentState;
-import com.vmware.admiral.compute.env.NetworkProfileService;
-import com.vmware.admiral.compute.env.NetworkProfileService.NetworkProfile;
-import com.vmware.admiral.compute.env.StorageProfileService;
-import com.vmware.admiral.compute.env.StorageProfileService.StorageProfile;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
+import com.vmware.admiral.compute.profile.ComputeProfileService;
+import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
+import com.vmware.admiral.compute.profile.NetworkProfileService;
+import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile;
+import com.vmware.admiral.compute.profile.ProfileService;
+import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
+import com.vmware.admiral.compute.profile.StorageProfileService;
+import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfile;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.ReservationRemovalTaskFactoryService;
@@ -364,9 +364,9 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
             StorageProfile storageProfile) {
         List<ServiceDocument> docs = new ArrayList<>();
         String id = UUID.randomUUID().toString();
-        EnvironmentState env = new EnvironmentState();
+        ProfileState env = new ProfileState();
         env.name = "wordpressEnv";
-        env.documentSelfLink = UriUtils.buildUriPath(EnvironmentService.FACTORY_LINK, id);
+        env.documentSelfLink = UriUtils.buildUriPath(ProfileService.FACTORY_LINK, id);
         env.endpointLink = endpoint.documentSelfLink;
         env.tenantLinks = getTenantLinks();
         docs.add(env);

@@ -56,11 +56,6 @@ import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.compute.content.TemplateComputeDescription;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
 import com.vmware.admiral.compute.endpoint.EndpointHealthCheckTaskService;
-import com.vmware.admiral.compute.env.ComputeProfileService;
-import com.vmware.admiral.compute.env.EnvironmentMappingService;
-import com.vmware.admiral.compute.env.EnvironmentService;
-import com.vmware.admiral.compute.env.NetworkProfileService;
-import com.vmware.admiral.compute.env.StorageProfileService;
 import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
@@ -79,6 +74,11 @@ import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.network.ComputeNetworkService;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
+import com.vmware.admiral.compute.profile.ComputeProfileService;
+import com.vmware.admiral.compute.profile.NetworkProfileService;
+import com.vmware.admiral.compute.profile.ProfileMappingService;
+import com.vmware.admiral.compute.profile.ProfileService;
+import com.vmware.admiral.compute.profile.StorageProfileService;
 import com.vmware.admiral.service.test.MockConfigureHostOverSshTaskServiceWithoutValidate;
 import com.vmware.admiral.service.test.MockContainerHostService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
@@ -106,7 +106,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 RegistryConfigCertificateDistributionService.class,
                 ComputeInitialBootService.class,
                 ElasticPlacementZoneConfigurationService.class,
-                EnvironmentMappingService.class,
+                ProfileMappingService.class,
                 KubernetesDescriptionContentService.class,
                 PodLogService.class);
 
@@ -118,7 +118,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 HostNetworkListDataCollection.class,
                 HostVolumeListDataCollection.class,
                 ContainerHostDataCollectionService.class,
-                EnvironmentService.class,
+                ProfileService.class,
                 ComputeProfileService.class,
                 StorageProfileService.class,
                 NetworkProfileService.class,

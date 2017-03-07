@@ -9,21 +9,21 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import AwsComputeProfileEditor from 'components/environments/aws/ComputeProfileEditor'; //eslint-disable-line
-import AwsNetworkProfileEditor from 'components/environments/aws/NetworkProfileEditor'; //eslint-disable-line
-import AwsStorageProfileEditor from 'components/environments/aws/StorageProfileEditor'; //eslint-disable-line
-import AzureComputeProfileEditor from 'components/environments/azure/ComputeProfileEditor'; //eslint-disable-line
-import AzureNetworkProfileEditor from 'components/environments/azure/NetworkProfileEditor'; //eslint-disable-line
-import AzureStorageProfileEditor from 'components/environments/azure/StorageProfileEditor'; //eslint-disable-line
-import vSphereComputeProfileEditor from 'components/environments/vsphere/ComputeProfileEditor'; //eslint-disable-line
-import vSphereNetworkProfileEditor from 'components/environments/vsphere/NetworkProfileEditor'; //eslint-disable-line
-import vSphereStorageProfileEditor from 'components/environments/vsphere/StorageProfileEditor'; //eslint-disable-line
+import AwsComputeProfileEditor from 'components/profiles/aws/ComputeProfileEditor'; //eslint-disable-line
+import AwsNetworkProfileEditor from 'components/profiles/aws/NetworkProfileEditor'; //eslint-disable-line
+import AwsStorageProfileEditor from 'components/profiles/aws/StorageProfileEditor'; //eslint-disable-line
+import AzureComputeProfileEditor from 'components/profiles/azure/ComputeProfileEditor'; //eslint-disable-line
+import AzureNetworkProfileEditor from 'components/profiles/azure/NetworkProfileEditor'; //eslint-disable-line
+import AzureStorageProfileEditor from 'components/profiles/azure/StorageProfileEditor'; //eslint-disable-line
+import vSphereComputeProfileEditor from 'components/profiles/vsphere/ComputeProfileEditor'; //eslint-disable-line
+import vSphereNetworkProfileEditor from 'components/profiles/vsphere/NetworkProfileEditor'; //eslint-disable-line
+import vSphereStorageProfileEditor from 'components/profiles/vsphere/StorageProfileEditor'; //eslint-disable-line
 
 import { EnvironmentsActions, NavigationActions } from 'actions/Actions';
 import EndpointsList from 'components/endpoints/EndpointsList'; //eslint-disable-line
 import SubnetworkSearch from 'components/subnetworks/SubnetworkSearch'; //eslint-disable-line
 import SubnetworksList from 'components/subnetworks/SubnetworksList'; //eslint-disable-line
-import EnvironmentEditViewVue from 'components/environments/EnvironmentEditViewVue.html';
+import EnvironmentEditViewVue from 'components/profiles/EnvironmentEditViewVue.html';
 import utils from 'core/utils';
 
 export default Vue.component('environment-edit-view', {

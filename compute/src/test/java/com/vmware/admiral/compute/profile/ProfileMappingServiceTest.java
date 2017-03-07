@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.env;
+package com.vmware.admiral.compute.profile;
 
 import static org.junit.Assert.assertEquals;
 
@@ -19,25 +19,28 @@ import java.util.Map;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.container.ComputeBaseTest;
-import com.vmware.admiral.compute.env.EnvironmentMappingService.EnvironmentMappingState;
+import com.vmware.admiral.compute.profile.ComputeProfileService;
+import com.vmware.admiral.compute.profile.ProfileMappingService;
+import com.vmware.admiral.compute.profile.ProfileMappingService.ProfileMappingState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.Utils;
 
 /**
- * Tests for the {@link EnvironmentMappingService} class.
+ * Tests for the {@link ProfileMappingService} class.
  */
-public class EnvironmentMappingServiceTest extends ComputeBaseTest {
+public class ProfileMappingServiceTest extends ComputeBaseTest {
 
     @Test
     public void test() throws Throwable {
-        waitForServiceAvailability(EnvironmentMappingService.SELF_LINK);
-        Operation result = host.waitForResponse(Operation.createGet(host, EnvironmentMappingService.SELF_LINK));
+        waitForServiceAvailability(ProfileMappingService.SELF_LINK);
+        Operation result = host.waitForResponse(Operation.createGet(host, ProfileMappingService.SELF_LINK));
         Map<String, Object> documents = result.getBody(ServiceDocumentQueryResult.class).documents;
-        EnvironmentMappingState state = Utils.fromJson(documents.get(ComputeProfileService.FACTORY_LINK),
-                EnvironmentMappingState.class);
+        ProfileMappingState state = Utils.fromJson(documents.get(ComputeProfileService.FACTORY_LINK),
+                ProfileMappingState.class);
         assertEquals(Arrays.asList("coreos", "ubuntu-1604"),
                 state.mappings.get("imageMapping"));
-        assertEquals(Arrays.asList("small", "medium", "large", "xlarge"), state.mappings.get("instanceTypeMapping"));
+        assertEquals(Arrays.asList("small", "medium", "large", "xlarge"),
+                state.mappings.get("instanceTypeMapping"));
     }
 }

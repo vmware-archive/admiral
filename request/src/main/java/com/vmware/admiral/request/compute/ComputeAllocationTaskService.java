@@ -47,9 +47,9 @@ import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
-import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentState;
-import com.vmware.admiral.compute.env.EnvironmentService.EnvironmentStateExpanded;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.NetworkType;
+import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
+import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService.ResourceNamePrefixTaskState;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
@@ -111,7 +111,6 @@ public class ComputeAllocationTaskService
 
         public static final String ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME = "compute.container.host";
 
-        public static final String FIELD_NAME_CUSTOM_PROP_ENV = "__env";
         public static final String FIELD_NAME_CUSTOM_PROP_ZONE = "__zoneId";
         public static final String FIELD_NAME_CUSTOM_PROP_RESOURCE_POOL_LINK = "__resourcePoolLink";
         public static final String FIELD_NAME_CUSTOM_PROP_REGION_ID = "__regionId";
@@ -142,17 +141,15 @@ public class ComputeAllocationTaskService
         public Collection<HostSelection> selectedComputePlacementHosts;
 
         // Service use fields:
-        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL,
-                LINK }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String endpointLink;
-        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL,
-                LINK }, indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String endpointComputeStateLink;
-        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL,
-                LINK }, indexing = STORE_ONLY)
-        public String environmentLink;
+        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        public String profileLink;
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String endpointType;
+
         /** (Internal) Set by task after resource name prefixes requested. */
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Set<String> resourceNames;
@@ -256,17 +253,17 @@ public class ComputeAllocationTaskService
 
     private void prepareContext(ComputeAllocationTaskState state,
             ComputeDescription computeDesc, ResourcePoolState resourcePool,
-            EndpointState endpoint, String environmentLink) {
+            EndpointState endpoint, String profileLink) {
 
         if (resourcePool == null) {
             getResourcePool(state,
-                    (pool) -> prepareContext(state, computeDesc, pool, endpoint, environmentLink));
+                    (pool) -> prepareContext(state, computeDesc, pool, endpoint, profileLink));
             return;
         }
 
         if (computeDesc == null) {
             getComputeDescription(state.resourceDescriptionLink, (compDesc) -> prepareContext(state,
-                    compDesc, resourcePool, endpoint, environmentLink));
+                    compDesc, resourcePool, endpoint, profileLink));
             return;
         }
 
@@ -280,24 +277,24 @@ public class ComputeAllocationTaskService
 
         if (endpoint == null) {
             getServiceState(endpointLink, EndpointState.class,
-                    (ep) -> prepareContext(state, computeDesc, resourcePool, ep, environmentLink));
+                    (ep) -> prepareContext(state, computeDesc, resourcePool, ep, profileLink));
             return;
         }
 
-        if (environmentLink == null) {
+        if (profileLink == null) {
             String contextId = RequestUtils.getContextId(state);
-            NetworkProfileQueryUtils.getEnvironmentsForComputeNics(getHost(),
+            NetworkProfileQueryUtils.getProfilesForComputeNics(getHost(),
                     UriUtils.buildUri(getHost(), getSelfLink()), state.tenantLinks, contextId,
                     computeDesc,
-                    (environmentLinks, e) -> {
+                    (profileLinks, e) -> {
                         if (e != null) {
-                            failTask("Error getting environment constraints: ", e);
+                            failTask("Error getting profile constraints: ", e);
                             return;
                         }
-                        queryEnvironment(state, endpoint,
-                                QueryUtil.getTenantLinks(state.tenantLinks), environmentLinks,
-                                (envLink) -> prepareContext(state, computeDesc, resourcePool,
-                                        endpoint, envLink));
+                        queryProfile(state, endpoint,
+                                QueryUtil.getTenantLinks(state.tenantLinks), profileLinks,
+                                (link) -> prepareContext(state, computeDesc, resourcePool,
+                                        endpoint, link));
                     });
             return;
         }
@@ -307,7 +304,7 @@ public class ComputeAllocationTaskService
 
             s.endpointLink = endpointLink;
             s.endpointComputeStateLink = endpoint.computeLink;
-            s.environmentLink = environmentLink;
+            s.profileLink = profileLink;
             s.endpointType = endpoint.endpointType;
             s.resourcePoolLink = resourcePool.documentSelfLink;
 
@@ -324,19 +321,19 @@ public class ComputeAllocationTaskService
     }
 
     private void createOsDiskState(ComputeAllocationTaskState state,
-            SubStage nextStage, EnvironmentStateExpanded env, ComputeDescription computeDesc) {
+            SubStage nextStage, ProfileStateExpanded profile, ComputeDescription computeDesc) {
         if (state.customProperties.containsKey(ComputeConstants.CUSTOM_PROP_DISK_LINK)) {
             proceedTo(nextStage);
             return;
         }
-        if (env == null) {
-            getServiceState(state.environmentLink, EnvironmentStateExpanded.class, true,
+        if (profile == null) {
+            getServiceState(state.profileLink, ProfileStateExpanded.class, true,
                     e -> createOsDiskState(state, nextStage, e, computeDesc));
             return;
         }
         if (computeDesc == null) {
             getServiceState(state.resourceDescriptionLink, ComputeDescription.class,
-                    compDesc -> createOsDiskState(state, nextStage, env, compDesc));
+                    compDesc -> createOsDiskState(state, nextStage, profile, compDesc));
             return;
         }
 
@@ -363,8 +360,8 @@ public class ComputeAllocationTaskService
             rootDisk.bootConfig = new DiskState.BootConfig();
             rootDisk.bootConfig.label = "cidata";
 
-            Map<String, String> values = env.storageProfile != null
-                    ? env.storageProfile.bootDiskPropertyMapping : null;
+            Map<String, String> values = profile.storageProfile != null
+                    ? profile.storageProfile.bootDiskPropertyMapping : null;
             if (values != null) {
                 rootDisk.customProperties = new HashMap<>(values);
             }
@@ -477,7 +474,7 @@ public class ComputeAllocationTaskService
                 state.customProperties);
 
         EnhanceContext context = new EnhanceContext();
-        context.environmentLink = state.environmentLink;
+        context.profileLink = state.profileLink;
         context.endpointLink = state.endpointLink;
         context.resourcePoolLink = state.resourcePoolLink;
         context.regionId = endpointComputeDescription.regionId;
@@ -594,24 +591,24 @@ public class ComputeAllocationTaskService
     }
 
     private void allocateComputeState(ComputeAllocationTaskState state,
-            ComputeDescription computeDescription, EnvironmentStateExpanded environment,
+            ComputeDescription computeDescription, ProfileStateExpanded profile,
             ServiceTaskCallback taskCallback) {
 
         if (computeDescription == null) {
             getComputeDescription(state.resourceDescriptionLink,
-                    (compDesc) -> allocateComputeState(state, compDesc, environment, taskCallback));
+                    (compDesc) -> allocateComputeState(state, compDesc, profile, taskCallback));
             return;
         }
-        if (environment == null) {
-            getServiceState(state.environmentLink, EnvironmentStateExpanded.class, true,
-                    env -> allocateComputeState(state, computeDescription, env, taskCallback));
+        if (profile == null) {
+            getServiceState(state.profileLink, ProfileStateExpanded.class, true,
+                    p -> allocateComputeState(state, computeDescription, p, taskCallback));
             return;
         }
         if (taskCallback == null) {
             // recurse after creating a sub task
             createCounterSubTaskCallback(state, state.resourceCount, false,
                     SubStage.COMPUTE_ALLOCATION_COMPLETED,
-                    (serviceTask) -> allocateComputeState(state, computeDescription, environment,
+                    (serviceTask) -> allocateComputeState(state, computeDescription, profile,
                             serviceTask));
             return;
         }
@@ -646,7 +643,7 @@ public class ComputeAllocationTaskService
             String name = namesIterator.next();
             String computeResourceId = buildResourceId(name);
 
-            createComputeResource(state, computeDescription, environment,
+            createComputeResource(state, computeDescription, profile,
                     state.endpointComputeStateLink, placementComputeLinkIterator.next().hostLink,
                     computeResourceId, name, null, null, taskCallback);
         }
@@ -657,20 +654,20 @@ public class ComputeAllocationTaskService
     }
 
     private void createComputeResource(ComputeAllocationTaskState state, ComputeDescription cd,
-            EnvironmentStateExpanded env, String parentLink, String placementLink,
+            ProfileStateExpanded profile, String parentLink, String placementLink,
             String computeResourceId, String computeName,
             List<String> diskLinks,
             List<String> networkLinks, ServiceTaskCallback taskCallback) {
         if (diskLinks == null) {
             createDiskResources(state, taskCallback, dl -> createComputeResource(
-                    state, cd, env, parentLink, placementLink, computeResourceId, computeName, dl,
+                    state, cd, profile, parentLink, placementLink, computeResourceId, computeName, dl,
                     networkLinks, taskCallback));
             return;
         }
 
         if (networkLinks == null) {
-            createNetworkResources(state, cd, env, placementLink, taskCallback,
-                    nl -> createComputeResource(state, cd, env, parentLink, placementLink,
+            createNetworkResources(state, cd, profile, placementLink, taskCallback,
+                    nl -> createComputeResource(state, cd, profile, parentLink, placementLink,
                             computeResourceId, computeName, diskLinks, nl, taskCallback));
             return;
         }
@@ -777,7 +774,7 @@ public class ComputeAllocationTaskService
     }
 
     private void createNetworkResources(ComputeAllocationTaskState state, ComputeDescription cd,
-            EnvironmentStateExpanded env, String placementLink, ServiceTaskCallback taskCallback,
+            ProfileStateExpanded profile, String placementLink, ServiceTaskCallback taskCallback,
             Consumer<List<String>> networkLinksConsumer) {
         if (cd.networkInterfaceDescLinks == null
                 || cd.networkInterfaceDescLinks.isEmpty()) {
@@ -792,7 +789,7 @@ public class ComputeAllocationTaskService
                         .sendWithDeferredResult(
                                 Operation.createGet(this, nicDescLink),
                                 NetworkInterfaceDescription.class)
-                        .thenCompose(nid -> createNicState(state, nid, env))
+                        .thenCompose(nid -> createNicState(state, nid, profile))
                         .thenCompose(nic -> this.sendWithDeferredResult(
                                 Operation.createPost(this, NetworkInterfaceService.FACTORY_LINK)
                                         .setBody(nic),
@@ -810,19 +807,19 @@ public class ComputeAllocationTaskService
     }
 
     private DeferredResult<NetworkInterfaceState> createNicState(ComputeAllocationTaskState state,
-            NetworkInterfaceDescription nid, EnvironmentStateExpanded env) {
+            NetworkInterfaceDescription nid, ProfileStateExpanded profile) {
         String subnetLink = nid.subnetLink;
 
         boolean noNicVM = nid.customProperties != null
                 && nid.customProperties.containsKey(NetworkProfileQueryUtils.NO_NIC_VM);
         DeferredResult<String> subnet = null;
-        if ((env.networkProfile != null && env.networkProfile.subnetStates != null
-                && !env.networkProfile.subnetStates.isEmpty())) {
+        if ((profile.networkProfile != null && profile.networkProfile.subnetStates != null
+                && !profile.networkProfile.subnetStates.isEmpty())) {
             if (!noNicVM) {
                 DeferredResult<String> subnetDeferred = new DeferredResult<>();
                 NetworkProfileQueryUtils.getSubnetForComputeNic(getHost(),
                         UriUtils.buildUri(getHost(), getSelfLink()), state.tenantLinks,
-                        RequestUtils.getContextId(state), nid, env,
+                        RequestUtils.getContextId(state), nid, profile,
                         (networkAndSubnet, ex) -> {
                             if (ex != null) {
                                 subnetDeferred.fail(ex);
@@ -845,7 +842,7 @@ public class ComputeAllocationTaskService
                 subnet = subnetDeferred;
             } else {
                 subnet = DeferredResult.completed(
-                        env.networkProfile.subnetStates.get(0).documentSelfLink);
+                        profile.networkProfile.subnetStates.get(0).documentSelfLink);
             }
         } else if (noNicVM && nid.networkLink != null) {
             subnet = DeferredResult.completed(subnetLink);
@@ -963,36 +960,36 @@ public class ComputeAllocationTaskService
                 }).sendWith(this);
     }
 
-    private void queryEnvironment(ComputeAllocationTaskState state,
-            EndpointState endpoint, List<String> tenantLinks, List<String> environmentLinks,
+    private void queryProfile(ComputeAllocationTaskState state,
+            EndpointState endpoint, List<String> tenantLinks, List<String> profileLinks,
             Consumer<String> callbackFunction) {
 
         if (tenantLinks == null || tenantLinks.isEmpty()) {
-            logInfo("Quering for global environments for endpoint [%s] of type [%s]...",
+            logInfo("Quering for global profiles for endpoint [%s] of type [%s]...",
                     endpoint.documentSelfLink, endpoint.endpointType);
         } else {
-            logInfo("Quering for group [%s] environments for endpoint [%s] of type [%s]...",
+            logInfo("Quering for group [%s] profiles for endpoint [%s] of type [%s]...",
                     tenantLinks, endpoint.documentSelfLink, endpoint.endpointType);
         }
         Query tenantLinksQuery = QueryUtil.addTenantClause(tenantLinks);
 
         // link=LINK || (link=unset && type=TYPE)
         Query.Builder query = Query.Builder.create()
-                .addKindFieldClause(EnvironmentState.class)
+                .addKindFieldClause(ProfileState.class)
                 .addClause(tenantLinksQuery)
                 .addClause(Query.Builder.create()
-                        .addFieldClause(EnvironmentState.FIELD_NAME_ENDPOINT_LINK,
+                        .addFieldClause(ProfileState.FIELD_NAME_ENDPOINT_LINK,
                                 endpoint.documentSelfLink, Occurance.SHOULD_OCCUR)
                         .addClause(Query.Builder.create(Occurance.SHOULD_OCCUR)
-                                .addFieldClause(EnvironmentState.FIELD_NAME_ENDPOINT_LINK,
+                                .addFieldClause(ProfileState.FIELD_NAME_ENDPOINT_LINK,
                                         "", MatchType.PREFIX, Occurance.MUST_NOT_OCCUR)
-                                .addFieldClause(EnvironmentState.FIELD_NAME_ENDPOINT_TYPE,
+                                .addFieldClause(ProfileState.FIELD_NAME_ENDPOINT_TYPE,
                                         endpoint.endpointType)
                                 .build())
                         .build());
 
-        if (environmentLinks != null && !environmentLinks.isEmpty()) {
-            query = query.addInClause(EnvironmentState.FIELD_NAME_SELF_LINK, environmentLinks);
+        if (profileLinks != null && !profileLinks.isEmpty()) {
+            query = query.addInClause(ProfileState.FIELD_NAME_SELF_LINK, profileLinks);
         }
 
         QueryTask task = QueryTask.Builder.createDirectTask()
@@ -1000,42 +997,41 @@ public class ComputeAllocationTaskService
                 .addOption(QueryOption.EXPAND_CONTENT)
                 .build();
 
-        List<EnvironmentState> foundEnvs = new LinkedList<EnvironmentState>();
+        List<ProfileState> foundProfiles = new LinkedList<ProfileState>();
         new ServiceDocumentQuery<>(
-                getHost(), EnvironmentState.class).query(task,
+                getHost(), ProfileState.class).query(task,
                         (r) -> {
                             if (r.hasException()) {
-                                failTask("Failure while quering for enviroment mappings",
-                                        r.getException());
+                                failTask("Failure while quering for profiles", r.getException());
                                 return;
                             } else if (r.hasResult()) {
-                                foundEnvs.add(r.getResult());
+                                foundProfiles.add(r.getResult());
                             } else {
-                                if (foundEnvs.isEmpty()) {
+                                if (foundProfiles.isEmpty()) {
                                     if (tenantLinks != null && !tenantLinks.isEmpty()) {
-                                        queryEnvironment(state, endpoint, null,
-                                                environmentLinks, callbackFunction);
+                                        queryProfile(state, endpoint, null,
+                                                profileLinks, callbackFunction);
                                     } else {
                                         failTask(String.format(
-                                                "No available environments for endpoint %s of type %s",
+                                                "No available profiles for endpoint %s of type %s",
                                                 endpoint.documentSelfLink, endpoint.endpointType),
                                                 null);
                                     }
                                 } else {
-                                    // Sort environments based on order of environmentLinks
-                                    List<EnvironmentState> sortedEnvs = foundEnvs;
-                                    if (environmentLinks != null && !environmentLinks.isEmpty()) {
-                                        sortedEnvs = sortedEnvs.stream().sorted((e1, e2) ->
-                                                environmentLinks.indexOf(e1.documentSelfLink)
-                                                        - environmentLinks.indexOf(e2.documentSelfLink))
+                                    // Sort profiles based on order of profileLinks
+                                    List<ProfileState> sortedProfiles = foundProfiles;
+                                    if (profileLinks != null && !profileLinks.isEmpty()) {
+                                        sortedProfiles = sortedProfiles.stream().sorted((e1, e2) ->
+                                                profileLinks.indexOf(e1.documentSelfLink)
+                                                        - profileLinks.indexOf(e2.documentSelfLink))
                                                 .collect(Collectors.toList());
                                     }
 
-                                    Stream<EnvironmentState> envForTheEndpoint = sortedEnvs.stream()
-                                            .filter(env -> endpoint.documentSelfLink.equals(
-                                                    env.endpointLink));
-                                    callbackFunction.accept(envForTheEndpoint.findFirst()
-                                            .orElse(sortedEnvs.get(0))
+                                    Stream<ProfileState> profileForTheEndpoint = sortedProfiles.stream()
+                                            .filter(profile -> endpoint.documentSelfLink.equals(
+                                                    profile.endpointLink));
+                                    callbackFunction.accept(profileForTheEndpoint.findFirst()
+                                            .orElse(sortedProfiles.get(0))
                                             .documentSelfLink);
                                 }
                             }

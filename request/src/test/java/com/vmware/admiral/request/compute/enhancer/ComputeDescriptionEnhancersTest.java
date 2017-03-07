@@ -37,10 +37,10 @@ import com.vmware.admiral.common.util.KeyUtil;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
-import com.vmware.admiral.compute.env.ComputeProfileService;
-import com.vmware.admiral.compute.env.EnvironmentService;
-import com.vmware.admiral.compute.env.NetworkProfileService;
-import com.vmware.admiral.compute.env.StorageProfileService;
+import com.vmware.admiral.compute.profile.ComputeProfileService;
+import com.vmware.admiral.compute.profile.NetworkProfileService;
+import com.vmware.admiral.compute.profile.ProfileService;
+import com.vmware.admiral.compute.profile.StorageProfileService;
 import com.vmware.admiral.host.CaSigningCertService;
 import com.vmware.admiral.host.HostInitServiceHelper;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
@@ -68,10 +68,10 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         HostInitServiceHelper.startServices(host,
                 TestInitialBootService.class);
         HostInitServiceHelper.startServiceFactories(host,
-                CaSigningCertService.class, EnvironmentService.class,
+                CaSigningCertService.class, ProfileService.class,
                 ComputeProfileService.class, StorageProfileService.class,
                 NetworkProfileService.class);
-        waitForServiceAvailability(EnvironmentService.FACTORY_LINK);
+        waitForServiceAvailability(ProfileService.FACTORY_LINK);
         waitForServiceAvailability(CaSigningCertService.FACTORY_LINK);
         waitForServiceAvailability(ManagementUriParts.AUTH_CREDENTIALS_CA_LINK);
 
@@ -88,7 +88,7 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         context = new EnhanceContext();
         context.imageType = "ubuntu-1604";
         context.endpointType = awsEndpointType;
-        context.environmentLink = UriUtils.buildUriPath(EnvironmentService.FACTORY_LINK,
+        context.profileLink = UriUtils.buildUriPath(ProfileService.FACTORY_LINK,
                 awsEndpointType);
     }
 
@@ -442,7 +442,7 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         @Override
         public void handlePost(Operation post) {
             ArrayList<ServiceDocument> states = new ArrayList<>();
-            states.addAll(EnvironmentService.getAllDefaultDocuments());
+            states.addAll(ProfileService.getAllDefaultDocuments());
             initInstances(post, false, true, states.toArray(new ServiceDocument[states.size()]));
         }
     }
