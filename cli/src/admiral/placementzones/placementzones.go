@@ -315,10 +315,10 @@ func AddPZ(rpName string, custProps, tags, tagsToMatch []string) (string, error)
 		Name:             rpName,
 		CustomProperties: cp,
 	}
-	resPoolState.AddTagLinks(tagsToMatch)
+	resPoolState.AddTagLinks(tags)
 
 	epzState := EpzState{}
-	epzState.AddTagLinks(tags)
+	epzState.AddTagLinks(tagsToMatch)
 
 	pz := &PlacementZone{
 		ResourcePoolState: resPoolState,
@@ -362,25 +362,25 @@ func EditPZID(id, newName string, tagsToAdd, tagsToRemove, tagsToMatchToAdd, tag
 	}
 
 	if len(tagsToRemove) > 0 {
-		err = oldPz.EpzState.RemoveTagLinks(tagsToRemove)
+		err = oldPz.ResourcePoolState.RemoveTagLinks(tagsToRemove)
 		if err != nil {
 			return "", err
 		}
 	}
 	if len(tagsToAdd) > 0 {
-		err = oldPz.EpzState.AddTagLinks(tagsToAdd)
+		err = oldPz.ResourcePoolState.AddTagLinks(tagsToAdd)
 		if err != nil {
 			return "", err
 		}
 	}
 	if len(tagsToMatchToRemove) > 0 {
-		err = oldPz.ResourcePoolState.RemoveTagLinks(tagsToMatchToRemove)
+		err = oldPz.EpzState.RemoveTagLinks(tagsToMatchToRemove)
 		if err != nil {
 			return "", err
 		}
 	}
 	if len(tagsToMatchToAdd) > 0 {
-		err = oldPz.ResourcePoolState.AddTagLinks(tagsToMatchToAdd)
+		err = oldPz.EpzState.AddTagLinks(tagsToMatchToAdd)
 		if err != nil {
 			return "", err
 		}
