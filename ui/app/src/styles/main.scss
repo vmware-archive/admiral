@@ -1749,12 +1749,7 @@ $alert-text-color: #ffffff;
 
 .requests-list, .eventlog-list {
   > .title {
-    font-size: 28px;
-    height: 40px;
-    margin-bottom: 20px;
-    margin-left: 5px;
-    letter-spacing: 0.02em;
-    font-weight: 300;
+    @include view-title();
 
     .action-confirmation {
       float: right;

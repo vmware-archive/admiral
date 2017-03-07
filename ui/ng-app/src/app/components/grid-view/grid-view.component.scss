@@ -1,4 +1,5 @@
 @import 'node_modules/admiral-ui-common/css/variables';
+@import 'node_modules/admiral-ui-common/css/mixins';
 
 grid-view {
   position: absolute;
@@ -17,7 +18,7 @@ grid-view {
 
     .card-item {
       display: block;
-      max-width: 300px;
+      max-width: 400px;
       min-width: 200px;
       position: absolute;
       margin-right: 40px;
@@ -32,7 +33,6 @@ grid-view {
   .items.list {
     .card-item {
       max-width: 100%;
-      min-width: 100%;
     }
 
     .card {
@@ -55,7 +55,11 @@ grid-view {
     }
   }
 
-  .title-empty {
+  .title {
+    @include view-title();
+  }
+
+  .content-empty {
     text-align: center;
     display: block;
     margin-top: 100px;
@@ -70,6 +74,17 @@ grid-view {
       line-height: 14px;
       min-height: 0;
       height: auto;
+    }
+  }
+
+  .form-group {
+    padding-left: 120px;
+    display: flex;
+    position: relative;
+    > label:first-child {
+      width: 100px;
+      position: absolute;
+      left: 0;
     }
   }
 }
