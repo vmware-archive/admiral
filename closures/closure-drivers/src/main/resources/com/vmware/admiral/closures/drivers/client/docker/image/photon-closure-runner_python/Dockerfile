@@ -12,9 +12,6 @@ ENV PIP_DEFAULT_TIMEOUT=120
 COPY app/*.* /app/
 
 ENTRYPOINT ["./run.sh"]
-
-RUN chmod +x /app/*.sh && \
-    /app/dep_install.sh
-
-
+RUN chmod +x /app/*.sh
+RUN /app/dep_install.sh
 
