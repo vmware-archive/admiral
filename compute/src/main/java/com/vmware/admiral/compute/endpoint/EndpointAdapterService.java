@@ -294,16 +294,20 @@ public class EndpointAdapterService extends StatelessService {
 
     private void handleException(Operation op, String opName, String endpoint, int statusCode,
             Throwable e) {
-        ServiceErrorResponse rsp = Utils.toServiceErrorResponse(e);
-        rsp.message = String.format("Error %s endpoint %s : %s",
+        ServiceErrorResponse rsp = Utils.toValidationErrorResponse(e, op);
+        String message = String.format("Error %s endpoint %s : %s",
                 opName, endpoint, rsp.message);
+        LocalizableValidationException outerEx = new LocalizableValidationException(
+                message, "compute.endpoint.operation.error." + opName,
+                endpoint, rsp.message);
+        rsp.message = Utils.toValidationErrorResponse(outerEx, op).message;
 
         handleServiceErrorResponse(op, statusCode, e, rsp);
     }
 
     private void handleServiceErrorResponse(Operation op, int statusCode, Throwable e,
             ServiceErrorResponse rsp) {
-        logWarning(rsp.message);
+        logWarning(e.getMessage());
         op.setStatusCode(statusCode);
         op.setContentType(Operation.MEDIA_TYPE_APPLICATION_JSON);
         op.fail(e, rsp);

@@ -27,6 +27,7 @@ import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.SslCertificateResolver;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationContext;
 import com.vmware.xenon.common.StatelessService;
@@ -173,7 +174,7 @@ public class SslTrustImportService extends StatelessService {
                 }
 
             } catch (Throwable t) {
-                if (!(t instanceof IllegalArgumentException)) {
+                if (!(t instanceof IllegalArgumentException) && !(t instanceof LocalizableValidationException)) {
                     t = new IllegalArgumentException(t);
                 }
                 op.setStatusCode(Operation.STATUS_CODE_BAD_REQUEST);

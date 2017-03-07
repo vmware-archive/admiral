@@ -130,7 +130,8 @@ public class UriUtilsExtended {
         try {
             return new URI(scheme, null, serviceHost, port, path, null, null);
         } catch (URISyntaxException e) {
-            throw new IllegalArgumentException(e);
+            throw new LocalizableValidationException(e, e.getMessage(), "common.uri.syntax.error",
+                    scheme, serviceHost, port, path);
         }
     }
 

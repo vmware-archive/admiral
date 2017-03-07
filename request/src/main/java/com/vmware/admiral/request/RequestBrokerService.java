@@ -327,7 +327,7 @@ public class RequestBrokerService extends
 
         ServiceErrorResponse rsp;
         if (e != null) {
-            rsp = Utils.toServiceErrorResponse(e);
+            rsp = getServiceErrorResponse(e);
         } else {
             rsp = new ServiceErrorResponse();
             rsp.message = errMsg;
@@ -341,7 +341,7 @@ public class RequestBrokerService extends
     private void failRequest(RequestBrokerState state, String message, Throwable ex) {
         logSevere(message + ",reason: %s", Utils.toString(ex));
         proceedTo(SubStage.ERROR, s -> {
-            s.taskInfo.failure = Utils.toServiceErrorResponse(ex);
+            s.taskInfo.failure = getServiceErrorResponse(ex);
         });
     }
 

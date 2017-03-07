@@ -12,7 +12,9 @@
 package com.vmware.admiral.common.util;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
+import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -104,7 +106,8 @@ public class SslCertificateResolver {
             }
         } catch (KeyManagementException | NoSuchAlgorithmException e) {
             logger.throwing(logger.getName(), "connect", e);
-            throw new LocalizableValidationException(e, "Failed to initialize SSL context.", "common.ssh.context.init");
+            throw new LocalizableValidationException(e, "Failed to initialize SSL context.",
+                    "common.ssh.context.init");
         }
 
         SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
@@ -112,7 +115,6 @@ public class SslCertificateResolver {
             sslSocket.connect(new InetSocketAddress(this.hostAddress, this.port), (int) timeout);
             SSLSession session = sslSocket.getSession();
             session.invalidate();
-
         } catch (IOException e) {
             if (certsTrusted || !connectionCertificates.isEmpty()) {
                 Utils.logWarning(
@@ -120,14 +122,22 @@ public class SslCertificateResolver {
                         uri, e.getMessage());
             } else {
                 logger.throwing(logger.getName(), "connect", e);
-                throw new IllegalArgumentException(e.getMessage(), e);
+                if (e instanceof SocketTimeoutException) {
+                    throw new LocalizableValidationException(e, "Connection timeout",
+                            "common.connection.timeout");
+                } else if (e instanceof ConnectException) {
+                    throw new LocalizableValidationException(e, "Connection refused",
+                            "common.connection.refused");
+                } else {
+                    throw new IllegalArgumentException(e.getMessage(), e);
+                }
             }
         }
 
-
         if (connectionCertificates.size() == 0) {
             LocalizableValidationException e = new LocalizableValidationException(
-                    "Importing ssl certificate failed for server: " + uri, "common.certificate.import.failed", uri);
+                    "Importing ssl certificate failed for server: " + uri,
+                    "common.certificate.import.failed", uri);
 
             logger.throwing(logger.getName(), "connect", e);
             throw e;
