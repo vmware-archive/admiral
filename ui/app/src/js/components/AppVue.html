@@ -39,6 +39,10 @@
                       v-bind:model="model.centerView.data"
                       v-ref:center-view >
       </templates-view>
+      <registry-view v-if="model.centerView.name === constants.VIEWS.REGISTRIES.name"
+                      v-bind:model="model.centerView.data"
+                      v-ref:center-view>
+      </registry-view>
       <containers-view v-if="showResources"
                        v-bind:model="model.centerView.data"
                        v-ref:center-view >

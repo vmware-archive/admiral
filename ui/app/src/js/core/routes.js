@@ -147,7 +147,7 @@ crossroads.addRoute('/templates/template/{templateId*}/newContainer', function(t
 });
 
 crossroads.addRoute('/registries', function() {
-  actions.AppActions.openView(constants.VIEWS.TEMPLATES.name);
+  actions.AppActions.openView(constants.VIEWS.REGISTRIES.name);
   actions.RegistryActions.openRegistries();
 });
 
