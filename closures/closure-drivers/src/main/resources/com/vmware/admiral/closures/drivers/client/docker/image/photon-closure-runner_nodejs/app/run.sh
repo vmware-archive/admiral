@@ -8,3 +8,4 @@ node ./appmain.js
 curl -sL --cacert trust.pem \
          --request PATCH -H "Content-Type: application/json" \
                          -H "x-xenon-auth-token: ${TOKEN}" -d @response.json ${TASK_URI} > /dev/null
+
