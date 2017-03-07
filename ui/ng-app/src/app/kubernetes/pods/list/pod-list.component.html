@@ -10,12 +10,11 @@
   -->
 
 <div>
-  <grid-view [items]="pods" [loading]="loadingPods">
+  <grid-view [items]="entities" [loading]="loadingEntities">
     <div title>Pods</div>
     <template let-item="item">
-      <card [routerLink]="['./' + item.documentId]" [imageSrc]="getImageIconLink(item.image)">
+      <card [routerLink]="['./' + item.documentId]">
         <div card-header>{{item.powerState}}</div>
-        <div card-title>{{item.names}}</div>
         <div card-footer>
           <clr-dropdown [clrMenuPosition]="'bottom-left'" (click)="$event.stopPropagation()">
             <button class="btn btn-sm btn-link" clrDropdownToggle>

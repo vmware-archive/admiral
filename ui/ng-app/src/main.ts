@@ -26,7 +26,7 @@ if (environment.production) {
 I18n.use(I18nXhrBackend)
   .use(I18nLanguageDetector)
   .init({
-    ns: ['admiral'],
+    ns: ['admiral', 'kubernetes'],
     defaultNS: 'admiral',
     fallbackLng: 'en',
     backend: {

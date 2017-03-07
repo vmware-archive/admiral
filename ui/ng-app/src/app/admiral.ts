@@ -20,9 +20,13 @@ import { LogsScrollComponent } from "./components/logs/logs-scroll.component";
 import { MaximizableBehaviourComponent } from "./components/maximizable-behaviour/maximizable-behaviour.component";
 import { BackButtonComponent } from "./components/back-button/back-button.component";
 
-import { PodListComponent } from './kubernetes/pods/pod-list/pod-list.component';
-import { PodDetailsComponent } from './kubernetes/pods/pod-details/pod-details.component';
-import { PodDetailsPropertiesComponent } from './kubernetes/pods/pod-details/pod-details-properties.component';
+import { PodListComponent } from './kubernetes/pods/list/pod-list.component';
+import { PodDetailsComponent } from './kubernetes/pods/details/pod-details.component';
+import { PodDetailsPropertiesComponent } from './kubernetes/pods/details/pod-details-properties.component';
+import { DeploymentListComponent } from './kubernetes/deployments/list/deployment-list.component';
+import { DeploymentDetailsComponent } from './kubernetes/deployments/details/deployment-details.component';
+import { ServiceListComponent } from './kubernetes/services/list/service-list.component';
+import { ServiceDetailsComponent } from './kubernetes/services/details/service-details.component';
 
 
 export const ADMIRAL_DECLARATIONS = [
@@ -40,4 +44,8 @@ export const ADMIRAL_DECLARATIONS = [
   PodListComponent,
   PodDetailsComponent,
   PodDetailsPropertiesComponent,
+  DeploymentListComponent,
+  DeploymentDetailsComponent,
+  ServiceListComponent,
+  ServiceDetailsComponent
 ];

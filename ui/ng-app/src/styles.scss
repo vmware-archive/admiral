@@ -4,6 +4,7 @@
 .main-container {
   /* Fix for fixed positioned elements http://stackoverflow.com/questions/36855473/position-fixed-not-working-is-working-like-absolute */
   -webkit-transform: none;
+  background-color: #FFFFFF;
 }
 
 .details-view {
@@ -13,4 +14,5 @@
   right: 0;
   bottom: 0;
   background-color: white;
+  z-index: 10;
 }

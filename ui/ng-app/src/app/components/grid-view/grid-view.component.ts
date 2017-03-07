@@ -95,8 +95,9 @@ export class GridViewComponent implements OnInit {
         parseInt(itemsStyle['margin-left'], 10) + parseInt(itemsStyle['margin-right'], 10);
 
     let columns = Math.floor(width / (minWidth + marginWidth));
-    if (minWidthStyle === '100%') {
+    if (maxWidthStyle === '100%') {
       columns = 1;
+      maxWidth = width;
     }
 
     let columnsToUse = Math.max(Math.min(columns, length), 1);
@@ -117,18 +118,21 @@ export class GridViewComponent implements OnInit {
 
       // trick to show nice apear animation, where the item is already positioned,
       // but it will pop out
-      // var oldTransform = itemStyle['transform'];
-      // if (!oldTransform || oldTransform === 'none') {
-      //   item.classList.add('notransition');
-      //   item.style.transform = 'translate(' + left + 'px,' + top + 'px) scale(0)';
-      //   this.reflow(item);
-      // }
-
-      this.cardStyles[i] = {
-        transform:  'translate(' + left + 'px,' + top + 'px) scale(1)',
-        width: itemWidth + 'px',
-        transition: null
-      };
+      var oldTransform = itemStyle['transform'];
+      if (!oldTransform || oldTransform === 'none') {
+        this.cardStyles[i] = {
+          transform:  'translate(' + left + 'px,' + top + 'px) scale(0)',
+          width: itemWidth + 'px',
+          transition: 'none'
+        };
+        this.throttleLayout();
+      } else {
+        this.cardStyles[i] = {
+          transform:  'translate(' + left + 'px,' + top + 'px) scale(1)',
+          width: itemWidth + 'px',
+          transition: null
+        };
+      }
 
       if (!item.classList.contains('context-selected')) {
         var itemHeight = itemsHeight[i];
@@ -156,7 +160,9 @@ export class GridViewComponent implements OnInit {
     if (this.cardStyles[index]) {
       return this.cardStyles[index];
     } else {
-      return {};
+      return {
+        opacity: '0'
+      };
     }
   }
 
