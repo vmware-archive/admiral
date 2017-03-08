@@ -84,7 +84,7 @@
         "add": "Add",
         "update": "Update",
         "create": "Create",
-        "certificateWarning": "The certificate for __address__ is invalid. You may be connecting to a website that is pretending to be __address__, which could put your confidential information at risk. Would you like to connect to the website anyway?",
+        "certificateWarning": "The certificate for {{address}} is invalid. You may be connecting to a website that is pretending to be {{address}}, which could put your confidential information at risk. Would you like to connect to the website anyway?",
         "showCertificate": "Show certificate",
         "hideCertificate": "Hide certificate",
         "manageCertificates": "Manage Certificates",
@@ -317,7 +317,7 @@
           "editTitle": "Edit Network Configuration",
           "name": "Name",
           "existingNetwork": "Existing",
-          "showingCount": "Showing __count__ out of __totalCount__",
+          "showingCount": "Showing {{count}} out of {{totalCount}}",
           "showingInstances": "instances",
           "noResults": "No networks found",
           "hosts": "Hosts",
@@ -354,7 +354,7 @@
             "valueHint": "Example: 20GB"
           },
           "existingVolume": "Existing",
-          "showingCount": "Showing __count__ out of __totalCount__",
+          "showingCount": "Showing {{count}} out of {{totalCount}}",
           "showingInstances": "instances",
           "noResults": "No volumes found",
           "mountpoint": "Host Mountpoint",
@@ -989,8 +989,8 @@
         "UNKNOWN": "UNKNOWN",
         "RETIRED": "RETIRED",
         "PROVISIONING": "PROVISIONING",
-        "continuousStateSince": "__state__ for __duration__",
-        "errorStatus": "__state__: __status__"
+        "continuousStateSince": "{{state}} for {{duration}}",
+        "errorStatus": "{{state}}: {{status}}"
       },
       "actions": {
         "start": "Start",
@@ -1149,10 +1149,10 @@
       "failure": "Authentication error"
     },
     "dropdownSearchMenu": {
-      "title": "Select from the __entity__ list",
-      "searchPlaceholder": "Search for __entity__",
+      "title": "Select from the {{entity}} list",
+      "searchPlaceholder": "Search for {{entity}}",
       "clear": "Clear Selection",
-      "showingCount": "Showing __count__ out of __totalCount__",
+      "showingCount": "Showing {{count}} out of {{totalCount}}",
       "noResults": "No items found"
     },
     "customProperties": {
@@ -1222,6 +1222,6 @@
       "OFF": "OFF",
       "SUSPEND": "DISABLED",
       "UNKNOWN": "UNKNOWN",
-      "stateSinceMessage": "since __date__"
+      "stateSinceMessage": "since {{date}}"
     }
 }

@@ -72,7 +72,7 @@
         "add": "Adicionar",
         "update": "Atualizar",
         "create": "Criar",
-        "certificateWarning": "O certificado para __address__ é inválido. Talvez você esteja se conectando a um site que está fingindo ser __address__, o que pode colocar suas informações confidenciais em risco. Deseja se conectar ao site mesmo assim?",
+        "certificateWarning": "O certificado para {{address}} é inválido. Talvez você esteja se conectando a um site que está fingindo ser {{address}}, o que pode colocar suas informações confidenciais em risco. Deseja se conectar ao site mesmo assim?",
         "showCertificate": "Mostrar certificado",
         "hideCertificate": "Ocultar certificado",
         "manageCertificates": "Gerenciar Certificados",
@@ -295,7 +295,7 @@
           "editTitle": "Editar Configuração de Rede",
           "name": "Nome",
           "existingNetwork": "Existente",
-          "showingCount": "Mostrando __count__ de __totalCount__",
+          "showingCount": "Mostrando {{count}} de {{totalCount}}",
           "showingInstances": "instâncias",
           "noResults": "Nenhuma rede encontrada",
           "hosts": "Hosts",
@@ -942,7 +942,7 @@
         "UNKNOWN": "DESCONHECIDO",
         "RETIRED": "DESATIVADO",
         "PROVISIONING": "PROVISIONAMENTO",
-        "continuousStateSince": "__state__ por __duration__"
+        "continuousStateSince": "{{state}} por {{duration}}"
       },
       "actions": {
         "start": "Iniciar",
@@ -1101,10 +1101,10 @@
       "failure": "Erro de autenticação"
     },
     "dropdownSearchMenu": {
-      "title": "Selecionar na lista __entity__",
-      "searchPlaceholder": "Procurar __entity__",
+      "title": "Selecionar na lista {{entity}}",
+      "searchPlaceholder": "Procurar {{entity}}",
       "clear": "Limpar Seleção",
-      "showingCount": "Mostrando __count__ de __totalCount__",
+      "showingCount": "Mostrando {{count}} de {{totalCount}}",
       "noResults": "Nenhum item encontrado"
     },
     "customProperties": {
@@ -1172,6 +1172,6 @@
       "OFF": "DESATIVADO",
       "SUSPEND": "DESABILITADO",
       "UNKNOWN": "DESCONHECIDO",
-      "stateSinceMessage": "desde __date__"
+      "stateSinceMessage": "desde {{date}}"
     }
 }

@@ -9,7 +9,9 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
- import templateHelpers from 'core/templateHelpers';
+import templateHelpers from 'core/templateHelpers';
+
+window.i18n = i18next;
 
 var initializer = {};
 initializer.init = function(callback) {
@@ -19,18 +21,16 @@ initializer.init = function(callback) {
   templateHelpers.register();
 
   var initI18N = function() {
-    i18n.init({
-      ns: {
-        namespaces: ['admiral'],
-        defaultNs: 'admiral'
-      },
-
-      // Will load messages/admiral.en-EN.json for example and fallback to
-      // messages/admiral.en.json
-      resGetPath: 'messages/__ns__.__lng__.json',
-      useCookie: false,
-      fallbackLng: 'en',
-      debug: true
+    i18next.use(i18nextXHRBackend)
+      .use(i18nextBrowserLanguageDetector)
+      .init({
+        ns: ['admiral'],
+        defaultNS: 'admiral',
+        fallbackLng: 'en',
+        backend: {
+          loadPath: 'messages/{{ns}}.{{lng}}.json'
+        },
+        debug: true
     }, callback);
   };
 

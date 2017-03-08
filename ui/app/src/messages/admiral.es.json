@@ -72,7 +72,7 @@
         "add": "Añadir",
         "update": "Actualizar",
         "create": "Crear",
-        "certificateWarning": "El certificado para __address__ no es válido. Es posible que se haya conectado a un sitio que aparenta ser __address__, que podría poner en peligro su información confidencial. ¿Desea conectarse al sitio web de todas formas?",
+        "certificateWarning": "El certificado para {{address}} no es válido. Es posible que se haya conectado a un sitio que aparenta ser {{address}}, que podría poner en peligro su información confidencial. ¿Desea conectarse al sitio web de todas formas?",
         "showCertificate": "Mostrar certificado",
         "hideCertificate": "Ocultar certificado",
         "manageCertificates": "Administrar certificados",
@@ -295,7 +295,7 @@
           "editTitle": "Editar configuración de red",
           "name": "Nombre",
           "existingNetwork": "Existente",
-          "showingCount": "Mostrando __count__ de __totalCount__",
+          "showingCount": "Mostrando {{count}} de {{totalCount}}",
           "showingInstances": "instancias",
           "noResults": "No se encontraron redes",
           "hosts": "Hosts",
@@ -332,7 +332,7 @@
             "valueHint": "Ejemplo: 20 GB"
           },
           "existingVolume": "Existente",
-          "showingCount": "Mostrando __count__ de __totalCount__",
+          "showingCount": "Mostrando {{count}} de {{totalCount}}",
           "showingInstances": "instancias",
           "noResults": "No se ha encontrado ningún volumen",
           "mountpoint": "Punto de montaje de host",
@@ -942,7 +942,7 @@
         "UNKNOWN": "DESCONOCIDO",
         "RETIRED": "RETIRADO",
         "PROVISIONING": "APROVISIONAMIENTO",
-        "continuousStateSince": "__state__ durante __duration__"
+        "continuousStateSince": "{{state}} durante {{duration}}"
       },
       "actions": {
         "start": "Iniciar",
@@ -1101,10 +1101,10 @@
       "failure": "Error de autenticación"
     },
     "dropdownSearchMenu": {
-      "title": "Seleccionar desde la lista __entity__",
-      "searchPlaceholder": "Buscar __entity__",
+      "title": "Seleccionar desde la lista {{entity}}",
+      "searchPlaceholder": "Buscar {{entity}}",
       "clear": "Borrar elección",
-      "showingCount": "Mostrando __count__ de __totalCount__",
+      "showingCount": "Mostrando {{count}} de {{totalCount}}",
       "noResults": "No se encontraron elementos"
     },
     "customProperties": {
@@ -1172,6 +1172,6 @@
       "OFF": "DESCONECTADO",
       "SUSPEND": "DESHABILITADO",
       "UNKNOWN": "DESCONOCIDO",
-      "stateSinceMessage": "desde __date__"
+      "stateSinceMessage": "desde {{date}}"
     }
 }

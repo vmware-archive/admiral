@@ -72,7 +72,7 @@
         "add": "追加",
         "update": "更新",
         "create": "作成",
-        "certificateWarning": "__address__ の証明書が無効です。接続先の Web サイトが __address_ になりすましている可能性があり、このために機密情報が危険にさらされる可能性があります。このまま Web サイトに接続しますか?",
+        "certificateWarning": "{{address}} の証明書が無効です。接続先の Web サイトが {{address}} になりすましている可能性があり、このために機密情報が危険にさらされる可能性があります。このまま Web サイトに接続しますか?",
         "showCertificate": "証明書の表示",
         "hideCertificate": "証明書を隠す",
         "manageCertificates": "証明書の管理",
@@ -295,7 +295,7 @@
           "editTitle": "ネットワーク構成の編集",
           "name": "名前",
           "existingNetwork": "既存",
-          "showingCount": "__count__ /__totalCount__ を表示中",
+          "showingCount": "{{count}} /{{totalCount}} を表示中",
           "showingInstances": "個のインスタンス",
           "noResults": "ネットワークが見つかりませんでした",
           "hosts": "ホスト",
@@ -332,7 +332,7 @@
             "valueHint": "例: 20GB"
           },
           "existingVolume": "既存",
-          "showingCount": "__count__ /__totalCount__ を表示中",
+          "showingCount": "{{count}} /{{totalCount}} を表示中",
           "showingInstances": "個のインスタンス",
           "noResults": "ボリュームが見つかりません",
           "mountpoint": "ホストのマウントポイント",
@@ -942,7 +942,7 @@
         "UNKNOWN": "不明",
         "RETIRED": "使用中止",
         "PROVISIONING": "プロビジョニング",
-        "continuousStateSince": "__state__ (__duration__)"
+        "continuousStateSince": "{{state}} ({{duration}})"
       },
       "actions": {
         "start": "開始",
@@ -1101,10 +1101,10 @@
       "failure": "認証エラー"
     },
     "dropdownSearchMenu": {
-      "title": "__entity__ リストから選択します",
-      "searchPlaceholder": "__entity__ の検索",
+      "title": "{{entity}} リストから選択します",
+      "searchPlaceholder": "{{entity}} の検索",
       "clear": "選択をクリア",
-      "showingCount": "__count__ /__totalCount__ を表示中",
+      "showingCount": "{{count}} /{{totalCount}} を表示中",
       "noResults": "アイテムが見つかりませんでした"
     },
     "customProperties": {
@@ -1172,6 +1172,6 @@
       "OFF": "オフ",
       "SUSPEND": "無効",
       "UNKNOWN": "不明",
-      "stateSinceMessage": "__date__ 以降"
+      "stateSinceMessage": "{{date}} 以降"
     }
 }

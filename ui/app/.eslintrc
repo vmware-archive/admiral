@@ -120,6 +120,9 @@ Additional changes to the original file:
   "globals": {
     "$": true,
     "i18n"        : true,
+    "i18next"     : true,
+    "i18nextXHRBackend" : true,
+    "i18nextBrowserLanguageDetector" : true,
     "Vue"         : true,
     "Reflux"      : true,
     "Immutable"   : true,

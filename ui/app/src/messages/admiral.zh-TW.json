@@ -72,7 +72,7 @@
         "add": "新增",
         "update": "更新",
         "create": "建立",
-        "certificateWarning": "__address__ 的憑證無效。您可能會連線至偽裝成 __address__ 的網站，這會使您的機密資訊處於風險之中。仍要連線至該網站嗎?",
+        "certificateWarning": "{{address}} 的憑證無效。您可能會連線至偽裝成 {{address}} 的網站，這會使您的機密資訊處於風險之中。仍要連線至該網站嗎?",
         "showCertificate": "顯示憑證",
         "hideCertificate": "隱藏憑證",
         "manageCertificates": "管理憑證",
@@ -295,7 +295,7 @@
           "editTitle": "編輯網路組態",
           "name": "名稱",
           "existingNetwork": "現有",
-          "showingCount": "顯示第 __count__ 個，共 __totalCount__ 個",
+          "showingCount": "顯示第 {{count}} 個，共 {{totalCount}} 個",
           "showingInstances": "個執行個體",
           "noResults": "找不到網路",
           "hosts": "主機",
@@ -332,7 +332,7 @@
             "valueHint": "範例: 20 GB"
           },
           "existingVolume": "現有",
-          "showingCount": "顯示第 __count__ 個，共 __totalCount__ 個",
+          "showingCount": "顯示第 {{count}} 個，共 {{totalCount}} 個",
           "showingInstances": "個執行個體",
           "noResults": "找不到磁碟區",
           "mountpoint": "主機掛接點",
@@ -942,7 +942,7 @@
         "UNKNOWN": "未知",
         "RETIRED": "已淘汰",
         "PROVISIONING": "佈建中",
-        "continuousStateSince": "__state__狀態已持續 __duration__"
+        "continuousStateSince": "{{state}}狀態已持續 {{duration}}"
       },
       "actions": {
         "start": "啟動",
@@ -1101,10 +1101,10 @@
       "failure": "驗證錯誤"
     },
     "dropdownSearchMenu": {
-      "title": "從 __entity__ 清單中選取",
-      "searchPlaceholder": "搜尋 __entity__",
+      "title": "從 {{entity}} 清單中選取",
+      "searchPlaceholder": "搜尋 {{entity}}",
       "clear": "清除選取項目",
-      "showingCount": "顯示第 __count__ 個，共 __totalCount__ 個",
+      "showingCount": "顯示第 {{count}} 個，共 {{totalCount}} 個",
       "noResults": "找不到項目"
     },
     "customProperties": {
@@ -1172,6 +1172,6 @@
       "OFF": "關閉",
       "SUSPEND": "已停用",
       "UNKNOWN": "未知",
-      "stateSinceMessage": "自 __date__"
+      "stateSinceMessage": "自 {{date}}"
     }
 }

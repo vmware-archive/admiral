@@ -72,7 +72,7 @@
         "add": "추가",
         "update": "업데이트",
         "create": "생성",
-        "certificateWarning": "__address__에 대한 인증서가 유효하지 않습니다. __address__(으)로 가장하는 웹 사이트에 연결하는 중일 수 있으며 이 경우 기밀 정보가 위험에 처할 수 있습니다. 그래도 웹 사이트에 연결하시겠습니까?",
+        "certificateWarning": "{{address}}에 대한 인증서가 유효하지 않습니다. {{address}}(으)로 가장하는 웹 사이트에 연결하는 중일 수 있으며 이 경우 기밀 정보가 위험에 처할 수 있습니다. 그래도 웹 사이트에 연결하시겠습니까?",
         "showCertificate": "인증서 표시",
         "hideCertificate": "인증서 숨김",
         "manageCertificates": "인증서 관리",
@@ -295,7 +295,7 @@
           "editTitle": "네트워크 구성 편집",
           "name": "이름",
           "existingNetwork": "기존",
-          "showingCount": "__count__개 항목 표시 중(총 __totalCount__개 항목)",
+          "showingCount": "{{count}}개 항목 표시 중(총 {{totalCount}}개 항목)",
           "showingInstances": "개 인스턴스",
           "noResults": "네트워크 없음",
           "hosts": "호스트",
@@ -332,7 +332,7 @@
             "valueHint": "예: 20GB"
           },
           "existingVolume": "기존",
-          "showingCount": "__count__개 항목 표시 중(총 __totalCount__개 항목)",
+          "showingCount": "{{count}}개 항목 표시 중(총 {{totalCount}}개 항목)",
           "showingInstances": "개 인스턴스",
           "noResults": "볼륨 없음",
           "mountpoint": "호스트 탑재 지점",
@@ -942,7 +942,7 @@
         "UNKNOWN": "알 수 없음",
         "RETIRED": "회수됨",
         "PROVISIONING": "프로비저닝",
-        "continuousStateSince": "__state__ 상태가 __duration__ 지속됨"
+        "continuousStateSince": "{{state}} 상태가 {{duration}} 지속됨"
       },
       "actions": {
         "start": "시작",
@@ -1101,10 +1101,10 @@
       "failure": "인증 오류"
     },
     "dropdownSearchMenu": {
-      "title": "__entity__ 목록에서 선택",
-      "searchPlaceholder": "__entity__ 검색",
+      "title": "{{entity}} 목록에서 선택",
+      "searchPlaceholder": "{{entity}} 검색",
       "clear": "선택 지우기",
-      "showingCount": "__count__개 항목 표시 중(총 __totalCount__개 항목)",
+      "showingCount": "{{count}}개 항목 표시 중(총 {{totalCount}}개 항목)",
       "noResults": "항목 없음"
     },
     "customProperties": {
@@ -1172,6 +1172,6 @@
       "OFF": "꺼짐",
       "SUSPEND": "사용 안 함",
       "UNKNOWN": "알 수 없음",
-      "stateSinceMessage": "__date__ 이후"
+      "stateSinceMessage": "{{date}} 이후"
     }
 }

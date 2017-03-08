@@ -20,6 +20,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
@@ -42,6 +43,7 @@ public abstract class BaseUiService extends StatelessService {
     public static final String LOGIN_PATH = "login" + HTML_RESOURCE_EXTENSION;
     public static final String INDEX_PATH = "index" + HTML_RESOURCE_EXTENSION;
     public static final String INDEX_EMBEDDED_PATH = "index-embedded" + HTML_RESOURCE_EXTENSION;
+    public static final String I18NEXT_COOKIE = "i18next";
 
     @Override
     public void authorizeRequest(Operation op) {
@@ -88,6 +90,19 @@ public abstract class BaseUiService extends StatelessService {
             Operation operation = get.clone();
             operation.setUri(UriUtils.buildUri(getHost(), uiResourcePath, uri.getQuery()))
                     .setCompletion((o, e) -> {
+                        // Localization - browser language user preferences
+                        String acceptLanguage =
+                                get.getRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER);
+
+                        if (acceptLanguage != null && !acceptLanguage.trim().isEmpty()) {
+                            List<Locale.LanguageRange> parsed =
+                                    Locale.LanguageRange.parse(acceptLanguage);
+
+                            if (parsed.size() > 0) {
+                                get.addResponseCookie(I18NEXT_COOKIE, parsed.get(0).getRange());
+                            }
+                        }
+
                         get.setBody(o.getBodyRaw())
                                 .setStatusCode(o.getStatusCode())
                                 .setContentType(o.getContentType());

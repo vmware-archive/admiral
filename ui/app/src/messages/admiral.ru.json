@@ -72,7 +72,7 @@
         "add": "Добавить",
         "update": "Обновить",
         "create": "Создать",
-        "certificateWarning": "Недействительный сертификат для __address__. Возможно, вы пытаетесь подключиться к веб-сайту, который выдает себя за __address__, из-за чего безопасность вашей конфиденциальной информации может оказаться под угрозой. Хотите все равно подключиться к этому веб-сайту?",
+        "certificateWarning": "Недействительный сертификат для {{address}}. Возможно, вы пытаетесь подключиться к веб-сайту, который выдает себя за {{address}}, из-за чего безопасность вашей конфиденциальной информации может оказаться под угрозой. Хотите все равно подключиться к этому веб-сайту?",
         "showCertificate": "Показать сертификат",
         "hideCertificate": "Скрыть сертификат",
         "manageCertificates": "Управление сертификатами",
@@ -295,7 +295,7 @@
           "editTitle": "Изменить конфигурацию сети",
           "name": "Имя",
           "existingNetwork": "Имеющиеся",
-          "showingCount": "Отображается __count__ из __totalCount__",
+          "showingCount": "Отображается {{count}} из {{totalCount}}",
           "showingInstances": "экземпляры",
           "noResults": "Сети не найдены",
           "hosts": "Узлы",
@@ -332,7 +332,7 @@
             "valueHint": "Пример: 20 ГБ"
           },
           "existingVolume": "Имеющиеся",
-          "showingCount": "Отображается __count__ из __totalCount__",
+          "showingCount": "Отображается {{count}} из {{totalCount}}",
           "showingInstances": "экземпляры",
           "noResults": "Тома не найдены",
           "mountpoint": "Точка монтирования узла",
@@ -942,7 +942,7 @@
         "UNKNOWN": "НЕТ ДАННЫХ",
         "RETIRED": "СПИСАНО",
         "PROVISIONING": "ПОДГОТОВКА",
-        "continuousStateSince": "__state__ в течение __duration__"
+        "continuousStateSince": "{{state}} в течение {{duration}}"
       },
       "actions": {
         "start": "Пуск",
@@ -1101,10 +1101,10 @@
       "failure": "Ошибка проверки подлинности"
     },
     "dropdownSearchMenu": {
-      "title": "Выберите из списка __entity__",
-      "searchPlaceholder": "Поиск: __entity__",
+      "title": "Выберите из списка {{entity}}",
+      "searchPlaceholder": "Поиск: {{entity}}",
       "clear": "Очистить выбор",
-      "showingCount": "Отображается __count__ из __totalCount__",
+      "showingCount": "Отображается {{count}} из {{totalCount}}",
       "noResults": "Элементы не найдены"
     },
     "customProperties": {
@@ -1172,6 +1172,6 @@
       "OFF": "ВЫКЛ.",
       "SUSPEND": "ОТКЛЮЧЕНО",
       "UNKNOWN": "НЕТ ДАННЫХ",
-      "stateSinceMessage": "с __date__"
+      "stateSinceMessage": "с {{date}}"
     }
 }

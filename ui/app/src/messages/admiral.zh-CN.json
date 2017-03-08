@@ -72,7 +72,7 @@
         "add": "添加",
         "update": "更新",
         "create": "创建",
-        "certificateWarning": "__address__ 的证书无效。您可能正连接到伪装成 __address__ 的网站，这可能会使您的机密信息面临风险。您仍然要连接到该网站吗?",
+        "certificateWarning": "{{address}} 的证书无效。您可能正连接到伪装成 {{address}} 的网站，这可能会使您的机密信息面临风险。您仍然要连接到该网站吗?",
         "showCertificate": "显示证书",
         "hideCertificate": "隐藏证书",
         "manageCertificates": "管理证书",
@@ -295,7 +295,7 @@
           "editTitle": "编辑网络配置",
           "name": "名称",
           "existingNetwork": "现有",
-          "showingCount": "显示 __count__ 项 (共 __totalCount__ 项)",
+          "showingCount": "显示 {{count}} 项 (共 {{totalCount}} 项)",
           "showingInstances": "个实例",
           "noResults": "找不到网络",
           "hosts": "主机",
@@ -332,7 +332,7 @@
             "valueHint": "示例: 20GB"
           },
           "existingVolume": "现有",
-          "showingCount": "显示 __count__ 项 (共 __totalCount__ 项)",
+          "showingCount": "显示 {{count}} 项 (共 {{totalCount}} 项)",
           "showingInstances": "个实例",
           "noResults": "未找到卷",
           "mountpoint": "主机挂载点",
@@ -942,7 +942,7 @@
         "UNKNOWN": "未知",
         "RETIRED": "已注销",
         "PROVISIONING": "正在置备",
-        "continuousStateSince": "__state__状态已持续 __duration__"
+        "continuousStateSince": "{{state}}状态已持续 {{duration}}"
       },
       "actions": {
         "start": "启动",
@@ -1101,10 +1101,10 @@
       "failure": "身份验证错误"
     },
     "dropdownSearchMenu": {
-      "title": "从 __entity__ 列表选择",
-      "searchPlaceholder": "搜索 __entity__",
+      "title": "从 {{entity}} 列表选择",
+      "searchPlaceholder": "搜索 {{entity}}",
       "clear": "清除选择",
-      "showingCount": "显示 __count__ 项 (共 __totalCount__ 项)",
+      "showingCount": "显示 {{count}} 项 (共 {{totalCount}} 项)",
       "noResults": "未找到任何项目"
     },
     "customProperties": {
@@ -1172,6 +1172,6 @@
       "OFF": "关闭",
       "SUSPEND": "已禁用",
       "UNKNOWN": "未知",
-      "stateSinceMessage": "始于 __date__"
+      "stateSinceMessage": "始于 {{date}}"
     }
 }
