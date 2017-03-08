@@ -790,6 +790,8 @@
         "logsFormatRaw": "Raw",
         "networkAddresses": "Network Addresses",
         "attributes": {
+          "name": "Name",
+          "value": "Value",
           "host": "Host",
           "createdDateLabel": "Created",
           "ports": "Ports",
