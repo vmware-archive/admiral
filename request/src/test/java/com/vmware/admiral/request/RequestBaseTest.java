@@ -208,6 +208,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 ComputeDescriptionService.FACTORY_LINK,
                 ComputeService.FACTORY_LINK,
                 ResourcePoolService.FACTORY_LINK));
+
         return services;
     }
 

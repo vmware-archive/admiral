@@ -37,6 +37,7 @@ import com.vmware.admiral.request.ReservationRemovalTaskFactoryService;
 import com.vmware.admiral.request.ReservationTaskFactoryService;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService;
 import com.vmware.admiral.request.ServiceDocumentDeleteTaskService;
+import com.vmware.admiral.request.TagAssignmentService;
 import com.vmware.admiral.request.composition.CompositeComponentRemovalTaskService;
 import com.vmware.admiral.request.composition.CompositionSubTaskFactoryService;
 import com.vmware.admiral.request.composition.CompositionTaskFactoryService;
@@ -76,7 +77,8 @@ public class HostInitRequestServicesConfig extends HostInitServiceHelper {
                 RequestStatusFactoryService.class,
                 NotificationsService.class,
                 ComputeRemovalWatchService.class,
-                RequestInitialBootService.class);
+                RequestInitialBootService.class,
+                TagAssignmentService.class);
 
         startServiceFactories(host,
                 ProvisionContainerHostsTaskService.class,

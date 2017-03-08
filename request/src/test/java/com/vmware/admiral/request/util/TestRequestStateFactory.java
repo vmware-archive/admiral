@@ -464,11 +464,6 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         return volume;
     }
 
-    public static ComputeState createCompute() {
-        ComputeState compute = new ComputeState();
-        return compute;
-    }
-
     public static EndpointState createEndpoint() {
         EndpointState endpoint = createEndpoint(ENDPOINT_ID, EndpointType.aws);
         return endpoint;
