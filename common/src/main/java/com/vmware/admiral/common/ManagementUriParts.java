@@ -53,6 +53,7 @@ public interface ManagementUriParts {
     String ELASTIC_PLACEMENT_ZONE_CONFIGURATION = ELASTIC_PLACEMENT_ZONES + "-config";
     String PLACEMENT_CAPACITY_UPDATE = RESOURCES + "/placement-capacity-update";
     String PLACEMENT_UPDATE_TASKS = RESOURCES + "/placement-update-tasks";
+    String TAG_ASSIGNMENT = RESOURCES + "/tag-assignment";
 
     String PROJECTS = "/projects";
 
