@@ -10,6 +10,8 @@
  */
 
 import { Component, Input, QueryList, OnInit, ContentChild, ContentChildren, ViewChild, ViewChildren, TemplateRef, HostListener, ViewEncapsulation } from '@angular/core';
+import { searchConstants } from 'admiral-ui-common';
+import * as I18n from 'i18next';
 
 @Component({
   selector: 'grid-view',
@@ -21,6 +23,9 @@ export class GridViewComponent implements OnInit {
   @Input() items: any[];
   @Input() count: number;
   @Input() loading: boolean;
+  @Input() searchPlaceholder: string;
+  @Input() searchSuggestionProperties: Array<string>;
+  @Input() searchQueryOptions: string;
 
   @ViewChildren('cardItem') cards;
   @ViewChild('itemsHolder') itemsHolder;
@@ -31,6 +36,13 @@ export class GridViewComponent implements OnInit {
   cardStyles = [];
   itemsHolderStyle: any = {};
   layoutTimeout;
+  searchOccurrenceProperties = [{
+    name: searchConstants.SEARCH_OCCURRENCE.ALL,
+    label: I18n.t('occurrence.all')
+  }, {
+    name: searchConstants.SEARCH_OCCURRENCE.ANY,
+    label: I18n.t('occurrence.any')
+  }];
 
   constructor() { }
 
@@ -95,7 +107,7 @@ export class GridViewComponent implements OnInit {
         parseInt(itemsStyle['margin-left'], 10) + parseInt(itemsStyle['margin-right'], 10);
 
     let columns = Math.floor(width / (minWidth + marginWidth));
-    if (maxWidthStyle === '100%') {
+    if (!this.showCardView) {
       columns = 1;
       maxWidth = width;
     }
@@ -168,5 +180,9 @@ export class GridViewComponent implements OnInit {
 
   reflow(el) {
     el.offsetHeight;
+  }
+
+  onSearch(queryOptions) {
+
   }
 }

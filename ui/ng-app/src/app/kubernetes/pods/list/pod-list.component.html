@@ -14,7 +14,7 @@
     <div title>Pods</div>
     <template let-item="item">
       <card [routerLink]="['./' + item.documentId]">
-        <div card-header>{{item.powerState}}</div>
+        <div card-header>{{item.name}}</div>
         <div card-footer>
           <clr-dropdown [clrMenuPosition]="'bottom-left'" (click)="$event.stopPropagation()">
             <button class="btn btn-sm btn-link" clrDropdownToggle>

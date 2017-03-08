@@ -51,7 +51,7 @@
                             <goal>npm</goal>
                         </goals>
                         <configuration>
-                            <arguments>install admiral-ui-common</arguments>
+                            <arguments>install node-sass admiral-ui-common</arguments>
                         </configuration>
                     </execution>
 
@@ -62,7 +62,18 @@
                             <goal>npm</goal>
                         </goals>
                         <configuration>
-                            <arguments>install</arguments>
+                            <arguments>install --ignore-scripts</arguments>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>npm rebuild</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>rebuild node-sass</arguments>
                         </configuration>
                     </execution>
 

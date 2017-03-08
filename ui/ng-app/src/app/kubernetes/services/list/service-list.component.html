@@ -18,11 +18,11 @@
         <div card-content>
           <div class="form-group">
             <label>{{"creation" | i18n: { "ns": "kubernetes"} }}</label>
-            <div>{{item.service.metadata.creationTimestamp}}</div>
+            <div>{{item.service?.metadata.creationTimestamp || "--"}}</div>
           </div>
           <div class="form-group">
             <label>{{"namespace" | i18n: { "ns": "kubernetes"} }}</label>
-            <div>{{item.service.metadata.namespace}}</div>
+            <div>{{item.service?.metadata.namespace || "--"}}</div>
           </div>
         </div>
         <div card-footer>

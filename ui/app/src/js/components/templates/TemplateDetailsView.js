@@ -750,9 +750,11 @@ var TemplateDetailsView = Vue.extend({
         this.getExportLink(constants.TEMPLATES.EXPORT_FORMAT.DOCKER_COMPOSE));
     },
     operationSupported: function(op) {
-      if (op === 'PROVISION' || 'PUBLISH' || 'EXPORT') {
-        if (!this.model.templateDetails.listView.items
-              || this.model.templateDetails.listView.items.length === 0) {
+      var listView = this.model.templateDetails.listView;
+      var hasContainers = listView.items && listView.items.length > 0;
+      var hasKubernetes = listView.kubernetes && listView.kubernetes.length > 0;
+      if (op === 'PROVISION' || op === 'PUBLISH' || op === 'EXPORT') {
+        if (!hasContainers && !hasKubernetes) {
           return false;
         }
       }

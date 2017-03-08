@@ -10,7 +10,7 @@ grid-view {
 
   .items {
     position: absolute;
-    top: 50px;
+    top: 90px;
     left: 0;
     right: 0;
     bottom: 0;
@@ -66,14 +66,18 @@ grid-view {
   }
 
   .toolbar {
-    float: right;
-    .btn {
-      margin: 0;
-      padding: 5px;
+    display: flex;
+    > .btn {
+      margin: 10px 0 0 0;
+      padding: 0;
       min-width: 0;
-      line-height: 14px;
+      line-height: 20px;
       min-height: 0;
-      height: auto;
+      width: 40px;
+      height: 20px;
+    }
+    > search {
+      flex: 1 2 auto;
     }
   }
 

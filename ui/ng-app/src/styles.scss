@@ -1,5 +1,10 @@
 /* You can add global styles to this file, and also import other style files */
 @import 'node_modules/admiral-ui-common/css/variables';
+@import "node_modules/admiral-ui-common/css/tokenfield-override";
+@import "node_modules/clarity-ui/src/images/images.clarity";
+@import "node_modules/clarity-ui/src/typography/typography.clarity";
+@import "node_modules/clarity-ui/src/forms/forms.clarity";
+
 
 .main-container {
   /* Fix for fixed positioned elements http://stackoverflow.com/questions/36855473/position-fixed-not-working-is-working-like-absolute */
@@ -15,4 +20,15 @@
   bottom: 0;
   background-color: white;
   z-index: 10;
+}
+
+.main-container .tokenfield {
+  @extend %clr-form-fields-appearance;
+  @include input-border-bottom-animation();
+}
+
+.main-container .tokenfield.focus {
+  border-bottom: 1px solid #0094d2;
+  background-size: 100% 100%;
+  box-shadow: none;
 }

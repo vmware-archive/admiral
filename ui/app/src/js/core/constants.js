@@ -9,6 +9,8 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
+import { searchConstants } from 'admiral-ui-common';
+
 var constants = Immutable({
   LOADING: {},
   CONTEXT_PANEL: {
@@ -319,15 +321,8 @@ var constants = Immutable({
   NOTIFICATIONS: {
     REFRESH_INTERVAL: 5000
   },
-  SEARCH_CATEGORY_PARAM: '$category',
-  SEARCH_OCCURRENCE: {
-    PARAM: '$occurrence',
-    ALL: 'all',
-    ANY: 'any'
-    /* Not supported by DCP
-    NONE: 'none'
-    */
-  },
+  SEARCH_CATEGORY_PARAM: searchConstants.SEARCH_CATEGORY_PARAM,
+  SEARCH_OCCURRENCE: searchConstants.SEARCH_OCCURRENCE,
   ALERTS: {
     TYPE: {
       FAIL: 'danger',
