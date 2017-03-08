@@ -11,17 +11,26 @@
 
 package com.vmware.admiral.auth.project;
 
+import java.util.ArrayList;
+import java.util.function.Consumer;
+
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.UserGroupService;
+import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
+import com.vmware.xenon.services.common.UserService.UserState;
 
 /**
  * Project is a group sharing same resources.
@@ -59,6 +68,18 @@ public class ProjectService extends StatefulService {
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public String description;
+
+        /** Link to the group of administrators for this project. */
+        @Documentation(description = "Link to the group of administrators for this project.")
+        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL, PropertyUsageOption.LINK,
+                PropertyUsageOption.SINGLE_ASSIGNMENT, PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        public String administratorsUserGroupLink;
+
+        /** Link to the group of members for this project. */
+        @Documentation(description = "Link to the group of members for this project.")
+        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL, PropertyUsageOption.LINK,
+                PropertyUsageOption.SINGLE_ASSIGNMENT, PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        public String membersUserGroupLink;
     }
 
     public ProjectService() {
@@ -77,8 +98,8 @@ public class ProjectService extends StatefulService {
 
         ProjectState createBody = post.getBody(ProjectState.class);
         validateState(createBody);
-
-        super.handleCreate(post);
+        createAdminAndMemberGroups(post);
+        // Operation will be completed after a successful creation of the groups
     }
 
     @Override
@@ -125,6 +146,77 @@ public class ProjectService extends StatefulService {
     }
 
     private void validateState(ProjectState state) {
+        Utils.validateState(getStateDescription(), state);
         AssertUtil.assertNotNullOrEmpty(state.name, ProjectState.FIELD_NAME_NAME);
+    }
+
+    private void createAdminAndMemberGroups(Operation createPost) {
+        ProjectState createBody = createPost.getBody(ProjectState.class);
+        if (createBody.administratorsUserGroupLink != null
+                && createBody.membersUserGroupLink != null
+                && !createBody.administratorsUserGroupLink.trim().isEmpty()
+                && !createBody.membersUserGroupLink.trim().isEmpty()) {
+            // No groups to create, complete the operation
+            createPost.complete();
+            return;
+        }
+
+        // Prepare operations to create only the missing UserGroup-s
+        ArrayList<Operation> operations = new ArrayList<>(2);
+        Query defaultQuery = createDefaultUserGroupQuery(createPost);
+        if (createBody.administratorsUserGroupLink == null
+                || createBody.administratorsUserGroupLink.trim().isEmpty()) {
+            Operation createAdminsGroup = buildCreateUserGroupOperation(defaultQuery,
+                    (userState) -> {
+                        createBody.administratorsUserGroupLink = userState.documentSelfLink;
+                    });
+            operations.add(createAdminsGroup);
+        }
+        if (createBody.membersUserGroupLink == null
+                || createBody.membersUserGroupLink.trim().isEmpty()) {
+            Operation createMembersGroup = buildCreateUserGroupOperation(defaultQuery,
+                    (userState) -> {
+                        createBody.membersUserGroupLink = userState.documentSelfLink;
+                    });
+            operations.add(createMembersGroup);
+        }
+
+        // Execute the prepared operations and complete the createPost on success
+        OperationJoin.create(operations)
+                .setCompletion((ops, ers) -> {
+                    if (ers != null && ers.size() > 0) {
+                        createPost.fail(ers.values().iterator().next());
+                    } else {
+                        createPost.complete();
+                    }
+                }).sendWith(getHost());
+    }
+
+    private Operation buildCreateUserGroupOperation(Query userGroupQuery,
+            Consumer<UserState> successHandler) {
+        UserGroupState userGroupState = UserGroupState.Builder
+                .create()
+                .withQuery(userGroupQuery)
+                .build();
+
+        return Operation.createPost(getHost(), UserGroupService.FACTORY_LINK)
+                .setReferer(getHost().getUri())
+                .setBody(userGroupState)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logWarning(Utils.toString(e));
+                        return;
+                        // error will be handled in joined completion handler
+                    }
+                    if (successHandler != null) {
+                        successHandler.accept(o.getBody(UserState.class));
+                    }
+                });
+    }
+
+    private Query createDefaultUserGroupQuery(Operation callerOp) {
+        String userLink = callerOp.getAuthorizationContext().getClaims().getSubject();
+        return QueryUtil.buildPropertyQuery(UserState.class, UserState.FIELD_NAME_SELF_LINK,
+                userLink).querySpec.query;
     }
 }

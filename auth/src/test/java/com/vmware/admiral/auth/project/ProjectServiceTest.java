@@ -12,6 +12,8 @@
 package com.vmware.admiral.auth.project;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -22,8 +24,14 @@ import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.LocalizableValidationException;
+import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.UserGroupService;
+import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
+import com.vmware.xenon.services.common.UserService.UserState;
 
 public class ProjectServiceTest extends AuthBaseTest {
 
@@ -36,6 +44,8 @@ public class ProjectServiceTest extends AuthBaseTest {
     @Before
     public void setUp() throws Throwable {
         waitForServiceAvailability(ProjectService.FACTORY_LINK);
+
+        host.assumeIdentity(buildUserServicePath(ADMIN_USERNAME));
         project = createProject(PROJECT_NAME, PROJECT_DESCRIPTION, PROJECT_IS_PUBLIC);
     }
 
@@ -100,6 +110,8 @@ public class ProjectServiceTest extends AuthBaseTest {
         final String updatedDescription = "updatedDescription";
         final boolean updatedIsPublic = true;
 
+        project = createProject(PROJECT_NAME, PROJECT_DESCRIPTION, PROJECT_IS_PUBLIC);
+
         ProjectState updateState = new ProjectState();
         updateState.name = updatedName;
         updateState.description = updatedDescription;
@@ -155,5 +167,77 @@ public class ProjectServiceTest extends AuthBaseTest {
         } catch (LocalizableValidationException e) {
             verifyExceptionMessage(String.format(AssertUtil.PROPERTY_CANNOT_BE_NULL_MESSAGE_FORMAT, ProjectState.FIELD_NAME_NAME), e.getMessage());
         }
+    }
+
+    @Test
+    public void testUserGroupsAutoCreatedOnProjectCreate() {
+        assertDocumentExists(project.administratorsUserGroupLink);
+        assertDocumentExists(project.membersUserGroupLink);
+    }
+
+    @Test
+    public void testUserGroupsNotOverridenIfSpecifiedOnProjectCreate() throws Throwable {
+        String testAdminsGroupLink = createUserGroup().documentSelfLink;
+        String testMembersGroupLink = createUserGroup().documentSelfLink;
+        ProjectState testProject;
+
+        // only admins group link provided
+        testProject = createProject("test-project-1", null, false, testAdminsGroupLink, null);
+        assertNotNull(testProject);
+        assertNotNull(testProject.administratorsUserGroupLink);
+        assertNotNull(testProject.membersUserGroupLink);
+        assertEquals(testAdminsGroupLink, testProject.administratorsUserGroupLink);
+        assertNotEquals(testMembersGroupLink, testProject.membersUserGroupLink);
+
+        // only members group link provided
+        testProject = createProject("test-project-2", null, false, null, testMembersGroupLink);
+        assertNotNull(testProject);
+        assertNotNull(testProject.administratorsUserGroupLink);
+        assertNotNull(testProject.membersUserGroupLink);
+        assertNotEquals(testAdminsGroupLink, testProject.administratorsUserGroupLink);
+        assertEquals(testMembersGroupLink, testProject.membersUserGroupLink);
+
+        // both admins and members group links provided
+        testProject = createProject("test-project-3", null, false, testAdminsGroupLink,
+                testMembersGroupLink);
+        assertNotNull(testProject);
+        assertNotNull(testProject.administratorsUserGroupLink);
+        assertNotNull(testProject.membersUserGroupLink);
+        assertEquals(testAdminsGroupLink, testProject.administratorsUserGroupLink);
+        assertEquals(testMembersGroupLink, testProject.membersUserGroupLink);
+    }
+
+    private void assertDocumentExists(String documentLink) {
+        assertNotNull(documentLink);
+
+        host.testStart(1);
+        Operation.createGet(host, documentLink)
+                .setReferer(host.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.failIteration(e);
+                    } else {
+                        try {
+                            assertNotNull(o.getBodyRaw());
+                            host.completeIteration();
+                        } catch (AssertionError er) {
+                            host.failIteration(er);
+                        }
+                    }
+                }).sendWith(host);
+        host.testWait();
+    }
+
+    private UserGroupState createUserGroup() throws Throwable {
+
+        Query query = QueryUtil.buildPropertyQuery(UserState.class, UserState.FIELD_NAME_SELF_LINK,
+                buildUserServicePath(ADMIN_USERNAME)).querySpec.query;
+
+        UserGroupState userGroupState = UserGroupState.Builder
+                .create()
+                .withQuery(query)
+                .build();
+
+        return doPost(userGroupState, UserGroupService.FACTORY_LINK);
     }
 }

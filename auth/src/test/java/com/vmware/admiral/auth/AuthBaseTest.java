@@ -22,17 +22,40 @@ import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.host.HostInitAuthServiceConfig;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
+import com.vmware.admiral.service.common.AuthBootstrapService;
+import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.VerificationHost;
+import com.vmware.xenon.services.common.UserService;
 
 public abstract class AuthBaseTest extends BaseTestCase {
 
+    protected static final String ADMIN_USERNAME = "administrator@admiral.com";
+
+    private static final String LOCAL_USERS_FILE = "/local-users.json";
+
     @Before
     public void beforeForAuthBase() throws Throwable {
+        host.setSystemAuthorizationContext();
+
         startServices(host);
 
         waitForServiceAvailability(AuthInitialBootService.SELF_LINK);
         waitForInitialBootServiceToBeSelfStopped(AuthInitialBootService.SELF_LINK);
+        AuthBootstrapService.waitForInitConfig(host, ((CustomizationVerificationHost) host).localUsers);
+
+        host.resetAuthorizationContext();
+    }
+
+    @Override
+    protected VerificationHost createHost() throws Throwable {
+        String[] customArgs = {
+                CommandLineArgumentParser.ARGUMENT_PREFIX
+                + AuthBootstrapService.LOCAL_USERS_FILE
+                + CommandLineArgumentParser.ARGUMENT_ASSIGNMENT
+                + AuthBaseTest.class.getResource(LOCAL_USERS_FILE).toURI().getPath()
+        };
+        return createHost(customArgs);
     }
 
     @Override
@@ -40,25 +63,25 @@ public abstract class AuthBaseTest extends BaseTestCase {
         return true;
     }
 
-    private static void startServices(VerificationHost host) throws Throwable {
-        DeploymentProfileConfig.getInstance().setTest(true);
-
-        HostInitCommonServiceConfig.startServices(host);
-        HostInitAuthServiceConfig.startServices(host);
-    }
-
     protected ProjectState createProject(String name) throws Throwable {
-        return createProject(name, null, false);
+        return createProject(name, null, false, null, null);
     }
 
     protected ProjectState createProject(String name, String description, boolean isPublic)
             throws Throwable {
+        return createProject(name, description, isPublic, null, null);
+    }
+
+    protected ProjectState createProject(String name, String description, boolean isPublic,
+            String adminsGroupLink, String membersGroupLink) throws Throwable {
         ProjectState projectState = new ProjectState();
 
         projectState.id = UUID.randomUUID().toString();
         projectState.name = name;
         projectState.description = description;
         projectState.isPublic = isPublic;
+        projectState.administratorsUserGroupLink = adminsGroupLink;
+        projectState.membersUserGroupLink = membersGroupLink;
 
         projectState = doPost(projectState, ProjectService.FACTORY_LINK);
 
@@ -90,5 +113,19 @@ public abstract class AuthBaseTest extends BaseTestCase {
                     message);
             throw new IllegalStateException(errorMessage);
         }
+    }
+
+    protected String buildUserServicePath(String email) {
+        return UriUtils.buildUriPath(UserService.FACTORY_LINK, email);
+    }
+
+    private static void startServices(VerificationHost host) throws Throwable {
+        DeploymentProfileConfig.getInstance().setTest(true);
+
+        HostInitCommonServiceConfig.startServices(host);
+        HostInitAuthServiceConfig.startServices(host);
+
+        host.registerForServiceAvailability(AuthBootstrapService.startTask(host), true,
+                AuthBootstrapService.FACTORY_LINK);
     }
 }

@@ -24,6 +24,7 @@ public class AuthInitialBootServiceTest extends AuthBaseTest {
     @Test
     public void testDefaultProjectCreatedOnStartUp() throws Throwable {
         waitForServiceAvailability(ProjectService.DEFAULT_PROJECT_LINK);
+        host.assumeIdentity(buildUserServicePath(ADMIN_USERNAME));
 
         ProjectState project = getDocument(ProjectState.class,
                 ProjectService.DEFAULT_PROJECT_LINK);
