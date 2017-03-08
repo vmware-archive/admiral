@@ -13,7 +13,6 @@
   },
   "private": true,
   "dependencies": {
-    "@angular/cli": "1.0.0-rc.0",
     "@angular/common": "2.4.8",
     "@angular/compiler": "2.4.8",
     "@angular/core": "2.4.8",
@@ -44,6 +43,7 @@
   },
   "devDependencies": {
     "@angular/compiler-cli": "2.4.8",
+    "@angular/cli": "1.0.0-rc.0",
     "@types/core-js": "0.9.35",
     "@types/d3": "3.5.36",
     "@types/i18next": "2.3.32",
