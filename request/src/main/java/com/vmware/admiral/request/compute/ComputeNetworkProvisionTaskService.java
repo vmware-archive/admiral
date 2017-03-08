@@ -21,6 +21,9 @@ import java.util.UUID;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ServiceUtils;
+import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationRequest;
+import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationRequest.RequestType;
+import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationState;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.NetworkType;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
@@ -39,6 +42,7 @@ import com.vmware.photon.controller.model.tasks.ProvisionSubnetTaskService.Provi
 import com.vmware.photon.controller.model.tasks.ServiceTaskCallback;
 import com.vmware.photon.controller.model.tasks.SubTaskService;
 import com.vmware.photon.controller.model.tasks.TaskOption;
+import com.vmware.photon.controller.model.util.AssertUtil;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -112,7 +116,7 @@ public class ComputeNetworkProvisionTaskService
 
     }
 
-    public static class Context {
+    private static class Context {
         public Context(String computeNetworkLink, String subTaskLink) {
             this.computeNetworkLink = computeNetworkLink;
             this.subTaskLink = subTaskLink;
@@ -123,8 +127,9 @@ public class ComputeNetworkProvisionTaskService
         public ComputeNetwork computeNetwork;
         public ProfileStateExpanded profile;
         public SubnetState subnet;
-        public EndpointState endpoint;
+        public EndpointState isolatedNetworkEndpoint;
         public String instanceAdapterReference;
+        public String subnetCIDR;
     }
 
     public ComputeNetworkProvisionTaskService() {
@@ -199,7 +204,6 @@ public class ComputeNetworkProvisionTaskService
         }
     }
 
-
     private DeferredResult<Context> populateContext(Context context) {
         return DeferredResult.completed(context)
                 .thenCompose(this::populateComputeNetwork)
@@ -228,6 +232,7 @@ public class ComputeNetworkProvisionTaskService
                                 context.computeNetwork.name));
             }
             return DeferredResult.completed(context)
+                    .thenCompose(this::allocateSubnetCIDR)
                     .thenCompose(this::customizeTemplateSubnet)
                     .thenCompose(this::provisionSubnet);
 
@@ -269,21 +274,21 @@ public class ComputeNetworkProvisionTaskService
             // In case of NSX-T isolated networks, profile endpoint will be vSphere
             // and network profile Isolated network endpoint will be NSX-T
             return this.sendWithDeferredResult(Operation.createGet(this.getHost(),
-                            context.profile.networkProfile.isolatedNetworkState.endpointLink),
+                    context.profile.networkProfile.isolatedNetworkState.endpointLink),
                     EndpointState.class)
                     .thenApply(endpoint -> {
-                        context.endpoint = endpoint;
+                        context.isolatedNetworkEndpoint = endpoint;
                         return context;
                     });
         }
     }
 
     private DeferredResult<Context> populateInstanceAdapterReference(Context context) {
-        if (context.endpoint == null) {
+        if (context.isolatedNetworkEndpoint == null) {
             return DeferredResult.completed(context);
         } else {
             String uri = UriUtils.buildUriPath(PhotonModelAdaptersRegistryService.FACTORY_LINK,
-                    context.endpoint.endpointType);
+                    context.isolatedNetworkEndpoint.endpointType);
 
             return sendWithDeferredResult(
                     Operation.createGet(getHost(), uri), PhotonModelAdapterConfig.class)
@@ -294,7 +299,6 @@ public class ComputeNetworkProvisionTaskService
                     });
         }
     }
-
 
     private DeferredResult<Context> populateSubnet(Context context) {
         if (context.computeNetwork.subnetLink == null) {
@@ -309,16 +313,34 @@ public class ComputeNetworkProvisionTaskService
                 });
     }
 
+    private DeferredResult<Context> allocateSubnetCIDR(Context context) {
+        AssertUtil.assertNotNull(context.profile, "Context.profile should not be null.");
+        AssertUtil.assertNotNull(context.subnet, "Context.subnet should not be null.");
+
+        // Get new CIDR.
+        ComputeNetworkCIDRAllocationRequest request = new ComputeNetworkCIDRAllocationRequest();
+        request.requestType = RequestType.ALLOCATE;
+        request.subnetLink = context.subnet.documentSelfLink;
+        return this.sendWithDeferredResult(
+                Operation.createPatch(this,
+                        context.profile.networkProfile.isolationNetworkCIDRAllocationLink)
+                        .setBody(request), ComputeNetworkCIDRAllocationState.class)
+                .thenApply(cidrAllocation -> {
+                    // Store the allocated CIDR in the context.
+                    context.subnetCIDR = cidrAllocation.lastAllocatedCIDR;
+                    return context;
+                });
+    }
+
     private DeferredResult<Context> customizeTemplateSubnet(Context context) {
         ProfileStateExpanded profile = context.profile;
         SubnetState subnet = context.subnet;
 
         subnet.networkLink = profile.networkProfile.isolationNetworkLink;
-        // TODO: Calculate the CIDR. Hardcode for now.
-        subnet.subnetCIDR = "192.168.5.0/24";
-        subnet.endpointLink = context.endpoint.documentSelfLink;
+        subnet.endpointLink = context.isolatedNetworkEndpoint.documentSelfLink;
         subnet.instanceAdapterReference = UriUtils.buildUri(this.getHost(),
                 context.instanceAdapterReference);
+        subnet.subnetCIDR = context.subnetCIDR;
 
         return this.sendWithDeferredResult(Operation.createPatch(this, subnet.documentSelfLink)
                 .setBody(subnet))
