@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import Search from 'components/common/Search';
+import { Search } from 'admiral-ui-common';
 
 var VueSearch = Vue.extend({
   template: '<div></div>',
@@ -36,7 +36,7 @@ var VueSearch = Vue.extend({
     if (this.queryOptions) {
       this.search.setQueryOptions(this.queryOptions);
     }
-    $(this.$el).append(this.search.getEl());
+    $(this.$el).append($(this.search.getEl()));
   },
 
   attached: function() {

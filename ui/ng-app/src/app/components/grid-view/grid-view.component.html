@@ -13,6 +13,12 @@
   <ng-content select="[title]"></ng-content>
 </div>
 <div class="toolbar">
+  <search [suggestionProperties]="searchSuggestionProperties"
+                  [placeholder]="searchPlaceholder"
+                  [queryOptions]="searchQueryOptions"
+                  [occurrenceProperties]="searchOccurrenceProperties"
+                  (searchChange)="search"
+                  ></search>
   <button (click)="toggleCardView(true)" class="btn" title="Card View"><i class="fa fa-th"></i></button>
   <button (click)="toggleCardView(false)" class="btn" title="List View"><i class="fa fa-list"></i></button>
 </div>

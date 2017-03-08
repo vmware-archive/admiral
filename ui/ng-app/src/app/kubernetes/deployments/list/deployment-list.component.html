@@ -10,7 +10,9 @@
   -->
 
 <div>
-  <grid-view [items]="entities" [loading]="loadingEntities">
+  <grid-view [items]="entities" [loading]="loadingEntities"
+    [searchPlaceholder]="'Search for deployments'"
+    [searchSuggestionProperties]="['name']">
     <div title>{{"deployments.plural" | i18n: { "ns": "kubernetes"} }}</div>
     <template let-item="item">
       <card [routerLink]="['./' + item.documentId]">
@@ -18,23 +20,23 @@
         <div card-content>
           <div class="form-group">
             <label>{{"creation" | i18n: { "ns": "kubernetes"} }}</label>
-            <div>{{item.deployment.metadata.creationTimestamp}}</div>
+            <div>{{item.deployment?.metadata.creationTimestamp || "--"}}</div>
           </div>
           <div class="form-group">
             <label>{{"namespace" | i18n: { "ns": "kubernetes"} }}</label>
-            <div>{{item.deployment.metadata.namespace}}</div>
+            <div>{{item.deployment?.metadata.namespace || "--"}}</div>
           </div>
           <div class="form-group">
             <label>{{"containers" | i18n: { "ns": "kubernetes"} }}</label>
-            <div>{{item.deployment.spec.template.spec.containers.length}}</div>
+            <div>{{item.deployment?.spec.template.spec.containers.length || "--"}}</div>
           </div>
           <div class="form-group">
             <label>{{"restartPolicy" | i18n: { "ns": "kubernetes"} }}</label>
-            <div>{{item.deployment.spec.template.spec.restartPolicy}}</div>
+            <div>{{item.deployment?.spec.template.spec.restartPolicy || "--"}}</div>
           </div>
           <div class="form-group">
             <label>{{"strategy" | i18n: { "ns": "kubernetes"} }}</label>
-            <div>{{item.deployment.spec.strategy.type}}</div>
+            <div>{{item.deployment?.spec.strategy.type || "--"}}</div>
           </div>
         </div>
         <div card-footer>

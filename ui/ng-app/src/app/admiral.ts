@@ -19,6 +19,7 @@ import { StatsComponent } from "./components/stats/stats.component";
 import { LogsScrollComponent } from "./components/logs/logs-scroll.component";
 import { MaximizableBehaviourComponent } from "./components/maximizable-behaviour/maximizable-behaviour.component";
 import { BackButtonComponent } from "./components/back-button/back-button.component";
+import { SearchComponent } from "./components/search/search.component";
 
 import { PodListComponent } from './kubernetes/pods/list/pod-list.component';
 import { PodDetailsComponent } from './kubernetes/pods/details/pod-details.component';
@@ -40,6 +41,7 @@ export const ADMIRAL_DECLARATIONS = [
   LogsScrollComponent,
   MaximizableBehaviourComponent,
   BackButtonComponent,
+  SearchComponent,
 
   PodListComponent,
   PodDetailsComponent,

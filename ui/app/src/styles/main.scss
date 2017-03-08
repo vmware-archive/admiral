@@ -7,7 +7,7 @@
 
 @import "bootstrap-tokenfield.css";
 @import "tokenfield-typeahead.css";
-@import "tokenfield-override";
+@import "node_modules/admiral-ui-common/css/tokenfield-override";
 
 @import "clarity-bootstrap-gap";
 @import "clarity-ui.min.css";
@@ -19,7 +19,7 @@
 @import "components/container-request";
 @import "components/closures-request";
 @import "components/profile";
-@import "components/query-search";
+@import "node_modules/admiral-ui-common/css/query-search";
 @import "components/networks";
 @import "components/volumes";
 @import "components/resource-links";

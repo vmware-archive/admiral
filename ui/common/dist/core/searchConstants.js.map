@@ -1,0 +1,1 @@
+{"version":3,"file":"searchConstants.js","sourceRoot":"","sources":["../../src/core/searchConstants.js"],"names":[],"mappings":"AAAA,IAAI,eAAe,GAAG;IACpB,qBAAqB,EAAE,WAAW;IAClC,iBAAiB,EAAE;QACjB,KAAK,EAAE,aAAa;QACpB,GAAG,EAAE,KAAK;QACV,GAAG,EAAE,KAAK;QACV;;UAEE;KACH;CACF,CAAC;AAEF,MAAM,CAAC,OAAO,GAAG,eAAe,CAAC"}

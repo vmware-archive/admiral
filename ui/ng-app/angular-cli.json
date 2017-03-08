@@ -22,6 +22,8 @@
                 "../node_modules/clarity-ui/clarity-ui.min.css",
                 "../node_modules/admiral-ui-common/css/radialProgress.css",
                 "../node_modules/font-awesome/css/font-awesome.min.css",
+                "../node_modules/bootstrap-tokenfield/dist/css/bootstrap-tokenfield.css",
+                "../node_modules/bootstrap-tokenfield/dist/css/tokenfield-typeahead.css",
                 "styles.scss"
             ],
             "scripts": [
