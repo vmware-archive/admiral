@@ -190,7 +190,7 @@ public abstract class BaseIntegrationSupportIT {
         sendRequest(HttpMethod.DELETE, documentSelfLink, Utils.toJson(new ServiceDocument()));
     }
 
-    protected static <T extends ServiceDocument> T getDocument(String selfLink,
+    protected static <T> T getDocument(String selfLink,
             Class<? extends T> type) throws Exception {
         String body = sendRequest(HttpMethod.GET, selfLink, null);
         if (body == null || body.isEmpty()) {

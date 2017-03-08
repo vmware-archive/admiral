@@ -32,8 +32,8 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ServiceClientFactory;
+import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
-import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
@@ -183,9 +183,9 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         uri = URI.create(getBaseUrl() + ManagementUriParts.CONTAINER_HOSTS);
         waitForStatusCode(uri, Operation.STATUS_CODE_OK);
 
-        ComputeState dockerHost = getDocument(
+        com.vmware.admiral.test.integration.client.ComputeState dockerHost = getDocument(
                 COMPUTE_SELF_LINK,
-                ComputeState.class);
+                com.vmware.admiral.test.integration.client.ComputeState.class);
         assertTrue(dockerHost != null);
         // Run the data collection in order to update the host
         ContainerHostDataCollectionState dataCollectionBody = new ContainerHostDataCollectionState();
@@ -196,14 +196,16 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
             if (body == null) {
                 return false;
             }
-            ComputeState host = Utils.fromJson(body, ComputeState.class);
+            com.vmware.admiral.test.integration.client.ComputeState host = Utils.fromJson(body,
+                    com.vmware.admiral.test.integration.client.ComputeState.class);
             // trust alias custom property must be set eventually after upgrade
-            return (ContainerHostUtil.getTrustAlias(host) != null);
+            return (host.customProperties
+                    .get(ContainerHostService.SSL_TRUST_ALIAS_PROP_NAME) != null);
         });
 
-        AuthCredentialsServiceState credentials = getDocument(
+        com.vmware.admiral.test.integration.client.AuthCredentialsServiceState credentials = getDocument(
                 CREDENTIALS_SELF_LINK,
-                AuthCredentialsServiceState.class);
+                com.vmware.admiral.test.integration.client.AuthCredentialsServiceState.class);
         assertTrue(credentials != null);
 
         // get all the containers with expand - validate xenon issue:
@@ -218,7 +220,8 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         JsonArray documentLinks = jsonObject.getAsJsonArray("documentLinks");
         for (int i = 0; i < documentLinks.size(); i++) {
             String selfLink = documentLinks.get(i).getAsString();
-            ContainerState state = getDocument(selfLink, ContainerState.class);
+            com.vmware.admiral.test.integration.client.ContainerState state = getDocument(selfLink,
+                    com.vmware.admiral.test.integration.client.ContainerState.class);
             assertTrue(state != null);
         }
 
