@@ -381,7 +381,7 @@ var utils = {
       if (state === constants.CONTAINERS.STATES.RUNNING && !!timestamp) {
         var now = moment.utc();
         var stateMoment = moment.utc(timestamp);
-
+        moment.locale(i18n.detectLanguage());
         return i18n.t('app.container.state.continuousStateSince', {
           state: stateString,
           duration: moment.duration(now.diff(stateMoment)).humanize()
