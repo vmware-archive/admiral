@@ -136,6 +136,10 @@ let searchImages = function(queryOptions, searchOnlyImages, forContainerDefiniti
 
   this.emitChange();
 
+  if (searchOnlyImages) {
+    queryOptions.$category = 'images';
+  }
+
   operation.forPromise(services.loadTemplates(queryOptions)).then((data) => {
     var isPartialResult = data.isPartialResult;
     var templates = data.results;
