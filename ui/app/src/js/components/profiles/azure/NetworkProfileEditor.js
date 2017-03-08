@@ -13,16 +13,16 @@ export default Vue.component('azure-network-profile-editor', {
   template: `
     <div>
       <text-group
-        :label="i18n('app.environment.edit.nameLabel')"
+        :label="i18n('app.profile.edit.nameLabel')"
         :value="name"
         @change="onNameChange">
       </text-group>
       <multicolumn-editor-group
         v-if="endpoint"
         :headers="[
-          i18n('app.environment.edit.nameLabel')
+          i18n('app.profile.edit.nameLabel')
         ]"
-        :label="i18n('app.environment.edit.subnetworksLabel')"
+        :label="i18n('app.profile.edit.subnetworksLabel')"
         :value="subnetworks"
         @change="onSubnetworkChange">
         <multicolumn-cell name="name">

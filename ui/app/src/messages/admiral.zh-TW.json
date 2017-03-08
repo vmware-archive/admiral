@@ -25,7 +25,7 @@
       "closures": "閉包",
       "eventlog": "事件記錄",
       "placementZones": "放置區域",
-      "environments": "環境",
+      "profiles": "環境",
       "endpoints": "端點",
       "machines": "機器",
       "compute": "計算"
@@ -405,7 +405,7 @@
         "verified": "已成功驗證!"
       }
     },
-    "environment": {
+    "profile": {
       "list": {
         "title": "環境",
         "titleSearch": "找到的環境",

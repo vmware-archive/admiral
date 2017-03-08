@@ -25,7 +25,7 @@
       "closures": "Abschlüsse",
       "eventlog": "Ereignisprotokoll",
       "placementZones": "Platzierungszonen",
-      "environments": "Umgebungen",
+      "profiles": "Umgebungen",
       "endpoints": "Endpoints",
       "machines": "Maschinen",
       "compute": "Computing"
@@ -405,7 +405,7 @@
         "verified": "Erfolgreich überprüft."
       }
     },
-    "environment": {
+    "profile": {
       "list": {
         "title": "Umgebungen",
         "titleSearch": "Gefundene Umgebungen",

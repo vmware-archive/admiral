@@ -71,13 +71,13 @@ export default Vue.component('subnetwork-search', {
   methods: {
     renderSubnetwork(network) {
       let props = [
-        i18n.t('app.environment.edit.cidrLabel') + ':' + network.subnetCIDR
+        i18n.t('app.profile.edit.cidrLabel') + ':' + network.subnetCIDR
       ];
       if (network.supportPublicIpAddress) {
-        props.push(i18n.t('app.environment.edit.supportPublicIpAddressLabel'));
+        props.push(i18n.t('app.profile.edit.supportPublicIpAddressLabel'));
       }
       if (network.defaultForZone) {
-        props.push(i18n.t('app.environment.edit.defaultForZoneLabel'));
+        props.push(i18n.t('app.profile.edit.defaultForZoneLabel'));
       }
       let secondary = props.join(', ');
       return `

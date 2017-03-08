@@ -25,7 +25,7 @@
       "closures": "Cierres",
       "eventlog": "Log de eventos",
       "placementZones": "Zonas de ubicación",
-      "environments": "Entornos",
+      "profiles": "Entornos",
       "endpoints": "Endpoints",
       "machines": "Máquinas",
       "compute": "Informática"
@@ -405,7 +405,7 @@
         "verified": "Se ha verificado correctamente."
       }
     },
-    "environment": {
+    "profile": {
       "list": {
         "title": "Entornos",
         "titleSearch": "Entornos encontrados",

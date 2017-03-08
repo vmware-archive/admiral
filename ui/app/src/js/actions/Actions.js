@@ -173,9 +173,9 @@ export var CertificatesActions = Reflux.createActions([
   'updateCertificate', 'deleteCertificate', 'importCertificate'
 ]);
 
-export var EnvironmentsActions = Reflux.createActions([
-  'openEnvironments', 'openEnvironmentsNext', 'openAddEnvironment', 'editEnvironment',
-  'cancelEditEnvironment', 'createEnvironment', 'updateEnvironment', 'deleteEnvironment',
+export var ProfileActions = Reflux.createActions([
+  'openProfiles', 'openProfilesNext', 'openAddProfile', 'editProfile',
+  'cancelEditProfile', 'createProfile', 'updateProfile', 'deleteProfile',
   'createEndpoint', 'manageEndpoints', 'createSubnetwork', 'manageSubnetworks',
   'closeToolbar', 'selectView'
 ]);
@@ -211,8 +211,8 @@ export var NavigationActions = Reflux.createActions([
   'openHome', 'openHomeAddHost', 'openHosts', 'openHostsSilently', 'openAddHost', 'editHost',
   'openTemplates', 'openEventLog', 'openRegistries', 'openContainerRequest', 'openContainers',
   'openNetworks', 'openContainerDetails', 'openClusterDetails', 'openCompositeContainerDetails',
-  'openTemplateDetails', 'showContainersPerPlacement', 'openPlacements', 'openEnvironments',
-  'openAddEnvironment', 'editEnvironment', 'openMachines', 'openAddMachine', 'editMachine',
+  'openTemplateDetails', 'showContainersPerPlacement', 'openPlacements', 'openProfiles',
+  'openAddProfile', 'editProfile', 'openMachines', 'openAddMachine', 'editMachine',
   'openCompute', 'editCompute', 'openClosures', 'openClosuresSilently', 'openAddClosure',
   'openClosureDetails', 'openCompositeClosureDetails', 'openEndpoints', 'openEndpointsSilently',
   'openAddEndpoint', 'openVolumes'

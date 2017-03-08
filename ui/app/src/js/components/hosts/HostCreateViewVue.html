@@ -27,7 +27,7 @@
     <span class="help-block">{{i18n(validationErrors.endpoint)}}</span>
   </div>
 
-  <div id="instanceType" class="form-group" v-if="endpointEnvironment">
+  <div id="instanceType" class="form-group" v-if="endpointProfile">
     <label class="required">
       {{i18n("app.host.details.instanceType")}}
     </label>
@@ -41,7 +41,7 @@
     </div>
   </div>
 
-  <div id="imageType" class="form-group" v-if="endpointEnvironment">
+  <div id="imageType" class="form-group" v-if="endpointProfile">
     <label class="required">
       {{i18n("app.host.details.imageType")}}
     </label>

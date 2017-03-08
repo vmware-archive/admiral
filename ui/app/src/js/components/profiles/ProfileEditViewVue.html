@@ -9,7 +9,7 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div class="environment-edit-view" :class="{'right-context-expanded': contextExpanded}">
+<div class="profile-edit-view" :class="{'right-context-expanded': contextExpanded}">
   <div class="main-panel">
     <alert alert-type="danger"
            :show-alert="validationErrors._generic && (validationErrors._generic != null)"
@@ -18,32 +18,32 @@
            :show-alert="validationErrors._valid && (validationErrors._valid != null)"
            :alert-message="i18n('app.host.details.verified')"></alert>
 
-    <div class="environment-form form-horizontal">
+    <div class="profile-form form-horizontal">
       <div class="title">
-        {{i18n(model.item.documentSelfLink ? 'app.environment.edit.editTitle' : 'app.environment.edit.addTitle')}}
+        {{i18n(model.item.documentSelfLink ? 'app.profile.edit.editTitle' : 'app.profile.edit.addTitle')}}
       </div>
 
-      <div class="environment-definition-form">
-        <div class="environment-form-content">
+      <div class="profile-definition-form">
+        <div class="profile-form-content">
           <ul class="nav" role="tablist">
             <li role="presentation" class="nav-item">
               <a href="#basic" class="nav-link" aria-controls="basic" role="tab" data-toggle="pill">
-                {{i18n('app.environment.edit.basicTab')}}
+                {{i18n('app.profile.edit.basicTab')}}
               </a>
             </li>
             <li role="presentation" class="nav-item" :class="{'disabled': saveDisabled}">
               <a href="#compute" class="nav-link" aria-controls="compute" role="tab" data-toggle="pill">
-                {{i18n('app.environment.edit.computeTab')}}
+                {{i18n('app.profile.edit.computeTab')}}
               </a>
             </li>
             <li role="presentation" class="nav-item" :class="{'disabled': saveDisabled}">
               <a href="#network" class="nav-link" aria-controls="network" role="tab" data-toggle="pill">
-                {{i18n('app.environment.edit.networkTab')}}
+                {{i18n('app.profile.edit.networkTab')}}
               </a>
             </li>
             <li role="presentation" class="nav-item" :class="{'disabled': saveDisabled}">
               <a href="#storage" class="nav-link" aria-controls="storage" role="tab" data-toggle="pill">
-                {{i18n('app.environment.edit.storageTab')}}
+                {{i18n('app.profile.edit.storageTab')}}
               </a>
             </li>
           </ul>
@@ -52,14 +52,14 @@
             <div role="tabpanel" class="tab-pane" id="basic">
               <form>
                 <text-group
-                  :label="i18n('app.environment.edit.nameLabel')"
+                  :label="i18n('app.profile.edit.nameLabel')"
                   :required="true"
                   :value="model.item.name"
                   @change="onNameChange">
                 </text-group>
                 <dropdown-search-group
                   v-if="!model.item.endpointType"
-                  :label="i18n('app.environment.edit.endpointLabel')"
+                  :label="i18n('app.profile.edit.endpointLabel')"
                   :disabled="!!model.item.documentSelfLink"
                   :entity="i18n('app.endpoint.entity')"
                   :loading="!model.endpoints"
@@ -78,9 +78,9 @@
                   @change="onEndpointChange">
                 </dropdown-search-group>
                 <tags-group
-                  :label="i18n('app.environment.edit.tagsLabel')"
-                  :hint="i18n('app.environment.edit.tagsHint')"
-                  :placeholder="i18n('app.environment.edit.tagsPlaceholder')"
+                  :label="i18n('app.profile.edit.tagsLabel')"
+                  :hint="i18n('app.profile.edit.tagsHint')"
+                  :placeholder="i18n('app.profile.edit.tagsPlaceholder')"
                   :value="tags"
                   @change="onTagsChange">
                 </tags-group>
@@ -136,7 +136,7 @@
                 :class="{'loading': model.saving}"
                 :disabled="saveDisabled"
                 @click="save($event)">
-          {{i18n("app.environment.edit.save")}}
+          {{i18n("app.profile.edit.save")}}
           <i class="fa fa-spinner fa-spin loader-inline"></i></button>
         <span class="help-block"></span>
       </div>

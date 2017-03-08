@@ -25,7 +25,7 @@
       "closures": "闭包服务",
       "eventlog": "事件日志",
       "placementZones": "放置区域",
-      "environments": "环境",
+      "profiles": "环境",
       "endpoints": "端点",
       "machines": "计算机",
       "compute": "计算资源"
@@ -405,7 +405,7 @@
         "verified": "已成功验证!"
       }
     },
-    "environment": {
+    "profile": {
       "list": {
         "title": "环境",
         "titleSearch": "找到的环境",

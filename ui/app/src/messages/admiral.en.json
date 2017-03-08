@@ -36,7 +36,7 @@
       "closures": "Closures",
       "eventlog": "Event Log",
       "placementZones": "Placement Zones",
-      "environments": "Profiles",
+      "profiles": "Profiles",
       "endpoints": "Endpoints",
       "machines": "Machines",
       "compute": "Compute",
@@ -482,7 +482,7 @@
         "verified": "Verified successfully!"
       }
     },
-    "environment": {
+    "profile": {
       "list": {
         "title": "Profiles",
         "titleSearch": "Found profiles",

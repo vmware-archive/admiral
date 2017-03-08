@@ -25,7 +25,7 @@
       "closures": "Sluitingen",
       "eventlog": "Gebeurtenislogboek",
       "placementZones": "Plaatsingszones",
-      "environments": "Omgevingen",
+      "profiles": "Omgevingen",
       "endpoints": "Endpoints",
       "machines": "Machines",
       "compute": "Computer"
@@ -405,7 +405,7 @@
         "verified": "Geverifieerd!"
       }
     },
-    "environment": {
+    "profile": {
       "list": {
         "title": "Omgevingen",
         "titleSearch": "Gevonden omgevingen",

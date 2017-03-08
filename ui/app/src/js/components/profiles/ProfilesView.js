@@ -9,15 +9,15 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import EnvironmentsViewVue from 'components/profiles/EnvironmentsViewVue.html';
-import EnvironmentItem from 'components/profiles/EnvironmentItem'; //eslint-disable-line
-import EnvironmentEditView from 'components/profiles/EnvironmentEditView'; //eslint-disable-line
+import ProfilesViewVue from 'components/profiles/ProfilesViewVue.html';
+import ProfileItem from 'components/profiles/ProfileItem'; //eslint-disable-line
+import ProfileEditView from 'components/profiles/ProfileEditView'; //eslint-disable-line
 import GridHolderMixin from 'components/common/GridHolderMixin';
 import constants from 'core/constants';
-import { EnvironmentsActions, NavigationActions } from 'actions/Actions';
+import { ProfileActions, NavigationActions } from 'actions/Actions';
 
-var EnvironmentsView = Vue.extend({
-  template: EnvironmentsViewVue,
+var ProfilesView = Vue.extend({
+  template: ProfilesViewVue,
 
   props: {
     model: {
@@ -60,29 +60,29 @@ var EnvironmentsView = Vue.extend({
 
   methods: {
     goBack: function() {
-      NavigationActions.openEnvironments(this.model.listView && this.model.listView.queryOptions);
+      NavigationActions.openProfiles(this.model.listView && this.model.listView.queryOptions);
     },
     search: function(queryOptions) {
-      NavigationActions.openEnvironments(queryOptions);
+      NavigationActions.openProfiles(queryOptions);
     },
     refresh: function() {
-      EnvironmentsActions.openEnvironments(this.model.listView.queryOptions, true);
+      ProfileActions.openProfiles(this.model.listView.queryOptions, true);
     },
     loadMore: function() {
       if (this.model.listView.nextPageLink) {
-        EnvironmentsActions.openEnvironmentsNext(this.model.listView.queryOptions,
+        ProfileActions.openProfilesNext(this.model.listView.queryOptions,
           this.model.listView.nextPageLink);
       }
     },
-    addEnvironment: function() {
-      NavigationActions.openAddEnvironment();
+    addProfile: function() {
+      NavigationActions.openAddProfile();
     },
-    editEnvironment: function(environment) {
-      NavigationActions.editEnvironment(environment.documentSelfLink);
+    editProfile: function(profile) {
+      NavigationActions.editProfile(profile.documentSelfLink);
     }
   }
 });
 
-Vue.component('environments-view', EnvironmentsView);
+Vue.component('profiles-view', ProfilesView);
 
-export default EnvironmentsView;
+export default ProfilesView;

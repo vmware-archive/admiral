@@ -25,7 +25,7 @@
       "closures": "클로저",
       "eventlog": "이벤트 로그",
       "placementZones": "배치 영역",
-      "environments": "환경",
+      "profiles": "환경",
       "endpoints": "끝점",
       "machines": "시스템",
       "compute": "계산"
@@ -405,7 +405,7 @@
         "verified": "확인이 완료되었습니다!"
       }
     },
-    "environment": {
+    "profile": {
       "list": {
         "title": "환경",
         "titleSearch": "찾은 환경",
