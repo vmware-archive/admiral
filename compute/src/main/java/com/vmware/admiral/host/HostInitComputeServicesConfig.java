@@ -72,6 +72,7 @@ import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerServic
 import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService.ReplicationControllerState;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler;
 import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler.ServiceState;
+import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.network.ComputeNetworkService;
@@ -132,6 +133,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ContainerNetworkDescriptionService.class,
                 ComputeNetworkDescriptionService.class,
                 ComputeNetworkService.class,
+                ComputeNetworkCIDRAllocationService.class,
                 ContainerVolumeDescriptionService.class,
                 ContainerVolumeService.class,
                 ContainerVolumeDescriptionService.class,

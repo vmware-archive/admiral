@@ -59,6 +59,8 @@ public interface ManagementUriParts {
     String PLACEMENT_UPDATE_TASKS = RESOURCES + "/placement-update-tasks";
     String TAG_ASSIGNMENT = RESOURCES + "/tag-assignment";
     String COMPUTE_SEARCH = RESOURCES + "/compute-search";
+    String COMPUTE_NETWORK_CIDR_ALLOCATIONS = RESOURCES + "/compute-network-cidr-allocations";
+
     String PROJECTS = "/projects";
 
     String EPZ_COMPUTE_ENUMERATION_TASKS = RESOURCES + "/epz-compute-enumeration-tasks";
