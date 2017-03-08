@@ -65,7 +65,7 @@
         "add": "Aggiungi",
         "update": "Aggiorna",
         "create": "Crea",
-        "certificateWarning": "Il certificato per __address__ non è valido. È possibile che sia in corso la connessione a un sito Web che finge di essere __address__. Ciò potrebbe mettere a rischio le informazioni riservate dell'utente. Connettersi comunque al sito Web?",
+        "certificateWarning": "Il certificato per {{address}} non è valido. È possibile che sia in corso la connessione a un sito Web che finge di essere {{address}}. Ciò potrebbe mettere a rischio le informazioni riservate dell'utente. Connettersi comunque al sito Web?",
         "showCertificate": "Mostra certificato",
         "hideCertificate": "Nascondi certificato",
         "manageCertificates": "Gestisci certificati",
@@ -281,7 +281,7 @@
           "editTitle": "Modifica configurazione di rete",
           "name": "Nome",
           "existingNetwork": "Esistente",
-          "showingCount": "Visualizzazione di __count__ di __totalCount__",
+          "showingCount": "Visualizzazione di {{count}} di {{totalCount}}",
           "showingInstances": "istanze",
           "noResults": "Nessuna rete trovata",
           "hosts": "Host",
@@ -815,7 +815,7 @@
         "UNKNOWN": "SCONOSCIUTO",
         "RETIRED": "RITIRATO",
         "PROVISIONING": "PROVISIONING",
-        "continuousStateSince": "__state__ for __duration__"
+        "continuousStateSince": "{{state}} for {{duration}}"
       },
       "actions": {
         "start": "Avvia",
@@ -973,10 +973,10 @@
       "failure": "Errore di autenticazione"
     },
     "dropdownSearchMenu": {
-      "title": "Selezionare dall'elenco __entity__",
-      "searchPlaceholder": "Cerca __entity__",
+      "title": "Selezionare dall'elenco {{entity}}",
+      "searchPlaceholder": "Cerca {{entity}}",
       "clear": "Cancella selezione",
-      "showingCount": "Visualizzazione di __count__ di __totalCount__",
+      "showingCount": "Visualizzazione di {{count}} di {{totalCount}}",
       "noResults": "Nessun elemento trovato."
     },
     "customProperties": {
@@ -1042,6 +1042,6 @@
       "OFF": "SPENTO",
       "SUSPEND": "DISATTIVATO",
       "UNKNOWN": "SCONOSCIUTO",
-      "stateSinceMessage": "da __date__"
+      "stateSinceMessage": "da {{date}}"
     }
 }

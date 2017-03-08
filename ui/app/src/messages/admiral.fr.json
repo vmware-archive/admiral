@@ -65,7 +65,7 @@
         "add": "Ajouter",
         "update": "Mettre à jour",
         "create": "Créer",
-        "certificateWarning": "Le certificat de __address__ n'est pas valide. Il se peut que vous vous connectiez à un site Web prétendant être __address__, ce qui peut constituer un risque pour vos informations confidentielles. Voulez-vous néanmoins vous connecter au site Web ?",
+        "certificateWarning": "Le certificat de {{address}} n'est pas valide. Il se peut que vous vous connectiez à un site Web prétendant être {{address}}, ce qui peut constituer un risque pour vos informations confidentielles. Voulez-vous néanmoins vous connecter au site Web ?",
         "showCertificate": "Afficher le certificat",
         "hideCertificate": "Masquer le certificat",
         "manageCertificates": "Gérer les certificats",
@@ -281,7 +281,7 @@
           "editTitle": "Modifier la configuration réseau",
           "name": "Nom",
           "existingNetwork": "Existant",
-          "showingCount": "Showing __count__ out of __totalCount__",
+          "showingCount": "Showing {{count}} out of {{totalCount}}",
           "showingInstances": "instances",
           "noResults": "Aucun réseau trouvé",
           "hosts": "Hôtes",
@@ -815,7 +815,7 @@
         "UNKNOWN": "INCONNU",
         "RETIRED": "RETIRÉ",
         "PROVISIONING": "PROVISIONNEMENT",
-        "continuousStateSince": "__state__ for __duration__"
+        "continuousStateSince": "{{state}} for {{duration}}"
       },
       "actions": {
         "start": "Démarrer",
@@ -973,10 +973,10 @@
       "failure": "Erreur d'authentication"
     },
     "dropdownSearchMenu": {
-      "title": "Sélectionner dans la liste __entity__",
-      "searchPlaceholder": "Rechercher __entity__",
+      "title": "Sélectionner dans la liste {{entity}}",
+      "searchPlaceholder": "Rechercher {{entity}}",
       "clear": "Annuler la sélection",
-      "showingCount": "Showing __count__ out of __totalCount__",
+      "showingCount": "Showing {{count}} out of {{totalCount}}",
       "noResults": "Aucun élément trouvé"
     },
     "customProperties": {
@@ -1042,6 +1042,6 @@
       "OFF": "DÉSACTIVÉ",
       "SUSPEND": "DÉSACTIVÉ",
       "UNKNOWN": "INCONNU",
-      "stateSinceMessage": "depuis __date__"
+      "stateSinceMessage": "depuis {{date}}"
     }
 }

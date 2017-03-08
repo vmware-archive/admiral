@@ -9,7 +9,9 @@ var jsLibsToCopy = [
   './node_modules/jquery/dist/jquery.js',
   './node_modules/es5-shim/es5-shim.js',
   './node_modules/babel-polyfill/dist/polyfill.js',
-  './node_modules/i18next-client/i18next.js',
+  './node_modules/i18next/i18next.js',
+  './node_modules/i18next-browser-languagedetector/i18nextBrowserLanguageDetector.js',
+  './node_modules/i18next-xhr-backend/i18nextXHRBackend.js',
   './node_modules/tether/dist/js/tether.js',
   './node_modules/bootstrap/dist/js/bootstrap.js',
   './node_modules/reflux/dist/reflux.js',
@@ -41,7 +43,9 @@ var jsLibsToCopyMinified = [
   './node_modules/jquery/dist/jquery.min.js',
   './node_modules/es5-shim/es5-shim.min.js',
   './node_modules/babel-polyfill/dist/polyfill.min.js',
-  './node_modules/i18next-client/i18next.min.js',
+  './node_modules/i18next/i18next.min.js',
+  './node_modules/i18next-browser-languagedetector/i18nextBrowserLanguageDetector.min.js',
+  './node_modules/i18next-xhr-backend/i18nextXHRBackend.min.js',
   './node_modules/tether/dist/js/tether.min.js',
   './node_modules/bootstrap/dist/js/bootstrap.min.js',
   './node_modules/reflux/dist/reflux.min.js',
@@ -165,11 +169,11 @@ module.exports = {
   },
   images: {
     src: src + '/image-assets/**/*.*',
-    dest: dest + '/image-assets',
+    dest: dest + '/image-assets'
   },
   fonts: {
     src: './node_modules/font-awesome/fonts/**/*.*',
-    dest: dest + '/fonts',
+    dest: dest + '/fonts'
   },
   styles: {
     src: [
@@ -180,7 +184,7 @@ module.exports = {
       './node_modules/admiral-ui-common/css/*.css'
     ],
     dest: dest + '/styles',
-    includePaths:  [
+    includePaths: [
       './node_modules/bootstrap-sass/assets/stylesheets',
       './node_modules/clarity-ui/src'
     ]

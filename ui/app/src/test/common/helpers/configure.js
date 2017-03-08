@@ -11,6 +11,8 @@
 
 import Handlebars from 'handlebars/runtime';
 
+window.i18n = i18next;
+
 Handlebars.registerHelper('i18n', function(i18n_key) {
   return i18n_key;
 });

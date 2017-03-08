@@ -18,7 +18,7 @@ var templateHelpers = {};
 templateHelpers.register = function() {
   Handlebars.registerHelper('i18n', function(i18nKey) {
     i18nKey = Handlebars.Utils.escapeExpression(i18nKey);
-    return i18n.t(i18nKey);
+    return i18next.t(i18nKey);
   });
 
   Handlebars.registerHelper('i18n-appmode-aware', function(i18nStandaloneKey, i18nEmbeddedKey) {

@@ -72,7 +72,7 @@
         "add": "Hinzufügen",
         "update": "Aktualisieren",
         "create": "Erstellen",
-        "certificateWarning": "Das Zertifikat für __address__ ist ungültig. Sie stellen möglicherweise eine Verbindung zu einer Website her, die vorgibt, folgende zu sein: __address__. Damit könnten Ihre vertraulichen Daten einem Risiko ausgesetzt werden. Möchten Sie dennoch die Verbindung zu der Website herstellen?",
+        "certificateWarning": "Das Zertifikat für {{address}} ist ungültig. Sie stellen möglicherweise eine Verbindung zu einer Website her, die vorgibt, folgende zu sein: {{address}}. Damit könnten Ihre vertraulichen Daten einem Risiko ausgesetzt werden. Möchten Sie dennoch die Verbindung zu der Website herstellen?",
         "showCertificate": "Zertifikat anzeigen",
         "hideCertificate": "Zertifikat ausblenden",
         "manageCertificates": "Zertifikate verwalten",
@@ -295,7 +295,7 @@
           "editTitle": "Netzwerkkonfiguration bearbeiten",
           "name": "Name",
           "existingNetwork": "Vorhanden",
-          "showingCount": "__count__ von __totalCount__ werden angezeigt",
+          "showingCount": "{{count}} von {{totalCount}} werden angezeigt",
           "showingInstances": "Instanzen",
           "noResults": "Keine Netzwerke gefunden",
           "hosts": "Hosts",
@@ -332,7 +332,7 @@
             "valueHint": "Beispiel: 20GB"
           },
           "existingVolume": "Vorhanden",
-          "showingCount": "__count__ von __totalCount__ werden angezeigt",
+          "showingCount": "{{count}} von {{totalCount}} werden angezeigt",
           "showingInstances": "Instanzen",
           "noResults": "Keine Volumes gefunden",
           "mountpoint": "Host-Bereitstellungspunkt",
@@ -942,7 +942,7 @@
         "UNKNOWN": "UNBEKANNT",
         "RETIRED": "ZURÜCKGEZOGEN",
         "PROVISIONING": "BEREITSTELLUNG",
-        "continuousStateSince": "__state__ für __duration__"
+        "continuousStateSince": "{{state}} für {{duration}}"
       },
       "actions": {
         "start": "Starten",
@@ -1101,10 +1101,10 @@
       "failure": "Authentifizierungsfehler"
     },
     "dropdownSearchMenu": {
-      "title": "Aus __entity__-Liste auswählen",
-      "searchPlaceholder": "__entity__ suchen",
+      "title": "Aus {{entity}}-Liste auswählen",
+      "searchPlaceholder": "{{entity}} suchen",
       "clear": "Auswahl löschen",
-      "showingCount": "__count__ von __totalCount__ werden angezeigt",
+      "showingCount": "{{count}} von {{totalCount}} werden angezeigt",
       "noResults": "Keine Elemente gefunden"
     },
     "customProperties": {
@@ -1172,6 +1172,6 @@
       "OFF": "AUS",
       "SUSPEND": "DEAKTIVIERT",
       "UNKNOWN": "UNBEKANNT",
-      "stateSinceMessage": "seit __date__"
+      "stateSinceMessage": "seit {{date}}"
     }
 }

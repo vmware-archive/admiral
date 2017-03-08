@@ -72,7 +72,7 @@
         "add": "Toevoegen",
         "update": "Bijwerken",
         "create": "Maken",
-        "certificateWarning": "Het certificaat voor __address__ is ongeldig. U maakt mogelijk verbinding met een website die zich voordoet als __address__ waardoor uw vertrouwelijke gegevens risico kunnen lopen. Wilt u toch verbinding maken met deze website?",
+        "certificateWarning": "Het certificaat voor {{address}} is ongeldig. U maakt mogelijk verbinding met een website die zich voordoet als {{address}} waardoor uw vertrouwelijke gegevens risico kunnen lopen. Wilt u toch verbinding maken met deze website?",
         "showCertificate": "Certificaat weergeven",
         "hideCertificate": "Certificaat verbergen",
         "manageCertificates": "Certificaten beheren",
@@ -295,7 +295,7 @@
           "editTitle": "Netwerkconfiguratie bewerken",
           "name": "Naam",
           "existingNetwork": "Bestaand",
-          "showingCount": "__count__ van __totalCount__ weergegeven",
+          "showingCount": "{{count}} van {{totalCount}} weergegeven",
           "showingInstances": "instanties",
           "noResults": "Geen netwerken gevonden",
           "hosts": "Hosts",
@@ -332,7 +332,7 @@
             "valueHint": "Voorbeeld: 20GB"
           },
           "existingVolume": "Bestaand",
-          "showingCount": "__count__ van __totalCount__ weergegeven",
+          "showingCount": "{{count}} van {{totalCount}} weergegeven",
           "showingInstances": "instanties",
           "noResults": "Geen volumes gevonden",
           "mountpoint": "Hostkoppelpunt",
@@ -942,7 +942,7 @@
         "UNKNOWN": "ONBEKEND",
         "RETIRED": "UIT DE HANDEL GENOMEN",
         "PROVISIONING": "INRICHTING",
-        "continuousStateSince": "__state__ gedurende __duration__"
+        "continuousStateSince": "{{state}} gedurende {{duration}}"
       },
       "actions": {
         "start": "Beginnen",
@@ -1101,10 +1101,10 @@
       "failure": "Verificatie mislukt"
     },
     "dropdownSearchMenu": {
-      "title": "Selecteer uit de lijst __entity__",
-      "searchPlaceholder": "Zoeken naar __entity__",
+      "title": "Selecteer uit de lijst {{entity}}",
+      "searchPlaceholder": "Zoeken naar {{entity}}",
       "clear": "Selectie wissen",
-      "showingCount": "__count__ van __totalCount__ weergegeven",
+      "showingCount": "{{count}} van {{totalCount}} weergegeven",
       "noResults": "Geen items gevonden"
     },
     "customProperties": {
@@ -1172,6 +1172,6 @@
       "OFF": "UIT",
       "SUSPEND": "UITGESCHAKELD",
       "UNKNOWN": "ONBEKEND",
-      "stateSinceMessage": "vanaf __date__"
+      "stateSinceMessage": "vanaf {{date}}"
     }
 }

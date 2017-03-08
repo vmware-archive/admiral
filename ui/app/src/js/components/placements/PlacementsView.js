@@ -92,7 +92,6 @@ var PlacementsView = Vue.extend({
     this.unwatchModel();
   },
   methods: {
-    i18n: i18n.t,
     openToolbarPlacementZones: PlacementContextToolbarActions.openToolbarPlacementZones,
     openToolbarResourceGroups: PlacementContextToolbarActions.openToolbarResourceGroups,
     openToolbarDeploymentPolicies: PlacementContextToolbarActions.openToolbarDeploymentPolicies,
