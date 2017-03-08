@@ -132,6 +132,22 @@ var day2operation = function(url, entity) {
   return post(url, entity);
 };
 
+var buildTagsQuery = function(q) {
+  var pair = q.split(':');
+  var occurrence = pair[1] ? constants.SEARCH_OCCURRENCE.ALL : constants.SEARCH_OCCURRENCE.ANY;
+  return buildOdataQuery({
+    key: [{
+      val: '*' + pair[0].toLowerCase() + (pair[1] ? '' : '*'),
+      op: 'eq'
+    }],
+    value: [{
+      val: (pair[0] ? '' : '*') + (pair[1] || pair[0] || '').toLowerCase() + '*',
+      op: 'eq'
+    }],
+    [constants.SEARCH_OCCURRENCE.PARAM]: occurrence
+  });
+};
+
 // Simple Odata query builder. By default it will build 'and' query. If provided OCCURRENCE option,
 // then it will use it to build 'and', 'or' query. Based on the option provided, it will use
 // comparison like 'eq' or 'ne'
@@ -277,13 +293,13 @@ var mergeUrl = function(path, params) {
   return path;
 };
 
-var buildPaginationUrl = function(path, filter, count, order, limit) {
-  var params = {
+var buildPaginationUrl = function(path, filter, count, order, limit, params) {
+  params = $.extend(params || {}, {
     [DOCUMENT_TYPE_PROP_NAME]: true,
     [ODATA_COUNT_PROP_NAME]: count,
     [ODATA_LIMIT_PROP_NAME]: limit || calculateLimit(),
     [ODATA_ORDERBY_PROP_NAME]: order
-  };
+  });
   if (filter) {
     params[ODATA_FILTER_PROP_NAME] = filter;
   }
@@ -446,19 +462,7 @@ services.loadTags = function(documentSelfLinks) {
 services.searchTags = function(q) {
   var params = {};
   if (q) {
-    var pair = q.split(':');
-    var occurrence = pair[1] ? constants.SEARCH_OCCURRENCE.ALL : constants.SEARCH_OCCURRENCE.ANY;
-    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
-      key: [{
-        val: pair[0].toLowerCase() + '*',
-        op: 'eq'
-      }],
-      value: [{
-        val: (pair[1] || pair[0] || '').toLowerCase() + '*',
-        op: 'eq'
-      }],
-      [constants.SEARCH_OCCURRENCE.PARAM]: occurrence
-    });
+    params[ODATA_FILTER_PROP_NAME] = buildTagsQuery(q);
   }
   return list(links.TAGS, true, params);
 };
@@ -882,8 +886,34 @@ services.updateMachine = function(id, data) {
 };
 
 services.loadCompute = function(queryOptions) {
+  var params = {};
+  var queryOptionsOccurrence = queryOptions && queryOptions[constants.SEARCH_OCCURRENCE.PARAM];
+  var operator = queryOptionsOccurrence === constants.SEARCH_OCCURRENCE.ANY ? 'or' : 'and';
+  var endpointOps = {};
+  var endpointArray = toArrayIfDefined(queryOptions && queryOptions.endpoint);
+  if (endpointArray) {
+    endpointOps[FILTER_VALUE_ALL_FIELDS] = endpointArray.map((endpoint) => {
+      return {
+        val: '*' + endpoint.toLowerCase() + '*',
+        op: 'eq'
+      };
+    });
+    endpointOps[constants.SEARCH_OCCURRENCE.PARAM] = queryOptionsOccurrence;
+    params.endpoint = buildOdataQuery(endpointOps);
+    params.operator = operator;
+  }
+
+  var tagArray = toArrayIfDefined(queryOptions && queryOptions.tag);
+  if (tagArray) {
+    params.tag = tagArray
+        .map((q) => '(' + buildTagsQuery(q) + ')')
+        .join(' ' + operator + ' ');
+    params.operator = operator;
+  }
+
   let filter = buildHostsQuery(queryOptions, false, true);
-  let url = buildPaginationUrl(links.COMPUTE_RESOURCES, filter, true, 'creationTimeMicros asc');
+  let url = buildPaginationUrl(links.COMPUTE_RESOURCES_SEARCH, filter, true,
+      'creationTimeMicros asc', null, params);
   return get(url).then(function(result) {
     return result;
   });
@@ -2078,25 +2108,7 @@ var toArrayIfDefined = function(obj) {
 };
 
 var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
-  let qOps = [];
-
-  // Filter out Amazon parent hosts
-  qOps.descriptionLink = [
-    {
-      op: 'ne',
-      val: links.COMPUTE_DESCRIPTIONS + '/*-parent-compute-desc'
-    }
-  ];
-
-  //  Filter only actual compute hosts
-  if (onlyContainerHosts === false) {
-    qOps['customProperties/__computeContainerHost'] = [
-      {
-        op: 'ne',
-        val: '*'
-      }
-    ];
-  }
+  let qOps = {};
 
   //Filter only actual compute hosts that are container hosts
   if (onlyContainerHosts === true) {
@@ -2117,21 +2129,18 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
     ];
   }
 
-  var result = buildOdataQuery(qOps);
-
   if (onlyCompute === true) {
-    var computeOps = {
-      [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY,
-      type: [{
-        op: 'eq',
-        val: 'VM_HOST'
-      }, {
-        op: 'eq',
-        val: 'ZONE'
-      }]
-    };
-    result += ' and (' + buildOdataQuery(computeOps) + ')';
+    qOps[constants.SEARCH_OCCURRENCE.PARAM] = constants.SEARCH_OCCURRENCE.ANY;
+    qOps.type = [{
+      op: 'eq',
+      val: 'VM_HOST'
+    }, {
+      op: 'eq',
+      val: 'ZONE'
+    }];
   }
+
+  var result = '(' + buildOdataQuery(qOps) + ')';
 
   if (queryOptions) {
     var userQueryOps = {};
