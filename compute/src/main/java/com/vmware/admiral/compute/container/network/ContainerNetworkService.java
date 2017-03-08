@@ -181,9 +181,16 @@ public class ContainerNetworkService extends StatefulService {
     @Override
     public void handlePut(Operation put) {
         try {
+            // handle concurrent discovery of overlay networks by updating the network state
+            // instead of overwriting it: if data collection service discovers a particular overlay
+            // network on multiple hosts at the same time and tries to create multiple network
+            // states, update its parent links only
             ContainerNetworkState putState = getValidInputFrom(put, false);
-            setState(put, putState);
-            put.setBody(putState).complete();
+            ContainerNetworkState currentState = getState(put);
+            currentState.parentLinks = PropertyUtils.mergeLists(currentState.parentLinks,
+                    putState.parentLinks);
+            setState(put, currentState);
+            put.setBody(currentState).complete();
         } catch (Throwable e) {
             logSevere(e);
             put.fail(e);
