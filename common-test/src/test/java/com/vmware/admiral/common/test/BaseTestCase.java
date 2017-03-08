@@ -52,7 +52,9 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.TestServerX509TrustManager;
+import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.admiral.service.common.TaskServiceDocument;
+import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -87,12 +89,27 @@ public abstract class BaseTestCase {
     protected static final int MAINTENANCE_INTERVAL_MILLIS = 20;
     protected VerificationHost host;
 
-    private static class CustomizationVerificationHost extends VerificationHost {
+    protected static class CustomizationVerificationHost extends VerificationHost {
+
+        /**
+         * Users configuration file (full path). Specifying a file automatically enables Xenon's Authx
+         * services.
+         */
+        public String localUsers;
+
         private Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains = new HashMap<>();
 
         public CustomizationVerificationHost(
                 Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains) {
             this.chains.putAll(chains);
+        }
+
+        @Override
+        public ServiceHost initialize(Arguments args) throws Throwable {
+            if (AuthBootstrapService.isAuthxEnabled(localUsers)) {
+                args.isAuthorizationEnabled = true;
+            }
+            return super.initialize(args);
         }
 
         @Override
@@ -177,30 +194,49 @@ public abstract class BaseTestCase {
         host = null;
     }
 
-    protected VerificationHost createHost() throws Throwable {
+    protected ServiceHost.Arguments getHostArguments() {
         ServiceHost.Arguments args = new ServiceHost.Arguments();
         args.sandbox = null; // ask runtime to pick a random storage location
         args.port = 0; // ask runtime to pick a random port
+        return args;
+    }
+
+    protected VerificationHost createHost() throws Throwable {
+        return createHost(null, null);
+    }
+
+    protected VerificationHost createHost(String[] args) throws Throwable {
+        return createHost(null, args);
+    }
+
+    protected VerificationHost createHost(ServiceHost.Arguments args, String[] additionalArgs) throws Throwable {
         Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains = new HashMap<>();
         customizeChains(chains);
 
-        VerificationHost h = VerificationHost.initialize(new CustomizationVerificationHost(chains),
-                args);
-        h.setMaintenanceIntervalMicros(this.getMaintenanceIntervalMillis() * 1000);
-        h.setTimeoutSeconds(HOST_TIMEOUT_SECONDS);
+        CustomizationVerificationHost customizationHost = new CustomizationVerificationHost(chains);
 
-        h.setPeerSynchronizationEnabled(this.getPeerSynchronizationEnabled());
+        if (args == null) {
+            args = getHostArguments();
+        }
+        if (additionalArgs != null) {
+            CommandLineArgumentParser.parse(args, additionalArgs);
+            CommandLineArgumentParser.parse(customizationHost, additionalArgs);
+        }
 
-        h.start();
+        VerificationHost resultHost = VerificationHost.initialize(customizationHost, args);
+        resultHost.setMaintenanceIntervalMicros(this.getMaintenanceIntervalMillis() * 1000);
+        resultHost.setTimeoutSeconds(HOST_TIMEOUT_SECONDS);
 
-        return h;
+        resultHost.setPeerSynchronizationEnabled(this.getPeerSynchronizationEnabled());
+
+        resultHost.start();
+
+        return resultHost;
     }
 
     protected Map.Entry<VerificationHost, ServerX509TrustManager> createHostWithTrustManager(
             long reloadTime) throws Throwable {
-        ServiceHost.Arguments args = new ServiceHost.Arguments();
-        args.sandbox = null; // ask runtime to pick a random storage location
-        args.port = 0; // ask runtime to pick a random port
+        ServiceHost.Arguments args = getHostArguments();
         Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains = new HashMap<>();
         customizeChains(chains);
 
