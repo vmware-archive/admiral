@@ -88,7 +88,6 @@ public class HostVolumeListDataCollection extends StatefulService {
         public void add(ContainerVolumeState volume) {
             AssertUtil.assertNotNull(volume.name, "volumeName");
             AssertUtil.assertNotNull(volume.driver, "volumeDriver");
-            AssertUtil.assertNotNull(volume.scope, "volumeScope");
             volumesByName.put(volume.name, volume);
         }
     }
