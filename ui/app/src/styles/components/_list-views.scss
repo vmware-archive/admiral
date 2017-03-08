@@ -204,7 +204,7 @@
 .containers-view .container-item .container-header .title-holder .truncateText {
   color: #000;
 }
-.hosts-view, .machines-view, .compute-view, .environments-view {
+.hosts-view, .machines-view, .compute-view, .profiles-view {
   .list-holder {
     > .main-panel {
       @extend .position-expand;
@@ -235,7 +235,7 @@
   font-weight: 300;
 }
 
-.hosts-view, .machines-view, .compute-view, .environments-view {
+.hosts-view, .machines-view, .compute-view, .profiles-view {
   .list-view .grid-item .stats-holder {
     position: relative;
   }
@@ -278,7 +278,7 @@
     font-weight: normal;
   }
 
-  .list-view .environment-item .delete-inline-item-confirmation-holder,
+  .list-view .profile-item .delete-inline-item-confirmation-holder,
   .list-view .host-item .delete-inline-item-confirmation-holder {
     @extend .item-delete-confirmation;
   }
@@ -289,7 +289,7 @@
     }
   }
 
-  .list-view .environment-item:hover .actions,
+  .list-view .profile-item:hover .actions,
   .list-view .compute-item:hover .actions,
   .list-view .host-item:hover .actions,
   .list-view .machine-item:hover .actions {
@@ -300,8 +300,8 @@
 /* Environments */
 
 
-.environments-view {
-  .list-view .environment-item {
+.profiles-view {
+  .list-view .profile-item {
     @include container-image-header-icons(48px);
     .image-header {
       position: relative;
@@ -1091,7 +1091,7 @@ $elements-side-margin: $elements-margin / 2;
   margin-top: 20px;
 }
 
-.placements-view, .environments-view, .center-view > .endpoints-view, .registry-view {
+.placements-view, .profiles-view, .center-view > .endpoints-view, .registry-view {
   > .main-panel {
     @extend .position-expand;
     z-index: 1;

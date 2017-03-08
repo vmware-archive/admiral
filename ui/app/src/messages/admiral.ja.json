@@ -25,7 +25,7 @@
       "closures": "クロージャ",
       "eventlog": "イベント ログ",
       "placementZones": "配置ゾーン",
-      "environments": "環境",
+      "profiles": "環境",
       "endpoints": "エンドポイント",
       "machines": "マシン",
       "compute": "コンピューティング"
@@ -405,7 +405,7 @@
         "verified": "検証が正常に完了しました。"
       }
     },
-    "environment": {
+    "profile": {
       "list": {
         "title": "環境",
         "titleSearch": "見つかった環境",

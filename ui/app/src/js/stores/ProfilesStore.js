@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { EndpointsActions, EnvironmentsActions, NavigationActions,
+import { EndpointsActions, ProfileActions, NavigationActions,
     SubnetworksActions} from 'actions/Actions';
 import ContextPanelStoreMixin from 'stores/mixins/ContextPanelStoreMixin';
 import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
@@ -43,7 +43,7 @@ function onOpenToolbarItem(name, data, shouldSelectAndComplete) {
   this.emitChange();
 }
 
-let EnvironmentsStore = Reflux.createStore({
+let ProfilesStore = Reflux.createStore({
   mixins: [ContextPanelStoreMixin, CrudStoreMixin],
   init() {
     EndpointsStore.listen((endpointsData) => {
@@ -109,9 +109,9 @@ let EnvironmentsStore = Reflux.createStore({
 
   },
 
-  listenables: [EnvironmentsActions],
+  listenables: [ProfileActions],
 
-  onOpenEnvironments(queryOptions) {
+  onOpenProfiles(queryOptions) {
     this.setInData(['listView', 'queryOptions'], queryOptions);
     this.setInData(['editingItemData'], null);
     this.setInData(['validationErrors'], null);
@@ -121,14 +121,14 @@ let EnvironmentsStore = Reflux.createStore({
       this.setInData(['listView', 'itemsLoading'], true);
       this.emitChange();
 
-      operation.forPromise(services.loadEnvironments(queryOptions)).then((result) => {
+      operation.forPromise(services.loadProfiles(queryOptions)).then((result) => {
         let nextPageLink = result.nextPageLink;
         let itemsCount = result.totalCount;
 
         Promise.all(result.documentLinks.map((documentLink) =>
-          services.loadEnvironment(utils.getDocumentId(documentLink))
-        )).then((environments) => {
-          this.setInData(['listView', 'items'], environments);
+          services.loadProfile(utils.getDocumentId(documentLink))
+        )).then((profiles) => {
+          this.setInData(['listView', 'items'], profiles);
           this.setInData(['listView', 'itemsLoading'], false);
           this.setInData(['listView', 'nextPageLink'], nextPageLink);
           if (itemsCount !== undefined && itemsCount !== null) {
@@ -140,15 +140,15 @@ let EnvironmentsStore = Reflux.createStore({
     }
   },
 
-  onOpenAddEnvironment() {
+  onOpenAddProfile() {
     this.setInData(['editingItemData', 'item'], {});
     this.setInData(['editingItemData', 'endpoints'], this.data.endpoints);
     this.setInData(['editingItemData', 'subnetworks'], this.data.subnetworks);
     this.emitChange();
   },
 
-  onEditEnvironment(environmentId) {
-    services.loadEnvironment(environmentId).then((document) => {
+  onEditProfile(profileId) {
+    services.loadProfile(profileId).then((document) => {
       var promises = [];
 
       if (document.endpointLink) {
@@ -191,12 +191,12 @@ let EnvironmentsStore = Reflux.createStore({
     this.emitChange();
   },
 
-  onCancelEditEnvironment() {
+  onCancelEditProfile() {
     this.setInData(['editingItemData'], null);
     this.emitChange();
   },
 
-  onCreateEnvironment(model, tags) {
+  onCreateProfile(model, tags) {
     let tagsPromises = [];
     tags.forEach((tag) => {
       tagsPromises.push(services.createTag(tag));
@@ -216,9 +216,9 @@ let EnvironmentsStore = Reflux.createStore({
           networkProfileLink: networkProfile.documentSelfLink,
           storageProfileLink: storageProfile.documentSelfLink
         });
-        return services.createEnvironment(data);
+        return services.createProfile(data);
       }).then(() => {
-        NavigationActions.openEnvironments();
+        NavigationActions.openProfiles();
         this.setInData(['editingItemData'], null);
         this.emitChange();
       }).catch(this.onGenericEditError);
@@ -230,7 +230,7 @@ let EnvironmentsStore = Reflux.createStore({
     this.emitChange();
   },
 
-  onUpdateEnvironment(model, tags) {
+  onUpdateProfile(model, tags) {
     let tagsPromises = [];
     tags.forEach((tag) => {
       tagsPromises.push(services.createTag(tag));
@@ -244,9 +244,9 @@ let EnvironmentsStore = Reflux.createStore({
         services.updateComputeProfile(data.computeProfile),
         services.updateNetworkProfile(data.networkProfile),
         services.updateStorageProfile(data.storageProfile),
-        services.updateEnvironment(data)
+        services.updateProfile(data)
       ]).then(() => {
-        NavigationActions.openEnvironments();
+        NavigationActions.openProfiles();
         this.setInData(['editingItemData'], null);
         this.emitChange();
       }).catch(this.onGenericEditError);
@@ -258,12 +258,12 @@ let EnvironmentsStore = Reflux.createStore({
     this.emitChange();
   },
 
-  onDeleteEnvironment(environment) {
-    services.deleteEnvironment(environment).then(() => {
-      var environments = this.data.listView.items.asMutable().filter((item) =>
-          item.documentSelfLink !== environment.documentSelfLink);
+  onDeleteProfile(profile) {
+    services.deleteProfile(profile).then(() => {
+      var profiles = this.data.listView.items.asMutable().filter((item) =>
+          item.documentSelfLink !== profile.documentSelfLink);
 
-      this.setInData(['listView', 'items'], Immutable(environments));
+      this.setInData(['listView', 'items'], Immutable(profiles));
       this.setInData(['listView', 'itemsCount'], this.data.listView.itemsCount - 1);
       this.emitChange();
     });
@@ -329,5 +329,4 @@ let EnvironmentsStore = Reflux.createStore({
   }
 });
 
-export default EnvironmentsStore;
-
+export default ProfilesStore;

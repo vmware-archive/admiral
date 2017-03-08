@@ -99,19 +99,19 @@ var HostCreateView = Vue.extend({
       return !this.instanceType || !this.imageType ||
           (this.endpoint.endpointType === 'vsphere' && !this.destination);
     },
-    endpointEnvironment: function() {
-      if (this.endpoint && this.model.environments) {
-        return this.model.environments.find((environment) =>
-            environment.endpointType === this.endpoint.endpointType);
+    endpointProfile: function() {
+      if (this.endpoint && this.model.profiles) {
+        return this.model.profiles.find((profile) =>
+            profile.endpointType === this.endpoint.endpointType);
       }
     },
     instanceTypes: function() {
-      return this.endpointEnvironment &&
-          this.endpointEnvironment.computeProfile.instanceTypeMapping;
+      return this.endpointProfile &&
+          this.endpointProfile.computeProfile.instanceTypeMapping;
     },
     imageTypes: function() {
-      return this.endpointEnvironment &&
-          this.endpointEnvironment.computeProfile.imageMapping;
+      return this.endpointProfile &&
+          this.endpointProfile.computeProfile.imageMapping;
     },
     validationErrors: function() {
       return this.model.validationErrors || {};
@@ -281,13 +281,13 @@ var HostCreateView = Vue.extend({
     },
     getInstanceTypeDescription: function(key) {
       if (!utils.isApplicationEmbedded()) {
-        return i18n.t(`app.environment.instanceType.${this.endpoint.endpointType}.${key}`);
+        return i18n.t(`app.profile.instanceType.${this.endpoint.endpointType}.${key}`);
       }
       return key;
     },
     getImageTypeDescription: function(key) {
       if (!utils.isApplicationEmbedded()) {
-        return i18n.t(`app.environment.imageType.${key}`);
+        return i18n.t(`app.profile.imageType.${key}`);
       }
       return key;
     },

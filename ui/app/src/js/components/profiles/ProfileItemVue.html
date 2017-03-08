@@ -9,7 +9,7 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div class="environment-item">
+<div class="profile-item">
   <div class="image-header">
     <img v-bind:src="iconSrc">
     <div :title="id" class="title truncateText">{{model.name}}</div>
@@ -17,7 +17,7 @@
   <hr>
   <div class="details form-horizontal">
     <div class="form-group">
-      <label class="col-xs-5">{{i18n("app.environment.details.endpoint")}}</label>
+      <label class="col-xs-5">{{i18n("app.profile.details.endpoint")}}</label>
       <div class="col-xs-7 truncateText" :title="endpointName">
         <span>{{endpointName}}</span>
       </div>
@@ -25,11 +25,11 @@
   </div>
   <div class="actions" v-bind:class="{'hide': showDeleteConfirmation}">
     <action-button name="edit" v-bind:label="i18n('app.host.actions.edit')"
-                   icon-name="edit" v-on:click="editEnvironment($event)"></action-button>
+                   icon-name="edit" v-on:click="editProfile($event)"></action-button>
     <action-button name="remove" v-bind:label="i18n('app.host.actions.remove')"
                    icon-name="trash" v-on:click="askConfirmation($event)"></action-button>
   </div>
   <delete-confirmation v-bind:show="showDeleteConfirmation"
-                       v-on:confirm-delete="removeEnvironment($event)"
+                       v-on:confirm-delete="removeProfile($event)"
                        v-on:cancel-delete="cancelRemoval($event)"></delete-confirmation>
 </div>

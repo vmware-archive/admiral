@@ -10,12 +10,12 @@
  */
 
 import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin';
-import EnvironmentItemVue from 'components/profiles/EnvironmentItemVue.html';
-import { EnvironmentsActions, NavigationActions } from 'actions/Actions';
+import ProfileItemVue from 'components/profiles/ProfileItemVue.html';
+import { ProfileActions, NavigationActions } from 'actions/Actions';
 import utils from 'core/utils';
 
-export default Vue.component('environment-grid-item', {
-  template: EnvironmentItemVue,
+export default Vue.component('profile-grid-item', {
+  template: ProfileItemVue,
   mixins: [DeleteConfirmationSupportMixin],
   props: {
     model: {
@@ -34,13 +34,13 @@ export default Vue.component('environment-grid-item', {
     }
   },
   methods: {
-    removeEnvironment() {
-      this.confirmRemoval(EnvironmentsActions.deleteEnvironment, [this.model]);
+    removeProfile() {
+      this.confirmRemoval(ProfileActions.deleteProfile, [this.model]);
     },
-    editEnvironment(event) {
+    editProfile(event) {
       event.preventDefault();
 
-      NavigationActions.editEnvironment(utils.getDocumentId(this.model.documentSelfLink));
+      NavigationActions.editProfile(utils.getDocumentId(this.model.documentSelfLink));
     }
   }
 });

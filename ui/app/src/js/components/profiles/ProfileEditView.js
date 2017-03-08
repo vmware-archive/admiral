@@ -19,15 +19,15 @@ import vSphereComputeProfileEditor from 'components/profiles/vsphere/ComputeProf
 import vSphereNetworkProfileEditor from 'components/profiles/vsphere/NetworkProfileEditor'; //eslint-disable-line
 import vSphereStorageProfileEditor from 'components/profiles/vsphere/StorageProfileEditor'; //eslint-disable-line
 
-import { EnvironmentsActions, NavigationActions } from 'actions/Actions';
+import { ProfileActions, NavigationActions } from 'actions/Actions';
 import EndpointsList from 'components/endpoints/EndpointsList'; //eslint-disable-line
 import SubnetworkSearch from 'components/subnetworks/SubnetworkSearch'; //eslint-disable-line
 import SubnetworksList from 'components/subnetworks/SubnetworksList'; //eslint-disable-line
-import EnvironmentEditViewVue from 'components/profiles/EnvironmentEditViewVue.html';
+import ProfileEditViewVue from 'components/profiles/ProfileEditViewVue.html';
 import utils from 'core/utils';
 
-export default Vue.component('environment-edit-view', {
-  template: EnvironmentEditViewVue,
+export default Vue.component('profile-edit-view', {
+  template: ProfileEditViewVue,
   props: {
     model: {
       default: () => ({
@@ -88,12 +88,12 @@ export default Vue.component('environment-edit-view', {
         return false;
       }
       this.currentView = $(e.target).attr('href').substring(1);
-      EnvironmentsActions.selectView(this.currentView,
+      ProfileActions.selectView(this.currentView,
           this.endpoint && this.endpoint.documentSelfLink);
     });
 
     $(this.$el).find('.nav-item a[href="#' + this.currentView + '"]').tab('show');
-    EnvironmentsActions.selectView(this.currentView,
+    ProfileActions.selectView(this.currentView,
         this.endpoint && this.endpoint.documentSelfLink);
 
     this.unwatchEndpoint = this.$watch('model.item.endpoint', (endpoint) => {
@@ -105,7 +105,7 @@ export default Vue.component('environment-edit-view', {
   },
   methods: {
     goBack() {
-      NavigationActions.openEnvironments();
+      NavigationActions.openProfiles();
     },
     save($event) {
       $event.stopImmediatePropagation();
@@ -113,9 +113,9 @@ export default Vue.component('environment-edit-view', {
 
       let model = this.getModel();
       if (model.documentSelfLink) {
-        EnvironmentsActions.updateEnvironment(model, this.tags);
+        ProfileActions.updateProfile(model, this.tags);
       } else {
-        EnvironmentsActions.createEnvironment(model, this.tags);
+        ProfileActions.createProfile(model, this.tags);
       }
     },
     onNameChange(value) {
@@ -137,10 +137,10 @@ export default Vue.component('environment-edit-view', {
       this.networkProfileEditor = value;
     },
     onNetworkCreateSubnetwork() {
-      EnvironmentsActions.createSubnetwork();
+      ProfileActions.createSubnetwork();
     },
     onNetworkManageSubnetworks() {
-      EnvironmentsActions.manageSubnetworks();
+      ProfileActions.manageSubnetworks();
     },
     onStorageProfileEditorChange(value) {
       this.editorErrors = null;
@@ -150,16 +150,16 @@ export default Vue.component('environment-edit-view', {
       this.editorErrors = errors;
     },
     createEndpoint() {
-      EnvironmentsActions.createEndpoint();
+      ProfileActions.createEndpoint();
     },
     manageEndpoints() {
-      EnvironmentsActions.manageEndpoints();
+      ProfileActions.manageEndpoints();
     },
     manageSubnetworks() {
-      EnvironmentsActions.manageSubnetworks();
+      ProfileActions.manageSubnetworks();
     },
     closeToolbar() {
-      EnvironmentsActions.closeToolbar();
+      ProfileActions.closeToolbar();
     },
     getModel() {
       var toSave = $.extend({ properties: {} }, this.model.item.asMutable({deep: true}));

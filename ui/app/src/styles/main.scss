@@ -18,7 +18,7 @@
 @import "components/container-details";
 @import "components/container-request";
 @import "components/closures-request";
-@import "components/environment";
+@import "components/profile";
 @import "components/query-search";
 @import "components/networks";
 @import "components/volumes";
@@ -420,7 +420,7 @@ textarea {
   overflow: hidden;
 }
 
-.hosts-view, .images-view, .containers-view, .machines-view, .compute-view, .environments-view {
+.hosts-view, .images-view, .containers-view, .machines-view, .compute-view, .profiles-view {
   @extend .position-expand;
   overflow: hidden;
 }
@@ -818,7 +818,7 @@ $main-list-view-right: 10px;
 
 .host-view,
 .compute-edit-view,
-.environment-edit-view,
+.profile-edit-view,
 .machine-edit-view,
 .registry-view {
   > .main-panel {
@@ -835,7 +835,7 @@ $main-list-view-right: 10px;
 
 .host-view.right-context-expanded,
 .compute-edit-view.right-context-expanded,
-.environment-edit-view.right-context-expanded,
+.profile-edit-view.right-context-expanded,
 .machine-edit-view.right-context-expanded,
 .registry-view.right-context-expanded {
   > .main-panel {
@@ -880,7 +880,7 @@ $main-list-view-right: 10px;
   }
 }
 
-.environment-edit-view {
+.profile-edit-view {
   > .main-panel {
     @extend .position-expand;
     background-color: $context-view-background-color;
@@ -922,7 +922,7 @@ $main-list-view-right: 10px;
   }
 }
 
-.registry-view, .placements-view, .environments-view, .center-view > .endpoints-view {
+.registry-view, .placements-view, .profiles-view, .center-view > .endpoints-view {
   @extend .inline-editable-list-and-context-view;
 }
 
@@ -1265,7 +1265,7 @@ form.placement-inline-edit-properties {
   bottom: 0;
 }
 
-.environments-view .closable-view > .content {
+.profiles-view .closable-view > .content {
   top: 0;
   left: 0;
   right: 0;
@@ -1278,7 +1278,7 @@ form.placement-inline-edit-properties {
   left: 15px;
 }
 
-.closable-view .environment-form,
+.closable-view .profile-form,
 .closable-view.registry-view .list-holder {
   margin-top: 20px;
 }

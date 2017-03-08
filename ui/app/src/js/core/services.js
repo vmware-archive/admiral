@@ -1163,7 +1163,7 @@ services.deletePlacement = function(placement) {
   return deleteEntity(placement.documentSelfLink);
 };
 
-services.loadEnvironments = function(queryOptions) {
+services.loadProfiles = function(queryOptions) {
   let filter = buildSearchQuery(queryOptions);
   let url = buildPaginationUrl(links.PROFILES, filter, true,
       'documentExpirationTimeMicros desc');
@@ -1172,20 +1172,20 @@ services.loadEnvironments = function(queryOptions) {
   });
 };
 
-services.loadEnvironment = function(environmentId) {
-  return get(links.PROFILES + '/' + environmentId + '?' + EXPAND_QUERY_PROP_NAME);
+services.loadProfile = function(profileId) {
+  return get(links.PROFILES + '/' + profileId + '?' + EXPAND_QUERY_PROP_NAME);
 };
 
-services.createEnvironment = function(environment) {
-  return post(links.PROFILES, environment);
+services.createProfile = function(profile) {
+  return post(links.PROFILES, profile);
 };
 
-services.updateEnvironment = function(environment) {
-  return put(environment.documentSelfLink, environment);
+services.updateProfile = function(profile) {
+  return put(profile.documentSelfLink, profile);
 };
 
-services.deleteEnvironment = function(environment) {
-  return deleteEntity(environment.documentSelfLink);
+services.deleteProfile = function(profile) {
+  return deleteEntity(profile.documentSelfLink);
 };
 
 services.createComputeProfile = function(profile) {

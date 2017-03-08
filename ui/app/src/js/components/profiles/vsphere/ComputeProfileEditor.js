@@ -14,12 +14,12 @@ export default Vue.component('vsphere-compute-profile-editor', {
     <div>
       <multicolumn-editor-group
         :headers="[
-          i18n('app.environment.edit.nameLabel'),
-          i18n('app.environment.edit.cpuCountLabel'),
-          i18n('app.environment.edit.diskSizeMbLabel'),
-          i18n('app.environment.edit.memoryMbLabel')
+          i18n('app.profile.edit.nameLabel'),
+          i18n('app.profile.edit.cpuCountLabel'),
+          i18n('app.profile.edit.diskSizeMbLabel'),
+          i18n('app.profile.edit.memoryMbLabel')
         ]"
-        :label="i18n('app.environment.edit.instanceTypeMappingLabel')"
+        :label="i18n('app.profile.edit.instanceTypeMappingLabel')"
         :value="instanceTypeMapping"
         @change="onInstanceTypeMappingChange">
         <multicolumn-cell name="name">
@@ -37,10 +37,10 @@ export default Vue.component('vsphere-compute-profile-editor', {
       </multicolumn-editor-group>
       <multicolumn-editor-group
         :headers="[
-          i18n('app.environment.edit.nameLabel'),
-          i18n('app.environment.edit.valueLabel')
+          i18n('app.profile.edit.nameLabel'),
+          i18n('app.profile.edit.valueLabel')
         ]"
-        :label="i18n('app.environment.edit.imageMappingLabel')"
+        :label="i18n('app.profile.edit.imageMappingLabel')"
         :value="imageMapping"
         @change="onImageMappingChange">
         <multicolumn-cell name="name">

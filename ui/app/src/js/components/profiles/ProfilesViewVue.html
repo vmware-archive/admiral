@@ -9,16 +9,16 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div class="environments-view">
-  <div class="environments-list-holder">
+<div class="profiles-view">
+  <div class="profiles-list-holder">
     <div class="main-panel">
-      <div class="list-view environments-list scroll-view" v-if="model.listView">
+      <div class="list-view profiles-list scroll-view" v-if="model.listView">
         <a class="close-button hide" @click="goBack($event)"><i
           class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
 
         <div class="toolbar">
           <search v-bind:suggestion-properties="searchSuggestions"
-                  v-bind:placeholder="i18n('app.environment.list.searchPlaceholder')"
+                  v-bind:placeholder="i18n('app.profile.list.searchPlaceholder')"
                   v-bind:query-options="model.listView.queryOptions"
                   v-bind:occurrence-properties="
                       [{
@@ -30,15 +30,15 @@
                       }]"
                   v-on:search-change="search">
          </search>
-         <a class="btn btn-primary createEnvironment-btn" v-on:click="addEnvironment"><i
-           class="fa fa-plus-circle"></i>{{i18n("app.environment.list.addButton")}}</a>
+         <a class="btn btn-primary createProfile-btn" v-on:click="addProfile"><i
+           class="fa fa-plus-circle"></i>{{i18n("app.profile.list.addButton")}}</a>
         </div>
 
         <div class="grid-container">
           <list-title v-on:refresh-list="refresh()"
                       v-bind:has-search-query="isShowingSearchResults" v-bind:count="itemsCount"
-                      v-bind:title="i18n('app.environment.list.title')"
-                      v-bind:title-search="i18n('app.environment.list.titleSearch')"></list-title>
+                      v-bind:title="i18n('app.profile.list.title')"
+                      v-bind:title-search="i18n('app.profile.list.titleSearch')"></list-title>
           <div class="content">
             <grid v-bind:context-selected="model.selectedItem"
                   v-bind:preferred-width="preferredGridWidth"
@@ -46,7 +46,7 @@
                   v-infinite-scroll="loadMore()">
                 <grid-item v-for="item in model.listView.items"
                            track-by="documentSelfLink">
-                  <environment-grid-item v-bind:model="item"></environment-grid-item>
+                  <profile-grid-item v-bind:model="item"></profile-grid-item>
               </grid-item>
             </grid>
           </div>
@@ -63,7 +63,7 @@
     <a class="close-button" v-on:click="goBack($event)"><i
       class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
 
-    <environment-edit-view v-bind:model="model.editingItemData" class="content"></environment-edit-view>
+    <profile-edit-view v-bind:model="model.editingItemData" class="content"></profile-edit-view>
   </div>
 
 </div>

@@ -10,7 +10,7 @@
  */
 
 import PlacementsStore from 'stores/PlacementsStore';
-import EnvironmentsStore from 'stores/EnvironmentsStore';
+import ProfilesStore from 'stores/ProfilesStore';
 import EndpointsStore from 'stores/EndpointsStore';
 import MachinesStore from 'stores/MachinesStore';
 import ComputeStore from 'stores/ComputeStore';
@@ -78,7 +78,7 @@ let initializeStoreListeners = function() {
 
   });
 
-  EnvironmentsStore.listen((data) => {
+  ProfilesStore.listen((data) => {
     if (this.data.centerView && this.data.centerView.name === constants.VIEWS.PROFILES.name) {
       this.setInData(['centerView', 'data'], data);
       this.emitChange();

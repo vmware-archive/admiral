@@ -14,10 +14,10 @@ export default Vue.component('azure-storage-profile-editor', {
     <div>
       <multicolumn-editor-group
         :headers="[
-          i18n('app.environment.edit.nameLabel'),
-          i18n('app.environment.edit.valueLabel')
+          i18n('app.profile.edit.nameLabel'),
+          i18n('app.profile.edit.valueLabel')
         ]"
-        :label="i18n('app.environment.edit.bootDiskPropertyMappingLabel')"
+        :label="i18n('app.profile.edit.bootDiskPropertyMappingLabel')"
         :value="bootDiskPropertyMapping"
         @change="onBootDiskPropertyMappingChange">
         <multicolumn-cell name="name">
