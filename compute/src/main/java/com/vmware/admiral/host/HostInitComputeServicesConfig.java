@@ -15,6 +15,7 @@ import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionFactoryService;
+import com.vmware.admiral.compute.ComputeSearchService;
 import com.vmware.admiral.compute.ConfigureHostOverSshTaskService;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
@@ -105,6 +106,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 HostConfigCertificateDistributionService.class,
                 RegistryConfigCertificateDistributionService.class,
                 ComputeInitialBootService.class,
+                ComputeSearchService.class,
                 ElasticPlacementZoneConfigurationService.class,
                 ProfileMappingService.class,
                 KubernetesDescriptionContentService.class,
