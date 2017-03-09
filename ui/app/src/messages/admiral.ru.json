@@ -3,8 +3,10 @@
     "homepage": {
       "welcome": "Приветствуем!",
       "description": "Здесь вы можете <b>создавать, подготавливать, отслеживать приложения контейнерного исполнения, а также управлять ими.</b>",
+      "descriptionCompute": "В этом разделе вы можете <b>создавать, подготавливать, отслеживать любое приложение в любом облаке, а также управлять им.</b>",
       "start": "Приступим!",
       "addHost": "Добавление узла",
+      "addEndpoint": "Добавить конечную точку",
       "enter": "Ввод",
       "helpCenter": "Справка",
       "steps": {
@@ -22,13 +24,15 @@
       "containers": "Контейнеры",
       "applications": "Приложения",
       "networks": "Сети",
+      "volumes": "Тома",
       "closures": "Закрытия",
+      "kubernetes": "Kubernetes",
       "eventlog": "Журнал событий",
       "placementZones": "Зоны размещения",
-      "profiles": "Среды",
+      "environments": "Профили",
       "endpoints": "Конечные точки",
       "machines": "Компьютеры",
-      "compute": "Вычисление"
+      "compute": "Вычислительный ресурс"
     },
     "host": {
       "entity": "узел",
@@ -43,7 +47,10 @@
         "addressHint": "Укажите соответствующие схему и порт, например https://myhost.com:2376. Схема, используемая по умолчанию: \"https\". Порты, используемые по умолчанию: https/443, http/80.",
         "hostAlias": "Имя",
         "hostAddress": "Адрес",
+        "hostType": "Тип узла",
         "placementZone": "Зона размещения",
+        "placementZoneInputPlaceholder": "Пример: vic:hostname:2376",
+        "placementZoneInputHint": "Зона размещения планировщика с этим именем будет создана автоматически",
         "credential": "Учетные данные для входа",
         "guestCredential": "Гостевые учетные данные",
         "destination": "Пункт назначения",
@@ -54,7 +61,7 @@
         "tagsHint": "Введите теги ключ:значение",
         "autoConfigure": "Автоматическая конфигурация",
         "autoConfigureInput":"Включить автоматическую конфигурацию узла",
-        "autoConfigureHint": "Узел будет настроен автоматически",
+        "autoConfigureHint": "Эта функция поможет настроить удаленный интерфейс API Docker для указанного адреса и порта, используя сгенерированные самоподписанные сертификаты. Это будет сделано один раз через SSH. Поддерживаемые операционные системы: CoreOS, PhotonOS, Ubuntu Server версии 16.04 или выше.",
         "reservationPolicy": "Политика резервирования",
         "endpoint": "Конечная точка",
         "connectionType": "Тип подключения",
@@ -70,6 +77,7 @@
         "hideCertificate": "Скрыть сертификат",
         "manageCertificates": "Управление сертификатами",
         "containers": "Контейнеры",
+        "nodes": "Узлы",
         "cpu": "ЦП",
         "memory": "Память",
         "storage": "Хранилище",
@@ -80,7 +88,8 @@
         "instanceType": "Тип экземпляра",
         "imageType": "ОС",
         "port": "Порт",
-        "clusterSize": "Число экземпляров"
+        "clusterSize": "Число экземпляров",
+        "unlimited": "Без ограничений"
       },
       "list": {
         "title": "Узлы",
@@ -117,7 +126,12 @@
         "update": "Изменить зону размещения",
         "nameTitle": "Имя зоны размещения",
         "endpointTitle": "Конечная точка",
+        "placementPolicy": "Политика расширенного размещения",
+        "placementPolicyHint": "По умолчанию ресурсы размещаются на случайных узлах. Можно также применить одну из следующих стратегий:<br><br><b>BINPACK</b> - размещение на узле с наибольшей загрузкой памяти.<br><br><b>SPREAD</b> - размещение на узле с наименьшим количеством ресурсов.",
         "dynamicTitle": "Динамическое выделение ресурсов для этой зоны",
+        "tagsTitle": "Теги",
+        "tagsHint": "Введите теги ключ:значение",
+        "tagsPlaceholder": "Пример: соответствие:да",
         "tagsToMatchTitle": "Теги для сопоставления",
         "tagsToMatchHint": "Введите теги ключ:значение для сопоставления",
         "tagsToMatchPlaceholder": "Пример: расположение:запад"
@@ -236,7 +250,7 @@
         "searchImagesPlaceholder": "Поиск образов",
         "searchTemplatesPlaceholder": "Поиск шаблонов",
         "searchClosuresPlaceholder": "Поиск закрытий",
-        "manageRegistry": "Управление реестром",
+        "manageRegistry": "Управление реестрами",
         "provision": "Подготовка",
         "provisionAdditionalInfo": "Введите дополнительные сведения",
         "editTemplate": "Изменение и просмотр сведений",
@@ -302,9 +316,50 @@
           "editTitle": "Изменить закрытие",
           "name": "Имя"
         },
+        "editVolume" :{
+          "newLabel": "Добавить том",
+          "newTitle": "Добавить том",
+          "newDropdownTitle": "Добавить том...",
+          "editTitle": "Изменить том",
+          "name": "Имя",
+          "driver": "Драйвер",
+          "driverPlaceholder": "Пример: локальный",
+          "driverOptions": {
+            "label": "Параметры драйвера",
+            "keyTitle": "Параметр",
+            "keyHint": "Пример: размер",
+            "valueTitle": "Значение",
+            "valueHint": "Пример: 20 ГБ"
+          },
+          "existingVolume": "Имеющиеся",
+          "showingCount": "Отображается __count__ из __totalCount__",
+          "showingInstances": "экземпляры",
+          "noResults": "Тома не найдены",
+          "mountpoint": "Точка монтирования узла",
+          "hosts": "Узел",
+          "hostsSearchPlaceholder": "Поиск узла",
+          "create": "Создать",
+          "createTitle": "Создать том",
+          "customProperties": "Настраиваемые свойства"
+        },
+        "editKubernetes": {
+          "newTitle": "Добавить Kubernetes",
+          "editTitle": "Изменить Kubernetes",
+          "createEntities": {
+            "title": "Создать экземпляры Kubernetes",
+            "button": "Создать",
+            "hint": "Создавайте экземпляры Kubernetes из определений YAML, загрузив файл или вручную введя его содержимое. Можно использовать несколько определений, разделенных \"---\", например пару «Развертывание/Сервис».",
+            "placeholder": "Введите определения YAML для Kubernetes... "
+          }
+        },
         "network": {
           "drag": "Перетащите, чтобы прикрепить контейнер к этой сети",
           "drop": "Отпустите, чтобы прикрепить контейнер к этой сети"
+        },
+        "volume": {
+          "drag": "Перетащите, чтобы прикрепить контейнер к этому тому",
+          "drop": "Отпустите, чтобы прикрепить контейнер к этому тому",
+          "editContainerPath": "Путь к контейнеру:"
         }
       },
       "actions": {
@@ -405,12 +460,12 @@
         "verified": "Проверка успешно выполнена!"
       }
     },
-    "profile": {
+    "environment": {
       "list": {
-        "title": "Среды",
-        "titleSearch": "Найденные среды",
-        "searchPlaceholder": "Поиск сред",
-        "addButton": "Добавить среду",
+        "title": "Профили",
+        "titleSearch": "Найденные профили",
+        "searchPlaceholder": "Поиск профилей",
+        "addButton": "Создать профиль",
         "addPropertyButton": "Добавить свойство",
         "nameColumn": "Имя",
         "endpointTypeColumn": "Тип конечной точки",
@@ -425,11 +480,11 @@
         "remove": "Удалить"
       },
       "edit": {
-        "addTitle": "Добавить среду",
-        "editTitle": "Изменить среду",
+        "addTitle": "Добавить профиль",
+        "editTitle": "Изменить профиль",
         "save": "Сохранить",
         "basicTab": "Основные",
-        "computeTab": "Вычисление",
+        "computeTab": "Вычислительный ресурс",
         "networkTab": "Сеть",
         "storageTab": "Хранилище",
         "nameLabel": "Имя",
@@ -441,7 +496,12 @@
         "bootDiskPropertyLabel": "Свойство загрузочного диска",
         "cpuCountLabel": "Процессоры",
         "diskSizeMbLabel": "Размер диска",
-        "memoryMbLabel": "Память"
+        "memoryMbLabel": "Память",
+        "subnetworksLabel": "Подсети",
+        "cidrLabel": "CIDR",
+        "cidrLabelHint": "0.0.0.0/0",
+        "supportPublicIpAddressLabel": "Поддерживать общедоступный IP-адрес",
+        "defaultForZoneLabel": "По умолчанию для зоны"
       },
       "instanceType": {
         "aws": {
@@ -484,18 +544,23 @@
         "update": "Изменить конечную точку",
         "nameLabel": "Имя",
         "typeLabel": "Тип",
-        "accessKeyIdLabel": "Идентификатор ключа доступа",
-        "usernameLabel": "Имя пользователя",
-        "passwordLabel": "Пароль",
-        "secretAccessKeyLabel": "Секретный ключ доступа",
+        "privateKeyIdLabel": "Идентификатор ключа доступа",
+        "privateKeyLabel": "Секретный ключ доступа",
         "regionIdLabel": "Идентификатор области",
-        "endpointHostLabel": "Имя узла или IP-адрес",
-        "subscriptionIdLabel": "Идентификатор подписки",
-        "tenantIdLabel": "Идентификатор арендатора",
-        "datacenterIdLabel": "Имя центра обработки данных"
+        "azure": {
+          "userLinkLabel": "Идентификатор подписки",
+          "tenantIdLabel": "Идентификатор арендатора"
+        },
+        "vsphere": {
+          "hostNameLabel": "Имя узла или IP-адрес",
+          "privateKeyIdLabel": "Имя пользователя",
+          "privateKeyLabel": "Пароль",
+          "regionIdLabel": "ЦОД"
+        }
       },
       "entity": "конечная точка",
       "typeEntity": "тип",
+      "datacenterEntity": "ЦОД",
       "createNew": "Новая конечная точка",
       "manage": "Управление конечными точками",
       "contextPanelTooltip": "Конечные точки"
@@ -504,22 +569,59 @@
       "list": {
         "title": "Компьютеры",
         "titleSearch": "Найденные компьютеры",
-        "searchPlaceholder": "Поиск компьютеров"
+        "searchPlaceholder": "Поиск компьютеров",
+        "addButton": "Создать компьютер"
+      },
+      "edit": {
+        "addTitle": "Создать компьютер",
+        "editTitle": "Изменить компьютер",
+        "nameLabel": "Имя",
+        "save": "Сохранить",
+        "create": "Создать",
+        "loadButton": "Загрузить из файла",
+        "importTemplateHint": "Составное описание с одним или несколькими описаниями компьютеров",
+        "importPlaceholder": ""
       }
     },
     "compute": {
       "entity": "пункт назначения",
       "list": {
-        "title": "Вычисление",
-        "titleSearch": "Найденные вычисления",
-        "searchPlaceholder": "Поиск вычисления"
+        "title": "Вычислительный ресурс",
+        "titleSearch": "Найденные вычислительные ресурсы",
+        "searchPlaceholder": "Поиск вычислительных ресурсов"
       },
       "details": {
         "type": "Тип"
       },
       "edit": {
-        "title": "Изменить вычисление"
+        "title": "Изменить вычислительный ресурс",
+        "nameLabel": "Имя"
       }
+    },
+    "network": {
+      "entity": "Сеть"
+    },
+    "subnetwork": {
+      "list": {
+        "title": "Подсети",
+        "addButton": "Добавить",
+        "nameColumn": "Имя",
+        "cidrColumn": "CIDR"
+      },
+      "edit": {
+        "addNew": "Добавить подсеть",
+        "update": "Изменить подсеть",
+        "nameLabel": "Имя",
+        "cidrLabel": "CIDR",
+        "supportPublicIpAddressLabel": "Поддерживать общедоступный IP-адрес",
+        "defaultForZoneLabel": "По умолчанию для зоны",
+        "tagsTitle": "Теги",
+        "tagsHint": "Введите теги ключ:значение",
+        "tagsPlaceholder": "Пример: access:restricted"
+      },
+      "entity": "Подсеть",
+      "manage": "Управление подсетями",
+      "contextPanelTooltip": "Подсети"
     },
     "resource": {
       "list": {
@@ -541,22 +643,10 @@
             "CONNECTED": "ПОДКЛЮЧЕНО",
             "RETIRED": "СПИСАНО",
             "ERROR": "ОШИБКА"
-          },
-          "operations": {
-            "errors": {
-              "remove": {
-                "containersConnected": "Есть подключенные контейнеры"
-              }
-            }
           }
         },
         "container": {
-          "create": "Создать контейнер",
-          "operations": {
-            "errors": {
-              "managedByCatalog": "Под управлением каталога"
-            }
-          }
+          "create": "Создать контейнер"
         },
         "application": {
           "create": "Создать приложение"
@@ -564,17 +654,42 @@
         "closure": {
           "create": "Создать закрытие"
         },
+        "kubernetes": {
+          "create": "Создать"
+        },
+        "volume": {
+          "create": "Создать том",
+          "connectedDateLabel": "Подключено с",
+          "driverLabel": "Драйвер",
+          "driverOptionsLabel": "Параметры драйвера",
+          "scope": "Область",
+          "mountpoint": "Точка монтирования узла",
+          "connectedContainers": "Контейнеры",
+          "parentHosts": "Узлы",
+          "external": "Внешние",
+          "state": {
+            "UNKNOWN": "НЕТ ДАННЫХ",
+            "PROVISIONING": "ПОДГОТОВКА",
+            "CONNECTED": "ПОДКЛЮЧЕНО",
+            "RETIRED": "СПИСАНО",
+            "ERROR": "ОШИБКА"
+          }
+        },
         "titleSearch": {
           "containers": "Контейнеры",
           "applications": "Приложения",
           "networks": "Сети",
-          "closures": "Закрытия"
+          "volumes": "Тома",
+          "closures": "Закрытия",
+          "kubernetes": "Kubernetes"
         },
         "searchPlaceholder": {
           "containers": "Поиск контейнеров",
           "applications": "Поиск приложений",
           "networks": "Поиск сетей",
-          "closures": "Поиск закрытий"
+          "closures": "Поиск закрытий",
+          "volumes": "Поиск томов",
+          "kubernetes": "Поиск экземпляров Kubernetes"
         },
         "searchCategory": {
           "networks": "Сети"
@@ -735,6 +850,12 @@
             "volume": "Том",
             "volumeHint": "Пример: datacontainer"
           },
+          "volumeDriver": "Драйвер тома",
+          "volumeDriverPlaceholder": "Пример: локальный",
+          "volumeDriverDescription": "Драйвер, который будет использован для томов",
+          "volumeName": "Имя тома",
+          "volumeNamePlaceholder": "Пример: имяТома",
+          "volumeNameDescription": "Имя тома, когда используется нелокальный драйвер",
           "workingDirectory": "Рабочий каталог",
           "workingDirectoryDescription": "Рабочий каталог, в котором следует запускать команды",
           "clusterSize": "Размер кластера",
@@ -772,6 +893,8 @@
           },
           "customProperties": "Настраиваемые свойства",
           "customPropertiesDescription": "Настраиваемые свойства позволяют добавлять атрибуты в подготавливаемые контейнеры.",
+          "healthContinueProvisionigOnError": "Игнорировать результаты проверки работоспособности при подготовке",
+          "healthContinueProvisionigOnErrorDescription": "Проверку работоспособности можно использовать не только, когда служба запущена, но и в момент подготовки ресурса. Контейнеры не будут считаться подготовленными, пока не пройдут проверку работоспособности. Установите этот флажок, чтобы подготовить контейнер, даже если проверка выявила проблемы.",
           "healthMode": "Режим",
           "healthConfigNone": "Нет",
           "healthConfigTCP": "TCP-соединение",
@@ -780,12 +903,16 @@
           "healthPath": "URL-путь",
           "healthPathDescription": "URL-путь к интерфейсу API, используемому для проверки работоспособности",
           "healthPort": "Порт",
+          "healthPortHint": "По умолчанию: 80",
           "healthPortDescription": "Порт контейнера для использования",
           "healthTimeout": "Время ожидания (мс)",
+          "healthTimeoutHint": "По умолчанию: 2000",
           "healthTimeoutDescription": "Время ожидания в мс для выполнения операции проверки работоспособности",
           "healthyThreshold": "Порог работоспособности",
+          "healthyThresholdHint": "По умолчанию: 3",
           "healthyThresholdDescription": "Пороговое значение успешной операции проверки работоспособности, при котором контейнер считается работоспособным",
           "unhealthyThreshold": "Порог неработоспособности",
+          "unhealthyThresholdHint": "По умолчанию: 3",
           "unhealthyThresholdDescription": "Пороговое значение неудачной операции проверки работоспособности, при котором контейнер считается неработоспособным",
           "command": "Команда",
           "commandDescription": "Команда, которую следует выполнить в отношении контейнера. Состояние завершения используется для определения работоспособности контейнера.",
@@ -815,7 +942,7 @@
         "UNKNOWN": "НЕТ ДАННЫХ",
         "RETIRED": "СПИСАНО",
         "PROVISIONING": "ПОДГОТОВКА",
-        "continuousStateSince": "__state__ на протяжении __duration__"
+        "continuousStateSince": "__state__ в течение __duration__"
       },
       "actions": {
         "start": "Пуск",
@@ -866,7 +993,8 @@
         "descriptionId": "Идентификатор",
         "source": "Источник",
         "sourceURL": "URL-адрес источника",
-        "resources": "Ресурсы"
+        "resources": "Ресурсы",
+        "placement": "Размещение"
       },
       "state": {
         "CREATED": "СОЗДАНО",
@@ -893,8 +1021,8 @@
           "source": "Исходный код",
           "sourceURL": "URL-адрес источника",
           "runtimeTypes": {
-            "nodejs": "Node.js 4.3.0",
-            "python": "Python 3.4.3"
+            "nodejs": "NodeJs 4",
+            "python": "Python 3"
           },
           "logConfigOptionsInputs" : {
             "name": "Имя",
@@ -954,8 +1082,8 @@
     },
     "help": {
         "link": "Справка",
-        "description": "Функция \"Ансамбль\" позволяет получить доступ к необходимой информации о контексте задачи, которая выполняется в данный момент. По мере продолжения работы обновление выполняется автоматически с соблюдением инструкций. Используйте второй экран или разделенный экран для доступа к информации в режиме реального времени. Можно использовать мобильное устройство, телевизор или любой другой экран, независимо от того, подключен он к компьютеру или нет. Функцию \"Ансамбль\" можно использовать вне доверенной сети, продолжая получать при этом мгновенные обновления.",
-        "descriptionOpen": "Чтобы открыть функцию \"Ансамбль\", щелкните элемент <strong>Открыть в новой вкладке</strong> или отсканируйте QR-код с помощью мобильного устройства."
+        "description": "Функция Ensemble позволяет получить доступ к необходимой информации о контексте задачи, которая выполняется в данный момент. По мере продолжения работы обновление выполняется автоматически с соблюдением инструкций. Используйте второй экран или разделенный экран для доступа к информации в режиме реального времени. Можно использовать мобильное устройство, телевизор или любой другой экран, независимо от того, подключен он к компьютеру или нет. Функцию Ensemble можно использовать вне доверенной сети, продолжая получать при этом мгновенные обновления.",
+        "descriptionOpen": "Чтобы открыть функцию Ensemble, щелкните элемент <strong>Открыть в новой вкладке</strong> или отсканируйте QR-код с помощью мобильного устройства."
       },
       "resources": {
         "selectMultiple": "Выбрать элементы",
@@ -1027,7 +1155,9 @@
       "volumeDestinationRequired": "Необходимо указать пункт назначения тома.",
       "invalidInputValue": "Недопустимое входное значение",
       "invalidPath": "В качестве значения должен быть указан абсолютный путь.",
-      "invalidPathOrName": "В качестве значения должен быть указан абсолютный путь или действительное имя тома."
+      "invalidPathOrName": "В качестве значения должен быть указан абсолютный путь или действительное имя тома.",
+      "containersConnected": "Есть подключенные контейнеры",
+      "managedByCatalog": "Под управлением каталога"
     },
     "infoMessages": {
       "created": "Успешно создано!",
