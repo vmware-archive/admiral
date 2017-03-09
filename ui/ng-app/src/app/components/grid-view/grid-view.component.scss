@@ -10,11 +10,15 @@ grid-view {
 
   .items {
     position: absolute;
-    top: 90px;
+    top: 130px;
     left: 0;
     right: 0;
     bottom: 0;
     overflow: auto;
+
+    @media (min-width: 576px) {
+      top: 80px;
+    }
 
     .card-item {
       display: block;
@@ -57,6 +61,7 @@ grid-view {
 
   .title {
     @include view-title();
+    margin-bottom: 0;
   }
 
   .content-empty {
@@ -66,18 +71,25 @@ grid-view {
   }
 
   .toolbar {
-    display: flex;
-    > .btn {
-      margin: 10px 0 0 0;
-      padding: 0;
-      min-width: 0;
-      line-height: 20px;
-      min-height: 0;
-      width: 40px;
-      height: 20px;
-    }
-    > search {
-      flex: 1 2 auto;
+    overflow: hidden;
+    .toolbar-secondary {
+      display: flex;
+      > .separator {
+        border-left: 1px solid #cccccc;
+        width: 1px;
+        margin: 12px 6px;
+      }
+      > .btn {
+        padding: 0;
+        min-width: 0;
+        line-height: 30px;
+        min-height: 0;
+        width: 40px;
+        height: 30px;
+      }
+      > search {
+        flex: 1 2 auto;
+      }
     }
   }
 

@@ -10,7 +10,7 @@
  */
 
 export class Links {
-  public static RESOURCES = 'resources';
+  public static RESOURCES = '/resources';
   public static PODS = Links.RESOURCES + '/kubernetes-pods';
   public static DEPLOYMENTS = Links.RESOURCES + '/kubernetes-deployments';
   public static SERVICES = Links.RESOURCES + '/kubernetes-services';
