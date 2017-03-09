@@ -14,7 +14,7 @@
   <span slot="title">{{titleText}}</span>
   <div class="project-form" slot="body">
     <alert alert-type="danger" v-bind:show-alert="hasError"
-                               v-bind:alert-message="error"></alert>
+                               v-bind:alert-message="i18n('error')"></alert>
     <project-definition-form v-ref:project-edit-form
                              v-bind:model="model"
                              v-on:required-input-changed="requiredInputChanged">
