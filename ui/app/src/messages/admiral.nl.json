@@ -3,8 +3,10 @@
     "homepage": {
       "welcome": "Welkom!",
       "description": "Dit is de plaats waar u <b>toepassingen in containervorm kunt maken, inrichten, beheren en bewaken.</b>",
+      "descriptionCompute": "Dit is de plaats waar u <b>een toepassing kunt maken, inrichten, beheren en bewaken in de cloud.</b>",
       "start": "Laten we aan de slag gaan!",
       "addHost": "Een host toevoegen",
+      "addEndpoint": "Een endpoint toevoegen",
       "enter": "Invoer",
       "helpCenter": "Help",
       "steps": {
@@ -22,13 +24,15 @@
       "containers": "Containers",
       "applications": "Toepassingen",
       "networks": "Netwerken",
+      "volumes": "Volumes",
       "closures": "Sluitingen",
+      "kubernetes": "Kubernetes",
       "eventlog": "Gebeurtenislogboek",
       "placementZones": "Plaatsingszones",
-      "profiles": "Omgevingen",
+      "environments": "Profielen",
       "endpoints": "Endpoints",
       "machines": "Machines",
-      "compute": "Computer"
+      "compute": "Computingbron"
     },
     "host": {
       "entity": "host",
@@ -43,7 +47,10 @@
         "addressHint": "Specificeer het gepaste schema en de poort, bijv. https://myhost.com:2376. Standaardschema: 'https'. Standaardpoorten: https/443, http/80.",
         "hostAlias": "Naam",
         "hostAddress": "Adres",
+        "hostType": "Hosttype",
         "placementZone": "Plaatsingszone",
+        "placementZoneInputPlaceholder": "Voorbeeld: vic:hostname:2376",
+        "placementZoneInputHint": "Er wordt automatisch een plaatsingszone van een planner met deze naam gemaakt",
         "credential": "Verificatiegegevens",
         "guestCredential": "Verificatiegegevens gast",
         "destination": "Bestemming",
@@ -54,7 +61,7 @@
         "tagsHint": "Invoersleutel: waardetags",
         "autoConfigure": "Automatische configuratie",
         "autoConfigureInput":"Automatische configuratie host inschakelen",
-        "autoConfigureHint": "De host wordt automatisch geconfigureerd",
+        "autoConfigureHint": "Met deze optie configureert u de Docker Remote API op het opgegeven adres en de opgegeven poort met gegenereerde, zelf ondertekende certificaten. Dit gebeurt eenmaal en verloopt via SSH. Ondersteunde besturingssystemen zijn: CoreOS, PhotonOS, Ubuntu Server 16.04 of hoger.",
         "reservationPolicy": "Reserveringsbeleid",
         "endpoint": "Endpoint",
         "connectionType": "Verbindingstype",
@@ -70,6 +77,7 @@
         "hideCertificate": "Certificaat verbergen",
         "manageCertificates": "Certificaten beheren",
         "containers": "Containers",
+        "nodes": "Knooppunten",
         "cpu": "CPU",
         "memory": "Geheugen",
         "storage": "Opslag",
@@ -80,7 +88,8 @@
         "instanceType": "Instantietype",
         "imageType": "OS",
         "port": "Poort",
-        "clusterSize": "Aantal instanties"
+        "clusterSize": "Aantal instanties",
+        "unlimited": "Onbeperkt"
       },
       "list": {
         "title": "Hosts",
@@ -117,7 +126,12 @@
         "update": "Plaatsingszone bewerken",
         "nameTitle": "Naam plaatsingszone",
         "endpointTitle": "Endpoint",
+        "placementPolicy": "Geavanceerd plaatsingsbeleid",
+        "placementPolicyHint": "Bronnen worden standaard op willekeurige hosts geplaatst. U kunt optioneel een van de volgende strategieën toepassen:<br><br><b>BINPACK</b> - plaatsen op host met het hoogste geheugengebruik.<br><br><b>SPREAD</b> - plaatsen op host met minste aantal bronnen.",
         "dynamicTitle": "Dynamisch bronnen aan deze zone toewijzen",
+        "tagsTitle": "Tags",
+        "tagsHint": "Invoersleutel: waardetags",
+        "tagsPlaceholder": "Voorbeeld: compliance:yes",
         "tagsToMatchTitle": "Tags voor overeenkomst",
         "tagsToMatchHint": "Invoersleutel: waardetags voor overeenkomst",
         "tagsToMatchPlaceholder": "Voorbeeld: location:west"
@@ -236,7 +250,7 @@
         "searchImagesPlaceholder": "Zoeken naar images",
         "searchTemplatesPlaceholder": "Zoeken naar sjablonen",
         "searchClosuresPlaceholder": "Zoeken naar sluitingen",
-        "manageRegistry": "Register beheren",
+        "manageRegistry": "Registers beheren",
         "provision": "Inrichting",
         "provisionAdditionalInfo": "Extra informatie invoeren",
         "editTemplate": "Details bewerken/bekijken",
@@ -281,7 +295,7 @@
           "editTitle": "Netwerkconfiguratie bewerken",
           "name": "Naam",
           "existingNetwork": "Bestaand",
-          "showingCount": "__count__ van __totalCount__ wordt weergegeven",
+          "showingCount": "__count__ van __totalCount__ weergegeven",
           "showingInstances": "instanties",
           "noResults": "Geen netwerken gevonden",
           "hosts": "Hosts",
@@ -302,9 +316,50 @@
           "editTitle": "Sluiting bewerken",
           "name": "Naam"
         },
+        "editVolume" :{
+          "newLabel": "Volume toevoegen",
+          "newTitle": "Volume toevoegen",
+          "newDropdownTitle": "Volume toevoegen...",
+          "editTitle": "Volume bewerken",
+          "name": "Naam",
+          "driver": "Stuurprogramma",
+          "driverPlaceholder": "Voorbeeld: local",
+          "driverOptions": {
+            "label": "Opties van stuurprogramma",
+            "keyTitle": "Optie",
+            "keyHint": "Voorbeeld: size",
+            "valueTitle": "Waarde",
+            "valueHint": "Voorbeeld: 20GB"
+          },
+          "existingVolume": "Bestaand",
+          "showingCount": "__count__ van __totalCount__ weergegeven",
+          "showingInstances": "instanties",
+          "noResults": "Geen volumes gevonden",
+          "mountpoint": "Hostkoppelpunt",
+          "hosts": "Host",
+          "hostsSearchPlaceholder": "Zoeken naar host",
+          "create": "Maken",
+          "createTitle": "Volume maken",
+          "customProperties": "Aangepaste eigenschappen"
+        },
+        "editKubernetes": {
+          "newTitle": "Kubernetes toevoegen",
+          "editTitle": "Kubernetes bewerken",
+          "createEntities": {
+            "title": "Kubernetes-entiteiten maken",
+            "button": "Maken",
+            "hint": "Richt Kubernetes-entiteiten in op basis van YAML-definities door een bestand te laden of de inhoud handmatig in te voeren. Dit biedt ondersteuning voor meerdere definities, gescheiden met \"---\", bijvoorbeeld Deployment/Service.",
+            "placeholder": "YAML- of Kubernetes-definities invoeren... "
+          }
+        },
         "network": {
           "drag": "Slepen om container aan dit netwerk te koppelen",
           "drop": "Neerzetten om container aan dit netwerk te koppelen"
+        },
+        "volume": {
+          "drag": "Slepen om container aan dit volume te koppelen",
+          "drop": "Neerzetten om container aan dit volume te koppelen",
+          "editContainerPath": "Pad naar container:"
         }
       },
       "actions": {
@@ -405,12 +460,12 @@
         "verified": "Geverifieerd!"
       }
     },
-    "profile": {
+    "environment": {
       "list": {
-        "title": "Omgevingen",
-        "titleSearch": "Gevonden omgevingen",
-        "searchPlaceholder": "Zoeken naar omgevingen",
-        "addButton": "Omgeving toevoegen",
+        "title": "Profielen",
+        "titleSearch": "Gevonden profielen",
+        "searchPlaceholder": "Zoeken naar profielen",
+        "addButton": "Profiel maken",
         "addPropertyButton": "Eigenschap toevoegen",
         "nameColumn": "Naam",
         "endpointTypeColumn": "Endpointtype",
@@ -425,11 +480,11 @@
         "remove": "Verwijderen"
       },
       "edit": {
-        "addTitle": "Omgeving toevoegen",
-        "editTitle": "Omgeving bewerken",
+        "addTitle": "Profiel toevoegen",
+        "editTitle": "Profiel bewerken",
         "save": "Opslaan",
         "basicTab": "Basis",
-        "computeTab": "Computer",
+        "computeTab": "Computingbron",
         "networkTab": "Netwerk",
         "storageTab": "Opslag",
         "nameLabel": "Naam",
@@ -441,7 +496,12 @@
         "bootDiskPropertyLabel": "Opstartschijfeigenschap",
         "cpuCountLabel": "CPU's",
         "diskSizeMbLabel": "Schijfgrootte",
-        "memoryMbLabel": "Geheugen"
+        "memoryMbLabel": "Geheugen",
+        "subnetworksLabel": "Subnetwerken",
+        "cidrLabel": "CIDR",
+        "cidrLabelHint": "0.0.0.0/0",
+        "supportPublicIpAddressLabel": "Ondersteuning voor openbaar IP",
+        "defaultForZoneLabel": "Standaard voor zone"
       },
       "instanceType": {
         "aws": {
@@ -484,18 +544,23 @@
         "update": "Endpoint bewerken",
         "nameLabel": "Naam",
         "typeLabel": "Type",
-        "accessKeyIdLabel": "Toegangssleutel-id",
-        "usernameLabel": "Gebruikersnaam",
-        "passwordLabel": "Wachtwoord",
-        "secretAccessKeyLabel": "Geheime toegangssleutel",
+        "privateKeyIdLabel": "Toegangssleutel-id",
+        "privateKeyLabel": "Geheime toegangssleutel",
         "regionIdLabel": "Regio-id",
-        "endpointHostLabel": "Hostnaam of IP",
-        "subscriptionIdLabel": "Abonnements-id",
-        "tenantIdLabel": "Tenant-id",
-        "datacenterIdLabel": "Datacenternaam"
+        "azure": {
+          "userLinkLabel": "Abonnements-id",
+          "tenantIdLabel": "Tenant-id"
+        },
+        "vsphere": {
+          "hostNameLabel": "Hostnaam of IP",
+          "privateKeyIdLabel": "Gebruikersnaam",
+          "privateKeyLabel": "Wachtwoord",
+          "regionIdLabel": "Datacenter"
+        }
       },
       "entity": "endpoint",
       "typeEntity": "type",
+      "datacenterEntity": "datacenter",
       "createNew": "Nieuw endpoint",
       "manage": "Endpoints beheren",
       "contextPanelTooltip": "Endpoints"
@@ -504,22 +569,59 @@
       "list": {
         "title": "Machines",
         "titleSearch": "Machines gevonden",
-        "searchPlaceholder": "Zoeken naar machines"
+        "searchPlaceholder": "Zoeken naar machines",
+        "addButton": "Machine maken"
+      },
+      "edit": {
+        "addTitle": "Machine maken",
+        "editTitle": "Machine bewerken",
+        "nameLabel": "Naam",
+        "save": "Opslaan",
+        "create": "Maken",
+        "loadButton": "Laden vanuit bestand",
+        "importTemplateHint": "Samengestelde beschrijving met een of meerdere machinebeschrijvingen",
+        "importPlaceholder": ""
       }
     },
     "compute": {
       "entity": "bestemming",
       "list": {
-        "title": "Computer",
-        "titleSearch": "Computer gevonden",
-        "searchPlaceholder": "Zoeken naar computers"
+        "title": "Computingbron",
+        "titleSearch": "Computingbron gevonden",
+        "searchPlaceholder": "Zoeken naar computingbron"
       },
       "details": {
         "type": "Type"
       },
       "edit": {
-        "title": "Computer bewerken"
+        "title": "Computingbron bewerken",
+        "nameLabel": "Naam"
       }
+    },
+    "network": {
+      "entity": "Netwerk"
+    },
+    "subnetwork": {
+      "list": {
+        "title": "Subnetwerken",
+        "addButton": "Toevoegen",
+        "nameColumn": "Naam",
+        "cidrColumn": "CIDR"
+      },
+      "edit": {
+        "addNew": "Subnetwerk toevoegen",
+        "update": "Subnetwerk bewerken",
+        "nameLabel": "Naam",
+        "cidrLabel": "CIDR",
+        "supportPublicIpAddressLabel": "Ondersteuning voor openbaar IP",
+        "defaultForZoneLabel": "Standaard voor zone",
+        "tagsTitle": "Tags",
+        "tagsHint": "Invoersleutel: waardetags",
+        "tagsPlaceholder": "Voorbeeld: access:restricted"
+      },
+      "entity": "Subnetwerk",
+      "manage": "Subnetwerken beheren",
+      "contextPanelTooltip": "Subnetwerken"
     },
     "resource": {
       "list": {
@@ -541,22 +643,10 @@
             "CONNECTED": "VERBONDEN",
             "RETIRED": "UIT DE HANDEL GENOMEN",
             "ERROR": "FOUT"
-          },
-          "operations": {
-            "errors": {
-              "remove": {
-                "containersConnected": "Er zijn verbonden containers"
-              }
-            }
           }
         },
         "container": {
-          "create": "Container maken",
-          "operations": {
-            "errors": {
-              "managedByCatalog": "Beheerd per catalogus"
-            }
-          }
+          "create": "Container maken"
         },
         "application": {
           "create": "Toepassing maken"
@@ -564,17 +654,42 @@
         "closure": {
           "create": "Sluiting maken"
         },
+        "kubernetes": {
+          "create": "Maken"
+        },
+        "volume": {
+          "create": "Volume maken",
+          "connectedDateLabel": "Verbonden sinds",
+          "driverLabel": "Stuurprogramma",
+          "driverOptionsLabel": "Opties van stuurprogramma",
+          "scope": "Bereik",
+          "mountpoint": "Hostkoppelpunt",
+          "connectedContainers": "Containers",
+          "parentHosts": "Hosts",
+          "external": "Extern",
+          "state": {
+            "UNKNOWN": "ONBEKEND",
+            "PROVISIONING": "INRICHTING",
+            "CONNECTED": "VERBONDEN",
+            "RETIRED": "UIT DE HANDEL GENOMEN",
+            "ERROR": "FOUT"
+          }
+        },
         "titleSearch": {
           "containers": "Containers",
           "applications": "Toepassingen",
           "networks": "Netwerken",
-          "closures": "Sluitingen"
+          "volumes": "Volumes",
+          "closures": "Sluitingen",
+          "kubernetes": "Kubernetes"
         },
         "searchPlaceholder": {
           "containers": "Zoeken naar containers",
           "applications": "Zoeken naar toepassingen",
           "networks": "Zoeken naar netwerken",
-          "closures": "Zoeken naar sluitingen"
+          "closures": "Zoeken naar sluitingen",
+          "volumes": "Zoeken naar volumes",
+          "kubernetes": "Zoeken naar Kubernetes-entiteiten"
         },
         "searchCategory": {
           "networks": "Netwerken"
@@ -735,6 +850,12 @@
             "volume": "Volume",
             "volumeHint": "Voorbeeld: datacontainer"
           },
+          "volumeDriver": "Volumestuurprogramma",
+          "volumeDriverPlaceholder": "Voorbeeld: local",
+          "volumeDriverDescription": "Het stuurprogramma dat moet worden gebruikt voor volumes",
+          "volumeName": "Volumenaam",
+          "volumeNamePlaceholder": "Voorbeeld: volumeNaam",
+          "volumeNameDescription": "De naam van het volume bij gebruik van een niet-lokaal stuurprogramma",
           "workingDirectory": "Werkdirectory",
           "workingDirectoryDescription": "De werkdirectory om opdrachten in uit te voeren",
           "clusterSize": "Clustergrootte",
@@ -772,6 +893,8 @@
           },
           "customProperties": "Aangepaste eigenschappen",
           "customPropertiesDescription": "Aangepaste eigenschappen maken het mogelijk kenmerken toe te voegen aan de containers die worden ingericht.",
+          "healthContinueProvisionigOnError": "Mislukte statuscontroles bij inrichten negeren",
+          "healthContinueProvisionigOnErrorDescription": "Als de statuscontrole is ingeschakeld, wordt deze niet alleen gebruikt wanneer de service actief is, maar ook tijdens het inrichten. De containers worden pas beschouwd als ingericht wanneer er een geslaagde statuscontrole heeft plaatsgevonden. Selecteer deze optie om te kunnen inrichten zonder dat er een geslaagde statuscontrole heeft plaatsgevonden.",
           "healthMode": "Modus",
           "healthConfigNone": "Geen",
           "healthConfigTCP": "TCP-verbinding",
@@ -780,12 +903,16 @@
           "healthPath": "URL-pad",
           "healthPathDescription": "URL-pad naar de API die wordt gebruikt voor statuscontrole",
           "healthPort": "Poort",
+          "healthPortHint": "Standaard: 80",
           "healthPortDescription": "Containerpoort die moet worden gebruikt",
           "healthTimeout": "Time-out (ms)",
+          "healthTimeoutHint": "Standaard: 2000",
           "healthTimeoutDescription": "Time-out in ms voor de statuscontrolebewerking",
           "healthyThreshold": "Drempelwaarde voor gezonde status",
+          "healthyThresholdHint": "Standaard: 3",
           "healthyThresholdDescription": "Drempelwaarde voor statuscontrole voor het aantal bewerkingen met goed gevolg dat nodig is om de container als gezond te beschouwen",
           "unhealthyThreshold": "Drempelwaarde voor ongezonde status",
+          "unhealthyThresholdHint": "Standaard: 3",
           "unhealthyThresholdDescription": "Drempelwaarde voor statuscontrole voor het aantal bewerkingen met negatief resultaat dat nodig is om de container als ongezond te beschouwen",
           "command": "Opdracht",
           "commandDescription": "Opdracht die moet worden uitgevoerd voor de container. De afsluitstatus wordt gebruikt om de gezondheid van de container te bepalen.",
@@ -815,7 +942,7 @@
         "UNKNOWN": "ONBEKEND",
         "RETIRED": "UIT DE HANDEL GENOMEN",
         "PROVISIONING": "INRICHTING",
-        "continuousStateSince": "__state__ for __duration__"
+        "continuousStateSince": "__state__ gedurende __duration__"
       },
       "actions": {
         "start": "Beginnen",
@@ -866,7 +993,8 @@
         "descriptionId": "Id",
         "source": "Bron",
         "sourceURL": "Bron-URL",
-        "resources": "Bronnen"
+        "resources": "Bronnen",
+        "placement": "Plaatsing"
       },
       "state": {
         "CREATED": "GEMAAKT",
@@ -893,8 +1021,8 @@
           "source": "Broncode",
           "sourceURL": "Bron-URL",
           "runtimeTypes": {
-            "nodejs": "Node.js 4.3.0",
-            "python": "Python 3.4.3"
+            "nodejs": "NodeJs 4",
+            "python": "Python 3"
           },
           "logConfigOptionsInputs" : {
             "name": "Naam",
@@ -976,7 +1104,7 @@
       "title": "Selecteer uit de lijst __entity__",
       "searchPlaceholder": "Zoeken naar __entity__",
       "clear": "Selectie wissen",
-      "showingCount": "__count__ van __totalCount__ wordt weergegeven",
+      "showingCount": "__count__ van __totalCount__ weergegeven",
       "noResults": "Geen items gevonden"
     },
     "customProperties": {
@@ -1027,7 +1155,9 @@
       "volumeDestinationRequired": "Volumebestemming is verplicht.",
       "invalidInputValue": "Ongeldige invoerwaarde",
       "invalidPath": "Waarde moet een absoluut pad zijn.",
-      "invalidPathOrName": "Waarde moet een absoluut pad of een geldige volumenaam zijn."
+      "invalidPathOrName": "Waarde moet een absoluut pad of een geldige volumenaam zijn.",
+      "containersConnected": "Er zijn verbonden containers.",
+      "managedByCatalog": "Beheerd per catalogus"
     },
     "infoMessages": {
       "created": "Gemaakt!",
