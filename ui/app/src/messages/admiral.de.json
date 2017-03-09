@@ -3,8 +3,10 @@
     "homepage": {
       "welcome": "Willkommen!",
       "description": "Hier können Sie <b>containerisierte Anwendungen erstellen, bereitstellen, verwalten und überwachen</b>.",
+      "descriptionCompute": "Hier können Sie <b>eine beliebige Anwendung in einer beliebigen Cloud erstellen, bereitstellen, verwalten und überwachen.</b>",
       "start": "Los geht's.",
       "addHost": "Host hinzufügen",
+      "addEndpoint": "Endpoint hinzufügen",
       "enter": "Eingabe",
       "helpCenter": "Hilfe",
       "steps": {
@@ -22,13 +24,15 @@
       "containers": "Container",
       "applications": "Anwendungen",
       "networks": "Netzwerke",
+      "volumes": "Volumes",
       "closures": "Abschlüsse",
+      "kubernetes": "Kubernetes",
       "eventlog": "Ereignisprotokoll",
       "placementZones": "Platzierungszonen",
-      "profiles": "Umgebungen",
+      "environments": "Profile",
       "endpoints": "Endpoints",
       "machines": "Maschinen",
-      "compute": "Computing"
+      "compute": "Computing-Ressource"
     },
     "host": {
       "entity": "Host",
@@ -43,7 +47,10 @@
         "addressHint": "Geben Sie ein geeignetes Schema und einen geeigneten Port an, z. B. https://myhost.com:2376. Standardschema: 'https'. Standardports: https/443, http/80.",
         "hostAlias": "Name",
         "hostAddress": "Adresse",
+        "hostType": "Hosttyp",
         "placementZone": "Platzierungszone",
+        "placementZoneInputPlaceholder": "Beispiel: vic:hostname:2376",
+        "placementZoneInputHint": "Eine Scheduler-Platzierungszone mit diesem Namen wird automatisch erstellt.",
         "credential": "Anmeldedaten",
         "guestCredential": "Gastanmeldedaten",
         "destination": "Ziel",
@@ -54,7 +61,7 @@
         "tagsHint": "Schlüssel:Wert-Tags eingeben",
         "autoConfigure": "Automatisch konfigurieren",
         "autoConfigureInput":"Automatische Hostkonfiguration aktivieren",
-        "autoConfigureHint": "Der Host wird automatisch konfiguriert",
+        "autoConfigureHint": "Mit dieser Option wird die Docker-Remote-API an der angegebenen Adresse und dem angegebenen Port mit selbstsignierten Zertifikaten erstellt. Dies erfolgt einmalig über SSH. Folgende Betriebssysteme werden unterstützt: CoreOS, PhotonOS, Ubuntu Server 16.04 oder höher.",
         "reservationPolicy": "Reservierungsrichtlinie",
         "endpoint": "Endpoint",
         "connectionType": "Verbindungstyp",
@@ -70,6 +77,7 @@
         "hideCertificate": "Zertifikat ausblenden",
         "manageCertificates": "Zertifikate verwalten",
         "containers": "Container",
+        "nodes": "Knoten",
         "cpu": "CPU",
         "memory": "Arbeitsspeicher",
         "storage": "Speicher",
@@ -80,7 +88,8 @@
         "instanceType": "Instanztyp",
         "imageType": "Betriebssystem",
         "port": "Port",
-        "clusterSize": "Anzahl Instanzen"
+        "clusterSize": "Anzahl Instanzen",
+        "unlimited": "Unbegrenzt"
       },
       "list": {
         "title": "Hosts",
@@ -117,7 +126,12 @@
         "update": "Platzierungszone bearbeiten",
         "nameTitle": "Name der Platzierungszone",
         "endpointTitle": "Endpoint",
+        "placementPolicy": "Erweiterte Platzierungsrichtlinie",
+        "placementPolicyHint": "Standardmäßig werden Ressourcen nach dem Zufallsprinzip auf Hosts platziert. Optional kann eine der folgenden Strategien angewendet werden:<br><br><b>BINPACK</b> - auf Host mit höchster Arbeitsspeichernutzung platzieren<br><br><b>SPREAD</b> - auf Host mit geringster Anzahl an Ressourcen platzieren",
         "dynamicTitle": "Ressourcen diesem Bereich dynamisch zuordnen",
+        "tagsTitle": "Tags",
+        "tagsHint": "Schlüssel:Wert-Tags eingeben",
+        "tagsPlaceholder": "Beispiel: compliance:yes",
         "tagsToMatchTitle": "Abzugleichende Tags",
         "tagsToMatchHint": "Abzugleichende Schlüssel:Wert-Tags eingeben",
         "tagsToMatchPlaceholder": "Beispiel: location:west"
@@ -236,7 +250,7 @@
         "searchImagesPlaceholder": "Images suchen",
         "searchTemplatesPlaceholder": "Vorlagen suchen",
         "searchClosuresPlaceholder": "Abschlüssen suchen",
-        "manageRegistry": "Registrierung verwalten",
+        "manageRegistry": "Registrierungen verwalten",
         "provision": "Bereitstellen",
         "provisionAdditionalInfo": "Zusätzliche Informationen eingeben",
         "editTemplate": "Details bearbeiten/anzeigen",
@@ -302,9 +316,50 @@
           "editTitle": "Abschluss bearbeiten",
           "name": "Name"
         },
+        "editVolume" :{
+          "newLabel": "Volume hinzufügen",
+          "newTitle": "Volume hinzufügen",
+          "newDropdownTitle": "Volume hinzufügen...",
+          "editTitle": "Volume bearbeiten",
+          "name": "Name",
+          "driver": "Treiber",
+          "driverPlaceholder": "Beispiel: local",
+          "driverOptions": {
+            "label": "Treiberoptionen",
+            "keyTitle": "Option",
+            "keyHint": "Beispiel: size",
+            "valueTitle": "Wert",
+            "valueHint": "Beispiel: 20GB"
+          },
+          "existingVolume": "Vorhanden",
+          "showingCount": "__count__ von __totalCount__ werden angezeigt",
+          "showingInstances": "Instanzen",
+          "noResults": "Keine Volumes gefunden",
+          "mountpoint": "Host-Bereitstellungspunkt",
+          "hosts": "Host",
+          "hostsSearchPlaceholder": "Host suchen",
+          "create": "Erstellen",
+          "createTitle": "Volume erstellen",
+          "customProperties": "Benutzerdefinierte Eigenschaften"
+        },
+        "editKubernetes": {
+          "newTitle": "Kubernetes hinzufügen",
+          "editTitle": "Kubernetes bearbeiten",
+          "createEntities": {
+            "title": "Kubernetes-Entitäten erstellen",
+            "button": "Erstellen",
+            "hint": "Stellen Sie Kubernetes-Entitäten über YAML-Definitionen bereit, indem Sie eine Datei laden oder ihren Inhalt manuell eingeben. Unterstützt mehrere, durch „---“ getrennte Definitionen, beispielsweise Bereitstellung/Dienst-Paar.",
+            "placeholder": "YAML von Kubernetes-Definitionen eingeben... "
+          }
+        },
         "network": {
           "drag": "Ziehen, um Container an dieses Netzwerk anzuhängen",
           "drop": "Ablegen, um Container an dieses Netzwerk anzuhängen"
+        },
+        "volume": {
+          "drag": "Ziehen, um Container an dieses Volume anzuhängen",
+          "drop": "Ablegen, um Container an dieses Volume anzuhängen",
+          "editContainerPath": "Container-Pfad:"
         }
       },
       "actions": {
@@ -405,12 +460,12 @@
         "verified": "Erfolgreich überprüft."
       }
     },
-    "profile": {
+    "environment": {
       "list": {
-        "title": "Umgebungen",
-        "titleSearch": "Gefundene Umgebungen",
-        "searchPlaceholder": "Umgebungen suchen",
-        "addButton": "Umgebung hinzufügen",
+        "title": "Profile",
+        "titleSearch": "Gefundene Profile",
+        "searchPlaceholder": "Profile suchen",
+        "addButton": "Profil erstellen",
         "addPropertyButton": "Eigenschaft hinzufügen",
         "nameColumn": "Name",
         "endpointTypeColumn": "Endpoint-Typ",
@@ -425,11 +480,11 @@
         "remove": "Entfernen"
       },
       "edit": {
-        "addTitle": "Umgebung hinzufügen",
-        "editTitle": "Umgebung bearbeiten",
+        "addTitle": "Profil hinzufügen",
+        "editTitle": "Profil bearbeiten",
         "save": "Speichern",
         "basicTab": "Standard",
-        "computeTab": "Computing",
+        "computeTab": "Computing-Ressource",
         "networkTab": "Netzwerk",
         "storageTab": "Speicher",
         "nameLabel": "Name",
@@ -441,7 +496,12 @@
         "bootDiskPropertyLabel": "Eigenschaft des Startdatenträgers",
         "cpuCountLabel": "CPUs",
         "diskSizeMbLabel": "Datenträgergröße",
-        "memoryMbLabel": "Arbeitsspeicher"
+        "memoryMbLabel": "Arbeitsspeicher",
+        "subnetworksLabel": "Subnetzwerke",
+        "cidrLabel": "CIDR",
+        "cidrLabelHint": "0.0.0.0/0",
+        "supportPublicIpAddressLabel": "Öffentliche IP unterstützen",
+        "defaultForZoneLabel": "Standardwert für Zone"
       },
       "instanceType": {
         "aws": {
@@ -484,18 +544,23 @@
         "update": "Endpoint bearbeiten",
         "nameLabel": "Name",
         "typeLabel": "Typ",
-        "accessKeyIdLabel": "Zugriffsschlüssel-ID",
-        "usernameLabel": "Benutzername",
-        "passwordLabel": "Kennwort",
-        "secretAccessKeyLabel": "Geheimer Zugriffsschlüssel",
+        "privateKeyIdLabel": "Zugriffsschlüssel-ID",
+        "privateKeyLabel": "Geheimer Zugriffsschlüssel",
         "regionIdLabel": "Regions-ID",
-        "endpointHostLabel": "Hostname oder IP",
-        "subscriptionIdLabel": "Abonnement-ID",
-        "tenantIdLabel": "Mandanten-ID",
-        "datacenterIdLabel": "Datencentername"
+        "azure": {
+          "userLinkLabel": "Abonnement-ID",
+          "tenantIdLabel": "Mandanten-ID"
+        },
+        "vsphere": {
+          "hostNameLabel": "Hostname oder IP",
+          "privateKeyIdLabel": "Benutzername",
+          "privateKeyLabel": "Kennwort",
+          "regionIdLabel": "Datencenter"
+        }
       },
       "entity": "Endpoint",
       "typeEntity": "Typ",
+      "datacenterEntity": "Datencenter",
       "createNew": "Neuer Endpoint",
       "manage": "Endpoints verwalten",
       "contextPanelTooltip": "Endpoints"
@@ -504,22 +569,59 @@
       "list": {
         "title": "Maschinen",
         "titleSearch": "Gefundene Maschinen",
-        "searchPlaceholder": "Maschinen suchen"
+        "searchPlaceholder": "Maschinen suchen",
+        "addButton": "Maschine erstellen"
+      },
+      "edit": {
+        "addTitle": "Maschine erstellen",
+        "editTitle": "Maschine bearbeiten",
+        "nameLabel": "Name",
+        "save": "Speichern",
+        "create": "Erstellen",
+        "loadButton": "Laden aus Datei",
+        "importTemplateHint": "Zusammengesetzte Beschreibung, die eine oder mehrere Maschinenbeschreibungen enthält",
+        "importPlaceholder": ""
       }
     },
     "compute": {
       "entity": "Ziel",
       "list": {
-        "title": "Computing",
-        "titleSearch": "Gefundenes Computing",
-        "searchPlaceholder": "Computing suchen"
+        "title": "Computing-Ressource",
+        "titleSearch": "Gefundene Computing-Ressource",
+        "searchPlaceholder": "Computing-Ressource suchen"
       },
       "details": {
         "type": "Typ"
       },
       "edit": {
-        "title": "Computing bearbeiten"
+        "title": "Computing-Ressource bearbeiten",
+        "nameLabel": "Name"
       }
+    },
+    "network": {
+      "entity": "Netzwerk"
+    },
+    "subnetwork": {
+      "list": {
+        "title": "Subnetzwerke",
+        "addButton": "Hinzufügen",
+        "nameColumn": "Name",
+        "cidrColumn": "CIDR"
+      },
+      "edit": {
+        "addNew": "Subnetzwerk hinzufügen",
+        "update": "Subnetzwerk bearbeiten",
+        "nameLabel": "Name",
+        "cidrLabel": "CIDR",
+        "supportPublicIpAddressLabel": "Öffentliche IP unterstützen",
+        "defaultForZoneLabel": "Standardwert für Zone",
+        "tagsTitle": "Tags",
+        "tagsHint": "Schlüssel:Wert-Tags eingeben",
+        "tagsPlaceholder": "Beispiel: access:restricted"
+      },
+      "entity": "Subnetzwerk",
+      "manage": "Subnetzwerke verwalten",
+      "contextPanelTooltip": "Subnetzwerke"
     },
     "resource": {
       "list": {
@@ -541,22 +643,10 @@
             "CONNECTED": "VERBUNDEN",
             "RETIRED": "ZURÜCKGEZOGEN",
             "ERROR": "FEHLER"
-          },
-          "operations": {
-            "errors": {
-              "remove": {
-                "containersConnected": "Es sind verbundene Container vorhanden"
-              }
-            }
           }
         },
         "container": {
-          "create": "Container erstellen",
-          "operations": {
-            "errors": {
-              "managedByCatalog": "Von Katalog verwaltet"
-            }
-          }
+          "create": "Container erstellen"
         },
         "application": {
           "create": "Anwendung erstellen"
@@ -564,17 +654,42 @@
         "closure": {
           "create": "Abschluss erstellen"
         },
+        "kubernetes": {
+          "create": "Erstellen"
+        },
+        "volume": {
+          "create": "Volume erstellen",
+          "connectedDateLabel": "Verbunden seit",
+          "driverLabel": "Treiber",
+          "driverOptionsLabel": "Treiberoptionen",
+          "scope": "Geltungsbereich",
+          "mountpoint": "Host-Bereitstellungspunkt",
+          "connectedContainers": "Container",
+          "parentHosts": "Hosts",
+          "external": "Extern",
+          "state": {
+            "UNKNOWN": "UNBEKANNT",
+            "PROVISIONING": "BEREITSTELLUNG",
+            "CONNECTED": "VERBUNDEN",
+            "RETIRED": "ZURÜCKGEZOGEN",
+            "ERROR": "FEHLER"
+          }
+        },
         "titleSearch": {
           "containers": "Container",
           "applications": "Anwendungen",
           "networks": "Netzwerke",
-          "closures": "Abschlüsse"
+          "volumes": "Volumes",
+          "closures": "Abschlüsse",
+          "kubernetes": "Kubernetes"
         },
         "searchPlaceholder": {
           "containers": "Container suchen",
           "applications": "Anwendungen suchen",
           "networks": "Netzwerke suchen",
-          "closures": "Abschlüsse suchen"
+          "closures": "Abschlüsse suchen",
+          "volumes": "Volumes suchen",
+          "kubernetes": "Kubernetes-Entitäten suchen"
         },
         "searchCategory": {
           "networks": "Netzwerke"
@@ -735,6 +850,12 @@
             "volume": "Volume",
             "volumeHint": "Beispiel: datacontainer"
           },
+          "volumeDriver": "Volume-Treiber",
+          "volumeDriverPlaceholder": "Beispiel: local",
+          "volumeDriverDescription": "Der Treiber, der für Volumes verwendet werden soll",
+          "volumeName": "Volume-Name",
+          "volumeNamePlaceholder": "Beispiel: volumeName",
+          "volumeNameDescription": "Der Name des Volume bei Verwendung eines nicht lokalen Treibers",
           "workingDirectory": "Arbeitsverzeichnis",
           "workingDirectoryDescription": "Das Arbeitsverzeichnis, in dem Befehle ausgeführt werden",
           "clusterSize": "Clustergröße",
@@ -772,6 +893,8 @@
           },
           "customProperties": "Benutzerdefinierte Eigenschaften",
           "customPropertiesDescription": "Benutzerdefinierte Eigenschaften ermöglichen das Hinzufügen von Attributen zu den Containern, die bereitgestellt werden.",
+          "healthContinueProvisionigOnError": "Integritätsprüfungsfehler bei Bereitstellung ignorieren",
+          "healthContinueProvisionigOnErrorDescription": "Ist die Integritätsprüfung konfiguriert, wird sie nicht nur verwendet, wenn der Dienst ausgeführt wird, sondern auch bei der Bereitstellung. Die Container werden erst dann als bereitgestellt betrachtet, wenn eine Integritätsprüfung erfolgreich bestanden wurde. Aktivieren Sie diese Option, um eine Bereitstellung auch ohne erfolgreiche Integritätsprüfung durchführen zu können.",
           "healthMode": "Modus",
           "healthConfigNone": "Keine",
           "healthConfigTCP": "TCP-Verbindung",
@@ -780,12 +903,16 @@
           "healthPath": "URL-Pfad",
           "healthPathDescription": "URL-Pfad zur API für die Integritätsprüfung",
           "healthPort": "Port",
+          "healthPortHint": "Standard: 80",
           "healthPortDescription": "Zu verwendender Container-Port",
           "healthTimeout": "Zeitüberschreitung (ms)",
+          "healthTimeoutHint": "Standard: 2000",
           "healthTimeoutDescription": "Zeitüberschreitung in ms für den Integritätsprüfungsvorgang",
           "healthyThreshold": "Fehlerfrei-Schwellenwert",
+          "healthyThresholdHint": "Standard: 3",
           "healthyThresholdDescription": "Schwellenwert für erfolgreiche Integritätsprüfungsvorgänge, der benötigt wird, damit der Container als fehlerfrei betrachtet wird",
           "unhealthyThreshold": "Fehlerhaft-Schwellenwert",
+          "unhealthyThresholdHint": "Standard: 3",
           "unhealthyThresholdDescription": "Schwellenwert für fehlgeschlagene Integritätsprüfungsvorgänge, der benötigt wird, damit der Container als fehlerhaft betrachtet wird",
           "command": "Befehl",
           "commandDescription": "Im Container auszuführender Befehl. Beendigungsstatus wird verwendet, um die Container-Integrität zu bestimmen.",
@@ -866,7 +993,8 @@
         "descriptionId": "ID",
         "source": "Quelle",
         "sourceURL": "Quell-URL",
-        "resources": "Ressourcen"
+        "resources": "Ressourcen",
+        "placement": "Platzierung"
       },
       "state": {
         "CREATED": "ERSTELLT",
@@ -893,8 +1021,8 @@
           "source": "Quellcode",
           "sourceURL": "Quell-URL",
           "runtimeTypes": {
-            "nodejs": "Node.js 4.3.0",
-            "python": "Python 3.4.3"
+            "nodejs": "NodeJs 4",
+            "python": "Python 3"
           },
           "logConfigOptionsInputs" : {
             "name": "Name",
@@ -1027,7 +1155,9 @@
       "volumeDestinationRequired": "Volume-Ziel ist erforderlich.",
       "invalidInputValue": "Ungültiger Eingabewert",
       "invalidPath": "Wert muss ein absoluter Pfad sein.",
-      "invalidPathOrName": "Wert muss ein absoluter Pfad oder ein gültiger Volume-Name sein."
+      "invalidPathOrName": "Wert muss ein absoluter Pfad oder ein gültiger Volume-Name sein.",
+      "containersConnected": "Es sind verbundene Container vorhanden.",
+      "managedByCatalog": "Von Katalog verwaltet"
     },
     "infoMessages": {
       "created": "Erfolgreich erstellt.",

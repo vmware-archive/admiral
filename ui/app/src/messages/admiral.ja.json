@@ -3,8 +3,10 @@
     "homepage": {
       "welcome": "ようこそ。",
       "description": "ここでは、<b>コンテナ化されたアプリケーションを作成して、プロビジョニング、管理および監視</b>を行うことができます。",
+      "descriptionCompute": "ここでは、<b>任意のクラウドで、任意のアプリケーションを作成して、プロビジョニング、管理および監視</b>を行うことができます。",
       "start": "それでは、早速始めましょう。",
       "addHost": "ホストの追加",
+      "addEndpoint": "エンドポイントを追加",
       "enter": "開始",
       "helpCenter": "ヘルプ",
       "steps": {
@@ -22,10 +24,12 @@
       "containers": "コンテナ",
       "applications": "アプリケーション",
       "networks": "ネットワーク",
+      "volumes": "ボリューム",
       "closures": "クロージャ",
+      "kubernetes": "Kubernetes",
       "eventlog": "イベント ログ",
       "placementZones": "配置ゾーン",
-      "profiles": "環境",
+      "environments": "プロファイル",
       "endpoints": "エンドポイント",
       "machines": "マシン",
       "compute": "コンピューティング"
@@ -43,7 +47,10 @@
         "addressHint": "適切なスキームおよびポートを指定してください (例: https://myhost.com:2376)。デフォルト スキーム: 'https'。デフォルト ポート: https/443、http/80。",
         "hostAlias": "名前",
         "hostAddress": "アドレス",
+        "hostType": "ホスト タイプ",
         "placementZone": "配置ゾーン",
+        "placementZoneInputPlaceholder": "例: vic:hostname:2376",
+        "placementZoneInputHint": "この名前を持つスケジューラ配置ゾーンが自動的に作成されます",
         "credential": "ログイン認証情報",
         "guestCredential": "ゲストの認証情報",
         "destination": "ターゲット",
@@ -54,7 +61,7 @@
         "tagsHint": "key:value タグを入力します",
         "autoConfigure": "自動構成",
         "autoConfigureInput":"ホストの自動構成の有効化",
-        "autoConfigureHint": "ホストは自動的に構成されます",
+        "autoConfigureHint": "このオプションを指定すると、生成された自己署名証明書を使用して、指定されたアドレスおよびポートに Docker Remote API が構成されます。この処理は SSH を介して 1 回実行されます。サポート対象のオペレーティング システムは、CoreOS、PhotonOS、Ubuntu Server 16.04 以降です。",
         "reservationPolicy": "予約ポリシー",
         "endpoint": "エンドポイント",
         "connectionType": "接続タイプ",
@@ -70,6 +77,7 @@
         "hideCertificate": "証明書を隠す",
         "manageCertificates": "証明書の管理",
         "containers": "コンテナ",
+        "nodes": "ノード",
         "cpu": "CPU",
         "memory": "メモリ",
         "storage": "ストレージ",
@@ -80,7 +88,8 @@
         "instanceType": "インスタンス タイプ",
         "imageType": "OS",
         "port": "ポート",
-        "clusterSize": "インスタンス数"
+        "clusterSize": "インスタンス数",
+        "unlimited": "制限なし"
       },
       "list": {
         "title": "ホスト",
@@ -117,7 +126,12 @@
         "update": "配置ゾーンの編集",
         "nameTitle": "配置ゾーン名",
         "endpointTitle": "エンドポイント",
+        "placementPolicy": "詳細配置ポリシー",
+        "placementPolicyHint": "デフォルトでは、リソースが配置されるホストは無作為に選ばれます。オプションを使用することで、次のいずれかの方式を適用できます:<br><br><b>BINPACK</b>: メモリ使用量が最大のホストに配置します。<br><br><b>SPREAD</b>: リソース数が最小のホストに配置します。",
         "dynamicTitle": "このゾーンへのリソースの動的割り当て",
+        "tagsTitle": "タグ",
+        "tagsHint": "key:value タグを入力します",
+        "tagsPlaceholder": "例: compliance:yes",
         "tagsToMatchTitle": "一致するタグ",
         "tagsToMatchHint": "一致する key:value タグを入力します",
         "tagsToMatchPlaceholder": "例: location:west"
@@ -281,7 +295,7 @@
           "editTitle": "ネットワーク構成の編集",
           "name": "名前",
           "existingNetwork": "既存",
-          "showingCount": "__totalCount__ 個中 __count__ 個を表示しています",
+          "showingCount": "__count__ /__totalCount__ を表示中",
           "showingInstances": "個のインスタンス",
           "noResults": "ネットワークが見つかりませんでした",
           "hosts": "ホスト",
@@ -302,9 +316,50 @@
           "editTitle": "クロージャの編集",
           "name": "名前"
         },
+        "editVolume" :{
+          "newLabel": "ボリュームの追加",
+          "newTitle": "ボリュームの追加",
+          "newDropdownTitle": "ボリュームの追加...",
+          "editTitle": "ボリュームの編集",
+          "name": "名前",
+          "driver": "ドライバ",
+          "driverPlaceholder": "例: local",
+          "driverOptions": {
+            "label": "ドライバのオプション",
+            "keyTitle": "オプション",
+            "keyHint": "例: size",
+            "valueTitle": "値",
+            "valueHint": "例: 20GB"
+          },
+          "existingVolume": "既存",
+          "showingCount": "__count__ /__totalCount__ を表示中",
+          "showingInstances": "個のインスタンス",
+          "noResults": "ボリュームが見つかりません",
+          "mountpoint": "ホストのマウントポイント",
+          "hosts": "ホスト",
+          "hostsSearchPlaceholder": "ホストの検索",
+          "create": "作成",
+          "createTitle": "ボリュームの作成",
+          "customProperties": "カスタム プロパティ"
+        },
+        "editKubernetes": {
+          "newTitle": "Kubernetes の追加",
+          "editTitle": "Kubernetes の編集",
+          "createEntities": {
+            "title": "Kubernetes エンティティの作成",
+            "button": "作成",
+            "hint": "ファイルをロードして YAML 定義から Kubernetes エンティティをプロビジョニングするか、内容を手動で入力します。Deployment/Service ペアのように、複数の定義を 「---」で区切って指定できます。",
+            "placeholder": "Kubernetes 定義の YAML を入力します... "
+          }
+        },
         "network": {
           "drag": "コンテナをドラッグして、このネットワークに接続します",
           "drop": "コンテナをドロップして、このネットワークに接続します"
+        },
+        "volume": {
+          "drag": "コンテナをドラッグして、このボリュームに接続します",
+          "drop": "コンテナをドロップして、このボリュームに接続します",
+          "editContainerPath": "コンテナのパス:"
         }
       },
       "actions": {
@@ -405,12 +460,12 @@
         "verified": "検証が正常に完了しました。"
       }
     },
-    "profile": {
+    "environment": {
       "list": {
-        "title": "環境",
-        "titleSearch": "見つかった環境",
-        "searchPlaceholder": "環境の検索",
-        "addButton": "環境の追加",
+        "title": "プロファイル",
+        "titleSearch": "プロファイルが見つかりました",
+        "searchPlaceholder": "プロファイルの検索",
+        "addButton": "プロファイルの作成",
         "addPropertyButton": "プロパティの追加",
         "nameColumn": "名前",
         "endpointTypeColumn": "エンドポイント タイプ",
@@ -425,8 +480,8 @@
         "remove": "削除"
       },
       "edit": {
-        "addTitle": "環境の追加",
-        "editTitle": "環境の編集",
+        "addTitle": "プロファイルの追加",
+        "editTitle": "プロファイルの編集",
         "save": "保存",
         "basicTab": "基本",
         "computeTab": "コンピューティング",
@@ -441,7 +496,12 @@
         "bootDiskPropertyLabel": "ブート ディスクのプロパティ",
         "cpuCountLabel": "CPU",
         "diskSizeMbLabel": "ディスク サイズ",
-        "memoryMbLabel": "メモリ"
+        "memoryMbLabel": "メモリ",
+        "subnetworksLabel": "サブネットワーク",
+        "cidrLabel": "CIDR",
+        "cidrLabelHint": "0.0.0.0/0",
+        "supportPublicIpAddressLabel": "パブリック IP アドレスのサポート",
+        "defaultForZoneLabel": "ゾーンのデフォルト"
       },
       "instanceType": {
         "aws": {
@@ -484,18 +544,23 @@
         "update": "エンドポイントの編集",
         "nameLabel": "名前",
         "typeLabel": "タイプ",
-        "accessKeyIdLabel": "アクセス キーの ID",
-        "usernameLabel": "ユーザー名",
-        "passwordLabel": "パスワード",
-        "secretAccessKeyLabel": "プライベート アクセス キー",
+        "privateKeyIdLabel": "アクセス キーの ID",
+        "privateKeyLabel": "プライベート アクセス キー",
         "regionIdLabel": "地域 ID",
-        "endpointHostLabel": "ホスト名または IP アドレス",
-        "subscriptionIdLabel": "サブスクリプション ID",
-        "tenantIdLabel": "テナント ID",
-        "datacenterIdLabel": "データセンター名"
+        "azure": {
+          "userLinkLabel": "サブスクリプション ID",
+          "tenantIdLabel": "テナント ID"
+        },
+        "vsphere": {
+          "hostNameLabel": "ホスト名または IP アドレス",
+          "privateKeyIdLabel": "ユーザー名",
+          "privateKeyLabel": "パスワード",
+          "regionIdLabel": "データセンター"
+        }
       },
       "entity": "エンドポイント",
       "typeEntity": "タイプ",
+      "datacenterEntity": "データセンター",
       "createNew": "新規エンドポイント",
       "manage": "エンドポイントの管理",
       "contextPanelTooltip": "エンドポイント"
@@ -504,7 +569,18 @@
       "list": {
         "title": "マシン",
         "titleSearch": "見つかったマシン",
-        "searchPlaceholder": "マシンの検索"
+        "searchPlaceholder": "マシンの検索",
+        "addButton": "マシンの作成"
+      },
+      "edit": {
+        "addTitle": "マシンの作成",
+        "editTitle": "マシンの編集",
+        "nameLabel": "名前",
+        "save": "保存",
+        "create": "作成",
+        "loadButton": "ファイルからロード",
+        "importTemplateHint": "説明を合成します。これには、1 台または複数のマシンの説明が含まれます。",
+        "importPlaceholder": ""
       }
     },
     "compute": {
@@ -518,8 +594,34 @@
         "type": "タイプ"
       },
       "edit": {
-        "title": "コンピューティングの編集"
+        "title": "コンピューティングの編集",
+        "nameLabel": "名前"
       }
+    },
+    "network": {
+      "entity": "ネットワーク"
+    },
+    "subnetwork": {
+      "list": {
+        "title": "サブネットワーク",
+        "addButton": "追加",
+        "nameColumn": "名前",
+        "cidrColumn": "CIDR"
+      },
+      "edit": {
+        "addNew": "サブネットワークの追加",
+        "update": "サブネットワークの編集",
+        "nameLabel": "名前",
+        "cidrLabel": "CIDR",
+        "supportPublicIpAddressLabel": "パブリック IP アドレスのサポート",
+        "defaultForZoneLabel": "ゾーンのデフォルト",
+        "tagsTitle": "タグ",
+        "tagsHint": "key:value タグを入力します",
+        "tagsPlaceholder": "例: access:restricted"
+      },
+      "entity": "サブネットワーク",
+      "manage": "サブネットワークの管理",
+      "contextPanelTooltip": "サブネットワーク"
     },
     "resource": {
       "list": {
@@ -541,22 +643,10 @@
             "CONNECTED": "接続済み",
             "RETIRED": "使用中止",
             "ERROR": "エラー"
-          },
-          "operations": {
-            "errors": {
-              "remove": {
-                "containersConnected": "接続済みのコネクタがあります"
-              }
-            }
           }
         },
         "container": {
-          "create": "コンテナの作成",
-          "operations": {
-            "errors": {
-              "managedByCatalog": "カタログで管理されています"
-            }
-          }
+          "create": "コンテナの作成"
         },
         "application": {
           "create": "アプリケーションの作成"
@@ -564,17 +654,42 @@
         "closure": {
           "create": "クロージャの作成"
         },
+        "kubernetes": {
+          "create": "作成"
+        },
+        "volume": {
+          "create": "ボリュームの作成",
+          "connectedDateLabel": "接続日:",
+          "driverLabel": "ドライバ",
+          "driverOptionsLabel": "ドライバのオプション",
+          "scope": "スコープ",
+          "mountpoint": "ホストのマウントポイント",
+          "connectedContainers": "コンテナ",
+          "parentHosts": "ホスト",
+          "external": "外部",
+          "state": {
+            "UNKNOWN": "不明",
+            "PROVISIONING": "プロビジョニング",
+            "CONNECTED": "接続済み",
+            "RETIRED": "使用中止",
+            "ERROR": "エラー"
+          }
+        },
         "titleSearch": {
           "containers": "コンテナ",
           "applications": "アプリケーション",
           "networks": "ネットワーク",
-          "closures": "クロージャ"
+          "volumes": "ボリューム",
+          "closures": "クロージャ",
+          "kubernetes": "Kubernetes"
         },
         "searchPlaceholder": {
           "containers": "コンテナの検索",
           "applications": "アプリケーションの検索",
           "networks": "ネットワークの検索",
-          "closures": "クロージャの検索"
+          "closures": "クロージャの検索",
+          "volumes": "ボリュームの検索",
+          "kubernetes": "Kubernetes エンティティの検索"
         },
         "searchCategory": {
           "networks": "ネットワーク"
@@ -735,6 +850,12 @@
             "volume": "ボリューム",
             "volumeHint": "例: datacontainer"
           },
+          "volumeDriver": "ボリューム ドライバ",
+          "volumeDriverPlaceholder": "例: local",
+          "volumeDriverDescription": "ボリュームに使用するドライバ",
+          "volumeName": "ボリューム名",
+          "volumeNamePlaceholder": "例: volumeName",
+          "volumeNameDescription": "ローカルでないドライバを使用している場合はボリュームの名前",
           "workingDirectory": "作業ディレクトリ",
           "workingDirectoryDescription": "コマンドの実行場所となる作業ディレクトリ",
           "clusterSize": "クラスタのサイズ",
@@ -772,6 +893,8 @@
           },
           "customProperties": "カスタム プロパティ",
           "customPropertiesDescription": "[カスタム プロパティ] では、プロビジョニング対象となるコンテナに属性を追加できます。",
+          "healthContinueProvisionigOnError": "プロビジョニングに関する健全性チェックの失敗を無視",
+          "healthContinueProvisionigOnErrorDescription": "健全性チェックが設定されていると、サービスの起動時と実行時の他に、プロビジョニング時にも健全性チェックが使用されます。コンテナは、健全性チェックに成功するまで、プロビジョニング済みとみなされません。このオプションをオンにすると、健全性チェックに成功していない場合でもプロビジョニングが可能になります。",
           "healthMode": "モード",
           "healthConfigNone": "なし",
           "healthConfigTCP": "TCP 接続",
@@ -780,12 +903,16 @@
           "healthPath": "URL パス",
           "healthPathDescription": "健全性チェックに使用する API への URL パス",
           "healthPort": "ポート",
+          "healthPortHint": "デフォルト: 80",
           "healthPortDescription": "使用するコンテナ ポート",
           "healthTimeout": "タイムアウト (ミリ秒)",
+          "healthTimeoutHint": "デフォルト: 2000",
           "healthTimeoutDescription": "健全性チェックのタイムアウト (ミリ秒)",
           "healthyThreshold": "良好状態のしきい値",
+          "healthyThresholdHint": "デフォルト: 3",
           "healthyThresholdDescription": "健全性チェックの成功回数のしきい値。これにより、コンテナの健全性が良好と見なされます。",
           "unhealthyThreshold": "不良状態のしきい値",
+          "unhealthyThresholdHint": "デフォルト: 3",
           "unhealthyThresholdDescription": "健全性チェックの失敗回数のしきい値。これにより、コンテナの健全性が不良と見なされます。",
           "command": "コマンド",
           "commandDescription": "のコンテナで実行するコマンド。コンテナの健全性が識別には、終了ステータスが使用されます。",
@@ -815,7 +942,7 @@
         "UNKNOWN": "不明",
         "RETIRED": "使用中止",
         "PROVISIONING": "プロビジョニング",
-        "continuousStateSince": "__state__ for __duration__"
+        "continuousStateSince": "__state__ (__duration__)"
       },
       "actions": {
         "start": "開始",
@@ -866,7 +993,8 @@
         "descriptionId": "ID",
         "source": "ソース",
         "sourceURL": "ソース URL",
-        "resources": "リソース"
+        "resources": "リソース",
+        "placement": "配置"
       },
       "state": {
         "CREATED": "作成済み",
@@ -893,8 +1021,8 @@
           "source": "ソース コード",
           "sourceURL": "ソース URL",
           "runtimeTypes": {
-            "nodejs": "Node.js 4.3.0",
-            "python": "Python 3.4.3"
+            "nodejs": "NodeJs 4",
+            "python": "Python 3"
           },
           "logConfigOptionsInputs" : {
             "name": "名前",
@@ -976,7 +1104,7 @@
       "title": "__entity__ リストから選択します",
       "searchPlaceholder": "__entity__ の検索",
       "clear": "選択をクリア",
-      "showingCount": "__totalCount__ 個中 __count__ 個を表示しています",
+      "showingCount": "__count__ /__totalCount__ を表示中",
       "noResults": "アイテムが見つかりませんでした"
     },
     "customProperties": {
@@ -1027,7 +1155,9 @@
       "volumeDestinationRequired": "ボリュームのターゲットが必要です。",
       "invalidInputValue": "入力値が無効です",
       "invalidPath": "値は絶対パスにする必要があります。",
-      "invalidPathOrName": "値は、絶対パスまたは有効なボリューム名にする必要があります。"
+      "invalidPathOrName": "値は、絶対パスまたは有効なボリューム名にする必要があります。",
+      "containersConnected": "接続済みのコネクタがあります",
+      "managedByCatalog": "カタログで管理されています"
     },
     "infoMessages": {
       "created": "正常に作成されました。",

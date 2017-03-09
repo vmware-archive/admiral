@@ -3,8 +3,10 @@
     "homepage": {
       "welcome": "歡迎使用!",
       "description": "在這裡，您可以<b>建立、佈建、管理以及監控容器化應用程式。</b>",
+      "descriptionCompute": "您可以使用此位置<b>在任何雲端建立、佈建、管理及監控任何應用程式。</b>",
       "start": "讓我們立即開始吧!",
       "addHost": "新增主機",
+      "addEndpoint": "新增端點",
       "enter": "輸入",
       "helpCenter": "說明",
       "steps": {
@@ -22,13 +24,15 @@
       "containers": "容器",
       "applications": "應用程式",
       "networks": "網路",
+      "volumes": "磁碟區",
       "closures": "閉包",
+      "kubernetes": "Kubernetes",
       "eventlog": "事件記錄",
       "placementZones": "放置區域",
-      "profiles": "環境",
+      "environments": "設定檔",
       "endpoints": "端點",
       "machines": "機器",
-      "compute": "計算"
+      "compute": "計算資源"
     },
     "host": {
       "entity": "主機",
@@ -43,7 +47,10 @@
         "addressHint": "請指定適當的配置和連接埠，例如，https://myhost.com:2376。預設配置: 'https'。預設連接埠: https/443、http/80。",
         "hostAlias": "名稱",
         "hostAddress": "位址",
+        "hostType": "主機類型",
         "placementZone": "放置區域",
+        "placementZoneInputPlaceholder": "範例: vic:hostname:2376",
+        "placementZoneInputHint": "具有此名稱的排程器放置區域將自動建立",
         "credential": "登入認證",
         "guestCredential": "客體認證",
         "destination": "目的地",
@@ -54,7 +61,7 @@
         "tagsHint": "輸入索引鍵:值標記",
         "autoConfigure": "自動設定",
         "autoConfigureInput":"啟用主機自動組態",
-        "autoConfigureHint": "將自動設定主機",
+        "autoConfigureHint": "此選項會設定所提供位址與連接埠 (具有產生的自我簽署憑證) 的 Docker 遠端 API。透過 SSH 即可一次完成。支援的作業系統為: CoreOS、PhotonOS、Ubuntu Server 16.04 或更高版本。",
         "reservationPolicy": "保留區原則",
         "endpoint": "端點",
         "connectionType": "連線類型",
@@ -70,6 +77,7 @@
         "hideCertificate": "隱藏憑證",
         "manageCertificates": "管理憑證",
         "containers": "容器",
+        "nodes": "節點",
         "cpu": "CPU",
         "memory": "記憶體",
         "storage": "儲存區",
@@ -80,7 +88,8 @@
         "instanceType": "執行個體類型",
         "imageType": "作業系統",
         "port": "連接埠",
-        "clusterSize": "執行個體計數"
+        "clusterSize": "執行個體計數",
+        "unlimited": "無限制"
       },
       "list": {
         "title": "主機",
@@ -117,7 +126,12 @@
         "update": "編輯放置區域",
         "nameTitle": "放置區域名稱",
         "endpointTitle": "端點",
+        "placementPolicy": "進階放置原則",
+        "placementPolicyHint": "依預設，資源將置於隨機主機上。會選擇性地套用下列其中一個策略:<br><br><b>BINPACK</b> - 置於記憶體使用量最高的主機上。<br><br><b>SPREAD</b> - 置於資源數最少的主機上。",
         "dynamicTitle": "動態配置資源至此區域",
+        "tagsTitle": "標記",
+        "tagsHint": "輸入索引鍵:值標記",
+        "tagsPlaceholder": "範例: compliance:yes",
         "tagsToMatchTitle": "要比對的標記",
         "tagsToMatchHint": "輸入要比對的索引鍵:值標記",
         "tagsToMatchPlaceholder": "範例: location:west"
@@ -281,7 +295,7 @@
           "editTitle": "編輯網路組態",
           "name": "名稱",
           "existingNetwork": "現有",
-          "showingCount": "目前顯示第 __count__ 個，共 __totalCount__ 個",
+          "showingCount": "顯示第 __count__ 個，共 __totalCount__ 個",
           "showingInstances": "個執行個體",
           "noResults": "找不到網路",
           "hosts": "主機",
@@ -302,9 +316,50 @@
           "editTitle": "編輯閉包",
           "name": "名稱"
         },
+        "editVolume" :{
+          "newLabel": "新增磁碟區",
+          "newTitle": "新增磁碟區",
+          "newDropdownTitle": "新增磁碟區...",
+          "editTitle": "編輯磁碟區",
+          "name": "名稱",
+          "driver": "驅動程式",
+          "driverPlaceholder": "範例: local",
+          "driverOptions": {
+            "label": "驅動程式選項",
+            "keyTitle": "選項",
+            "keyHint": "範例: size",
+            "valueTitle": "值",
+            "valueHint": "範例: 20 GB"
+          },
+          "existingVolume": "現有",
+          "showingCount": "顯示第 __count__ 個，共 __totalCount__ 個",
+          "showingInstances": "個執行個體",
+          "noResults": "找不到磁碟區",
+          "mountpoint": "主機掛接點",
+          "hosts": "主機",
+          "hostsSearchPlaceholder": "搜尋主機",
+          "create": "建立",
+          "createTitle": "建立磁碟區",
+          "customProperties": "自訂內容"
+        },
+        "editKubernetes": {
+          "newTitle": "新增 Kubernetes",
+          "editTitle": "編輯 Kubernetes",
+          "createEntities": {
+            "title": "建立 Kubernetes 實體",
+            "button": "建立",
+            "hint": "透過載入檔案或手動輸入其內容，即可從 YAML 定義佈建 Kubernetes 實體。支援多個定義 (由 \"---\" 分隔)，例如部署/服務配對。",
+            "placeholder": "輸入 Kubernetes 定義的 YAML..."
+          }
+        },
         "network": {
           "drag": "拖曳以將容器連結至此網路",
           "drop": "拖放以將容器連結至此網路"
+        },
+        "volume": {
+          "drag": "拖曳以將容器連結至此磁碟區",
+          "drop": "放置以將容器連結至此磁碟區",
+          "editContainerPath": "容器路徑:"
         }
       },
       "actions": {
@@ -405,12 +460,12 @@
         "verified": "已成功驗證!"
       }
     },
-    "profile": {
+    "environment": {
       "list": {
-        "title": "環境",
-        "titleSearch": "找到的環境",
-        "searchPlaceholder": "搜尋環境",
-        "addButton": "新增環境",
+        "title": "設定檔",
+        "titleSearch": "已找到設定檔",
+        "searchPlaceholder": "搜尋設定檔",
+        "addButton": "建立設定檔",
         "addPropertyButton": "新增內容",
         "nameColumn": "名稱",
         "endpointTypeColumn": "端點類型",
@@ -425,11 +480,11 @@
         "remove": "移除"
       },
       "edit": {
-        "addTitle": "新增環境",
-        "editTitle": "編輯環境",
+        "addTitle": "新增設定檔",
+        "editTitle": "編輯設定檔",
         "save": "儲存",
         "basicTab": "基本",
-        "computeTab": "計算",
+        "computeTab": "計算資源",
         "networkTab": "網路",
         "storageTab": "儲存區",
         "nameLabel": "名稱",
@@ -441,7 +496,12 @@
         "bootDiskPropertyLabel": "開機磁碟內容",
         "cpuCountLabel": "CPU",
         "diskSizeMbLabel": "磁碟大小",
-        "memoryMbLabel": "記憶體"
+        "memoryMbLabel": "記憶體",
+        "subnetworksLabel": "子網路",
+        "cidrLabel": "CIDR",
+        "cidrLabelHint": "0.0.0.0/0",
+        "supportPublicIpAddressLabel": "支援公用 IP",
+        "defaultForZoneLabel": "區域的預設值"
       },
       "instanceType": {
         "aws": {
@@ -484,18 +544,23 @@
         "update": "編輯端點",
         "nameLabel": "名稱",
         "typeLabel": "類型",
-        "accessKeyIdLabel": "存取金鑰識別碼",
-        "usernameLabel": "使用者名稱",
-        "passwordLabel": "密碼",
-        "secretAccessKeyLabel": "密碼存取金鑰",
+        "privateKeyIdLabel": "存取金鑰識別碼",
+        "privateKeyLabel": "密碼存取金鑰",
         "regionIdLabel": "區域識別碼",
-        "endpointHostLabel": "主機名稱或 IP",
-        "subscriptionIdLabel": "訂閱識別碼",
-        "tenantIdLabel": "承租人識別碼",
-        "datacenterIdLabel": "資料中心名稱"
+        "azure": {
+          "userLinkLabel": "訂閱識別碼",
+          "tenantIdLabel": "承租人識別碼"
+        },
+        "vsphere": {
+          "hostNameLabel": "主機名稱或 IP",
+          "privateKeyIdLabel": "使用者名稱",
+          "privateKeyLabel": "密碼",
+          "regionIdLabel": "資料中心"
+        }
       },
       "entity": "端點",
       "typeEntity": "類型",
+      "datacenterEntity": "資料中心",
       "createNew": "新增端點",
       "manage": "管理端點",
       "contextPanelTooltip": "端點"
@@ -504,22 +569,59 @@
       "list": {
         "title": "機器",
         "titleSearch": "找到的機器",
-        "searchPlaceholder": "搜尋機器"
+        "searchPlaceholder": "搜尋機器",
+        "addButton": "建立機器"
+      },
+      "edit": {
+        "addTitle": "建立機器",
+        "editTitle": "編輯機器",
+        "nameLabel": "名稱",
+        "save": "儲存",
+        "create": "建立",
+        "loadButton": "從檔案載入",
+        "importTemplateHint": "包含一或多個機器說明的複合說明",
+        "importPlaceholder": ""
       }
     },
     "compute": {
       "entity": "目的地",
       "list": {
-        "title": "計算",
-        "titleSearch": "找到的計算",
-        "searchPlaceholder": "搜尋計算"
+        "title": "計算資源",
+        "titleSearch": "找到的計算資源",
+        "searchPlaceholder": "搜尋計算資源"
       },
       "details": {
         "type": "類型"
       },
       "edit": {
-        "title": "編輯計算"
+        "title": "編輯計算資源",
+        "nameLabel": "名稱"
       }
+    },
+    "network": {
+      "entity": "網路"
+    },
+    "subnetwork": {
+      "list": {
+        "title": "子網路",
+        "addButton": "新增",
+        "nameColumn": "名稱",
+        "cidrColumn": "CIDR"
+      },
+      "edit": {
+        "addNew": "新增子網路",
+        "update": "編輯子網路",
+        "nameLabel": "名稱",
+        "cidrLabel": "CIDR",
+        "supportPublicIpAddressLabel": "支援公用 IP",
+        "defaultForZoneLabel": "區域的預設值",
+        "tagsTitle": "標記",
+        "tagsHint": "輸入索引鍵:值標記",
+        "tagsPlaceholder": "範例: access:restricted"
+      },
+      "entity": "子網路",
+      "manage": "管理子網路",
+      "contextPanelTooltip": "子網路"
     },
     "resource": {
       "list": {
@@ -541,22 +643,10 @@
             "CONNECTED": "已連線",
             "RETIRED": "已淘汰",
             "ERROR": "錯誤"
-          },
-          "operations": {
-            "errors": {
-              "remove": {
-                "containersConnected": "存在連線的容器"
-              }
-            }
           }
         },
         "container": {
-          "create": "建立容器",
-          "operations": {
-            "errors": {
-              "managedByCatalog": "由目錄管理"
-            }
-          }
+          "create": "建立容器"
         },
         "application": {
           "create": "建立應用程式"
@@ -564,17 +654,42 @@
         "closure": {
           "create": "建立閉包"
         },
+        "kubernetes": {
+          "create": "建立"
+        },
+        "volume": {
+          "create": "建立磁碟區",
+          "connectedDateLabel": "以下時間之後連線",
+          "driverLabel": "驅動程式",
+          "driverOptionsLabel": "驅動程式選項",
+          "scope": "範圍",
+          "mountpoint": "主機掛接點",
+          "connectedContainers": "容器",
+          "parentHosts": "主機",
+          "external": "外部",
+          "state": {
+            "UNKNOWN": "未知",
+            "PROVISIONING": "佈建中",
+            "CONNECTED": "已連線",
+            "RETIRED": "已淘汰",
+            "ERROR": "錯誤"
+          }
+        },
         "titleSearch": {
           "containers": "容器",
           "applications": "應用程式",
           "networks": "網路",
-          "closures": "閉包"
+          "volumes": "磁碟區",
+          "closures": "閉包",
+          "kubernetes": "Kubernetes"
         },
         "searchPlaceholder": {
           "containers": "搜尋容器",
           "applications": "搜尋應用程式",
           "networks": "搜尋網路",
-          "closures": "搜尋閉包"
+          "closures": "搜尋閉包",
+          "volumes": "搜尋磁碟區",
+          "kubernetes": "搜尋 Kubernetes 實體"
         },
         "searchCategory": {
           "networks": "網路"
@@ -735,6 +850,12 @@
             "volume": "磁碟區",
             "volumeHint": "範例: datacontainer"
           },
+          "volumeDriver": "磁碟區驅動程式",
+          "volumeDriverPlaceholder": "範例: local",
+          "volumeDriverDescription": "磁碟區要使用的驅動程式",
+          "volumeName": "磁碟區名稱",
+          "volumeNamePlaceholder": "範例: volumeName",
+          "volumeNameDescription": "使用非本機驅動程式時的磁碟區名稱",
           "workingDirectory": "工作目錄",
           "workingDirectoryDescription": "可供在其中執行命令的工作目錄",
           "clusterSize": "叢集大小",
@@ -772,6 +893,8 @@
           },
           "customProperties": "自訂內容",
           "customPropertiesDescription": "自訂內容允許將屬性新增到將要佈建的容器。",
+          "healthContinueProvisionigOnError": "佈建時忽略健全狀況檢查失敗",
+          "healthContinueProvisionigOnErrorDescription": "如果已設定健全狀況檢查，除了服務啟動並執行時之外，也將在佈建時使用。在成功通過一項健全狀況檢查之前，將不會考慮佈建容器。勾選此選項，以便即使在未成功通過健全狀況檢查的情況下也能佈建。",
           "healthMode": "模式",
           "healthConfigNone": "無",
           "healthConfigTCP": "TCP 連線",
@@ -780,12 +903,16 @@
           "healthPath": "URL 路徑",
           "healthPathDescription": "用於健全狀況檢查之 API 的 URL 路徑",
           "healthPort": "連接埠",
+          "healthPortHint": "預設值: 80",
           "healthPortDescription": "要使用的容器連接埠",
           "healthTimeout": "逾時 (毫秒)",
+          "healthTimeoutHint": "預設值: 2000",
           "healthTimeoutDescription": "健全狀況檢查作業的逾時 (以毫秒為單位)",
           "healthyThreshold": "狀況良好臨界值",
+          "healthyThresholdHint": "預設值: 3",
           "healthyThresholdDescription": "要將容器視為狀況良好所需的健全狀況檢查成功作業的臨界值",
           "unhealthyThreshold": "狀況不良的臨界值",
+          "unhealthyThresholdHint": "預設值: 3",
           "unhealthyThresholdDescription": "要將容器視為狀況不良所需的健全狀況檢查失敗作業的臨界值",
           "command": "命令",
           "commandDescription": "要在容器上執行的命令。結束狀態用於判定容器健全狀況。",
@@ -815,7 +942,7 @@
         "UNKNOWN": "未知",
         "RETIRED": "已淘汰",
         "PROVISIONING": "佈建中",
-        "continuousStateSince": "__state__ for __duration__"
+        "continuousStateSince": "__state__狀態已持續 __duration__"
       },
       "actions": {
         "start": "啟動",
@@ -866,7 +993,8 @@
         "descriptionId": "識別碼",
         "source": "來源",
         "sourceURL": "來源 URL",
-        "resources": "資源"
+        "resources": "資源",
+        "placement": "放置"
       },
       "state": {
         "CREATED": "已建立",
@@ -893,8 +1021,8 @@
           "source": "原始程式碼",
           "sourceURL": "來源 URL",
           "runtimeTypes": {
-            "nodejs": "Node.js 4.3.0",
-            "python": "Python 3.4.3"
+            "nodejs": "NodeJs 4",
+            "python": "Python 3"
           },
           "logConfigOptionsInputs" : {
             "name": "名稱",
@@ -976,7 +1104,7 @@
       "title": "從 __entity__ 清單中選取",
       "searchPlaceholder": "搜尋 __entity__",
       "clear": "清除選取項目",
-      "showingCount": "目前顯示第 __count__ 個，共 __totalCount__ 個",
+      "showingCount": "顯示第 __count__ 個，共 __totalCount__ 個",
       "noResults": "找不到項目"
     },
     "customProperties": {
@@ -1027,7 +1155,9 @@
       "volumeDestinationRequired": "磁碟區目的地為必填。",
       "invalidInputValue": "輸入的值無效",
       "invalidPath": "值必須為絕對路徑。",
-      "invalidPathOrName": "值必須為絕對路徑或有效的磁碟區名稱。"
+      "invalidPathOrName": "值必須為絕對路徑或有效的磁碟區名稱。",
+      "containersConnected": "存在連線的容器。",
+      "managedByCatalog": "由目錄管理"
     },
     "infoMessages": {
       "created": "已成功建立!",
