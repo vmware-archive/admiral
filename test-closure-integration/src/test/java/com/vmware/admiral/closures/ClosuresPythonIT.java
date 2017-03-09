@@ -49,7 +49,7 @@ import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.Utils;
 
-public class PythonTest extends BaseClosureIntegrationTest {
+public class ClosuresPythonIT extends BaseClosureIntegrationTest {
 
     protected static String IMAGE_NAME_PREFIX = "vmware/photon-closure-runner_";
 
