@@ -30,6 +30,7 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.EndpointService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.photon.controller.model.support.CertificateInfoServiceErrorResponse;
 import com.vmware.photon.controller.model.tasks.EndpointAllocationTaskService;
 import com.vmware.photon.controller.model.tasks.EndpointAllocationTaskService.EndpointAllocationTaskState;
 import com.vmware.photon.controller.model.tasks.EndpointRemovalTaskService;
@@ -227,6 +228,13 @@ public class EndpointAdapterService extends StatelessService {
                     }
                     EndpointAllocationTaskState body = o.getBody(EndpointAllocationTaskState.class);
                     if (body.taskInfo.stage == TaskStage.FAILED) {
+                        if (validateConnection && CertificateInfoServiceErrorResponse.KIND
+                                .equals(body.taskInfo.failure.documentKind)) {
+                            put.setBody(body.taskInfo.failure);
+                            put.setStatusCode(HttpURLConnection.HTTP_OK);
+                            put.complete();
+                            return;
+                        }
                         handleServiceErrorResponse(put, o.getStatusCode(), e,
                                 body.taskInfo.failure);
                         return;
