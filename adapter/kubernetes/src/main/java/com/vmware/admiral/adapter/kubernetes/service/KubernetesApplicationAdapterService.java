@@ -357,6 +357,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                     deploymentState.compositeComponentLink = context.compositeComponent.documentSelfLink;
                     deploymentState.parentLink = context.kubernetesContext.host.documentSelfLink;
                     deploymentState.documentSelfLink = deployment.metadata.uid;
+                    deploymentState.id = deployment.metadata.uid;
                     sendRequest(Operation.createPost(this, DeploymentService.FACTORY_LINK)
                             .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                             .setBody(deploymentState)
@@ -404,6 +405,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                             controllerState.compositeComponentLink = context.compositeComponent.documentSelfLink;
                             controllerState.parentLink = context.kubernetesContext.host.documentSelfLink;
                             controllerState.documentSelfLink = controller.metadata.uid;
+                            controllerState.id = controller.metadata.uid;
                             sendRequest(Operation
                                     .createPost(this, ReplicationControllerService.FACTORY_LINK)
                                     .addPragmaDirective(
@@ -451,6 +453,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                     serviceState.compositeComponentLink = context.compositeComponent.documentSelfLink;
                     serviceState.parentLink = context.kubernetesContext.host.documentSelfLink;
                     serviceState.documentSelfLink = service.metadata.uid;
+                    serviceState.id = service.metadata.uid;
                     sendRequest(Operation.createPost(this, ServiceEntityHandler.FACTORY_LINK)
                             .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                             .setBody(serviceState)
@@ -496,6 +499,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                     replicaSetState.compositeComponentLink = context.compositeComponent.documentSelfLink;
                     replicaSetState.parentLink = context.kubernetesContext.host.documentSelfLink;
                     replicaSetState.documentSelfLink = replicaSet.metadata.uid;
+                    replicaSetState.id = replicaSet.metadata.uid;
                     sendRequest(Operation.createPost(this, ReplicaSetService.FACTORY_LINK)
                             .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                             .setBody(replicaSetState)
@@ -541,6 +545,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                     podState.compositeComponentLink = context.compositeComponent.documentSelfLink;
                     podState.parentLink = context.kubernetesContext.host.documentSelfLink;
                     podState.documentSelfLink = pod.metadata.uid;
+                    podState.id = pod.metadata.uid;
                     sendRequest(Operation.createPost(this, PodService.FACTORY_LINK)
                             .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                             .setBody(podState)
@@ -611,6 +616,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
         state.compositeComponentLink = component.documentSelfLink;
         state.descriptionLink = description.documentSelfLink;
         state.parentLink = context.kubernetesContext.host.documentSelfLink;
+        state.id = state.getMetadata().uid;
 
         sendRequest(Operation.createPost(this, factoryLink)
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
