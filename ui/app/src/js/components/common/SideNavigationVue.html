@@ -83,22 +83,36 @@
       </ul>
     </section>
   </section>
+
   <section v-if="application === 'compute'" class="sidenav-content">
-    <a class="nav-link" data-cmd="navigation-{{computeConstants.VIEWS.ENDPOINTS.name}}"
-       :class="{'active': currentView === computeConstants.VIEWS.ENDPOINTS.name}"
-       href="#/endpoints">{{i18n("app.navbar.endpoints")}}</a>
-    <a class="nav-link" data-cmd="navigation-{{computeConstants.VIEWS.PROFILES.name}}"
-       :class="{'active': currentView === computeConstants.VIEWS.PROFILES.name}"
-       href="#/profiles">{{i18n("app.navbar.profiles")}}</a>
-    <a class="nav-link" data-cmd="navigation-{{computeConstants.VIEWS.PLACEMENTS.name}}"
-       :class="{'active': currentView === computeConstants.VIEWS.PLACEMENTS.name}"
-       href="#/placements">{{i18n("app.navbar.placements")}}</a>
-    <a class="nav-link" data-cmd="navigation-{{computeConstants.VIEWS.COMPUTE.name}}"
-       :class="{'active': currentView === computeConstants.VIEWS.COMPUTE.name}"
-       href="#/compute">{{i18n("app.navbar.compute")}}</a>
     <section class="nav-group collapsible">
       <input id="nav-category-compute-resources" type="checkbox">
       <label for="nav-category-compute-resources">{{i18n("app.navbar.resources")}}</label>
+      <ul class="nav-list">
+        <li><a class="nav-link" data-cmd="navigation-{{computeConstants.VIEWS.ENDPOINTS.name}}"
+               :class="{'active': currentView === computeConstants.VIEWS.ENDPOINTS.name}"
+               href="#/endpoints">{{i18n("app.navbar.endpoints")}}</a></li>
+        <li><a class="nav-link" data-cmd="navigation-{{computeConstants.VIEWS.COMPUTE.name}}"
+               :class="{'active': currentView === computeConstants.VIEWS.COMPUTE.name}"
+               href="#/compute">{{i18n("app.navbar.compute")}}</a></li>
+      </ul>
+    </section>
+    <section class="nav-group collapsible">
+      <input id="nav-category-compute-policies" type="checkbox">
+      <label for="nav-category-compute-policies">{{i18n("app.navbar.policies")}}</label>
+      <ul class="nav-list">
+        <li><a class="nav-link" data-cmd="navigation-{{computeConstants.VIEWS.PROFILES.name}}"
+               :class="{'active': currentView === computeConstants.VIEWS.PROFILES.name}"
+               href="#/profiles">{{i18n("app.navbar.profiles")}}</a></li>
+        <li><a class="nav-link" data-cmd="navigation-{{computeConstants.VIEWS.PLACEMENTS.name}}"
+               :class="{'active': currentView === computeConstants.VIEWS.PLACEMENTS.name}"
+               href="#/placements">{{i18n("app.navbar.placements")}}</a></li>
+      </ul>
+    </section>
+
+    <section class="nav-group collapsible">
+      <input id="nav-category-compute-deployment" type="checkbox">
+      <label for="nav-category-compute-deployment">{{i18n("app.navbar.deployment")}}</label>
       <ul class="nav-list">
         <li><a class="nav-link" data-cmd="navigation-{{computeConstants.VIEWS.RESOURCES.VIEWS.MACHINES.name}}"
                :class="{'active': currentView === computeConstants.VIEWS.RESOURCES.VIEWS.MACHINES.name}"
