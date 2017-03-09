@@ -3,8 +3,10 @@
     "homepage": {
       "welcome": "Le damos la bienvenida.",
       "description": "Aquí podrá <b>crear, aprovisionar, administrar y supervisar las aplicaciones en contenedores.</b>",
+      "descriptionCompute": "Aquí podrá <b>crear, aprovisionar, administrar y supervisar cualquier aplicación en cualquier nube.</b>",
       "start": "Empecemos.",
       "addHost": "Añadir un host",
+      "addEndpoint": "Añadir un endpoint",
       "enter": "Entrar",
       "helpCenter": "Ayuda",
       "steps": {
@@ -22,13 +24,15 @@
       "containers": "Contenedores",
       "applications": "Aplicaciones",
       "networks": "Redes",
-      "closures": "Cierres",
+      "volumes": "Volúmenes",
+      "closures": "Clausuras",
+      "kubernetes": "Kubernetes",
       "eventlog": "Log de eventos",
       "placementZones": "Zonas de ubicación",
-      "profiles": "Entornos",
+      "environments": "Perfiles",
       "endpoints": "Endpoints",
       "machines": "Máquinas",
-      "compute": "Informática"
+      "compute": "Recurso informático"
     },
     "host": {
       "entity": "host",
@@ -43,7 +47,10 @@
         "addressHint": "Especifique el esquema y el puerto adecuados, por ejemplo, https://myhost.com:2376. Esquema predeterminado: 'https'. Puertos predeterminados: https/443, http/80.",
         "hostAlias": "Nombre",
         "hostAddress": "Dirección",
+        "hostType": "Tipo de host",
         "placementZone": "Zona de ubicación",
+        "placementZoneInputPlaceholder": "Ejemplo: vic:hostname:2376",
+        "placementZoneInputHint": "Se creará automáticamente una zona de ubicación del programador con este nombre",
         "credential": "Credencial de inicio de sesión",
         "guestCredential": "Credencial de invitado",
         "destination": "Destino",
@@ -54,7 +61,7 @@
         "tagsHint": "Introduzca etiquetas clave:valor",
         "autoConfigure": "Configuración automática",
         "autoConfigureInput":"Habilitar configuración automática de hosts",
-        "autoConfigureHint": "El host se configurará automáticamente",
+        "autoConfigureHint": "Esta opción configurará la API remota de Docker en la dirección y el puerto proporcionados con certificados autofirmados generados. Se hará una vez mediante SSH. Sistemas operativos admitidos: CoreOS, PhotonOS, Ubuntu Server 16.04 o posterior.",
         "reservationPolicy": "Política de reserva",
         "endpoint": "Endpoint",
         "connectionType": "Tipo de conexión",
@@ -70,6 +77,7 @@
         "hideCertificate": "Ocultar certificado",
         "manageCertificates": "Administrar certificados",
         "containers": "Contenedores",
+        "nodes": "Nodos",
         "cpu": "CPU",
         "memory": "Memoria",
         "storage": "Almacenamiento",
@@ -80,7 +88,8 @@
         "instanceType": "Tipo de instancia",
         "imageType": "SO",
         "port": "Puerto",
-        "clusterSize": "Cantidad de instancias"
+        "clusterSize": "Cantidad de instancias",
+        "unlimited": "Sin límite"
       },
       "list": {
         "title": "Hosts",
@@ -117,7 +126,12 @@
         "update": "Editar zona de ubicación",
         "nameTitle": "Nombre de zona de ubicación",
         "endpointTitle": "Endpoint",
+        "placementPolicy": "Política de ubicación avanzada",
+        "placementPolicyHint": "De forma predeterminada, los recursos se colocan en hosts aleatorios. Opcionalmente, se puede aplicar una de estas estrategias:<br><br><b>BINPACK</b>: colocación en el host que use más memoria.<br><br><b>SPREAD</b>: colocación en el host que tenga el menor número de recursos.",
         "dynamicTitle": "Asignar dinámicamente recursos a esta zona",
+        "tagsTitle": "Etiquetas",
+        "tagsHint": "Introduzca etiquetas clave:valor",
+        "tagsPlaceholder": "Ejemplo: compliance:yes",
         "tagsToMatchTitle": "Etiquetas que hacer coincidir",
         "tagsToMatchHint": "Introduzca etiquetas clave:valor que hacer coincidir",
         "tagsToMatchPlaceholder": "Ejemplo: location:west"
@@ -235,8 +249,8 @@
         "searchImagesTemplatesPlaceholder": "Buscar imágenes, plantillas",
         "searchImagesPlaceholder": "Buscar imágenes",
         "searchTemplatesPlaceholder": "Buscar plantillas",
-        "searchClosuresPlaceholder": "Buscar cierres",
-        "manageRegistry": "Administrar registro",
+        "searchClosuresPlaceholder": "Buscar clausuras",
+        "manageRegistry": "Administrar registros",
         "provision": "Aprovisionar",
         "provisionAdditionalInfo": "Introducir información adicional",
         "editTemplate": "Editar/ver detalles",
@@ -255,7 +269,7 @@
           "all": "Todo",
           "images": "Imágenes",
           "templates": "Plantillas",
-          "closures": "Cierres"
+          "closures": "Clausuras"
         }
       },
       "details": {
@@ -298,13 +312,54 @@
           "customProperties": "Propiedades personalizadas"
         },
         "editClosures" :{
-          "newTitle": "Añadir cierre",
-          "editTitle": "Editar cierre",
+          "newTitle": "Añadir clausura",
+          "editTitle": "Editar clausura",
           "name": "Nombre"
+        },
+        "editVolume" :{
+          "newLabel": "Añadir volumen",
+          "newTitle": "Añadir volumen",
+          "newDropdownTitle": "Añadir volumen...",
+          "editTitle": "Editar volumen",
+          "name": "Nombre",
+          "driver": "Controlador",
+          "driverPlaceholder": "Ejemplo: local",
+          "driverOptions": {
+            "label": "Opciones del controlador",
+            "keyTitle": "Opción",
+            "keyHint": "Ejemplo: size",
+            "valueTitle": "Valor",
+            "valueHint": "Ejemplo: 20 GB"
+          },
+          "existingVolume": "Existente",
+          "showingCount": "Mostrando __count__ de __totalCount__",
+          "showingInstances": "instancias",
+          "noResults": "No se ha encontrado ningún volumen",
+          "mountpoint": "Punto de montaje de host",
+          "hosts": "Host",
+          "hostsSearchPlaceholder": "Buscar hosts",
+          "create": "Crear",
+          "createTitle": "Crear volumen",
+          "customProperties": "Propiedades personalizadas"
+        },
+        "editKubernetes": {
+          "newTitle": "Añadir Kubernetes",
+          "editTitle": "Editar Kubernetes",
+          "createEntities": {
+            "title": "Crear entidades de Kubernetes",
+            "button": "Crear",
+            "hint": "Para aprovisionar las entidades de Kubernetes de definiciones YAML, cargue un archivo o introduzca manualmente su contenido. Admite varias definiciones separadas por \"---\", por ejemplo, par Implementación/Servicio.",
+            "placeholder": "Introducir YAML de definiciones de Kubernetes... "
+          }
         },
         "network": {
           "drag": "Arrastrar para adjuntar un contenedor a esta red",
           "drop": "Soltar para adjuntar un contenedor a esta red"
+        },
+        "volume": {
+          "drag": "Arrastrar para adjuntar contenedor a este volumen",
+          "drop": "Soltar para adjuntar contenedor a este volumen",
+          "editContainerPath": "Ruta de contenedor:"
         }
       },
       "actions": {
@@ -405,12 +460,12 @@
         "verified": "Se ha verificado correctamente."
       }
     },
-    "profile": {
+    "environment": {
       "list": {
-        "title": "Entornos",
-        "titleSearch": "Entornos encontrados",
-        "searchPlaceholder": "Buscar entornos",
-        "addButton": "Añadir entorno",
+        "title": "Perfiles",
+        "titleSearch": "Perfiles encontrados",
+        "searchPlaceholder": "Buscar perfiles",
+        "addButton": "Crear perfil",
         "addPropertyButton": "Añadir propiedad",
         "nameColumn": "Nombre",
         "endpointTypeColumn": "Tipo de endpoint",
@@ -425,11 +480,11 @@
         "remove": "Quitar"
       },
       "edit": {
-        "addTitle": "Añadir entorno",
-        "editTitle": "Editar entorno",
+        "addTitle": "Añadir perfil",
+        "editTitle": "Editar perfil",
         "save": "Guardar",
         "basicTab": "Básica",
-        "computeTab": "Informática",
+        "computeTab": "Recurso informático",
         "networkTab": "Red",
         "storageTab": "Almacenamiento",
         "nameLabel": "Nombre",
@@ -441,7 +496,12 @@
         "bootDiskPropertyLabel": "Propiedad de disco de arranque",
         "cpuCountLabel": "CPU",
         "diskSizeMbLabel": "Tamaño del disco",
-        "memoryMbLabel": "Memoria"
+        "memoryMbLabel": "Memoria",
+        "subnetworksLabel": "Subredes",
+        "cidrLabel": "CIDR",
+        "cidrLabelHint": "0.0.0.0/0",
+        "supportPublicIpAddressLabel": "IP pública de soporte",
+        "defaultForZoneLabel": "Valor predeterminado para zona"
       },
       "instanceType": {
         "aws": {
@@ -484,18 +544,23 @@
         "update": "Editar endpoint",
         "nameLabel": "Nombre",
         "typeLabel": "Tipo",
-        "accessKeyIdLabel": "ID de clave de acceso",
-        "usernameLabel": "Nombre de usuario",
-        "passwordLabel": "Contraseña",
-        "secretAccessKeyLabel": "Clave de acceso secreta",
+        "privateKeyIdLabel": "ID de clave de acceso",
+        "privateKeyLabel": "Clave de acceso secreta",
         "regionIdLabel": "ID de región",
-        "endpointHostLabel": "Nombre de host o IP",
-        "subscriptionIdLabel": "ID de suscripción",
-        "tenantIdLabel": "ID de tenant",
-        "datacenterIdLabel": "Nombre de centro de datos"
+        "azure": {
+          "userLinkLabel": "ID de suscripción",
+          "tenantIdLabel": "ID de tenant"
+        },
+        "vsphere": {
+          "hostNameLabel": "Nombre de host o IP",
+          "privateKeyIdLabel": "Nombre de usuario",
+          "privateKeyLabel": "Contraseña",
+          "regionIdLabel": "Centro de datos"
+        }
       },
       "entity": "endpoint",
       "typeEntity": "tipo",
+      "datacenterEntity": "centro de datos",
       "createNew": "Nuevo endpoint",
       "manage": "Administrar endpoints",
       "contextPanelTooltip": "Endpoints"
@@ -504,22 +569,59 @@
       "list": {
         "title": "Máquinas",
         "titleSearch": "Máquinas encontradas",
-        "searchPlaceholder": "Buscar máquinas"
+        "searchPlaceholder": "Buscar máquinas",
+        "addButton": "Crear máquina"
+      },
+      "edit": {
+        "addTitle": "Crear máquina",
+        "editTitle": "Editar máquina",
+        "nameLabel": "Nombre",
+        "save": "Guardar",
+        "create": "Crear",
+        "loadButton": "Cargar desde archivo",
+        "importTemplateHint": "Descripción compuesta que contiene una o varias descripciones de máquina",
+        "importPlaceholder": ""
       }
     },
     "compute": {
       "entity": "destino",
       "list": {
-        "title": "Informática",
-        "titleSearch": "Informáticas encontradas",
-        "searchPlaceholder": "Buscar informáticas"
+        "title": "Recurso informático",
+        "titleSearch": "Recursos informáticos encontrados",
+        "searchPlaceholder": "Buscar recursos informáticos"
       },
       "details": {
         "type": "Tipo"
       },
       "edit": {
-        "title": "Editar informática"
+        "title": "Editar recurso informático",
+        "nameLabel": "Nombre"
       }
+    },
+    "network": {
+      "entity": "Red"
+    },
+    "subnetwork": {
+      "list": {
+        "title": "Subredes",
+        "addButton": "Añadir",
+        "nameColumn": "Nombre",
+        "cidrColumn": "CIDR"
+      },
+      "edit": {
+        "addNew": "Añadir subred",
+        "update": "Editar subred",
+        "nameLabel": "Nombre",
+        "cidrLabel": "CIDR",
+        "supportPublicIpAddressLabel": "IP pública de soporte",
+        "defaultForZoneLabel": "Valor predeterminado para zona",
+        "tagsTitle": "Etiquetas",
+        "tagsHint": "Introduzca etiquetas clave:valor",
+        "tagsPlaceholder": "Ejemplo: access:restricted"
+      },
+      "entity": "Subred",
+      "manage": "Administrar subredes",
+      "contextPanelTooltip": "Subredes"
     },
     "resource": {
       "list": {
@@ -541,40 +643,53 @@
             "CONNECTED": "CONECTADO",
             "RETIRED": "RETIRADO",
             "ERROR": "ERROR"
-          },
-          "operations": {
-            "errors": {
-              "remove": {
-                "containersConnected": "Hay contenedores conectados"
-              }
-            }
           }
         },
         "container": {
-          "create": "Crear contenedor",
-          "operations": {
-            "errors": {
-              "managedByCatalog": "Administrado por catálogo"
-            }
-          }
+          "create": "Crear contenedor"
         },
         "application": {
           "create": "Crear aplicación"
         },
         "closure": {
-          "create": "Crear cierre"
+          "create": "Crear clausura"
+        },
+        "kubernetes": {
+          "create": "Crear"
+        },
+        "volume": {
+          "create": "Crear volumen",
+          "connectedDateLabel": "Conectado desde",
+          "driverLabel": "Controlador",
+          "driverOptionsLabel": "Opciones del controlador",
+          "scope": "Ámbito",
+          "mountpoint": "Punto de montaje de host",
+          "connectedContainers": "Contenedores",
+          "parentHosts": "Hosts",
+          "external": "Externo",
+          "state": {
+            "UNKNOWN": "DESCONOCIDO",
+            "PROVISIONING": "APROVISIONAMIENTO",
+            "CONNECTED": "CONECTADO",
+            "RETIRED": "RETIRADO",
+            "ERROR": "ERROR"
+          }
         },
         "titleSearch": {
           "containers": "Contenedores",
           "applications": "Aplicaciones",
           "networks": "Redes",
-          "closures": "Cierres"
+          "volumes": "Volúmenes",
+          "closures": "Clausuras",
+          "kubernetes": "Kubernetes"
         },
         "searchPlaceholder": {
           "containers": "Buscar contenedores",
           "applications": "Buscar aplicaciones",
           "networks": "Buscar redes",
-          "closures": "Buscar cierres"
+          "closures": "Buscar clausuras",
+          "volumes": "Buscar volúmenes",
+          "kubernetes": "Buscar entidades de Kubernetes"
         },
         "searchCategory": {
           "networks": "Redes"
@@ -735,6 +850,12 @@
             "volume": "Volumen",
             "volumeHint": "Ejemplo: datacontainer"
           },
+          "volumeDriver": "Controlador del volumen",
+          "volumeDriverPlaceholder": "Ejemplo: local",
+          "volumeDriverDescription": "El controlador que se usará para los volúmenes",
+          "volumeName": "Nombre del volumen",
+          "volumeNamePlaceholder": "Ejemplo: volumeName",
+          "volumeNameDescription": "El nombre del volumen cuando se usa un controlador que no es local",
           "workingDirectory": "Directorio de trabajo",
           "workingDirectoryDescription": "El directorio de trabajo donde se ejecutarán los comandos",
           "clusterSize": "Tamaño del clúster",
@@ -753,7 +874,7 @@
           "memoryLimit": "Límite de memoria",
           "memoryLimitDescription": "Límite de memoria en bytes",
           "memorySwapLimit": "Límite de intercambio de memoria",
-          "memorySwapLimitDescription": "Límite de memoria total (memoria + intercambio); establecer como -1 para deshabilitar el intercambio Debe usarlo con la memoria y hacer que el valor de intercambio sea más grande que la memoria",
+          "memorySwapLimitDescription": "Límite de memoria total (memoria + intercambio); establézcalo como -1 para deshabilitar el intercambio. Debe usarlo con la memoria y hacer que el valor de intercambio sea más grande que la memoria",
           "affinityConstraints": "Restricciones de afinidad",
           "affinityConstraintsDescription": "Condiciones de afinidad o antiafinidad de los contenedores implementados o no implementados en el mismo host. Formato: [!]serviceName[:soft|hard].",
           "affinityInputs": {
@@ -772,6 +893,8 @@
           },
           "customProperties": "Propiedades personalizadas",
           "customPropertiesDescription": "Propiedades personalizadas permite añadir atributos a los contenedores que se aprovisionarán.",
+          "healthContinueProvisionigOnError": "Omitir errores de comprobación de estado durante el aprovisionamiento",
+          "healthContinueProvisionigOnErrorDescription": "Si la comprobación de estado está configurada, se utilizará tanto cuando el servicio esté en funcionamiento como durante el aprovisionamiento. No se considerará que los contenedores están aprovisionados hasta que aprueben una comprobación de estado. Active esta opción para aprovisionar incluso sin una comprobación de estado correcta.",
           "healthMode": "Modo",
           "healthConfigNone": "Ninguno",
           "healthConfigTCP": "Conexión de TCP",
@@ -780,12 +903,16 @@
           "healthPath": "Ruta de URL",
           "healthPathDescription": "Ruta de URL a la API usada para la comprobación de estado",
           "healthPort": "Puerto",
+          "healthPortHint": "Predeterminado: 80",
           "healthPortDescription": "Puerto de contenedor que se va a usar",
           "healthTimeout": "Tiempo de espera (ms)",
+          "healthTimeoutHint": "Predeterminado: 2000",
           "healthTimeoutDescription": "Tiempo de espera en ms para la operación de comprobación de estado",
           "healthyThreshold": "Umbral de buen estado",
+          "healthyThresholdHint": "Predeterminado: 3",
           "healthyThresholdDescription": "Umbral de las operaciones de comprobación de estado realizadas correctamente necesarias para que se considere que el contenedor está en buen estado",
           "unhealthyThreshold": "Umbral de mal estado",
+          "unhealthyThresholdHint": "Predeterminado: 3",
           "unhealthyThresholdDescription": "Umbral de las operaciones de comprobación de estado con errores necesarias para que se considere que el contenedor está en mal estado",
           "command": "Comando",
           "commandDescription": "Comando que se debe ejecutar en el contenedor. El estado de salida se usa para determinar el estado del contenedor.",
@@ -847,9 +974,9 @@
       }
     },
     "closure": {
-      "title": "Todos los cierres",
-      "titleSearch": "Cierres encontrados",
-      "searchPlaceholder": "Buscar cierres",
+      "title": "Todas las clausuras",
+      "titleSearch": "Clausuras encontradas",
+      "searchPlaceholder": "Buscar clausuras",
       "placementZone": "Grupo de recursos",
       "resultStatus": "Estado de resultados",
       "details": {
@@ -861,12 +988,13 @@
         "inputs": "Entradas",
         "outputs": "Salidas",
         "errorMsg": "Error",
-        "closureTitle": "Información de ejecución de cierres",
-        "closureDescriptionTitle": "Información de descripción de cierres",
+        "closureTitle": "Información de ejecución de clausuras",
+        "closureDescriptionTitle": "Información de descripción de clausuras",
         "descriptionId": "ID",
         "source": "Origen",
         "sourceURL": "URL de origen",
-        "resources": "Recursos"
+        "resources": "Recursos",
+        "placement": "Colocación"
       },
       "state": {
         "CREATED": "CREADO",
@@ -876,14 +1004,14 @@
         "CANCELLED": "CANCELADO"
       },
       "list" : {
-        "name": "Cierre",
-        "closuresCountLabel": "Cierres",
-        "closureRunsLabel": "Ejecuciones de cierres",
+        "name": "Clausura",
+        "closuresCountLabel": "Clausuras",
+        "closureRunsLabel": "Ejecuciones de clausuras",
         "memory": "Memoria:",
         "timeout": "Tiempo de espera:"
       },
       "request": {
-        "title": "Definición de cierre",
+        "title": "Definición de clausura",
         "save": "Guardar",
         "run": "Ejecutar",
         "inputs": {
@@ -893,8 +1021,8 @@
           "source": "Código de origen",
           "sourceURL": "URL de origen",
           "runtimeTypes": {
-            "nodejs": "Node.js 4.3.0",
-            "python": "Python 3.4.3"
+            "nodejs": "NodeJs 4",
+            "python": "Python 3"
           },
           "logConfigOptionsInputs" : {
             "name": "Nombre",
@@ -923,14 +1051,14 @@
           "inputs": "Entradas",
           "outputs": "Salidas",
           "dependencies": "Dependencias",
-          "nameDescription": "Nombre del cierre. Si no se ha definido el punto de entrada, el nombre se usará como nombre de función para llamar.",
-          "descriptionDescription": "Descripción del cierre",
+          "nameDescription": "Nombre de la clausura. Si no se ha definido el punto de entrada, el nombre se usará como nombre de función para llamar.",
+          "descriptionDescription": "Descripción de la clausura",
           "sourceDescription": "Código de origen que ejecutar",
           "sourceURLDescription": "Código de origen accesible a través de URL. El contenido podría ser el propio código o un archivo zip. Si se usa la URL de origen, no se usará el código de origen del campo.",
           "memoryLimitDescription": "Límite de memoria en megabytes. El valor máximo permitido es 1536 MB.",
           "timeoutDescription": "Tiempo de espera de ejecución en segundos. Si la ejecución supera el tiempo de espera, se cancela la ejecución de la tarea.",
           "entrypointDescription": "Función principal que se va a llamar con el formato: file_name.function_name",
-          "logDriverDescription": "Controlador de registro para la tarea de cierre",
+          "logDriverDescription": "Controlador de registro para la tarea de clausura",
           "logConfigOptionsDescription": "Opciones admitidas para cada controlador de registro",
           "dependenciesDescription": "Dependencias que instalar antes de ejecutar el código",
           "inputDescription": "Entrada que se usará al ejecutar el código. La entrada debe ser una primitiva o un objeto JSON válido.",
@@ -1027,7 +1155,9 @@
       "volumeDestinationRequired": "Se requiere el destino del volumen.",
       "invalidInputValue": "Valor de entrada no válido",
       "invalidPath": "El valor debe ser una ruta absoluta.",
-      "invalidPathOrName": "El valor debe ser una ruta absoluta o un nombre de volumen válido."
+      "invalidPathOrName": "El valor debe ser una ruta absoluta o un nombre de volumen válido.",
+      "containersConnected": "Hay contenedores conectados.",
+      "managedByCatalog": "Administrado por catálogo"
     },
     "infoMessages": {
       "created": "Se ha creado correctamente.",

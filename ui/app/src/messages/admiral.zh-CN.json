@@ -3,8 +3,10 @@
     "homepage": {
       "welcome": "欢迎使用!",
       "description": "您可以在此处<b>创建、置备、管理和监控容器化应用程序。</b>",
+      "descriptionCompute": "您可以在此处<b>创建、置备、管理和监控任何云上的任何应用程序</b>。",
       "start": "立即开始使用!",
       "addHost": "添加主机",
+      "addEndpoint": "添加端点",
       "enter": "输入",
       "helpCenter": "帮助",
       "steps": {
@@ -22,10 +24,12 @@
       "containers": "容器",
       "applications": "应用程序",
       "networks": "网络",
+      "volumes": "卷",
       "closures": "闭包服务",
+      "kubernetes": "Kubernetes",
       "eventlog": "事件日志",
       "placementZones": "放置区域",
-      "profiles": "环境",
+      "environments": "配置文件",
       "endpoints": "端点",
       "machines": "计算机",
       "compute": "计算资源"
@@ -43,7 +47,10 @@
         "addressHint": "请指定适当的方案和端口，例如 https://myhost.com:2376。默认方案:“https”。默认端口: https/443、http/80。",
         "hostAlias": "名称",
         "hostAddress": "地址",
+        "hostType": "主机类型",
         "placementZone": "放置区域",
+        "placementZoneInputPlaceholder": "示例: vic:hostname:2376",
+        "placementZoneInputHint": "将自动创建具有此名称的调度程序放置区域",
         "credential": "登录凭据",
         "guestCredential": "客户机凭据",
         "destination": "目标",
@@ -54,7 +61,7 @@
         "tagsHint": "输入“键:值”标记",
         "autoConfigure": "自动配置",
         "autoConfigureInput":"启用主机自动配置",
-        "autoConfigureHint": "将自动配置主机",
+        "autoConfigureHint": "此选项将在提供的具有生成的自签名证书的地址和端口上配置 docker 远程 API。它将通过 SSH 完成一次。支持的操作系统包括: CoreOS、PhotonOS、Ubuntu Server 16.04 或更高版本。",
         "reservationPolicy": "预留策略",
         "endpoint": "端点",
         "connectionType": "连接类型",
@@ -70,6 +77,7 @@
         "hideCertificate": "隐藏证书",
         "manageCertificates": "管理证书",
         "containers": "容器",
+        "nodes": "节点",
         "cpu": "CPU",
         "memory": "内存",
         "storage": "存储",
@@ -80,7 +88,8 @@
         "instanceType": "实例类型",
         "imageType": "操作系统",
         "port": "端口",
-        "clusterSize": "实例计数"
+        "clusterSize": "实例计数",
+        "unlimited": "无限制"
       },
       "list": {
         "title": "主机",
@@ -117,7 +126,12 @@
         "update": "编辑放置区域",
         "nameTitle": "放置区域名称",
         "endpointTitle": "端点",
+        "placementPolicy": "高级放置策略",
+        "placementPolicyHint": "默认情况下，资源放置在随机主机上。可以应用以下策略之一: <br><br><b>BINPACK</b> - 放置在具有最高内存使用率的主机上。<br><br><b>SPREAD</b> - 放置在资源数量最少的主机上。",
         "dynamicTitle": "向此区域动态分配资源",
+        "tagsTitle": "标记",
+        "tagsHint": "输入“键:值”标记",
+        "tagsPlaceholder": "示例: compliance:yes",
         "tagsToMatchTitle": "要匹配的标记",
         "tagsToMatchHint": "输入要匹配的“键:值”标记",
         "tagsToMatchPlaceholder": "示例: location:west"
@@ -302,9 +316,50 @@
           "editTitle": "编辑闭包服务",
           "name": "名称"
         },
+        "editVolume" :{
+          "newLabel": "添加卷",
+          "newTitle": "添加卷",
+          "newDropdownTitle": "添加卷...",
+          "editTitle": "编辑卷",
+          "name": "名称",
+          "driver": "驱动程序",
+          "driverPlaceholder": "示例: local",
+          "driverOptions": {
+            "label": "驱动程序选项",
+            "keyTitle": "选项",
+            "keyHint": "示例: size",
+            "valueTitle": "值",
+            "valueHint": "示例: 20GB"
+          },
+          "existingVolume": "现有",
+          "showingCount": "显示 __count__ 项 (共 __totalCount__ 项)",
+          "showingInstances": "个实例",
+          "noResults": "未找到卷",
+          "mountpoint": "主机挂载点",
+          "hosts": "主机",
+          "hostsSearchPlaceholder": "搜索主机",
+          "create": "创建",
+          "createTitle": "创建卷",
+          "customProperties": "自定义属性"
+        },
+        "editKubernetes": {
+          "newTitle": "添加 Kubernetes",
+          "editTitle": "编辑 Kubernetes",
+          "createEntities": {
+            "title": "创建 Kubernetes 实体",
+            "button": "创建",
+            "hint": "通过加载文件或手动输入其内容，从 YAML 定义置备 Kubernetes 实体。支持多个由“---”分隔的定义，例如 Deployment/Service 对。",
+            "placeholder": "输入 YAML Kubernetes 定义…"
+          }
+        },
         "network": {
           "drag": "拖动以将容器附加到此网络",
           "drop": "放置以将容器附加到此网络"
+        },
+        "volume": {
+          "drag": "拖动以将容器附加到此卷",
+          "drop": "放置以将容器附加到此卷",
+          "editContainerPath": "容器路径:"
         }
       },
       "actions": {
@@ -405,12 +460,12 @@
         "verified": "已成功验证!"
       }
     },
-    "profile": {
+    "environment": {
       "list": {
-        "title": "环境",
-        "titleSearch": "找到的环境",
-        "searchPlaceholder": "搜索环境",
-        "addButton": "添加环境",
+        "title": "配置文件",
+        "titleSearch": "已找到配置文件",
+        "searchPlaceholder": "搜索配置文件",
+        "addButton": "创建配置文件",
         "addPropertyButton": "添加属性",
         "nameColumn": "名称",
         "endpointTypeColumn": "端点类型",
@@ -425,8 +480,8 @@
         "remove": "移除"
       },
       "edit": {
-        "addTitle": "添加环境",
-        "editTitle": "编辑环境",
+        "addTitle": "添加配置文件",
+        "editTitle": "编辑配置文件",
         "save": "保存",
         "basicTab": "常规",
         "computeTab": "计算资源",
@@ -441,7 +496,12 @@
         "bootDiskPropertyLabel": "引导磁盘属性",
         "cpuCountLabel": "CPU",
         "diskSizeMbLabel": "磁盘大小",
-        "memoryMbLabel": "内存"
+        "memoryMbLabel": "内存",
+        "subnetworksLabel": "子网",
+        "cidrLabel": "CIDR",
+        "cidrLabelHint": "0.0.0.0/0",
+        "supportPublicIpAddressLabel": "支持公共 IP",
+        "defaultForZoneLabel": "区域的默认值"
       },
       "instanceType": {
         "aws": {
@@ -484,18 +544,23 @@
         "update": "编辑端点",
         "nameLabel": "名称",
         "typeLabel": "类型",
-        "accessKeyIdLabel": "访问密钥 ID",
-        "usernameLabel": "用户名",
-        "passwordLabel": "密码",
-        "secretAccessKeyLabel": "私有访问密钥",
+        "privateKeyIdLabel": "访问密钥 ID",
+        "privateKeyLabel": "私有访问密钥",
         "regionIdLabel": "区域 ID",
-        "endpointHostLabel": "主机名或 IP",
-        "subscriptionIdLabel": "订阅 ID",
-        "tenantIdLabel": "租户 ID",
-        "datacenterIdLabel": "数据中心名称"
+        "azure": {
+          "userLinkLabel": "订阅 ID",
+          "tenantIdLabel": "租户 ID"
+        },
+        "vsphere": {
+          "hostNameLabel": "主机名或 IP",
+          "privateKeyIdLabel": "用户名",
+          "privateKeyLabel": "密码",
+          "regionIdLabel": "数据中心"
+        }
       },
       "entity": "端点",
       "typeEntity": "类型",
+      "datacenterEntity": "数据中心",
       "createNew": "新建端点",
       "manage": "管理端点",
       "contextPanelTooltip": "端点"
@@ -504,7 +569,18 @@
       "list": {
         "title": "计算机",
         "titleSearch": "发现的计算机",
-        "searchPlaceholder": "搜索计算机"
+        "searchPlaceholder": "搜索计算机",
+        "addButton": "创建计算机"
+      },
+      "edit": {
+        "addTitle": "创建计算机",
+        "editTitle": "编辑计算机",
+        "nameLabel": "名称",
+        "save": "保存",
+        "create": "创建",
+        "loadButton": "从文件加载",
+        "importTemplateHint": "包含一个或多个计算机描述的复合描述",
+        "importPlaceholder": ""
       }
     },
     "compute": {
@@ -518,8 +594,34 @@
         "type": "类型"
       },
       "edit": {
-        "title": "编辑计算资源"
+        "title": "编辑计算资源",
+        "nameLabel": "名称"
       }
+    },
+    "network": {
+      "entity": "网络"
+    },
+    "subnetwork": {
+      "list": {
+        "title": "子网",
+        "addButton": "添加",
+        "nameColumn": "名称",
+        "cidrColumn": "CIDR"
+      },
+      "edit": {
+        "addNew": "添加子网",
+        "update": "编辑子网",
+        "nameLabel": "名称",
+        "cidrLabel": "CIDR",
+        "supportPublicIpAddressLabel": "支持公共 IP",
+        "defaultForZoneLabel": "区域的默认值",
+        "tagsTitle": "标记",
+        "tagsHint": "输入“键:值”标记",
+        "tagsPlaceholder": "示例: access:restricted"
+      },
+      "entity": "子网",
+      "manage": "管理子网",
+      "contextPanelTooltip": "子网"
     },
     "resource": {
       "list": {
@@ -541,22 +643,10 @@
             "CONNECTED": "已连接",
             "RETIRED": "已注销",
             "ERROR": "错误"
-          },
-          "operations": {
-            "errors": {
-              "remove": {
-                "containersConnected": "存在已连接容器"
-              }
-            }
           }
         },
         "container": {
-          "create": "创建容器",
-          "operations": {
-            "errors": {
-              "managedByCatalog": "由目录管理"
-            }
-          }
+          "create": "创建容器"
         },
         "application": {
           "create": "创建应用程序"
@@ -564,17 +654,42 @@
         "closure": {
           "create": "创建闭包服务"
         },
+        "kubernetes": {
+          "create": "创建"
+        },
+        "volume": {
+          "create": "创建卷",
+          "connectedDateLabel": "连接时间",
+          "driverLabel": "驱动程序",
+          "driverOptionsLabel": "驱动程序选项",
+          "scope": "范围",
+          "mountpoint": "主机挂载点",
+          "connectedContainers": "容器",
+          "parentHosts": "主机",
+          "external": "外部",
+          "state": {
+            "UNKNOWN": "未知",
+            "PROVISIONING": "正在置备",
+            "CONNECTED": "已连接",
+            "RETIRED": "已注销",
+            "ERROR": "错误"
+          }
+        },
         "titleSearch": {
           "containers": "容器",
           "applications": "应用程序",
           "networks": "网络",
-          "closures": "闭包服务"
+          "volumes": "卷",
+          "closures": "闭包服务",
+          "kubernetes": "Kubernetes"
         },
         "searchPlaceholder": {
           "containers": "搜索容器",
           "applications": "搜索应用程序",
           "networks": "搜索网络",
-          "closures": "搜索闭包服务"
+          "closures": "搜索闭包服务",
+          "volumes": "搜索卷",
+          "kubernetes": "搜索 Kubernetes 实体"
         },
         "searchCategory": {
           "networks": "网络"
@@ -735,6 +850,12 @@
             "volume": "卷",
             "volumeHint": "示例: datacontainer"
           },
+          "volumeDriver": "卷驱动程序",
+          "volumeDriverPlaceholder": "示例: local",
+          "volumeDriverDescription": "用于卷的驱动程序",
+          "volumeName": "卷名",
+          "volumeNamePlaceholder": "示例: volumeName",
+          "volumeNameDescription": "使用非本地驱动程序时的卷名",
           "workingDirectory": "工作目录",
           "workingDirectoryDescription": "要在其中运行命令的工作目录",
           "clusterSize": "群集大小",
@@ -772,6 +893,8 @@
           },
           "customProperties": "自定义属性",
           "customPropertiesDescription": "通过自定义属性可以向将要置备的容器添加属性。",
+          "healthContinueProvisionigOnError": "在置备时忽略运行状况检查故障",
+          "healthContinueProvisionigOnErrorDescription": "如果配置了运行状况检查，除了在服务启动并运行时使用，还将在置备时使用。在成功通过一次运行状况检查之后，容器才会被视为已置备。选中此选项可在未成功通过运行状况检查时也能进行置备。",
           "healthMode": "模式",
           "healthConfigNone": "无",
           "healthConfigTCP": "TCP 连接",
@@ -780,12 +903,16 @@
           "healthPath": "URL 路径",
           "healthPathDescription": "用于运行状况检查的 API 的 URL 路径",
           "healthPort": "端口",
+          "healthPortHint": "默认: 80",
           "healthPortDescription": "要使用的容器端口",
           "healthTimeout": "超时 (毫秒)",
+          "healthTimeoutHint": "默认: 2000",
           "healthTimeoutDescription": "运行状况检查操作超时 (毫秒)",
           "healthyThreshold": "正常阈值",
+          "healthyThresholdHint": "默认: 3",
           "healthyThresholdDescription": "运行状况检查的成功操作阈值，达到此值时视为容器正常",
           "unhealthyThreshold": "不正常阈值",
+          "unhealthyThresholdHint": "默认: 3",
           "unhealthyThresholdDescription": "运行状况检查的失败操作阈值，达到此值时视为容器不正常",
           "command": "命令",
           "commandDescription": "要对容器执行的命令。退出状态可确定容器运行状况。",
@@ -866,7 +993,8 @@
         "descriptionId": "ID",
         "source": "源",
         "sourceURL": "源 URL",
-        "resources": "资源"
+        "resources": "资源",
+        "placement": "放置"
       },
       "state": {
         "CREATED": "已创建",
@@ -893,8 +1021,8 @@
           "source": "源代码",
           "sourceURL": "源 URL",
           "runtimeTypes": {
-            "nodejs": "Node.js 4.3.0",
-            "python": "Python 3.4.3"
+            "nodejs": "NodeJs 4",
+            "python": "Python 3"
           },
           "logConfigOptionsInputs" : {
             "name": "名称",
@@ -1027,7 +1155,9 @@
       "volumeDestinationRequired": "“卷目标”是必填字段。",
       "invalidInputValue": "输入值无效",
       "invalidPath": "值必须是绝对路径。",
-      "invalidPathOrName": "值必须是绝对路径或有效卷名称。"
+      "invalidPathOrName": "值必须是绝对路径或有效卷名称。",
+      "containersConnected": "存在已连接容器。",
+      "managedByCatalog": "由目录管理"
     },
     "infoMessages": {
       "created": "已成功创建!",
