@@ -579,7 +579,8 @@
           "hostNameLabel": "Host name or IP",
           "privateKeyIdLabel": "Username",
           "privateKeyLabel": "Password",
-          "regionIdLabel": "Datacenter"
+          "regionIdLabel": "Datacenter",
+          "linkedEndpointLabel": "NSXT endpoint"
         }
       },
       "entity": "endpoint",

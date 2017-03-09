@@ -1242,13 +1242,20 @@ services.updateStorageProfile = function(profile) {
   return put(profile.documentSelfLink, profile);
 };
 
-services.searchEndpoints = function(query, limit) {
-  let filter = buildOdataQuery({
+services.searchEndpoints = function(query, limit, type) {
+  let endpointOps = {
     name: [{
       val: '*' + query.toLowerCase() + '*',
       op: 'eq'
     }]
-  });
+  };
+  if (type) {
+    endpointOps.endpointType = [{
+      val: type.toLowerCase(),
+      op: 'eq'
+    }];
+  }
+  let filter = buildOdataQuery(endpointOps);
 
   let url = buildPaginationUrl(links.ENDPOINTS, filter, true,
                                'documentExpirationTimeMicros desc', limit);

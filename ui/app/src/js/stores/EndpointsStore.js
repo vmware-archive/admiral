@@ -53,10 +53,16 @@ let EndpointsStore = Reflux.createStore({
             endpoints.push(result[key]);
           }
         }
-
-        this.setInData(['items'], endpoints);
-        this.setInData(['itemsLoading'], false);
-        this.emitChange();
+        Promise.all(endpoints.map((endpoint) => {
+          let documentLink = endpoint.endpointProperties.linkedEndpointLink;
+          return documentLink ?
+              services.loadEndpoint(utils.getDocumentId(documentLink)) : Promise.resolve();
+        })).then((linkedEndpoints) => {
+          linkedEndpoints.forEach((e, i) => endpoints[i].linkedEndpoint = e);
+          this.setInData(['items'], endpoints);
+          this.setInData(['itemsLoading'], false);
+          this.emitChange();
+        });
       });
     }
   },
