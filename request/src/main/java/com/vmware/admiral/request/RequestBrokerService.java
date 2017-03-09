@@ -1147,7 +1147,7 @@ public class RequestBrokerService extends
         ComputeProvisionTaskState ps = new ComputeProvisionTaskState();
         ps.documentSelfLink = getSelfId();
         ps.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
-                TaskStage.STARTED, SubStage.COMPLETED, TaskStage.STARTED, SubStage.ERROR);
+                TaskStage.STARTED, SubStage.COMPLETED, TaskStage.STARTED, SubStage.REQUEST_FAILED);
         ps.customProperties = state.customProperties;
         ps.tenantLinks = state.tenantLinks;
         ps.requestTrackerLink = state.requestTrackerLink;
