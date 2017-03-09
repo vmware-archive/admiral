@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -286,6 +287,26 @@ public class VolumeUtil {
                 }
             });
         }
+    }
+
+    public static List<String> extractVolumeNames(String[] volumes) {
+        if (volumes == null || volumes.length == 0) {
+            return Collections.emptyList();
+        }
+
+        return Arrays.stream(volumes)
+                .map((v) -> extractVolumeName(v))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    private static String extractVolumeName(String volume) {
+        String hostPart = volume.split(":/")[0];
+        // a mount point starts with either / | ~ | . | ..
+        if (!hostPart.isEmpty() &&  !hostPart.matches("^(/|~|\\.|\\.\\.).*$")) {
+            return hostPart;
+        }
+        return null;
     }
 
     private static void discoverVmdkDatastoreForHost(ServiceHost serviceHost, String hostLink,

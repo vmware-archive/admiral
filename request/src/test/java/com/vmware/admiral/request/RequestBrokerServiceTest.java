@@ -1604,6 +1604,101 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
     }
 
     @Test
+    public void testCompositeComponentWithClusterAndLocalContainerVolumeRequestLifeCycle()
+            throws Throwable {
+        host.log(
+                "########  Start of testCompositeComponentWithClusterAndLocalContainerVolumeRequestLifeCycle ######## ");
+
+        // setup Docker Host:
+        ResourcePoolState resourcePool = createResourcePool();
+        ComputeDescription dockerHostDesc = createDockerHostDescription();
+
+        delete(computeHost.documentSelfLink);
+        computeHost = null;
+
+        ComputeState dockerHost1 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost1);
+
+        ComputeState dockerHost2 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost2);
+
+        String sharedVolumeName = "Postgres";
+        String volumeName = String.format("%s:/etc/pgdata/postgres", sharedVolumeName);
+
+        ContainerVolumeDescription volumeDesc = TestRequestStateFactory
+                .createContainerVolumeDescription(sharedVolumeName);
+        volumeDesc.documentSelfLink = UUID.randomUUID().toString();
+
+        ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
+        container1Desc.documentSelfLink = UUID.randomUUID().toString();
+        container1Desc.name = "Container1";
+        container1Desc.volumes = new String[] { volumeName };
+        container1Desc._cluster = 2;
+
+        // setup Composite description with 1 container (cluster 2) and 1 volume
+        CompositeDescription compositeDesc = createCompositeDesc(volumeDesc, container1Desc);
+        assertNotNull(compositeDesc);
+
+        // setup Group Placement:
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
+
+        // 1. Request a composite container:
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
+
+        request.tenantLinks = groupPlacementState.tenantLinks;
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // wait for request completed state:
+        request = waitForRequestToComplete(request);
+
+        // Verify request status
+        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
+        assertNotNull(rs);
+
+        assertEquals(Integer.valueOf(100), rs.progress);
+        assertEquals(1, request.resourceLinks.size());
+
+        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks
+                .iterator().next());
+
+        String volumeLink = null;
+        String containerLink1 = null;
+        String containerLink2 = null;
+
+        Iterator<String> iterator = cc.componentLinks.iterator();
+
+        while (iterator.hasNext()) {
+            String link = iterator.next();
+            if (link.startsWith(ContainerVolumeService.FACTORY_LINK)) {
+                volumeLink = link;
+            } else if (containerLink1 == null) {
+                containerLink1 = link;
+            } else {
+                containerLink2 = link;
+            }
+        }
+
+        ContainerState cont1 = getDocument(ContainerState.class, containerLink1);
+        ContainerState cont2 = getDocument(ContainerState.class, containerLink2);
+
+        // provisioned on same hosts because of the local volume
+        assertTrue(cont1.parentLink.equals(cont2.parentLink));
+
+        ContainerVolumeState volume = getDocument(ContainerVolumeState.class, volumeLink);
+        assertTrue(volume.name.contains(sharedVolumeName));
+
+        String volumeHostPath = volume.originatingHostLink;
+
+        assertTrue(cont1.parentLink.equals(volumeHostPath));
+
+        assertEquals(cc.documentSelfLink, cont1.compositeComponentLink);
+        assertEquals(cc.documentSelfLink, cont2.compositeComponentLink);
+    }
+
+    @Test
     public void testRequestLifeCycleFailureShouldCleanReservations() throws Throwable {
         // setup Docker Host:
         ResourcePoolState resourcePool = createResourcePool();
