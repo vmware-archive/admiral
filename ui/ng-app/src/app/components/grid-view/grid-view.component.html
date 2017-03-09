@@ -13,14 +13,25 @@
   <ng-content select="[title]"></ng-content>
 </div>
 <div class="toolbar">
-  <search [suggestionProperties]="searchSuggestionProperties"
+  <div class="row">
+    <div class="col-sm-6 toolbar-primary">
+      <button class="btn btn-link"><i class="fa fa-plus"></i>Add new</button>
+    </div>
+    <div class="col-sm-6 toolbar-secondary">
+      <search [suggestionProperties]="searchSuggestionProperties"
                   [placeholder]="searchPlaceholder"
                   [queryOptions]="searchQueryOptions"
                   [occurrenceProperties]="searchOccurrenceProperties"
                   (searchChange)="search"
                   ></search>
-  <button (click)="toggleCardView(true)" class="btn" title="Card View"><i class="fa fa-th"></i></button>
-  <button (click)="toggleCardView(false)" class="btn" title="List View"><i class="fa fa-list"></i></button>
+      <span class="separator"></span>
+      <button (click)="refresh()" class="btn btn-link" title="Refresh"><i class="fa fa-refresh"></i></button>
+      <span class="separator"></span>
+      <button (click)="toggleCardView(true)" class="btn btn-link" title="Card View"><i class="fa fa-th"></i></button>
+      <button (click)="toggleCardView(false)" class="btn btn-link" title="List View"><i class="fa fa-list"></i></button>
+    </div>
+  </div>
+
 </div>
 
 <div [ngClass]="{'items': true, 'list': !showCardView}" [ngStyle]="itemsHolderStyle" #itemsHolder>
