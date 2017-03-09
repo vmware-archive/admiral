@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -17,9 +17,12 @@ import static com.vmware.admiral.service.common.RegistryService.API_VERSION_PROP
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,14 +34,18 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceClientFactory;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.common.RegistryService.ApiVersion;
 import com.vmware.admiral.service.common.RegistryService.RegistryAuthState;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.http.netty.NettyHttpServiceClient;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
 /**
@@ -72,7 +79,14 @@ public class RegistryAdapterService extends StatelessService {
     // like JFrog Artifactory (cse-artifactory.eng.vmware.com) does not support it.
     private static final String V2_PING_ENDPOINT = "/v2/_catalog?n=1";
 
-    private ServiceClient serviceClient;
+    public static final String REGITRY_PROXY_PARAM_NAME = "registry.proxy";
+    public static final String REGITRY_NO_PROXY_LIST_PARAM_NAME = "registry.no.proxy.list";
+    public static final String REGISTRY_PROXY_NULL_VALUE = "__null";
+
+    private ServiceClient serviceClientProxy;
+    private ServiceClient serviceClientNoProxy;
+    private Set<String> serviceClientNoProxyList;
+
     private ServerX509TrustManager trustManager;
 
     public class RegistryPingResponse {
@@ -99,19 +113,78 @@ public class RegistryAdapterService extends StatelessService {
 
     @Override
     public void handleStart(Operation post) {
-        this.trustManager = ServerX509TrustManager.create(getHost());
-        this.serviceClient = ServiceClientFactory.createServiceClient(
-                trustManager, null);
+        trustManager = ServerX509TrustManager.create(getHost());
+        serviceClientNoProxyList = new HashSet<>();
 
-        super.handleStart(post);
+        DeferredResult.allOf(Arrays.asList(getProperty(REGITRY_PROXY_PARAM_NAME),
+                getProperty(REGITRY_NO_PROXY_LIST_PARAM_NAME)))
+                .whenComplete((p, ex) -> {
+                    if (ex != null) {
+                        logSevere("Registry proxy properties not loaded properly", ex);
+                        initNoProxyClient(null);
+                    } else {
+                        Map<String, String> props = p.stream()
+                                .collect(Collectors.toMap(s -> s.key, s -> s.value));
+
+                        initProxyClient(props);
+                        initNoProxyClient(props);
+                    }
+                    super.handleStart(post);
+                });
+    }
+
+    private void initProxyClient(Map<String, String> props) {
+        String registryProxyAddress = null;
+        if (props != null) {
+            registryProxyAddress = props.get(REGITRY_PROXY_PARAM_NAME);
+        }
+
+        if (registryProxyAddress != null && !registryProxyAddress.equals(REGISTRY_PROXY_NULL_VALUE)) {
+            try {
+                URI registryProxyURI = new URI(registryProxyAddress);
+                serviceClientProxy = ServiceClientFactory.createServiceClient(trustManager, null);
+
+                if (serviceClientProxy instanceof NettyHttpServiceClient) {
+                    ((NettyHttpServiceClient) serviceClientProxy).setHttpProxy(registryProxyURI);
+                } else {
+                    logSevere("Cannot set proxy for accessing registries. Expecting "
+                            + "NettyHttpServiceClient, actual:"
+                            + serviceClientProxy.getClass().getSimpleName());
+                    serviceClientProxy = null;
+                }
+            } catch (Exception e) {
+                logSevere("Registry proxy URI invalid syntax:" + e.getMessage(), e);
+                serviceClientProxy = null;
+            }
+        }
+    }
+
+    private void initNoProxyClient(Map<String, String> props) {
+        // create plain, no proxied client
+        serviceClientNoProxy = ServiceClientFactory.createServiceClient(trustManager, null);
+
+        if (props != null) {
+            String registryProxyAddress = props.get(REGITRY_PROXY_PARAM_NAME);
+            String registryNoProxiedHosts = props.get(REGITRY_NO_PROXY_LIST_PARAM_NAME);
+
+            if (registryNoProxiedHosts != null && !registryNoProxiedHosts.equals(REGISTRY_PROXY_NULL_VALUE) &&
+                    registryProxyAddress != null && !registryProxyAddress.equals(REGISTRY_PROXY_NULL_VALUE)) {
+                logFine("Setting non-proxied registry hosts: %s", registryNoProxiedHosts);
+                serviceClientNoProxyList.addAll(
+                        Arrays.asList(registryNoProxiedHosts.split("\\s*,\\s*")));
+            }
+        }
     }
 
     @Override
-    public void handleDelete(Operation delete) {
-        if (this.serviceClient != null) {
-            this.serviceClient.stop();
+    public void handleStop(Operation delete) {
+        if (serviceClientNoProxy != null) {
+            serviceClientNoProxy.stop();
         }
-        super.handleDelete(delete);
+        if (serviceClientProxy != null) {
+            serviceClientProxy.stop();
+        }
+        super.handleStop(delete);
     }
 
     private static class RequestContext {
@@ -235,7 +308,8 @@ public class RegistryAdapterService extends StatelessService {
             processV2SearchRequest(context);
         } else {
             String errorMsg = String.format("Unsupported registry version '%s'.", apiVersion);
-            context.operation.fail(new LocalizableValidationException(errorMsg, "adapter.unsupported.registry.version", apiVersion));
+            context.operation.fail(new LocalizableValidationException(errorMsg,
+                    "adapter.unsupported.registry.version", apiVersion));
         }
     }
 
@@ -274,8 +348,7 @@ public class RegistryAdapterService extends StatelessService {
                 search.addRequestHeader(AUTHORIZATION_HEADER, authorization);
             }
 
-            this.serviceClient.send(search);
-
+            sendOperationWithClient(search, context);
         } catch (Exception x) {
             context.operation.fail(x);
         }
@@ -307,8 +380,7 @@ public class RegistryAdapterService extends StatelessService {
                     .toLowerCase();
 
             RegistrySearchResponse response = new RegistrySearchResponse();
-            List<Result> results = new ArrayList<>();
-            response.results = results;
+            response.results = new ArrayList<>();
 
             logInfo("Performing registry search: %s", searchUri);
             sendV2SearchRequest(searchUri, searchTerm, response, context);
@@ -358,7 +430,8 @@ public class RegistryAdapterService extends StatelessService {
                             String nextPagePath = extractUrl(linkHeader);
                             if (nextPagePath == null) {
                                 context.operation.fail(new LocalizableValidationException(
-                                        "Unexpected link header format: " + linkHeader, "adapter.link.header.format", linkHeader));
+                                        "Unexpected link header format: " + linkHeader,
+                                        "adapter.link.header.format", linkHeader));
                                 return;
                             }
                             URI nextPageUri = UriUtils.extendUri(
@@ -376,8 +449,7 @@ public class RegistryAdapterService extends StatelessService {
         if (authorization != null) {
             search.addRequestHeader(AUTHORIZATION_HEADER, authorization);
         }
-
-        this.serviceClient.send(search);
+        sendOperationWithClient(search, context);
     }
 
     private String extractUrl(String linkHeader) {
@@ -463,7 +535,7 @@ public class RegistryAdapterService extends StatelessService {
             pingOp.addRequestHeader(AUTHORIZATION_HEADER, authorization);
         }
 
-        serviceClient.send(pingOp);
+        sendOperationWithClient(pingOp, context);
     }
 
     private void processListImageTagsRequest(RequestContext context) {
@@ -484,7 +556,8 @@ public class RegistryAdapterService extends StatelessService {
             processV2ListImageTagsRequest(context);
         } else {
             String errorMsg = String.format("Unsupported registry version '%s'.", apiVersion);
-            context.operation.fail(new LocalizableValidationException(errorMsg, "adapter.unsupported.registry.version", apiVersion));
+            context.operation.fail(new LocalizableValidationException(errorMsg,
+                    "adapter.unsupported.registry.version", apiVersion));
         }
     }
 
@@ -519,7 +592,7 @@ public class RegistryAdapterService extends StatelessService {
                 search.addRequestHeader(AUTHORIZATION_HEADER, authorization);
             }
 
-            this.serviceClient.send(search);
+            sendOperationWithClient(search, context);
 
         } catch (Exception x) {
             context.operation.fail(x);
@@ -569,7 +642,7 @@ public class RegistryAdapterService extends StatelessService {
                 search.addRequestHeader(AUTHORIZATION_HEADER, authorization);
             }
 
-            this.serviceClient.send(search);
+            sendOperationWithClient(search, context);
 
         } catch (Exception x) {
             context.operation.fail(x);
@@ -638,9 +711,39 @@ public class RegistryAdapterService extends StatelessService {
                 getTokenOp.addRequestHeader(AUTHORIZATION_HEADER, authorization);
             }
 
-            serviceClient.send(getTokenOp);
+            sendOperationWithClient(getTokenOp, context);
         } catch (Exception e) {
             failureCallback.accept(e);
         }
+    }
+
+    private void sendOperationWithClient(Operation op, RequestContext context) {
+        String registryAddress = getRegistryHostAddress(context);
+        if (serviceClientProxy == null ||
+                (registryAddress != null && serviceClientNoProxyList.contains(registryAddress))) {
+            serviceClientNoProxy.send(op);
+        } else {
+            serviceClientProxy.send(op);
+        }
+    }
+
+    private String getRegistryHostAddress(RequestContext c) {
+        if (c != null && c.registryState != null && c.registryState.address != null) {
+            String registry = c.registryState.address;
+            try {
+                URI registryUri = new URI(registry);
+                return registryUri.getHost();
+            } catch (Exception e) {
+                logWarning("Problem while getting the host from registry address %s. Error: %s",
+                        registry, e.getMessage());
+            }
+        }
+        return null;
+    }
+
+    private DeferredResult<ConfigurationState> getProperty(String propName) {
+        String propLink = UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, propName);
+        Operation op = Operation.createGet(this, propLink);
+        return this.sendWithDeferredResult(op, ConfigurationState.class);
     }
 }

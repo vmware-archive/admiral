@@ -44,7 +44,7 @@ import com.vmware.xenon.common.UriUtils;
  */
 public class RegistryAdapterServiceTest extends BaseMockRegistryTestCase {
 
-    private static URI registryAdapterServiceUri;
+    private URI registryAdapterServiceUri;
     private String provisioningTaskLink;
     private String dockerHubRegistryStateLink;
     private String defaultRegistryStateLink;
