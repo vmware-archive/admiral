@@ -11,6 +11,13 @@
 
 package com.vmware.admiral.adapter.kubernetes.service;
 
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.DEPLOYMENT_TYPE;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.POD_TYPE;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.REPLICATION_CONTROLLER_TYPE;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.REPLICA_SET_TYPE;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.SERVICE_TYPE;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.createEntityData;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -26,9 +33,10 @@ import com.vmware.admiral.adapter.kubernetes.KubernetesRemoteApiClient;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
-import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection.EntityListCallback;
+import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection.KubernetesEntityData;
 import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
+import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.admiral.compute.kubernetes.entities.deployments.Deployment;
 import com.vmware.admiral.compute.kubernetes.entities.deployments.DeploymentList;
 import com.vmware.admiral.compute.kubernetes.entities.pods.Pod;
@@ -284,7 +292,7 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
                     if (resultCount.decrementAndGet() == 0 && allStarted.get()) {
                         if (Logger.getLogger(this.getClass().getName()).isLoggable(Level.FINE)) {
                             logFine("Collection returned entity IDs: %s %s",
-                                    callbackResponse.entityIdsAndNames.keySet().stream()
+                                    callbackResponse.idToEntityData.keySet().stream()
                                             .collect(Collectors.toList()),
                                     request.getRequestTrackingLog());
                         }
@@ -303,11 +311,9 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
             if (podList.items != null) {
                 synchronized (callbackResponse) {
                     for (Pod pod : podList.items) {
-                        if (pod != null && pod.metadata != null) {
-                            callbackResponse.entityIdsAndNames.put(
-                                    pod.metadata.uid, pod.metadata.name);
-                            callbackResponse.entityIdsAndTypes.put(
-                                    pod.metadata.uid, KubernetesUtil.POD_TYPE);
+                        if (validateKubernetesObject(pod)) {
+                            KubernetesEntityData data = createEntityData(pod, POD_TYPE);
+                            callbackResponse.idToEntityData.put(pod.metadata.uid, data);
                         }
                     }
                 }
@@ -318,11 +324,9 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
             if (serviceList.items != null) {
                 synchronized (callbackResponse) {
                     for (Service service : serviceList.items) {
-                        if (service != null && service.metadata != null) {
-                            callbackResponse.entityIdsAndNames.put(
-                                    service.metadata.uid, service.metadata.name);
-                            callbackResponse.entityIdsAndTypes.put(
-                                    service.metadata.uid, KubernetesUtil.SERVICE_TYPE);
+                        if (validateKubernetesObject(service)) {
+                            KubernetesEntityData data = createEntityData(service, SERVICE_TYPE);
+                            callbackResponse.idToEntityData.put(service.metadata.uid, data);
                         }
                     }
                 }
@@ -333,11 +337,9 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
             if (deploymentList.items != null) {
                 synchronized (callbackResponse) {
                     for (Deployment deployment : deploymentList.items) {
-                        if (deployment != null && deployment.metadata != null) {
-                            callbackResponse.entityIdsAndNames.put(
-                                    deployment.metadata.uid, deployment.metadata.name);
-                            callbackResponse.entityIdsAndTypes.put(
-                                    deployment.metadata.uid, KubernetesUtil.DEPLOYMENT_TYPE);
+                        if (validateKubernetesObject(deployment)) {
+                            KubernetesEntityData data = createEntityData(deployment, DEPLOYMENT_TYPE);
+                            callbackResponse.idToEntityData.put(deployment.metadata.uid, data);
                         }
                     }
                 }
@@ -348,11 +350,9 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
             if (rcList.items != null) {
                 synchronized (callbackResponse) {
                     for (ReplicationController rc : rcList.items) {
-                        if (rc != null && rc.metadata != null) {
-                            callbackResponse.entityIdsAndNames.put(
-                                    rc.metadata.uid, rc.metadata.name);
-                            callbackResponse.entityIdsAndTypes.put(
-                                    rc.metadata.uid, KubernetesUtil.REPLICATION_CONTROLLER_TYPE);
+                        if (validateKubernetesObject(rc)) {
+                            KubernetesEntityData data = createEntityData(rc, REPLICATION_CONTROLLER_TYPE);
+                            callbackResponse.idToEntityData.put(rc.metadata.uid, data);
                         }
                     }
                 }
@@ -362,12 +362,10 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
             ReplicaSetList rsList = o.getBody(ReplicaSetList.class);
             if (rsList.items != null) {
                 synchronized (callbackResponse) {
-                    for (ReplicaSet rc : rsList.items) {
-                        if (rc != null && rc.metadata != null) {
-                            callbackResponse.entityIdsAndNames.put(
-                                    rc.metadata.uid, rc.metadata.name);
-                            callbackResponse.entityIdsAndTypes.put(
-                                    rc.metadata.uid, KubernetesUtil.REPLICA_SET_TYPE);
+                    for (ReplicaSet rs : rsList.items) {
+                        if (validateKubernetesObject(rs)) {
+                            KubernetesEntityData data = createEntityData(rs, REPLICA_SET_TYPE);
+                            callbackResponse.idToEntityData.put(rs.metadata.uid, data);
                         }
                     }
                 }
@@ -407,5 +405,13 @@ public class KubernetesHostAdapterService extends AbstractKubernetesAdapterServi
         void complete(AdapterRequest r, Operation o, EntityListCallback c);
 
         void fail(AdapterRequest r, Operation o, Throwable e);
+    }
+
+    private boolean validateKubernetesObject(BaseKubernetesObject object) {
+        if (object.metadata == null || object.metadata.selfLink == null
+                || object.metadata.name == null) {
+            return false;
+        }
+        return true;
     }
 }

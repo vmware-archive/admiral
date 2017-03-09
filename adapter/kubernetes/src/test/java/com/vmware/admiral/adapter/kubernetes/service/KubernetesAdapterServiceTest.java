@@ -128,6 +128,7 @@ public class KubernetesAdapterServiceTest extends BaseKubernetesMockTest {
         podState.pod.metadata.selfLink = "/api/v1/namespaces/default/pods/test-pod";
         podState.pod.metadata.name = "test-pod";
         podState.parentLink = kubernetesHostState.documentSelfLink;
+        podState.kubernetesSelfLink = podState.pod.metadata.selfLink;
         podState = doPost(podState, PodService.FACTORY_LINK);
 
         Pod updatedPod = new Pod();

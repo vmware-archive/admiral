@@ -29,6 +29,8 @@ import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection.EntityListCallback;
 import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection.KubernetesEntityDataCollectionState;
+import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
+import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
 import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
 import com.vmware.admiral.compute.kubernetes.service.PodService;
@@ -176,11 +178,21 @@ public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
 
     private BaseKubernetesState makeEntity(String id, String name, String type) {
         BaseKubernetesState result = KubernetesUtil.createKubernetesEntityState(type);
-        if (result != null) {
-            result.id = id;
-            result.name = name;
-            result.parentLink = COMPUTE_HOST_LINK;
+        if (result == null) {
+            return null;
         }
+        result.id = id;
+        result.name = name;
+        result.parentLink = COMPUTE_HOST_LINK;
+        ObjectMeta metadata = new ObjectMeta();
+        metadata.name = name;
+        metadata.selfLink = "test";
+        metadata.namespace = "test";
+        metadata.uid = id;
+        BaseKubernetesObject object = new BaseKubernetesObject();
+        object.metadata = metadata;
+        object.kind = type;
+        result.setKubernetesEntityFromJson(Utils.toJson(object));
         return result;
     }
 
@@ -189,7 +201,8 @@ public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
         BaseKubernetesState entity = new PodState();
         entity.name = "entity";
         entity.id = "id";
-        MockKubernetesAdapterService.addEntity(entity);
+        MockKubernetesAdapterService
+                .addEntity(makeEntity(entity.id, entity.name, KubernetesUtil.POD_TYPE));
 
         startDataCollectionAndWait();
 
@@ -216,10 +229,10 @@ public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
     public void testDiscoverMultipleEntities() throws Throwable {
         List<BaseKubernetesState> testEntities = new ArrayList<>();
         testEntities.add(makeEntity("pod-1", "my_prog_1", KubernetesUtil.POD_TYPE));
-        testEntities.add(makeEntity("depl-1", "my_app_1", KubernetesUtil.DEPLOYMENT_TYPE));
         testEntities.add(makeEntity("pod-2", "name-for-pod", KubernetesUtil.POD_TYPE));
         testEntities.add(makeEntity("no-name", null, KubernetesUtil.POD_TYPE));
         testEntities.add(makeEntity("ser-1", "my_service_1", KubernetesUtil.SERVICE_TYPE));
+        testEntities.add(makeEntity("depl-1", "my_app_1", KubernetesUtil.DEPLOYMENT_TYPE));
 
         testEntities.forEach(MockKubernetesAdapterService::addEntity);
         startDataCollectionAndWait();
@@ -248,11 +261,13 @@ public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
         existingPod.id = pod.id;
         existingPod.name = pod.name + "_second";
         existingPod.parentLink = COMPUTE_HOST_LINK;
+        existingPod.documentSelfLink = existingPod.id;
 
         ServiceState existingService = new ServiceState();
-        existingService.id = "service-1";
+        existingService.id = "service-2";
         existingService.name = "my-test-service";
         existingService.parentLink = COMPUTE_HOST_LINK;
+        existingService.documentSelfLink = existingService.id;
 
         host.testStart(2);
         host.sendRequest(

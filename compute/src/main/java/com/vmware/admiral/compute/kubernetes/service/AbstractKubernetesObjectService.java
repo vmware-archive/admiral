@@ -76,8 +76,7 @@ public abstract class AbstractKubernetesObjectService<T extends BaseKubernetesSt
     }
 
     private void startMonitoringState(T body) {
-        if (body.getEntityAsBaseKubernetesObject() != null && body.getMetadata() != null &&
-                body.getKubernetesSelfLink() != null) {
+        if (body.kubernetesSelfLink != null) {
             getHost().registerForServiceAvailability((o, ex) -> {
                 if (ex != null) {
                     logWarning("Skipping maintenance because service failed to start: "

@@ -33,11 +33,6 @@ public class DeploymentService extends AbstractKubernetesObjectService<Deploymen
         public Deployment deployment;
 
         @Override
-        public String getKubernetesSelfLink() {
-            return this.deployment.metadata.selfLink;
-        }
-
-        @Override
         public String getType() {
             return KubernetesUtil.DEPLOYMENT_TYPE;
         }

@@ -20,11 +20,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -72,7 +70,7 @@ public class KubernetesEntityDataCollection extends StatefulService {
         state.documentSelfLink = DEFAULT_KUBERNETES_ENTITY_DATA_COLLECTION_LINK;
         state.taskInfo = new TaskState();
         state.taskInfo.stage = TaskStage.STARTED;
-        state.computeHostLinks = new HashSet<String>();
+        state.computeHostLinks = new HashSet<>();
         return state;
     }
 
@@ -94,11 +92,21 @@ public class KubernetesEntityDataCollection extends StatefulService {
         return template;
     }
 
+    public static class KubernetesEntityData {
+
+        public String kind;
+
+        public String name;
+
+        public String selfLink;
+
+        public String namespace;
+    }
+
     public static class EntityListCallback extends ServiceTaskCallbackResponse {
 
         public String computeHostLink;
-        public Map<String, String> entityIdsAndNames = new HashMap<String, String>();
-        public Map<String, String> entityIdsAndTypes = new HashMap<String, String>();
+        public Map<String, KubernetesEntityData> idToEntityData = new HashMap<>();
         public boolean unlockDataCollectionForHost;
     }
 
@@ -207,7 +215,7 @@ public class KubernetesEntityDataCollection extends StatefulService {
             op.complete();
         }
 
-        List<ResourceState> entityStates = new ArrayList<ResourceState>();
+        List<ResourceState> entityStates = new ArrayList<>();
 
         QueryTask q = getKubernetesStatesQueryTask();
 
@@ -260,7 +268,7 @@ public class KubernetesEntityDataCollection extends StatefulService {
         for (ResourceState entityState : entityStates) {
             boolean exists = false;
             if (entityState.id != null) {
-                exists = callback.entityIdsAndNames.remove(entityState.id) != null;
+                exists = callback.idToEntityData.remove(entityState.id) != null;
             }
             if (!exists) {
                 handleMissingEntity(entityState);
@@ -268,7 +276,7 @@ public class KubernetesEntityDataCollection extends StatefulService {
         }
 
         // finished removing existing entity states, now deal with remaining IDs
-        List<BaseKubernetesState> entitiesLeft = new ArrayList<BaseKubernetesState>();
+        List<BaseKubernetesState> entitiesLeft = new ArrayList<>();
 
         Operation operation = Operation
                 .createGet(this, callback.computeHostLink)
@@ -283,35 +291,29 @@ public class KubernetesEntityDataCollection extends StatefulService {
                             ComputeState host = o.getBody(ComputeState.class);
                             List<String> group = host.tenantLinks;
 
-                            for (Entry<String, String> entry : callback.entityIdsAndNames.entrySet()) {
-                                String type = callback.entityIdsAndTypes.get(entry.getKey());
-                                BaseKubernetesState entity =
-                                        KubernetesUtil.createKubernetesEntityState(type);
-                                if (entity == null) {
+                            for (Entry<String, KubernetesEntityData> entry : callback.idToEntityData
+                                    .entrySet()) {
+                                KubernetesEntityData data = entry.getValue();
+                                BaseKubernetesState state =
+                                        KubernetesUtil.createKubernetesEntityState(data.kind);
+                                if (state == null) {
                                     logWarning("Dropping entity %s, because of unknown type %s",
-                                            entry.getKey(), type);
+                                            entry.getKey(), data.kind);
                                     continue;
                                 }
 
-                                entity.id = entry.getKey();
-                                entity.name = entry.getValue();
-                                entity.documentSelfLink = entry.getKey();
+                                state.name = data.name;
+                                state.id = entry.getKey();
+                                state.documentSelfLink = entry.getKey();
+                                state.kubernetesSelfLink = data.selfLink;
+                                state.tenantLinks = group;
+                                state.parentLink = callback.computeHostLink;
 
-                                entity.tenantLinks = group;
-                                entity.descriptionLink = String.format("%s-%s",
-                                        KubernetesDescriptionService.DISCOVERED_DESCRIPTION_LINK,
-                                        UUID.randomUUID().toString());
-
-                                entity.parentLink = callback.computeHostLink;
-
-                                entitiesLeft.add(entity);
+                                entitiesLeft.add(state);
                             }
 
-                            createDiscoveredEntities(
-                                    entitiesLeft,
-                                    // e is not used?
-                                    (e) -> unlockCurrentDataCollectionForHost(
-                                            callback.computeHostLink));
+                            createDiscoveredEntities(entitiesLeft, () ->
+                                    unlockCurrentDataCollectionForHost(callback.computeHostLink));
                         });
 
         sendRequest(operation);
@@ -333,23 +335,23 @@ public class KubernetesEntityDataCollection extends StatefulService {
     }
 
     private void createDiscoveredEntities(List<BaseKubernetesState> entities,
-            Consumer<Throwable> callback) {
+            Runnable callback) {
         if (entities.isEmpty()) {
-            callback.accept(null);
+            callback.run();
         } else {
             AtomicInteger counter = new AtomicInteger(entities.size());
             for (BaseKubernetesState entity : entities) {
                 if (entity.name == null) {
                     logWarning("Name not set for entity: %s", entity.documentSelfLink);
                     if (counter.decrementAndGet() == 0) {
-                        callback.accept(null);
+                        callback.run();
                     }
                     continue;
                 }
                 // check again if the entity state already exists by id. This is needed in
                 // cluster mode not to create entity states that we already have
 
-                List<ResourceState> entitiesFound = new ArrayList<ResourceState>();
+                List<ResourceState> entitiesFound = new ArrayList<>();
 
                 // This may be overkill, as the id alone could give us the desired entity.
                 QueryTask entityStatesQuery = getKubernetesStatesQueryTask();
@@ -359,30 +361,31 @@ public class KubernetesEntityDataCollection extends StatefulService {
                         .setTermMatchValue(entity.id)
                         .setOccurance(Occurance.MUST_OCCUR));
 
-                new ServiceDocumentQuery<ResourceState>(getHost(), ResourceState.class).query(entityStatesQuery,
-                        (r) -> {
-                            if (r.hasException()) {
-                                logSevere("Failed to get entity %s : %s",
-                                        entity.name, r.getException().getMessage());
-                                callback.accept(r.getException());
-                            } else if (r.hasResult()) {
-                                entitiesFound.add(r.getResult());
-                            } else {
-                                if (entitiesFound.isEmpty()) {
-                                    createDiscoveredEntity(callback, counter, entity);
-                                } else {
-                                    if (counter.decrementAndGet() == 0) {
-                                        callback.accept(null);
+                new ServiceDocumentQuery<ResourceState>(getHost(), ResourceState.class)
+                        .query(entityStatesQuery,
+                                (r) -> {
+                                    if (r.hasException()) {
+                                        logSevere("Failed to get entity %s : %s",
+                                                entity.name, r.getException().getMessage());
+                                        callback.run();
+                                    } else if (r.hasResult()) {
+                                        entitiesFound.add(r.getResult());
+                                    } else {
+                                        if (entitiesFound.isEmpty()) {
+                                            createDiscoveredEntity(counter, entity, callback);
+                                        } else {
+                                            if (counter.decrementAndGet() == 0) {
+                                                callback.run();
+                                            }
+                                        }
                                     }
-                                }
-                            }
-                        });
+                                });
             }
         }
     }
 
-    private void createDiscoveredEntity(Consumer<Throwable> callback, AtomicInteger counter,
-            BaseKubernetesState entity) {
+    private void createDiscoveredEntity(AtomicInteger counter, BaseKubernetesState entity,
+            Runnable callback) {
 
         logFine("Creating KubernetesState for discovered entity: %s", entity.id);
         String type = KubernetesUtil.getResourceType(entity.getType()).getName();
@@ -396,22 +399,16 @@ public class KubernetesEntityDataCollection extends StatefulService {
                             if (ex != null) {
                                 logSevere(
                                         "Failed to create KubernetesState for discovered entity (id=%s): %s",
-                                        entity.id,
-                                        ex.getMessage());
+                                        entity.id, ex.getMessage());
                                 if (hasError.compareAndSet(false, true)) {
-                                    callback.accept(ex);
+                                    callback.run();
                                 }
-                                return;
                             } else {
                                 logInfo("Created KubernetesState for discovered entity: %s",
                                         entity.id);
                             }
-
-                            BaseKubernetesState body = o.getBody(entity.getClass());
-                            // createDiscoveredEntityDescription(body);
-
                             if (counter.decrementAndGet() == 0) {
-                                callback.accept(null);
+                                callback.run();
                             }
                         }));
     }

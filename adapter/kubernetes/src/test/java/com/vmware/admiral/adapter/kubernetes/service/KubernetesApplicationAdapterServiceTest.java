@@ -15,6 +15,7 @@ import static org.junit.Assert.assertEquals;
 
 import static com.vmware.admiral.compute.container.CompositeComponentService.FIELD_NAME_HOST_LINK;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.DEPLOYMENT_TYPE;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.KUBERNETES_LABEL_APP_ID;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.POD_TYPE;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.REPLICA_SET_TYPE;
 
@@ -344,25 +345,25 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
         wpPod.kind = POD_TYPE;
         wpPod.metadata = new ObjectMeta();
         wpPod.metadata.labels = new HashMap<>();
-        wpPod.metadata.labels.put("app_id", compositeComponentId);
+        wpPod.metadata.labels.put(KUBERNETES_LABEL_APP_ID, compositeComponentId);
 
         Pod mysqlPod = new Pod();
         mysqlPod.kind = POD_TYPE;
         mysqlPod.metadata = new ObjectMeta();
         mysqlPod.metadata.labels = new HashMap<>();
-        mysqlPod.metadata.labels.put("app_id", compositeComponentId);
+        mysqlPod.metadata.labels.put(KUBERNETES_LABEL_APP_ID, compositeComponentId);
 
         ReplicaSet wpRs = new ReplicaSet();
         wpRs.kind = REPLICA_SET_TYPE;
         wpRs.metadata = new ObjectMeta();
         wpRs.metadata.labels = new HashMap<>();
-        wpRs.metadata.labels.put("app_id", compositeComponentId);
+        wpRs.metadata.labels.put(KUBERNETES_LABEL_APP_ID, compositeComponentId);
 
         ReplicaSet mysqlRs = new ReplicaSet();
         mysqlRs.kind = REPLICA_SET_TYPE;
         mysqlRs.metadata = new ObjectMeta();
         mysqlRs.metadata.labels = new HashMap<>();
-        mysqlRs.metadata.labels.put("app_id", compositeComponentId);
+        mysqlRs.metadata.labels.put(KUBERNETES_LABEL_APP_ID, compositeComponentId);
 
         service.deployedElements.add(wpPod);
         service.deployedElements.add(mysqlPod);

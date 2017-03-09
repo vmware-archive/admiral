@@ -37,11 +37,6 @@ public class ServiceEntityHandler extends AbstractKubernetesObjectService<Servic
         public Service service;
 
         @Override
-        public String getKubernetesSelfLink() {
-            return this.service.metadata.selfLink;
-        }
-
-        @Override
         public String getType() {
             return KubernetesUtil.SERVICE_TYPE;
         }
