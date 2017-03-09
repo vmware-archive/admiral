@@ -44,6 +44,14 @@ export default Vue.component('vsphere-endpoint-editor', {
         :value="convertToObject(regionId)"
         @change="onRegionIdChange">
       </dropdown-search-group>
+      <dropdown-search-group
+        :disabled="!!model.documentSelfLink && !!model.linkedEndpoint"
+        :entity="i18n('app.endpoint.edit.vsphere.linkedEndpointLabel')"
+        :label="i18n('app.endpoint.edit.vsphere.linkedEndpointLabel')"
+        :filter="searchLinkedEndpoints"
+        :value="linkedEndpoint"
+        @change="onLinkedEndpointChange">
+      </dropdown-search-group>
     </div>
   `,
   props: {
@@ -56,6 +64,7 @@ export default Vue.component('vsphere-endpoint-editor', {
     let properties = this.model.endpointProperties || {};
     return {
       hostName: properties.hostName,
+      linkedEndpoint: this.model.linkedEndpoint,
       privateKeyId: properties.privateKeyId,
       privateKey: properties.privateKey,
       regionId: properties.regionId,
@@ -89,18 +98,25 @@ export default Vue.component('vsphere-endpoint-editor', {
       this.regionId = regionIdObject && regionIdObject.id;
       this.emitChange();
     },
+    onLinkedEndpointChange(endpoint) {
+      this.linkedEndpoint = endpoint;
+      this.emitChange();
+    },
     emitChange() {
       if (this.hostName && this.privateKeyId && this.privateKey) {
         if (!this.regionIdValues.length) {
           this.searchRegionIds();
         }
       } else {
-        this.regionId = null;
+        if (!(this.model.documentSelfLink && !this.privateKey)) {
+          this.regionId = null;
+        }
         this.regionIdValues = [];
       }
       this.$emit('change', {
         properties: {
           hostName: this.hostName,
+          linkedEndpointLink: this.linkedEndpoint && this.linkedEndpoint.documentSelfLink,
           privateKeyId: this.privateKeyId,
           privateKey: this.privateKey,
           regionId: this.regionId
@@ -125,6 +141,13 @@ export default Vue.component('vsphere-endpoint-editor', {
           }
         });
       }
+    },
+    searchLinkedEndpoints(...args) {
+      return new Promise((resolve, reject) => {
+        services.searchEndpoints.apply(null, [...args, 'nxst']).then((result) => {
+          resolve(result);
+        }).catch(reject);
+      });
     },
     convertToObject(value) {
       if (value) {
