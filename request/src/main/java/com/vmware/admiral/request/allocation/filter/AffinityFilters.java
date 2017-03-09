@@ -130,6 +130,7 @@ public final class AffinityFilters {
         filters.add(new BinpackAffinityHostFilter(host, desc));
         filters.add(new SpreadAffinityHostFilter(host, desc));
 
+        filters.add(new ClusterLocalAffinityHostFilter(host, desc));
     }
 
     private void initialize(ServiceHost host, CompositeDescription desc) {

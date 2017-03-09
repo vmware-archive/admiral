@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -60,7 +59,7 @@ public class NamedVolumeAffinityHostFilter
 
     public NamedVolumeAffinityHostFilter(ServiceHost host, ContainerDescription desc) {
         this.host = host;
-        this.volumeNames = extractVolumeNames(desc.volumes);
+        this.volumeNames = VolumeUtil.extractVolumeNames(desc.volumes);
         this.tenantLinks = desc.tenantLinks;
     }
 
@@ -455,25 +454,5 @@ public class NamedVolumeAffinityHostFilter
         }
 
         return false;
-    }
-
-    private List<String> extractVolumeNames(String[] volumes) {
-        if (volumes == null || volumes.length == 0) {
-            return Collections.emptyList();
-        }
-
-        return Arrays.stream(volumes)
-                .map((v) -> extractVolumeName(v))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-    }
-
-    private String extractVolumeName(String volume) {
-        String hostPart = volume.split(":/")[0];
-        // a mount point starts with either / | ~ | . | ..
-        if (!hostPart.isEmpty() &&  !hostPart.matches("^(/|~|\\.|\\.\\.).*$")) {
-            return hostPart;
-        }
-        return null;
     }
 }
