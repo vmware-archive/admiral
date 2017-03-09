@@ -12,8 +12,12 @@
 package com.vmware.admiral.host;
 
 import java.net.URI;
+import java.util.logging.Level;
 
 import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
@@ -30,8 +34,58 @@ public class HostInitRegistryAdapterServiceConfig {
 
         } else {
             registryAdapterReference = UriUtils.buildUri(host, RegistryAdapterService.class);
-            host.startService(Operation.createPost(registryAdapterReference),
-                    new RegistryAdapterService());
+            ensurePropertyExists(host, RegistryAdapterService.REGITRY_PROXY_PARAM_NAME, () -> {
+                ensurePropertyExists(host, RegistryAdapterService.REGITRY_NO_PROXY_LIST_PARAM_NAME,
+                        () -> {
+                            host.startService(Operation.createPost(registryAdapterReference),
+                                    new RegistryAdapterService());
+                        });
+            });
         }
+    }
+
+    private static void ensurePropertyExists(ServiceHost host, String propertyKey,
+            Runnable callback) {
+        new ServiceDocumentQuery<>(host, ConfigurationState.class)
+                .queryDocument(
+                        UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, propertyKey),
+                        (r) -> {
+                            if (r.hasException()) {
+                                host.log(Level.WARNING,
+                                        "Failed to get configuration property" + propertyKey, r.getException());
+                            } else if (r.hasResult()) {
+                                // configuration document exists, proceed.
+                                callback.run();
+                                return;
+                            }
+                            // create new configuration document with empty value and subscribe to it
+                            ConfigurationState body = buildConfigurationState(propertyKey,
+                                    RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE);
+
+                            Operation
+                                    .createPost(host, ConfigurationFactoryService.SELF_LINK)
+                                    .addPragmaDirective(
+                                            Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
+                                    .setBody(body)
+                                    .setReferer(host.getUri())
+                                    .setCompletion((o, e) -> {
+                                        if (e != null) {
+                                            host.log(Level.SEVERE,
+                                                    "Failed to post configuration property" + propertyKey, e);
+                                        }
+                                        callback.run();
+                                    })
+                                    .sendWith(host);
+                        });
+    }
+
+    static ConfigurationState buildConfigurationState(String propertyKey, String propertyValue) {
+        ConfigurationState cs = new ConfigurationState();
+        cs.documentSelfLink = propertyKey;
+        cs.key = propertyKey;
+        cs.value = (propertyValue != null && propertyValue.length() > 0) ? propertyValue
+                : RegistryAdapterService.REGISTRY_PROXY_NULL_VALUE;
+
+        return cs;
     }
 }

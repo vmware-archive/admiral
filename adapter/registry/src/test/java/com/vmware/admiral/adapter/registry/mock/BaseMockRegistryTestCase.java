@@ -28,9 +28,9 @@ import com.vmware.xenon.common.test.VerificationHost;
 public class BaseMockRegistryTestCase extends BaseTestCase {
     protected static VerificationHost mockRegistryHost;
 
-    protected static URI dockerHubRegistryUri;
-    protected static URI defaultRegistryUri;
-    protected static URI v2RegistryUri;
+    protected  URI dockerHubRegistryUri;
+    protected  URI defaultRegistryUri;
+    protected  URI v2RegistryUri;
 
     @Before
     public void setUpMockRegistryHost() throws Throwable {
@@ -92,15 +92,15 @@ public class BaseMockRegistryTestCase extends BaseTestCase {
                 new MockV2RegistryListTagsService());
     }
 
-    public static URI getDockerHubRegistryUri() {
+    public URI getDockerHubRegistryUri() {
         return dockerHubRegistryUri;
     }
 
-    public static URI getDefaultRegistryUri() {
+    public URI getDefaultRegistryUri() {
         return defaultRegistryUri;
     }
 
-    public static URI getV2RegistryUri() {
+    public URI getV2RegistryUri() {
         return v2RegistryUri;
     }
 }
