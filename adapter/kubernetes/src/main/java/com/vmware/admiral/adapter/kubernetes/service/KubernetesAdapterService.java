@@ -141,7 +141,7 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
 
     private void processDeleteKubernetesEntity(RequestContext context) {
         context.executor
-                .deleteEntity(context.kubernetesState.getKubernetesSelfLink(), context.k8sContext,
+                .deleteEntity(context.kubernetesState.kubernetesSelfLink, context.k8sContext,
                         (o, ex) -> {
                             if (ex != null) {
                                 fail(context.request, ex);
@@ -160,7 +160,7 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
 
         Map<String, String> containerNamesToLogLinks = new HashMap<>();
         for (Container container : podState.pod.spec.containers) {
-            String logLink = podState.getKubernetesSelfLink() + "/log?container=" + container.name;
+            String logLink = podState.kubernetesSelfLink + "/log?container=" + container.name;
             containerNamesToLogLinks.put(container.name, logLink);
         }
 
@@ -219,7 +219,7 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
     }
 
     private void inspectKubernetesEntity(RequestContext context) {
-        context.executor.inspectEntity(context.kubernetesState.getKubernetesSelfLink(),
+        context.executor.inspectEntity(context.kubernetesState.kubernetesSelfLink,
                 context.k8sContext, (o, ex) -> {
                     if (ex != null) {
                         fail(context.request, ex);

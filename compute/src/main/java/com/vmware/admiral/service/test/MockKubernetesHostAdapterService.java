@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.service.test;
 
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.createEntityData;
+
 import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Map;
@@ -62,11 +64,12 @@ public class MockKubernetesHostAdapterService extends BaseMockAdapterService {
             EntityListCallback callbackResponse = new EntityListCallback();
             callbackResponse.computeHostLink = request.resourceReference.getPath();
             // String hostId = Service.getId(request.resourceReference.getPath());
-            callbackResponse.entityIdsAndNames = new HashMap<>();
+            callbackResponse.idToEntityData = new HashMap<>();
             for (BaseKubernetesState entity : MockKubernetesAdapterService
                     .getKubernetesEntities()) {
-                callbackResponse.entityIdsAndNames.put(entity.id, entity.name);
-                callbackResponse.entityIdsAndTypes.put(entity.id, entity.getType());
+                callbackResponse.idToEntityData
+                        .put(entity.id, createEntityData(entity.getEntityAsBaseKubernetesObject(),
+                                entity.getType()));
             }
             patchTaskStage(request, null, callbackResponse);
             op.setBody(callbackResponse);

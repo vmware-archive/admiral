@@ -35,6 +35,7 @@ import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.content.ComponentTemplate;
 import com.vmware.admiral.compute.content.CompositeTemplate;
+import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection.KubernetesEntityData;
 import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
 import com.vmware.admiral.compute.kubernetes.entities.deployments.Deployment;
@@ -74,7 +75,7 @@ public class KubernetesUtil {
 
     public static final String KUBERNETES_LABEL_APP = "app";
     public static final String KUBERNETES_LABEL_TIER = "tier";
-    public static final String KUBERNETES_LABEL_APP_ID = "app_id";
+    public static final String KUBERNETES_LABEL_APP_ID = "admiral_app_id";
 
     private static final Map<String, ResourceType> kindToInternalType = new HashMap<>();
 
@@ -170,8 +171,17 @@ public class KubernetesUtil {
         return kubernetesTemplate;
     }
 
-    public static BaseKubernetesState createKubernetesEntityState(String type) {
-        switch (type) {
+    public static KubernetesEntityData createEntityData(BaseKubernetesObject object, String kind) {
+        KubernetesEntityData data = new KubernetesEntityData();
+        data.name = object.metadata.name;
+        data.kind = kind;
+        data.selfLink = object.metadata.selfLink;
+        data.namespace = object.metadata.namespace;
+        return data;
+    }
+
+    public static BaseKubernetesState createKubernetesEntityState(String kind) {
+        switch (kind) {
         case KubernetesUtil.POD_TYPE:
             return new PodState();
         case KubernetesUtil.SERVICE_TYPE:

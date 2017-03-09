@@ -34,11 +34,6 @@ public class ReplicaSetService extends AbstractKubernetesObjectService<ReplicaSe
         }
 
         @Override
-        public String getKubernetesSelfLink() {
-            return this.replicaSet.metadata.selfLink;
-        }
-
-        @Override
         public void setKubernetesEntityFromJson(String json) {
             this.replicaSet = Utils.fromJson(json, ReplicaSet.class);
         }

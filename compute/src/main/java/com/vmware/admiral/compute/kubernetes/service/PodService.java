@@ -34,11 +34,6 @@ public class PodService extends AbstractKubernetesObjectService<PodState> {
         public Pod pod;
 
         @Override
-        public String getKubernetesSelfLink() {
-            return this.pod.metadata.selfLink;
-        }
-
-        @Override
         public String getType() {
             return KubernetesUtil.POD_TYPE;
         }

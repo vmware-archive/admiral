@@ -34,11 +34,6 @@ public class ReplicationControllerService
         public ReplicationController replicationController;
 
         @Override
-        public String getKubernetesSelfLink() {
-            return this.replicationController.metadata.selfLink;
-        }
-
-        @Override
         public String getType() {
             return KubernetesUtil.REPLICATION_CONTROLLER_TYPE;
         }

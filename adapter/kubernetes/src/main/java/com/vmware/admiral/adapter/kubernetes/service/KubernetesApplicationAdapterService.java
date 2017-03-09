@@ -358,6 +358,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                     deploymentState.parentLink = context.kubernetesContext.host.documentSelfLink;
                     deploymentState.documentSelfLink = deployment.metadata.uid;
                     deploymentState.id = deployment.metadata.uid;
+                    deploymentState.kubernetesSelfLink = deployment.metadata.selfLink;
                     sendRequest(Operation.createPost(this, DeploymentService.FACTORY_LINK)
                             .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                             .setBody(deploymentState)
@@ -406,6 +407,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                             controllerState.parentLink = context.kubernetesContext.host.documentSelfLink;
                             controllerState.documentSelfLink = controller.metadata.uid;
                             controllerState.id = controller.metadata.uid;
+                            controllerState.kubernetesSelfLink = controller.metadata.selfLink;
                             sendRequest(Operation
                                     .createPost(this, ReplicationControllerService.FACTORY_LINK)
                                     .addPragmaDirective(
@@ -454,6 +456,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                     serviceState.parentLink = context.kubernetesContext.host.documentSelfLink;
                     serviceState.documentSelfLink = service.metadata.uid;
                     serviceState.id = service.metadata.uid;
+                    serviceState.kubernetesSelfLink = service.metadata.selfLink;
                     sendRequest(Operation.createPost(this, ServiceEntityHandler.FACTORY_LINK)
                             .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                             .setBody(serviceState)
@@ -500,6 +503,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                     replicaSetState.parentLink = context.kubernetesContext.host.documentSelfLink;
                     replicaSetState.documentSelfLink = replicaSet.metadata.uid;
                     replicaSetState.id = replicaSet.metadata.uid;
+                    replicaSetState.kubernetesSelfLink = replicaSet.metadata.selfLink;
                     sendRequest(Operation.createPost(this, ReplicaSetService.FACTORY_LINK)
                             .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                             .setBody(replicaSetState)
@@ -546,6 +550,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
                     podState.parentLink = context.kubernetesContext.host.documentSelfLink;
                     podState.documentSelfLink = pod.metadata.uid;
                     podState.id = pod.metadata.uid;
+                    podState.kubernetesSelfLink = pod.metadata.selfLink;
                     sendRequest(Operation.createPost(this, PodService.FACTORY_LINK)
                             .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                             .setBody(podState)
@@ -617,6 +622,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
         state.descriptionLink = description.documentSelfLink;
         state.parentLink = context.kubernetesContext.host.documentSelfLink;
         state.id = state.getMetadata().uid;
+        state.kubernetesSelfLink = state.getMetadata().selfLink;
 
         sendRequest(Operation.createPost(this, factoryLink)
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
@@ -693,7 +699,7 @@ public class KubernetesApplicationAdapterService extends AbstractKubernetesAdapt
 
         for (String componentLink : componentLinks) {
             getState(context, componentLink,
-                    (state) -> context.client.deleteEntity(state.getKubernetesSelfLink(),
+                    (state) -> context.client.deleteEntity(state.kubernetesSelfLink,
                             context.kubernetesContext,
                             (o, ex) -> {
                                 if (ex != null) {
