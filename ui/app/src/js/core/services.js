@@ -769,6 +769,10 @@ services.searchCompute = function(resourcePoolLink, query, limit) {
   });
 };
 
+services.loadNetwork = function(documentSelfLink) {
+  return get(documentSelfLink);
+};
+
 services.loadNetworks = function(endpointLink, documentSelfLinks) {
   var params = {};
   if (documentSelfLinks && documentSelfLinks.length) {
