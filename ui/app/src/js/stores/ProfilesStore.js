@@ -174,12 +174,23 @@ let ProfilesStore = Reflux.createStore({
         promises.push(Promise.resolve());
       }
 
-      Promise.all(promises).then(([endpoint, tags, subnetworks]) => {
+      if (document.networkProfile && document.networkProfile.isolationNetworkLink) {
+        promises.push(
+            services.loadNetwork(
+                document.networkProfile.isolationNetworkLink).catch(() => Promise.resolve()));
+      } else {
+        promises.push(Promise.resolve());
+      }
+
+      Promise.all(promises).then(([endpoint, tags, subnetworks, isolationNetwork]) => {
         if (document.endpointLink && endpoint) {
           document.endpoint = endpoint;
         }
         document.tags = tags ? Object.values(tags) : [];
         document.networkProfile.subnetworks = subnetworks ? Object.values(subnetworks) : [];
+        if (document.networkProfile.isolationNetworkLink && isolationNetwork) {
+          document.networkProfile.isolationNetwork = isolationNetwork;
+        }
 
         this.setInData(['editingItemData', 'item'], Immutable(document));
         this.setInData(['editingItemData', 'endpoints'], this.data.endpoints);

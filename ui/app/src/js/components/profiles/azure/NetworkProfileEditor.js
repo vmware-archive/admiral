@@ -9,6 +9,8 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
+import services from 'core/services';
+
 export default Vue.component('azure-network-profile-editor', {
   template: `
     <div>
@@ -32,6 +34,22 @@ export default Vue.component('azure-network-profile-editor', {
           </subnetwork-search>
         </multicolumn-cell>
       </multicolumn-editor-group>
+      <dropdown-group
+        v-if="endpoint"
+        :entity="i18n('app.profile.edit.isolationNetworkLabel')"
+        :label="i18n('app.profile.edit.isolationTypeLabel')"
+        :options="isolationTypes"
+        :value="convertToObject(model.isolationType)"
+        @change="onIsolationTypeChange">
+      </dropdown-group>
+      <dropdown-search-group
+        v-if="isolationType && isolationType.id === 'SUBNET'"
+        :entity="i18n('app.network.entity')"
+        :filter="searchIsolationNetworks"
+        :label="i18n('app.profile.edit.isolationNetworkLabel')"
+        :value="model.isolationNetwork"
+        @change="onIsolationNetworkChange">
+      </dropdown-search-group>
     </div>
   `,
   props: {
@@ -48,6 +66,18 @@ export default Vue.component('azure-network-profile-editor', {
     let subnetworks = this.model.subnetworks &&
         this.model.subnetworks.asMutable() || [];
     return {
+      isolationNetwork: this.model.isolationNetwork,
+      isolationType: this.model.isolationType,
+      isolationTypes: [{
+        id: 'NONE',
+        name: i18n.t('app.profile.edit.noneIsolationTypeLabel')
+      }, {
+        id: 'SUBNET',
+        name: i18n.t('app.profile.edit.subnetIsolationTypeLabel')
+      }, {
+        id: 'SECURITY_GROUP',
+        name: i18n.t('app.profile.edit.securityGroupIsolationTypeLabel')
+      }],
       name: this.model.name,
       subnetworks: subnetworks.map((subnetwork) => {
         return {
@@ -68,12 +98,38 @@ export default Vue.component('azure-network-profile-editor', {
       this.subnetworks = value;
       this.emitChange();
     },
+    onIsolationTypeChange(value) {
+      this.isolationType = value;
+      this.isolationNetwork = null;
+      this.emitChange();
+    },
+    onIsolationNetworkChange(value) {
+      this.isolationNetwork = value;
+      this.emitChange();
+    },
+    searchIsolationNetworks(...args) {
+      return new Promise((resolve, reject) => {
+        services.searchNetworks.apply(null,
+            [this.endpointLink, ...args]).then((result) => {
+          resolve(result);
+        }).catch(reject);
+      });
+    },
+    convertToObject(value) {
+      if (value) {
+        return this.isolationTypes.find((type) => type.id === value);
+      }
+    },
     manageSubnetworks() {
       this.$emit('manage.subnetworks');
     },
     emitChange() {
       this.$emit('change', {
         properties: {
+          isolationType: this.isolationType && this.isolationType.id,
+          isolationNetwork: this.isolationNetwork,
+          isolationNetworkLink: this.isolationNetwork &&
+              this.isolationNetwork.documentSelfLink,
           name: this.name,
           subnetLinks: this.subnetworks.reduce((previous, current) => {
             if (current.name && current.name.documentSelfLink) {
