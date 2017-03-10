@@ -1294,9 +1294,6 @@ var utils = {
         .map(stripExtraFields);
     var tagsToAssign = newTags.filter(tag => !tagInArray(tag, originalTags));
 
-    console.log('Tags to unassign: ' + JSON.stringify(tagsToUnassign));
-    console.log('Tags to assign: ' + JSON.stringify(tagsToAssign));
-
     if (tagsToUnassign.length === 0 && tagsToAssign.length === 0) {
         return null;
     }

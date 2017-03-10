@@ -484,7 +484,9 @@ var HostAddView = Vue.extend({
       // If the host has self signed certificate, we may need to accept it,
       // by clicking confirmAddHost
       if (this.model.isUpdate) {
-        HostActions.updateHost(hostData, tags);
+        var tagRequest = utils.createTagAssignmentRequest(this.model.dto.documentSelfLink,
+            this.model.tags, tags);
+        HostActions.updateHost(hostData, tagRequest);
       } else {
         HostActions.addHost(hostData, tags);
       }
