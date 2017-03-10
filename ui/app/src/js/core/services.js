@@ -467,6 +467,23 @@ services.searchTags = function(q) {
   return list(links.TAGS, true, params);
 };
 
+services.updateTagAssignment = function(tagAssignmentRequest) {
+  return tagAssignmentRequest
+      ? post(links.TAG_ASSIGNMENT, tagAssignmentRequest)
+      : Promise.resolve({});
+};
+
+services.saveTagStates = function(tags) {
+    if (tags === undefined || tags.length === 0) {
+        return Promise.resolve(tags);
+    }
+    let request = {
+      tagsToAssign: tags
+    };
+    return services.updateTagAssignment(request)
+        .then((response) => Promise.resolve(response.tagLinks));
+};
+
 services.loadPlacementZones = function(documentSelfLinks) {
   var params = {};
   if (documentSelfLinks && documentSelfLinks.length) {
@@ -874,7 +891,7 @@ services.createSubnetwork = function(subnetwork) {
 };
 
 services.updateSubnetwork = function(subnetwork) {
-  return put(subnetwork.documentSelfLink, subnetwork);
+  return patch(subnetwork.documentSelfLink, subnetwork);
 };
 
 services.loadMachines = function(queryOptions) {
@@ -1215,7 +1232,7 @@ services.createProfile = function(profile) {
 };
 
 services.updateProfile = function(profile) {
-  return put(profile.documentSelfLink, profile);
+  return patch(profile.documentSelfLink, profile);
 };
 
 services.deleteProfile = function(profile) {

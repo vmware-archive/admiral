@@ -207,33 +207,29 @@ let ProfilesStore = Reflux.createStore({
     this.emitChange();
   },
 
-  onCreateProfile(model, tags) {
-    let tagsPromises = [];
-    tags.forEach((tag) => {
-      tagsPromises.push(services.createTag(tag));
-    });
-    Promise.all(tagsPromises).then((updatedTags) => {
-      let data = $.extend({}, model, {
-        tags: tags,
-        tagLinks: [...new Set(updatedTags.map((tag) => tag.documentSelfLink))]
+  onCreateProfile(model, tagRequest) {
+    Promise.all([
+      services.createComputeProfile(model.computeProfile),
+      services.createNetworkProfile(model.networkProfile),
+      services.createStorageProfile(model.storageProfile)
+    ]).then(([computeProfile, networkProfile, storageProfile]) => {
+      let data = $.extend(model, {
+        computeProfileLink: computeProfile.documentSelfLink,
+        networkProfileLink: networkProfile.documentSelfLink,
+        storageProfileLink: storageProfile.documentSelfLink
       });
-      Promise.all([
-        services.createComputeProfile(data.computeProfile),
-        services.createNetworkProfile(data.networkProfile),
-        services.createStorageProfile(data.storageProfile)
-      ]).then(([computeProfile, networkProfile, storageProfile]) => {
-        data = $.extend(data, {
-          computeProfileLink: computeProfile.documentSelfLink,
-          networkProfileLink: networkProfile.documentSelfLink,
-          storageProfileLink: storageProfile.documentSelfLink
-        });
-        return services.createProfile(data);
-      }).then(() => {
-        NavigationActions.openProfiles();
-        this.setInData(['editingItemData'], null);
-        this.emitChange();
-      }).catch(this.onGenericEditError);
-    });
+      return services.createProfile(data);
+    }).then((createdProfile) => {
+      if (tagRequest) {
+        tagRequest.resourceLink = createdProfile.documentSelfLink;
+        return services.updateTagAssignment(tagRequest);
+      }
+      return Promise.resolve();
+    }).then(() => {
+      NavigationActions.openProfiles();
+      this.setInData(['editingItemData'], null);
+      this.emitChange();
+    }).catch(this.onGenericEditError);
 
     this.setInData(['editingItemData', 'item'], model);
     this.setInData(['editingItemData', 'validationErrors'], null);
@@ -241,27 +237,18 @@ let ProfilesStore = Reflux.createStore({
     this.emitChange();
   },
 
-  onUpdateProfile(model, tags) {
-    let tagsPromises = [];
-    tags.forEach((tag) => {
-      tagsPromises.push(services.createTag(tag));
-    });
-    Promise.all(tagsPromises).then((updatedTags) => {
-      let data = $.extend({}, model, {
-        tags: tags,
-        tagLinks: [...new Set(updatedTags.map((tag) => tag.documentSelfLink))]
-      });
-      Promise.all([
-        services.updateComputeProfile(data.computeProfile),
-        services.updateNetworkProfile(data.networkProfile),
-        services.updateStorageProfile(data.storageProfile),
-        services.updateProfile(data)
-      ]).then(() => {
-        NavigationActions.openProfiles();
-        this.setInData(['editingItemData'], null);
-        this.emitChange();
-      }).catch(this.onGenericEditError);
-    });
+  onUpdateProfile(model, tagRequest) {
+    Promise.all([
+      services.updateComputeProfile(model.computeProfile),
+      services.updateNetworkProfile(model.networkProfile),
+      services.updateStorageProfile(model.storageProfile),
+      services.updateProfile(model),
+      services.updateTagAssignment(tagRequest)
+    ]).then(() => {
+      NavigationActions.openProfiles();
+      this.setInData(['editingItemData'], null);
+      this.emitChange();
+    }).catch(this.onGenericEditError);
 
     this.setInData(['editingItemData', 'item'], model);
     this.setInData(['editingItemData', 'validationErrors'], null);

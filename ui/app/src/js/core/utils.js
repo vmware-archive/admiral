@@ -1277,6 +1277,36 @@ var utils = {
     }
 
     return foundVolume;
+  },
+
+  createTagAssignmentRequest: function(resourceLink, originalTags, newTags) {
+    var tagInArray = function(tag, array) {
+      return array.find(item => item.key === tag.key && item.value === tag.value) !== undefined;
+    };
+    var stripExtraFields = function(tag) {
+      return {
+        key: tag.key,
+        value: tag.value
+      };
+    };
+    var tagsToUnassign = originalTags
+        .filter(tag => !tagInArray(tag, newTags))
+        .map(stripExtraFields);
+    var tagsToAssign = newTags.filter(tag => !tagInArray(tag, originalTags));
+
+    console.log('Tags to unassign: ' + JSON.stringify(tagsToUnassign));
+    console.log('Tags to assign: ' + JSON.stringify(tagsToAssign));
+
+    if (tagsToUnassign.length === 0 && tagsToAssign.length === 0) {
+        return null;
+    }
+
+    let request = {
+      resourceLink: resourceLink,
+      tagsToUnassign: tagsToUnassign,
+      tagsToAssign: tagsToAssign
+    };
+    return request;
   }
 };
 
@@ -1291,6 +1321,5 @@ utils.serviceUrl = function(path) {
  }
  return defaultServiceUrl(path);
 };
-
 
 export default utils;

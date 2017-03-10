@@ -12,6 +12,7 @@
 import SubnetworkEditorVue from 'components/subnetworks/SubnetworkEditorVue.html';
 import { SubnetworksActions } from 'actions/Actions';
 import services from 'core/services';
+import utils from 'core/utils';
 
 export default Vue.component('subnetwork-editor', {
   template: SubnetworkEditorVue,
@@ -51,10 +52,12 @@ export default Vue.component('subnetwork-editor', {
       $event.stopImmediatePropagation();
       $event.preventDefault();
       let toSave = this.getModel();
+      var tagRequest = utils.createTagAssignmentRequest(toSave.documentSelfLink,
+          this.model.item.tags || [], this.tags);
       if (toSave.documentSelfLink) {
-        SubnetworksActions.updateSubnetwork(toSave, this.tags);
+        SubnetworksActions.updateSubnetwork(toSave, tagRequest);
       } else {
-        SubnetworksActions.createSubnetwork(toSave, this.tags);
+        SubnetworksActions.createSubnetwork(toSave, tagRequest);
       }
     },
     searchNetworks(...args) {
@@ -95,7 +98,8 @@ export default Vue.component('subnetwork-editor', {
         name: this.name,
         defaultForZone: this.defaultForZone,
         subnetCIDR: this.cidr,
-        supportPublicIpAddress: this.supportPublicIpAddress
+        supportPublicIpAddress: this.supportPublicIpAddress,
+        tagLinks: undefined
       });
     }
   }
