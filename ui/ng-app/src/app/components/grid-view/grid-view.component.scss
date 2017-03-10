@@ -23,7 +23,7 @@ grid-view {
     .card-item {
       display: block;
       max-width: 400px;
-      min-width: 200px;
+      min-width: 300px;
       position: absolute;
       margin-right: 40px;
       transition: width 0.4s, transform 0.4s;
@@ -101,6 +101,10 @@ grid-view {
       width: 100px;
       position: absolute;
       left: 0;
+    }
+    > div {
+      width: 100%;
+      overflow: hidden;
     }
   }
 }

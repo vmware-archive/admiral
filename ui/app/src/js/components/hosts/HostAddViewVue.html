@@ -59,6 +59,14 @@
     <div class="form-control dropdown-holder"></div>
     <span class="help-block">{{i18n(validationErrors.deploymentPolicy)}}</span>
   </div>
+  <div v-if="selectedHostType === 'KUBERNETES'" class="form-group">
+    <label>Namespace</label>
+    <div class="select">
+      <select class="form-control">
+        <option value="Default">Default</option>
+      </select>
+    </div>
+  </div>
 
   <div id="tags" v-show="showTags" class="form-group tags" v-bind:class="{'has-error': validationErrors.tags}">
     <label>{{i18n("app.host.details.tags")}}</label>

@@ -18,40 +18,24 @@
   </thead>
   <tbody>
     <tr>
-      <td>Name</td>
-      <td>{{entity.names}}</td>
+      <td>{{"creation" | i18n: { "ns": "kubernetes"} }}</td>
+      <td>{{entity.pod?.metadata.creationTimestamp || "--"}}</td>
     </tr>
-    <tr>
-      <td>Self link</td>
-      <td>{{entity.documentSelfLink}}</td>
+    <tr class="form-group">
+      <td>{{"namespace" | i18n: { "ns": "kubernetes"} }}</td>
+      <td>{{entity.pod?.metadata.namespace || "--"}}</td>
     </tr>
-    <tr>
-      <td>Created</td>
-      <td>{{entity.created}}</td>
+    <tr class="form-group">
+      <td>{{"containers" | i18n: { "ns": "kubernetes"} }}</td>
+      <td>{{entity.pod?.spec.containers.length || "--"}}</td>
     </tr>
-    <tr>
-      <td>Image</td>
-      <td>{{entity.image}}</td>
+    <tr class="form-group">
+      <td>{{"startTime" | i18n: { "ns": "kubernetes"} }}</td>
+      <td>{{entity.pod?.status.startTime || "--"}}</td>
     </tr>
-    <tr>
-      <td>Restart count</td>
-      <td>{{entity.attributes && entity.attributes.RestartCount}}</td>
-    </tr>
-    <tr>
-      <td>Memory</td>
-      <td>{{entity.attributes && entity.attributes.HostConfig.Memory}}</td>
-    </tr>
-    <tr>
-      <td>Memory swap</td>
-      <td>{{entity.attributes && entity.attributes.HostConfig.MemorySwap}}</td>
-    </tr>
-    <tr>
-      <td>CPU shares</td>
-      <td>{{entity.attributes && entity.attributes.HostConfig.CpuShares}}</td>
-    </tr>
-    <tr>
-      <td>CPUs</td>
-      <td>{{entity.attributes && entity.attributes.HostConfig.CpusetCpus}}</td>
+    <tr class="form-group">
+      <td>{{"pods.ip" | i18n: { "ns": "kubernetes"} }}</td>
+      <td>{{entity.pod?.status.podIP || "--"}}</td>
     </tr>
   </tbody>
 </table>

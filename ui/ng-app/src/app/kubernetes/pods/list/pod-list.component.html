@@ -10,11 +10,39 @@
   -->
 
 <div>
-  <grid-view [items]="entities" [loading]="loadingEntities">
+  <grid-view [items]="entities" [loading]="loadingEntities"
+    [searchPlaceholder]="'Search for pods'"
+    [searchSuggestionProperties]="['name', 'ip', 'status']">
     <div title>Pods</div>
     <template let-item="item">
       <card [routerLink]="['./' + item.documentId]">
         <div card-header>{{item.name}}</div>
+        <div card-content>
+          <div class="form-group">
+            <label>{{"creation" | i18n: { "ns": "kubernetes"} }}</label>
+            <div>{{item.pod?.metadata.creationTimestamp || "--"}}</div>
+          </div>
+          <div class="form-group">
+            <label>{{"namespace" | i18n: { "ns": "kubernetes"} }}</label>
+            <div>{{item.pod?.metadata.namespace || "--"}}</div>
+          </div>
+          <div class="form-group">
+            <label>{{"containers" | i18n: { "ns": "kubernetes"} }}</label>
+            <div>{{item.pod?.spec.containers.length || "--"}}</div>
+          </div>
+          <div class="form-group">
+            <label>{{"pods.status" | i18n: { "ns": "kubernetes"} }}</label>
+            <div>{{item.pod?.status.phase || "--"}}</div>
+          </div>
+          <div class="form-group">
+            <label>{{"startTime" | i18n: { "ns": "kubernetes"} }}</label>
+            <div>{{item.pod?.status.startTime || "--"}}</div>
+          </div>
+          <div class="form-group">
+            <label>{{"pods.ip" | i18n: { "ns": "kubernetes"} }}</label>
+            <div>{{item.pod?.status.podIP || "--"}}</div>
+          </div>
+        </div>
         <div card-footer>
           <clr-dropdown [clrMenuPosition]="'bottom-left'" (click)="$event.stopPropagation()">
             <button class="btn btn-sm btn-link" clrDropdownToggle>
