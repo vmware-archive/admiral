@@ -32,14 +32,16 @@ import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.common.test.TestRequestSender;
 import com.vmware.xenon.common.test.TestRequestSender.FailureResponse;
 
-public class EventRegistryTopicServiceTest extends BaseTestCase {
+public class EventTopicServiceTest extends BaseTestCase {
+
+    private static final String EVENT_TASK = "DummyTask";
+    private static final String EVENT_NAME = "Name assignment";
 
     private TestRequestSender sender;
 
     @Before
     public void setUp() throws Throwable {
         sender = host.getTestRequestSender();
-        // Start the example service factory
 
         host.startFactory(new EventTopicService());
 
@@ -50,7 +52,6 @@ public class EventRegistryTopicServiceTest extends BaseTestCase {
                 EventTopicRegistrationBootstrapService.FACTORY_LINK);
 
         host.startFactory(new EventTopicRegistrationBootstrapService());
-        // host.startFactory(EventTopicBootstrapService.class.newInstance());
 
         waitForServiceAvailability(EventTopicRegistrationBootstrapService.FACTORY_LINK);
 
@@ -62,7 +63,7 @@ public class EventRegistryTopicServiceTest extends BaseTestCase {
 
     @Test
     public void testCreateEventRegistryTopic() {
-        EventTopicState state = createEventTopicState("DummyTask",
+        EventTopicState state = createEventTopicState(EVENT_NAME, EVENT_TASK,
                 TaskStage.FINISHED.name(), DefaultSubStage.COMPLETED.name(), false);
 
         URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
@@ -81,8 +82,23 @@ public class EventRegistryTopicServiceTest extends BaseTestCase {
     }
 
     @Test
+    public void testEmptyName() {
+        EventTopicState state = createEventTopicState(null, EVENT_TASK,
+                TaskStage.FINISHED.name(), DefaultSubStage.COMPLETED.name(), false);
+
+        URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
+        Operation op = Operation
+                .createPost(uri)
+                .setBody(state);
+
+        FailureResponse failure = sender.sendAndWaitFailure(op);
+        assertNotNull(failure);
+        assertEquals("'name' is required.", failure.failure.getMessage());
+    }
+
+    @Test
     public void testEmptyTask() {
-        EventTopicState state = createEventTopicState(null,
+        EventTopicState state = createEventTopicState(EVENT_NAME, null,
                 TaskStage.FINISHED.name(), DefaultSubStage.COMPLETED.name(), false);
 
         URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
@@ -97,7 +113,7 @@ public class EventRegistryTopicServiceTest extends BaseTestCase {
 
     @Test
     public void testEmptyStage() {
-        EventTopicState state = createEventTopicState("DummyTask",
+        EventTopicState state = createEventTopicState(EVENT_NAME, EVENT_TASK,
                 null, DefaultSubStage.COMPLETED.name(), false);
 
         URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
@@ -112,7 +128,7 @@ public class EventRegistryTopicServiceTest extends BaseTestCase {
 
     @Test
     public void testEmptySubStage() {
-        EventTopicState state = createEventTopicState("DummyTask",
+        EventTopicState state = createEventTopicState(EVENT_NAME, EVENT_TASK,
                 TaskStage.FINISHED.name(), null, false);
 
         URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
@@ -127,7 +143,7 @@ public class EventRegistryTopicServiceTest extends BaseTestCase {
 
     @Test
     public void testEmptyBlocking() {
-        EventTopicState state = createEventTopicState("DummyTask",
+        EventTopicState state = createEventTopicState(EVENT_NAME, EVENT_TASK,
                 TaskStage.FINISHED.name(), DefaultSubStage.COMPLETED.name(), null);
 
         URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
@@ -166,9 +182,10 @@ public class EventRegistryTopicServiceTest extends BaseTestCase {
 
     }
 
-    private EventTopicState createEventTopicState(String task, String stage,
+    private EventTopicState createEventTopicState(String name, String task, String stage,
             String subStage, Boolean blocking) {
         EventTopicState state = new EventTopicState();
+        state.name = name;
         state.task = task;
         state.stage = stage;
         state.substage = subStage;

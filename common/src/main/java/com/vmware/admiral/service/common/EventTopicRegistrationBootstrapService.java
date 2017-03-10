@@ -38,13 +38,16 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
 
     public static final String FACTORY_LINK = ManagementUriParts.EVENT_TOPIC_REGISTRY_BOOTSTRAP;
 
+    public static final String CONTAINER_NAME_TOPIC_TASK_SELF_LINK = "change-container-name";
+
+    private static final String CONTAINER_NAME_TOPIC_NAME = "Name assignment";
+    private static final String CONTAINER_NAME_TOPIC_TASK_NAME = "ContainerAllocationTaskState";
+    private static final String CONTAINER_NAME_TOPIC_SUBSTAGE = "CONTEXT_PREPARED";
+    private static final String CONTAINER_NAME_TOPIC_TASK_DESCRIPTION = "Assign custom container name.";
+
     public static FactoryService createFactory() {
         return FactoryService.create(EventTopicRegistrationBootstrapService.class);
     }
-
-    public static final String CONTAINER_NAME_TOPIC_TASK_SELF_LINK = "change-container-name";
-    private static final String CONTAINER_NAME_TOPIC_TASK_NAME = "ContainerAllocationTaskState";
-    private static final String CONTAINER_NAME_TOPIC_TASK_DESCRIPTION = "Assign custom container name.";
 
     public EventTopicRegistrationBootstrapService() {
         super(ServiceDocument.class);
@@ -135,12 +138,13 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
 
     private static Operation createChangeContainerNameTopicOperation(ServiceHost host) {
         EventTopicState topic = new EventTopicState();
+        topic.name = CONTAINER_NAME_TOPIC_NAME;
         topic.task = CONTAINER_NAME_TOPIC_TASK_NAME;
-        topic.stage = TaskStage.FINISHED.name();
-        topic.substage = DefaultSubStage.COMPLETED.name();
+        topic.stage = TaskStage.STARTED.name();
+        topic.substage = CONTAINER_NAME_TOPIC_SUBSTAGE;
         topic.documentSelfLink = CONTAINER_NAME_TOPIC_TASK_SELF_LINK;
         topic.description = CONTAINER_NAME_TOPIC_TASK_DESCRIPTION;
-        topic.blockable = false;
+        topic.blockable = Boolean.TRUE;
         topic.notificationPayload = TaskPayloadBuilder.initialize()
                 .add(Set.class, "resourceNames")
                 .add(String.class, "resourceType")
