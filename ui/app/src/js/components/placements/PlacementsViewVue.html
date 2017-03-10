@@ -11,37 +11,33 @@
 
 <div class="placements-view" v-bind:class="{'right-context-expanded':  contextExpanded}">
   <div class="main-panel">
-    <list-title
-      v-bind:has-search-query="false"
-      v-bind:title="i18n('app.placement.list.title')"
-      v-bind:title-search="i18n('app.placement.list.title')"
-      v-bind:count="itemsCount" v-on:refresh-list="refresh()"></list-title>
-    <alert alert-type="danger" v-bind:show-alert="hasError"
-      v-bind:alert-message="errorMessage"></alert>
+    <list-title :has-search-query="false"
+                :title="i18n('app.placement.list.title')"
+                :title-search="i18n('app.placement.list.title')"
+                :count="itemsCount" v-on:refresh-list="refresh()"></list-title>
+    <alert alert-type="danger" :show-alert="hasError" :alert-message="errorMessage"></alert>
     <div class="list-holder"></div>
     <div class="mask"></div>
   </div>
+
   <context-sidepanel class="right-context-panel"
     v-bind:class="{'right-context-expanded': innerContextExpanded}" v-on:close="closeToolbar()">
 
     <div slot="toolbar" class="toolbar">
       <context-sidepanel-toolbar-item
         v-bind:active="activeContextItem === 'placementZones'"
-        v-bind:icon-class="'fa fa-bullseye'"
         v-bind:label="i18n('app.placementZone.contextPanelTooltip')"
         v-on:open="openToolbarPlacementZones()" v-on:close="closeToolbar()">
       </context-sidepanel-toolbar-item>
 
       <context-sidepanel-toolbar-item v-if="showProjectsToolbarItem"
         v-bind:active="activeContextItem === 'resourceGroups'"
-        v-bind:icon-class="'fa fa-users'"
         v-bind:label="i18n('app.group.contextPanelTooltip')"
         v-on:open="openToolbarResourceGroups()" v-on:close="closeToolbar()">
       </context-sidepanel-toolbar-item>
 
       <context-sidepanel-toolbar-item v-if="!isStandaloneMode"
         v-bind:active="activeContextItem === 'deploymentPolicies'"
-        v-bind:icon-class="'fa fa-file-text'"
         v-bind:label="i18n('app.deploymentPolicy.contextPanelTooltip')"
         v-on:open="openToolbarDeploymentPolicies()" v-on:close="closeToolbar()">
       </context-sidepanel-toolbar-item>

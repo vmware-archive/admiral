@@ -187,7 +187,6 @@
     <div slot="toolbar" class="toolbar">
       <context-sidepanel-toolbar-item
         v-bind:active="activeContextItem === 'requests'"
-        v-bind:icon-class="'fa fa-tasks'"
         v-bind:label="i18n('app.request.contextPanelTooltip')"
         v-bind:notifications="requestsCount"
         v-on:open="openToolbarRequests()" v-on:close="closeToolbar()">
@@ -195,7 +194,6 @@
 
       <context-sidepanel-toolbar-item
         v-bind:active="activeContextItem === 'eventlogs'"
-        v-bind:icon-class="'fa fa-binoculars'"
         v-bind:label="i18n('app.eventlog.contextPanelTooltip')"
         v-bind:notifications="eventLogsCount"
         v-on:open="openToolbarEventLogs()" v-on:close="closeToolbar()">
@@ -284,7 +282,6 @@
     <div slot="toolbar" class="toolbar">
       <context-sidepanel-toolbar-item
         v-bind:active="activeContextItem === 'closures'"
-        v-bind:icon-class="'fa fa-tasks'"
         v-bind:label="i18n('app.closure.resultStatus')"
         v-on:open="openToolbarClosureResults()" v-on:close="closeToolbar()">
       </context-sidepanel-toolbar-item>

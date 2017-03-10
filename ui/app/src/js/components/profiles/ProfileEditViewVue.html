@@ -150,14 +150,12 @@
       <context-sidepanel-toolbar-item
         v-if="!model.item.endpointType && currentView === 'basic'"
         :active="activeContextItem === 'endpoints'"
-        :icon-class="'fa fa-cloud'"
         :label="i18n('app.endpoint.contextPanelTooltip')"
         @open="manageEndpoints()" @close="closeToolbar()">
       </context-sidepanel-toolbar-item>
       <context-sidepanel-toolbar-item
         v-if="endpoint && currentView === 'network'"
         :active="activeContextItem === 'subnetworks'"
-        :icon-class="'fa fa-sitemap'"
         :label="i18n('app.subnetwork.contextPanelTooltip')"
         @open="manageSubnetworks()" @close="closeToolbar()">
       </context-sidepanel-toolbar-item>
