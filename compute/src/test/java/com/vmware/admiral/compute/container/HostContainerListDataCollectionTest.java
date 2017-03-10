@@ -180,6 +180,39 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
         assertEquals(Boolean.TRUE, systemContainer.system);
     }
 
+    // VBV-1023
+    @Test
+    public void testProvisionSystemContainerWhenVersionIsWrong() throws Throwable {
+        String systemContainerId = extractId(systemContainerLink);
+        String systemContainerRef = UriUtils.buildUri(host, systemContainerLink).toString();
+        // deploy an old version of the system container
+        String oldImage = String.format("%s:%s", "test", "abcdefg");
+
+        // add system container to the adapter service because it already exists on host
+        MockDockerAdapterService.addContainerId(TEST_HOST_ID, systemContainerId,
+                systemContainerRef);
+        MockDockerAdapterService.addContainerNames(TEST_HOST_ID, systemContainerId,
+                SystemContainerDescriptions.AGENT_CONTAINER_NAME);
+        MockDockerAdapterService.addContainerImage(TEST_HOST_ID, systemContainerId, oldImage);
+
+        // run data collection on preexisting system container with old version
+        startAndWaitHostContainerListDataCollection();
+
+        // wait for the system container with the updated image
+        ContainerState systemContainer = waitForContainer(systemContainerLink, image);
+
+        assertNotNull("System container not created or can't be retrieved.", systemContainer);
+        assertEquals(systemContainerLink, systemContainer.documentSelfLink);
+        assertEquals(SystemContainerDescriptions.AGENT_CONTAINER_NAME,
+                systemContainer.names.get(0));
+        assertNotNull("System container volumes should not be empty", systemContainer.volumes);
+        assertNotNull("System container not recreated", systemContainer.id);
+        assertEquals(SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK,
+                systemContainer.descriptionLink);
+        assertEquals(image, systemContainer.image);
+        assertEquals(Boolean.TRUE, systemContainer.system);
+    }
+
     private void startAndWaitHostContainerListDataCollection() throws Throwable {
         host.testStart(1);
         host.sendRequest(Operation

@@ -199,7 +199,7 @@ public class HostContainerListDataCollection extends StatefulService {
             } catch (RuntimeException e) {
                 Utils.logWarning("Unable to compare container versions [%s-%s]", version,
                         o.version);
-                return 0;
+                return -1;
             }
         }
 
