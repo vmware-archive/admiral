@@ -12,15 +12,23 @@
 package com.vmware.admiral.compute;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.BiConsumer;
 
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.LocalizableValidationException;
+import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.OperationJoin;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.UriUtils;
 
 public class ContainerHostUtil {
@@ -97,8 +105,7 @@ public class ContainerHostUtil {
     /**
      * Check if docker is running on VMware Integrated Container host.
      *
-     * @param computeState
-     *            host to check
+     * @param computeState host to check
      * @return boolean value
      */
     public static boolean isVicHost(ComputeState computeState) {
@@ -116,8 +123,7 @@ public class ContainerHostUtil {
     /**
      * Check if host is running Kubernetes.
      *
-     * @param computeState
-     *            host to check
+     * @param computeState host to check
      * @return boolean value
      */
     public static boolean isKubernetesHost(ComputeState computeState) {
@@ -148,6 +154,33 @@ public class ContainerHostUtil {
         URI hostUri = ContainerDescription.getDockerHostUri(computeState);
         return UriUtils.HTTPS_SCHEME.equalsIgnoreCase(hostUri.getScheme())
                 && (getTrustAlias(computeState) == null);
+    }
+
+    public static void filterKubernetesHostLinks(Service sender, Set<String> hostLinks,
+            BiConsumer<Set<String>, Map<Long, Throwable>> callback) {
+        List<Operation> getHosts = new ArrayList<>();
+        for (String hostLink : hostLinks) {
+            getHosts.add(Operation.createGet(sender, hostLink));
+        }
+
+        OperationJoin.create(getHosts)
+                .setCompletion((ops, errs) -> {
+                    Set<String> kubernetesHostLinks = new HashSet<>();
+                    if (errs != null && !errs.isEmpty()) {
+                        callback.accept(null, errs);
+                    } else {
+                        for (Operation op : ops.values()) {
+                            if (op == null || op.getStatusCode() != Operation.STATUS_CODE_OK) {
+                                continue;
+                            }
+                            ComputeState state = op.getBody(ComputeState.class);
+                            if (isKubernetesHost(state)) {
+                                kubernetesHostLinks.add(state.documentSelfLink);
+                            }
+                        }
+                        callback.accept(kubernetesHostLinks, null);
+                    }
+                }).sendWith(sender);
     }
 
 }

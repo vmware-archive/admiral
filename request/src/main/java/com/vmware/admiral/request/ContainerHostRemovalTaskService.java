@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.request;
 
+import static com.vmware.admiral.compute.ContainerHostUtil.filterKubernetesHostLinks;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
@@ -37,6 +38,8 @@ import com.vmware.admiral.request.ContainerHostRemovalTaskService.ContainerHostR
 import com.vmware.admiral.request.ContainerNetworkRemovalTaskService.ContainerNetworkRemovalTaskState;
 import com.vmware.admiral.request.ContainerRemovalTaskService.ContainerRemovalTaskState;
 import com.vmware.admiral.request.ContainerVolumeRemovalTaskService.ContainerVolumeRemovalTaskState;
+import com.vmware.admiral.request.kubernetes.CompositeKubernetesRemovalTaskService;
+import com.vmware.admiral.request.kubernetes.CompositeKubernetesRemovalTaskService.CompositeKubernetesRemovalTaskState;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.CounterSubTaskService;
 import com.vmware.admiral.service.common.CounterSubTaskService.CounterSubTaskState;
@@ -65,11 +68,15 @@ public class ContainerHostRemovalTaskService extends
             extends
             com.vmware.admiral.service.common.TaskServiceDocument<ContainerHostRemovalTaskState.SubStage> {
 
-        /** (Required) The resources on which the given operation will be applied */
+        /**
+         * (Required) The resources on which the given operation will be applied
+         */
         @PropertyOptions(usage = { REQUIRED, SINGLE_ASSIGNMENT }, indexing = STORE_ONLY)
         public Set<String> resourceLinks;
 
-        /** (Internal) Set by Task for the query to retrieve all the containers for the given hosts. */
+        /**
+         * (Internal) Set by Task for the query to retrieve all the containers for the given hosts.
+         */
         @PropertyOptions(usage = { SERVICE_USE, SINGLE_ASSIGNMENT, AUTO_MERGE_IF_NOT_NULL },
                 indexing = STORE_ONLY)
         public String containerQueryTaskLink;
@@ -86,6 +93,8 @@ public class ContainerHostRemovalTaskService extends
             REMOVED_NETWORKS,
             REMOVING_VOLUMES,
             REMOVED_VOLUMES,
+            REMOVING_KUBERNETES_RESOURCES,
+            REMOVED_KUBERNETES_RESOURCES,
             REMOVING_PORT_PROFILES,
             REMOVED_PORT_PROFILES,
             REMOVING_HOSTS,
@@ -131,6 +140,11 @@ public class ContainerHostRemovalTaskService extends
         case REMOVING_VOLUMES:
             break;
         case REMOVED_VOLUMES:
+            filterKubernetesHosts(state);
+            break;
+        case REMOVING_KUBERNETES_RESOURCES:
+            break;
+        case REMOVED_KUBERNETES_RESOURCES:
             queryPortProfiles(state);
             break;
         case REMOVING_PORT_PROFILES:
@@ -350,7 +364,7 @@ public class ContainerHostRemovalTaskService extends
                         volumeLinks.add(r.getDocumentSelfLink());
                     } else {
                         if (volumeLinks.isEmpty()) {
-                            queryPortProfiles(state);
+                            filterKubernetesHosts(state);
                             return;
                         }
 
@@ -384,9 +398,54 @@ public class ContainerHostRemovalTaskService extends
         sendRequest(startPost);
     }
 
+    private void filterKubernetesHosts(ContainerHostRemovalTaskState state) {
+        filterKubernetesHostLinks(this, state.resourceLinks,
+                (kubernetesHostLinks, errors) -> {
+                    if (errors != null) {
+                        failTask("Couldn't filter kubernetes host links: %s",
+                                new IllegalStateException(Utils.toString(errors)));
+                        return;
+                    }
+                    removeKubernetesResources(state, kubernetesHostLinks);
+                });
+
+    }
+
+    private void removeKubernetesResources(ContainerHostRemovalTaskState state, Set<String>
+            kubernetesHostLinks) {
+        if (kubernetesHostLinks == null || kubernetesHostLinks.isEmpty()) {
+            queryPortProfiles(state);
+            return;
+        }
+
+        CompositeKubernetesRemovalTaskState kubernetesRemovalTask = new CompositeKubernetesRemovalTaskState();
+        kubernetesRemovalTask.resourceLinks = kubernetesHostLinks;
+        kubernetesRemovalTask.cleanupOnly = true;
+        kubernetesRemovalTask.serviceTaskCallback = ServiceTaskCallback.create(
+                getSelfLink(),
+                TaskStage.STARTED, SubStage.REMOVED_KUBERNETES_RESOURCES,
+                TaskStage.STARTED, SubStage.ERROR);
+        kubernetesRemovalTask.requestTrackerLink = state.requestTrackerLink;
+
+        Operation startPost = Operation
+                .createPost(this, CompositeKubernetesRemovalTaskService.FACTORY_LINK)
+                .setBody(kubernetesRemovalTask)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating kubernetes composite removal task", e);
+                        return;
+                    }
+
+                    proceedTo(SubStage.REMOVING_KUBERNETES_RESOURCES);
+                });
+        sendRequest(startPost);
+    }
+
     private void queryPortProfiles(ContainerHostRemovalTaskState state) {
-        QueryTask q = QueryUtil.buildQuery(HostPortProfileService.HostPortProfileState.class, false);
-        QueryUtil.addListValueClause(q, HostPortProfileService.HostPortProfileState.FIELD_HOST_LINK, state.resourceLinks);
+        QueryTask q = QueryUtil
+                .buildQuery(HostPortProfileService.HostPortProfileState.class, false);
+        QueryUtil.addListValueClause(q, HostPortProfileService.HostPortProfileState.FIELD_HOST_LINK,
+                state.resourceLinks);
         ServiceDocumentQuery<HostPortProfileService.HostPortProfileState> query = new ServiceDocumentQuery<>(
                 getHost(), HostPortProfileService.HostPortProfileState.class);
         QueryUtil.addBroadcastOption(q);
@@ -410,8 +469,8 @@ public class ContainerHostRemovalTaskService extends
         });
     }
 
-    private void removePortProfiles(ContainerHostRemovalTaskState state, ArrayList<String> hostPortProfileLinks,
-                                    String subTaskLink) {
+    private void removePortProfiles(ContainerHostRemovalTaskState state,
+            ArrayList<String> hostPortProfileLinks, String subTaskLink) {
         if (subTaskLink == null) {
             // create counter subtask to remove every host port profile. Go to REMOVED_PORT_PROFILES when complete
             createCounterSubTask(state, hostPortProfileLinks.size(), SubStage.REMOVED_PORT_PROFILES,

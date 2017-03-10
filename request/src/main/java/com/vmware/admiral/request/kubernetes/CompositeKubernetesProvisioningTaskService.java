@@ -13,7 +13,7 @@ package com.vmware.admiral.request.kubernetes;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
-import static com.vmware.admiral.compute.container.CompositeComponentService.FIELD_NAME_HOST_LINK;
+import static com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent.CUSTOM_PROPERTY_HOST_LINK;
 import static com.vmware.admiral.request.utils.RequestUtils.getContextId;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
@@ -343,7 +343,7 @@ public class CompositeKubernetesProvisioningTaskService extends
             cc.customProperties = new HashMap<>();
         }
 
-        cc.customProperties.put(FIELD_NAME_HOST_LINK, state.hostSelections.get(0)
+        cc.customProperties.put(CUSTOM_PROPERTY_HOST_LINK, state.hostSelections.get(0)
                 .hostLink);
 
         sendRequest(Operation
