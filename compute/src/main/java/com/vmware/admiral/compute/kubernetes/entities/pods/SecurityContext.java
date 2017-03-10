@@ -18,7 +18,7 @@ package com.vmware.admiral.compute.kubernetes.entities.pods;
  */
 public class SecurityContext {
 
-    public Boolean priviliged;
+    public Boolean privileged;
 
     public Long runAsUser;
 

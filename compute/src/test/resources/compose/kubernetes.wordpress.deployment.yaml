@@ -14,14 +14,14 @@ spec:
         tier: "wordpress"
     spec:
       containers:
-      - image: "wordpress:latest"
-        name: "wordpress"
+      - name: "wordpress"
+        image: "wordpress:latest"
+        ports:
+        - containerPort: 80
+          protocol: "TCP"
         env:
         - name: "WORDPRESS_DB_HOST"
           value: "db:3306"
         - name: "WORDPRESS_DB_PASSWORD"
           value: "wordpress"
-        ports:
-        - containerPort: 80
-          protocol: "TCP"
       restartPolicy: "Always"

@@ -9,9 +9,13 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.content.kubernetes.pods;
+package com.vmware.admiral.compute.kubernetes.entities.namespaces;
 
-public class PodContainerStateWaiting {
-    // public String reason;
-    // public String message;
+public class NamespaceStatus {
+
+    /**
+     * Phase is the current lifecycle phase of the namespace.
+     */
+    public String phase;
+
 }

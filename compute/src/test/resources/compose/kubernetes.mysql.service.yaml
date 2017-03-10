@@ -8,9 +8,9 @@ metadata:
 spec:
   ports:
   - name: "3306"
-    port: 3306
     protocol: "TCP"
-    targetPort: 3306
+    port: 3306
+    targetPort: "3306"
   selector:
     app: "Docker Compose 2016-06-06 09.20.46.085 GMT"
     tier: "db"

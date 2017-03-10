@@ -8,9 +8,9 @@ metadata:
 spec:
   ports:
   - name: "8000"
-    port: 8000
     protocol: "TCP"
-    targetPort: 80
+    port: 8000
+    targetPort: "80"
   selector:
     app: "Docker Compose 2016-06-06 09.20.46.085 GMT"
     tier: "wordpress"

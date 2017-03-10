@@ -47,7 +47,7 @@ import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
-import com.vmware.admiral.compute.content.kubernetes.CommonKubernetesEntity;
+import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.photon.controller.model.Constraint;
 import com.vmware.photon.controller.model.Constraint.Condition.Enforcement;
@@ -340,12 +340,11 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
             templateToCheck = yamls.get(0);
         }
         try {
-            objectMapper().readValue(templateToCheck, CommonKubernetesEntity.class);
+            objectMapper().readValue(templateToCheck, BaseKubernetesObject.class);
         } catch (IOException e) {
             return false;
         }
         return true;
 
     }
-
 }

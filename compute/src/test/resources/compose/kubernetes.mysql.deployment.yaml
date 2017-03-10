@@ -14,8 +14,11 @@ spec:
         tier: "db"
     spec:
       containers:
-      - image: "mysql:5.7"
-        name: "db"
+      - name: "db"
+        image: "mysql:5.7"
+        ports:
+        - containerPort: 3306
+          protocol: "TCP"
         env:
         - name: "MYSQL_ROOT_PASSWORD"
           value: "wordpress"
@@ -25,7 +28,4 @@ spec:
           value: "wordpress"
         - name: "MYSQL_PASSWORD"
           value: "wordpress"
-        ports:
-        - containerPort: 3306
-          protocol: "TCP"
       restartPolicy: "Always"

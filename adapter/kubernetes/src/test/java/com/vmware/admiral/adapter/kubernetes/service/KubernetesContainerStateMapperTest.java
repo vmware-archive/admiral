@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.adapter.kubernetes.service;
 
+import java.util.Arrays;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -18,14 +20,13 @@ import com.vmware.admiral.adapter.kubernetes.KubernetesContainerStateMapper;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.PortBinding;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainer;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerEnvVar;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerPort;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerState;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerStateRunning;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerStateTerminated;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerStateWaiting;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerStatus;
+import com.vmware.admiral.compute.kubernetes.entities.pods.Container;
+import com.vmware.admiral.compute.kubernetes.entities.pods.ContainerPort;
+import com.vmware.admiral.compute.kubernetes.entities.pods.ContainerStateRunning;
+import com.vmware.admiral.compute.kubernetes.entities.pods.ContainerStateTerminated;
+import com.vmware.admiral.compute.kubernetes.entities.pods.ContainerStateWaiting;
+import com.vmware.admiral.compute.kubernetes.entities.pods.ContainerStatus;
+import com.vmware.admiral.compute.kubernetes.entities.pods.EnvVar;
 
 public class KubernetesContainerStateMapperTest {
     private KubernetesContainerStateMapper mapper = new KubernetesContainerStateMapper();
@@ -47,7 +48,7 @@ public class KubernetesContainerStateMapperTest {
 
     @Test
     public void TestCorrectEnvMap() {
-        PodContainerEnvVar e = new PodContainerEnvVar();
+        EnvVar e = new EnvVar();
         e.name = "name";
         e.value = "val";
         String env = KubernetesContainerStateMapper.makeEnv(e);
@@ -56,14 +57,14 @@ public class KubernetesContainerStateMapperTest {
 
     @Test
     public void TestCorrectPortMap() {
-        PodContainerPort inPort = new PodContainerPort();
-        inPort.hostIp = "127.0.0.1";
+        ContainerPort inPort = new ContainerPort();
+        inPort.hostIP = "127.0.0.1";
         inPort.hostPort = 321;
         inPort.containerPort = 123;
         inPort.protocol = "udp";
         PortBinding outPort = KubernetesContainerStateMapper.makePort(inPort);
         Assert.assertEquals(inPort.protocol, outPort.protocol);
-        Assert.assertEquals(inPort.hostIp, outPort.hostIp);
+        Assert.assertEquals(inPort.hostIP, outPort.hostIp);
         Assert.assertEquals(Integer.toString(inPort.hostPort), outPort.hostPort);
         Assert.assertEquals(Integer.toString(inPort.containerPort), outPort.containerPort);
     }
@@ -71,49 +72,49 @@ public class KubernetesContainerStateMapperTest {
     @Test
     public void TestCorrectMapContainer() {
         ContainerState outState = new ContainerState();
-        PodContainer inContainer = new PodContainer();
-        PodContainerStatus inStatus = new PodContainerStatus();
+        Container inContainer = new Container();
+        ContainerStatus inStatus = new ContainerStatus();
 
         inContainer.name = "test-name";
         inContainer.image = "test-image";
-        inContainer.command = new String[] { "cmd1", "cmd2" };
-        PodContainerEnvVar e1 = new PodContainerEnvVar() {
+        inContainer.command = Arrays.asList("cmd1", "cmd2");
+        EnvVar e1 = new EnvVar() {
             {
                 name = "name1";
                 value = "val1";
             }
         };
-        PodContainerEnvVar e2 = new PodContainerEnvVar() {
+        EnvVar e2 = new EnvVar() {
             {
                 name = "name2";
                 value = "val2";
             }
         };
-        inContainer.env = new PodContainerEnvVar[] { e1, e2 };
-        PodContainerPort port1 = new PodContainerPort() {
+        inContainer.env = Arrays.asList(e1, e2);
+        ContainerPort port1 = new ContainerPort() {
             {
                 name = "portName1";
                 protocol = "tcp";
-                hostIp = "192.168.0.1";
+                hostIP = "192.168.0.1";
                 hostPort = 8080;
                 containerPort = 80;
             }
         };
-        PodContainerPort port2 = new PodContainerPort() {
+        ContainerPort port2 = new ContainerPort() {
             {
                 name = "portName2";
                 protocol = "tcp";
-                hostIp = "192.168.0.2";
+                hostIP = "192.168.0.2";
                 hostPort = 8081;
                 containerPort = 81;
             }
         };
-        inContainer.ports = new PodContainerPort[] { port1, port2 };
+        inContainer.ports = Arrays.asList(port1, port2);
 
         String id = "test-id-123";
         inStatus.containerID = "docker://" + id;
-        inStatus.state = new PodContainerState();
-        inStatus.state.running = new PodContainerStateRunning();
+        inStatus.state = new com.vmware.admiral.compute.kubernetes.entities.pods.ContainerState();
+        inStatus.state.running = new ContainerStateRunning();
 
         KubernetesContainerStateMapper.mapContainer(outState, inContainer, inStatus);
 
@@ -122,22 +123,22 @@ public class KubernetesContainerStateMapperTest {
         Assert.assertEquals(inContainer.name, outState.names.get(0));
         Assert.assertEquals(inContainer.image, outState.image);
         Assert.assertNotNull(outState.command);
-        Assert.assertEquals(inContainer.command.length, outState.command.length);
-        for (int i = 0; i < inContainer.command.length; i++) {
-            Assert.assertEquals(inContainer.command[i], outState.command[i]);
+        Assert.assertEquals(inContainer.command.size(), outState.command.length);
+        for (int i = 0; i < inContainer.command.size(); i++) {
+            Assert.assertEquals(inContainer.command.get(i), outState.command[i]);
         }
         Assert.assertNotNull(outState.env);
-        for (int i = 0; i < inContainer.env.length; i++) {
-            PodContainerEnvVar envVar = inContainer.env[i];
+        for (int i = 0; i < inContainer.env.size(); i++) {
+            EnvVar envVar = inContainer.env.get(i);
             Assert.assertEquals(envVar.name + "=" + envVar.value, outState.env[i]);
         }
         Assert.assertNotNull(outState.ports);
-        Assert.assertEquals(inContainer.ports.length, outState.ports.size());
-        for (int i = 0; i < inContainer.ports.length; i++) {
-            PodContainerPort inPort = inContainer.ports[i];
+        Assert.assertEquals(inContainer.ports.size(), outState.ports.size());
+        for (int i = 0; i < inContainer.ports.size(); i++) {
+            ContainerPort inPort = inContainer.ports.get(i);
             PortBinding outPort = outState.ports.get(i);
             Assert.assertEquals(inPort.protocol, outPort.protocol);
-            Assert.assertEquals(inPort.hostIp, outPort.hostIp);
+            Assert.assertEquals(inPort.hostIP, outPort.hostIp);
             Assert.assertEquals(Integer.toString(inPort.hostPort), outPort.hostPort);
             Assert.assertEquals(Integer.toString(inPort.containerPort), outPort.containerPort);
         }
@@ -147,9 +148,9 @@ public class KubernetesContainerStateMapperTest {
     @Test
     public void TestMapContainerWithNullInputContainer() {
         ContainerState outState = new ContainerState();
-        PodContainerStatus status = new PodContainerStatus();
+        ContainerStatus status = new ContainerStatus();
         status.containerID = "docker://test-id";
-        status.state = new PodContainerState();
+        // status.state = new ContainerState();
         KubernetesContainerStateMapper.mapContainer(outState, null, status);
         Assert.assertNull(outState.id);
         Assert.assertNull(outState.powerState);
@@ -158,7 +159,7 @@ public class KubernetesContainerStateMapperTest {
     @Test
     public void TestMapContainerWithNullInputStatus() {
         ContainerState outState = new ContainerState();
-        PodContainer inContainer = new PodContainer();
+        Container inContainer = new Container();
         inContainer.name = "test";
         inContainer.image = "image";
         KubernetesContainerStateMapper.mapContainer(outState, inContainer, null);
@@ -174,42 +175,42 @@ public class KubernetesContainerStateMapperTest {
 
     @Test
     public void TestGetPowerStateRunning() {
-        PodContainerStatus status = new PodContainerStatus();
-        status.state = new PodContainerState();
-        status.state.running = new PodContainerStateRunning();
+        ContainerStatus status = new ContainerStatus();
+        status.state = new com.vmware.admiral.compute.kubernetes.entities.pods.ContainerState();
+        status.state.running = new ContainerStateRunning();
         PowerState state = KubernetesContainerStateMapper.getPowerState(status);
         Assert.assertEquals(PowerState.RUNNING, state);
     }
 
     @Test
     public void TestGetPowerStatePaused() {
-        PodContainerStatus status = new PodContainerStatus();
-        status.state = new PodContainerState();
-        status.state.waiting = new PodContainerStateWaiting();
+        ContainerStatus status = new ContainerStatus();
+        status.state = new com.vmware.admiral.compute.kubernetes.entities.pods.ContainerState();
+        status.state.waiting = new ContainerStateWaiting();
         PowerState state = KubernetesContainerStateMapper.getPowerState(status);
         Assert.assertEquals(PowerState.PAUSED, state);
     }
 
     @Test
     public void TestGetPowerStateStopped() {
-        PodContainerStatus status = new PodContainerStatus();
-        status.state = new PodContainerState();
-        status.state.terminated = new PodContainerStateTerminated();
+        ContainerStatus status = new ContainerStatus();
+        status.state = new com.vmware.admiral.compute.kubernetes.entities.pods.ContainerState();
+        status.state.terminated = new ContainerStateTerminated();
         PowerState state = KubernetesContainerStateMapper.getPowerState(status);
         Assert.assertEquals(PowerState.STOPPED, state);
     }
 
     @Test
     public void TestGetPowerStateUnknown() {
-        PodContainerStatus status = new PodContainerStatus();
-        status.state = new PodContainerState();
+        ContainerStatus status = new ContainerStatus();
+        status.state = new com.vmware.admiral.compute.kubernetes.entities.pods.ContainerState();
         PowerState state = KubernetesContainerStateMapper.getPowerState(status);
         Assert.assertEquals(PowerState.UNKNOWN, state);
     }
 
     @Test
     public void TestGetPowerStateWithNullStatus() {
-        PodContainerStatus status = null;
+        ContainerStatus status = null;
         PowerState state = KubernetesContainerStateMapper.getPowerState(status);
         Assert.assertEquals(PowerState.UNKNOWN, state);
     }

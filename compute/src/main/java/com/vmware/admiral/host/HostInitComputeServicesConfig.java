@@ -63,7 +63,6 @@ import com.vmware.admiral.compute.kubernetes.service.DeploymentService.Deploymen
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionContentService;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
-import com.vmware.admiral.compute.kubernetes.service.KubernetesService;
 import com.vmware.admiral.compute.kubernetes.service.PodLogService;
 import com.vmware.admiral.compute.kubernetes.service.PodService;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
@@ -141,7 +140,6 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 PlacementCapacityUpdateTaskService.class,
                 KubernetesDescriptionService.class,
                 EndpointHealthCheckTaskService.class,
-                KubernetesService.class,
                 PodService.class,
                 DeploymentService.class,
                 ReplicationControllerService.class,

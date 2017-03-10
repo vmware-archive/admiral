@@ -18,4 +18,10 @@ package com.vmware.admiral.compute.kubernetes.entities.pods;
  */
 public class ContainerState {
 
+    public ContainerStateWaiting waiting;
+
+    public ContainerStateRunning running;
+
+    public ContainerStateTerminated terminated;
+
 }

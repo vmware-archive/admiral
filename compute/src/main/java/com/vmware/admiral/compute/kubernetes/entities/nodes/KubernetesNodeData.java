@@ -9,14 +9,18 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.content.kubernetes.nodes;
+package com.vmware.admiral.compute.kubernetes.entities.nodes;
 
 /**
  * Not an object returned by any kubernetes Api.
  */
 public class KubernetesNodeData {
+
     public String name;
+
     public Double usedCPU;
+
     public Double availableMem;
+
     public Double totalMem;
 }
