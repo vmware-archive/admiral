@@ -5,3 +5,5 @@
 
 [ui/app/src/messages]
    admiral.%J.json
+[common/src/main/resources/i18n]
+   messages%j.properties
