@@ -21,6 +21,7 @@ import java.util.Set;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.service.common.MultiTenantDocument;
+import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
@@ -84,6 +85,8 @@ public class NetworkProfileService extends StatefulService {
     public static class NetworkProfileExpanded extends NetworkProfile {
         public List<SubnetState> subnetStates;
 
+        public NetworkState isolatedNetworkState;
+
         public static URI buildUri(URI networkProfileUri) {
             return UriUtils.buildExpandLinksQueryUri(networkProfileUri);
         }
@@ -122,6 +125,15 @@ public class NetworkProfileService extends StatefulService {
                                     expanded.subnetStates.add(o.getBody(SubnetState.class));
                                 }
                             })));
+        }
+        if (currentState.isolationNetworkLink != null) {
+            getOps.add(Operation.createGet(this, currentState.isolationNetworkLink)
+                    .setReferer(this.getUri())
+                    .setCompletion((o, e) -> {
+                        if (e == null) {
+                            expanded.isolatedNetworkState = o.getBody(NetworkState.class);
+                        }
+                    }));
         }
 
         if (!getOps.isEmpty()) {

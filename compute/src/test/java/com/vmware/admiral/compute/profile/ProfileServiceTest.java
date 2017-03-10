@@ -15,6 +15,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import java.net.URI;
+import java.util.Arrays;
+import java.util.UUID;
+
 import org.junit.Test;
 
 import com.vmware.admiral.compute.container.ComputeBaseTest;
@@ -24,6 +28,10 @@ import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
 import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfile;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
+import com.vmware.photon.controller.model.resources.NetworkService;
+import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
+import com.vmware.photon.controller.model.resources.SubnetService;
+import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.UriUtils;
@@ -97,21 +105,37 @@ public class ProfileServiceTest extends ComputeBaseTest {
         compute = doPost(compute, ComputeProfileService.FACTORY_LINK);
         StorageProfile storage = new StorageProfile();
         storage = doPost(storage, StorageProfileService.FACTORY_LINK);
-        NetworkProfile network = new NetworkProfile();
-        network = doPost(network, NetworkProfileService.FACTORY_LINK);
+
+        NetworkState networkState = new NetworkState();
+        networkState.endpointLink = UUID.randomUUID().toString();
+        networkState.resourcePoolLink = UUID.randomUUID().toString();
+        networkState.regionId = UUID.randomUUID().toString();
+        networkState.instanceAdapterReference = new URI("/");
+        networkState.subnetCIDR = "0.0.0.0/24";
+        networkState = doPost(networkState, NetworkService.FACTORY_LINK);
+
+        SubnetState subnetState = new SubnetState();
+        subnetState.subnetCIDR = "0.0.0.0/24";
+        subnetState.networkLink = networkState.documentSelfLink;
+        subnetState = doPost(subnetState, SubnetService.FACTORY_LINK);
+
+        NetworkProfile networkProfile = new NetworkProfile();
+        networkProfile.isolationNetworkLink = networkState.documentSelfLink;
+        networkProfile.subnetLinks = Arrays.asList(subnetState.documentSelfLink);
+        networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
 
         ProfileState profile = new ProfileState();
         profile.name = "test profile";
         profile.endpointType = EndpointType.vsphere.name();
         profile.computeProfileLink = compute.documentSelfLink;
         profile.storageProfileLink = storage.documentSelfLink;
-        profile.networkProfileLink = network.documentSelfLink;
+        profile.networkProfileLink = networkProfile.documentSelfLink;
         profile = doPost(profile, ProfileService.FACTORY_LINK);
 
         ProfileState retrievedProfile = getDocument(ProfileState.class, profile.documentSelfLink);
         assertEquals(compute.documentSelfLink, retrievedProfile.computeProfileLink);
         assertEquals(storage.documentSelfLink, retrievedProfile.storageProfileLink);
-        assertEquals(network.documentSelfLink, retrievedProfile.networkProfileLink);
+        assertEquals(networkProfile.documentSelfLink, retrievedProfile.networkProfileLink);
 
         ProfileStateExpanded retrievedExpandedProfile = getDocument(ProfileStateExpanded.class,
                 profile.documentSelfLink,
@@ -119,10 +143,15 @@ public class ProfileServiceTest extends ComputeBaseTest {
                 ServiceDocumentQueryResult.FIELD_NAME_DOCUMENT_LINKS);
         assertEquals(compute.documentSelfLink, retrievedExpandedProfile.computeProfileLink);
         assertEquals(storage.documentSelfLink, retrievedExpandedProfile.storageProfileLink);
-        assertEquals(network.documentSelfLink, retrievedExpandedProfile.networkProfileLink);
+        assertEquals(networkProfile.documentSelfLink, retrievedExpandedProfile.networkProfileLink);
         assertEquals(compute.documentSelfLink, retrievedExpandedProfile.computeProfile.documentSelfLink);
         assertEquals(storage.documentSelfLink, retrievedExpandedProfile.storageProfile.documentSelfLink);
-        assertEquals(network.documentSelfLink, retrievedExpandedProfile.networkProfile.documentSelfLink);
+        assertEquals(networkProfile.documentSelfLink, retrievedExpandedProfile.networkProfile.documentSelfLink);
+        assertEquals(networkState.documentSelfLink,
+                retrievedExpandedProfile.networkProfile.isolatedNetworkState.documentSelfLink);
+        assertEquals(1, retrievedExpandedProfile.networkProfile.subnetStates.size());
+        assertEquals(subnetState.documentSelfLink, retrievedExpandedProfile
+                .networkProfile.subnetStates.iterator().next().documentSelfLink);
     }
 
     @Test(expected = LocalizableValidationException.class)
