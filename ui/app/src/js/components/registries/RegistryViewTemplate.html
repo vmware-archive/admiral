@@ -18,14 +18,12 @@
     <div slot="toolbar" class="toolbar">
       <context-sidepanel-toolbar-item
         v-bind:active="activeContextItem === 'credentials'"
-        v-bind:icon-class="'fa fa-key'"
         v-bind:label="i18n('app.credential.contextPanelTooltip')"
         v-on:open="openToolbarCredentials()" v-on:close="closeToolbar()">
       </context-sidepanel-toolbar-item>
 
       <context-sidepanel-toolbar-item
         v-bind:active="activeContextItem === 'certificates'"
-        v-bind:icon-class="'fa fa-certificate'"
         v-bind:label="i18n('app.certificate.contextPanelTooltip')"
         v-on:open="openToolbarCertificates()" v-on:close="closeToolbar()">
       </context-sidepanel-toolbar-item>
