@@ -83,22 +83,22 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
         } else if (ContainerHostOperationType.LIST_CONTAINERS == request.getOperationType()
                 && request.serviceTaskCallback.isEmpty()) {
             getContainerHost(request, op, request.resourceReference,
-                    (computeState, commandInput) ->
-                    directListContainers(request, op, computeState, commandInput));
+                    (computeState, commandInput) -> directListContainers(request, op, computeState,
+                            commandInput));
         } else if (ContainerHostOperationType.LIST_NETWORKS == request.getOperationType()
                 && request.serviceTaskCallback.isEmpty()) {
             getContainerHost(request, op, request.resourceReference,
-                    (computeState, commandInput) ->
-                    directListNetworks(request, op, computeState, commandInput));
+                    (computeState, commandInput) -> directListNetworks(request, op, computeState,
+                            commandInput));
         } else if (ContainerHostOperationType.LIST_VOLUMES == request.getOperationType()
                 && request.serviceTaskCallback.isEmpty()) {
             getContainerHost(request, op, request.resourceReference,
-                    (computeState, commandInput) ->
-                    directListVolumes(request, op, computeState, commandInput));
+                    (computeState, commandInput) -> directListVolumes(request, op, computeState,
+                            commandInput));
         } else {
             getContainerHost(request, op, request.resourceReference,
-                    (computeState, commandInput) ->
-                    processOperation(request, computeState, commandInput));
+                    (computeState, commandInput) -> processOperation(request, computeState,
+                            commandInput));
             op.complete();
         }
     }
@@ -241,6 +241,8 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
 
         getCommandExecutor().hostPing(commandInput, (o, ex) -> {
             if (ex != null) {
+                logWarning("Failure while pinging host [%s]",
+                        computeState.documentSelfLink);
                 fail(request, o, ex);
             } else {
                 patchTaskStage(request, TaskStage.FINISHED, null);
@@ -257,6 +259,8 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
                 commandInput,
                 (o, ex) -> {
                     if (ex != null) {
+                        logWarning("Failure while listing containers of host [%s]",
+                                computeState.documentSelfLink);
                         fail(request, o, ex);
                     } else {
                         ContainerListCallback callbackResponse = createContainerListCallback(
@@ -404,6 +408,8 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
                 commandInput,
                 (o, ex) -> {
                     if (ex != null) {
+                        logWarning("Failure while listing volumes of host [%s]",
+                                computeState.documentSelfLink);
                         fail(request, o, ex);
                     } else {
                         VolumeListCallback callbackResponse = createVolumeListCallback(
@@ -469,7 +475,8 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
         return callbackResponse;
     }
 
-    private void updateHostStateCustomProperties(ComputeState computeState, Map<String, Object> properties) {
+    private void updateHostStateCustomProperties(ComputeState computeState,
+            Map<String, Object> properties) {
         if (computeState != null && properties != null && !properties.isEmpty()) {
             computeState.customProperties = new HashMap<>();
 
@@ -553,8 +560,8 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
                                         op.fail(ex);
                                     } else {
                                         try {
-                                            AuthCredentialsServiceState authCredentialsState =
-                                                    o.getBody(AuthCredentialsServiceState.class);
+                                            AuthCredentialsServiceState authCredentialsState = o
+                                                    .getBody(AuthCredentialsServiceState.class);
                                             operation.accept(authCredentialsState);
                                         } catch (Throwable eInner) {
                                             op.fail(eInner);

@@ -256,7 +256,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
      */
     private void processContainerState(RequestContext context) {
         if (context.containerState.parentLink == null) {
-            fail(context.request, new IllegalArgumentException("parentLink"));
+            fail(context.request, new IllegalArgumentException(
+                    "parentLink missing for container " + context.containerState.documentSelfLink));
             return;
         }
 
@@ -333,6 +334,9 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         context.executor.fetchContainerLog(fetchLogCommandInput,
                 (operation, excep) -> {
                     if (excep != null) {
+                        logWarning("Failure while fetching logs for container [%s] of host [%s]",
+                                context.containerState.documentSelfLink,
+                                context.computeState.documentSelfLink);
                         fail(context.request, operation, excep);
                     } else {
                         /* Write this to the log service */
@@ -497,13 +501,15 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
         CompletionHandler imageCompletionHandler = (o, ex) -> {
             if (ex != null) {
+                logWarning("Failure retrieving image for container [%s] of host [%s]",
+                        context.containerState.documentSelfLink,
+                        context.computeState.documentSelfLink);
                 fail(context.request, o, ex);
             } else {
                 handleExceptions(
                         context.request,
                         context.operation,
-                        () -> processCreateContainer(context, 0)
-                );
+                        () -> processCreateContainer(context, 0));
             }
         };
 
@@ -904,8 +910,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         if (containerDescription.customProperties == null) {
             return false;
         }
-        String useLocalImageFirst = containerDescription.customProperties.get
-                (DOCKER_CONTAINER_CREATE_USE_LOCAL_IMAGE_WITH_PRIORITY);
+        String useLocalImageFirst = containerDescription.customProperties
+                .get(DOCKER_CONTAINER_CREATE_USE_LOCAL_IMAGE_WITH_PRIORITY);
 
         // Flag that forces container to be started from a local image and only if the image is not available
         // download it from a registry.
@@ -1002,7 +1008,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                             containerId, networkId);
                     if (error.compareAndSet(false, true)) {
                         // Update the container state so further actions (e.g. cleanup) can be performed
-                        context.containerState.status = String.format("Cannot connect container to network %s", networkId);
+                        context.containerState.status = String
+                                .format("Cannot connect container to network %s", networkId);
                         context.containerState.powerState = ContainerState.PowerState.ERROR;
                         context.requestFailed = true;
                         inspectContainer(context);
@@ -1103,6 +1110,9 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 inspectCommandInput,
                 (o, ex) -> {
                     if (ex != null) {
+                        logWarning("Exception while inspecting container [%s] of host [%s]",
+                                context.containerState.documentSelfLink,
+                                context.computeState.documentSelfLink);
                         fail(context.request, o, ex);
                     } else {
                         handleExceptions(
@@ -1132,7 +1142,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
         CommandInput execCommandInput = new CommandInput(context.commandInput).withProperty(
                 DOCKER_CONTAINER_ID_PROP_NAME, context.containerState.id).withProperty(
-                DOCKER_EXEC_COMMAND_PROP_NAME, commandArr);
+                        DOCKER_EXEC_COMMAND_PROP_NAME, commandArr);
 
         if (context.request.customProperties.get(DOCKER_EXEC_ATTACH_STDERR_PROP_NAME) != null) {
             execCommandInput.withProperty(DOCKER_EXEC_ATTACH_STDERR_PROP_NAME,
@@ -1189,6 +1199,10 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         context.executor.fetchContainerStats(statsCommandInput, (o, ex) -> {
             if (ex != null) {
                 notifyFailedHealthStatus(context);
+                logWarning(
+                        "Exception while fetching stats for container [%s] of host [%s]",
+                        context.containerState.documentSelfLink,
+                        context.computeState.documentSelfLink);
                 fail(context.request, o, ex);
             } else {
                 handleExceptions(context.request, context.operation, () -> {
@@ -1282,6 +1296,9 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                     logWarning("Container %s not found", context.containerState.id);
                     patchTaskStage(context.request, TaskStage.FINISHED, null);
                 } else {
+                    logWarning("Failure while removing container [%s] of host [%s]",
+                            context.containerState.documentSelfLink,
+                            context.computeState.documentSelfLink);
                     fail(context.request, o, ex);
                 }
             } else {
@@ -1311,6 +1328,9 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                             maxRetryCount - retryCount.get());
                     processStartContainerWithRetry(context, retryCount.get(), maxRetryCount);
                 } else {
+                    logWarning("Failure while starting container [%s] of host [%s]",
+                            context.containerState.documentSelfLink,
+                            context.computeState.documentSelfLink);
                     fail(context.request, o, ex);
                 }
             } else {
@@ -1342,6 +1362,9 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                             maxRetryCount - retryCount.get());
                     processStopContainerWithRetry(context, retryCount.get(), maxRetryCount);
                 } else {
+                    logWarning("Failure while stopping container [%s] of host [%s]",
+                            context.containerState.documentSelfLink,
+                            context.computeState.documentSelfLink);
                     fail(context.request, o, ex);
                 }
             } else {

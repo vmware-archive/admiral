@@ -48,7 +48,7 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
     protected static final String NOT_FOUND_EXCEPTION_MESSAGE = "returned error 404";
 
     private static final Set<String> UNSUPPORTED_CREDENTIALS_TYPES = new HashSet<>(Arrays.asList(
-                    AuthCredentialsType.Password.toString()));
+            AuthCredentialsType.Password.toString()));
 
     public AbstractDockerAdapterService() {
         super();
@@ -156,6 +156,8 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
                 AuthCredentialsServiceState.class)
                 .queryDocument(credentialsLink, (r) -> {
                     if (r.hasException()) {
+                        logWarning("Failure while getting credentials for %s an docker uri ",
+                                credentialsLink, dockerUri);
                         fail(request, r.getException());
                         if (op != null) {
                             op.fail(r.getException());
@@ -200,7 +202,8 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
             boolean throwError) {
         RuntimeException e = null;
         if (UNSUPPORTED_CREDENTIALS_TYPES.contains(c.type)) {
-            e = new LocalizableValidationException("Unsupported credentials type", "adapter.unsuported.auth.credentials.type");
+            e = new LocalizableValidationException("Unsupported credentials type",
+                    "adapter.unsuported.auth.credentials.type");
             if (throwError) {
                 throw e;
             }

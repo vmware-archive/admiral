@@ -56,8 +56,8 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
         logFine("Processing host docker image operation request %s",
                 request.getRequestTrackingLog());
         getContainerHost(request, op, request.resourceReference,
-                (computeState, commandInput) ->
-                processOperation(request, op, computeState, commandInput));
+                (computeState, commandInput) -> processOperation(request, op, computeState,
+                        commandInput));
     }
 
     private void processOperation(DockerImageHostRequest request, Operation op,
@@ -95,6 +95,9 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
 
         Operation.CompletionHandler imageCompletionHandler = (o, ex) -> {
             if (ex != null) {
+                logWarning("Failure while loading image [%s] on host [%s]",
+                        ref,
+                        computeState.documentSelfLink);
                 fail(request, o, ex);
             } else {
                 handleExceptions(
@@ -104,8 +107,7 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
                             logInfo("Image loaded: %s on remote machine: %s", ref,
                                     computeState.documentSelfLink);
                             patchTaskStage(request, TaskState.TaskStage.FINISHED, null);
-                        }
-                );
+                        });
             }
         };
 
@@ -120,12 +122,12 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
 
     private void processLoadedImageData(ComputeService.ComputeState computeState,
             CommandInput commandInput, byte[] imageData, String fileName,
-            Operation.CompletionHandler
-            imageCompletionHandler) {
+            Operation.CompletionHandler imageCompletionHandler) {
         if (imageData == null || imageData.length == 0) {
             String errMsg = String.format("No content loaded for file: %s ", fileName);
             this.logSevere(errMsg);
-            imageCompletionHandler.handle(null, new LocalizableValidationException(errMsg, "adapter.load.image.empty", fileName, ""));
+            imageCompletionHandler.handle(null, new LocalizableValidationException(errMsg,
+                    "adapter.load.image.empty", fileName, ""));
             return;
         }
 
@@ -138,8 +140,7 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
 
     private void doInspectImage(AdapterRequest request, ComputeService.ComputeState computeState,
             CommandInput commandInput) {
-        logInfo("Inspecting docker image on host: " + computeState
-                .documentSelfLink);
+        logInfo("Inspecting docker image on host: " + computeState.documentSelfLink);
 
         Map<String, String> customProperties = request.customProperties;
 
@@ -155,13 +156,15 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
                                 logWarning(
                                         "Unable to inspect image %s on the remote host: %s",
                                         commandInput.getProperties().get(
-                                                DOCKER_BUILD_IMAGE_INSPECT_NAME_PROP_NAME), ex);
+                                                DOCKER_BUILD_IMAGE_INSPECT_NAME_PROP_NAME),
+                                        ex);
                                 fail(request, o, ex);
                             } else {
                                 logInfo("Completed inspect image request on remote machine: %s ",
                                         computeState.documentSelfLink);
                                 JsonElement rawResult = o.getBody(JsonElement.class);
-                                ServiceTaskCallbackResponse callbackResponse = createSearchResponse(rawResult);
+                                ServiceTaskCallbackResponse callbackResponse = createSearchResponse(
+                                        rawResult);
                                 patchTaskStage(request, TaskState.TaskStage.FINISHED, null,
                                         callbackResponse);
                             }
@@ -217,16 +220,16 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
                 .withProperty(DOCKER_BUILD_IMAGE_DOCKERFILE_DATA, buildRequest.getDockerImageData())
                 .withProperty(DOCKER_BUILD_IMAGE_DOCKERFILE_PROP_NAME,
                         customProperties.get(DOCKER_BUILD_IMAGE_DOCKERFILE_PROP_NAME))
-                .withProperty(DOCKER_BUILD_IMAGE_FORCERM_PROP_NAME, customProperties.get
-                        (DOCKER_BUILD_IMAGE_FORCERM_PROP_NAME))
-                .withProperty(DOCKER_BUILD_IMAGE_NOCACHE_PROP_NAME, customProperties.get
-                        (DOCKER_BUILD_IMAGE_NOCACHE_PROP_NAME))
+                .withProperty(DOCKER_BUILD_IMAGE_FORCERM_PROP_NAME,
+                        customProperties.get(DOCKER_BUILD_IMAGE_FORCERM_PROP_NAME))
+                .withProperty(DOCKER_BUILD_IMAGE_NOCACHE_PROP_NAME,
+                        customProperties.get(DOCKER_BUILD_IMAGE_NOCACHE_PROP_NAME))
                 .withProperty(DOCKER_BUILD_IMAGE_TAG_PROP_NAME,
                         customProperties.get(DOCKER_BUILD_IMAGE_TAG_PROP_NAME));
 
         if (customProperties.get(DOCKER_BUILD_IMAGE_BUILDARGS_PROP_NAME) != null) {
-            commandInput.withProperty(DOCKER_BUILD_IMAGE_BUILDARGS_PROP_NAME, customProperties.get
-                    (DOCKER_BUILD_IMAGE_BUILDARGS_PROP_NAME));
+            commandInput.withProperty(DOCKER_BUILD_IMAGE_BUILDARGS_PROP_NAME,
+                    customProperties.get(DOCKER_BUILD_IMAGE_BUILDARGS_PROP_NAME));
         }
 
         getCommandExecutor().buildImage(

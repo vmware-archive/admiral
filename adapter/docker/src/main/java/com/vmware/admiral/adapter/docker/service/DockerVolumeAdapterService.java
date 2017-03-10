@@ -102,7 +102,9 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
      */
     private void processVolumeState(RequestContext context) {
         if (context.volumeState.originatingHostLink == null) {
-            fail(context.request, new IllegalArgumentException("originatingHostLink"));
+            fail(context.request,
+                    new IllegalArgumentException("originatingHostLink missing for volumen state "
+                            + context.volumeState.documentSelfLink));
             return;
         }
 
@@ -177,6 +179,8 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
 
         context.executor.createVolume(createCommandInput, (op, ex) -> {
             if (ex != null) {
+                logWarning("Failure while creating volume [%s]",
+                        context.volumeState.documentSelfLink);
                 fail(context.request, op, ex);
             } else {
                 inspectAndUpdateVolume(context);
@@ -191,6 +195,8 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
 
         context.executor.removeVolume(deleteCommandInput, (op, ex) -> {
             if (ex != null) {
+                logWarning("Failure while removing volume [%s]",
+                        context.volumeState.documentSelfLink);
                 fail(context.request, op, ex);
             } else {
                 patchTaskStage(context.request, TaskStage.FINISHED, null);
@@ -210,6 +216,8 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
                 inspectCommandInput,
                 (o, ex) -> {
                     if (ex != null) {
+                        logWarning("Failure while inspecting volume [%s]",
+                                context.volumeState.documentSelfLink);
                         fail(context.request, o, ex);
                     } else {
                         handleExceptions(context.request,
@@ -243,6 +251,8 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
                 .setBody(newVolumeState)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
+                        logWarning("Failure while patching volume [%s]",
+                                volumeState.documentSelfLink);
                         fail(context.request, o, ex);
                     } else {
                         patchTaskStage(request, TaskStage.FINISHED, ex);
@@ -292,6 +302,8 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
 
         context.executor.createVolume(createCommandInput, (op, ex) -> {
             if (ex != null) {
+                logWarning("Failure while creating volume [%s]",
+                        context.volumeState.documentSelfLink);
                 fail(context.request, op, ex);
             } else {
                 inspectVmdkDatastoreDiscoveryVolume(context);
@@ -305,6 +317,8 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
                 context.commandInput,
                 (o, ex) -> {
                     if (ex != null) {
+                        logWarning("Failure while inspecting volume [%s]",
+                                context.volumeState.documentSelfLink);
                         fail(context.request, o, ex);
                     } else {
                         handleExceptions(context.request, context.operation, () -> {
@@ -331,6 +345,8 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
     private void deleteVmdkDatastoreDiscoveryVolume(RequestContext context) {
         context.executor.removeVolume(context.commandInput, (op, ex) -> {
             if (ex != null) {
+                logWarning("Failure while removing volume [%s]",
+                        context.volumeState.documentSelfLink);
                 fail(context.request, op, ex);
             } else {
                 patchTaskStage(context.request, TaskStage.FINISHED, null);
@@ -348,6 +364,9 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
                 .setBody(patch)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
+                        logWarning("Failure while patching compute state [%s] with volume [%s]",
+                                context.request.resourceReference,
+                                context.volumeState.documentSelfLink);
                         fail(context.request, o, ex);
                     } else {
                         callback.run();

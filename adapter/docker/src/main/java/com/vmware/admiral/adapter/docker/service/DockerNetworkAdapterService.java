@@ -49,8 +49,7 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
             "bridge", "docker_gwbridge");
 
     private static final List<Integer> RETRIABLE_HTTP_STATUSES = Arrays.asList(
-            HttpStatus.SC_INTERNAL_SERVER_ERROR
-    );
+            HttpStatus.SC_INTERNAL_SERVER_ERROR);
 
     private static final int NETWORK_CREATE_RETRIES_COUNT = Integer.getInteger(
             "com.vmware.admiral.adapter.network.create.retries", 3);
@@ -114,7 +113,9 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
      */
     private void processNetworkState(RequestContext context) {
         if (context.networkState.originatingHostLink == null) {
-            fail(context.request, new IllegalArgumentException("originatingHostLink"));
+            fail(context.request,
+                    new IllegalArgumentException("originatingHostLink missing for network state "
+                            + context.networkState.documentSelfLink));
             return;
         }
 
@@ -213,6 +214,8 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
                             NETWORK_CREATE_RETRIES_COUNT - retryCount.get());
                     processCreateNetwork(context, retryCount.get());
                 } else {
+                    logWarning("Failure while creating network [%s]",
+                            context.networkState.documentSelfLink);
                     fail(context.request, op, ex);
                 }
             } else {
@@ -248,6 +251,8 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
                 inspectCommandInput,
                 (o, ex) -> {
                     if (ex != null) {
+                        logWarning("Failure while inspecting network [%s]",
+                                context.networkState.documentSelfLink);
                         fail(context.request, o, ex);
                     } else {
                         handleExceptions(
@@ -282,6 +287,8 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
                 .setBody(newNetworkState)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
+                        logWarning("Failure while patching network [%s]",
+                                context.networkState.documentSelfLink);
                         fail(context.request, o, ex);
                     } else {
                         patchTaskStage(request, TaskStage.FINISHED, ex);
@@ -305,6 +312,8 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
                     logWarning("Container network %s not found", context.networkState.id);
                     patchTaskStage(context.request, TaskStage.FINISHED, null);
                 } else {
+                    logWarning("Failure while removing network [%s]",
+                            context.networkState.documentSelfLink);
                     fail(context.request, op, ex);
                 }
             } else {
