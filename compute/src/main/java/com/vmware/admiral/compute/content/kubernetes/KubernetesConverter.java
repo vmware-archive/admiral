@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -20,31 +20,37 @@ import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.KUBER
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.KUBERNETES_LABEL_TIER;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.SERVICE_TYPE;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.HttpVersion;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.RequestProtocol;
 import com.vmware.admiral.compute.container.PortBinding;
-import com.vmware.admiral.compute.content.kubernetes.deployments.Deployment;
-import com.vmware.admiral.compute.content.kubernetes.deployments.DeploymentSpec;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainer;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerEnvVar;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerPort;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerProbe;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerProbeExecAction;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerProbeHTTPGetAction;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerProbeTCPSocketAction;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerResources;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerSecurityContext;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodSpec;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodTemplateSpec;
-import com.vmware.admiral.compute.content.kubernetes.services.Service;
-import com.vmware.admiral.compute.content.kubernetes.services.ServicePort;
-import com.vmware.admiral.compute.content.kubernetes.services.ServiceSpec;
+import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
+import com.vmware.admiral.compute.kubernetes.entities.common.ResourceRequirements;
+import com.vmware.admiral.compute.kubernetes.entities.deployments.Deployment;
+import com.vmware.admiral.compute.kubernetes.entities.deployments.DeploymentSpec;
+import com.vmware.admiral.compute.kubernetes.entities.pods.Container;
+import com.vmware.admiral.compute.kubernetes.entities.pods.ContainerPort;
+import com.vmware.admiral.compute.kubernetes.entities.pods.EnvVar;
+import com.vmware.admiral.compute.kubernetes.entities.pods.ExecAction;
+import com.vmware.admiral.compute.kubernetes.entities.pods.HTTPGetAction;
+import com.vmware.admiral.compute.kubernetes.entities.pods.PodSpec;
+import com.vmware.admiral.compute.kubernetes.entities.pods.PodTemplateSpec;
+import com.vmware.admiral.compute.kubernetes.entities.pods.Probe;
+import com.vmware.admiral.compute.kubernetes.entities.pods.RestartPolicy;
+import com.vmware.admiral.compute.kubernetes.entities.pods.SecurityContext;
+import com.vmware.admiral.compute.kubernetes.entities.pods.TCPSocketAction;
+import com.vmware.admiral.compute.kubernetes.entities.services.Service;
+import com.vmware.admiral.compute.kubernetes.entities.services.ServicePort;
+import com.vmware.admiral.compute.kubernetes.entities.services.ServiceSpec;
 import com.vmware.xenon.common.Service.Action;
 
 public class KubernetesConverter {
@@ -53,14 +59,8 @@ public class KubernetesConverter {
         TCP, UDP
     }
 
-    public static final String RESOURCES_LIMITS = "limits";
-
-    public static final String KUBERNETES_RESTART_POLICY_NEVER = "Never";
-    public static final String KUBERNETES_RESTART_POLICY_ON_FAILURE = "OnFailure";
-    public static final String KUBERNETES_RESTART_POLICY_ALWAYS = "Always";
-
-    //From PodContainer to ContainerDescription
-    public static ContainerDescription fromPodContainerToContainerDescription(PodContainer
+    //From Container to ContainerDescription
+    public static ContainerDescription fromPodContainerToContainerDescription(Container
             podContainer, PodSpec podSpec) {
 
         assertNotNull(podContainer, "pod container");
@@ -69,15 +69,16 @@ public class KubernetesConverter {
 
         description.name = podContainer.name;
         description.image = podContainer.image;
-        description.command = fromPodContainerCommandToContainerDescriptionCommand(podContainer
-                .command, podContainer.args);
+        List<String> containerDescCommand = fromPodContainerCommandToContainerDescriptionCommand
+                (podContainer.command, podContainer.args);
+        description.command = containerDescCommand.toArray(new String[containerDescCommand.size()]);
         description.workingDir = podContainer.workingDir;
         description.portBindings = fromPodContainerPortsToContainerDescriptionPortBindings(
                 podContainer.ports);
         description.env = fromPodContainerEnvVarToContainerDescriptionEnv(podContainer.env);
         description.privileged = fromPodPrivilegedModeToContainerDescriptionPrivilegedMode
                 (podContainer);
-        description.restartPolicy = podSpec.restartPolicy;
+        description.restartPolicy = podSpec.restartPolicy.name().toLowerCase();
         description.healthConfig = fromPodContainerProbeToContainerDescriptionHealthConfig
                 (podContainer);
 
@@ -86,64 +87,59 @@ public class KubernetesConverter {
         return description;
     }
 
-    public static String[] fromPodContainerCommandToContainerDescriptionCommand(String[]
-            command, String[] args) {
-        if (isNullOrEmpty(command)) {
+    public static List<String> fromPodContainerCommandToContainerDescriptionCommand(List<String>
+            command, List<String> args) {
+        if (command == null || command.isEmpty()) {
             return null;
         }
-        String[] compositeComponentCommand;
-        if (isNullOrEmpty(args)) {
-            compositeComponentCommand = new String[command.length];
-        } else {
-            compositeComponentCommand = new String[command.length + args.length];
-        }
+        List<String> compositeComponentCommand = new ArrayList<>();
 
-        for (int i = 0; i < command.length; i++) {
-            compositeComponentCommand[i] = command[i];
+        for (int i = 0; i < command.size(); i++) {
+            compositeComponentCommand.add(i, command.get(i));
         }
-        if (!isNullOrEmpty(args)) {
-            for (int i = 0; i < args.length; i++) {
-                compositeComponentCommand[command.length + i] = args[i];
+        if (args != null && !args.isEmpty()) {
+            for (int i = 0; i < args.size(); i++) {
+                compositeComponentCommand.add(command.size() + i, args.get(i));
             }
         }
         return compositeComponentCommand;
     }
 
     public static PortBinding[] fromPodContainerPortsToContainerDescriptionPortBindings(
-            PodContainerPort[] ports) {
-        if (isNullOrEmpty(ports)) {
+            List<ContainerPort> ports) {
+        if (ports == null || ports.isEmpty()) {
             return null;
         }
-        PortBinding[] portBindings = new PortBinding[ports.length];
-        for (int i = 0; i < ports.length; i++) {
-            portBindings[i] = fromPodContainerPortToPortBinding(ports[i]);
+        PortBinding[] portBindings = new PortBinding[ports.size()];
+        for (int i = 0; i < ports.size(); i++) {
+            portBindings[i] = fromPodContainerPortToPortBinding(ports.get(i));
         }
         return portBindings;
     }
 
-    public static PortBinding fromPodContainerPortToPortBinding(PodContainerPort podContainerPort) {
+    public static PortBinding fromPodContainerPortToPortBinding(ContainerPort podContainerPort) {
         PortBinding portBinding = new PortBinding();
         portBinding.protocol = podContainerPort.protocol;
         portBinding.containerPort = String.valueOf(podContainerPort.containerPort);
-        portBinding.hostIp = podContainerPort.hostIp;
+        portBinding.hostIp = podContainerPort.hostIP;
         portBinding.hostPort = String.valueOf(podContainerPort.hostPort);
 
         return portBinding;
     }
 
-    public static String[] fromPodContainerEnvVarToContainerDescriptionEnv(
-            PodContainerEnvVar[] env) {
-        if (isNullOrEmpty(env)) {
+    public static String[] fromPodContainerEnvVarToContainerDescriptionEnv(List<EnvVar> env) {
+        if (env == null || env.isEmpty()) {
             return null;
         }
-        String[] compositeComponentEnvVars = new String[env.length];
-        for (int i = 0; i < env.length; i++) {
-            compositeComponentEnvVars[i] = String.format("%s=%s", env[i].name, env[i].value);
+        String[] compositeComponentEnvVars = new String[env.size()];
+        for (int i = 0; i < env.size(); i++) {
+            compositeComponentEnvVars[i] = String.format("%s=%s", env.get(i).name, env.get(i)
+                    .value);
         }
         return compositeComponentEnvVars;
     }
 
-    public static Boolean fromPodPrivilegedModeToContainerDescriptionPrivilegedMode(PodContainer
+    public static Boolean fromPodPrivilegedModeToContainerDescriptionPrivilegedMode(Container
             podContainer) {
         if (podContainer.securityContext == null) {
             return (Boolean) null;
@@ -151,13 +147,13 @@ public class KubernetesConverter {
         return podContainer.securityContext.privileged;
     }
 
-    public static HealthConfig fromPodContainerProbeToContainerDescriptionHealthConfig(PodContainer
+    public static HealthConfig fromPodContainerProbeToContainerDescriptionHealthConfig(Container
             podContainer) {
         if (podContainer.livenessProbe == null) {
             return null;
         }
 
-        PodContainerProbe probe = podContainer.livenessProbe;
+        Probe probe = podContainer.livenessProbe;
         HealthConfig healthConfig = new HealthConfig();
 
         if (probe.exec != null) {
@@ -184,7 +180,7 @@ public class KubernetesConverter {
         return healthConfig;
     }
 
-    public static Integer fromPodContainerProbePortToHealthCheckPort(PodContainer podContainer) {
+    public static Integer fromPodContainerProbePortToHealthCheckPort(Container podContainer) {
         String probePort;
         if (podContainer.livenessProbe.httpGet != null) {
             probePort = podContainer.livenessProbe.httpGet.port;
@@ -200,7 +196,7 @@ public class KubernetesConverter {
         try {
             result = Integer.parseInt(probePort);
         } catch (NumberFormatException nfe) {
-            for (PodContainerPort port : podContainer.ports) {
+            for (ContainerPort port : podContainer.ports) {
                 if (probePort.equals(port.name)) {
                     result = port.containerPort;
                 }
@@ -209,14 +205,11 @@ public class KubernetesConverter {
         return result;
     }
 
-    public static void setPodContainerResourcesToContainerDescriptionResources(PodContainer
+    public static void setPodContainerResourcesToContainerDescriptionResources(Container
             podContainer, ContainerDescription containerDescription) {
-        if ((isNullOrEmpty(podContainer.resources)) || (!podContainer.resources
-                .containsKey(RESOURCES_LIMITS))) {
-            return;
-        }
-        String podContainerMemoryLimit = podContainer.resources.get(RESOURCES_LIMITS).memory;
-        String podContainerCpuShares = podContainer.resources.get(RESOURCES_LIMITS).cpu;
+
+        String podContainerMemoryLimit = (String) podContainer.resources.limits.get("memory");
+        String podContainerCpuShares = (String) podContainer.resources.limits.get("cpu");
         try {
             containerDescription.memoryLimit = Long.parseLong(podContainerMemoryLimit);
             containerDescription.cpuShares = Integer.parseInt(podContainerCpuShares);
@@ -289,12 +282,12 @@ public class KubernetesConverter {
         return Math.max(1, result.intValue());
     }
 
-    public static PodContainer fromContainerDescriptionToPodContainer(
+    public static Container fromContainerDescriptionToPodContainer(
             ContainerDescription description) {
         if (description == null) {
             return null;
         }
-        PodContainer podContainer = new PodContainer();
+        Container podContainer = new Container();
         podContainer.name = description.name;
         podContainer.image = description.image;
         podContainer.workingDir = description.workingDir;
@@ -307,78 +300,79 @@ public class KubernetesConverter {
         setContainerDescriptionResourcesToPodContainerResources(description, podContainer);
 
         if (!isNullOrEmpty(description.command)) {
-            // PodContainer hold it's command as 2 separate string arrays - one for command
+            // Container hold it's command as 2 separate string arrays - one for command
             // and one for it's args. In this approach we assume that the command is the first
             // element and rest elements are it's args, for ContainerDescription's command.
-            podContainer.command = new String[] { description.command[0] };
-            podContainer.args = (String[]) Arrays.stream(description.command).skip(1)
-                    .toArray();
+            podContainer.command = Collections.singletonList(description.command[0]);
+            podContainer.args = Arrays.stream(description.command).skip(1)
+                    .collect(Collectors.toList());
         }
         if (description.privileged != null) {
-            podContainer.securityContext = new PodContainerSecurityContext();
+            podContainer.securityContext = new SecurityContext();
             podContainer.securityContext.privileged = description.privileged;
         }
 
         return podContainer;
     }
 
-    public static PodContainerEnvVar[] fromContainerDescriptionEnvsToPodContainersEnvs(String[]
+    public static List<EnvVar> fromContainerDescriptionEnvsToPodContainersEnvs(String[]
             envs) {
         if (isNullOrEmpty(envs)) {
             return null;
         }
-        PodContainerEnvVar[] envVars = new PodContainerEnvVar[envs.length];
+        List<EnvVar> envVars = new ArrayList<>(envs.length);
         for (int i = 0; i < envs.length; i++) {
             String[] keyValue = envs[i].split("=");
-            PodContainerEnvVar podContainerEnvVar = new PodContainerEnvVar();
+            EnvVar podContainerEnvVar = new EnvVar();
             podContainerEnvVar.name = keyValue[0];
             podContainerEnvVar.value = keyValue[1];
-            envVars[i] = podContainerEnvVar;
+            envVars.add(i, podContainerEnvVar);
         }
         return envVars;
     }
 
-    public static PodContainerPort[] fromContainerDescriptionPortsToPodContainerPorts(
+    public static List<ContainerPort> fromContainerDescriptionPortsToPodContainerPorts(
             PortBinding[] ports) {
         if (isNullOrEmpty(ports)) {
             return null;
         }
 
-        PodContainerPort[] podPorts = new PodContainerPort[ports.length];
+        List<ContainerPort> podPorts = new ArrayList<>(ports.length);
         for (int i = 0; i < ports.length; i++) {
-            PodContainerPort podPort = new PodContainerPort();
+            ContainerPort podPort = new ContainerPort();
             podPort.containerPort = Integer.parseInt(ports[i].containerPort);
             podPort.protocol = fromCompositeProtocolToKubernetesProtocol(ports[i].protocol);
-            podPorts[i] = podPort;
+            podPorts.add(i, podPort);
         }
         return podPorts;
     }
 
-    public static PodContainerProbe fromContainerDescriptionHealthConfigToPodContainerProbe(
+    public static Probe fromContainerDescriptionHealthConfigToPodContainerProbe(
             HealthConfig healthConfig) {
         if (healthConfig == null) {
             return null;
         }
-        PodContainerProbe probe = new PodContainerProbe();
+        Probe probe = new Probe();
         switch (healthConfig.protocol) {
         case COMMAND:
-            probe.exec = new PodContainerProbeExecAction();
+            probe.exec = new ExecAction();
             probe.exec.command = healthConfig.command.split("\\s+");
             break;
         case HTTP:
-            probe.httpGet = new PodContainerProbeHTTPGetAction();
+            probe.httpGet = new HTTPGetAction();
             probe.httpGet.path = healthConfig.urlPath;
             probe.httpGet.port = String.valueOf(healthConfig.port);
             break;
         case TCP:
-            probe.tcpSocket = new PodContainerProbeTCPSocketAction();
+            probe.tcpSocket = new TCPSocketAction();
             probe.tcpSocket.port = String.valueOf(healthConfig.port);
             break;
         default:
             return null;
         }
         if (healthConfig.timeoutMillis != null) {
-            probe.timeoutSeconds = TimeUnit.MILLISECONDS.toSeconds(healthConfig.timeoutMillis);
+            probe.timeoutSeconds = Math
+                    .toIntExact(TimeUnit.MILLISECONDS.toSeconds(healthConfig.timeoutMillis));
         }
         probe.failureThreshold = healthConfig.unhealthyThreshold;
         probe.successThreshold = healthConfig.healthyThreshold;
@@ -386,16 +380,15 @@ public class KubernetesConverter {
     }
 
     public static void setContainerDescriptionResourcesToPodContainerResources(ContainerDescription
-            description, PodContainer podContainer) {
+            description, Container podContainer) {
         if ((description.memoryLimit == null || description.memoryLimit <= 0) && (description
                 .cpuShares == null || description.cpuShares <= 0)) {
             return;
         }
-        podContainer.resources = new HashMap<>();
-        podContainer.resources.put(RESOURCES_LIMITS, new PodContainerResources());
-        podContainer.resources.get(RESOURCES_LIMITS).memory = String
-                .valueOf(description.memoryLimit);
-        podContainer.resources.get(RESOURCES_LIMITS).cpu = String.valueOf(description.cpuShares);
+        podContainer.resources = new ResourceRequirements();
+        podContainer.resources.limits = new HashMap<>();
+        podContainer.resources.limits.put("memory", String.valueOf(description.memoryLimit));
+        podContainer.resources.limits.put("cpu", String.valueOf(description.cpuShares));
     }
 
     public static Deployment fromContainerDescriptionToDeployment(
@@ -422,8 +415,8 @@ public class KubernetesConverter {
         deployment.spec.template.spec = new PodSpec();
         deployment.spec.template.spec.restartPolicy =
                 fromContainerDescriptionRestartPolicyToPodRestartPolicy(description.restartPolicy);
-        PodContainer podContainer = fromContainerDescriptionToPodContainer(description);
-        deployment.spec.template.spec.containers = new PodContainer[] { podContainer };
+        Container podContainer = fromContainerDescriptionToPodContainer(description);
+        deployment.spec.template.spec.containers = Collections.singletonList(podContainer);
 
         return deployment;
     }
@@ -449,23 +442,23 @@ public class KubernetesConverter {
         return service;
     }
 
-    public static ServicePort[] fromContainerDescriptionPortsToServicePorts(ContainerDescription
+    public static List<ServicePort> fromContainerDescriptionPortsToServicePorts(ContainerDescription
             description) {
-        ServicePort[] servicePorts = new ServicePort[description.portBindings.length];
+        List<ServicePort> servicePorts = new ArrayList<>(description.portBindings.length);
 
         for (int i = 0; i < description.portBindings.length; i++) {
             ServicePort port = new ServicePort();
             port.name = description.portBindings[i].hostPort;
             port.port = Integer.parseInt(description.portBindings[i].hostPort);
-            port.targetPort = Integer.parseInt(description.portBindings[i].containerPort);
+            port.targetPort = description.portBindings[i].containerPort;
             port.protocol = fromCompositeProtocolToKubernetesProtocol(description.portBindings[i]
                     .protocol);
-            servicePorts[i] = port;
+            servicePorts.add(i, port);
         }
         return servicePorts;
     }
 
-    public static String fromContainerDescriptionRestartPolicyToPodRestartPolicy(String
+    public static RestartPolicy fromContainerDescriptionRestartPolicyToPodRestartPolicy(String
             descriptionRestartPolicy) {
         if (descriptionRestartPolicy == null) {
             return null;
@@ -473,11 +466,11 @@ public class KubernetesConverter {
 
         switch (descriptionRestartPolicy) {
         case "no":
-            return KUBERNETES_RESTART_POLICY_NEVER;
+            return RestartPolicy.Never;
         case "always":
-            return KUBERNETES_RESTART_POLICY_ALWAYS;
+            return RestartPolicy.Always;
         case "on-failure":
-            return KUBERNETES_RESTART_POLICY_ON_FAILURE;
+            return RestartPolicy.OnFailure;
         default:
             throw new IllegalArgumentException("Invalid restart policy.");
         }

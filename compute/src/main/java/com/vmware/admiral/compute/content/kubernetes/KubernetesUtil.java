@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,10 +11,20 @@
 
 package com.vmware.admiral.compute.content.kubernetes;
 
+import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
+import static com.vmware.admiral.compute.content.CompositeTemplateUtil.filterComponentTemplates;
+import static com.vmware.admiral.compute.content.CompositeTemplateUtil.isNullOrEmpty;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesConverter.fromContainerDescriptionToDeployment;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesConverter.fromContainerDescriptionToService;
+
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
@@ -22,17 +32,20 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
+import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.compute.content.ComponentTemplate;
+import com.vmware.admiral.compute.content.CompositeTemplate;
 import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
 import com.vmware.admiral.compute.kubernetes.entities.deployments.Deployment;
+import com.vmware.admiral.compute.kubernetes.entities.pods.Pod;
 import com.vmware.admiral.compute.kubernetes.entities.pods.PodTemplateSpec;
 import com.vmware.admiral.compute.kubernetes.entities.replicaset.ReplicaSet;
 import com.vmware.admiral.compute.kubernetes.entities.replicationcontrollers.ReplicationController;
+import com.vmware.admiral.compute.kubernetes.entities.services.Service;
 import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService.DeploymentState;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
-import com.vmware.admiral.compute.kubernetes.service.KubernetesService;
-import com.vmware.admiral.compute.kubernetes.service.KubernetesService.KubernetesState;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
 import com.vmware.admiral.compute.kubernetes.service.ReplicaSetService.ReplicaSetState;
 import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService.ReplicationControllerState;
@@ -78,103 +91,83 @@ public class KubernetesUtil {
         return kindToInternalType.get(type);
     }
 
-    // public static CommonKubernetesEntity deserializeKubernetesEntity(String yaml)
-    //         throws IOException {
-    //     assertNotEmpty(yaml, "yaml");
-    //     CommonKubernetesEntity entity;
-    //     try {
-    //         entity = YamlMapper.objectMapper().readValue(yaml.trim(), CommonKubernetesEntity.class);
-    //         if (POD_TYPE.equals(entity.kind)) {
-    //             entity = YamlMapper.objectMapper().readValue(yaml.trim(), Pod.class);
-    //         } else if (POD_TEMPLATE.equals(entity.kind)) {
-    //             throw new IllegalArgumentException("Not implemented.");
-    //         } else if (REPLICATION_CONTROLLER_TYPE.equals(entity.kind)) {
-    //             throw new IllegalArgumentException("Not implemented.");
-    //         } else if (DEPLOYMENT_TYPE.equals(entity.kind)) {
-    //             entity = YamlMapper.objectMapper().readValue(yaml.trim(), Deployment.class);
-    //         } else if (SERVICE_TYPE.equals(entity.kind)) {
-    //             entity = YamlMapper.objectMapper().readValue(yaml.trim(), Service.class);
-    //         } else {
-    //             throw new IllegalArgumentException("Invalid kubernetes kind.");
-    //         }
-    //     } catch (JsonProcessingException e) {
-    //         throw new IllegalArgumentException(
-    //                 "Error processing Kubernetes configuration YAML content: " + e
-    //                         .getOriginalMessage());
-    //     }
-    //     return entity;
-    // }
-    //
-    // public static String serializeKubernetesEntity(CommonKubernetesEntity kubernetesEntity)
-    //         throws IOException {
-    //
-    //     return YamlMapper.objectMapper().setSerializationInclusion(Include.NON_NULL)
-    //             .writeValueAsString(kubernetesEntity).trim();
-    // }
-    //
-    // public static String serializeKubernetesTemplate(KubernetesTemplate template)
-    //         throws IOException {
-    //     StringBuilder builder = new StringBuilder();
-    //
-    //     for (Service service : template.services.values()) {
-    //         builder.append(serializeKubernetesEntity(service));
-    //         builder.append("\n");
-    //     }
-    //
-    //     for (Deployment deployment : template.deployments.values()) {
-    //         builder.append(serializeKubernetesEntity(deployment));
-    //         builder.append("\n");
-    //     }
-    //
-    //     return builder.toString().trim();
-    // }
-    //
-    // public static KubernetesTemplate fromCompositeTemplateToKubernetesTemplate(
-    //         CompositeTemplate template) {
-    //     if (template == null) {
-    //         return null;
-    //     }
-    //
-    //     KubernetesTemplate kubernetesTemplate = new KubernetesTemplate();
-    //     if (!isNullOrEmpty(template.components)) {
-    //         kubernetesTemplate.deployments = new LinkedHashMap<>();
-    //         kubernetesTemplate.services = new LinkedHashMap<>();
-    //         Map<String, ComponentTemplate<ContainerDescription>> containerComponents = filterComponentTemplates(
-    //                 template.components, ContainerDescription.class);
-    //
-    //         for (Entry<String, ComponentTemplate<ContainerDescription>> container : containerComponents
-    //                 .entrySet()) {
-    //             Deployment deployment = fromContainerDescriptionToDeployment(
-    //                     container.getValue().data, template.name);
-    //             kubernetesTemplate.deployments.put(deployment.metadata.name, deployment);
-    //             if (!isNullOrEmpty(container.getValue().data.portBindings)) {
-    //                 Service service = fromContainerDescriptionToService(container.getValue().data,
-    //                         template.name);
-    //                 kubernetesTemplate.services.put(service.metadata.name, service);
-    //             }
-    //         }
-    //     }
-    //     return kubernetesTemplate;
-    // }
+    public static BaseKubernetesObject deserializeKubernetesEntity(String yaml)
+            throws IOException {
+        assertNotEmpty(yaml, "yaml");
+        BaseKubernetesObject entity;
+        try {
+            entity = YamlMapper.objectMapper().readValue(yaml.trim(), BaseKubernetesObject.class);
+            if (POD_TYPE.equals(entity.kind)) {
+                entity = YamlMapper.objectMapper().readValue(yaml.trim(), Pod.class);
+            } else if (POD_TEMPLATE.equals(entity.kind)) {
+                throw new IllegalArgumentException("Not implemented.");
+            } else if (REPLICATION_CONTROLLER_TYPE.equals(entity.kind)) {
+                throw new IllegalArgumentException("Not implemented.");
+            } else if (DEPLOYMENT_TYPE.equals(entity.kind)) {
+                entity = YamlMapper.objectMapper().readValue(yaml.trim(), Deployment.class);
+            } else if (SERVICE_TYPE.equals(entity.kind)) {
+                entity = YamlMapper.objectMapper().readValue(yaml.trim(), Service.class);
+            } else {
+                throw new IllegalArgumentException("Invalid kubernetes kind.");
+            }
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException(
+                    "Error processing Kubernetes configuration YAML content: " + e
+                            .getOriginalMessage());
+        }
+        return entity;
+    }
 
-    public static KubernetesState makeStateFromJson(String json) {
-        KubernetesState result = new KubernetesState();
-        CommonKubernetesEntity entity = null;
-        try {
-            result.kubernetesEntity = YamlMapper.fromJsonToYaml(json);
-            entity = result.getKubernetesEntity(CommonKubernetesEntity.class);
-        } catch (IOException ignored) {
+    public static String serializeKubernetesEntity(BaseKubernetesObject kubernetesEntity)
+            throws IOException {
+
+        return YamlMapper.objectMapper().setSerializationInclusion(Include.NON_NULL)
+                .writeValueAsString(kubernetesEntity).trim();
+    }
+
+    public static String serializeKubernetesTemplate(KubernetesTemplate template)
+            throws IOException {
+        StringBuilder builder = new StringBuilder();
+
+        for (Service service : template.services.values()) {
+            builder.append(serializeKubernetesEntity(service));
+            builder.append("\n");
+        }
+
+        for (Deployment deployment : template.deployments.values()) {
+            builder.append(serializeKubernetesEntity(deployment));
+            builder.append("\n");
+        }
+
+        return builder.toString().trim();
+    }
+
+    public static KubernetesTemplate fromCompositeTemplateToKubernetesTemplate(
+            CompositeTemplate template) {
+        if (template == null) {
             return null;
         }
-        try {
-            result.type = entity.kind;
-            result.namespace = entity.metadata.namespace;
-            result.name = entity.metadata.name;
-            result.id = entity.metadata.uid;
-            return result;
-        } catch (NullPointerException ignored) {
-            return null;
+
+        KubernetesTemplate kubernetesTemplate = new KubernetesTemplate();
+        if (!isNullOrEmpty(template.components)) {
+            kubernetesTemplate.deployments = new LinkedHashMap<>();
+            kubernetesTemplate.services = new LinkedHashMap<>();
+            Map<String, ComponentTemplate<ContainerDescription>> containerComponents = filterComponentTemplates(
+                    template.components, ContainerDescription.class);
+
+            for (Entry<String, ComponentTemplate<ContainerDescription>> container : containerComponents
+                    .entrySet()) {
+                Deployment deployment = fromContainerDescriptionToDeployment(
+                        container.getValue().data, template.name);
+                kubernetesTemplate.deployments.put(deployment.metadata.name, deployment);
+                if (!isNullOrEmpty(container.getValue().data.portBindings)) {
+                    Service service = fromContainerDescriptionToService(container.getValue().data,
+                            template.name);
+                    kubernetesTemplate.services.put(service.metadata.name, service);
+                }
+            }
         }
+        return kubernetesTemplate;
     }
 
     public static BaseKubernetesState createKubernetesEntityState(String type) {
@@ -209,10 +202,6 @@ public class KubernetesUtil {
 
         // TODO: double check these
         return entityDescription;
-    }
-
-    public static String buildEntityLink(String name) {
-        return UriUtils.buildUriPath(KubernetesService.FACTORY_LINK, buildEntityId(name));
     }
 
     public static String buildEntityId(String name) {

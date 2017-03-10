@@ -44,14 +44,13 @@ import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.compute.ContainerHostService;
-import com.vmware.admiral.compute.content.kubernetes.ObjectMeta;
-import com.vmware.admiral.compute.content.kubernetes.deployments.Deployment;
-import com.vmware.admiral.compute.content.kubernetes.namespaces.Namespace;
-import com.vmware.admiral.compute.content.kubernetes.namespaces.NamespaceList;
-import com.vmware.admiral.compute.content.kubernetes.nodes.KubernetesNodeData;
-import com.vmware.admiral.compute.content.kubernetes.nodes.Node;
-import com.vmware.admiral.compute.content.kubernetes.nodes.NodeList;
 import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
+import com.vmware.admiral.compute.kubernetes.entities.common.ObjectMeta;
+import com.vmware.admiral.compute.kubernetes.entities.namespaces.Namespace;
+import com.vmware.admiral.compute.kubernetes.entities.namespaces.NamespaceList;
+import com.vmware.admiral.compute.kubernetes.entities.nodes.KubernetesNodeData;
+import com.vmware.admiral.compute.kubernetes.entities.nodes.Node;
+import com.vmware.admiral.compute.kubernetes.entities.nodes.NodeList;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
@@ -318,25 +317,6 @@ public class KubernetesRemoteApiClient {
         sendRequest(Action.GET, uri, null, context, completionHandler);
     }
 
-    public void createService(
-            com.vmware.admiral.compute.content.kubernetes.services.Service service,
-            KubernetesContext context, CompletionHandler completionHandler) {
-
-        URI uri = UriUtils
-                .buildUri(ApiUtil.namespacePrefix(context, ApiUtil.API_PREFIX_V1) + "/services");
-
-        sendRequest(Action.POST, uri, service, context, completionHandler);
-    }
-
-    public void createDeployment(Deployment deployment, KubernetesContext context,
-            CompletionHandler completionHandler) {
-        URI uri = UriUtils.buildUri(
-                ApiUtil.namespacePrefix(context, API_PREFIX_EXTENSIONS_V1BETA)
-                        + "/deployments");
-
-        sendRequest(Action.POST, uri, deployment, context, completionHandler);
-    }
-
     public void getServices(KubernetesContext context, String appId, CompletionHandler
             completionHandler) {
         URI uri = UriUtils.buildUri(ApiUtil.namespacePrefix(context, ApiUtil.API_PREFIX_V1) +
@@ -390,28 +370,6 @@ public class KubernetesRemoteApiClient {
         }
 
         sendRequest(Action.GET, uri, null, context, completionHandler);
-    }
-
-    public void deleteService(String serviceName, KubernetesContext context, CompletionHandler
-            completionHandler) {
-        assertNotNull(serviceName, "serviceName");
-
-        URI uri = UriUtils.buildUri(
-                ApiUtil.namespacePrefix(context, API_PREFIX_V1) + "/services/" + serviceName);
-
-        sendRequest(Action.DELETE, uri, null, context, completionHandler);
-    }
-
-    public void deleteDeployment(String deploymentName, KubernetesContext context,
-            CompletionHandler completionHandler) {
-        assertNotNull(deploymentName, "deploymentName");
-
-        URI uri = UriUtils.buildUri(
-                ApiUtil.namespacePrefix(context, API_PREFIX_EXTENSIONS_V1BETA) + "/deployments/"
-                        + deploymentName);
-
-        sendRequest(Action.DELETE, uri, null, context, completionHandler);
-
     }
 
     public void createEntity(KubernetesDescription description, KubernetesContext context,

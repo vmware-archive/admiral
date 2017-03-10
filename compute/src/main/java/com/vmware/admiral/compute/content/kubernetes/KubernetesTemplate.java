@@ -13,8 +13,8 @@ package com.vmware.admiral.compute.content.kubernetes;
 
 import java.util.Map;
 
-import com.vmware.admiral.compute.content.kubernetes.deployments.Deployment;
-import com.vmware.admiral.compute.content.kubernetes.services.Service;
+import com.vmware.admiral.compute.kubernetes.entities.deployments.Deployment;
+import com.vmware.admiral.compute.kubernetes.entities.services.Service;
 
 /**
  * KubernetesTemplate is representation of converted CompositeTemplate

@@ -13,7 +13,6 @@ package com.vmware.admiral.adapter.kubernetes.service;
 
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.fromResourceStateToBaseKubernetesState;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -25,12 +24,10 @@ import com.vmware.admiral.adapter.common.KubernetesOperationType;
 import com.vmware.admiral.adapter.kubernetes.KubernetesRemoteApiClient;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
-import com.vmware.admiral.compute.content.kubernetes.CommonKubernetesEntity;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.entities.pods.Container;
 import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
-import com.vmware.admiral.compute.kubernetes.service.KubernetesService.KubernetesState;
 import com.vmware.admiral.compute.kubernetes.service.PodService;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
 import com.vmware.admiral.service.common.LogService;
@@ -117,7 +114,8 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
                     .request.operationTypeId);
             switch (operationType) {
             case CREATE:
-                getKubernetesDescription(context);
+                fail(context.request,
+                        new IllegalArgumentException("Unsupported request type: " + operationType));
                 break;
 
             case DELETE:
@@ -139,62 +137,6 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
         } catch (Throwable e) {
             fail(context.request, e);
         }
-    }
-
-    private void getKubernetesDescription(RequestContext context) {
-        sendRequest(Operation
-                .createGet(this, context.kubernetesState.descriptionLink)
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        fail(context.request, ex);
-                    } else {
-                        context.kubernetesDescription = o.getBody(KubernetesDescription.class);
-                        processCreateKubernetesEntity(context);
-                    }
-                })
-        );
-    }
-
-    private void processCreateKubernetesEntity(RequestContext context) {
-        try {
-            context.executor.createEntity(context.kubernetesDescription, context.k8sContext,
-                    (o, ex) -> {
-                        if (ex != null) {
-                            fail(context.request, ex);
-                        } else {
-                            String createdKubernetesEntity = o.getBody(String.class);
-                            patchKubernetesState(context, createdKubernetesEntity);
-                        }
-                    });
-        } catch (IOException ex) {
-            fail(context.request, ex);
-        }
-    }
-
-    private void patchKubernetesState(RequestContext context, String createdKubernetesEntity) {
-
-        KubernetesState newKubernetesState = new KubernetesState();
-        try {
-            newKubernetesState.kubernetesEntity = createdKubernetesEntity;
-            CommonKubernetesEntity entity = newKubernetesState.getKubernetesEntity
-                    (CommonKubernetesEntity.class);
-            newKubernetesState.type = entity.kind;
-            newKubernetesState.selfLink = entity.metadata.selfLink;
-            newKubernetesState.namespace = entity.metadata.namespace;
-        } catch (Throwable ex) {
-            fail(context.request, ex);
-        }
-
-        sendRequest(Operation
-                .createPatch(this, context.kubernetesState.documentSelfLink)
-                .setBody(newKubernetesState)
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        fail(context.request, ex);
-                    } else {
-                        patchTaskStage(context.request, TaskStage.FINISHED, null);
-                    }
-                }));
     }
 
     private void processDeleteKubernetesEntity(RequestContext context) {

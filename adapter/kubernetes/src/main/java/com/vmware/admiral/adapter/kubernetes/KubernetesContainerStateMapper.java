@@ -19,18 +19,19 @@ import java.util.Arrays;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.PortBinding;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainer;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerEnvVar;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerPort;
-import com.vmware.admiral.compute.content.kubernetes.pods.PodContainerStatus;
+import com.vmware.admiral.compute.kubernetes.entities.pods.Container;
+import com.vmware.admiral.compute.kubernetes.entities.pods.ContainerPort;
+import com.vmware.admiral.compute.kubernetes.entities.pods.ContainerStatus;
+import com.vmware.admiral.compute.kubernetes.entities.pods.EnvVar;
 
 public class KubernetesContainerStateMapper {
-    public static String makeEnv(PodContainerEnvVar env) {
+    public static String makeEnv(EnvVar env) {
         return env.name + "=" + env.value;
     }
 
     /**
      * Change kubernetes container id
+     *
      * @param id The kubernetes container id is in the form 'docker://<container-id>'
      * @return
      */
@@ -41,19 +42,19 @@ public class KubernetesContainerStateMapper {
         return id;
     }
 
-    public static PortBinding makePort(PodContainerPort port) {
+    public static PortBinding makePort(ContainerPort port) {
         PortBinding result = new PortBinding();
 
         result.containerPort = Integer.toString(port.containerPort);
         result.hostPort = Integer.toString(port.hostPort);
-        result.hostIp = port.hostIp;
+        result.hostIp = port.hostIP;
         result.protocol = port.protocol;
 
         return result;
     }
 
-    public static void mapContainer(ContainerState outContainerState, PodContainer inContainer,
-            PodContainerStatus status) {
+    public static void mapContainer(ContainerState outContainerState, Container inContainer,
+            ContainerStatus status) {
         if (outContainerState == null || inContainer == null || status == null) {
             return;
         }
@@ -62,26 +63,27 @@ public class KubernetesContainerStateMapper {
         outContainerState.names = Arrays.asList(inContainer.name);
         outContainerState.image = inContainer.image;
         if (inContainer.command != null) {
-            outContainerState.command = inContainer.command;
+            outContainerState.command = inContainer.command.toArray(new String[inContainer
+                    .command.size()]);
         }
 
         if (inContainer.env != null) {
-            outContainerState.env = new String[inContainer.env.length];
+            outContainerState.env = new String[inContainer.env.size()];
             for (int i = 0; i < outContainerState.env.length; ++i) {
-                outContainerState.env[i] = makeEnv(inContainer.env[i]);
+                outContainerState.env[i] = makeEnv(inContainer.env.get(i));
             }
         }
         if (inContainer.ports != null) {
-            outContainerState.ports = new ArrayList<>(inContainer.ports.length);
-            for (int i = 0; i < inContainer.ports.length; ++i) {
-                outContainerState.ports.add(makePort(inContainer.ports[i]));
+            outContainerState.ports = new ArrayList<>(inContainer.ports.size());
+            for (int i = 0; i < inContainer.ports.size(); ++i) {
+                outContainerState.ports.add(makePort(inContainer.ports.get(i)));
             }
         }
 
         outContainerState.powerState = getPowerState(status);
     }
 
-    public static PowerState getPowerState(PodContainerStatus status) {
+    public static PowerState getPowerState(ContainerStatus status) {
         if (status == null || status.state == null) {
             return PowerState.UNKNOWN;
         }
@@ -121,7 +123,7 @@ public class KubernetesContainerStateMapper {
         }
     }
 
-    private static final String[] magnitude = new String[] {"K", "M", "G", "T", "P"};
+    private static final String[] magnitude = new String[] { "K", "M", "G", "T", "P" };
 
     public static long parseMem(String value) {
         if (value == null) {
@@ -139,7 +141,7 @@ public class KubernetesContainerStateMapper {
             case 2:
                 String mag = end.substring(0, 1);
                 boolean found = false;
-                for (String m: magnitude) {
+                for (String m : magnitude) {
                     val *= mult;
                     if (m.equals(mag)) {
                         found = true;

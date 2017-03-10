@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,12 +9,13 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.content.kubernetes.pods;
+package com.vmware.admiral.compute.kubernetes.entities.nodes;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import java.util.List;
 
-@JsonInclude(value = Include.NON_NULL)
-public class PodContainerSecurityContext {
-    public Boolean privileged;
+import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesList;
+
+public class NodeList extends BaseKubernetesList {
+
+    public List<Node> items;
 }

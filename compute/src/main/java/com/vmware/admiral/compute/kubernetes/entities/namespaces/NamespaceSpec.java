@@ -9,8 +9,15 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.content.kubernetes.pods;
+package com.vmware.admiral.compute.kubernetes.entities.namespaces;
 
-public class PodContainerStateRunning {
-    // public String startedAt;
+import java.util.List;
+
+public class NamespaceSpec {
+
+    /**
+     * Finalizers is an opaque list of values that must be empty to permanently
+     * remove object from storage.
+     */
+    public List<Object> finalizers;
 }

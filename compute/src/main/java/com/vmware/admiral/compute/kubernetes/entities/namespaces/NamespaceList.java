@@ -9,15 +9,19 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute.content.kubernetes.pods;
+package com.vmware.admiral.compute.kubernetes.entities.namespaces;
 
-public class PodContainerStatus {
-    public String name;
-    public PodContainerState state;
-    // public PodContainerState lastState;
-    // public boolean ready;
-    // public int restartCount;
-    public String image;
-    // public String imageID;
-    public String containerID;
+import java.util.List;
+
+import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesList;
+
+/**
+ * NamespaceList is a list of Namespaces.
+ */
+public class NamespaceList extends BaseKubernetesList {
+
+    /**
+     * Items is the list of Namespace objects in the list.
+     */
+    public List<Namespace> items;
 }
