@@ -52,10 +52,10 @@ import com.vmware.xenon.services.common.QueryTask;
  */
 public class CompositeComponentService extends StatefulService {
 
-    public static final String FIELD_NAME_HOST_LINK = "__hostLink";
-
     public static class CompositeComponent extends
             com.vmware.admiral.service.common.MultiTenantDocument {
+
+        public static final String CUSTOM_PROPERTY_HOST_LINK = "__hostLink";
 
         /** Name of composite description */
         @Documentation(description = "Name of composite description.")

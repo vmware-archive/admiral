@@ -12,12 +12,15 @@
 package com.vmware.admiral.compute.container;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
+import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 
 /**
@@ -102,7 +105,7 @@ public class CompositeComponentRegistry {
     private static RegistryEntry emptyEntry = new RegistryEntry(null, null, null, null, null, null);
 
     private static RegistryEntry getEntry(Predicate<RegistryEntry> predicate) {
-        for (RegistryEntry entry: entries) {
+        for (RegistryEntry entry : entries) {
             if (predicate.test(entry)) {
                 return entry;
             }
@@ -114,7 +117,7 @@ public class CompositeComponentRegistry {
         return r -> descriptionLink != null && descriptionLink.startsWith(r.descriptionFactoryLink);
     }
 
-    private static Predicate<RegistryEntry> stateFactoryPrefix (String stateLink) {
+    private static Predicate<RegistryEntry> stateFactoryPrefix(String stateLink) {
         return r -> stateLink != null && stateLink.startsWith(r.stateFactoryLink);
     }
 
@@ -126,6 +129,14 @@ public class CompositeComponentRegistry {
         List<Class<? extends ResourceState>> r = entries.stream()
                 .map(entry -> entry.componentMeta.stateClass).collect(Collectors.toList());
         return r.iterator();
+    }
+
+    public static Collection<Class<? extends ResourceState>> getKubernetesClasses() {
+        Set<Class<? extends ResourceState>> result = entries.stream()
+                .map(e -> e.componentMeta.stateClass)
+                .filter(c -> BaseKubernetesState.class.isAssignableFrom(c))
+                .collect(Collectors.toSet());
+        return result;
     }
 
     public static class ComponentMeta {

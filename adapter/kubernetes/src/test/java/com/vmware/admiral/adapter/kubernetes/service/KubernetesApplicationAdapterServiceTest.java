@@ -13,7 +13,7 @@ package com.vmware.admiral.adapter.kubernetes.service;
 
 import static org.junit.Assert.assertEquals;
 
-import static com.vmware.admiral.compute.container.CompositeComponentService.FIELD_NAME_HOST_LINK;
+import static com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent.CUSTOM_PROPERTY_HOST_LINK;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.DEPLOYMENT_TYPE;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.KUBERNETES_LABEL_APP_ID;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.POD_TYPE;
@@ -101,7 +101,7 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
         compositeComponent.name = compositeDescription.name + "-mcm-102";
         compositeComponent.compositeDescriptionLink = compositeDescription.documentSelfLink;
         compositeComponent.customProperties = new HashMap<>();
-        compositeComponent.customProperties.put(FIELD_NAME_HOST_LINK,
+        compositeComponent.customProperties.put(CUSTOM_PROPERTY_HOST_LINK,
                 kubernetesHostState.documentSelfLink);
         compositeComponent = doPost(compositeComponent, CompositeComponentFactoryService.SELF_LINK);
 
@@ -293,7 +293,7 @@ public class KubernetesApplicationAdapterServiceTest extends BaseKubernetesMockT
         compositeComponent.name = compositeDescription.name + "-mcm-102";
         compositeComponent.compositeDescriptionLink = compositeDescription.documentSelfLink;
         compositeComponent.customProperties = new HashMap<>();
-        compositeComponent.customProperties.put(FIELD_NAME_HOST_LINK,
+        compositeComponent.customProperties.put(CUSTOM_PROPERTY_HOST_LINK,
                 kubernetesHostState.documentSelfLink);
         compositeComponent = doPost(compositeComponent, CompositeComponentFactoryService.SELF_LINK);
         return compositeComponent;
