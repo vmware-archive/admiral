@@ -13,7 +13,9 @@ package com.vmware.admiral.request;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
+import java.net.ServerSocket;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +31,7 @@ import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
+import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
 import com.vmware.admiral.request.ContainerControlLoopService.ContainerControlLoopState;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.photon.controller.model.tasks.QueryUtils.QueryByPages;
@@ -69,116 +72,163 @@ public class ContainerControlLoopServiceTest extends RequestBaseTest {
         doPost(controlLoopState, ContainerControlLoopService.CONTROL_LOOP_INFO_LINK);
     }
 
+    @Test
+    public void testRedeploymentWithAutoredeployOptionDisabled() throws Throwable {
+        final long timoutInMillis = 5000; // 5sec
+        ContainerDescription cd = createContainerDescription(false);
+
+        ContainerState state = provisionContainer(cd.documentSelfLink);
+        // change the power state of one of them
+        state.powerState = PowerState.ERROR;
+        doPut(state);
+
+        doOperation(new ContainerControlLoopState(), UriUtils.buildUri(host,
+                ContainerControlLoopService.CONTROL_LOOP_INFO_LINK),
+                false,
+                Service.Action.PATCH);
+
+        long startTime = System.currentTimeMillis();
+        AtomicBoolean healthyContainersFound = new AtomicBoolean(false);
+        waitFor(() -> {
+            retrieveContainerStates(cd.documentSelfLink).thenAccept(containerStates -> {
+                long healthyContainers = containerStates.stream().filter(cs -> PowerState.RUNNING.equals(cs.powerState)).count();
+                if (healthyContainers != 0) {
+                    healthyContainersFound.set(true);
+                }
+            });
+
+            if (healthyContainersFound.get()) {
+                fail("Should not have any healthy containers.");
+            }
+
+            return System.currentTimeMillis() - startTime > timoutInMillis;
+        });
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     public void testRedeploymentOfAContainerInCluster() throws Throwable {
 
         containerDescription1 = createContainerDescription(false);
         containerDescription1._cluster = 2;
+
+        HealthConfig healthConfig = createHealthConfigTcp();
+        healthConfig.autoredeploy = true;
+        containerDescription1.healthConfig = healthConfig;
         doPut(containerDescription1);
 
-        // provision 2 containers in cluster
-        ContainerState state = provisionContainer(containerDescription1.documentSelfLink);
-        // change the power state of one of them
-        state.powerState = PowerState.ERROR;
-        doPut(state);
+        // starting a listener for the health check
+        try (ServerSocket serverSocket = new ServerSocket(RequestBaseTest.HEALTH_CHECK_PORT)) {
+            // provision 2 containers in cluster
+            ContainerState state = provisionContainer(containerDescription1.documentSelfLink);
+            // change the power state of one of them
+            state.powerState = PowerState.ERROR;
+            doPut(state);
 
-        Map<String, List<String>> containersPerContextId = new HashMap<>();
+            Map<String, List<String>> containersPerContextId = new HashMap<>();
 
-        retrieveContainerStates(containerDescription1.documentSelfLink).thenAccept(containerStates -> {
-            List<String> containersFromDesc1 = containerStates.stream().map(cs -> cs.documentSelfLink).collect(Collectors.toList());
-            assertEquals(2, containersFromDesc1.size());
-
-            // clustered containers have same context_id
-            containersPerContextId.put(containerStates.get(0).customProperties.get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY), containersFromDesc1);
-        });
-
-        doOperation(new ContainerControlLoopState(), UriUtils.buildUri(host,
-                ContainerControlLoopService.CONTROL_LOOP_INFO_LINK),
-                false,
-                Service.Action.PATCH);
-
-        Map<String, List<String>> redeployedContainersPerContextId = new HashMap<>();
-
-        AtomicBoolean containerFromDesc1Redeployed = new AtomicBoolean(false);
-
-        waitFor(() -> {
-            // get all containers from containerDescription1
             retrieveContainerStates(containerDescription1.documentSelfLink).thenAccept(containerStates -> {
-                long healthyContainers = containerStates.stream().filter(cs -> PowerState.RUNNING.equals(cs.powerState)).count();
-                host.log("Healthy containers from %s : %d", containerDescription1.documentSelfLink, healthyContainers);
-                containerFromDesc1Redeployed.set(containerDescription1._cluster == healthyContainers && containerDescription1._cluster == containerStates.size());
-
                 List<String> containersFromDesc1 = containerStates.stream().map(cs -> cs.documentSelfLink).collect(Collectors.toList());
-                redeployedContainersPerContextId.put(containerStates.get(0).customProperties.get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY), containersFromDesc1);
+                assertEquals(2, containersFromDesc1.size());
+
+                // clustered containers have same context_id
+                containersPerContextId.put(containerStates.get(0).customProperties.get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY), containersFromDesc1);
             });
 
-            if (containerFromDesc1Redeployed.get()) {
-                containersPerContextId.entrySet().stream().forEach(m -> {
-                    String contextId = m.getKey();
-                    List<String> redeployedContainers = redeployedContainersPerContextId.get(contextId);
-                    host.log("Redeployed container: %s -> %s", StringUtils.join(m.getValue()), StringUtils.join(redeployedContainers));
-                });
-            }
+            doOperation(new ContainerControlLoopState(), UriUtils.buildUri(host,
+                    ContainerControlLoopService.CONTROL_LOOP_INFO_LINK),
+                    false,
+                    Service.Action.PATCH);
 
-            return containerFromDesc1Redeployed.get();
-        });
+            Map<String, List<String>> redeployedContainersPerContextId = new HashMap<>();
+
+            AtomicBoolean containerFromDesc1Redeployed = new AtomicBoolean(false);
+
+            waitFor(() -> {
+                // get all containers from containerDescription1
+                retrieveContainerStates(containerDescription1.documentSelfLink).thenAccept(containerStates -> {
+                    long healthyContainers = containerStates.stream().filter(cs -> PowerState.RUNNING.equals(cs.powerState)).count();
+                    host.log("Healthy containers from %s : %d", containerDescription1.documentSelfLink, healthyContainers);
+                    containerFromDesc1Redeployed.set(containerDescription1._cluster == healthyContainers && containerDescription1._cluster == containerStates.size());
+
+                    List<String> containersFromDesc1 = containerStates.stream().map(cs -> cs.documentSelfLink).collect(Collectors.toList());
+                    redeployedContainersPerContextId.put(containerStates.get(0).customProperties.get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY), containersFromDesc1);
+                });
+
+                if (containerFromDesc1Redeployed.get()) {
+                    containersPerContextId.entrySet().stream().forEach(m -> {
+                        String contextId = m.getKey();
+                        List<String> redeployedContainers = redeployedContainersPerContextId.get(contextId);
+                        host.log("Redeployed container: %s -> %s", StringUtils.join(m.getValue()), StringUtils.join(redeployedContainers));
+                    });
+                }
+
+                return containerFromDesc1Redeployed.get();
+            });
+        }
     }
 
     @SuppressWarnings("unchecked")
     @Test
     public void redeploymentOfSingleContainers() throws Throwable {
         containerDescription2 = createContainerDescription(false);
+        HealthConfig healthConfig = createHealthConfigTcp();
+        healthConfig.autoredeploy = true;
+        containerDescription2.healthConfig = healthConfig;
+        doPut(containerDescription2);
 
-        // provision 3 single containers, 2 of them in ERROR state
-        ContainerState state = null;
-        for (int i = 0; i < SINGLE_CONTAINERS_TO_BE_PROVISIONED; i++) {
-            state = provisionContainer(containerDescription2.documentSelfLink);
+        // starting a listener for the health check
+        try (ServerSocket serverSocket = new ServerSocket(RequestBaseTest.HEALTH_CHECK_PORT)) {
+            // provision 3 single containers, 2 of them in ERROR state
+            ContainerState state = null;
+            for (int i = 0; i < SINGLE_CONTAINERS_TO_BE_PROVISIONED; i++) {
+                state = provisionContainer(containerDescription2.documentSelfLink);
 
-            if (i < SINGLE_CONTAINERS_TO_BE_PROVISIONED - 1) {
-                state.powerState = PowerState.ERROR;
-                doPut(state);
+                if (i < SINGLE_CONTAINERS_TO_BE_PROVISIONED - 1) {
+                    state.powerState = PowerState.ERROR;
+                    doPut(state);
+                }
             }
-        }
 
-        Map<String, List<String>> containersPerContextId = new HashMap<>();
+            Map<String, List<String>> containersPerContextId = new HashMap<>();
 
-        retrieveContainerStates(containerDescription2.documentSelfLink).thenAccept(containerStates -> {
-            containerStates.stream().forEach(cs -> {
-                containersPerContextId.put(cs.customProperties.get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY), Arrays.asList(cs.documentSelfLink));
-            });
-        });
-
-        doOperation(new ContainerControlLoopState(), UriUtils.buildUri(host,
-                ContainerControlLoopService.CONTROL_LOOP_INFO_LINK),
-                false,
-                Service.Action.PATCH);
-
-        Map<String, List<String>> redeployedContainersPerContextId = new HashMap<>();
-        AtomicBoolean containerFromDesc2Redeployed = new AtomicBoolean(false);
-
-        waitFor(() -> {
-            // get all containers from containerDescription2
             retrieveContainerStates(containerDescription2.documentSelfLink).thenAccept(containerStates -> {
-                long healthyContainers = containerStates.stream().filter(cs -> PowerState.RUNNING.equals(cs.powerState)).count();
-                host.log("Healthy containers from %s : %d", containerDescription2.documentSelfLink, healthyContainers);
-                containerFromDesc2Redeployed.set(SINGLE_CONTAINERS_TO_BE_PROVISIONED == healthyContainers && SINGLE_CONTAINERS_TO_BE_PROVISIONED == containerStates.size());
-
                 containerStates.stream().forEach(cs -> {
-                    redeployedContainersPerContextId.put(cs.customProperties.get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY), Arrays.asList(cs.documentSelfLink));
+                    containersPerContextId.put(cs.customProperties.get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY), Arrays.asList(cs.documentSelfLink));
                 });
             });
 
-            if (containerFromDesc2Redeployed.get()) {
-                containersPerContextId.entrySet().stream().forEach(m -> {
-                    String contextId = m.getKey();
-                    List<String> redeployedContainers = redeployedContainersPerContextId.get(contextId);
-                    host.log("Redeployed container: %s -> %s", StringUtils.join(m.getValue()), StringUtils.join(redeployedContainers));
-                });
-            }
+            doOperation(new ContainerControlLoopState(), UriUtils.buildUri(host,
+                    ContainerControlLoopService.CONTROL_LOOP_INFO_LINK),
+                    false,
+                    Service.Action.PATCH);
 
-            return containerFromDesc2Redeployed.get();
-        });
+            Map<String, List<String>> redeployedContainersPerContextId = new HashMap<>();
+            AtomicBoolean containerFromDesc2Redeployed = new AtomicBoolean(false);
+
+            waitFor(() -> {
+                // get all containers from containerDescription2
+                retrieveContainerStates(containerDescription2.documentSelfLink).thenAccept(containerStates -> {
+                    long healthyContainers = containerStates.stream().filter(cs -> PowerState.RUNNING.equals(cs.powerState)).count();
+                    host.log("Healthy containers from %s : %d", containerDescription2.documentSelfLink, healthyContainers);
+                    containerFromDesc2Redeployed.set(SINGLE_CONTAINERS_TO_BE_PROVISIONED == healthyContainers && SINGLE_CONTAINERS_TO_BE_PROVISIONED == containerStates.size());
+
+                    containerStates.stream().forEach(cs -> {
+                        redeployedContainersPerContextId.put(cs.customProperties.get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY), Arrays.asList(cs.documentSelfLink));
+                    });
+                });
+
+                if (containerFromDesc2Redeployed.get()) {
+                    containersPerContextId.entrySet().stream().forEach(m -> {
+                        String contextId = m.getKey();
+                        List<String> redeployedContainers = redeployedContainersPerContextId.get(contextId);
+                        host.log("Redeployed container: %s -> %s", StringUtils.join(m.getValue()), StringUtils.join(redeployedContainers));
+                    });
+                }
+
+                return containerFromDesc2Redeployed.get();
+            });
+        }
     }
 
     private DeferredResult<List<ContainerState>> retrieveContainerStates(String descriptionLink) {

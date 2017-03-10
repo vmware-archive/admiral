@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
+import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -30,6 +31,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.ServiceUtils;
@@ -45,6 +47,9 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationContext;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
+import com.vmware.xenon.common.ServiceDocument.Documentation;
+import com.vmware.xenon.common.ServiceDocument.UsageOption;
+import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -59,6 +64,8 @@ public class HealthChecker {
     private static volatile HealthChecker instance;
 
     public static class HealthConfig {
+
+        public static final String FIELD_NAME_AUTOREDEPLOY = "autoredeploy";
 
         public enum RequestProtocol {
             HTTP, TCP, COMMAND
@@ -92,6 +99,12 @@ public class HealthChecker {
 
         @JsonProperty("continue_provisioning_on_error")
         public boolean continueProvisioningOnError;
+
+        /** If set to true the unhealthy containers from a description will be redeployed. */
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
+        @Documentation(description = "Automatic redeployment of containers.")
+        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        public Boolean autoredeploy;
 
         public String command;
     }
