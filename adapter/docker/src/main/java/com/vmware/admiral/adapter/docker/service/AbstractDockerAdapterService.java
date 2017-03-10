@@ -229,7 +229,7 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
     protected void fail(AdapterRequest request, Operation o, Throwable e) {
         if (o != null && o.getBodyRaw() != null) {
             String errMsg = String.format("%s; Reason: %s", e.getMessage(),
-                    o.getBodyRaw().toString());
+                    Utils.toJson(o.getBodyRaw()));
 
             e = new Exception(errMsg, e);
         }
