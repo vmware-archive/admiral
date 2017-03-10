@@ -26,17 +26,23 @@
     <maximizable-behaviour class="details-usages">
       <div class="title">Usages</div>
       <div class="content">
-        <compute-stats [cpuUsage]="99" [memUsage]="1024" [memLimit]="2048" [networkIn]="120" [networkOut]="329"></compute-stats>
+        <compute-stats [cpuUsage]="40" [memUsage]="512*1024*1024" [memLimit]="2048*1024*1024" [networkIn]="120" [networkOut]="329"></compute-stats>
       </div>
-      <div class="central-block-loading loading-background hide">
+      <div *ngIf="loadingStats" class="central-block-loading loading-background">
         <span class="vertical-helper"></span>
         <div class="spinner"></div>
       </div>
     </maximizable-behaviour>
     <maximizable-behaviour class="details-logs">
       <div class="title">Logs</div>
+      <!--<clr-tabs class="content">
+        <clr-tab-link *ngFor="let logs of logsByComponent">{{logs.name}}</clr-tab-link>
+        <clr-tab-content *ngFor="let logs of logsByComponent">
+          <logs-scroll [logs]="logs.content"></logs-scroll>
+        </clr-tab-content>
+      </clr-tabs>-->
       <logs-scroll class="content" [logs]="logs"></logs-scroll>
-      <div class="central-block-loading hide">
+      <div *ngIf="loadingLogs" class="central-block-loading">
         <span class="vertical-helper"></span>
         <div class="spinner"></div>
       </div>

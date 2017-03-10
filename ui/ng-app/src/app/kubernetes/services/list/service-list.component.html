@@ -10,7 +10,9 @@
   -->
 
 <div>
-  <grid-view [items]="entities" [loading]="loadingEntities">
+  <grid-view [items]="entities" [loading]="loadingEntities"
+    [searchPlaceholder]="'Search for services'"
+    [searchSuggestionProperties]="['name']">
     <div title>{{"services.plural" | i18n: { "ns": "kubernetes"} }}</div>
     <template let-item="item">
       <card [routerLink]="['./' + item.documentId]">

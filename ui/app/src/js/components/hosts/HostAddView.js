@@ -385,8 +385,6 @@ var HostAddView = Vue.extend({
     this.unwatchDeploymentPolicy();
 
     this.unwatchModel();
-
-    this.unwatchShouldAcceptCertificate();
   },
 
   methods: {

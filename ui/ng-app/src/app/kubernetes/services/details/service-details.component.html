@@ -19,6 +19,15 @@
     </thead>
     <tbody>
       <tr>
+        <td>{{"ports" | i18n: { "ns": "kubernetes"} }}</td>
+        <td>
+          <div *ngFor="let portLink of portLinks">
+            <a *ngIf="portLink.link" [href]="portLink.link" target="_blank">{{portLink.name}}</a>
+            <span *ngIf="!portLink.link">{{portLink.name}}</span>
+          </div>
+        </td>
+      </tr>
+      <tr>
         <td>{{"creation" | i18n: { "ns": "kubernetes"} }}</td>
         <td>{{entity.service.metadata.creationTimestamp}}</td>
       </tr>

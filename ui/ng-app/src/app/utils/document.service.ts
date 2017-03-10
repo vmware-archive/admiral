@@ -11,7 +11,6 @@
 
 import { Injectable } from '@angular/core';
 import { Ajax } from './ajax.service';
-import { Links } from './links';
 import { URLSearchParams } from '@angular/http';
 
 @Injectable()
@@ -22,7 +21,7 @@ export class DocumentService {
   public list(link : string): Promise<Array<any>> {
     return this.ajax.get(link, new URLSearchParams('expand=true')).then(result => {
       return result.documentLinks.map(link => {
-        var document = result.documents[link]
+        let document = result.documents[link]
         document.documentId = this.getDocumentId(link);
         return document;
       });
@@ -34,23 +33,30 @@ export class DocumentService {
   }
 
    public getById(link: string, documentId: string): Promise<any> {
-    var documentSelfLink = link + '/' + documentId
+    let documentSelfLink = link + '/' + documentId
     return this.get(documentSelfLink);
   }
 
 
-  public getLogs(id, sinceMs) {
+  public getLogs(logsServiceLink, id, sinceMs) {
     return new Promise((resolve, reject) => {
-      var logRequestUriPath = 'id=' + id;
+      let logRequestUriPath = 'id=' + id;
       if (sinceMs) {
-        var sinceSeconds = sinceMs / 1000;
+        let sinceSeconds = sinceMs / 1000;
         logRequestUriPath += '&since=' + sinceSeconds;
       }
 
-      this.ajax.get(Links.CONTAINER_LOGS, new URLSearchParams(logRequestUriPath)).then((logServiceState) => {
-        if (logServiceState && logServiceState.logs) {
-          var decodedLogs = atob(logServiceState.logs);
-          resolve(decodedLogs);
+      this.ajax.get(logsServiceLink, new URLSearchParams(logRequestUriPath)).then((logServiceState) => {
+        if (logServiceState) {
+          if (logServiceState.logs) {
+            let decodedLogs = atob(logServiceState.logs);
+            resolve(decodedLogs);
+          } else {
+            for (let component in logServiceState) {
+              logServiceState[component] = atob(logServiceState[component].logs);
+            }
+            resolve(logServiceState);
+          }
         } else {
           resolve('');
         }

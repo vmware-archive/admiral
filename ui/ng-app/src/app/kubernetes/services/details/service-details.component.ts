@@ -15,6 +15,55 @@ import { BaseDetailsComponent } from '../../../components/base/base-details.comp
 import { DocumentService } from '../../../utils/document.service';
 import { Links } from '../../../utils/links';
 
+let getPortLinkDisplayText = function(hostIp, portObj) {
+  let linkDisplayName = '';
+
+  // Used backend's com.vmware.vcac.container.domain.PortBinding.toString() to format the
+  // ports string
+  if (hostIp) {
+    linkDisplayName += hostIp;
+  }
+
+  if (portObj.nodePort) {
+    if (linkDisplayName.length > 0) {
+      linkDisplayName += ':';
+    }
+    linkDisplayName += portObj.nodePort;
+  }
+
+  if (linkDisplayName.length > 0) {
+    linkDisplayName += ':';
+  }
+  linkDisplayName += portObj.port;
+
+  if (portObj.protocol) {
+    linkDisplayName += '/' + portObj.protocol;
+  }
+
+  return linkDisplayName;
+};
+
+let getPortLinks = function(hostIp, ports) {
+  var portLinks = [];
+
+  if (ports) {
+    for (let i = 0; i < ports.length; i++) {
+      let portObj = ports[i];
+
+      let linkDisplayName = getPortLinkDisplayText(hostIp, portObj);
+
+      let linkAddress = hostIp ? ('http://' + hostIp + ':' + portObj.nodePort) : null;
+
+      portLinks[i] = {
+        link: linkAddress,
+        name: linkDisplayName
+      };
+    }
+  }
+
+  return portLinks;
+};
+
 @Component({
   selector: 'service-details',
   templateUrl: './service-details.component.html',
@@ -22,7 +71,30 @@ import { Links } from '../../../utils/links';
   encapsulation: ViewEncapsulation.None
 })
 export class ServiceDetailsComponent extends BaseDetailsComponent {
+  private portLinks: Array<any>;
+
   constructor(route: ActivatedRoute, service: DocumentService) {
     super(route, service, Links.SERVICES);
+  }
+
+  entityInitialized() {
+    this.calculatePortLinks();
+  }
+
+  calculatePortLinks() {
+    let result = [];
+    if (this.entity && this.entity.service && this.entity.service.spec) {
+      let ports = this.entity.service.spec.ports;
+      let externalIPs = this.entity.service.spec.externalIPs;
+
+      if (externalIPs && externalIPs.length > 0) {
+        externalIPs.forEach(externalIP => {
+          result = result.concat(getPortLinks(externalIP, ports));
+        });
+      } else {
+        result = getPortLinks(null, ports);
+      }
+    }
+    this.portLinks = result;
   }
 }
