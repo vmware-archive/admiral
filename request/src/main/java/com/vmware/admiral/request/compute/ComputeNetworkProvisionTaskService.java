@@ -21,13 +21,18 @@ import java.util.UUID;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ServiceUtils;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.NetworkType;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
 import com.vmware.admiral.request.compute.ComputeNetworkProvisionTaskService.ComputeNetworkProvisionTaskState.SubStage;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputeProvisionTaskState;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
+import com.vmware.photon.controller.model.UriPaths;
 import com.vmware.photon.controller.model.adapterapi.ResourceOperationResponse;
 import com.vmware.photon.controller.model.adapterapi.SubnetInstanceRequest.InstanceRequestType;
+import com.vmware.photon.controller.model.adapters.registry.PhotonModelAdaptersRegistryService;
+import com.vmware.photon.controller.model.adapters.registry.PhotonModelAdaptersRegistryService.PhotonModelAdapterConfig;
+import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.photon.controller.model.tasks.ProvisionSubnetTaskService;
 import com.vmware.photon.controller.model.tasks.ProvisionSubnetTaskService.ProvisionSubnetTaskState;
@@ -118,6 +123,8 @@ public class ComputeNetworkProvisionTaskService
         public ComputeNetwork computeNetwork;
         public ProfileStateExpanded profile;
         public SubnetState subnet;
+        public EndpointState endpoint;
+        public String instanceAdapterReference;
     }
 
     public ComputeNetworkProvisionTaskService() {
@@ -158,47 +165,6 @@ public class ComputeNetworkProvisionTaskService
         }
     }
 
-    private DeferredResult<Context> populateContext(Context context) {
-        return DeferredResult.completed(context)
-                .thenCompose(this::populateComputeNetwork)
-                .thenCompose(this::populateProfile)
-                .thenCompose(this::populateSubnet);
-    }
-
-    private DeferredResult<Context> populateComputeNetwork(Context context) {
-
-        return this.sendWithDeferredResult(
-                Operation.createGet(this, context.computeNetworkLink), ComputeNetwork.class)
-                .thenApply(computeNetwork -> {
-                    context.computeNetwork = computeNetwork;
-                    return context;
-                });
-    }
-
-    private DeferredResult<Context> populateProfile(Context context) {
-        URI uri = UriUtils.buildUri(this.getHost(), context.computeNetwork.provisionProfileLink);
-        uri = UriUtils.buildExpandLinksQueryUri(uri);
-
-        return this.sendWithDeferredResult(Operation.createGet(uri), ProfileStateExpanded.class)
-                .thenApply(profile -> {
-                    context.profile = profile;
-                    return context;
-                });
-    }
-
-    private DeferredResult<Context> populateSubnet(Context context) {
-        if (context.computeNetwork.subnetLink == null) {
-            return DeferredResult.completed(context);
-        }
-
-        return this.sendWithDeferredResult(
-                Operation.createGet(this, context.computeNetwork.subnetLink), SubnetState.class)
-                .thenApply(subnetState -> {
-                    context.subnet = subnetState;
-                    return context;
-                });
-    }
-
     private void provisionResources(ComputeNetworkProvisionTaskState state, String subTaskLink) {
         try {
             Set<String> resourceLinks = state.resourceLinks;
@@ -233,10 +199,34 @@ public class ComputeNetworkProvisionTaskService
         }
     }
 
+
+    private DeferredResult<Context> populateContext(Context context) {
+        return DeferredResult.completed(context)
+                .thenCompose(this::populateComputeNetwork)
+                .thenCompose(ctx -> {
+                    if (context.computeNetwork.networkType != NetworkType.ISOLATED) {
+                        return DeferredResult.completed(context);
+                    } else {
+                        // Get isolated network context
+                        return DeferredResult.completed(context)
+                                .thenCompose(this::populateSubnet)
+                                .thenCompose(this::populateProfile)
+                                .thenCompose(this::populateEndpoint)
+                                .thenCompose(this::populateInstanceAdapterReference);
+
+                    }
+                });
+    }
+
     private DeferredResult<Context> provisionResource(Context context) {
         // Should we provision a new Subnet?
-        if (context.subnet != null) {
+        if (context.computeNetwork.networkType == NetworkType.ISOLATED) {
             // Yes!
+            if (context.subnet == null) {
+                throw new IllegalArgumentException(
+                        String.format("Subnet is required to provision an ISOLATED network '%s'.",
+                                context.computeNetwork.name));
+            }
             return DeferredResult.completed(context)
                     .thenCompose(this::customizeTemplateSubnet)
                     .thenCompose(this::provisionSubnet);
@@ -250,6 +240,75 @@ public class ComputeNetworkProvisionTaskService
         }
     }
 
+    private DeferredResult<Context> populateComputeNetwork(Context context) {
+        return this.sendWithDeferredResult(
+                Operation.createGet(this, context.computeNetworkLink), ComputeNetwork.class)
+                .thenApply(computeNetwork -> {
+                    context.computeNetwork = computeNetwork;
+                    return context;
+                });
+    }
+
+    private DeferredResult<Context> populateProfile(Context context) {
+        URI uri = UriUtils.buildUri(this.getHost(), context.computeNetwork.provisionProfileLink);
+        uri = UriUtils.buildExpandLinksQueryUri(uri);
+
+        return this.sendWithDeferredResult(Operation.createGet(uri), ProfileStateExpanded.class)
+                .thenApply(profile -> {
+                    context.profile = profile;
+                    return context;
+                });
+    }
+
+    private DeferredResult<Context> populateEndpoint(Context context) {
+        if (context.profile == null
+                || context.profile.networkProfile.isolatedNetworkState == null) {
+            return DeferredResult.completed(context);
+        } else {
+            // Use network profile isolated network endpoint link to provision subnet
+            // In case of NSX-T isolated networks, profile endpoint will be vSphere
+            // and network profile Isolated network endpoint will be NSX-T
+            return this.sendWithDeferredResult(Operation.createGet(this.getHost(),
+                            context.profile.networkProfile.isolatedNetworkState.endpointLink),
+                    EndpointState.class)
+                    .thenApply(endpoint -> {
+                        context.endpoint = endpoint;
+                        return context;
+                    });
+        }
+    }
+
+    private DeferredResult<Context> populateInstanceAdapterReference(Context context) {
+        if (context.endpoint == null) {
+            return DeferredResult.completed(context);
+        } else {
+            String uri = UriUtils.buildUriPath(PhotonModelAdaptersRegistryService.FACTORY_LINK,
+                    context.endpoint.endpointType);
+
+            return sendWithDeferredResult(
+                    Operation.createGet(getHost(), uri), PhotonModelAdapterConfig.class)
+                    .thenApply(config -> {
+                        context.instanceAdapterReference = config.adapterEndpoints
+                                .get(UriPaths.AdapterTypePath.SUBNET_ADAPTER.key);
+                        return context;
+                    });
+        }
+    }
+
+
+    private DeferredResult<Context> populateSubnet(Context context) {
+        if (context.computeNetwork.subnetLink == null) {
+            return DeferredResult.completed(context);
+        }
+
+        return this.sendWithDeferredResult(
+                Operation.createGet(this, context.computeNetwork.subnetLink), SubnetState.class)
+                .thenApply(subnetState -> {
+                    context.subnet = subnetState;
+                    return context;
+                });
+    }
+
     private DeferredResult<Context> customizeTemplateSubnet(Context context) {
         ProfileStateExpanded profile = context.profile;
         SubnetState subnet = context.subnet;
@@ -257,11 +316,12 @@ public class ComputeNetworkProvisionTaskService
         subnet.networkLink = profile.networkProfile.isolationNetworkLink;
         // TODO: Calculate the CIDR. Hardcode for now.
         subnet.subnetCIDR = "192.168.5.0/24";
-        subnet.endpointLink = context.profile.endpointLink;
-        // TODO: Set instance adapter reference.
-        //subnet.instanceAdapterReference = ??
+        subnet.endpointLink = context.endpoint.documentSelfLink;
+        subnet.instanceAdapterReference = UriUtils.buildUri(this.getHost(),
+                context.instanceAdapterReference);
 
-        return this.sendWithDeferredResult(Operation.createPatch(this, subnet.documentSelfLink))
+        return this.sendWithDeferredResult(Operation.createPatch(this, subnet.documentSelfLink)
+                .setBody(subnet))
                 .thenApply(op -> context);
     }
 
