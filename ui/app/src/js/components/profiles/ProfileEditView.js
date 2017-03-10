@@ -112,10 +112,12 @@ export default Vue.component('profile-edit-view', {
       $event.preventDefault();
 
       let model = this.getModel();
+      var tagRequest = utils.createTagAssignmentRequest(model.documentSelfLink,
+          this.model.item.tags || [], this.tags);
       if (model.documentSelfLink) {
-        ProfileActions.updateProfile(model, this.tags);
+        ProfileActions.updateProfile(model, tagRequest);
       } else {
-        ProfileActions.createProfile(model, this.tags);
+        ProfileActions.createProfile(model, tagRequest);
       }
     },
     onNameChange(value) {
@@ -162,6 +164,7 @@ export default Vue.component('profile-edit-view', {
       ProfileActions.closeToolbar();
     },
     getModel() {
+      // TODO: prepare a PATCH body instead of full-blown document
       var toSave = $.extend({ properties: {} }, this.model.item.asMutable({deep: true}));
       toSave.name = this.name;
       toSave.endpointLink = this.endpoint && this.endpoint.documentSelfLink;
@@ -171,6 +174,7 @@ export default Vue.component('profile-edit-view', {
           this.networkProfileEditor.properties);
       toSave.storageProfile = $.extend(toSave.storageProfile || {},
           this.storageProfileEditor.properties);
+      toSave.tagLinks = undefined;
       return toSave;
     }
   }

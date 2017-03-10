@@ -12,6 +12,7 @@
 import { MachineActions, MachinesContextToolbarActions } from 'actions/Actions';
 import VueTags from 'components/common/VueTags'; //eslint-disable-line
 import MachineEditViewVue from 'components/machines/MachineEditViewVue.html';
+import utils from 'core/utils';
 
 export default Vue.component('machine-edit-view', {
   template: MachineEditViewVue,
@@ -80,7 +81,9 @@ export default Vue.component('machine-edit-view', {
         resourcePoolLink: this.placementZone ? this.placementZone.documentSelfLink : null,
         selfLinkId: this.model.item.selfLinkId
       };
-      MachineActions.updateMachine(model, this.tags);
+      var tagRequest = utils.createTagAssignmentRequest(this.model.item.documentSelfLink,
+          this.model.item.tags, this.tags);
+      MachineActions.updateMachine(model, tagRequest);
     },
     openToolbarPlacementZones: MachinesContextToolbarActions.openToolbarPlacementZones,
     closeToolbar: MachinesContextToolbarActions.closeToolbar,

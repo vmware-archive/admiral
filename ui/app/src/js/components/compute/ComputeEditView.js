@@ -12,6 +12,7 @@
 import { ComputeActions, ComputeContextToolbarActions } from 'actions/Actions';
 import VueTags from 'components/common/VueTags'; //eslint-disable-line
 import ComputeEditViewVue from 'components/compute/ComputeEditViewVue.html';
+import utils from 'core/utils';
 
 export default Vue.component('compute-edit-view', {
   template: ComputeEditViewVue,
@@ -50,7 +51,9 @@ export default Vue.component('compute-edit-view', {
         resourcePoolLink: this.placementZone ? this.placementZone.documentSelfLink : null,
         selfLinkId: this.model.item.selfLinkId
       };
-      ComputeActions.updateCompute(model, this.tags);
+      var tagRequest = utils.createTagAssignmentRequest(this.model.item.documentSelfLink,
+          this.model.item.tags, this.tags);
+      ComputeActions.updateCompute(model, tagRequest);
     },
     openToolbarPlacementZones: ComputeContextToolbarActions.openToolbarPlacementZones,
     closeToolbar: ComputeContextToolbarActions.closeToolbar,

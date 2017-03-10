@@ -13,6 +13,7 @@ package com.vmware.admiral.request;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,17 +27,17 @@ import com.vmware.photon.controller.model.resources.TagService;
 import com.vmware.photon.controller.model.resources.TagService.TagState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.ServiceStateCollectionUpdateRequest;
 import com.vmware.xenon.common.StatelessService;
-import com.vmware.xenon.common.Utils;
 
 /**
  * Helper utility service for updating tags on a resource. Does all the heavy-lifting with regard
  * to self link retrieval, TagState creation, tag assignment/unassignment, and so on.
  *
+ * If no resource is provided, the given tags are created if needed, and their links returned.
+ *
  * Use a {@code POST} request with a {@code TagAssignmentRequest} body to create tag states in a
- * batch and retrieve their self links and (optionally) server states.
+ * batch and retrieve their links.
  */
 public class TagAssignmentService extends StatelessService {
 
@@ -57,7 +58,9 @@ public class TagAssignmentService extends StatelessService {
         //-----------------------------------------------------------------------------------------
         // Input fields
 
-        @UsageOption(option = PropertyUsageOption.REQUIRED)
+        /**
+         * Optional resource which tags to update.
+         */
         public String resourceLink;
 
         /**
@@ -93,7 +96,6 @@ public class TagAssignmentService extends StatelessService {
     @Override
     public void handlePost(Operation post) {
         TagAssignmentRequest request = post.getBody(TagAssignmentRequest.class);
-        Utils.validateState(this.getDocumentTemplate().documentDescription, request);
 
         postTagStates(request)
                 .thenCompose(ignore -> updateTags(request))
@@ -119,12 +121,18 @@ public class TagAssignmentService extends StatelessService {
     }
 
     private DeferredResult<Set<String>> updateTags(TagAssignmentRequest request) {
-        Collection<Object> tagLinksToAdd = getTagLinks(request, request.tagsToAssign);
+        if (request.resourceLink == null) {
+            return DeferredResult.completed(getTagLinks(request, request.tagsToAssign));
+        }
+
+        Collection<Object> tagLinksToAdd =
+                new HashSet<>(getTagLinks(request, request.tagsToAssign));
         Map<String, Collection<Object>> addMap = !tagLinksToAdd.isEmpty()
                 ? Collections.singletonMap(ResourceState.FIELD_NAME_TAG_LINKS, tagLinksToAdd)
                 : null;
 
-        Collection<Object> tagLinksToRemove = getTagLinks(request, request.tagsToUnassign);
+        Collection<Object> tagLinksToRemove =
+                new HashSet<>(getTagLinks(request, request.tagsToUnassign));
         Map<String, Collection<Object>> removeMap = !tagLinksToRemove.isEmpty()
                 ? Collections.singletonMap(ResourceState.FIELD_NAME_TAG_LINKS, tagLinksToRemove)
                 : null;
@@ -159,9 +167,9 @@ public class TagAssignmentService extends StatelessService {
         return Operation.createPost(this.getHost(), TagService.FACTORY_LINK).setBody(tagState);
     }
 
-    private Collection<Object> getTagLinks(TagAssignmentRequest request, List<KeyValue> tags) {
+    private Set<String> getTagLinks(TagAssignmentRequest request, List<KeyValue> tags) {
         if (tags == null) {
-            return Collections.emptyList();
+            return Collections.emptySet();
         }
 
         return tags.stream()

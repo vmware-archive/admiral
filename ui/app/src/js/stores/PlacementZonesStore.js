@@ -140,38 +140,28 @@ let PlacementZonesStore = Reflux.createStore({
     this.emitChange();
   },
 
-  onCreatePlacementZone: function(config, tags, tagsToMatch) {
+  onCreatePlacementZone: function(config, tagRequest, tagsToMatch) {
     this.setInData(['editingItemData', 'validationErrors'], null);
     this.setInData(['editingItemData', 'saving'], true);
     this.emitChange();
 
-    let tagsPromises = [];
-    tags.forEach((tag) => {
-      tagsPromises.push(services.createTag(tag));
-    });
-
-    let tagsToMatchPromises = [];
-    tagsToMatch.forEach((tag) => {
-      tagsToMatchPromises.push(services.createTag(tag));
-    });
-
-    Promise.all(tagsPromises).then((createdTags) => {
-      config.resourcePoolState.tagLinks = createdTags.map((tag) => tag.documentSelfLink);
-      return Promise.all(tagsToMatchPromises);
-    }).then((createdTagsToMatch) => {
+    Promise.all([
+        services.updateTagAssignment(tagRequest),
+        services.saveTagStates(tagsToMatch)
+    ]).then(([tagResponse, tagLinksToMatch]) => {
+      config.resourcePoolState.tagLinks = tagResponse.tagLinks;
       if (config.epzState) {
         config.epzState = $.extend(config.epzState, {
-          tagLinksToMatch: createdTagsToMatch.map((tag) => tag.documentSelfLink)
+          tagLinksToMatch: tagLinksToMatch
         });
       }
       return services.createPlacementZone(config);
     }).then((createdConfig) => {
-
       createdConfig.hostsCount = 0;
       createdConfig.cpuPercentage = 0;
       createdConfig.memoryPercentage = 0;
       createdConfig.storagePercentage = 0;
-      createdConfig.tags = tags;
+      createdConfig.tags = tagRequest ? tagRequest.tagsToAssign : undefined;
       createdConfig.tagsToMatch = tagsToMatch;
       createdConfig = enhanceConfig(createdConfig);
 
@@ -194,29 +184,20 @@ let PlacementZonesStore = Reflux.createStore({
     }).catch(this.onGenericEditError);
   },
 
-  onUpdatePlacementZone: function(config, tags, tagsToMatch) {
+  onUpdatePlacementZone: function(config, tagRequest, tagsToMatch) {
     this.setInData(['editingItemData', 'validationErrors'], null);
     this.setInData(['editingItemData', 'saving'], true);
     this.emitChange();
 
-    let tagsPromises = [];
-    tags.forEach((tag) => {
-      tagsPromises.push(services.createTag(tag));
-    });
-
-    let tagsToMatchPromises = [];
-    tagsToMatch.forEach((tag) => {
-      tagsToMatchPromises.push(services.createTag(tag));
-    });
-
-    Promise.all(tagsPromises).then((updatedTags) => {
-      config.resourcePoolState.tagLinks = updatedTags.map((tag) => tag.documentSelfLink);
-      return Promise.all(tagsToMatchPromises);
-    }).then((updatedTagsToMatch) => {
+    services.updateTagAssignment(tagRequest).then(tagResponse => {
+      // TODO can be run in parallel if PATCH is used
+      config.resourcePoolState.tagLinks = tagResponse.tagLinks;
+      return services.saveTagStates(tagsToMatch);
+    }).then(tagLinksToMatch => {
       if (config.epzState) {
         config.epzState = $.extend(config.epzState, {
           resourcePoolLink: config.resourcePoolState.documentSelfLink,
-          tagLinksToMatch: updatedTagsToMatch.map((tag) => tag.documentSelfLink)
+          tagLinksToMatch: tagLinksToMatch
         });
       }
       return services.updatePlacementZone($.extend(true, {}, config.dto, config));
@@ -224,7 +205,6 @@ let PlacementZonesStore = Reflux.createStore({
       // If the backend did not make any changes, the response will be empty
       updatedConfig.resourcePoolState = updatedConfig.resourcePoolState || config.resourcePoolState;
       updatedConfig.epzState = updatedConfig.epzState || config.epzState;
-      updatedConfig.tags = tags;
       updatedConfig.tagsToMatch = tagsToMatch;
       updatedConfig = enhanceConfig(updatedConfig);
 
@@ -233,6 +213,7 @@ let PlacementZonesStore = Reflux.createStore({
       for (var i = 0; i < configs.length; i++) {
         if (configs[i].documentSelfLink === updatedConfig.documentSelfLink) {
           updatedConfig.hostsCount = configs[i].hostsCount;
+          updatedConfig.tags = configs[i].tags;
           configs[i] = Immutable(updatedConfig);
 
           this.setInData(['items'], configs);

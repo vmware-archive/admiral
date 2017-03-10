@@ -303,22 +303,21 @@ let MachinesStore = Reflux.createStore({
     this.setInData(['editingItemData', 'item'], {});
     this.emitChange();
   },
-  onUpdateMachine(model, tags) {
-    let tagsPromises = [];
-    tags.forEach((tag) => {
-      tagsPromises.push(services.createTag(tag));
+  onUpdateMachine(model, tagRequest) {
+    // update machine (TODO: switch to PATCH)
+    let data = $.extend({}, model.dto, {
+      resourcePoolLink: model.resourcePoolLink
     });
-    Promise.all(tagsPromises).then((updatedTags) => {
-      let data = $.extend({}, model.dto, {
-        resourcePoolLink: model.resourcePoolLink,
-        tagLinks: [...new Set(updatedTags.map((tag) => tag.documentSelfLink))]
-      });
-      services.updateMachine(model.selfLinkId, data).then(() => {
-        actions.NavigationActions.openMachines();
-        this.setInData(['editingItemData'], null);
-        this.emitChange();
-      }).catch(this.onGenericEditError);
-    });
+
+    // TODO: execute in parallel when switched to PATCH
+    services.updateMachine(model.selfLinkId, data).then(() => {
+        return services.updateTagAssignment(tagRequest);
+    }).then(() => {
+      actions.NavigationActions.openMachines();
+      this.setInData(['editingItemData'], null);
+      this.emitChange();
+    }).catch(this.onGenericEditError);
+
     this.setInData(['editingItemData', 'item'], model);
     this.setInData(['editingItemData', 'validationErrors'], null);
     this.setInData(['editingItemData', 'saving'], true);

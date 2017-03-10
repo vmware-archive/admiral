@@ -90,12 +90,10 @@ public class TagAssignmentServiceTest extends RequestBaseTest {
                 Arrays.asList());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testNoLinkRequest() throws Throwable {
-        TagAssignmentRequest request = new TagAssignmentRequest();
-        doOperation(request,
-                UriUtils.buildUri(this.host, TagAssignmentService.SELF_LINK),
-                TagAssignmentRequest.class, false, Action.POST);
+        updateTags(null, null, null, Arrays.asList());
+        updateTags(null, Arrays.asList("key2:value2"), null, Arrays.asList("key2:value2"));
     }
 
     @Test(expected = ServiceNotFoundException.class)

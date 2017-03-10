@@ -79,75 +79,69 @@ export default Reflux.createStore({
     this.emitChange();
   },
 
-  onCreateSubnetwork: function(subnetwork, tags) {
+  onCreateSubnetwork: function(subnetwork, tagRequest) {
 
     this.setInData(['editingItemData', 'item'], subnetwork);
     this.setInData(['editingItemData', 'validationErrors'], null);
     this.setInData(['editingItemData', 'saving'], true);
     this.emitChange();
 
-    Promise.all(tags.map(services.createTag)).then((createdTags) => {
+    let immutableSubnetwork;
 
-      subnetwork.tagLinks = createdTags.map((tag) => tag.documentSelfLink);
+    services.createSubnetwork(subnetwork).then((createdSubnetwork) => {
+      immutableSubnetwork = Immutable(createdSubnetwork);
+      if (tagRequest) {
+        tagRequest.resourceLink = createdSubnetwork.documentSelfLink;
+        return services.updateTagAssignment(tagRequest);
+      }
+      return Promise.resolve();
+    }).then(() => {
+      var subnetworks = this.data.items.asMutable();
+      subnetworks.push(immutableSubnetwork);
 
-      services.createSubnetwork(subnetwork).then((createdSubnetwork) => {
-        createdSubnetwork.tags = tags;
-        var immutableSubnetwork = Immutable(createdSubnetwork);
+      this.setInData(['items'], subnetworks);
+      this.setInData(['newItem'], immutableSubnetwork);
+      this.setInData(['editingItemData'], null);
+      this.emitChange();
 
-        var subnetworks = this.data.items.asMutable();
-        subnetworks.push(immutableSubnetwork);
-
-        this.setInData(['items'], subnetworks);
-        this.setInData(['newItem'], immutableSubnetwork);
-        this.setInData(['editingItemData'], null);
+      setTimeout(() => {
+        this.setInData(['newItem'], null);
         this.emitChange();
-
-        setTimeout(() => {
-          this.setInData(['newItem'], null);
-          this.emitChange();
-        }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
-      }).catch(this.onGenericEditError);
-
+      }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
     }).catch(this.onGenericEditError);
   },
 
-  onUpdateSubnetwork: function(subnetwork, tags) {
+  onUpdateSubnetwork: function(subnetwork, tagRequest) {
 
     this.setInData(['editingItemData', 'item'], subnetwork);
     this.setInData(['editingItemData', 'validationErrors'], null);
     this.setInData(['editingItemData', 'saving'], true);
     this.emitChange();
 
-    Promise.all(tags.map(services.createTag)).then((updatedTags) => {
+    Promise.all([
+        services.updateSubnetwork(subnetwork),
+        services.updateTagAssignment(tagRequest)]).then(([updatedSubnetwork]) => {
+      // If the backend did not make any changes, the response will be empty
+      updatedSubnetwork = updatedSubnetwork || subnetwork;
 
-      subnetwork.tagLinks = updatedTags.map((tag) => tag.documentSelfLink);
+      var immutableSubnetwork = Immutable(updatedSubnetwork);
+      var subnetworks = this.data.items.asMutable();
 
-      services.updateSubnetwork(subnetwork).then((updatedSubnetwork) => {
-        // If the backend did not make any changes, the response will be empty
-        updatedSubnetwork = updatedSubnetwork || subnetwork;
-        updatedSubnetwork.tags = tags;
-
-        var immutableSubnetwork = Immutable(updatedSubnetwork);
-        var subnetworks = this.data.items.asMutable();
-
-        for (var i = 0; i < subnetworks.length; i++) {
-          if (subnetworks[i].documentSelfLink === immutableSubnetwork.documentSelfLink) {
-            subnetworks[i] = immutableSubnetwork;
-          }
+      for (var i = 0; i < subnetworks.length; i++) {
+        if (subnetworks[i].documentSelfLink === immutableSubnetwork.documentSelfLink) {
+          subnetworks[i] = immutableSubnetwork;
         }
+      }
 
-        this.setInData(['items'], subnetworks);
-        this.setInData(['updatedItem'], immutableSubnetwork);
-        this.setInData(['editingItemData'], null);
+      this.setInData(['items'], subnetworks);
+      this.setInData(['updatedItem'], immutableSubnetwork);
+      this.setInData(['editingItemData'], null);
+      this.emitChange();
+
+      setTimeout(() => {
+        this.setInData(['updatedItem'], null);
         this.emitChange();
-
-        setTimeout(() => {
-          this.setInData(['updatedItem'], null);
-          this.emitChange();
-        }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
-      }).catch(this.onGenericEditError);
-
-
+      }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
     }).catch(this.onGenericEditError);
   },
 

@@ -99,11 +99,13 @@ var PlacementZoneEditor = Vue.extend({
         });
       }
 
+      var tagRequest = utils.createTagAssignmentRequest(item.documentSelfLink,
+          this.model.item.tags || [], this.tags);
       if (item.documentSelfLink) {
-        PlacementZonesActions.updatePlacementZone(item, this.tags,
+        PlacementZonesActions.updatePlacementZone(item, tagRequest,
             this.isDynamic() ? this.tagsToMatch : []);
       } else {
-        PlacementZonesActions.createPlacementZone(item, this.tags,
+        PlacementZonesActions.createPlacementZone(item, tagRequest,
             this.isDynamic() ? this.tagsToMatch : []);
       }
     },

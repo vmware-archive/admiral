@@ -254,22 +254,19 @@ let ComputeStore = Reflux.createStore({
     this.setInData(['editingItemData', 'item'], {});
     this.emitChange();
   },
-  onUpdateCompute(model, tags) {
-    let tagsPromises = [];
-    tags.forEach((tag) => {
-      tagsPromises.push(services.createTag(tag));
+  onUpdateCompute(model, tagRequest) {
+    let data = $.extend({}, model.dto, {
+      resourcePoolLink: model.resourcePoolLink
     });
-    Promise.all(tagsPromises).then((updatedTags) => {
-      let data = $.extend({}, model.dto, {
-        resourcePoolLink: model.resourcePoolLink,
-        tagLinks: [...new Set(updatedTags.map((tag) => tag.documentSelfLink))]
-      });
-      services.updateCompute(model.selfLinkId, data).then(() => {
-        actions.NavigationActions.openCompute();
-        this.setInData(['editingItemData'], null);
-        this.emitChange();
-      }).catch(this.onGenericEditError);
-    });
+
+    // TODO: execute in parallel when switched to PATCH
+    services.updateCompute(model.selfLinkId, data).then(() => {
+      return services.updateTagAssignment(tagRequest);
+    }).then(() => {
+      actions.NavigationActions.openCompute();
+      this.setInData(['editingItemData'], null);
+      this.emitChange();
+    }).catch(this.onGenericEditError);
 
     this.setInData(['editingItemData', 'item'], model);
     this.setInData(['editingItemData', 'validationErrors'], null);
