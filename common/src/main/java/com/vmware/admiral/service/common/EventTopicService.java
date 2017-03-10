@@ -23,6 +23,10 @@ public class EventTopicService extends StatefulService {
 
     public static class EventTopicState extends MultiTenantDocument {
 
+        @Documentation(description = "Event Topic name")
+        @UsageOption(option = PropertyUsageOption.REQUIRED)
+        public String name;
+
         @Documentation(description = "Task name")
         @UsageOption(option = PropertyUsageOption.REQUIRED)
         public String task;
@@ -75,6 +79,11 @@ public class EventTopicService extends StatefulService {
 
     private void validate(Operation post) {
         EventTopicState body = post.getBody(EventTopicState.class);
+
+        if (body.name == null) {
+            post.fail(new Throwable("'name' is required."));
+        }
+
         if (body.task == null || body.task.isEmpty()) {
             post.fail(new Throwable("'Task' is required."));
         }
@@ -95,9 +104,6 @@ public class EventTopicService extends StatefulService {
             post.fail(new Throwable("'Notification payload' is required."));
         }
 
-        if (body.replyPayload == null) {
-            post.fail(new Throwable("'Replay payload' is required."));
-        }
     }
 
 }

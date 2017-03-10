@@ -47,6 +47,7 @@ import com.vmware.admiral.compute.container.ServiceNetwork;
 
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
+import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState.SubStage;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
@@ -667,6 +668,24 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         validatePorts(desc1, getDocument(ContainerState.class, resourceIterator.next()));
         validatePorts(desc2,
                 getDocument(ContainerState.class, allocationTask2.resourceLinks.iterator().next()));
+    }
+
+    @SuppressWarnings("static-access")
+    @Test
+    public void testContainerAllocationSubscriptionSubStages() throws Throwable {
+
+        ContainerAllocationTaskState allocationTask = createContainerAllocationTask();
+        allocationTask.customProperties = new HashMap<>();
+        allocationTask.customProperties.put("customPropB", "valueB");
+        allocationTask = allocate(allocationTask);
+
+        assertNotNull(allocationTask);
+        Set<SubStage> subscriptionSubStages = allocationTask.taskSubStage.SUBSCRIPTION_SUB_STAGES;
+
+        assertNotNull(subscriptionSubStages);
+        assertEquals(2, subscriptionSubStages.size());
+        assertTrue(subscriptionSubStages.contains(allocationTask.taskSubStage.CONTEXT_PREPARED));
+        assertTrue(subscriptionSubStages.contains(allocationTask.taskSubStage.RESOURCES_NAMED));
     }
 
     private void validatePorts(ContainerDescription containerDescription,

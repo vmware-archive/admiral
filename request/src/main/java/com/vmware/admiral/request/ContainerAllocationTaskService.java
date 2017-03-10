@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -123,6 +124,10 @@ public class ContainerAllocationTaskService extends
 
             static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
                     Arrays.asList(PROVISIONING));
+
+            static final Set<SubStage> SUBSCRIPTION_SUB_STAGES = new HashSet<>(
+                    Arrays.asList(CONTEXT_PREPARED, RESOURCES_NAMED));
+
         }
 
         /** The description that defines the requested resource. */
@@ -182,6 +187,7 @@ public class ContainerAllocationTaskService extends
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.transientSubStages = SubStage.TRANSIENT_SUB_STAGES;
+        super.subscriptionSubStages = EnumSet.copyOf(SubStage.SUBSCRIPTION_SUB_STAGES);
     }
 
     @Override
@@ -1007,5 +1013,17 @@ public class ContainerAllocationTaskService extends
 
         return getHost()
                 .sendWithDeferredResult(op, ConfigurationState.class);
+    }
+
+    @Override
+    protected ServiceTaskCallbackResponse notificationPayload() {
+        return new ExtensibilityCallbackResponse();
+    }
+
+    /**
+     * Defines fields which are eligible for modification in case of subscription for task.
+     */
+    protected static class ExtensibilityCallbackResponse extends ServiceTaskCallbackResponse {
+        Set<String> resourceNames;
     }
 }
