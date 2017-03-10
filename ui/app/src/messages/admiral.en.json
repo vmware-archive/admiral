@@ -930,6 +930,8 @@
             "servicenameHint": "Example: webserver",
             "constraint": "Constraint"
           },
+          "autoredeploy": "Autoredeploy",
+          "autoredeployDescription": "Automatic redeployment of containers when they are in ERROR state.",
           "environmentVariables": "Environment Variables",
           "environmentVariablesDescription": "A list of environment variables",
           "environmentVariablesInputs": {

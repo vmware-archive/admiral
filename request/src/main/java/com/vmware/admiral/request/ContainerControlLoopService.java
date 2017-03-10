@@ -22,6 +22,7 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.request.ContainerRedeploymentTaskService.ContainerRedeploymentTaskState;
 import com.vmware.admiral.request.utils.RequestUtils;
@@ -192,13 +193,16 @@ public class ContainerControlLoopService extends StatefulService {
     }
 
     private DeferredResult<List<ContainerDescription>> retrieveContainerDescriptions() {
-        logFine("Retrieve all container descriptions. System container is excluded.");
+        logFine("Retrieve all container descriptions which have autoredeploy option enabled."
+                + "System container is excluded.");
 
         Builder builder = Builder.create()
                 .addKindFieldClause(ContainerDescription.class)
                 .addFieldClause(ContainerDescription.FIELD_NAME_SELF_LINK,
                         SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK,
-                        Occurance.MUST_NOT_OCCUR);
+                        Occurance.MUST_NOT_OCCUR)
+                .addCompositeFieldClause(ContainerDescription.FIELD_NAME_HEALTH_CONFIG,
+                        HealthConfig.FIELD_NAME_AUTOREDEPLOY, Boolean.TRUE.toString(), Occurance.MUST_OCCUR);
 
         QueryByPages<ContainerDescription> query = new QueryByPages<>(getHost(), builder.build(),
                 ContainerDescription.class, null);

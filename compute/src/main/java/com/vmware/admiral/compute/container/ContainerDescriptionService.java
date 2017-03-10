@@ -108,6 +108,7 @@ public class ContainerDescriptionService extends StatefulService {
         public static final String FIELD_NAME_AFFINITY = "affinity";
         public static final String FIELD_NAME_DEPLOYMENT_POLICY_ID = "deploymentPolicyId";
         public static final String FIELD_NAME_PARENT_DESCRIPTION_LINK = "parentDescriptionLink";
+        public static final String FIELD_NAME_HEALTH_CONFIG = "healthConfig";
 
         /** (Required) The docker image */
         @Documentation(description = "The docker image.")
@@ -279,6 +280,7 @@ public class ContainerDescriptionService extends StatefulService {
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public LogConfig logConfig;
 
+        @PropertyOptions(indexing = { PropertyIndexingOption.EXPAND })
         @JsonProperty("health_config")
         @Documentation(description = "Health service for this container.")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
@@ -793,6 +795,8 @@ public class ContainerDescriptionService extends StatefulService {
         template.healthConfig.timeoutMillis = 2000;
         template.healthConfig.healthyThreshold = 2;
         template.healthConfig.unhealthyThreshold = 2;
+        template.healthConfig.continueProvisioningOnError = true;
+        template.healthConfig.autoredeploy = true;
 
         template.networks = new LinkedHashMap<>();
         template.networkMode = "";

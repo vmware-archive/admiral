@@ -544,6 +544,8 @@ class ContainerDefinitionForm extends Component {
       '.container-health-protocol-input input:radio:checked').val();
     healthConfig.continueProvisioningOnError =
         this.$el.find('input#health-continue-provisionig-on-error-checkbox').prop('checked');
+    healthConfig.autoredeploy = this.$el.find('.container-autoredeployment-input .checkbox-control')
+      .is(':checked');
     if (healthConfig.protocol === 'COMMAND') {
       healthConfig.command = this.$el.find('.container-health-command-input textarea').val();
     } else if (healthConfig.protocol !== 'NONE') {
@@ -1079,6 +1081,8 @@ var updateForm = function(data, oldData) {
 
       this.$el.find('input#health-continue-provisionig-on-error-checkbox')
         .prop('checked', data.healthConfig.continueProvisioningOnError);
+      this.$el.find('.container-autoredeployment-input .checkbox-control')
+        .prop('checked', !!data.healthConfig.autoredeploy);
       this.$el.find('.container-health-protocol-input input[value='
                     + protocol + ']').prop('checked', true);
       healthConfigModeChanged(this.$el, protocol);
@@ -1173,19 +1177,23 @@ function healthConfigModeChanged($el, mode) {
       $el.find('.container-health-path-input').show();
       $el.find('#health-config-command').hide();
       $el.find('#health-continue-provisionig-on-error').show();
+      $el.find('.container-autoredeployment-input').show();
     } else if (mode === 'TCP') {
       $el.find('#health-config').show();
       $el.find('.container-health-path-input').hide();
       $el.find('#health-config-command').hide();
       $el.find('#health-continue-provisionig-on-error').show();
+      $el.find('.container-autoredeployment-input').show();
     } else if (mode === 'NONE') {
       $el.find('#health-config').hide();
       $el.find('#health-config-command').hide();
       $el.find('#health-continue-provisionig-on-error').hide();
+      $el.find('.container-autoredeployment-input').hide();
     } else if (mode === 'COMMAND') {
       $el.find('#health-config-command').show();
       $el.find('#health-config').hide();
       $el.find('#health-continue-provisionig-on-error').show();
+      $el.find('.container-autoredeployment-input').show();
     }
 }
 
