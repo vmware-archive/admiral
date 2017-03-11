@@ -106,7 +106,7 @@ public class EventLogService extends StatefulService {
 
     @Override
     public void handlePut(Operation put) {
-        getHost().failRequestActionNotSupported(put);
+        Operation.failActionNotSupported(put);
     }
 
     private void validateStateOnStart(EventLogState state) {

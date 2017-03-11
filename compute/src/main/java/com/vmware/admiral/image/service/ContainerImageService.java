@@ -55,7 +55,7 @@ public class ContainerImageService extends StatelessService {
     @Override
     public void handleRequest(Operation op) {
         if (op.getAction() != Action.GET) {
-            getHost().failRequestActionNotSupported(op);
+            Operation.failActionNotSupported(op);
             return;
         }
 

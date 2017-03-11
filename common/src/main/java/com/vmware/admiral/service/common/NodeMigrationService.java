@@ -185,10 +185,21 @@ public class NodeMigrationService extends StatelessService {
                                     logInfo("Migration task completed: %s", currentTask);
                                     migrationTasksInProgress.remove(currentTask);
                                 } else if (state.taskInfo.stage == TaskStage.FAILED) {
-                                    logInfo("Migration task failed: %s", currentTask);
-                                    if (hasError.compareAndSet(false, true)) {
-                                        logSevere("Migration failed");
-                                        post.fail(new Throwable("One or more migration tasks failed"));
+                                    // If a factory is missing on the source this is not a problem
+                                    // for the migration. The factory should be skipped.
+                                    if (state.taskInfo.failure.message.contains(
+                                            String.valueOf(Operation.STATUS_CODE_NOT_FOUND))) {
+                                        logInfo("Migration task skipped because it does not exist on source: %s",
+                                                currentTask);
+                                        migrationTasksInProgress.remove(currentTask);
+                                    } else {
+                                        logInfo("Migration task failed: %s", currentTask);
+                                        if (hasError.compareAndSet(false, true)) {
+                                            logSevere("Migration failed");
+                                            post.fail(new Throwable(
+                                                    "One or more migration tasks failed"));
+                                            migrationTasksInProgress.remove(currentTask);
+                                        }
                                     }
                                 }
                             }

@@ -72,7 +72,7 @@ public class SslTrustImportService extends StatelessService {
 
     @Override
     public void handleGet(Operation op) {
-        getHost().failRequestActionNotSupported(op);
+        Operation.failActionNotSupported(op);
     }
 
     @Override

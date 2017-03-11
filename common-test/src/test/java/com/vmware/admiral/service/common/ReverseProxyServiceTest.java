@@ -78,7 +78,7 @@ public class ReverseProxyServiceTest extends BaseTestCase {
         }
         op.setCompletion((o, e) -> {
             if (e != null) {
-                host.failRequestActionNotSupported(o);
+                Operation.failActionNotSupported(o);
                 return;
             }
             String outBody = o.getBody(String.class);

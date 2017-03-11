@@ -129,7 +129,7 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
 
     @Override
     public void handlePut(Operation put) {
-        getHost().failRequestActionNotSupported(put);
+        Operation.failActionNotSupported(put);
     }
 
     @Override

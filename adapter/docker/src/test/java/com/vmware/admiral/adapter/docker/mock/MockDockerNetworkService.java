@@ -82,7 +82,7 @@ public class MockDockerNetworkService extends StatelessService {
         } else if (op.getAction() == Action.POST) {
             handlePost(op);
         } else {
-            getHost().failRequestActionNotSupported(op);
+            Operation.failActionNotSupported(op);
         }
     }
 
@@ -157,7 +157,7 @@ public class MockDockerNetworkService extends StatelessService {
             }
 
         } else {
-            getHost().failRequestActionNotSupported(post);
+            Operation.failActionNotSupported(post);
         }
 
     }

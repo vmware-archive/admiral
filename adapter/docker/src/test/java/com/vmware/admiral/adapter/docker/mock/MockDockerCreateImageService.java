@@ -56,7 +56,7 @@ public class MockDockerCreateImageService extends StatelessService {
             handlePost(op);
 
         } else {
-            getHost().failRequestActionNotSupported(op);
+            Operation.failActionNotSupported(op);
         }
     }
 
