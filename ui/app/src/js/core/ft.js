@@ -48,8 +48,7 @@ var ft = {
   },
 
   areClosuresAllowed: function() {
-    return utils.getConfigurationPropertyBoolean('allow.closures') &&
-      !utils.isApplicationEmbedded();
+    return utils.getConfigurationPropertyBoolean('allow.closures');
   },
 
   showProjectsInNavigation: function() {
