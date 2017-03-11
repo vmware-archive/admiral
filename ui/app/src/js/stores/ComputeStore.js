@@ -255,14 +255,14 @@ let ComputeStore = Reflux.createStore({
     this.emitChange();
   },
   onUpdateCompute(model, tagRequest) {
-    let data = $.extend({}, model.dto, {
-      resourcePoolLink: model.resourcePoolLink
-    });
+    let patchData = {
+      resourcePoolLink: model.resourcePoolLink || constants.NO_LINK_VALUE
+    };
 
-    // TODO: execute in parallel when switched to PATCH
-    services.updateCompute(model.selfLinkId, data).then(() => {
-      return services.updateTagAssignment(tagRequest);
-    }).then(() => {
+    Promise.all([
+        services.updateCompute(model.selfLinkId, patchData),
+        services.updateTagAssignment(tagRequest)
+    ]).then(() => {
       actions.NavigationActions.openCompute();
       this.setInData(['editingItemData'], null);
       this.emitChange();
