@@ -1300,7 +1300,7 @@ services.loadEndpoints = function() {
 };
 
 services.loadEndpoint = function(documentSelfLink) {
-  return get(links.ENDPOINTS + documentSelfLink);
+  return get(documentSelfLink);
 };
 
 services.verifyEndpoint = function(endpoint) {

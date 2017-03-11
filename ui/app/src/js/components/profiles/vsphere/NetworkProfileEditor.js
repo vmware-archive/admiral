@@ -109,12 +109,10 @@ export default Vue.component('vsphere-network-profile-editor', {
       this.emitChange();
     },
     searchIsolationNetworks(...args) {
-      return new Promise((resolve, reject) => {
-        services.searchNetworks.apply(null,
-            [this.endpointLink, ...args]).then((result) => {
-          resolve(result);
-        }).catch(reject);
-      });
+      return services.searchNetworks.apply(null, [
+        this.endpoint.endpointProperties.linkedEndpointLink || this.endpoint.documentSelfLink,
+        ...args
+      ]);
     },
     convertToObject(value) {
       if (value) {
