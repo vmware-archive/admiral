@@ -123,7 +123,7 @@ public class RegistryAdapterService extends StatelessService {
     @Override
     public void handleRequest(Operation op) {
         if (op.getAction() != Action.PATCH) {
-            getHost().failRequestActionNotSupported(op);
+            Operation.failActionNotSupported(op);
             return;
         }
 

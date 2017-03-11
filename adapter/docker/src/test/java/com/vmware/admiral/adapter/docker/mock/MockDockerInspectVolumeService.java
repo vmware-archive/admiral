@@ -31,7 +31,7 @@ public class MockDockerInspectVolumeService extends StatelessService {
             handleGet(op);
 
         } else {
-            getHost().failRequestActionNotSupported(op);
+            Operation.failActionNotSupported(op);
         }
     }
 
