@@ -56,7 +56,7 @@ let EndpointsStore = Reflux.createStore({
         Promise.all(endpoints.map((endpoint) => {
           let documentLink = endpoint.endpointProperties.linkedEndpointLink;
           return documentLink ?
-              services.loadEndpoint(utils.getDocumentId(documentLink)) : Promise.resolve();
+              services.loadEndpoint(documentLink) : Promise.resolve();
         })).then((linkedEndpoints) => {
           linkedEndpoints.forEach((e, i) => endpoints[i].linkedEndpoint = e);
           this.setInData(['items'], endpoints);
