@@ -40,11 +40,15 @@
         <dropdown
             :entity="i18n('app.placementZone.edit.placementPolicy')"
             :options="[{
+              name: 'RANDOM'
+            }, {
               name: 'BINPACK'
             }, {
               name: 'SPREAD'
             }]"
-            :value="{'name': model.item.epzState && model.item.epzState.placementPolicy}"
+            :value="{
+              name: placementPolicy
+            }"
             @change="onPlacementPolicyChange"></dropdown>
       </div>
       <div v-if="isDockerPlacementZone" class="tags form-group row">

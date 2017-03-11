@@ -35,8 +35,10 @@ var PlacementZoneEditor = Vue.extend({
     }
   },
   data() {
+    let placementPolicy = this.model.item.epzState && this.model.item.epzState.placementPolicy;
     return {
-      placementPolicy: null,
+      placementPolicy: placementPolicy && placementPolicy !== 'DEFAULT'
+          ? placementPolicy : 'RANDOM',
       saveDisabled: !this.model.item.name,
       tags: this.model.item.tags || [],
       tagsToMatch: this.model.item.tagsToMatch || []
@@ -93,11 +95,10 @@ var PlacementZoneEditor = Vue.extend({
         item.epzState = item.epzState || {};
       }
 
-      if (this.placementPolicy) {
-        item.epzState = $.extend(item.epzState || {}, {
-          placementPolicy: this.placementPolicy
-        });
-      }
+      item.epzState = $.extend(item.epzState || {}, {
+        placementPolicy: this.placementPolicy && this.placementPolicy !== 'RANDOM'
+            ? this.placementPolicy : 'DEFAULT'
+      });
 
       var tagRequest = utils.createTagAssignmentRequest(item.documentSelfLink,
           this.model.item.tags || [], this.tags);
