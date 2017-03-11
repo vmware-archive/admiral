@@ -682,7 +682,7 @@ services.loadHostByLink = function(hostLink) {
 };
 
 services.updateCompute = function(hostId, hostData) {
-  return put(links.COMPUTE_RESOURCES + '/' + hostId, hostData);
+  return patch(links.COMPUTE_RESOURCES + '/' + hostId, hostData);
 };
 
 services.updateContainerHost = function(hostSpec) {
@@ -903,7 +903,7 @@ services.loadMachines = function(queryOptions) {
 };
 
 services.updateMachine = function(id, data) {
-  return put(links.COMPUTE_RESOURCES + '/' + id, data);
+  return patch(links.COMPUTE_RESOURCES + '/' + id, data);
 };
 
 services.loadCompute = function(queryOptions) {

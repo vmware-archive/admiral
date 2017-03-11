@@ -304,15 +304,14 @@ let MachinesStore = Reflux.createStore({
     this.emitChange();
   },
   onUpdateMachine(model, tagRequest) {
-    // update machine (TODO: switch to PATCH)
-    let data = $.extend({}, model.dto, {
-      resourcePoolLink: model.resourcePoolLink
-    });
+    let patchData = {
+      resourcePoolLink: model.resourcePoolLink || constants.NO_LINK_VALUE
+    };
 
-    // TODO: execute in parallel when switched to PATCH
-    services.updateMachine(model.selfLinkId, data).then(() => {
-        return services.updateTagAssignment(tagRequest);
-    }).then(() => {
+    Promise.all([
+        services.updateMachine(model.selfLinkId, patchData),
+        services.updateTagAssignment(tagRequest)
+    ]).then(() => {
       actions.NavigationActions.openMachines();
       this.setInData(['editingItemData'], null);
       this.emitChange();

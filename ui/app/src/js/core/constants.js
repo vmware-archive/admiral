@@ -365,6 +365,7 @@ var constants = Immutable({
     COMPUTE: 'COMPUTE'
   },
   NEW_ITEM_SYSTEM_VALUE: '__new',
+  NO_LINK_VALUE: '__noLink',
   RESOURCE_CONNECTION_TYPE: {
     NETWORK: 'network',
     VOLUME: 'volume'
