@@ -248,6 +248,8 @@ public class EndpointAdapterService extends StatelessService {
                     "compute.endpoint.adapter.delete.endpoint.missing", delete.getUri().getPath());
         }
 
+        String id = statsCollectionId(endpointLink);
+
         EndpointRemovalTaskState state = new EndpointRemovalTaskState();
         state.endpointLink = endpointLink;
         state.taskInfo = new TaskState();
@@ -265,6 +267,16 @@ public class EndpointAdapterService extends StatelessService {
                         return;
                     }
                     delete.complete();
+                })
+                .sendWith(this);
+
+        // Delete scheduled stats collection
+        Operation.createDelete(this, UriUtils.buildUriPath(ScheduledTaskService.FACTORY_LINK, id))
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logInfo("Uneble to delete scheduled stats collection task, reason: %s",
+                                e.getMessage());
+                    }
                 })
                 .sendWith(this);
     }
@@ -317,11 +329,7 @@ public class EndpointAdapterService extends StatelessService {
 
         EndpointState endpoint = currentState.endpointState;
 
-        String statsCollectionSuffix = "-stats-collection";
-
-        // Append suffix to avoid duplication with enumeration scheduler.
-        String id = UriUtils.getLastPathSegment(endpoint.documentSelfLink)
-                .concat(statsCollectionSuffix);
+        String id = statsCollectionId(endpoint.documentSelfLink);
 
         long intervalMicros = currentState.enumerationRequest.refreshIntervalMicros != null
                 ? currentState.enumerationRequest.refreshIntervalMicros
@@ -363,6 +371,15 @@ public class EndpointAdapterService extends StatelessService {
 
                 })
                 .sendWith(this);
+    }
+
+    private String statsCollectionId(String endpointLink) {
+        String statsCollectionSuffix = "-stats-collection";
+
+        // Append suffix to avoid duplication with enumeration scheduler.
+        String id = UriUtils.getLastPathSegment(endpointLink)
+                .concat(statsCollectionSuffix);
+        return id;
     }
 
 }
