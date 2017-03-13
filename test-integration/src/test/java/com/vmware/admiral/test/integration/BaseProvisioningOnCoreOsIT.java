@@ -96,7 +96,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
     private AuthCredentialsServiceState dockerHostAuthCredentials;
     private SslTrustCertificateState dockerHostSslTrust;
 
-    private final Set<String> containersToDelete = new HashSet<>();
+    protected final Set<String> containersToDelete = new HashSet<>();
     private final Set<String> externalNetworksToDelete = new HashSet<>();
 
     protected String registryAddress;
