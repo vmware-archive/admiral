@@ -250,7 +250,8 @@ public class NetworkProfileQueryUtils {
                                             s -> Pair.of(profile, s)));
 
                             if (networkDescription.networkType == NetworkType.PUBLIC) {
-                                pairs = pairs.filter(p -> p.right.supportPublicIpAddress);
+                                pairs = pairs.filter(p -> p.right.supportPublicIpAddress != null ?
+                                      p.right.supportPublicIpAddress : false);
                             }
 
                             selectedProfiles = TagConstraintUtils
