@@ -225,6 +225,7 @@ public class ContainerVolumeDescriptionService extends StatefulService {
     @Override
     public ServiceDocument getDocumentTemplate() {
         ContainerVolumeDescription template = (ContainerVolumeDescription) super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
 
         template.name = "name (string)";
         template.customProperties = new HashMap<>(1);

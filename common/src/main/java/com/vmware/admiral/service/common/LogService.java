@@ -92,6 +92,7 @@ public class LogService extends StatefulService {
     @Override
     public ServiceDocument getDocumentTemplate() {
         ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
 
         // resource reference prop:
         ServiceDocumentDescription.PropertyDescription pd = template.documentDescription

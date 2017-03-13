@@ -39,6 +39,10 @@
             <artifactId>xenon-common</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.vmware.photon.controller</groupId>
+            <artifactId>photon-model</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.hierynomus</groupId>
             <artifactId>sshj</artifactId>
             <version>0.16.0</version>

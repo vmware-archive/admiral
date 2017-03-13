@@ -19,6 +19,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -39,6 +40,7 @@ import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification.QueryOption;
 
 public class ContainerServiceTest extends ComputeBaseTest {
 
@@ -137,6 +139,78 @@ public class ContainerServiceTest extends ComputeBaseTest {
         }
         queryContainers(numberOfContainers + 1);
         countQueryContainers(numberOfContainers + 1);
+    }
+
+    @Test
+    public void testVersionRetentionWtihOData() throws Throwable {
+        ContainerState state = createContainer("/parent/1", "tenant1");
+
+        int numberOfContainerStatePatches = 2017;
+        for (int i = 0; i <= numberOfContainerStatePatches; i++) {
+            ContainerState containerState = new ContainerState();
+            containerState.customProperties = new HashMap<String, String>();
+            containerState.customProperties.put("keyTestProp_" + i, "valueTestProp_" + i);
+            doPatch(containerState, state.documentSelfLink);
+        }
+
+        waitFor(() -> {
+            AtomicInteger ai = new AtomicInteger(0);
+            QuerySpecification qs = new QuerySpecification();
+            qs.query = Query.Builder.create().addKindFieldClause(ContainerState.class).build();
+            qs.options = EnumSet.of(QueryOption.COUNT, QueryOption.INCLUDE_ALL_VERSIONS);
+            QueryTask qt = QueryTask.create(qs);
+            host.testStart(1);
+            new ServiceDocumentQuery<>(
+                    host, null).query(qt,
+                            (r) -> {
+                                if (r.hasException()) {
+                                    ai.set(Integer.MAX_VALUE);
+                                }
+                                if (r.hasResult()) {
+                                    ai.set((int) r.getCount());
+                                } else {
+                                    ai.set(Integer.MAX_VALUE);
+                                }
+                                host.completeIteration();
+                            });
+            host.testWait();
+            return ai
+                    .get() <= com.vmware.photon.controller.model.ServiceUtils.SERVICE_DOCUMENT_VERSION_RETENTION_LIMIT;
+        });
+
+        List<String> containerStatesList = new ArrayList<>();
+        QuerySpecification qs = new QuerySpecification();
+        qs.query = Query.Builder.create().addKindFieldClause(ContainerState.class).build();
+        qs.options = EnumSet.of(QueryOption.INCLUDE_ALL_VERSIONS);
+        QueryTask qt = QueryTask.create(qs);
+        host.testStart(1);
+        new ServiceDocumentQuery<>(
+                host, null).query(qt,
+                        (r) -> {
+                            if (r.hasException()) {
+                                host.failIteration(r.getException());
+                                return;
+                            }
+                            if (r.hasResult()) {
+                                containerStatesList.add(r.getDocumentSelfLink());
+                                return;
+                            }
+                            host.completeIteration();
+                        });
+        host.testWait();
+
+        assertTrue("Document version retention below floor",
+                com.vmware.photon.controller.model.ServiceUtils.SERVICE_DOCUMENT_VERSION_RETENTION_FLOOR < containerStatesList
+                        .size());
+        assertTrue("Document version retention above limit.",
+                com.vmware.photon.controller.model.ServiceUtils.SERVICE_DOCUMENT_VERSION_RETENTION_LIMIT > containerStatesList
+                        .size());
+        for (int i = 0; i < containerStatesList.size(); i++) {
+            assertEquals(
+                    Integer.parseInt(containerStatesList.get(i)
+                            .substring(containerStatesList.get(i).length() - 4)),
+                    numberOfContainerStatePatches + 1 - i);
+        }
     }
 
     @Test

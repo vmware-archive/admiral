@@ -57,6 +57,15 @@ import com.vmware.xenon.swagger.SwaggerDescriptorService;
  */
 public class ManagementHost extends ServiceHost implements IExtensibilityRegistryHost {
 
+    static {
+        if (System.getProperty("service.document.version.retention.limit") == null) {
+            System.setProperty("service.document.version.retention.limit", "10");
+        }
+        if (System.getProperty("service.document.version.retention.floor") == null) {
+            System.setProperty("service.document.version.retention.floor", "2");
+        }
+    }
+
     /**
      * Flag to start a mock adapter instance useful for integration tests
      */

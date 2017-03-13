@@ -276,6 +276,7 @@ public class HostPortProfileService extends StatefulService {
     @Override
     public ServiceDocument getDocumentTemplate() {
         HostPortProfileState template = (HostPortProfileState) super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
         template.reservedPorts = new HashMap<>();
 
         return template;

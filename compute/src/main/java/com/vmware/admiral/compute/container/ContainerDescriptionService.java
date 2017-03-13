@@ -740,6 +740,7 @@ public class ContainerDescriptionService extends StatefulService {
     @Override
     public ServiceDocument getDocumentTemplate() {
         ContainerDescription template = (ContainerDescription) super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
 
         // FIXME this causes issues when the text contains non alpha characters
         // ServiceDocumentTemplateUtil.indexTextProperty(template,

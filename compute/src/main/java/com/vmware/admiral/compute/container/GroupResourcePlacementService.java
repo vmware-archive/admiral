@@ -708,6 +708,7 @@ public class GroupResourcePlacementService extends StatefulService {
     public ServiceDocument getDocumentTemplate() {
         GroupResourcePlacementState template =
                 (GroupResourcePlacementState) super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
         template.resourceQuotaPerResourceDesc = new HashMap<>();
         template.memoryQuotaPerResourceDesc = new HashMap<>();
         template.customProperties = new HashMap<String, String>(1);
