@@ -13,9 +13,17 @@ package com.vmware.admiral.adapter.kubernetes;
 
 import static com.vmware.admiral.adapter.kubernetes.ApiUtil.API_PREFIX_EXTENSIONS_V1BETA;
 import static com.vmware.admiral.adapter.kubernetes.ApiUtil.API_PREFIX_V1;
+import static com.vmware.admiral.adapter.kubernetes.ApiUtil.getKubernetesPath;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.DEPLOYMENT_TYPE;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.KUBERNETES_LABEL_APP;
 import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.KUBERNETES_LABEL_APP_ID;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.NAMESPACE_TYPE;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.NODE_TYPE;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.POD_TYPE;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.REPLICATION_CONTROLLER_TYPE;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.REPLICA_SET_TYPE;
+import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.SERVICE_TYPE;
 
 import java.io.IOException;
 import java.net.URI;
@@ -261,14 +269,16 @@ public class KubernetesRemoteApiClient {
 
     public void getNamespaces(KubernetesContext context, CompletionHandler completionHandler) {
         URI uri = UriUtils
-                .buildUri(ApiUtil.apiPrefix(context, ApiUtil.API_PREFIX_V1) + "/namespaces");
+                .buildUri(ApiUtil.apiPrefix(context, ApiUtil.API_PREFIX_V1) +
+                        getKubernetesPath(NAMESPACE_TYPE));
         sendRequest(Action.GET, uri, null, context, completionHandler);
     }
 
     public void createNamespaceIfMissing(KubernetesContext context,
             CompletionHandler completionHandler) {
         URI uri = UriUtils
-                .buildUri(ApiUtil.apiPrefix(context, ApiUtil.API_PREFIX_V1) + "/namespaces");
+                .buildUri(ApiUtil.apiPrefix(context, ApiUtil.API_PREFIX_V1) +
+                        getKubernetesPath(NAMESPACE_TYPE));
         String target = context.host.customProperties.get(
                 KubernetesHostConstants.KUBERNETES_HOST_NAMESPACE_PROP_NAME);
 
@@ -301,7 +311,8 @@ public class KubernetesRemoteApiClient {
     public void getPods(KubernetesContext context, String appId, CompletionHandler
             completionHandler) {
         URI uri = UriUtils
-                .buildUri(ApiUtil.namespacePrefix(context, ApiUtil.API_PREFIX_V1) + "/pods");
+                .buildUri(ApiUtil.namespacePrefix(context, ApiUtil.API_PREFIX_V1) +
+                        getKubernetesPath(POD_TYPE));
 
         if (appId != null) {
             uri = UriUtils.extendUriWithQuery(uri, LABEL_SELECTOR_QUERY, String
@@ -313,14 +324,15 @@ public class KubernetesRemoteApiClient {
 
     public void getNodes(KubernetesContext context, CompletionHandler completionHandler) {
         URI uri = UriUtils
-                .buildUri(ApiUtil.apiPrefix(context, ApiUtil.API_PREFIX_V1) + "/nodes");
+                .buildUri(ApiUtil.apiPrefix(context, ApiUtil.API_PREFIX_V1) + getKubernetesPath
+                        (NODE_TYPE));
         sendRequest(Action.GET, uri, null, context, completionHandler);
     }
 
     public void getServices(KubernetesContext context, String appId, CompletionHandler
             completionHandler) {
         URI uri = UriUtils.buildUri(ApiUtil.namespacePrefix(context, ApiUtil.API_PREFIX_V1) +
-                "/services");
+                getKubernetesPath(SERVICE_TYPE));
 
         if (appId != null) {
             uri = UriUtils.extendUriWithQuery(uri, LABEL_SELECTOR_QUERY, String
@@ -334,7 +346,7 @@ public class KubernetesRemoteApiClient {
             completionHandler) {
         URI uri = UriUtils.buildUri(
                 ApiUtil.namespacePrefix(context, API_PREFIX_EXTENSIONS_V1BETA)
-                        + "/deployments");
+                        + getKubernetesPath(DEPLOYMENT_TYPE));
 
         if (appId != null) {
             uri = UriUtils.extendUriWithQuery(uri, LABEL_SELECTOR_QUERY, String
@@ -348,7 +360,7 @@ public class KubernetesRemoteApiClient {
             completionHandler) {
         URI uri = UriUtils.buildUri(
                 ApiUtil.namespacePrefix(context, API_PREFIX_EXTENSIONS_V1BETA)
-                        + "/replicasets");
+                        + getKubernetesPath(REPLICA_SET_TYPE));
 
         if (appId != null) {
             uri = UriUtils.extendUriWithQuery(uri, LABEL_SELECTOR_QUERY, String
@@ -362,7 +374,7 @@ public class KubernetesRemoteApiClient {
             CompletionHandler completionHandler) {
         URI uri = UriUtils.buildUri(
                 ApiUtil.namespacePrefix(context, API_PREFIX_V1)
-                        + "/replicationcontrollers");
+                        + getKubernetesPath(REPLICATION_CONTROLLER_TYPE));
 
         if (appId != null) {
             uri = UriUtils.extendUriWithQuery(uri, LABEL_SELECTOR_QUERY, String

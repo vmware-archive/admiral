@@ -69,6 +69,8 @@ public class KubernetesUtil {
     public static final String DEPLOYMENT_TYPE = "Deployment";
     public static final String SERVICE_TYPE = "Service";
     public static final String REPLICA_SET_TYPE = "ReplicaSet";
+    public static final String NODE_TYPE = "Node";
+    public static final String NAMESPACE_TYPE = "Namespace";
 
     public static final String KUBERNETES_API_VERSION_V1 = "v1";
     public static final String KUBERNETES_API_VERSION_V1_BETA1 = "extensions/v1beta1";

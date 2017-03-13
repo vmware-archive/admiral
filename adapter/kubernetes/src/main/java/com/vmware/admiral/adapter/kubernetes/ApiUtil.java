@@ -22,7 +22,6 @@ import java.util.Map;
 import com.vmware.admiral.adapter.kubernetes.service.AbstractKubernetesAdapterService.KubernetesContext;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
-import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
 import com.vmware.xenon.common.UriUtils;
 
@@ -38,6 +37,13 @@ public class ApiUtil {
         entityTypeToPath.put(KubernetesUtil.SERVICE_TYPE, "/services");
         entityTypeToPath.put(KubernetesUtil.POD_TYPE, "/pods");
         entityTypeToPath.put(KubernetesUtil.REPLICATION_CONTROLLER_TYPE, "/replicationcontrollers");
+        entityTypeToPath.put(KubernetesUtil.REPLICA_SET_TYPE, "/replicasets");
+        entityTypeToPath.put(KubernetesUtil.NAMESPACE_TYPE, "/namespaces");
+        entityTypeToPath.put(KubernetesUtil.NODE_TYPE, "/nodes");
+    }
+
+    public static String getKubernetesPath(String entityType) {
+        return entityTypeToPath.get(entityType);
     }
 
     static String apiPrefix(KubernetesContext context, String apiVersion) {
@@ -54,19 +60,6 @@ public class ApiUtil {
         return apiPrefix(context, apiVersion) + NAMESPACES + namespace;
     }
 
-    static String namespacePrefix(KubernetesContext context, String apiVersion,
-            BaseKubernetesObject kubernetesObject) {
-        assert (context.host != null);
-        assert (kubernetesObject != null);
-
-        String namespace = kubernetesObject.metadata.namespace;
-        if (namespace == null || namespace.isEmpty()) {
-            return namespacePrefix(context, apiVersion);
-        } else {
-            return apiPrefix(context, apiVersion) + NAMESPACES + namespace;
-        }
-    }
-
     public static URI buildKubernetesUri(KubernetesDescription description,
             KubernetesContext context) throws IOException {
         assertNotNull(context.host, "context.host");
@@ -80,14 +73,13 @@ public class ApiUtil {
                             description.type));
         }
 
-        BaseKubernetesObject entity = description.getKubernetesEntity(BaseKubernetesObject.class);
-
         String uriString;
 
-        if (KubernetesUtil.DEPLOYMENT_TYPE.equals(description.type)) {
-            uriString = namespacePrefix(context, API_PREFIX_EXTENSIONS_V1BETA, entity);
+        if (KubernetesUtil.DEPLOYMENT_TYPE.equals(description.type)
+                || KubernetesUtil.REPLICA_SET_TYPE.equals(description.type)) {
+            uriString = namespacePrefix(context, API_PREFIX_EXTENSIONS_V1BETA);
         } else {
-            uriString = namespacePrefix(context, API_PREFIX_V1, entity);
+            uriString = namespacePrefix(context, API_PREFIX_V1);
         }
 
         uriString = uriString + entityTypeToPath.get(description.type);
