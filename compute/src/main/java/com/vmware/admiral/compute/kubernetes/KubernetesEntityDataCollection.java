@@ -11,7 +11,12 @@
 
 package com.vmware.admiral.compute.kubernetes;
 
+import static com.vmware.admiral.compute.content.CompositeDescriptionContentService.KUBERNETES_APPLICATION_TEMPLATE_PREFIX;
+import static com.vmware.admiral.compute.content.CompositeTemplateUtil.FORMATTER;
+
 import java.net.URI;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,7 +37,9 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
+import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService;
@@ -101,6 +108,13 @@ public class KubernetesEntityDataCollection extends StatefulService {
         public String selfLink;
 
         public String namespace;
+
+        /**
+         * This will be != null, in case the entity is created from admiral,
+         * and it was part of composite component. Will be used to discover applications
+         * deployed from admiral.
+         */
+        public String compositeComponentId;
     }
 
     public static class EntityListCallback extends ServiceTaskCallbackResponse {
@@ -277,7 +291,7 @@ public class KubernetesEntityDataCollection extends StatefulService {
 
         // finished removing existing entity states, now deal with remaining IDs
         List<BaseKubernetesState> entitiesLeft = new ArrayList<>();
-
+        Set<String> compositeIdsToCreate = new HashSet<>();
         Operation operation = Operation
                 .createGet(this, callback.computeHostLink)
                 .setCompletion(
@@ -290,6 +304,9 @@ public class KubernetesEntityDataCollection extends StatefulService {
                             }
                             ComputeState host = o.getBody(ComputeState.class);
                             List<String> group = host.tenantLinks;
+
+                            AtomicInteger counter = new AtomicInteger(
+                                    callback.idToEntityData.size());
 
                             for (Entry<String, KubernetesEntityData> entry : callback.idToEntityData
                                     .entrySet()) {
@@ -308,15 +325,66 @@ public class KubernetesEntityDataCollection extends StatefulService {
                                 state.kubernetesSelfLink = data.selfLink;
                                 state.tenantLinks = group;
                                 state.parentLink = callback.computeHostLink;
-
+                                state = checkForCompositeComponentId(state, data);
                                 entitiesLeft.add(state);
+                                if (state.compositeComponentLink != null && !state
+                                        .compositeComponentLink.isEmpty()) {
+                                    compositeIdsToCreate.add(state.compositeComponentLink);
+                                }
                             }
-
-                            createDiscoveredEntities(entitiesLeft, () ->
-                                    unlockCurrentDataCollectionForHost(callback.computeHostLink));
+                            createCompositeComponents(compositeIdsToCreate, () ->
+                                    createDiscoveredEntities(entitiesLeft, () ->
+                                            unlockCurrentDataCollectionForHost(
+                                                    callback.computeHostLink)));
                         });
-
         sendRequest(operation);
+    }
+
+    private void createCompositeComponents(Set<String> compositeIds, Runnable callback) {
+        if (compositeIds == null || compositeIds.isEmpty()) {
+            callback.run();
+            return;
+        }
+
+        AtomicInteger counter = new AtomicInteger(compositeIds.size());
+
+        Runnable decrementCounter = () -> {
+            if (counter.decrementAndGet() == 0) {
+                callback.run();
+            }
+        };
+
+        for (String compositeId : compositeIds) {
+            sendRequest(Operation
+                    .createGet(this, buildCompositeComponentPath(compositeId))
+                    .setCompletion((o, ex) -> {
+                        if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
+                            createCompositeComponent(compositeId, decrementCounter);
+                        } else if (ex != null) {
+                            logWarning("Error getting composite component: %s", compositeId);
+                            decrementCounter.run();
+                        } else {
+                            decrementCounter.run();
+                        }
+                    }));
+        }
+
+    }
+
+    private void createCompositeComponent(String compositeId, Runnable callback) {
+        CompositeComponent compositeComponent = new CompositeComponent();
+        compositeComponent.documentSelfLink = compositeId;
+        compositeComponent.name = KUBERNETES_APPLICATION_TEMPLATE_PREFIX + ZonedDateTime
+                .now(ZoneOffset.UTC).format(FORMATTER);
+        sendRequest(Operation.createPost(this, CompositeComponentFactoryService.SELF_LINK)
+                .setBody(compositeComponent)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        logWarning("Error creating composite component "
+                                + "on kubernetes data collection: %s", Utils.toString(ex));
+                    }
+                    callback.run();
+                }));
     }
 
     private void unlockCurrentDataCollectionForHost(String computeHostLink) {
@@ -457,5 +525,18 @@ public class KubernetesEntityDataCollection extends StatefulService {
                             logInfo("Deleted KubernetesState of missing entity: "
                                     + state.documentSelfLink);
                         }));
+    }
+
+    private BaseKubernetesState checkForCompositeComponentId(BaseKubernetesState state,
+            KubernetesEntityData data) {
+        if (data.compositeComponentId == null || data.compositeComponentId.isEmpty()) {
+            return state;
+        }
+        state.compositeComponentLink = buildCompositeComponentPath(data.compositeComponentId);
+        return state;
+    }
+
+    private static String buildCompositeComponentPath(String compositeId) {
+        return UriUtils.buildUriPath(CompositeComponentFactoryService.SELF_LINK, compositeId);
     }
 }

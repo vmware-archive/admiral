@@ -179,6 +179,11 @@ public class KubernetesUtil {
         data.kind = kind;
         data.selfLink = object.metadata.selfLink;
         data.namespace = object.metadata.namespace;
+        if (object.metadata.labels != null
+                && object.metadata.labels.containsKey(KUBERNETES_LABEL_APP_ID)) {
+            data.compositeComponentId = String
+                    .valueOf(object.metadata.labels.get(KUBERNETES_LABEL_APP_ID));
+        }
         return data;
     }
 
