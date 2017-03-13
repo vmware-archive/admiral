@@ -11,6 +11,9 @@
 
 package com.vmware.admiral.compute.kubernetes;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +28,7 @@ import org.junit.Test;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.content.kubernetes.KubernetesUtil;
 import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection.EntityListCallback;
@@ -176,7 +180,8 @@ public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
         return entitiesFound;
     }
 
-    private BaseKubernetesState makeEntity(String id, String name, String type) {
+    private BaseKubernetesState makeEntity(String id, String name, String type,
+            String compositeId) {
         BaseKubernetesState result = KubernetesUtil.createKubernetesEntityState(type);
         if (result == null) {
             return null;
@@ -192,6 +197,10 @@ public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
         BaseKubernetesObject object = new BaseKubernetesObject();
         object.metadata = metadata;
         object.kind = type;
+        if (compositeId != null) {
+            object.metadata.labels = new HashMap<>();
+            object.metadata.labels.put(KubernetesUtil.KUBERNETES_LABEL_APP_ID, compositeId);
+        }
         result.setKubernetesEntityFromJson(Utils.toJson(object));
         return result;
     }
@@ -202,7 +211,7 @@ public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
         entity.name = "entity";
         entity.id = "id";
         MockKubernetesAdapterService
-                .addEntity(makeEntity(entity.id, entity.name, KubernetesUtil.POD_TYPE));
+                .addEntity(makeEntity(entity.id, entity.name, KubernetesUtil.POD_TYPE, null));
 
         startDataCollectionAndWait();
 
@@ -228,11 +237,11 @@ public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
     @Test
     public void testDiscoverMultipleEntities() throws Throwable {
         List<BaseKubernetesState> testEntities = new ArrayList<>();
-        testEntities.add(makeEntity("pod-1", "my_prog_1", KubernetesUtil.POD_TYPE));
-        testEntities.add(makeEntity("pod-2", "name-for-pod", KubernetesUtil.POD_TYPE));
-        testEntities.add(makeEntity("no-name", null, KubernetesUtil.POD_TYPE));
-        testEntities.add(makeEntity("ser-1", "my_service_1", KubernetesUtil.SERVICE_TYPE));
-        testEntities.add(makeEntity("depl-1", "my_app_1", KubernetesUtil.DEPLOYMENT_TYPE));
+        testEntities.add(makeEntity("pod-1", "my_prog_1", KubernetesUtil.POD_TYPE, null));
+        testEntities.add(makeEntity("pod-2", "name-for-pod", KubernetesUtil.POD_TYPE, null));
+        testEntities.add(makeEntity("no-name", null, KubernetesUtil.POD_TYPE, null));
+        testEntities.add(makeEntity("ser-1", "my_service_1", KubernetesUtil.SERVICE_TYPE, null));
+        testEntities.add(makeEntity("depl-1", "my_app_1", KubernetesUtil.DEPLOYMENT_TYPE, null));
 
         testEntities.forEach(MockKubernetesAdapterService::addEntity);
         startDataCollectionAndWait();
@@ -253,9 +262,10 @@ public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
         pod.name = "my_prog_1";
 
         List<BaseKubernetesState> testEntities = new ArrayList<>();
-        testEntities.add(makeEntity(pod.id, pod.name, KubernetesUtil.POD_TYPE));
-        testEntities.add(makeEntity("service-2", "bread-baker", KubernetesUtil.SERVICE_TYPE));
-        testEntities.add(makeEntity("rc-1", "test-controller", KubernetesUtil.REPLICATION_CONTROLLER_TYPE));
+        testEntities.add(makeEntity(pod.id, pod.name, KubernetesUtil.POD_TYPE, null));
+        testEntities.add(makeEntity("service-2", "bread-baker", KubernetesUtil.SERVICE_TYPE, null));
+        testEntities.add(makeEntity("rc-1", "test-controller",
+                KubernetesUtil.REPLICATION_CONTROLLER_TYPE, null));
 
         PodState existingPod = new PodState();
         existingPod.id = pod.id;
@@ -306,5 +316,29 @@ public class KubernetesEntityDataCollectionTest extends ComputeBaseTest {
         // Only service-2 is listed, so service-1 will be deleted
         Assert.assertEquals(1, services.size());
         Assert.assertEquals(1, rcs.size());
+    }
+
+    @Test
+    public void testDataCollectionDiscoverAdmiralApplication() throws Throwable {
+        String testCompositeId = "test-composite-id";
+        List<BaseKubernetesState> testEntities = new ArrayList<>();
+        testEntities
+                .add(makeEntity("pod-1", "my_prog_1", KubernetesUtil.POD_TYPE, testCompositeId));
+        testEntities
+                .add(makeEntity("pod-2", "name-for-pod", KubernetesUtil.POD_TYPE, testCompositeId));
+        testEntities.add(makeEntity("ser-1", "my_service_1", KubernetesUtil.SERVICE_TYPE,
+                testCompositeId));
+        testEntities.add(makeEntity("depl-1", "my_app_1", KubernetesUtil.DEPLOYMENT_TYPE,
+                testCompositeId));
+
+        testEntities.forEach(MockKubernetesAdapterService::addEntity);
+        startDataCollectionAndWait();
+
+        CompositeComponent compositeComponent = getDocument(CompositeComponent.class,
+                "/resources/composite-components/" + testCompositeId);
+
+        assertNotNull(compositeComponent);
+        assertEquals(4, compositeComponent.componentLinks.size());
+
     }
 }
