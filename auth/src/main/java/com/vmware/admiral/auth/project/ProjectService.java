@@ -12,13 +12,16 @@
 package com.vmware.admiral.auth.project;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 import com.vmware.admiral.auth.util.ProjectUtil;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -41,6 +44,11 @@ import com.vmware.xenon.services.common.UserService.UserState;
  * Project is a group sharing same resources.
  */
 public class ProjectService extends StatefulService {
+
+    private static final String FAILED_TO_RETRIEVE_STATE_WITH_MEMBERS_MESSAGE_FORMAT =
+            "Failed to retrieve project state with members for project %s";
+    private static final String FAILED_TO_RETRIEVE_STATE_WITH_MEMBERS_MESSAGE_CODE =
+            "auth.project.retrieve.state.with.members.failed";
 
     public static final String FACTORY_LINK = ManagementUriParts.PROJECTS;
     public static final String DEFAULT_PROJECT_ID = "default-project";
@@ -87,6 +95,18 @@ public class ProjectService extends StatefulService {
         public String membersUserGroupLink;
     }
 
+    public static class ProjectStateWithMembers extends ProjectState {
+
+        /** List of administrators for this project. */
+        @Documentation(description = "List of administrators for this project.")
+        public List<UserState> administrators;
+
+        /** List of members for this project. */
+        @Documentation(description = "List of members for this project.")
+        public List<UserState> members;
+
+    }
+
     public ProjectService() {
         super(ProjectState.class);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
@@ -103,8 +123,22 @@ public class ProjectService extends StatefulService {
 
         ProjectState createBody = post.getBody(ProjectState.class);
         validateState(createBody);
-        createAdminAndMemberGroups(post);
-        // Operation will be completed after a successful creation of the groups
+
+        if (isDevOpsAdmin(post)) {
+            createAdminAndMemberGroups(post);
+            // Operation will be completed after a successful creation of the groups
+        } else {
+            post.complete();
+        }
+    }
+
+    @Override
+    public void handleGet(Operation get) {
+        if (UriUtils.hasODataExpandParamValue(get.getUri())) {
+            retrieveExpandedState(getState(get), get);
+        } else {
+            super.handleGet(get);
+        }
     }
 
     @Override
@@ -183,6 +217,122 @@ public class ProjectService extends StatefulService {
         template.isPublic = true;
 
         return template;
+    }
+
+    private boolean isDevOpsAdmin(Operation op) {
+        // TODO extract this to a common utility
+        return !OperationUtil.isGuestUser(op);
+    }
+
+    /**
+     * Creates a {@link ProjectStateWithMembers} based on the current state of the service by
+     * additionally building the lists of administrators and members. When done, the prepared
+     * expanded state will be set as body for the provided <code>get</code> {@link Operation} and it
+     * will be completed.
+     */
+    private void retrieveExpandedState(ProjectState simpleState, Operation get) {
+        ProjectStateWithMembers expandedState = new ProjectStateWithMembers();
+        simpleState.copyTo(expandedState);
+        expandedState.isPublic = simpleState.isPublic;
+        expandedState.description = simpleState.description;
+        expandedState.administratorsUserGroupLink = simpleState.administratorsUserGroupLink;
+        expandedState.membersUserGroupLink = simpleState.membersUserGroupLink;
+
+        Operation adminsOp = buildUsersRetrievalHelperOperation((adminsList) -> {
+            expandedState.administrators = adminsList;
+        });
+        Operation membersOp = buildUsersRetrievalHelperOperation((membersList) -> {
+            expandedState.members = membersList;
+        });
+        OperationJoin.create(adminsOp, membersOp).setCompletion((ops, exs) -> {
+            if (exs != null && !exs.isEmpty()) {
+                String error = String.format(FAILED_TO_RETRIEVE_STATE_WITH_MEMBERS_MESSAGE_FORMAT,
+                        simpleState.documentSelfLink);
+                get.fail(new LocalizableValidationException(exs.values().iterator().next(), error,
+                        FAILED_TO_RETRIEVE_STATE_WITH_MEMBERS_MESSAGE_CODE,
+                        simpleState.documentSelfLink));
+            } else {
+                get.setBody(expandedState).complete();
+            }
+        });
+
+        retrieveUserGroupMembers(simpleState.administratorsUserGroupLink, adminsOp);
+        retrieveUserGroupMembers(simpleState.membersUserGroupLink, membersOp);
+    }
+
+    /**
+     * Creates a helper {@link Operation} that is supposed to be completed when the {@link List} of
+     * members of a specific user group has been populated. On successful completion, the operation
+     * body is expected to be the list of {@link UserState}s
+     */
+    @SuppressWarnings("unchecked")
+    private Operation buildUsersRetrievalHelperOperation(
+            Consumer<List<UserState>> successHandler) {
+
+        Operation result = new Operation();
+        result.setCompletion((o, e) -> {
+            if (e != null) {
+                result.fail(e);
+            } else {
+                // o.getRawBody() is used instead of o.getBody(List.class) to avoid
+                // converting the list of UserState-s to list of LinkedTreeMap-s
+                successHandler.accept((List<UserState>) o.getBodyRaw());
+            }
+        });
+        return result;
+    }
+
+    /**
+     * Retrieves the list of members for the specified by document link user group, sets that list
+     * as a body for the provided operation and completes it. If <code>groupLink</code> is
+     * <code>null</code>, an empty list will be returned in the <code>callerOp</code> body.
+     *
+     * @see #retrieveUserStatesForGroup(UserGroupState, Operation)
+     */
+    private void retrieveUserGroupMembers(String groupLink, Operation callerOp) {
+        if (groupLink == null) {
+            callerOp.setBody(new ArrayList<>(0)).complete();
+            return;
+        }
+
+        Operation.createGet(getHost(), groupLink)
+                .setReferer(getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logWarning("Failed to retrieve UserGroupState %s: %s", groupLink,
+                                Utils.toString(e));
+                        callerOp.fail(e);
+                        return;
+                    }
+
+                    UserGroupState groupState = o.getBody(UserGroupState.class);
+                    retrieveUserStatesForGroup(groupState, callerOp);
+                }).sendWith(getHost());
+    }
+
+    /**
+     * Retrieves the list of members for the specified user group, sets that list as a body for the
+     * provided operation and completes it.
+     *
+     * @see #retrieveUserStatesForGroup(UserGroupState, Operation)
+     */
+    private void retrieveUserStatesForGroup(UserGroupState groupState, Operation callerOp) {
+        ArrayList<UserState> resultList = new ArrayList<>();
+
+        QueryTask queryTask = QueryUtil.buildQuery(UserState.class, true, groupState.query);
+        QueryUtil.addExpandOption(queryTask);
+        new ServiceDocumentQuery<UserState>(getHost(), UserState.class)
+                .query(queryTask, (r) -> {
+                    if (r.hasException()) {
+                        logWarning("Failed to retrieve members of UserGroupState %s: %s",
+                                groupState.documentSelfLink, Utils.toString(r.getException()));
+                        callerOp.fail(r.getException());
+                    } else if (r.hasResult()) {
+                        resultList.add(r.getResult());
+                    } else {
+                        callerOp.setBody(resultList).complete();
+                    }
+                });
     }
 
     private void validateState(ProjectState state) {

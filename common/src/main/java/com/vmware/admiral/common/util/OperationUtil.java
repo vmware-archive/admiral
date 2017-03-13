@@ -18,10 +18,12 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.GuestUserService;
 
 public class OperationUtil {
 
@@ -97,4 +99,23 @@ public class OperationUtil {
         }
         return MEDIA_TYPE_APPLICATION_YAML.equals(acceptHeader);
     }
+
+    /**
+     * Checks whether the specified {@link Operation} <code>op</code> comes from a guest or not.
+     * Guest operations will either have no {@link AuthorizationContext} set or will have an
+     * {@link AuthorizationContext} that is asociated with the Guest user (see
+     * {@link GuestUserService}).
+     *
+     * @param op
+     *            the caller {@link Operation}
+     * @return whether this operaion was issued by a guest or not
+     */
+    public static boolean isGuestUser(Operation op) {
+        AuthorizationContext ctx = op.getAuthorizationContext();
+        return ctx == null || ctx.getClaims() == null
+                || ctx.getClaims().getSubject() == null
+                || ctx.getClaims().getSubject().isEmpty()
+                || ctx.getClaims().getSubject().equals(GuestUserService.SELF_LINK);
+    }
+
 }
