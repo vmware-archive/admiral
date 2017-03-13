@@ -390,6 +390,7 @@ public class CompositeComponentService extends StatefulService {
     @Override
     public ServiceDocument getDocumentTemplate() {
         CompositeComponent template = (CompositeComponent) super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
         template.name = "name (string)";
         template.compositeDescriptionLink = "compositeDescriptionLink (string) (optional)";
         template.componentLinks = new ArrayList<String>(1);

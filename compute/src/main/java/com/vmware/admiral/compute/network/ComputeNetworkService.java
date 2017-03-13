@@ -129,6 +129,7 @@ public class ComputeNetworkService extends StatefulService {
     @Override
     public ServiceDocument getDocumentTemplate() {
         ComputeNetwork nd = (ComputeNetwork) super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(nd);
         nd.name = "My Network";
         nd.networkType = NetworkType.PUBLIC;
         nd.securityGroupLinks = new HashSet<>();

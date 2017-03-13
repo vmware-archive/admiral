@@ -236,6 +236,7 @@ public class RequestStatusService extends StatefulService {
     @Override
     public ServiceDocument getDocumentTemplate() {
         RequestStatus template = (RequestStatus) super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
         template.phase = "Container Allocation";
         template.taskInfo = new TaskState();
         template.taskInfo.stage = TaskStage.CREATED;

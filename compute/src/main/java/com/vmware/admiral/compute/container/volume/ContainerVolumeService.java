@@ -307,6 +307,7 @@ public class ContainerVolumeService extends StatefulService {
     @Override
     public ServiceDocument getDocumentTemplate() {
         ContainerVolumeState template = (ContainerVolumeState) super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
 
         template.name = "name (string)";
         template.descriptionLink = UriUtils.buildUriPath(

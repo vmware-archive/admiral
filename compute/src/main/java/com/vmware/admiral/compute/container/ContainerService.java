@@ -392,6 +392,7 @@ public class ContainerService extends StatefulService {
     @Override
     public ServiceDocument getDocumentTemplate() {
         ContainerState template = (ContainerState) super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
 
         template.names = new ArrayList<>(2);
         template.names.add("name1 (string)");

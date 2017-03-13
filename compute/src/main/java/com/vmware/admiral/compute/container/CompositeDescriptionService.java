@@ -252,6 +252,7 @@ public class CompositeDescriptionService extends StatefulService {
     @Override
     public ServiceDocument getDocumentTemplate() {
         CompositeDescription template = (CompositeDescription) super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
 
         template.name = "name (string)";
         template.status = Status.PUBLISHED;

@@ -318,6 +318,7 @@ public class ContainerNetworkService extends StatefulService {
     @Override
     public ServiceDocument getDocumentTemplate() {
         ContainerNetworkState template = (ContainerNetworkState) super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
 
         template.name = "name (string)";
         template.descriptionLink = UriUtils.buildUriPath(
