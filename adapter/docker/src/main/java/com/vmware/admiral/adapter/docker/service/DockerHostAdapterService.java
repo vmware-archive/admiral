@@ -217,26 +217,22 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
     private Map<String, Object> parseStatsOutput(String commandOutput, String hostLink) {
         Map<String, Object> properties = new HashMap<>();
 
-        try {
-            if (commandOutput != null) {
-                String[] results = commandOutput.split("\n");
+        if (commandOutput != null) {
+            String[] results = commandOutput.split("\n");
 
-                if (results.length == 2) {
-                    properties.put(
-                            ContainerHostService.DOCKER_HOST_AVAILABLE_MEMORY_PROP_NAME,
-                            results[0].trim());
+            if (results.length == 2) {
+                properties = PropertyUtils.setPropertyDouble(properties,
+                        ContainerHostService.DOCKER_HOST_AVAILABLE_MEMORY_PROP_NAME,
+                        results[0].trim());
 
-                    properties.put(
-                            ContainerHostService.DOCKER_HOST_CPU_USAGE_PCT_PROP_NAME,
-                            Double.valueOf(results[1].trim()));
-                } else {
-                    logWarning("Unexpected stats output host [%s], output [%s]",
-                            hostLink, commandOutput);
-                }
+                properties = PropertyUtils.setPropertyDouble(properties,
+                        ContainerHostService.DOCKER_HOST_CPU_USAGE_PCT_PROP_NAME,
+                        results[1].trim());
+
+            } else {
+                logWarning("Unexpected stats output host [%s], output [%s]",
+                        hostLink, commandOutput);
             }
-        } catch (Exception e) {
-            logWarning("Error parsing host [%s] stats, output [%s], error : %s",
-                    hostLink, commandOutput, e.getMessage());
         }
 
         return properties;

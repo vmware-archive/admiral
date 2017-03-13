@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.BinaryOperator;
+import java.util.logging.Logger;
 
 import com.vmware.xenon.common.ReflectionUtils;
 import com.vmware.xenon.common.ServiceDocument;
@@ -135,8 +136,15 @@ public class PropertyUtils {
             return Optional.empty();
         }
         if (properties.containsKey(key)) {
-            // Some values are written in scientific notation, so we parse them with Double
-            return Optional.of(Double.valueOf(properties.get(key)).longValue());
+            try {
+                Double value = Double.valueOf(properties.get(key));
+                // Some values are written in scientific notation, so we parse them with Double
+                return Optional.of(value.longValue());
+            } catch (Exception ex) {
+                Logger.getAnonymousLogger().warning(
+                        String.format("Could not parse property %s as double: %s", key, properties.get(key)));
+                return Optional.empty();
+            }
         } else {
             return Optional.empty();
         }
@@ -147,10 +155,31 @@ public class PropertyUtils {
             return Optional.empty();
         }
         if (properties.containsKey(key)) {
-            return Optional.of(Double.valueOf(properties.get(key)));
+            try {
+                return Optional.of(Double.valueOf(properties.get(key)));
+            } catch (Exception ex) {
+                Logger.getAnonymousLogger().warning(
+                        String.format("Could not parse property %s as double: %s", key, properties.get(key)));
+                return Optional.empty();
+            }
         } else {
             return Optional.empty();
         }
+    }
+
+    public static Map<String, Object> setPropertyDouble(Map<String, Object> properties, String key, String value) {
+        if (key == null) {
+            return properties;
+        }
+
+        try {
+            properties.put(key, Double.valueOf(value));
+        } catch (Exception e) {
+            Logger.getLogger(PropertyUtils.class.getName())
+                .warning(String.format("Cannot set property %s value %s as double", key, value));
+        }
+
+        return properties;
     }
 
     @SuppressWarnings("unchecked")
