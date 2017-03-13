@@ -146,7 +146,7 @@ let searchImages = function(queryOptions, searchOnlyImages, forContainerDefiniti
     var resultTemplates = [];
     for (var i = 0; i < templates.length; i++) {
       var template = templates[i];
-      console.log(' TEMPLATE TYPE: ' + template.templateType);
+
       if (template.templateType === DTO_IMAGE_TYPE) {
         _enhanceImage(template);
         resultTemplates.push(template);
@@ -214,7 +214,7 @@ let searchClosures = function(queryOptions, searchOnlyImages, forContainerDefini
       let closures = processClosures(closuresResult);
       for (var i = 0; i < closures.length; i++) {
         var closure = closures[i];
-        console.log(' TEMPLATE TYPE: ' + closure.name);
+
         _enhanceClosureDescription(closure);
         resultTemplates.push(closure);
       }
@@ -225,7 +225,7 @@ let searchClosures = function(queryOptions, searchOnlyImages, forContainerDefini
     this.setInData(listViewPath.concat(['searchedItems']), true);
     this.emitChange();
   }).catch((e) => {
-    console.log(' TEMPLATE TYPE: ' + e);
+    // Error
     this.setInData(listViewPath.concat(['items']), []);
     this.setInData(listViewPath.concat(['itemsLoading']), false);
     this.setInData(listViewPath.concat(['searchedItems']), true);
@@ -1083,13 +1083,13 @@ let TemplatesStore = Reflux.createStore({
 
   onRemoveClosure: function(closureDesc, templateId) {
     if (!templateId) {
-      console.log('Calling delete on: ' + closureDesc);
-      services.deleteClosure(closureDesc).then((request) => {
-        console.log('Closure deleted successfully! ' + request);
-          let queryOptions = this.selectFromData(['listView', 'queryOptions']).get();
-          // Refresh view
-          this.onOpenTemplates(queryOptions, true);
+
+      services.deleteClosure(closureDesc).then(() => {
+        let queryOptions = this.selectFromData(['listView', 'queryOptions']).get();
+        // Refresh view
+        this.onOpenTemplates(queryOptions, true);
       }).catch(this.onGenericCreateError);
+
       return;
     }
 
@@ -1131,8 +1131,6 @@ let TemplatesStore = Reflux.createStore({
 
     return services.createClosure(closureDescription).then((createdClosure) => {
       return services.loadContainerTemplate(templateId).then((template) => {
-        console.log('Updating template ID: ' + templateId + ' with: '
-          + createdClosure.documentSelfLink);
 
         template.descriptionLinks.push(createdClosure.documentSelfLink);
 
@@ -1234,8 +1232,6 @@ let TemplatesStore = Reflux.createStore({
         this.setInData(['selectedItemDetails', 'tasks', 'monitoredTask', 'isRunning'], null);
         this.emitChange();
         return;
-      } else {
-        console.log('Monitoring closure: ' + task.documentSelfLink);
       }
       services.getClosure(task.documentSelfLink).then((fetchedTask) => {
         this.setInData(['tasks', 'monitoredTask'], fetchedTask);
@@ -1252,7 +1248,6 @@ let TemplatesStore = Reflux.createStore({
   },
   resetMonitoredClosure: function() {
     if (this.data.tasks) {
-      console.log('Resetting monitored closure...');
       this.setInData(['tasks', 'monitoredTask'], null);
       this.emitChange();
     }
@@ -2253,7 +2248,7 @@ let TemplatesStore = Reflux.createStore({
       });
     }).catch((e) => {
       let errorMessage = utils.getErrorMessage(e);
-      console.log(errorMessage);
+
       if (errorMessage && errorMessage._generic) {
         errorMessage = errorMessage._generic;
       } else {
