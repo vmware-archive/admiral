@@ -17,7 +17,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.net.URI;
 import java.util.Arrays;
+import java.util.logging.Level;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -25,6 +27,7 @@ import org.junit.Test;
 import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
+import com.vmware.admiral.auth.project.ProjectService.ProjectStateWithMembers;
 import com.vmware.admiral.auth.util.ProjectUtil;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.QueryUtil;
@@ -36,6 +39,8 @@ import com.vmware.photon.controller.model.resources.ResourcePoolService.Resource
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
@@ -233,6 +238,83 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertNotNull(testProject.membersUserGroupLink);
         assertEquals(testAdminsGroupLink, testProject.administratorsUserGroupLink);
         assertEquals(testMembersGroupLink, testProject.membersUserGroupLink);
+    }
+
+    @Test
+    public void testGetStateWithMembers() {
+        URI uri = UriUtils.buildUri(host, project.documentSelfLink,
+                UriUtils.URI_PARAM_ODATA_EXPAND);
+        host.testStart(1);
+        Operation.createGet(uri)
+                .setReferer(host.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.log(Level.SEVERE, Utils.toString(e));
+                        host.failIteration(e);
+                    } else {
+                        ProjectStateWithMembers stateWithMembers = o
+                                .getBody(ProjectStateWithMembers.class);
+                        try {
+                            assertNotNull(stateWithMembers);
+
+                            assertNotNull(stateWithMembers.administrators);
+                            assertTrue(stateWithMembers.administrators.size() == 1);
+                            assertTrue(stateWithMembers.administrators.iterator()
+                                    .next().documentSelfLink
+                                            .equals(buildUserServicePath(ADMIN_USERNAME)));
+
+                            assertNotNull(stateWithMembers.members);
+                            assertTrue(stateWithMembers.members.size() == 1);
+                            assertTrue(stateWithMembers.members.iterator()
+                                    .next().documentSelfLink
+                                            .equals(buildUserServicePath(ADMIN_USERNAME)));
+
+                            host.completeIteration();
+                        } catch (AssertionError er) {
+                            host.log(Level.SEVERE, Utils.toString(er));
+                            host.failIteration(er);
+                        }
+                    }
+                }).sendWith(host);
+        host.testWait();
+    }
+
+    @Test
+    public void testGetStateWithMembersReturnsEmptyListsOnMissingUserGroups() throws Throwable {
+        // update project state to have no admins and members group links stored
+        project.administratorsUserGroupLink = null;
+        project.membersUserGroupLink = null;
+        project = doPut(project);
+
+        URI uri = UriUtils.buildUri(host, project.documentSelfLink,
+                UriUtils.URI_PARAM_ODATA_EXPAND);
+        host.testStart(1);
+        Operation.createGet(uri)
+                .setReferer(host.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.log(Level.SEVERE, Utils.toString(e));
+                        host.failIteration(e);
+                    } else {
+                        ProjectStateWithMembers stateWithMembers = o
+                                .getBody(ProjectStateWithMembers.class);
+                        try {
+                            assertNotNull(stateWithMembers);
+
+                            assertNotNull(stateWithMembers.administrators);
+                            assertTrue(stateWithMembers.administrators.size() == 0);
+
+                            assertNotNull(stateWithMembers.members);
+                            assertTrue(stateWithMembers.members.size() == 0);
+
+                            host.completeIteration();
+                        } catch (AssertionError er) {
+                            host.log(Level.SEVERE, Utils.toString(er));
+                            host.failIteration(er);
+                        }
+                    }
+                }).sendWith(host);
+        host.testWait();
     }
 
     private void assertDocumentExists(String documentLink) {
