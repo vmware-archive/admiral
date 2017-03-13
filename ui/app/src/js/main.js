@@ -52,7 +52,7 @@ var updateHeaderLink = function(registryUrl) {
         return false;
       }
     });
-    $('head title').html('VIC');
+    $('head title').html('vSphere Integrated Containers');
   } else {
     $('body').append($(DefaultTemplate()));
     $('head title').html('Admiral');
