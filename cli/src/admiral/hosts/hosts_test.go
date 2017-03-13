@@ -23,7 +23,7 @@ import (
 	. "admiral/common/utils"
 	"admiral/config"
 	"admiral/credentials"
-	"admiral/placementzones"
+	"admiral/placement_zones"
 	"admiral/tags"
 )
 
@@ -50,7 +50,7 @@ func TestAddRemoveHost(t *testing.T) {
 	CheckTestError(err, t)
 
 	// Testing phase 1
-	hostID, err := AddHost(tc.HostAddress, tc.PlacementZone, "", credentialsID, "", "", "", "", true, nil, nil)
+	hostID, err := AddHost(tc.HostAddress, tc.PlacementZone, "docker", "", credentialsID, "", "", "", "", true, nil, nil)
 	CheckTestError(err, t)
 
 	// Validating phase 1
@@ -98,7 +98,7 @@ func TestEnableDisableHost(t *testing.T) {
 	// Preparing
 	credentialsID, err := credentials.AddByCert("test-credentials", tc.PublicKey, tc.PrivateKey, nil)
 	CheckTestError(err, t)
-	hostID, err := AddHost(tc.HostAddress, tc.PlacementZone, "", credentialsID, "", "", "", "", true, nil, nil)
+	hostID, err := AddHost(tc.HostAddress, tc.PlacementZone, "docker", "", credentialsID, "", "", "", "", true, nil, nil)
 	CheckTestError(err, t)
 	// Wait because host is being in UNKNOWN power state
 	// by the time of disable attempt.
@@ -150,10 +150,10 @@ func TestHostUpdate(t *testing.T) {
 	// Preparing
 	credentialsID, err := credentials.AddByCert("test-credentials", tc.PublicKey, tc.PrivateKey, nil)
 	CheckTestError(err, t)
-	hostID, err := AddHost(tc.HostAddress, tc.PlacementZone, "", credentialsID, "", "", "", "", true, nil, nil)
+	hostID, err := AddHost(tc.HostAddress, tc.PlacementZone, "docker", "", credentialsID, "", "", "", "", true, nil, nil)
 	CheckTestError(err, t)
 	rpName := "test-placement-zone"
-	pzID, err := placementzones.AddPZ(rpName, nil, nil, nil)
+	pzID, err := placement_zones.AddPZ(rpName, false, nil, nil, nil)
 	CheckTestError(err, t)
 	credentialsName := "test-credentials"
 	credentialsUsername := "testuser"
@@ -192,7 +192,7 @@ func TestHostUpdate(t *testing.T) {
 	CheckTestError(err, t)
 	err = ValidateHostIsDeleted(hostID)
 	CheckTestError(err, t)
-	_, err = placementzones.RemovePZID(pzID)
+	_, err = placement_zones.RemovePZID(pzID)
 	CheckTestError(err, t)
 	_, err = credentials.RemoveCredentialsID(credentialsID)
 	CheckTestError(err, t)
@@ -207,7 +207,7 @@ func TestAddAndUpdateHostWithTags(t *testing.T) {
 
 	// Testing phase 1
 	hostTags := []string{"test:test", "test1:test1"}
-	hostID, err := AddHost(tc.HostAddress, tc.PlacementZone, "", credentialsID, "", "", "", "", true, nil, hostTags)
+	hostID, err := AddHost(tc.HostAddress, tc.PlacementZone, "docker", "", credentialsID, "", "", "", "", true, nil, hostTags)
 	CheckTestError(err, t)
 
 	// Validating phase 1

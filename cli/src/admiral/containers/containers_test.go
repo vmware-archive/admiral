@@ -48,7 +48,7 @@ func TestProvisionRemoveContainer(t *testing.T) {
 	// Preparation
 	credentialsID, err := credentials.AddByCert("test-credentials", tc.PublicKey, tc.PrivateKey, nil)
 	CheckTestError(err, t)
-	hostID, err := hosts.AddHost(tc.HostAddress, tc.PlacementZone, "", credentialsID, "", "", "", "", true, nil, nil)
+	hostID, err := hosts.AddHost(tc.HostAddress, tc.PlacementZone, "docker", "", credentialsID, "", "", "", "", true, nil, nil)
 	CheckTestError(err, t)
 	containerName := "ubuntu"
 	imageName := "ubuntu"
@@ -108,7 +108,7 @@ func TestStopStartContainer(t *testing.T) {
 	// Preparation
 	credentialsID, err := credentials.AddByCert("test-credentials", tc.PublicKey, tc.PrivateKey, nil)
 	CheckTestError(err, t)
-	hostID, err := hosts.AddHost(tc.HostAddress, tc.PlacementZone, "", credentialsID, "", "", "", "", true, nil, nil)
+	hostID, err := hosts.AddHost(tc.HostAddress, tc.PlacementZone, "docker", "", credentialsID, "", "", "", "", true, nil, nil)
 	CheckTestError(err, t)
 	containerName := "ubuntu"
 	imageName := "ubuntu"

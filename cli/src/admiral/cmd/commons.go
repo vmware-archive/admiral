@@ -157,6 +157,8 @@ var (
 	deplPolicyFDesc     = "DeploymentPolicy ID."
 	autoAccept          bool
 	autoAcceptDesc      = "Auto accept if certificate is not trusted."
+	hostType            string
+	hostTypeDesc        = "Host type. One of: docker, vch."
 
 	// Create host flags
 	endpointId       string
@@ -253,6 +255,10 @@ var (
 	//custom timeout flags
 	customTimeout     int
 	customTimeoutDesc = "Set custom task timeout (seconds)."
+
+	//Placement zone flags
+	isScheduler     bool
+	isSchedulerDesc = "Specify the placement zone is for scheduler hosts."
 )
 
 var admiralLogo = `

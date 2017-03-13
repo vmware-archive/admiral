@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package placementzones
+package placement_zones
 
 import (
 	"bytes"
@@ -149,6 +149,13 @@ func (rps *ResourcePoolState) containsTagLink(tagLink string) bool {
 	return false
 }
 
+func (rps *ResourcePoolState) SetScheduler(isScheduler bool) {
+	if isScheduler {
+		scheduler := "SCHEDULER"
+		rps.CustomProperties["__placementZoneType"] = &scheduler
+	}
+}
+
 type EpzState struct {
 	base_types.ServiceDocument
 
@@ -282,7 +289,8 @@ func RemovePZID(id string) (string, error) {
 	return fullId, nil
 }
 
-func AddPZ(rpName string, custProps, tags, tagsToMatch []string) (string, error) {
+func AddPZ(rpName string, isScheduler bool,
+	custProps, tags, tagsToMatch []string) (string, error) {
 	url := uri_utils.BuildUrl(uri_utils.ElasticPlacementZone, nil, true)
 
 	cp := make(map[string]*string, 0)
@@ -293,7 +301,7 @@ func AddPZ(rpName string, custProps, tags, tagsToMatch []string) (string, error)
 		CustomProperties: cp,
 	}
 	resPoolState.AddTagLinks(tags)
-
+	resPoolState.SetScheduler(isScheduler)
 	epzState := EpzState{}
 	epzState.AddTagLinks(tagsToMatch)
 

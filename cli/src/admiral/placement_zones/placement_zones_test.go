@@ -11,7 +11,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package placementzones
+package placement_zones
 
 import (
 	"fmt"
@@ -44,7 +44,7 @@ func TestMain(m *testing.M) {
 func TestAddRemovePlacementZone(t *testing.T) {
 	// Testing phase 1
 	name := "test-placement-zone"
-	id, err := AddPZ(name, nil, nil, nil)
+	id, err := AddPZ(name, false, nil, nil, nil)
 	CheckTestError(err, t)
 
 	// Validating phase 1
@@ -91,7 +91,7 @@ func TestAddRemovePlacementZone(t *testing.T) {
 func TestUpdatePlacementZone(t *testing.T) {
 	// Preparing
 	name := "test-placement-zone"
-	id, err := AddPZ(name, nil, nil, nil)
+	id, err := AddPZ(name, false, nil, nil, nil)
 	CheckTestError(err, t)
 
 	// Testing
@@ -127,7 +127,7 @@ func TestUpdatePlacementZone(t *testing.T) {
 func TestAddPlacementZoneWithEmptyName(t *testing.T) {
 	// Testing
 	name := ""
-	_, err := AddPZ(name, nil, nil, nil)
+	_, err := AddPZ(name, false, nil, nil, nil)
 
 	// Validating
 	if err == nil {
@@ -139,7 +139,7 @@ func TestAddAndUpdatePlacementZoneWithTags(t *testing.T) {
 	// Testing phase 1
 	name := "test-placement-zone"
 	pzTags := []string{"test:test", "test1:test1"}
-	id, err := AddPZ(name, nil, pzTags, nil)
+	id, err := AddPZ(name, false, nil, pzTags, nil)
 	CheckTestError(err, t)
 
 	// Validating phase 1
