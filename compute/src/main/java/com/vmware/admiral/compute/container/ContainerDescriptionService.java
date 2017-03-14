@@ -124,12 +124,13 @@ public class ContainerDescriptionService extends StatefulService {
         @Documentation(description = "Link to the parent container description.")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public String parentDescriptionLink;
+
         /**
          * (Optional) An image reference to a docker image in .tgz format to be downloaded to the
          * server and pushed to the local host repository.
          */
+        @JsonProperty(value = "image_reference")
         @Documentation(description = "An image reference to a docker image in .tgz format to be downloaded to the server and pushed to the local host repository.")
-        @JsonIgnore
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public URI imageReference;
 

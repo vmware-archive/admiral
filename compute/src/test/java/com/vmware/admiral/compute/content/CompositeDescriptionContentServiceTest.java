@@ -47,6 +47,7 @@ import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
+import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.photon.controller.model.Constraint;
@@ -97,6 +98,14 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
                 cd.customProperties.get("_leaseDays"));
 
         descLinks.addAll(cd.descriptionLinks);
+
+        CompositeDescriptionExpanded cdExpanded = o.getBody(CompositeDescriptionExpanded.class);
+        for (ComponentDescription component : cdExpanded.componentDescriptions) {
+            ContainerDescription containerDescription = Utils
+                    .fromJson(component.componentJson, ContainerDescription.class);
+            assertNotNull(containerDescription.image);
+            assertNotNull(containerDescription.imageReference);
+        }
     };
 
     private static BiConsumer<Operation, List<String>> verifyKubernetesTemplate = (o, descLinks)
