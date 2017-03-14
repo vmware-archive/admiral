@@ -21,13 +21,13 @@ import ClosureRequestForm from 'components/closures/ClosureRequestForm'; // esli
 import RequestsList from 'components/requests/RequestsList'; //eslint-disable-line
 import EventLogList from 'components/eventlog/EventLogList'; //eslint-disable-line
 import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin';
+import TemplateExport from 'components/templates/TemplateExport'; //eslint-disable-line
 import VueAdapter from 'components/common/VueAdapter';
 import ResourceGroupsMixin from 'components/templates/ResourceGroupsMixin';
 import GridHolderMixin from 'components/common/GridHolderMixin';
 import constants from 'core/constants';
 import utils from 'core/utils';
 import ft from 'core/ft';
-import exportHelper from 'components/templates/TemplateExportHelper';
 import {
   NavigationActions,
   RequestsActions,
@@ -72,7 +72,9 @@ var TemplatesViewVueComponent = Vue.extend({
       // this view behaves better if the target width is set before the width transition
       requiresPreTransitionWidth: true,
       alert: alertData,
-      createTemplateName: null
+      createTemplateName: null,
+      showTemplateExport: false,
+      exportTemplateDocumentId: null
     };
   },
   computed: {
@@ -268,12 +270,7 @@ var TemplatesViewVueComponent = Vue.extend({
           $event.stopPropagation();
           $event.preventDefault();
 
-          exportHelper.showExportDialog(
-            this.getExportLink(constants.TEMPLATES.EXPORT_FORMAT.COMPOSITE_BLUEPRINT),
-            this.getExportLink(constants.TEMPLATES.EXPORT_FORMAT.DOCKER_COMPOSE));
-        },
-        getExportLink: function(format) {
-          return utils.getExportLinkForTemplate(this.model.documentId, format);
+          this.$dispatch('export-template', this.model.documentId);
         },
         operationSupported: function(op) {
           return utils.operationSupportedTemplate(op);
@@ -412,12 +409,32 @@ var TemplatesViewVueComponent = Vue.extend({
     openToolbarEventLogs: TemplatesContextToolbarActions.openToolbarEventLogs,
     closeToolbar: TemplatesContextToolbarActions.closeToolbar,
     openToolbarClosureResults: TemplatesContextToolbarActions.openToolbarClosureResults,
+
     alertType: function(alert) {
       return alert && alert.type;
     },
     alertClosed: function() {
       this.alert.show = false;
       this.alert.message = '';
+    },
+
+    exportTemplate: function(templateDocumentId) {
+      this.showTemplateExport = true;
+      this.exportTemplateDocumentId = templateDocumentId;
+    },
+    getExportLink: function(format) {
+      return utils.getExportLinkForTemplate(this.exportTemplateDocumentId, format);
+    },
+    getExportLinkYaml: function() {
+      return this.getExportLink(constants.TEMPLATES.EXPORT_FORMAT.COMPOSITE_BLUEPRINT);
+    },
+    getExportLinkDocker: function() {
+      return this.getExportLink(constants.TEMPLATES.EXPORT_FORMAT.DOCKER_COMPOSE);
+    },
+
+    cancelExportTemplate: function() {
+      this.showTemplateExport = false;
+      this.exportTemplateDocumentId = null;
     }
   },
   events: {
@@ -430,6 +447,15 @@ var TemplatesViewVueComponent = Vue.extend({
         this.alert.show = false;
         this.alert.message = '';
       }
+    },
+
+    'export-template': function(templateDocumentId) {
+      return this.exportTemplate(templateDocumentId);
+    },
+
+    'confirm-template-export': function() {
+      this.showTemplateExport = false;
+      this.exportTemplateDocumentId = null;
     }
   }
 });

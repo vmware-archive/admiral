@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -15,12 +15,13 @@ import MaximizableBehaviour from 'components/common/MaximizableBehaviour'; //esl
 import VueToolbarActionButton from 'components/common/VueToolbarActionButton'; //eslint-disable-line
 import ContainerProperties from 'components/containers/ContainerProperties'; //eslint-disable-line
 import ContainerStats from 'components/containers/ContainerStats'; //eslint-disable-line
+import ContainerShell from 'components/containers/ContainerShell'; //eslint-disable-line
 import ActionConfirmationSupportMixin from 'components/common/ActionConfirmationSupportMixin'; //eslint-disable-line
+
 import { ContainerActions, NavigationActions } from 'actions/Actions';
+
 import constants from 'core/constants';
 import utils from 'core/utils';
-import modal from 'core/modal';
-import ContainerShellTemplate from 'components/containers/ContainerShellTemplate.html';
 import ansi from 'ansi_up';
 
 const REFRESH_STATS_TIMEOUT = 60000;
@@ -32,7 +33,9 @@ var ContainerDetailsVueComponent = Vue.extend({
   data: function() {
     return {
       logsSinceDurations: constants.CONTAINERS.LOGS.SINCE_DURATIONS,
-      logsFormat: constants.CONTAINERS.LOGS.FORMAT
+      logsFormat: constants.CONTAINERS.LOGS.FORMAT,
+      showShell: false,
+      shellUrl: null
     };
   },
 
@@ -94,51 +97,12 @@ var ContainerDetailsVueComponent = Vue.extend({
         }, START_REFRESH_POLLING_DELAY);
       }
 
-      var newShellData = newData.shell;
-      var oldShellData = oldData && oldData.shell;
-      if (newShellData !== oldShellData) {
-        if (!newShellData) {
-          this.$shell.find('iframe').remove();
-          modal.hide(this.$shell);
-          this.$shell = null;
-        } else if (!this.$shell) {
-          this.$shell = $(ContainerShellTemplate({
-            shellUrl: newShellData.shellUri,
-            newTabEnabled: true
-          }));
-
-          var $iframe = this.$shell.find('iframe');
-
-          this.$shell.on('click', '.open-new-tab', (e) => {
-            e.stopImmediatePropagation();
-            e.preventDefault();
-
-            var iframeWindow = $iframe[0].contentWindow;
-            // TODO: once we have the shellinabox served from the same domain as our app,
-            // we could re-use the session like so
-            var sessionId = iframeWindow.shellinabox && iframeWindow.shellinabox.session;
-            var url = $iframe.attr('src');
-            if (sessionId) {
-              url += '#' + sessionId;
-            }
-            var newWindow = window.open(url);
-            if (newWindow) {
-              ContainerActions.closeShell();
-            } else {
-              // Probably browser is blocking a popup
-            }
-          });
-
-          this.$shell.on('click', '.close-button', (e) => {
-            e.stopImmediatePropagation();
-            e.preventDefault();
-
-            ContainerActions.closeShell();
-          });
-
-          modal.show(this.$shell);
-        }
+      let newShellData = newData.shell;
+      if (!newShellData) {
+        $(this.$refs.shellModal.$el).next('.modal').find('iframe').remove();
       }
+      this.showShell = newShellData && (newShellData !== (oldData && oldData.shell)) || false;
+      this.shellUrl = this.showShell ? newShellData.shellUri : null;
     },
 
     containerStatusDisplay: utils.containerStatusDisplay,
@@ -227,6 +191,11 @@ var ContainerDetailsVueComponent = Vue.extend({
 
     goBack: function() {
       this.$dispatch('go-back', 'container-details');
+    }
+  },
+  events: {
+    'close-shell-modal': function() {
+      ContainerActions.closeShell();
     }
   },
   components: {

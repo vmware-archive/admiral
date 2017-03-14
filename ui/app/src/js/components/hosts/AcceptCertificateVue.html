@@ -12,8 +12,8 @@
 <modal :show="true" size="lg" :closable="false" :has-header="false">
   <span slot="title"></span>
   <div slot="body">
-    <div class="certificate-warning">
-      <i class="fa fa-exclamation-circle modal-help-icon"></i>
+    <div>
+      <i class="fa fa-exclamation-circle modal-title-icon"></i>
       <div class="certificate-warning-text">{{warningMessage}}</div>
     </div>
     <div class="certificate-content-holder" v-if="certificateShown">

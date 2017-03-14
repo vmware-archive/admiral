@@ -15,8 +15,7 @@ import ContainerDefinitionVue from 'components/templates/ContainerDefinitionVue.
 import ClosureDefinitionVue from 'components/templates/ClosureDefinitionVue.html';
 import KubernetesTemplateItem from 'components/templates/kubernetes/KubernetesTemplateItem';
 import ContainerDefinitionForm from 'components/containers/ContainerDefinitionForm';
-import InlineDeleteConfirmationTemplate from
-  'components/common/InlineDeleteConfirmationTemplate.html';
+import InlineDeleteConfirmationTemplate from 'components/common/InlineDeleteConfirmationTemplate.html'; //eslint-disable-line
 import DeleteConfirmationSupportMixin from 'components/common/DeleteConfirmationSupportMixin';
 import ResourceGroupsMixin from 'components/templates/ResourceGroupsMixin';
 import GridHolderMixin from 'components/common/GridHolderMixin';
@@ -28,7 +27,6 @@ import VolumeBox from 'components/volumes/VolumeBox'; //eslint-disable-line
 import NetworkDefinitionForm from 'components/networks/NetworkDefinitionForm'; //eslint-disable-line
 import VolumeDefinitionForm from 'components/volumes/VolumeDefinitionForm'; //eslint-disable-line
 import TemplateNewItemMenu from 'components/templates/TemplateNewItemMenu'; //eslint-disable-line
-import exportHelper from 'components/templates/TemplateExportHelper';
 import KubernetesDefinitionForm from 'components/kubernetes/KubernetesDefinitionForm';
 import { TemplateActions } from 'actions/Actions';
 import utils from 'core/utils';
@@ -738,17 +736,11 @@ var TemplateDetailsView = Vue.extend({
 
       TemplateActions.publishTemplate(this.model.documentId);
     },
-    getExportLink: function(format) {
-      return utils.getExportLinkForTemplate(this.model.documentId, format);
-    },
-    exportTemplate: function($event) {
-      $event.stopPropagation();
-      $event.preventDefault();
 
-      exportHelper.showExportDialog(
-        this.getExportLink(constants.TEMPLATES.EXPORT_FORMAT.COMPOSITE_BLUEPRINT),
-        this.getExportLink(constants.TEMPLATES.EXPORT_FORMAT.DOCKER_COMPOSE));
+    exportTemplate: function() {
+      this.$dispatch('export-template', this.model.documentId);
     },
+
     operationSupported: function(op) {
       var listView = this.model.templateDetails.listView;
       var hasContainers = listView.items && listView.items.length > 0;

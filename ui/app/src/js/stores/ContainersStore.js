@@ -2002,7 +2002,7 @@ let ContainersStore = Reflux.createStore({
         shellUri: shellUri
       });
       this.emitChange();
-    });
+    }).catch(this.onGenericDetailsError);
   },
 
   onCloseShell: function() {

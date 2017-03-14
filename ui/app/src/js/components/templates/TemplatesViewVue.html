@@ -10,10 +10,9 @@
   -->
 
 <div class="images-view" v-bind:class="{'right-context-expanded':  contextExpanded}">
-  <alert v-bind:alert-type="alert.type"
-       v-bind:show-alert="alert.show"
-       v-bind:alert-message="alert.message"
-       v-on:alert-closed="alertClosed()"></alert>
+  <alert :alert-type="alert.type" :show-alert="alert.show" :alert-message="alert.message"
+         @alert-closed="alertClosed()"></alert>
+
   <div class="list-holder">
     <div class="main-panel">
       <div class="list-view scroll-view" v-if="model.listView">
@@ -85,10 +84,8 @@
       </div>
     </div>
   </div>
-  <div v-if="model.registries"
-       transition="slide-and-fade"
-       class="registry-view closable-view">
 
+  <div v-if="model.registries" transition="slide-and-fade" class="registry-view closable-view">
     <a class="close-button" v-on:click="goBack($event)"
        v-bind:class="{'hide': model.registries.contextView.expanded}"><i
       class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
@@ -96,10 +93,7 @@
     <registry-view v-bind:model="model.registries" class="content"></registry-view>
   </div>
 
-  <div v-if="model.importTemplate"
-       transition="slide-and-fade"
-       class="closable-view">
-
+  <div v-if="model.importTemplate" transition="slide-and-fade" class="closable-view">
     <a class="close-button" v-on:click="goBack($event)"><i
       class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
 
@@ -108,7 +102,6 @@
 
   <div v-if="model.selectedItemDetails" transition="slide-and-fade" class="closable-view"
        :class="{'expanded': model.selectedItemDetails.expanded}">
-
     <a class="close-button" v-on:click="goBack($event)"><i
       class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
 
@@ -132,6 +125,7 @@
           </div>
         </div>
       </template>
+
       <template-details-view v-ref:template-details v-if="model.selectedItemDetails.selectedForEdit"
                              v-bind:model="model.selectedItemDetails"></template-details-view>
       <container-request-form v-if="model.selectedItemDetails.selectedForRequest"
@@ -142,10 +136,9 @@
                             v-bind:model="model.selectedItemDetails"></closure-request-form>
 
     </div>
+  </div>
 
-   </div>
-  <context-sidepanel class="right-context-panel" v-if="showContextPanel" v-on:close="closeToolbar()">
-
+  <context-sidepanel v-if="showContextPanel" class="right-context-panel" v-on:close="closeToolbar()">
     <div slot="toolbar" class="toolbar">
       <context-sidepanel-toolbar-item
         v-bind:active="activeContextItem === 'requests'"
@@ -168,10 +161,11 @@
       <eventlog-list v-if="activeContextItem === 'eventlogs'"
                      v-bind:model="model.contextView.activeItem.data"></eventlog-list>
     </div>
-
   </context-sidepanel>
-  <context-sidepanel class="right-context-panel right-closure-panel" v-if="showClosureContextPanel" v-bind:class="{'right-context-expanded': innerContextExpanded}">
 
+  <context-sidepanel v-if="showClosureContextPanel"
+                     class="right-context-panel right-closure-panel"
+                     v-bind:class="{'right-context-expanded': innerContextExpanded}">
     <div slot="toolbar" class="toolbar">
       <context-sidepanel-toolbar-item
         v-bind:active="activeContextItem === 'closures'"
@@ -222,4 +216,9 @@
       </div>
     </div>
   </context-sidepanel>
+
+  <template-export v-if="showTemplateExport"
+                   :link-yaml="getExportLinkYaml()"
+                   :link-docker="getExportLinkDocker()"
+                   @cancel="cancelExportTemplate()"></template-export>
 </div>

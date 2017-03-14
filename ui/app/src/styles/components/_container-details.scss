@@ -322,44 +322,12 @@ $elements-side-margin: $elements-margin / 2;
 
 
 /* Container Details Content */
+.shell-modal-content {
+  padding-top: 5px;
 
-.container-shell.modal {
-  .modal-dialog {
-    height: 80%;
-  }
-  .modal-content {
+  iframe {
     height: 100%;
-  }
-
-  .modal-header {
-    position: absolute;
-    top: 0;
-    right: 0;
-    left: 0;
-
-    .open-new-tab {
-      float: right;
-      .fa {
-        margin-right: 10px;
-      }
-    }
-  }
-
-  .modal-header {
-  }
-
-  .modal-body {
-    position: absolute;
-    top: 64px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: 0;
-    margin: 15px;
-    iframe {
-      height: 100%;
-      width: 100%;
-      border: 0;
-    }
+    width: 100%;
+    border: 0;
   }
 }

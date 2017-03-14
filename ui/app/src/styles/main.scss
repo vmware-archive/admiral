@@ -521,7 +521,7 @@ $main-list-view-right: 10px;
   }
 }
 
-.certificate-warning i {
+.modal-title-icon {
   position: relative;
   top: 4px;
 
@@ -1152,16 +1152,7 @@ form.placement-inline-edit-properties {
 }
 
 .export-template-options {
-  margin-top: 10px;
-  margin-left: 50px;
-
-  .export-template-option {
-    margin-top: 5px;
-
-    .export-option-label {
-      margin-left: 5px;
-    }
-  }
+  margin-left: 35px;
 }
 
 .mask {
