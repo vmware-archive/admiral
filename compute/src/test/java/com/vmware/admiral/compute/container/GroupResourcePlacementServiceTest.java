@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -18,6 +18,7 @@ import static org.junit.Assert.fail;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,6 +41,7 @@ import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementPoolState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.ResourcePlacementReservationRequest;
@@ -402,8 +404,6 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
         releasePlacement(placementState);
 
         doDelete(UriUtils.buildUri(host, descLink), false);
-        doDelete(UriUtils.buildUri(host, placementState.documentSelfLink), false);
-
     }
 
     @Test
@@ -470,9 +470,7 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
         releasePlacement(noLimitsGroupResourcePlacement);
 
         doDelete(UriUtils.buildUri(host, descLink), false);
-        doDelete(UriUtils.buildUri(host, placementState.documentSelfLink), false);
         doDelete(UriUtils.buildUri(host, noLimitsContainerDescription.documentSelfLink), false);
-        doDelete(UriUtils.buildUri(host, noLimitsGroupResourcePlacement.documentSelfLink), false);
     }
 
     private void releasePlacement(GroupResourcePlacementState placementState)
@@ -508,8 +506,6 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
         host.testWait("Asd", (int) TimeUnit.MINUTES.toSeconds(1));
 
         releasePlacement(placementState);
-
-        doDelete(UriUtils.buildUri(host, placementState.documentSelfLink), false);
     }
 
     @Test
@@ -624,9 +620,6 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
         }
 
         releasePlacement(placementState);
-
-        doDelete(UriUtils.buildUri(host, placementState.documentSelfLink), false);
-
     }
 
     @Test
@@ -657,6 +650,24 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
     public void testDeleteWhenActiveReservation() throws Throwable {
         GroupResourcePlacementState placementState = createAndStoreGroupResourcePlacement();
         placementState = makeResourcePlacementReservationRequest(placementState, 5);
+
+        boolean expectedFailure = true;
+        try {
+            DeploymentProfileConfig.getInstance().setTest(false);
+            doDelete(UriUtils.buildUri(host, placementState.documentSelfLink), expectedFailure);
+            fail("expect validation error during deletion");
+        } catch (LocalizableValidationException e) {
+            // expected
+        } finally {
+            DeploymentProfileConfig.getInstance().setTest(true);
+        }
+    }
+
+    @Test
+    public void testDeleteWhenWrongReservationCount() throws Throwable {
+        GroupResourcePlacementState placementState = createAndStoreGroupResourcePlacement();
+
+        createContainer(placementState.documentSelfLink);
 
         boolean expectedFailure = true;
         try {
@@ -714,6 +725,10 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
                 .setCompletion(expectFailure ? host.getExpectedFailureCompletion()
                         : host.getCompletion()));
         host.testWait();
+
+        for (int i = 0; i < count; i++) {
+            createContainer(placementState.documentSelfLink);
+        }
 
         return getDocument(GroupResourcePlacementState.class, placementState.documentSelfLink);
     }
@@ -819,4 +834,23 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
                 1024L * 1024L * 1024L * 46L, 1024L * 1024L * 1024L * 1024L);
     }
 
+    private ContainerState createContainer(String groupResourcePlacementLink) throws Throwable {
+        ContainerState containerState = new ContainerState();
+        containerState.id = UUID.randomUUID().toString();
+        containerState.names = new ArrayList<>(Arrays.asList("name_" + containerState.id));
+        containerState.command = new String[] { "cat" };
+        containerState.adapterManagementReference = URI
+                .create("http://remote-host:8082/docker-executor");
+        containerState.address = "http://docker:5432/";
+        containerState.descriptionLink = UriUtils.buildUriPath(
+                ContainerDescriptionService.FACTORY_LINK, "docker-nginx");
+        containerState.customProperties = new HashMap<>();
+        containerState.powerState = ContainerState.PowerState.RUNNING;
+        containerState.parentLink = "/parent/link";
+        containerState.groupResourcePlacementLink = groupResourcePlacementLink;
+
+        containerState = doPost(containerState, ContainerFactoryService.SELF_LINK);
+
+        return containerState;
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -62,6 +62,8 @@ public class ContainerService extends StatefulService {
         public static final String FIELD_NAME_PARENT_LINK = "parentLink";
         public static final String FIELD_NAME_RESOURCE_POOL_LINK = "resourcePoolLink";
         public static final String FIELD_NAME_POWER_STATE = "powerState";
+        public static final String FIELD_NAME_GROUP_RESOURCE_PLACEMENT_LINK =
+                "groupResourcePlacementLink";
         public static final String CONTAINER_ALLOCATION_STATUS = "allocation";
         public static final String CONTAINER_DEGRADED_STATUS = "degraded";
         public static final String CONTAINER_ERROR_STATUS = "error";
