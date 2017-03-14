@@ -59,7 +59,7 @@ public class ClusterLocalAffinityHostFilter
     @Override
     public boolean isActive() {
         return (desc._cluster != null && desc._cluster > 1)
-                && (desc.volumes != null && desc.volumes.length > 0);
+                && (volumeNames != null && volumeNames.size() > 0);
     }
 
     @Override
