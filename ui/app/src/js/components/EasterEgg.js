@@ -16,7 +16,7 @@ var EasterEgg = Vue.extend({
 
   methods: {
     isCatalan: function() {
-      var userLang = i18n.detectLanguage();
+      var userLang = i18n.language;
 
       return (userLang && userLang.toLowerCase().indexOf('ca') === 0);
     }
