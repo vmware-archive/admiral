@@ -54,10 +54,8 @@ public class ClusterLocalAffinityHostFilterTest extends BaseAffinityHostFilterTe
         ContainerDescription desc = createDescription();
         desc.volumes = new String[] { "/var/run/docker.sock:/var/run/docker.sock" };
         filter = new ClusterLocalAffinityHostFilter(host, desc);
-        assertTrue(filter.isActive());
-        Map<String, HostSelection> selected = filter();
-        // filter selects all the available hosts
-        assertEquals(3, selected.size());
+        // filter is not active
+        assertFalse(filter.isActive());
     }
 
     @Test
