@@ -14,6 +14,8 @@ package com.vmware.admiral.service.common;
 import com.vmware.admiral.common.ManagementUriParts;
 
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocument.Documentation;
+import com.vmware.xenon.common.ServiceDocument.UsageOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.StatefulService;
 
@@ -23,21 +25,13 @@ public class EventTopicService extends StatefulService {
 
     public static class EventTopicState extends MultiTenantDocument {
 
+        @Documentation(description = "Event Topic id")
+        @UsageOption(option = PropertyUsageOption.REQUIRED)
+        public String id;
+
         @Documentation(description = "Event Topic name")
         @UsageOption(option = PropertyUsageOption.REQUIRED)
         public String name;
-
-        @Documentation(description = "Task name")
-        @UsageOption(option = PropertyUsageOption.REQUIRED)
-        public String task;
-
-        @Documentation(description = "Task stage")
-        @UsageOption(option = PropertyUsageOption.REQUIRED)
-        public String stage;
-
-        @Documentation(description = "Task substage")
-        @UsageOption(option = PropertyUsageOption.REQUIRED)
-        public String substage;
 
         @Documentation(description = "Blocking or asynchronous flag")
         @UsageOption(option = PropertyUsageOption.REQUIRED)
@@ -54,6 +48,10 @@ public class EventTopicService extends StatefulService {
         @Documentation(description = "Reply payload.")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public String description;
+
+        @Documentation(description = "Topic task info.")
+        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        public TopicTaskInfo topicTaskInfo;
 
     }
 
@@ -77,6 +75,21 @@ public class EventTopicService extends StatefulService {
         super.handlePost(post);
     }
 
+    public static class TopicTaskInfo {
+
+        @Documentation(description = "Task name")
+        @UsageOption(option = PropertyUsageOption.REQUIRED)
+        public String task;
+
+        @Documentation(description = "Task stage")
+        @UsageOption(option = PropertyUsageOption.REQUIRED)
+        public String stage;
+
+        @Documentation(description = "Task substage")
+        @UsageOption(option = PropertyUsageOption.REQUIRED)
+        public String substage;
+    }
+
     private void validate(Operation post) {
         EventTopicState body = post.getBody(EventTopicState.class);
 
@@ -84,15 +97,19 @@ public class EventTopicService extends StatefulService {
             post.fail(new Throwable("'name' is required."));
         }
 
-        if (body.task == null || body.task.isEmpty()) {
+        if (body.topicTaskInfo == null) {
+            post.fail(new Throwable("'TopicTaskInfo' is required."));
+        }
+
+        if (body.topicTaskInfo.task == null || body.topicTaskInfo.task.isEmpty()) {
             post.fail(new Throwable("'Task' is required."));
         }
 
-        if (body.stage == null) {
+        if (body.topicTaskInfo.stage == null) {
             post.fail(new Throwable("'Stage' is required."));
         }
 
-        if (body.substage == null) {
+        if (body.topicTaskInfo.substage == null) {
             post.fail(new Throwable("'SubStage' is required."));
         }
 

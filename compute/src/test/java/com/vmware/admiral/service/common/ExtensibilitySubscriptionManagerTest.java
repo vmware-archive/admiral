@@ -41,13 +41,12 @@ public class ExtensibilitySubscriptionManagerTest extends BaseTestCase {
 
         host.startServiceAndWait(ConfigurationFactoryService.class,
                 ConfigurationFactoryService.SELF_LINK);
-        host.startServiceAndWait(ExtensibilitySubscriptionFactoryService.class,
-                ExtensibilitySubscriptionFactoryService.SELF_LINK);
-
 
         manager = new ExtensibilitySubscriptionManager();
         host.startServiceAndWait(manager, ExtensibilitySubscriptionManager.SELF_LINK, null);
 
+        host.startServiceAndWait(ExtensibilitySubscriptionFactoryService.class,
+                ExtensibilitySubscriptionFactoryService.SELF_LINK);
     }
 
     @Test

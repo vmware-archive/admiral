@@ -35,9 +35,10 @@ public interface ManagementUriParts {
     String CERT_DISTRIBUTION_ADD_HOST = CONFIG + "/certs-dist-add-host";
     String ENDPOINTS = CONFIG + "/endpoints";
 
-    String EXTENSIBILITY_SUBSCRIPTION = CONFIG + "/extensibility-subscriptions";
-    String EXTENSIBILITY_MANAGER = CONFIG + "/extensibility-manager";
-    String EXTENSIBILITY_CALLBACKS = CONFIG + "/extensibility-callbacks";
+    String EXTENSIBILITY = "/extensibility";
+    String EXTENSIBILITY_SUBSCRIPTION = EXTENSIBILITY + "-subscriptions";
+    String EXTENSIBILITY_MANAGER = EXTENSIBILITY + "-manager";
+    String EXTENSIBILITY_CALLBACKS = EXTENSIBILITY + "-callbacks";
 
     String EVENT_TOPIC_REGISTRY = CONFIG + "/event-topic";
     String EVENT_TOPIC_REGISTRY_BOOTSTRAP = CONFIG + "/event-topic-registry";
