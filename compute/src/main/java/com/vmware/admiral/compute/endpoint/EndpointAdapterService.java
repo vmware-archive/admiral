@@ -327,7 +327,13 @@ public class EndpointAdapterService extends StatelessService {
 
     private void handleServiceErrorResponse(Operation op, int statusCode, Throwable e,
             ServiceErrorResponse rsp) {
-        logWarning(e.getMessage());
+        if (e != null) {
+            logWarning(Utils.toString(e));
+        }
+        if (rsp != null) {
+            logWarning("kind: %s, message: %s, errorCode: %s, statusCode: %s.",
+                    rsp.documentKind, rsp.message, rsp.getErrorCode(), rsp.statusCode);
+        }
         op.setStatusCode(statusCode);
         op.setContentType(Operation.MEDIA_TYPE_APPLICATION_JSON);
         op.fail(e, rsp);
