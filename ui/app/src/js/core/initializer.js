@@ -20,18 +20,20 @@ initializer.init = function(callback) {
 
   templateHelpers.register();
 
-  var initI18N = function() {
-    i18next.use(i18nextXHRBackend)
-      .use(i18nextBrowserLanguageDetector)
-      .init({
-        ns: ['admiral'],
-        defaultNS: 'admiral',
-        fallbackLng: 'en',
-        backend: {
-          loadPath: 'messages/{{ns}}.{{lng}}.json'
-        },
-        debug: true
-    }, callback);
+  const initI18N = function() {
+    return new Promise((resolve) => {
+      i18next.use(i18nextXHRBackend)
+        .use(i18nextBrowserLanguageDetector)
+        .init({
+          ns: ['admiral'],
+          defaultNS: 'admiral',
+          fallbackLng: 'en',
+          backend: {
+            loadPath: 'messages/{{ns}}.{{lng}}.json'
+          },
+          debug: true
+      }, resolve);
+    });
   };
 
   const DEFAULT_ADAPTERS = [{
@@ -73,8 +75,11 @@ initializer.init = function(callback) {
       }
     }
     utils.initializeConfigurationProperties(configurationProperties);
-    return ft.isExternalPhotonAdaptersEnabled() ? services.loadAdapters() : Promise.resolve([]);
-  }).then((adapters) => {
+    return Promise.all([
+      ft.isExternalPhotonAdaptersEnabled() ? services.loadAdapters() : Promise.resolve([]),
+      initI18N()
+    ]);
+  }).then(([adapters]) => {
     utils.initializeAdapters(DEFAULT_ADAPTERS.concat(Object.values(adapters).map((adapter) => {
       return {
         id: adapter.id,
@@ -86,9 +91,10 @@ initializer.init = function(callback) {
         storageProfileEditor: adapter.customProperties.storageProfileEditor
       };
     })));
-    initI18N();
     return Promise.all(Object.values(adapters).map((adapter) =>
       services.loadScript(adapter.customProperties.uiLink.replace(/^\//, ''))));
+  }).then(() => {
+    callback();
   }).catch((err) => {
     console.warn('Error when loading configuration! Error: ' + err);
   });
