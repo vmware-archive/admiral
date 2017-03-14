@@ -1,0 +1,39 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<modal :show="true" :closable="false" :has-header="false">
+  <div slot="body">
+    <div>
+      <i class="fa fa-exclamation-circle modal-title-icon"></i>
+      <div class="export-template-text">{{i18n("app.template.export.formatPromptMessage")}}</div>
+    </div>
+    <div class="export-template-options">
+      <form>
+        <div class="radio">
+          <input type="radio" name="format" id="exportTemplateFormat_Yaml"
+                 value="COMPOSITE_BLUEPRINT" v-model="exportFormat">
+          <label for="exportTemplateFormat_Yaml">{{i18n("app.template.export.format.compositeBlueprint")}}</label>
+        </div>
+        <div class="radio">
+          <input type="radio" name="format" id="exportTemplateFormat_Docker"
+                 value="DOCKER_COMPOSE" v-model="exportFormat">
+          <label for="exportTemplateFormat_Docker">{{i18n("app.template.export.format.dockerCompose")}}</label>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div slot="footer">
+    <button class="btn btn-outline cancelBtn" type="button" data-cmd="cancel-export-template"
+            @click="$emit('cancel')">{{i18n("cancel")}}</button>
+    <button class="btn btn-primary" type="button" data-cmd="confirm-export-template"
+            @click="confirmExport($event)">{{i18n("ok")}}</button>
+  </div>
+</modal>
