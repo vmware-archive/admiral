@@ -13,7 +13,6 @@ package com.vmware.admiral.compute.kubernetes.service;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
@@ -62,7 +61,6 @@ public class PodLogService extends StatelessService {
         Map<String, LogServiceState> resultLogs = new HashMap<>();
 
         AtomicInteger counter = new AtomicInteger(podState.pod.spec.containers.size());
-        AtomicBoolean hasError = new AtomicBoolean(false);
 
         for (Container container : podState.pod.spec.containers) {
             String podLogLink = KubernetesUtil.buildLogUriPath(podState, container.name);
@@ -70,17 +68,17 @@ public class PodLogService extends StatelessService {
             sendRequest(Operation.createGet(this, podLogLink)
                     .setCompletion((o, ex) -> {
                         if (ex != null) {
-                            if (hasError.compareAndSet(false, true)) {
-                                get.fail(ex);
-                                createAdapterRequest(podState);
-                            }
+                            LogServiceState log = new LogServiceState();
+                            log.logs = "--".getBytes();
+                            log.tenantLinks = podState.tenantLinks;
+                            resultLogs.put(container.name, log);
                         } else {
                             resultLogs.put(container.name, o.getBody(LogServiceState.class));
-                            if (counter.decrementAndGet() == 0 && !hasError.get()) {
-                                get.setBody(resultLogs);
-                                get.complete();
-                                createAdapterRequest(podState);
-                            }
+                        }
+                        if (counter.decrementAndGet() == 0) {
+                            get.setBody(resultLogs);
+                            get.complete();
+                            createAdapterRequest(podState);
                         }
                     }));
         }
