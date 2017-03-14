@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.function.Consumer;
+import java.util.UUID;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -52,24 +52,36 @@ public class PodLogServiceTest extends ComputeBaseTest {
     public void testLog() throws Throwable {
         PodState podState = createPodState();
         createLogStates(podState);
+        Map<String, LogServiceState> logsMap = getPodLogs(podState);
 
-        getPodLogs(podState, (logsMap) -> {
-            assertNotNull(logsMap);
-            assertEquals(3, logsMap.size());
-            for (int i = 0; i < podState.pod.spec.containers.size(); i++) {
-                Container temp = podState.pod.spec.containers.get(i);
-                assertTrue(logsMap.containsKey(temp.name));
-                assertEquals("test-log-" + i,
-                        new String(logsMap.get(temp.name).logs));
-            }
+        assertNotNull(logsMap);
+        assertEquals(3, logsMap.size());
+        for (int i = 0; i < podState.pod.spec.containers.size(); i++) {
+            Container temp = podState.pod.spec.containers.get(i);
+            assertTrue(logsMap.containsKey(temp.name));
+            assertEquals("test-log-" + i, new String(logsMap.get(temp.name).logs));
 
-        });
+        }
+    }
+
+    @Test
+    public void testEmptyLogs() throws Throwable {
+        PodState podState = createPodState();
+        Map<String, LogServiceState> logsMap = getPodLogs(podState);
+
+        assertNotNull(logsMap);
+        assertEquals(3, logsMap.size());
+        for (int i = 0; i < podState.pod.spec.containers.size(); i++) {
+            Container temp = podState.pod.spec.containers.get(i);
+            assertTrue(logsMap.containsKey(temp.name));
+            assertEquals("--", new String(logsMap.get(temp.name).logs));
+
+        }
     }
 
     @SuppressWarnings("unchecked")
-    private void getPodLogs(PodState podState, Consumer<Map<String, LogServiceState>> callback)
-            throws Throwable {
-
+    private Map<String, LogServiceState> getPodLogs(PodState podState) throws Throwable {
+        Map<String, LogServiceState> logsMap = new HashMap<>();
         host.testStart(1);
         host.send(Operation.createGet(
                 UriUtils.buildUri(host, PodLogService.SELF_LINK,
@@ -82,7 +94,6 @@ public class PodLogServiceTest extends ComputeBaseTest {
                     }
                     try {
                         Map<String, Object> tempMap = o.getBody(Map.class);
-                        Map<String, LogServiceState> logsMap = new HashMap<>();
 
                         for (Entry<String, Object> entry : tempMap.entrySet()) {
                             Object obj = entry.getValue();
@@ -90,7 +101,6 @@ public class PodLogServiceTest extends ComputeBaseTest {
                                     LogServiceState.class);
                             logsMap.put(entry.getKey(), logState);
                         }
-                        callback.accept(logsMap);
                         host.completeIteration();
                     } catch (Throwable ex) {
                         host.failIteration(ex);
@@ -98,7 +108,7 @@ public class PodLogServiceTest extends ComputeBaseTest {
 
                 }));
         host.testWait();
-
+        return logsMap;
     }
 
     private PodState createPodState() throws Throwable {
@@ -117,6 +127,8 @@ public class PodLogServiceTest extends ComputeBaseTest {
         podState.pod.spec.containers.add(container3);
         podState.pod.metadata = new ObjectMeta();
         podState.pod.metadata.selfLink = "/api/v1/namespaces/default/pods/test-pod";
+        podState.pod.metadata.uid = UUID.randomUUID().toString();
+        podState.documentSelfLink = podState.pod.metadata.uid;
         podState = doPost(podState, PodService.FACTORY_LINK);
         return podState;
     }
@@ -128,6 +140,8 @@ public class PodLogServiceTest extends ComputeBaseTest {
             logState.documentSelfLink = podState.documentSelfLink + "-" + podState.pod.spec
                     .containers.get(i).name;
             logState = doPost(logState, LogService.FACTORY_LINK);
+            assertNotNull(logState);
+            host.log("Created log state: %s", logState.documentSelfLink);
         }
     }
 
