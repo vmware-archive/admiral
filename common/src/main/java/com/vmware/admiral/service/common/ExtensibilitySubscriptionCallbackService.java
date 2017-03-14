@@ -238,6 +238,12 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
                                 String.format("Notification to [%s] failed. Error: %s",
                                         body.serviceTaskCallback.serviceSelfLink, e.getMessage()));
                     }
+
+                    getHost().log(Level.INFO,
+                            String.format(
+                                    "Task [%s] has been resumed. Deleting ExtensibilitySubscriptionCallback [%s].",
+                                    body.serviceTaskCallback.serviceSelfLink, getSelfLink()));
+                    sendRequest(Operation.createDelete(getUri()));
                 }));
     }
 

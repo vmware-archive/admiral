@@ -40,6 +40,7 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
 
     public static final String CONTAINER_NAME_TOPIC_TASK_SELF_LINK = "change-container-name";
 
+    private static final String CONTAINER_NAME_TOPIC_ID = "com.vmware.container.name.assignment";
     private static final String CONTAINER_NAME_TOPIC_NAME = "Name assignment";
     private static final String CONTAINER_NAME_TOPIC_TASK_NAME = "ContainerAllocationTaskState";
     private static final String CONTAINER_NAME_TOPIC_SUBSTAGE = "CONTEXT_PREPARED";
@@ -138,10 +139,13 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
 
     private static Operation createChangeContainerNameTopicOperation(ServiceHost host) {
         EventTopicState topic = new EventTopicState();
+        topic.id = CONTAINER_NAME_TOPIC_ID;
         topic.name = CONTAINER_NAME_TOPIC_NAME;
-        topic.task = CONTAINER_NAME_TOPIC_TASK_NAME;
-        topic.stage = TaskStage.STARTED.name();
-        topic.substage = CONTAINER_NAME_TOPIC_SUBSTAGE;
+        EventTopicService.TopicTaskInfo taskInfo = new EventTopicService.TopicTaskInfo();
+        taskInfo.task = CONTAINER_NAME_TOPIC_TASK_NAME;
+        taskInfo.stage = TaskStage.STARTED.name();
+        taskInfo.substage = CONTAINER_NAME_TOPIC_SUBSTAGE;
+        topic.topicTaskInfo = taskInfo;
         topic.documentSelfLink = CONTAINER_NAME_TOPIC_TASK_SELF_LINK;
         topic.description = CONTAINER_NAME_TOPIC_TASK_DESCRIPTION;
         topic.blockable = Boolean.TRUE;

@@ -72,9 +72,11 @@ public class EventTopicServiceTest extends BaseTestCase {
 
         assertNotNull(result);
         assertNotNull(result.documentSelfLink);
-        assertEquals(state.task, result.task);
-        assertEquals(state.stage, result.stage);
-        assertEquals(state.substage, result.substage);
+        assertNotNull(result.topicTaskInfo);
+
+        assertEquals(state.topicTaskInfo.task, result.topicTaskInfo.task);
+        assertEquals(state.topicTaskInfo.stage, result.topicTaskInfo.stage);
+        assertEquals(state.topicTaskInfo.substage, result.topicTaskInfo.substage);
 
         uri = UriUtils.buildUri(host, result.documentSelfLink);
         result = sender.sendGetAndWait(uri, EventTopicState.class);
@@ -184,11 +186,15 @@ public class EventTopicServiceTest extends BaseTestCase {
 
     private EventTopicState createEventTopicState(String name, String task, String stage,
             String subStage, Boolean blocking) {
+
+        EventTopicService.TopicTaskInfo taskInfo = new EventTopicService.TopicTaskInfo();
+        taskInfo.task = task;
+        taskInfo.stage = stage;
+        taskInfo.substage = subStage;
+
         EventTopicState state = new EventTopicState();
         state.name = name;
-        state.task = task;
-        state.stage = stage;
-        state.substage = subStage;
+        state.topicTaskInfo = taskInfo;
         state.blockable = blocking;
         state.notificationPayload = "notificationPayload";
         state.replyPayload = "replayPayload";

@@ -71,16 +71,12 @@ public class ExtensibilitySubscriptionService extends StatefulService {
     @Override
     public void handleCreate(Operation post) {
         validateState(post);
-
-        post.complete();
-        notifyUpdatedExtensibilityDocument();
+        notifyUpdatedExtensibilityDocument(post);
     }
 
     @Override
     public void handleDelete(Operation delete) {
-        delete.complete();
-
-        notifyUpdatedExtensibilityDocument();
+        notifyUpdatedExtensibilityDocument(delete);
     }
 
     static String constructKey(ExtensibilitySubscription state) {
@@ -102,7 +98,7 @@ public class ExtensibilitySubscriptionService extends StatefulService {
         return cs;
     }
 
-    private void notifyUpdatedExtensibilityDocument() {
+    private void notifyUpdatedExtensibilityDocument(Operation operation) {
         sendRequest(Operation.createPut(this, LAST_UPDATED_DOCUMENT_KEY)
                 .setBody(buildConfigurationStateWithValue(getSelfLink()))
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
@@ -110,9 +106,10 @@ public class ExtensibilitySubscriptionService extends StatefulService {
                     if (e != null) {
                         logWarning("Error notify updated extensibility document for '%s' : %s",
                                 getSelfLink(), Utils.toString(e));
+                        operation.fail(e);
                         return;
                     }
-
+                    operation.complete();
                     logFine("Updated extensibility %s completed.", getSelfLink());
                 }));
     }

@@ -41,6 +41,8 @@ public class ExtensibilitySubscriptionServiceTest extends BaseTestCase {
         // start services
         host.startServiceAndWait(ConfigurationFactoryService.class,
                 ConfigurationFactoryService.SELF_LINK);
+        host.startServiceAndWait(ExtensibilitySubscriptionManager.class,
+                ExtensibilitySubscriptionManager.SELF_LINK);
         host.startServiceAndWait(ExtensibilitySubscriptionFactoryService.class,
                 ExtensibilitySubscriptionFactoryService.SELF_LINK);
     }

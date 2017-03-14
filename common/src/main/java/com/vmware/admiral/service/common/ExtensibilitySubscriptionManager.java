@@ -29,7 +29,9 @@ import com.vmware.admiral.service.common.ExtensibilitySubscriptionService.Extens
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.StatelessService;
+import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -92,8 +94,8 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
 
         if (extensibilitySubscription.blocking) {
             // blocking notification
-            sendExternalNotificationCall(notificationPayload, replayPayload, extensibilitySubscription,
-                    state);
+            sendBlockingNotificationCall(notificationPayload, replayPayload,
+                    extensibilitySubscription, state);
         } else {
             // asynchronous notification
             sendAsyncNotificationCall(notificationPayload, replayPayload, extensibilitySubscription,
@@ -192,7 +194,7 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
      *            task state to send
      */
     @SuppressWarnings({ "rawtypes" })
-    private <T extends TaskServiceDocument> void sendExternalNotificationCall(
+    private <T extends TaskServiceDocument> void sendBlockingNotificationCall(
             ServiceTaskCallbackResponse notificationPayload,
             ServiceTaskCallbackResponse replayPayload,
             ExtensibilitySubscription extensibility, T state) {
@@ -203,13 +205,16 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
         // Create callback which will handle response from subscriber client.
         ExtensibilitySubscriptionCallback callbackState = new ExtensibilitySubscriptionCallback();
         callbackState.taskStateJson = Utils.toJson(state);
-        callbackState.taskStateClassName = state.getClass().getName();
+        callbackState.taskStateClassName = state.getClass().getSimpleName();
+
         // Set callback to service task which will be resumed, once subscriber finished.
         callbackState.serviceTaskCallback = ServiceTaskCallback.create(
                 state.documentSelfLink,
                 state.taskInfo.stage, state.taskSubStage,
                 TaskStage.STARTED, DefaultSubStage.ERROR);
+        callbackState.requestTrackerLink = state.requestTrackerLink;
         callbackState.replayPayload = replayPayload;
+        callbackState.tenantLinks = state.tenantLinks;
 
         sendRequest(Operation
                 .createPost(this, ExtensibilitySubscriptionCallbackService.FACTORY_LINK)
@@ -225,7 +230,7 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
 
                     sendExternalNotification(extensibility,
                             buildDataToSend(notificationPayload, replayPayload, result),
-                            NOTIFICATION_RETRY_COUNT);
+                            state, NOTIFICATION_RETRY_COUNT);
                 }));
     }
 
@@ -248,7 +253,8 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
                 extensibility.callbackReference, state.documentSelfLink);
         // Task is filtered to provide only fields declared as notification payload.
         T notificationPayloadState = prepareTaskNotificationPayload(notificationPayload, state);
-        sendExternalNotification(extensibility, notificationPayloadState, NOTIFICATION_RETRY_COUNT);
+        sendExternalNotification(extensibility, notificationPayloadState, state,
+                NOTIFICATION_RETRY_COUNT);
     }
 
     @SuppressWarnings("unchecked")
@@ -267,18 +273,21 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
      * Sends a service document to external url. Supports retry in case of an error and if task
      * service is provided this method will call failTask when no more retries left.
      *
+     *
      * @param extensibility
      *            extensibility state
      * @param body
      *            document to send
+     * @param state
+     *            - task state
      * @param retriesLeft
      *            number of retries left before give up
      *
-     * @param notificationPayload
-     *            task fields which subscriber will use for information.
      */
-    private void sendExternalNotification(ExtensibilitySubscription extensibility,
-            ServiceDocument body,
+    @SuppressWarnings("rawtypes")
+    private <T extends TaskServiceDocument> void sendExternalNotification(
+            ExtensibilitySubscription extensibility,
+            ServiceDocument body, T state,
             int retriesLeft) {
 
         sendRequest(Operation.createPost(extensibility.callbackReference)
@@ -286,11 +295,17 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
                 .setReferer(getUri())
                 .setCompletion((o, e) -> {
                     if (e != null) {
+                        logWarning(
+                                "Retrying [{}] times to notify [{}]. Error: [{}]",
+                                retriesLeft, extensibility.callbackReference,
+                                e.getMessage());
+
                         if (retriesLeft <= 1) {
                             logWarning("Cannot notify [%s] for task [%s]. Error: %s",
                                     extensibility.callbackReference, body.documentSelfLink,
                                     e.getMessage());
-                            // TODO Notification failed. Resume task service?
+
+                            failTask(e.getMessage(), state.documentSelfLink);
                         } else if (o.getStatusCode() == Operation.STATUS_CODE_TIMEOUT) {
                             // Call to ExtensibilitySubscriptionCallback will resume the service
                             // task.
@@ -298,7 +313,7 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
                                     extensibility.callbackReference, body.documentSelfLink);
                         } else {
                             getHost().schedule(() -> {
-                                sendExternalNotification(extensibility, body,
+                                sendExternalNotification(extensibility, body, state,
                                         retriesLeft - 1);
                             }, NOTIFICATION_RETRY_WAIT, TimeUnit.SECONDS);
 
@@ -306,6 +321,7 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
                     }
 
                 }));
+
     }
 
     @SuppressWarnings("rawtypes")
@@ -327,7 +343,9 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
         data.serviceCallback = UriUtils.buildUri(getHost(), result.documentSelfLink);
         data.notificationPayload = notificationPayloadData;
         data.replayPayload = replayPayloadData;
-
+        data.taskStateClassName = result.taskStateClassName;
+        data.tenantLinks = result.tenantLinks;
+        data.taskStateJson = result.taskStateJson;
         return data;
     }
 
@@ -360,6 +378,31 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
                                 }));
                     }
                 });
+    }
+
+    private void failTask(String errMsg, String taskDocumentSelfLink) {
+        if (errMsg == null) {
+            errMsg = "Unexpected State";
+        }
+
+        logWarning(errMsg);
+
+        ServiceTaskCallbackResponse body = new ServiceTaskCallbackResponse();
+        body.taskInfo = new TaskState();
+        body.taskInfo.stage = TaskStage.FAILED;
+        body.taskSubStage = DefaultSubStage.ERROR;
+
+        ServiceErrorResponse rsp = new ServiceErrorResponse();
+        rsp.message = errMsg;
+        body.taskInfo.failure = rsp;
+
+        sendRequest(Operation.createPatch(UriUtils.buildUri(getHost(), taskDocumentSelfLink))
+                .setBody(body)
+                .setCompletion((op, ex) -> {
+                    if (ex != null) {
+                        logWarning("Patch for fail task operation failed: %s", Utils.toString(ex));
+                    }
+                }));
     }
 
     private void addExtensibilitySubscription(ExtensibilitySubscription state) {
