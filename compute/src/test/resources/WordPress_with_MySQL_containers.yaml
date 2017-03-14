@@ -8,6 +8,7 @@ components:
     data:
       name: "wordpress"
       image: "centurylink/wordpress:3.9.1"
+      image_reference: "http://registry.hub.docker.com/centurylink/wordpress.tgz"
       _cluster: 2
       env:
       - var: "DB_PASSWORD"
@@ -35,6 +36,7 @@ components:
     data:
       name: "mysql"
       image: "centurylink/mysql:5.5"
+      image_reference: "http://registry.hub.docker.com/centurylink/mysql.tgz"
       env:
       - var: "MYSQL_ROOT_PASSWORD"
         value: "pass@word01"

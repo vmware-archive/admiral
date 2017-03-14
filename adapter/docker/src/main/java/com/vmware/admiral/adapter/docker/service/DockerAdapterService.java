@@ -142,6 +142,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
      */
     private static final String DOWNLOAD_TEMPFILE_PREFIX = "admiral";
 
+    private static final String FILE_SCHEME = "file";
+
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER;
 
     public static final String PROVISION_CONTAINER_RETRIES_COUNT_PARAM_NAME = "provision.container.retries.count";
@@ -545,49 +547,44 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
             getHost().log(Level.INFO, "Downloading image from: %s %s", imageReference,
                     context.request.getRequestTrackingLog());
             try {
-                File tempFile = File.createTempFile(DOWNLOAD_TEMPFILE_PREFIX, null);
-                tempFile.deleteOnExit();
+                if (FILE_SCHEME.equals(imageReference.getScheme())) {
+                    // for file scheme use the file and do not delete it (it is not a temp copy)
+                    processDownloadedImage(context, new File(imageReference),
+                            imageCompletionHandler, false);
+                } else {
+                    // for not file scheme, download it to a temp file
+                    File tempFile = File.createTempFile(DOWNLOAD_TEMPFILE_PREFIX, null);
+                    tempFile.deleteOnExit();
 
-                Operation fetchOp = Operation.createGet(imageReference);
+                    Operation fetchOp = Operation.createGet(imageReference);
 
-                fetchOp.setExpiration(ServiceUtils.getExpirationTimeFromNowInMicros(
-                        getHost().getOperationTimeoutMicros()))
-                        .setReferer(UriUtils.buildUri(getHost(), SELF_LINK))
-                        .setContextId(context.request.getRequestId())
-                        .setCompletion((o, ex) -> {
-                            if (ex != null) {
-                                if (!tempFile.delete()) {
-                                    this.logWarning("Failed to delete temp file: %s %s", tempFile,
+                    fetchOp.setExpiration(ServiceUtils.getExpirationTimeFromNowInMicros(
+                            getHost().getOperationTimeoutMicros()))
+                            .setReferer(UriUtils.buildUri(getHost(), SELF_LINK))
+                            .setContextId(context.request.getRequestId())
+                            .setCompletion((o, ex) -> {
+                                if (ex != null) {
+                                    if (!tempFile.delete()) {
+                                        this.logWarning("Failed to delete temp file: %s %s",
+                                                tempFile, context.request.getRequestTrackingLog());
+                                    }
+                                    fail(context.request, ex);
+
+                                } else {
+                                    getHost().log(Level.INFO,
+                                            "Finished download of %d bytes from %s to %s %s",
+                                            tempFile.length(), o.getUri(),
+                                            tempFile.getAbsolutePath(),
                                             context.request.getRequestTrackingLog());
+
+                                    processDownloadedImage(context, tempFile,
+                                            imageCompletionHandler, true);
                                 }
-                                fail(context.request, ex);
+                            });
 
-                            } else {
-                                // Hack: until issue:
-                                // https://www.pivotaltracker.com/projects/1471320/stories/111849709
-                                // tempFile is not ready by the time it gets here.
-                                for (int i = 0; i < 200; i++) {
-                                    if (tempFile.length() > 0) {
-                                        break;
-                                    }
-
-                                    try {
-                                        Thread.sleep(50);
-                                    } catch (InterruptedException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                                getHost().log(Level.INFO,
-                                        "Finished download of %d bytes from %s to %s %s",
-                                        tempFile.length(), o.getUri(), tempFile.getAbsolutePath(),
-                                        context.request.getRequestTrackingLog());
-
-                                processDownloadedImage(context, tempFile, imageCompletionHandler);
-                            }
-                        });
-
-                // TODO ssl trust / credentials for the image server
-                FileUtils.getFile(getHost().getClient(), fetchOp, tempFile);
+                    // TODO ssl trust / credentials for the image server
+                    FileUtils.getFile(getHost().getClient(), fetchOp, tempFile);
+                }
 
             } catch (IOException x) {
                 throw new RuntimeException("Failure downloading image from: " + imageReference
@@ -605,7 +602,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
      * @param imageCompletionHandler
      */
     private void processDownloadedImage(RequestContext context, File tempFile,
-            CompletionHandler imageCompletionHandler) {
+            CompletionHandler imageCompletionHandler, boolean isTempFile) {
 
         Operation fileReadOp = Operation.createPatch(null)
                 .setContextId(context.request.getRequestId())
@@ -616,7 +613,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                     }
 
                     byte[] imageData = o.getBody(byte[].class);
-                    if (!tempFile.delete()) {
+                    if (isTempFile && !tempFile.delete()) {
                         this.logWarning("Failed to delete temp file: %s %s", tempFile,
                                 context.request.getRequestTrackingLog());
                     }
