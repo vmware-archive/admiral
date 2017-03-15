@@ -17,14 +17,22 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.Arrays;
+
 import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
+import com.vmware.admiral.auth.util.ProjectUtil;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
+import com.vmware.photon.controller.model.resources.ResourcePoolService;
+import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -46,6 +54,7 @@ public class ProjectServiceTest extends AuthBaseTest {
         waitForServiceAvailability(ProjectService.FACTORY_LINK);
 
         host.assumeIdentity(buildUserServicePath(ADMIN_USERNAME));
+        waitForServiceAvailability(GroupResourcePlacementService.FACTORY_LINK);
         project = createProject(PROJECT_NAME, PROJECT_DESCRIPTION, PROJECT_IS_PUBLIC);
     }
 
@@ -127,6 +136,25 @@ public class ProjectServiceTest extends AuthBaseTest {
     @Test
     public void testDelete() throws Throwable {
         deleteProject(project);
+    }
+
+    @Test
+    public void testDeleteProjectAssociatedWithPlacement() throws Throwable {
+        ResourcePoolState pool = createResourcePool();
+        GroupResourcePlacementState placement = new GroupResourcePlacementState();
+        placement.name = "test-reservation";
+        placement.resourcePoolLink = pool.documentSelfLink;
+        placement.tenantLinks = Arrays.asList(project.documentSelfLink);
+
+        doPost(placement, GroupResourcePlacementService.FACTORY_LINK);
+
+        try {
+            deleteProject(project);
+        } catch (LocalizableValidationException e) {
+            verifyExceptionMessage(e.getMessage(),
+                    ProjectUtil.PROJECT_IN_USE_MESSAGE);
+        }
+
     }
 
     @Test
@@ -239,5 +267,12 @@ public class ProjectServiceTest extends AuthBaseTest {
                 .build();
 
         return doPost(userGroupState, UserGroupService.FACTORY_LINK);
+    }
+
+    private ResourcePoolState createResourcePool() throws Throwable {
+        ResourcePoolState pool = new ResourcePoolState();
+        pool.name = "pool";
+
+        return doPost(pool, ResourcePoolService.FACTORY_LINK);
     }
 }
