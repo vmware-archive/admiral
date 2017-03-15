@@ -43,7 +43,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
-import com.vmware.admiral.adapter.common.service.mock.MockTaskFactoryService;
 import com.vmware.admiral.adapter.common.service.mock.MockTaskService.MockTaskState;
 import com.vmware.admiral.adapter.docker.mock.BaseMockDockerTestCase;
 import com.vmware.admiral.adapter.docker.mock.MockDockerPathConstants;
@@ -65,8 +64,6 @@ import com.vmware.admiral.compute.container.maintenance.ContainerStats;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
-import com.vmware.admiral.service.common.SslTrustCertificateService;
-import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -101,8 +98,6 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
     private String parentComputeStateLink;
     private URI containerStateReference;
     private URI dockerAdapterServiceUri;
-    private String testDockerCredentialsLink;
-    private String provisioningTaskLink;
     private String containerDescriptionLink;
     private ContainerState containerState;
     private ContainerStats containerStats;
@@ -267,12 +262,6 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
 
     }
 
-    protected void createProvisioningTask() throws Throwable {
-        MockTaskState provisioningTask = new MockTaskState();
-        provisioningTaskLink = doPost(provisioningTask,
-                MockTaskFactoryService.SELF_LINK).documentSelfLink;
-    }
-
     protected void createContainerDescription() throws Throwable {
         createContainerDescription("busybox:latest");
     }
@@ -322,16 +311,6 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
 
         ContainerState container = doPost(containerState, ContainerFactoryService.SELF_LINK);
         containerStateReference = UriUtils.extendUri(host.getUri(), container.documentSelfLink);
-    }
-
-    protected void createTestDockerAuthCredentials() throws Throwable {
-        testDockerCredentialsLink = doPost(getDockerCredentials(),
-                AuthCredentialsService.FACTORY_LINK).documentSelfLink;
-        SslTrustCertificateState dockerServerTrust = getDockerServerTrust();
-        if (dockerServerTrust != null && dockerServerTrust.certificate != null
-                && !dockerServerTrust.certificate.isEmpty()) {
-            doPost(dockerServerTrust, SslTrustCertificateService.FACTORY_LINK);
-        }
     }
 
     protected void createParentComputeState() throws Throwable {

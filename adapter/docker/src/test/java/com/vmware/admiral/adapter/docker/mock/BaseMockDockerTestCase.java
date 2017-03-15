@@ -19,18 +19,27 @@ import java.util.logging.Level;
 import org.junit.After;
 import org.junit.Before;
 
+import com.vmware.admiral.adapter.common.ContainerHostOperationType;
 import com.vmware.admiral.adapter.common.service.mock.MockTaskFactoryService;
+import com.vmware.admiral.adapter.common.service.mock.MockTaskService.MockTaskState;
+import com.vmware.admiral.adapter.docker.service.ContainerHostRequest;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
 import com.vmware.admiral.host.ComputeInitialBootService;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
+import com.vmware.admiral.service.common.ServiceTaskCallback;
+import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
+import com.vmware.admiral.service.common.TaskServiceDocument;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.VerificationHost;
+import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
 /**
@@ -45,8 +54,13 @@ public class BaseMockDockerTestCase extends BaseTestCase {
     private static final String DOCKER_CLIENT_CERTIFICATE = "test.docker.client.certificate";
     private static final String DOCKER_SERVER_CERTIFICATE = "test.docker.server.certificate";
     protected static final long FUTURE_TIMEOUT_SECONDS = 10;
+    protected static final String TASK_INFO_STAGE = TaskServiceDocument.FIELD_NAME_TASK_STAGE;
 
     protected VerificationHost mockDockerHost;
+    protected URI dockerHostAdapterServiceUri;
+    protected ComputeState dockerHostState;
+    protected String testDockerCredentialsLink;
+    protected String provisioningTaskLink;
 
     protected static URI dockerUri;
     protected static URI dockerVersionedUri;
@@ -184,6 +198,91 @@ public class BaseMockDockerTestCase extends BaseTestCase {
      */
     protected boolean isMockTarget() {
         return mockDockerHost != null;
+    }
+
+    protected ComputeState requestDockerHostOperation(String mockDockerPath,
+            ContainerHostOperationType operationType) throws Throwable {
+        mockDockerHost.waitForServiceAvailable(MockDockerHostService.SELF_LINK + mockDockerPath);
+
+        sendContainerHostRequest(operationType,
+                UriUtils.buildUri(host, dockerHostState.documentSelfLink));
+
+        // wait for provisioning task stage to change to finish
+        waitForPropertyValue(provisioningTaskLink, MockTaskState.class, TASK_INFO_STAGE,
+                TaskState.TaskStage.FINISHED);
+
+        dockerHostState = retrieveDockerHostState();
+
+        return dockerHostState;
+    }
+
+    protected ComputeState retrieveDockerHostState() throws Throwable {
+        Operation getContainerState = Operation.createGet(UriUtils.buildUri(host,
+                dockerHostState.documentSelfLink))
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.failIteration(ex);
+
+                    } else {
+                        dockerHostState = o.getBody(ComputeState.class);
+                        host.completeIteration();
+                    }
+                });
+
+        host.testStart(1);
+        host.send(getContainerState);
+        host.testWait();
+
+        return dockerHostState;
+    }
+
+    protected void sendContainerHostRequest(ContainerHostOperationType type, URI computeStateReference)
+            throws Throwable {
+        ContainerHostRequest request = new ContainerHostRequest();
+        request.resourceReference = computeStateReference;
+        request.operationTypeId = type.id;
+        request.serviceTaskCallback = ServiceTaskCallback.create(provisioningTaskLink);
+
+        sendContainerHostRequest(request);
+    }
+
+    protected void sendContainerHostRequest(ContainerHostRequest request) throws Throwable {
+
+        Operation startContainer = Operation
+                .createPatch(dockerHostAdapterServiceUri)
+                .setReferer(URI.create("/")).setBody(request)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.failIteration(ex);
+                    }
+
+                    host.completeIteration();
+                });
+
+        host.testStart(1);
+        host.send(startContainer);
+        host.testWait();
+
+        if (!isMockTarget()) {
+            // in case of testing with a real docker server, give it some time to settle
+            Thread.sleep(100L);
+        }
+    }
+
+    protected void createTestDockerAuthCredentials() throws Throwable {
+        testDockerCredentialsLink = doPost(getDockerCredentials(),
+                AuthCredentialsService.FACTORY_LINK).documentSelfLink;
+        SslTrustCertificateState dockerServerTrust = getDockerServerTrust();
+        if (dockerServerTrust != null && dockerServerTrust.certificate != null
+                && !dockerServerTrust.certificate.isEmpty()) {
+            doPost(dockerServerTrust, SslTrustCertificateService.FACTORY_LINK);
+        }
+    }
+
+    protected void createProvisioningTask() throws Throwable {
+        MockTaskState provisioningTask = new MockTaskState();
+        provisioningTaskLink = doPost(provisioningTask,
+                MockTaskFactoryService.SELF_LINK).documentSelfLink;
     }
 
     /**

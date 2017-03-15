@@ -35,6 +35,8 @@ import java.util.stream.Collectors;
 
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.ConversionUtil;
+import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
@@ -62,6 +64,12 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
     private static final String COMMAND_AVAILABLE_MEMORY = "free -b | awk '/^Mem:/{print $7}'";
     private static final String COMMAND_CPU_USAGE = "awk -v a=\"$(awk '/cpu /{print $2+$4,$2+$4+$5}' /proc/stat; sleep 1)\" '/cpu /{split(a,b,\" \"); print 100*($2+$4-b[1])/($2+$4+$5-b[2])}'  /proc/stat";
     private static final String HIDDEN_CUSTOM_PROPERTY_PREFIX = "__";
+
+    // constats to extract VCH usage data
+    private static final String SYSTEM_STATUS = "SystemStatus";
+    private static final String VCH_MEMORY_USAGE = " VCH memory usage";
+    private static final String VCH_CPU_LIMIT = " VCH CPU limit";
+    private static final String VCH_CPU_USAGE = " VCH CPU usage";
 
     @Override
     public void handlePatch(Operation op) {
@@ -494,6 +502,10 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
 
             computeState.customProperties.remove(
                     ContainerHostService.NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME);
+
+            if (ContainerHostUtil.isVicHost(computeState)) {
+                parseVicStats(computeState, properties);
+            }
         }
     }
 
@@ -600,4 +612,69 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
                 request.customProperties.get(SSL_TRUST_ALIAS_PROP_NAME));
     }
 
+    private void parseVicStats(ComputeState computeState, Map<String, Object> properties) {
+        Long totalMemory = PropertyUtils.getPropertyLong(computeState.customProperties,
+                ContainerHostService.DOCKER_HOST_TOTAL_MEMORY_PROP_NAME).orElse(0L);
+        Double usedMemory = Double.valueOf(0);
+        Long totalCpu = Long.valueOf(0);
+        Long usedCpu = Long.valueOf(0);
+        try {
+            @SuppressWarnings("unchecked")
+            List<List<String>> systemStatus = (List<List<String>>) properties.get(SYSTEM_STATUS);
+            // parse SystemStatus in the best possible way, but do not fail if result is not in
+            // expected format
+            for (List<String> status : systemStatus) {
+                if (status == null || status.size() < 2) {
+                    continue;
+                }
+                if (VCH_MEMORY_USAGE.equals(status.get(0))) {
+                    usedMemory = getMemoryStatus(status);
+                } else if (VCH_CPU_LIMIT.equals(status.get(0))) {
+                    totalCpu = getCpuStatus(status);
+                } else if (VCH_CPU_USAGE.equals(status.get(0))) {
+                    usedCpu = getCpuStatus(status);
+                }
+            }
+            String cpuUsagePct = "0";
+            if (totalCpu != 0) {
+                cpuUsagePct = Double.toString(100.0 * usedCpu / totalCpu);
+            }
+            computeState.customProperties.put(
+                    ContainerHostService.DOCKER_HOST_AVAILABLE_MEMORY_PROP_NAME,
+                    Double.toString(totalMemory - usedMemory));
+            if (totalCpu != 0) {
+                computeState.customProperties.put(
+                        ContainerHostService.DOCKER_HOST_CPU_USAGE_PCT_PROP_NAME,
+                        cpuUsagePct);
+            }
+        } catch (Exception e) {
+            logWarning("Unable to parse SystemStatus contents: %s", e.getMessage());
+        }
+    }
+
+    private Double getMemoryStatus(List<String> status) {
+        if (status.get(0) == null || status.get(1) == null) {
+            logWarning("Unable to parse memory status for VIC host");
+            return Double.valueOf(0);
+        }
+        String[] sp = status.get(1).split(" ");
+        if (sp.length < 2) {
+            logWarning("Unable to parse memory status for VIC host");
+            return Double.valueOf(0);
+        }
+        return ConversionUtil.memoryToBytes(Double.parseDouble(sp[0]), sp[1]);
+    }
+
+    private Long getCpuStatus(List<String> status) {
+        if (status.get(0) == null || status.get(1) == null) {
+            logWarning("Unable to parse CPU status for VIC host");
+            return Long.valueOf(0);
+        }
+        String[] sp = status.get(1).split(" ");
+        if (sp.length < 2) {
+            logWarning("Unable to parse CPU status for VIC host");
+            return Long.valueOf(0);
+        }
+        return ConversionUtil.cpuToHertz(Long.parseLong(sp[0]), sp[1]);
+    }
 }

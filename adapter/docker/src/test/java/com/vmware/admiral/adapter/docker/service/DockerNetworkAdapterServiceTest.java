@@ -34,8 +34,6 @@ import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.NetworkOperationType;
-import com.vmware.admiral.adapter.common.service.mock.MockTaskFactoryService;
-import com.vmware.admiral.adapter.common.service.mock.MockTaskService.MockTaskState;
 import com.vmware.admiral.adapter.docker.mock.BaseMockDockerTestCase;
 import com.vmware.admiral.adapter.docker.mock.MockDockerNetworkService;
 import com.vmware.admiral.common.util.CertificateUtil;
@@ -46,8 +44,6 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
-import com.vmware.admiral.service.common.SslTrustCertificateService;
-import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -55,7 +51,6 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.FileContentService;
 
 public class DockerNetworkAdapterServiceTest extends BaseMockDockerTestCase {
@@ -76,8 +71,6 @@ public class DockerNetworkAdapterServiceTest extends BaseMockDockerTestCase {
     private static Integer TIME_BETWEEN_RETRIES_IN_MILSEC = 1000;
 
     private String parentComputeStateLink;
-    private String testDockerCredentialsLink;
-    private String provisioningTaskLink;
     private URI networkStateReference;
     private URI dockerNetworkAdapterServiceUri;
     private static URI imageReference;
@@ -154,16 +147,6 @@ public class DockerNetworkAdapterServiceTest extends BaseMockDockerTestCase {
         });
 
         host.testWait();
-    }
-
-    protected void createTestDockerAuthCredentials() throws Throwable {
-        testDockerCredentialsLink = doPost(getDockerCredentials(),
-                AuthCredentialsService.FACTORY_LINK).documentSelfLink;
-        SslTrustCertificateState dockerServerTrust = getDockerServerTrust();
-        if (dockerServerTrust != null && dockerServerTrust.certificate != null
-                && !dockerServerTrust.certificate.isEmpty()) {
-            doPost(dockerServerTrust, SslTrustCertificateService.FACTORY_LINK);
-        }
     }
 
     protected void createParentComputeState() throws Throwable {
@@ -303,12 +286,6 @@ public class DockerNetworkAdapterServiceTest extends BaseMockDockerTestCase {
             // in case of testing with a real docker server, give it some time to settle
             Thread.sleep(2000L);
         }
-    }
-
-    protected void createProvisioningTask() throws Throwable {
-        MockTaskState provisioningTask = new MockTaskState();
-        provisioningTaskLink = doPost(provisioningTask,
-                MockTaskFactoryService.SELF_LINK).documentSelfLink;
     }
 
     /*
