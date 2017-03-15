@@ -53,6 +53,11 @@
             <artifactId>xenon-common</artifactId>
         </dependency>
         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>admiral-compute</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.vmware.photon.controller</groupId>
             <artifactId>photon-model</artifactId>
         </dependency>
