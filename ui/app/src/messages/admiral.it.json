@@ -3,8 +3,10 @@
     "homepage": {
       "welcome": "Benvenuto",
       "description": "In questa pagina è possibile <b>creare, effettuare il provisioning, gestire e monitorare le applicazioni del contenitore.</b>",
+      "descriptionCompute": "In questa pagina è possibile <b>creare, effettuare il provisioning, gestire e monitorare qualsiasi applicazione su qualsiasi cloud.</b>",
       "start": "Inizia subito.",
       "addHost": "Aggiungi un host",
+      "addEndpoint": "Aggiungi un endpoint",
       "enter": "Immetti",
       "helpCenter": "Guida",
       "steps": {
@@ -22,13 +24,15 @@
       "containers": "Contenitori",
       "applications": "Applicazioni",
       "networks": "Reti",
+      "volumes": "Volumi",
       "closures": "Chiusure",
+      "kubernetes": "Kubernetes",
       "eventlog": "Registro eventi",
       "placementZones": "Zone di posizionamento",
-      "profiles": "Ambienti",
+      "environments": "Profili",
       "endpoints": "Endpoint",
       "machines": "Macchine",
-      "compute": "Elaborazione"
+      "compute": "Risorsa di elaborazione"
     },
     "host": {
       "entity": "host",
@@ -43,7 +47,10 @@
         "addressHint": "Specificare lo schema e la porta appropriati, ad esempio https://myhost.com:2376. Schema predefinito: 'https'. Porte predefinite: https/443, http/80.",
         "hostAlias": "Nome",
         "hostAddress": "Indirizzo",
+        "hostType": "Tipo di host",
         "placementZone": "Zona di posizionamento",
+        "placementZoneInputPlaceholder": "Esempio: vic:nome host:2376",
+        "placementZoneInputHint": "Verrà automaticamente creata una zona di posizionamento dello scheduler con questo nome",
         "credential": "Credenziali di login",
         "guestCredential": "Credenziali guest",
         "destination": "Destinazione",
@@ -54,7 +61,7 @@
         "tagsHint": "Consente di immettere i tag chiave:valore",
         "autoConfigure": "Configurazione automatica",
         "autoConfigureInput":"Attiva configurazione automatica host",
-        "autoConfigureHint": "L'host verrà configurato automaticamente",
+        "autoConfigureHint": "Questa opzione configurerà l'API remoto del docker nell'indirizzo e nella porta forniti con i certificati autofirmati generati. L'operazione verrà eseguita una volta, tramite SSH. I sistemi operativi supportati sono: CoreOS, PhotonOS, Ubuntu Server 16.04 o versioni successive.",
         "reservationPolicy": "Criterio di prenotazione",
         "endpoint": "Endpoint",
         "connectionType": "Tipo di connessione",
@@ -65,11 +72,12 @@
         "add": "Aggiungi",
         "update": "Aggiorna",
         "create": "Crea",
-        "certificateWarning": "Il certificato per {{address}} non è valido. È possibile che sia in corso la connessione a un sito Web che finge di essere {{address}}. Ciò potrebbe mettere a rischio le informazioni riservate dell'utente. Connettersi comunque al sito Web?",
+        "certificateWarning": "Il certificato per __address__ non è valido. È possibile che sia in corso la connessione a un sito Web che finge di essere __address__. Ciò potrebbe mettere a rischio le informazioni riservate dell'utente. Connettersi comunque al sito Web?",
         "showCertificate": "Mostra certificato",
         "hideCertificate": "Nascondi certificato",
         "manageCertificates": "Gestisci certificati",
         "containers": "Contenitori",
+        "nodes": "Nodi",
         "cpu": "CPU",
         "memory": "Memoria",
         "storage": "Storage",
@@ -80,7 +88,8 @@
         "instanceType": "Tipo di istanza",
         "imageType": "Sistema operativo",
         "port": "Porta",
-        "clusterSize": "Conteggio istanze"
+        "clusterSize": "Conteggio istanze",
+        "unlimited": "Illimitato"
       },
       "list": {
         "title": "Host",
@@ -117,7 +126,12 @@
         "update": "Modifica zona di posizionamento",
         "nameTitle": "Nome zona di posizionamento",
         "endpointTitle": "Endpoint",
+        "placementPolicy": "Criterio di posizionamento avanzato",
+        "placementPolicyHint": "Per impostazione predefinita, le risorse vengono posizionate su host casuali. Facoltativamente è possibile applicare una delle seguenti strategie:<br><br><b>BINPACK</b> - Il posizionamento viene effettuato sull'host con il maggiore utilizzo di memoria.<br><br><b>SPREAD</b> - Il posizionamento viene effettuato sull'host con il minor numero di risorse.",
         "dynamicTitle": "Alloca risorse a questa zona in modo dinamico",
+        "tagsTitle": "Tag",
+        "tagsHint": "Consente di immettere i tag chiave:valore",
+        "tagsPlaceholder": "Esempio: conformità:sì",
         "tagsToMatchTitle": "Tag di cui trovare la corrispondenza",
         "tagsToMatchHint": "Immettere i tag chiave:valore di cui trovare la corrispondenza",
         "tagsToMatchPlaceholder": "Esempio: posizione:ovest"
@@ -236,7 +250,7 @@
         "searchImagesPlaceholder": "Cerca immagini",
         "searchTemplatesPlaceholder": "Cerca modelli",
         "searchClosuresPlaceholder": "Cerca chiusure",
-        "manageRegistry": "Gestisci registro",
+        "manageRegistry": "Gestisci registri",
         "provision": "Provisioning",
         "provisionAdditionalInfo": "Immettere le informazioni aggiuntive",
         "editTemplate": "Modifica/Visualizza dettagli",
@@ -281,7 +295,7 @@
           "editTitle": "Modifica configurazione di rete",
           "name": "Nome",
           "existingNetwork": "Esistente",
-          "showingCount": "Visualizzazione di {{count}} di {{totalCount}}",
+          "showingCount": "Visualizzazione di __count__ di __totalCount__",
           "showingInstances": "istanze",
           "noResults": "Nessuna rete trovata",
           "hosts": "Host",
@@ -302,9 +316,50 @@
           "editTitle": "Modifica chiusura",
           "name": "Nome"
         },
+        "editVolume" :{
+          "newLabel": "Aggiungi volume",
+          "newTitle": "Aggiungi volume",
+          "newDropdownTitle": "Aggiungi volume...",
+          "editTitle": "Modifica volume",
+          "name": "Nome",
+          "driver": "Driver",
+          "driverPlaceholder": "Esempio: locale",
+          "driverOptions": {
+            "label": "Opzioni driver",
+            "keyTitle": "Opzione",
+            "keyHint": "Esempio: dimensione",
+            "valueTitle": "Valore",
+            "valueHint": "Esempio: 20 GB"
+          },
+          "existingVolume": "Esistente",
+          "showingCount": "Visualizzazione di __count__ di __totalCount__",
+          "showingInstances": "istanze",
+          "noResults": "Nessun volume trovato",
+          "mountpoint": "Punto di montaggio host",
+          "hosts": "Host",
+          "hostsSearchPlaceholder": "Cerca host",
+          "create": "Crea",
+          "createTitle": "Crea volume",
+          "customProperties": "Proprietà personalizzate"
+        },
+        "editKubernetes": {
+          "newTitle": "Aggiungi Kubernetes",
+          "editTitle": "Modifica Kubernetes",
+          "createEntities": {
+            "title": "Crea entità Kubernetes",
+            "button": "Crea",
+            "hint": "Effettuare il provisioning delle entità Kubernetes dalle definizioni YAML caricando un file o immettendone manualmente il contenuto. Sono supportate varie definizioni, separate da \"---\", ad esempio la coppia distribuzione/servizio.",
+            "placeholder": "Immettere le definizioni YAML di Kubernetes... "
+          }
+        },
         "network": {
           "drag": "Trascinare per collegare il contenitore a questa rete",
           "drop": "Rilasciare per collegare il contenitore a questa rete"
+        },
+        "volume": {
+          "drag": "Trascinare per collegare il contenitore a questo volume",
+          "drop": "Rilasciare per collegare il contenitore a questo volume",
+          "editContainerPath": "Percorso del contenitore:"
         }
       },
       "actions": {
@@ -405,12 +460,12 @@
         "verified": "Verifica completata."
       }
     },
-    "profile": {
+    "environment": {
       "list": {
-        "title": "Ambienti",
-        "titleSearch": "Ambienti trovati",
-        "searchPlaceholder": "Cerca ambienti",
-        "addButton": "Aggiungi ambiente",
+        "title": "Profili",
+        "titleSearch": "Profili trovati",
+        "searchPlaceholder": "Cerca profili",
+        "addButton": "Crea profilo",
         "addPropertyButton": "Aggiungi proprietà",
         "nameColumn": "Nome",
         "endpointTypeColumn": "Tipo di endpoint",
@@ -425,11 +480,11 @@
         "remove": "Rimuovi"
       },
       "edit": {
-        "addTitle": "Aggiungi ambiente",
-        "editTitle": "Modifica ambiente",
+        "addTitle": "Aggiungi profilo",
+        "editTitle": "Modifica profilo",
         "save": "Salva",
         "basicTab": "Di base",
-        "computeTab": "Elaborazione",
+        "computeTab": "Risorsa di elaborazione",
         "networkTab": "Rete",
         "storageTab": "Storage",
         "nameLabel": "Nome",
@@ -441,7 +496,12 @@
         "bootDiskPropertyLabel": "Proprietà disco di avvio",
         "cpuCountLabel": "CPU",
         "diskSizeMbLabel": "Dimensione disco",
-        "memoryMbLabel": "Memoria"
+        "memoryMbLabel": "Memoria",
+        "subnetworksLabel": "Sottoreti",
+        "cidrLabel": "CIDR",
+        "cidrLabelHint": "0.0.0.0/0",
+        "supportPublicIpAddressLabel": "IP pubblico di supporto",
+        "defaultForZoneLabel": "Valore predefinito per la zona"
       },
       "instanceType": {
         "aws": {
@@ -484,18 +544,23 @@
         "update": "Modifica endpoint",
         "nameLabel": "Nome",
         "typeLabel": "Tipo",
-        "accessKeyIdLabel": "ID chiave di accesso",
-        "usernameLabel": "Nome utente",
-        "passwordLabel": "Password",
-        "secretAccessKeyLabel": "Chiave di accesso segreta",
+        "privateKeyIdLabel": "ID chiave di accesso",
+        "privateKeyLabel": "Chiave di accesso segreta",
         "regionIdLabel": "ID regione",
-        "endpointHostLabel": "Nome host o IP",
-        "subscriptionIdLabel": "ID sottoscrizione",
-        "tenantIdLabel": "ID tenant",
-        "datacenterIdLabel": "Nome data center"
+        "azure": {
+          "userLinkLabel": "ID sottoscrizione",
+          "tenantIdLabel": "ID tenant"
+        },
+        "vsphere": {
+          "hostNameLabel": "Nome host o IP",
+          "privateKeyIdLabel": "Nome utente",
+          "privateKeyLabel": "Password",
+          "regionIdLabel": "Data center"
+        }
       },
       "entity": "endpoint",
       "typeEntity": "tipo",
+      "datacenterEntity": "data center",
       "createNew": "Nuovo endpoint",
       "manage": "Gestisci endpoint",
       "contextPanelTooltip": "Endpoint"
@@ -504,22 +569,59 @@
       "list": {
         "title": "Macchine",
         "titleSearch": "Macchine trovate",
-        "searchPlaceholder": "Cerca macchine"
+        "searchPlaceholder": "Cerca macchine",
+        "addButton": "Crea macchina"
+      },
+      "edit": {
+        "addTitle": "Crea macchina",
+        "editTitle": "Modifica macchina",
+        "nameLabel": "Nome",
+        "save": "Salva",
+        "create": "Crea",
+        "loadButton": "Carica da file",
+        "importTemplateHint": "Descrizione composita contenente una o più descrizioni delle macchine",
+        "importPlaceholder": ""
       }
     },
     "compute": {
       "entity": "destinazione",
       "list": {
-        "title": "Elaborazione",
-        "titleSearch": "Elaborazione trovata",
-        "searchPlaceholder": "Cerca elaborazione"
+        "title": "Risorsa di elaborazione",
+        "titleSearch": "Trovata risorsa di elaborazione",
+        "searchPlaceholder": "Cerca risorsa di elaborazione"
       },
       "details": {
         "type": "Tipo"
       },
       "edit": {
-        "title": "Modifica elaborazione"
+        "title": "Modifica risorsa di elaborazione",
+        "nameLabel": "Nome"
       }
+    },
+    "network": {
+      "entity": "Rete"
+    },
+    "subnetwork": {
+      "list": {
+        "title": "Sottoreti",
+        "addButton": "Aggiungi",
+        "nameColumn": "Nome",
+        "cidrColumn": "CIDR"
+      },
+      "edit": {
+        "addNew": "Aggiungi sottorete",
+        "update": "Modifica sottorete",
+        "nameLabel": "Nome",
+        "cidrLabel": "CIDR",
+        "supportPublicIpAddressLabel": "IP pubblico di supporto",
+        "defaultForZoneLabel": "Valore predefinito per la zona",
+        "tagsTitle": "Tag",
+        "tagsHint": "Consente di immettere i tag chiave:valore",
+        "tagsPlaceholder": "Esempio: accesso:limitato"
+      },
+      "entity": "Sottorete",
+      "manage": "Gestisci sottoreti",
+      "contextPanelTooltip": "Sottoreti"
     },
     "resource": {
       "list": {
@@ -541,22 +643,10 @@
             "CONNECTED": "CONNESSA",
             "RETIRED": "RITIRATA",
             "ERROR": "ERRORE"
-          },
-          "operations": {
-            "errors": {
-              "remove": {
-                "containersConnected": "Esistono contenitori connessi"
-              }
-            }
           }
         },
         "container": {
-          "create": "Crea contenitore",
-          "operations": {
-            "errors": {
-              "managedByCatalog": "Gestito dal catalogo"
-            }
-          }
+          "create": "Crea contenitore"
         },
         "application": {
           "create": "Crea applicazione"
@@ -564,17 +654,42 @@
         "closure": {
           "create": "Crea chiusura"
         },
+        "kubernetes": {
+          "create": "Crea"
+        },
+        "volume": {
+          "create": "Crea volume",
+          "connectedDateLabel": "Connesso da",
+          "driverLabel": "Driver",
+          "driverOptionsLabel": "Opzioni driver",
+          "scope": "Ambito",
+          "mountpoint": "Punto di montaggio host",
+          "connectedContainers": "Contenitori",
+          "parentHosts": "Host",
+          "external": "Esterno",
+          "state": {
+            "UNKNOWN": "SCONOSCIUTO",
+            "PROVISIONING": "PROVISIONING",
+            "CONNECTED": "CONNESSA",
+            "RETIRED": "RITIRATA",
+            "ERROR": "ERRORE"
+          }
+        },
         "titleSearch": {
           "containers": "Contenitori",
           "applications": "Applicazioni",
           "networks": "Reti",
-          "closures": "Chiusure"
+          "volumes": "Volumi",
+          "closures": "Chiusure",
+          "kubernetes": "Kubernetes"
         },
         "searchPlaceholder": {
           "containers": "Cerca contenitori",
           "applications": "Cerca applicazioni",
           "networks": "Cerca reti",
-          "closures": "Cerca chiusure"
+          "closures": "Cerca chiusure",
+          "volumes": "Cerca volumi",
+          "kubernetes": "Cerca entità Kubernetes"
         },
         "searchCategory": {
           "networks": "Reti"
@@ -735,6 +850,12 @@
             "volume": "Volume",
             "volumeHint": "Esempio: contenitore dati"
           },
+          "volumeDriver": "Driver volume",
+          "volumeDriverPlaceholder": "Esempio: locale",
+          "volumeDriverDescription": "Driver da utilizzare per i volumi",
+          "volumeName": "Nome volume",
+          "volumeNamePlaceholder": "Esempio: nome volume",
+          "volumeNameDescription": "Nome del volume quando si utilizza un driver non locale",
           "workingDirectory": "Directory di lavoro",
           "workingDirectoryDescription": "Directory di lavoro in cui eseguire i comandi",
           "clusterSize": "Dimensioni cluster",
@@ -772,6 +893,8 @@
           },
           "customProperties": "Proprietà personalizzate",
           "customPropertiesDescription": "Le proprietà personalizzate consentono di aggiungere attributi ai contenitori di cui verrà eseguito il provisioning.",
+          "healthContinueProvisionigOnError": "Ignora errori del controllo di integrità durante il provisioning",
+          "healthContinueProvisionigOnErrorDescription": "Se è configurato il controllo di integrità, verrà utilizzato anche durante il provisioning oltre che nel corso dell'esecuzione del servizio. Il provisioning dei contenitori non sarà considerato completo fino a che un controllo di integrità non andrà a buon fine. Selezionare questa opzione per effettuare il provisioning anche senza aver completato un controllo di integrità.",
           "healthMode": "Modalità",
           "healthConfigNone": "Nessuna",
           "healthConfigTCP": "Connessione TCP",
@@ -780,12 +903,16 @@
           "healthPath": "Percorso URL",
           "healthPathDescription": "Percorso URL dell'API utilizzata per il controllo dell'integrità",
           "healthPort": "Porta",
+          "healthPortHint": "Valore predefinito: 80",
           "healthPortDescription": "Porta del contenitore da utilizzare",
           "healthTimeout": "Timeout (ms)",
+          "healthTimeoutHint": "Valore predefinito: 2000",
           "healthTimeoutDescription": "Timeout in ms per l'operazione di controllo dell'integrità",
           "healthyThreshold": "Soglia di integrità",
+          "healthyThresholdHint": "Valore predefinito: 3",
           "healthyThresholdDescription": "Soglia delle operazioni di controllo dell'integrità completate, necessaria affinché il contenitore venga considerato integro",
           "unhealthyThreshold": "Soglia di non integrità",
+          "unhealthyThresholdHint": "Valore predefinito: 3",
           "unhealthyThresholdDescription": "Soglia delle operazioni di controllo dell'integrità non riuscite, necessaria affinché il contenitore venga considerato non integro",
           "command": "Comando",
           "commandDescription": "Comando da eseguire nel contenitore. Lo stato di uscita viene utilizzato per determinare l'integrità del contenitore.",
@@ -815,7 +942,7 @@
         "UNKNOWN": "SCONOSCIUTO",
         "RETIRED": "RITIRATO",
         "PROVISIONING": "PROVISIONING",
-        "continuousStateSince": "{{state}} for {{duration}}"
+        "continuousStateSince": "__state__ for __duration__"
       },
       "actions": {
         "start": "Avvia",
@@ -866,7 +993,8 @@
         "descriptionId": "ID",
         "source": "Origine",
         "sourceURL": "URL origine",
-        "resources": "Risorse"
+        "resources": "Risorse",
+        "placement": "Posizionamento"
       },
       "state": {
         "CREATED": "CREATA",
@@ -893,8 +1021,8 @@
           "source": "Codice origine",
           "sourceURL": "URL origine",
           "runtimeTypes": {
-            "nodejs": "Node.js 4.3.0",
-            "python": "Python 3.4.3"
+            "nodejs": "NodeJs 4",
+            "python": "Python 3"
           },
           "logConfigOptionsInputs" : {
             "name": "Nome",
@@ -973,10 +1101,10 @@
       "failure": "Errore di autenticazione"
     },
     "dropdownSearchMenu": {
-      "title": "Selezionare dall'elenco {{entity}}",
-      "searchPlaceholder": "Cerca {{entity}}",
+      "title": "Selezionare dall'elenco __entity__",
+      "searchPlaceholder": "Cerca __entity__",
       "clear": "Cancella selezione",
-      "showingCount": "Visualizzazione di {{count}} di {{totalCount}}",
+      "showingCount": "Visualizzazione di __count__ di __totalCount__",
       "noResults": "Nessun elemento trovato."
     },
     "customProperties": {
@@ -1027,7 +1155,9 @@
       "volumeDestinationRequired": "La destinazione del volume è obbligatoria.",
       "invalidInputValue": "Valore di input non valido",
       "invalidPath": "Il valore deve essere un percorso assoluto.",
-      "invalidPathOrName": "Il valore deve essere un percorso assoluto o un nome di volume valido."
+      "invalidPathOrName": "Il valore deve essere un percorso assoluto o un nome di volume valido.",
+      "containersConnected": "Esistono contenitori connessi.",
+      "managedByCatalog": "Gestito dal catalogo"
     },
     "infoMessages": {
       "created": "Creazione completata.",
@@ -1042,6 +1172,6 @@
       "OFF": "SPENTO",
       "SUSPEND": "DISATTIVATO",
       "UNKNOWN": "SCONOSCIUTO",
-      "stateSinceMessage": "da {{date}}"
+      "stateSinceMessage": "da __date__"
     }
 }
