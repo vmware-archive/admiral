@@ -14,14 +14,11 @@ package com.vmware.admiral.request.compute.enhancer;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 import java.security.KeyPair;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
@@ -98,115 +95,6 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
     }
 
     @Test
-    public void testBaseEnhance() {
-        TestContext ctx = testCreate(1);
-        DeferredResult<ComputeDescription> result = ComputeDescriptionEnhancers
-                .build(host, UriUtils.buildUri(host, "test")).enhance(context,
-                        cd);
-        result.whenComplete((desc, t) -> {
-            if (t != null) {
-                ctx.failIteration(t);
-                return;
-            }
-            ctx.completeIteration();
-        });
-        ctx.await();
-        assertNotNull("Expected to have content", context.content);
-        assertTrue("Expected to empty content", context.content.isEmpty());
-    }
-
-    @Test
-    public void testEnhanceWithSshEnabledAndGeneratedKey() {
-        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_ENABLE_SSH_ACCESS_NAME,
-                "true");
-
-        TestContext ctx = testCreate(1);
-        DeferredResult<ComputeDescription> result = ComputeDescriptionEnhancers
-                .build(host, UriUtils.buildUri(host, "test")).enhance(context,
-                        cd);
-        result.whenComplete((desc, t) -> {
-            if (t != null) {
-                ctx.failIteration(t);
-                return;
-            }
-            ctx.completeIteration();
-        });
-        ctx.await();
-
-        assertNotNull("Expected to have content", context.content);
-        Object object = context.content.get("ssh_authorized_keys");
-        assertNotNull("Expected to have authorized keys", object);
-        @SuppressWarnings("rawtypes")
-        List list = (List) object;
-        assertEquals(1, list.size());
-        assertNotNull(list.get(0));
-
-        assertNotNull(cd.authCredentialsLink);
-    }
-
-    @Test
-    public void testEnhanceWithSshEnabledAndPreconfiguredKey() {
-        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_ENABLE_SSH_ACCESS_NAME,
-                "true");
-        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_SSH_AUTHORIZED_KEY_NAME,
-                "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQC1cbdZp...");
-
-        TestContext ctx = testCreate(1);
-        DeferredResult<ComputeDescription> result = ComputeDescriptionEnhancers
-                .build(host, UriUtils.buildUri(host, "test")).enhance(context,
-                        cd);
-        result.whenComplete((desc, t) -> {
-            if (t != null) {
-                ctx.failIteration(t);
-                return;
-            }
-            ctx.completeIteration();
-        });
-        ctx.await();
-
-        assertNotNull("Expected to have content", context.content);
-        Object object = context.content.get("ssh_authorized_keys");
-        assertNotNull("Expected to have authorized keys", object);
-        @SuppressWarnings("rawtypes")
-        List list = (List) object;
-        assertEquals(1, list.size());
-        assertNotNull(list.get(0));
-
-        assertNull(cd.authCredentialsLink);
-    }
-
-    @Test
-    public void testEnhanceWithSshEnabledAndPreconfiguredPublicKeyAuthLink() throws Throwable {
-        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_ENABLE_SSH_ACCESS_NAME,
-                "true");
-
-        cd.authCredentialsLink = getClientPublicKeyAuthAndSshKey().documentSelfLink;
-
-        TestContext ctx = testCreate(1);
-        DeferredResult<ComputeDescription> result = ComputeDescriptionEnhancers
-                .build(host, UriUtils.buildUri(host, "test")).enhance(context,
-                        cd);
-        result.whenComplete((desc, t) -> {
-            if (t != null) {
-                ctx.failIteration(t);
-                return;
-            }
-            ctx.completeIteration();
-        });
-        ctx.await();
-
-        assertNotNull("Expected to have content", context.content);
-        Object object = context.content.get("ssh_authorized_keys");
-        assertNotNull("Expected to have authorized keys", object);
-        @SuppressWarnings("rawtypes")
-        List list = (List) object;
-        assertEquals(1, list.size());
-        assertNotNull(list.get(0));
-
-        assertNotNull(cd.authCredentialsLink);
-    }
-
-    @Test
     public void testEnhanceWithSshEnabledAndPreconfiguredPublicSshKeyAuthLink() throws Throwable {
         cd.customProperties.put(ComputeConstants.CUSTOM_PROP_ENABLE_SSH_ACCESS_NAME,
                 "true");
@@ -226,85 +114,9 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         });
         ctx.await();
 
-        assertNotNull("Expected to have content", context.content);
-        Object object = context.content.get("ssh_authorized_keys");
-        assertNotNull("Expected to have authorized keys", object);
-        @SuppressWarnings("rawtypes")
-        List list = (List) object;
-        assertEquals(1, list.size());
-        assertNotNull(list.get(0));
-
         assertNotNull(cd.authCredentialsLink);
     }
 
-    @Test
-    public void testEnhanceWithSshEnabledAndPreconfiguredPublicKeyOnlyAuthLink() throws Throwable {
-        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_ENABLE_SSH_ACCESS_NAME,
-                "true");
-
-        cd.authCredentialsLink = getClientPublicKeyAuth().documentSelfLink;
-
-        TestContext ctx = testCreate(1);
-        DeferredResult<ComputeDescription> result = ComputeDescriptionEnhancers
-                .build(host, UriUtils.buildUri(host, "test")).enhance(context,
-                        cd);
-        result.whenComplete((desc, t) -> {
-            if (t != null) {
-                ctx.failIteration(t);
-                return;
-            }
-            ctx.completeIteration();
-        });
-        ctx.await();
-
-        assertNotNull("Expected to have content", context.content);
-        Object object = context.content.get("ssh_authorized_keys");
-        assertNotNull("Expected to have authorized keys", object);
-        @SuppressWarnings("rawtypes")
-        List list = (List) object;
-        assertEquals(1, list.size());
-        assertNotNull(list.get(0));
-
-        assertNotNull(cd.authCredentialsLink);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    public void testEnhanceWithRemoteAPIAndDefaultPort() {
-        cd.customProperties.put(ComputeAllocationTaskState.ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME,
-                "true");
-        cd.customProperties.put(ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
-                DockerAdapterType.API.name());
-
-        TestContext ctx = testCreate(1);
-        DeferredResult<ComputeDescription> result = ComputeDescriptionEnhancers
-                .build(host, UriUtils.buildUri(host, "test")).enhance(context,
-                        cd);
-        result.whenComplete((desc, t) -> {
-            if (t != null) {
-                ctx.failIteration(t);
-                return;
-            }
-            ctx.completeIteration();
-        });
-        ctx.await();
-
-        assertNotNull("Expected to have content", context.content);
-        Object writeFiles = context.content.get("write_files");
-        assertNotNull("Expected to have write-files section", writeFiles);
-        @SuppressWarnings({ "rawtypes" })
-        List<Object> list = (List) writeFiles;
-        assertEquals(4, list.size());
-
-        list.stream()
-                .filter(e -> (e instanceof Map))
-                .map(e -> (Map<String, Object>) e)
-                .filter(m -> "/etc/systemd/system/docker.service.d/docker.conf"
-                        .equals(m.get("path")))
-                .map(m -> (String) m.get("content")).forEach(v -> assertTrue(v.contains("443")));
-    }
-
-    @SuppressWarnings("unchecked")
     @Test
     public void testEnhanceWithRemoteAPIAndCustomPort() {
         cd.customProperties.put(ComputeAllocationTaskState.ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME,
@@ -326,59 +138,10 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         });
         ctx.await();
 
-        assertNotNull("Expected to have content", context.content);
-        Object writeFiles = context.content.get("write_files");
-        assertNotNull("Expected to have write-files section", writeFiles);
-        @SuppressWarnings({ "rawtypes" })
-        List<Object> list = (List) writeFiles;
-        assertEquals(4, list.size());
-
-        list.stream()
-                .filter(e -> (e instanceof Map))
-                .map(e -> (Map<String, Object>) e)
-                .filter(m -> "/etc/systemd/system/docker.service.d/docker.conf"
-                        .equals(m.get("path")))
-                .map(m -> (String) m.get("content")).forEach(v -> assertTrue(v.contains("2376")));
+        assertEquals(ManagementUriParts.AUTH_CREDENTIALS_CLIENT_LINK,
+                cd.customProperties.get(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME));
     }
 
-    @SuppressWarnings("unchecked")
-    @Test
-    public void testEnhanceWithRemoteAPIAndCustomPortOnCoreOs() throws JsonProcessingException {
-        context.imageType = "coreos";
-
-        cd.customProperties.put(ComputeAllocationTaskState.ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME,
-                "true");
-        cd.customProperties.put(ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
-                DockerAdapterType.API.name());
-        cd.customProperties.put(ContainerHostService.DOCKER_HOST_PORT_PROP_NAME, "2376");
-
-        TestContext ctx = testCreate(1);
-        DeferredResult<ComputeDescription> result = ComputeDescriptionEnhancers
-                .build(host, UriUtils.buildUri(host, "test")).enhance(context,
-                        cd);
-        result.whenComplete((desc, t) -> {
-            if (t != null) {
-                ctx.failIteration(t);
-                return;
-            }
-            ctx.completeIteration();
-        });
-        ctx.await();
-
-        assertNotNull("Expected to have content", context.content);
-        Object writeFiles = context.content.get("write_files");
-        assertNotNull("Expected to have write-files section", writeFiles);
-        @SuppressWarnings({ "rawtypes" })
-        List<Object> list = (List) writeFiles;
-        assertEquals(3, list.size());
-
-        String value = EnhancerUtils.objectMapper()
-                .writeValueAsString(context.content.get("coreos"));
-        assertTrue(value.contains("ListenStream=2376"));
-    }
-
-
-    @SuppressWarnings("unchecked")
     @Test
     public void testEnhanceImageInstanceTypeCaseInsensitive() throws JsonProcessingException {
         context.imageType = "CoreOs";
@@ -423,17 +186,7 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         });
         ctx.await();
 
-        assertNotNull("Expected to have content", context.content);
-        assertNotNull("Expected to have authorized keys",
-                context.content.get("ssh_authorized_keys"));
-
-        Object writeFiles = context.content.get("write_files");
-        assertNotNull("Expected to have write-files section", writeFiles);
-        @SuppressWarnings("rawtypes")
-        List list = (List) writeFiles;
-        assertEquals(4, list.size());
-        System.out.println(
-                cd.customProperties.get(ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME));
+        assertNull("Expected to have content", context.content);
     }
 
     public static class TestInitialBootService extends AbstractInitialBootService {
@@ -447,35 +200,8 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         }
     }
 
-    private AuthCredentialsServiceState getClientPublicKeyAuth() throws Throwable {
-        AuthCredentialsServiceState state = new AuthCredentialsServiceState();
-        state.documentSelfLink = ManagementUriParts.AUTH_CREDENTIALS_CA_LINK;
-        state.type = AuthCredentialsType.PublicKey.name();
-        state.userEmail = UUID.randomUUID().toString();
-        generateKeyPair((key, ssh) -> {
-            state.publicKey = KeyUtil.toPEMFormat(key.getPublic());
-            state.privateKey = KeyUtil.toPEMFormat(key.getPrivate());
-        });
-        return doPost(state, AuthCredentialsService.FACTORY_LINK);
-    }
-
-    private AuthCredentialsServiceState getClientPublicKeyAuthAndSshKey() throws Throwable {
-        AuthCredentialsServiceState state = new AuthCredentialsServiceState();
-        state.documentSelfLink = ManagementUriParts.AUTH_CREDENTIALS_CA_LINK;
-        state.type = AuthCredentialsType.PublicKey.name();
-        state.userEmail = UUID.randomUUID().toString();
-        generateKeyPair((key, ssh) -> {
-            state.publicKey = KeyUtil.toPEMFormat(key.getPublic());
-            state.privateKey = KeyUtil.toPEMFormat(key.getPrivate());
-            state.customProperties = new HashMap<>();
-            state.customProperties.put(ComputeConstants.CUSTOM_PROP_SSH_AUTHORIZED_KEY_NAME, ssh);
-        });
-        return doPost(state, AuthCredentialsService.FACTORY_LINK);
-    }
-
     private AuthCredentialsServiceState getClientPublicSshKeyAuth() throws Throwable {
         AuthCredentialsServiceState state = new AuthCredentialsServiceState();
-        state.documentSelfLink = ManagementUriParts.AUTH_CREDENTIALS_CA_LINK;
         state.type = AuthCredentialsType.Public.name();
         state.userEmail = UUID.randomUUID().toString();
         generateKeyPair((key, ssh) -> {

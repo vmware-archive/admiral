@@ -40,13 +40,13 @@ import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
-public class ProfileComputeDescriptionEnhancer extends ComputeDescriptionEnhancer {
+public class ComputeDescriptionProfileEnhancer extends ComputeDescriptionEnhancer {
     static final String TEMPLATE_LINK = "__templateComputeLink";
 
     private ServiceHost host;
     private URI referer;
 
-    public ProfileComputeDescriptionEnhancer(ServiceHost host, URI referer) {
+    public ComputeDescriptionProfileEnhancer(ServiceHost host, URI referer) {
         this.host = host;
         this.referer = referer;
     }
@@ -74,6 +74,9 @@ public class ProfileComputeDescriptionEnhancer extends ComputeDescriptionEnhance
                     if (cd.zoneId == null && context.zoneId != null) {
                         cd.zoneId = context.zoneId;
                     }
+                    cd.customProperties.put(ComputeConstants.CUSTOM_PROP_ENDPOINT_TYPE_NAME,
+                            context.endpointType);
+                    cd.customProperties.put("__requestedImageType", context.imageType);
 
                     String absImageId = context.imageType;
                     if (absImageId != null) {

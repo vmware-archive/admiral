@@ -31,11 +31,9 @@ public class ComputeDescriptionEnhancers extends ComputeDescriptionEnhancer {
     }
 
     private void initialize(ServiceHost host, URI referer) {
-        this.enhancers.add(new ProfileComputeDescriptionEnhancer(host, referer));
-        this.enhancers.add(new CloudConfigLoaderEnhancer());
+        this.enhancers.add(new ComputeDescriptionProfileEnhancer(host, referer));
         this.enhancers.add(new GuestCredentialsComputeDescriptionEnhancer(host, referer));
-        this.enhancers.add(new ContainerHostRemoteAPIComputeDescriptionEnhancer(host, referer));
-        this.enhancers.add(new CloudConfigSerializeEnhancer(host));
+        this.enhancers.add(new ComputeDescriptionContainerHostRemoteAPIEnhancer());
     }
 
     public static ComputeDescriptionEnhancers build(ServiceHost host, URI referer) {

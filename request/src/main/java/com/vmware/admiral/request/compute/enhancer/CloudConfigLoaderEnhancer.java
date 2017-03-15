@@ -21,20 +21,20 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.vmware.admiral.compute.ComputeConstants;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Utils;
 
-public class CloudConfigLoaderEnhancer extends ComputeDescriptionEnhancer {
+public class CloudConfigLoaderEnhancer extends ComputeEnhancer {
 
     @Override
     @SuppressWarnings("unchecked")
-    public DeferredResult<ComputeDescription> enhance(EnhanceContext context,
-            ComputeDescription cd) {
-        String fileContent = getCustomProperty(cd,
+    public DeferredResult<ComputeState> enhance(EnhanceContext context,
+            ComputeState cs) {
+        String fileContent = getCustomProperty(cs,
                 ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME);
         if (fileContent == null) {
-            boolean supportDocker = enableContainerHost(cd.customProperties);
+            boolean supportDocker = enableContainerHost(cs.customProperties);
             String imageType = context.imageType;
             try {
                 fileContent = loadResource(String.format("/%s-content/cloud_config_%s.yml",
@@ -50,7 +50,7 @@ public class CloudConfigLoaderEnhancer extends ComputeDescriptionEnhancer {
                 Utils.logWarning("Error reading cloud-config data from %s, reason : %s",
                         fileContent, e.getMessage());
             }
-            return DeferredResult.completed(cd);
+            return DeferredResult.completed(cs);
         } else {
             try {
                 Map<String, Object> content = objectMapper().readValue(fileContent, Map.class);
@@ -60,7 +60,7 @@ public class CloudConfigLoaderEnhancer extends ComputeDescriptionEnhancer {
                 Utils.logWarning("Error reading cloud-config data from %s, reason : %s",
                         fileContent, e.getMessage());
             }
-            return DeferredResult.completed(cd);
+            return DeferredResult.completed(cs);
         }
     }
 }

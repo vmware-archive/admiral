@@ -371,7 +371,6 @@ public class ComputeAllocationTaskService
 
             String content = computeDesc.customProperties
                     .get(ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME);
-            logInfo("Cloud config file to use [%s]", content);
             DiskState.BootConfig.FileEntry file = new DiskState.BootConfig.FileEntry();
             file.path = "user-data";
             file.contents = content;
