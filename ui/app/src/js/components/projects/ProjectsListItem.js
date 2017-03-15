@@ -32,8 +32,9 @@ var ProjectsListItem = Vue.extend({
     this.unwatchError = this.$watch('error', (error) => {
       if (error) {
         this.cancelRemoval();
-        if (error._generic) {
-          this.showCustomAlertMessage(error._generic);
+        let errorMessage = utils.getErrorMessage(error);
+        if (errorMessage) {
+          this.showCustomAlertMessage(errorMessage._generic);
         } else {
           this.showAlert('errors.projectsUnexpectedError');
         }

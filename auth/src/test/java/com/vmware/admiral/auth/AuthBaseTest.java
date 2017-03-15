@@ -22,10 +22,14 @@ import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.host.HostInitAuthServiceConfig;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
+import com.vmware.admiral.host.HostInitComputeServicesConfig;
+import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.admiral.service.common.AuthBootstrapService;
+
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.VerificationHost;
+
 import com.vmware.xenon.services.common.UserService;
 
 public abstract class AuthBaseTest extends BaseTestCase {
@@ -61,6 +65,18 @@ public abstract class AuthBaseTest extends BaseTestCase {
     @Override
     protected boolean getPeerSynchronizationEnabled() {
         return true;
+    }
+
+    private static void startServices(VerificationHost host) throws Throwable {
+        DeploymentProfileConfig.getInstance().setTest(true);
+
+        HostInitCommonServiceConfig.startServices(host);
+        HostInitPhotonModelServiceConfig.startServices(host);
+        HostInitComputeServicesConfig.startServices(host, true);
+        HostInitAuthServiceConfig.startServices(host);
+
+        host.registerForServiceAvailability(AuthBootstrapService.startTask(host), true,
+                AuthBootstrapService.FACTORY_LINK);
     }
 
     protected ProjectState createProject(String name) throws Throwable {
@@ -117,15 +133,5 @@ public abstract class AuthBaseTest extends BaseTestCase {
 
     protected String buildUserServicePath(String email) {
         return UriUtils.buildUriPath(UserService.FACTORY_LINK, email);
-    }
-
-    private static void startServices(VerificationHost host) throws Throwable {
-        DeploymentProfileConfig.getInstance().setTest(true);
-
-        HostInitCommonServiceConfig.startServices(host);
-        HostInitAuthServiceConfig.startServices(host);
-
-        host.registerForServiceAvailability(AuthBootstrapService.startTask(host), true,
-                AuthBootstrapService.FACTORY_LINK);
     }
 }

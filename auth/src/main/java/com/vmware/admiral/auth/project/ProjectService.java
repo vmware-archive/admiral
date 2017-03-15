@@ -14,20 +14,25 @@ package com.vmware.admiral.auth.project;
 import java.util.ArrayList;
 import java.util.function.Consumer;
 
+import com.vmware.admiral.auth.util.ProjectUtil;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
+import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.ServiceUriPaths;
 import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
 import com.vmware.xenon.services.common.UserService.UserState;
@@ -136,9 +141,44 @@ public class ProjectService extends StatefulService {
     }
 
     @Override
+    public void handleDelete(Operation delete) {
+        ProjectState state = getState(delete);
+        if (state == null || state.documentSelfLink == null) {
+            delete.complete();
+            return;
+        }
+
+        QueryTask queryTask = ProjectUtil.createQueryTaskForProjectAssociatedWithPlacement(state, null);
+
+
+        sendRequest(Operation.createPost(getHost(), ServiceUriPaths.CORE_QUERY_TASKS)
+                .setBody(queryTask)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logSevere("Failed to retrieve placements associated with project: " + state.documentSelfLink);
+                        delete.fail(e);
+                        return;
+                    } else {
+                        ServiceDocumentQueryResult result = o.getBody(QueryTask.class).results;
+                        long documentCount = result.documentCount;
+                        if (documentCount != 0) {
+                            delete.fail(new LocalizableValidationException(
+                                    ProjectUtil.PROJECT_IN_USE_MESSAGE,
+                                    ProjectUtil.PROJECT_IN_USE_MESSAGE_CODE,
+                                    documentCount, documentCount > 1 ? "s" : ""));
+                            return;
+                        }
+
+                        super.handleDelete(delete);
+                    }
+                }));
+    }
+
+    @Override
     public ServiceDocument getDocumentTemplate() {
         ProjectState template = (ProjectState) super.getDocumentTemplate();
         template.name = "resource-group-1";
+        template.id = "project-id";
         template.description = "project1";
         template.isPublic = true;
 
