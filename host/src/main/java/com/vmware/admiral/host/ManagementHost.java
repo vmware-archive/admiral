@@ -31,6 +31,7 @@ import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState
 import com.vmware.admiral.service.common.EventTopicRegistrationBootstrapService;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionManager;
 import com.vmware.admiral.service.common.NodeMigrationService;
+import com.vmware.photon.controller.model.resources.ResourceGroupService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.FactoryService;
@@ -108,6 +109,7 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
     static {
         chains.put(AuthCredentialsService.class, AuthCredentialsOperationProcessingChain.class);
         chains.put(ResourcePoolService.class, ResourcePoolOperationProcessingChain.class);
+        chains.put(ResourceGroupService.class, ResourceGroupOperationProcessingChain.class);
         CompositeComponentNotificationProcessingChain.registerOperationProcessingChains(chains);
     }
 
