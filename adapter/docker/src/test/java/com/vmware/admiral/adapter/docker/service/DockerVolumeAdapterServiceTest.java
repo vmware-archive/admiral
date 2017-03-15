@@ -34,8 +34,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.VolumeOperationType;
-import com.vmware.admiral.adapter.common.service.mock.MockTaskFactoryService;
-import com.vmware.admiral.adapter.common.service.mock.MockTaskService.MockTaskState;
 import com.vmware.admiral.adapter.docker.mock.BaseMockDockerTestCase;
 import com.vmware.admiral.adapter.docker.mock.MockDockerVolumeListService;
 import com.vmware.admiral.common.util.CertificateUtil;
@@ -46,8 +44,6 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionSer
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
-import com.vmware.admiral.service.common.SslTrustCertificateService;
-import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -55,7 +51,6 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.FileContentService;
 
 /**
@@ -83,8 +78,6 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
     private static final Integer TIME_BETWEEN_RETRIES_IN_MILSEC = 300;
 
     private String parentComputeStateLink;
-    private String testDockerCredentialsLink;
-    private String provisioningTaskLink;
     private URI volumeStateReference;
     private URI dockerVolumeAdapterServiceUri;
     private static URI imageReference;
@@ -161,16 +154,6 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
 
         host.testWait();
 
-    }
-
-    protected void createTestDockerAuthCredentials() throws Throwable {
-        testDockerCredentialsLink = doPost(getDockerCredentials(),
-                AuthCredentialsService.FACTORY_LINK).documentSelfLink;
-        SslTrustCertificateState dockerServerTrust = getDockerServerTrust();
-        if (dockerServerTrust != null && dockerServerTrust.certificate != null
-                && !dockerServerTrust.certificate.isEmpty()) {
-            doPost(dockerServerTrust, SslTrustCertificateService.FACTORY_LINK);
-        }
     }
 
     protected void createParentComputeState() throws Throwable {
@@ -313,12 +296,6 @@ public class DockerVolumeAdapterServiceTest extends BaseMockDockerTestCase {
             // to settle
             Thread.sleep(2000L);
         }
-    }
-
-    protected void createProvisioningTask() throws Throwable {
-        MockTaskState provisioningTask = new MockTaskState();
-        provisioningTaskLink = doPost(provisioningTask,
-                MockTaskFactoryService.SELF_LINK).documentSelfLink;
     }
 
     /*
