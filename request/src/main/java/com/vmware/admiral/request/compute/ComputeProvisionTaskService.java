@@ -32,11 +32,13 @@ import java.util.stream.Stream;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ServiceUtils;
+import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputeProvisionTaskState.SubStage;
-import com.vmware.admiral.request.compute.enhancer.ComputeStateEnhancer;
+import com.vmware.admiral.request.compute.enhancer.ComputeStateEnhancers;
+import com.vmware.admiral.request.compute.enhancer.Enhancer;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.photon.controller.model.adapterapi.ResourceOperationResponse;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -135,14 +137,20 @@ public class ComputeProvisionTaskService extends
                 return;
             }
 
-            ComputeStateEnhancer enhancer = new ComputeStateEnhancer(getHost(),
-                    UriUtils.buildUri(getHost().getPublicUri(), getSelfLink()));
+            URI referer = UriUtils.buildUri(getHost().getPublicUri(), getSelfLink());
+
             List<ComputeState> comps = new ArrayList<>();
             AtomicInteger count = new AtomicInteger(opsGetComputes.values().size());
             opsGetComputes.values().stream()
                     .map(op -> op.getBody(ComputeState.class))
                     .forEach(cs -> {
-                        enhancer.enhance(null, cs)
+                        Enhancer.EnhanceContext context = new Enhancer.EnhanceContext();
+                        context.endpointType = cs.customProperties
+                                .get(ComputeConstants.CUSTOM_PROP_ENDPOINT_TYPE_NAME);
+                        context.imageType = cs.customProperties.get("__requestedImageType");
+
+                        ComputeStateEnhancers.build(getHost(), referer)
+                                .enhance(context, cs)
                                 .whenComplete((c, t) -> {
                                     comps.add(c);
                                     if (count.decrementAndGet() == 0) {
@@ -176,7 +184,8 @@ public class ComputeProvisionTaskService extends
         try {
             Set<String> resourceLinks = state.resourceLinks;
             if (resourceLinks == null || resourceLinks.isEmpty()) {
-                throw new LocalizableValidationException("No compute instances to provision", "request.compute.provision.empty");
+                throw new LocalizableValidationException("No compute instances to provision",
+                        "request.compute.provision.empty");
             }
             if (subTaskLink == null) {
                 // recurse after creating a sub task

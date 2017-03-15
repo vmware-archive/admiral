@@ -9,7 +9,6 @@ components:
       imageType: "ubuntu-1604"
       networks:
         - name: "wpnet"
-          ports: 5432
       __computeConfigContent: |
           #cloud-config
           repo_update: true
@@ -55,5 +54,4 @@ components:
     type: "Compute.Network"
     data:
       name: wpnet
-      assignment: static
       networkType: public

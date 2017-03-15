@@ -45,8 +45,8 @@ import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSele
 import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService.ComputeReservationTaskState.SubStage;
 import com.vmware.admiral.request.compute.ProfileQueryUtils.ProfileEntry;
+import com.vmware.admiral.request.compute.enhancer.ComputeDescriptionProfileEnhancer;
 import com.vmware.admiral.request.compute.enhancer.Enhancer.EnhanceContext;
-import com.vmware.admiral.request.compute.enhancer.ProfileComputeDescriptionEnhancer;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -229,7 +229,8 @@ public class ComputeReservationTaskService
 
         String contextId = RequestUtils.getContextId(state);
         NetworkProfileQueryUtils.getProfilesForComputeNics(getHost(),
-                UriUtils.buildUri(getHost(), getSelfLink()), state.tenantLinks, contextId, computeDesc,
+                UriUtils.buildUri(getHost(), getSelfLink()), state.tenantLinks, contextId,
+                computeDesc,
                 (profileConstraints, e) -> {
                     if (e != null) {
                         failTask("Error getting network profile constraints: ", e);
@@ -414,40 +415,43 @@ public class ComputeReservationTaskService
                     }
                     profileEntries.forEach(profileEntry -> logInfo(
                             () -> String.format("Endpoint %s, profiles: %s",
-                                    profileEntry.endpoint.documentSelfLink, profileEntry.profileLinks)));
+                                    profileEntry.endpoint.documentSelfLink,
+                                    profileEntry.profileLinks)));
 
-                    ProfileComputeDescriptionEnhancer enhancer = new ProfileComputeDescriptionEnhancer(
+                    ComputeDescriptionProfileEnhancer enhancer = new ComputeDescriptionProfileEnhancer(
                             getHost(), UriUtils.buildUri(getHost().getPublicUri(), getSelfLink()));
 
                     List<DeferredResult<Pair<ComputeDescription, ProfileEntry>>> list = profileEntries
                             .stream()
-                            .flatMap(profileEntry -> profileEntry.profileLinks.stream().map(profileLink -> {
-                                ComputeDescription cloned = Utils.cloneObject(computeDesc);
-                                EnhanceContext context = new EnhanceContext();
-                                context.profileLink = profileLink;
-                                context.imageType = cloned.customProperties
-                                        .remove(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
-                                context.skipNetwork = true;
-                                context.regionId = profileEntry.endpoint.endpointProperties
-                                        .get(EndpointConfigRequest.REGION_KEY);
+                            .flatMap(profileEntry -> profileEntry.profileLinks.stream()
+                                    .map(profileLink -> {
+                                        ComputeDescription cloned = Utils.cloneObject(computeDesc);
+                                        EnhanceContext context = new EnhanceContext();
+                                        context.profileLink = profileLink;
+                                        context.imageType = cloned.customProperties
+                                                .remove(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
+                                        context.skipNetwork = true;
+                                        context.regionId = profileEntry.endpoint.endpointProperties
+                                                .get(EndpointConfigRequest.REGION_KEY);
 
-                                DeferredResult<Pair<ComputeDescription, ProfileEntry>> r = new DeferredResult<>();
-                                enhancer.enhance(context, cloned).whenComplete((cd, t) -> {
-                                    if (t != null) {
-                                        r.complete(Pair.of(cd, null));
-                                        return;
-                                    }
-                                    String enhancedImage = cd.customProperties
-                                            .get(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
-                                    if (enhancedImage != null
-                                            && context.imageType.equals(enhancedImage)) {
-                                        r.complete(Pair.of(cd, null));
-                                        return;
-                                    }
-                                    r.complete(Pair.of(cd, profileEntry));
-                                });
-                                return r;
-                            })).collect(Collectors.toList());
+                                        DeferredResult<Pair<ComputeDescription, ProfileEntry>> r = new DeferredResult<>();
+                                        enhancer.enhance(context, cloned).whenComplete((cd, t) -> {
+                                            if (t != null) {
+                                                r.complete(Pair.of(cd, null));
+                                                return;
+                                            }
+                                            String enhancedImage = cd.customProperties
+                                                    .get(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
+                                            if (enhancedImage != null
+                                                    && context.imageType.equals(enhancedImage)) {
+                                                r.complete(Pair.of(cd, null));
+                                                return;
+                                            }
+                                            r.complete(Pair.of(cd, profileEntry));
+                                        });
+                                        return r;
+                                    }))
+                            .collect(Collectors.toList());
 
                     DeferredResult.allOf(list).whenComplete((all, t) -> {
                         if (t != null) {
@@ -480,8 +484,9 @@ public class ComputeReservationTaskService
             List<GroupResourcePlacementState> placements, List<String> tenantLinks,
             ComputeDescription computeDesc) {
         // retrieve the tag links from constraint conditions
-        Map<Condition, String> tagLinkByCondition = TagConstraintUtils.extractPlacementTagConditions(
-                computeDesc.constraints, computeDesc.tenantLinks);
+        Map<Condition, String> tagLinkByCondition = TagConstraintUtils
+                .extractPlacementTagConditions(
+                        computeDesc.constraints, computeDesc.tenantLinks);
 
         // check if requirements are stated in the compute description
         if (tagLinkByCondition == null) {
@@ -521,10 +526,11 @@ public class ComputeReservationTaskService
             proceedTo(isGlobal(state) ? SubStage.SELECTED_GLOBAL : SubStage.SELECTED, s -> {
                 s.resourcePoolsPerGroupPlacementLinks = TagConstraintUtils
                         .filterByConstraints(
-                            tagLinkByCondition,
-                            placements.stream(),
-                            p -> getResourcePoolTags(resourcePoolsByLink.get(p.resourcePoolLink)),
-                            (g1, g2) -> g1.priority - g2.priority)
+                                tagLinkByCondition,
+                                placements.stream(),
+                                p -> getResourcePoolTags(
+                                        resourcePoolsByLink.get(p.resourcePoolLink)),
+                                (g1, g2) -> g1.priority - g2.priority)
                         .collect(Collectors.toMap(gp -> gp.documentSelfLink,
                                 gp -> gp.resourcePoolLink,
                                 (k1, k2) -> k1, LinkedHashMap::new));

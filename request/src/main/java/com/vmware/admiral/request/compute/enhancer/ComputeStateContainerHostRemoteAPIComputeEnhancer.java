@@ -28,18 +28,17 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.CertificateUtil.CertChainKeyPair;
 import com.vmware.admiral.common.util.KeyUtil;
-import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.request.compute.enhancer.EnhancerUtils.WriteFiles;
-import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
-public class ContainerHostRemoteAPIComputeDescriptionEnhancer extends ComputeDescriptionEnhancer {
+public class ComputeStateContainerHostRemoteAPIComputeEnhancer extends ComputeEnhancer {
 
     private static final Pattern REMOTE_API_PORT = Pattern
             .compile("\\{\\{ remote_api_port \\}\\}");
@@ -47,29 +46,28 @@ public class ContainerHostRemoteAPIComputeDescriptionEnhancer extends ComputeDes
     private ServiceHost host;
     private URI referer;
 
-    public ContainerHostRemoteAPIComputeDescriptionEnhancer(ServiceHost host, URI referer) {
+    public ComputeStateContainerHostRemoteAPIComputeEnhancer(ServiceHost host, URI referer) {
         this.host = host;
         this.referer = referer;
     }
 
     @Override
-    public DeferredResult<ComputeDescription> enhance(EnhanceContext context,
-            ComputeDescription cd) {
-        DeferredResult<ComputeDescription> result = new DeferredResult<>();
-        String adapterType = getCustomProperty(cd,
+    public DeferredResult<ComputeState> enhance(EnhanceContext context,
+            ComputeState cs) {
+        DeferredResult<ComputeState> result = new DeferredResult<>();
+        String adapterType = getCustomProperty(cs,
                 ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME);
         if (adapterType == null || !DockerAdapterType.API.name().equals(adapterType)) {
-            result.complete(cd);
+            result.complete(cs);
         } else {
-
-            applyPort(context, cd);
-            processCaCertSign(context, cd, result);
+            applyPort(context, cs);
+            processCaCertSign(context, cs, result);
         }
         return result;
     }
 
-    private void applyPort(EnhanceContext context, ComputeDescription cd) {
-        String portValue = getCustomProperty(cd, ContainerHostService.DOCKER_HOST_PORT_PROP_NAME);
+    private void applyPort(EnhanceContext context, ComputeState cs) {
+        String portValue = getCustomProperty(cs, ContainerHostService.DOCKER_HOST_PORT_PROP_NAME);
         int port = 443;
         if (portValue != null) {
             try {
@@ -78,7 +76,7 @@ public class ContainerHostRemoteAPIComputeDescriptionEnhancer extends ComputeDes
                 host.log(Level.WARNING, "The remote API port is not a valid number: %s", portValue);
             }
         } else {
-            cd.customProperties.put(ContainerHostService.DOCKER_HOST_PORT_PROP_NAME,
+            cs.customProperties.put(ContainerHostService.DOCKER_HOST_PORT_PROP_NAME,
                     String.valueOf(port));
         }
 
@@ -124,8 +122,8 @@ public class ContainerHostRemoteAPIComputeDescriptionEnhancer extends ComputeDes
         });
     }
 
-    private void processCaCertSign(EnhanceContext context, ComputeDescription cd,
-            DeferredResult<ComputeDescription> result) {
+    private void processCaCertSign(EnhanceContext context, ComputeState cs,
+            DeferredResult<ComputeState> result) {
 
         Operation.createGet(host, ManagementUriParts.AUTH_CREDENTIALS_CA_LINK)
                 .setReferer(referer)
@@ -140,9 +138,7 @@ public class ContainerHostRemoteAPIComputeDescriptionEnhancer extends ComputeDes
                     AuthCredentialsServiceState caCred = o
                             .getBody(AuthCredentialsServiceState.class);
                     addServerCerts(context, caCred);
-                    cd.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
-                            ManagementUriParts.AUTH_CREDENTIALS_CLIENT_LINK);
-                    result.complete(cd);
+                    result.complete(cs);
                 })
                 .sendWith(host);
     }
