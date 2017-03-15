@@ -69,6 +69,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     public static class TaskStatusState extends MultiTenantDocument {
         public static final String FIELD_NAME_EVENT_LOG_LINK = "eventLogLink";
         public static final String FIELD_NAME_TASK_INFO = "taskInfo";
+        public static final String FIELD_NAME_PROGRESS = "progress";
 
         /** The name of the TaskService */
         public String phase;

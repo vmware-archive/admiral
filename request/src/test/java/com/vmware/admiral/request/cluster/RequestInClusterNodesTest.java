@@ -56,6 +56,7 @@ import com.vmware.admiral.request.RequestStatusService.RequestStatus;
 import com.vmware.admiral.request.ReservationTaskFactoryService;
 import com.vmware.admiral.request.ReservationTaskService.ReservationTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
+import com.vmware.admiral.service.common.AbstractTaskStatefulService.TaskStatusState;
 import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
@@ -246,10 +247,10 @@ public class RequestInClusterNodesTest extends RequestBaseTest {
         request = waitForRequestToComplete(request);
 
         // Verify request status
+        waitForPropertyValue(request.requestTrackerLink, RequestStatus.class,
+                TaskStatusState.FIELD_NAME_PROGRESS, 100);
         RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
         assertNotNull(rs);
-
-        assertEquals(Integer.valueOf(100), rs.progress);
         assertEquals(1, request.resourceLinks.size());
 
         CompositeComponent cc = getDocument(CompositeComponent.class,
@@ -374,9 +375,10 @@ public class RequestInClusterNodesTest extends RequestBaseTest {
         assertNotNull(containerState);
 
         // Verify request status
+        waitForPropertyValue(request.requestTrackerLink, RequestStatus.class,
+                TaskStatusState.FIELD_NAME_PROGRESS, 100);
         RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
         assertNotNull(rs);
-        assertEquals(Integer.valueOf(100), rs.progress);
 
         // 4. Remove the container
         request = TestRequestStateFactory.createRequestState();
@@ -393,9 +395,10 @@ public class RequestInClusterNodesTest extends RequestBaseTest {
         assertNull(containerState);
 
         // Verify request status
+        waitForPropertyValue(request.requestTrackerLink, RequestStatus.class,
+                TaskStatusState.FIELD_NAME_PROGRESS, 100);
         rs = getDocument(RequestStatus.class, request.requestTrackerLink);
         assertNotNull(rs);
-        assertEquals(Integer.valueOf(100), rs.progress);
     }
 
     @Test
