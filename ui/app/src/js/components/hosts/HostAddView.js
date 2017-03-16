@@ -76,7 +76,7 @@ var HostAddView = Vue.extend({
       autoConfigure: false,
       selectedHostType: constants.HOST.TYPE.DOCKER,
       schedulerPlacementZoneName: null,
-      showAcceptCertificate: false
+      allowAcceptCertificateDialog: false
     };
   },
 
@@ -128,6 +128,10 @@ var HostAddView = Vue.extend({
 
       // check if host type matches verified host type
       return this.selectedHostType === this.model.verifiedHostModel.hostType;
+    },
+    acceptCertificateData: function() {
+      return this.model.shouldAcceptCertificate
+                && this.model.shouldAcceptCertificate.certificateHolder;
     },
     isVchOptionEnabled: function() {
       return ft.isVchHostOptionEnabled();
@@ -368,14 +372,6 @@ var HostAddView = Vue.extend({
       }
 
     }, {immediate: true});
-
-    // Should accept certificate
-    this.unwatchShouldAcceptCertificate = this.$watch('model.shouldAcceptCertificate',
-      (shouldAcceptCertificate) => {
-        if (shouldAcceptCertificate && shouldAcceptCertificate.certificateHolder) {
-          this.showAcceptCertificate = true;
-        }
-      });
   },
 
   detached: function() {
@@ -464,6 +460,9 @@ var HostAddView = Vue.extend({
       if (this.autoConfigure) {
         hostData.isConfigureOverSsh = true;
       }
+
+      this.allowAcceptCertificateDialog = true;
+
       HostActions.verifyHost(hostData);
     },
     saveHost: function() {
@@ -492,35 +491,28 @@ var HostAddView = Vue.extend({
       }
     },
 
-    showModal: function() {
-      if (!this.showAcceptCertificate) {
-        this.showAcceptCertificate = true;
-      }
-    },
-
     confirmAcceptCertificate: function() {
-      this.showAcceptCertificate = false;
+      this.allowAcceptCertificateDialog = false;
 
-      let certificateHolder = this.model.shouldAcceptCertificate.certificateHolder;
       let hostModel = this.getHostData();
       let tags = this.tagsInput.getValue();
 
       if (this.model.shouldAcceptCertificate.verify) {
-        HostActions.acceptCertificateAndVerifyHost(certificateHolder, hostModel, tags);
+        HostActions.acceptCertificateAndVerifyHost(this.acceptCertificateData, hostModel, tags);
       } else {
-        HostActions.acceptCertificateAndAddHost(certificateHolder, hostModel, tags);
+        HostActions.acceptCertificateAndAddHost(this.acceptCertificateData, hostModel, tags);
       }
     },
 
     cancelAcceptCertificate: function() {
-      this.showAcceptCertificate = false;
+      this.allowAcceptCertificateDialog = false;
     }
   },
   events: {
     'manage-certificates': function() {
       HostContextToolbarActions.manageCertificates();
 
-      this.showAcceptCertificate = false;
+      this.allowAcceptCertificateDialog = false;
     }
   }
 });

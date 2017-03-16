@@ -96,8 +96,8 @@
         v-on:click="verifyHost">{{i18n("app.host.details.verify")}}<i class="fa fa-spinner fa-spin loader-inline"></i></a>
     <span class="help-block"></span>
   </div>
-  <accept-certificate v-if="showAcceptCertificate"
-                      :model="model.shouldAcceptCertificate && model.shouldAcceptCertificate.certificateHolder"
+  <accept-certificate v-if="allowAcceptCertificateDialog && acceptCertificateData"
+                      :model="acceptCertificateData"
                       :address="address"
                       @confirm="confirmAcceptCertificate()"
                       @cancel="cancelAcceptCertificate()"></accept-certificate>
