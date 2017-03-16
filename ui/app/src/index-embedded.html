@@ -65,7 +65,9 @@
         script.src = 'js/main.js';
         document.body.appendChild(script);
       } else {
-        setTimeout(() => loadScript(retries - 1), 50);
+        setTimeout(function() {
+          loadScript(retries - 1);
+        }, 50);
       }
     }
     loadScript(50);
