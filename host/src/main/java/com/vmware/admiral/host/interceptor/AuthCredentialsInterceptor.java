@@ -9,9 +9,9 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.host;
+package com.vmware.admiral.host.interceptor;
 
-import java.util.function.Predicate;
+import java.util.logging.Level;
 
 import com.vmware.admiral.common.security.EncryptionUtils;
 import com.vmware.admiral.common.util.QueryUtil;
@@ -19,10 +19,9 @@ import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.admiral.service.common.AuthBootstrapService.CredentialsScope;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
-import com.vmware.xenon.common.FactoryService;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.OperationProcessingChain;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
@@ -40,44 +39,26 @@ import com.vmware.xenon.services.common.ServiceUriPaths;
  * - Encrypts the private key field of a {@link AuthCredentialsServiceState} when needed if the
  * encryption is enabled.
  */
-public class AuthCredentialsOperationProcessingChain extends OperationProcessingChain {
+public class AuthCredentialsInterceptor {
 
     public static final String CREDENTIALS_IN_USE_MESSAGE = "Credentials are in use";
     public static final String CREDENTIALS_IN_USE_MESSAGE_CODE = "host.credentials.in.use";
 
-    public AuthCredentialsOperationProcessingChain(FactoryService service) {
-        super(service);
-        this.add(new Predicate<Operation>() {
-            @Override
-            public boolean test(Operation op) {
-                if (op.getAction() == Action.POST) {
-                    return handlePatchPostPut(service, op);
-                }
-                return true;
-            }
-        });
+    public static void register(OperationInterceptorRegistry registry) {
+        registry.addFactoryServiceInterceptor(
+                AuthCredentialsService.class, Action.POST, AuthCredentialsInterceptor::handlePatchPostPut);
+
+        registry.addServiceInterceptor(
+                AuthCredentialsService.class, Action.POST, AuthCredentialsInterceptor::handlePatchPostPut);
+        registry.addServiceInterceptor(
+                AuthCredentialsService.class, Action.PUT, AuthCredentialsInterceptor::handlePatchPostPut);
+        registry.addServiceInterceptor(
+                AuthCredentialsService.class, Action.PATCH, AuthCredentialsInterceptor::handlePatchPostPut);
+        registry.addServiceInterceptor(
+                AuthCredentialsService.class, Action.DELETE, AuthCredentialsInterceptor::handleDelete);
     }
 
-    public AuthCredentialsOperationProcessingChain(AuthCredentialsService service) {
-        super(service);
-        this.add(new Predicate<Operation>() {
-            @Override
-            public boolean test(Operation op) {
-                switch (op.getAction()) {
-                case DELETE:
-                    return handleDelete(service, op, this);
-                case PATCH:
-                case POST:
-                case PUT:
-                    return handlePatchPostPut(service, op);
-                default:
-                    return true;
-                }
-            }
-        });
-    }
-
-    private boolean handlePatchPostPut(Service service, Operation op) {
+    public static DeferredResult<Void> handlePatchPostPut(Service service, Operation op) {
         AuthCredentialsServiceState body = op.getBody(AuthCredentialsServiceState.class);
 
         // Credentials with SYSTEM scope need the password in plain text or they can't be used to
@@ -90,11 +71,11 @@ public class AuthCredentialsOperationProcessingChain extends OperationProcessing
             body.privateKey = EncryptionUtils.encrypt(body.privateKey);
             op.setBodyNoCloning(body);
         }
-        return true;
+        return null;
     }
 
-    private boolean handleDelete(AuthCredentialsService service, Operation op,
-            Predicate<Operation> invokingFilter) {
+    public static DeferredResult<Void> handleDelete(Service service, Operation op) {
+        DeferredResult<Void> dr = new DeferredResult<>();
         service.sendRequest(Operation.createPost(service, ServiceUriPaths.CORE_QUERY_TASKS)
                 .setBody(QueryUtil.addCountOption(QueryUtil.buildPropertyQuery(ComputeState.class,
                         QuerySpecification.buildCompositeFieldName(
@@ -103,17 +84,17 @@ public class AuthCredentialsOperationProcessingChain extends OperationProcessing
                         service.getSelfLink())))
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        service.logWarning(Utils.toString(e));
-                        op.fail(e);
+                        service.getHost().log(Level.WARNING, Utils.toString(e));
+                        dr.fail(e);
                     }
                     ServiceDocumentQueryResult result = o.getBody(QueryTask.class).results;
                     if (result.documentCount != 0) {
                         op.fail(new LocalizableValidationException(CREDENTIALS_IN_USE_MESSAGE,
                                 CREDENTIALS_IN_USE_MESSAGE_CODE));
                     }
-                    resumeProcessingRequest(op, invokingFilter);
+                    dr.complete(null);
                 }));
-        return false;
+        return dr;
     }
 
 }

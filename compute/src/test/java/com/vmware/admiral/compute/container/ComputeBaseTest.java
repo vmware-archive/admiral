@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.After;
 import org.junit.Before;
@@ -25,18 +24,17 @@ import org.junit.Before;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
-import com.vmware.admiral.host.CompositeComponentNotificationProcessingChain;
+import com.vmware.admiral.host.CompositeComponentInterceptor;
 import com.vmware.admiral.host.ComputeInitialBootService;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
+import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
 import com.vmware.admiral.service.common.AbstractInitialBootService;
 import com.vmware.photon.controller.model.resources.EndpointService;
 import com.vmware.photon.controller.model.tasks.EndpointAllocationTaskService;
 import com.vmware.photon.controller.model.tasks.TaskOption;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.OperationProcessingChain;
-import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.TaskState;
@@ -71,9 +69,8 @@ public abstract class ComputeBaseTest extends BaseTestCase {
     }
 
     @Override
-    protected void customizeChains(
-            Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains) {
-        CompositeComponentNotificationProcessingChain.registerOperationProcessingChains(chains);
+    protected void registerInterceptors(OperationInterceptorRegistry registry) {
+        CompositeComponentInterceptor.register(registry);
     }
 
     private static void startServices(ServiceHost serviceHost) throws Throwable {

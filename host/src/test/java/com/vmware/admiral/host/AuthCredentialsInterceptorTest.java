@@ -21,7 +21,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.Map;
 
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -36,20 +35,21 @@ import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.PlacementZoneConstants;
 import com.vmware.admiral.compute.PlacementZoneConstants.PlacementZoneType;
+import com.vmware.admiral.host.interceptor.AuthCredentialsInterceptor;
+import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.admiral.service.common.AuthBootstrapService.CredentialsScope;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.photon.controller.model.security.util.AuthCredentialsOperationProcessingChain;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.OperationProcessingChain;
-import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
-public class AuthCredentialsOperationProcessingChainTest extends BaseTestCase {
+public class AuthCredentialsInterceptorTest extends BaseTestCase {
 
     @ClassRule
     public static TemporaryFolder folder = new TemporaryFolder();
@@ -66,10 +66,8 @@ public class AuthCredentialsOperationProcessingChainTest extends BaseTestCase {
     }
 
     @Override
-    protected void customizeChains(
-            Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains) {
-        super.customizeChains(chains);
-        chains.put(AuthCredentialsService.class, AuthCredentialsOperationProcessingChain.class);
+    protected void registerInterceptors(OperationInterceptorRegistry registry) {
+        AuthCredentialsInterceptor.register(registry);
     }
 
     @Test

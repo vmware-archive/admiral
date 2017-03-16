@@ -56,7 +56,7 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionSer
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
 import com.vmware.admiral.host.CaSigningCertService;
-import com.vmware.admiral.host.CompositeComponentNotificationProcessingChain;
+import com.vmware.admiral.host.CompositeComponentInterceptor;
 import com.vmware.admiral.host.ComputeInitialBootService;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
@@ -65,6 +65,7 @@ import com.vmware.admiral.host.HostInitKubernetesAdapterServiceConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.admiral.host.HostInitRequestServicesConfig;
 import com.vmware.admiral.host.RequestInitialBootService;
+import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.composition.CompositionSubTaskFactoryService;
@@ -88,8 +89,6 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
-import com.vmware.xenon.common.OperationProcessingChain;
-import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -163,9 +162,8 @@ public abstract class RequestBaseTest extends BaseTestCase {
     }
 
     @Override
-    protected void customizeChains(
-            Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains) {
-        CompositeComponentNotificationProcessingChain.registerOperationProcessingChains(chains);
+    protected void registerInterceptors(OperationInterceptorRegistry registry) {
+        CompositeComponentInterceptor.register(registry);
     }
 
     protected List<String> getFactoryServiceList() {

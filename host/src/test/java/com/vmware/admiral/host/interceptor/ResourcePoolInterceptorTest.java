@@ -9,13 +9,13 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.host;
+package com.vmware.admiral.host.interceptor;
 
 import static org.junit.Assert.assertNotNull;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.concurrent.CompletionException;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -27,18 +27,16 @@ import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.PlacementZoneConstants;
 import com.vmware.admiral.compute.PlacementZoneConstants.PlacementZoneType;
-import com.vmware.admiral.host.ResourcePoolOperationProcessingChain;
+import com.vmware.admiral.host.HostInitComputeServicesConfig;
+import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
-import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.OperationProcessingChain;
-import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.UriUtils;
 
-public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
+public class ResourcePoolInterceptorTest extends BaseTestCase {
 
     private static final String TAG_LINKS_MUST_BE_EMPTY_MESSAGE = String
             .format(AssertUtil.PROPERTY_MUST_BE_EMPTY_MESSAGE_FORMAT, "tagLinks");
@@ -61,12 +59,9 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
         defaultPlacementZone = createPlacementZone(DEFAULT_TEST_PLACEMENT_ZONE_NAME, false);
     }
 
-
     @Override
-    protected void customizeChains(
-            Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains) {
-        super.customizeChains(chains);
-        chains.put(ResourcePoolService.class, ResourcePoolOperationProcessingChain.class);
+    protected void registerInterceptors(OperationInterceptorRegistry registry) {
+        ResourcePoolInterceptor.register(registry);
     }
 
     @Test
@@ -80,8 +75,7 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         try {
-                            verifyExceptionMessage(e.getMessage(),
-                                    ResourcePoolOperationProcessingChain.PLACEMENT_ZONE_IN_USE_MESSAGE);
+                            verifyExceptionMessage(e, ResourcePoolInterceptor.PLACEMENT_ZONE_IN_USE_MESSAGE);
                             host.completeIteration();
                         } catch (IllegalStateException ex) {
                             host.failIteration(ex);
@@ -113,8 +107,8 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
         try {
             createPlacementZone(resourcePoolState);
             Assert.fail("Should fail to create a scheduler placement zone with tags");
-        } catch (LocalizableValidationException ex) {
-            verifyExceptionMessage(ex.getMessage(), TAG_LINKS_MUST_BE_EMPTY_MESSAGE);
+        } catch (Exception ex) {
+            verifyExceptionMessage(ex, TAG_LINKS_MUST_BE_EMPTY_MESSAGE);
         }
     }
 
@@ -143,8 +137,8 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
         try {
             doPut(createdPlacementZone);
             Assert.fail("PUT should fail for scheduler placement zone with tags");
-        } catch (LocalizableValidationException ex) {
-            verifyExceptionMessage(ex.getMessage(), TAG_LINKS_MUST_BE_EMPTY_MESSAGE);
+        } catch (Exception ex) {
+            verifyExceptionMessage(ex, TAG_LINKS_MUST_BE_EMPTY_MESSAGE);
         }
     }
 
@@ -174,8 +168,8 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
         try {
             doPatch(patchState, createdPlacementZone.documentSelfLink);
             Assert.fail("PATCH should fail to set tags for scheduler placement zone");
-        } catch (LocalizableValidationException ex) {
-            verifyExceptionMessage(ex.getMessage(), TAG_LINKS_MUST_BE_EMPTY_MESSAGE);
+        } catch (Exception ex) {
+            verifyExceptionMessage(ex, TAG_LINKS_MUST_BE_EMPTY_MESSAGE);
         }
     }
 
@@ -193,8 +187,8 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
         try {
             doPatch(patchState, createdPlacementZone.documentSelfLink);
             Assert.fail("PATCH should fail to set tags for scheduler placement zone");
-        } catch (LocalizableValidationException ex) {
-            verifyExceptionMessage(ex.getMessage(), TAG_LINKS_MUST_BE_EMPTY_MESSAGE);
+        } catch (Exception ex) {
+            verifyExceptionMessage(ex, TAG_LINKS_MUST_BE_EMPTY_MESSAGE);
         }
     }
 
@@ -241,9 +235,9 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
             Assert.fail(
                     "PUT should fail to update the type of a used "
                     + "scheduler placement zone to a docker zone");
-        } catch (LocalizableValidationException ex) {
-            verifyExceptionMessage(ex.getMessage(),
-                    ResourcePoolOperationProcessingChain.SCHEDULER_HOSTS_IN_PLACEMENT_ZONE_MESSAGE);
+        } catch (Exception ex) {
+            verifyExceptionMessage(ex,
+                    ResourcePoolInterceptor.SCHEDULER_HOSTS_IN_PLACEMENT_ZONE_MESSAGE);
         }
     }
 
@@ -264,9 +258,9 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
             Assert.fail(
                     "PUT should fail to update the type of a used "
                     + "docker placement zone to a scheduler zone");
-        } catch (LocalizableValidationException ex) {
-            verifyExceptionMessage(ex.getMessage(),
-                    ResourcePoolOperationProcessingChain.NON_SCHEDULER_HOST_IN_PLACEMENT_ZONE_MESSAGE);
+        } catch (Exception ex) {
+            verifyExceptionMessage(ex,
+                    ResourcePoolInterceptor.NON_SCHEDULER_HOST_IN_PLACEMENT_ZONE_MESSAGE);
         }
     }
 
@@ -288,9 +282,9 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
             Assert.fail(
                     "PATCH should fail to update the type of a used "
                     + "docker placement zone to a scheduler zone");
-        } catch (LocalizableValidationException ex) {
-            verifyExceptionMessage(ex.getMessage(),
-                    ResourcePoolOperationProcessingChain.NON_SCHEDULER_HOST_IN_PLACEMENT_ZONE_MESSAGE);
+        } catch (Exception ex) {
+            verifyExceptionMessage(ex,
+                    ResourcePoolInterceptor.NON_SCHEDULER_HOST_IN_PLACEMENT_ZONE_MESSAGE);
         }
     }
 
@@ -312,9 +306,9 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
             Assert.fail(
                     "PATCH should fail to update the type of a used "
                     + "scheduler placement zone to a docker zone");
-        } catch (LocalizableValidationException ex) {
-            verifyExceptionMessage(ex.getMessage(),
-                    ResourcePoolOperationProcessingChain.SCHEDULER_HOSTS_IN_PLACEMENT_ZONE_MESSAGE);
+        } catch (Exception ex) {
+            verifyExceptionMessage(ex,
+                    ResourcePoolInterceptor.SCHEDULER_HOSTS_IN_PLACEMENT_ZONE_MESSAGE);
         }
     }
 
@@ -340,9 +334,9 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
             Assert.fail(
                     "PATCH should fail to update the type of a docker placement "
                     + "zone to a scheduler zone when the placement zone is in use by multiple scheduler hosts");
-        } catch (LocalizableValidationException ex) {
-            verifyExceptionMessage(ex.getMessage(),
-                    ResourcePoolOperationProcessingChain.MULTIPLE_HOSTS_IN_PLACEMENT_ZONE_MESSAGE);
+        } catch (Exception ex) {
+            verifyExceptionMessage(ex,
+                    ResourcePoolInterceptor.MULTIPLE_HOSTS_IN_PLACEMENT_ZONE_MESSAGE);
         }
     }
 
@@ -433,7 +427,8 @@ public class ResourcePoolOperationProcessingChainTest extends BaseTestCase {
         return doPost(computeState, ComputeService.FACTORY_LINK);
     }
 
-    private void verifyExceptionMessage(String message, String expected) {
+    private void verifyExceptionMessage(Throwable e, String expected) {
+        String message = e instanceof CompletionException ? e.getCause().getMessage() : e.getMessage();
         if (!message.equals(expected)) {
             String errorMessage = String.format("Expected error '%s' but was '%s'", expected,
                     message);

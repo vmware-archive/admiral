@@ -15,7 +15,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Level;
 
 import javax.net.ssl.SSLContext;
@@ -25,31 +24,30 @@ import io.swagger.models.Info;
 import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
+import com.vmware.admiral.host.interceptor.AuthCredentialsInterceptor;
+import com.vmware.admiral.host.interceptor.EndpointInterceptor;
+import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
+import com.vmware.admiral.host.interceptor.ProfileInterceptor;
+import com.vmware.admiral.host.interceptor.ResourceGroupInterceptor;
+import com.vmware.admiral.host.interceptor.ResourcePoolInterceptor;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.admiral.service.common.ConfigurationService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.common.EventTopicRegistrationBootstrapService;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionManager;
 import com.vmware.admiral.service.common.NodeMigrationService;
-import com.vmware.photon.controller.model.resources.ResourceGroupService;
-import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.xenon.common.CommandLineArgumentParser;
-import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.LoaderFactoryService;
 import com.vmware.xenon.common.LoaderService;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
-import com.vmware.xenon.common.OperationProcessingChain;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.ServiceHost;
-import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.http.netty.NettyHttpListener;
 import com.vmware.xenon.common.http.netty.NettyHttpServiceClient;
-import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.MigrationTaskService;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 import com.vmware.xenon.swagger.SwaggerDescriptorService;
@@ -99,18 +97,18 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
 
     private ExtensibilitySubscriptionManager extensibilityRegistry;
 
-    private static Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains
-            = new HashMap<>();
+    private static OperationInterceptorRegistry interceptors = new OperationInterceptorRegistry();
 
-    /*
-      Add concrete {@link OperationProcessingChain} implementations that prevent the deletion of
-      referenced states.
+    /**
+     * Register service operation interceptors.
      */
     static {
-        chains.put(AuthCredentialsService.class, AuthCredentialsOperationProcessingChain.class);
-        chains.put(ResourcePoolService.class, ResourcePoolOperationProcessingChain.class);
-        chains.put(ResourceGroupService.class, ResourceGroupOperationProcessingChain.class);
-        CompositeComponentNotificationProcessingChain.registerOperationProcessingChains(chains);
+        ResourcePoolInterceptor.register(interceptors);
+        CompositeComponentInterceptor.register(interceptors);
+        AuthCredentialsInterceptor.register(interceptors);
+        ResourceGroupInterceptor.register(interceptors);
+        EndpointInterceptor.register(interceptors);
+        ProfileInterceptor.register(interceptors);
     }
 
     public static void main(String[] args) throws Throwable {
@@ -335,52 +333,14 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
 
     @Override
     public ServiceHost startFactory(Service service) {
-        checkForOperationChain(service);
+        interceptors.subscribeToService(service);
         return super.startFactory(service);
     }
 
     @Override
     public ServiceHost startService(Operation post, Service service) {
-        checkForOperationChain(service);
+        interceptors.subscribeToService(service);
         return super.startService(post, service);
-    }
-
-    private void checkForOperationChain(Service service) {
-        Class<? extends Service> serviceClass = service.getClass();
-        if (!applyOperationChainIfNeed(service, serviceClass, serviceClass, false)) {
-            if (service instanceof FactoryService) {
-                try {
-                    Service actualInstance = ((FactoryService) service).createServiceInstance();
-                    Class<? extends Service> instanceClass = actualInstance.getClass();
-                    applyOperationChainIfNeed(service, instanceClass, FactoryService.class,
-                            false);
-                } catch (Throwable e) {
-                    log(Level.SEVERE, "Failure: %s", Utils.toString(e));
-                }
-            } else if (service instanceof StatefulService) {
-                applyOperationChainIfNeed(service, serviceClass, StatefulService.class,
-                        true);
-            }
-        }
-    }
-
-    private boolean applyOperationChainIfNeed(Service service,
-            Class<? extends Service> serviceClass, Class<? extends Service> parameterClass,
-            boolean logOnError) {
-        if (chains.containsKey(serviceClass)) {
-            try {
-                service.setOperationProcessingChain(
-                        chains.get(serviceClass)
-                                .getDeclaredConstructor(parameterClass)
-                                .newInstance(service));
-                return true;
-            } catch (Exception e) {
-                if (logOnError) {
-                    log(Level.SEVERE, "Failure: %s", Utils.toString(e));
-                }
-            }
-        }
-        return false;
     }
 
     @Override
