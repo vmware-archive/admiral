@@ -228,17 +228,33 @@ public class EndpointAdapterService extends StatelessService {
                     }
                     EndpointAllocationTaskState body = o.getBody(EndpointAllocationTaskState.class);
                     if (body.taskInfo.stage == TaskStage.FAILED) {
-                        if (validateConnection && CertificateInfoServiceErrorResponse.KIND
-                                .equals(body.taskInfo.failure.documentKind)) {
-                            put.setBody(body.taskInfo.failure);
+                        if (validateConnection && body.certificateInfo != null) {
+                            int statusCode;
+                            int errorCode;
+                            String message;
+                            if (body.taskInfo.failure != null) {
+                                statusCode = body.taskInfo.failure.statusCode;
+                                errorCode = body.taskInfo.failure.getErrorCode();
+                                message = body.taskInfo.failure.message;
+                            } else {
+                                statusCode = HttpURLConnection.HTTP_UNAVAILABLE;
+                                errorCode = CertificateInfoServiceErrorResponse
+                                        .ERROR_CODE_CERTIFICATE_MASK;
+                                message = "Unknown issue with certificate validation.";
+                            }
+                            CertificateInfoServiceErrorResponse errorResponse =
+                                    CertificateInfoServiceErrorResponse.create(
+                                            body.certificateInfo, statusCode, errorCode, message);
+                            put.setBody(errorResponse);
                             put.setStatusCode(HttpURLConnection.HTTP_OK);
                             put.complete();
-                            return;
+                        } else {
+                            handleServiceErrorResponse(put, o.getStatusCode(), e,
+                                    body.taskInfo.failure);
                         }
-                        handleServiceErrorResponse(put, o.getStatusCode(), e,
-                                body.taskInfo.failure);
                         return;
                     }
+
                     put.setStatusCode(HttpURLConnection.HTTP_NO_CONTENT);
                     put.setBody(null);
                     put.complete();
