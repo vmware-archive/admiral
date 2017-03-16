@@ -1900,7 +1900,7 @@ let TemplatesStore = Reflux.createStore({
                             listViewItems);
           this.emitChange();
         }
-      });
+      }).catch(this.onGenericEditError);
     });
   },
 
