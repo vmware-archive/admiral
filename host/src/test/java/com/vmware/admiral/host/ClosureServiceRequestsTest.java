@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import com.google.gson.JsonPrimitive;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -41,10 +42,9 @@ import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
+import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.OperationProcessingChain;
-import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.UriUtils;
@@ -75,9 +75,8 @@ public class ClosureServiceRequestsTest extends BaseTestCase {
     }
 
     @Override
-    protected void customizeChains(
-            Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains) {
-        CompositeComponentNotificationProcessingChain.registerOperationProcessingChains(chains);
+    protected void registerInterceptors(OperationInterceptorRegistry registry) {
+        CompositeComponentInterceptor.register(registry);
     }
 
     @Test

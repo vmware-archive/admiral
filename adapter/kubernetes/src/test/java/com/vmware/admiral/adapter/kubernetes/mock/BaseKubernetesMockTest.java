@@ -13,7 +13,6 @@ package com.vmware.admiral.adapter.kubernetes.mock;
 
 import java.net.URI;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -29,17 +28,13 @@ import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
-import com.vmware.admiral.compute.kubernetes.service.DeploymentService;
-import com.vmware.admiral.compute.kubernetes.service.PodService;
-import com.vmware.admiral.compute.kubernetes.service.ReplicaSetService;
-import com.vmware.admiral.compute.kubernetes.service.ReplicationControllerService;
-import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler;
-import com.vmware.admiral.host.CompositeComponentNotificationProcessingChain;
+import com.vmware.admiral.host.CompositeComponentInterceptor;
 import com.vmware.admiral.host.ComputeInitialBootService;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.admiral.host.HostInitKubernetesAdapterServiceConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
+import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
 import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
@@ -47,8 +42,6 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.OperationProcessingChain;
-import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.VerificationHost;
@@ -191,15 +184,8 @@ public class BaseKubernetesMockTest extends BaseTestCase {
     }
 
     @Override
-    protected void customizeChains(
-            Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains) {
-        chains.put(DeploymentService.class, CompositeComponentNotificationProcessingChain.class);
-        chains.put(PodService.class, CompositeComponentNotificationProcessingChain.class);
-        chains.put(ServiceEntityHandler.class, CompositeComponentNotificationProcessingChain.class);
-        chains.put(ReplicationControllerService.class,
-                CompositeComponentNotificationProcessingChain.class);
-        chains.put(ReplicaSetService.class,
-                CompositeComponentNotificationProcessingChain.class);
+    protected void registerInterceptors(OperationInterceptorRegistry registry) {
+        CompositeComponentInterceptor.register(registry);
     }
 
     protected static AuthCredentialsServiceState getKubernetesCredentials() {

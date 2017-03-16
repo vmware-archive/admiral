@@ -9,10 +9,10 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.host;
+package com.vmware.admiral.host.interceptor;
 
 import java.util.Arrays;
-import java.util.Map;
+import java.util.concurrent.CompletionException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -21,16 +21,16 @@ import com.vmware.admiral.auth.util.ProjectUtil;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
+import com.vmware.admiral.host.HostInitComputeServicesConfig;
+import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.photon.controller.model.resources.ResourceGroupService;
 import com.vmware.photon.controller.model.resources.ResourceGroupService.ResourceGroupState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.OperationProcessingChain;
-import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.UriUtils;
 
-public class ResourceGroupOperationProcessingChainTest extends BaseTestCase {
+public class ResourceGroupInterceptorTest extends BaseTestCase {
 
     private ResourceGroupState resourceGroup;
 
@@ -50,10 +50,8 @@ public class ResourceGroupOperationProcessingChainTest extends BaseTestCase {
 
 
     @Override
-    protected void customizeChains(
-            Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains) {
-        super.customizeChains(chains);
-        chains.put(ResourceGroupService.class, ResourceGroupOperationProcessingChain.class);
+    protected void registerInterceptors(OperationInterceptorRegistry registry) {
+        ResourceGroupInterceptor.register(registry);
     }
 
     @Test
@@ -68,8 +66,9 @@ public class ResourceGroupOperationProcessingChainTest extends BaseTestCase {
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         try {
-                            verifyExceptionMessage(e.getMessage(),
-                                    ProjectUtil.PROJECT_IN_USE_MESSAGE);
+                            String message = e instanceof CompletionException
+                                    ? e.getCause().getMessage() : e.getMessage();
+                            verifyExceptionMessage(message, ProjectUtil.PROJECT_IN_USE_MESSAGE);
                             host.completeIteration();
                         } catch (IllegalStateException ex) {
                             host.failIteration(ex);

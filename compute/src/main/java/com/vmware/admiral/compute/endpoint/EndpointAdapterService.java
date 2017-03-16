@@ -290,6 +290,12 @@ public class EndpointAdapterService extends StatelessService {
                         handleException(delete, "deleting", endpointLink, o.getStatusCode(), e);
                         return;
                     }
+                    EndpointRemovalTaskState body = o.getBody(EndpointRemovalTaskState.class);
+                    if (body.taskInfo.stage == TaskStage.FAILED) {
+                        handleServiceErrorResponse(delete, o.getStatusCode(), e,
+                                body.taskInfo.failure);
+                        return;
+                    }
                     delete.complete();
                 })
                 .sendWith(this);

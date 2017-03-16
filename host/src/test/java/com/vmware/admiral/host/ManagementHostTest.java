@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -35,6 +36,7 @@ import org.junit.rules.TemporaryFolder;
 
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.compute.ComputeConstants;
+import com.vmware.admiral.host.interceptor.AuthCredentialsInterceptor;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -244,7 +246,7 @@ public class ManagementHostTest {
                 doDelete(host, UriUtils.buildUri(host, credentials.documentSelfLink));
                 fail("expect validation error during deletion");
             } catch (LocalizableValidationException e) {
-                assertEquals(AuthCredentialsOperationProcessingChain.CREDENTIALS_IN_USE_MESSAGE,
+                assertEquals(AuthCredentialsInterceptor.CREDENTIALS_IN_USE_MESSAGE,
                         e.getMessage());
             }
             doDelete(host, UriUtils.buildUri(host, compute.documentSelfLink));
@@ -281,8 +283,10 @@ public class ManagementHostTest {
             try {
                 doDelete(host, UriUtils.buildUri(host, resourcePool.documentSelfLink));
                 fail("expect validation error during deletion");
-            } catch (LocalizableValidationException e) {
-                assertEquals("Placement zone is in use", e.getMessage());
+            } catch (Exception e) {
+                String msg = e instanceof CompletionException ? e.getCause().getMessage()
+                        : e.getMessage();
+                assertEquals("Placement zone is in use", msg);
             }
 
             resourcePool.name = "test-resource-pool2";

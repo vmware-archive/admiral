@@ -22,7 +22,6 @@ import java.net.URISyntaxException;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -52,20 +51,19 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.TestServerX509TrustManager;
+import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.OperationProcessingChain;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.ServiceHost;
-import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -97,11 +95,10 @@ public abstract class BaseTestCase {
          */
         public String localUsers;
 
-        private Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains = new HashMap<>();
+        private final OperationInterceptorRegistry interceptors;
 
-        public CustomizationVerificationHost(
-                Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains) {
-            this.chains.putAll(chains);
+        public CustomizationVerificationHost(OperationInterceptorRegistry interceptors) {
+            this.interceptors = interceptors;
         }
 
         @Override
@@ -114,63 +111,14 @@ public abstract class BaseTestCase {
 
         @Override
         public ServiceHost startFactory(Service service) {
-            Class<? extends Service> serviceClass = service.getClass();
-            if (!applyOperationChainIfNeed(service, serviceClass, serviceClass, false)) {
-                if (service instanceof FactoryService) {
-                    try {
-                        Service actualInstance = ((FactoryService) service).createServiceInstance();
-                        Class<? extends Service> instanceClass = actualInstance.getClass();
-                        applyOperationChainIfNeed(service, instanceClass, FactoryService.class,
-                                false);
-                    } catch (Throwable e) {
-                        log(Level.SEVERE, "Failure: %s", Utils.toString(e));
-                    }
-                } else if (service instanceof StatefulService) {
-                    applyOperationChainIfNeed(service, serviceClass, StatefulService.class,
-                            true);
-                }
-            }
+            interceptors.subscribeToService(service);
             return super.startFactory(service);
         }
 
         @Override
         public ServiceHost startService(Operation post, Service service) {
-            Class<? extends Service> serviceClass = service.getClass();
-            if (!applyOperationChainIfNeed(service, serviceClass, serviceClass, false)) {
-                if (service instanceof FactoryService) {
-                    try {
-                        Service actualInstance = ((FactoryService) service).createServiceInstance();
-                        Class<? extends Service> instanceClass = actualInstance.getClass();
-                        applyOperationChainIfNeed(service, instanceClass, FactoryService.class,
-                                false);
-                    } catch (Throwable e) {
-                        log(Level.SEVERE, "Failure: %s", Utils.toString(e));
-                    }
-                } else if (service instanceof StatefulService) {
-                    applyOperationChainIfNeed(service, serviceClass, StatefulService.class,
-                            true);
-                }
-            }
+            interceptors.subscribeToService(service);
             return super.startService(post, service);
-        }
-
-        private boolean applyOperationChainIfNeed(Service service,
-                Class<? extends Service> serviceClass, Class<? extends Service> parameterClass,
-                boolean logOnError) {
-            if (chains.containsKey(serviceClass)) {
-                try {
-                    service.setOperationProcessingChain(
-                            chains.get(serviceClass)
-                                    .getDeclaredConstructor(parameterClass)
-                                    .newInstance(service));
-                    return true;
-                } catch (Exception e) {
-                    if (logOnError) {
-                        log(Level.SEVERE, "Failure: %s", Utils.toString(e));
-                    }
-                }
-            }
-            return false;
         }
     }
 
@@ -210,10 +158,10 @@ public abstract class BaseTestCase {
     }
 
     protected VerificationHost createHost(ServiceHost.Arguments args, String[] additionalArgs) throws Throwable {
-        Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains = new HashMap<>();
-        customizeChains(chains);
+        OperationInterceptorRegistry interceptors = new OperationInterceptorRegistry();
+        registerInterceptors(interceptors);
 
-        CustomizationVerificationHost customizationHost = new CustomizationVerificationHost(chains);
+        CustomizationVerificationHost customizationHost = new CustomizationVerificationHost(interceptors);
 
         if (args == null) {
             args = getHostArguments();
@@ -237,10 +185,11 @@ public abstract class BaseTestCase {
     protected Map.Entry<VerificationHost, ServerX509TrustManager> createHostWithTrustManager(
             long reloadTime) throws Throwable {
         ServiceHost.Arguments args = getHostArguments();
-        Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains = new HashMap<>();
-        customizeChains(chains);
 
-        VerificationHost h = VerificationHost.initialize(new CustomizationVerificationHost(chains),
+        OperationInterceptorRegistry interceptors = new OperationInterceptorRegistry();
+        registerInterceptors(interceptors);
+
+        VerificationHost h = VerificationHost.initialize(new CustomizationVerificationHost(interceptors),
                 args);
         h.setMaintenanceIntervalMicros(this.getMaintenanceIntervalMillis() * 1000);
 
@@ -297,8 +246,7 @@ public abstract class BaseTestCase {
         return MAINTENANCE_INTERVAL_MILLIS;
     }
 
-    protected void customizeChains(
-            Map<Class<? extends Service>, Class<? extends OperationProcessingChain>> chains) {
+    protected void registerInterceptors(OperationInterceptorRegistry registry) {
     }
 
     public static TestContext testCreate(int count) {
