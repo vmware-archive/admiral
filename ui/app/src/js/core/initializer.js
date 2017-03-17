@@ -96,7 +96,7 @@ initializer.init = function(callback) {
   }).then(() => {
     callback();
   }).catch((err) => {
-    console.warn('Error when loading configuration! Error: ' + err);
+    console.warn('Error when loading configuration! Error: ', err);
   });
 };
 
