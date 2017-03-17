@@ -12,81 +12,59 @@
 package com.vmware.admiral.request;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import org.junit.Before;
+import com.google.common.collect.Lists;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
-import com.vmware.admiral.request.utils.RequestUtils;
+import com.vmware.xenon.common.LocalizableValidationException;
 
 public class ContainerRecommendationTest extends RequestBaseTest {
 
-    private ContainerDescription containerDescription;
-    private Map<String, List<ContainerState>> containersPerContextId;
-    private String contextA;
-    private String contextB;
+    @Test
+    public void testStateRecommend() throws Throwable {
+        ContainerDescription containerDescription = TestRequestStateFactory
+                .createContainerDescription();
+        ContainerState containerState = TestRequestStateFactory.createContainer();
+        containerState.powerState = PowerState.ERROR;
 
-    @Before
-    public void init() {
-        containerDescription = TestRequestStateFactory.createContainerDescription();
+        List<ContainerDiff> containerDiffs = ContainerDiff.inspect(containerDescription, Lists
+                .newArrayList(containerState));
 
-        // create ContainerDescriptionDiff with 4 containers per description,
-        // grouped by context_id on 2 groups and all of the containers are in ERROR state
-        contextA = "context_A";
-        contextB = "context_B";
-        List<ContainerState> containersPerContextA = new ArrayList<>();
-        List<ContainerState> containersPerContextB = new ArrayList<>();
-
-        containersPerContextId = new HashMap<>();
-
-        for (int i = 0; i < 4; i++) {
-            ContainerState cs = TestRequestStateFactory.createContainer();
-            cs.powerState = PowerState.ERROR;
-
-            if (i < 2) {
-                cs.customProperties.put(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, contextA);
-                containersPerContextA.add(cs);
-            } else {
-                cs.customProperties.put(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, contextB);
-                containersPerContextB.add(cs);
-            }
-        }
-
-        containersPerContextId.put(contextA, containersPerContextA);
-        containersPerContextId.put(contextB, containersPerContextB);
+        assertEquals(ContainerRecommendation.Recommendation.REDEPLOY, ContainerRecommendation
+                .recommend(containerDiffs.get(0)));
     }
 
     @Test
-    public void testRecommendationContainersToBeRemoved() {
+    public void testEnvRecommend() throws Throwable {
+        ContainerDescription containerDescription = TestRequestStateFactory
+                .createContainerDescription();
+        ContainerState containerState = TestRequestStateFactory.createContainer();
+        containerState.env = new String[]{"a=b"};
 
-        ContainerStateInspector inspectedContainerStates = ContainerStateInspector.inspect(containerDescription, containersPerContextId);
+        List<ContainerDiff> containerDiffs = ContainerDiff.inspect(containerDescription, Lists
+                .newArrayList(containerState));
 
-        // do recommendation
-        ContainerRecommendation recommendation = ContainerRecommendation.recommend(inspectedContainerStates);
-        assertNotNull(recommendation);
+        assertEquals(ContainerRecommendation.Recommendation.REDEPLOY, ContainerRecommendation
+                .recommend(containerDiffs.get(0)));
+    }
 
-        // assert container description is not null
-        assertNotNull(recommendation.getContainerDescription());
+    @Test
+    public void testNoRecommend() throws Throwable {
+        ContainerState containerState = TestRequestStateFactory.createContainer();
+        ContainerDiff containerDiff = new ContainerDiff(containerState);
 
+        assertEquals(ContainerRecommendation.Recommendation.NONE, ContainerRecommendation
+                .recommend(containerDiff));
+    }
 
-        // assert containers to be removed
-        Map<String, List<ContainerState>> numberOfContainersToBeClusteredPerContextId = recommendation.getContainersToBeRemoved();
-        assertNotNull(numberOfContainersToBeClusteredPerContextId);
-        // assert number of containers to be provisioned in context_A
-        assertEquals(2, numberOfContainersToBeClusteredPerContextId.get(contextA).size());
-        // assert number of containers to be provisioned in context_B
-        assertEquals(2, numberOfContainersToBeClusteredPerContextId.get(contextB).size());
-
-        // assert recommendation type
-        assertEquals(ContainerRecommendation.Recommendation.REDEPLOY, recommendation.getRecommendation());
+    @Test(expected = LocalizableValidationException.class)
+    public void testNullRecommend() throws Throwable {
+        ContainerRecommendation.recommend(null);
     }
 }

@@ -104,6 +104,7 @@ public class ContainerDescriptionService extends StatefulService {
         public static final String FIELD_NAME_VOLUMES = "volumes";
         public static final String FIELD_NAME_VOLUMES_FROM = "volumesFrom";
         public static final String FIELD_NAME_VOLUME_DRIVER = "volumeDriver";
+        public static final String FIELD_NAME_ENV = "env";
         public static final String FIELD_NAME_LINKS = "links";
         public static final String FIELD_NAME_AFFINITY = "affinity";
         public static final String FIELD_NAME_DEPLOYMENT_POLICY_ID = "deploymentPolicyId";

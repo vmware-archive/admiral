@@ -11,11 +11,12 @@
 
 package com.vmware.admiral.request;
 
-import java.util.List;
-import java.util.Map;
+import java.util.Objects;
+import java.util.function.Predicate;
 
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.request.ContainerDiff.ContainerPropertyDiff;
 import com.vmware.xenon.common.LocalizableValidationException;
 
 /**
@@ -23,48 +24,29 @@ import com.vmware.xenon.common.LocalizableValidationException;
  * state of the containers.
  */
 public class ContainerRecommendation {
-    public static final String INSPECTED_CONTAINER_STATES_NOT_PROVIDED = "Inspected container states not provided.";
-    public static final String INSPECTED_CONTAINER_STATES_NOT_PROVIDED_CODE = "request.container-recommendation.inspected-container-states.not-provided";
+    public static final String INSPECTED_CONTAINER_STATES_NOT_PROVIDED = "Inspected container " +
+            "states not provided.";
+    public static final String INSPECTED_CONTAINER_STATES_NOT_PROVIDED_CODE = "request" +
+            ".container-recommendation.inspected-container-states.not-provided";
 
-    public enum Recommendation {
-        REDEPLOY
-    }
-
-    private ContainerDescription containerDescription;
-    private Map<String, List<ContainerState>> containersToBeRemoved;
-    private Recommendation recommendation;
-
-    public static ContainerRecommendation recommend(ContainerStateInspector inspectedContainerStates) {
-
-        if (inspectedContainerStates == null) {
-            throw new LocalizableValidationException(INSPECTED_CONTAINER_STATES_NOT_PROVIDED, INSPECTED_CONTAINER_STATES_NOT_PROVIDED_CODE);
+    public static Recommendation recommend(ContainerDiff diff) {
+        if (diff == null) {
+            throw new LocalizableValidationException(INSPECTED_CONTAINER_STATES_NOT_PROVIDED,
+                    INSPECTED_CONTAINER_STATES_NOT_PROVIDED_CODE);
         }
 
-        ContainerDescription containerDescription = inspectedContainerStates.getContainerDescription();
-        Map<String, List<ContainerState>> unhealthyContainersPerContextId = inspectedContainerStates
-                .getUnhealthyContainersPerContextId();
-        Recommendation recommendation = Recommendation.REDEPLOY;
+        Predicate<ContainerPropertyDiff> envPredicate = d -> Objects.equals(ContainerDescription
+                .FIELD_NAME_ENV, d.containerDescriptionPropertyName);
+        Predicate<ContainerPropertyDiff> statePredicate = d -> Objects.equals(ContainerState
+                .FIELD_NAME_POWER_STATE, d.containerStatePropertyName);
 
-        return new ContainerRecommendation(containerDescription, unhealthyContainersPerContextId, recommendation);
+        if (diff.diffs.stream().anyMatch(envPredicate.or(statePredicate))) {
+            return Recommendation.REDEPLOY;
+        }
+        return Recommendation.NONE;
     }
 
-    public ContainerRecommendation(ContainerDescription containerDescription,
-            Map<String, List<ContainerState>> containersToBeRemoved,
-            Recommendation recommendation) {
-        this.containerDescription = containerDescription;
-        this.containersToBeRemoved = containersToBeRemoved;
-        this.recommendation = recommendation;
-    }
-
-    public ContainerDescription getContainerDescription() {
-        return containerDescription;
-    }
-
-    public Map<String, List<ContainerState>> getContainersToBeRemoved() {
-        return containersToBeRemoved;
-    }
-
-    public Recommendation getRecommendation() {
-        return recommendation;
+    public enum Recommendation {
+        REDEPLOY, NONE
     }
 }
