@@ -13,6 +13,7 @@ package com.vmware.admiral.request;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -24,6 +25,7 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
+import com.vmware.admiral.request.ContainerRecommendation.Recommendation;
 import com.vmware.admiral.request.ContainerRedeploymentTaskService.ContainerRedeploymentTaskState;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -50,13 +52,6 @@ public class ContainerControlLoopService extends StatefulService {
     private static final long MAINTENANCE_INTERVAL_MICROS = Long
             .getLong("com.vmware.admiral.request.container.maintenance.interval.micros",
                     TimeUnit.MINUTES.toMicros(5));
-
-    public static ServiceDocument buildDefaultStateInstance() {
-        ContainerControlLoopState state = new ContainerControlLoopState();
-        state.documentSelfLink = CONTROL_LOOP_INFO_LINK;
-        return state;
-    }
-
     protected volatile AtomicInteger containerDescriptionsToBeProcessed = new AtomicInteger(0);
 
     public static class ContainerControlLoopState extends com.vmware.xenon.common.ServiceDocument {
@@ -72,6 +67,12 @@ public class ContainerControlLoopService extends StatefulService {
         super.setMaintenanceIntervalMicros(MAINTENANCE_INTERVAL_MICROS);
     }
 
+    public static ServiceDocument buildDefaultStateInstance() {
+        ContainerControlLoopState state = new ContainerControlLoopState();
+        state.documentSelfLink = CONTROL_LOOP_INFO_LINK;
+        return state;
+    }
+
     @Override
     public void handlePost(Operation post) {
         if (!post.hasBody()) {
@@ -83,7 +84,7 @@ public class ContainerControlLoopService extends StatefulService {
                 .getBody(ContainerControlLoopState.class);
         if (initState.documentSelfLink == null
                 || !initState.documentSelfLink
-                        .endsWith(CONTROL_LOOP_INFO)) {
+                .endsWith(CONTROL_LOOP_INFO)) {
             post.fail(new LocalizableValidationException(
                     "Only one instance of container control loop service can be started",
                     "request.container-control-loop.single-instance"));
@@ -119,7 +120,6 @@ public class ContainerControlLoopService extends StatefulService {
 
     @Override
     public void handlePatch(Operation patch) {
-
         if (!checkForBody(patch)) {
             return;
         }
@@ -148,7 +148,6 @@ public class ContainerControlLoopService extends StatefulService {
     }
 
     private void performMaintenance() {
-
         retrieveContainerDescriptions().whenComplete((containerDescriptions, e) -> {
             if (e != null) {
                 logSevere("Failed to retrieve container descriptions");
@@ -163,40 +162,37 @@ public class ContainerControlLoopService extends StatefulService {
             containerDescriptionsToBeProcessed.set(containerDescriptions.size());
 
             for (ContainerDescription containerDescription : containerDescriptions) {
-                DeferredResult<List<ContainerState>> containerStates = retrieveContainerStates(
-                        containerDescription);
                 containerDescriptionsToBeProcessed.decrementAndGet();
 
-                containerStates
-                        .thenApply(cs -> groupContainersByContextId(cs))
-                        .whenComplete((groupedContainers, ex) -> {
-                            if (ex != null) {
-                                logSevere("Failed to retrieve containers");
-                                return;
-                            }
+                retrieveContainerStates(containerDescription).thenApply
+                        (containers -> filterContainersWithContextId(containers)).whenComplete(
+                            (containers, ex) -> {
 
-                            if (groupedContainers.isEmpty()) {
-                                logFine("No grouped containers from description: %s",
-                                        containerDescription.documentSelfLink);
-                                return;
-                            }
+                                if (ex != null) {
+                                    logSevere("Failed to retrieve containers");
+                                    return;
+                                }
 
-                            ContainerStateInspector inspectedContainerStates = ContainerStateInspector
-                                    .inspect(containerDescription, groupedContainers);
-                            ContainerRecommendation recommendation = ContainerRecommendation
-                                    .recommend(inspectedContainerStates);
+                                if (containers.isEmpty()) {
+                                    logFine("No containers from description: %s",
+                                            containerDescription.documentSelfLink);
+                                    return;
+                                }
 
-                            switch (recommendation.getRecommendation()) {
-                            case REDEPLOY:
-                                redeployContainers(recommendation);
-                                break;
-
-                            default:
-                                break;
-                            }
-                        });
+                                List<ContainerState> containersToBeRemoved = ContainerDiff.inspect
+                                        (containerDescription, containers).stream().filter(diff ->
+                                        Recommendation.REDEPLOY.equals(ContainerRecommendation
+                                                .recommend(diff))).collect(Collectors.mapping(diff ->
+                                        diff.currentState, Collectors.toList()));
+                                redeployContainers(containerDescription, containersToBeRemoved);
+                            });
             }
         });
+    }
+
+    private List<ContainerState> filterContainersWithContextId(List<ContainerState> containers) {
+        return containers.stream().filter(state -> state.customProperties.get(RequestUtils
+                .FIELD_NAME_CONTEXT_ID_KEY) != null).collect(Collectors.toList());
     }
 
     private DeferredResult<List<ContainerDescription>> retrieveContainerDescriptions() {
@@ -209,7 +205,8 @@ public class ContainerControlLoopService extends StatefulService {
                         SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK,
                         Occurance.MUST_NOT_OCCUR)
                 .addCompositeFieldClause(ContainerDescription.FIELD_NAME_HEALTH_CONFIG,
-                        HealthConfig.FIELD_NAME_AUTOREDEPLOY, Boolean.TRUE.toString(), Occurance.MUST_OCCUR);
+                        HealthConfig.FIELD_NAME_AUTOREDEPLOY, Boolean.TRUE.toString(), Occurance
+                                .MUST_OCCUR);
 
         QueryByPages<ContainerDescription> query = new QueryByPages<>(getHost(), builder.build(),
                 ContainerDescription.class, null);
@@ -230,47 +227,30 @@ public class ContainerControlLoopService extends StatefulService {
         return query.collectDocuments(Collectors.toList());
     }
 
-    private Map<String, List<ContainerState>> groupContainersByContextId(
-            List<ContainerState> containers) {
-        logFine("Grouping containers by context_id");
+    private void redeployContainers(ContainerDescription description, List<ContainerState>
+            containers) {
+        Map<String, Set<String>> containerLinksGroupedByCondextId = containers.stream().collect
+                (Collectors.groupingBy
+                        (container -> container.customProperties.get(RequestUtils
+                                .FIELD_NAME_CONTEXT_ID_KEY), Collectors.mapping(container ->
+                                        container.documentSelfLink,
+                                Collectors.toSet())));
+        int desiredClusterSize = description._cluster == null ? 1 : description._cluster;
 
-        if (containers == null) {
-            throw new LocalizableValidationException("Containers not provided",
-                    "request.container-control-loop.containers-not-provided");
-        }
-
-        // if the containers are discovered (they don't have context_id) they won't be processed
-        Map<String, List<ContainerState>> groupedContainers = containers.stream().filter(
-                cs -> cs.customProperties.get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY) != null)
-                .collect(Collectors
-                        .groupingBy(cs -> cs.customProperties
-                                .get(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY)));
-
-        return groupedContainers;
-    }
-
-    private void redeployContainers(ContainerRecommendation recommendation) {
-
-        ContainerDescription cd = recommendation.getContainerDescription();
-        recommendation.getContainersToBeRemoved().entrySet().stream().forEach(c -> {
-            String contextId = c.getKey();
-            List<String> containerLinks = c.getValue().stream().map(cs -> cs.documentSelfLink)
-                    .collect(Collectors.toList());
-            int desiredClusterSize = cd._cluster == null ? 1 : cd._cluster;
-
-            if (containerLinks == null || containerLinks.isEmpty()) {
-                logFine("Skip container redeployment. No containers for redeploy with context_id %s from description: %s",
-                        contextId, cd.documentSelfLink);
+        containerLinksGroupedByCondextId.entrySet().stream().forEach(entry -> {
+            if (entry.getValue() == null || entry.getValue().isEmpty()) {
+                logFine("Skip container redeployment. No containers for redeploy with context_id " +
+                                "%s from description: %s",
+                        entry.getKey(), description.documentSelfLink);
             } else {
-                createContainerRedeployingTask(cd.documentSelfLink, containerLinks, cd.tenantLinks,
-                        contextId, desiredClusterSize);
+                createContainerRedeployingTask(description.documentSelfLink, entry.getValue(),
+                        description.tenantLinks, entry.getKey(), desiredClusterSize);
             }
         });
     }
 
-    private void createContainerRedeployingTask(String containerDescriptionLink,
-            List<String> containerLinks, List<String> tenantLinks, String contextId,
-            int desiredClusterSize) {
+    private void createContainerRedeployingTask(String containerDescriptionLink, Set<String>
+            containerLinks, List<String> tenantLinks, String contextId, int desiredClusterSize) {
         ContainerRedeploymentTaskState redeployingTaskState = new ContainerRedeploymentTaskState();
         redeployingTaskState.containerDescriptionLink = containerDescriptionLink;
         redeployingTaskState.containerStateLinks = containerLinks;
@@ -285,9 +265,9 @@ public class ContainerControlLoopService extends StatefulService {
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        o.fail(new LocalizableValidationException(
-                                "Creation of redeployment task failed",
-                                "request.container-control-loop-state.create-redeployment-task-fail"));
+                        o.fail(new LocalizableValidationException("Creation of redeployment task " +
+                                "failed", "request.container-control-loop-state" +
+                                ".create-redeployment-task-fail"));
                         return;
                     }
                 }));

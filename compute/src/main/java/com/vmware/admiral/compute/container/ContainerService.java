@@ -61,6 +61,7 @@ public class ContainerService extends StatefulService {
         public static final String FIELD_NAME_COMPOSITE_COMPONENT_LINK = "compositeComponentLink";
         public static final String FIELD_NAME_PARENT_LINK = "parentLink";
         public static final String FIELD_NAME_RESOURCE_POOL_LINK = "resourcePoolLink";
+        public static final String FIELD_NAME_ENV = "env";
         public static final String FIELD_NAME_POWER_STATE = "powerState";
         public static final String FIELD_NAME_GROUP_RESOURCE_PLACEMENT_LINK =
                 "groupResourcePlacementLink";
