@@ -11,16 +11,19 @@
 
 package com.vmware.admiral.host;
 
-import static java.util.Arrays.asList;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import static com.vmware.admiral.host.ManagementHostAuthUsersTest.AUTH_TOKEN_RETRY_COUNT;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.doRestrictedOperation;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.login;
 import static com.vmware.admiral.service.common.AuthBootstrapService.waitForInitConfig;
 
 import java.net.HttpURLConnection;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -29,47 +32,74 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import com.vmware.xenon.common.test.TestContext;
+
 /**
  * Similar to {@link ManagementHostClusterOf2NodesIT} but this test includes 3 nodes, only SSL
  * enabled and the users' passwords are encrypted.
  */
-@Ignore("VBV-984")
 public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT {
 
-    private ManagementHost hostOne;
-    private ManagementHost hostTwo;
-    private ManagementHost hostThree;
-
-    private static final int PORT_ONE = 20000 + new Random().nextInt(1000);
-    private static final int PORT_TWO = PORT_ONE + 1;
-    private static final int PORT_THREE = PORT_TWO + 1;
-
-    private static final String HOST_ONE = LOCALHOST + PORT_ONE;
-    private static final String HOST_TWO = LOCALHOST + PORT_TWO;
-    private static final String HOST_THREE = LOCALHOST + PORT_THREE;
-    private static final List<String> ALL_HOSTS = asList(HOST_ONE, HOST_TWO, HOST_THREE);
-
     @Before
-    public void setUp() throws Throwable {
-        hostOne = setUpHost(PORT_ONE, null, ALL_HOSTS);
-        hostTwo = setUpHost(PORT_TWO, null, ALL_HOSTS);
-        hostThree = setUpHost(PORT_THREE, null, ALL_HOSTS);
-
-        waitForInitConfig(hostOne, hostOne.localUsers);
-        waitForInitConfig(hostTwo, hostTwo.localUsers);
-        waitForInitConfig(hostThree, hostThree.localUsers);
+    public void setUp() {
+        hostsToTeardown = new ArrayList<>();
     }
 
     @After
     public void tearDown() throws Throwable {
-        tearDownHost(hostOne, hostTwo, hostThree);
+        tearDownHost(hostsToTeardown);
     }
 
     @Test
     public void testInvalidAccess() throws Throwable {
+        String testName = "testInvalidAccess ";
 
+        int portOne = 20000 + new Random().nextInt(1000);
+        int portTwo = portOne + 1;
+        int portThree = portTwo + 1;
+
+        String hostOneAddress = LOCALHOST + portOne;
+        String hostTwoAddress = LOCALHOST + portTwo;
+        String hostThreeAddress = LOCALHOST + portThree;
+
+        List<String> allHosts = Collections.synchronizedList(
+                Arrays.asList(hostOneAddress, hostTwoAddress, hostThreeAddress));
+
+        ManagementHost hostOne;
+
+        ManagementHost hostTwo;
+
+        ManagementHost hostThree;
+
+        System.out.println(testName + "setting up first host");
+        // Setup of first host
+        hostOne = setUpHost(portOne, null, Arrays.asList(hostOneAddress));
+        waitForInitConfig(hostOne, hostOne.localUsers);
+        String tokenOne = login(hostOne, USERNAME, PASSWORD, true);
+        assertClusterWithToken(tokenOne, hostOne);
+
+        System.out.println(testName + "setting up second host");
+        // Setup of second host
+        hostTwo = setUpHost(portTwo, null, Arrays.asList(hostOneAddress, hostTwoAddress));
+        waitForInitConfig(hostTwo, hostTwo.localUsers);
+        String tokenTwo = login(hostTwo, USERNAME, PASSWORD, true);
+        // Update the quorum of first host.
+        TestContext ctx = new TestContext(1, Duration.ofSeconds(60));
+        createUpdateQuorumOperation(hostOne, 2, ctx, tokenOne, AUTH_TOKEN_RETRY_COUNT);
+        ctx.await();
+        assertClusterWithToken(tokenTwo, hostTwo);
+
+        System.out.println(testName + "setting up third host");
+        // Setup of third host
+        hostThree = setUpHost(portThree, null, allHosts);
+        waitForInitConfig(hostThree, hostThree.localUsers);
+        String tokenThree = login(hostThree, USERNAME, PASSWORD, true);
+        assertClusterWithToken(tokenThree, hostThree);
+
+        hostsToTeardown = Arrays.asList(hostOne, hostTwo, hostThree);
+
+        System.out.println(testName + "asserting login with invalid credentials");
         // Invalid credentials
-
         assertNull(login(hostOne, USERNAME, "bad"));
         assertNull(login(hostOne, "bad", PASSWORD));
 
@@ -80,7 +110,6 @@ public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT
         assertNull(login(hostThree, "bad", PASSWORD));
 
         // Restricted operation without authentication
-
         assertEquals(HttpURLConnection.HTTP_FORBIDDEN, doRestrictedOperation(hostOne, null));
         assertEquals(HttpURLConnection.HTTP_FORBIDDEN, doRestrictedOperation(hostTwo, null));
         assertEquals(HttpURLConnection.HTTP_FORBIDDEN, doRestrictedOperation(hostThree, null));
@@ -88,88 +117,117 @@ public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT
 
     @Test
     public void testRestrictedOperationWithOneNodeRestarted() throws Throwable {
+        String testName = "testRestrictedOperationWithOneNodeRestarted ";
 
-        /*
-         * Within this test the nodes are restarted but not at the same time, there're always at
-         * least 2 running nodes.
-         */
+        int portOne = 20000 + new Random().nextInt(1000);
+        int portTwo = portOne + 1;
+        int portThree = portTwo + 1;
 
-        String tokenOne = login(hostOne, USERNAME, PASSWORD);
-        assertClusterWithToken(tokenOne, hostOne, hostTwo, hostThree);
+        String hostOneAddress = LOCALHOST + portOne;
+        String hostTwoAddress = LOCALHOST + portTwo;
+        String hostThreeAddress = LOCALHOST + portThree;
 
-        String tokenTwo = login(hostTwo, USERNAME, PASSWORD);
-        assertClusterWithToken(tokenTwo, hostOne, hostTwo, hostThree);
+        List<String> allHosts = Collections.synchronizedList(
+                Arrays.asList(hostOneAddress, hostTwoAddress, hostThreeAddress));
 
-        String tokenThree = login(hostThree, USERNAME, PASSWORD);
-        assertClusterWithToken(tokenThree, hostOne, hostTwo, hostThree);
+        ManagementHost hostOne;
+        ManagementHost hostTwo;
+        ManagementHost hostThree;
 
-        /*
-         * ==== Restart node1 ====================================================================
-         */
+        System.out.println(testName + "setting up first host");
+        // Setup of first host
+        hostOne = setUpHost(portOne, null, Arrays.asList(hostOneAddress));
+        waitForInitConfig(hostOne, hostOne.localUsers);
+        String tokenOne = login(hostOne, USERNAME, PASSWORD, true);
+        assertClusterWithToken(tokenOne, hostOne);
 
+        System.out.println(testName + "setting up second host");
+        // Setup of second host
+        hostTwo = setUpHost(portTwo, null, Arrays.asList(hostOneAddress, hostTwoAddress));
+        waitForInitConfig(hostTwo, hostTwo.localUsers);
+        String tokenTwo = login(hostTwo, USERNAME, PASSWORD, true);
+        // Update the quorum of first host.
+        TestContext ctx = new TestContext(1, Duration.ofMinutes(1));
+        createUpdateQuorumOperation(hostOne, 2, ctx, tokenOne, AUTH_TOKEN_RETRY_COUNT);
+        ctx.await();
+        assertClusterWithToken(tokenTwo, hostTwo);
+
+        System.out.println(testName + "setting up third host");
+        // Setup of third host
+        hostThree = setUpHost(portThree, null, allHosts);
+        waitForInitConfig(hostThree, hostThree.localUsers);
+        String tokenThree = login(hostThree, USERNAME, PASSWORD, true);
+        assertClusterWithToken(tokenThree, hostThree);
+
+        hostsToTeardown = Arrays.asList(hostOne, hostTwo, hostThree);
+
+        System.out.println(testName + "stopping host one");
+        // Restart node1
         stopHost(hostOne);
 
-        assertClusterWithToken(tokenTwo, hostTwo, hostThree);
-        assertClusterWithToken(tokenThree, hostTwo, hostThree);
+        System.out.println(testName + "asserting cluster with host two");
+        tokenTwo = login(hostTwo, USERNAME, PASSWORD, true);
+        assertClusterWithToken(tokenTwo, hostTwo);
 
-        hostOne = startHost(hostOne, null, ALL_HOSTS);
+        System.out.println(testName + "asserting cluster with host three");
+        tokenThree = login(hostThree, USERNAME, PASSWORD, true);
+        assertClusterWithToken(tokenThree, hostThree);
 
-        assertClusterWithToken(tokenOne, hostOne, hostTwo, hostThree);
-        assertClusterWithToken(tokenTwo, hostOne, hostTwo, hostThree);
-        assertClusterWithToken(tokenThree, hostOne, hostTwo, hostThree);
-        assertClusterFromNodes(hostOne, hostTwo, hostThree);
+        System.out.println(testName + "starting host one and asserting cluster");
+        hostOne = startHost(hostOne, null, allHosts);
+        tokenOne = login(hostOne, USERNAME, PASSWORD, true);
+        assertClusterWithToken(tokenOne, hostOne);
 
-        /*
-         * ==== Restart node2 ====================================================================
-         */
-
-        stopHost(hostTwo);
-
-        assertClusterWithToken(tokenOne, hostOne, hostThree);
-        assertClusterWithToken(tokenThree, hostOne, hostThree);
-        assertClusterFromNodes(hostOne, hostThree);
-
-        hostTwo = startHost(hostTwo, null, ALL_HOSTS);
-
-        assertClusterWithToken(tokenOne, hostOne, hostTwo, hostThree);
-        assertClusterWithToken(tokenTwo, hostOne, hostTwo, hostThree);
-        assertClusterWithToken(tokenThree, hostOne, hostTwo, hostThree);
-        assertClusterFromNodes(hostOne, hostTwo, hostThree);
-
-        /*
-         * ==== Restart node3 ====================================================================
-         */
-
-        stopHost(hostThree);
-
-        assertClusterWithToken(tokenOne, hostOne, hostTwo);
-        assertClusterWithToken(tokenTwo, hostOne, hostTwo);
-
-        hostThree = startHost(hostThree, null, ALL_HOSTS);
-
-        assertClusterWithToken(tokenOne, hostOne, hostTwo, hostThree);
-        assertClusterWithToken(tokenTwo, hostOne, hostTwo, hostThree);
-        assertClusterWithToken(tokenThree, hostOne, hostTwo, hostThree);
+        List<ManagementHost> hosts = Arrays.asList(hostOne, hostTwo, hostThree);
+        validateDefaultContentAdded(hosts);
     }
 
+    @Ignore("To be further reworked or removed.")
     @Test
     public void testRestrictedOperationWithNodesStoppedAndStarted() throws Throwable {
+        int portOne = 20000 + new Random().nextInt(1000);
+        int portTwo = portOne + 1;
+        int portThree = portTwo + 1;
 
-        /*
-         * Within this test the nodes are restarted at the same time.
-         */
+        String hostOneAddress = LOCALHOST + portOne;
+        String hostTwoAddress = LOCALHOST + portTwo;
+        String hostThreeAddress = LOCALHOST + portThree;
 
+        List<String> allHosts = Collections.synchronizedList(
+                Arrays.asList(hostOneAddress, hostTwoAddress, hostThreeAddress));
+
+        ManagementHost hostOne;
+
+        ManagementHost hostTwo;
+
+        ManagementHost hostThree;
+
+        // Setup of first host
+        hostOne = setUpHost(portOne, null, Arrays.asList(hostOneAddress));
+        waitForInitConfig(hostOne, hostOne.localUsers);
         String tokenOne = login(hostOne, USERNAME, PASSWORD);
-        assertClusterWithToken(tokenOne, hostOne, hostTwo, hostThree);
+        assertClusterWithToken(tokenOne, hostOne);
 
+        // Setup of second host
+        hostTwo = setUpHost(portTwo, null, Arrays.asList(hostOneAddress, hostTwoAddress));
+        waitForInitConfig(hostTwo, hostTwo.localUsers);
         String tokenTwo = login(hostTwo, USERNAME, PASSWORD);
-        assertClusterWithToken(tokenTwo, hostOne, hostTwo, hostThree);
+        // Update the quorum of first host.
+        TestContext ctx = new TestContext(1, Duration.ofSeconds(60));
+        createUpdateQuorumOperation(hostOne, 2, ctx, tokenOne, AUTH_TOKEN_RETRY_COUNT);
+        ctx.await();
+        assertClusterWithToken(tokenTwo, hostTwo);
 
+        // Setup of third host
+        hostThree = setUpHost(portThree, null, allHosts);
+        waitForInitConfig(hostThree, hostThree.localUsers);
         String tokenThree = login(hostThree, USERNAME, PASSWORD);
-        assertClusterWithToken(tokenThree, hostOne, hostTwo, hostThree);
+        assertClusterWithToken(tokenThree, hostThree);
 
-        List<ManagementHost> hosts = asList(hostOne, hostTwo, hostThree);
-        validateDefaultContentAdded(hosts, tokenOne);
+        hostsToTeardown = Arrays.asList(hostOne, hostTwo, hostThree);
+
+        List<ManagementHost> hosts = Arrays.asList(hostOne, hostTwo, hostThree);
+        validateDefaultContentAdded(hosts);
 
         /*
          * ==== Stop all the nodes ===============================================================
@@ -184,19 +242,23 @@ public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT
          */
 
         // start 1st node with quorum = 1 (peer nodes = self)
-        hostOne = startHost(hostOne, hostOne.getStorageSandbox(), asList(HOST_ONE));
+        hostOne = startHost(hostOne, hostOne.getStorageSandbox(), Arrays.asList(hostOneAddress));
         // start 2nd node with quorum = 2 (peer nodes = self & 1st node )
-        hostTwo = startHost(hostTwo, null, asList(HOST_ONE, HOST_TWO));
+        hostTwo = startHost(hostTwo, null, Arrays.asList(hostOneAddress, hostTwoAddress));
         // start 3rd node with quorum = 2 (peer nodes = self & other nodes)
-        hostThree = startHost(hostThree, null, ALL_HOSTS);
+        hostThree = startHost(hostThree, null, allHosts);
 
-        assertClusterWithToken(tokenOne, hostOne, hostTwo, hostThree);
-        assertClusterWithToken(tokenTwo, hostOne, hostTwo, hostThree);
-        assertClusterWithToken(tokenThree, hostOne, hostTwo, hostThree);
+        tokenOne = login(hostOne, USERNAME, PASSWORD, true);
+        assertClusterWithToken(tokenOne, hostOne);
+        tokenTwo = login(hostOne, USERNAME, PASSWORD, true);
+        assertClusterWithToken(tokenTwo, hostTwo);
+        tokenThree = login(hostOne, USERNAME, PASSWORD, true);
+        assertClusterWithToken(tokenThree, hostThree);
+
         assertClusterFromNodes(hostOne, hostTwo, hostThree);
 
-        hosts = asList(hostOne, hostTwo, hostThree);
-        validateDefaultContentAdded(hosts, tokenOne);
+        hosts = Arrays.asList(hostOne, hostTwo, hostThree);
+        validateDefaultContentAdded(hosts);
     }
 
 }

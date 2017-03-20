@@ -11,14 +11,13 @@
 
 package com.vmware.admiral.host;
 
-import static java.lang.Boolean.TRUE;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.host.HostInitDockerAdapterServiceConfig.FIELD_NAME_START_MOCK_HOST_ADAPTER_INSTANCE;
+import static com.vmware.admiral.host.ManagementHostAuthUsersTest.DELAY_BETWEEN_AUTH_TOKEN_RETRIES;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.doRestrictedOperation;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.login;
 import static com.vmware.admiral.service.common.AuthBootstrapService.waitForInitConfig;
@@ -34,7 +33,6 @@ import java.net.Socket;
 import java.net.URI;
 import java.time.Duration;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -51,7 +49,7 @@ import java.util.logging.Logger;
 import javax.net.ssl.SSLSocketFactory;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
 import com.vmware.admiral.common.test.BaseTestCase;
@@ -106,6 +104,8 @@ import com.vmware.xenon.services.common.ServiceUriPaths;
  */
 public abstract class BaseManagementHostClusterIT {
 
+    protected List<ManagementHost> hostsToTeardown;
+
     private final Logger logger = Logger.getLogger(BaseManagementHostClusterIT.class.getName());
 
     private static final String LOCAL_USERS_FILE = getResourceFilePath(
@@ -130,8 +130,8 @@ public abstract class BaseManagementHostClusterIT {
 
     protected static GroupResourcePlacementState groupResourcePlacementState;
 
-    @Rule
-    public TemporaryFolder test = new TemporaryFolder();
+    @ClassRule
+    public static final TemporaryFolder test = new TemporaryFolder();
 
     protected static final String LOCALHOST = "https://127.0.0.1:";
 
@@ -144,7 +144,7 @@ public abstract class BaseManagementHostClusterIT {
     protected BaseManagementHostClusterIT() {
     }
 
-    protected ManagementHost setUpHost(int port, URI sandboxUri, List<String> peers)
+    protected static ManagementHost setUpHost(int port, URI sandboxUri, List<String> peers)
             throws Throwable {
 
         String sandboxPath;
@@ -157,8 +157,7 @@ public abstract class BaseManagementHostClusterIT {
             sandbox.create();
             sandboxPath = sandbox.getRoot().toPath().toString();
         }
-
-        String hostId = getClass().getSimpleName() + "-" + port;
+        String hostId = LOCALHOST.substring(0, LOCALHOST.length() - 2) + "-" + port;
 
         String peerNodes = String.join(",", peers);
 
@@ -170,7 +169,7 @@ public abstract class BaseManagementHostClusterIT {
                 ARGUMENT_PREFIX
                         + FIELD_NAME_START_MOCK_HOST_ADAPTER_INSTANCE
                         + ARGUMENT_ASSIGNMENT
-                        + TRUE.toString(),
+                        + Boolean.TRUE.toString(),
                 ARGUMENT_PREFIX
                         + AuthBootstrapService.LOCAL_USERS_FILE
                         + ARGUMENT_ASSIGNMENT
@@ -215,8 +214,8 @@ public abstract class BaseManagementHostClusterIT {
         return host;
     }
 
-    protected void tearDownHost(ManagementHost... hosts) {
-        Arrays.stream(hosts).forEach(host -> stopHost(host));
+    protected void tearDownHost(List<ManagementHost> hosts) {
+        hosts.forEach(host -> stopHost(host));
     }
 
     protected void stopHost(ManagementHost host) {
@@ -232,8 +231,14 @@ public abstract class BaseManagementHostClusterIT {
             ServiceRequestListener secureListener = host.getSecureListener();
             host.stop();
             secureListener.stop();
-            waitWhilePortIsListening(host);
-            FileUtils.deleteDirectory(new File(host.getStorageSandbox().getPath()));
+            // waitWhilePortIsListening(host);
+            // Surrounded with try catch because on Windows OS, there is probably
+            // permissions problem and this util cannot delete the sandbox.
+            try {
+                FileUtils.deleteDirectory(new File(host.getStorageSandbox().getPath()));
+            } catch (Throwable t) {
+                logger.log(Level.WARNING, "Error when trying to remove sandbox", t);
+            }
             logger.log(Level.INFO, String.format("Host '%s' stopped", hostname));
 
         } catch (Exception e) {
@@ -244,10 +249,8 @@ public abstract class BaseManagementHostClusterIT {
     /**
      * Stops the host and removes it from default node group.
      *
-     * @param availableHost
-     *            - available host which will exclude other from group.
-     * @param hostToStop
-     *            - unavailable host.
+     * @param availableHost - available host which will exclude other from group.
+     * @param hostToStop    - unavailable host.
      */
     protected void stopHostAndRemoveItFromNodeGroup(ManagementHost availableHost,
             ManagementHost hostToStop) {
@@ -260,7 +263,7 @@ public abstract class BaseManagementHostClusterIT {
 
     }
 
-    public void validateDefaultContentAdded(List<ManagementHost> allHostsInstances, String token)
+    public void validateDefaultContentAdded(List<ManagementHost> allHostsInstances)
             throws Throwable {
         Map<String, Class<? extends ServiceDocument>> defaultContent = new HashMap<>();
 
@@ -284,16 +287,16 @@ public abstract class BaseManagementHostClusterIT {
                 GroupResourcePlacementState.class);
 
         for (Entry<String, Class<? extends ServiceDocument>> docEntry : defaultContent.entrySet()) {
-            validateDefaultContentInSync(allHostsInstances, token, docEntry.getKey(),
-                    docEntry.getValue());
+            waitForDocumentSync(allHostsInstances, docEntry.getKey(), docEntry.getValue());
         }
     }
 
     private <T extends ServiceDocument> void validateDefaultContentInSync(
-            List<ManagementHost> allHostsInstances, String token, String documentSelfLink,
-            Class<T> type) {
+            List<ManagementHost> allHostsInstances, String documentSelfLink, Class<T> type)
+            throws Throwable {
         ManagementHost firstHost = allHostsInstances.get(0);
-        T firstState = doGet(firstHost, documentSelfLink, type, token);
+        String firstToken = login(firstHost, USERNAME, PASSWORD);
+        T firstState = doGet(firstHost, documentSelfLink, type, firstToken);
         assertNotNull(
                 "State with link " + documentSelfLink + " was not found on host "
                         + firstHost.getUri().toString(),
@@ -302,7 +305,8 @@ public abstract class BaseManagementHostClusterIT {
         for (ManagementHost host : allHostsInstances) {
             logger.log(Level.INFO,
                     "Finding state with link " + documentSelfLink + " on host %s", host.getId());
-            T state = doGet(host, documentSelfLink, type, token);
+            String hostToken = login(host, USERNAME, PASSWORD);
+            T state = doGet(host, documentSelfLink, type, hostToken);
             logger.log(Level.INFO, "State with link " + documentSelfLink + " was not found on host "
                     + host.getId(), state);
 
@@ -320,6 +324,32 @@ public abstract class BaseManagementHostClusterIT {
                         + " are not the same on different hosts");
             }
         }
+    }
+
+    private <T extends ServiceDocument> void waitForDocumentSync(
+            List<ManagementHost> allHostsInstances, String documentSelfLink,
+            Class<T> type) throws TimeoutException, InterruptedException {
+        waitFor(allHostsInstances.get(0), new Condition() {
+            @Override
+            public boolean isReady() {
+                try {
+                    validateDefaultContentInSync(allHostsInstances, documentSelfLink,
+                            type);
+                    return true;
+                } catch (AssertionError e) {
+                    logger.log(Level.WARNING, "Exception when validating synchronized documents",
+                            e);
+                } catch (Throwable ex) {
+                    logger.log(Level.WARNING, "Exception caught: ", ex);
+                }
+                return false;
+            }
+
+            @Override
+            public String getDescription() {
+                return "Waiting for documents to get synchronized.";
+            }
+        });
     }
 
     private static <T extends ServiceDocument> boolean equals(T documentA, T documentB,
@@ -398,8 +428,6 @@ public abstract class BaseManagementHostClusterIT {
         Thread.sleep(5000);
         logger.log(Level.INFO, "Host '" + hostname + "' started.");
 
-        // waitForHostToStart(host);
-
         return host;
     }
 
@@ -415,7 +443,7 @@ public abstract class BaseManagementHostClusterIT {
         for (ManagementHost host : hosts) {
             final String[] tokens = new String[1];
             // String token = login(host, USERNAME, PASSWORD);
-            waitFor(new Condition() {
+            waitFor(host, new Condition() {
 
                 @Override
                 public boolean isReady() {
@@ -425,7 +453,7 @@ public abstract class BaseManagementHostClusterIT {
                             tokens[0] = token;
                             return true;
                         }
-                    } catch (IOException e) {
+                    } catch (Throwable e) {
                         host.log(Level.WARNING, "Exception while getting token from host: %s",
                                 host.getUri());
                     }
@@ -451,7 +479,7 @@ public abstract class BaseManagementHostClusterIT {
         for (ManagementHost host : hosts) {
 
             // Assert restricted operation access
-            waitFor(new Condition() {
+            waitFor(host, new Condition() {
 
                 @Override
                 public boolean isReady() {
@@ -474,7 +502,7 @@ public abstract class BaseManagementHostClusterIT {
             // Assert node groups info
             URI uri = UriUtils.buildUri(host, NODE_GROUPS);
 
-            waitFor(new Condition() {
+            waitFor(host, new Condition() {
 
                 @Override
                 public boolean isReady() {
@@ -508,7 +536,7 @@ public abstract class BaseManagementHostClusterIT {
         }
     }
 
-    protected void initializeProvisioningContext(ManagementHost host) throws Exception {
+    protected void initializeProvisioningContext(ManagementHost host) throws Throwable {
         Map<String, String> headers = new HashMap<>();
         headers.put(Operation.REQUEST_AUTH_TOKEN_HEADER, login(host, USERNAME, PASSWORD));
         headers.put("Content-Type", "application/json;charset=utf-8");
@@ -519,10 +547,8 @@ public abstract class BaseManagementHostClusterIT {
      * Starts provisioning context sequentially 1.ResourcePool 2.GroupResourceState
      * 3.ComputeDescription 4.ComputeState
      *
-     * @param headers
-     *            - headers for rest calls
-     * @param host
-     *            - ServiceHost
+     * @param headers - headers for rest calls
+     * @param host    - ServiceHost
      * @throws Exception
      */
     private void startContextCreationWithResourcePool(Map<String, String> headers,
@@ -537,7 +563,7 @@ public abstract class BaseManagementHostClusterIT {
         String body = Utils.toJson(resourcePool);
         URI uri = UriUtils.buildUri(host, ResourcePoolService.FACTORY_LINK);
 
-        waitFor(new Condition() {
+        waitFor(host, new Condition() {
 
             @Override
             public boolean isReady() {
@@ -671,7 +697,7 @@ public abstract class BaseManagementHostClusterIT {
 
         final RequestJSONResponseMapper[] result = new RequestJSONResponseMapper[1];
 
-        waitFor(new Condition() {
+        waitFor(host, new Condition() {
 
             @Override
             public boolean isReady() {
@@ -708,7 +734,7 @@ public abstract class BaseManagementHostClusterIT {
         return result[0];
     }
 
-    protected Map<String, String> getAuthenticationHeaders(ManagementHost host) throws IOException {
+    protected Map<String, String> getAuthenticationHeaders(ManagementHost host) throws Throwable {
         Map<String, String> headers = new HashMap<>();
         headers.put(Operation.REQUEST_AUTH_TOKEN_HEADER, login(host, USERNAME, PASSWORD));
         headers.put("Content-Type", "application/json;charset=utf-8");
@@ -718,7 +744,7 @@ public abstract class BaseManagementHostClusterIT {
     private static void checkHostAccess(Map<String, String> headers, ManagementHost host)
             throws InterruptedException, TimeoutException {
         // Assert restricted operation access before provisioning.
-        waitFor(new Condition() {
+        waitFor(host, new Condition() {
             @Override
             public boolean isReady() {
                 try {
@@ -746,17 +772,23 @@ public abstract class BaseManagementHostClusterIT {
 
     }
 
-    protected static void waitFor(Condition condition)
-            throws InterruptedException, TimeoutException {
+    public static void waitFor(ServiceHost host, Condition condition) throws TimeoutException {
         long start = System.currentTimeMillis();
-        long end = start + TIMEOUT_FOR_WAIT_CONDITION; // Wait 1 minute.
+        long end = start + TIMEOUT_FOR_WAIT_CONDITION; //Wait 1 minute.
 
         while (!condition.isReady()) {
-            Thread.sleep(DELAY_BETWEEN_RETRIES_IN_MILISEC);
             if (System.currentTimeMillis() > end) {
                 throw new TimeoutException(
                         String.format("Timeout waiting for: [%s]", condition.getDescription()));
             }
+
+            host.schedule(() -> {
+                try {
+                    waitFor(host, condition);
+                } catch (TimeoutException e) {
+                    host.log(Level.WARNING, e.getMessage());
+                }
+            }, DELAY_BETWEEN_AUTH_TOKEN_RETRIES, TimeUnit.SECONDS);
         }
     }
 
@@ -869,12 +901,13 @@ public abstract class BaseManagementHostClusterIT {
             assertNotNull("nodes", nodes);
             @SuppressWarnings("unchecked")
             // {ManagementHostClusterOf3NodesIT-20557={groupReference=https://127.0.0.1:20557/core/node-groups/default,
-            // status=AVAILABLE, options=[PEER] ....}}
-            Map<Object, Object> nodes = Utils.fromJson(this.nodes, Map.class);
+                    // status=AVAILABLE, options=[PEER] ....}}
+                    Map<Object, Object> nodes = Utils.fromJson(this.nodes, Map.class);
             @SuppressWarnings("unchecked")
             // {groupReference=https://127.0.0.1:20557/core/node-groups/default,
-            // status=AVAILABLE...}
-            Map<Object, Object> hostProperties = Utils.fromJson(nodes.get(hostId), Map.class);
+                    // status=AVAILABLE...}
+                    Map<Object, Object> hostProperties = Utils
+                    .fromJson(nodes.get(hostId), Map.class);
             assertEquals(hostProperties.get(property), value);
         }
 
@@ -913,7 +946,7 @@ public abstract class BaseManagementHostClusterIT {
     }
 
     private void waitUntilNodeIsRemovedFromGroup(ManagementHost availableHost) {
-        TestContext waiter = new TestContext(1, Duration.ofSeconds(30));
+        TestContext waiter = new TestContext(1, Duration.ofSeconds(60));
 
         AtomicBoolean unavailableNodeDetected = new AtomicBoolean(false);
 
@@ -968,8 +1001,15 @@ public abstract class BaseManagementHostClusterIT {
                 }).sendWith(availableHost);
     }
 
-    private void createUpdateQuorumOperation(ManagementHost availableHost, int availableNodes,
+    protected void createUpdateQuorumOperation(ManagementHost availableHost, int availableNodes,
             TestContext waiter) {
+        createUpdateQuorumOperation(availableHost, availableNodes, waiter, null, null);
+    }
+
+    protected void createUpdateQuorumOperation(ManagementHost availableHost, int availableNodes,
+            TestContext waiter, String authToken, Integer retryCount) {
+
+        availableHost.log(Level.INFO, "Auth token in update quorum request: " + authToken);
 
         UpdateQuorumRequest request = new UpdateQuorumRequest();
         request.isGroupUpdate = true;
@@ -979,19 +1019,34 @@ public abstract class BaseManagementHostClusterIT {
         availableHost.log(Level.INFO,
                 String.format("Updating membershipQuorum to %d", request.membershipQuorum));
 
-        Operation.createPatch(availableHost, ServiceUriPaths.DEFAULT_NODE_GROUP)
+        Operation patch = Operation.createPatch(availableHost, ServiceUriPaths.DEFAULT_NODE_GROUP)
                 .setBody(request)
                 .setReferer(availableHost.getUri())
+                .addRequestHeader(Operation.REQUEST_AUTH_TOKEN_HEADER, authToken)
                 .setCompletion(
                         (o, e) -> {
                             if (e != null) {
-                                waiter.fail(e);
+                                if (retryCount != null && retryCount > 0) {
+                                    availableHost.log(Level.INFO, "Retrying %s times to relax "
+                                            + "the quorum", retryCount);
+                                    availableHost.schedule(() ->
+                                                    createUpdateQuorumOperation(availableHost,
+                                                            availableNodes, waiter, authToken,
+                                                            retryCount - 1),
+                                            DELAY_BETWEEN_AUTH_TOKEN_RETRIES, TimeUnit.SECONDS);
+                                } else {
+                                    waiter.fail(e);
+                                }
                             } else {
                                 waiter.completeIteration();
                             }
-                        })
-                .sendWith(availableHost);
-        ;
+                        });
+
+        if (authToken != null && !authToken.isEmpty()) {
+            patch = patch.addRequestHeader(Operation.REQUEST_AUTH_TOKEN_HEADER, authToken);
+        }
+
+        patch.sendWith(availableHost);
     }
 
     protected void disableDataCollection(ManagementHost host, String token, TestContext waiter) {
@@ -1008,8 +1063,5 @@ public abstract class BaseManagementHostClusterIT {
                     waiter.completeIteration();
 
                 }).sendWith(host);
-        ;
-
     }
-
 }

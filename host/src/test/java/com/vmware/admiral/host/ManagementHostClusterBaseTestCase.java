@@ -211,7 +211,7 @@ public abstract class ManagementHostClusterBaseTestCase extends ManagementHostBa
         assertNodes(headers, hosts);
     }
 
-    protected static void assertClusterFromNodes(ManagementHost... hosts) throws Exception {
+    protected static void assertClusterFromNodes(ManagementHost... hosts) throws Throwable {
         for (ManagementHost host : hosts) {
             String token = login(host, USERNAME, PASSWORD);
             assertNotNull(token);
@@ -292,7 +292,7 @@ public abstract class ManagementHostClusterBaseTestCase extends ManagementHostBa
 
     }
 
-    private static void waitFor(Condition condition) throws InterruptedException, TimeoutException {
+    public static void waitFor(Condition condition) throws InterruptedException, TimeoutException {
         long start = System.currentTimeMillis();
         long end = start + TIMEOUT_FOR_WAIT_CONDITION; //Wait 1 minute.
 

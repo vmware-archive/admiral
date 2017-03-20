@@ -30,10 +30,13 @@ import java.net.URI;
 import java.net.URL;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.time.Duration;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import javax.net.ssl.HostnameVerifier;
@@ -55,9 +58,12 @@ import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.services.common.authn.BasicAuthenticationService;
 
 public class ManagementHostAuthUsersTest extends ManagementHostBaseTest {
+    protected static final int AUTH_TOKEN_RETRY_COUNT = 20;
+    protected static final int DELAY_BETWEEN_AUTH_TOKEN_RETRIES = 4;
 
     private static final HostnameVerifier ALLOW_ALL_HOSTNAME_VERIFIER = new AllowAllHostnameVerifier();
     private static final SSLSocketFactory UNSECURE_SSL_SOCKET_FACTORY = getUnsecuredSSLSocketFactory();
@@ -196,7 +202,8 @@ public class ManagementHostAuthUsersTest extends ManagementHostBaseTest {
     /*
      * Returns the auth token or null if the credentials are invalid.
      */
-    public static String login(ServiceHost host, String username, String password)
+    public static String login(ServiceHost host, String username, String password,
+            boolean retryOnFail)
             throws IOException {
 
         URI uri = UriUtils.buildUri(host, BasicAuthenticationService.SELF_LINK);
@@ -209,7 +216,44 @@ public class ManagementHostAuthUsersTest extends ManagementHostBaseTest {
 
         SimpleEntry<Integer, String> result = doPost(uri, headers, body);
 
+        if (result.getValue() == null && retryOnFail) {
+            host.log(Level.INFO, "Retrying to get auth token for: " + uri.toString());
+            TestContext context = new TestContext(1,
+                    Duration.ofSeconds(3 * AUTH_TOKEN_RETRY_COUNT));
+            waitForAuthToken(host, uri, headers, body, context, AUTH_TOKEN_RETRY_COUNT);
+            context.await();
+            result = doPost(uri, headers, body);
+        }
+
         return result.getValue();
+    }
+
+    public static String login(ServiceHost host, String username, String password)
+            throws IOException {
+        return login(host, username, password, false);
+    }
+
+    private static void waitForAuthToken(ServiceHost host, URI uri, Map<String, String> headers,
+            String body, TestContext context, final int retryCounter) throws IOException {
+
+        if (retryCounter == 0) {
+            context.failIteration(new Throwable("Failed waiting for auth token."));
+            return;
+        }
+
+        SimpleEntry<Integer, String> result = doPost(uri, headers, body);
+        if (result.getValue() == null) {
+            host.schedule(() -> {
+                try {
+                    waitForAuthToken(host, uri, headers, body, context, retryCounter - 1);
+                } catch (IOException e) {
+                    host.log(Level.WARNING, "Error on getting auth token: ", e);
+                }
+            }, DELAY_BETWEEN_AUTH_TOKEN_RETRIES, TimeUnit.SECONDS);
+            return;
+        }
+
+        context.completeIteration();
     }
 
     public static SimpleEntry<Integer, String> doPost(URI uri, Map<String, String> headers,
