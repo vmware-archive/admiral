@@ -11,6 +11,7 @@
 
 import * as actions from 'actions/Actions';
 import constants from 'core/constants';
+import links from 'core/links';
 import services from 'core/services';
 import utils from 'core/utils';
 import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
@@ -300,7 +301,9 @@ let MachinesStore = Reflux.createStore({
 
     }).catch(this.onGenericEditError);
 
-    this.setInData(['editingItemData', 'item'], {});
+    this.setInData(['editingItemData', 'item'], {
+      documentSelfLink: links.COMPUTE_RESOURCES + '/' + machineId
+    });
     this.emitChange();
   },
   onUpdateMachine(model, tagRequest) {

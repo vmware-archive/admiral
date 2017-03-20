@@ -295,7 +295,7 @@ var constants = Immutable({
     }
   },
   MACHINES: {
-    SEARCH_SUGGESTIONS: ['address']
+    SEARCH_SUGGESTIONS: ['address', 'endpoint', 'name', 'tag']
   },
   PROFILES: {
     SEARCH_SUGGESTIONS: ['name']

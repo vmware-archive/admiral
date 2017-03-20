@@ -325,6 +325,34 @@ var list = function(url, expandQuery, paramsData) {
   });
 };
 
+var getComputeParams = function(queryOptions) {
+  var params = {};
+  var queryOptionsOccurrence = queryOptions && queryOptions[constants.SEARCH_OCCURRENCE.PARAM];
+  var operator = queryOptionsOccurrence === constants.SEARCH_OCCURRENCE.ANY ? 'or' : 'and';
+  var endpointOps = {};
+  var endpointArray = toArrayIfDefined(queryOptions && queryOptions.endpoint);
+  if (endpointArray) {
+    endpointOps[FILTER_VALUE_ALL_FIELDS] = endpointArray.map((endpoint) => {
+      return {
+        val: '*' + endpoint.toLowerCase() + '*',
+        op: 'eq'
+      };
+    });
+    endpointOps[constants.SEARCH_OCCURRENCE.PARAM] = queryOptionsOccurrence;
+    params.endpoint = buildOdataQuery(endpointOps);
+    params.operator = operator;
+  }
+
+  var tagArray = toArrayIfDefined(queryOptions && queryOptions.tag);
+  if (tagArray) {
+    params.tag = tagArray
+        .map((q) => '(' + buildTagsQuery(q) + ')')
+        .join(' ' + operator + ' ');
+    params.operator = operator;
+  }
+  return params;
+};
+
 var services = {};
 
 services.createDocument = function(factoryLink, document) {
@@ -896,10 +924,9 @@ services.updateSubnetwork = function(subnetwork) {
 
 services.loadMachines = function(queryOptions) {
   let filter = buildHostsQuery(queryOptions, false, false);
-  let url = buildPaginationUrl(links.COMPUTE_RESOURCES, filter, true, 'creationTimeMicros asc');
-  return get(url).then(function(result) {
-    return result;
-  });
+  let url = buildPaginationUrl(links.COMPUTE_RESOURCES_SEARCH, filter, true,
+      'creationTimeMicros asc', null, getComputeParams(queryOptions));
+  return get(url);
 };
 
 services.updateMachine = function(id, data) {
@@ -907,43 +934,13 @@ services.updateMachine = function(id, data) {
 };
 
 services.loadCompute = function(queryOptions) {
-  var params = {};
-  var queryOptionsOccurrence = queryOptions && queryOptions[constants.SEARCH_OCCURRENCE.PARAM];
-  var operator = queryOptionsOccurrence === constants.SEARCH_OCCURRENCE.ANY ? 'or' : 'and';
-  var endpointOps = {};
-  var endpointArray = toArrayIfDefined(queryOptions && queryOptions.endpoint);
-  if (endpointArray) {
-    endpointOps[FILTER_VALUE_ALL_FIELDS] = endpointArray.map((endpoint) => {
-      return {
-        val: '*' + endpoint.toLowerCase() + '*',
-        op: 'eq'
-      };
-    });
-    endpointOps[constants.SEARCH_OCCURRENCE.PARAM] = queryOptionsOccurrence;
-    params.endpoint = buildOdataQuery(endpointOps);
-    params.operator = operator;
-  }
-
-  var tagArray = toArrayIfDefined(queryOptions && queryOptions.tag);
-  if (tagArray) {
-    params.tag = tagArray
-        .map((q) => '(' + buildTagsQuery(q) + ')')
-        .join(' ' + operator + ' ');
-    params.operator = operator;
-  }
-
   let filter = buildHostsQuery(queryOptions, false, true);
   let url = buildPaginationUrl(links.COMPUTE_RESOURCES_SEARCH, filter, true,
-      'creationTimeMicros asc', null, params);
-  return get(url).then(function(result) {
-    return result;
-  });
+      'creationTimeMicros asc', null, getComputeParams(queryOptions));
+  return get(url);
 };
 
 services.loadNextPage = function(nextPageLink) {
-
-  console.log('>>>>>>>>>>>. LOADING next page of: ' + nextPageLink);
-
   return get(nextPageLink + '&' + DOCUMENT_TYPE_PROP_NAME + '=true').then(function(result) {
     return result;
   });
