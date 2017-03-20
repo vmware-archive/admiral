@@ -144,7 +144,7 @@ export default Vue.component('vsphere-endpoint-editor', {
     },
     searchLinkedEndpoints(...args) {
       return new Promise((resolve, reject) => {
-        services.searchEndpoints.apply(null, [...args, 'nxst']).then((result) => {
+        services.searchEndpoints.apply(null, [...args, 'nsxt']).then((result) => {
           resolve(result);
         }).catch(reject);
       });
