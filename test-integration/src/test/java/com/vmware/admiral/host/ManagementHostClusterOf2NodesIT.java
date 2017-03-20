@@ -15,13 +15,10 @@ import static java.util.Arrays.asList;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 
-import static com.vmware.admiral.host.ManagementHostAuthUsersTest.doRestrictedOperation;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.login;
 import static com.vmware.admiral.service.common.AuthBootstrapService.waitForInitConfig;
 
-import java.net.HttpURLConnection;
 import java.net.URI;
 import java.time.Duration;
 import java.util.HashMap;
@@ -31,7 +28,6 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.logging.Level;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -68,6 +64,8 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
 
     @Before
     public void setUp() throws Throwable {
+        System.out.println(this.getClass().getSimpleName() + ALL_HOSTS);
+
         hostOne = setUpHost(PORT_ONE, null, ALL_HOSTS);
         hostTwo = setUpHost(PORT_TWO, null, ALL_HOSTS);
 
@@ -78,27 +76,10 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         initializeProvisioningContext(hostOne);
     }
 
-    @After
-    public void tearDown() throws Throwable {
-        tearDownHost(hostOne, hostTwo);
-    }
-
-    @Test
-    public void testInvalidAccess() throws Throwable {
-
-        // Invalid credentials
-
-        assertNull(login(hostOne, USERNAME, "bad"));
-        assertNull(login(hostOne, "bad", PASSWORD));
-
-        assertNull(login(hostTwo, USERNAME, "bad"));
-        assertNull(login(hostTwo, "bad", PASSWORD));
-
-        // Restricted operation without authentication
-
-        assertEquals(HttpURLConnection.HTTP_FORBIDDEN, doRestrictedOperation(hostOne, null));
-        assertEquals(HttpURLConnection.HTTP_FORBIDDEN, doRestrictedOperation(hostTwo, null));
-    }
+    // @After
+    // public void tearDown() throws Throwable {
+    //     tearDownHost(hostOne, hostTwo);
+    // }
 
     @Test
     public void testRestrictedOperationWithNodesRestarted() throws Throwable {
@@ -115,7 +96,7 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         assertClusterWithToken(tokenTwo, hostOne, hostTwo);
 
         List<ManagementHost> hosts = asList(hostOne, hostTwo);
-        validateDefaultContentAdded(hosts, tokenOne);
+        validateDefaultContentAdded(hosts);
 
         /*
          * ==== Restart node1 ====================================================================
@@ -136,7 +117,7 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         assertClusterFromNodes(hostOne, hostTwo);
 
         hosts = asList(hostOne, hostTwo);
-        validateDefaultContentAdded(hosts, tokenOne);
+        validateDefaultContentAdded(hosts);
 
         /*
          * ==== Restart node2 ====================================================================
@@ -157,9 +138,10 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         assertClusterFromNodes(hostOne, hostTwo);
 
         hosts = asList(hostOne, hostTwo);
-        validateDefaultContentAdded(hosts, tokenOne);
+        validateDefaultContentAdded(hosts);
     }
 
+    @Ignore
     @Test
     public void testRestrictedOperationWithNodesStoppedAndStarted() throws Throwable {
 
@@ -175,7 +157,7 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         assertClusterWithToken(tokenTwo, hostOne, hostTwo);
 
         List<ManagementHost> hosts = asList(hostOne, hostTwo);
-        validateDefaultContentAdded(hosts, tokenOne);
+        validateDefaultContentAdded(hosts);
 
         /*
          * ==== Stop both nodes ==================================================================
@@ -199,7 +181,7 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         assertClusterFromNodes(hostOne, hostTwo);
 
         hosts = asList(hostOne, hostTwo);
-        validateDefaultContentAdded(hosts, tokenOne);
+        validateDefaultContentAdded(hosts);
     }
 
     @Test
