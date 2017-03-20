@@ -213,4 +213,40 @@ describe("utils test", function() {
       expect(utils.getVersionNumber()).toBeFalsy();
     });
   });
+
+  describe('extractHarborRedirectUrl', function() {
+    it('should extract and decode harbor redirect url', function() {
+      var redirectUrl = 'http://my-harbor.com/sample';
+      var urlEncoded = btoa(redirectUrl);
+      window.location.hash = '#/containers?harbor_redirect_url=' + urlEncoded;
+      var actualRedirectUrl = utils.extractHarborRedirectUrl();
+      expect(actualRedirectUrl).toEqual(redirectUrl);
+      expect(window.location.hash).toEqual('#/containers');
+
+      window.location.hash = '#/containers?name=docker&harbor_redirect_url=' + urlEncoded;
+      actualRedirectUrl = utils.extractHarborRedirectUrl();
+      expect(actualRedirectUrl).toEqual(redirectUrl);
+      expect(window.location.hash).toEqual('#/containers?name=docker');
+
+      window.location.hash = '#/containers?name=docker&harbor_redirect_url=' + urlEncoded + '&description=hello';
+      actualRedirectUrl = utils.extractHarborRedirectUrl();
+      expect(actualRedirectUrl).toEqual(redirectUrl);
+      expect(window.location.hash).toEqual('#/containers?name=docker&description=hello');
+    });
+  });
+
+  describe('prepareHarborRedirectUrl', function() {
+    it('should prepare and encode harbor redirect url of admiral', function() {
+      window.location.hash = '#/containers';
+      var actualRedirectUrl = utils.prepareHarborRedirectUrl('http://my-harbor.com/sample');
+      expect(actualRedirectUrl)
+        .toEqual('http://my-harbor.com/sample?admiral_redirect_url=' +
+                 btoa(window.location.href));
+
+      actualRedirectUrl = utils.prepareHarborRedirectUrl('http://my-harbor.com/sample?name=test');
+      expect(actualRedirectUrl)
+        .toEqual('http://my-harbor.com/sample?name=test&admiral_redirect_url=' +
+                 btoa(window.location.href));
+    });
+  });
 });
