@@ -16,6 +16,7 @@ import static com.vmware.admiral.compute.content.kubernetes.KubernetesUtil.fromR
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -81,11 +82,11 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
                                     CompositeComponentRegistry.metaByStateLink(
                                             context.request.resourceReference
                                                     .getPath()).stateClass);
+                            context.kubernetesState = o.getBody(stateType);
+                            processKubernetesState(context);
                         } catch (IllegalArgumentException iae) {
                             fail(context.request, iae);
                         }
-                        context.kubernetesState = o.getBody(stateType);
-                        processKubernetesState(context);
                     }
                 }));
     }
@@ -164,7 +165,7 @@ public class KubernetesAdapterService extends AbstractKubernetesAdapterService {
             containerNamesToLogLinks.put(container.name, logLink);
         }
 
-        Map<String, String> containerNameToLogOutput = new HashMap<>();
+        Map<String, String> containerNameToLogOutput = new ConcurrentHashMap<>();
 
         AtomicInteger counter = new AtomicInteger(containerNamesToLogLinks.size());
 
