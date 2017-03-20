@@ -582,6 +582,42 @@ var utils = {
     }
   },
 
+  extractHarborRedirectUrl: function() {
+    var queryIndex = location.hash.indexOf('?');
+    if (queryIndex !== -1) {
+      var query = location.hash.substring(queryIndex + 1);
+      var params = this.uriToParams(query);
+      var redirectUrl = params.harbor_redirect_url;
+      if (redirectUrl) {
+        delete params.harbor_redirect_url;
+        var newQuery = this.paramsToURI(params);
+
+        var newHash = location.hash.substring(0, queryIndex);
+        if (newQuery) {
+          newHash += '?' + newQuery;
+        }
+        location.hash = newHash;
+
+        return atob(redirectUrl);
+      }
+    }
+    return null;
+  },
+
+  prepareHarborRedirectUrl: function(baseHarborUrl) {
+    var selfRedirectUrl = window.location.href;
+    selfRedirectUrl = btoa(selfRedirectUrl);
+    var query = 'admiral_redirect_url=' + selfRedirectUrl;
+    var harborUrl = baseHarborUrl;
+    if (harborUrl.indexOf('?') !== -1) {
+      harborUrl += '&' + query;
+    } else {
+      harborUrl += '?' + query;
+    }
+
+    return harborUrl;
+  },
+
   isApplicationEmbedded: function() {
     return isEmbedded;
   },

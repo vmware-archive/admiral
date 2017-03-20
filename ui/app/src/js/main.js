@@ -39,7 +39,13 @@ var updateHeaderLink = function(registryUrl) {
   }
   if (registryUrl) {
     $('body').append($(VICTemplate()));
-    $('body > .header .registry-link').attr('href', registryUrl);
+    $('body > .header .registry-link').attr('href', registryUrl).click(function(e) {
+      e.preventDefault();
+
+      window.location.href = utils.prepareHarborRedirectUrl(registryUrl);
+
+      return false;
+    });
     $('body > .header #search_input').change(function(e) {
       window.location.hash = '#/templates?any=' + this.value;
       e.preventDefault();
@@ -69,5 +75,8 @@ initializer.init(() => {
                      require('stores/AppStore').default);
   }
 
-  updateHeaderLink(utils.getConfigurationProperty('vic.registry.tab.url'));
+  var baseRegistryUrl = utils.getConfigurationProperty('harbor.tab.url');
+  var redirectUrl = utils.extractHarborRedirectUrl();
+
+  updateHeaderLink(redirectUrl || baseRegistryUrl);
 });
