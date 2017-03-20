@@ -55,7 +55,7 @@ public class PodLogServiceTest extends ComputeBaseTest {
         Map<String, LogServiceState> logsMap = getPodLogs(podState);
 
         assertNotNull(logsMap);
-        assertEquals(3, logsMap.size());
+        assertEquals(6, logsMap.size());
         for (int i = 0; i < podState.pod.spec.containers.size(); i++) {
             Container temp = podState.pod.spec.containers.get(i);
             assertTrue(logsMap.containsKey(temp.name));
@@ -70,7 +70,7 @@ public class PodLogServiceTest extends ComputeBaseTest {
         Map<String, LogServiceState> logsMap = getPodLogs(podState);
 
         assertNotNull(logsMap);
-        assertEquals(3, logsMap.size());
+        assertEquals(6, logsMap.size());
         for (int i = 0; i < podState.pod.spec.containers.size(); i++) {
             Container temp = podState.pod.spec.containers.get(i);
             assertTrue(logsMap.containsKey(temp.name));
@@ -94,7 +94,6 @@ public class PodLogServiceTest extends ComputeBaseTest {
                     }
                     try {
                         Map<String, Object> tempMap = o.getBody(Map.class);
-
                         for (Entry<String, Object> entry : tempMap.entrySet()) {
                             Object obj = entry.getValue();
                             LogServiceState logState = Utils.fromJson(Utils.toJson(obj),
@@ -122,9 +121,18 @@ public class PodLogServiceTest extends ComputeBaseTest {
         container2.name = "container2";
         Container container3 = new Container();
         container3.name = "container3";
+        Container container4 = new Container();
+        container4.name = "container4";
+        Container container5 = new Container();
+        container5.name = "container5";
+        Container container6 = new Container();
+        container6.name = "container6";
         podState.pod.spec.containers.add(container1);
         podState.pod.spec.containers.add(container2);
         podState.pod.spec.containers.add(container3);
+        podState.pod.spec.containers.add(container4);
+        podState.pod.spec.containers.add(container5);
+        podState.pod.spec.containers.add(container6);
         podState.pod.metadata = new ObjectMeta();
         podState.pod.metadata.selfLink = "/api/v1/namespaces/default/pods/test-pod";
         podState.pod.metadata.uid = UUID.randomUUID().toString();
