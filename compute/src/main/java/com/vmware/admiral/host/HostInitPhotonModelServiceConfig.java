@@ -19,6 +19,7 @@ import com.vmware.photon.controller.model.adapters.azure.AzureAdapters;
 import com.vmware.photon.controller.model.adapters.registry.PhotonModelAdaptersRegistryAdapters;
 import com.vmware.photon.controller.model.adapters.vsphere.VSphereAdapters;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.photon.controller.model.security.PhotonModelSecurityServices;
 import com.vmware.photon.controller.model.tasks.PhotonModelTaskServices;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.Utils;
@@ -41,6 +42,15 @@ public class HostInitPhotonModelServiceConfig {
 
         PhotonModelServices.startServices(host);
         PhotonModelTaskServices.startServices(host);
+
+        try {
+            PhotonModelSecurityServices.startServices(host);
+
+        } catch (Throwable e) {
+            host.log(Level.WARNING,
+                    "Exception staring photon model security services: %s",
+                    Utils.toString(e));
+        }
 
         try {
             PhotonModelAdaptersRegistryAdapters.startServices(host);
