@@ -11,9 +11,10 @@
 
 package com.vmware.admiral.compute.kubernetes.service;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.KubernetesOperationType;
@@ -58,8 +59,10 @@ public class PodLogService extends StatelessService {
     }
 
     private void processPodState(Operation get, PodState podState) {
-        Map<String, LogServiceState> resultLogs = new HashMap<>();
-
+        Map<String, LogServiceState> resultLogs = new ConcurrentHashMap<>();
+        logInfo("Getting logs for following containers: %s",
+                podState.pod.spec.containers.stream()
+                        .map(c -> c.name).collect(Collectors.toList()));
         AtomicInteger counter = new AtomicInteger(podState.pod.spec.containers.size());
 
         for (Container container : podState.pod.spec.containers) {
@@ -68,12 +71,17 @@ public class PodLogService extends StatelessService {
             sendRequest(Operation.createGet(this, podLogLink)
                     .setCompletion((o, ex) -> {
                         if (ex != null) {
+                            logWarning("Couldn't get logs for container: %s, reason: %s",
+                                    podLogLink, Utils.toString(ex));
                             LogServiceState log = new LogServiceState();
                             log.logs = "--".getBytes();
                             log.tenantLinks = podState.tenantLinks;
                             resultLogs.put(container.name, log);
                         } else {
-                            resultLogs.put(container.name, o.getBody(LogServiceState.class));
+                            LogServiceState log = o.getBody(LogServiceState.class);
+                            logInfo("Fetched log for container: %s, log: %s",
+                                    container.name, new String(log.logs));
+                            resultLogs.put(container.name, log);
                         }
                         if (counter.decrementAndGet() == 0) {
                             get.setBody(resultLogs);
@@ -97,7 +105,6 @@ public class PodLogService extends StatelessService {
                     if (ex != null) {
                         logWarning("Adapter request for container logs %s failed. Error: %s",
                                 pod.documentSelfLink, Utils.toString(ex));
-                        return;
                     }
                 }));
     }
