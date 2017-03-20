@@ -15,6 +15,10 @@ var userScriptFileName = 'index.js';
 var userScriptSrcFolder = 'userSrc';
 var userScriptScrPathPrefix = '../../';
 
+var END_CERT_PATTERN = '-----END CERTIFICATE-----';
+var trust_store = [];
+
+
 var closureSemaphore = null;
 
 function getModuleName() {
@@ -166,7 +170,7 @@ function proceedWithSourceUrl(data, context) {
         hostname: sourceURLObj.hostname,
         port: sourceURLObj.port,
         path: sourceURLObj.path,
-        ca: fs.readFileSync('/app/trust.pem')
+        ca: trust_store
     };
     let httpFunction = sourceURL.startsWith('https') ? https : http;
     request = httpFunction.get(options, function(response) {
@@ -214,7 +218,7 @@ function getProceedWithTaskDef(closureDescUri, internalCtx, context) {
         url: closureDescUri,
         json: true,
         headers: headers,
-        ca: fs.readFileSync('/app/trust.pem')
+        ca: trust_store
       }, (err, res, data) => {
         if (err || res.statusCode !== 200) {
             var msg = "Unable to get closure description from URI: " + closureDescUri;
@@ -299,7 +303,7 @@ function proceedWithExecution(closureUri, internalCtx, context, closure) {
             url: closureUri,
             json: true,
             headers: headers,
-            ca: fs.readFileSync('/app/trust.pem'),
+            ca: trust_store,
             body: runningState
           }, (err, res, data) => {
             if (err || res.statusCode !== 200) {
@@ -332,7 +336,7 @@ function proceedWithTask(closureUri, internalCtx, context) {
         url: closureUri,
         json: true,
         headers: headers,
-        ca: fs.readFileSync('/app/trust.pem')
+        ca: trust_store
       }, (err, res, data) => {
         if (err || res.statusCode !== 200) {
             var msg = "Unable to get closure source from URI: " + closureUri;
@@ -393,6 +397,7 @@ function complete(context, internalCtx, closureSemaphore, error) {
 }
 
 function install_dependencies() {
+    initTrustStore();
     console.log("Installing dependencies started at: " + moment().toDate());
 
     var closureUri = process.env.TASK_URI;
@@ -422,7 +427,7 @@ function executeFunc(token, link, operation, body, handler) {
             url: targetUri,
             json: true,
             headers: headers,
-            ca: fs.readFileSync('/app/trust.pem')
+            ca: trust_store
           }, (err, res, data) => {
             if (arguments.length > 4) {
                 handler(res, data);
@@ -442,13 +447,30 @@ function executeFunc(token, link, operation, body, handler) {
         method: method,
         headers: headers,
         body: body,
-        ca: fs.readFileSync('/app/trust.pem')
+        ca: trust_store
       }, (err, res, data) => {
         handler(res, data);
     });
 }
 
+function initTrustStore() {
+    let rawPemContent = fs.readFileSync('/app/trust.pem', 'utf8');
+    let regex = new RegExp(END_CERT_PATTERN, 'g');
+    rawPemContent = rawPemContent.replace(regex,  END_CERT_PATTERN + '\nCERT-BORDER');
+
+    let ca = [];
+    let certChain = rawPemContent.split("CERT-BORDER");
+    certChain.forEach(function(cert) {
+      if (cert.trim().length > 0) {
+        ca.push(cert.concat('\n'));
+      }
+    });
+
+    trust_store = ca;
+}
+
 function main() {
+    initTrustStore();
     console.log("Script run started at: " + moment().toDate());
     let token = process.env.TOKEN;
     var context = {
