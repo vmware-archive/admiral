@@ -16,6 +16,7 @@ import static org.junit.Assert.assertNotNull;
 
 import java.net.ServerSocket;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.UUID;
 
 import org.junit.Before;
@@ -29,6 +30,8 @@ import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.HttpVersi
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig.RequestProtocol;
 import com.vmware.admiral.compute.container.maintenance.ContainerStats;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
+import com.vmware.photon.controller.model.resources.ComputeService;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service.Action;
@@ -125,64 +128,115 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
         assertEquals(putConfig.healthConfig.urlPath, containerDesc.healthConfig.urlPath);
     }
 
+    private void verifyHealthFailureAfterTreshold(int unhealthyTreshold, ContainerDescription containerDesc,
+            ContainerState container) throws Throwable {
+        for (int i = 1; i < unhealthyTreshold; i++) {
+            HealthChecker.getInstance().doHealthCheck(host, containerDesc.documentSelfLink);
+            // expect the container to have changed status to degraded after maintenance - container url
+            // is wrong
+            final int failureCountExpected = i;
+            waitFor(() -> {
+                ContainerStats containerStats = getContainerStats(container.documentSelfLink);
+                if (containerStats.healthCheckSuccess == null) {
+                    return false;
+                }
+                return containerStats.healthCheckSuccess == false
+                        && containerStats.healthFailureCount == failureCountExpected;
+            });
+
+            PowerState expectedPowerState;
+            if (i == unhealthyTreshold) {
+                expectedPowerState = PowerState.ERROR;
+            } else {
+                expectedPowerState = PowerState.RUNNING;
+            }
+
+            boolean checkForDegraded = i < unhealthyTreshold;
+
+            waitFor(() -> {
+                ContainerState containerWithError = getDocument(ContainerState.class, container.documentSelfLink);
+
+                if (checkForDegraded && !containerWithError.status.equals(ContainerState.CONTAINER_DEGRADED_STATUS)) {
+                    return false;
+                }
+
+                assertEquals(expectedPowerState, containerWithError.powerState);
+
+                return true;
+            });
+        }
+
+    }
+
     @Test
-    public void testHandlePeriodicMaintenance() throws Throwable {
+    public void testHealthCheckWithHttpAndDefaultPortTresholds() throws Throwable {
         // Create health config and a container to check the health for
 
         ContainerDescription containerDesc = createContainerDescription();
         containerDesc.documentSelfLink = UriUtils.buildUriPath(
                 ContainerDescriptionService.FACTORY_LINK, "mockDescId");
+        containerDesc.healthConfig = new HealthConfig();
+        containerDesc.healthConfig.protocol = RequestProtocol.HTTP;
+        containerDesc.healthConfig.httpMethod = Action.GET;
+        containerDesc.healthConfig.urlPath = TestHealthService.SELF_LINK;
         containerDesc = doPost(containerDesc, ContainerDescriptionService.FACTORY_LINK);
 
         ContainerState container = createContainerStateNoAddress(containerDesc.documentSelfLink);
+        container.address = host.getPreferredAddress();
         container.powerState = PowerState.RUNNING;
         container = doPost(container, ContainerFactoryService.SELF_LINK);
 
-        // Do maintenance
-        HealthChecker.getInstance().doHealthCheck(host, containerDesc.documentSelfLink);
-        // expect the container to have changed status to degraded after maintenance - container url
-        // is wrong
-        final String containerLink = container.documentSelfLink;
-        waitFor(() -> {
-            ContainerStats containerStats = getContainerStats(containerLink);
-            if (containerStats.healthCheckSuccess == null) {
-                return false;
-            }
-            return containerStats.healthCheckSuccess == false
-                    && containerStats.healthFailureCount == 1;
-        });
+        verifyHealthFailureAfterTreshold(3, containerDesc, container);
 
-        waitFor(() -> {
-            ContainerState containerWithError = getDocument(ContainerState.class, containerLink);
-            if (!containerWithError.status.equals(ContainerState.CONTAINER_DEGRADED_STATUS)) {
-                return false;
-            }
+        // Start a test service to ping for health check
+        TestHealthService pingService = new TestHealthService();
+        URI pingServiceUri = UriUtils.buildUri(host, TestHealthService.SELF_LINK);
+        host.startService(Operation.createPost(pingServiceUri), pingService);
+        waitForServiceAvailability(TestHealthService.SELF_LINK);
 
-            assertEquals(PowerState.RUNNING, containerWithError.powerState);
-
-            return true;
-        });
-
-        HealthChecker.getInstance().doHealthCheck(host, containerDesc.documentSelfLink);
-
-        waitFor(() -> {
-            ContainerStats containerStats = getContainerStats(containerLink);
-            return containerStats.healthCheckSuccess == false
-                    && containerStats.healthFailureCount == 2;
-        });
-
-        waitFor(() -> {
-            ContainerState containerWithError = getDocument(ContainerState.class, containerLink);
-            if (!containerWithError.powerState.equals(PowerState.ERROR)) {
-                return false;
-            }
-
-            return true;
-        });
+        verifyHealthSuccessAfterTreshold(3, containerDesc, container);
     }
 
     @Test
-    public void testHandlePeriodicMaintenanceOverTcp() throws Throwable {
+    public void testHealthCheckWithHttpAndDefaultTimeout() throws Throwable {
+        // Create health config and a container to check the health for
+
+        ContainerDescription containerDesc = createContainerDescription();
+        containerDesc.documentSelfLink = UriUtils.buildUriPath(
+                ContainerDescriptionService.FACTORY_LINK, "mockDescId");
+        containerDesc.healthConfig = new HealthConfig();
+        containerDesc.healthConfig.protocol = RequestProtocol.HTTP;
+        containerDesc.healthConfig.httpMethod = Action.GET;
+        containerDesc.healthConfig.urlPath = TestHealthService.SELF_LINK;
+        containerDesc.healthConfig.healthyThreshold = 1;
+        containerDesc.healthConfig.unhealthyThreshold = 1;
+        containerDesc = doPost(containerDesc, ContainerDescriptionService.FACTORY_LINK);
+
+        ContainerState container = createContainerStateNoAddress(containerDesc.documentSelfLink);
+        container.address = host.getPreferredAddress();
+        container.powerState = PowerState.RUNNING;
+        container = doPost(container, ContainerFactoryService.SELF_LINK);
+
+        // Start a test service to ping for health check
+        TestHealthService pingService = new TestHealthService();
+        URI pingServiceUri = UriUtils.buildUri(host, TestHealthService.SELF_LINK);
+        host.startService(Operation.createPost(pingServiceUri), pingService);
+        waitForServiceAvailability(TestHealthService.SELF_LINK);
+
+        // Should succeed as the default timeout is enough for the request to the test service to succeed
+        verifyHealthSuccessAfterTreshold(containerDesc.healthConfig.healthyThreshold, containerDesc, container);
+
+        // should fail the next health checks because the timeout is less than the health check operation is going to take
+        containerDesc.healthConfig.urlPath = TestHealthService.SELF_LINK + "/processTime=2000";
+        containerDesc.healthConfig.timeoutMillis = 1000;
+        doPatch(containerDesc, containerDesc.documentSelfLink);
+
+        verifyHealthFailureAfterTreshold(containerDesc.healthConfig.unhealthyThreshold, containerDesc, container);
+    }
+
+
+    @Test
+    public void testHealthCheckWithTcp() throws Throwable {
         // Create health config and a container to check the health for
         String mockContainerDescriptionLink = UriUtils.buildUriPath(
                 ContainerDescriptionService.FACTORY_LINK, "mockDescId");
@@ -201,56 +255,22 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
         container = doPost(container, ContainerFactoryService.SELF_LINK);
 
         // Do maintenance
-        HealthChecker.getInstance().doHealthCheck(host, containerDesc.documentSelfLink);
-        // expect the container to have changed status to degraded after maintenance - container url
-        // is wrong
-        final String containerLink = container.documentSelfLink;
-        waitFor(() -> {
-            ContainerStats containerStats = getContainerStats(containerLink);
-            if (containerStats.healthCheckSuccess == null) {
-                return false;
-            }
-
-            return containerStats.healthCheckSuccess == false
-                    && containerStats.healthFailureCount == 1;
-        });
-
-        waitFor(() -> {
-            ContainerState containerWithError = getDocument(ContainerState.class, containerLink);
-            if (!containerWithError.status.equals(ContainerState.CONTAINER_DEGRADED_STATUS)) {
-                return false;
-            }
-
-            assertEquals(PowerState.RUNNING, containerWithError.powerState);
-
-            return true;
-        });
+        verifyHealthFailureAfterTreshold(containerDesc.healthConfig.unhealthyThreshold.intValue(),
+                containerDesc, container);
 
         ContainerState patch = new ContainerState();
         patch.address = "localhost";
-        URI uri = UriUtils.buildUri(host, containerLink);
+        URI uri = UriUtils.buildUri(host, container.documentSelfLink);
         doOperation(patch, uri, false, Action.PATCH);
 
         try (ServerSocket serverSocket = new ServerSocket(8800)) {
-            HealthChecker.getInstance().doHealthCheck(host, containerDesc.documentSelfLink);
-
-            waitFor(() -> {
-                ContainerState containerWithError = getDocument(ContainerState.class,
-                        containerLink);
-                if (!containerWithError.status.equals(ContainerState.CONTAINER_RUNNING_STATUS)) {
-                    return false;
-                }
-
-                assertEquals(PowerState.RUNNING, containerWithError.powerState);
-
-                return true;
-            });
+            verifyHealthSuccessAfterTreshold(containerDesc.healthConfig.healthyThreshold, containerDesc, container);
         }
 
     }
 
     @Test
-    public void testHandlePeriodicMaintenanceWithCommand() throws Throwable {
+    public void testHealthCheckWithCommand() throws Throwable {
         // Create health config and a container to check the health for
         String mockContainerDescriptionLink = UriUtils.buildUriPath(
                 ContainerDescriptionService.FACTORY_LINK, "mockDescId");
@@ -269,58 +289,18 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
         container.powerState = PowerState.RUNNING;
         container = doPost(container, ContainerFactoryService.SELF_LINK);
 
-        // Do maintenance
-        HealthChecker.getInstance().doHealthCheck(host, containerDesc.documentSelfLink);
-        // expect the container to have changed status to degraded after maintenance - container url
-        // is wrong
-        final String containerLink = container.documentSelfLink;
-        waitFor(() -> {
-            ContainerStats containerStats = getContainerStats(containerLink);
-            if (containerStats.healthCheckSuccess == null) {
-                return false;
-            }
-
-            return containerStats.healthCheckSuccess == false
-                    && containerStats.healthFailureCount == 1;
-        });
-
-        waitFor(() -> {
-            ContainerState containerWithError = getDocument(ContainerState.class, containerLink);
-            if (!containerWithError.status.equals(ContainerState.CONTAINER_DEGRADED_STATUS)) {
-                return false;
-            }
-
-            assertEquals(PowerState.RUNNING, containerWithError.powerState);
-
-            return true;
-        });
+        verifyHealthFailureAfterTreshold(containerDesc.healthConfig.unhealthyThreshold, containerDesc, container);
 
         MockDockerAdapterService dockerAdapterService = new MockDockerAdapterService();
         host.startService(Operation.createPost(UriUtils.buildUri(host,
                 MockDockerAdapterService.class)), dockerAdapterService);
         waitForServiceAvailability(MockDockerAdapterService.SELF_LINK);
 
-        HealthChecker.getInstance().doHealthCheck(host, containerDesc.documentSelfLink);
-
-        waitFor(() -> {
-            ContainerState containerWithError = getDocument(ContainerState.class, containerLink);
-            if (!containerWithError.status.equals(ContainerState.CONTAINER_RUNNING_STATUS)) {
-                return false;
-            }
-
-            assertEquals(PowerState.RUNNING, containerWithError.powerState);
-
-            return true;
-        });
-
-        stopService(dockerAdapterService);
+        verifyHealthSuccessAfterTreshold(containerDesc.healthConfig.healthyThreshold, containerDesc, container);
     }
 
     @Test
-    public void testHandlePeriodicMaintenanceWithSuccess() throws Throwable {
-        host.log("Test testHandlePeriodicMaintenanceWithSuccess starts...");
-
-        host.log("Creating HealthConfig...");
+    public void testHealthCheckSuccessWithHttpAndDefaultPort() throws Throwable {
         // Create health config and a container to check the health for
         String mockContainerDescriptionLink = UriUtils.buildUriPath(
                 ContainerDescriptionService.FACTORY_LINK, "mockDescId");
@@ -329,46 +309,108 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
         containerDesc.documentSelfLink = mockContainerDescriptionLink;
         containerDesc = doPost(containerDesc, ContainerDescriptionService.FACTORY_LINK);
 
-        host.log("HealthConfig created. Creating ContainerState...");
-
         ContainerState container = createContainerStateNoAddress(mockContainerDescriptionLink);
         container.address = host.getPreferredAddress();
         container = doPost(container, ContainerFactoryService.SELF_LINK);
 
-        host.log("ContainerState created. Creating ping service...");
+        // Start a test service to ping for health check
+        TestHealthService pingService = new TestHealthService();
+        URI pingServiceUri = UriUtils.buildUri(host, TestHealthService.SELF_LINK);
+        host.startService(Operation.createPost(pingServiceUri), pingService);
+        waitForServiceAvailability(TestHealthService.SELF_LINK);
+
+        verifyHealthSuccessAfterTreshold(containerDesc.healthConfig.healthyThreshold, containerDesc, container);
+    }
+
+    @Test
+    public void testHealthCheckSuccessWithHttpAndPortBindings() throws Throwable {
+
+        ComputeState containerHost = new ComputeState();
+        containerHost.address = host.getPreferredAddress();
+        containerHost.descriptionLink = UriUtils.buildUriPath(ComputeService.FACTORY_LINK, "mockId");
+        containerHost = doPost(containerHost, ComputeService.FACTORY_LINK);
+
+        // Create health config and a container to check the health for
+        String mockContainerDescriptionLink = UriUtils.buildUriPath(
+                ContainerDescriptionService.FACTORY_LINK, "mockDescId");
+        ContainerDescription containerDesc = createContainerDescription();
+        containerDesc.documentSelfLink = mockContainerDescriptionLink;
+        containerDesc.healthConfig.port = 85;
+        containerDesc = doPost(containerDesc, ContainerDescriptionService.FACTORY_LINK);
+
+        ContainerState container = createContainerStateNoAddress(mockContainerDescriptionLink);
+        container.parentLink = containerHost.documentSelfLink;
+        PortBinding portBinding = new PortBinding();
+        portBinding.containerPort = "85";
+        portBinding.hostPort = String.valueOf(host.getPort());
+        container.ports = Arrays.asList(portBinding);
+        container = doPost(container, ContainerFactoryService.SELF_LINK);
 
         // Start a test service to ping for health check
         TestHealthService pingService = new TestHealthService();
         URI pingServiceUri = UriUtils.buildUri(host, TestHealthService.SELF_LINK);
-        host.log("Ping service created. Starting...");
         host.startService(Operation.createPost(pingServiceUri), pingService);
-        host.log("Ping service started.");
+        waitForServiceAvailability(TestHealthService.SELF_LINK);
 
-        // Do maintenance
-        host.log("Starting health check...");
-        HealthChecker.getInstance().doHealthCheck(host, containerDesc.documentSelfLink);
-        host.log("Health check done. Waiting for updates...");
+        verifyHealthSuccessAfterTreshold(containerDesc.healthConfig.healthyThreshold, containerDesc, container);
+    }
+
+    @Test
+    public void testHealthCheckSuccessWithTcpAndPortBindings() throws Throwable {
+
+        ComputeState containerHost = new ComputeState();
+        containerHost.address = host.getPreferredAddress();
+        containerHost.descriptionLink = UriUtils.buildUriPath(ComputeService.FACTORY_LINK, "mockId");
+        containerHost = doPost(containerHost, ComputeService.FACTORY_LINK);
+
+        // Create health config and a container to check the health for
+        String mockContainerDescriptionLink = UriUtils.buildUriPath(
+                ContainerDescriptionService.FACTORY_LINK, "mockDescId");
+        ContainerDescription containerDesc = createContainerDescription();
+        containerDesc.documentSelfLink = mockContainerDescriptionLink;
+        containerDesc.healthConfig.protocol = RequestProtocol.TCP;
+        containerDesc.healthConfig.port = 8085;
+        containerDesc = doPost(containerDesc, ContainerDescriptionService.FACTORY_LINK);
+
+        ContainerState container = createContainerStateNoAddress(mockContainerDescriptionLink);
+        container.parentLink = containerHost.documentSelfLink;
+        PortBinding portBinding = new PortBinding();
+        portBinding.containerPort = "8085";
+        portBinding.hostPort = "8085";
+        container.ports = Arrays.asList(portBinding);
+        container = doPost(container, ContainerFactoryService.SELF_LINK);
+
+        try (ServerSocket socket = new ServerSocket(containerDesc.healthConfig.port)) {
+            verifyHealthSuccessAfterTreshold(containerDesc.healthConfig.healthyThreshold, containerDesc, container);
+        }
+    }
+
+
+    private void verifyHealthSuccessAfterTreshold(int successTreshold, ContainerDescription containerDesc, ContainerState container)
+            throws Throwable {
 
         final String containerLink = container.documentSelfLink;
-        waitFor(() -> {
-            ContainerStats containerStats = getContainerStats(containerLink);
-            host.log("Waiting for health check updates...");
 
-            return containerStats.healthCheckSuccess != null
-                    && containerStats.healthCheckSuccess
-                    && containerStats.healthSuccessCount == 1;
-        });
+        for (int i = 1; i <= successTreshold; i++) {
+            // Do maintenance
+            HealthChecker.getInstance().doHealthCheck(host, containerDesc.documentSelfLink);
 
-        host.log("Second health check.");
-        HealthChecker.getInstance().doHealthCheck(host, containerDesc.documentSelfLink);
+            final int successCount = i;
+            waitFor(() -> {
+                ContainerStats containerStats = getContainerStats(containerLink);
+
+                return containerStats.healthCheckSuccess != null
+                        && containerStats.healthCheckSuccess
+                        && containerStats.healthSuccessCount == successCount;
+            });
+        }
+
         waitFor(() -> {
             ContainerState healthyContainer = getDocument(ContainerState.class, containerLink);
 
             return ContainerState.CONTAINER_RUNNING_STATUS.equals(healthyContainer.status)
                     && PowerState.RUNNING.equals(healthyContainer.powerState);
         });
-
-        host.log("Test finished");
     }
 
     private ContainerState createContainerStateNoAddress(String containerDescriptionLink) {
@@ -413,6 +455,16 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
 
         @Override
         public void handleRequest(Operation op) {
+            // query encoded sleep to test timeouts
+            String query = op.getUri().getQuery();
+            if (query != null) {
+                int sleepTime = Integer.parseInt(query.split("=")[1]);
+                try {
+                    Thread.sleep(sleepTime);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
             op.complete();
         }
     }
