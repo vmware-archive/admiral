@@ -47,13 +47,16 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.ServiceNetwork;
-
 import com.vmware.xenon.common.LocalizableValidationException;
 
 /**
  * Map properties into ContainerState
  */
 public class ContainerStateMapper {
+
+    private ContainerStateMapper() {
+    }
+
     /**
      * Convert generic properties from the given map to modeled properties in the given
      * ContainerState
@@ -61,7 +64,7 @@ public class ContainerStateMapper {
      * @param containerState
      * @param properties
      */
-    public void propertiesToContainerState(ContainerState containerState,
+    public static void propertiesToContainerState(ContainerState containerState,
             Map<String, Object> properties) {
 
         AssertUtil.assertNotNull(containerState, "containerState");
@@ -90,7 +93,8 @@ public class ContainerStateMapper {
      * @param containerState
      * @param state
      */
-    private void mapStateProperties(ContainerState containerState, Map<String, Object> state) {
+    private static void mapStateProperties(ContainerState containerState,
+            Map<String, Object> state) {
         if (state == null) {
             return;
         }
@@ -105,7 +109,8 @@ public class ContainerStateMapper {
      * @param containerState
      * @param config
      */
-    private void mapConfigProperties(ContainerState containerState, Map<String, Object> config) {
+    private static void mapConfigProperties(ContainerState containerState,
+            Map<String, Object> config) {
         if (config == null) {
             return;
         }
@@ -130,7 +135,7 @@ public class ContainerStateMapper {
      * @param networkSettings
      *            the network settings that were returned by an inspect command
      */
-    private void mapNetworkSettingsProperties(ContainerState containerState,
+    private static void mapNetworkSettingsProperties(ContainerState containerState,
             Map<String, Object> networkSettings) {
 
         mapPortBindingProperties(containerState, networkSettings);
@@ -153,14 +158,15 @@ public class ContainerStateMapper {
      * @param networks
      *            the list of networks that was returned by an inspect command
      */
-    private void mapNetworks(ContainerState containerState, Map<String, Object> networks) {
+    private static void mapNetworks(ContainerState containerState, Map<String, Object> networks) {
         if (containerState.networks == null) {
             containerState.networks = new HashMap<>();
         }
 
         if (networks != null) {
-            networks.keySet().forEach(networkName -> mapNetwork(containerState.networks, networkName,
-                    getMap(networks, networkName)));
+            networks.keySet()
+                    .forEach(networkName -> mapNetwork(containerState.networks, networkName,
+                            getMap(networks, networkName)));
         }
     }
 
@@ -175,7 +181,7 @@ public class ContainerStateMapper {
      * @param networkProps
      *            the properties of this network that were returned by an inspect command
      */
-    private void mapNetwork(Map<String, ServiceNetwork> networks, String networkName,
+    private static void mapNetwork(Map<String, ServiceNetwork> networks, String networkName,
             Map<String, Object> networkProps) {
 
         ServiceNetwork network = new ServiceNetwork();
@@ -201,7 +207,7 @@ public class ContainerStateMapper {
      * @param containerState
      * @param networkSettings
      */
-    private void mapPortBindingProperties(ContainerState containerState,
+    private static void mapPortBindingProperties(ContainerState containerState,
             Map<String, Object> networkSettings) {
 
         if (networkSettings == null) {
@@ -229,7 +235,7 @@ public class ContainerStateMapper {
      * @param containerState
      * @param networkSettings
      */
-    private void mapContainerIPAddress(ContainerState containerState,
+    private static void mapContainerIPAddress(ContainerState containerState,
             Map<String, Object> networkSettings) {
 
         if (networkSettings == null) {
@@ -248,26 +254,31 @@ public class ContainerStateMapper {
     /*
      * map the State.Running property to the PowerState enum
      */
-    private void mapPowerState(ContainerState containerState, Map<String, Object> state) {
+    private static void mapPowerState(ContainerState containerState, Map<String, Object> state) {
+
+        if (ContainerState.CONTAINER_UNHEALTHY_STATUS.equals(containerState.status)) {
+            // do not modify the power state set during the health config check!
+            return;
+        }
+
         Boolean isRunning = (Boolean) state
                 .get(DOCKER_CONTAINER_STATE_RUNNING_PROP_NAME);
 
         if (isRunning.booleanValue()) {
             containerState.powerState = PowerState.RUNNING;
-
         } else {
             containerState.powerState = PowerState.STOPPED;
         }
     }
 
-    private <T> Map<String, T> getMap(Map<String, Object> container, String propertyName) {
+    private static <T> Map<String, T> getMap(Map<String, Object> container, String propertyName) {
         @SuppressWarnings("unchecked")
         Map<String, T> map = (Map<String, T>) container.get(propertyName);
 
         return map;
     }
 
-    private <T> List<T> getList(Map<String, Object> container, String propertyName) {
+    private static <T> List<T> getList(Map<String, Object> container, String propertyName) {
         @SuppressWarnings("unchecked")
         List<T> list = (List<T>) container.get(propertyName);
 

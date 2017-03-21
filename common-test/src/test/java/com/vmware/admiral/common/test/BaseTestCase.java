@@ -25,7 +25,9 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -90,8 +92,8 @@ public abstract class BaseTestCase {
     protected static class CustomizationVerificationHost extends VerificationHost {
 
         /**
-         * Users configuration file (full path). Specifying a file automatically enables Xenon's Authx
-         * services.
+         * Users configuration file (full path). Specifying a file automatically enables Xenon's
+         * Authx services.
          */
         public String localUsers;
 
@@ -467,7 +469,7 @@ public abstract class BaseTestCase {
         fail(errorMessage);
     }
 
-    // utility method to be used as helper for discovering issues with test when run in a loop
+    // utility method to be used as helper for discovering issues with test when running in a loop
     protected void runInLoop(int count, RunnableHandler function) throws Throwable {
         for (int i = 0; i < count; i++) {
             System.out.println("########################################################");
@@ -475,6 +477,26 @@ public abstract class BaseTestCase {
             System.out.println("########################################################");
             function.run();
         }
+    }
+
+    // utility method to be used as helper for discovering issues with test when measuring response
+    // times
+    protected <T> T runWithTimeout(int timeoutSeconds, CallableHandler<T> function)
+            throws Throwable {
+        Future<T> future = host.getExecutor().submit(new Callable<T>() {
+            @Override
+            public T call() throws Exception {
+                System.out.println("########################################################");
+                System.out.println("################ Run with timeout (sec): " + timeoutSeconds);
+                System.out.println("########################################################");
+                try {
+                    return function.call();
+                } catch (Throwable e) {
+                    throw new RuntimeException("Throwable inside runWithTimeout.call!", e);
+                }
+            }
+        });
+        return future.get(timeoutSeconds, TimeUnit.SECONDS);
     }
 
     @FunctionalInterface
@@ -1022,5 +1044,10 @@ public abstract class BaseTestCase {
     @FunctionalInterface
     protected static interface RunnableHandler {
         void run() throws Throwable;
+    }
+
+    @FunctionalInterface
+    protected static interface CallableHandler<T> {
+        T call() throws Throwable;
     }
 }

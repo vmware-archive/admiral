@@ -44,7 +44,6 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState.Powe
 import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.ServiceNetwork;
-
 import com.vmware.admiral.compute.container.SystemContainerDescriptions;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState.SubStage;
@@ -245,7 +244,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
 
     @Test
     public void testContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncludedWhichFailsContinueProvisioning() throws Throwable {
-        host.log(">>>>>>Start: testContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncludedShouldFail <<<<< ");
+        host.log(">>>>>>Start: testContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncludedWhichFailsContinueProvisioning <<<<< ");
         containerDesc.healthConfig = createHealthConfigTcp();
         containerDesc.healthConfig.continueProvisioningOnError = true;
 
@@ -276,6 +275,47 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         assertNotNull(provisioningRequest);
 
         waitForRequestToComplete(provisioningRequest);
+    }
+
+    @Test
+    public void testContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncludedWhichFailsContinueProvisioningImmediately()
+            throws Throwable {
+        host.log(
+                ">>>>>>Start: testContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncludedWhichFailsContinueProvisioningImmediately <<<<< ");
+        containerDesc.healthConfig = createHealthConfigTcp();
+        containerDesc.healthConfig.continueProvisioningOnError = true;
+
+        doOperation(containerDesc, UriUtils.buildUri(host, containerDesc.documentSelfLink),
+                false, Action.PUT);
+
+        ContainerAllocationTaskState allocationTask = createContainerAllocationTask();
+        allocationTask.customProperties = new HashMap<>();
+        allocationTask.customProperties.put(RequestUtils.FIELD_NAME_ALLOCATION_REQUEST,
+                Boolean.TRUE.toString());
+        allocationTask = allocate(allocationTask);
+
+        assertContainerStateAfterAllocation(allocationTask);
+
+        // Request provisioning after allocation:
+        RequestBrokerState provisioningRequest = new RequestBrokerState();
+        provisioningRequest.resourceType = allocationTask.resourceType;
+        provisioningRequest.resourceLinks = allocationTask.resourceLinks;
+        provisioningRequest.resourceDescriptionLink = containerDesc.documentSelfLink;
+        provisioningRequest.operation = ContainerOperationType.CREATE.id;
+
+        configureHealthCheckTimeout("60000"); // exaggerate the timeout
+
+        configureHealthCheckDelay(DEFAULT_HEALTH_CHECK_DELAY);
+
+        // should fail because there is no listener to handle the health check request
+        final RequestBrokerState provisioningRequestOut = doPost(provisioningRequest,
+                RequestBrokerFactoryService.SELF_LINK);
+        assertNotNull(provisioningRequestOut);
+
+        // the request should complete 'right away' despite of the health check taking some time
+        runWithTimeout(5, () -> {
+            return waitForRequestToComplete(provisioningRequestOut);
+        });
     }
 
     @Test
@@ -631,7 +671,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         desc1.name = "linked-service";
         desc1._cluster = 2;
         desc1.portBindings = Arrays.stream(new String[] {
-                "80"})
+                "80" })
                 .map((s) -> PortBinding.fromDockerPortMapping(DockerPortMapping.fromString(s)))
                 .collect(Collectors.toList())
                 .toArray(new PortBinding[0]);

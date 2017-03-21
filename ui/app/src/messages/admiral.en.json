@@ -945,8 +945,8 @@
           },
           "customProperties": "Custom Properties",
           "customPropertiesDescription": "Custom Properties allow to add attributes to the containers that will be provisioned.",
-          "healthContinueProvisionigOnError": "Ignore health check failures on provision",
-          "healthContinueProvisionigOnErrorDescription": "If health check is configured, in addition to when the service is up and running, it will also be used on provisioning. The containers will not be considered provisioned until one successful health check passes. Check this option to be able to provision even without successful health check.",
+          "healthContinueProvisionigOnError": "Ignore health check on provision",
+          "healthContinueProvisionigOnErrorDescription": "If health check is configured, in addition to when the service is up and running, it will also be used on provision. A container will not be considered provisioned until one successful health check passes. Check this option to be able to provision a container without doing a health check first.",
           "healthMode": "Mode",
           "healthConfigNone": "None",
           "healthConfigTCP": "TCP connection",
@@ -996,6 +996,9 @@
         "PROVISIONING": "PROVISIONING",
         "continuousStateSince": "{{state}} for {{duration}}",
         "errorStatus": "{{state}}: {{status}}"
+      },
+      "status": {
+        "unhealthy": "Health check failed"
       },
       "actions": {
         "start": "Start",

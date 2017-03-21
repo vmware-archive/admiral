@@ -816,9 +816,14 @@ public class ContainerAllocationTaskService extends
         AtomicBoolean proceededToError = new AtomicBoolean(false);
 
         if (this.containerDescription.healthConfig == null) {
-            logInfo("Skipping health check.");
+            logInfo("Skipping health check. No health config set.");
             proceedTo(SubStage.COMPLETED);
+            return;
+        }
 
+        if (this.containerDescription.healthConfig.continueProvisioningOnError) {
+            logInfo("Skipping health check. Health config set to ignore it on provision.");
+            proceedTo(SubStage.COMPLETED);
             return;
         }
 
@@ -854,13 +859,6 @@ public class ContainerAllocationTaskService extends
 
         if ((System.currentTimeMillis() - startTime) > this.healthCheckTimeout) {
             logWarning("Health check timeout exceeded.");
-            if (this.containerDescription.healthConfig.continueProvisioningOnError) {
-                if (expectedSuccessfulHealthCheckCount.decrementAndGet() == 0) {
-                    proceedTo(SubStage.COMPLETED);
-                }
-
-                return;
-            }
 
             if (proceededToError.get()) {
                 return;

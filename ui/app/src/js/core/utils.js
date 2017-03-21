@@ -387,9 +387,13 @@ var utils = {
           duration: moment.duration(now.diff(stateMoment)).humanize()
         });
       } else if (state === constants.CONTAINERS.STATES.ERROR && status) {
+        var statusString = status;
+        if (status === constants.CONTAINERS.STATUS.UNHEALTHY) {
+          statusString = i18n.t('app.container.status.' + status);
+        }
         return i18n.t('app.container.state.errorStatus', {
           state: stateString,
-          status: status
+          status: statusString
         });
       }
     }

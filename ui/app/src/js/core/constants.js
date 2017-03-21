@@ -213,6 +213,9 @@ var constants = Immutable({
       RETIRED: 'RETIRED',
       PRO: 'RETIRED'
     },
+    STATUS: {
+        UNHEALTHY: 'unhealthy'
+    },
     LOGS: {
       SINCE_DURATIONS: [
         moment.duration(15, 'minutes').asMilliseconds(),

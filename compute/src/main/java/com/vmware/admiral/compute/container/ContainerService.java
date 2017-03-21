@@ -66,6 +66,7 @@ public class ContainerService extends StatefulService {
                 "groupResourcePlacementLink";
         public static final String CONTAINER_ALLOCATION_STATUS = "allocation";
         public static final String CONTAINER_DEGRADED_STATUS = "degraded";
+        public static final String CONTAINER_UNHEALTHY_STATUS = "unhealthy";
         public static final String CONTAINER_ERROR_STATUS = "error";
         public static final String CONTAINER_RUNNING_STATUS = "running";
         public static final String FIELD_NAME_SYSTEM = "system";
