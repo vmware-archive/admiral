@@ -216,14 +216,9 @@ let toViewModel = function(dto) {
     nodes = JSON.parse(dto.customProperties.__nodes);
   }
 
-  return {
+  return $.extend({}, dto, {
     dto: dto,
-    id: dto.id,
-    name: dto.name,
     address: dto.address ? dto.address : dto.id,
-    descriptionLink: dto.descriptionLink,
-    powerState: dto.powerState,
-    resourcePoolLink: dto.resourcePoolLink,
     placementZoneDocumentId: utils.getDocumentId(dto.resourcePoolLink),
     epzs: epzs,
     containers: containers,
@@ -232,9 +227,8 @@ let toViewModel = function(dto) {
     cpuPercentage: cpuUsagePct,
     customProperties: customProperties,
     selfLinkId: utils.getDocumentId(dto.documentSelfLink),
-    tagLinks: dto.tagLinks,
     nodes: nodes
-  };
+  });
 };
 
 let updateSchedulerPlacementZoneName = function(hostModel) {
