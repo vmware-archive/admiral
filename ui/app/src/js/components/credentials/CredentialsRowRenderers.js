@@ -51,23 +51,30 @@ var truncateContent = function(content) {
 Handlebars.registerHelper('displayableCredentials', function(credentialObject) {
 
   if (credentialObject.type === constants.CREDENTIALS_TYPE.PASSWORD) {
-    return getUsernamePasswordString(credentialObject.username, credentialObject.password);
+    return utils.escapeHtml(
+      getUsernamePasswordString(credentialObject.username, credentialObject.password));
 
   } else if (credentialObject.type === constants.CREDENTIALS_TYPE.PRIVATE_KEY) {
-    return credentialObject.username + ' / '
-      + '<div class="truncateText">'
-            + utils.maskValueIfEncrypted(credentialObject.privateKey) + '</div>';
+    return utils.escapeHtml(credentialObject.username) + ' / ' +
+      '<div class="truncateText">' +
+      utils.escapeHtml(utils.maskValueIfEncrypted(credentialObject.privateKey)) +
+      '</div>';
 
   } else if (credentialObject.type === constants.CREDENTIALS_TYPE.PUBLIC_KEY) {
-    return '<div class="truncateText">' + credentialObject.publicKey + '</div>' +
-      '<div class="truncateText">'
-            + utils.maskValueIfEncrypted(credentialObject.privateKey) + '</div>';
+    return '<div class="truncateText">' +
+      utils.escapeHtml(credentialObject.publicKey) +
+      '</div>' +
+      '<div class="truncateText">' +
+      utils.escapeHtml(utils.maskValueIfEncrypted(credentialObject.privateKey)) +
+      '</div>';
 
   } else if (credentialObject.type === constants.CREDENTIALS_TYPE.PUBLIC) {
-    return '<div class="truncateText">' + credentialObject.publicKey + '</div>';
+    return '<div class="truncateText">' +
+      utils.escapeHtml(credentialObject.publicKey) +
+      '</div>';
 
   } else {
-    return 'Unknown [' + credentialObject.type + ']';
+    return 'Unknown [' + utils.escapeHtml(credentialObject.type) + ']';
   }
 });
 
