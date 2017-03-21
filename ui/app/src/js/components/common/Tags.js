@@ -9,24 +9,25 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
+import constants from 'core/constants';
 import services from 'core/services';
 
+const SEPARATOR = constants.TAGS.SEPARATOR;
+const SEPARATOR_REGEX = new RegExp(constants.TAGS.SEPARATOR, 'g');
+
+const SEPARATOR_ENTITY = constants.TAGS.SEPARATOR_ENTITY;
+const SEPARATOR_ENTITY_REGEX = new RegExp(constants.TAGS.SEPARATOR_ENTITY, 'g');
+
 function encode(value) {
-  return encodeURIComponent(value);
+  return value.replace(SEPARATOR_REGEX, SEPARATOR_ENTITY);
 }
 
 function decode(value) {
-  return decodeURIComponent(value);
+  return value.replace(SEPARATOR_ENTITY_REGEX, SEPARATOR);
 }
 
 function getValue(tag) {
-  if (tag.value && tag.value.indexOf(':') === -1) {
-    return encode(tag.key) + ':' + encode(tag.value);
-  }
-  if (tag.value) {
-    return encode(tag.value);
-  }
-  return encode(tag.key);
+  return encode(tag.key) + (tag.value ? SEPARATOR + encode(tag.value) : '');
 }
 
 function Tags(el) {
@@ -52,14 +53,19 @@ function Tags(el) {
             }));
             suggestions.sort((a, b) => a.value === b.value ? 0 : +(a.value > b.value) || -1);
             if (values.length) {
-              if (q.indexOf(':') === -1) {
-                suggestions = [{ value: encode(values[0].key) + ':'}, ...suggestions];
+              if (q.indexOf(SEPARATOR) === -1) {
+                suggestions = [{ value: encode(values[0].key) + SEPARATOR}, ...suggestions];
               }
               if (!values.find((tag) => tag.key === q)) {
-                suggestions = [{ value: q + (q.indexOf(':') === -1 ? ':' : '')}, ...suggestions];
+                suggestions = [
+                  { value: q + (q.indexOf(SEPARATOR) === -1 ? SEPARATOR : '')},
+                  ...suggestions
+                ];
               }
             } else {
-              suggestions = [{ value: q + (q.indexOf(':') === -1 ? ':' : '')}];
+              suggestions = [
+                { value: q + (q.indexOf(SEPARATOR) === -1 ? SEPARATOR : '')}
+              ];
             }
             async(suggestions);
           });
@@ -81,7 +87,7 @@ function Tags(el) {
 
 Tags.prototype.getValue = function() {
   return this.$el.tokenfield('getTokens').reduce((prev, curr) => {
-    let pair = curr.value.split(':');
+    let pair = curr.value.split(SEPARATOR);
     let item = {
       key: decode(pair[0]),
       value: decode(pair[1] || '')

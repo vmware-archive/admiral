@@ -369,6 +369,10 @@ var constants = Immutable({
   RESOURCE_CONNECTION_TYPE: {
     NETWORK: 'network',
     VOLUME: 'volume'
+  },
+  TAGS: {
+    SEPARATOR: ':',
+    SEPARATOR_ENTITY: '׃'
   }
 });
 

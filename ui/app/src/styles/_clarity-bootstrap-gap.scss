@@ -84,7 +84,7 @@ input:not([type]) {
 }
 
 .tooltip {
-  z-index: 1;
+  z-index: 101;
   > .tooltip-inner {
     @extend .tooltip-content;
     visibility: visible;
