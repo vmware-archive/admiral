@@ -104,7 +104,7 @@ var PlacementZoneEditor = Vue.extend({
           this.model.item.tags || [], this.tags);
       if (item.documentSelfLink) {
         PlacementZonesActions.updatePlacementZone(item, tagRequest,
-            this.isDynamic() ? this.tagsToMatch : []);
+            this.tags, this.isDynamic() ? this.tagsToMatch : []);
       } else {
         PlacementZonesActions.createPlacementZone(item, tagRequest,
             this.isDynamic() ? this.tagsToMatch : []);

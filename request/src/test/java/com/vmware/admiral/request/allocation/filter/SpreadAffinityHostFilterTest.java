@@ -53,7 +53,7 @@ public class SpreadAffinityHostFilterTest extends BaseAffinityHostFilterTest {
         assignContainersToHost(thirdHost, 3);
 
         // Set Spread policy to EPZS
-        uodateEpzWithPlacementPolicy();
+        updateEpzWithPlacementPolicy();
 
         // Filter should return thirdHost as it has lowest amount of containers.
         filter = new SpreadAffinityHostFilter(host, containerDesc);
@@ -85,7 +85,7 @@ public class SpreadAffinityHostFilterTest extends BaseAffinityHostFilterTest {
 
     }
 
-    private void uodateEpzWithPlacementPolicy() throws Throwable {
+    private void updateEpzWithPlacementPolicy() throws Throwable {
 
         // Create ElasticPlacementZoneState which follows SPREAD deployment policy.
         ElasticPlacementZoneState epzState = new ElasticPlacementZoneState();
@@ -99,7 +99,7 @@ public class SpreadAffinityHostFilterTest extends BaseAffinityHostFilterTest {
 
         epz = doOperation(epz,
                 UriUtils.buildUri(host, ElasticPlacementZoneConfigurationService.SELF_LINK),
-                ElasticPlacementZoneConfigurationState.class, false, Action.PUT);
+                ElasticPlacementZoneConfigurationState.class, false, Action.PATCH);
 
         assertEquals(epz.epzState.placementPolicy,
                 ElasticPlacementZoneService.PlacementPolicy.SPREAD);
