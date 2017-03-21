@@ -11,15 +11,18 @@
 
 package com.vmware.admiral.host.interceptor;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.compute.ComputeConstants;
+import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostUtil;
+import com.vmware.admiral.compute.PlacementZoneConstants;
 import com.vmware.admiral.compute.PlacementZoneUtil;
+import com.vmware.admiral.compute.ResourceType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
@@ -32,6 +35,8 @@ import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
+import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
 /**
  * Prevent deletion of {@link ResourcePoolState} if its in use by a {@link ComputeState}. Also
@@ -91,8 +96,17 @@ public class ResourcePoolInterceptor {
                 });
     }
 
+    private static boolean isComputeZone(ResourcePoolState currentState) {
+        return currentState.customProperties != null && ResourceType.COMPUTE_TYPE.getName()
+                .equalsIgnoreCase(currentState.customProperties
+                        .get(PlacementZoneConstants.RESOURCE_TYPE_CUSTOM_PROP_NAME));
+    }
+
     public static DeferredResult<Void> handlePostOrPut(Service service, Operation op) {
         ResourcePoolState placementZone = op.getBody(ResourcePoolState.class);
+        if (isComputeZone(placementZone)) {
+            return DeferredResult.completed(null);
+        }
 
         if (PlacementZoneUtil.isSchedulerPlacementZone(placementZone)) {
             try {
@@ -114,31 +128,20 @@ public class ResourcePoolInterceptor {
                 .thenCompose(currentState -> {
                     AssertUtil.assertNotNull(currentState, "currentState");
 
-                    ResourcePoolState unifiedState = new ResourcePoolState();
-                    unifiedState.customProperties = new HashMap<>();
-                    unifiedState.tagLinks = new HashSet<>();
-
-                    // Unify the custom properties of both states
-                    if (currentState.customProperties != null) {
-                        unifiedState.customProperties.putAll(currentState.customProperties);
-                    }
-                    if (patchState.customProperties != null) {
-                        unifiedState.customProperties.putAll(patchState.customProperties);
+                    if (isComputeZone(currentState)) {
+                        return DeferredResult.completed(null);
                     }
 
-                    // Unify the tag links of both states
-                    if (currentState.tagLinks != null) {
-                        unifiedState.tagLinks.addAll(currentState.tagLinks);
-                    }
-                    if (patchState.tagLinks != null) {
-                        unifiedState.tagLinks.addAll(patchState.tagLinks);
-                    }
+                    ResourcePoolState rp = new ResourcePoolState();
+                    rp.customProperties = PropertyUtils.mergeCustomProperties(
+                            currentState.customProperties, patchState.customProperties);
 
                     // Now check whether the unified state is a scheduler
-                    if (PlacementZoneUtil.isSchedulerPlacementZone(unifiedState)) {
+                    if (PlacementZoneUtil.isSchedulerPlacementZone(rp)) {
                         try {
                             // shcedulers can have no tags
-                            AssertUtil.assertEmpty(unifiedState.tagLinks, "tagLinks");
+                            AssertUtil.assertEmpty(currentState.tagLinks, "tagLinks");
+                            AssertUtil.assertEmpty(patchState.tagLinks, "tagLinks");
                         } catch (LocalizableValidationException ex) {
                             return DeferredResult.failed(ex);
                         }
@@ -150,7 +153,8 @@ public class ResourcePoolInterceptor {
                         return verifyZoneContainsNoSchedulers(currentState.documentSelfLink, op,
                                 service);
                     }
-                }).thenAccept(ignore -> { });
+                }).thenAccept(ignore -> {
+                });
     }
 
     private static DeferredResult<Void> verifyZoneContainsSingleSchedulerOrNoHost(
@@ -163,6 +167,8 @@ public class ResourcePoolInterceptor {
         Query query = Query.Builder.create()
                 .addKindFieldClause(ComputeState.class)
                 .addFieldClause(ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, resourcePoolLink)
+                .addCompositeFieldClause(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
+                        ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME, "true")
                 .build();
 
         QueryUtils.QueryByPages<ComputeState> queryHelper = new QueryUtils.QueryByPages<>(
@@ -193,6 +199,13 @@ public class ResourcePoolInterceptor {
         Query query = Query.Builder.create()
                 .addKindFieldClause(ComputeState.class)
                 .addFieldClause(ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, resourcePoolLink)
+                .addCompositeFieldClause(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
+                        ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME, "true")
+                .addFieldClause(
+                        QuerySpecification.buildCompositeFieldName(
+                                ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
+                                ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME),
+                        "*", MatchType.WILDCARD)
                 .build();
 
         QueryUtils.QueryByPages<ComputeState> queryHelper = new QueryUtils.QueryByPages<>(
