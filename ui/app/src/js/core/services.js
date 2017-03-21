@@ -1423,12 +1423,20 @@ services.loadExposedServices = function() {
   return list(links.EXPOSED_SERVICES, true);
 };
 
-services.loadContainerLogs = function(containerId, sinceMs) {
+services.loadContainerLogs = function(containerId, logsSettings) {
   return new Promise(function(resolve, reject) {
     var logRequestUriPath = links.CONTAINER_LOGS + '?id=' + containerId;
-    if (sinceMs) {
-      var sinceSeconds = sinceMs / 1000;
-      logRequestUriPath += '&since=' + sinceSeconds;
+    if (logsSettings && logsSettings.option === constants.CONTAINERS.LOGS.OPTION.SINCE) {
+      let sinceMs = logsSettings.sinceDuration;
+      if (sinceMs) {
+        var sinceSeconds = sinceMs / 1000;
+        logRequestUriPath += '&timestamps=true&since=' + sinceSeconds;
+      }
+    } else if (logsSettings && logsSettings.option === constants.CONTAINERS.LOGS.OPTION.TAIL) {
+        let tailLines = logsSettings.tailLines;
+        if (tailLines) {
+          logRequestUriPath += '&tail=' + tailLines;
+        }
     }
 
     get(logRequestUriPath).then(function(logServiceState) {

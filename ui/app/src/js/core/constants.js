@@ -221,6 +221,17 @@ var constants = Immutable({
         moment.duration(2, 'hours').asMilliseconds(),
         moment.duration(5, 'hours').asMilliseconds()
       ],
+      TAIL_LINES: [
+        10,
+        50,
+        100,
+        1000,
+        10000
+      ],
+      OPTION: {
+        SINCE: 'since',
+        TAIL: 'tail'
+      },
       FORMAT: {
         ANSI: 'ansi',
         RAW: 'raw'

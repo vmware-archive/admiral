@@ -88,11 +88,32 @@
       </div>
       <div class="container-details-logs-settings" v-if="model.logsSettings">
         <div>
-          <span>{{i18n('app.container.details.showingLogsSince')}}</span>
-          <select v-on:change="onLogsSinceChange($event)" class="value">
+          <span>{{i18n('app.container.details.showingLogs')}}</span>
+          <span class="value">
+            <span class="radio-inline" v-if="!onVchHost">
+              <input type="radio" name="log-option-radio" id="log-since-radio"
+                v-bind:value="logsOption.SINCE"
+                v-bind:checked="logsOption.SINCE == logsSettingsOption"
+                v-on:change="onLogsOptionChange($event)">
+              <label for="log-since-radio">{{i18n('app.container.details.logsOptionSince')}}</label>
+            </span>
+            <span class="radio-inline">
+              <input type="radio" name="log-option-radio" id="log-tail-radio"
+                v-bind:value="logsOption.TAIL"
+                v-bind:checked="logsOption.TAIL == logsSettingsOption"
+                v-on:change="onLogsOptionChange($event)">
+              <label for="log-tail-radio">{{i18n('app.container.details.logsOptionTail')}}</label>
+            </span>
+          </span>
+          <select v-on:change="onLogsSinceChange($event)" class="value" v-if="(logsOption.SINCE == logsSettingsOption) && !onVchHost">
             <option v-for="duration in logsSinceDurations"
                     v-bind:value="duration"
                     v-bind:selected="duration == model.logsSettings.sinceDuration">{{duration | momentHumanize}}</option>
+          </select>
+          <select v-on:change="onLogsTailChange($event)" class="value" v-if="logsOption.TAIL == logsSettingsOption">
+            <option v-for="lineNumber in logsTailLines"
+                    v-bind:value="lineNumber"
+                    v-bind:selected="lineNumber == model.logsSettings.tailLines">{{lineNumber}} {{i18n('app.container.details.lines')}}</option>
           </select>
         </div>
         <div>
