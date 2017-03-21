@@ -724,19 +724,19 @@ public class GroupResourcePlacementService extends StatefulService {
     }
 
     @SuppressWarnings("unchecked")
-    private void countResourcesForPlacement(GroupResourcePlacementState state,
-            Consumer<ServiceDocumentQueryElementResult<? extends ServiceDocument>>
+    private <T extends ServiceDocument> void countResourcesForPlacement(GroupResourcePlacementState state,
+            Consumer<ServiceDocumentQueryElementResult<T>>
                     completionHandler) {
         QueryTask queryTask;
-        Class resourceClass;
+        Class<T> resourceClass;
 
         if (ResourceType.CONTAINER_TYPE.getName().equals(state.resourceType)) {
-            resourceClass = ContainerState.class;
+            resourceClass = (Class<T>) ContainerState.class;
             queryTask = QueryUtil.buildPropertyQuery(resourceClass,
                     ContainerState.FIELD_NAME_GROUP_RESOURCE_PLACEMENT_LINK,
                     state.documentSelfLink);
         } else if (ResourceType.COMPUTE_TYPE.getName().equals(state.resourceType)) {
-            resourceClass = ComputeState.class;
+            resourceClass = (Class<T>) ComputeState.class;
             queryTask = QueryUtil.buildPropertyQuery(resourceClass,
                     ComputeState.FIELD_NAME_RESOURCE_POOL_LINK,
                     state.resourcePoolLink);
