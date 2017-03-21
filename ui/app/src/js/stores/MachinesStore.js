@@ -39,20 +39,13 @@ let toViewModel = function(dto) {
       }
     }
   }
-  return {
-    documentSelfLink: dto.documentSelfLink,
+  return $.extend({}, dto, {
     dto: dto,
-    id: dto.id,
     selfLinkId: utils.getDocumentId(dto.documentSelfLink),
-    name: dto.name,
-    address: dto.address,
-    powerState: dto.powerState,
-    resourcePoolLink: dto.resourcePoolLink,
-    descriptionLink: dto.descriptionLink,
     placementZoneDocumentId: dto.resourcePoolLink && utils.getDocumentId(dto.resourcePoolLink),
     connectionType: hasCustomProperties ? dto.customProperties.__adapterDockerType : null,
     customProperties: customProperties
-  };
+  });
 };
 
 let onOpenToolbarItem = function(name, data, shouldSelectAndComplete) {
