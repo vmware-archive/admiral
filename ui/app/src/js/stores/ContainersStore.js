@@ -88,6 +88,7 @@ function decorateContainerHostName(container, hosts) {
     container.hostName = utils.getHostName(host);
     container.hostAddress = host.address;
     container.hostDocumentId = utils.getDocumentId(host.documentSelfLink);
+    container.isOnVchHost = host.customProperties.__containerHostType === constants.HOST.TYPE.VCH;
   }
   return container;
 }
@@ -932,7 +933,7 @@ let ContainersStore = Reflux.createStore({
     var operation = this.requestCancellableOperation(constants.CONTAINERS.OPERATION.LOGS);
     if (operation) {
       operation.forPromise(services.loadContainerLogs(selectedContainerDetails.documentId,
-          selectedContainerDetails.logsSettings.sinceDuration))
+          selectedContainerDetails.logsSettings))
         .then((logs) => {
           updateSelectedContainerDetails.call(this, ['logsLoading'], false);
           updateSelectedContainerDetails.call(this, ['logs'], logs);
@@ -947,9 +948,21 @@ let ContainersStore = Reflux.createStore({
     this.emitChange();
   },
 
+  onChangeLogsTailLines: function(lines) {
+    updateSelectedContainerDetails.call(this, ['logsSettings', 'tailLines'], lines);
+    localStorage.logsTailLines = lines;
+    this.emitChange();
+  },
+
   onChangeLogsFormat: function(format) {
     updateSelectedContainerDetails.call(this, ['logsSettings', 'format'], format);
     localStorage.logsFormat = format;
+    this.emitChange();
+  },
+
+  onChangeLogsOption: function(option) {
+    updateSelectedContainerDetails.call(this, ['logsSettings', 'option'], option);
+    localStorage.logsOption = option;
     this.emitChange();
   },
 
@@ -1633,7 +1646,10 @@ let ContainersStore = Reflux.createStore({
       logsSettings: {
         sinceDuration: localStorage.logsSinceDuration
           || constants.CONTAINERS.LOGS.SINCE_DURATIONS[0],
-        format: localStorage.logsFormat || constants.CONTAINERS.LOGS.FORMAT.ANSI
+        tailLines: localStorage.logsTailLines
+          || constants.CONTAINERS.LOGS.TAIL_LINES[0],
+        format: localStorage.logsFormat || constants.CONTAINERS.LOGS.FORMAT.ANSI,
+        option: localStorage.logsOption || constants.CONTAINERS.LOGS.OPTION.TAIL
       },
       type: constants.CONTAINERS.TYPES.SINGLE,
       documentId: containerId,

@@ -326,13 +326,6 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         CommandInput fetchLogCommandInput = constructFetchLogCommandInput(context.request,
                 context.commandInput, context.containerState);
 
-        // currently VIC does not support container logs
-        if (ContainerHostUtil.isVicHost(context.computeState)) {
-            byte[] log = "--".getBytes();
-            processContainerLogResponse(context, log);
-            return;
-        }
-
         context.executor.fetchContainerLog(fetchLogCommandInput,
                 (operation, excep) -> {
                     if (excep != null) {
@@ -378,9 +371,9 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         CommandInput fetchLogCommandInput = new CommandInput(commandInput);
         boolean stdErr = true;
         boolean stdOut = true;
-        boolean includeTimeStamp = true;
-        int tail = DockerAdapterCommandExecutor.DEFAULT_VALUE_TAIL;
-        long sinceInSeconds = 0;
+        boolean includeTimeStamp = false;
+        String since = null;
+        String tail = null;
 
         if (request.customProperties != null) {
             stdErr = Boolean.parseBoolean(request.customProperties.getOrDefault(STD_ERR,
@@ -389,17 +382,22 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                     String.valueOf(stdOut)));
             includeTimeStamp = Boolean.parseBoolean(request.customProperties.getOrDefault(
                     TIMESTAMPS, String.valueOf(includeTimeStamp)));
-            String since = request.customProperties.get(SINCE);
-            if (since != null && !since.isEmpty()) {
-                sinceInSeconds = Long.parseLong(since);
-            }
+            since = request.customProperties.get(SINCE);
+            tail = request.customProperties.get(TAIL);
         }
 
         fetchLogCommandInput.withProperty(STD_ERR, stdErr);
         fetchLogCommandInput.withProperty(STD_OUT, stdOut);
         fetchLogCommandInput.withProperty(TIMESTAMPS, includeTimeStamp);
-        fetchLogCommandInput.withProperty(TAIL, tail);
-        fetchLogCommandInput.withProperty(SINCE, sinceInSeconds);
+
+        if (since != null && !since.isEmpty()) {
+            fetchLogCommandInput.withProperty(SINCE, Long.parseLong(since));
+        }
+
+        if (tail != null && !tail.isEmpty()) {
+            fetchLogCommandInput.withProperty(TAIL, Integer.parseInt(tail));
+        }
+
         fetchLogCommandInput.withProperty(DOCKER_CONTAINER_ID_PROP_NAME, containerState.id);
 
         return fetchLogCommandInput;

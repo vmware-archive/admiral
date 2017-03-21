@@ -33,6 +33,8 @@ var ContainerDetailsVueComponent = Vue.extend({
   data: function() {
     return {
       logsSinceDurations: constants.CONTAINERS.LOGS.SINCE_DURATIONS,
+      logsTailLines: constants.CONTAINERS.LOGS.TAIL_LINES,
+      logsOption: constants.CONTAINERS.LOGS.OPTION,
       logsFormat: constants.CONTAINERS.LOGS.FORMAT,
       showShell: false,
       shellUrl: null
@@ -55,6 +57,16 @@ var ContainerDetailsVueComponent = Vue.extend({
     },
     logsSettingsFormat: function() {
       return this.model.logsSettings && this.model.logsSettings.format;
+    },
+    logsSettingsOption: function() {
+      if (this.onVchHost) {
+        ContainerActions.changeLogsOption(constants.CONTAINERS.LOGS.OPTION.TAIL);
+      }
+
+      return this.model.logsSettings && this.model.logsSettings.option;
+    },
+    onVchHost: function() {
+      return this.model.instance && this.model.instance.isOnVchHost;
     }
   },
 
@@ -112,9 +124,19 @@ var ContainerDetailsVueComponent = Vue.extend({
       ContainerActions.changeLogsSinceDuration(sinceDuration);
     },
 
+    onLogsTailChange: function(event) {
+      var tailLines = $(event.target).val();
+      ContainerActions.changeLogsTailLines(tailLines);
+    },
+
     onLogsFormatChange: function(event) {
       var format = $(event.target).val();
       ContainerActions.changeLogsFormat(format);
+    },
+
+    onLogsOptionChange: function(event) {
+      var option = $(event.target).val();
+      ContainerActions.changeLogsOption(option);
     },
 
     cloneContainer: function($event) {
