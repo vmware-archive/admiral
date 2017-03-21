@@ -133,7 +133,7 @@ var day2operation = function(url, entity) {
 };
 
 var buildTagsQuery = function(q) {
-  var pair = q.split(':');
+  var pair = q.split(constants.TAGS.SEPARATOR);
   var occurrence = pair[1] ? constants.SEARCH_OCCURRENCE.ALL : constants.SEARCH_OCCURRENCE.ANY;
   return buildOdataQuery({
     key: [{
