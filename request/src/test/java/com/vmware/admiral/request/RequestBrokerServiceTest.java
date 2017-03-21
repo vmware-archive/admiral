@@ -33,6 +33,8 @@ import org.junit.Test;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.test.CommonTestStateFactory;
+import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ResourceType;
@@ -66,6 +68,7 @@ import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState.SubSta
 import com.vmware.admiral.request.RequestStatusService.RequestStatus;
 import com.vmware.admiral.request.ReservationTaskService.ReservationTaskState;
 import com.vmware.admiral.request.composition.CompositionSubTaskService;
+import com.vmware.admiral.request.compute.ComputeOperationType;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
@@ -84,6 +87,7 @@ import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
+import com.vmware.xenon.services.common.QueryTask;
 
 public class RequestBrokerServiceTest extends RequestBaseTest {
 
@@ -2218,6 +2222,63 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // wait for request completed state:
         request = waitForRequestToComplete(request);
+    }
+
+    @Test
+    public void testRemoveHostRemoveItsContainers() throws Throwable {
+        host.log("########  Start of testRemoveHostRemoveItsContainers ######## ");
+
+        ResourcePoolState resourcePool = createResourcePool();
+        ComputeDescription dockerHostDesc = createDockerHostDescription();
+        ComputeState computeState = createDockerHost(dockerHostDesc, resourcePool);
+
+        ContainerDescription containerDesc = createContainerDescription();
+
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
+
+        RequestBrokerState request = TestRequestStateFactory.createRequestState();
+        request.resourceDescriptionLink = containerDesc.documentSelfLink;
+        request.tenantLinks = groupPlacementState.tenantLinks;
+        request = startRequest(request);
+        request = waitForRequestToComplete(request);
+
+        List<ContainerState> containerStateList = getAllContainers(computeState.documentSelfLink);
+        assertEquals("Should have one container before deleting the host.", 1, containerStateList.size());
+
+        request = TestRequestStateFactory.createComputeRequestState();
+        request.operation = ComputeOperationType.DELETE.id;
+        request.resourceLinks = new HashSet<>();
+        request.resourceLinks.add(computeState.documentSelfLink);
+        request = startRequest(request);
+        request = waitForRequestToComplete(request);
+
+        containerStateList = getAllContainers(computeState.documentSelfLink);
+        assertEquals("Should have zero containers after deleting the host.", 0, containerStateList.size());
+    }
+
+    private List<ContainerState> getAllContainers(String computeSelfLink) {
+        host.testStart(1);
+        List<ContainerState> containerStateList = new ArrayList<>();
+
+        QueryTask.Query.Builder queryBuilder = QueryTask.Query.Builder.create()
+                .addKindFieldClause(ContainerState.class)
+                .addFieldClause(ContainerState.FIELD_NAME_PARENT_LINK, computeSelfLink);
+        QueryTask containerStateQuery =  QueryTask.Builder.create().setQuery(queryBuilder.build()).build();
+        QueryUtil.addExpandOption(containerStateQuery);
+        new ServiceDocumentQuery<ContainerState>(host, ContainerState.class).query(
+                containerStateQuery,
+                (r) -> {
+                    if (r.hasException()) {
+                        host.failIteration(r.getException());
+                    } else if (r.hasResult()) {
+                        containerStateList.add(r.getResult());
+                    } else {
+                        host.completeIteration();
+                    }
+                });
+        host.testWait();
+        return containerStateList;
     }
 
     private CompositeComponent setUpCompositeWithServiceLinks(boolean includeNetwork)
