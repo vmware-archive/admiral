@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.PlacementZoneConstants;
@@ -416,6 +417,8 @@ public class ResourcePoolInterceptorTest extends BaseTestCase {
             computeState.resourcePoolLink = defaultPlacementZone.documentSelfLink;
         }
         computeState.customProperties = new HashMap<>();
+        computeState.customProperties.put(ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME,
+                "true");
         if (isScheduler) {
             computeState.customProperties.put(ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME,
                     ContainerHostType.VCH.toString());
