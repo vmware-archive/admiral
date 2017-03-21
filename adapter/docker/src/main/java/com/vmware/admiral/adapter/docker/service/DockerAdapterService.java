@@ -521,8 +521,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 processLoadedImageData(context, imageData, ref, imageCompletionHandler);
             });
         } else if (shouldTryCreateFromLocalImage(context.containerDescription)) {
-            // try to create the container from a local image first. Only if the image is not available it will be
-            // fetched according to the settings.
+            // try to create the container from a local image first. Only if the image is not
+            // available it will be fetched according to the settings.
             logInfo("Trying to create the container using local image first...");
             handleExceptions(
                     context.request,
@@ -740,7 +740,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
         // Add first container network to avoid container to be connected to default network.
         // Other container networks will be added after container is created.
-        // Docker APIs fail if there is more than one network added to the container when it is created
+        // Docker APIs fail if there is more than one network added to the container when it is
+        // created
         if (context.containerState.networks != null && !context.containerState.networks.isEmpty()) {
             createNetworkConfig(createCommandInput,
                     context.containerState.networks.entrySet().iterator().next());
@@ -908,8 +909,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         String useLocalImageFirst = containerDescription.customProperties
                 .get(DOCKER_CONTAINER_CREATE_USE_LOCAL_IMAGE_WITH_PRIORITY);
 
-        // Flag that forces container to be started from a local image and only if the image is not available
-        // download it from a registry.
+        // Flag that forces container to be started from a local image and only if the image is not
+        // available download it from a registry.
         return Boolean.valueOf(useLocalImageFirst);
     }
 
@@ -1002,7 +1003,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                     logWarning("Exception while connecting container [%s] to network [%s]",
                             containerId, networkId);
                     if (error.compareAndSet(false, true)) {
-                        // Update the container state so further actions (e.g. cleanup) can be performed
+                        // Update the container state so further actions (e.g. cleanup) can be
+                        // performed
                         context.containerState.status = String
                                 .format("Cannot connect container to network %s", networkId);
                         context.containerState.powerState = ContainerState.PowerState.ERROR;
@@ -1238,6 +1240,10 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         newContainerState.documentExpirationTimeMicros = -1; // make sure the expiration is reset.
         newContainerState.adapterManagementReference = containerState.adapterManagementReference;
 
+        // copy status related attributes to check for unhealthy containers
+        newContainerState.powerState = containerState.powerState;
+        newContainerState.status = containerState.status;
+
         // copy properties into the ContainerState's attributes
         newContainerState.attributes = properties.entrySet()
                 .stream()
@@ -1246,7 +1252,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                         (e) -> e.getKey(),
                         (e) -> Utils.toJson(e.getValue())));
 
-        new ContainerStateMapper().propertiesToContainerState(newContainerState, properties);
+        ContainerStateMapper.propertiesToContainerState(newContainerState, properties);
 
         getHost().log(Level.FINE, "Patching ContainerState: %s %s",
                 containerState.documentSelfLink, request.getRequestTrackingLog());

@@ -62,7 +62,8 @@ public class ShellContainerExecutorService extends StatelessService {
             if (hostLink == null) {
                 post.fail(new LocalizableValidationException(String.format("%s or %s is required",
                         HOST_LINK_URI_PARAM, CONTAINER_LINK_URI_PARAM),
-                        "compute.shell.container.links.required", HOST_LINK_URI_PARAM, CONTAINER_LINK_URI_PARAM));
+                        "compute.shell.container.links.required", HOST_LINK_URI_PARAM,
+                        CONTAINER_LINK_URI_PARAM));
                 return;
             }
 
@@ -99,8 +100,7 @@ public class ShellContainerExecutorService extends StatelessService {
                             post.complete();
                         }
                     },
-                    post::fail
-            );
+                    post::fail);
         } else {
             // execute command for specific container
             getContainerWhenAvailable(containerLink, RETRY_COUNT, callback);
@@ -120,7 +120,7 @@ public class ShellContainerExecutorService extends StatelessService {
                         (o, e) -> {
                             if (e == null && o.hasBody()) {
                                 ContainerState containerState = o.getBody(ContainerState.class);
-                                if (containerState.powerState == PowerState.RUNNING) {
+                                if (isRunning(containerState)) {
                                     logInfo("Container %s for shell execution is running",
                                             containerState.documentSelfLink);
                                     callback.accept(containerState, null);
@@ -144,6 +144,12 @@ public class ShellContainerExecutorService extends StatelessService {
                                         "Shell container not available"));
                             }
                         }));
+    }
+
+    private boolean isRunning(ContainerState containerState) {
+        return (containerState.powerState == PowerState.RUNNING)
+                || ((containerState.powerState == PowerState.ERROR)
+                        && ContainerState.CONTAINER_UNHEALTHY_STATUS.equals(containerState.status));
     }
 
     private void executeCommand(ContainerState container, ShellContainerExecutorState execState,

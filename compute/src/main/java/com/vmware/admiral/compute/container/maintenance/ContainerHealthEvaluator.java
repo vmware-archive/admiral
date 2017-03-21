@@ -86,7 +86,7 @@ public class ContainerHealthEvaluator {
             healthConfig.unhealthyThreshold = DEFAULT_UNHEALTHY_THRESHOLD;
         }
         if (patchHealth.healthFailureCount == healthConfig.unhealthyThreshold) {
-            status = String.format("Health check failed last %d attempts", patchHealth.healthFailureCount);
+            status = ContainerState.CONTAINER_UNHEALTHY_STATUS;
             powerState = PowerState.ERROR;
             publishEventLog(patchHealth);
         } else if (!skipDegraded
@@ -133,7 +133,8 @@ public class ContainerHealthEvaluator {
         EventLogState eventLog = new EventLogState();
         eventLog.description = String.format(
                 "Health check failed for container %s after %d tries, container state will be set to ERROR.",
-                containerState.documentSelfLink, patchHealth.healthFailureCount);;
+                containerState.documentSelfLink, patchHealth.healthFailureCount);
+        ;
         eventLog.eventLogType = EventLogType.ERROR;
         eventLog.resourceType = getClass().getName();
         eventLog.tenantLinks = containerState.tenantLinks;
@@ -145,7 +146,8 @@ public class ContainerHealthEvaluator {
                 .setReferer(ContainerFactoryService.SELF_LINK)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        host.log(Level.WARNING, "Failed to create event log: %s", Utils.toString(e));
+                        host.log(Level.WARNING, "Failed to create event log: %s",
+                                Utils.toString(e));
                     }
                 }));
     }

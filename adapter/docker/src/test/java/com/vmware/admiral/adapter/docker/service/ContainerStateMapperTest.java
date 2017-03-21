@@ -66,17 +66,17 @@ public class ContainerStateMapperTest {
     private static final String DEFAULT_CONTAINER_PUBLISHED_HOST_PORT = "80";
     private static final String DEFAULT_CONTAINER_PUBLISHED_HOST_IP = "0.0.0.0";
 
-    private static final String[] DEFAULT_CONTAINER_BRIDGE_NETWORK_LINKS_ARRAY = new String[] { "container:alias" };
-    private static final String[] DEFAULT_CONTAINER_BRIDGE_NETWORK_ALIASES_ARRAY = new String[] { "alias" };
+    private static final String[] DEFAULT_CONTAINER_BRIDGE_NETWORK_LINKS_ARRAY = new String[] {
+            "container:alias" };
+    private static final String[] DEFAULT_CONTAINER_BRIDGE_NETWORK_ALIASES_ARRAY = new String[] {
+            "alias" };
     private static final String[] DEFAULT_CONTAINER_COMMAND_ARRAY = new String[] { "sh" };
 
-    private ContainerStateMapper containerStateMapper;
     private ContainerState predefinedState;
     private Map<String, Object> predefinedInspectMap;
 
     @Before
     public void setUp() {
-        containerStateMapper = new ContainerStateMapper();
         predefinedState = getDefaultContainerState();
         predefinedInspectMap = getDefaultContainerInspectResponseAsMap();
     }
@@ -98,6 +98,60 @@ public class ContainerStateMapperTest {
         assertEquals(715, parsed - vic);
     }
 
+    @Test
+    public void testPatchUnhealthyContainerState() {
+
+        // When the health check fails for a given container, its power state is marked as 'ERROR'
+        // and its status as 'unhealthy'. See ContainerHealthEvaluator.patchContainerStatus.
+        predefinedState.powerState = PowerState.ERROR;
+        predefinedState.status = ContainerState.CONTAINER_UNHEALTHY_STATUS;
+
+        ContainerState mappedState = new ContainerState();
+        mappedState.powerState = predefinedState.powerState;
+        mappedState.status = predefinedState.status;
+
+        ContainerStateMapper.propertiesToContainerState(mappedState, predefinedInspectMap);
+
+        assertEquals(PowerState.ERROR, mappedState.powerState);
+        assertEquals(ContainerState.CONTAINER_UNHEALTHY_STATUS, mappedState.status);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testPatchHealthyContainerState() {
+
+        // Set running state to true
+        ((Map<String, Object>) predefinedInspectMap.get(DOCKER_CONTAINER_STATE_PROP_NAME))
+                .put(DOCKER_CONTAINER_STATE_RUNNING_PROP_NAME, true);
+
+        ContainerState mappedState = new ContainerState();
+        ContainerStateMapper.propertiesToContainerState(mappedState, predefinedInspectMap);
+
+        assertEquals(PowerState.RUNNING, mappedState.powerState);
+        assertEquals(null, mappedState.status);
+
+        // Set running state to false
+        ((Map<String, Object>) predefinedInspectMap.get(DOCKER_CONTAINER_STATE_PROP_NAME))
+                .put(DOCKER_CONTAINER_STATE_RUNNING_PROP_NAME, false);
+
+        mappedState = new ContainerState();
+        ContainerStateMapper.propertiesToContainerState(mappedState, predefinedInspectMap);
+
+        assertEquals(PowerState.STOPPED, mappedState.powerState);
+        assertEquals(null, mappedState.status);
+
+        // Set running state to true... after the power state has been set to error
+        ((Map<String, Object>) predefinedInspectMap.get(DOCKER_CONTAINER_STATE_PROP_NAME))
+                .put(DOCKER_CONTAINER_STATE_RUNNING_PROP_NAME, true);
+
+        mappedState = new ContainerState();
+        mappedState.status = ContainerState.CONTAINER_DEGRADED_STATUS; // degraded but healthy
+        ContainerStateMapper.propertiesToContainerState(mappedState, predefinedInspectMap);
+
+        assertEquals(PowerState.RUNNING, mappedState.powerState);
+        assertEquals(ContainerState.CONTAINER_DEGRADED_STATUS, mappedState.status);
+    }
+
     /**
      * Build a {@link ContainerState} instance that has a user-defined network and the
      * system-defined "bridge" network. Also build the inspect command map representation and use
@@ -117,7 +171,7 @@ public class ContainerStateMapperTest {
         addNetworkToInspectMap(predefinedInspectMap, networkName, ipv4, ipv6, aliases, links);
 
         ContainerState mappedState = new ContainerState();
-        containerStateMapper.propertiesToContainerState(mappedState, predefinedInspectMap);
+        ContainerStateMapper.propertiesToContainerState(mappedState, predefinedInspectMap);
         assertTrue("predefined and mapped state should be equal",
                 areEqualContainerStates(predefinedState, mappedState));
     }
@@ -141,7 +195,7 @@ public class ContainerStateMapperTest {
         addNetworkToInspectMap(predefinedInspectMap, networkName, ipv4);
 
         ContainerState mappedState = new ContainerState();
-        containerStateMapper.propertiesToContainerState(mappedState, predefinedInspectMap);
+        ContainerStateMapper.propertiesToContainerState(mappedState, predefinedInspectMap);
         assertTrue("predefined and mapped state should be equal",
                 areEqualContainerStates(predefinedState, mappedState));
     }
