@@ -595,6 +595,10 @@ var utils = {
     return locationSearch.indexOf('compute') !== -1;
   },
 
+  escapeHtml: function(htmlString) {
+    return $('<div>').text(htmlString).html();
+  },
+
   /**
    * The build number consists of the release version + the number of last
    * succesful build of this version. For example: 0.9.1 (1423)
