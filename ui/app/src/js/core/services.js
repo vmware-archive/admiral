@@ -555,7 +555,7 @@ services.createPlacementZone = function(config) {
 };
 
 services.updatePlacementZone = function(config) {
-  return put(links.EPZ_CONFIG + config.documentSelfLink, config);
+  return patch(links.EPZ_CONFIG + config.documentSelfLink, config);
 };
 
 services.deletePlacementZone = function(config) {

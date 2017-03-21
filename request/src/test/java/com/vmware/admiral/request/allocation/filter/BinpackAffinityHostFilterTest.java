@@ -58,7 +58,7 @@ public class BinpackAffinityHostFilterTest extends BaseAffinityHostFilterTest {
         // Second host has lowest available memory
         setHostsStats(hostToAvailableMem);
 
-        uodateEpzWithPlacementPolicy();
+        updateEpzWithPlacementPolicy();
 
         /*
          * H1[6GB], H2[5GB], H3[7GB] BinPack sorting algorithm will return H2 as it has only 5GB
@@ -109,7 +109,7 @@ public class BinpackAffinityHostFilterTest extends BaseAffinityHostFilterTest {
 
         // All hosts have available memory below minimum required for Binpack policy which is 2GB.
         setHostsStats(hostToAvailableMem);
-        uodateEpzWithPlacementPolicy();
+        updateEpzWithPlacementPolicy();
 
         filter = new BinpackAffinityHostFilter(host, containerDesc);
 
@@ -138,7 +138,7 @@ public class BinpackAffinityHostFilterTest extends BaseAffinityHostFilterTest {
         hostToAvailableMem.put(thirdHost, 5000000000L); // 5GB
 
         setHostsStats(hostToAvailableMem);
-        uodateEpzWithPlacementPolicy();
+        updateEpzWithPlacementPolicy();
 
         // In this case host-2 is most loaded, but its memory is lower than required - 3GB. Filter
         // must switch to second most suitable host which is host-3 with 5GB.
@@ -178,7 +178,7 @@ public class BinpackAffinityHostFilterTest extends BaseAffinityHostFilterTest {
         return hostSelection == null ? super.prepareHostSelectionMap() : hostSelection;
     }
 
-    private void uodateEpzWithPlacementPolicy() throws Throwable {
+    private void updateEpzWithPlacementPolicy() throws Throwable {
 
         // Create ElasticPlacementZoneState which follows BINPACK deployment policy.
         ElasticPlacementZoneState epzState = new ElasticPlacementZoneState();
@@ -192,7 +192,7 @@ public class BinpackAffinityHostFilterTest extends BaseAffinityHostFilterTest {
 
         epz = doOperation(epz,
                 UriUtils.buildUri(host, ElasticPlacementZoneConfigurationService.SELF_LINK),
-                ElasticPlacementZoneConfigurationState.class, false, Action.PUT);
+                ElasticPlacementZoneConfigurationState.class, false, Action.PATCH);
 
         assertEquals(epz.epzState.placementPolicy,
                 ElasticPlacementZoneService.PlacementPolicy.BINPACK);

@@ -184,16 +184,12 @@ let PlacementZonesStore = Reflux.createStore({
     }).catch(this.onGenericEditError);
   },
 
-  onUpdatePlacementZone: function(config, tagRequest, tagsToMatch) {
+  onUpdatePlacementZone: function(config, tagRequest, tags, tagsToMatch) {
     this.setInData(['editingItemData', 'validationErrors'], null);
     this.setInData(['editingItemData', 'saving'], true);
     this.emitChange();
 
-    services.updateTagAssignment(tagRequest).then(tagResponse => {
-      // TODO can be run in parallel if PATCH is used
-      config.resourcePoolState.tagLinks = tagResponse.tagLinks;
-      return services.saveTagStates(tagsToMatch);
-    }).then(tagLinksToMatch => {
+    let updatePromise = services.saveTagStates(tagsToMatch).then(tagLinksToMatch => {
       if (config.epzState) {
         config.epzState = $.extend(config.epzState, {
           resourcePoolLink: config.resourcePoolState.documentSelfLink,
@@ -201,11 +197,16 @@ let PlacementZonesStore = Reflux.createStore({
         });
       }
       return services.updatePlacementZone($.extend(true, {}, config.dto, config));
-    }).then((updatedConfig) => {
+    });
+    let updateTagsPromise = services.updateTagAssignment(tagRequest);
+
+    Promise.all([updatePromise, updateTagsPromise]).then(([updatedConfig, tagResponse]) => {
       // If the backend did not make any changes, the response will be empty
       updatedConfig.resourcePoolState = updatedConfig.resourcePoolState || config.resourcePoolState;
       updatedConfig.epzState = updatedConfig.epzState || config.epzState;
+      updatedConfig.resourcePoolState.tagLinks = tagResponse.tagLinks;
       updatedConfig.tagsToMatch = tagsToMatch;
+      updatedConfig.tags = tags;
       updatedConfig = enhanceConfig(updatedConfig);
 
       var configs = this.data.items.asMutable();
@@ -213,7 +214,6 @@ let PlacementZonesStore = Reflux.createStore({
       for (var i = 0; i < configs.length; i++) {
         if (configs[i].documentSelfLink === updatedConfig.documentSelfLink) {
           updatedConfig.hostsCount = configs[i].hostsCount;
-          updatedConfig.tags = configs[i].tags;
           configs[i] = Immutable(updatedConfig);
 
           this.setInData(['items'], configs);

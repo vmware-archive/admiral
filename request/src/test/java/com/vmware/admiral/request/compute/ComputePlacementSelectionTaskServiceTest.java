@@ -239,11 +239,10 @@ public class ComputePlacementSelectionTaskServiceTest extends ComputeRequestBase
 
         epz = doOperation(epz,
                 UriUtils.buildUri(host, ElasticPlacementZoneConfigurationService.SELF_LINK),
-                ElasticPlacementZoneConfigurationState.class, false, Action.PUT);
+                ElasticPlacementZoneConfigurationState.class, false, Action.PATCH);
 
         assertEquals(epz.epzState.placementPolicy,
                 policy);
-
     }
 
     private void assignComputesToHost(String hostLink, int instances) throws Throwable {
