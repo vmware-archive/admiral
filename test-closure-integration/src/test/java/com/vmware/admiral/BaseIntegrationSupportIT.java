@@ -98,7 +98,7 @@ public class BaseIntegrationSupportIT {
     protected static final TestLogger logger =  new TestLogger(BaseIntegrationSupportIT.class);
 
     @Rule
-    public Timeout globalTimeout = Timeout.seconds(TimeUnit.MINUTES.toSeconds(5));
+    public Timeout globalTimeout = Timeout.seconds(TimeUnit.MINUTES.toSeconds(7));
 
     @BeforeClass
     public static void baseBeforeClass() {
