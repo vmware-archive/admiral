@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 
 import org.junit.Before;
@@ -146,7 +147,7 @@ public class ClosureServiceRequestsTest extends BaseTestCase {
         // Executing the created Closure
         TestContext ctx2 = testCreate(1);
         Closure closureRequest = new Closure();
-        Map inputs = new HashMap<>();
+        Map<String, JsonElement> inputs = new HashMap<>();
         inputs.put("a", new JsonPrimitive(expectedInVar));
         closureRequest.inputs = inputs;
         Operation closureExecPost = Operation

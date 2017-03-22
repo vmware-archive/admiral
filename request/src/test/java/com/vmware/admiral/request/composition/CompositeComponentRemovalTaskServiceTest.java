@@ -120,11 +120,11 @@ public class CompositeComponentRemovalTaskServiceTest extends RequestBaseTest {
     public void testRemoveCompositeComponentsWithKubernetesObjects() throws Throwable {
         CompositeDescription description = createCompositeDescription();
         CompositeComponent component = createCompositeComponent(description.documentSelfLink);
-        PodState pod = createPod(component);
+        createPod(component);
         MockKubernetesApplicationAdapterService.addCompositeComponent(component);
 
         CompositeComponent component1 = createCompositeComponent(description.documentSelfLink);
-        pod = createPod(component1);
+        createPod(component1);
         MockKubernetesApplicationAdapterService.addCompositeComponent(component1);
 
         RequestBrokerState day2RemovalRequest = new RequestBrokerState();
@@ -167,11 +167,11 @@ public class CompositeComponentRemovalTaskServiceTest extends RequestBaseTest {
     public void testRemoveMixedCompositeComponents() throws Throwable {
         CompositeDescription description = createCompositeDescription();
         CompositeComponent component = createCompositeComponent(description.documentSelfLink);
-        PodState pod = createPod(component);
+        createPod(component);
         MockKubernetesApplicationAdapterService.addCompositeComponent(component);
 
         CompositeComponent component1 = createCompositeComponent(description.documentSelfLink);
-        pod = createPod(component1);
+        createPod(component1);
         MockKubernetesApplicationAdapterService.addCompositeComponent(component1);
 
         CompositeComponent component2 = createCompositeComponent();

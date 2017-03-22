@@ -23,6 +23,7 @@ import com.vmware.xenon.common.TaskState;
 /**
  * Mock Closure Service to be used in unit and integration tests.
  */
+@SuppressWarnings("rawtypes")
 public class MockClosureService extends ClosureService {
 
     public MockClosureService(DriverRegistry driverRegistry,
@@ -30,6 +31,7 @@ public class MockClosureService extends ClosureService {
         super(driverRegistry, maintenanceTimeout);
     }
 
+    @SuppressWarnings("unchecked")
     protected Closure updateState(Operation patch, Closure requestedState) {
         Closure currentState = this.getState(patch);
 

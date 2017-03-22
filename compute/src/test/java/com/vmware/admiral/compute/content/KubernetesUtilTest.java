@@ -61,9 +61,11 @@ import com.vmware.admiral.compute.kubernetes.entities.pods.HTTPGetAction;
 import com.vmware.admiral.compute.kubernetes.entities.pods.Probe;
 import com.vmware.admiral.compute.kubernetes.entities.pods.TCPSocketAction;
 import com.vmware.admiral.compute.kubernetes.entities.services.Service;
+import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
 import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionService.KubernetesDescription;
 import com.vmware.admiral.compute.kubernetes.service.PodService.PodState;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Service.Action;
 
 public class KubernetesUtilTest {
@@ -502,8 +504,8 @@ public class KubernetesUtilTest {
     @Test
     public void testGetStateTypeFromSelfLink() {
         String selfLink = "/resources/kubernetes-pods/376fdq673";
-        Class expectedClass = PodState.class;
-        Class actualClass = getStateTypeFromSelfLink(selfLink);
+        Class<? extends BaseKubernetesState> expectedClass = PodState.class;
+        Class<? extends BaseKubernetesState> actualClass = getStateTypeFromSelfLink(selfLink);
         assertEquals(expectedClass, actualClass);
     }
 
@@ -528,8 +530,8 @@ public class KubernetesUtilTest {
 
     @Test
     public void testFromResourceStateToBaseKubernetesStateShouldFail() {
-        Class containerClass = CompositeComponentRegistry.metaByStateLink("/resources/containers")
-                .stateClass;
+        Class<? extends ResourceState> containerClass = CompositeComponentRegistry
+                .metaByStateLink("/resources/containers").stateClass;
 
         String expectedExceptionMsg = "Class: " + ContainerState.class.getName() + " is not child"
                 + " of BaseKubernetesState.";

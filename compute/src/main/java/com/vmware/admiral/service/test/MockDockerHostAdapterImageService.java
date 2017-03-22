@@ -55,7 +55,6 @@ public class MockDockerHostAdapterImageService extends StatelessService {
         }
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
     public void handleRequest(Operation op) {
         if (op.getAction() == Action.GET) {

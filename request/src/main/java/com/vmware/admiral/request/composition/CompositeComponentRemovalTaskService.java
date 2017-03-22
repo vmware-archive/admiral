@@ -42,6 +42,7 @@ import com.vmware.admiral.request.kubernetes.CompositeKubernetesRemovalTaskServi
 import com.vmware.admiral.request.kubernetes.CompositeKubernetesRemovalTaskService.CompositeKubernetesRemovalTaskState;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
 import com.vmware.xenon.common.OperationJoin;
@@ -83,6 +84,7 @@ public class CompositeComponentRemovalTaskService
             ResourceType.NETWORK_TYPE, ResourceType.COMPUTE_NETWORK_TYPE,
             ResourceType.VOLUME_TYPE, ResourceType.CLOSURE_TYPE);
 
+    @SuppressWarnings("unused")
     private static final List<ResourceType> TYPES_SUPPORTING_PARALLEL_REMOVAL = Arrays.asList(
             ResourceType.JOIN_COMPOSITE_COMPONENT_TYPE);
 
@@ -384,7 +386,8 @@ public class CompositeComponentRemovalTaskService
             return false;
         }
         for (String link : component.componentLinks) {
-            Class componentClass = CompositeComponentRegistry.metaByStateLink(link).stateClass;
+            Class<? extends ResourceState> componentClass = CompositeComponentRegistry
+                    .metaByStateLink(link).stateClass;
             if (!BaseKubernetesState.class.isAssignableFrom(componentClass)) {
                 return false;
             }
