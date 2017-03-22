@@ -7,7 +7,7 @@
       "start": "Los geht's.",
       "addHost": "Host hinzufügen",
       "addEndpoint": "Endpoint hinzufügen",
-      "enter": "Eingabe",
+      "enter": "Weiter",
       "helpCenter": "Hilfe",
       "steps": {
         "description": "Das Erstellen einer Anwendung ist ganz einfach",
@@ -111,7 +111,7 @@
     "placementZone": {
       "createNew": "Neue Platzierungszone",
       "manage": "Platzierungszonen verwalten",
-      "entity": "Platzierungszone",
+      "entity": "Platzierungszonen",
       "list": {
         "title": "Platzierungszonen",
         "addButton": "Hinzufügen",
@@ -128,7 +128,7 @@
         "endpointTitle": "Endpoint",
         "placementPolicy": "Erweiterte Platzierungsrichtlinie",
         "placementPolicyHint": "Standardmäßig werden Ressourcen nach dem Zufallsprinzip auf Hosts platziert. Optional kann eine der folgenden Strategien angewendet werden:<br><br><b>BINPACK</b> - auf Host mit höchster Arbeitsspeichernutzung platzieren<br><br><b>SPREAD</b> - auf Host mit geringster Anzahl an Ressourcen platzieren",
-        "dynamicTitle": "Ressourcen diesem Bereich dynamisch zuordnen",
+        "dynamicTitle": "Ressourcen dieser Zone dynamisch zuordnen",
         "tagsTitle": "Tags",
         "tagsHint": "Schlüssel:Wert-Tags eingeben",
         "tagsPlaceholder": "Beispiel: compliance:yes",
@@ -180,7 +180,7 @@
         "usernameTitle": "Benutzername",
         "passwordTitle": "Kennwort",
         "showPassword": "Kennwort anzeigen",
-        "hidePassword": "Kennwort ausblenden",
+        "hidePassword": "Kennwort verbergen",
         "usePrivateKey": "Privaten Schlüssel verwenden",
         "usePassword": "Kennwort verwenden",
         "certificateTitle": "Zertifikat",
@@ -191,7 +191,7 @@
     },
     "deploymentPolicy": {
       "createNew": "Neue Bereitstellungsrichtlinie",
-      "entity": "Bereitstellungsrichtlinie",
+      "entity": "Bereitstellungsrichtlinien",
       "manage": "Bereitstellungsrichtlinien verwalten",
       "contextPanelTooltip": "Bereitstellungsrichtlinien",
       "list": {
@@ -501,7 +501,7 @@
         "cidrLabel": "CIDR",
         "cidrLabelHint": "0.0.0.0/0",
         "supportPublicIpAddressLabel": "Öffentliche IP unterstützen",
-        "defaultForZoneLabel": "Standardwert für Zone"
+        "defaultForZoneLabel": "Standard für Zone"
       },
       "instanceType": {
         "aws": {
@@ -614,7 +614,7 @@
         "nameLabel": "Name",
         "cidrLabel": "CIDR",
         "supportPublicIpAddressLabel": "Öffentliche IP unterstützen",
-        "defaultForZoneLabel": "Standardwert für Zone",
+        "defaultForZoneLabel": "Standard für Zone",
         "tagsTitle": "Tags",
         "tagsHint": "Schlüssel:Wert-Tags eingeben",
         "tagsPlaceholder": "Beispiel: access:restricted"
@@ -865,7 +865,7 @@
           "restartPolicyType": {
             "always": "Immer",
             "onFailure": "Bei Fehler",
-            "none": "Keine"
+            "none": "Nein"
           },
           "maxRestarts": "Max. Neustarts",
           "maxRestartsDescription": "Anzahl max. Neustarts bei Container-Fehlern",
@@ -942,7 +942,7 @@
         "UNKNOWN": "UNBEKANNT",
         "RETIRED": "ZURÜCKGEZOGEN",
         "PROVISIONING": "BEREITSTELLUNG",
-        "continuousStateSince": "{{state}} für {{duration}}"
+        "continuousStateSince": "{{state}}: {{duration}}"
       },
       "actions": {
         "start": "Starten",

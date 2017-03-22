@@ -35,7 +35,7 @@
       "compute": "Computingbron"
     },
     "host": {
-      "entity": "host",
+      "entity": "Host",
       "details": {
         "title": {
           "add": "Host toevoegen",
@@ -111,7 +111,7 @@
     "placementZone": {
       "createNew": "Nieuwe plaatsingszone",
       "manage": "Plaatsingszones beheren",
-      "entity": "plaatsingszone",
+      "entity": "Plaatsingszones",
       "list": {
         "title": "Plaatsingszones",
         "addButton": "Toevoegen",
@@ -163,7 +163,7 @@
     "credential": {
       "createNew": "Nieuwe verificatiegegevens",
       "manage": "Verificatiegegevens beheren",
-      "entity": "verificatiegegevens",
+      "entity": "Verificatiegegevens",
       "contextPanelTooltip": "Verificatiegegevens",
       "list": {
         "title": "Verificatiegegevens",
@@ -191,7 +191,7 @@
     },
     "deploymentPolicy": {
       "createNew": "Nieuw implementatiebeleid",
-      "entity": "implementatiebeleid",
+      "entity": "Implementatiebeheer",
       "manage": "Implementatiebeleid beheren",
       "contextPanelTooltip": "Impl.beleid",
       "list": {
@@ -915,7 +915,7 @@
           "unhealthyThresholdHint": "Standaard: 3",
           "unhealthyThresholdDescription": "Drempelwaarde voor statuscontrole voor het aantal bewerkingen met negatief resultaat dat nodig is om de container als ongezond te beschouwen",
           "command": "Opdracht",
-          "commandDescription": "Opdracht die moet worden uitgevoerd voor de container. De afsluitstatus wordt gebruikt om de gezondheid van de container te bepalen.",
+          "commandDescription": "Opdracht die moet worden uitgevoerd voor de container. De afsluitstatus wordt gebruikt om de status van de container te bepalen",
           "logConfigDriver": "Stuurprogramma",
           "logConfigDriverDescription": "Stuurprogramma logboekregistratie voor de container",
           "logConfigDriverTypes": {

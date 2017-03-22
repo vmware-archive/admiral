@@ -7,7 +7,7 @@
       "start": "立即开始使用!",
       "addHost": "添加主机",
       "addEndpoint": "添加端点",
-      "enter": "输入",
+      "enter": "开始使用",
       "helpCenter": "帮助",
       "steps": {
         "description": "轻松创建应用程序",
@@ -181,10 +181,10 @@
         "passwordTitle": "密码",
         "showPassword": "显示密码",
         "hidePassword": "隐藏密码",
-        "usePrivateKey": "使用私有密钥",
+        "usePrivateKey": "使用私钥",
         "usePassword": "使用密码",
         "certificateTitle": "证书",
-        "publicTitle": "公用密钥",
+        "publicTitle": "公钥",
         "publicCertificateTitle": "公用证书",
         "privateCertificateTitle": "私有证书"
       }
@@ -405,12 +405,12 @@
         "cpuColumn": "CPU 份额",
         "memoryColumn": "内存限制",
         "storageColumn": "存储限制",
-        "instancesPerPlacement": "显示每个放置位置的实例数",
+        "instancesPerPlacement": "显示每个放置的实例数",
         "unlimitedInstances": "不受限制"
       },
       "edit": {
-        "createNew": "新建放置位置",
-        "update": "编辑放置位置",
+        "createNew": "新建放置",
+        "update": "编辑放置",
         "nameLabel": "名称",
         "groupLabel": "项目",
         "selectGroup": "选择项目",
@@ -422,8 +422,8 @@
         "selectDeploymentPolicy": "选择部署策略",
         "priorityLabel": "优先级",
         "priorityPlaceholder": "正数 (可选)",
-        "priorityHint": "留空将其置于最低优先级",
-        "instancesLabel": "实例",
+        "priorityHint": "留空则将其置于最低优先级",
+        "instancesLabel": "实例数",
         "instancesPlaceholder": "实例数 (可选)",
         "instancesHint": "限制最大实例数的正整数。留空或为 0 表示无限数量。",
         "cpuSharesLabel": "CPU 份额",
@@ -627,7 +627,7 @@
       "list": {
         "network": {
           "name": "网络",
-          "connectedDateLabel": "已连接",
+          "connectedDateLabel": "连接开始时间",
           "networkDriverLabel": "网络驱动程序",
           "ipamDriverLabel": "IPAM 驱动程序",
           "subnetLabel": "子网",
@@ -745,7 +745,7 @@
         "network": "网络",
         "networkTrafficSent": "已发送",
         "networkTrafficReceived": "已接收",
-        "showingLogsSince": "显示给定日期后的日志",
+        "showingLogsSince": "显示给定时间段内的日志",
         "logsFormat": "日志格式",
         "logsFormatAnsi": "ANSI",
         "logsFormatRaw": "原始格式",
@@ -1082,7 +1082,7 @@
     },
     "help": {
         "link": "帮助",
-        "description": "使用 Ensemble 可以访问当前正在执行的任务的环境相关信息。它会随着任务的执行按照指令自动刷新。使用另一个屏幕或拆分屏幕可实时访问这些信息。您可以使用移动设备、电视和任何其他屏幕，而无论其是否已连接到计算机。您可以在受信任网络外部使用 Ensemble，同时仍能接收即时更新。",
+        "description": "使用 Ensemble 可以访问当前所执行任务的相关环境信息。它会随着任务的执行按照指令自动刷新。使用另一个屏幕或拆分屏幕可实时访问这些信息。您可以使用移动设备、电视和任何其他屏幕，而无论这些设备是否已连接到计算机。您可以在受信任网络外部使用 Ensemble，同时还能接收即时更新。",
         "descriptionOpen": "要打开 Ensemble，请单击<strong>在新选项卡中打开</strong>，或使用移动设备扫描二维码。"
       },
       "resources": {
@@ -1101,8 +1101,8 @@
       "failure": "身份验证错误"
     },
     "dropdownSearchMenu": {
-      "title": "从 {{entity}} 列表选择",
-      "searchPlaceholder": "搜索 {{entity}}",
+      "title": "从{{entity}}列表选择",
+      "searchPlaceholder": "搜索{{entity}}",
       "clear": "清除选择",
       "showingCount": "显示 {{count}} 项 (共 {{totalCount}} 项)",
       "noResults": "未找到任何项目"

@@ -332,7 +332,7 @@
             "valueHint": "Exemplo: 20GB"
           },
           "existingVolume": "Existente",
-          "showingCount": "Mostrando __count__ de __totalCount__",
+          "showingCount": "Mostrando {{count}} de {{totalCount}}",
           "showingInstances": "instâncias",
           "noResults": "Nenhum volume encontrado",
           "mountpoint": "Host Mountpoint",
