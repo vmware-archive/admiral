@@ -74,5 +74,14 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
         </dependency>
+
+        <!-- TEST -->
+        <dependency>
+            <groupId>${xenon.group}</groupId>
+            <artifactId>xenon-common</artifactId>
+            <version>${xenon.version}</version>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>
