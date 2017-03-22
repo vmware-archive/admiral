@@ -26,4 +26,7 @@ COPY images-bin/* $USER_RESOURCES
 
 COPY entrypoint.sh /entrypoint.sh
 
+ENV CONFIG_FILE_PATH $ADMIRAL_ROOT/config/configuration.properties
+COPY configuration.properties $CONFIG_FILE_PATH
+
 ENTRYPOINT ["/entrypoint.sh"]
