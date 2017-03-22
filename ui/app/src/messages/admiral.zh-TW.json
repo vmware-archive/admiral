@@ -425,7 +425,7 @@
         "priorityHint": "將其保留為空白以使其優先順序最低",
         "instancesLabel": "執行個體",
         "instancesPlaceholder": "執行個體數目 (選擇性)",
-        "instancesHint": "用於限制執行個體數目上限的正整數。針對無限制的數目，請保留空白或 0。",
+        "instancesHint": "用於限制執行個體數目上限的正整數。針對無限制的數目，請保留空白或設定為 0。",
         "cpuSharesLabel": "CPU 共用率",
         "memoryLimitLabel": "記憶體限制",
         "storageLimitLabel": "儲存區限制"
@@ -627,7 +627,7 @@
       "list": {
         "network": {
           "name": "網路",
-          "connectedDateLabel": "已連線",
+          "connectedDateLabel": "連線日期",
           "networkDriverLabel": "網路驅動程式",
           "ipamDriverLabel": "IPAM 驅動程式",
           "subnetLabel": "子網路",
@@ -711,7 +711,7 @@
         "searchPlaceholder": "搜尋容器",
         "createContainer": "建立容器",
         "hostLabel": "主機",
-        "createdDateLabel": "已建立",
+        "createdDateLabel": "建立日期",
         "portsLabel": "連接埠",
         "commandLabel": "命令",
         "logLabel": "記錄",
@@ -745,14 +745,14 @@
         "network": "網路",
         "networkTrafficSent": "已傳送",
         "networkTrafficReceived": "已接收",
-        "showingLogsSince": "顯示指定日期後的記錄",
+        "showingLogsSince": "顯示指定時間後的記錄",
         "logsFormat": "記錄格式",
         "logsFormatAnsi": "ANSI",
         "logsFormatRaw": "原始格式",
         "networkAddresses": "網路位址",
         "attributes": {
           "host": "主機",
-          "createdDateLabel": "已建立",
+          "createdDateLabel": "建立日期",
           "ports": "連接埠",
           "command": "命令",
           "ipaddress": "位址",
@@ -1101,8 +1101,8 @@
       "failure": "驗證錯誤"
     },
     "dropdownSearchMenu": {
-      "title": "從 {{entity}} 清單中選取",
-      "searchPlaceholder": "搜尋 {{entity}}",
+      "title": "從{{entity}}清單中選取",
+      "searchPlaceholder": "搜尋{{entity}}",
       "clear": "清除選取項目",
       "showingCount": "顯示第 {{count}} 個，共 {{totalCount}} 個",
       "noResults": "找不到項目"

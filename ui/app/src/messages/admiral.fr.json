@@ -7,7 +7,7 @@
       "start": "Commençons maintenant !",
       "addHost": "Ajouter un hôte",
       "addEndpoint": "Ajouter un point de terminaison",
-      "enter": "Entrée",
+      "enter": "Entrer",
       "helpCenter": "Aide",
       "steps": {
         "description": "La création d'une application est très simple",
@@ -72,7 +72,7 @@
         "add": "Ajouter",
         "update": "Mettre à jour",
         "create": "Créer",
-        "certificateWarning": "Le certificat de __address__ n'est pas valide. Il se peut que vous vous connectiez à un site Web prétendant être __address__, ce qui peut constituer un risque pour vos informations confidentielles. Voulez-vous néanmoins vous connecter au site Web ?",
+        "certificateWarning": "Le certificat de {{address}} n'est pas valide. Il se peut que vous vous connectiez à un site Web prétendant être {{address}}, ce qui peut constituer un risque pour vos informations confidentielles. Voulez-vous néanmoins vous connecter au site Web ?",
         "showCertificate": "Afficher le certificat",
         "hideCertificate": "Masquer le certificat",
         "manageCertificates": "Gérer les certificats",
@@ -295,7 +295,7 @@
           "editTitle": "Modifier la configuration réseau",
           "name": "Nom",
           "existingNetwork": "Existant",
-          "showingCount": "Affichage de __count__ sur __totalCount__",
+          "showingCount": "Affichage de {{count}} sur {{totalCount}}",
           "showingInstances": "instances",
           "noResults": "Aucun réseau trouvé",
           "hosts": "Hôtes",
@@ -332,7 +332,7 @@
             "valueHint": "Exemple : 20GB"
           },
           "existingVolume": "Existant",
-          "showingCount": "Affichage de __count__ sur __totalCount__",
+          "showingCount": "Affichage de {{count}} sur {{totalCount}}",
           "showingInstances": "instances",
           "noResults": "Volume introuvable",
           "mountpoint": "Point de montage d'hôte",
@@ -942,7 +942,7 @@
         "UNKNOWN": "INCONNU",
         "RETIRED": "RETIRÉ",
         "PROVISIONING": "PROVISIONNEMENT",
-        "continuousStateSince": "__state__ pendant __duration__"
+        "continuousStateSince": "{{state}} pendant {{duration}}"
       },
       "actions": {
         "start": "Démarrer",
@@ -1101,10 +1101,10 @@
       "failure": "Erreur d'authentication"
     },
     "dropdownSearchMenu": {
-      "title": "Sélectionner dans la liste __entity__",
-      "searchPlaceholder": "Rechercher __entity__",
+      "title": "Sélectionner dans la liste {{entity}}",
+      "searchPlaceholder": "Rechercher {{entity}}",
       "clear": "Annuler la sélection",
-      "showingCount": "Affichage de __count__ sur __totalCount__",
+      "showingCount": "Affichage de {{count}} sur {{totalCount}}",
       "noResults": "Aucun élément trouvé"
     },
     "customProperties": {
@@ -1172,6 +1172,6 @@
       "OFF": "DÉSACTIVÉ",
       "SUSPEND": "DÉSACTIVÉ",
       "UNKNOWN": "INCONNU",
-      "stateSinceMessage": "depuis __date__"
+      "stateSinceMessage": "depuis {{date}}"
     }
 }

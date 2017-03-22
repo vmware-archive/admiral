@@ -163,7 +163,7 @@
     "credential": {
       "createNew": "Nueva credencial",
       "manage": "Administrar credenciales",
-      "entity": "credencial",
+      "entity": "credenciales",
       "contextPanelTooltip": "Credenciales",
       "list": {
         "title": "Credenciales",
@@ -874,7 +874,7 @@
           "memoryLimit": "Límite de memoria",
           "memoryLimitDescription": "Límite de memoria en bytes",
           "memorySwapLimit": "Límite de intercambio de memoria",
-          "memorySwapLimitDescription": "Límite de memoria total (memoria + intercambio); establézcalo como -1 para deshabilitar el intercambio. Debe usarlo con la memoria y hacer que el valor de intercambio sea más grande que la memoria",
+          "memorySwapLimitDescription": "Límite de memoria total (memoria + intercambio); establézcalo como -1 para deshabilitar el intercambio. Debe usarlo con la memoria y hacer que el valor de intercambio sea más grande que la memoria.",
           "affinityConstraints": "Restricciones de afinidad",
           "affinityConstraintsDescription": "Condiciones de afinidad o antiafinidad de los contenedores implementados o no implementados en el mismo host. Formato: [!]serviceName[:soft|hard].",
           "affinityInputs": {
@@ -1101,9 +1101,9 @@
       "failure": "Error de autenticación"
     },
     "dropdownSearchMenu": {
-      "title": "Seleccionar desde la lista {{entity}}",
+      "title": "Seleccionar de la lista de {{entity}}",
       "searchPlaceholder": "Buscar {{entity}}",
-      "clear": "Borrar elección",
+      "clear": "Borrar selección",
       "showingCount": "Mostrando {{count}} de {{totalCount}}",
       "noResults": "No se encontraron elementos"
     },

@@ -1,7 +1,7 @@
 {
   "app": {
     "homepage": {
-      "welcome": "ようこそ。",
+      "welcome": "はじめに",
       "description": "ここでは、<b>コンテナ化されたアプリケーションを作成して、プロビジョニング、管理および監視</b>を行うことができます。",
       "descriptionCompute": "ここでは、<b>任意のクラウドで、任意のアプリケーションを作成して、プロビジョニング、管理および監視</b>を行うことができます。",
       "start": "それでは、早速始めましょう。",
@@ -47,7 +47,7 @@
         "addressHint": "適切なスキームおよびポートを指定してください (例: https://myhost.com:2376)。デフォルト スキーム: 'https'。デフォルト ポート: https/443、http/80。",
         "hostAlias": "名前",
         "hostAddress": "アドレス",
-        "hostType": "ホスト タイプ",
+        "hostType": "ホストのタイプ",
         "placementZone": "配置ゾーン",
         "placementZoneInputPlaceholder": "例: vic:hostname:2376",
         "placementZoneInputHint": "この名前を持つスケジューラ配置ゾーンが自動的に作成されます",
@@ -126,7 +126,7 @@
         "update": "配置ゾーンの編集",
         "nameTitle": "配置ゾーン名",
         "endpointTitle": "エンドポイント",
-        "placementPolicy": "詳細配置ポリシー",
+        "placementPolicy": "高度な配置ポリシー",
         "placementPolicyHint": "デフォルトでは、リソースが配置されるホストは無作為に選ばれます。オプションを使用することで、次のいずれかの方式を適用できます:<br><br><b>BINPACK</b>: メモリ使用量が最大のホストに配置します。<br><br><b>SPREAD</b>: リソース数が最小のホストに配置します。",
         "dynamicTitle": "このゾーンへのリソースの動的割り当て",
         "tagsTitle": "タグ",
@@ -384,7 +384,7 @@
         "importButton": "インポート"
       },
       "export": {
-        "formatPromptMessage": "テンプレートをエクスポートする形式を選択:",
+        "formatPromptMessage": "テンプレートのエクスポート形式を選択してください。",
         "format": {
           "compositeBlueprint": "YAML ブループリント",
           "dockerCompose": "Docker Compose"
@@ -711,7 +711,7 @@
         "searchPlaceholder": "コンテナの検索",
         "createContainer": "コンテナの作成",
         "hostLabel": "ホスト",
-        "createdDateLabel": "作成済み",
+        "createdDateLabel": "作成日",
         "portsLabel": "ポート",
         "commandLabel": "コマンド",
         "logLabel": "ログ",
@@ -745,14 +745,14 @@
         "network": "ネットワーク",
         "networkTrafficSent": "送信済み",
         "networkTrafficReceived": "受信済み",
-        "showingLogsSince": "特定の日付以降のログを表示",
+        "showingLogsSince": "ログの表示時間",
         "logsFormat": "ログ形式",
         "logsFormatAnsi": "ANSI",
         "logsFormatRaw": "Raw",
         "networkAddresses": "ネットワーク アドレス",
         "attributes": {
           "host": "ホスト",
-          "createdDateLabel": "作成済み",
+          "createdDateLabel": "作成日",
           "ports": "ポート",
           "command": "コマンド",
           "ipaddress": "アドレス",
@@ -915,7 +915,7 @@
           "unhealthyThresholdHint": "デフォルト: 3",
           "unhealthyThresholdDescription": "健全性チェックの失敗回数のしきい値。これにより、コンテナの健全性が不良と見なされます。",
           "command": "コマンド",
-          "commandDescription": "のコンテナで実行するコマンド。コンテナの健全性が識別には、終了ステータスが使用されます。",
+          "commandDescription": "コンテナで実行するコマンド。コンテナの健全性が識別には、終了ステータスが使用されます。",
           "logConfigDriver": "ドライバ",
           "logConfigDriverDescription": "コンテナのログ ドライバ",
           "logConfigDriverTypes": {
@@ -934,7 +934,7 @@
         }
       },
       "state": {
-        "RUNNING": "実行中",
+        "RUNNING": "実行時間：",
         "STOPPED": "停止",
         "REBOOTING": "再起動中",
         "PAUSED": "一時停止中",
@@ -1168,8 +1168,8 @@
       "any": "いずれかに一致"
     },
     "state": {
-      "ON": "オン",
-      "OFF": "オフ",
+      "ON": "有効",
+      "OFF": "無効",
       "SUSPEND": "無効",
       "UNKNOWN": "不明",
       "stateSinceMessage": "{{date}} 以降"
