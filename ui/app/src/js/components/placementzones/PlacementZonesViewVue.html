@@ -63,8 +63,8 @@
               </td>
             </tr>
             <tr class="item" v-for="item in model.items | orderBy sortKey sortOrders[sortKey]" track-by="documentSelfLink">
-              <template v-if="isHighlightedItem(item)">
-               <td colspan="5" class="highlight-item" v-bind:class="{'highlight-item-fail': model.validationErrors}">
+               <td v-if="isHighlightedItem(item)" colspan="5" class="highlight-item"
+                    :class="{'highlight-item-fail': model.validationErrors}">
                   <div>
                     <div class="help-text"><i class="fa fa-check"></i>
                       <span v-if="model.validationErrors">{{model.validationErrors._generic}}</span>
@@ -90,15 +90,11 @@
                     </table>
                   </div>
                 </td>
-              </template>
-              <template v-if="isEditingItem(item)">
-                <td colspan="5" class="inline-edit-holder placementZoneEditHolder">
+                <td v-if="isEditingItem(item)" colspan="5" class="inline-edit-holder placementZoneEditHolder">
                   <placement-zone-editor v-bind:model="model.editingItemData || { item:{} }"></placement-zone-editor>
                 </td>
-              </template>
-              <template v-if="!isEditingOrHighlightedItem(item)">
-                <td class="truncateText primary-cell" :title="item.name">{{item.name}}</td>
-                <td>
+                <td v-if="!isEditingOrHighlightedItem(item)" class="truncateText primary-cell" :title="item.name">{{item.name}}</td>
+                <td v-if="!isEditingOrHighlightedItem(item)">
                   <div class="stats-holder">
                     <div class="help-text">{{item.cpuPercentage}}%</div>
                     <div class="progress">
@@ -106,7 +102,7 @@
                     </div>
                   </div>
                 </td>
-                <td>
+                <td v-if="!isEditingOrHighlightedItem(item)">
                   <div class="stats-holder">
                     <div class="help-text">{{item.memoryPercentage}}%</div>
                     <div class="progress">
@@ -114,13 +110,13 @@
                     </div>
                   </div>
                 </td>
-                <td>
+                <td v-if="!isEditingOrHighlightedItem(item)">
                   <div class="placementZone-host-count">
                     <a :href="'#/' + getHostsPath() + '?placementZone=' + getDocumentId(item)" class="link">{{item.hostsCount}}</a>
                   </div>
                 </td>
                 <!-- Actions column -->
-                <td class="table-actions">
+                <td class="table-actions" v-if="!isEditingOrHighlightedItem(item)">
                   <div v-bind:class="{hide: isDeleting(item)}">
                     <a href="#" class="btn item-edit" v-on:click="editItem(item, $event)">
                       <i class="fa fa-pencil"></i>
@@ -145,7 +141,6 @@
                   </div>
 
                 </td>
-              </template>
             </tr>
           </tbody>
         </table>
