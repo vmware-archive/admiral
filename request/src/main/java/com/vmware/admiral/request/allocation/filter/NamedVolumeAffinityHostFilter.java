@@ -11,8 +11,6 @@
 
 package com.vmware.admiral.request.allocation.filter;
 
-import static java.util.Comparator.comparing;
-
 import static com.vmware.admiral.compute.ContainerHostService.DOCKER_HOST_PLUGINS_VOLUME_PROP_NAME;
 import static com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.DEFAULT_VOLUME_DRIVER;
 import static com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.VMDK_VOLUME_DRIVER;
@@ -20,6 +18,7 @@ import static com.vmware.admiral.compute.container.volume.ContainerVolumeDescrip
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -163,7 +162,8 @@ public class NamedVolumeAffinityHostFilter
             // In case there are multiple volumes with the same name but on different hosts and
             // another container must be attached to the current external volume, make sure the same
             // single external volume is chosen for each such container
-            Collections.sort(volumes, comparing(v -> v.documentSelfLink));
+            Collections.sort(volumes,
+                    Comparator.<ContainerVolumeState, String> comparing(v -> v.documentSelfLink));
             ContainerVolumeState selectedVolume = pickOnePerContext(state, volumes);
             hostLinks.addAll(selectedVolume.parentLinks);
         }
@@ -244,7 +244,7 @@ public class NamedVolumeAffinityHostFilter
                 ContainerVolumeState.FIELD_NAME_DESCRIPTION_LINK, descLinksWithNames.keySet());
 
         final Map<String, Set<String>> requiredDrivers = new HashMap<>();
-        new ServiceDocumentQuery<ContainerVolumeState>(host, ContainerVolumeState.class)
+        new ServiceDocumentQuery<>(host, ContainerVolumeState.class)
                 .query(q, (r) -> {
                     if (r.hasException()) {
                         host.log(

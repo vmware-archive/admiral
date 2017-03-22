@@ -31,7 +31,6 @@ import java.util.stream.Stream;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
@@ -40,11 +39,14 @@ import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputePro
 import com.vmware.admiral.request.compute.enhancer.ComputeStateEnhancers;
 import com.vmware.admiral.request.compute.enhancer.Enhancer;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
+import com.vmware.photon.controller.model.adapterapi.ComputeInstanceRequest;
+import com.vmware.photon.controller.model.adapterapi.ComputeInstanceRequest.InstanceRequestType;
 import com.vmware.photon.controller.model.adapterapi.ResourceOperationResponse;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
-import com.vmware.photon.controller.model.tasks.ProvisionComputeTaskService;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeStateWithDescription;
 import com.vmware.photon.controller.model.tasks.ServiceTaskCallback;
 import com.vmware.photon.controller.model.tasks.SubTaskService;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
@@ -193,41 +195,33 @@ public class ComputeProvisionTaskService extends
                 return;
             }
             boolean isMockRequest = DeploymentProfileConfig.getInstance().isTest();
-            Stream<Operation> operations = resourceLinks.stream().map((p) -> {
-                ProvisionComputeTaskService.ProvisionComputeTaskState provisionTaskState = new ProvisionComputeTaskService.ProvisionComputeTaskState();
-                provisionTaskState.computeLink = p;
 
-                provisionTaskState.parentTaskLink = subTaskLink;
-                provisionTaskState.isMockRequest = isMockRequest;
-                provisionTaskState.taskSubStage = ProvisionComputeTaskService.ProvisionComputeTaskState.SubStage.CREATING_HOST;
-                provisionTaskState.tenantLinks = state.tenantLinks;
-                provisionTaskState.documentExpirationTimeMicros = ServiceUtils
-                        .getDefaultTaskExpirationTimeInMicros();
+            List<DeferredResult<Operation>> ops = resourceLinks.stream().map(
+                    rl -> ComputeStateWithDescription.buildUri(UriUtils.buildUri(getHost(), rl)))
+                    .map(uri -> sendWithDeferredResult(Operation.createGet(uri),
+                            ComputeStateWithDescription.class))
+                    .map(dr -> dr.thenCompose(c -> {
+                        ComputeInstanceRequest cr = new ComputeInstanceRequest();
+                        cr.resourceReference = UriUtils.buildUri(getHost(), c.documentSelfLink);
+                        cr.requestType = InstanceRequestType.CREATE;
+                        cr.taskReference = UriUtils.buildUri(getHost(), subTaskLink);
+                        cr.isMockRequest = isMockRequest;
+                        return sendWithDeferredResult(
+                                Operation.createPatch(c.description.instanceAdapterReference)
+                                        .setBody(cr))
+                                        .exceptionally(e -> {
+                                            ResourceOperationResponse r = ResourceOperationResponse
+                                                    .fail(c.documentSelfLink, e);
+                                            completeSubTask(subTaskLink, r);
+                                            return null;
+                                        });
+                    })).collect(Collectors.toList());
 
-                return Operation.createPost(this, ProvisionComputeTaskService.FACTORY_LINK)
-                        .setBody(provisionTaskState);
+            DeferredResult.allOf(ops).whenComplete((all, e) -> {
+                logInfo("Requested provisioning of %s compute resources.",
+                        resourceLinks.size());
+                proceedTo(SubStage.PROVISIONING_COMPUTE);
             });
-
-            OperationJoin.create(operations)
-                    .setCompletion((ops,
-                            exc) -> {
-                        if (exc != null) {
-                            logSevere(
-                                    "Failure creating provisioning tasks: %s",
-                                    Utils.toString(exc));
-
-                            exc.forEach((i, t) -> {
-                                ResourceOperationResponse r = ResourceOperationResponse.fail(null,
-                                        t);
-                                completeSubTask(subTaskLink, r);
-                            });
-                            return;
-                        }
-                    }).sendWith(this);
-            logInfo("Requested provisioning of %s compute resources.",
-                    resourceLinks.size());
-            proceedTo(SubStage.PROVISIONING_COMPUTE);
-            return;
         } catch (Throwable e) {
             failTask("System failure creating ContainerStates", e);
         }
@@ -237,7 +231,7 @@ public class ComputeProvisionTaskService extends
 
         ServiceTaskCallback<SubStage> callback = ServiceTaskCallback.create(getSelfLink());
         callback.onSuccessTo(SubStage.PROVISIONING_COMPUTE_COMPLETED);
-        SubTaskService.SubTaskState<SubStage> subTaskInitState = new SubTaskService.SubTaskState<SubStage>();
+        SubTaskService.SubTaskState<SubStage> subTaskInitState = new SubTaskService.SubTaskState<>();
         // tell the sub task with what to patch us, on completion
         subTaskInitState.serviceTaskCallback = callback;
         subTaskInitState.errorThreshold = 0;
