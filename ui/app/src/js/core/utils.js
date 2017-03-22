@@ -1325,6 +1325,7 @@ var utils = {
     };
     var stripExtraFields = function(tag) {
       return {
+        external: false,
         key: tag.key,
         value: tag.value
       };
