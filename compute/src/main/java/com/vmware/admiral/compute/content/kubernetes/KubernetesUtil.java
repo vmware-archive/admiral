@@ -338,11 +338,11 @@ public class KubernetesUtil {
 
     }
 
-    @SuppressWarnings("unchecked")
     public static <T extends BaseKubernetesState> Class<T> getStateTypeFromSelfLink(String
             selfLink) {
 
-        Class resourceStateClass = CompositeComponentRegistry.metaByStateLink(selfLink).stateClass;
+        Class<? extends ResourceState> resourceStateClass =
+                CompositeComponentRegistry.metaByStateLink(selfLink).stateClass;
 
         return fromResourceStateToBaseKubernetesState(resourceStateClass);
 

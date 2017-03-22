@@ -305,9 +305,6 @@ public class KubernetesEntityDataCollection extends StatefulService {
                             ComputeState host = o.getBody(ComputeState.class);
                             List<String> group = host.tenantLinks;
 
-                            AtomicInteger counter = new AtomicInteger(
-                                    callback.idToEntityData.size());
-
                             for (Entry<String, KubernetesEntityData> entry : callback.idToEntityData
                                     .entrySet()) {
                                 KubernetesEntityData data = entry.getValue();
@@ -481,6 +478,7 @@ public class KubernetesEntityDataCollection extends StatefulService {
                         }));
     }
 
+    @SuppressWarnings("unused")
     private void createDiscoveredEntityDescription(BaseKubernetesState entity) {
         /*if (entity.kubernetesEntity == null) {
             logWarning("Yaml missing for entity: %s", entity.documentSelfLink);
