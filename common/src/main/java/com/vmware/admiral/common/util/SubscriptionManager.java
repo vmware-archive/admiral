@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -22,12 +22,14 @@ import java.util.logging.Level;
 import com.vmware.admiral.common.util.SubscriptionManager.SubscriptionNotification.NotificationOperation;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.ServiceSubscriptionState.ServiceSubscriber;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.ReliableSubscriptionService;
 
 /**
  * A helper class to extract and manage the common service subscription operations. This class
@@ -161,7 +163,7 @@ public class SubscriptionManager<T extends ServiceDocument> implements Closeable
                         subscribeForServiceLink);
             }
         } catch (InterruptedException ex) {
-            host.log(Level.WARNING, "Thred interrupted: %s", Utils.toString(ex));
+            host.log(Level.WARNING, "Thread interrupted: %s", Utils.toString(ex));
         }
 
         Operation subscribe = Operation
@@ -180,24 +182,26 @@ public class SubscriptionManager<T extends ServiceDocument> implements Closeable
                     }
                 });
 
-        StatelessService notificationTarget = new NotificationStatelessServiceHandler<T>(this,
-                notificationHandler);
+        boolean usePublicUri = false;
+        ServiceSubscriber sr = ServiceSubscriber.create(replayState).setUsePublicUri(usePublicUri);
+        StatelessService notificationTarget = ReliableSubscriptionService.create(subscribe, sr,
+                (op) -> handleNotification(op, notificationHandler));
 
         // make sure the subscription is idempotent using the id of the service to subscribe for
         notificationTarget.setSelfLink(UriUtils.buildUriPath("subscriptions",
                 uniqueSubscriptionId, "resource",
                 Service.getId(subscribeForServiceLink)));
         try {
+            // TODO send delete instead of stopping the service?
+
             // don't expect exception but in case something happen should not stop the subscription
             // process
             host.stopService(notificationTarget);
         } catch (Throwable e) {
-            Utils.logWarning("Error while stopping the a subscription service %s",
+            Utils.logWarning("Error while stopping subscription service %s",
                     Utils.toString(e));
         }
 
-        boolean usePublicUri = false;
-        ServiceSubscriber sr = ServiceSubscriber.create(replayState).setUsePublicUri(usePublicUri);
         host.startSubscriptionService(subscribe, notificationTarget, sr);
         this.subscriptionLink = notificationTarget.getSelfLink();
         return subscriptionLink;
@@ -307,47 +311,34 @@ public class SubscriptionManager<T extends ServiceDocument> implements Closeable
         return UriUtils.buildSubscriptionUri(host, subscribeForServiceLink);
     }
 
-    private static class NotificationStatelessServiceHandler<T extends ServiceDocument> extends
-            StatelessService {
-        private final SubscriptionManager<T> subscriptionManager;
-        private final Consumer<SubscriptionNotification<T>> notificationHandler;
+    private void handleNotification(Operation op, Consumer<SubscriptionNotification<T>> notificationHandler) {
+        try {
+            host.log(Level.INFO, "Notification received for action: [%s] and uri: [%s]",
+                    op.getAction(), op.getUri());
+            SubscriptionNotification<T> notification = new SubscriptionNotification<>();
 
-        private NotificationStatelessServiceHandler(SubscriptionManager<T> subscriptionManager,
-                Consumer<SubscriptionNotification<T>> notificationHandler) {
-            this.subscriptionManager = subscriptionManager;
-            this.notificationHandler = notificationHandler;
-        }
-
-        @Override
-        public void handleRequest(Operation op) {
-            try {
-                logInfo("Notification received for action: [%s] and uri: [%s]",
-                        op.getAction(), op.getUri());
-                SubscriptionNotification<T> notification = new SubscriptionNotification<>();
-
-                if (Action.DELETE == op.getAction()) {
-                    if (!op.hasBody()) { // service stopped. no changes to the state.
-                        op.complete();
-                        return;
-                    } else {
-                        notification.operation = NotificationOperation.DELETE;
-                        // the subscription is already deleted with the deletion of the document
-                        // just reset the subscription link.
-                        subscriptionManager.subscriptionLink = null;
-                    }
+            if (Action.DELETE == op.getAction()) {
+                if (!op.hasBody()) { // service stopped. no changes to the state.
+                    op.complete();
+                    return;
                 } else {
-                    notification.operation = NotificationOperation.UPDATE;
+                    notification.operation = NotificationOperation.DELETE;
+                    // the subscription is already deleted with the deletion of the document
+                    // just reset the subscription link.
+                    this.subscriptionLink = null;
                 }
-
-                if (op.hasBody()) {
-                    notification.result = op.getBody(subscriptionManager.type);
-                }
-                notificationHandler.accept(notification);
-                op.complete();
-            } catch (Throwable e) {
-                Utils.logWarning("Error handling notifications. Error: %s", Utils.toString(e));
-                op.fail(e);
+            } else {
+                notification.operation = NotificationOperation.UPDATE;
             }
+
+            if (op.hasBody()) {
+                notification.result = op.getBody(this.type);
+            }
+            notificationHandler.accept(notification);
+            op.complete();
+        } catch (Throwable e) {
+            Utils.logWarning("Error handling notifications. Error: %s", Utils.toString(e));
+            op.fail(e);
         }
     }
 
