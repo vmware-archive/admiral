@@ -13,8 +13,8 @@ package com.vmware.admiral.common.util;
 
 import java.util.Base64;
 
-import com.vmware.admiral.common.AuthCredentialsType;
-import com.vmware.admiral.common.security.EncryptionUtils;
+import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
+import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
 public class AuthUtils {

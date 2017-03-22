@@ -30,13 +30,13 @@ import javax.net.ssl.X509TrustManager;
 import org.yaml.snakeyaml.util.UriEncoder;
 
 import com.vmware.admiral.adapter.docker.util.DockerStreamUtil;
-import com.vmware.admiral.common.security.EncryptionUtils;
 import com.vmware.admiral.common.util.AssertUtil;
-import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.DelegatingX509KeyManager;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.common.util.ServiceUtils;
+import com.vmware.photon.controller.model.security.util.CertificateUtil;
+import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
 import com.vmware.xenon.common.Service;

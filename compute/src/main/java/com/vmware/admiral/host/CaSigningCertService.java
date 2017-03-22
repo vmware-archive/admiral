@@ -23,12 +23,12 @@ import java.security.cert.X509Certificate;
 import java.util.Scanner;
 import java.util.logging.Level;
 
-import com.vmware.admiral.common.AuthCredentialsType;
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.util.CertificateUtil;
-import com.vmware.admiral.common.util.CertificateUtil.CertChainKeyPair;
-import com.vmware.admiral.common.util.KeyUtil;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
+import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
+import com.vmware.photon.controller.model.security.util.CertificateUtil;
+import com.vmware.photon.controller.model.security.util.CertificateUtil.CertChainKeyPair;
+import com.vmware.photon.controller.model.security.util.KeyUtil;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;

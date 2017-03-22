@@ -23,9 +23,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.security.EncryptionUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.AuthorizationSetupHelper;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;

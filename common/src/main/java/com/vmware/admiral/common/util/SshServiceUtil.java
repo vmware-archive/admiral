@@ -30,9 +30,9 @@ import java.util.logging.Logger;
 
 import net.schmizz.sshj.SSHClient;
 
-import com.vmware.admiral.common.security.EncryptionUtils;
 import com.vmware.admiral.common.util.SshUtil.AsyncResult;
 import com.vmware.admiral.common.util.SshUtil.ConsumedResult;
+import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
 import com.vmware.xenon.common.ServiceHost;
