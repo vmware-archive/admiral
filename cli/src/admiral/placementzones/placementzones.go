@@ -274,7 +274,7 @@ func (rpl *PlacementZoneList) GetOutputString() string {
 		val := rpl.Documents[link]
 		output := utils.GetTabSeparatedString(val.ResourcePoolState.GetID(), val.ResourcePoolState.Name,
 			val.ResourcePoolState.GetUsedMemoryPercentage(), val.ResourcePoolState.GetUsedCpuPercentage(),
-			tags.TagsToString(val.EpzState.TagLinksToMatch))
+			tags.TagsToString(val.ResourcePoolState.TagLinks))
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}
@@ -361,18 +361,6 @@ func EditPZID(id, newName string, tagsToAdd, tagsToRemove, tagsToMatchToAdd, tag
 		oldPz.ResourcePoolState.Name = newName
 	}
 
-	if len(tagsToRemove) > 0 {
-		err = oldPz.ResourcePoolState.RemoveTagLinks(tagsToRemove)
-		if err != nil {
-			return "", err
-		}
-	}
-	if len(tagsToAdd) > 0 {
-		err = oldPz.ResourcePoolState.AddTagLinks(tagsToAdd)
-		if err != nil {
-			return "", err
-		}
-	}
 	if len(tagsToMatchToRemove) > 0 {
 		err = oldPz.EpzState.RemoveTagLinks(tagsToMatchToRemove)
 		if err != nil {
@@ -387,12 +375,66 @@ func EditPZID(id, newName string, tagsToAdd, tagsToRemove, tagsToMatchToAdd, tag
 	}
 
 	jsonBody, _ := json.Marshal(oldPz)
-	req, _ := http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
+	req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
 	if respErr != nil {
 		return "", respErr
 	}
+
+	err = handleTagLinksUpdate(fullId, tagsToAdd, tagsToRemove)
+
+	if err != nil {
+		return "", err
+	}
+
 	return fullId, nil
+}
+
+func handleTagLinksUpdate(placementZoneId string, tagsToAdd, tagsToRemove []string) error {
+	if utils.IsNilOrEmptyStr(tagsToAdd) && utils.IsNilOrEmptyStr(tagsToRemove) {
+		return nil
+	}
+
+	tagsToAssign := parseTagsInput(tagsToAdd)
+	tagsToUnassign := parseTagsInput(tagsToRemove)
+
+	fullId, err := selflink.GetFullId(placementZoneId, new(PlacementZoneList), utils.PLACEMENT_ZONE)
+
+	if err != nil {
+		return err
+	}
+
+	tagsRequest := &tags.TagAssignmentRequest{
+		ResourceLink:   utils.CreateResLinkForResourcePool(fullId),
+		TagsToAssign:   tagsToAssign,
+		TagsToUnassign: tagsToUnassign,
+	}
+
+	url := urlutils.BuildUrl(urlutils.TagAssignment, nil, true)
+	jsonBody, _ := json.Marshal(tagsRequest)
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
+	_, _, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return respErr
+	}
+	return nil
+}
+
+func parseTagsInput(tagsInput []string) []tags.Tag {
+	result := []tags.Tag{}
+
+	for _, input := range tagsInput {
+		tag, err := tags.NewTag(input)
+		if err != nil {
+			continue
+		}
+		result = append(result, *tag)
+	}
+
+	if len(result) < 1 {
+		return nil
+	}
+	return result
 }
 
 func GetPZLinks(pzName string) []string {

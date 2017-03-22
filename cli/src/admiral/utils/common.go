@@ -118,3 +118,13 @@ func ValuesToStrings(v []reflect.Value) []string {
 	}
 	return result
 }
+
+func IsNilOrEmptyStr(arr []string) bool {
+	if arr == nil {
+		return true
+	}
+	if len(arr) < 1 {
+		return true
+	}
+	return false
+}

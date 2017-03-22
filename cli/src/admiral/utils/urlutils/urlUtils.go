@@ -78,6 +78,8 @@ func (rt ResourceType) GetBaseUrl() string {
 		return "/config/registries"
 	case LoginOut:
 		return "/core/authn/basic"
+	case TagAssignment:
+		return "/resources/tag-assignment"
 	default:
 		return ""
 	}
@@ -112,6 +114,7 @@ const (
 	Registry
 	ClosureDescription
 	LoginOut
+	TagAssignment
 )
 
 func BuildUrl(resType ResourceType, queryParameters map[string]interface{}, includeAdmiralUrl bool) string {

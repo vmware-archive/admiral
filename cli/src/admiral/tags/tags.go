@@ -89,6 +89,15 @@ func (tl *TagList) GetCount() int {
 	return len(tl.Documents)
 }
 
+type TagAssignmentRequest struct {
+	ResourceLink   string `json:"resourceLink,omitempty"`
+	TagsToAssign   []Tag  `json:"tagsToAssign,omitempty"`
+	TagsToUnassign []Tag  `json:"tagsToUnassign,omitempty"`
+	// Populated by this service with the entire set of tag links on the resource after the
+	// assignment/unassignment have been completed.
+	TagLinks []string `json:"tagLinks,omitempty"`
+}
+
 func GetTagIdByEqualKeyVals(input string, createIfNotExist bool) (string, error) {
 	tagToMatch, err := NewTag(input)
 	if err != nil {
