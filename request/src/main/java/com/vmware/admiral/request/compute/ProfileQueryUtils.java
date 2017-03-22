@@ -91,11 +91,13 @@ public class ProfileQueryUtils {
 
             entriesPerEndpoint.computeIfAbsent(epl, k -> new ArrayList<>())
                     .add(new ProfileEntry(rp.documentSelfLink, null));
-        }).thenCompose(v -> DeferredResult.allOf(entriesPerEndpoint.keySet().stream()
-                .map(epl -> host.sendWithDeferredResult(
-                        Operation.createGet(host, epl).setReferer(referer),
-                        EndpointState.class))
-                .collect(Collectors.toList()))
+        }).thenCompose(v -> {
+            return DeferredResult.allOf(entriesPerEndpoint.keySet().stream()
+                    .map(epl -> host.sendWithDeferredResult(
+                            Operation.createGet(host, epl).setReferer(referer),
+                            EndpointState.class))
+                    .collect(Collectors.toList()));
+        }
         ).thenCompose(endpoints -> {
 
             if (endpoints == null || endpoints.isEmpty()) {
@@ -148,9 +150,11 @@ public class ProfileQueryUtils {
             return filteredEndpoints;
         }).thenApply(eps -> eps.stream()
                 .map(ep -> applyEndpoint(ep, entriesPerEndpoint.get(ep.documentSelfLink)))
-        ).thenCompose(entriesStream -> DeferredResult.allOf(entriesStream
+        ).thenCompose(entriesStream -> {
+            return DeferredResult.allOf(entriesStream
                 .map(entries -> queryProfiles(host, entries, tenantLinks, profileLinks))
-                .collect(Collectors.toList()))
+                    .collect(Collectors.toList()));
+        }
         ).whenComplete((all, ex) -> {
             if (ex != null) {
                 consumer.accept(null, ex);
