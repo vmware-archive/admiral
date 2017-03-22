@@ -17,6 +17,8 @@ import static org.junit.Assert.assertTrue;
 import static com.vmware.admiral.test.integration.TestPropertiesUtil.getSystemOrTestProp;
 
 import java.net.URI;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.gson.JsonArray;
@@ -34,6 +36,7 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
+import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
@@ -55,11 +58,14 @@ import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsSe
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
+    private static final String DOCUMENT_LINKS = "documentLinks";
     private static final String TEMPLATE_FILE = "Admiral_master_and_0.9.1_release.yaml";
+    private static final String TEMPLATE_HELLO_WORLD_NETWORK = "HelloWorld_network.yaml";
     private static final String ADMIRAL_BRANCH_NAME = "admiral-branch";
     private static final String ADMIRAL_MASTER_NAME = "admiral-master";
 
     private static final String SEPARATOR = "/";
+    private static final String EXPAND = "?expand";
 
     private static final String UPGRADE_SKIP_INITIALIZE = "upgrade.skip.initialize";
     private static final String UPGRADE_SKIP_VALIDATE = "upgrade.skip.validate";
@@ -69,6 +75,11 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
             IntegratonTestStateFactory.AUTH_CREDENTIALS_ID;
     private static final String COMPUTE_SELF_LINK = ComputeService.FACTORY_LINK + SEPARATOR
             + IntegratonTestStateFactory.DOCKER_COMPUTE_ID;
+
+    private ContainerState admiralBranchContainer;
+    private ContainerState admiralMasterContainer;
+
+    private Set<String> applicationsToDelete = new HashSet<>();
 
     private static ServiceClient serviceClient;
 
@@ -119,27 +130,31 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
                 .collect(Collectors.toList()).get(0);
         waitForStatusCode(URI.create(getBaseUrl() + admiralBranchContainerLink),
                 Operation.STATUS_CODE_OK);
-        ContainerState admiralBranchContainer = getDocument(admiralBranchContainerLink,
-                ContainerState.class);
+        admiralBranchContainer = getDocument(admiralBranchContainerLink, ContainerState.class);
 
         String admiralMasterContainerLink = cc.componentLinks.stream()
                 .filter((l) -> l.contains(ADMIRAL_MASTER_NAME))
                 .collect(Collectors.toList()).get(0);
         waitForStatusCode(URI.create(getBaseUrl() + admiralMasterContainerLink),
                 Operation.STATUS_CODE_OK);
-        ContainerState admiralMasterContainer = getDocument(admiralMasterContainerLink,
-                ContainerState.class);
+        admiralMasterContainer = getDocument(admiralMasterContainerLink, ContainerState.class);
 
         String skipInit = getSystemOrTestProp(UPGRADE_SKIP_INITIALIZE, "false");
         if (skipInit.equals(Boolean.FALSE.toString())) {
+            logger.info("---------- Initialize content before upgrade. --------");
             addContentToTheProvisionedAdmiral(admiralBranchContainer);
+        } else {
+            logger.info("---------- Skipping content initialization. --------");
         }
 
         String skipValidate = getSystemOrTestProp(UPGRADE_SKIP_VALIDATE, "false");
         if (skipValidate.equals(Boolean.FALSE.toString())) {
+            logger.info("---------- Migrate data and validate content. --------");
             migrateData(admiralBranchContainer, admiralMasterContainer);
             validateContent(admiralMasterContainer);
             removeData(admiralMasterContainer);
+        } else {
+            logger.info("---------- Skipping content validation. --------");
         }
     }
 
@@ -158,6 +173,7 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         MigrationRequest migrationRequest = new MigrationRequest();
         migrationRequest.sourceNodeGroup = source;
         try {
+            logger.info("---------- Send migration request. --------");
             sendRequest(HttpMethod.POST, NodeMigrationService.SELF_LINK,
                     Utils.toJson(migrationRequest));
         } finally {
@@ -167,13 +183,17 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
     }
 
     private void removeData(ContainerState admiralContainer) throws Exception {
-        changeBaseURI(admiralContainer);
+        changeBaseURI(admiralMasterContainer);
+        if (!applicationsToDelete.isEmpty()) {
+            requestContainerDelete(applicationsToDelete, false);
+        }
         delete(COMPUTE_SELF_LINK);
         delete(CREDENTIALS_SELF_LINK);
         setBaseURI(null);
     }
 
     private void validateContent(ContainerState admiralContainer) throws Exception {
+        logger.info("---------- Validate compatibility. --------");
         changeBaseURI(admiralContainer);
         // wait for the admiral container to start
         URI uri = URI.create(getBaseUrl() + NodeHealthCheckService.SELF_LINK);
@@ -208,22 +228,41 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
                 com.vmware.admiral.test.integration.client.AuthCredentialsServiceState.class);
         assertTrue(credentials != null);
 
-        // get all the containers with expand - validate xenon issue:
-        // https://www.pivotaltracker.com/n/projects/1471320/stories/137898729
-        HttpResponse response = SimpleHttpsClient.execute(HttpMethod.GET,
-                getBaseUrl() + buildServiceUri("/resources/containers?expand"));
-        assertTrue(response.statusCode == 200);
+        // container
+        validateResources(ManagementUriParts.CONTAINERS,
+                com.vmware.admiral.test.integration.client.ContainerState.class);
 
-        // There are at least 2 containers availabale the provisioned admiral and the agent
-        JsonElement json = new JsonParser().parse(response.responseBody);
-        JsonObject jsonObject = json.getAsJsonObject();
-        JsonArray documentLinks = jsonObject.getAsJsonArray("documentLinks");
-        for (int i = 0; i < documentLinks.size(); i++) {
-            String selfLink = documentLinks.get(i).getAsString();
-            com.vmware.admiral.test.integration.client.ContainerState state = getDocument(selfLink,
-                    com.vmware.admiral.test.integration.client.ContainerState.class);
-            assertTrue(state != null);
-        }
+        // application
+        validateResources(ManagementUriParts.COMPOSITE_COMPONENT,
+                com.vmware.admiral.test.integration.client.CompositeComponent.class);
+
+        // network
+        validateResources(ManagementUriParts.CONTAINER_NETWORKS,
+                com.vmware.admiral.test.integration.client.ContainerNetworkState.class);
+
+        // event-log
+        validateResources(ManagementUriParts.EVENT_LOG,
+                com.vmware.admiral.test.integration.client.EventLogState.class);
+
+        // request-status
+        validateResources(ManagementUriParts.REQUEST_STATUS,
+                com.vmware.admiral.test.integration.client.ContainerRequestStatus.class);
+
+        // placement
+        validateResources(ManagementUriParts.RESOURCE_GROUP_PLACEMENTS,
+                com.vmware.admiral.test.integration.client.GroupResourcePlacementState.class);
+
+        // composite-description (template)
+        validateResources(ManagementUriParts.COMPOSITE_DESC,
+                com.vmware.admiral.test.integration.client.CompositeDescription.class);
+
+         // certificate
+        validateResources(ManagementUriParts.SSL_TRUST_CERTS,
+                com.vmware.admiral.test.integration.client.SslTrustCertificateState.class);
+
+        // placement zone
+        validateResources(ManagementUriParts.ELASTIC_PLACEMENT_ZONE_CONFIGURATION,
+                com.vmware.admiral.test.integration.client.ElasticPlacementZoneConfigurationState.class);
 
         setBaseURI(null);
     }
@@ -244,13 +283,54 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         waitForStatusCode(uri, Operation.STATUS_CODE_OK);
         uri = URI.create(getBaseUrl() + ManagementUriParts.CONTAINER_HOSTS);
         waitForStatusCode(uri, Operation.STATUS_CODE_OK);
+        // Create event. The template does not exist on the new admiral host
+        boolean requestContainerFailed = false;
+        try {
+            requestContainer(getResourceDescriptionLink(false, RegistryType.V1_SSL_SECURE));
+        } catch (Exception e) {
+            // Do nothing we want the request to fail in order to create an event
+            requestContainerFailed = true;
+        }
+        if (!requestContainerFailed) {
+            throw new IllegalStateException("Container request was expected to fail!");
+        }
 
         // create documents to check for after upgrade
+        compositeDescriptionLink = importTemplate(serviceClient, TEMPLATE_HELLO_WORLD_NETWORK);
+        // try to provision in order to create an event state
         setupCoreOsHost(DockerAdapterType.API, false);
-        // credentials
+        // provision an application with network
+        requestContainer(
+                getResourceDescriptionLink(false, RegistryType.V1_SSL_SECURE));
+
         AuthCredentialsServiceState credentials = IntegratonTestStateFactory
                 .createAuthCredentials(false);
         postDocument(AuthCredentialsService.FACTORY_LINK, credentials);
+
+        // placement zone
+        ElasticPlacementZoneConfigurationState epzConfigState = new ElasticPlacementZoneConfigurationState();
+        epzConfigState.resourcePoolState = IntegratonTestStateFactory.createResourcePool();
+        postDocument(ManagementUriParts.ELASTIC_PLACEMENT_ZONE_CONFIGURATION, epzConfigState);
+
         setBaseURI(null);
+    }
+
+    private <T> void validateResources(String endpoint, Class<? extends T> clazz) throws Exception {
+        HttpResponse response = SimpleHttpsClient.execute(HttpMethod.GET,
+                getBaseUrl() + buildServiceUri(endpoint + EXPAND), null, null);
+        assertTrue(response.statusCode == 200);
+        JsonElement json = new JsonParser().parse(response.responseBody);
+        JsonObject jsonObject = json.getAsJsonObject();
+        JsonArray documentLinks =  jsonObject.getAsJsonArray(DOCUMENT_LINKS);
+        assertTrue(documentLinks.size() > 0);
+        for (int i = 0; i < documentLinks.size(); i++) {
+            String selfLink = documentLinks.get(i).getAsString();
+            T state = getDocument(selfLink, clazz);
+            assertTrue(state != null);
+            // add applications created in the initialization phase for deletion
+            if (com.vmware.admiral.test.integration.client.CompositeComponent.class.equals(clazz)) {
+                applicationsToDelete.add(selfLink);
+            }
+        }
     }
 }
