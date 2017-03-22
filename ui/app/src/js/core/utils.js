@@ -530,7 +530,8 @@ var utils = {
       return this.getConfigurationPropertyBoolean('allow.browser.ssh.console')
                 && !this.isApplicationSingleView()
                 && this.isContainerStatusOk(resource.powerState)
-                && !this.isContainerStatusInactive(resource.powerState);
+                && !this.isContainerStatusInactive(resource.powerState)
+                && !resource.isOnVchHost;
     }
 
     return true;
