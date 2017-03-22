@@ -26,6 +26,7 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.X509ExtendedKeyManager;
 import javax.net.ssl.X509KeyManager;
 
+import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Utils;
 

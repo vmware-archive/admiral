@@ -32,7 +32,7 @@ import net.schmizz.sshj.transport.TransportException;
 import net.schmizz.sshj.transport.verification.HostKeyVerifier;
 import net.schmizz.sshj.userauth.keyprovider.OpenSSHKeyFile;
 
-import com.vmware.admiral.common.security.EncryptionUtils;
+import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 

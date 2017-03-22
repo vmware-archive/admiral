@@ -45,7 +45,6 @@ import org.objenesis.ObjenesisStd;
 import org.objenesis.instantiator.ObjectInstantiator;
 
 import com.vmware.admiral.common.util.AssertUtil;
-import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
@@ -54,6 +53,7 @@ import com.vmware.admiral.common.util.TestServerX509TrustManager;
 import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.admiral.service.common.TaskServiceDocument;
+import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.LocalizableValidationException;

@@ -13,12 +13,12 @@ package com.vmware.admiral.host.interceptor;
 
 import java.util.logging.Level;
 
-import com.vmware.admiral.common.security.EncryptionUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.admiral.service.common.AuthBootstrapService.CredentialsScope;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;

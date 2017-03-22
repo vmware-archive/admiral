@@ -36,7 +36,6 @@ import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.common.test.CommonTestStateFactory;
-import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ResourceType;
@@ -62,6 +61,7 @@ import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCert
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.VerificationHost;
 import com.vmware.xenon.services.common.ServiceUriPaths;

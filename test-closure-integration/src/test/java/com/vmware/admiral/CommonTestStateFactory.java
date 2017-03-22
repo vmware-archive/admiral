@@ -19,8 +19,8 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.UUID;
 
-import com.vmware.admiral.common.AuthCredentialsType;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
+import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
 public class CommonTestStateFactory {

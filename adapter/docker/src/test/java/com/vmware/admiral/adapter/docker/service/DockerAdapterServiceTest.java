@@ -47,9 +47,7 @@ import com.vmware.admiral.adapter.common.service.mock.MockTaskService.MockTaskSt
 import com.vmware.admiral.adapter.docker.mock.BaseMockDockerTestCase;
 import com.vmware.admiral.adapter.docker.mock.MockDockerPathConstants;
 import com.vmware.admiral.adapter.docker.util.DockerPortMapping.Protocol;
-import com.vmware.admiral.common.AuthCredentialsType;
 import com.vmware.admiral.common.DeploymentProfileConfig;
-import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
@@ -68,6 +66,8 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
+import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;

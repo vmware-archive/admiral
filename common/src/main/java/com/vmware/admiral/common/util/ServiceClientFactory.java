@@ -18,6 +18,7 @@ import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 
+import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.http.netty.NettyHttpServiceClient;

@@ -21,10 +21,10 @@ import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
 
-import com.vmware.admiral.common.AuthCredentialsType;
-import com.vmware.admiral.common.util.KeyUtil;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
+import com.vmware.photon.controller.model.security.util.KeyUtil;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;

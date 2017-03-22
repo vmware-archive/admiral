@@ -25,12 +25,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.common.test.CommonTestStateFactory;
-import com.vmware.admiral.common.util.CertificateUtil;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
+import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.UriUtils;
