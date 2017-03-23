@@ -156,15 +156,18 @@ public class ComputeDescriptionProfileEnhancer extends ComputeDescriptionEnhance
             String subnetLink = EnhancerUtils.getCustomProperty(cd, "subnetworkLink");
             createNicDesc(context, cd, null, subnetLink, result);
         } else {
-            Query q = Query.Builder.create()
+            Query.Builder queryBuilder = Query.Builder.create()
                     .addKindFieldClause(NetworkState.class)
                     .addCaseInsensitiveFieldClause(NetworkState.FIELD_NAME_NAME, networkId,
                             MatchType.TERM, Occurance.MUST_OCCUR)
-                    .addFieldClause(NetworkState.FIELD_NAME_REGION_ID, context.regionId)
-                    .build();
+                    .addFieldClause(NetworkState.FIELD_NAME_ENDPOINT_LINK, context.endpointLink);
+
+            if (context.regionId != null) {
+                queryBuilder.addFieldClause(NetworkState.FIELD_NAME_REGION_ID, context.regionId);
+            }
 
             QueryTask queryTask = QueryTask.Builder.createDirectTask()
-                    .setQuery(q)
+                    .setQuery(queryBuilder.build())
                     .build();
             queryTask.tenantLinks = cd.tenantLinks;
             Operation.createPost(UriUtils.buildUri(this.host, ServiceUriPaths.CORE_QUERY_TASKS))

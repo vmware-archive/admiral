@@ -17,15 +17,18 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import java.net.URI;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.UUID;
 
 import org.junit.After;
@@ -417,10 +420,13 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     }
 
     protected ComputeDescription prepareComputeDescription() throws Exception {
+        SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd-HH:mm:ss.SSS");
+        df.setTimeZone(TimeZone.getTimeZone("GMT"));
+
         String id = name(getEndpointType(), "test", UUID.randomUUID().toString());
         ComputeDescription computeDesc = new ComputeDescription();
         computeDesc.id = id;
-        computeDesc.name = "belvm" + String.valueOf(System.currentTimeMillis() / 1000);
+        computeDesc.name = "prelude-test-" + df.format(new Date());
         computeDesc.instanceType = "small";
         computeDesc.tenantLinks = getTenantLinks();
         computeDesc.customProperties = new HashMap<>();
