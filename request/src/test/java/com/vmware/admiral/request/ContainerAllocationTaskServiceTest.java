@@ -213,6 +213,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
     public void testContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncludedShouldFail() throws Throwable {
         host.log(">>>>>>Start: testContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncludedShouldFail <<<<< ");
         containerDesc.healthConfig = createHealthConfigTcp();
+        containerDesc.healthConfig.ignoreOnProvision = false;
         doOperation(containerDesc, UriUtils.buildUri(host, containerDesc.documentSelfLink),
                 false, Action.PUT);
 
@@ -246,7 +247,6 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
     public void testContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncludedWhichFailsContinueProvisioning() throws Throwable {
         host.log(">>>>>>Start: testContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncludedWhichFailsContinueProvisioning <<<<< ");
         containerDesc.healthConfig = createHealthConfigTcp();
-        containerDesc.healthConfig.continueProvisioningOnError = true;
 
         doOperation(containerDesc, UriUtils.buildUri(host, containerDesc.documentSelfLink),
                 false, Action.PUT);
@@ -283,7 +283,6 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         host.log(
                 ">>>>>>Start: testContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncludedWhichFailsContinueProvisioningImmediately <<<<< ");
         containerDesc.healthConfig = createHealthConfigTcp();
-        containerDesc.healthConfig.continueProvisioningOnError = true;
 
         doOperation(containerDesc, UriUtils.buildUri(host, containerDesc.documentSelfLink),
                 false, Action.PUT);
@@ -357,6 +356,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         host.log(">>>>>>Start: testClusteredContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncludedShoudFail <<<<< ");
         final int clusterSize = 5;
         containerDesc.healthConfig = createHealthConfigTcp();
+        containerDesc.healthConfig.ignoreOnProvision = false;
         containerDesc._cluster = clusterSize;
         doOperation(containerDesc, UriUtils.buildUri(host, containerDesc.documentSelfLink),
                 false, Action.PUT);
