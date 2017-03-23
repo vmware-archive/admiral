@@ -87,6 +87,21 @@ public class CompositeDescriptionService extends StatefulService {
             PUBLISHED,
             RETIRED
         }
+
+        @Override
+        public void copyTo(ServiceDocument target) {
+            super.copyTo(target);
+            if (target instanceof CompositeDescription) {
+                CompositeDescription cd = (CompositeDescription)target;
+                cd.name = this.name;
+                cd.status = this.status;
+                cd.lastPublished = this.lastPublished;
+                cd.parentDescriptionLink = this.parentDescriptionLink;
+                cd.descriptionLinks = this.descriptionLinks;
+                cd.customProperties = this.customProperties;
+                cd.bindings = this.bindings;
+            }
+        }
     }
 
     public static class CompositeDescriptionExpanded extends CompositeDescription {
@@ -94,16 +109,8 @@ public class CompositeDescriptionService extends StatefulService {
 
         private static CompositeDescriptionExpanded expand(CompositeDescription cd) {
             CompositeDescriptionExpanded cdExpanded = new CompositeDescriptionExpanded();
-            cdExpanded.name = cd.name;
-            cdExpanded.status = cd.status;
-            cdExpanded.lastPublished = cd.lastPublished;
-            cdExpanded.parentDescriptionLink = cd.parentDescriptionLink;
-            cdExpanded.documentSelfLink = cd.documentSelfLink;
-            cdExpanded.customProperties = cd.customProperties;
-            cdExpanded.descriptionLinks = cd.descriptionLinks;
-            cdExpanded.tenantLinks = cd.tenantLinks;
+            cd.copyTo(cdExpanded);
             cdExpanded.componentDescriptions = new ArrayList<>();
-            cdExpanded.bindings = cd.bindings;
             return cdExpanded;
         }
     }

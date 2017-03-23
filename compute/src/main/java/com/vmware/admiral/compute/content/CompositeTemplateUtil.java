@@ -334,12 +334,12 @@ public class CompositeTemplateUtil {
 
         if (!isNullOrEmpty(entity.components)) {
             sanitizeContainerComponents(entity, serialize);
-            sanitizeContainerNerworkComponents(entity);
+            sanitizeContainerNetworkComponents(entity);
             normalizeClosureDescriptions(entity, serialize);
         }
     }
 
-    private static void sanitizeContainerNerworkComponents(CompositeTemplate entity) {
+    private static void sanitizeContainerNetworkComponents(CompositeTemplate entity) {
         for (Entry<String, ComponentTemplate<ContainerNetworkDescription>> entry : filterComponentTemplates(
                 entity.components, ContainerNetworkDescription.class).entrySet()) {
 
@@ -893,7 +893,7 @@ public class CompositeTemplateUtil {
         return description;
     }
 
-    public static void assertContainersComponentsOnly(
+    public static void assertComponentTypes(
             Map<String, ComponentTemplate<?>> components) {
         assertNotEmpty(components, "components");
 
