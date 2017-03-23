@@ -97,8 +97,12 @@ public class HealthChecker {
         @JsonProperty("unhealthy_threshold")
         public Integer unhealthyThreshold;
 
-        @JsonProperty("continue_provisioning_on_error")
-        public boolean continueProvisioningOnError;
+        /** If set to true the health check is ignored on provision. Default is true. */
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
+        @Documentation(description = "Ignore health check on provision. Default is true.")
+        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        @JsonProperty("ignore_on_provision")
+        public Boolean ignoreOnProvision;
 
         /** If set to true the unhealthy containers from a description will be redeployed. */
         @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)

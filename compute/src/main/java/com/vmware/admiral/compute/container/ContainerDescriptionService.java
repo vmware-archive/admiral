@@ -796,7 +796,7 @@ public class ContainerDescriptionService extends StatefulService {
         template.healthConfig.timeoutMillis = 2000;
         template.healthConfig.healthyThreshold = 2;
         template.healthConfig.unhealthyThreshold = 2;
-        template.healthConfig.continueProvisioningOnError = true;
+        template.healthConfig.ignoreOnProvision = true;
         template.healthConfig.autoredeploy = true;
 
         template.networks = new LinkedHashMap<>();

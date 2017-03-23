@@ -444,6 +444,8 @@ class ContainerDefinitionForm extends Component {
       healthConfigModeChanged(that.$el, this.value);
     });
 
+    this.$el.find('.health-ignore-on-provision-input .checkbox-control').prop('checked', true);
+
     this.logConfigOptionsEditor = new MulticolumnInputs(
       this.$el.find('.container-logconfig-options-input .form-control'), {
         name: enhanceLabels('app.container.request.inputs.logConfigOptionsInputs.name'),
@@ -542,8 +544,8 @@ class ContainerDefinitionForm extends Component {
     var healthConfig = {};
     healthConfig.protocol = this.$el.find(
       '.container-health-protocol-input input:radio:checked').val();
-    healthConfig.continueProvisioningOnError =
-        this.$el.find('input#health-continue-provisionig-on-error-checkbox').prop('checked');
+    healthConfig.ignoreOnProvision =
+        this.$el.find('.health-ignore-on-provision-input .checkbox-control').is(':checked');
     healthConfig.autoredeploy = this.$el.find('.container-autoredeployment-input .checkbox-control')
       .is(':checked');
     if (healthConfig.protocol === 'COMMAND') {
@@ -1079,8 +1081,8 @@ var updateForm = function(data, oldData) {
     if (data.healthConfig) {
       let protocol = data.healthConfig.protocol;
 
-      this.$el.find('input#health-continue-provisionig-on-error-checkbox')
-        .prop('checked', data.healthConfig.continueProvisioningOnError);
+      this.$el.find('.health-ignore-on-provision-input .checkbox-control')
+        .prop('checked', !!data.healthConfig.ignoreOnProvision);
       this.$el.find('.container-autoredeployment-input .checkbox-control')
         .prop('checked', !!data.healthConfig.autoredeploy);
       this.$el.find('.container-health-protocol-input input[value='
@@ -1176,23 +1178,23 @@ function healthConfigModeChanged($el, mode) {
       $el.find('#health-config').show();
       $el.find('.container-health-path-input').show();
       $el.find('#health-config-command').hide();
-      $el.find('#health-continue-provisionig-on-error').show();
+      $el.find('.health-ignore-on-provision-input').show();
       $el.find('.container-autoredeployment-input').show();
     } else if (mode === 'TCP') {
       $el.find('#health-config').show();
       $el.find('.container-health-path-input').hide();
       $el.find('#health-config-command').hide();
-      $el.find('#health-continue-provisionig-on-error').show();
+      $el.find('.health-ignore-on-provision-input').show();
       $el.find('.container-autoredeployment-input').show();
     } else if (mode === 'NONE') {
       $el.find('#health-config').hide();
       $el.find('#health-config-command').hide();
-      $el.find('#health-continue-provisionig-on-error').hide();
+      $el.find('.health-ignore-on-provision-input').hide();
       $el.find('.container-autoredeployment-input').hide();
     } else if (mode === 'COMMAND') {
       $el.find('#health-config-command').show();
       $el.find('#health-config').hide();
-      $el.find('#health-continue-provisionig-on-error').show();
+      $el.find('.health-ignore-on-provision-input').show();
       $el.find('.container-autoredeployment-input').show();
     }
 }

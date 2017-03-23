@@ -821,7 +821,7 @@ public class ContainerAllocationTaskService extends
             return;
         }
 
-        if (this.containerDescription.healthConfig.continueProvisioningOnError) {
+        if (!Boolean.FALSE.equals(this.containerDescription.healthConfig.ignoreOnProvision)) {
             logInfo("Skipping health check. Health config set to ignore it on provision.");
             proceedTo(SubStage.COMPLETED);
             return;
