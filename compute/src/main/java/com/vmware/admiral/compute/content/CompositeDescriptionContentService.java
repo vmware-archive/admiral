@@ -18,7 +18,7 @@ import static com.vmware.admiral.common.util.OperationUtil.isApplicationYamlCont
 import static com.vmware.admiral.common.util.UriUtilsExtended.MEDIA_TYPE_APPLICATION_YAML;
 import static com.vmware.admiral.common.util.ValidationUtils.handleValidationException;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.FORMATTER;
-import static com.vmware.admiral.compute.content.CompositeTemplateUtil.assertContainersComponentsOnly;
+import static com.vmware.admiral.compute.content.CompositeTemplateUtil.assertComponentTypes;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.convertCompositeDescriptionToCompositeTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.deserializeCompositeTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.deserializeDockerCompose;
@@ -248,40 +248,30 @@ public class CompositeDescriptionContentService extends StatelessService {
     private void processCompositeTemplate(CompositeTemplate template, Operation op) {
         validateCompositeTemplate(template);
 
-        Operation createDescriptionOp = Operation.createPost(this,
-                CompositeDescriptionFactoryService.SELF_LINK);
-
         DeferredResult<List<Operation>> components = createComponents(template);
-
-        DeferredResult<Object> handle = components.thenCompose((ops) -> {
+        components.thenCompose((ops) -> {
             CompositeDescription description = fromCompositeTemplateToCompositeDescription(
                     template);
             description.descriptionLinks = ops.stream()
                     .map((o) -> o.getBody(ServiceDocument.class).documentSelfLink)
                     .collect(Collectors.toList());
 
-            createDescriptionOp.setBody(description).setReferer(getUri());
-            return getHost().sendWithDeferredResult(createDescriptionOp);
-        }).handle((o, e) -> {
+            Operation createDescriptionOp = Operation
+                    .createPost(this, CompositeDescriptionFactoryService.SELF_LINK)
+                    .setBody(description);
+            return sendWithDeferredResult(createDescriptionOp, CompositeDescription.class);
+        }).whenComplete((description, e) -> {
             if (e != null) {
                 logWarning("Failed to create CompositeDescription: %s", Utils.toString(e));
                 LocalizableValidationException ex = new LocalizableValidationException(e,
                         "Failed to create CompositeDescription: " + Utils.toString(e),
                         "compute.composite-description.create.failed");
                 op.fail(ex);
-                return null;
             } else {
-                CompositeDescription description = o.getBody(CompositeDescription.class);
-                op.addResponseHeader(Operation.LOCATION_HEADER,
-                        description.documentSelfLink);
+                op.addResponseHeader(Operation.LOCATION_HEADER, description.documentSelfLink);
                 op.complete();
             }
-            return null;
         });
-
-        if (handle.isDone()) {
-            // do something with the deferred result because findbugs complains
-        }
     }
 
     private void processKubernetesTemplate(String yamlContent, Operation post) {
@@ -344,7 +334,7 @@ public class CompositeDescriptionContentService extends StatelessService {
     private void validateCompositeTemplate(CompositeTemplate compositeTemplate) {
         assertNotNull(compositeTemplate, "compositeTemplate");
         assertNotEmpty(compositeTemplate.name, "name");
-        assertContainersComponentsOnly(compositeTemplate.components);
+        assertComponentTypes(compositeTemplate.components);
     }
 
 }

@@ -18,7 +18,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import static com.vmware.admiral.compute.content.CompositeTemplateUtil.assertContainersComponentsOnly;
+import static com.vmware.admiral.compute.content.CompositeTemplateUtil.assertComponentTypes;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.deserializeCompositeTemplate;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.deserializeDockerCompose;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.fromCompositeTemplateToDockerCompose;
@@ -71,7 +71,7 @@ public class CompositeTemplateUtilTest {
         CompositeTemplate template1 = fromDockerComposeToCompositeTemplate(compose1);
         template1.name = expectedTemplate.name; // because of the timestamp
 
-        assertContainersComponentsOnly(template1.components);
+        assertComponentTypes(template1.components);
 
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 2,
                 template1.components);
@@ -92,7 +92,7 @@ public class CompositeTemplateUtilTest {
         CompositeTemplate template2 = fromDockerComposeToCompositeTemplate(compose2);
         template2.name = expectedTemplate.name; // because of the timestamp
 
-        assertContainersComponentsOnly(template2.components);
+        assertComponentTypes(template2.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 2,
                 template1.components);
         assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 0,
@@ -121,7 +121,7 @@ public class CompositeTemplateUtilTest {
         CompositeTemplate template1 = fromDockerComposeToCompositeTemplate(compose1);
         template1.name = expectedTemplate.name; // because of the timestamp
 
-        assertContainersComponentsOnly(template1.components);
+        assertComponentTypes(template1.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 3,
                 template1.components);
         assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 2,
@@ -149,7 +149,7 @@ public class CompositeTemplateUtilTest {
         CompositeTemplate template2 = fromDockerComposeToCompositeTemplate(compose2);
         template2.name = expectedTemplate.name; // because of the timestamp
 
-        assertContainersComponentsOnly(template2.components);
+        assertComponentTypes(template2.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 3,
                 template2.components);
         assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 3,
@@ -178,7 +178,7 @@ public class CompositeTemplateUtilTest {
         CompositeTemplate template1 = fromDockerComposeToCompositeTemplate(compose1);
         template1.name = expectedTemplate.name; // because of the timestamp
 
-        assertContainersComponentsOnly(template1.components);
+        assertComponentTypes(template1.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 2,
                 template1.components);
         assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 0,
@@ -203,7 +203,7 @@ public class CompositeTemplateUtilTest {
         CompositeTemplate template2 = fromDockerComposeToCompositeTemplate(compose2);
         template2.name = expectedTemplate.name; // because of the timestamp
 
-        assertContainersComponentsOnly(template2.components);
+        assertComponentTypes(template2.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 3,
                 template2.components);
         assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 0,
@@ -458,7 +458,7 @@ public class CompositeTemplateUtilTest {
 
         assertNull(template.id);
         assertNull(template.status);
-        assertContainersComponentsOnly(template.components);
+        assertComponentTypes(template.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 5,
                 template.components);
         assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 0,
@@ -488,7 +488,7 @@ public class CompositeTemplateUtilTest {
 
         assertNull(template.id);
         assertNull(template.status);
-        assertContainersComponentsOnly(template.components);
+        assertComponentTypes(template.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 3,
                 template.components);
         assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 3,
@@ -517,7 +517,7 @@ public class CompositeTemplateUtilTest {
 
         assertNull(template.id);
         assertNull(template.status);
-        assertContainersComponentsOnly(template.components);
+        assertComponentTypes(template.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 3,
                 template.components);
         assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 0,
@@ -551,7 +551,7 @@ public class CompositeTemplateUtilTest {
 
         assertNull(template.id);
         assertNull(template.status);
-        assertContainersComponentsOnly(template.components);
+        assertComponentTypes(template.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 4,
                 template.components);
         assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 0,
@@ -579,7 +579,7 @@ public class CompositeTemplateUtilTest {
 
         assertNull(template.id);
         assertNull(template.status);
-        assertContainersComponentsOnly(template.components);
+        assertComponentTypes(template.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 3,
                 template.components);
         assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 2,
@@ -607,7 +607,7 @@ public class CompositeTemplateUtilTest {
 
         assertNull(template.id);
         assertNull(template.status);
-        assertContainersComponentsOnly(template.components);
+        assertComponentTypes(template.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 2,
                 template.components);
         assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 0,
@@ -635,7 +635,7 @@ public class CompositeTemplateUtilTest {
 
         assertNull(template.id);
         assertNull(template.status);
-        assertContainersComponentsOnly(template.components);
+        assertComponentTypes(template.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 3,
                 template.components);
         assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 3,
@@ -663,7 +663,7 @@ public class CompositeTemplateUtilTest {
 
         assertNull(template.id);
         assertNull(template.status);
-        assertContainersComponentsOnly(template.components);
+        assertComponentTypes(template.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 3,
                 template.components);
         assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 0,
@@ -685,7 +685,7 @@ public class CompositeTemplateUtilTest {
 
         assertNull(template.id);
         assertNull(template.status);
-        assertContainersComponentsOnly(template.components);
+        assertComponentTypes(template.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 1,
                 template.components);
         assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 0,
@@ -719,7 +719,7 @@ public class CompositeTemplateUtilTest {
 
         assertNull(template.id);
         assertNull(template.status);
-        assertContainersComponentsOnly(template.components);
+        assertComponentTypes(template.components);
         assertContainersComponents(ResourceType.CONTAINER_TYPE.getContentType(), 3,
                 template.components);
         assertContainersComponents(ResourceType.NETWORK_TYPE.getContentType(), 2,

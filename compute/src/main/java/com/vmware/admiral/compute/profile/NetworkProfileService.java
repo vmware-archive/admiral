@@ -73,7 +73,6 @@ public class NetworkProfileService extends StatefulService {
             if (target instanceof NetworkProfile) {
                 NetworkProfile targetState = (NetworkProfile) target;
                 targetState.name = this.name;
-                targetState.tenantLinks = this.tenantLinks;
                 targetState.tagLinks = this.tagLinks;
                 targetState.subnetLinks = this.subnetLinks;
                 targetState.isolationType = this.isolationType;

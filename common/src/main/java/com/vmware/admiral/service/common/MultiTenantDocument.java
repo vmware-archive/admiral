@@ -29,4 +29,12 @@ public abstract class MultiTenantDocument extends ServiceDocument {
     @PropertyOptions(indexing = { PropertyIndexingOption.EXPAND })
     public List<String> tenantLinks;
 
+    @Override
+    public void copyTo(ServiceDocument target) {
+        super.copyTo(target);
+        if (target instanceof MultiTenantDocument) {
+            MultiTenantDocument mtd = (MultiTenantDocument)target;
+            mtd.tenantLinks = this.tenantLinks;
+        }
+    }
 }
