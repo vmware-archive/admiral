@@ -40,7 +40,7 @@ export default Vue.component('vsphere-endpoint-editor', {
         :label="i18n('app.endpoint.edit.vsphere.regionIdLabel')"
         :loading="regionIdLoading"
         :options="regionIdValues"
-        :required="true"
+        :required="false"
         :value="convertToObject(regionId)"
         @change="onRegionIdChange">
       </dropdown-search-group>
@@ -121,7 +121,7 @@ export default Vue.component('vsphere-endpoint-editor', {
           privateKey: this.privateKey,
           regionId: this.regionId
         },
-        valid: this.hostName && this.privateKeyId && this.privateKey && this.regionId
+        valid: this.hostName && this.privateKeyId && this.privateKey && !this.regionIdLoading
       });
     },
     searchRegionIds() {
@@ -131,6 +131,7 @@ export default Vue.component('vsphere-endpoint-editor', {
         services.searchRegionIds(hostName, privateKeyId, privateKey).then((result) => {
           this.regionIdLoading = false;
           this.regionIdValues = result.datacenters.map(this.convertToObject);
+          this.emitChange();
         }, (e) => {
           this.regionIdLoading = false;
           if (hostName !== this.hostName || privateKeyId !== this.privateKeyId ||
