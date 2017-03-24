@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"admiral/config"
+	"admiral/hosts"
 	. "admiral/testutils"
 )
 
@@ -96,5 +97,7 @@ func TestPlacementAddRemove(t *testing.T) {
 
 	TestPrintln("Removing the host.")
 	hostMsg, err = RunHostRemove([]string{hostId})
+	CheckTestError(err, t)
+	err = hosts.ValidateHostIsDeleted(hostId)
 	CheckTestError(err, t)
 }
