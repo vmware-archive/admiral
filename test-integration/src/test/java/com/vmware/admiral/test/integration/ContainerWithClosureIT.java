@@ -14,6 +14,7 @@ package com.vmware.admiral.test.integration;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,12 +39,16 @@ import com.vmware.xenon.common.TaskState;
 public class ContainerWithClosureIT extends BaseProvisioningOnCoreOsIT {
 
     private static final String TEMPLATE_FILE = "Container_with_closure.yaml";
+    private static final String TEMPLATE_INVALID_FILE = "Container_with_closure_Invalid.yaml";
+    private static final String TEMPLATE_TIMEOUT_FILE = "Container_with_closure_Timeout.yaml";
     private static final String CONTAINER_NAME_MASK = "kitematic";
 
     private static final String INPUT_NAME = "input_a";
     private static final String INPUT_VALUE = "value_a";
 
     private String compositeDescriptionLink;
+    private String compositeTimeoutDescriptionLink;
+    private String compositeInvalidDescriptionLink;
 
     @BeforeClass
     public static void beforeClass() {
@@ -58,11 +63,47 @@ public class ContainerWithClosureIT extends BaseProvisioningOnCoreOsIT {
     @Before
     public void setUp() throws Exception {
         compositeDescriptionLink = importTemplate(serviceClient, TEMPLATE_FILE);
+        compositeTimeoutDescriptionLink = importTemplate(serviceClient, TEMPLATE_TIMEOUT_FILE);
+        compositeInvalidDescriptionLink = importTemplate(serviceClient, TEMPLATE_INVALID_FILE);
     }
 
     @Test
     public void testProvision() throws Exception {
         doProvisionDockerContainerOnCoreOS(false, ContainerHostService.DockerAdapterType.API);
+    }
+
+    @Test
+    public void testNegativeInvalidTempalteProvision() throws Exception {
+        setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
+
+        logger.info("********************************************************************");
+        logger.info("---------- Create RequestBrokerState and start the request --------");
+        logger.info("********************************************************************");
+
+        logger.info("---------- 1. Request invalid closure template instance. --------");
+        try {
+            requestContainer(compositeInvalidDescriptionLink);
+            fail("Unexpected successful request on invalid closure template");
+        } catch (Exception ex) {
+            logger.info("Exception is expected on invalid closure tempalte.");
+        }
+    }
+
+    @Test
+    public void testNegativeTimeoutProvision() throws Exception {
+        setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
+
+        logger.info("********************************************************************");
+        logger.info("---------- Create RequestBrokerState and start the request --------");
+        logger.info("********************************************************************");
+
+        logger.info("---------- 1. Request invalid closure template instance. --------");
+        try {
+            requestContainer(compositeTimeoutDescriptionLink);
+            fail("Unexpected successful request on timeout closure template");
+        } catch (Exception ex) {
+            logger.info("Exception is expected on timeout closure template.");
+        }
     }
 
     @Override
