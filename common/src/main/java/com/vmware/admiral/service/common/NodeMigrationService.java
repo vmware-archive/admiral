@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.TaskState.TaskStage;
@@ -72,7 +73,6 @@ public class NodeMigrationService extends StatelessService {
 
         // Add the factories that are not started from admiral
         services.add("/core/auth/credentials");
-        services.add("/resources/compute");
         services.add("/resources/pools");
         services.add("/resources/groups");
         services.add("/resources/tags");
@@ -88,7 +88,10 @@ public class NodeMigrationService extends StatelessService {
     private void setDependentServices() {
         // elastic placement zones depend on resource pools
         services.remove(ManagementUriParts.ELASTIC_PLACEMENT_ZONES);
+        // compute states should be migrated after containers to avoid discovered containers
+        services.remove(ComputeService.FACTORY_LINK);
         dependentServices.add(ManagementUriParts.ELASTIC_PLACEMENT_ZONES);
+        dependentServices.add(ComputeService.FACTORY_LINK);
     }
 
     private void migrateData(MigrationRequest body, Operation post) {

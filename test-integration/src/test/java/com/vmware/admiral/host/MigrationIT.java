@@ -27,7 +27,10 @@ import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
 import com.vmware.admiral.compute.ElasticPlacementZoneService;
 import com.vmware.admiral.compute.ElasticPlacementZoneService.ElasticPlacementZoneState;
+import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.request.RequestBaseTest;
+import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
+import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.NodeMigrationService;
 import com.vmware.admiral.service.common.NodeMigrationService.MigrationRequest;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
@@ -51,6 +54,7 @@ public class MigrationIT extends RequestBaseTest {
     private List<String> computeStates = new ArrayList<String>();
     private String resourcePoolStateLink;
     private String epzStateLink;
+    private String containerSelfLink;
 
     @Override
     @Before
@@ -70,8 +74,19 @@ public class MigrationIT extends RequestBaseTest {
         setUpDockerHostAuthentication();
         // setup Docker Host:
         createResourcePool();
+        groupPlacementState = createGroupResourcePlacement(resourcePool);
         createMultipleDockerHosts();
         createResourcePoolAndEPZ();
+        createContainer();
+    }
+
+    private void createContainer() throws Throwable {
+        RequestBrokerState request = TestRequestStateFactory.createRequestState();
+        request.resourceDescriptionLink = createContainerDescription().documentSelfLink;
+        request.tenantLinks = groupPlacementState.tenantLinks;
+        request = startRequest(request);
+        request = waitForRequestToComplete(request);
+        containerSelfLink = request.resourceLinks.iterator().next();
     }
 
     protected void createMultipleDockerHosts() throws Throwable {
@@ -123,6 +138,15 @@ public class MigrationIT extends RequestBaseTest {
         });
         this.targetHost.send(post);
         this.targetHost.testWait();
+
+        testCreate(1);
+        URI uri = UriUtils.buildUri(targetHost, containerSelfLink);
+        uri = UriUtils.extendUriWithQuery(uri, new String[0]);
+        try {
+            containerState = getDocument(ContainerState.class, uri);
+        } catch (Throwable e1) {
+            e1.printStackTrace();
+        }
 
         verifyComputeStatesExist();
         // EPZ depends on RP to be migrated, so verify these states are copied
@@ -202,7 +226,13 @@ public class MigrationIT extends RequestBaseTest {
                 }
                 ComputeState body = o.getBody(ComputeState.class);
                 Assert.assertTrue(body != null);
-                this.targetHost.completeIteration();
+                // VBV-1131 - Hosts should be migrated after containers
+                if (body.documentUpdateTimeMicros < containerState.documentUpdateTimeMicros) {
+                    this.targetHost
+                            .failIteration(new Throwable("Hosts were migrated before containers"));
+                } else {
+                    this.targetHost.completeIteration();
+                }
             });
             this.targetHost.send(get);
             this.targetHost.testWait();
