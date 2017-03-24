@@ -12,15 +12,13 @@
 package com.vmware.admiral.compute.content;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.common.util.UriUtilsExtended.MEDIA_TYPE_APPLICATION_YAML;
-import static com.vmware.admiral.common.util.YamlMapper.isMultiYaml;
-import static com.vmware.admiral.common.util.YamlMapper.objectMapper;
-import static com.vmware.admiral.common.util.YamlMapper.splitYaml;
 
 import java.io.IOException;
 import java.net.URI;
@@ -29,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
@@ -41,6 +40,7 @@ import org.junit.runners.Parameterized;
 
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.common.util.FileUtil;
+import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.ComponentDescription;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ResourceType;
@@ -48,7 +48,7 @@ import com.vmware.admiral.compute.container.CompositeDescriptionService.Composit
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
-import com.vmware.admiral.compute.kubernetes.entities.common.BaseKubernetesObject;
+import com.vmware.admiral.compute.content.Binding.ComponentBinding;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.photon.controller.model.Constraint;
 import com.vmware.photon.controller.model.Constraint.Condition.Enforcement;
@@ -77,9 +77,9 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
         return Arrays.asList(new Object[][] {
                 { "WordPress_with_MySQL_containers.yaml", verifyContainerTemplate },
                 { "WordPress_with_MySQL_compute.yaml", verifyComputeTemplate },
+                { "WordPress_with_MySQL_bindings.yaml", verifyBindingsTemplate },
                 { "WordPress_with_MySQL_kubernetes.yaml", verifyKubernetesTemplate }
         });
-
     }
 
     public CompositeDescriptionContentServiceTest(String templateFileName,
@@ -108,14 +108,6 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
         }
     };
 
-    private static BiConsumer<Operation, List<String>> verifyKubernetesTemplate = (o, descLinks)
-            -> {
-        CompositeDescription cd = o.getBody(CompositeDescription.class);
-        assertEquals("descriptionLinks.size", 4, cd.descriptionLinks.size());
-
-        descLinks.addAll(cd.descriptionLinks);
-    };
-
     private static BiConsumer<Operation, List<String>> verifyComputeTemplate = (o, descLinks) -> {
         CompositeDescriptionExpanded cd = o.getBody(CompositeDescriptionExpanded.class);
         assertEquals("name", "wordPressWithMySqlCompute", cd.name);
@@ -125,10 +117,11 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
         assertEquals("customProperties[_leaseDays]", "3",
                 cd.customProperties.get("_leaseDays"));
 
-        //assert network was persisted
+        // assert network was persisted
         Optional<ComponentDescription> networkComponentOpt = cd.componentDescriptions.stream()
                 .filter(c -> c.type.equals(
-                        ResourceType.COMPUTE_NETWORK_TYPE.getName())).findFirst();
+                        ResourceType.COMPUTE_NETWORK_TYPE.getName()))
+                .findFirst();
 
         assertTrue(networkComponentOpt.isPresent());
 
@@ -167,6 +160,33 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
 
         assertEquals("public-wpnet", networkDescription.name);
         assertNull(networkDescription.assignment);
+
+        descLinks.addAll(cd.descriptionLinks);
+    };
+
+    private static BiConsumer<Operation, List<String>> verifyBindingsTemplate = (o,
+            descLinks) -> {
+        CompositeDescription cd = o.getBody(CompositeDescription.class);
+
+        // verify bindings are present in the CompositeDescription
+        assertNotNull(cd.bindings);
+        assertEquals(1, cd.bindings.size());
+        ComponentBinding componentBinding = cd.bindings.get(0);
+        assertEquals("wordpress", componentBinding.componentName);
+        assertNotNull(componentBinding.bindings);
+        assertEquals(2, componentBinding.bindings.size());
+        assertTrue(hasBindingExpression(componentBinding.bindings,
+                "${mysql~restart_policy}"));
+        assertTrue(hasBindingExpression(componentBinding.bindings,
+                "${_resource~mysql~address}:3306"));
+
+        descLinks.addAll(cd.descriptionLinks);
+    };
+
+    private static BiConsumer<Operation, List<String>> verifyKubernetesTemplate = (o,
+            descLinks) -> {
+        CompositeDescription cd = o.getBody(CompositeDescription.class);
+        assertEquals("descriptionLinks.size", 4, cd.descriptionLinks.size());
 
         descLinks.addAll(cd.descriptionLinks);
     };
@@ -321,7 +341,7 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
                 return;
             }
 
-            //cant compare the strings as the order of the components may not be the same
+            // Can't compare the strings as the order of the components may not be the same.
             try {
                 CompositeTemplate original = CompositeTemplateUtil
                         .deserializeCompositeTemplate(template);
@@ -335,25 +355,75 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
                 assertEquals(original.name, result.name);
                 assertEquals(original.status, result.status);
                 assertEquals(original.properties, result.properties);
+
+                if (isBindingYaml(resultYaml)) {
+                    assertBindings(original, result, template, resultYaml);
+                }
             } catch (IOException e) {
                 fail(e.getMessage());
             }
-
         });
     }
 
-    private boolean isKubernetesYaml(String template) {
-        String templateToCheck = template;
-        if (isMultiYaml(template)) {
-            List<String> yamls = splitYaml(template);
-            templateToCheck = yamls.get(0);
-        }
-        try {
-            objectMapper().readValue(templateToCheck, BaseKubernetesObject.class);
-        } catch (IOException e) {
-            return false;
-        }
-        return true;
+    private static boolean isKubernetesYaml(String template) {
+        return (template != null) && (template.contains("apiVersion: v1"));
+    }
 
+    private static boolean isBindingYaml(String template) {
+        return (template != null) && (template.contains("wordPressWithMySqlBindings"));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void assertBindings(CompositeTemplate original, CompositeTemplate result,
+            String originalYaml, String resultYaml) throws IOException {
+
+        // Verify that bindings are not present in the exported YAML blueprint...
+        assertFalse(originalYaml.contains("bindings:"));
+        assertFalse(resultYaml.contains("bindings:"));
+
+        // ...but the values are where they are supposed to be...
+        assertTrue(originalYaml.contains("${mysql~restart_policy}"));
+        assertTrue(resultYaml.contains("${mysql~restart_policy}"));
+
+        assertTrue(originalYaml.contains("${_resource~mysql~address}:3306"));
+        assertTrue(resultYaml.contains("${_resource~mysql~address}:3306"));
+
+        Map<String, Object> templateMap = YamlMapper.objectMapper().readValue(
+                originalYaml.trim(), Map.class);
+        Map<String, Object> resultMap = YamlMapper.objectMapper().readValue(
+                resultYaml.trim(), Map.class);
+        assertEquals(templateMap.get("components"), resultMap.get("components"));
+
+        // ...and also when deserialized to CompositeTemplate.
+        assertNotNull(original.bindings);
+        assertEquals(1, original.bindings.size());
+        ComponentBinding originalComponentBinding = original.bindings.get(0);
+        assertEquals("wordpress", originalComponentBinding.componentName);
+        assertNotNull(originalComponentBinding.bindings);
+        assertEquals(2, originalComponentBinding.bindings.size());
+        assertTrue(hasBindingExpression(originalComponentBinding.bindings,
+                "${mysql~restart_policy}"));
+        assertTrue(hasBindingExpression(originalComponentBinding.bindings,
+                "${_resource~mysql~address}:3306"));
+
+        assertNotNull(result.bindings);
+        assertEquals(1, result.bindings.size());
+        ComponentBinding resultComponentBinding = result.bindings.get(0);
+        assertEquals("wordpress", resultComponentBinding.componentName);
+        assertNotNull(resultComponentBinding.bindings);
+        assertEquals(2, resultComponentBinding.bindings.size());
+        assertTrue(hasBindingExpression(resultComponentBinding.bindings,
+                "${mysql~restart_policy}"));
+        assertTrue(hasBindingExpression(resultComponentBinding.bindings,
+                "${_resource~mysql~address}:3306"));
+    }
+
+    private static boolean hasBindingExpression(List<Binding> bindings, String expression) {
+        for (Binding binding : bindings) {
+            if (expression.equals(binding.originalFieldExpression)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

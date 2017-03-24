@@ -734,9 +734,11 @@ public class CompositeTemplateUtilTest {
         assertTrue(appData.networks.containsKey("back"));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void testDeserializeCompositeTemplateWithBindings() throws IOException {
         String expectedContent = getContent("composite.bindings.yaml");
+
         CompositeTemplate compositeTemplate = deserializeCompositeTemplate(expectedContent);
 
         ContainerDescription wpData = (ContainerDescription) compositeTemplate.components
@@ -747,7 +749,7 @@ public class CompositeTemplateUtilTest {
         assertEquals(1, compositeTemplate.bindings.size());
 
         List<Binding> bindings = compositeTemplate.bindings.iterator().next().bindings;
-        assertEquals(2, bindings.size());
+        assertEquals(3, bindings.size());
 
         Map<Boolean, List<Binding>> partitionedBindings = bindings.stream()
                 .collect(Collectors.partitioningBy(b -> b.isProvisioningTimeBinding()));
@@ -759,11 +761,37 @@ public class CompositeTemplateUtilTest {
         assertEquals("db~_cluster", binding.placeholder.bindingExpression);
 
         // provisioning time bindings
-        assertEquals(1, partitionedBindings.get(true).size());
+        assertEquals(2, partitionedBindings.get(true).size());
 
         binding = partitionedBindings.get(true).get(0);
         assertTrue(binding.isProvisioningTimeBinding());
+        assertEquals("_resource~db~address", binding.placeholder.bindingExpression);
+
+        binding = partitionedBindings.get(true).get(1);
+        assertTrue(binding.isProvisioningTimeBinding());
         assertEquals("_resource~db~env~MYSQL_USER", binding.placeholder.bindingExpression);
+
+        // validate "normalizeBindings"
+
+        String expectedContentSerialized = serializeCompositeTemplate(compositeTemplate);
+
+        assertFalse(expectedContent.contains("bindings:"));
+        assertFalse(expectedContentSerialized.contains("bindings:"));
+
+        assertTrue(expectedContent.contains("${db~_cluster}"));
+        assertTrue(expectedContentSerialized.contains("${db~_cluster}"));
+
+        assertTrue(expectedContent.contains("${_resource~db~env~MYSQL_USER}"));
+        assertTrue(expectedContentSerialized.contains("${_resource~db~env~MYSQL_USER}"));
+
+        assertTrue(expectedContent.contains("${_resource~db~address}:3306"));
+        assertTrue(expectedContentSerialized.contains("${_resource~db~address}:3306"));
+
+        Map<String, Object> originalMap = YamlMapper.objectMapper().readValue(
+                expectedContent.trim(), Map.class);
+        Map<String, Object> serializedMap = YamlMapper.objectMapper().readValue(
+                expectedContentSerialized.trim(), Map.class);
+        assertEquals(originalMap.get("components"), serializedMap.get("components"));
     }
 
     @Test
