@@ -62,7 +62,13 @@ templateHelpers.register = function() {
 
   Handlebars.registerHelper('containerStatus', utils.containerStatusDisplay);
 
-  Handlebars.registerHelper('formatBytes', formatUtils.formatBytes);
+  Handlebars.registerHelper('formatBytes', function(valueBytes) {
+    if (valueBytes && utils.isValidNonNegativeIntValue(valueBytes)) {
+      return formatUtils.formatBytes(valueBytes);
+    } else {
+      return i18n.t('app.placement.list.unlimitedMemoryLimit');
+    }
+  });
 
   Handlebars.registerHelper('getDocumentId', utils.getDocumentId);
 

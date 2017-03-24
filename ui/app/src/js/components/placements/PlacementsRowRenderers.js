@@ -21,12 +21,12 @@ var renderers = {
 
     rowRendererEl.find('.placementInstances').on('click', function(e) {
       e.preventDefault();
-      return NavigationActions.showContainersPerPlacement(placement.documentSelfLink);
+      if (utils.isApplicationCompute()) {
+        return NavigationActions.showMachinesPerPlacement(placement.documentSelfLink);
+      } else {
+        return NavigationActions.showContainersPerPlacement(placement.documentSelfLink);
+      }
     });
-
-    if (!utils.isApplicationEmbedded()) {
-      rowRendererEl.find('td#deploymentPolicy').hide();
-    }
 
     return rowRendererEl;
   },
@@ -38,21 +38,7 @@ var renderers = {
     placementHighlight.isNew = isNew;
     placementHighlight.isUpdated = isUpdated;
 
-    let highlightTemplate = $(PlacementsRowHighlightTemplate(placementHighlight));
-
-    if (!utils.isApplicationEmbedded()) {
-      highlightTemplate.find('.highlight-item').prop('colspan', 8);
-      highlightTemplate.find('th.th-wide#deployment-policy').hide();
-      highlightTemplate.find('th.th-wide').css('width', '15%');
-      highlightTemplate.find('th.th-medium').css('width', '13%');
-      highlightTemplate.find('th.th-small').css('width', '12%');
-    } else {
-      highlightTemplate.find('th.th-wide').css('width', '14%');
-      highlightTemplate.find('th.th-medium').css('width', '11%');
-      highlightTemplate.find('th.th-small').css('width', '9%');
-    }
-
-    return highlightTemplate;
+    return $(PlacementsRowHighlightTemplate(placementHighlight));
   }
 };
 

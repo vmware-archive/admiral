@@ -15,7 +15,6 @@ import constants from 'core/constants';
 import utils from 'core/utils';
 import PlacementZonesStore from 'stores/PlacementZonesStore';
 import ResourceGroupsStore from 'stores/ResourceGroupsStore';
-import DeploymentPolicyStore from 'stores/DeploymentPolicyStore';
 import ContextPanelStoreMixin from 'stores/mixins/ContextPanelStoreMixin';
 import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
 
@@ -31,15 +30,6 @@ let _enhancePlacement = function(placement) {
   for (let i = 0; i < placementZones.length; i++) {
     if (placementZones[i].documentSelfLink === placement.resourcePoolLink) {
       placement.placementZoneName = placementZones[i].resourcePoolState.name;
-      break;
-    }
-  }
-
-  let deploymentPolicies = (placementEditData && placementEditData.deploymentPolicies)
-                              || this.selectFromData(['placements', 'deploymentPolicies']).get();
-  for (let i = 0; i < deploymentPolicies.length; i++) {
-    if (deploymentPolicies[i].documentSelfLink === placement.deploymentPolicyLink) {
-      placement.deploymentPolicyName = deploymentPolicies[i].name;
       break;
     }
   }
@@ -118,7 +108,6 @@ let _createDto = function(placement) {
       ? constants.RESOURCE_TYPES.COMPUTE
       : constants.RESOURCE_TYPES.CONTAINER;
   dto.resourcePoolLink = dto.placementZone ? dto.placementZone.documentSelfLink : null;
-  dto.deploymentPolicyLink = dto.deploymentPolicy ? dto.deploymentPolicy.documentSelfLink : null;
 
   dto.name = placement.name ? placement.name
                 : (dto.group || 'group') + ' : ' + (dto.resourcePoolLink || 'resourcePoolLink');
@@ -141,7 +130,6 @@ let _createDto = function(placement) {
     dto.tenantLinks.push(tenantLink);
   }
 
-  delete dto.deploymentPolicy;
   delete dto.placementZone;
   delete dto.groupId;
 
@@ -213,32 +201,6 @@ let PlacementsStore = Reflux.createStore({
 
       });
     }
-
-    DeploymentPolicyStore.listen((placementsData) => {
-      if (this.isContextPanelActive(constants.CONTEXT_PANEL.DEPLOYMENT_POLICIES)) {
-        this.setActiveItemData(placementsData);
-
-        var itemToSelect = placementsData.newItem || placementsData.updatedItem;
-        if (itemToSelect && this.data.contextView.shouldSelectAndComplete) {
-          clearTimeout(this.itemSelectTimeout);
-          this.itemSelectTimeout = setTimeout(() => {
-            this.setInData(['placements', 'editingItemData', 'selectedDeploymentPolicy'],
-              itemToSelect);
-            this.emitChange();
-
-            this.onCloseToolbar();
-          }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
-        }
-
-        this.emitChange();
-      }
-
-      if (placementsData.items && this.data.placements && this.data.placements.editingItemData) {
-        this.setInData(['placements', 'editingItemData', 'deploymentPolicies'],
-          placementsData.items);
-        this.emitChange();
-      }
-    });
   },
 
   listenables: [
@@ -284,7 +246,6 @@ let PlacementsStore = Reflux.createStore({
     if (!utils.isApplicationEmbedded()) {
       actions.ResourceGroupsActions.retrieveGroups();
     }
-    actions.DeploymentPolicyActions.retrieveDeploymentPolicies();
   },
 
   processPlacements: function(placementsResult) {
@@ -294,16 +255,9 @@ let PlacementsStore = Reflux.createStore({
         .filter((placement) => placement.resourcePoolLink)
         .map((placement) => placement.resourcePoolLink);
 
-    let deploymentPolicyLinks = placements
-        .filter((placement) => placement.deploymentPolicyLink)
-        .map((placement) => placement.deploymentPolicyLink);
-
     var calls = [
       services.loadPlacementZones([...new Set(resourcePoolLinks)]).then((result) => {
         this.setInData(['placements', 'placementZones'], Object.values(result));
-      }),
-      services.loadDeploymentPolicies([...new Set(deploymentPolicyLinks)]).then((result) => {
-        this.setInData(['placements', 'deploymentPolicies'], Object.values(result));
       })
     ];
     if (!utils.isApplicationEmbedded()) {
@@ -345,18 +299,6 @@ let PlacementsStore = Reflux.createStore({
       }
     }
 
-    var deploymentPolicies = DeploymentPolicyStore.getData().items;
-
-    if (deploymentPolicies && placement) {
-      for (let i = 0; i < deploymentPolicies.length; i++) {
-        var deploymentPolicy = deploymentPolicies[i];
-        if (deploymentPolicy.documentSelfLink === placement.deploymentPolicyLink) {
-          placementModel.deploymentPolicy = deploymentPolicy;
-          break;
-        }
-      }
-    }
-
     let groups = utils.isApplicationEmbedded()
                     ? this.selectFromData(['placements', 'groups']).get()
                     : ResourceGroupsStore.getData().items;
@@ -371,7 +313,6 @@ let PlacementsStore = Reflux.createStore({
 
     this.setInData(['placements', 'editingItemData', 'item'], placementModel);
     this.setInData(['placements', 'editingItemData', 'placementZones'], placementZones);
-    this.setInData(['placements', 'editingItemData', 'deploymentPolicies'], deploymentPolicies);
     this.setInData(['placements', 'editingItemData', 'groups'], groups);
 
     this.emitChange();
@@ -440,11 +381,6 @@ let PlacementsStore = Reflux.createStore({
       false);
   },
 
-  onOpenToolbarDeploymentPolicies: function() {
-    this.openToolbarItem(constants.CONTEXT_PANEL.DEPLOYMENT_POLICIES,
-      DeploymentPolicyStore.getData(), false);
-  },
-
   onCloseToolbar: function() {
     this.closeToolbar();
   },
@@ -469,17 +405,6 @@ let PlacementsStore = Reflux.createStore({
   onManageResourceGroups: function() {
     this.openToolbarItem(constants.CONTEXT_PANEL.RESOURCE_GROUPS, ResourceGroupsStore.getData(),
       true);
-  },
-
-  onCreateDeploymentPolicy: function() {
-    this.openToolbarItem(constants.CONTEXT_PANEL.DEPLOYMENT_POLICIES,
-      DeploymentPolicyStore.getData(), true);
-    actions.DeploymentPolicyActions.editDeploymentPolicy();
-  },
-
-  onManageDeploymentPolicies: function() {
-    this.openToolbarItem(constants.CONTEXT_PANEL.DEPLOYMENT_POLICIES,
-      DeploymentPolicyStore.getData(), true);
   },
 
   onGenericEditError: function(e) {

@@ -424,11 +424,11 @@
         "deploymentPolicyColumn": "Deployment Policy",
         "priorityColumn": "Priority",
         "instancesColumn": "Instances",
-        "cpuColumn": "CPU shares",
-        "memoryColumn": "Memory limit",
-        "storageColumn": "Storage limit",
+        "memoryColumn": "Memory Limit",
+        "storageColumn": "Storage Limit",
         "instancesPerPlacement": "Show instances per placement",
-        "unlimitedInstances": "Unlimited"
+        "unlimitedInstances": "Unlimited",
+        "unlimitedMemoryLimit": "Unlimited"
       },
       "edit": {
         "createNew": "New Placement",

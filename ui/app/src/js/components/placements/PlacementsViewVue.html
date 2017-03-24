@@ -35,12 +35,6 @@
         v-bind:label="i18n('app.group.contextPanelTooltip')"
         v-on:open="openToolbarResourceGroups()" v-on:close="closeToolbar()">
       </context-sidepanel-toolbar-item>
-
-      <context-sidepanel-toolbar-item v-if="!isStandaloneMode"
-        v-bind:active="activeContextItem === 'deploymentPolicies'"
-        v-bind:label="i18n('app.deploymentPolicy.contextPanelTooltip')"
-        v-on:open="openToolbarDeploymentPolicies()" v-on:close="closeToolbar()">
-      </context-sidepanel-toolbar-item>
     </div>
 
     <div slot="content" class="content">
@@ -48,8 +42,6 @@
         v-bind:model="model.contextView.activeItem.data"></placement-zones-view>
       <resource-groups-list v-if="isStandaloneMode && activeContextItem === 'resourceGroups'"
         v-bind:model="model.contextView.activeItem.data"></resource-groups-list>
-      <deployment-policies-list v-if="activeContextItem === 'deploymentPolicies'"
-        v-bind:model="model.contextView.activeItem.data"></deployment-policies-list>
     </div>
 
   </context-sidepanel>

@@ -2245,6 +2245,17 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
       }
     }
 
+    var placementArray = toArrayIfDefined(queryOptions.placement);
+    if (placementArray) {
+      userQueryOps['customProperties/__groupResourcePlacementLink'] =
+          placementArray.map((placementId) => {
+            return {
+              val: placementId,
+              op: 'eq'
+            };
+          });
+    }
+
     var compositeContextIdArray = toArrayIfDefined(queryOptions.compositeContextId);
     if (compositeContextIdArray) {
       userQueryOps['customProperties/__composition_context_id'] =

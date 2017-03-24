@@ -16,7 +16,6 @@ import PlacementsRowRenderers from 'components/placements/PlacementsRowRenderers
 import PlacementsRowEditor from 'components/placements/PlacementsRowEditor';
 import PlacementZonesView from 'components/placementzones/PlacementZonesView'; //eslint-disable-line
 import ResourceGroupsList from 'components/resourcegroups/ResourceGroupsList'; //eslint-disable-line
-import DeploymentPoliciesList from 'components/deploymentpolicies/DeploymentPoliciesList'; //eslint-disable-line
 import { PlacementActions, PlacementContextToolbarActions } from 'actions/Actions';
 import utils from 'core/utils';
 import ft from 'core/ft';
@@ -73,17 +72,6 @@ var PlacementsView = Vue.extend({
     this.placementsList.setDeleteCallback(PlacementActions.deletePlacement);
     this.placementsList.setEditCallback(PlacementActions.editPlacement);
 
-    if (this.isStandaloneMode) {
-      $('th#deploymentPolicy').hide();
-      $('th.th-wide').css('width', '15%');
-      $('th.th-medium').css('width', '13%');
-      $('th.th-small').css('width', '12%');
-    } else {
-      $('th.th-wide').css('width', '14%');
-      $('th.th-medium').css('width', '11%');
-      $('th.th-small').css('width', '9%');
-    }
-
     this.unwatchModel = this.$watch('model.placements', (placements) => {
       this.placementsList.setData(placements);
     });
@@ -94,7 +82,6 @@ var PlacementsView = Vue.extend({
   methods: {
     openToolbarPlacementZones: PlacementContextToolbarActions.openToolbarPlacementZones,
     openToolbarResourceGroups: PlacementContextToolbarActions.openToolbarResourceGroups,
-    openToolbarDeploymentPolicies: PlacementContextToolbarActions.openToolbarDeploymentPolicies,
     closeToolbar: PlacementContextToolbarActions.closeToolbar,
     refresh: PlacementActions.openPlacements
   }

@@ -452,13 +452,20 @@ actions.NavigationActions.openCompositeClosureDetails.listen(function(closureDes
   hasher.setHash('closures/' + closureDescriptionId);
 });
 
-
 actions.NavigationActions.showContainersPerPlacement.listen(function(placementId) {
   let queryOptions = {
     'placement': placementId
   };
 
   hasher.setHash(getHashWithQuery('containers', queryOptions));
+});
+
+actions.NavigationActions.showMachinesPerPlacement.listen(function(placementId) {
+  let queryOptions = {
+    'placement': placementId
+  };
+
+  hasher.setHash(getHashWithQuery('machines', queryOptions));
 });
 
 actions.NavigationActions.openPlacements.listen(function() {

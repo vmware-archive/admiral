@@ -10,7 +10,7 @@
   -->
 
 <tr>
-  <td colspan="9" class="inline-edit-holder placementEditHolder">
+  <td colspan="7" class="inline-edit-holder placementEditHolder">
     <div class="inline-edit">
       <form class="inline-edit-properties placement-inline-edit-properties">
         <section class="form-block">
@@ -81,37 +81,6 @@
                         <option>GB</option>
                       </select>
                     </div>
-                  </div>
-                  <span class="help-block"></span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-xl-7">
-              {{#if isEmbeded}}
-              <div class="deploymentPolicy form-group">
-                <label>{{i18n "app.placement.edit.deploymentPolicyLabel"}}</label>
-                <div class="form-control">
-                  <div class="dropdown-holder"></div>
-                  <span class="help-block"></span>
-                </div>
-              </div>
-              {{else}}
-              <div class="placeholder form-group">
-                <label></label>
-                <div class="form-control">
-                  <div class="dropdown-holder"></div>
-                </div>
-              </div>
-              {{/if}}
-            </div>
-            <div class="col-xl-5">
-              <div class="form-group">
-                <label>{{i18n "app.placement.edit.cpuSharesLabel"}}</label>
-                <div class="cpuSharesInput form-control">
-                  <div class="inline-input-group">
-                    <input type="number"/><span>%</span>
                   </div>
                   <span class="help-block"></span>
                 </div>

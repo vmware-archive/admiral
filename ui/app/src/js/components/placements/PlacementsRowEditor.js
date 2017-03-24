@@ -41,16 +41,6 @@ const GROUPS_MANAGE_OPTIONS = [{
   icon: 'pencil'
 }];
 
-const deploymentPolicyManageOptions = [{
-  id: 'policy-create',
-  name: i18n.t('app.deploymentPolicy.createNew'),
-  icon: 'plus'
-}, {
-  id: 'policy-manage',
-  name: i18n.t('app.deploymentPolicy.manage'),
-  icon: 'pencil'
-}];
-
 function PlacementsRowEditor() {
   let model = {
     isEmbeded: utils.isApplicationEmbedded()
@@ -90,28 +80,6 @@ function PlacementsRowEditor() {
 
   this.placementZoneInput.setOptionSelectCallback(() => toggleButtonsState.call(this));
 
-  var deploymentPolicyEl = this.$el.find('.deploymentPolicy .form-control');
-  this.deploymentPolicyInput = new DropdownSearchMenu(deploymentPolicyEl, {
-    title: i18n.t('app.placement.edit.selectDeploymentPolicy'),
-    searchPlaceholder: i18n.t('dropdownSearchMenu.searchPlaceholder', {
-      entity: i18n.t('app.deploymentPolicy.entity')
-    })
-  });
-
-  this.deploymentPolicyInput.setManageOptions(deploymentPolicyManageOptions);
-  this.deploymentPolicyInput.setManageOptionSelectCallback(function(option) {
-    if (option.id === 'policy-create') {
-      PlacementContextToolbarActions.createDeploymentPolicy();
-    } else {
-      PlacementContextToolbarActions.manageDeploymentPolicies();
-    }
-  });
-
-  this.deploymentPolicyInput.setOptionSelectCallback(() => toggleButtonsState.call(this));
-
-  if (!utils.isApplicationEmbedded()) {
-    this.$el.find('.inline-edit-holder').prop('colspan', 8);
-  }
   addEventListeners.call(this);
 }
 
@@ -163,16 +131,11 @@ PlacementsRowEditor.prototype.setData = function(data) {
         placementObject.groupId;
       this.placementGroupInput.setValue(groupInputValue);
       this.placementZoneInput.setSelectedOption(placementObject.placementZone);
-      if (this.deploymentPolicyInput) {
-        this.deploymentPolicyInput.setSelectedOption(placementObject.deploymentPolicy);
-      }
       this.$el.find('.maxInstancesInput input').val(placementObject.maxNumberInstances);
       this.$el.find('.priorityInput input').val(placementObject.priority);
       this.$el.find('.nameInput input').val(placementObject.name);
 
       this.setMemoryInputValue(placementObject.memoryLimit, '.memoryLimitInput');
-
-      this.$el.find('.cpuSharesInput input').val(placementObject.cpuShares);
     }
 
     if (data.placementZones === constants.LOADING) {
@@ -202,18 +165,6 @@ PlacementsRowEditor.prototype.setData = function(data) {
         placementGroupValue = selectedGroup;
       }
       this.placementGroupInput.setValue(placementGroupValue);
-    }
-
-    if (data.deploymentPolicies === constants.LOADING) {
-      this.deploymentPolicyInput.setLoading(true);
-    } else {
-      this.deploymentPolicyInput.setLoading(false);
-      this.deploymentPolicyInput.setOptions(data.deploymentPolicies);
-    }
-
-    if (oldData.selectedDeploymentPolicy !== data.selectedDeploymentPolicy &&
-      data.selectedDeploymentPolicy) {
-      this.deploymentPolicyInput.setSelectedOption(data.selectedDeploymentPolicy);
     }
 
     if (oldData.validationErrors !== data.validationErrors) {
@@ -263,7 +214,6 @@ var getPlacementModel = function() {
 
   toReturn.groupId = this.placementGroupInput.getValue();
   toReturn.placementZone = this.placementZoneInput.getSelectedOption();
-  toReturn.deploymentPolicy = this.deploymentPolicyInput.getSelectedOption();
 
   var maxNumberInstances = this.$el.find('.maxInstancesInput input').val();
   if ($.isNumeric(maxNumberInstances) && utils.isValidNonNegativeIntValue(maxNumberInstances)) {
@@ -279,11 +229,6 @@ var getPlacementModel = function() {
 
   toReturn.memoryLimit = this.getMemoryInputValue('.memoryLimitInput');
 
-  var cpuShares = this.$el.find('.cpuSharesInput input').val();
-  if ($.isNumeric(cpuShares) && utils.isValidNonNegativeIntValue(cpuShares)) {
-    toReturn.cpuShares = cpuShares;
-  }
-
   return toReturn;
 };
 
@@ -294,7 +239,6 @@ var toggleButtonsState = function() {
   var priority = this.$el.find('.priorityInput input').val();
   var maxNumberInstances = this.$el.find('.maxInstancesInput input').val();
   var memoryLimit = this.$el.find('.memoryLimitInput input').val();
-  var cpuShares = this.$el.find('.cpuSharesInput input').val();
 
   var $verifyBtn = this.$el.find('.inline-edit-verify');
   $verifyBtn.removeClass('loading');
@@ -315,12 +259,8 @@ var toggleButtonsState = function() {
   utils.applyValidationError(this.$el.find('.memoryLimitInput'),
                                     memoryLimitClause ? null : i18n.t('errors.invalidInputValue'));
 
-  var cpuSharesClause = !cpuShares || utils.isValidNonNegativeIntValue(cpuShares);
-  utils.applyValidationError(this.$el.find('.cpuSharesInput'),
-                                     cpuSharesClause ? null : i18n.t('errors.invalidInputValue'));
-
   let notEnoughInfo = !placementZone || !name || !priorityClause || !maxNumberInstancesClause
-                      || !groupClause || !memoryLimitClause || !cpuSharesClause;
+                      || !groupClause || !memoryLimitClause;
   if (notEnoughInfo) {
     $saveBtn.attr('disabled', true);
   } else {
