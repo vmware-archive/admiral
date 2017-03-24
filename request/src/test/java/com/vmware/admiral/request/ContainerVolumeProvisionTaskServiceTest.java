@@ -56,7 +56,6 @@ public class ContainerVolumeProvisionTaskServiceTest extends RequestBaseTest {
         container1Desc.name = "container1";
         container1Desc.volumes = new String[] { volumeName + ":/etc/pgdata/postgres" };
 
-
         // Create another ContainerDescription without volume and placed it in different host.
         ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription();
         container2Desc.name = "container2";
@@ -81,7 +80,8 @@ public class ContainerVolumeProvisionTaskServiceTest extends RequestBaseTest {
         assertEquals(3, compositeDesc.descriptionLinks.size());
 
         // setup Group Placement:
-        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
 
         // 1. Request a composite container:
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
@@ -94,7 +94,8 @@ public class ContainerVolumeProvisionTaskServiceTest extends RequestBaseTest {
         // wait for request completed state:
         request = waitForRequestToComplete(request);
 
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
+        CompositeComponent cc = getDocument(CompositeComponent.class,
+                request.resourceLinks.iterator().next());
 
         assertNotNull(cc.componentLinks);
         assertEquals(cc.componentLinks.size(), 3);
@@ -182,7 +183,8 @@ public class ContainerVolumeProvisionTaskServiceTest extends RequestBaseTest {
         assertEquals(3, compositeDesc.descriptionLinks.size());
 
         // setup Group Placement:
-        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(resourcePool);
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
 
         // 1. Request a composite container:
         RequestBrokerState request = TestRequestStateFactory.createRequestState(
@@ -195,7 +197,8 @@ public class ContainerVolumeProvisionTaskServiceTest extends RequestBaseTest {
         // wait for request completed state:
         request = waitForRequestToComplete(request);
 
-        CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
+        CompositeComponent cc = getDocument(CompositeComponent.class,
+                request.resourceLinks.iterator().next());
 
         assertNotNull(cc.componentLinks);
         assertEquals(cc.componentLinks.size(), 3);
@@ -294,6 +297,87 @@ public class ContainerVolumeProvisionTaskServiceTest extends RequestBaseTest {
         assertTrue(hostLinks.contains(vol1.originatingHostLink));
         assertTrue(hostLinks.contains(vol2.originatingHostLink));
         assertFalse(vol1.originatingHostLink.equals(vol2.originatingHostLink));
+    }
+
+    @Test
+    public void testVolumeProvisioningTaskWithDefaultDriver() throws Throwable {
+
+        String volumeName = "Posgres";
+        ContainerVolumeDescription volumeDesc = TestRequestStateFactory
+                .createContainerVolumeDescription(volumeName);
+        volumeDesc.documentSelfLink = UUID.randomUUID().toString();
+
+        volumeDesc.driver = null; // no driver -> default driver
+
+        // Create ContainerDescription with above volume.
+        ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
+        container1Desc.name = "container1";
+        container1Desc.volumes = new String[] { volumeName + ":/etc/pgdata/postgres" };
+
+        // Setup Docker host and resource pool.
+        ResourcePoolState resourcePool = createResourcePool();
+        ComputeDescription dockerHostDesc = createDockerHostDescription();
+
+        ComputeState dockerHost1 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost1);
+
+        ComputeState dockerHost2 = createDockerHost(dockerHostDesc, resourcePool, true);
+        addForDeletion(dockerHost2);
+
+        CompositeDescription compositeDesc = createCompositeDesc(volumeDesc, container1Desc);
+        assertNotNull(compositeDesc);
+        assertEquals(2, compositeDesc.descriptionLinks.size());
+
+        // setup Group Placement:
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
+
+        // 1. Request a composite container:
+        RequestBrokerState request = TestRequestStateFactory.createRequestState(
+                ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
+
+        request.tenantLinks = groupPlacementState.tenantLinks;
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // wait for request completed state:
+        request = waitForRequestToComplete(request);
+
+        CompositeComponent cc = getDocument(CompositeComponent.class,
+                request.resourceLinks.iterator().next());
+
+        assertNotNull(cc.componentLinks);
+        assertEquals(cc.componentLinks.size(), 2);
+
+        String volumeLink = null;
+        String containerLink1 = null;
+
+        Iterator<String> iterator = cc.componentLinks.iterator();
+
+        while (iterator.hasNext()) {
+            String link = iterator.next();
+            if (link.startsWith(ContainerVolumeService.FACTORY_LINK)) {
+                volumeLink = link;
+            } else if (containerLink1 == null) {
+                containerLink1 = link;
+            }
+        }
+
+        ContainerState cont1 = getDocument(ContainerState.class, containerLink1);
+        assertNotNull(cont1);
+
+        ContainerVolumeState volume = getDocument(ContainerVolumeState.class, volumeLink);
+        String volumeDescProp = volume.customProperties.get("volume propKey string");
+        assertNotNull(volumeDescProp);
+        assertEquals("volume customPropertyValue string", volumeDescProp);
+
+        // Volume must be provisioned on same host where ContainerDesc with volume is.
+        assertTrue("Volume is provisioned on wrong host.",
+                volume.originatingHostLink.equals(cont1.parentLink));
+
+        assertEquals(cont1.volumes.length, 1);
+        assertTrue("Host volume name is different than Container volume name.",
+                cont1.volumes[0].contains(volume.name));
     }
 
 }

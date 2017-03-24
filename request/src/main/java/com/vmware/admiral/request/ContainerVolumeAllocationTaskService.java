@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.vmware.admiral.adapter.docker.service.DockerVolumeAdapterService;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.ServiceUtils;
@@ -305,6 +306,9 @@ public class ContainerVolumeAllocationTaskService extends
             volumeState.descriptionLink = state.resourceDescriptionLink;
             volumeState.customProperties = state.customProperties;
             volumeState.driver = volumeDescription.driver;
+            if ((volumeState.driver == null) || volumeState.driver.isEmpty()) {
+                volumeState.driver = DockerVolumeAdapterService.DOCKER_VOLUME_DRIVER_TYPE_DEFAULT;
+            }
             volumeState.options = volumeDescription.options;
 
             volumeState.external = (getProvidedHostIds(state) != null);
