@@ -66,7 +66,7 @@ var ContainerDetailsVueComponent = Vue.extend({
       return this.model.logsSettings && this.model.logsSettings.option;
     },
     onVchHost: function() {
-      return this.model.instance && this.model.instance.isOnVchHost;
+      return utils.isContainerOnVchHost(this.model.instance);
     }
   },
 

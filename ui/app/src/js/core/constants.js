@@ -225,7 +225,6 @@ var constants = Immutable({
         moment.duration(5, 'hours').asMilliseconds()
       ],
       TAIL_LINES: [
-        10,
         50,
         100,
         1000,

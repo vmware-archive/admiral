@@ -9,21 +9,16 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
+import ContainerStatsVue from 'components/containers/ContainerStatsVue.html';
 import { RadialProgress } from 'admiral-ui-common';
 import { NetworkTrafficVisualization } from 'admiral-ui-common';
 import { formatUtils } from 'admiral-ui-common';
-
-const TEMPLATE = `
-<div class="container-stats">
-  <div class="cpu-stats" v-bind:class="cpuPercentage | calculateStatsClass"></div>
-  <div class="memory-stats" v-bind:class="memoryPercentage | calculateStatsClass"></div>
-  <div class="network-stats"></div>
-</div>`;
+import utils from 'core/utils';
 
 const NA = i18n.t('unavailable');
 
 var ContainerStats = Vue.extend({
-  template: TEMPLATE,
+  template: ContainerStatsVue,
   props: {
     model: { required: true },
     containerStopped: {
@@ -32,13 +27,20 @@ var ContainerStats = Vue.extend({
       default: false
     }
   },
+  computed: {
+    onVchHost: function() {
+      return utils.isContainerOnVchHost(this.model.instance);
+    }
+  },
   ready: function() {
     this.cpuStats = new RadialProgress($(this.$el).find('.cpu-stats')[0]).diameter(150).value(0)
       .majorTitle(NA).label(i18n.t('app.container.details.cpu')).render();
     this.memoryStats = new RadialProgress($(this.$el).find('.memory-stats')[0]).diameter(150)
       .value(0).majorTitle(NA).label(i18n.t('app.container.details.memory')).render();
-    this.networkStats = new NetworkTrafficVisualization($(this.$el)
-        .find('.network-stats')[0], i18n);
+    if (!this.onVchHost) {
+      this.networkStats = new NetworkTrafficVisualization($(this.$el)
+          .find('.network-stats')[0], i18n);
+    }
     resetStats.call(this);
 
     this.modelUnwatch = this.$watch('model.instance.powerState', this.onContainerUpdate);
@@ -73,7 +75,6 @@ var ContainerStats = Vue.extend({
       return 'danger';
     }
   },
-
   methods: {
     onDataUpdate: function(newData) {
       if (newData && !this.containerStopped) {
@@ -99,7 +100,9 @@ var ContainerStats = Vue.extend({
         this.memoryStats.majorTitle(memoryUsage).minorTitle(memoryLimit).value(memoryPercentage)
           .render();
 
-        this.networkStats.setData(newData.networkIn, newData.networkOut);
+        if (this.networkStats) {
+          this.networkStats.setData(newData.networkIn, newData.networkOut);
+        }
       } else {
         resetStats.call(this);
       }
@@ -118,7 +121,9 @@ var ContainerStats = Vue.extend({
 function resetStats() {
   this.cpuStats.value(0).majorTitle(NA).render();
   this.memoryStats.majorTitle(NA).minorTitle(NA).value(0).render();
-  this.networkStats.reset(NA);
+  if (this.networkStats) {
+    this.networkStats.reset(NA);
+  }
 }
 
 Vue.component('container-stats', ContainerStats);
