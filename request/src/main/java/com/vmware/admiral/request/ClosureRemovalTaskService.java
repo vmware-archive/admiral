@@ -22,11 +22,10 @@ import java.util.Set;
 
 import com.vmware.admiral.request.ClosureRemovalTaskService.ClosureRemovalTaskState.SubStage;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
-import com.vmware.admiral.service.common.CounterSubTaskService;
+
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.Utils;
 
 public class ClosureRemovalTaskService extends
@@ -124,25 +123,6 @@ public class ClosureRemovalTaskService extends
         } catch (Throwable e) {
             failTask("Unexpected exception while deleting resources", e);
         }
-    }
-
-    private void completeSubTasksCounter(String subTaskLink, Throwable ex) {
-        CounterSubTaskService.CounterSubTaskState body = new CounterSubTaskService.CounterSubTaskState();
-        body.taskInfo = new TaskState();
-        if (ex == null) {
-            body.taskInfo.stage = TaskState.TaskStage.FINISHED;
-        } else {
-            body.taskInfo.stage = TaskState.TaskStage.FAILED;
-            body.taskInfo.failure = Utils.toServiceErrorResponse(ex);
-        }
-
-        sendRequest(Operation.createPatch(this, subTaskLink)
-                .setBody(body)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Notifying counting task failed: %s", e);
-                    }
-                }));
     }
 
     private Operation deleteClosure(String resourceLink) {

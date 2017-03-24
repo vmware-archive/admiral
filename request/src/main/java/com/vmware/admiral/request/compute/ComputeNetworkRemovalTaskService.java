@@ -14,24 +14,35 @@ package com.vmware.admiral.request.compute;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-
-import org.apache.http.HttpStatus;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import com.vmware.admiral.adapter.common.NetworkOperationType;
+import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.ServiceUtils;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.NetworkType;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
 import com.vmware.admiral.request.compute.ComputeNetworkRemovalTaskService.ComputeNetworkRemovalTaskState.SubStage;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
-import com.vmware.admiral.service.common.CounterSubTaskService.CounterSubTaskState;
 import com.vmware.admiral.service.common.TaskServiceDocument;
+import com.vmware.photon.controller.model.adapterapi.SubnetInstanceRequest;
+import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
+import com.vmware.photon.controller.model.tasks.ProvisionSubnetTaskService;
+import com.vmware.photon.controller.model.tasks.ProvisionSubnetTaskService.ProvisionSubnetTaskState;
+import com.vmware.photon.controller.model.tasks.QueryUtils.QueryByPages;
+import com.vmware.photon.controller.model.tasks.TaskOption;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
-import com.vmware.xenon.common.TaskState;
-import com.vmware.xenon.common.TaskState.TaskStage;
-import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask;
 
 /**
  * Task implementing removal of Compute Networks.
@@ -48,6 +59,8 @@ public class ComputeNetworkRemovalTaskService extends
 
         public static enum SubStage {
             CREATED,
+            INSTANCES_REMOVING,
+            INSTANCES_REMOVED,
             REMOVING_RESOURCE_STATES,
             COMPLETED,
             ERROR;
@@ -59,13 +72,21 @@ public class ComputeNetworkRemovalTaskService extends
         /** (Required) The resources on which the given operation will be applied */
         @PropertyOptions(usage = { REQUIRED }, indexing = STORE_ONLY)
         public Set<String> resourceLinks;
-
-        /**
-         * whether to actually go and destroy the compute network using the adapter or just remove
-         * the ComputeNetworkState
-         */
-        public boolean removeOnly;
     }
+
+    public static class Context {
+        public Context(ComputeNetwork computeNetwork, String subTaskLink) {
+            this.computeNetwork = computeNetwork;
+            this.subTaskLink = subTaskLink;
+        }
+
+        public ComputeNetwork computeNetwork;
+        public String subTaskLink;
+        public SubnetState subnet;
+    }
+
+    // cached compute networks
+    private transient volatile List<ComputeNetwork> computeNetworks;
 
     public ComputeNetworkRemovalTaskService() {
         super(ComputeNetworkRemovalTaskState.class, SubStage.class, DISPLAY_NAME);
@@ -78,20 +99,29 @@ public class ComputeNetworkRemovalTaskService extends
 
     @Override
     protected void handleStartedStagePatch(ComputeNetworkRemovalTaskState state) {
-        switch (state.taskSubStage) {
-        case CREATED:
-            removeResources(state, null);
-            break;
-        case REMOVING_RESOURCE_STATES:
-            break;
-        case COMPLETED:
-            complete();
-            break;
-        case ERROR:
-            completeWithError();
-            break;
-        default:
-            break;
+        try {
+            switch (state.taskSubStage) {
+            case CREATED:
+                deleteResourceInstances(state, computeNetworks);
+                break;
+            case INSTANCES_REMOVING:
+                break;
+            case INSTANCES_REMOVED:
+                removeComputeNetworkStates(state, computeNetworks, null);
+                break;
+            case REMOVING_RESOURCE_STATES:
+                break;
+            case COMPLETED:
+                complete();
+                break;
+            case ERROR:
+                completeWithError();
+                break;
+            default:
+                break;
+            }
+        } catch (Throwable e) {
+            failTask("Unexpected exception while deleting compute networks", e);
         }
     }
 
@@ -105,80 +135,154 @@ public class ComputeNetworkRemovalTaskService extends
         return statusTask;
     }
 
-    private void completeSubTasksCounter(String subTaskLink, Throwable ex) {
-        CounterSubTaskState body = new CounterSubTaskState();
-        body.taskInfo = new TaskState();
-        if (ex == null) {
-            body.taskInfo.stage = TaskStage.FINISHED;
-        } else {
-            body.taskInfo.stage = TaskStage.FAILED;
-            body.taskInfo.failure = Utils.toServiceErrorResponse(ex);
-        }
-
-        sendRequest(Operation.createPatch(this, subTaskLink)
-                .setBody(body)
-                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Notifying counting task failed: %s", e);
-                    }
-                }));
-    }
-
-    private void removeResources(ComputeNetworkRemovalTaskState state, String subTaskLink) {
-        if (subTaskLink == null) {
-            createCounterSubTask(state, state.resourceLinks.size(),
-                    (link) -> removeResources(state, link));
+    private void deleteResourceInstances(ComputeNetworkRemovalTaskState state,
+            List<ComputeNetwork> computeNetworks) {
+        if (computeNetworks == null) {
+            queryComputeNetworkResources(state, networks ->
+                    deleteResourceInstances(state, networks));
             return;
         }
 
+        // Check if subnets should be deleted
+        List<ComputeNetwork> isolatedComputeNetworks = computeNetworks.stream()
+                .filter(n -> n.networkType == NetworkType.ISOLATED && n.subnetLink != null)
+                .collect(Collectors.toList());
+        if (isolatedComputeNetworks.size() == 0) {
+            proceedTo(SubStage.INSTANCES_REMOVED);
+            return;
+        }
+        createCounterSubTask(state, isolatedComputeNetworks.size(),
+                SubStage.INSTANCES_REMOVED,
+                (subTaskLink) -> deleteSubnets(isolatedComputeNetworks, subTaskLink));
+    }
+
+    private void deleteSubnets(List<ComputeNetwork> isolatedComputeNetworks, String subTaskLink) {
         try {
-            for (String resourceLink : state.resourceLinks) {
-                sendRequest(Operation
-                        .createGet(this, resourceLink)
-                        .setCompletion((o, e) -> {
-                            if (e != null) {
-                                if (e instanceof ServiceHost.ServiceNotFoundException
-                                        && o.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-                                    logWarning("Compute Network is not found at link: %s ",
-                                            resourceLink);
-                                    completeSubTasksCounter(subTaskLink, null);
-                                } else {
-                                    failTask("Failed retrieving Compute Network State: "
-                                            + resourceLink, e);
-                                }
-                                return;
-                            }
-
-                            ComputeNetwork cns = o.getBody(ComputeNetwork.class);
-
-                            deleteComputeNetwork(cns).setCompletion((o2, e2) -> {
-                                if (e2 != null) {
-                                    failTask("Failed removing Compute Network State: "
-                                            + resourceLink, e2);
-                                    return;
-                                }
+            isolatedComputeNetworks.forEach(isolatedComputeNetwork -> {
+                DeferredResult.completed(new Context(isolatedComputeNetwork, subTaskLink))
+                        .thenCompose(this::populateSubnet)
+                        .thenCompose(this::destroySubnet)
+                        .exceptionally(e -> {
+                            if (e.getCause() != null && e.getCause()
+                                    instanceof ServiceHost.ServiceNotFoundException) {
+                                logWarning("Subnet State is not found at link: %s ",
+                                        isolatedComputeNetwork.subnetLink);
                                 completeSubTasksCounter(subTaskLink, null);
-                            }).sendWith(this);
-                        }));
-            }
-            proceedTo(SubStage.REMOVING_RESOURCE_STATES);
+                            } else {
+                                completeSubTasksCounter(subTaskLink, e);
+                            }
+                            return null;
+                        });
+            });
+            proceedTo(SubStage.INSTANCES_REMOVING);
         } catch (Throwable e) {
-            failTask("Unexpected exception while deleting resources", e);
+            failTask("Unexpected exception while deleting subnets", e);
         }
     }
 
-    private Operation deleteComputeNetwork(ComputeNetwork cns) {
-        return Operation
-                .createDelete(this, cns.documentSelfLink)
-                .setCompletion(
-                        (o, e) -> {
-                            if (e != null) {
-                                logWarning("Failed deleting ComputeNetworkState: "
-                                        + cns.documentSelfLink, e);
-                                return;
-                            }
-                            logInfo("Deleted ComputeNetworkState: " + cns.documentSelfLink);
-                        });
+    private DeferredResult<Context> destroySubnet(Context context) {
+        // If there is not instanceAdapterReference, subnet was not provisioned by the adapter
+        // Ex: deployment provisioning failed after network allocated, but before provisioned
+        if (context.subnet.instanceAdapterReference == null) {
+            return removeSubnetState(context);
+        }
+
+        ProvisionSubnetTaskState provisionTaskState = new ProvisionSubnetTaskState();
+        boolean isMockRequest = DeploymentProfileConfig.getInstance().isTest();
+        if (isMockRequest) {
+            provisionTaskState.options = EnumSet.of(TaskOption.IS_MOCK);
+        }
+        provisionTaskState.requestType = SubnetInstanceRequest.InstanceRequestType.DELETE;
+        provisionTaskState.parentTaskLink = context.subTaskLink;
+        provisionTaskState.tenantLinks = context.computeNetwork.tenantLinks;
+        provisionTaskState.documentExpirationTimeMicros = ServiceUtils
+                .getDefaultTaskExpirationTimeInMicros();
+        provisionTaskState.subnetDescriptionLink = context.subnet.documentSelfLink;
+
+        return this.sendWithDeferredResult(
+                Operation.createPost(this, ProvisionSubnetTaskService.FACTORY_LINK)
+                        .setBody(provisionTaskState))
+                .thenApply(op -> context);
+    }
+
+    private DeferredResult<Context> removeSubnetState(Context context) {
+        return this.sendWithDeferredResult(
+                Operation.createDelete(this, context.subnet.documentSelfLink))
+                .thenCompose(o -> {
+                    completeSubTasksCounter(context.subTaskLink, null);
+                    return DeferredResult.completed(context);
+                });
+    }
+
+    private void removeComputeNetworkStates(ComputeNetworkRemovalTaskState state,
+            List<ComputeNetwork> computeNetworks, String subTaskLink) {
+        if (subTaskLink == null) {
+            createCounterSubTask(state, computeNetworks.size(),
+                    (link) -> removeComputeNetworkStates(state, computeNetworks, link));
+            return;
+        }
+
+        if (computeNetworks == null) {
+            queryComputeNetworkResources(state, networks ->
+                    removeComputeNetworkStates(state, networks, subTaskLink));
+            return;
+        }
+
+        for (ComputeNetwork computeNetwork : computeNetworks) {
+            Operation.createDelete(this, computeNetwork.documentSelfLink)
+                    .setCompletion(
+                            (o, e) -> {
+                                if (e != null) {
+                                    logWarning("Failed deleting ComputeNetworkState: "
+                                            + computeNetwork.documentSelfLink, e);
+                                    return;
+                                }
+                                logInfo("Deleted ComputeNetworkState: "
+                                        + computeNetwork.documentSelfLink);
+                                completeSubTasksCounter(subTaskLink, null);
+                            }).sendWith(this);
+        }
+        proceedTo(SubStage.REMOVING_RESOURCE_STATES);
+    }
+
+    private DeferredResult<Context> populateSubnet(Context context) {
+        return this.sendWithDeferredResult(
+                Operation.createGet(this, context.computeNetwork.subnetLink), SubnetState.class)
+                .thenApply(subnetState -> {
+                    context.subnet = subnetState;
+                    return context;
+                });
+    }
+
+    private void queryComputeNetworkResources(ComputeNetworkRemovalTaskState state,
+            Consumer<List<ComputeNetwork>> callbackFunction) {
+        if (this.computeNetworks != null) {
+            callbackFunction.accept(this.computeNetworks);
+            return;
+        }
+
+        List<ComputeNetwork> computeNetworks = new ArrayList<>();
+        QueryTask.Query.Builder builder = QueryTask.Query.Builder.create()
+                .addKindFieldClause(ComputeNetwork.class)
+                .addInClause(ServiceDocument.FIELD_NAME_SELF_LINK, state.resourceLinks);
+
+        QueryByPages<ComputeNetwork> query = new QueryByPages<>(getHost(), builder.build(),
+                ComputeNetwork.class, state.tenantLinks);
+        query.queryDocuments(computeNetwork -> computeNetworks.add(computeNetwork))
+                .whenComplete(((v, e) -> {
+                    if (e != null) {
+                        failTask("Failure retrieving query results", e);
+                        return;
+                    }
+
+                    if (computeNetworks.isEmpty()) {
+                        logWarning("No available resources found to be removed with links: %s",
+                                state.resourceLinks);
+                        proceedTo(SubStage.COMPLETED);
+                    } else {
+                        this.computeNetworks = computeNetworks;
+                        callbackFunction.accept(this.computeNetworks);
+                    }
+                }));
     }
 }

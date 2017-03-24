@@ -38,6 +38,7 @@ import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeDescriptionFactoryService;
 import com.vmware.admiral.compute.container.CompositeDescriptionService;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
+import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
@@ -81,14 +82,20 @@ import com.vmware.admiral.service.test.MockComputeHostInstanceAdapter;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.admiral.service.test.MockDockerNetworkAdapterService;
 import com.vmware.admiral.service.test.MockDockerVolumeAdapterService;
+import com.vmware.photon.controller.model.adapters.awsadapter.AWSNetworkService;
+import com.vmware.photon.controller.model.adapters.awsadapter.AWSSubnetService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
+import com.vmware.photon.controller.model.resources.NetworkService;
+import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.photon.controller.model.resources.SubnetService;
+import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -557,6 +564,31 @@ public abstract class RequestBaseTest extends BaseTestCase {
             }
             return endpoint;
         }
+    }
+
+    protected NetworkState createNetworkState() throws Throwable {
+        NetworkState network = new NetworkState();
+        network.regionId = ComputeBaseTest.REGION_ID;
+        network.resourcePoolLink = UUID.randomUUID().toString();
+        network.subnetCIDR = "0.0.0.0/24";
+        network.endpointLink = createEndpoint().documentSelfLink;
+        network.instanceAdapterReference = UriUtils.buildUri(this.host,
+                AWSNetworkService.SELF_LINK);
+        network = getOrCreateDocument(network, NetworkService.FACTORY_LINK);
+        assertNotNull(network);
+        return network;
+    }
+
+    protected SubnetState createSubnetState() throws Throwable {
+        SubnetState subnet = new SubnetState();
+        subnet.networkLink = createNetworkState().documentSelfLink;
+        subnet.endpointLink = createEndpoint().documentSelfLink;
+        subnet.subnetCIDR = "0.0.0.0/24";
+        subnet.instanceAdapterReference = UriUtils.buildUri(this.host,
+                AWSSubnetService.SELF_LINK);
+        subnet = doPost(subnet, SubnetService.FACTORY_LINK);
+        assertNotNull(subnet);
+        return subnet;
     }
 
     protected void waitForContainerPowerState(final PowerState expectedPowerState,
