@@ -55,7 +55,7 @@ public class GuestCredentialsComputeDescriptionEnhancer extends ComputeDescripti
             return DeferredResult.completed(cd);
         }
 
-        if (cd.authCredentialsLink == null) {
+        if (cd.authCredentialsLink != null) {
             return DeferredResult.completed(cd);
         }
 
