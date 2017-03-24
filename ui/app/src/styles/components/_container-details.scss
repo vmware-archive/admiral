@@ -182,7 +182,7 @@ $elements-side-margin: $elements-margin / 2;
     overflow: auto;
     white-space: pre-wrap;
     word-wrap: break-word;
-    bottom: 45px;
+    bottom: 70px;
   }
 
   > .content > .container-details-logs .container-details-logs-settings {
@@ -191,9 +191,13 @@ $elements-side-margin: $elements-margin / 2;
     left: 0;
   }
 
-  > .content > .container-details-logs .container-details-logs-settings .value {
-    margin-left: 10px;
+  > .content > .container-details-logs .container-details-logs-settings .form-group {
+    padding-left: 178px;
+    label:first-child {
+        width: 154px;
+    }
   }
+
 
   .maximizableControl {
     position: absolute;
@@ -287,9 +291,17 @@ $elements-side-margin: $elements-margin / 2;
     right: 70%;
   }
 
+  .container-details-usages .container-stats.no-network-stats .cpu-stats {
+      right: 45%;
+  }
+
   .container-details-usages .container-stats .memory-stats {
     left: 70%;
     right: 0;
+  }
+
+  .container-details-usages .container-stats.no-network-stats .memory-stats {
+      left: 45%;
   }
 
   .container-details-usages .container-stats .network-stats {

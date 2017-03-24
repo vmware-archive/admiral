@@ -401,6 +401,10 @@ var utils = {
     return stateString;
   },
 
+  isContainerOnVchHost(containerState) {
+    return containerState && containerState.isOnVchHost;
+  },
+
   networkStatusDisplay: function(state) {
     var stateString = '';
     if (state) {
