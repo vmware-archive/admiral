@@ -1,0 +1,34 @@
+---
+id: wordPressWithMySqlBindings
+name: wordPressWithMySqlBindings
+status: PUBLISHED
+properties:
+  _leaseDays: 3
+components:
+  wordpress:
+    type: App.Container
+    data:
+      restart_policy: ${mysql~restart_policy}
+      name: wordpress
+      image: wordpress:4.3.1
+      _cluster: 2
+      env:
+      - var: WORDPRESS_DB_PASSWORD
+        value: pass@word01
+      - var: WORDPRESS_DB_NAME
+        value: wordpress
+      - var: WORDPRESS_DB_HOST
+        value: ${_resource~mysql~address}:3306
+      ports:
+      - container_port: "80"
+  mysql:
+    type: App.Container
+    data:
+      restart_policy: "no"
+      name: mysql
+      image: mariadb:10.0.26
+      env:
+      - var: MYSQL_ROOT_PASSWORD
+        value: pass@word01
+      ports:
+      - container_port: "3306"

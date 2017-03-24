@@ -21,6 +21,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -28,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -57,6 +57,7 @@ import com.vmware.admiral.compute.container.ServiceNetwork;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.Ipam;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
+import com.vmware.admiral.compute.content.Binding.ComponentBinding;
 import com.vmware.admiral.compute.content.compose.CommonDescriptionEntity;
 import com.vmware.admiral.compute.content.compose.DockerCompose;
 import com.vmware.admiral.compute.content.compose.DockerComposeNetwork;
@@ -120,8 +121,7 @@ public class CompositeTemplateUtil {
         } else {
             if (isMultiYaml) {
                 throw new LocalizableValidationException(
-                        "Multiple YAML definitions are not supported "
-                                + "for Docker Compose and YAML Blueprint.",
+                        "Multiple YAML definitions are not supported for Docker Compose and YAML Blueprint.",
                         "compute.template.yaml.content.multiple.definitions");
             } else {
                 if (DOCKER_COMPOSE_VERSION_2.equals(template.version)
@@ -185,9 +185,7 @@ public class CompositeTemplateUtil {
             entity.bindings = new ArrayList<>(componentBindings);
         } catch (JsonProcessingException e) {
             String format = "Error processing Blueprint YAML content: %s";
-            Utils.log(CompositeTemplateUtil.class,
-                    CompositeTemplateUtil.class.getSimpleName(),
-                    Level.INFO, format, e.getMessage());
+            Utils.logWarning(format, e.getMessage());
             throw new LocalizableValidationException(String.format(format, e.getOriginalMessage()),
                     "compute.template.yaml.error", e.getOriginalMessage());
         }
@@ -199,7 +197,75 @@ public class CompositeTemplateUtil {
         sanitizeCompositeTemplate(entity, true);
 
         Map<String, Object> stringObjectMap = TemplateSerializationUtils.serializeTemplate(entity);
+
+        if (!isNullOrEmpty(entity.bindings)) {
+            normalizeBindings(stringObjectMap, entity);
+        }
+
         return YamlMapper.objectWriter().writeValueAsString(stringObjectMap);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void normalizeBindings(Map<String, Object> stringObjectMap,
+            CompositeTemplate entity) {
+        Map<String, Object> components = (Map<String, Object>) stringObjectMap.get("components");
+
+        for (ComponentBinding componentBinding : entity.bindings) {
+            String componentName = componentBinding.componentName;
+            List<Binding> bindings = componentBinding.bindings;
+
+            Map<String, Object> component = (Map<String, Object>) components.get(componentName);
+            if ((component == null) || isNullOrEmpty(bindings)) {
+                continue;
+            }
+
+            for (Binding binding : bindings) {
+                String expression = binding.originalFieldExpression;
+
+                List<String> targetFieldPath = binding.targetFieldPath;
+                if (isNullOrEmpty(targetFieldPath)) {
+                    continue;
+                }
+
+                Object level = component.get("data");
+                int pathSize = targetFieldPath.size();
+
+                for (int i = 0; i < pathSize; i++) {
+                    String currentPath = targetFieldPath.get(i);
+
+                    if (i == (pathSize - 1)) { // last path element
+                        if (level instanceof Map<?, ?>) {
+                            ((Map<String, Object>) level).put(currentPath, expression);
+                        } else if (level instanceof List<?>) {
+                            ((List<Object>) level).set(Integer.parseInt(currentPath), expression);
+                        } else {
+                            String message = String.format(
+                                    "[Component '%s'] Item '%s' in binding with targetFieldPath '%s' is not a valid JsonObject (Map or List)!",
+                                    componentName, currentPath, targetFieldPath);
+                            Utils.logWarning(message);
+                            throw new LocalizableValidationException(message,
+                                    "compute.template.yaml.error", message);
+                        }
+                        continue;
+                    }
+
+                    if (level instanceof Map<?, ?>) {
+                        level = ((Map<String, Object>) level).get(currentPath);
+                    } else if (level instanceof List<?>) {
+                        level = ((List<Object>) level).get(Integer.parseInt(currentPath));
+                    } else {
+                        String message = String.format(
+                                "[Component '%s'] Item '%s' in binding with targetFieldPath '%s' is not a valid JsonObject (Map or List)!",
+                                componentName, currentPath, targetFieldPath);
+                        Utils.logWarning(message);
+                        throw new LocalizableValidationException(message,
+                                "compute.template.yaml.error", message);
+                    }
+                }
+            }
+        }
+
+        stringObjectMap.remove("bindings");
     }
 
     private static void normalizeContainerDescription(
@@ -273,8 +339,7 @@ public class CompositeTemplateUtil {
         if (json != null && json.isJsonObject()) {
             retMap = toMap((JsonObject) json);
         } else {
-            Utils.log(CompositeTemplateUtil.class, CompositeTemplateUtil.class.getSimpleName(),
-                    Level.WARNING, "Log configuration is not a valid JsonObject!");
+            Utils.logWarning("Log configuration is not a valid JsonObject!");
         }
         return retMap;
     }
@@ -359,11 +424,8 @@ public class CompositeTemplateUtil {
             normalizeContainerDescription(component, serialize);
 
             if (!entry.getKey().equals(component.data.name)) {
-                Utils.log(CompositeTemplateUtil.class,
-                        CompositeTemplateUtil.class.getSimpleName(),
-                        Level.WARNING,
-                        "Container name '%s' differs from component name '%s' and "
-                                + "it will be overriden with the component name!",
+                Utils.logWarning("Container name '%s' differs from component name '%s' and "
+                        + "it will be overriden with the component name!",
                         component.data.name, entry.getKey());
                 component.data.name = entry.getKey();
             }
@@ -915,7 +977,7 @@ public class CompositeTemplateUtil {
     public static DeferredResult<CompositeTemplate> convertCompositeDescriptionToCompositeTemplate(
             Service service, CompositeDescription compositeDescription) {
 
-        //get each component recursively
+        // get each component recursively
         List<DeferredResult<NestedState>> components = compositeDescription.descriptionLinks
                 .stream()
                 .map(link -> {
@@ -923,34 +985,38 @@ public class CompositeTemplateUtil {
                     return NestedState.get(service, link, meta.descriptionClass);
                 }).collect(Collectors.toList());
 
-        //creat the ComponentTemplate objects
+        // create the ComponentTemplate objects
         return DeferredResult.allOf(components).thenApply(nestedStates -> {
-                    CompositeTemplate template = fromCompositeDescriptionToCompositeTemplate(
-                            compositeDescription);
-                    if (nestedStates == null || nestedStates.isEmpty()) {
-                        return template;
-                    }
-                    template.components = new HashMap<>();
-                    for (int i = 0; i < compositeDescription.descriptionLinks.size(); i++) {
-                        String link = compositeDescription.descriptionLinks.get(i);
-                        NestedState nestedState = nestedStates.get(i);
+            CompositeTemplate template = fromCompositeDescriptionToCompositeTemplate(
+                    compositeDescription);
+            if (nestedStates == null || nestedStates.isEmpty()) {
+                return template;
+            }
+            template.components = new HashMap<>();
+            for (int i = 0; i < compositeDescription.descriptionLinks.size(); i++) {
+                String link = compositeDescription.descriptionLinks.get(i);
+                NestedState nestedState = nestedStates.get(i);
 
-                        ComponentMeta meta = metaByDescriptionLink(link);
+                ComponentMeta meta = metaByDescriptionLink(link);
 
-                        ComponentTemplate<?> component = fromDescriptionToComponentTemplate(
-                                nestedState, meta.resourceType);
-                        template.components
-                                .put(((ResourceState) nestedState.object).name,
-                                        component);
-                    }
-                    return template;
-                }
+                ComponentTemplate<?> component = fromDescriptionToComponentTemplate(
+                        nestedState, meta.resourceType);
+                template.components
+                        .put(((ResourceState) nestedState.object).name,
+                                component);
+            }
+            return template;
+        }
 
         );
     }
 
     public static <T> boolean isNullOrEmpty(T[] array) {
         return (array == null || array.length == 0);
+    }
+
+    public static boolean isNullOrEmpty(Collection<?> collection) {
+        return (collection == null || collection.isEmpty());
     }
 
     public static boolean isNullOrEmpty(Map<?, ?> map) {

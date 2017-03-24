@@ -32,7 +32,7 @@ components:
       _cluster: ${db~_cluster}
       env:
       - var: "WORDPRESS_DB_HOST"
-        value: "db:3306"
+        value: "${_resource~db~address}:3306"
       - var: "WORDPRESS_DB_PASSWORD"
         value: "wordpress"
       restart_policy: "always"

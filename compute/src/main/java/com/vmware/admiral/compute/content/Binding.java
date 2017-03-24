@@ -14,8 +14,11 @@ package com.vmware.admiral.compute.content;
 import java.io.Serializable;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import com.vmware.admiral.compute.BindingUtils;
 
+@JsonIgnoreProperties({ "provisioningTimeBinding" })
 public class Binding implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -25,8 +28,10 @@ public class Binding implements Serializable {
         public String componentName;
         public List<Binding> bindings;
 
-        public ComponentBinding(String componentName,
-                List<Binding> bindings) {
+        public ComponentBinding() {
+        }
+
+        public ComponentBinding(String componentName, List<Binding> bindings) {
             this.componentName = componentName;
             this.bindings = bindings;
         }
@@ -35,9 +40,12 @@ public class Binding implements Serializable {
     public static class BindingPlaceholder implements Serializable {
         private static final long serialVersionUID = 1L;
 
-        public String bindingExpression;// TODO could be a list of fields, but not sure about
-        // the syntax yet
+        // TODO could be a list of fields, but not sure about the syntax yet
+        public String bindingExpression;
         public String defaultValue;
+
+        public BindingPlaceholder() {
+        }
 
         public BindingPlaceholder(String bindingExpression) {
             this(bindingExpression, null);
@@ -56,6 +64,9 @@ public class Binding implements Serializable {
     public String originalFieldExpression;
     public BindingPlaceholder placeholder;
 
+    public Binding() {
+    }
+
     public Binding(List<String> targetFieldPath,
             String originalFieldExpression, BindingPlaceholder placeholder) {
         this.targetFieldPath = targetFieldPath;
@@ -64,6 +75,7 @@ public class Binding implements Serializable {
     }
 
     public boolean isProvisioningTimeBinding() {
-        return BindingUtils.isProvisioningTimeBinding(this.placeholder.bindingExpression);
+        return (this.placeholder != null)
+                && BindingUtils.isProvisioningTimeBinding(this.placeholder.bindingExpression);
     }
 }
