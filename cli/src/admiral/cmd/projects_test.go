@@ -18,6 +18,7 @@ import (
 	"strings"
 	"testing"
 
+	"admiral/hosts"
 	. "admiral/testutils"
 )
 
@@ -73,5 +74,7 @@ func TestAddUseRemoveProjects(t *testing.T) {
 	// Clean up the env.
 	TestPrintln("Removing the host.")
 	hostMsg, err = RunHostRemove([]string{hostId})
+	CheckTestError(err, t)
+	err = hosts.ValidateHostIsDeleted(hostId)
 	CheckTestError(err, t)
 }

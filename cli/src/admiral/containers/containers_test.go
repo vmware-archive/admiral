@@ -97,6 +97,8 @@ func TestProvisionRemoveContainer(t *testing.T) {
 	// Cleaning
 	_, err = hosts.RemoveHost(hostID, false)
 	CheckTestError(err, t)
+	err = hosts.ValidateHostIsDeleted(hostID)
+	CheckTestError(err, t)
 	_, err = credentials.RemoveCredentialsID(credentialsID)
 	CheckTestError(err, t)
 }
@@ -158,6 +160,8 @@ func TestStopStartContainer(t *testing.T) {
 	_, err = RemoveContainer([]string{contId}, false)
 	CheckTestError(err, t)
 	_, err = hosts.RemoveHost(hostID, false)
+	CheckTestError(err, t)
+	err = hosts.ValidateHostIsDeleted(hostID)
 	CheckTestError(err, t)
 	_, err = credentials.RemoveCredentialsID(credentialsID)
 	CheckTestError(err, t)

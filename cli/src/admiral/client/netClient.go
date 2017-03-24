@@ -32,6 +32,7 @@ import (
 
 const (
 	HttpsDefaultPort string = ":443"
+	TimeoutSeconds   int64  = 60
 )
 
 var (
@@ -106,6 +107,36 @@ func ProcessRequest(req *http.Request) (*http.Response, []byte, error) {
 	respBody, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	return resp, respBody, nil
+}
+
+func ProcessRequestUntilNotFound(req *http.Request) error {
+	token, _ := utils.GetAuthToken()
+	if netClient == nil {
+		validateConnection(req.URL)
+		netClient, netClientErr = buildHttpClient()
+		if netClientErr != nil {
+			return netClientErr
+		}
+	}
+
+	setReqHeaders(req, token)
+
+	start := time.Now()
+	for {
+		elapsed := time.Now().Sub(start)
+		if elapsed.Seconds() > float64(TimeoutSeconds) {
+			return errors.New("Waiting for 404 status code timed out.")
+		}
+		resp, err := netClient.Do(req)
+		if err != nil {
+			return err
+		}
+
+		if resp.StatusCode == http.StatusNotFound {
+			return nil
+		}
+		time.Sleep(3 * time.Second)
+	}
 }
 
 //CheckResponseError checks if the response code is 4xx and then prints any error message,

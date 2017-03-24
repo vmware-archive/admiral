@@ -623,3 +623,11 @@ func GetHost(id string) (*Host, error) {
 	utils.CheckBlockingError(err)
 	return host, nil
 }
+
+func ValidateHostIsDeleted(id string) error {
+	link := utils.CreateResLinksForHosts(id)
+	fmt.Println("Validating host is deleted: " + link)
+	url := config.URL + link
+	req, _ := http.NewRequest("GET", url, nil)
+	return client.ProcessRequestUntilNotFound(req)
+}

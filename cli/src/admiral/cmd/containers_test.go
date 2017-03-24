@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"admiral/config"
+	"admiral/hosts"
 	. "admiral/testutils"
 )
 
@@ -64,5 +65,7 @@ func TestContainerProvision(t *testing.T) {
 	TestPrintln("Removing host.")
 	hostRemoveCmd.ParseFlags([]string{"--force"})
 	hostMsg, err = RunHostRemove([]string{hostId})
+	CheckTestError(err, t)
+	err = hosts.ValidateHostIsDeleted(hostId)
 	CheckTestError(err, t)
 }

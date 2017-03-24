@@ -138,6 +138,8 @@ func teardown(hostId, credentialsId, networkId string, t *testing.T) {
 	}
 	_, err := hosts.RemoveHost(hostId, false)
 	CheckTestError(err, t)
+	err = hosts.ValidateHostIsDeleted(hostId)
+	CheckTestError(err, t)
 	_, err = credentials.RemoveCredentialsID(credentialsId)
 	CheckTestError(err, t)
 }

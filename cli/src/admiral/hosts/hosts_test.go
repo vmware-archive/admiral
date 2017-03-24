@@ -70,6 +70,8 @@ func TestAddRemoveHost(t *testing.T) {
 	// Testing phase 2
 	hostID, err = RemoveHost(hostID, false)
 	CheckTestError(err, t)
+	err = ValidateHostIsDeleted(hostID)
+	CheckTestError(err, t)
 
 	// Validating phase 2
 	hl = HostsList{}
@@ -137,6 +139,8 @@ func TestEnableDisableHost(t *testing.T) {
 	// Cleaning
 	_, err = RemoveHost(hostID, false)
 	CheckTestError(err, t)
+	err = ValidateHostIsDeleted(hostID)
+	CheckTestError(err, t)
 	_, err = credentials.RemoveCredentialsID(credentialsID)
 	CheckTestError(err, t)
 }
@@ -184,6 +188,8 @@ func TestHostUpdate(t *testing.T) {
 
 	// Cleaning
 	_, err = RemoveHost(hostID, false)
+	CheckTestError(err, t)
+	err = ValidateHostIsDeleted(hostID)
 	CheckTestError(err, t)
 	_, err = placementzones.RemovePZID(pzID)
 	CheckTestError(err, t)
@@ -258,6 +264,8 @@ func TestAddAndUpdateHostWithTags(t *testing.T) {
 	}
 
 	_, err = RemoveHost(hostID, false)
+	CheckTestError(err, t)
+	err = ValidateHostIsDeleted(hostID)
 	CheckTestError(err, t)
 	_, err = credentials.RemoveCredentialsID(credentialsID)
 	CheckTestError(err, t)

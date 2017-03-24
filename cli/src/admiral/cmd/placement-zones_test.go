@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"admiral/config"
+	"admiral/hosts"
 	. "admiral/testutils"
 )
 
@@ -53,6 +54,8 @@ func TestAddUseRemoveResourcePools(t *testing.T) {
 	TestPrintln("Removing host.")
 	hostRemoveCmd.ParseFlags([]string{"--force"})
 	hostMsg, err = RunHostRemove([]string{hostId})
+	CheckTestError(err, t)
+	err = hosts.ValidateHostIsDeleted(hostId)
 	CheckTestError(err, t)
 
 	TestPrintln("Removing placement zone.")
