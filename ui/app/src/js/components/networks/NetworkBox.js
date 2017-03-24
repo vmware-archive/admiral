@@ -130,11 +130,6 @@ var NetworkBox = Vue.extend({
       e.preventDefault();
       e.stopPropagation();
 
-      if (!this.model.external) {
-        // there's no point of showing the networks view for nonexistent network
-        return;
-      }
-
       let queryOptions = {
         $category: constants.RESOURCES.SEARCH_CATEGORY.NETWORKS,
         $occurrence: constants.SEARCH_OCCURRENCE.ANY,

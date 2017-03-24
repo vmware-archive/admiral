@@ -620,19 +620,30 @@ let updateNetworksAndLinks = function(containerDescriptions) {
 };
 
 let updateContainerDescriptionsWithVolume = function(oldName, newName) {
+  if (oldName === newName) {
+    return;
+  }
+
   let containerDefs = utils.getIn(this.getData(),
                                   ['selectedItemDetails', 'templateDetails', 'listView', 'items']);
   if (containerDefs) {
+    var volumeNamePart = oldName + ':';
     containerDefs = containerDefs.map((containerDefinition) => {
-      if (containerDefinition.volumes[oldName] && oldName !== newName) {
+      var containerDefinitionUpdated = false;
+      containerDefinition.volumes = containerDefinition.volumes.map((volumeBinding) => {
+        if (volumeBinding.startsWith(volumeNamePart)) {
+          var containerPart = volumeBinding.replace(volumeNamePart, '');
+          containerDefinitionUpdated = true;
+          return newName + ':' + containerPart;
+        } else {
+          return volumeBinding;
+        }
+      });
 
-        containerDefinition = containerDefinition.asMutable();
-        containerDefinition.volumes = containerDefinition.volumes.asMutable();
-        containerDefinition.volumes[newName] = containerDefinition.volumes[oldName];
-        delete containerDefinition.volumes[oldName];
-
+      if (containerDefinitionUpdated) {
         services.updateContainerDescription(containerDefinition);
       }
+
       return containerDefinition;
     });
 
