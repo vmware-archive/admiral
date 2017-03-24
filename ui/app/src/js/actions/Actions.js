@@ -135,7 +135,6 @@ export var HostsContextToolbarActions = Reflux.createActions([
 
 export var PlacementContextToolbarActions = Reflux.createActions([
   'openToolbarPlacementZones', 'createPlacementZone', 'managePlacementZones',
-  'openToolbarDeploymentPolicies', 'createDeploymentPolicy', 'manageDeploymentPolicies',
   'openToolbarResourceGroups', 'createResourceGroup', 'manageResourceGroups',
   'closeToolbar'
 ]);
@@ -212,8 +211,8 @@ export var NavigationActions = Reflux.createActions([
   'openHome', 'openHomeAddHost', 'openHosts', 'openHostsSilently', 'openAddHost', 'editHost',
   'openTemplates', 'openEventLog', 'openRegistries', 'openContainerRequest', 'openContainers',
   'openNetworks', 'openContainerDetails', 'openClusterDetails', 'openCompositeContainerDetails',
-  'openTemplateDetails', 'showContainersPerPlacement', 'openPlacements', 'openProfiles',
-  'openAddProfile', 'editProfile', 'openMachines', 'openAddMachine', 'editMachine',
+  'openTemplateDetails', 'showContainersPerPlacement', 'showMachinesPerPlacement', 'openPlacements',
+  'openProfiles', 'openAddProfile', 'editProfile', 'openMachines', 'openAddMachine', 'editMachine',
   'openCompute', 'editCompute', 'openClosures', 'openClosuresSilently', 'openAddClosure',
   'openClosureDetails', 'openCompositeClosureDetails', 'openEndpoints', 'openEndpointsSilently',
   'openAddEndpoint', 'openVolumes'

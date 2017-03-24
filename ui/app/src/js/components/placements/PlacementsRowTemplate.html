@@ -13,21 +13,12 @@
   <td class="truncateText" title="{{name}}">{{name}}</td>
   <td class="truncateText primary-cell" title="{{groupName}}">{{groupName}}</td>
   <td class="truncateText" title="{{getDocumentId resourcePoolLink}}" data-name="{{placementZoneName}}">{{placementZoneName}}</td>
-  <td id="deploymentPolicy" class="truncateText" title="{{getDocumentId deploymentPolicyLink}}">{{deploymentPolicyName}}</td>
   <td class="truncateText" title="{{priority}}">{{priority}}</td>
   <td data-sort="{{instancesPercentage}}">
     <div class="stats-holder placementInstances navigation-link" title="{{i18n 'app.placement.list.instancesPerPlacement'}}">
       <div class="help-text">{{numOfInstances}} of {{#if maxNumberInstances}}{{maxNumberInstances}}{{else}}{{i18n "app.placement.list.unlimitedInstances"}}{{/if}}</div>
       <div class="progress">
         <div class="progress-bar progress-bar-{{placementZonePercentageLevel instancesPercentage}}" role="progressbar" style="width:{{instancesPercentage}}%"></div>
-      </div>
-    </div>
-  </td>
-  <td data-sort="{{cpuPercentage}}">
-    <div class="stats-holder">
-      <div class="help-text">{{cpuShares}}%</div>
-      <div class="progress">
-        <div class="progress-bar progress-bar-{{placementZonePercentageLevel cpuShares}}" role="progressbar" style="width:{{cpuShares}}%"></div>
       </div>
     </div>
   </td>
