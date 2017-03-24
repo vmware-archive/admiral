@@ -548,6 +548,26 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                 }));
     }
 
+    protected void completeSubTasksCounter(String subTaskLink, Throwable ex) {
+        CounterSubTaskState body = new CounterSubTaskState();
+        body.taskInfo = new TaskState();
+        if (ex == null) {
+            body.taskInfo.stage = TaskStage.FINISHED;
+        } else {
+            body.taskInfo.stage = TaskStage.FAILED;
+            body.taskInfo.failure = Utils.toServiceErrorResponse(ex);
+        }
+
+        sendRequest(Operation.createPatch(this, subTaskLink)
+                .setBody(body)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Notifying counting task failed: %s", e);
+                    }
+                }));
+    }
+
     /**
      * Moves the task to the given subStage. The method assumes the task stage is STARTED as this is
      * the stage where most sub-stage transition happen.

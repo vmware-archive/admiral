@@ -53,7 +53,6 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -270,26 +269,6 @@ public class ContainerRemovalTaskService
         return PowerState.PROVISIONING == containerState.powerState
                 && ContainerState.CONTAINER_ALLOCATION_STATUS
                 .equals(containerState.status);
-    }
-
-    private void completeSubTasksCounter(String subTaskLink, Throwable ex) {
-        CounterSubTaskState body = new CounterSubTaskState();
-        body.taskInfo = new TaskState();
-        if (ex == null) {
-            body.taskInfo.stage = TaskStage.FINISHED;
-        } else {
-            body.taskInfo.stage = TaskStage.FAILED;
-            body.taskInfo.failure = Utils.toServiceErrorResponse(ex);
-        }
-
-        sendRequest(Operation.createPatch(this, subTaskLink)
-                .setBody(body)
-                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Notifying counting task failed: %s", e);
-                    }
-                }));
     }
 
     private void createDeleteResourceCounterSubTask(ContainerRemovalTaskState state,

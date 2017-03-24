@@ -43,6 +43,7 @@ import com.vmware.xenon.common.test.TestContext;
 
 public abstract class ComputeBaseTest extends BaseTestCase {
 
+    public static final String REGION_ID = "us-east-1";
     protected static final Long MIN_MEMORY = 4_194_304L;
 
     private List<Runnable> staticFieldValuesResetRunners = new ArrayList<>();
@@ -139,7 +140,7 @@ public abstract class ComputeBaseTest extends BaseTestCase {
         endpoint.endpointProperties = new HashMap<>();
         endpoint.endpointProperties.put("privateKey", "aws.access.key");
         endpoint.endpointProperties.put("privateKeyId", "aws.secret.key");
-        endpoint.endpointProperties.put("regionId", "us-east-1");
+        endpoint.endpointProperties.put("regionId", REGION_ID);
         return endpoint;
     }
 }

@@ -28,6 +28,7 @@ import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.compute.ComputeNetworkRemovalTaskService.ComputeNetworkRemovalTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
+import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.UriUtils;
 
 public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
@@ -46,17 +47,74 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
     public void testNetworkRemoval() throws Throwable {
         ComputeNetwork cn = createNetwork("my net", true);
         cn = doPost(cn,
-                ComputeNetworkDescriptionService.FACTORY_LINK);
+                ComputeNetworkService.FACTORY_LINK);
 
         ComputeNetworkRemovalTaskState removalTask = createComputeNetworkRemovalTask(
                 cn.documentSelfLink, 1);
 
         removalTask = remove(removalTask);
 
-        ComputeNetwork networkState = getDocumentNoWait(ComputeNetwork.class,
-                removalTask.resourceLinks.iterator().next());
+        validateResourcesRemove(removalTask.resourceLinks.iterator().next(), null);
+    }
 
-        assertNull(networkState);
+    @Test
+    public void testNetworkRemovalNoComputeNetworkShouldSucceed() throws Throwable {
+        ComputeNetworkRemovalTaskState removalTask = createComputeNetworkRemovalTask(
+                UUID.randomUUID().toString(), 1);
+
+        removalTask = remove(removalTask);
+
+        validateResourcesRemove(removalTask.resourceLinks.iterator().next(), null);
+    }
+
+    @Test
+    public void testIsolatedNetworkRemoval() throws Throwable {
+        SubnetState subnet = createSubnetState();
+
+        ComputeNetwork cn = createNetwork("my net", true);
+        cn.networkType = ComputeNetworkDescriptionService.NetworkType.ISOLATED;
+        cn.subnetLink = subnet.documentSelfLink;
+        cn = doPost(cn, ComputeNetworkService.FACTORY_LINK);
+        ComputeNetworkRemovalTaskState removalTask = createComputeNetworkRemovalTask(
+                cn.documentSelfLink, 1);
+
+        removalTask = remove(removalTask);
+
+        validateResourcesRemove(removalTask.resourceLinks.iterator().next(),
+                subnet.documentSelfLink);
+    }
+
+    @Test
+    public void testIsolatedNetworkRemovalNoSubnetStateShouldSucceed() throws Throwable {
+        ComputeNetwork cn = createNetwork("my net", true);
+        cn.networkType = ComputeNetworkDescriptionService.NetworkType.ISOLATED;
+        cn.subnetLink = UUID.randomUUID().toString();
+        cn = doPost(cn, ComputeNetworkService.FACTORY_LINK);
+        ComputeNetworkRemovalTaskState removalTask = createComputeNetworkRemovalTask(
+                cn.documentSelfLink, 1);
+
+        removalTask = remove(removalTask);
+
+        validateResourcesRemove(removalTask.resourceLinks.iterator().next(), null);
+    }
+
+    @Test
+    public void testIsolatedNetworkRemovalNoSubnetAdapterShouldSucceed() throws Throwable {
+        SubnetState subnet = createSubnetState();
+        subnet.instanceAdapterReference = null;
+        subnet = doPut(subnet);
+
+        ComputeNetwork cn = createNetwork("my net", true);
+        cn.networkType = ComputeNetworkDescriptionService.NetworkType.ISOLATED;
+        cn.subnetLink = subnet.documentSelfLink;
+        cn = doPost(cn, ComputeNetworkService.FACTORY_LINK);
+        ComputeNetworkRemovalTaskState removalTask = createComputeNetworkRemovalTask(
+                cn.documentSelfLink, 1);
+
+        removalTask = remove(removalTask);
+
+        validateResourcesRemove(removalTask.resourceLinks.iterator().next(),
+                subnet.documentSelfLink);
     }
 
     private ComputeNetworkRemovalTaskState createComputeNetworkRemovalTask(
@@ -109,4 +167,15 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
         return cn;
     }
 
+    private void validateResourcesRemove(String computeNetworkLink, String subnetLink)
+            throws Throwable {
+        ComputeNetwork networkState = getDocumentNoWait(ComputeNetwork.class,
+                computeNetworkLink);
+        assertNull(networkState);
+
+        if (subnetLink != null) {
+            SubnetState subnet = getDocumentNoWait(SubnetState.class, subnetLink);
+            assertNull(subnet);
+        }
+    }
 }
