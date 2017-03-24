@@ -339,6 +339,8 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         prepareRequest(op, false);
         op.setExpiration(ServiceUtils.getExpirationTimeFromNowInMicros(
                 TimeUnit.SECONDS.toMicros(10)));
+        // Avoid reusing an open channel to this host to ensure certs validation.
+        op.setConnectionTag(input.getCredentials().documentSelfLink);
 
         if (isSecure(input.getDockerUri())) {
             // Make sure that the trusted certificate is loaded before proceeding to avoid
