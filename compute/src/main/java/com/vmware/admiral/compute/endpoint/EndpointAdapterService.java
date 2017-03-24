@@ -16,7 +16,6 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -35,6 +34,8 @@ import com.vmware.photon.controller.model.tasks.EndpointAllocationTaskService;
 import com.vmware.photon.controller.model.tasks.EndpointAllocationTaskService.EndpointAllocationTaskState;
 import com.vmware.photon.controller.model.tasks.EndpointRemovalTaskService;
 import com.vmware.photon.controller.model.tasks.EndpointRemovalTaskService.EndpointRemovalTaskState;
+import com.vmware.photon.controller.model.tasks.ImageEnumerationTaskService;
+import com.vmware.photon.controller.model.tasks.ImageEnumerationTaskService.ImageEnumerationTaskState;
 import com.vmware.photon.controller.model.tasks.ScheduledTaskService;
 import com.vmware.photon.controller.model.tasks.ScheduledTaskService.ScheduledTaskState;
 import com.vmware.photon.controller.model.tasks.TaskOption;
@@ -81,9 +82,17 @@ public class EndpointAdapterService extends StatelessService {
 
     public static final String SELF_LINK = ManagementUriParts.ENDPOINTS;
 
-    private static final String DEFAULT_SCHEDULED_TASK_INTERVAL_MICROS = System.getProperty(
-            "default.scheduled.stats.collection.interval.micros",
-            String.valueOf(TimeUnit.MINUTES.toMicros(5)));
+    private static final Long DEFAULT_SCHEDULED_STATS_COLLECTION_INTERVAL = Long.valueOf(
+            System.getProperty(
+                    "default.scheduled.stats.collection.interval.micros",
+                    String.valueOf(TimeUnit.MINUTES.toMicros(5))));
+
+    private static final Long DEFAULT_SCHEDULED_IMAGE_ENUM_INTERVAL = Long.valueOf(
+            System.getProperty(
+                    "default.scheduled.image.enumeration.interval.micros",
+                    String.valueOf(TimeUnit.DAYS.toMicros(7))));
+
+    private static final long DEFAULT_SCHEDULED_TASK_DELAY = TimeUnit.SECONDS.toMicros(2);
 
     public EndpointAdapterService() {
         super.toggleOption(ServiceOption.URI_NAMESPACE_OWNER, true);
@@ -132,19 +141,23 @@ public class EndpointAdapterService extends StatelessService {
 
     @Override
     public void handlePost(Operation post) {
-        EndpointState state = validateState(post);
+        EndpointState endpoinState = validateState(post);
+
         String query = post.getUri().getQuery();
-        boolean enumerate = query != null
+
+        // If 'enumerate' flag is set triggers the following end-point specific enumerations:
+        // - Resource Enumeration (as part of EndpointAllocationTaskService request)
+        // - Stats Collection (as part of this request)
+        // - Image Enumeration (as part of this request)
+        final boolean enumerate = query != null
                 && query.contains(ManagementUriParts.REQUEST_PARAM_ENUMERATE_OPERATION_NAME);
 
-        EndpointAllocationTaskState eats = new EndpointAllocationTaskState();
-        eats.endpointState = state;
-        eats.tenantLinks = state.tenantLinks;
+        final EndpointAllocationTaskState eats = new EndpointAllocationTaskState();
+        eats.endpointState = endpoinState;
+        eats.tenantLinks = endpoinState.tenantLinks;
         eats.taskInfo = new TaskState();
         eats.taskInfo.isDirect = true;
-        eats.options = EnumSet.noneOf(TaskOption.class);
-
-        eats.options.add(TaskOption.PRESERVE_MISSING_RESOUCES);
+        eats.options = EnumSet.of(TaskOption.PRESERVE_MISSING_RESOUCES);
         if (DeploymentProfileConfig.getInstance().isTest()) {
             eats.options.add(TaskOption.IS_MOCK);
         }
@@ -153,14 +166,14 @@ public class EndpointAdapterService extends StatelessService {
             eats.enumerationRequest = new EndpointAllocationTaskService.ResourceEnumerationRequest();
             eats.enumerationRequest.resourcePoolLink = UriUtils.getODataParamValueAsString(
                     post.getUri(), ManagementUriParts.REQUEST_PARAM_TARGET_RESOURCE_POOL_LINK);
-            eats.enumerationRequest.delayMicros = TimeUnit.SECONDS.toMicros(2);
+            eats.enumerationRequest.delayMicros = DEFAULT_SCHEDULED_TASK_DELAY;
         }
 
         Operation.createPost(this, EndpointAllocationTaskService.FACTORY_LINK)
                 .setBody(eats)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        handleException(post, "creating", state.name, o.getStatusCode(), e);
+                        handleException(post, "creating", endpoinState.name, o.getStatusCode(), e);
                         return;
                     }
                     EndpointAllocationTaskState body = o.getBody(EndpointAllocationTaskState.class);
@@ -180,16 +193,19 @@ public class EndpointAdapterService extends StatelessService {
                             .setBody(patchRPWithComputeType)
                             .setCompletion((op, ex) -> {
                                 if (ex != null) {
-                                    handleException(post, "creating", state.name, op.getStatusCode(), ex);
+                                    handleException(post, "creating", endpoinState.name,
+                                            op.getStatusCode(), ex);
                                     return;
                                 }
 
-                                // Once patch ResourcePoolState is done continue with EndpointState processing
+                                // Once patch ResourcePoolState is done continue with EndpointState
+                                // processing
                                 if (enumerate) {
                                     triggerStatsCollection(body);
+                                    triggerImageEnumeration(body);
                                 }
-                                post.setBody(body.endpointState);
-                                post.complete();
+
+                                post.setBody(body.endpointState).complete();
                             }));
                 })
                 .sendWith(this);
@@ -197,33 +213,34 @@ public class EndpointAdapterService extends StatelessService {
 
     @Override
     public void handlePut(Operation put) {
-        EndpointState state = validateState(put);
+        EndpointState endpointState = validateState(put);
+
         String query = put.getUri().getQuery();
         boolean validateConnection = query != null
                 && query.contains(ManagementUriParts.REQUEST_PARAM_VALIDATE_OPERATION_NAME);
 
-        EndpointAllocationTaskState eats = new EndpointAllocationTaskState();
-        eats.endpointState = state;
-        eats.tenantLinks = state.tenantLinks;
+        final EndpointAllocationTaskState eats = new EndpointAllocationTaskState();
+        eats.endpointState = endpointState;
+        eats.tenantLinks = endpointState.tenantLinks;
         eats.taskInfo = new TaskState();
         eats.taskInfo.isDirect = true;
         eats.options = EnumSet.noneOf(TaskOption.class);
-
         if (DeploymentProfileConfig.getInstance().isTest()) {
             eats.options.add(TaskOption.IS_MOCK);
         }
 
         if (validateConnection) {
             eats.options.add(TaskOption.VALIDATE_ONLY);
-        } else if (state.documentSelfLink == null) {
-            put.fail(new LocalizableValidationException("Invalid state passed for update", "compute.endpoint.adapter.invalid.state"));
+        } else if (endpointState.documentSelfLink == null) {
+            put.fail(new LocalizableValidationException("Invalid state passed for update",
+                    "compute.endpoint.adapter.invalid.state"));
         }
 
         Operation.createPost(this, EndpointAllocationTaskService.FACTORY_LINK)
                 .setBody(eats)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        handleException(put, "updating", state.name, o.getStatusCode(), e);
+                        handleException(put, "updating", endpointState.name, o.getStatusCode(), e);
                         return;
                     }
                     EndpointAllocationTaskState body = o.getBody(EndpointAllocationTaskState.class);
@@ -238,12 +255,11 @@ public class EndpointAdapterService extends StatelessService {
                                 message = body.taskInfo.failure.message;
                             } else {
                                 statusCode = HttpURLConnection.HTTP_UNAVAILABLE;
-                                errorCode = CertificateInfoServiceErrorResponse
-                                        .ERROR_CODE_CERTIFICATE_MASK;
+                                errorCode = CertificateInfoServiceErrorResponse.ERROR_CODE_CERTIFICATE_MASK;
                                 message = "Unknown issue with certificate validation.";
                             }
-                            CertificateInfoServiceErrorResponse errorResponse =
-                                    CertificateInfoServiceErrorResponse.create(
+                            CertificateInfoServiceErrorResponse errorResponse = CertificateInfoServiceErrorResponse
+                                    .create(
                                             body.certificateInfo, statusCode, errorCode, message);
                             put.setBody(errorResponse);
                             put.setStatusCode(HttpURLConnection.HTTP_OK);
@@ -264,6 +280,7 @@ public class EndpointAdapterService extends StatelessService {
 
     @Override
     public void handleDelete(Operation delete) {
+
         String endpointLink = extractEndpointLink(delete);
 
         if (endpointLink == null || endpointLink.isEmpty()) {
@@ -272,19 +289,17 @@ public class EndpointAdapterService extends StatelessService {
                     "compute.endpoint.adapter.delete.endpoint.missing", delete.getUri().getPath());
         }
 
-        String id = statsCollectionId(endpointLink);
-
-        EndpointRemovalTaskState state = new EndpointRemovalTaskState();
-        state.endpointLink = endpointLink;
-        state.taskInfo = new TaskState();
-        state.taskInfo.isDirect = true;
-
+        final EndpointRemovalTaskState endpointRemovalTask = new EndpointRemovalTaskState();
+        endpointRemovalTask.endpointLink = endpointLink;
+        endpointRemovalTask.taskInfo = new TaskState();
+        endpointRemovalTask.taskInfo.isDirect = true;
+        endpointRemovalTask.options = EnumSet.noneOf(TaskOption.class);
         if (DeploymentProfileConfig.getInstance().isTest()) {
-            state.options = EnumSet.of(TaskOption.IS_MOCK);
+            endpointRemovalTask.options.add(TaskOption.IS_MOCK);
         }
 
         Operation.createPost(this, EndpointRemovalTaskService.FACTORY_LINK)
-                .setBody(state)
+                .setBody(endpointRemovalTask)
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         handleException(delete, "deleting", endpointLink, o.getStatusCode(), e);
@@ -300,26 +315,21 @@ public class EndpointAdapterService extends StatelessService {
                 })
                 .sendWith(this);
 
-        // Delete scheduled stats collection
-        Operation.createDelete(this, UriUtils.buildUriPath(ScheduledTaskService.FACTORY_LINK, id))
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        logInfo("Uneble to delete scheduled stats collection task, reason: %s",
-                                e.getMessage());
-                    }
-                })
-                .sendWith(this);
+        deleteStatsCollectionScheduledTask(endpointLink);
+        deleteImageEnumerationScheduledTask(endpointLink);
     }
 
     private EndpointState validateState(Operation op) {
         if (!op.hasBody()) {
-            throw new LocalizableValidationException("Body is required", "compute.endpoint.adapter.body.required");
+            throw new LocalizableValidationException("Body is required",
+                    "compute.endpoint.adapter.body.required");
         }
 
         EndpointState state = op.getBody(EndpointState.class);
 
         if (state.endpointType == null) {
-            throw new LocalizableValidationException("Endpoint type is required", "compute.endpoint.adapter.enpoint.type.required");
+            throw new LocalizableValidationException("Endpoint type is required",
+                    "compute.endpoint.adapter.enpoint.type.required");
         }
         return state;
     }
@@ -365,15 +375,20 @@ public class EndpointAdapterService extends StatelessService {
 
         EndpointState endpoint = currentState.endpointState;
 
-        String id = statsCollectionId(endpoint.documentSelfLink);
+        String statsCollectionId = statsCollectionId(endpoint.documentSelfLink);
 
         long intervalMicros = currentState.enumerationRequest.refreshIntervalMicros != null
                 ? currentState.enumerationRequest.refreshIntervalMicros
-                : Long.valueOf(DEFAULT_SCHEDULED_TASK_INTERVAL_MICROS);
+                : DEFAULT_SCHEDULED_STATS_COLLECTION_INTERVAL;
 
-        StatsCollectionTaskState statsCollectionTask = new StatsCollectionTaskState();
+        // The stats-collection task to be scheduled
+        final StatsCollectionTaskState statsCollectionTask = new StatsCollectionTaskState();
+        statsCollectionTask.documentSelfLink = statsCollectionId;
         statsCollectionTask.resourcePoolLink = endpoint.resourcePoolLink;
         statsCollectionTask.options = EnumSet.of(TaskOption.SELF_DELETE_ON_COMPLETION);
+        if (DeploymentProfileConfig.getInstance().isTest()) {
+            statsCollectionTask.options.add(TaskOption.IS_MOCK);
+        }
 
         // Create additional Query clause
         List<Query> queries = Arrays.asList(
@@ -382,15 +397,18 @@ public class EndpointAdapterService extends StatelessService {
 
         statsCollectionTask.customizationClauses = queries;
 
-        ScheduledTaskState scheduledTaskState = new ScheduledTaskState();
-        scheduledTaskState.documentSelfLink = id;
+        // The scheduled task that should trigger the stats-collection task
+        final ScheduledTaskState scheduledTaskState = new ScheduledTaskState();
+
         scheduledTaskState.factoryLink = StatsCollectionTaskService.FACTORY_LINK;
         scheduledTaskState.initialStateJson = Utils.toJson(statsCollectionTask);
         scheduledTaskState.intervalMicros = intervalMicros;
         scheduledTaskState.delayMicros = currentState.enumerationRequest.delayMicros;
+
+        scheduledTaskState.documentSelfLink = statsCollectionId;
         scheduledTaskState.tenantLinks = endpoint.tenantLinks;
-        scheduledTaskState.customProperties = new HashMap<>();
-        scheduledTaskState.customProperties.put(ComputeProperties.ENDPOINT_LINK_PROP_NAME,
+        scheduledTaskState.customProperties = Collections.singletonMap(
+                ComputeProperties.ENDPOINT_LINK_PROP_NAME,
                 endpoint.documentSelfLink);
 
         Operation.createPost(this, ScheduledTaskService.FACTORY_LINK)
@@ -398,24 +416,122 @@ public class EndpointAdapterService extends StatelessService {
                 .setBody(scheduledTaskState)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logWarning("Error triggering stats collection task, reason: %s",
-                                e.getMessage());
+                        logWarning(
+                                "Error triggering stats collection task for endpoint [%s], reason: %s",
+                                endpoint.documentSelfLink, e.getMessage());
                     } else {
-                        logInfo("Stats collection has been scheduled for endpoint: %s",
-                                currentState.documentSelfLink);
+                        logInfo("Stats collection has been scheduled for endpoint [%s]",
+                                endpoint.documentSelfLink);
                     }
 
                 })
                 .sendWith(this);
     }
 
-    private String statsCollectionId(String endpointLink) {
-        String statsCollectionSuffix = "-stats-collection";
+    /**
+     * Delete scheduled stats-collection task.
+     */
+    private void deleteStatsCollectionScheduledTask(String endpointLink) {
+        String uri = UriUtils.buildUriPath(
+                ScheduledTaskService.FACTORY_LINK,
+                statsCollectionId(endpointLink));
+
+        Operation.createDelete(this, uri)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logInfo("Unable to delete scheduled stats collection task for endpoint [%s], reason: %s",
+                                endpointLink, e.getMessage());
+                    }
+                })
+                .sendWith(this);
+    }
+
+    /**
+     * Create end-point specific stats-collection id, by analogy with {#code
+     * EndpointAllocationTaskService}.
+     */
+    static String statsCollectionId(String endpointLink) {
+
+        final String statsCollectionSuffix = "-stats-collection";
 
         // Append suffix to avoid duplication with enumeration scheduler.
-        String id = UriUtils.getLastPathSegment(endpointLink)
-                .concat(statsCollectionSuffix);
-        return id;
+        return UriUtils.getLastPathSegment(endpointLink).concat(statsCollectionSuffix);
+    }
+
+    private void triggerImageEnumeration(EndpointAllocationTaskState endpointAllocationTask) {
+
+        final EndpointState endpoint = endpointAllocationTask.endpointState;
+
+        String imageEnumerationId = imageEnumerationId(endpoint.documentSelfLink);
+
+        // The image-enum task to be scheduled
+        final ImageEnumerationTaskState imageEnumTask = new ImageEnumerationTaskState();
+        imageEnumTask.documentSelfLink = imageEnumerationId;
+        imageEnumTask.endpointLink = endpoint.documentSelfLink;
+        imageEnumTask.tenantLinks = endpoint.tenantLinks;
+        imageEnumTask.options = EnumSet.of(TaskOption.SELF_DELETE_ON_COMPLETION);
+        if (DeploymentProfileConfig.getInstance().isTest()) {
+            imageEnumTask.options.add(TaskOption.IS_MOCK);
+        }
+
+        // The scheduled task that should trigger the image-enum task
+        final ScheduledTaskState scheduledTask = new ScheduledTaskState();
+
+        scheduledTask.factoryLink = ImageEnumerationTaskService.FACTORY_LINK;
+        scheduledTask.initialStateJson = Utils.toJson(imageEnumTask);
+        scheduledTask.intervalMicros = DEFAULT_SCHEDULED_IMAGE_ENUM_INTERVAL;
+        scheduledTask.delayMicros = DEFAULT_SCHEDULED_TASK_DELAY;
+
+        scheduledTask.documentSelfLink = imageEnumerationId;
+        scheduledTask.tenantLinks = endpoint.tenantLinks;
+        scheduledTask.customProperties = Collections.singletonMap(
+                ComputeProperties.ENDPOINT_LINK_PROP_NAME,
+                endpoint.documentSelfLink);
+
+        Operation.createPost(this, ScheduledTaskService.FACTORY_LINK)
+                .setBody(scheduledTask)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logWarning(
+                                "ERROR triggering image-enumeration task for endpoint [%s], reason: %s",
+                                endpoint.documentSelfLink, e.getMessage());
+                    } else {
+                        logInfo("Image-enumeration has been scheduled for endpoint [%s]",
+                                endpoint.documentSelfLink);
+                    }
+                })
+                .sendWith(this);
+    }
+
+    /**
+     * Delete scheduled image-enumeration task.
+     */
+    private void deleteImageEnumerationScheduledTask(String endpointLink) {
+        String uri = UriUtils.buildUriPath(
+                ScheduledTaskService.FACTORY_LINK,
+                imageEnumerationId(endpointLink));
+
+        Operation.createDelete(this, uri)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logInfo("Unable to delete scheduled image-enumeration task for endpoint [%s], reason: %s",
+                                endpointLink, e.getMessage());
+                    }
+                })
+                .sendWith(this);
+    }
+
+    /**
+     * Create end-point specific image-enumeration id, by analogy with {#code
+     * EndpointAllocationTaskService}.
+     */
+    static String imageEnumerationId(String endpointLink) {
+
+        final String imageEnumerationSuffix = "-image-enumeration";
+
+        // Append suffix to avoid duplication with enumeration scheduler.
+        return UriUtils.getLastPathSegment(endpointLink).concat(imageEnumerationSuffix);
     }
 
 }

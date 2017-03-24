@@ -35,8 +35,10 @@ import com.vmware.photon.controller.model.resources.EndpointService.EndpointStat
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.tasks.EndpointAllocationTaskService.EndpointAllocationTaskState;
+import com.vmware.photon.controller.model.tasks.ImageEnumerationTaskService;
 import com.vmware.photon.controller.model.tasks.ScheduledTaskService;
 import com.vmware.photon.controller.model.tasks.ScheduledTaskService.ScheduledTaskState;
+import com.vmware.photon.controller.model.tasks.monitoring.StatsCollectionTaskService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.UriUtils;
@@ -186,15 +188,16 @@ public class EndpointAdapterServiceTest extends ComputeBaseTest {
     }
 
     @Test
-    public void testCollectStatsForEndpoint() throws Throwable {
+    public void testCreateEndpointWithEnumerationEnabled() throws Throwable {
 
-        EndpointState endpoint = createEndpoint("ep");
+        EndpointState endpoint = createEndpoint("testCreateEndpointWithEnumerationEnabled");
 
         String endpointAdapterUri = String.format("%s?operation=%s",
                 EndpointAdapterService.SELF_LINK,
                 ManagementUriParts.REQUEST_PARAM_ENUMERATE_OPERATION_NAME);
 
-        ServiceDocumentQueryResult queryResult = getDocument(ServiceDocumentQueryResult.class,
+        ServiceDocumentQueryResult queryResult = getDocument(
+                ServiceDocumentQueryResult.class,
                 ResourcePoolService.FACTORY_LINK);
 
         // Assign RP to enumeration.
@@ -202,21 +205,66 @@ public class EndpointAdapterServiceTest extends ComputeBaseTest {
                 ManagementUriParts.REQUEST_PARAM_TARGET_RESOURCE_POOL_LINK,
                 queryResult.documents.keySet().stream().findFirst().get());
 
-        EndpointState newEndpointState = doPost(endpoint, endpointAdapterUri);
+        endpoint = doPost(endpoint, endpointAdapterUri);
 
-        assertNotNull(newEndpointState);
-        assertNotNull(newEndpointState.documentSelfLink);
-        assertNotNull(newEndpointState.authCredentialsLink);
-        assertNotNull(newEndpointState.computeLink);
+        assertNotNull(endpoint);
+        assertNotNull(endpoint.documentSelfLink);
+        assertNotNull(endpoint.authCredentialsLink);
+        assertNotNull(endpoint.computeLink);
 
-        // Check scheduled task was created
-        String schedTaskLink = UriUtils.buildUriPath(ScheduledTaskService.FACTORY_LINK,
-                UriUtils.getLastPathSegment(newEndpointState.documentSelfLink)
-                        .concat("-stats-collection"));
+        // Check resource-enumeration scheduled task was created
+        {
+            String scheduledTaskLink = UriUtils.buildUriPath(
+                    ScheduledTaskService.FACTORY_LINK,
+                    UriUtils.getLastPathSegment(endpoint.documentSelfLink));
 
-        ScheduledTaskState scheduledTaskState = getDocument(ScheduledTaskState.class,
-                schedTaskLink);
-        assertNotNull(scheduledTaskState);
+            ScheduledTaskState scheduledTask = getDocument(
+                    ScheduledTaskState.class,
+                    scheduledTaskLink);
+            assertNotNull("resource-enumeration scheduled task is NOT created", scheduledTask);
+        }
+
+        {
+            // Check stats-collection scheduled task was created
+            String scheduledTaskLink = UriUtils.buildUriPath(
+                    ScheduledTaskService.FACTORY_LINK,
+                    EndpointAdapterService.statsCollectionId(endpoint.documentSelfLink));
+
+            ScheduledTaskState scheduledTask = getDocument(
+                    ScheduledTaskState.class,
+                    scheduledTaskLink);
+            assertNotNull("stats-collection scheduled task is NOT created", scheduledTask);
+
+            // Check stats-collection task was created
+            final String statsCollectionTaskLink = UriUtils.buildUriPath(
+                    StatsCollectionTaskService.FACTORY_LINK,
+                    EndpointAdapterService.statsCollectionId(endpoint.documentSelfLink));
+
+            // Wait for stats-collection task cause it is scheduled with a delay
+            // NOTE: the task is created with SELF_DELETE_ON_COMPLETION so wait for its availability
+            host.waitForServiceAvailable(statsCollectionTaskLink);
+        }
+
+        {
+            // Check image-enumeration scheduled task was created
+            String scheduledTaskLink = UriUtils.buildUriPath(
+                    ScheduledTaskService.FACTORY_LINK,
+                    EndpointAdapterService.imageEnumerationId(endpoint.documentSelfLink));
+
+            ScheduledTaskState scheduledTask = getDocument(
+                    ScheduledTaskState.class,
+                    scheduledTaskLink);
+            assertNotNull("image-enumeration scheduled task is NOT created", scheduledTask);
+
+            // Check image-enumeration task was created
+            final String imageEnumTaskLink = UriUtils.buildUriPath(
+                    ImageEnumerationTaskService.FACTORY_LINK,
+                    EndpointAdapterService.imageEnumerationId(endpoint.documentSelfLink));
+
+            // Wait for image-enumeration task cause it is scheduled with a delay
+            // NOTE: the task is created with SELF_DELETE_ON_COMPLETION so wait for its availability
+            host.waitForServiceAvailable(imageEnumTaskLink);
+        }
     }
 
     @Test
