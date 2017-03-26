@@ -75,6 +75,8 @@ initializer.init(() => {
                      require('stores/AppStore').default);
   }
 
+  utils.redirectToHashIfNeeded();
+
   var baseRegistryUrl = utils.getConfigurationProperty('harbor.tab.url');
   var redirectUrl = utils.extractHarborRedirectUrl();
 

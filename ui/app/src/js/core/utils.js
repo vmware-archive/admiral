@@ -587,17 +587,31 @@ var utils = {
     }
   },
 
+  redirectToHashIfNeeded: function() {
+    let queryIndex = location.search.indexOf('?');
+    if (queryIndex !== -1) {
+      let query = location.search.substring(queryIndex + 1);
+      let params = this.uriToParams(query);
+      let redirectUrl = params.harbor_redirect_url;
+      if (redirectUrl) {
+        let href = location.protocol + '//' +
+            location.host + '/#/' + location.search;
+        location.href = href;
+      }
+    }
+  },
+
   extractHarborRedirectUrl: function() {
     var queryIndex = location.hash.indexOf('?');
     if (queryIndex !== -1) {
-      var query = location.hash.substring(queryIndex + 1);
-      var params = this.uriToParams(query);
-      var redirectUrl = params.harbor_redirect_url;
+      let query = location.hash.substring(queryIndex + 1);
+      let params = this.uriToParams(query);
+      let redirectUrl = params.harbor_redirect_url;
       if (redirectUrl) {
         delete params.harbor_redirect_url;
-        var newQuery = this.paramsToURI(params);
+        let newQuery = this.paramsToURI(params);
 
-        var newHash = location.hash.substring(0, queryIndex);
+        let newHash = location.hash.substring(0, queryIndex);
         if (newQuery) {
           newHash += '?' + newQuery;
         }
