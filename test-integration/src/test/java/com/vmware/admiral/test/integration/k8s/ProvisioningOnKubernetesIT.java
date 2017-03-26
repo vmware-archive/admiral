@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -56,6 +57,7 @@ import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsSe
  * Class for test that adds a k8s host
  */
 @RunWith(Parameterized.class)
+@Ignore
 public class ProvisioningOnKubernetesIT extends BaseIntegrationSupportIT {
 
     protected ComputeState kubernetesHostCompute;
