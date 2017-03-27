@@ -12,6 +12,7 @@
 package com.vmware.admiral.common.util;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
+import static com.vmware.admiral.common.util.AssertUtil.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
@@ -21,35 +22,63 @@ import java.util.List;
  */
 public class ConversionUtil {
 
-    private static List<String> BINARY_MEMORY_UNITS = Arrays.asList("b", "kib", "mib", "gib", "tib", "pib");
-    private static List<String> DECIMAL_MEMORY_UNITS = Arrays.asList("b", "kb", "mb", "gb", "tb", "pb");
+    private static List<String> BINARY_MEMORY_UNITS = Arrays.asList("b", "kib", "mib", "gib", "tib",
+            "pib");
+    private static List<String> DECIMAL_MEMORY_UNITS = Arrays.asList("b", "kb", "mb", "gb", "tb",
+            "pb");
     private static List<String> CPU_UNITS = Arrays.asList("hz", "khz", "mhz", "ghz", "thz", "phz");
 
     /**
      * Converts a memory value from human readable form to the value in bytes.
      *
      * @param magnitude the magnitude
-     * @param unit the unit of the data (comparison is case insensitve)
+     * @param inUnit the input (comparison is case insensitve)
+     * @param outUnit the output (comparison is case insensitve)
      * @return the value converted to bytes
      */
     public static double memoryToBytes(double magnitude, String unit) {
-        assertNotNull(unit, "unit");
-        unit = unit.toLowerCase();
-        long base = 1;
-        for (String currentUnit : BINARY_MEMORY_UNITS) {
-            if (currentUnit.equals(unit)) {
-                return magnitude * base;
-            }
-            base *= 1024;
+        if (BINARY_MEMORY_UNITS.contains(unit.toLowerCase())) {
+            return memoryBinaryConversion(magnitude, unit, "b");
+        } else {
+            return memoryDecimalConversion(magnitude, unit, "b");
         }
-        base = 1;
-        for (String currentUnit : DECIMAL_MEMORY_UNITS) {
-            if (currentUnit.equals(unit)) {
-                return magnitude * base;
-            }
-            base *= 1000;
-        }
-        return 0;
+    }
+
+    /**
+     * Converts a memory binary value from one unit to another.
+     *
+     * @param magnitude the magnitude
+     * @param inUnit the input (comparison is case insensitve)
+     * @param outUnit the output (comparison is case insensitve)
+     * @return the value converted to bytes
+     */
+    public static double memoryBinaryConversion(double inMagnitude, String inUnit, String outUnit) {
+        return memoryConversion(inMagnitude, inUnit, outUnit, false);
+    }
+
+    /**
+    * Converts a memory decimal value from one unit to another.
+    *
+    * @param magnitude the magnitude
+    * @param inUnit the input (comparison is case insensitve)
+    * @param outUnit the output (comparison is case insensitve)
+    * @return the value converted to bytes
+    */
+    public static double memoryDecimalConversion(double inMagnitude, String inUnit,
+            String outUnit) {
+        return memoryConversion(inMagnitude, inUnit, outUnit, true);
+    }
+
+    private static double memoryConversion(double inMagnitude, String inUnit, String outUnit,
+            boolean isDecimal) {
+        int base = isDecimal ? 1000 : 1024;
+        List<String> listOfUnits = isDecimal ? DECIMAL_MEMORY_UNITS : BINARY_MEMORY_UNITS;
+        int inPow = listOfUnits.indexOf(inUnit.toLowerCase());
+        assertTrue(inPow >= 0, "inMagnitude set to incorrect unit.");
+        int outPow = listOfUnits.indexOf(outUnit.toLowerCase());
+        assertTrue(outPow >= 0, "outMagnitude set to incorrect unit.");
+        int pow = inPow - outPow;
+        return inMagnitude * Math.pow(base, pow);
     }
 
     /**
