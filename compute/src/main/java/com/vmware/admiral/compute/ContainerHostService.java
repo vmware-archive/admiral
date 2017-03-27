@@ -35,6 +35,7 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.SslCertificateResolver;
 import com.vmware.admiral.compute.ConfigureHostOverSshTaskService.ConfigureHostOverSshTaskServiceState;
+import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
 import com.vmware.admiral.compute.PlacementZoneConstants.PlacementZoneType;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
@@ -459,7 +460,7 @@ public class ContainerHostService extends StatelessService {
         case VCH:
             verifyPlacementZoneType(hostSpec, op, PlacementZoneType.SCHEDULER, () -> {
                 verifyPlacementZoneIsEmpty(hostSpec, op, () -> {
-                    storeVicHost(hostSpec, op);
+                    storeVchHost(hostSpec, op);
                 });
             });
             break;
@@ -480,14 +481,31 @@ public class ContainerHostService extends StatelessService {
         }
     }
 
-    private void storeVicHost(ContainerHostSpec hostSpec, Operation op) {
+    private void storeVchHost(ContainerHostSpec hostSpec, Operation op) {
+        ComputeState hostState = hostSpec.hostState;
         try {
             // Schedulers can be added to placements zones only explicitly, it is not possible to
             // use tags
-            AssertUtil.assertNotEmpty(hostSpec.hostState.resourcePoolLink, "resourcePoolLink");
-            AssertUtil.assertEmpty(hostSpec.hostState.tagLinks, "tagLinks");
+            AssertUtil.assertEmpty(hostState.tagLinks, "tagLinks");
         } catch (LocalizableValidationException ex) {
             op.fail(ex);
+            return;
+        }
+
+        // If no placement zone is specified, auto generate one
+        if (hostState.resourcePoolLink == null) {
+            // mark automatic deletion of the placement zone on host removal
+            if (hostState.customProperties == null) {
+                hostState.customProperties = new HashMap<>();
+            }
+            hostState.customProperties.put(
+                    ComputeConstants.AUTO_GENERATED_PLACEMENT_ZONE_PROP_NAME,
+                    Boolean.toString(true));
+
+            createSchedulerPlacementZone(hostState, op, (placementZone) -> {
+                hostState.resourcePoolLink = placementZone.documentSelfLink;
+                storeVchHost(hostSpec, op);
+            });
             return;
         }
 
@@ -527,6 +545,64 @@ public class ContainerHostService extends StatelessService {
                 doStoreHost(hostSpec, op);
             });
         }
+    }
+
+    /**
+     * Creates a placement zone, marks it as a {@link PlacementZoneType#SCHEDULER} type zone. Note
+     * that this method will not update the hostState. If such an update is needed, use the
+     * <code>successCallback</code>. Also, the calling <code>op</code> will not be completed on
+     * success. This should also be done in the <code>successCallback</code>.
+     *
+     * @param hostState
+     *            the {@link ComputeState} that the placement zone will be created for. Read-only
+     *            operations will be performed.
+     * @param op
+     *            the calling operation. This will be failed if the creation POST for the placement
+     *            zone fails.
+     * @param successCallback
+     *            a callback that will be executed on success with the created placement zone as an
+     *            argument.
+     */
+    private void createSchedulerPlacementZone(ComputeState hostState, Operation op,
+            Consumer<ResourcePoolState> successCallback) {
+        ContainerHostType hostType;
+        try {
+            hostType = ContainerHostUtil.getDeclaredContainerHostType(hostState);
+        } catch (LocalizableValidationException e) {
+            logWarning(Utils.toString(e));
+            op.fail(e);
+            return;
+        }
+
+        // Build the name of the placement zone
+        StringBuilder name = new StringBuilder(hostType.toString().toLowerCase());
+        name.append(":");
+        name.append(hostState.address.replaceAll("^https?:\\/\\/", ""));
+
+        // mark the placement zone as a scheduler
+        ResourcePoolState resourcePool = new ResourcePoolState();
+        resourcePool.name = name.toString();
+        resourcePool.customProperties = new HashMap<>();
+        resourcePool.customProperties.put(
+                PlacementZoneConstants.PLACEMENT_ZONE_TYPE_CUSTOM_PROP_NAME,
+                PlacementZoneType.SCHEDULER.toString());
+
+        // create the placement zone
+        ElasticPlacementZoneConfigurationState placementZone = new ElasticPlacementZoneConfigurationState();
+        placementZone.resourcePoolState = resourcePool;
+        Operation.createPost(this, ElasticPlacementZoneConfigurationService.SELF_LINK)
+                .setReferer(getUri())
+                .setBody(placementZone)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logWarning(Utils.toString(e));
+                        op.fail(e);
+                    } else {
+                        ResourcePoolState createdPool = o.getBody(
+                                ElasticPlacementZoneConfigurationState.class).resourcePoolState;
+                        successCallback.accept(createdPool);
+                    }
+                }).sendWith(this);
     }
 
     private void doStoreHost(ContainerHostSpec hostSpec, Operation op) {

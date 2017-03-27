@@ -625,50 +625,6 @@ let HostsStore = Reflux.createStore({
     actions.NavigationActions.openHosts();
   },
 
-  createPlacementZoneIfNeeded: function(hostModel) {
-
-    // auto creation of placement zones is possible for schedulers only
-    if (hostModel.hostType === constants.HOST.TYPE.DOCKER) {
-      return Promise.resolve(hostModel);
-    }
-
-    if (!hostModel.schedulerPlacementZoneName
-        || hostModel.schedulerPlacementZoneName === '') {
-      return Promise.resolve(hostModel);
-    }
-
-    let placementZoneConfig = {
-      resourcePoolState: {
-        name: hostModel.schedulerPlacementZoneName,
-        customProperties: {
-          __placementZoneType: constants.PLACEMENT_ZONE.TYPE.SCHEDULER
-        }
-      }
-    };
-
-    return services.createPlacementZone(placementZoneConfig).then((result) => {
-      hostModel.resourcePoolLink = result.resourcePoolState.documentSelfLink;
-      hostModel.createdSchedulerPlacementZone = true;
-      return Promise.resolve(hostModel);
-    });
-
-  },
-
-  cleanupCreatedPlacementZone: function(hostModel) {
-    if (!hostModel.createdSchedulerPlacementZone) {
-      // No placement zone was automatically created
-      return Promise.resolve();
-    }
-    if (!hostModel.resourcePoolLink || hostModel.resourcePoolLink === '') {
-      // No placement zone set
-      return Promise.resolve();
-    }
-
-    return services.deletePlacementZone({
-      documentSelfLink: hostModel.resourcePoolLink
-    });
-  },
-
   onAddHost: function(hostModel, tags) {
     this.setInData(['hostAddView', 'validationErrors'], null);
     this.setInData(['hostAddView', 'shouldAcceptCertificate'], null);
@@ -682,33 +638,20 @@ let HostsStore = Reflux.createStore({
       services.saveTagStates(tags).then((createdTagLinks) => {
 
         hostModel.tagLinks = createdTagLinks;
+        var hostSpec = getHostSpec(hostModel);
 
-        return this.createPlacementZoneIfNeeded(hostModel).then((hostModel) => {
-
-          var hostSpec = getHostSpec(hostModel);
-
-          return services.addHost(hostSpec).then((hostSpec) => {
-            this.setInData(['hostAddView', 'isSavingHost'], false);
-            if (hostSpec && hostSpec.certificate) {
-              // if certificate has to be accepted, delete auto-generated placement zone
-              // it will be recreated if and when the certificate has been accepted
-              return this.cleanupCreatedPlacementZone(hostModel).then(() => {
-                this.setInData(['hostAddView', 'shouldAcceptCertificate'], {
-                  certificateHolder: hostSpec
-                });
-                this.emitChange();
-              });
-            } else {
-              this.onHostAdded();
-            }
-          }).catch((e) => {
-            // cleanup auto-generated placement zone and rethrow the error
-            return this.cleanupCreatedPlacementZone(hostModel).then(() => {
-              return Promise.reject(e);
+        return services.addHost(hostSpec).then((hostSpec) => {
+          this.setInData(['hostAddView', 'isSavingHost'], false);
+          if (hostSpec && hostSpec.certificate) {
+            this.setInData(['hostAddView', 'shouldAcceptCertificate'], {
+              certificateHolder: hostSpec
             });
-          });
-
+            this.emitChange();
+          } else {
+            this.onHostAdded();
+          }
         });
+
       }).catch(this.onGenericEditError);
     }
 
@@ -971,17 +914,9 @@ let HostsStore = Reflux.createStore({
         return services.saveTagStates(tags).then((createdTagLinks) => {
           hostModel.tagLinks = createdTagLinks;
 
-          return this.createPlacementZoneIfNeeded(hostModel).then((hostModel) => {
-            var hostSpec = getHostSpec(hostModel);
-            hostSpec.sslTrust = certificateHolder;
-            return services.addHost(hostSpec);
-          })
-          .catch((e) => {
-            // cleanup auto-generated placement zone and rethrow the error
-            return this.cleanupCreatedPlacementZone(hostModel).then(() => {
-              return Promise.reject(e);
-            });
-          });
+          var hostSpec = getHostSpec(hostModel);
+          hostSpec.sslTrust = certificateHolder;
+          return services.addHost(hostSpec);
         });
       })
       .then(this.onHostAdded)

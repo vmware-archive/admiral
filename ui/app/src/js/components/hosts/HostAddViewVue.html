@@ -45,13 +45,7 @@
       {{i18n("app.host.details.placementZone")}}
     </label>
     <div v-show="isDockerHost" class="form-control dropdown-holder"></div>
-    <label v-show="!isDockerHost">{{schedulerPlacementZoneName}}</label>
-    <i class="fa fa-question-circle"
-       v-if="!model.isUpdate"
-       v-show="!isDockerHost"
-       data-toggle="tooltip"
-       data-placement="left"
-       v-tooltip="i18n('app.host.details.placementZoneInputHint')"></i>
+    <label v-if="model.isUpdate && !isDockerHost">{{schedulerPlacementZoneName}}</label>
     <span class="help-block">{{i18n(validationErrors.placementZone)}}</span>
   </div>
   <div v-if="isApplicationEmbedded()" id="deploymentPolicy" class="form-group" v-show="showDeploymentPolicy">

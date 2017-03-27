@@ -13,6 +13,7 @@ package com.vmware.admiral.test.integration;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import static com.vmware.admiral.test.integration.TestPropertiesUtil.getSystemOrTestProp;
 
@@ -577,13 +578,36 @@ public class ContainerHostServiceIT extends RequestBaseTest {
     }
 
     @Test
-    public void testAddVicHostWithNoPlacementZoneShouldFail() throws Throwable {
+    public void testAddVicHostWithNoPlacementZoneShouldCreatePlacementZone() throws Throwable {
         vicHostSpec.acceptCertificate = true;
         vicHostState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
         vicHostState.resourcePoolLink = null;
         markHostForVicValidation(vicHostState);
-        addHost(vicHostSpec, String.format(AssertUtil.PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT,
-                "resourcePoolLink"));
+
+        ComputeState addedHost = addHost(vicHostSpec, null);
+        assertNotNull("added host must not be null", addedHost);
+        assertNotNull("created placement zone link must not be null", addedHost.resourcePoolLink);
+        assertNotNull(addedHost.customProperties);
+        assertTrue(Boolean.parseBoolean(addedHost.customProperties.get(
+                ComputeConstants.AUTO_GENERATED_PLACEMENT_ZONE_PROP_NAME)));
+
+        host.testStart(1);
+        Operation.createGet(host, addedHost.resourcePoolLink)
+                .setReferer(host.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.failIteration(e);
+                    } else {
+                        ResourcePoolState placementZone = o.getBody(ResourcePoolState.class);
+                        assertNotNull(placementZone);
+                        assertNotNull(placementZone.customProperties);
+                        assertEquals(PlacementZoneType.SCHEDULER.toString(),
+                                placementZone.customProperties.get(
+                                        PlacementZoneConstants.PLACEMENT_ZONE_TYPE_CUSTOM_PROP_NAME));
+                        host.completeIteration();
+                    }
+                }).sendWith(host);
+        host.testWait();
     }
 
     @Test
@@ -660,7 +684,19 @@ public class ContainerHostServiceIT extends RequestBaseTest {
         addHost(hostSpec, null);
     }
 
-    private void addHost(ContainerHostSpec hostSpec, String expectedError) {
+    /**
+     * Tries to add the host from the provided host spec. Will throw an error if an unexpected error
+     * occurs, will return null if an expected error is caught or will return the added
+     * {@link ComputeState} on success.
+     *
+     * @param hostSpec
+     *            a hostSpec that contains the host to add
+     * @param expectedError
+     *            the expected error message. Set to <code>null</code> if none is expected.
+     */
+    private ComputeState addHost(ContainerHostSpec hostSpec, String expectedError) {
+        ComputeState addedHost = new ComputeState();
+
         Operation op = Operation.createPut(containerHostUri)
                 .setBody(hostSpec)
                 .setCompletion((o, e) -> {
@@ -681,8 +717,10 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                                             return;
                                         }
                                         try {
-                                            verifyAddedComputeState(hostSpec.hostState,
-                                                    verificationOp.getBody(ComputeState.class));
+                                            ComputeState body = verificationOp.getBody(ComputeState.class);
+                                            verifyAddedComputeState(hostSpec.hostState, body);
+                                            body.copyTo(addedHost);
+                                            addedHost.resourcePoolLink = body.resourcePoolLink;
                                             host.completeIteration();
                                         } catch (IllegalArgumentException ex) {
                                             host.failIteration(ex);
@@ -723,6 +761,8 @@ public class ContainerHostServiceIT extends RequestBaseTest {
         host.testStart(1);
         host.send(op);
         host.testWait();
+
+        return expectedError != null ? null : addedHost;
     }
 
     // skip verification and certificates and just add the compute state
