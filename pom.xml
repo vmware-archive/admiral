@@ -358,6 +358,12 @@
                                 <encoding>${project.build.sourceEncoding}</encoding>
                             </configuration>
                         </execution>
+                        <execution>
+                            <id>verify</id>
+                            <goals>
+                                <goal>verify</goal>
+                            </goals>
+                        </execution>
                     </executions>
                 </plugin>
 
