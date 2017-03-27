@@ -352,13 +352,15 @@ textarea {
 }
 
 .host-view .control-btns,
-.compute-view .control-btns {
+.compute-view .control-btns,
+.endpoints-view .control-btns,
+.placement-zones-view .control-btns,
+.groups-view .control-btns {
   padding-top: 10px;
 }
 
-.host-view .control-btns .btn,
-.compute-view .control-btns .btn {
-  font-size: 18px;
+.endpoints-view .form-group .btn-sm {
+  margin: 6px 0;
 }
 
 .helpcenter-link {
@@ -1348,17 +1350,6 @@ body > .loading, .container-details > .content .loading {
 
 .table > thead > tr > th {
   border-bottom: 1px solid #d3d3d3;
-  text-align: left;
-}
-
-.table > thead > tr > th.sort-header:not(:first-child) {
-  &:before {
-    content: "";
-    border-width: 3px 0 3px 1px;
-    border-style: solid;
-    border-color: #ddd;
-    margin: -3px 12px -3px -12px;
-  }
 }
 
 .form-group .dropdown .dropdown-options {

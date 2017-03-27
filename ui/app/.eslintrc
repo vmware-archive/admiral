@@ -134,6 +134,7 @@ Additional changes to the original file:
     "require"     : true,
     "moment"      : true,
     "jsPlumb"     : true,
-    "ace"         : true
+    "ace"         : true,
+    "api"         : true
   }
 }

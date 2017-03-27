@@ -86,7 +86,7 @@ describe('Certificates management integration test', function() {
       var certifcateInput =
           $container.find('.inline-edit .inline-edit-properties .certificate-input');
       console.log('Set the certificate. Inputs length: ' + certifcateInput.length);
-      certifcateInput.val(sampleCertificates.defaultCertificate);
+      certifcateInput.val(sampleCertificates.defaultCertificate).trigger('change');
 
       // Trigger creation
       var certifcateSaveButton = $container.find('.inline-edit .inline-edit-save');

@@ -10,6 +10,7 @@
  */
 
 const CONFIG = '/config';
+const PROVISIONING = '/provisioning';
 const RESOURCES = '/resources';
 
 var links = Immutable({
@@ -88,7 +89,10 @@ var links = Immutable({
   // Artificial internal only link
   SYSTEM_NETWORK_LINK: '/system-networks-link',
 
-  ADAPTERS: CONFIG + '/photon-model-adapters-registry'
+  ADAPTERS: CONFIG + '/photon-model-adapters-registry',
+
+  IMAGE_ENUMERATION: PROVISIONING + '/image-enumeration-tasks',
+  RESOURCE_ENUMERATION: PROVISIONING + '/resource-enumeration-tasks'
 });
 
 export default links;

@@ -2124,14 +2124,6 @@ services.loadPopularImages = function() {
   return list(links.POPULAR_IMAGES);
 };
 
-services.searchRegionIds = function(host, username, password) {
-  return patch('/provisioning/vsphere/dc-enumerator', {
-    host,
-    username,
-    password
-  });
-};
-
 services.loadAdapters = function() {
   return list(links.ADAPTERS, true);
 };
@@ -2140,6 +2132,28 @@ services.loadScript = function(src) {
   return new Promise((resolve, reject) => {
     $.getScript(src).done(resolve).fail(reject);
   });
+};
+
+services.collectInventory = function(endpoint) {
+  return get(endpoint.computeLink).then((compute) => {
+    let request = {
+      adapterManagementReference: compute.adapterManagementReference,
+      endpointLink: endpoint.documentSelfLink,
+      enumerationAction: 'START',
+      parentComputeLink: endpoint.computeLink,
+      options: ['PRESERVE_MISSING_RESOUCES'],
+      resourcePoolLink: endpoint.resourcePoolLink
+    };
+    return ajax('POST', links.RESOURCE_ENUMERATION, JSON.stringify(request));
+  });
+};
+
+services.collectImages = function(endpoint) {
+  let request = {
+    endpointLink: endpoint.documentSelfLink,
+    enumerationAction: 'START'
+  };
+  return ajax('POST', links.IMAGE_ENUMERATION, JSON.stringify(request));
 };
 
 var toArrayIfDefined = function(obj) {

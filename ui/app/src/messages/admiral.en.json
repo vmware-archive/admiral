@@ -576,6 +576,9 @@
         "privateKeyIdLabel": "Access key ID",
         "privateKeyLabel": "Secret access key",
         "regionIdLabel": "Region ID",
+        "collectLabel": "Data collection",
+        "collectInventoryLabel": "Collect inventory",
+        "collectImagesLabel": "Collect image types",
         "azure": {
           "userLinkLabel": "Subscription ID",
           "tenantIdLabel": "Tenant ID"
