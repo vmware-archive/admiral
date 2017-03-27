@@ -448,7 +448,12 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         Closure reqClosure = post.getBody(Closure.class);
         Closure closure = this.getState(post);
 
-        closure.inputs = reqClosure.inputs;
+        // apply inputs
+        if (reqClosure.inputs != null) {
+            reqClosure.inputs.forEach((k, v) -> {
+                closure.inputs.put(k, v);
+            });
+        }
         closure.serviceTaskCallback = reqClosure.serviceTaskCallback;
         closure.closureSemaphore = UUID.randomUUID().toString();
         if (isNotValid(post, closure)) {
