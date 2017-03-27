@@ -149,7 +149,7 @@ var HostAddView = Vue.extend({
       return this.isHostModelVerified || this.model.isUpdate;
     },
     showPlacementZone: function() {
-      return this.showAllCommonInputs;
+      return this.model.isUpdate || this.isVerifiedDockerHost;
     },
     showDeploymentPolicy: function() {
       return this.showAllCommonInputs;
@@ -343,7 +343,6 @@ var HostAddView = Vue.extend({
             this.placementZoneInput.setSelectedOption(model.placementZone);
           } else {
             this.schedulerPlacementZoneName = model.placementZone.name;
-            this.disableInput('placementZone', 'input', model.placementZone.name);
           }
         }
 
@@ -364,13 +363,6 @@ var HostAddView = Vue.extend({
 
         if (model.customProperties !== oldModel.customProperties) {
           this.customPropertiesEditor.setData(model.customProperties);
-        }
-      } else if (!model.isVerifyingHost && model.verifiedHostModel) {
-
-        if (this.schedulerPlacementZoneName !==
-            model.verifiedHostModel.schedulerPlacementZoneName) {
-          this.schedulerPlacementZoneName =
-            model.verifiedHostModel.schedulerPlacementZoneName;
         }
       }
 
@@ -424,8 +416,6 @@ var HostAddView = Vue.extend({
       if (this.isDockerHost || this.model.isUpdate) {
         hostData.resourcePoolLink = this.placementZone ?
           this.placementZone.documentSelfLink : null;
-      } else {
-        hostData.schedulerPlacementZoneName = this.schedulerPlacementZoneName;
       }
 
       if (this.deploymentPolicy) {
