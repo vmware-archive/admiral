@@ -658,7 +658,13 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
             logWarning("Unable to parse memory status for VIC host");
             return Double.valueOf(0);
         }
-        return ConversionUtil.memoryToBytes(Double.parseDouble(sp[0]), sp[1]);
+        double resp = 0;
+        try {
+            resp = ConversionUtil.memoryToBytes(Double.parseDouble(sp[0]), sp[1]);
+        } catch (Exception e) {
+            logWarning("Unable to parse SystemStatus memory units: %s", e.getMessage());
+        }
+        return resp;
     }
 
     private Long getCpuStatus(List<String> status) {
