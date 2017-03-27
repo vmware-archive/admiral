@@ -14,6 +14,7 @@ import HostAddView from 'components/hosts/HostAddView'; //eslint-disable-line
 import HostCreateView from 'components/hosts/HostCreateView'; //eslint-disable-line
 import { HostContextToolbarActions, NavigationActions } from 'actions/Actions';
 import utils from 'core/utils';
+import ft from 'core/ft';
 
 // Constants
 const TAB_ID_ADD_HOST = 'AddHost';
@@ -54,7 +55,7 @@ var HostView = Vue.extend({
       return !this.model.isUpdate && (this.selectedTab === TAB_ID_CREATE_HOST);
     },
     createHostEnabled: function() {
-      return !utils.isApplicationEmbedded();
+      return ft.isCreateHostOptionEnabled();
     },
     activeContextItem: function() {
       return this.model.contextView && this.model.contextView.activeItem &&

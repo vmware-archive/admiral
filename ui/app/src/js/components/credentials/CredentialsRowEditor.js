@@ -14,10 +14,14 @@ import MulticolumnInputs from 'components/common/MulticolumnInputs';
 import Alert from 'components/common/Alert';
 import constants from 'core/constants';
 import utils from 'core/utils';
+import ft from 'core/ft';
 import { CredentialsActions } from 'actions/Actions';
 
 function CredentialsRowEditor() {
   this.$el = $(CredentialsRowEditTemplate());
+  if (ft.isPublicKeyCredentialsDisabled()) {
+    this.$el.find('.credentialTypePublicRadio').addClass('hide');
+  }
 
   this.alert = new Alert(this.$el, this.$el.find('.inline-edit'), false);
 

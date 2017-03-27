@@ -47,12 +47,20 @@ var ft = {
     return utils.getConfigurationPropertyBoolean('allow.ft.host-option.kubernetes');
   },
 
+  isCreateHostOptionEnabled: function() {
+    return utils.getConfigurationPropertyBoolean('allow.ft.host-option.create');
+  },
+
   areClosuresAllowed: function() {
     return utils.getConfigurationPropertyBoolean('allow.closures');
   },
 
   showProjectsInNavigation: function() {
     return utils.getConfigurationPropertyBoolean('allow.ft.projects.in.navigation');
+  },
+
+  isPublicKeyCredentialsDisabled: function() {
+    return utils.getConfigurationPropertyBoolean('disable.credentials.publicKey');
   }
 };
 
