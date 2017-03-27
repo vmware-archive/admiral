@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -18,6 +18,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import org.junit.Before;
@@ -37,6 +38,7 @@ import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class ServiceDocumentQueryTest extends ComputeBaseTest {
+
     ServiceDocumentQuery<ContainerDescription> query;
     List<ContainerDescription> descs;
     private String image1 = "image1";
@@ -54,17 +56,17 @@ public class ServiceDocumentQueryTest extends ComputeBaseTest {
         descs = queryDocument("testLink");
         assertEquals(0, descs.size());
 
-        ContainerDescription sslTrustCert = new ContainerDescription();
-        sslTrustCert.image = image1;
-        sslTrustCert = doPost(sslTrustCert, ContainerDescriptionService.FACTORY_LINK);
+        ContainerDescription desc = new ContainerDescription();
+        desc.image = image1;
+        desc = doPost(desc, ContainerDescriptionService.FACTORY_LINK);
 
-        descs = queryDocument(sslTrustCert.documentSelfLink);
+        descs = queryDocument(desc.documentSelfLink);
         assertEquals(1, descs.size());
-        assertEquals(sslTrustCert.documentSelfLink, descs.get(0).documentSelfLink);
+        assertEquals(desc.documentSelfLink, descs.get(0).documentSelfLink);
         assertEquals(image1, descs.get(0).image);
 
-        delete(sslTrustCert.documentSelfLink);
-        descs = queryDocument(sslTrustCert.documentSelfLink);
+        delete(desc.documentSelfLink);
+        descs = queryDocument(desc.documentSelfLink);
         assertEquals(0, descs.size());
     }
 
@@ -74,9 +76,9 @@ public class ServiceDocumentQueryTest extends ComputeBaseTest {
         descs = queryDocumentUpdatedSince(startTime, "testLink");
         assertEquals(0, descs.size());
 
-        ContainerDescription sslTrustCert = new ContainerDescription();
-        sslTrustCert.image = image1;
-        sslTrustCert = doPost(sslTrustCert, ContainerDescriptionService.FACTORY_LINK);
+        ContainerDescription desc = new ContainerDescription();
+        desc.image = image1;
+        desc = doPost(desc, ContainerDescriptionService.FACTORY_LINK);
 
         long timeAfterPost = Utils.getNowMicrosUtc();
 
@@ -85,37 +87,37 @@ public class ServiceDocumentQueryTest extends ComputeBaseTest {
         assertEquals(0, descs.size());
 
         // match link but invalid time
-        descs = queryDocumentUpdatedSince(timeAfterPost, sslTrustCert.documentSelfLink);
+        descs = queryDocumentUpdatedSince(timeAfterPost, desc.documentSelfLink);
         assertEquals(0, descs.size());
 
         // match link but invalid time
-        descs = queryDocumentUpdatedSince(startTime, sslTrustCert.documentSelfLink);
+        descs = queryDocumentUpdatedSince(startTime, desc.documentSelfLink);
         assertEquals(1, descs.size());
 
-        sslTrustCert.image = image2;
-        doOperation(sslTrustCert, UriUtils.buildUri(host, sslTrustCert.documentSelfLink), false,
+        desc.image = image2;
+        doOperation(desc, UriUtils.buildUri(host, desc.documentSelfLink), false,
                 Service.Action.PATCH);
 
         long timeAfterPatch = Utils.getNowMicrosUtc();
 
         // the delta for the update should be retrieved
-        descs = queryDocumentUpdatedSince(timeAfterPost, sslTrustCert.documentSelfLink);
+        descs = queryDocumentUpdatedSince(timeAfterPost, desc.documentSelfLink);
         assertEquals(1, descs.size());
         assertEquals(image2, descs.get(0).image);
 
         // no updates after patch
-        descs = queryDocumentUpdatedSince(timeAfterPatch, sslTrustCert.documentSelfLink);
+        descs = queryDocumentUpdatedSince(timeAfterPatch, desc.documentSelfLink);
         assertEquals(0, descs.size());
 
-        delete(sslTrustCert.documentSelfLink);
+        delete(desc.documentSelfLink);
 
         long timeAfterDelete = Utils.getNowMicrosUtc();
 
-        descs = queryDocumentUpdatedSince(timeAfterPatch, sslTrustCert.documentSelfLink);
+        descs = queryDocumentUpdatedSince(timeAfterPatch, desc.documentSelfLink);
         assertEquals(1, descs.size());
         assertTrue(ServiceDocument.isDeleted(descs.get(0)));
 
-        descs = queryDocumentUpdatedSince(timeAfterDelete, sslTrustCert.documentSelfLink);
+        descs = queryDocumentUpdatedSince(timeAfterDelete, desc.documentSelfLink);
         assertEquals(0, descs.size());
     }
 
@@ -123,68 +125,68 @@ public class ServiceDocumentQueryTest extends ComputeBaseTest {
     public void testQueryUpdatedSince() throws Throwable {
         long startTime = Utils.getNowMicrosUtc();
 
-        ContainerDescription sslTrustCert = new ContainerDescription();
-        sslTrustCert.image = image1;
-        doPost(sslTrustCert, ContainerDescriptionService.FACTORY_LINK);
+        ContainerDescription desc1 = new ContainerDescription();
+        desc1.image = image1;
+        doPost(desc1, ContainerDescriptionService.FACTORY_LINK);
 
-        ContainerDescription sslTrustCert1 = new ContainerDescription();
-        sslTrustCert1.documentSelfLink = "image";
-        sslTrustCert1.image = image1;
-        sslTrustCert1 = doPost(sslTrustCert1, ContainerDescriptionService.FACTORY_LINK);
-
-        descs = queryUpdatedSince(startTime);
-
-        int countAfterCert1 = 2;
-        assertEquals(countAfterCert1, descs.size());
-        long timeAfterCert1 = Utils.getNowMicrosUtc();
-
-        sslTrustCert = new ContainerDescription();
-        sslTrustCert.image = image2;
-        doPost(sslTrustCert, ContainerDescriptionService.FACTORY_LINK);
-
-        ContainerDescription sslTrustCert2 = new ContainerDescription();
-        sslTrustCert2.documentSelfLink = "image2";
-        sslTrustCert2.image = image2;
-        sslTrustCert2 = doPost(sslTrustCert2, ContainerDescriptionService.FACTORY_LINK);
+        ContainerDescription desc2 = new ContainerDescription();
+        desc2.documentSelfLink = "image";
+        desc2.image = image1;
+        desc2 = doPost(desc2, ContainerDescriptionService.FACTORY_LINK);
 
         descs = queryUpdatedSince(startTime);
 
-        int countAfterCert2 = 2;
-        assertEquals(countAfterCert1 + countAfterCert2, descs.size());
-        long timeAfterCert2 = Utils.getNowMicrosUtc();
+        int countAfterDesc1 = 2;
+        assertEquals(countAfterDesc1, descs.size());
+        long timeAfterDesc1 = Utils.getNowMicrosUtc();
 
-        descs = queryUpdatedSince(timeAfterCert1);
-        assertEquals(countAfterCert2, descs.size());
+        desc1 = new ContainerDescription();
+        desc1.image = image2;
+        doPost(desc1, ContainerDescriptionService.FACTORY_LINK);
+
+        ContainerDescription desc3 = new ContainerDescription();
+        desc3.documentSelfLink = "image2";
+        desc3.image = image2;
+        desc3 = doPost(desc3, ContainerDescriptionService.FACTORY_LINK);
+
+        descs = queryUpdatedSince(startTime);
+
+        int countAfterDesc2 = 2;
+        assertEquals(countAfterDesc1 + countAfterDesc2, descs.size());
+        long timeAfterDesc2 = Utils.getNowMicrosUtc();
+
+        descs = queryUpdatedSince(timeAfterDesc1);
+        assertEquals(countAfterDesc2, descs.size());
 
         boolean match = false;
         for (ContainerDescription state : descs) {
-            if (sslTrustCert2.documentSelfLink.equals(state.documentSelfLink)) {
-                assertNotNull(sslTrustCert2.image);
+            if (desc3.documentSelfLink.equals(state.documentSelfLink)) {
+                assertNotNull(desc3.image);
                 match = true;
             }
         }
         assertTrue(match);
 
-        descs = queryUpdatedSince(timeAfterCert2);
+        descs = queryUpdatedSince(timeAfterDesc2);
         assertEquals(0, descs.size());
 
         long timeBeforeDeletion = Utils.getNowMicrosUtc();
-        delete(sslTrustCert1.documentSelfLink);
+        delete(desc2.documentSelfLink);
         descs = queryUpdatedSince(startTime);
-        assertEquals(countAfterCert1 + countAfterCert2, descs.size());
+        assertEquals(countAfterDesc1 + countAfterDesc2, descs.size());
 
         boolean deleted = false;
         for (ContainerDescription state : descs) {
-            if (sslTrustCert1.documentSelfLink.equals(state.documentSelfLink)) {
+            if (desc2.documentSelfLink.equals(state.documentSelfLink)) {
                 assertTrue(ServiceDocument.isDeleted(state));
                 deleted = true;
             }
         }
         assertTrue(deleted);
-        delete(sslTrustCert2.documentSelfLink);
+        delete(desc3.documentSelfLink);
 
         descs = queryUpdatedSince(timeBeforeDeletion);
-        assertEquals(countAfterCert1 + countAfterCert2 - 2, descs.size());
+        assertEquals(countAfterDesc1 + countAfterDesc2 - 2, descs.size());
         for (ContainerDescription state : descs) {
             assertTrue(ServiceDocument.isDeleted(state));
         }
@@ -198,19 +200,19 @@ public class ServiceDocumentQueryTest extends ComputeBaseTest {
         long startTime = Utils.getNowMicrosUtc();
         String testSelfLink = "test-link234";
 
-        ContainerDescription sslTrustCert = new ContainerDescription();
-        sslTrustCert.documentSelfLink = testSelfLink;
-        sslTrustCert.image = image1;
-        sslTrustCert = doPost(sslTrustCert, ContainerDescriptionService.FACTORY_LINK);
+        ContainerDescription desc = new ContainerDescription();
+        desc.documentSelfLink = testSelfLink;
+        desc.image = image1;
+        desc = doPost(desc, ContainerDescriptionService.FACTORY_LINK);
 
         descs = queryUpdatedSince(startTime);
 
         assertEquals(1, descs.size());
 
-        ContainerDescription updatedCert = new ContainerDescription();
-        updatedCert.documentSelfLink = testSelfLink;
-        updatedCert.image = image2;
-        updatedCert = doPost(updatedCert, ContainerDescriptionService.FACTORY_LINK);
+        ContainerDescription updatedDesc = new ContainerDescription();
+        updatedDesc.documentSelfLink = testSelfLink;
+        updatedDesc.image = image2;
+        updatedDesc = doPost(updatedDesc, ContainerDescriptionService.FACTORY_LINK);
 
         // update should still have only one document:
         descs = queryUpdatedSince(startTime);
@@ -218,36 +220,38 @@ public class ServiceDocumentQueryTest extends ComputeBaseTest {
         assertEquals(1, descs.size());
         assertEquals(image2, descs.get(0).image);
 
-        delete(sslTrustCert.documentSelfLink);
+        delete(desc.documentSelfLink);
         descs = queryUpdatedSince(startTime);
         // again, only one entity but indicated as deleted
         assertEquals(1, descs.size());
         assertTrue(ServiceDocument.isDeleted(descs.get(0)));
 
-        sslTrustCert = new ContainerDescription();
-        sslTrustCert.documentSelfLink = testSelfLink;
-        sslTrustCert.image = image1;
-        sslTrustCert = doPost(sslTrustCert, ContainerDescriptionService.FACTORY_LINK);
+        desc = new ContainerDescription();
+        desc.documentSelfLink = testSelfLink;
+        desc.image = image1;
+        desc = doPost(desc, ContainerDescriptionService.FACTORY_LINK);
 
         descs = queryUpdatedSince(startTime);
         assertEquals(1, descs.size()); // expectation is to still have only one
-        assertEquals(image1, sslTrustCert.image);
+        assertEquals(image1, desc.image);
     }
 
     @Test
     public void testQueryResultLimit() throws Throwable {
-        final String queryTaskDocumentSelfLink = UriUtils
-                .buildUri(host, ServiceUriPaths.CORE_QUERY_TASKS + "/testQueryTaskResultLimit").getPath();
+        final String queryTaskDocumentSelfLink = UriUtils.buildUriPath(
+                ServiceUriPaths.CORE_QUERY_TASKS, "/testQueryTaskResultLimit");
         QuerySpecification qs = new QuerySpecification();
         qs.query = Query.Builder.create().addKindFieldClause(ContainerDescription.class).build();
         QueryTask qt = QueryTask.create(qs);
         qt.documentSelfLink = queryTaskDocumentSelfLink + 1;
 
+        final AtomicReference<QueryTask> q = new AtomicReference<>();
         host.testStart(1);
-        new ServiceDocumentQuery<>(
-                host, ContainerDescription.class).query(qt, handler(true));
+        new ServiceDocumentQuery<>(host, ContainerDescription.class)
+                .query(qt, handler(false, q, qt.documentSelfLink));
         host.testWait();
-        qt = getDocument(QueryTask.class, qt.documentSelfLink);
+        qt = q.getAndSet(null);
+        assertNotNull(qt);
         assertEquals(ServiceDocumentQuery.DEFAULT_QUERY_RESULT_LIMIT,
                 qt.querySpec.resultLimit);
 
@@ -258,10 +262,11 @@ public class ServiceDocumentQueryTest extends ComputeBaseTest {
         qt.querySpec.resultLimit = resourceLimit;
         qt.documentSelfLink = queryTaskDocumentSelfLink + 2;
         host.testStart(1);
-        new ServiceDocumentQuery<>(
-                host, ContainerDescription.class).query(qt, handler(true));
+        new ServiceDocumentQuery<>(host, ContainerDescription.class)
+                .query(qt, handler(false, q, qt.documentSelfLink));
         host.testWait();
-        qt = getDocument(QueryTask.class, qt.documentSelfLink);
+        qt = q.getAndSet(null);
+        assertNotNull(qt);
         assertEquals(resourceLimit, qt.querySpec.resultLimit);
 
         qs = new QuerySpecification();
@@ -270,11 +275,37 @@ public class ServiceDocumentQueryTest extends ComputeBaseTest {
         QueryUtil.addCountOption(qt);
         qt.documentSelfLink = queryTaskDocumentSelfLink + 3;
         host.testStart(1);
-        new ServiceDocumentQuery<>(
-                host, ContainerDescription.class).query(qt, handler(true));
+        new ServiceDocumentQuery<>(host, ContainerDescription.class)
+                .query(qt, handler(true, q, qt.documentSelfLink));
         host.testWait();
-        qt = getDocument(QueryTask.class, qt.documentSelfLink);
+        qt = q.getAndSet(null);
+        assertNotNull(qt);
         assertNull(qt.querySpec.resultLimit);
+    }
+
+    @Test
+    public void testQueryTaskDeleted() throws Throwable {
+        final String queryTaskDocumentSelfLink = UriUtils.buildUriPath(
+                ServiceUriPaths.CORE_QUERY_TASKS, "/testQueryTaskResultLimit");
+        final String queryTaskLink = queryTaskDocumentSelfLink + 1;
+        QuerySpecification qs = new QuerySpecification();
+        qs.query = Query.Builder.create().addKindFieldClause(ContainerDescription.class).build();
+        QueryTask qt = QueryTask.create(qs);
+        qt.documentSelfLink = queryTaskLink;
+
+        final AtomicReference<QueryTask> q = new AtomicReference<>();
+        host.testStart(1);
+        new ServiceDocumentQuery<>(host, ContainerDescription.class)
+                .query(qt, handler(false, q, qt.documentSelfLink));
+        host.testWait();
+        qt = q.getAndSet(null);
+        //validate query task exists
+        assertNotNull(qt);
+        // validate query task is deleted
+        waitFor(() -> {
+            QueryTask queryTask = getDocumentNoWait(QueryTask.class, queryTaskLink);
+            return queryTask == null;
+        });
     }
 
     private List<ContainerDescription> queryDocument(String documentSelfLink) throws Throwable {
@@ -302,22 +333,36 @@ public class ServiceDocumentQueryTest extends ComputeBaseTest {
 
     private Consumer<ServiceDocumentQueryElementResult<ContainerDescription>> handler(
             boolean singleResult) {
+        return handler(singleResult, null, null);
+    }
+
+    private Consumer<ServiceDocumentQueryElementResult<ContainerDescription>> handler(
+            boolean singleResult, final AtomicReference<QueryTask> q, final String link) {
         descs.clear();
         return (r) -> {
             if (r.hasException()) {
                 host.failIteration(r.getException());
                 return;
             }
-            if (!r.hasResult()) {
-                host.completeIteration();
-                return;
-            }
-            descs.add(r.getResult());
 
-            if (singleResult) {
+            if (q != null && q.get() == null) {
+                try {
+                    QueryTask queryTask = getDocumentNoWait(QueryTask.class, link);
+                    q.set(queryTask);
+                } catch (Throwable ignore) {
+                }
+            }
+
+            if (r.hasResult()) {
+                descs.add(r.getResult());
+
+                if (singleResult) {
+                    host.completeIteration();
+                }
+            } else {
                 host.completeIteration();
-                return;
             }
         };
     }
+
 }
