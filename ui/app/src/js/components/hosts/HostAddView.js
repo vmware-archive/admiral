@@ -103,6 +103,12 @@ var HostAddView = Vue.extend({
       return !this.isDockerHost && this.isHostModelVerified;
     },
     isHostModelVerified: function() {
+      // if it is update and credentials haven't changed
+      if (this.model.isUpdate && this.model.dto.customProperties.__authCredentialsLink
+                                === this.credential.documentSelfLink) {
+        return true;
+      }
+
       // check if model is verified
       if (!this.model.verifiedHostModel) {
         return false;
@@ -158,10 +164,7 @@ var HostAddView = Vue.extend({
       return this.showAllCommonInputs;
     },
     showAddButton: function() {
-      return this.showAllCommonInputs;
-    },
-    showVerifyButton: function() {
-      return !this.model.isUpdate;
+      return this.isHostModelVerified;
     }
   },
 

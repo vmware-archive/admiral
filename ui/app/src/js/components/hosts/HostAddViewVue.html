@@ -99,7 +99,6 @@
       <template v-if="model.isUpdate">{{i18n("app.host.details.update")}}</template>
       <template v-else>{{i18n("app.host.details.add")}}</template><i class="fa fa-spinner fa-spin loader-inline"></i></button>
     <a href="#" class="btn verifyHost"
-        v-show="showVerifyButton"
         v-bind:class="{'disabled': isVerifyButtonDisabled, 'loading': model.isVerifyingHost}"
         v-on:click="verifyHost">{{i18n("app.host.details.verify")}}<i class="fa fa-spinner fa-spin loader-inline"></i></a>
     <span class="help-block"></span>
