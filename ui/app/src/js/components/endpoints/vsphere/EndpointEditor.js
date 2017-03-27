@@ -128,7 +128,12 @@ export default Vue.component('vsphere-endpoint-editor', {
       let {hostName, privateKeyId, privateKey} = this;
       if (!this.regionIdLoading) {
         this.regionIdLoading = true;
-        services.searchRegionIds(hostName, privateKeyId, privateKey).then((result) => {
+        let request = {
+          host: hostName,
+          username: privateKeyId,
+          password: privateKey
+        };
+        api.client.patch('/provisioning/vsphere/dc-enumerator', request).then((result) => {
           this.regionIdLoading = false;
           this.regionIdValues = result.datacenters.map(this.convertToObject);
           this.emitChange();

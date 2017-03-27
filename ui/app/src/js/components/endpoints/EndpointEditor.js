@@ -14,6 +14,7 @@ import AzureEndpointEditor from 'components/endpoints/azure/EndpointEditor'; //e
 import VsphereEndpointEditor from 'components/endpoints/vsphere/EndpointEditor'; //eslint-disable-line
 import EndpointEditorVue from 'components/endpoints/EndpointEditorVue.html';
 import { EndpointsActions } from 'actions/Actions';
+import services from 'core/services';
 import utils from 'core/utils';
 
 export default Vue.component('endpoint-editor', {
@@ -59,6 +60,16 @@ export default Vue.component('endpoint-editor', {
         EndpointsActions.createEndpoint(toSave);
       }
     },
+    collectInventory($event) {
+      $event.stopImmediatePropagation();
+      $event.preventDefault();
+      services.collectInventory(this.model.item);
+    },
+    collectImages($event) {
+      $event.stopImmediatePropagation();
+      $event.preventDefault();
+      services.collectImages(this.model.item);
+    },
     onNameChange(name) {
       this.name = name;
       this.saveDisabled = this.isSaveDisabled();
@@ -80,7 +91,7 @@ export default Vue.component('endpoint-editor', {
     },
     getModel() {
       return $.extend({}, this.model.item, {
-        endpointProperties: $.extend(this.model.item.endpointProperties || {},
+        endpointProperties: $.extend({}, this.model.item.endpointProperties || {},
             this.editor.properties),
         endpointType: this.endpointType,
         name: this.name

@@ -84,20 +84,18 @@
         </div>
       </div>
     </section>
+    <section class="control-btns">
+      <button type="submit" class="btn btn-primary inline-edit-save placementZoneEdit-save"
+          :class="{'loading': model.saving}"
+          :disabled="saveDisabled || model.saving"
+          @click="save($event)">
+        {{i18n("save")}}
+        <i class="fa fa-spinner fa-spin loader-inline"></i>
+      </button>
+      <button type="submit" class="btn"
+          @click="cancel($event)">
+        {{i18n("cancel")}}
+      </button>
+    </section>
   </form>
-  <div class="inline-edit-toolbar">
-    <a href="#"
-        class="inline-edit-save btn btn-circle placementZoneEdit-save"
-        :class="{'loading': model.saving}"
-        :disabled="saveDisabled || model.saving"
-        @click="save($event)">
-      <i class="fa fa-check"></i>
-      <i class="fa fa-spinner fa-spin loader"></i>
-    </a>
-    <a href="#"
-        class="inline-edit-cancel btn btn-circle"
-        @click="cancel($event)">
-      <i class="fa fa-times"></i>
-    </a>
-  </div>
 </div>

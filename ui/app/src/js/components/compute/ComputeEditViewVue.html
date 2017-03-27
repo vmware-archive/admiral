@@ -76,11 +76,11 @@
 
       <div class="form-group">
         <div class="col-sm-12">
-          <div class="pull-right control-btns">
+          <div class="control-btns">
             <button type="submit" class="btn btn-primary"
                     v-bind:class="{'loading': model.item.saving}"
                     v-on:click="saveCompute">
-              {{i18n("app.host.details.update")}}
+              {{i18n("save")}}
               <i class="fa fa-spinner fa-spin loader-inline"></i></button>
             <span class="help-block"></span>
           </div>
