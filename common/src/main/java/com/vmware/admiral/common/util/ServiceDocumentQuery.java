@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -122,12 +122,13 @@ public class ServiceDocumentQuery<T extends ServiceDocument> {
                                 if (qtr.results.documents == null
                                         || qtr.results.documents.isEmpty()) {
                                     completionHandler.accept(noResult());
-                                    return;
                                 } else {
                                     Collection<Object> values = qtr.results.documents.values();
                                     completionHandler.accept(result(values.iterator().next(),
                                             values.size()));
                                 }
+                                // delete query task
+                                deleteQueryTask(qtr);
                             } catch (Throwable ex) {
                                 completionHandler.accept(error(ex));
                             }
@@ -196,7 +197,12 @@ public class ServiceDocumentQuery<T extends ServiceDocument> {
                         return;
                     }
                     QueryTask qrt = o.getBody(QueryTask.class);
-                    processQuery(qrt, completionHandler);
+                    processQuery(qrt, (h) -> {
+                        completionHandler.accept(h);
+                        if (h != null && !h.hasResult()) {
+                            deleteQueryTask(qrt);
+                        }
+                    });
                 }));
     }
 
@@ -394,6 +400,13 @@ public class ServiceDocumentQuery<T extends ServiceDocument> {
 
     public static <S extends ServiceDocument> ServiceDocumentQueryElementResult<S> noResult() {
         return new ServiceDocumentQueryElementResult<>();
+    }
+
+    private void deleteQueryTask(QueryTask qrt) {
+        host.log(Level.FINEST, "Deleting query task %s", qrt.documentSelfLink);
+        Operation.createDelete(host, qrt.documentSelfLink)
+                .setReferer(host.getUri())
+                .sendWith(host);
     }
 
     public static class ServiceDocumentQueryElementResult<T extends ServiceDocument> {
