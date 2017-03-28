@@ -526,7 +526,7 @@
         "isolationNetworkLabel": "Isolation Network",
         "noneIsolationTypeLabel": "None",
         "subnetIsolationTypeLabel": "Subnetwork",
-        "securityGroupIsolationTypeLabel": "None",
+        "securityGroupIsolationTypeLabel": "Security Group",
         "cidrLabel": "CIDR",
         "cidrLabelHint": "0.0.0.0/0",
         "supportPublicIpAddressLabel": "Support Public IP",
