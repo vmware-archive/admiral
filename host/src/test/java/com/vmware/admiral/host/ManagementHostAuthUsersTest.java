@@ -219,8 +219,8 @@ public class ManagementHostAuthUsersTest extends ManagementHostBaseTest {
         if (result.getValue() == null && retryOnFail) {
             host.log(Level.INFO, "Retrying to get auth token for: " + uri.toString());
             TestContext context = new TestContext(1,
-                    Duration.ofSeconds(3 * AUTH_TOKEN_RETRY_COUNT));
-            waitForAuthToken(host, uri, headers, body, context, AUTH_TOKEN_RETRY_COUNT);
+                    Duration.ofSeconds(DELAY_BETWEEN_AUTH_TOKEN_RETRIES * AUTH_TOKEN_RETRY_COUNT));
+            waitForAuthToken(host, uri, headers, body, context);
             context.await();
             result = doPost(uri, headers, body);
         }
@@ -234,26 +234,20 @@ public class ManagementHostAuthUsersTest extends ManagementHostBaseTest {
     }
 
     private static void waitForAuthToken(ServiceHost host, URI uri, Map<String, String> headers,
-            String body, TestContext context, final int retryCounter) throws IOException {
-
-        if (retryCounter == 0) {
-            context.failIteration(new Throwable("Failed waiting for auth token."));
-            return;
-        }
+            String body, TestContext context) throws IOException {
 
         SimpleEntry<Integer, String> result = doPost(uri, headers, body);
         if (result.getValue() == null) {
             host.schedule(() -> {
                 try {
-                    waitForAuthToken(host, uri, headers, body, context, retryCounter - 1);
+                    waitForAuthToken(host, uri, headers, body, context);
                 } catch (IOException e) {
                     host.log(Level.WARNING, "Error on getting auth token: ", e);
                 }
             }, DELAY_BETWEEN_AUTH_TOKEN_RETRIES, TimeUnit.SECONDS);
-            return;
+        } else {
+            context.completeIteration();
         }
-
-        context.completeIteration();
     }
 
     public static SimpleEntry<Integer, String> doPost(URI uri, Map<String, String> headers,

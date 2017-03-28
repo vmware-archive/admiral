@@ -38,8 +38,9 @@ import com.vmware.xenon.common.test.TestContext;
  * Similar to {@link ManagementHostClusterOf2NodesIT} but this test includes 3 nodes, only SSL
  * enabled and the users' passwords are encrypted.
  */
-@Ignore
 public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT {
+
+    private List<ManagementHost> hostsToTeardown;
 
     @Before
     public void setUp() {
@@ -76,6 +77,7 @@ public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT
         // Setup of first host
         hostOne = setUpHost(portOne, null, Arrays.asList(hostOneAddress));
         waitForInitConfig(hostOne, hostOne.localUsers);
+        waitAuthServices(hostOne);
         String tokenOne = login(hostOne, USERNAME, PASSWORD, true);
         assertClusterWithToken(tokenOne, hostOne);
 
@@ -83,6 +85,7 @@ public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT
         // Setup of second host
         hostTwo = setUpHost(portTwo, null, Arrays.asList(hostOneAddress, hostTwoAddress));
         waitForInitConfig(hostTwo, hostTwo.localUsers);
+        waitAuthServices(hostTwo);
         String tokenTwo = login(hostTwo, USERNAME, PASSWORD, true);
         // Update the quorum of first host.
         TestContext ctx = new TestContext(1, Duration.ofSeconds(60));
@@ -94,6 +97,7 @@ public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT
         // Setup of third host
         hostThree = setUpHost(portThree, null, allHosts);
         waitForInitConfig(hostThree, hostThree.localUsers);
+        waitAuthServices(hostThree);
         String tokenThree = login(hostThree, USERNAME, PASSWORD, true);
         assertClusterWithToken(tokenThree, hostThree);
 
@@ -139,6 +143,7 @@ public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT
         // Setup of first host
         hostOne = setUpHost(portOne, null, Arrays.asList(hostOneAddress));
         waitForInitConfig(hostOne, hostOne.localUsers);
+        waitAuthServices(hostOne);
         String tokenOne = login(hostOne, USERNAME, PASSWORD, true);
         assertClusterWithToken(tokenOne, hostOne);
 
@@ -146,6 +151,7 @@ public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT
         // Setup of second host
         hostTwo = setUpHost(portTwo, null, Arrays.asList(hostOneAddress, hostTwoAddress));
         waitForInitConfig(hostTwo, hostTwo.localUsers);
+        waitAuthServices(hostTwo);
         String tokenTwo = login(hostTwo, USERNAME, PASSWORD, true);
         // Update the quorum of first host.
         TestContext ctx = new TestContext(1, Duration.ofMinutes(1));
@@ -157,6 +163,7 @@ public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT
         // Setup of third host
         hostThree = setUpHost(portThree, null, allHosts);
         waitForInitConfig(hostThree, hostThree.localUsers);
+        waitAuthServices(hostThree);
         String tokenThree = login(hostThree, USERNAME, PASSWORD, true);
         assertClusterWithToken(tokenThree, hostThree);
 
@@ -164,7 +171,7 @@ public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT
 
         System.out.println(testName + "stopping host one");
         // Restart node1
-        stopHost(hostOne);
+        stopHostAndRemoveItFromNodeGroup(hostTwo, tokenTwo, hostOne);
 
         System.out.println(testName + "asserting cluster with host two");
         tokenTwo = login(hostTwo, USERNAME, PASSWORD, true);
