@@ -26,6 +26,7 @@ import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.request.utils.RequestUtils;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.LifecycleState;
 
@@ -41,11 +42,10 @@ public class ComputeRemovalWatchServiceTest extends ComputeRequestBaseTest {
         super.setUp();
         DeploymentProfileConfig.getInstance().setTest(true);
 
-        // create a single powered-on compute available for placement
-        createVmHostCompute(true);
+        ComputeDescription cd = createVMComputeDescription(false);
 
         request = TestRequestStateFactory.createRequestState(ResourceType.COMPUTE_TYPE.getName(),
-                hostDesc.documentSelfLink);
+                cd.documentSelfLink);
         request.tenantLinks = computeGroupPlacementState.tenantLinks;
         request.resourceCount = 1;
     }

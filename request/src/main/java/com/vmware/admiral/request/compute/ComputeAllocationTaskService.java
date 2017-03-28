@@ -123,8 +123,7 @@ public class ComputeAllocationTaskService
         @Documentation(description = "Type of resource to create")
         @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
         public String resourceType;
-        @Documentation(
-                description = "(Required) the groupResourcePlacementState that links to ResourcePool")
+        @Documentation(description = "(Required) the groupResourcePlacementState that links to ResourcePool")
         @PropertyOptions(usage = { SINGLE_ASSIGNMENT, OPTIONAL, LINK }, indexing = STORE_ONLY)
         public String groupResourcePlacementLink;
         @Documentation(description = "(Optional) the resourcePoolLink to ResourcePool")
@@ -364,7 +363,8 @@ public class ComputeAllocationTaskService
             rootDisk.bootConfig.label = "cidata";
 
             Map<String, String> values = profile.storageProfile != null
-                    ? profile.storageProfile.bootDiskPropertyMapping : null;
+                    ? profile.storageProfile.bootDiskPropertyMapping
+                    : null;
             if (values != null) {
                 rootDisk.customProperties = new HashMap<>(values);
             }
@@ -421,7 +421,7 @@ public class ComputeAllocationTaskService
         QueryTask q = QueryTask.Builder.create().setQuery(queryBuilder.build()).build();
 
         Set<String> computeResourceLinks = new HashSet<>(state.resourceCount.intValue());
-        new ServiceDocumentQuery<ComputeState>(
+        new ServiceDocumentQuery<>(
                 getHost(), ComputeState.class).query(q, (r) -> {
                     if (r.hasException()) {
                         failTask("Failed to query for provisioned resources", r.getException());
@@ -495,15 +495,15 @@ public class ComputeAllocationTaskService
                     }
                     SubStage nextStage = cd.customProperties
                             .containsKey(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME)
-                            ? SubStage.COMPUTE_DESCRIPTION_RECONFIGURED
-                            : SubStage.RESOURCES_NAMES;
+                                    ? SubStage.COMPUTE_DESCRIPTION_RECONFIGURED
+                                    : SubStage.RESOURCES_NAMES;
 
                     Operation.createPut(this, state.resourceDescriptionLink)
                             .setBody(cd)
                             .setCompletion((o, e) -> {
                                 if (e != null) {
                                     failTask("Failed patching compute description : "
-                                                    + Utils.toString(e),
+                                            + Utils.toString(e),
                                             null);
                                     return;
                                 }
@@ -661,7 +661,8 @@ public class ComputeAllocationTaskService
             List<String> networkLinks, ServiceTaskCallback taskCallback) {
         if (diskLinks == null) {
             createDiskResources(state, taskCallback, dl -> createComputeResource(
-                    state, cd, profile, parentLink, placementLink, computeResourceId, computeName, dl,
+                    state, cd, profile, parentLink, placementLink, computeResourceId, computeName,
+                    dl,
                     networkLinks, taskCallback));
             return;
         }
@@ -790,7 +791,7 @@ public class ComputeAllocationTaskService
                         .sendWithDeferredResult(
                                 Operation.createGet(this, nicDescLink),
                                 NetworkInterfaceDescription.class)
-                        .thenCompose(nid -> createNicState(state, nid, profile))
+                        .thenCompose(nid -> createNicState(state, cd, nid, profile))
                         .thenCompose(nic -> this.sendWithDeferredResult(
                                 Operation.createPost(this, NetworkInterfaceService.FACTORY_LINK)
                                         .setBody(nic),
@@ -808,22 +809,20 @@ public class ComputeAllocationTaskService
     }
 
     private DeferredResult<NetworkInterfaceState> createNicState(ComputeAllocationTaskState state,
-            NetworkInterfaceDescription nid, ProfileStateExpanded profile) {
+            ComputeDescription cd, NetworkInterfaceDescription nid, ProfileStateExpanded profile) {
         String subnetLink = nid.subnetLink;
 
         boolean noNicVM = nid.customProperties != null
                 && nid.customProperties.containsKey(NetworkProfileQueryUtils.NO_NIC_VM);
-        DeferredResult<String> subnet = null;
+        DeferredResult<SubnetState> subnet = null;
         boolean isIsolatedNetworkEnvironment = profile.networkProfile != null &&
-                profile.networkProfile.isolationType == IsolationSupportType
-                        .SUBNET;
-        boolean hasSubnetStates = profile.networkProfile != null && profile.networkProfile
-                .subnetStates !=
-                null
+                profile.networkProfile.isolationType == IsolationSupportType.SUBNET;
+        boolean hasSubnetStates = profile.networkProfile != null
+                && profile.networkProfile.subnetStates != null
                 && !profile.networkProfile.subnetStates.isEmpty();
         if (hasSubnetStates || isIsolatedNetworkEnvironment) {
             if (!noNicVM) {
-                DeferredResult<String> subnetDeferred = new DeferredResult<>();
+                DeferredResult<SubnetState> subnetDeferred = new DeferredResult<>();
                 NetworkProfileQueryUtils.getSubnetForComputeNic(getHost(),
                         UriUtils.buildUri(getHost(), getSelfLink()), state.tenantLinks,
                         RequestUtils.getContextId(state), nid, profile,
@@ -839,44 +838,49 @@ public class ComputeAllocationTaskService
                                             subnetDeferred.fail(t);
                                             return;
                                         }
-                                        String chosenSubnetLink = networkAndSubnet.right.documentSelfLink;
 
                                         if (networkAndSubnet.left.networkType == NetworkType.PUBLIC) {
                                             nid.assignPublicIpAddress = true;
 
                                             this.sendWithDeferredResult(
-                                                    Operation.createPatch(this, nid.documentSelfLink)
+                                                    Operation
+                                                            .createPatch(this, nid.documentSelfLink)
                                                             .setBody(nid))
-                                                    .thenAccept(v -> subnetDeferred.complete(chosenSubnetLink));
+                                                    .thenAccept(v -> subnetDeferred
+                                                            .complete(networkAndSubnet.right));
                                             return;
                                         }
 
-                                        subnetDeferred.complete(chosenSubnetLink);
+                                        subnetDeferred.complete(networkAndSubnet.right);
                                     });
                         });
                 subnet = subnetDeferred;
             } else {
-                subnet = DeferredResult.completed(
-                        profile.networkProfile.subnetStates.get(0).documentSelfLink);
+                subnet = DeferredResult.completed(profile.networkProfile.subnetStates.get(0));
             }
         } else if (noNicVM && nid.networkLink != null) {
-            subnet = DeferredResult.completed(subnetLink);
+            subnet = DeferredResult.completed(null);
         } else if (subnetLink == null) {
             // TODO: filter also by NetworkProfile
             subnet = findSubnetBy(state, nid);
         } else {
-            subnet = DeferredResult.completed(subnetLink);
+            subnet = sendWithDeferredResult(Operation.createGet(this, subnetLink),
+                    SubnetState.class);
         }
 
-        DeferredResult<NetworkInterfaceState> n = subnet.thenCompose(sl -> {
+        DeferredResult<NetworkInterfaceState> n = subnet.thenCompose(s -> {
+            if (s == null && nid.networkLink == null) {
+                return DeferredResult.failed(
+                        new IllegalStateException("No matching network found for VM:" + cd.name));
+            }
             NetworkInterfaceState nic = new NetworkInterfaceState();
             nic.id = UUID.randomUUID().toString();
             nic.documentSelfLink = nic.id;
             nic.name = nid.name;
             nic.deviceIndex = nid.deviceIndex;
             nic.address = nid.address;
-            nic.networkLink = nid.networkLink;
-            nic.subnetLink = sl;
+            nic.networkLink = nid.networkLink != null ? nid.networkLink : s.networkLink;
+            nic.subnetLink = s != null ? s.documentSelfLink : null;
             nic.networkInterfaceDescriptionLink = nid.documentSelfLink;
             nic.securityGroupLinks = nid.securityGroupLinks;
             nic.groupLinks = nid.groupLinks;
@@ -890,17 +894,16 @@ public class ComputeAllocationTaskService
         return n;
     }
 
-    private DeferredResult<Operation> patchComputeNetwork(ComputeNetwork
-            computeNetwork,
+    private DeferredResult<Operation> patchComputeNetwork(ComputeNetwork computeNetwork,
             ProfileStateExpanded profile) {
 
         computeNetwork.provisionProfileLink = profile.documentSelfLink;
         return this.sendWithDeferredResult(
                 Operation.createPatch(this, computeNetwork.documentSelfLink)
-                    .setBody(computeNetwork));
+                        .setBody(computeNetwork));
     }
 
-    private DeferredResult<String> findSubnetBy(ComputeAllocationTaskState state,
+    private DeferredResult<SubnetState> findSubnetBy(ComputeAllocationTaskState state,
             NetworkInterfaceDescription nid) {
         Builder builder = Query.Builder.create().addKindFieldClause(SubnetState.class);
         if (state.tenantLinks == null || state.tenantLinks.isEmpty()) {
@@ -913,18 +916,18 @@ public class ComputeAllocationTaskService
         QueryByPages<SubnetState> querySubnetStates = new QueryByPages<>(getHost(), builder.build(),
                 SubnetState.class, QueryUtil.getTenantLinks(state.tenantLinks), state.endpointLink);
 
-        ArrayList<String> links = new ArrayList<>();
-        ArrayList<String> prefered = new ArrayList<>();
-        ArrayList<String> supportPublic = new ArrayList<>();
+        ArrayList<SubnetState> links = new ArrayList<>();
+        ArrayList<SubnetState> prefered = new ArrayList<>();
+        ArrayList<SubnetState> supportPublic = new ArrayList<>();
         return querySubnetStates.queryDocuments(s -> {
             boolean supportsPublic = s.supportPublicIpAddress != null && s.supportPublicIpAddress;
             boolean defaultForZone = s.defaultForZone != null && s.defaultForZone;
             if (supportsPublic && defaultForZone) {
-                prefered.add(s.documentSelfLink);
+                prefered.add(s);
             } else if (supportsPublic) {
-                supportPublic.add(s.documentSelfLink);
+                supportPublic.add(s);
             } else {
-                links.add(s.documentSelfLink);
+                links.add(s);
             }
         }).thenApply(ignore -> {
             if (!prefered.isEmpty()) {
@@ -1022,7 +1025,7 @@ public class ComputeAllocationTaskService
                 .addOption(QueryOption.EXPAND_CONTENT)
                 .build();
 
-        List<ProfileState> foundProfiles = new LinkedList<ProfileState>();
+        List<ProfileState> foundProfiles = new LinkedList<>();
         new ServiceDocumentQuery<>(
                 getHost(), ProfileState.class).query(task,
                         (r) -> {
@@ -1046,18 +1049,19 @@ public class ComputeAllocationTaskService
                                     // Sort profiles based on order of profileLinks
                                     List<ProfileState> sortedProfiles = foundProfiles;
                                     if (profileLinks != null && !profileLinks.isEmpty()) {
-                                        sortedProfiles = sortedProfiles.stream().sorted((e1, e2) ->
-                                                profileLinks.indexOf(e1.documentSelfLink)
+                                        sortedProfiles = sortedProfiles.stream()
+                                                .sorted((e1, e2) -> profileLinks
+                                                        .indexOf(e1.documentSelfLink)
                                                         - profileLinks.indexOf(e2.documentSelfLink))
                                                 .collect(Collectors.toList());
                                     }
 
-                                    Stream<ProfileState> profileForTheEndpoint = sortedProfiles.stream()
+                                    Stream<ProfileState> profileForTheEndpoint = sortedProfiles
+                                            .stream()
                                             .filter(profile -> endpoint.documentSelfLink.equals(
                                                     profile.endpointLink));
                                     callbackFunction.accept(profileForTheEndpoint.findFirst()
-                                            .orElse(sortedProfiles.get(0))
-                                            .documentSelfLink);
+                                            .orElse(sortedProfiles.get(0)).documentSelfLink);
                                 }
                             }
                         });

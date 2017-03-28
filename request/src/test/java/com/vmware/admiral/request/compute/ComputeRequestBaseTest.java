@@ -24,7 +24,9 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.NetworkInterfaceDescription;
+import com.vmware.photon.controller.model.resources.NetworkService;
 import com.vmware.photon.controller.model.resources.SubnetService;
+import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.UriUtils;
 
 public class ComputeRequestBaseTest extends RequestBaseTest {
@@ -57,24 +59,36 @@ public class ComputeRequestBaseTest extends RequestBaseTest {
         cd.customProperties = new HashMap<>();
         cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME,
                 "coreos");
+
+        SubnetState subnet = createSubnet("my-subnet");
         if (attachNic) {
-            NetworkInterfaceDescription nid = createNetworkInterface("test-nic");
+            NetworkInterfaceDescription nid = createNetworkInterface("test-nic",
+                    subnet.documentSelfLink);
             cd.networkInterfaceDescLinks = new ArrayList<>();
             cd.networkInterfaceDescLinks.add(nid.documentSelfLink);
         } else {
-            cd.customProperties.put("subnetworkLink",
-                    UriUtils.buildUriPath(SubnetService.FACTORY_LINK, "my-subnet"));
+            cd.customProperties.put("subnetworkLink", subnet.documentSelfLink);
         }
         return cd;
     }
 
-    private NetworkInterfaceDescription createNetworkInterface(String name) throws Throwable {
+    private SubnetState createSubnet(String name) throws Throwable {
+        SubnetState sub = new SubnetState();
+        sub.name = name;
+        sub.subnetCIDR = "192.168.0.0/24";
+        sub.networkLink = UriUtils.buildUriPath(NetworkService.FACTORY_LINK, name);
+        sub.documentSelfLink = UriUtils.buildUriPath(SubnetService.FACTORY_LINK, name);
+        return doPost(sub, SubnetService.FACTORY_LINK);
+    }
+
+    private NetworkInterfaceDescription createNetworkInterface(String name, String subnetLink)
+            throws Throwable {
         NetworkInterfaceDescription nid = new NetworkInterfaceDescription();
         nid.id = UUID.randomUUID().toString();
         nid.name = name;
         nid.documentSelfLink = nid.id;
         nid.tenantLinks = computeGroupPlacementState.tenantLinks;
-        nid.subnetLink = UriUtils.buildUriPath(SubnetService.FACTORY_LINK, "my-subnet");
+        nid.subnetLink = subnetLink;
 
         NetworkInterfaceDescription returnState = doPost(nid,
                 NetworkInterfaceDescriptionService.FACTORY_LINK);
