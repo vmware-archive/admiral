@@ -53,9 +53,9 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.photon.controller.model.resources.EndpointService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
+import com.vmware.photon.controller.model.resources.NetworkService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
-import com.vmware.photon.controller.model.resources.SubnetService;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
@@ -226,6 +226,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         SubnetState subnetState = new SubnetState();
         subnetState.documentSelfLink = "test-subnet-" + name;
         subnetState.subnetCIDR = "10.10.10.10/24";
+        subnetState.networkLink = UriUtils.buildUriPath(NetworkService.FACTORY_LINK, name);
         subnetState.tenantLinks = tenantLinks;
         subnetState.tagLinks = new HashSet<>();
         return subnetState;
@@ -360,8 +361,6 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         hostDescription.customProperties = new HashMap<>();
         hostDescription.customProperties.put(
                 ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "coreos");
-        hostDescription.customProperties.put("subnetworkLink",
-                UriUtils.buildUriPath(SubnetService.FACTORY_LINK, "my-subnet"));
 
         return hostDescription;
     }

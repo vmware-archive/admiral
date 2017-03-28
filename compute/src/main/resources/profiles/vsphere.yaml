@@ -23,7 +23,7 @@ computeProfile:
     coreos:
       image: "https://stable.release.core-os.net/amd64-usr/current/coreos_production_vmware_ova.ova"
     ubuntu-1604:
-      image: "https://cloud-images.ubuntu.com/releases/16.04/release/ubuntu-16.04-server-cloudimg-amd64.ova"
+      image: "https://cloud-images.ubuntu.com/releases/16.04/release-20170307/ubuntu-16.04-server-cloudimg-amd64.ova"
 storageProfile: {}
 networkProfile: {}
 misc:

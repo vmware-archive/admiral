@@ -43,6 +43,8 @@ import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.SubnetService;
+import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.services.common.QueryTask;
@@ -84,7 +86,11 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
     public void testWithSingleCompute() throws Throwable {
         createComputeGroupResourcePlacement(createComputeResourcePool(), 0);
 
+        SubnetState subnet = TestRequestStateFactory.createSubnetState("my-subnet");
+        subnet = doPost(subnet, SubnetService.FACTORY_LINK);
+
         ComputeDescription compute = TestRequestStateFactory.createDockerHostDescription();
+        compute.customProperties.put("subnetworkLink", subnet.documentSelfLink);
         compute.instanceAdapterReference = UriUtils.buildUri(host,
                 ManagementUriParts.ADAPTER_DOCKER);
         CompositeDescription compositeDesc = createCompositeDesc(compute);
@@ -120,13 +126,18 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
     public void testWithMultipleComputes() throws Throwable {
         createComputeGroupResourcePlacement(createComputeResourcePool(), 0);
 
+        SubnetState subnet = TestRequestStateFactory.createSubnetState("my-subnet");
+        subnet = doPost(subnet, SubnetService.FACTORY_LINK);
+
         ComputeDescription compute1 = TestRequestStateFactory.createDockerHostDescription();
         compute1.instanceAdapterReference = UriUtils.buildUri(host,
                 ManagementUriParts.ADAPTER_DOCKER);
+        compute1.customProperties.put("subnetworkLink", subnet.documentSelfLink);
 
         ComputeDescription compute2 = TestRequestStateFactory.createDockerHostDescription();
         compute2.instanceAdapterReference = UriUtils.buildUri(host,
                 ManagementUriParts.ADAPTER_DOCKER);
+        compute2.customProperties.put("subnetworkLink", subnet.documentSelfLink);
 
         CompositeDescription compositeDesc = createCompositeDesc(compute1, compute2);
         RequestBrokerState request = startComputeRequest(compositeDesc);
