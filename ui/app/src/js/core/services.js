@@ -1292,8 +1292,20 @@ services.searchEndpoints = function(query, limit, type) {
   });
 };
 
-services.loadEndpoints = function() {
-  return list(links.ENDPOINTS, true);
+services.loadEndpoints = function(documentSelfLinks) {
+  var params = {};
+  if (documentSelfLinks && documentSelfLinks.length) {
+    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+      documentSelfLink: documentSelfLinks.map((link) => {
+        return {
+          val: link,
+          op: 'eq'
+        };
+      }),
+      [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
+    });
+  }
+  return list(links.ENDPOINTS, true, params);
 };
 
 services.loadEndpoint = function(documentSelfLink) {

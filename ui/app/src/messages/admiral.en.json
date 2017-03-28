@@ -621,7 +621,14 @@
         "searchPlaceholder": "Search for compute"
       },
       "details": {
-        "type": "Type"
+        "type": "Type",
+        "zone": "Availability zone",
+        "vm_host": "Region",
+        "clustercomputeresource": "Cluster",
+        "computeresource": "Host",
+        "endpoint": "Endpoint",
+        "hostsystem": "Host",
+        "resourcepool": "Resource pool"
       },
       "edit": {
         "title": "Edit Compute",
