@@ -140,15 +140,22 @@ let ComputeStore = Reflux.createStore({
               }
             });
           });
-          return this.getDescriptions(compute);
-        }).then((result) => {
+          return Promise.all([
+            this.getDescriptions(compute),
+            this.getEndpoints(compute)
+          ]);
+        }).then(([descriptions, endpoints]) => {
 
           compute.forEach((compute) => {
-            if (result[compute.descriptionLink]) {
-              compute.cpuCount = result[compute.descriptionLink].cpuCount;
-              compute.cpuMhzPerCore = result[compute.descriptionLink].cpuMhzPerCore;
+            if (descriptions[compute.descriptionLink]) {
+              compute.cpuCount = descriptions[compute.descriptionLink].cpuCount;
+              compute.cpuMhzPerCore = descriptions[compute.descriptionLink].cpuMhzPerCore;
               compute.memory =
-                  Math.floor(result[compute.descriptionLink].totalMemoryBytes / 1048576);
+                  Math.floor(descriptions[compute.descriptionLink].totalMemoryBytes / 1048576);
+            }
+            if (endpoints[compute.endpointLink]) {
+              compute.endpointName = endpoints[compute.endpointLink].name;
+              compute.endpointType = endpoints[compute.endpointLink].endpointType;
             }
           });
 
@@ -189,15 +196,22 @@ let ComputeStore = Reflux.createStore({
               }
             });
           });
-          return this.getDescriptions(compute);
-        }).then((result) => {
+          return Promise.all([
+            this.getDescriptions(compute),
+            this.getEndpoints(compute)
+          ]);
+        }).then(([descriptions, endpoints]) => {
 
           compute.forEach((compute) => {
-            if (result[compute.descriptionLink]) {
-              compute.cpuCount = result[compute.descriptionLink].cpuCount;
-              compute.cpuMhzPerCore = result[compute.descriptionLink].cpuMhzPerCore;
+            if (descriptions[compute.descriptionLink]) {
+              compute.cpuCount = descriptions[compute.descriptionLink].cpuCount;
+              compute.cpuMhzPerCore = descriptions[compute.descriptionLink].cpuMhzPerCore;
               compute.memory =
-                  Math.floor(result[compute.descriptionLink].totalMemoryBytes / 1048576);
+                  Math.floor(descriptions[compute.descriptionLink].totalMemoryBytes / 1048576);
+            }
+            if (endpoints[compute.endpointLink]) {
+              compute.endpointName = endpoints[compute.endpointLink].name;
+              compute.endpointType = endpoints[compute.endpointLink].endpointType;
             }
           });
 
@@ -314,6 +328,20 @@ let ComputeStore = Reflux.createStore({
       this.setInData(['listView', 'placementZones'],
           $.extend({}, placementZones, newPlacementZones));
       return utils.getIn(this.data, ['listView', 'placementZones']);
+    });
+  },
+  getEndpoints(compute) {
+    let endpoints = utils.getIn(this.data, ['listView', 'endpoints']) || [];
+    let endpointLinks = compute.filter((compute) =>
+        compute.endpointLink).map((compute) => compute.endpointLink);
+    let links = [...new Set(endpointLinks)].filter((link) =>
+        !endpoints.hasOwnProperty(link));
+    if (links.length === 0) {
+      return Promise.resolve(endpoints);
+    }
+    return services.loadEndpoints(links).then((newEndpoints) => {
+      this.setInData(['listView', 'endpoints'], $.extend({}, endpoints, newEndpoints));
+      return utils.getIn(this.data, ['listView', 'endpoints']);
     });
   },
   getDescriptions(compute) {

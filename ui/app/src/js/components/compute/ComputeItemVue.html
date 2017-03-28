@@ -16,7 +16,15 @@
     <div class="form-group">
       <label class="col-xs-5">{{i18n("app.compute.details.type")}}</label>
       <div class="col-xs-7 truncateText"
-           :title="model.computeType">{{model.computeType}}</div>
+           :title="model.computeType">{{i18n("app.compute.details." + computeType)}}</div>
+    </div>
+    <div class="form-group">
+      <label class="col-xs-5">{{i18n("app.compute.details.endpoint")}}</label>
+      <div class="col-xs-7 endpoint-icon truncateText" :title="model.computeType">
+        <img v-bind:src="endpointIconSrc">
+        <a :href="'#/compute?endpoint=' + model.endpointName"
+           class="navigation-link">{{model.endpointName}}</a>
+      </div>
     </div>
     <div class="form-group">
       <label class="col-xs-5">{{i18n("app.host.details.placementZone")}}</label>

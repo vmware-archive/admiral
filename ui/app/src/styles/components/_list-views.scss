@@ -271,6 +271,14 @@
 
   .list-view .grid-item .details .form-group {
     margin-bottom: 5px;
+    > div, > label {
+      padding: 0 2px;
+      font-size: 13px;
+      line-height: 22px;
+    }
+    .endpoint-icon img {
+      margin: 3px 6px 0 0;
+    }
   }
 
   .list-view .grid-item .details .form-group label {

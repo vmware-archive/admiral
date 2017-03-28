@@ -12,32 +12,38 @@
 import ComputeItemVue from 'components/compute/ComputeItemVue.html';
 import { NavigationActions } from 'actions/Actions';
 import constants from 'core/constants';
+import utils from 'core/utils';
 
-var ComputeItem = Vue.extend({
+export default Vue.component('compute-grid-item', {
   template: ComputeItemVue,
   props: {
     model: {required: true}
   },
   computed: {
-    powerStateOn: function() {
+    powerStateOn() {
       return this.model.powerState === constants.STATES.ON;
     },
-    hostDisabled: function() {
+    hostDisabled() {
       return this.model.powerState === constants.STATES.SUSPEND;
     },
-    hostName: function() {
+    hostName() {
       return this.model.name;
     },
-    epzNames: function() {
+    epzNames() {
       return this.model.epzs.map((epz) => epz.epzName).join(', ');
+    },
+    computeType() {
+      return (this.model.computeType || this.model.type).toLowerCase();
+    },
+    endpointIconSrc() {
+      return utils.getAdapter(this.model.endpointType).iconSrc;
     }
   },
   methods: {
-    stateMessage: function(state) {
+    stateMessage(state) {
       return i18n.t('state.' + state);
     },
-
-    percentageLevel: function(percentage) {
+    percentageLevel(percentage) {
       if (percentage < 50) {
         return 'success';
       } else if (percentage < 80) {
@@ -46,15 +52,10 @@ var ComputeItem = Vue.extend({
         return 'danger';
       }
     },
-
-    editCompute: function(event) {
+    editCompute(event) {
       event.preventDefault();
 
       NavigationActions.editCompute(this.model.selfLinkId);
     }
   }
 });
-
-Vue.component('compute-grid-item', ComputeItem);
-
-export default ComputeItem;
