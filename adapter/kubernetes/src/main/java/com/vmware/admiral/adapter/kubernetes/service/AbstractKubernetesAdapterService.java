@@ -15,7 +15,6 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
@@ -24,11 +23,11 @@ import com.vmware.admiral.adapter.kubernetes.KubernetesRemoteApiClient;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
-import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.TaskState;
@@ -134,35 +133,36 @@ public abstract class AbstractKubernetesAdapterService extends StatelessService 
             return;
         }
 
-        final AtomicBoolean credentialsFound = new AtomicBoolean();
-
-        new ServiceDocumentQuery<>(getHost(),
-                AuthCredentialsServiceState.class)
-                        .queryDocument(credentialsLink, (r) -> {
-                            if (r.hasException()) {
-                                fail(request, r.getException());
+        sendRequest(Operation
+                .createGet(this, credentialsLink)
+                .setCompletion(
+                        (o, ex) -> {
+                            if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
+                                String errorMag = String.format(
+                                        "AuthCredentialsState not found with link: %s %s",
+                                        credentialsLink, request.getRequestTrackingLog());
+                                Throwable t = new LocalizableValidationException(errorMag,
+                                        "adapter.auth.not.found", credentialsLink,
+                                        request.getRequestTrackingLog());
                                 if (op != null) {
-                                    op.fail(r.getException());
+                                    op.fail(t);
                                 }
-                            } else if (r.hasResult()) {
-                                credentialsFound.set(true);
 
-                                context.credentials = r.getResult();
-
-                                callbackFunction.accept(context);
-                            } else {
-                                if (!credentialsFound.get()) {
-                                    Throwable t = new IllegalArgumentException(
-                                            "AuthCredentialsState not found with link: "
-                                                    + credentialsLink
-                                                    + request.getRequestTrackingLog());
-                                    if (op != null) {
-                                        op.fail(t);
-                                    }
-                                    fail(request, t);
-                                }
+                                fail(request, t);
+                                return;
                             }
-                        });
+
+                            if (ex != null) {
+                                fail(request, ex);
+                                if (op != null) {
+                                    op.fail(ex);
+                                }
+                                return;
+                            }
+
+                            context.credentials = o.getBody(AuthCredentialsServiceState.class);
+                            callbackFunction.accept(context);
+                        }));
 
         getHost().log(Level.FINE, "Fetching AuthCredentials: %s %s", credentialsLink,
                 request.getRequestTrackingLog());

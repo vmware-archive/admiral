@@ -629,20 +629,26 @@ public abstract class BaseTestCase {
                 AuthCredentialsServiceState.class);
 
         TestContext ctx = testCreate(1);
-        query.queryDocument(UriUtils.buildUriPath(AuthCredentialsService.FACTORY_LINK,
-                CommonTestStateFactory.AUTH_CREDENTIALS_ID),
-                (r) -> {
-                    if (r.hasException()) {
-                        r.throwRunTimeException();
-                    } else if (!r.hasResult()) {
+        String authCredentialLink = UriUtils.buildUriPath(AuthCredentialsService.FACTORY_LINK,
+                CommonTestStateFactory.AUTH_CREDENTIALS_ID);
+
+        host.send(Operation
+                .createGet(host, authCredentialLink)
+                .setCompletion((o, ex) -> {
+                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
                         host.send(Operation.createPost(
                                 UriUtils.buildUri(host, AuthCredentialsService.FACTORY_LINK))
                                 .setBody(CommonTestStateFactory.createAuthCredentials(false))
                                 .setCompletion(ctx.getCompletion()));
-                    } else {
-                        ctx.completeIteration();
+                        return;
                     }
-                });
+
+                    if (ex != null) {
+                        throw new RuntimeException(ex);
+                    }
+
+                    ctx.completeIteration();
+                }));
         ctx.await();
     }
 
