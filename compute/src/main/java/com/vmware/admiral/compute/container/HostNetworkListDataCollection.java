@@ -142,6 +142,7 @@ public class HostNetworkListDataCollection extends StatefulService {
         }
         if (body.containerHostLink == null) {
             logFine("'containerHostLink' is required");
+            op.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
             op.complete();
             return;
         }
@@ -166,6 +167,8 @@ public class HostNetworkListDataCollection extends StatefulService {
         if (state.containerHostLinks.get(body.containerHostLink) != null &&
                 Instant.now().isBefore(Instant.ofEpochMilli(
                         (state.containerHostLinks.get(body.containerHostLink))))) {
+            op.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
+            op.complete();
             return;// return since there is an active data collection for this host.
         } else {
             state.containerHostLinks.put(body.containerHostLink,

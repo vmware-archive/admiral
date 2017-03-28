@@ -204,6 +204,7 @@ public class KubernetesEntityDataCollection extends StatefulService {
 
         if (body.computeHostLink == null) {
             logFine("'computeHostLink' is required");
+            op.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
             op.complete();
             return;
         }
@@ -222,6 +223,7 @@ public class KubernetesEntityDataCollection extends StatefulService {
 
         // the patch will succeed regardless of the synchronization process
         if (state.computeHostLinks.contains(body.computeHostLink)) {
+            op.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
             op.complete();
             return;// return since there is an active data collection for this host.
         } else {
