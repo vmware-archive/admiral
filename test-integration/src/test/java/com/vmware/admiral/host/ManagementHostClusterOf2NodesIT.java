@@ -16,7 +16,6 @@ import static org.junit.Assert.assertNotNull;
 
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.AUTH_TOKEN_RETRY_COUNT;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.login;
-import static com.vmware.admiral.service.common.AuthBootstrapService.waitForInitConfig;
 
 import java.net.URI;
 import java.time.Duration;
@@ -76,10 +75,10 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         ALL_HOSTS = Arrays.asList(HOST_ONE, HOST_TWO);
 
         hostOne = setUpHost(PORT_ONE, null, Arrays.asList(HOST_ONE));
-        waitForInitConfig(hostOne, hostOne.localUsers);
+        waitAuthServices(hostOne);
 
         hostTwo = setUpHost(PORT_TWO, null, ALL_HOSTS);
-        waitForInitConfig(hostTwo, hostTwo.localUsers);
+        waitAuthServices(hostTwo);
         String tokenOne = login(hostOne, USERNAME, PASSWORD, true);
         TestContext ctx = new TestContext(1, Duration.ofSeconds(60));
         createUpdateQuorumOperation(hostOne, 2, ctx, tokenOne, AUTH_TOKEN_RETRY_COUNT);
@@ -117,7 +116,7 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
          * ==== Restart node1 ====================================================================
          */
 
-        stopHost(hostOne);
+        stopHost(hostOne, false);
 
         // We should explicitly set the quorum in the running node to 1 here, but now the
         // ClusterMonitoringService will take care of that. Otherwise the next operation will hang.
@@ -141,7 +140,7 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
          * ==== Restart node2 ====================================================================
          */
 
-        stopHost(hostTwo);
+        stopHost(hostTwo, false);
 
         // We should explicitly set the quorum in the running node to 1 here, but now the
         // ClusterMonitoringService will take care of that. Otherwise the next operation will hang.
@@ -184,8 +183,8 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
          * ==== Stop both nodes ==================================================================
          */
 
-        stopHost(hostOne);
-        stopHost(hostTwo);
+        stopHost(hostOne, false);
+        stopHost(hostTwo, false);
 
         /*
          * ==== Start both nodes =================================================================
@@ -218,7 +217,7 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         assertContainerDescription(hostTwo, headers);
 
         // Restart hostTwo
-        stopHost(hostTwo);
+        stopHost(hostTwo, false);
         hostTwo = startHost(hostTwo, null, ALL_HOSTS);
 
         // Get token from hostOne
@@ -234,17 +233,9 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
 
     @Test
     public void testProvisioningOfContainerInCluster() throws Throwable {
-
         Map<String, String> headersHostOne = getAuthenticationHeaders(hostOne);
 
-        TestContext waiter = new TestContext(1, Duration.ofSeconds(30));
-        disableDataCollection(hostOne, headersHostOne.get("x-xenon-auth-token"), waiter);
-        waiter.await();
-
         Map<String, String> headersHostTwo = getAuthenticationHeaders(hostTwo);
-        waiter = new TestContext(1, Duration.ofSeconds(30));
-        disableDataCollection(hostTwo, headersHostTwo.get("x-xenon-auth-token"), waiter);
-        waiter.await();
 
         // 1. Request a container instance:
         RequestBrokerState request = TestRequestStateFactory
@@ -293,17 +284,9 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
 
     @Test
     public void testProvisioningOfApplicationInCluster() throws Throwable {
-
         Map<String, String> headersHostOne = getAuthenticationHeaders(hostOne);
 
-        TestContext waiter = new TestContext(1, Duration.ofSeconds(30));
-        disableDataCollection(hostOne, headersHostOne.get("x-xenon-auth-token"), waiter);
-        waiter.await();
-
         Map<String, String> headersHostTwo = getAuthenticationHeaders(hostTwo);
-        waiter = new TestContext(1, Duration.ofSeconds(30));
-        disableDataCollection(hostTwo, headersHostTwo.get("x-xenon-auth-token"), waiter);
-        waiter.await();
 
         ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
         container1Desc.documentSelfLink = UUID.randomUUID().toString();

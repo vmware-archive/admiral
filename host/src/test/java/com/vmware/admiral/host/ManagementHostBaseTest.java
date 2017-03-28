@@ -15,6 +15,7 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.logging.Level;
 
+import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceDocument;
@@ -29,10 +30,8 @@ public class ManagementHostBaseTest extends ServiceHost {
      * 'initializeTestDocuments' is equals to 'true' the created ServiceHost comes with set of
      * documents which have been created when host starts using system authorization context.
      *
-     * @param args
-     *            - arguments which will be parsed from host,
-     * @param initializeTestDocuments
-     *            - boolean flag indicates whether additional test documents to be created.
+     * @param args                    - arguments which will be parsed from host,
+     * @param initializeTestDocuments - boolean flag indicates whether additional test documents to be created.
      * @return ManagementHost Object
      * @throws Throwable
      */
@@ -63,6 +62,8 @@ public class ManagementHostBaseTest extends ServiceHost {
         h.startFabricServices();
 
         h.startManagementServices();
+
+        waitForDefaultRegistryCreated(h);
 
         h.log(Level.INFO, "**** Management host started. ****");
 
@@ -135,6 +136,15 @@ public class ManagementHostBaseTest extends ServiceHost {
 
         context.await();
         return (T) result[0];
+    }
+
+    private static void waitForDefaultRegistryCreated(ManagementHost host) {
+        TestContext ctx = new TestContext(1, Duration.ofSeconds(120));
+        host.log(Level.INFO, "Waiting for default registry to start.");
+        host.registerForServiceAvailability(ctx.getCompletion(),
+                RegistryService.DEFAULT_INSTANCE_LINK);
+        ctx.await();
+        host.log(Level.INFO, "Default registry started.");
     }
 
 }

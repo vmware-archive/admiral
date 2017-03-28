@@ -12,6 +12,7 @@
 package com.vmware.admiral.auth;
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.UUID;
 
 import org.junit.Before;
@@ -28,11 +29,13 @@ import com.vmware.admiral.service.common.AuthBootstrapService;
 
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.common.test.VerificationHost;
 
 import com.vmware.xenon.services.common.UserService;
 
 public abstract class AuthBaseTest extends BaseTestCase {
+    public static final int DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES = 180;
 
     protected static final String ADMIN_USERNAME = "administrator@admiral.com";
 
@@ -46,8 +49,11 @@ public abstract class AuthBaseTest extends BaseTestCase {
 
         waitForServiceAvailability(AuthInitialBootService.SELF_LINK);
         waitForInitialBootServiceToBeSelfStopped(AuthInitialBootService.SELF_LINK);
-        AuthBootstrapService.waitForInitConfig(host, ((CustomizationVerificationHost) host).localUsers);
-
+        TestContext ctx = new TestContext(1,
+                Duration.ofSeconds(DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES));
+        AuthBootstrapService.waitForInitConfig(host, ((CustomizationVerificationHost) host)
+                .localUsers, ctx::completeIteration, ctx::failIteration);
+        ctx.await();
         host.resetAuthorizationContext();
     }
 
