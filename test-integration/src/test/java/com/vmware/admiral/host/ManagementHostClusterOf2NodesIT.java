@@ -11,16 +11,16 @@
 
 package com.vmware.admiral.host;
 
-import static java.util.Arrays.asList;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import static com.vmware.admiral.host.ManagementHostAuthUsersTest.AUTH_TOKEN_RETRY_COUNT;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.login;
 import static com.vmware.admiral.service.common.AuthBootstrapService.waitForInitConfig;
 
 import java.net.URI;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +28,7 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.logging.Level;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -52,34 +53,48 @@ import com.vmware.xenon.common.test.TestContext;
 @Ignore("VBV-1018")
 public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT {
 
+    private List<ManagementHost> hostsToTeardown;
+
     private ManagementHost hostOne;
     private ManagementHost hostTwo;
 
-    private static final int PORT_ONE = 20000 + new Random().nextInt(1000);
-    private static final int PORT_TWO = PORT_ONE + 1;
+    private int PORT_ONE;
+    private int PORT_TWO;
 
-    private static final String HOST_ONE = LOCALHOST + PORT_ONE;
-    private static final String HOST_TWO = LOCALHOST + PORT_TWO;
-    private static final List<String> ALL_HOSTS = asList(HOST_ONE, HOST_TWO);
+    private String HOST_ONE;
+    private String HOST_TWO;
+    private List<String> ALL_HOSTS;
 
     @Before
     public void setUp() throws Throwable {
-        System.out.println(this.getClass().getSimpleName() + ALL_HOSTS);
+        PORT_ONE = 20000 + new Random().nextInt(5000);
+        PORT_TWO = PORT_ONE + 1;
 
-        hostOne = setUpHost(PORT_ONE, null, ALL_HOSTS);
-        hostTwo = setUpHost(PORT_TWO, null, ALL_HOSTS);
+        HOST_ONE = LOCALHOST + PORT_ONE;
+        HOST_TWO = LOCALHOST + PORT_TWO;
 
+        ALL_HOSTS = Arrays.asList(HOST_ONE, HOST_TWO);
+
+        hostOne = setUpHost(PORT_ONE, null, Arrays.asList(HOST_ONE));
         waitForInitConfig(hostOne, hostOne.localUsers);
+
+        hostTwo = setUpHost(PORT_TWO, null, ALL_HOSTS);
         waitForInitConfig(hostTwo, hostTwo.localUsers);
+        String tokenOne = login(hostOne, USERNAME, PASSWORD, true);
+        TestContext ctx = new TestContext(1, Duration.ofSeconds(60));
+        createUpdateQuorumOperation(hostOne, 2, ctx, tokenOne, AUTH_TOKEN_RETRY_COUNT);
+        ctx.await();
+
+        hostsToTeardown = Arrays.asList(hostOne, hostTwo);
 
         // Initialize provisioning context
         initializeProvisioningContext(hostOne);
     }
 
-    // @After
-    // public void tearDown() throws Throwable {
-    //     tearDownHost(hostOne, hostTwo);
-    // }
+    @After
+    public void tearDown() throws Throwable {
+        tearDownHost(hostsToTeardown);
+    }
 
     @Test
     public void testRestrictedOperationWithNodesRestarted() throws Throwable {
@@ -89,20 +104,20 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
          * running node.
          */
 
-        String tokenOne = login(hostOne, USERNAME, PASSWORD);
-        assertClusterWithToken(tokenOne, hostOne, hostTwo);
+        String tokenOne = login(hostOne, USERNAME, PASSWORD, true);
+        assertClusterWithToken(tokenOne, hostOne);
 
-        String tokenTwo = login(hostTwo, USERNAME, PASSWORD);
-        assertClusterWithToken(tokenTwo, hostOne, hostTwo);
+        String tokenTwo = login(hostTwo, USERNAME, PASSWORD, true);
+        assertClusterWithToken(tokenTwo, hostTwo);
 
-        List<ManagementHost> hosts = asList(hostOne, hostTwo);
+        List<ManagementHost> hosts = Arrays.asList(hostOne, hostTwo);
         validateDefaultContentAdded(hosts);
 
         /*
          * ==== Restart node1 ====================================================================
          */
 
-        stopHostAndRemoveItFromNodeGroup(hostTwo, hostOne);
+        stopHost(hostOne);
 
         // We should explicitly set the quorum in the running node to 1 here, but now the
         // ClusterMonitoringService will take care of that. Otherwise the next operation will hang.
@@ -112,36 +127,42 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
 
         hostOne = startHost(hostOne, null, ALL_HOSTS);
 
-        assertClusterWithToken(tokenOne, hostOne, hostTwo);
-        assertClusterWithToken(tokenTwo, hostOne, hostTwo);
+        tokenOne = login(hostOne, USERNAME, PASSWORD, true);
+        assertClusterWithToken(tokenOne, hostOne);
+
+        tokenTwo = login(hostTwo, USERNAME, PASSWORD, true);
+        assertClusterWithToken(tokenTwo, hostTwo);
         assertClusterFromNodes(hostOne, hostTwo);
 
-        hosts = asList(hostOne, hostTwo);
+        hosts = Arrays.asList(hostOne, hostTwo);
         validateDefaultContentAdded(hosts);
 
         /*
          * ==== Restart node2 ====================================================================
          */
 
-        stopHostAndRemoveItFromNodeGroup(hostOne, hostTwo);
+        stopHost(hostTwo);
 
         // We should explicitly set the quorum in the running node to 1 here, but now the
         // ClusterMonitoringService will take care of that. Otherwise the next operation will hang.
 
+        tokenOne = login(hostOne, USERNAME, PASSWORD, true);
         assertClusterWithToken(tokenOne, hostOne);
         assertClusterFromNodes(hostOne);
 
         hostTwo = startHost(hostTwo, null, ALL_HOSTS);
 
-        assertClusterWithToken(tokenOne, hostOne, hostTwo);
-        assertClusterWithToken(tokenTwo, hostOne, hostTwo);
+        tokenOne = login(hostOne, USERNAME, PASSWORD, true);
+        assertClusterWithToken(tokenOne, hostOne);
+
+        tokenTwo = login(hostTwo, USERNAME, PASSWORD, true);
+        assertClusterWithToken(tokenTwo, hostTwo);
         assertClusterFromNodes(hostOne, hostTwo);
 
-        hosts = asList(hostOne, hostTwo);
+        hosts = Arrays.asList(hostOne, hostTwo);
         validateDefaultContentAdded(hosts);
     }
 
-    @Ignore
     @Test
     public void testRestrictedOperationWithNodesStoppedAndStarted() throws Throwable {
 
@@ -150,20 +171,20 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
          * then started again.
          */
 
-        String tokenOne = login(hostOne, USERNAME, PASSWORD);
-        assertClusterWithToken(tokenOne, hostOne, hostTwo);
+        String tokenOne = login(hostOne, USERNAME, PASSWORD, true);
+        assertClusterWithToken(tokenOne, hostOne);
 
-        String tokenTwo = login(hostTwo, USERNAME, PASSWORD);
-        assertClusterWithToken(tokenTwo, hostOne, hostTwo);
+        String tokenTwo = login(hostTwo, USERNAME, PASSWORD, true);
+        assertClusterWithToken(tokenTwo, hostTwo);
 
-        List<ManagementHost> hosts = asList(hostOne, hostTwo);
+        List<ManagementHost> hosts = Arrays.asList(hostOne, hostTwo);
         validateDefaultContentAdded(hosts);
 
         /*
          * ==== Stop both nodes ==================================================================
          */
 
-        stopHostAndRemoveItFromNodeGroup(hostTwo, hostOne);
+        stopHost(hostOne);
         stopHost(hostTwo);
 
         /*
@@ -171,16 +192,19 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
          */
 
         // start 1st node with quorum = 1 (peer nodes = self)
-        hostOne = startHost(hostOne, hostOne.getStorageSandbox(), asList(HOST_ONE));
+        hostOne = startHost(hostOne, hostOne.getStorageSandbox(), Arrays.asList(HOST_ONE));
         // start 2nd node with quorum = 2 (peer nodes = self & 1st node )
         hostTwo = startHost(hostTwo, null, ALL_HOSTS);
 
-        assertClusterWithToken(tokenOne, hostOne, hostTwo);
+        tokenOne = login(hostOne, USERNAME, PASSWORD, true);
+        assertClusterWithToken(tokenOne, hostOne);
+
+        tokenTwo = login(hostTwo, USERNAME, PASSWORD, true);
         assertClusterWithToken(tokenTwo, hostOne, hostTwo);
 
         assertClusterFromNodes(hostOne, hostTwo);
 
-        hosts = asList(hostOne, hostTwo);
+        hosts = Arrays.asList(hostOne, hostTwo);
         validateDefaultContentAdded(hosts);
     }
 
@@ -188,7 +212,7 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
     public void testReplicationOfDocumentsAfterRestart() throws Throwable {
 
         Map<String, String> headers = new HashMap<>();
-        headers.put(Operation.REQUEST_AUTH_TOKEN_HEADER, login(hostOne, USERNAME, PASSWORD));
+        headers.put(Operation.REQUEST_AUTH_TOKEN_HEADER, login(hostOne, USERNAME, PASSWORD, true));
 
         assertContainerDescription(hostOne, headers);
         assertContainerDescription(hostTwo, headers);
@@ -199,30 +223,27 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
 
         // Get token from hostOne
         headers = new HashMap<>();
-        headers.put(Operation.REQUEST_AUTH_TOKEN_HEADER, login(hostOne, USERNAME, PASSWORD));
-
+        headers.put(Operation.REQUEST_AUTH_TOKEN_HEADER, login(hostOne, USERNAME, PASSWORD, true));
         assertContainerDescription(hostOne, headers);
-        assertContainerDescription(hostTwo, headers);
 
         // Get token from hostTwo
         headers = new HashMap<>();
-        headers.put(Operation.REQUEST_AUTH_TOKEN_HEADER, login(hostTwo, USERNAME, PASSWORD));
-
-        assertContainerDescription(hostOne, headers);
+        headers.put(Operation.REQUEST_AUTH_TOKEN_HEADER, login(hostTwo, USERNAME, PASSWORD, true));
         assertContainerDescription(hostTwo, headers);
     }
 
     @Test
     public void testProvisioningOfContainerInCluster() throws Throwable {
 
-        Map<String, String> headers = getAuthenticationHeaders(hostOne);
+        Map<String, String> headersHostOne = getAuthenticationHeaders(hostOne);
 
         TestContext waiter = new TestContext(1, Duration.ofSeconds(30));
-        disableDataCollection(hostOne, headers.get("x-xenon-auth-token"), waiter);
+        disableDataCollection(hostOne, headersHostOne.get("x-xenon-auth-token"), waiter);
         waiter.await();
 
+        Map<String, String> headersHostTwo = getAuthenticationHeaders(hostTwo);
         waiter = new TestContext(1, Duration.ofSeconds(30));
-        disableDataCollection(hostTwo, headers.get("x-xenon-auth-token"), waiter);
+        disableDataCollection(hostTwo, headersHostTwo.get("x-xenon-auth-token"), waiter);
         waiter.await();
 
         // 1. Request a container instance:
@@ -233,13 +254,14 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         request.tenantLinks = groupResourcePlacementState.tenantLinks;
         request.documentSelfLink = "test-request";
         hostOne.log(Level.INFO, "########  Start of request ######## ");
-        startRequest(headers, hostOne, request);
+        startRequest(headersHostOne, hostOne, request);
 
         URI uri = UriUtils.buildUri(hostOne,
                 RequestBrokerFactoryService.SELF_LINK + "/" + request.documentSelfLink);
 
         // 2. Wait for provisioning request to finish
-        RequestJSONResponseMapper response = waitTaskToCompleteAndGetResponse(headers, hostOne,
+        RequestJSONResponseMapper response = waitTaskToCompleteAndGetResponse(headersHostOne,
+                hostOne,
                 uri);
 
         hostOne.log(Level.INFO, "########  Request finished. ######## ");
@@ -254,7 +276,7 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         String containerAsJson = null;
 
         try {
-            containerAsJson = getResource(hostTwo, headers, containersUri);
+            containerAsJson = getResource(hostTwo, headersHostTwo, containersUri);
         } catch (Exception e) {
             throw new RuntimeException(String.format(
                     "Exception appears while trying to get a container %s ", containersUri));
@@ -272,14 +294,15 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
     @Test
     public void testProvisioningOfApplicationInCluster() throws Throwable {
 
-        Map<String, String> headers = getAuthenticationHeaders(hostOne);
+        Map<String, String> headersHostOne = getAuthenticationHeaders(hostOne);
 
         TestContext waiter = new TestContext(1, Duration.ofSeconds(30));
-        disableDataCollection(hostOne, headers.get("x-xenon-auth-token"), waiter);
+        disableDataCollection(hostOne, headersHostOne.get("x-xenon-auth-token"), waiter);
         waiter.await();
 
+        Map<String, String> headersHostTwo = getAuthenticationHeaders(hostTwo);
         waiter = new TestContext(1, Duration.ofSeconds(30));
-        disableDataCollection(hostTwo, headers.get("x-xenon-auth-token"), waiter);
+        disableDataCollection(hostTwo, headersHostTwo.get("x-xenon-auth-token"), waiter);
         waiter.await();
 
         ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription();
@@ -292,7 +315,8 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         container2Desc.name = "container2";
         container2Desc.portBindings = null;
 
-        CompositeDescription compositeDesc = createCompositeDesc(headers, hostOne, container1Desc,
+        CompositeDescription compositeDesc = createCompositeDesc(headersHostOne, hostOne,
+                container1Desc,
                 container2Desc);
 
         // 1. Request a composite container:
@@ -300,13 +324,14 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
                 ResourceType.COMPOSITE_COMPONENT_TYPE.getName(), compositeDesc.documentSelfLink);
         request.documentSelfLink = UUID.randomUUID().toString();
         request.tenantLinks = groupResourcePlacementState.tenantLinks;
-        startRequest(headers, hostOne, request);
+        startRequest(headersHostOne, hostOne, request);
 
         URI uri = UriUtils.buildUri(hostOne,
                 RequestBrokerFactoryService.SELF_LINK + "/" + request.documentSelfLink);
 
         // 2. Wait for provisioning request to finish
-        RequestJSONResponseMapper response = waitTaskToCompleteAndGetResponse(headers, hostOne,
+        RequestJSONResponseMapper response = waitTaskToCompleteAndGetResponse(headersHostOne,
+                hostOne,
                 uri);
 
         hostOne.log(Level.INFO, "########  Request finished. ######## ");
@@ -320,7 +345,8 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         // Get composition from second host. It should be replicated.
         URI compositeComponentURI = UriUtils.buildUri(hostTwo, response.resourceLinks.get(0));
 
-        String compositeComponentAsJSON = getResource(hostTwo, headers, compositeComponentURI);
+        String compositeComponentAsJSON = getResource(hostTwo, headersHostTwo,
+                compositeComponentURI);
         CompositeComponentJSONResponseMapper compositeComponent = Utils
                 .fromJson(compositeComponentAsJSON, CompositeComponentJSONResponseMapper.class);
         assertNotNull(compositeComponent);
