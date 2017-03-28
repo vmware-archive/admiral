@@ -297,6 +297,7 @@ public class HostContainerListDataCollection extends StatefulService {
         String containerHostLink = body.containerHostLink;
         if (containerHostLink == null) {
             logWarning("'containerHostLink' is required");
+            op.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
             op.complete();
             return;
         }
@@ -328,6 +329,7 @@ public class HostContainerListDataCollection extends StatefulService {
                         containerHostLink,
                         body.containerIdsAndNames.keySet().stream().collect(Collectors.toList()));
             }
+            op.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
             op.complete();
             return; // return since there is an active data collection for this host.
         } else {

@@ -203,6 +203,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                     patch.fail(qr.error);
                     return;
                 }
+                patch.complete();
 
                 for (ComputeState computeState : qr.computesByLink.values()) {
                     if (!body.remove) {
@@ -243,7 +244,6 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 }
             });
 
-            patch.complete();
         }
     }
 

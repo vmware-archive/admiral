@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -11,9 +11,11 @@
 
 package com.vmware.admiral.request;
 
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
+
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +29,6 @@ import com.vmware.admiral.request.composition.CompositionSubTaskService;
 import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
@@ -52,15 +53,19 @@ public class RequestStatusService extends StatefulService {
         public static final String FIELD_NAME_COMPONENTS = "components";
 
         /** Request progress (0-100%) */
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Map<String, Map<String, Integer>> requestProgressByComponent;
 
         /** Current component in a composition, or null for a non-component phase */
         public String component;
 
         /** collection of expected components in a composition request */
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public List<ResourceNode> components;
 
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Map<ResourceType, List<String>> trackedExecutionTasksByResourceType;
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Map<ResourceType, List<String>> trackedAllocationTasksByResourceType;
 
         public void addTrackedTasks(String... taskNames) {
@@ -95,7 +100,6 @@ public class RequestStatusService extends StatefulService {
 
         if (body.components != null) {
             handleUpdateComponents(state, body);
-
         } else {
             handleUpdateProgress(state, body);
         }
@@ -238,14 +242,6 @@ public class RequestStatusService extends StatefulService {
         template.subStage = "CREATED";
         template.component = "mysql";
         template.progress = 0;
-
-        template.documentDescription.propertyDescriptions.get(
-                RequestStatus.FIELD_NAME_REQUEST_PROGRESS_BY_COMPONENT).indexingOptions = EnumSet
-                        .of(PropertyIndexingOption.STORE_ONLY);
-
-        template.documentDescription.propertyDescriptions.get(
-                RequestStatus.FIELD_NAME_COMPONENTS).indexingOptions = EnumSet
-                        .of(PropertyIndexingOption.STORE_ONLY);
 
         return template;
     }
