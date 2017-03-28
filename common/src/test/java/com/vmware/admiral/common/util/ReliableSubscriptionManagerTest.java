@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.util.SubscriptionManager.SubscriptionNotification;
@@ -37,6 +38,7 @@ import com.vmware.xenon.common.test.VerificationHost;
 import com.vmware.xenon.services.common.ExampleService;
 import com.vmware.xenon.services.common.ExampleService.ExampleServiceState;
 
+@Ignore
 public class ReliableSubscriptionManagerTest {
 
     @FunctionalInterface
