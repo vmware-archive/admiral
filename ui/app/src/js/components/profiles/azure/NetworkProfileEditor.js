@@ -47,6 +47,7 @@ export default Vue.component('azure-network-profile-editor', {
         :entity="i18n('app.network.entity')"
         :filter="searchIsolationNetworks"
         :label="i18n('app.profile.edit.isolationNetworkLabel')"
+        :renderer="renderIsolationNetwork"
         :value="model.isolationNetwork"
         @change="onIsolationNetworkChange">
       </dropdown-search-group>
@@ -107,11 +108,37 @@ export default Vue.component('azure-network-profile-editor', {
       this.isolationNetwork = value;
       this.emitChange();
     },
+    renderIsolationNetwork(network) {
+      let secondary = i18n.t('app.profile.edit.resourceGroupsLabel') + ': ' +
+          (network.groupNames ? network.groupNames.join(', ') : '');
+      return `
+        <div>
+          <div class="host-picker-item-primary" title="${network.name}">${network.name}</div>
+          <div class="host-picker-item-secondary truncateText" title="${secondary}">
+            ${secondary}
+          </div>
+        </div>`;
+    },
     searchIsolationNetworks(...args) {
       return new Promise((resolve, reject) => {
         services.searchNetworks.apply(null,
-            [this.endpointLink, ...args]).then((result) => {
-          resolve(result);
+            [this.endpoint.documentSelfLink, ...args]).then((result) => {
+          let groupLinks = result.items.reduce((previous, current) => {
+            if (current.groupLinks) {
+              previous = previous.concat(current.groupLinks);
+            }
+            return previous;
+          }, []);
+          services.loadResourceGroups([...new Set(groupLinks)]).then((groups) => {
+            result.items.forEach((item) => {
+              if (item.groupLinks) {
+                item.groupNames = item.groupLinks.map((groupLink) => {
+                  return groups[groupLink].name;
+                });
+              }
+            });
+            resolve(result);
+          });
         }).catch(reject);
       });
     },

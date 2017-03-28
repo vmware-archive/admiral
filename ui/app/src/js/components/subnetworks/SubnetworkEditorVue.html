@@ -17,8 +17,6 @@
     <section class="form-block">
       <label class="title" v-if="model.item.documentSelfLink">{{i18n('app.subnetwork.edit.update')}}</label>
       <label class="title" v-else>{{i18n('app.subnetwork.edit.addNew')}}</label>
-
-
       <dropdown-search-group
         v-if="!model.item.endpointType"
         :label="i18n('app.subnetwork.edit.networkLabel')"
@@ -29,7 +27,6 @@
         :value="network"
         @change="onNetworkChange">
       </dropdown-search-group>
-
       <text-group
         :label="i18n('app.subnetwork.edit.nameLabel')"
         :required="true"
@@ -66,20 +63,18 @@
         </tags>
       </div>
     </section>
+    <section class="control-btns">
+      <button type="submit" class="btn btn-primary placementZoneEdit-save"
+          :class="{'loading': model.saving}"
+          :disabled="saveDisabled || model.saving"
+          @click="save($event)">
+        {{i18n('save')}}
+        <i class="fa fa-spinner fa-spin loader-inline"></i>
+      </button>
+      <button type="submit" class="btn"
+          @click="cancel($event)">
+        {{i18n('cancel')}}
+      </button>
+    </section>
   </form>
-  <div class="inline-edit-toolbar">
-    <a href="#"
-      class="btn btn-circle"
-      :class="{'loading': model.saving}"
-      :disabled="saveDisabled || model.saving"
-      @click="save($event)">
-      <i class="fa fa-check"></i>
-      <i class="fa fa-spinner fa-spin loader"></i>
-    </a>
-    <a href="#"
-      class="btn btn-circle"
-      @click="cancel($event)">
-      <i class="fa fa-times"></i>
-    </a>
-  </div>
 </div>

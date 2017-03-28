@@ -98,7 +98,8 @@ let ProfilesStore = Reflux.createStore({
               item.documentSelfLink === itemToSelect.documentSelfLink);
           clearTimeout(this.itemSelectTimeout);
           this.itemSelectTimeout = setTimeout(() => {
-            this.setInData(['editingItemData', 'item', 'subnetwork'], itemToSelect);
+            this.setInData(['editingItemData', 'item', 'networkProfile', 'subnetwork'],
+                itemToSelect);
             this.onCloseToolbar();
           }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
         }

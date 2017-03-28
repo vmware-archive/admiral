@@ -529,6 +529,7 @@
         "securityGroupIsolationTypeLabel": "Security Group",
         "cidrLabel": "CIDR",
         "cidrLabelHint": "0.0.0.0/0",
+        "resourceGroupsLabel": "Resource groups",
         "supportPublicIpAddressLabel": "Support Public IP",
         "defaultForZoneLabel": "Default for Zone"
       },
