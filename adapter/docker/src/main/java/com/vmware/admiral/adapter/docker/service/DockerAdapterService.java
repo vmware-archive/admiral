@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -96,6 +96,7 @@ import com.vmware.admiral.adapter.docker.util.DockerImage;
 import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.ServiceUtils;
@@ -143,6 +144,11 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
     private static final String DOWNLOAD_TEMPFILE_PREFIX = "admiral";
 
     private static final String FILE_SCHEME = "file";
+
+    /**
+     * name of the feature toggle that enables stats collection for VCH
+     */
+    private static final String ALLOW_VCH_STATS_COLLECTION_PROP_NAME = "allow.vch.stats.collection";
 
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER;
 
@@ -1183,7 +1189,9 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         }
 
         // currently VIC does not support container stats
-        if (ContainerHostUtil.isVicHost(context.computeState)) {
+        boolean allowVchStatsCollection = Boolean
+                .valueOf(ConfigurationUtil.getProperty(ALLOW_VCH_STATS_COLLECTION_PROP_NAME));
+        if (ContainerHostUtil.isVicHost(context.computeState) && !allowVchStatsCollection) {
             return;
         }
 
