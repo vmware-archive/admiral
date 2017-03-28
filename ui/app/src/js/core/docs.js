@@ -156,6 +156,12 @@ docs.release = function() {
 };
 
 docs.checkIfAvailable = function(callback) {
+  if (utils.isVic()) {
+    ft.setDocsAvailable(false);
+    callback();
+    return;
+  }
+
   $.ajax(ENSEMBLE_URL).done((data, textStatus, jqXHR) => {
     if (jqXHR.status === 200) {
       ft.setDocsAvailable(true);

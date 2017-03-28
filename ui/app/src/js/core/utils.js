@@ -89,6 +89,10 @@ var utils = {
     return configurationProperties.hasOwnProperty(property);
   },
 
+  getHarborTabUrl: function() {
+    return this.getConfigurationProperty('harbor.tab.url');
+  },
+
   showResourcesView: function(viewName) {
     if (viewName === constants.VIEWS.RESOURCES.name) {
         return true;
@@ -100,6 +104,10 @@ var utils = {
         }
     }
     return false;
+  },
+
+  isVic: function() {
+    return this.getConfigurationPropertyBoolean('vic');
   },
 
   isNgView: function(viewName) {
@@ -591,37 +599,30 @@ var utils = {
     }
   },
 
-  redirectToHashIfNeeded: function() {
-    let queryIndex = location.search.indexOf('?');
+  extractHarborRedirectUrl: function() {
+    var queryIndex = location.search.indexOf('?');
     if (queryIndex !== -1) {
       let query = location.search.substring(queryIndex + 1);
-      let params = this.uriToParams(query);
-      let redirectUrl = params.harbor_redirect_url;
-      if (redirectUrl) {
-        let href = location.protocol + '//' +
-            location.host + '/#/' + location.search;
-        location.href = href;
-      }
-    }
-  },
-
-  extractHarborRedirectUrl: function() {
-    var queryIndex = location.hash.indexOf('?');
-    if (queryIndex !== -1) {
-      let query = location.hash.substring(queryIndex + 1);
       let params = this.uriToParams(query);
       let redirectUrl = params.harbor_redirect_url;
       if (redirectUrl) {
         delete params.harbor_redirect_url;
         let newQuery = this.paramsToURI(params);
 
-        let newHash = location.hash.substring(0, queryIndex);
+        let newSearch = location.search.substring(0, queryIndex);
         if (newQuery) {
-          newHash += '?' + newQuery;
+          newSearch += '?' + newQuery;
         }
-        location.hash = newHash;
 
-        return atob(redirectUrl);
+        let newHash = location.hash || '';
+
+        var newUrl = location.protocol + '//' + location.host + '/' + newSearch + newHash;
+
+        if (window.history.replaceState) {
+           window.history.replaceState({}, document.title, newUrl);
+        }
+
+        return decodeURIComponent(redirectUrl);
       }
     }
     return null;
@@ -629,7 +630,7 @@ var utils = {
 
   prepareHarborRedirectUrl: function(baseHarborUrl) {
     var selfRedirectUrl = window.location.href;
-    selfRedirectUrl = btoa(selfRedirectUrl);
+    selfRedirectUrl = encodeURIComponent(selfRedirectUrl);
     var query = 'admiral_redirect_url=' + selfRedirectUrl;
     var harborUrl = baseHarborUrl;
     if (harborUrl.indexOf('?') !== -1) {
