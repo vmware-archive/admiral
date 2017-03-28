@@ -42,8 +42,6 @@ var ContextSidePanelToolbarItem = Vue.extend({
   methods: {
     handleClick: function($event) {
       $event.preventDefault();
-      $event.stopImmediatePropagation();
-
       if (this.active) {
         this.$dispatch('close');
       } else {

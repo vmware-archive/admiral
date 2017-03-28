@@ -38,7 +38,6 @@ var updateHeaderLink = function(registryUrl) {
       return;
   }
   if (registryUrl) {
-    $('body').append($(VICTemplate()));
     $('body > .header .registry-link').attr('href', registryUrl).click(function(e) {
       e.preventDefault();
 
@@ -58,10 +57,6 @@ var updateHeaderLink = function(registryUrl) {
         return false;
       }
     });
-    $('head title').html('vSphere Integrated Containers');
-  } else {
-    $('body').append($(DefaultTemplate()));
-    $('head title').html('Admiral');
   }
 };
 
@@ -75,9 +70,17 @@ initializer.init(() => {
                      require('stores/AppStore').default);
   }
 
-  utils.redirectToHashIfNeeded();
+  if (utils.isVic()) {
+    $('body').append($(VICTemplate()));
+    $('head title').html('vSphere Integrated Containers');
+    $('head').append('<link rel="icon" type="image/x-icon" href="image-assets/vic-favicon.ico" />');
+  } else {
+    $('body').append($(DefaultTemplate()));
+    $('head title').html('Admiral');
+    $('head').append('<link rel="icon" type="image/x-icon" href="image-assets/favicon.ico" />');
+  }
 
-  var baseRegistryUrl = utils.getConfigurationProperty('harbor.tab.url');
+  var baseRegistryUrl = utils.getHarborTabUrl();
   var redirectUrl = utils.extractHarborRedirectUrl();
 
   updateHeaderLink(redirectUrl || baseRegistryUrl);

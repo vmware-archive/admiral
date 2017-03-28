@@ -16,6 +16,7 @@ import EasterEgg from 'components/EasterEgg'; //eslint-disable-line
 import LoginPanel from 'components/LoginPanel'; //eslint-disable-line
 import { NavigationActions } from 'actions/Actions';
 import docsHelp from 'components/common/DocsHelp';
+import utils from 'core/utils';
 
 var HomeVueComponent = Vue.extend({
   template: HomeVue,
@@ -31,6 +32,12 @@ var HomeVueComponent = Vue.extend({
           hostAddView: null
         };
       }
+    }
+  },
+
+  computed: {
+    isVic: function() {
+      return utils.isVic();
     }
   },
 
