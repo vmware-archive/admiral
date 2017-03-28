@@ -2031,9 +2031,21 @@ services.loadProject = function(projectLink) {
   return get(projectLink);
 };
 
-services.loadResourceGroups = function() {
+services.loadResourceGroups = function(documentSelfLinks) {
   var path = ft.showProjectsInNavigation() ? links.PROJECTS : links.RESOURCE_GROUPS;
-  return list(path, true, {});
+  var params = {};
+  if (documentSelfLinks && documentSelfLinks.length) {
+    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+      documentSelfLink: documentSelfLinks.map((link) => {
+        return {
+          val: link,
+          op: 'eq'
+        };
+      }),
+      [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
+    });
+  }
+  return list(path, true, params);
 };
 
 services.loadResourceGroup = function(groupLink) {

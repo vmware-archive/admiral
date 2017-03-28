@@ -110,6 +110,12 @@ function DropdownSearchMenu($el, componentOptions) {
     }
   });
 
+  $el.on('show.bs.dropdown', '.dropdown', () => {
+    if (this.filterCallback) {
+      invokeFilterCallback.call(this, this.filter);
+    }
+  });
+
   this.setSelectedOption(null);
   this.setManageOptions({});
 }

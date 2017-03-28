@@ -110,7 +110,7 @@ export default Vue.component('aws-network-profile-editor', {
     searchIsolationNetworks(...args) {
       return new Promise((resolve, reject) => {
         services.searchNetworks.apply(null,
-            [this.endpointLink, ...args]).then((result) => {
+            [this.endpoint.documentSelfLink, ...args]).then((result) => {
           resolve(result);
         }).catch(reject);
       });
