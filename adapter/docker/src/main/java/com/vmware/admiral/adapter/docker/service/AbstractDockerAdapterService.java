@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -18,7 +18,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
 
@@ -26,7 +25,6 @@ import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
-import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
@@ -150,49 +148,51 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
             return;
         }
 
-        final AtomicBoolean credentialsFound = new AtomicBoolean();
-
-        new ServiceDocumentQuery<>(getHost(),
-                AuthCredentialsServiceState.class)
-                .queryDocument(credentialsLink, (r) -> {
-                    if (r.hasException()) {
-                        logWarning("Failure while getting credentials for %s an docker uri ",
-                                credentialsLink, dockerUri);
-                        fail(request, r.getException());
+        sendRequest(Operation
+                .createGet(this, credentialsLink)
+                .setCompletion((o, ex) -> {
+                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
+                        String errorMsg = String.format(
+                                "AuthCredentialsState not found with link: %s %s",
+                                credentialsLink, request.getRequestTrackingLog());
+                        Throwable t = new LocalizableValidationException(errorMsg,
+                                "adapter.auth.not.found", credentialsLink,
+                                request.getRequestTrackingLog());
                         if (op != null) {
-                            op.fail(r.getException());
+                            op.fail(t);
                         }
-                    } else if (r.hasResult()) {
-                        AuthCredentialsServiceState credentials = r.getResult();
-                        Throwable e = checkAuthCredentialsSupportedType(credentials, false);
-                        if (e != null) {
-                            if (op != null) {
-                                op.fail(e);
-                            }
-                            fail(request, e);
-                        }
-
-                        commandInput
-                                .withCredentials(r.getResult())
-                                .withProperty(SSL_TRUST_ALIAS_PROP_NAME,
-                                        ContainerHostUtil.getTrustAlias(hostComputeState));
-
-                        credentialsFound.set(true);
-
-                        callbackFunction.accept(hostComputeState, commandInput);
-                    } else {
-                        if (!credentialsFound.get()) {
-                            String errorMag = String.format("AuthCredentialsState not found with link: %s %s",
-                                    credentialsLink, request.getRequestTrackingLog());
-                            Throwable t = new LocalizableValidationException(errorMag, "adapter.auth.not.found",
-                                    credentialsLink, request.getRequestTrackingLog());
-                            if (op != null) {
-                                op.fail(t);
-                            }
-                            fail(request, t);
-                        }
+                        fail(request, t);
+                        return;
                     }
-                });
+
+                    if (ex != null) {
+                        logWarning("Failure while getting credentials for %s and docker uri %s",
+                                credentialsLink, dockerUri);
+                        fail(request, ex);
+                        if (op != null) {
+                            op.fail(ex);
+                        }
+                        return;
+                    }
+
+                    AuthCredentialsServiceState credentials = o.getBody(
+                            AuthCredentialsServiceState.class);
+                    Throwable e = checkAuthCredentialsSupportedType(credentials, false);
+                    if (e != null) {
+                        if (op != null) {
+                            op.fail(e);
+                        }
+                        fail(request, e);
+                        return;
+                    }
+
+                    commandInput
+                            .withCredentials(credentials)
+                            .withProperty(SSL_TRUST_ALIAS_PROP_NAME,
+                                    ContainerHostUtil.getTrustAlias(hostComputeState));
+
+                    callbackFunction.accept(hostComputeState, commandInput);
+                }));
 
         getHost().log(Level.FINE, "Fetching AuthCredentials: %s %s", credentialsLink,
                 request.getRequestTrackingLog());
