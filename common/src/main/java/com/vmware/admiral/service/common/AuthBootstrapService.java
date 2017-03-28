@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import com.vmware.admiral.common.ManagementUriParts;
@@ -308,65 +309,70 @@ public class AuthBootstrapService extends StatefulService {
     /*
      * Helper method to wait for the initial configuration to be completed.
      */
-    public static void waitForInitConfig(ServiceHost host, String localUsers)
-            throws InterruptedException {
+    public static void waitForInitConfig(ServiceHost host, String localUsers, Runnable
+            successfulCallback, Consumer<Throwable> failureCallback) {
 
         if (!isAuthxEnabled(localUsers)) {
             host.log(Level.INFO,
                     "No users configuration file is specified. AuthX services are disabled!");
+            successfulCallback.run();
             return;
         }
 
         List<User> users = getUsers(host, localUsers);
         if (users == null) {
+            successfulCallback.run();
             return;
         }
 
-        AtomicBoolean ready = new AtomicBoolean(true);
+        AtomicBoolean hasError = new AtomicBoolean(false);
+        AtomicInteger counter = new AtomicInteger(users.size());
 
-        users.forEach(user -> ready.set(ready.get() && waitForUser(host, user)));
+        Consumer<Throwable> failCallback = (e) -> {
+            if (hasError.compareAndSet(false, true)) {
+                host.log(Level.WARNING, "Failure on wait for user: %s, calling the failure "
+                        + "callback", Utils.toString(e));
+                failureCallback.accept(e);
+            } else {
+                host.log(Level.WARNING, "Failure on wait for user: %s", Utils.toString(e));
+            }
+        };
 
-        if (!ready.get()) {
-            throw new IllegalStateException("One or more users are not initialized!");
+        Runnable callback = () -> {
+            if (counter.decrementAndGet() == 0 && !hasError.get()) {
+                successfulCallback.run();
+            }
+        };
+
+        for (User user : users) {
+            waitForUser(host, user, callback, failCallback);
         }
-
-        host.log(Level.INFO,
-                "Users from '%s' initialized in host '%s'!", localUsers, host.getUri());
     }
 
     /*
      * Helper method to wait for the provided user initialization to be completed.
      */
-    public static boolean waitForUser(ServiceHost host, User user) {
+    public static void waitForUser(ServiceHost host, User user, Runnable successfulCallback,
+            Consumer<Throwable> failureCallback) {
 
         final AtomicInteger servicesCounter = new AtomicInteger(4);
+        final AtomicBoolean hasError = new AtomicBoolean(false);
 
         host.registerForServiceAvailability((o, e) -> {
             if (e != null) {
-                host.log(Level.WARNING, "Waiting for user '%s' failed on GET! %s",
-                        user.email, e.getMessage());
+                hasError.set(true);
+                failureCallback.accept(e);
+            } else {
+                if (servicesCounter.decrementAndGet() == 0 && !hasError.get()) {
+                    successfulCallback.run();
+                }
             }
-            servicesCounter.getAndDecrement();
         }, true,
                 buildUriPath(UserService.FACTORY_LINK, user.email),
                 buildUriPath(UserGroupService.FACTORY_LINK, user.email + "-user-group"),
                 buildUriPath(ResourceGroupService.FACTORY_LINK, user.email + "-resource-group"),
                 buildUriPath(RoleService.FACTORY_LINK, user.email + "-role"));
 
-        try {
-            while (servicesCounter.get() > 0) {
-                host.log(Level.WARNING, "Waiting for user '%s' init to complete...", user.email);
-                Thread.sleep(1000);
-            }
-        } catch (InterruptedException e) {
-            host.log(Level.WARNING, "Waiting for user '%s' failed on AWAIT! %s", user.email,
-                    e.getMessage());
-            return false;
-        }
-
-        host.log(Level.WARNING, "Waiting for user '%s' completed successful", user.email);
-
-        return true;
     }
 
 }

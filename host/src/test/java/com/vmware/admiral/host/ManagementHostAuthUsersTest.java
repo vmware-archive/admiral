@@ -64,6 +64,7 @@ import com.vmware.xenon.services.common.authn.BasicAuthenticationService;
 public class ManagementHostAuthUsersTest extends ManagementHostBaseTest {
     protected static final int AUTH_TOKEN_RETRY_COUNT = 20;
     protected static final int DELAY_BETWEEN_AUTH_TOKEN_RETRIES = 4;
+    public static final int DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES = 240;
 
     private static final HostnameVerifier ALLOW_ALL_HOSTNAME_VERIFIER = new AllowAllHostnameVerifier();
     private static final SSLSocketFactory UNSECURE_SSL_SOCKET_FACTORY = getUnsecuredSSLSocketFactory();
@@ -104,7 +105,11 @@ public class ManagementHostAuthUsersTest extends ManagementHostBaseTest {
                         // ask runtime to pick a random port
                         + "0" });
 
-        AuthBootstrapService.waitForInitConfig(host, host.localUsers);
+        TestContext ctx = new TestContext(1,
+                Duration.ofSeconds(DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES));
+        AuthBootstrapService.waitForInitConfig(host, host.localUsers, ctx::completeIteration,
+                ctx::failIteration);
+        ctx.await();
     }
 
     @AfterClass

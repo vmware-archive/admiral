@@ -17,6 +17,7 @@ import static com.vmware.xenon.services.common.NodeState.NodeStatus.UNAVAILABLE;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
+import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.xenon.common.NodeSelectorState;
 import com.vmware.xenon.common.Operation;
@@ -50,6 +51,11 @@ public class ClusterMonitoringService extends StatelessService {
 
     @Override
     public void handleStart(Operation start) {
+        if (DeploymentProfileConfig.getInstance().isTest()) {
+            start.complete();
+            return;
+        }
+
         logInfo("handleStart");
 
         NodeSelectorState state = null;
