@@ -43,6 +43,7 @@ import com.vmware.admiral.request.compute.enhancer.Enhancer.EnhanceContext;
 import com.vmware.admiral.service.common.AbstractInitialBootService;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService;
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.photon.controller.model.security.util.KeyUtil;
 import com.vmware.xenon.common.DeferredResult;
@@ -67,7 +68,7 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         HostInitServiceHelper.startServiceFactories(host,
                 CaSigningCertService.class, ProfileService.class,
                 ComputeProfileService.class, StorageProfileService.class,
-                NetworkProfileService.class);
+                NetworkProfileService.class, NetworkInterfaceDescriptionService.class);
         waitForServiceAvailability(ProfileService.FACTORY_LINK);
         waitForServiceAvailability(CaSigningCertService.FACTORY_LINK);
         waitForServiceAvailability(ManagementUriParts.AUTH_CREDENTIALS_CA_LINK);

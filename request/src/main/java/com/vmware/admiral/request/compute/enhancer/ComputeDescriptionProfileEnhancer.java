@@ -11,17 +11,12 @@
 
 package com.vmware.admiral.request.compute.enhancer;
 
-import static com.vmware.admiral.compute.ComputeConstants.OVA_URI;
-
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 
-import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.compute.ComputeConstants;
-import com.vmware.admiral.compute.profile.ComputeImageDescription;
-import com.vmware.admiral.compute.profile.InstanceTypeDescription;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
 import com.vmware.admiral.request.compute.NetworkProfileQueryUtils;
@@ -41,7 +36,6 @@ import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class ComputeDescriptionProfileEnhancer extends ComputeDescriptionEnhancer {
-    static final String TEMPLATE_LINK = "__templateComputeLink";
 
     private ServiceHost host;
     private URI referer;
@@ -55,11 +49,10 @@ public class ComputeDescriptionProfileEnhancer extends ComputeDescriptionEnhance
     public DeferredResult<ComputeDescription> enhance(EnhanceContext context,
             ComputeDescription cd) {
 
-        return getProfileState(context.profileLink)
+        return getProfileState(context)
                 .thenCompose(profile -> {
+                    context.profile = profile;
                     DeferredResult<ComputeDescription> result = new DeferredResult<>();
-                    applyInstanceType(cd, profile);
-
                     if (cd.dataStoreId == null) {
                         cd.dataStoreId = profile.getStringMiscValue("placement", "dataStoreId");
                     }
@@ -76,45 +69,6 @@ public class ComputeDescriptionProfileEnhancer extends ComputeDescriptionEnhance
                     }
                     cd.customProperties.put(ComputeConstants.CUSTOM_PROP_ENDPOINT_TYPE_NAME,
                             context.endpointType);
-                    cd.customProperties.put("__requestedImageType", context.imageType);
-
-                    String absImageId = context.imageType;
-                    if (absImageId != null) {
-                        String imageId = null;
-                        if (profile.computeProfile != null && profile.computeProfile.imageMapping != null
-                                && PropertyUtils.getPropertyCaseInsensitive(profile.computeProfile.imageMapping, absImageId) != null) {
-                            ComputeImageDescription imageDesc = PropertyUtils.getPropertyCaseInsensitive(profile.computeProfile.imageMapping, absImageId);
-                            if (imageDesc.image != null) {
-                                imageId = imageDesc.image;
-                            } else if (imageDesc.imageByRegion != null) {
-                                imageId = imageDesc.imageByRegion.get(context.regionId);
-                            }
-                        }
-                        if (imageId == null) {
-                            imageId = absImageId;
-                        }
-
-                        // if it's not clone from template
-                        if (!cd.customProperties.containsKey(TEMPLATE_LINK)) {
-                            try {
-                                URI imageUri = URI.create(imageId);
-                                String scheme = imageUri.getScheme();
-                                if (scheme != null
-                                        && (scheme.startsWith("http")
-                                                || scheme.startsWith("file"))) {
-                                    cd.customProperties.put(OVA_URI, imageUri.toString());
-                                }
-                                cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME,
-                                        imageId);
-                            } catch (Throwable t) {
-                                result.fail(t);
-                                return result;
-                            }
-                        } else {
-                            cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME,
-                                    imageId);
-                        }
-                    }
 
                     if (!context.skipNetwork && (cd.networkInterfaceDescLinks == null
                             || cd.networkInterfaceDescLinks.isEmpty())) {
@@ -125,25 +79,6 @@ public class ComputeDescriptionProfileEnhancer extends ComputeDescriptionEnhance
                     return result;
                 });
 
-    }
-
-    private void applyInstanceType(ComputeDescription cd, ProfileStateExpanded profile) {
-        InstanceTypeDescription instanceTypeDescription = null;
-        if (profile.computeProfile != null && profile.computeProfile.instanceTypeMapping != null) {
-            instanceTypeDescription = PropertyUtils.getPropertyCaseInsensitive(
-                    profile.computeProfile.instanceTypeMapping, cd.instanceType);
-        }
-
-        if (instanceTypeDescription == null) {
-            return;
-        }
-
-        if (instanceTypeDescription.instanceType != null) {
-            cd.instanceType = instanceTypeDescription.instanceType;
-        } else {
-            cd.cpuCount = instanceTypeDescription.cpuCount;
-            cd.totalMemoryBytes = instanceTypeDescription.memoryMb * 1024 * 1024;
-        }
     }
 
     private void attachNetworkInterfaceDescription(EnhanceContext context, ComputeDescription cd,
@@ -225,10 +160,13 @@ public class ComputeDescriptionProfileEnhancer extends ComputeDescriptionEnhance
                 .sendWith(host);
     }
 
-    private DeferredResult<ProfileStateExpanded> getProfileState(String uriLink) {
-        host.log(Level.INFO, "Loading state for %s", uriLink);
+    private DeferredResult<ProfileStateExpanded> getProfileState(EnhanceContext context) {
+        if (context.profile != null) {
+            return DeferredResult.completed(context.profile);
+        }
+        host.log(Level.INFO, "Loading profile state for %s", context.profileLink);
 
-        URI profileUri = UriUtils.buildUri(host, uriLink);
+        URI profileUri = UriUtils.buildUri(host, context.profileLink);
         return host.sendWithDeferredResult(
                 Operation.createGet(ProfileStateExpanded.buildUri(profileUri)).setReferer(referer),
                 ProfileStateExpanded.class);

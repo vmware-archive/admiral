@@ -18,10 +18,11 @@ import static org.junit.Assert.fail;
 
 import java.net.URI;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -420,13 +421,13 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     }
 
     protected ComputeDescription prepareComputeDescription() throws Exception {
-        SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd-HH:mm:ss.SSS");
+        SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd-HHmmss");
         df.setTimeZone(TimeZone.getTimeZone("GMT"));
 
         String id = name(getEndpointType(), "test", UUID.randomUUID().toString());
         ComputeDescription computeDesc = new ComputeDescription();
         computeDesc.id = id;
-        computeDesc.name = "prelude-test-" + df.format(new Date());
+        computeDesc.name = nextName("mcp");
         computeDesc.instanceType = "small";
         computeDesc.tenantLinks = getTenantLinks();
         computeDesc.customProperties = new HashMap<>();
@@ -440,6 +441,17 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
         extendComputeDescription(computeDesc);
         return computeDesc;
+    }
+
+    protected String nextName(String prefix) {
+        if (prefix == null || prefix.length() == 0) {
+            prefix = "";
+        } else {
+            prefix = prefix + "-";
+        }
+
+        String now = DateTimeFormatter.ofPattern("MMD-HHmmssSSS").format(LocalDateTime.now());
+        return prefix + System.getProperty("user.name") + "-" + now;
     }
 
     protected GroupResourcePlacementState createResourcePlacement(String name, EndpointType endpointType,
@@ -551,7 +563,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
         containerDesc.image = CONTAINER_DCP_TEST_LATEST_IMAGE;
 
-        containerDesc.customProperties = new HashMap<String, String>();
+        containerDesc.customProperties = new HashMap<>();
 
         containerDesc.name = CONTAINER_DCP_TEST_LATEST_NAME;
         containerDesc.command = TEST_COMMAND;

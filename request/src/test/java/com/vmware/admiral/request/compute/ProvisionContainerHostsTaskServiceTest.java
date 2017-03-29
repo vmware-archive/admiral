@@ -37,7 +37,7 @@ import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 
 public class ProvisionContainerHostsTaskServiceTest extends ComputeRequestBaseTest {
     // AWS instance type.
-    private static final String T2_MICRO_INSTANCE_TYPE = "t2.micro";
+    private static final String T2_MICRO_INSTANCE_TYPE = "small";
 
     @Override
     @Before

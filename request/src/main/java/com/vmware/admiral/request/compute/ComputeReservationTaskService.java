@@ -19,6 +19,7 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,6 +46,8 @@ import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSele
 import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService.ComputeReservationTaskState.SubStage;
 import com.vmware.admiral.request.compute.ProfileQueryUtils.ProfileEntry;
+import com.vmware.admiral.request.compute.enhancer.ComputeDescriptionImageEnhancer;
+import com.vmware.admiral.request.compute.enhancer.ComputeDescriptionInstanceTypeEnhancer;
 import com.vmware.admiral.request.compute.enhancer.ComputeDescriptionProfileEnhancer;
 import com.vmware.admiral.request.compute.enhancer.Enhancer.EnhanceContext;
 import com.vmware.admiral.request.utils.RequestUtils;
@@ -72,8 +75,7 @@ import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 /**
  * Task implementing the reservation request resource work flow.
  */
-public class ComputeReservationTaskService
-        extends
+public class ComputeReservationTaskService extends
         AbstractTaskStatefulService<ComputeReservationTaskService.ComputeReservationTaskState, ComputeReservationTaskService.ComputeReservationTaskState.SubStage> {
 
     public static final String DISPLAY_NAME = "Reservation";
@@ -147,11 +149,11 @@ public class ComputeReservationTaskService
             queryGroupResourcePlacements(state, state.tenantLinks, this.computeDescription);
             break;
         case SELECTED:
-            selectPlacementComputeHosts(state, state.tenantLinks, new HashSet<String>(
+            selectPlacementComputeHosts(state, state.tenantLinks, new HashSet<>(
                     state.resourcePoolsPerGroupPlacementLinks.values()));
             break;
         case SELECTED_GLOBAL:
-            selectPlacementComputeHosts(state, null, new HashSet<String>(
+            selectPlacementComputeHosts(state, null, new HashSet<>(
                     state.resourcePoolsPerGroupPlacementLinks.values()));
             break;
         case PLACEMENT:
@@ -418,8 +420,13 @@ public class ComputeReservationTaskService
                                     profileEntry.endpoint.documentSelfLink,
                                     profileEntry.profileLinks)));
 
-                    ComputeDescriptionProfileEnhancer enhancer = new ComputeDescriptionProfileEnhancer(
-                            getHost(), UriUtils.buildUri(getHost().getPublicUri(), getSelfLink()));
+                    URI referer = UriUtils.buildUri(getHost().getPublicUri(), getSelfLink());
+                    ComputeDescriptionProfileEnhancer pe = new ComputeDescriptionProfileEnhancer(
+                            getHost(), referer);
+                    ComputeDescriptionInstanceTypeEnhancer instanceTypeEnhancer = new ComputeDescriptionInstanceTypeEnhancer(
+                            getHost(), referer);
+                    ComputeDescriptionImageEnhancer imageEnhancer = new ComputeDescriptionImageEnhancer(
+                            getHost(), referer);
 
                     List<DeferredResult<Pair<ComputeDescription, ProfileEntry>>> list = profileEntries
                             .stream()
@@ -433,22 +440,23 @@ public class ComputeReservationTaskService
                                         context.skipNetwork = true;
                                         context.regionId = profileEntry.endpoint.endpointProperties
                                                 .get(EndpointConfigRequest.REGION_KEY);
-
+                                        return Pair.of(context, cloned);
+                                    })
+                                    .map(p -> {
                                         DeferredResult<Pair<ComputeDescription, ProfileEntry>> r = new DeferredResult<>();
-                                        enhancer.enhance(context, cloned).whenComplete((cd, t) -> {
-                                            if (t != null) {
-                                                r.complete(Pair.of(cd, null));
-                                                return;
-                                            }
-                                            String enhancedImage = cd.customProperties
-                                                    .get(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
-                                            if (enhancedImage != null
-                                                    && context.imageType.equals(enhancedImage)) {
-                                                r.complete(Pair.of(cd, null));
-                                                return;
-                                            }
-                                            r.complete(Pair.of(cd, profileEntry));
-                                        });
+                                        pe.enhance(p.getLeft(), p.getRight())
+                                                .thenCompose(cd -> instanceTypeEnhancer
+                                                        .enhance(p.getLeft(), cd))
+                                                .thenCompose(cd -> imageEnhancer
+                                                        .enhance(p.getLeft(), cd))
+                                                .whenComplete((cd, t) -> {
+                                                    if (t != null) {
+                                                        logInfo(Utils.toString(t));
+                                                        r.complete(Pair.of(cd, null));
+                                                        return;
+                                                    }
+                                                    r.complete(Pair.of(cd, profileEntry));
+                                                });
                                         return r;
                                     }))
                             .collect(Collectors.toList());

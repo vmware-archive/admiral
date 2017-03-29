@@ -47,6 +47,8 @@ public class ComputeConstants {
 
     public static final String CUSTOM_PROP_IMAGE_ID_NAME = "imageType";
 
+    public static final String CUSTOM_PROP_IMAGE_REF_NAME = "imageRef";
+
     public static final String CUSTOM_PROP_SSH_AUTHORIZED_KEY_NAME = "sshKey";
 
     public static final String CUSTOM_PROP_ENABLE_SSH_ACCESS_NAME = "enableSSH";
