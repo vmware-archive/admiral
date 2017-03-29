@@ -10,15 +10,15 @@
  */
 
 var VueToolbarActionButton = Vue.extend({
-  template: `<div class="toolbar-action" v-show="supported">
-           <a class="btn btn-circle-outline"
-              data-toggle="tooltip" data-placement="top" :title="tooltip"
-              :data-name="id">
-             <i v-if="iconName" :class="'fa fa-' + iconName"></i>
-             <img v-if="iconSrc" v-bind:src="iconSrc"/>
-          </a>
-           <div class="toolbar-action-label">{{label}}</div>
-         </div>`,
+  template: `
+    <div class="toolbar-action" v-show="supported">
+      <a class="btn btn-circle-outline" v-tooltip="tooltip"
+        :data-name="id">
+        <i v-if="iconName" :class="'fa fa-' + iconName"></i>
+        <img v-if="iconSrc" v-bind:src="iconSrc">
+      </a>
+      <div class="toolbar-action-label">{{label}}</div>
+    </div>`,
   props: {
     id: {
       required: false,
@@ -45,11 +45,6 @@ var VueToolbarActionButton = Vue.extend({
       required: false,
       type: String,
       default: null
-    }
-  },
-  attached: function() {
-    if (this.tooltip) {
-      $(this.$el).find('a').tooltip({html: true});
     }
   }
 });
