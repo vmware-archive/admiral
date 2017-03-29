@@ -49,9 +49,14 @@ public class DeferredOperationPredicate implements Predicate<Operation> {
             return true;
         }
 
-        DeferredResult<Void> dr = this.predicate.apply(this.service, operation);
-        if (dr == null) {
-            return true;
+        DeferredResult<Void> dr;
+        try {
+            dr = this.predicate.apply(this.service, operation);
+            if (dr == null) {
+                return true;
+            }
+        } catch (Exception e) {
+            dr = DeferredResult.failed(e);
         }
 
         dr.whenComplete((ignore, e) -> {

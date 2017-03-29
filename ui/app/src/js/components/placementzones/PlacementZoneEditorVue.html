@@ -23,7 +23,9 @@
             :placeholder="i18n('app.placementZone.edit.nameTitle')">
       </div>
       <div class="form-group row" v-if="showEndpoint">
-        <div class="subtitle">{{i18n('app.placementZone.edit.endpointTitle')}}</div>
+        <label class="subtitle required" style="position: static">
+          {{i18n('app.placementZone.edit.endpointTitle')}}
+        </label>
         <dropdown-search
             :disabled="!!model.item.documentSelfLink"
             :entity="i18n('app.endpoint.entity')"

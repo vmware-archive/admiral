@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
-import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostUtil;
@@ -32,20 +31,16 @@ import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
-import com.vmware.xenon.common.ServiceDocumentQueryResult;
-import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
 /**
- * Prevent deletion of {@link ResourcePoolState} if its in use by a {@link ComputeState}. Also
- * prevent REST calls that will result in having scheduler {@link ResourcePoolState} instances with
+ * Prevents REST calls that will result in having scheduler {@link ResourcePoolState} instances with
  * tags set
  */
-public class ResourcePoolInterceptor {
+public class SchedulerPlacementZoneInterceptor {
 
-    public static final String PLACEMENT_ZONE_IN_USE_MESSAGE = "Placement zone is in use";
     public static final String MULTIPLE_HOSTS_IN_PLACEMENT_ZONE_MESSAGE = "Cannot convert to "
             + "scheduler placement zone: placement zone contains multiple hosts";
     public static final String NON_SCHEDULER_HOST_IN_PLACEMENT_ZONE_MESSAGE = "Cannot convert to "
@@ -53,47 +48,18 @@ public class ResourcePoolInterceptor {
     public static final String SCHEDULER_HOSTS_IN_PLACEMENT_ZONE_MESSAGE = "Cannot convert to "
             + "Docker placement zone: placement zone contains scheduler host(s)";
 
-    public static final String PLACEMENT_ZONE_IN_USE_MESSAGE_CODE = "host.resource-pool.in.use";
     public static final String MULTIPLE_HOSTS_IN_PLACEMENT_ZONE_MESSAGE_CODE = "host.placement-zone.contains.multiple.hosts";
     public static final String NON_SCHEDULER_HOST_IN_PLACEMENT_ZONE_MESSAGE_CODE = "host.placement-zone.contains.non-scheduler.host";
     public static final String SCHEDULER_HOSTS_IN_PLACEMENT_ZONE_MESSAGE_CODE = "host.placement-zone.contains.scheduler.hosts";
 
     public static void register(OperationInterceptorRegistry registry) {
         registry.addFactoryServiceInterceptor(
-                ResourcePoolService.class, Action.POST, ResourcePoolInterceptor::handlePostOrPut);
+                ResourcePoolService.class, Action.POST, SchedulerPlacementZoneInterceptor::handlePostOrPut);
 
         registry.addServiceInterceptor(
-                ResourcePoolService.class, Action.PUT, ResourcePoolInterceptor::handlePostOrPut);
+                ResourcePoolService.class, Action.PUT, SchedulerPlacementZoneInterceptor::handlePostOrPut);
         registry.addServiceInterceptor(
-                ResourcePoolService.class, Action.PATCH, ResourcePoolInterceptor::handlePatch);
-        registry.addServiceInterceptor(
-                ResourcePoolService.class, Action.DELETE, ResourcePoolInterceptor::handleDelete);
-    }
-
-    public static DeferredResult<Void> handleDelete(Service service, Operation op) {
-        ResourcePoolState currentState = service.getState(op);
-
-        QueryTask queryTask;
-        if (currentState.query != null) {
-            queryTask = QueryTask.Builder.createDirectTask().setQuery(currentState.query).build();
-        } else if (currentState.documentSelfLink != null) {
-            queryTask = QueryUtil.buildPropertyQuery(ComputeState.class,
-                    ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, currentState.documentSelfLink);
-        } else {
-            return null;
-        }
-
-        QueryUtil.addCountOption(queryTask);
-
-        return QueryUtils.startQueryTask(service, queryTask)
-                .thenAccept(qt -> {
-                    ServiceDocumentQueryResult result = qt.results;
-                    if (result.documentCount != 0) {
-                        throw new LocalizableValidationException(
-                                PLACEMENT_ZONE_IN_USE_MESSAGE,
-                                PLACEMENT_ZONE_IN_USE_MESSAGE_CODE);
-                    }
-                });
+                ResourcePoolService.class, Action.PATCH, SchedulerPlacementZoneInterceptor::handlePatch);
     }
 
     private static boolean isComputeZone(ResourcePoolState currentState) {
