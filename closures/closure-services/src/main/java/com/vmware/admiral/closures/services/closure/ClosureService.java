@@ -144,13 +144,18 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                 .getBody(ServiceTaskCallbackResponse.class);
         TaskState taskInfo = callbackResponse.taskInfo;
         if (TaskState.isFailed(taskInfo) || TaskState.isCancelled(taskInfo)) {
-            logWarning("Infrastructure failure detected: state: %s reason: %s", taskInfo.stage,
-                    taskInfo.failure.message);
-
+            String errorMsg = String.format("Failed to build runtime image! state: %s, "
+                    + "Reason: %n%s", taskInfo.stage, taskInfo.failure.message);
+            logWarning(errorMsg);
             currentState.state = taskInfo.stage;
-            currentState.errorMsg = taskInfo.failure.message;
+            currentState.errorMsg = errorMsg;
             this.setState(patchOp, currentState);
             patchOp.setBody(currentState).complete();
+
+            updateRequestTracker(fromClosure(currentState));
+            if (currentState.serviceTaskCallback != null) {
+                notifyCallerService(currentState);
+            }
             return;
         }
 

@@ -1,0 +1,60 @@
+---
+id: kitematicWithClosure
+name: kitematicWithClosure
+status: PUBLISHED
+properties:
+  _leaseDays: 3
+components:
+  kitematicBeforeClosure:
+    type: App.Container
+    data:
+      name: kitematicBeforeClosure
+      image: kitematic/hello-world-nginx:latest
+      env:
+      - var: input_a
+        value: value_a
+      a: |
+        {
+          "p": 50
+        }
+      b: 60
+  test:
+    type: App.Closure
+    data:
+      name: test
+      runtime: nodejs
+      description: Sum function which is part of template.
+      source: |
+        module.exports = function test(ctx) {
+          INVALID
+        };
+
+      outputNames:
+        - resultInt
+        - resultObj
+        - address
+        - testOut
+      logConfiguration:
+        type: "json-file"
+        config:
+          max-size: "10k"
+          max-file: "1"
+
+      inputs:
+        a: ${_resource~kitematicBeforeClosure~a}
+        b: ${_resource~kitematicBeforeClosure~b}
+        address: ${_resource~kitematicBeforeClosure~address}
+        invalid: ${_resource~kitematicBeforeClosure~invalid-property}
+        testIn: "test-value"
+  kitematicAfterClosure:
+    type: App.Container
+    data:
+      name: kitematicAfterClosure
+      image: kitematic/hello-world-nginx:latest
+      env:
+        - var: input_obj
+          value: ${_resource~test~outputs~resultObj}
+      customProperties:
+        input_int: ${_resource~test~outputs~resultInt}
+        address: ${_resource~test~outputs~address}
+
