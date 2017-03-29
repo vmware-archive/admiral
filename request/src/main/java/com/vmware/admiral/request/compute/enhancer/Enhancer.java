@@ -13,6 +13,7 @@ package com.vmware.admiral.request.compute.enhancer;
 
 import java.util.Map;
 
+import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.DeferredResult;
 
@@ -29,6 +30,8 @@ public interface Enhancer<T extends ResourceState> {
 
     static class EnhanceContext {
         public String profileLink;
+        // Lazy loaded using the profileLink
+        public ProfileStateExpanded profile;
         public String endpointLink;
         public String resourcePoolLink;
         public String regionId;
@@ -37,6 +40,7 @@ public interface Enhancer<T extends ResourceState> {
         public String imageType;
         public Map<String, Object> content;
         public boolean skipNetwork;
+
 
     }
 }

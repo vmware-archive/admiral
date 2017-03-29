@@ -31,6 +31,8 @@ public class ComputeDescriptionEnhancers extends ComputeDescriptionEnhancer {
     }
 
     private void initialize(ServiceHost host, URI referer) {
+        this.enhancers.add(new ComputeDescriptionInstanceTypeEnhancer(host, referer));
+        this.enhancers.add(new ComputeDescriptionImageEnhancer(host, referer));
         this.enhancers.add(new ComputeDescriptionProfileEnhancer(host, referer));
         this.enhancers.add(new GuestCredentialsComputeDescriptionEnhancer(host, referer));
         this.enhancers.add(new ComputeDescriptionContainerHostRemoteAPIEnhancer());
