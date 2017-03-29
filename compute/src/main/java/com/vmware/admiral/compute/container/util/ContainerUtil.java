@@ -97,16 +97,14 @@ public class ContainerUtil {
 
                 case HOST_CONFIG_PROPERTY:
 
-                    Map<String, String> logConfigProperty = Utils.getJsonMapValue(v,
+                    Map<String, Object> logConfigProperty = Utils.getJsonMapValue(v,
                             ContainerDescriptionHelper.LOG_CONFIG_PROPERTY, Map.class);
                     if (!logConfigProperty.isEmpty()) {
                         try {
                             LogConfig logConfig = new LogConfig();
-                            logConfig.type = logConfigProperty
+                            logConfig.type = (String) logConfigProperty
                                     .get(ContainerDescriptionHelper.TYPE_PROPERTY);
-                            logConfig.config = Utils.getJsonMapValue(
-                                    logConfigProperty.toString(), CONFIG_PROPERTY,
-                                    Map.class);
+                            logConfig.config = (Map) logConfigProperty.get(CONFIG_PROPERTY);
                             containerDescription.logConfig = logConfig;
                         } catch (Exception e) {
                             Utils.log(ContainerUtil.class, ContainerUtil.class.getSimpleName(),
@@ -167,7 +165,8 @@ public class ContainerUtil {
         PortBinding portBinding = getShellPortBinding(shellContainer);
 
         if (portBinding == null) {
-            throw new LocalizableValidationException("Could not locate shell port", "compute.shell.port");
+            throw new LocalizableValidationException("Could not locate shell port",
+                    "compute.shell.port");
         }
 
         String uriHost = UriUtilsExtended.extractHost(host.address);
@@ -273,9 +272,10 @@ public class ContainerUtil {
                 ContainerState newContainerState) {
             oldContainerState.ports = oldContainerState.ports == null ?
                     new ArrayList<>() : oldContainerState.ports;
-            newContainerState.ports = newContainerState.powerState == ContainerState.PowerState.RETIRED
-                    && newContainerState.ports == null ?
-                    new ArrayList<>() : newContainerState.ports;
+            newContainerState.ports =
+                    newContainerState.powerState == ContainerState.PowerState.RETIRED
+                            && newContainerState.ports == null ?
+                            new ArrayList<>() : newContainerState.ports;
             // ports are not collected or no changes to unexposed ports
             if (newContainerState.ports == null ||
                     newContainerState.ports.isEmpty() && oldContainerState.ports.isEmpty()) {
