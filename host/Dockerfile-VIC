@@ -2,4 +2,4 @@ FROM vmware/admiral
 
 MAINTAINER Admiral Team, https://vmware.github.io/admiral/
 
-COPY configuration-vic.properties $CONFIG_FILE_PATH
+COPY configuration-vic.properties $DIST_CONFIG_FILE_PATH
