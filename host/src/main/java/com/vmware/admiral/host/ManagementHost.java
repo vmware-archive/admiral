@@ -24,11 +24,13 @@ import io.swagger.models.Info;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.host.interceptor.AuthCredentialsInterceptor;
+import com.vmware.admiral.host.interceptor.ComputePlacementZoneInterceptor;
 import com.vmware.admiral.host.interceptor.EndpointInterceptor;
+import com.vmware.admiral.host.interceptor.InUsePlacementZoneInterceptor;
 import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
 import com.vmware.admiral.host.interceptor.ProfileInterceptor;
 import com.vmware.admiral.host.interceptor.ResourceGroupInterceptor;
-import com.vmware.admiral.host.interceptor.ResourcePoolInterceptor;
+import com.vmware.admiral.host.interceptor.SchedulerPlacementZoneInterceptor;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.admiral.service.common.ConfigurationService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
@@ -112,12 +114,14 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
      * Register service operation interceptors.
      */
     static {
-        ResourcePoolInterceptor.register(interceptors);
+        InUsePlacementZoneInterceptor.register(interceptors);
+        SchedulerPlacementZoneInterceptor.register(interceptors);
         CompositeComponentInterceptor.register(interceptors);
         AuthCredentialsInterceptor.register(interceptors);
         ResourceGroupInterceptor.register(interceptors);
         EndpointInterceptor.register(interceptors);
         ProfileInterceptor.register(interceptors);
+        ComputePlacementZoneInterceptor.register(interceptors);
     }
 
     public static void main(String[] args) throws Throwable {

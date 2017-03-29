@@ -34,10 +34,11 @@ import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
-import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.UriUtils;
 
-public class ResourcePoolInterceptorTest extends BaseTestCase {
+/**
+ * Tests for the {@link SchedulerPlacementZoneInterceptor} class.
+ */
+public class SchedulerPlacementZoneInterceptorTest extends BaseTestCase {
 
     private static final String TAG_LINKS_MUST_BE_EMPTY_MESSAGE = String
             .format(AssertUtil.PROPERTY_MUST_BE_EMPTY_MESSAGE_FORMAT, "tagLinks");
@@ -62,33 +63,7 @@ public class ResourcePoolInterceptorTest extends BaseTestCase {
 
     @Override
     protected void registerInterceptors(OperationInterceptorRegistry registry) {
-        ResourcePoolInterceptor.register(registry);
-    }
-
-    @Test
-    public void testDeleteResourcePoolInUseShouldFail() throws Throwable {
-        // Create and add a host
-        createComputeState(defaultPlacementZone);
-
-        // try to delete the placement zone. This should fail
-        Operation delete = Operation
-                .createDelete(UriUtils.buildUri(host, defaultPlacementZone.documentSelfLink))
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        try {
-                            verifyExceptionMessage(e, ResourcePoolInterceptor.PLACEMENT_ZONE_IN_USE_MESSAGE);
-                            host.completeIteration();
-                        } catch (IllegalStateException ex) {
-                            host.failIteration(ex);
-                        }
-                    } else {
-                        host.failIteration(new IllegalStateException(
-                                "Should fail when deleting a placement zone that is in use"));
-                    }
-                });
-        host.testStart(1);
-        host.send(delete);
-        host.testWait();
+        SchedulerPlacementZoneInterceptor.register(registry);
     }
 
     @Test
@@ -238,7 +213,7 @@ public class ResourcePoolInterceptorTest extends BaseTestCase {
                     + "scheduler placement zone to a docker zone");
         } catch (Exception ex) {
             verifyExceptionMessage(ex,
-                    ResourcePoolInterceptor.SCHEDULER_HOSTS_IN_PLACEMENT_ZONE_MESSAGE);
+                    SchedulerPlacementZoneInterceptor.SCHEDULER_HOSTS_IN_PLACEMENT_ZONE_MESSAGE);
         }
     }
 
@@ -261,7 +236,7 @@ public class ResourcePoolInterceptorTest extends BaseTestCase {
                     + "docker placement zone to a scheduler zone");
         } catch (Exception ex) {
             verifyExceptionMessage(ex,
-                    ResourcePoolInterceptor.NON_SCHEDULER_HOST_IN_PLACEMENT_ZONE_MESSAGE);
+                    SchedulerPlacementZoneInterceptor.NON_SCHEDULER_HOST_IN_PLACEMENT_ZONE_MESSAGE);
         }
     }
 
@@ -285,7 +260,7 @@ public class ResourcePoolInterceptorTest extends BaseTestCase {
                     + "docker placement zone to a scheduler zone");
         } catch (Exception ex) {
             verifyExceptionMessage(ex,
-                    ResourcePoolInterceptor.NON_SCHEDULER_HOST_IN_PLACEMENT_ZONE_MESSAGE);
+                    SchedulerPlacementZoneInterceptor.NON_SCHEDULER_HOST_IN_PLACEMENT_ZONE_MESSAGE);
         }
     }
 
@@ -309,7 +284,7 @@ public class ResourcePoolInterceptorTest extends BaseTestCase {
                     + "scheduler placement zone to a docker zone");
         } catch (Exception ex) {
             verifyExceptionMessage(ex,
-                    ResourcePoolInterceptor.SCHEDULER_HOSTS_IN_PLACEMENT_ZONE_MESSAGE);
+                    SchedulerPlacementZoneInterceptor.SCHEDULER_HOSTS_IN_PLACEMENT_ZONE_MESSAGE);
         }
     }
 
@@ -337,7 +312,7 @@ public class ResourcePoolInterceptorTest extends BaseTestCase {
                     + "zone to a scheduler zone when the placement zone is in use by multiple scheduler hosts");
         } catch (Exception ex) {
             verifyExceptionMessage(ex,
-                    ResourcePoolInterceptor.MULTIPLE_HOSTS_IN_PLACEMENT_ZONE_MESSAGE);
+                    SchedulerPlacementZoneInterceptor.MULTIPLE_HOSTS_IN_PLACEMENT_ZONE_MESSAGE);
         }
     }
 
