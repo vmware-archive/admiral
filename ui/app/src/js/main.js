@@ -32,11 +32,26 @@ var appInitializer = function(App, Store) {
   });
 };
 
-var updateHeaderLink = function(registryUrl) {
+var updateHeader = function() {
   if (utils.isApplicationEmbedded() ||
-      utils.isApplicationSingleView()) {
-      return;
+    utils.isApplicationSingleView()) {
+    return;
   }
+
+  if (utils.isVic()) {
+    $('body').append($(VICTemplate()));
+    $('head title').html('vSphere Integrated Containers');
+    $('head').append('<link rel="icon" type="image/x-icon" href="image-assets/vic-favicon.ico" />');
+  } else {
+    $('body').append($(DefaultTemplate()));
+    $('head title').html('Admiral');
+    $('head').append('<link rel="icon" type="image/x-icon" href="image-assets/favicon.ico" />');
+  }
+
+  var baseRegistryUrl = utils.getHarborTabUrl();
+  var redirectUrl = utils.extractHarborRedirectUrl();
+  var registryUrl = redirectUrl || baseRegistryUrl;
+
   if (registryUrl) {
     $('body > .header .registry-link').attr('href', registryUrl).click(function(e) {
       e.preventDefault();
@@ -70,18 +85,5 @@ initializer.init(() => {
                      require('stores/AppStore').default);
   }
 
-  if (utils.isVic()) {
-    $('body').append($(VICTemplate()));
-    $('head title').html('vSphere Integrated Containers');
-    $('head').append('<link rel="icon" type="image/x-icon" href="image-assets/vic-favicon.ico" />');
-  } else {
-    $('body').append($(DefaultTemplate()));
-    $('head title').html('Admiral');
-    $('head').append('<link rel="icon" type="image/x-icon" href="image-assets/favicon.ico" />');
-  }
-
-  var baseRegistryUrl = utils.getHarborTabUrl();
-  var redirectUrl = utils.extractHarborRedirectUrl();
-
-  updateHeaderLink(redirectUrl || baseRegistryUrl);
+  updateHeader();
 });
