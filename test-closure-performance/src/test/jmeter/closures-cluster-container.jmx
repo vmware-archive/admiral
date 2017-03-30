@@ -30,7 +30,7 @@
           <stringProp name="BeanShellSampler.query">import java.io.*;
 
 // in jenkins the path is /var/jenkins_home/workspace/Bellevue-performance/test-performance/target/jmeter/bin/
-String fileName = &quot;../../../../test-closure-performance/src/test/resources/performance-test.properties&quot;;
+String fileName = &quot;../../../../test-closure-performance/src/test/resources/integration-test.properties&quot;;
 log.info(&quot;Executing...&quot;);
 String customFileName = props.get(&quot;properties.file&quot;);
 if (customFileName != null &amp;&amp; customFileName.length() &gt; 0) {

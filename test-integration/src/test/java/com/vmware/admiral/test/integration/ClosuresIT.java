@@ -60,7 +60,7 @@ import com.vmware.xenon.common.Utils;
 public class ClosuresIT extends BaseProvisioningOnCoreOsIT {
 
     public static final int DOCKER_IMAGE_BUILD_TIMEOUT_SECONDS = 30 * 60;
-    private static final long TEST_TASK_MAINTANENACE_TIMEOUT_MLS = 4000;
+    private static final long TEST_TASK_MAINTANENACE_TIMEOUT_MLS = 10000;
 
     protected static String IMAGE_NAME_PREFIX = "vmware/photon-closure-runner_";
 
