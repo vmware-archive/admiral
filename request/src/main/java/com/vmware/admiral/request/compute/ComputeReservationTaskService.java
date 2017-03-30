@@ -531,17 +531,33 @@ public class ComputeReservationTaskService extends
             // filter out placements that do not satisfy the HARD constraints, and then sort
             // remaining placements by listing first those with more soft constraints satisfied
             // (placement priority being used as a second criteria)
+            LinkedHashMap<String, String> placementsAfterTagFilter = TagConstraintUtils
+                    .filterByConstraints(
+                            tagLinkByCondition,
+                            placements.stream(),
+                            p -> getResourcePoolTags(
+                                    resourcePoolsByLink.get(p.resourcePoolLink)),
+                            (g1, g2) -> g1.priority - g2.priority)
+                    .collect(Collectors.toMap(gp -> gp.documentSelfLink,
+                            gp -> gp.resourcePoolLink,
+                            (k1, k2) -> k1, LinkedHashMap::new));
+
+            if (!placements.isEmpty() && placementsAfterTagFilter.isEmpty()) {
+                logInfo("No candidate placements after tag filtering");
+
+                failTask(null, new LocalizableValidationException(
+                        "No placement exists that satisfies all of the request requirements. "
+                                + "Please check if suitable placements and placement zones exist "
+                                + "and they have been properly tagged.",
+                        "request.compute.reservation.resource-pools.empty.tags"));
+                return;
+            } else {
+                logInfo("Remaining candidate placements after tag filtering: "
+                        + placementsAfterTagFilter.keySet());
+            }
+
             proceedTo(isGlobal(state) ? SubStage.SELECTED_GLOBAL : SubStage.SELECTED, s -> {
-                s.resourcePoolsPerGroupPlacementLinks = TagConstraintUtils
-                        .filterByConstraints(
-                                tagLinkByCondition,
-                                placements.stream(),
-                                p -> getResourcePoolTags(
-                                        resourcePoolsByLink.get(p.resourcePoolLink)),
-                                (g1, g2) -> g1.priority - g2.priority)
-                        .collect(Collectors.toMap(gp -> gp.documentSelfLink,
-                                gp -> gp.resourcePoolLink,
-                                (k1, k2) -> k1, LinkedHashMap::new));
+                s.resourcePoolsPerGroupPlacementLinks = placementsAfterTagFilter;
             });
         }).sendWith(getHost());
     }
