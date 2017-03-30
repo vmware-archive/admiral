@@ -61,6 +61,10 @@ var ft = {
 
   isPublicKeyCredentialsDisabled: function() {
     return utils.getConfigurationPropertyBoolean('disable.credentials.publicKey');
+  },
+
+  isRequestGraphEnabled: function() {
+    return utils.getConfigurationPropertyBoolean('allow.ft.request-graph');
   }
 };
 

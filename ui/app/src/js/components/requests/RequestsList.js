@@ -18,6 +18,7 @@ import { RequestsActions, AppActions, NavigationActions } from 'actions/Actions'
 import constants from 'core/constants';
 import utils from 'core/utils';
 import links from 'core/links';
+import ft from 'core/ft';
 
 var RequestsListVueComponent = Vue.extend({
   template: RequestsListVue,
@@ -51,6 +52,9 @@ var RequestsListVueComponent = Vue.extend({
         },
         requestId: function() {
           return utils.getDocumentId(this.model.documentSelfLink);
+        },
+        isRequestGraphEnabled: function() {
+          return ft.isRequestGraphEnabled();
         }
       },
       data: function() {
@@ -163,6 +167,13 @@ var RequestsListVueComponent = Vue.extend({
             AppActions.openToolbarEventLogs(this.model.eventLogLink);
             return;
           }
+        },
+
+        openRequestGraph: function($e) {
+          $e.preventDefault();
+          var graphPath = 'index-single-view.html#/request-graph/' + this.requestId;
+          var win = window.open(graphPath, '_blank');
+          win.focus();
         },
 
         getRequestResourceQueryOpts: function(item) {

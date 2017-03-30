@@ -38,6 +38,8 @@
                  v-on:click="redirect($event)" :title="i18n('app.request.actions.details.show')"><i class="fa fa-warning"></i></div>
             <div v-else class="btn"
                  v-on:click="redirect($event)" :title="i18n('app.request.actions.open')"><i class="fa fa-eye"></i></div>
+            <div v-if="isRequestGraphEnabled" class="btn"
+                 v-on:click="openRequestGraph($event)" :title="i18n('app.request.actions.details.show')"><i class="fa fa-bug"></i></div>
             <div v-if="isDeleteEnabled(model)" href="#" class="btn"
                  v-on:click="deleteRequest($event)" :title="i18n('delete')"><i class="fa fa-trash"></i></div>
           </div>
