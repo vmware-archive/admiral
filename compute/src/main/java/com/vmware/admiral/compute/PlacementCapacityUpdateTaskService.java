@@ -48,6 +48,7 @@ import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
+import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
@@ -245,7 +246,8 @@ public class PlacementCapacityUpdateTaskService extends
                     .setCompletion((o, e) -> {
                         if (e != null) {
                             failTask(String.format("Error retrieving resource pool %s",
-                                    state.resourcePoolLink), e);
+                                    state.resourcePoolLink), e,
+                                    !(e instanceof ServiceNotFoundException));
                             return;
                         }
 
