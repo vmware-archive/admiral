@@ -67,6 +67,9 @@ var ContainerDetailsVueComponent = Vue.extend({
     },
     onVchHost: function() {
       return utils.isContainerOnVchHost(this.model.instance);
+    },
+    showBackButton: function() {
+      return !utils.isApplicationSingleView();
     }
   },
 

@@ -17,7 +17,7 @@
                                :alert-message="i18n('app.container.details.operation.failure')"
                                ></alert>
 
-    <a class="close-button" v-on:click="goBack($event)"><i
+  <a v-if="showBackButton" class="close-button" v-on:click="goBack($event)"><i
       class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
 
   <div class="container-details-header">
