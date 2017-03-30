@@ -515,6 +515,10 @@ var utils = {
 
     } else if (op === constants.CONTAINERS.OPERATION.MANAGE) {
       return (!this.isApplicationSingleView() && this.isFromCatalog(resource));
+    } else if (op === constants.CONTAINERS.OPERATION.CREATE_TEMPLATE) {
+      return !this.isApplicationSingleView();
+    } else if (op === constants.CONTAINERS.OPERATION.OPEN_TEMPLATE) {
+      return !this.isApplicationSingleView();
     } else if (resource.type === constants.RESOURCES.TYPES.NETWORK) {
       return (op === constants.RESOURCES.NETWORKS.OPERATION.REMOVE
             && !this.isFromCatalog(resource));
