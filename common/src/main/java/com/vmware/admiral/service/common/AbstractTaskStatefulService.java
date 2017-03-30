@@ -706,14 +706,17 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     }
 
     public void failTask(String errMsg, Throwable t) {
-        if (errMsg == null) {
-            errMsg = "Unexpected State";
-        }
+        failTask(errMsg, t, true);
+    }
+
+    public void failTask(String errMsg, Throwable t, boolean logAsWarning) {
+        final Level logLevel = logAsWarning ? Level.WARNING : Level.INFO;
+        final String msg = errMsg == null ? "Unexpected State" : errMsg;
         if (t != null) {
-            logWarning("%s%s Error: %s", errMsg, errMsg.endsWith(".") ? "" : ".",
-                    Utils.toString(t));
+            log(logLevel, () -> String.format("%s%s Error: %s", msg, msg.endsWith(".") ? "" : ".",
+                    Utils.toString(t)));
         } else {
-            logWarning(errMsg);
+            log(logLevel, msg);
         }
         ServiceTaskCallbackResponse body = new ServiceTaskCallbackResponse();
         body.taskInfo = new TaskState();
@@ -723,7 +726,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             body.taskInfo.failure = getServiceErrorResponse(t);
         } else {
             ServiceErrorResponse rsp = new ServiceErrorResponse();
-            rsp.message = errMsg;
+            rsp.message = msg;
             body.taskInfo.failure = rsp;
         }
 
