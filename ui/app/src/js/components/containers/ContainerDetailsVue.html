@@ -52,12 +52,12 @@
 
         <big-action-button name="openTemplate" icon-src="image-assets/templates-blue.png"
                            :label="i18n('app.container.actions.openTemplate')"
-                           :supported="!!model.templateLink"
+                           :supported="!!model.templateLink && operationSupported('OPEN_TEMPLATE')"
                            @click="openTemplate($event)"></big-action-button>
 
         <big-action-button name="createTemplate" icon-src="image-assets/templates-create.png"
                            :label="i18n('app.container.actions.createTemplate')"
-                           :supported="!!model.descriptionLinkToConvertToTemplate"
+                           :supported="!!model.descriptionLinkToConvertToTemplate && operationSupported('CREATE_TEMPLATE')"
                            @click="createTemplateFromContainer($event)"></big-action-button>
       </template>
     </div>
