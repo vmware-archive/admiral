@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -60,7 +60,7 @@ public class RequestBrokerGraphService extends StatelessService {
     public static final String QUERY_PARAM = "requestId";
     public static final String HOST_PARAM = "xenonHost";
 
-    public static class Response {
+    public static class RequestBrokerGraphResponse {
         List<TaskServiceDocumentHistory> tasks;
         RequestBrokerState request;
         List<Object> componentInfos;
@@ -124,7 +124,7 @@ public class RequestBrokerGraphService extends StatelessService {
             if (ex != null) {
                 get.fail(ex);
             } else {
-                Response r = new Response();
+                RequestBrokerGraphResponse r = new RequestBrokerGraphResponse();
                 r.tasks = convert(foundTasks);
                 populateRequestInfos(r, r.tasks, requestId);
                 get.setBody(r);
@@ -265,8 +265,6 @@ public class RequestBrokerGraphService extends StatelessService {
 
         result.stages.add(firstStageWithLink);
 
-        TransitionSource lastTransitionSource = new TransitionSource();
-        lastTransitionSource.documentSelfLink = result.documentSelfLink;
         Object lastTransitionStage = firstStageWithLink.taskSubStage;
         long lastDocumentUpdateTimeMicros = firstStageWithLink.documentUpdateTimeMicros;
 
@@ -423,7 +421,7 @@ public class RequestBrokerGraphService extends StatelessService {
         }
     }
 
-    private static void populateRequestInfos(Response response,
+    private static void populateRequestInfos(RequestBrokerGraphResponse response,
             List<TaskServiceDocumentHistory> tasks, String requestId) {
         Map<String, TaskServiceStageWithLink> allStages = new HashMap<>();
 

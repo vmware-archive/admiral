@@ -2353,7 +2353,6 @@ $request-graph-header-color: #0b40c8;
       position: absolute;
       top: 90px;
       left: 20px;
-      display: none;
       background-color: lightyellow;
       color: darkgray;
       border: 1px solid darkgray;
@@ -2361,12 +2360,15 @@ $request-graph-header-color: #0b40c8;
       padding: 3px;
       z-index: 3;
       white-space: pre-wrap;
+      opacity: 0;
+      pointer-events: none;
     }
   }
 
   .task-stage:hover {
     .basic-info {
-      display: block;
+      opacity: 1;
+      pointer-events: all;
     }
   }
 
