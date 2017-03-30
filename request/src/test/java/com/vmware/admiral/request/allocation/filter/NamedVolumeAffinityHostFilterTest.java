@@ -296,6 +296,26 @@ public class NamedVolumeAffinityHostFilterTest extends BaseAffinityHostFilterTes
         assertEquals(selectedHostLink, selectedHosts.keySet().iterator().next());
     }
 
+    @Test
+    public void testFilterHostsWhenLocalDriverIsNotReported() throws Throwable {
+        // In the case of vSphere Integrated Containers, only the "vsphere" volume plug-in is
+        // reported thought the __Plugins property. Nevertheless, "local" is an alias for the
+        // default VIC driver "vsphere", so provisioning with "local" volumes is possible.
+
+        String hostLink = createDockerHostWithVolumeDrivers("vsphere");
+
+        createVolumeDescription("myvol", "local");
+        assertEquals(4, initialHostLinks.size());
+        ContainerDescription containerDesc = createContainerDescription(
+                new String[] { "myvol:/tmp" });
+
+        filter = new NamedVolumeAffinityHostFilter(host, containerDesc);
+        Map<String, HostSelection> selectedHosts = filter();
+
+        assertEquals(4, selectedHosts.size());
+        assertTrue(selectedHosts.keySet().contains(hostLink));
+    }
+
     private ContainerDescription createContainerDescription(String[] volumes)
             throws Throwable {
         ContainerDescription desc = TestRequestStateFactory.createContainerDescription();

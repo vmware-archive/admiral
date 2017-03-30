@@ -28,6 +28,7 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import com.vmware.admiral.adapter.docker.service.DockerVolumeAdapterService;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
@@ -280,8 +281,8 @@ public class NamedVolumeAffinityHostFilter
                 .collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue()));
 
         if (hostSelectionMap.isEmpty()) {
-            String errMsg = String.format("No hosts found supporting the '%s' volume drivers.",
-                    requiredDrivers.toString());
+            String errMsg = String.format("No hosts found supporting the %s volume drivers.",
+                    requiredDrivers.keySet().toString());
             callback.complete(null, new HostSelectionFilterException(errMsg,
                     "request.volumes.filter.hosts.unavailable", requiredDrivers.toString()));
             return;
@@ -446,13 +447,14 @@ public class NamedVolumeAffinityHostFilter
     }
 
     private boolean supportsDrivers(Set<String> requiredDrivers, HostSelection hostSelection) {
-        if (hostSelection.plugins != null) {
-            @SuppressWarnings("unchecked")
-            List<String> supportedDrivers = Utils.getJsonMapValue(hostSelection.plugins,
-                    DOCKER_HOST_PLUGINS_VOLUME_PROP_NAME, List.class);
-            return supportedDrivers.containsAll(requiredDrivers);
+        if (hostSelection.plugins == null) {
+            return false;
         }
 
-        return false;
+        @SuppressWarnings("unchecked")
+        Set<String> supportedDrivers = new HashSet<>(Utils.getJsonMapValue(hostSelection.plugins,
+                DOCKER_HOST_PLUGINS_VOLUME_PROP_NAME, List.class));
+        supportedDrivers.add(DockerVolumeAdapterService.DOCKER_VOLUME_DRIVER_TYPE_DEFAULT);
+        return supportedDrivers.containsAll(requiredDrivers);
     }
 }
