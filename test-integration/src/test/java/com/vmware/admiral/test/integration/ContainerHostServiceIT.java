@@ -19,9 +19,11 @@ import static com.vmware.admiral.test.integration.TestPropertiesUtil.getSystemOr
 
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.After;
 import org.junit.Before;
@@ -32,7 +34,9 @@ import com.vmware.admiral.adapter.common.ContainerHostOperationType;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
@@ -40,6 +44,8 @@ import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.PlacementZoneConstants;
 import com.vmware.admiral.compute.PlacementZoneConstants.PlacementZoneType;
+import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
@@ -53,8 +59,10 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask;
 
 public class ContainerHostServiceIT extends RequestBaseTest {
     private static final String SCHEDULER_PLACEMENT_ZONE_ID = "test-scheduler-placement-zone";
@@ -578,19 +586,66 @@ public class ContainerHostServiceIT extends RequestBaseTest {
     }
 
     @Test
-    public void testAddVicHostWithNoPlacementZoneShouldCreatePlacementZone() throws Throwable {
+    public void testAddDockerHostDeclaredAsVicWithSchedulerPlacementZoneShouldFail() {
+        containerHostSpec.acceptCertificate = true;
+        computeState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
+        computeState.resourcePoolLink = schedulerPlacementZone.documentSelfLink;
+        markHostForVicValidation(computeState);
+        addHost(containerHostSpec, ContainerHostService.CONTAINER_HOST_IS_NOT_VCH_MESSAGE);
+    }
+
+    @Test
+    public void testAddDockerHostDeclaredAsVicWithNoPlacementZoneShouldFail() throws Throwable {
+        containerHostSpec.acceptCertificate = true;
+        computeState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
+        computeState.resourcePoolLink = null;
+        markHostForVicValidation(computeState);
+
+        long placementZonesCount = getDocumentsCount(ResourcePoolState.class);
+        long placementsCount = getDocumentsCount(GroupResourcePlacementState.class);
+
+        addHost(containerHostSpec, ContainerHostService.CONTAINER_HOST_IS_NOT_VCH_MESSAGE);
+        waitFor(() -> {
+            return (getDocumentsCount(ResourcePoolState.class) == placementZonesCount)
+                    && (getDocumentsCount(GroupResourcePlacementState.class) == placementsCount);
+        });
+    }
+
+    private <T extends ServiceDocument> long getDocumentsCount(Class<T> documentKind) {
+        AtomicLong documentsCount = new AtomicLong(0);
+        QueryTask queryTask = QueryUtil.buildPropertyQuery(documentKind);
+        QueryUtil.addCountOption(queryTask);
+
+        host.testStart(1);
+        new ServiceDocumentQuery<>(host, documentKind).query(queryTask, (r) -> {
+            if (r.hasException()) {
+                host.failIteration(r.getException());
+            } else if (r.hasResult()) {
+                documentsCount.set(r.getCount());
+                host.completeIteration();
+            }
+        });
+        host.testWait();
+
+        return documentsCount.get();
+    }
+
+    @Test
+    public void testAddVicHostWithNoPlacementZoneShouldCreatePlacementZoneAndPlacement() throws Throwable {
         vicHostSpec.acceptCertificate = true;
         vicHostState.address = VALID_DOCKER_HOST_NODE1_ADDRESS;
         vicHostState.resourcePoolLink = null;
         markHostForVicValidation(vicHostState);
 
+        // add and verify host
         ComputeState addedHost = addHost(vicHostSpec, null);
         assertNotNull("added host must not be null", addedHost);
         assertNotNull("created placement zone link must not be null", addedHost.resourcePoolLink);
         assertNotNull(addedHost.customProperties);
         assertTrue(Boolean.parseBoolean(addedHost.customProperties.get(
-                ComputeConstants.AUTO_GENERATED_PLACEMENT_ZONE_PROP_NAME)));
+                ComputeConstants.AUTOGENERATED_PLACEMENT_ZONE_PROP_NAME)));
 
+        // verify placement zone
         host.testStart(1);
         Operation.createGet(host, addedHost.resourcePoolLink)
                 .setReferer(host.getUri())
@@ -608,6 +663,32 @@ public class ContainerHostServiceIT extends RequestBaseTest {
                     }
                 }).sendWith(host);
         host.testWait();
+
+        // get the created placement
+        host.testStart(1);
+        QueryTask queryTask = QueryUtil.buildPropertyQuery(GroupResourcePlacementState.class,
+                GroupResourcePlacementState.FIELD_NAME_RESOURCE_POOL_LINK,
+                addedHost.resourcePoolLink,
+                GroupResourcePlacementState.FIELD_NAME_RESOURCE_TYPE,
+                ResourceType.CONTAINER_TYPE.getName());
+        QueryUtil.addExpandOption(queryTask);
+        ArrayList<GroupResourcePlacementState> results = new ArrayList<>();
+        new ServiceDocumentQuery<>(host, GroupResourcePlacementState.class).query(queryTask,
+                (r) -> {
+                    if (r.hasException()) {
+                        host.failIteration(r.getException());
+                    } else if (r.hasResult()) {
+                        results.add(r.getResult());
+                    } else {
+                        host.completeIteration();
+                    }
+                });
+        host.testWait();
+
+        // verify the placement
+        assertEquals(1, results.size());
+        GroupResourcePlacementState createdPlacement = results.iterator().next();
+        assertNotNull(createdPlacement);
     }
 
     @Test

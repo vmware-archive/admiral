@@ -64,6 +64,7 @@ public class GroupResourcePlacementService extends StatefulService {
     public static final String DEFAULT_RESOURCE_PLACEMENT_ID = "default-resource-placement";
     public static final String DEFAULT_RESOURCE_PLACEMENT_LINK = UriUtils.buildUriPath(
             FACTORY_LINK, DEFAULT_RESOURCE_PLACEMENT_ID);
+    public static final int DEFAULT_PLACEMENT_PRIORITY = 100;
 
     public static final long UNLIMITED_NUMBER_INSTANCES = 0;
     // Docker minimum memory limit is 4MB
@@ -85,7 +86,7 @@ public class GroupResourcePlacementService extends StatefulService {
         rsrvState.resourcePoolLink = DEFAULT_RESOURCE_POOL_LINK;
         rsrvState.tenantLinks = null; // global default group placement
         rsrvState.maxNumberInstances = 1000000;
-        rsrvState.priority = 100;
+        rsrvState.priority = DEFAULT_PLACEMENT_PRIORITY;
 
         return rsrvState;
     }
