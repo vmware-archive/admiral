@@ -40,7 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -134,7 +133,7 @@ public abstract class BaseManagementHostClusterIT {
 
     protected static GroupResourcePlacementState groupResourcePlacementState;
 
-    protected static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    protected static ScheduledExecutorService scheduler;
 
     @ClassRule
     public static final TemporaryFolder test = new TemporaryFolder();
@@ -1095,7 +1094,8 @@ public abstract class BaseManagementHostClusterIT {
         }
     }
 
-    protected void createUpdateQuorumOperation(ManagementHost availableHost, int availableNodes,
+    protected static void createUpdateQuorumOperation(ManagementHost availableHost, int
+            availableNodes,
             TestContext waiter, String authToken, Integer retryCount) {
 
         availableHost.log(Level.INFO, "Auth token in update quorum request: " + authToken);

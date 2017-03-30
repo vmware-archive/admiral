@@ -26,10 +26,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -66,8 +69,17 @@ public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT
     }
 
     @After
-    public void tearDown() throws Throwable {
+    public void tearDown() {
         tearDownHost(hostsToTeardown);
+    }
+
+    @BeforeClass
+    public static void init() {
+        scheduler = Executors.newScheduledThreadPool(1);
+    }
+
+    @AfterClass
+    public static void shutdown() {
         scheduler.shutdown();
     }
 
@@ -89,7 +101,7 @@ public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT
         assertEquals(HttpURLConnection.HTTP_FORBIDDEN, doRestrictedOperation(hostTwo, null));
         assertEquals(HttpURLConnection.HTTP_FORBIDDEN, doRestrictedOperation(hostThree, null));
 
-        // Restart node 1 and wait until it's removed from the node group.
+        // Stop node 1 and wait until it's removed from the node group.
         logger.log(Level.INFO, "stopping host one");
         stopHostAndRemoveItFromNodeGroup(hostTwo, hostOne);
 
@@ -217,6 +229,7 @@ public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT
             // Setup first host.
             logger.log(Level.INFO, "setting up first host");
             hostOne = setUpHost(portOne, null, Arrays.asList(hostOneAddress));
+            hostsToTeardown.add(hostOne);
 
             // Setup second host.
             logger.log(Level.INFO, "setting up second host");
@@ -225,12 +238,13 @@ public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT
             TestContext ctx = new TestContext(1, Duration.ofMinutes(1));
             createUpdateQuorumOperation(hostOne, 2, ctx, tokenOne, AUTH_TOKEN_RETRY_COUNT);
             ctx.await();
+            hostsToTeardown.add(hostTwo);
 
             // Setup third host.
             logger.log(Level.INFO, "setting up third host");
             hostThree = setUpHost(portThree, null, allHosts);
+            hostsToTeardown.add(hostThree);
 
-            hostsToTeardown = Arrays.asList(hostOne, hostTwo, hostThree);
         } catch (Throwable ex) {
             logger.log(Level.SEVERE, "Setting up hosts failed: " + Utils.toString(ex));
             if (retryCount > 0) {
