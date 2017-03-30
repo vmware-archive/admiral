@@ -15,17 +15,84 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>com.vmware.admiral</groupId>
+        <artifactId>admiral</artifactId>
+        <version>0.9.5-SNAPSHOT</version>
+    </parent>
+
     <artifactId>test-closure-performance</artifactId>
     <groupId>com.vmware.admiral</groupId>
-    <version>0.0.1</version>
+    <version>0.9.5-SNAPSHOT</version>
+
+    <build>
+        <directory>${buildDirectory}</directory>
+    </build>
 
     <properties>
-        <skipTests>true</skipTests>
-        <dcp.host>127.0.0.1</dcp.host>
-        <dcp.port>8282</dcp.port>
-        <threads>10</threads>
+        <buildDirectory>${project.basedir}/target</buildDirectory>
+        <!--<skipTests>true</skipTests>-->
+        <!--<dcp.host>127.0.0.1</dcp.host>-->
+        <!--<dcp.port>8282</dcp.port>-->
+        <!--<threads>10</threads>-->
     </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.vmware.admiral</groupId>
+            <artifactId>admiral-request</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.vmware.admiral</groupId>
+            <artifactId>admiral-adapter-docker</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vmware.admiral</groupId>
+            <artifactId>admiral-compute</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${xenon.group}</groupId>
+            <artifactId>xenon-common</artifactId>
+            <version>${xenon.version}</version>
+        </dependency>
+
+        <!-- TEST -->
+        <dependency>
+            <groupId>com.vmware.admiral</groupId>
+            <artifactId>admiral-common-test</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.vmware.admiral.closures</groupId>
+            <artifactId>admiral-closure-services</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.vmware.admiral</groupId>
+            <artifactId>closure-test-integration</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vmware.admiral</groupId>
+            <artifactId>admiral-test-integration</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+    </dependencies>
+
+    <!--
     <build>
         <plugins>
             <plugin>
@@ -58,12 +125,14 @@
                                     <artifactId>jmeter-plugins-extras-libs</artifactId>
                                 </plugin>
                             </jmeterPlugins>
-                            <!--ignoreResultFailures>true</ignoreResultFailures-->
+                            ignoreResultFailures>true</ignoreResultFailures
                             <propertiesUser>
                                 <DCP_HOST>${dcp.host}</DCP_HOST>
                                 <DCP_PORT>${dcp.port}</DCP_PORT>
-                                <DOCKER_HOST_ADDRESSES>${docker.host.performance.addresses}</DOCKER_HOST_ADDRESSES>
-                                <CLOSURES_NUMBERS_PER_THREAD>${closures.numbers.per.thread}</CLOSURES_NUMBERS_PER_THREAD>
+                                <DOCKER_HOST_ADDRESSES>${docker.host.performance.addresses}
+                                </DOCKER_HOST_ADDRESSES>
+                                <CLOSURES_NUMBERS_PER_THREAD>${closures.numbers.per.thread}
+                                </CLOSURES_NUMBERS_PER_THREAD>
                                 <threads>${threads}</threads>
                             </propertiesUser>
                             <testFilesIncluded>
@@ -127,16 +196,17 @@
                             <processAllFilesFound>true</processAllFilesFound>
 
 
-                            <!--
                             Specify custom date format for resources not supporting ISO8601.
 
                             Default IOS8601
-                            -->
-                            <remoteResourcesFromUntilDateFormat>HH:mm_yyyyMMdd</remoteResourcesFromUntilDateFormat>
+
+                            <remoteResourcesFromUntilDateFormat>HH:mm_yyyyMMdd
+                            </remoteResourcesFromUntilDateFormat>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
         </plugins>
     </build>
+ -->
 </project>
