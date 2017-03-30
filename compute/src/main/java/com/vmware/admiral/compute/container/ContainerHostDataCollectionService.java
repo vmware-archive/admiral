@@ -13,6 +13,8 @@ package com.vmware.admiral.compute.container;
 
 import static com.vmware.admiral.compute.ContainerHostService.RETRIES_COUNT_PROP_NAME;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -86,6 +88,10 @@ public class ContainerHostDataCollectionService extends StatefulService {
             TimeUnit.MINUTES.toMicros(5));
     private static final int MAX_RETRIES_COUNT = Integer.getInteger(
             "com.vmware.admiral.compute.container.host.maintenance.max.retries", 3);
+
+    private static final String LOAD_SKIP_DC_PARAMETER = "com.vmware.admiral.compute.container.load.average.dc.skip";
+
+    private static double loadDCSkip = 0.0d;
 
     private static final long FREQUENCY_OF_GENERAL_HOST_COLLECTION_MICROS = Long.getLong(
             "com.vmware.admiral.compute.container.host.frequency.interval.micros",
@@ -194,6 +200,11 @@ public class ContainerHostDataCollectionService extends StatefulService {
             state.lastRunTimeMicros = Utils.getNowMicrosUtc();
             updateHostInfoDataCollection(patch);
         } else {
+            if (shouldSkipDC() && !DeploymentProfileConfig.getInstance().isTest()) {
+                patch.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
+                patch.complete();
+                return;
+            }
             // retrieve resource pools for the given computes
             ResourcePoolQueryHelper rpHelper = ResourcePoolQueryHelper.createForComputes(getHost(),
                     body.computeContainerHostLinks);
@@ -246,6 +257,32 @@ public class ContainerHostDataCollectionService extends StatefulService {
             });
 
         }
+    }
+
+    private boolean shouldSkipDC() {
+        OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
+        Double systemLoadAverage = osBean.getSystemLoadAverage();
+
+        if (systemLoadAverage >= 0) {
+            if (loadDCSkip < 0.1d) {
+                try {
+                    loadDCSkip = Double.parseDouble(System.getProperty(LOAD_SKIP_DC_PARAMETER));
+                } catch (NumberFormatException | NullPointerException e) {
+                    logInfo("Value for %s not specified or incorrect", LOAD_SKIP_DC_PARAMETER);
+                    loadDCSkip = osBean.getAvailableProcessors() / 2.0d;
+                }
+            }
+
+            if (Double.compare(systemLoadAverage, loadDCSkip) > 0) {
+                // If the system is under high load skip the data collection after
+                // provisioning
+                logWarning(
+                        "Skipped on demand data collection because the system is under load. Load for the last minute: "
+                                + systemLoadAverage);
+                return true;
+            }
+        }
+        return false;
     }
 
     private void handleHostAvailable(ComputeState computeState) {
