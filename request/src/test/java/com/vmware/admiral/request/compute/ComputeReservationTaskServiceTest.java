@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.UUID;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ComputeConstants;
@@ -372,6 +373,10 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         assertNotNull(task);
 
         task = waitForTaskError(task.documentSelfLink, ComputeReservationTaskState.class);
+
+        Assert.assertTrue(
+                "Expected 'properly tagged' in error msg '" + task.taskInfo.failure.message + "'",
+                task.taskInfo.failure.message.contains(" properly tagged"));
     }
 
     @Test
