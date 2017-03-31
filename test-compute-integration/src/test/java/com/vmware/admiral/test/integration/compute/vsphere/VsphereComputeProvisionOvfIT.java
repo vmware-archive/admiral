@@ -11,66 +11,19 @@
 
 package com.vmware.admiral.test.integration.compute.vsphere;
 
-import java.net.URI;
-
 import com.vmware.admiral.compute.ComputeConstants;
-import com.vmware.admiral.test.integration.SimpleHttpsClient;
-import com.vmware.photon.controller.model.adapters.vsphere.ovf.ImportOvfRequest;
-import com.vmware.photon.controller.model.adapters.vsphere.ovf.OvfImporterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
-import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
-import com.vmware.xenon.common.Utils;
-import com.vmware.xenon.services.common.QueryTask;
-import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class VsphereComputeProvisionOvfIT extends VsphereComputeProvisionIT {
 
     public static final String OVF_URI = "test.vsphere.ovf.uri";
 
     @Override
-    protected ComputeDescription createComputeDescription() throws Exception {
-
-        ComputeDescription computeDesc = prepareComputeDescription();
-        //remove the image key, as we don't need for Ovf provisioning
-        computeDesc.customProperties
-                .remove(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
-
-        importOvf(computeDesc);
-
-        return findComputeDescription();
-    }
-
-    private void importOvf(ComputeDescription computeDesc)
+    protected void extendComputeDescription(ComputeDescription cd)
             throws Exception {
-        ImportOvfRequest req = new ImportOvfRequest();
-        req.ovfUri = URI.create(getTestProp(OVF_URI));
-        req.template = computeDesc;
+        super.extendComputeDescription(cd);
+        cd.customProperties.remove(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
 
-        sendRequest(SimpleHttpsClient.HttpMethod.PATCH, OvfImporterService.SELF_LINK,
-                Utils.toJson(req));
+        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_REF_NAME, getTestProp(OVF_URI));
     }
-
-    /**
-     * Do a query to get the ComputeDescription. Perhaps the OvfImporter should return the
-     * links of the created descriptions?
-     */
-    private ComputeDescription findComputeDescription() throws Exception {
-
-        QueryTask.QuerySpecification qs = new QueryTask.QuerySpecification();
-        qs.query.addBooleanClause(QueryTask.Query.Builder.create()
-                .addFieldClause(ComputeState.FIELD_NAME_ID, "ovf-*",
-                        QueryTask.QueryTerm.MatchType.WILDCARD).build());
-        QueryTask qt = QueryTask.create(qs).setDirect(true);
-
-        String resultJson = sendRequest(SimpleHttpsClient.HttpMethod.POST,
-                ServiceUriPaths.CORE_QUERY_TASKS, Utils.toJson(qt));
-
-        QueryTask result = Utils.fromJson(resultJson, QueryTask.class);
-        result.results.documentLinks.get(0);
-
-        String descJson = sendRequest(SimpleHttpsClient.HttpMethod.GET,
-                result.results.documentLinks.get(0), null);
-        return Utils.fromJson(descJson, ComputeDescription.class);
-    }
-
 }
