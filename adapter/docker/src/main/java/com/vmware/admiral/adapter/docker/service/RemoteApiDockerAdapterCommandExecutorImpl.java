@@ -44,6 +44,7 @@ import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
 /**
  * Docker command executor implementation based on DCP and the docker remote API
@@ -339,8 +340,8 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         prepareRequest(op, false);
         op.setExpiration(ServiceUtils.getExpirationTimeFromNowInMicros(
                 TimeUnit.SECONDS.toMicros(10)));
-        // Avoid reusing an open channel to this host to ensure certs validation.
-        op.setConnectionTag(input.getCredentials().documentSelfLink);
+
+        setConnectionTag(input.getCredentials(), op);
 
         if (isSecure(input.getDockerUri())) {
             // Make sure that the trusted certificate is loaded before proceeding to avoid
@@ -357,14 +358,30 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
     public void hostInfo(CommandInput input, CompletionHandler completionHandler) {
         createOrUpdateTargetSsl(input);
 
+        Operation op = Operation
+                .createGet(UriUtils.extendUri(input.getDockerUri(), "/info"))
+                .setCompletion(completionHandler);
+
+        prepareRequest(op, false);
+
+        setConnectionTag(input.getCredentials(), op);
+
         if (isSecure(input.getDockerUri())) {
             // Make sure that the trusted certificate is loaded before proceeding to avoid
             // SSLHandshakeException and getting hosts in DISABLED state
             ensureTrustDelegateExists(input, SSL_TRUST_RETRIES_COUNT, () -> {
-                sendGet(UriUtils.extendUri(input.getDockerUri(), "/info"), null, completionHandler);
+                serviceClient.send(op);
             });
         } else {
-            sendGet(UriUtils.extendUri(input.getDockerUri(), "/info"), null, completionHandler);
+            serviceClient.send(op);
+        }
+    }
+
+    private void setConnectionTag(AuthCredentialsServiceState credentials, Operation op) {
+        // Avoid reusing an open channel to this host to ensure certs validation.
+        if (credentials != null) {
+            op.setConnectionTag(credentials.documentSelfLink +
+                    String.valueOf(credentials.documentUpdateTimeMicros));
         }
     }
 
