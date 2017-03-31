@@ -300,6 +300,13 @@ public class VolumeUtil {
                 .collect(Collectors.toList());
     }
 
+    public static boolean isContainerRequest(Map<String, String> customProperties) {
+        if (customProperties != null) {
+            return customProperties.containsKey("container_request_id");
+        }
+        return false;
+    }
+
     private static String extractVolumeName(String volume) {
         String hostPart = volume.split(":/")[0];
         // a mount point starts with either / | ~ | . | ..

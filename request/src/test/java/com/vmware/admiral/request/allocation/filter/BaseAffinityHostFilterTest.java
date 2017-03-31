@@ -28,10 +28,13 @@ import org.junit.Before;
 
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
+import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
+import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState;
 import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
@@ -202,4 +205,19 @@ public class BaseAffinityHostFilterTest extends RequestBaseTest {
         return hostSelectionMap;
     }
 
+    protected CompositeComponent createCompositeComponent(CompositeDescription compositeDesc,
+            ContainerVolumeState... volumes) throws Throwable {
+        CompositeComponent compositeComponent = new CompositeComponent();
+        compositeComponent.documentSelfLink = state.contextId;
+        compositeComponent.name = compositeDesc.name + "-mcm-102";
+        compositeComponent.compositeDescriptionLink = compositeDesc.documentSelfLink;
+        compositeComponent.componentLinks = new ArrayList<>();
+        for (ContainerVolumeState containerVolumeState : volumes) {
+            compositeComponent.componentLinks.add(containerVolumeState.documentSelfLink);
+        }
+        compositeComponent = doPost(compositeComponent, CompositeComponentFactoryService.SELF_LINK);
+        assertNotNull(compositeComponent);
+        addForDeletion(compositeComponent);
+        return compositeComponent;
+    }
 }

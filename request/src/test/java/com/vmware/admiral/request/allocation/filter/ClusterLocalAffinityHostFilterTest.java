@@ -26,6 +26,7 @@ import java.util.UUID;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
+import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
@@ -62,8 +63,10 @@ public class ClusterLocalAffinityHostFilterTest extends BaseAffinityHostFilterTe
     public void testFilterWithLocalNamedVolumes() throws Throwable {
         ContainerVolumeDescription volumeDesc = createVolumeDescription("Postgres",
                 DEFAULT_VOLUME_DRIVER);
+        CompositeDescription compositeDesc = createCompositeDesc(false, false, volumeDesc);
         String[] volumes = new String[] { volumeDesc.name + ":/tmp" };
-        createVolumeState(volumeDesc);
+        ContainerVolumeState volume = createVolumeState(volumeDesc);
+        createCompositeComponent(compositeDesc, volume);
 
         ContainerDescription desc = createDescription();
         desc.volumes = volumes;
@@ -79,8 +82,10 @@ public class ClusterLocalAffinityHostFilterTest extends BaseAffinityHostFilterTe
     public void testFilterWithLocalNonNamedVolumes() throws Throwable {
         ContainerVolumeDescription volumeDesc = createVolumeDescription("Postgres",
                 VMDK_VOLUME_DRIVER);
+        CompositeDescription compositeDesc = createCompositeDesc(false, false, volumeDesc);
         String[] volumes = new String[] { volumeDesc.name + ":/tmp" };
-        createVolumeState(volumeDesc);
+        ContainerVolumeState volume = createVolumeState(volumeDesc);
+        createCompositeComponent(compositeDesc, volume);
 
         ContainerDescription desc = createDescription();
         desc.volumes = volumes;
