@@ -1872,8 +1872,12 @@ services.updateContainerTemplate = function(template) {
   return patch(template.documentSelfLink, template);
 };
 
-services.copyContainerTemplate = function(template) {
-  return post(links.COMPOSITE_DESCRIPTIONS_CLONE, template);
+services.copyContainerTemplate = function(template, reverse) {
+  var target = links.COMPOSITE_DESCRIPTIONS_CLONE;
+  if (reverse) {
+    target += '?reverseParentLinks=true';
+  }
+  return post(target, template);
 };
 
 services.importContainerTemplate = function(template) {

@@ -14,8 +14,10 @@ package com.vmware.admiral.compute.container;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -42,8 +44,74 @@ public class CompositeDescriptionCloneServiceTest extends ComputeBaseTest {
         waitForServiceAvailability(CompositeDescriptionFactoryService.SELF_LINK);
     }
 
-    @Before
-    public void initObjects() throws Throwable {
+    @Test
+    public void testCloneCompositeDescriptionWithTwoContainers() throws Throwable {
+        initObjectsWithTwoContainers();
+
+        CompositeDescription clonedCompositeDesc = cloneCompositeDesc(
+                createdCompositeWithTwoContainers, false);
+
+        checkCompositeForEquality(createdCompositeWithTwoContainers, clonedCompositeDesc, false);
+
+        List<String> containerDescriptions = clonedCompositeDesc.descriptionLinks;
+
+        ContainerDescription clonedFirstContainer = getDocument(ContainerDescription.class,
+                containerDescriptions.get(0));
+        checkContainersForЕquality(createdFirstContainer, clonedFirstContainer, false);
+
+        ContainerDescription clonedSecondContainer = getDocument(ContainerDescription.class,
+                containerDescriptions.get(1));
+        checkContainersForЕquality(createdSecondContainer, clonedSecondContainer, false);
+    }
+
+    @Test
+    public void testCloneCompositeDescriptionWithTwoContainersAndReverseParentLinks()
+            throws Throwable {
+        initObjectsWithTwoContainers();
+
+        CompositeDescription clonedCompositeDesc = cloneCompositeDesc(
+                createdCompositeWithTwoContainers, true);
+
+        checkCompositeForEquality(createdCompositeWithTwoContainers, clonedCompositeDesc, true);
+
+        List<String> containerDescriptions = clonedCompositeDesc.descriptionLinks;
+
+        ContainerDescription clonedFirstContainer = getDocument(ContainerDescription.class,
+                containerDescriptions.get(0));
+        checkContainersForЕquality(createdFirstContainer, clonedFirstContainer, true);
+
+        ContainerDescription clonedSecondContainer = getDocument(ContainerDescription.class,
+                containerDescriptions.get(1));
+        checkContainersForЕquality(createdSecondContainer, clonedSecondContainer, true);
+    }
+
+    @Test
+    public void testCloneCompositeDescriptionWithoutContainers() throws Throwable {
+        initObjectsWithoutContainers();
+
+        CompositeDescription clonedCompositeDesc = cloneCompositeDesc(
+                createdCompositeWithoutContainers, false);
+
+        checkCompositeForEquality(createdCompositeWithoutContainers, clonedCompositeDesc, false);
+    }
+
+    @Test
+    public void testCloneCompositeDescriptionWithoutContainersAndReverseParentLinks()
+            throws Throwable {
+        initObjectsWithoutContainers();
+
+        CompositeDescription clonedCompositeDesc = cloneCompositeDesc(
+                createdCompositeWithoutContainers, true);
+
+        checkCompositeForEquality(createdCompositeWithoutContainers, clonedCompositeDesc, true);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCloneNoCompositeDescription() throws Throwable {
+        cloneCompositeDesc(null, false);
+    }
+
+    private void initObjectsWithTwoContainers() throws Throwable {
         ContainerDescription firstContainer = new ContainerDescription();
         firstContainer.name = "testContainer1";
         firstContainer.image = "registry.hub.docker.com/nginx";
@@ -62,16 +130,6 @@ public class CompositeDescriptionCloneServiceTest extends ComputeBaseTest {
         createdFirstContainer = doPost(firstContainer, ContainerDescriptionService.FACTORY_LINK);
         createdSecondContainer = doPost(firstContainer, ContainerDescriptionService.FACTORY_LINK);
 
-        CompositeDescription firstComposite = new CompositeDescription();
-        firstComposite.name = "testComposite1";
-        firstComposite.customProperties = new HashMap<String, String>();
-        firstComposite.customProperties.put("key1", "value1");
-        firstComposite.customProperties.put("key2", "value2");
-        firstComposite.descriptionLinks = new ArrayList<String>();
-
-        createdCompositeWithoutContainers = doPost(firstComposite,
-                CompositeDescriptionService.SELF_LINK);
-
         CompositeDescription secondComposite = new CompositeDescription();
         secondComposite.name = "testComposite2";
         secondComposite.customProperties = new HashMap<String, String>();
@@ -85,40 +143,28 @@ public class CompositeDescriptionCloneServiceTest extends ComputeBaseTest {
                 CompositeDescriptionService.SELF_LINK);
     }
 
-    @Test
-    public void testCloneCompositeDescriptionWithTwoContainers() throws Throwable {
-        CompositeDescription clonedCompositeDesc = cloneCompositeDesc(createdCompositeWithTwoContainers);
+    private void initObjectsWithoutContainers() throws Throwable {
+        CompositeDescription firstComposite = new CompositeDescription();
+        firstComposite.name = "testComposite1";
+        firstComposite.customProperties = new HashMap<String, String>();
+        firstComposite.customProperties.put("key1", "value1");
+        firstComposite.customProperties.put("key2", "value2");
+        firstComposite.descriptionLinks = new ArrayList<String>();
 
-        checkCompositeForEquality(createdCompositeWithTwoContainers, clonedCompositeDesc);
-
-        List<String> containerDescripsions = clonedCompositeDesc.descriptionLinks;
-
-        ContainerDescription clonedFirstContainer = getDocument(ContainerDescription.class,
-                containerDescripsions.get(0));
-        checkContainersForЕquality(createdFirstContainer, clonedFirstContainer);
-
-        ContainerDescription clonedSecondContainer = getDocument(ContainerDescription.class,
-                containerDescripsions.get(1));
-        checkContainersForЕquality(createdSecondContainer, clonedSecondContainer);
+        createdCompositeWithoutContainers = doPost(firstComposite,
+                CompositeDescriptionService.SELF_LINK);
     }
 
-    @Test
-    public void testCloneCompositeDescriptionWithoutContainers() throws Throwable {
-        CompositeDescription clonedCompositeDesc = cloneCompositeDesc(createdCompositeWithoutContainers);
-
-        checkCompositeForEquality(createdCompositeWithoutContainers, clonedCompositeDesc);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testCloneNoCompositeDescription() throws Throwable {
-        cloneCompositeDesc(null);
-    }
-
-    private CompositeDescription cloneCompositeDesc(CompositeDescription compositeDesc)
-            throws Throwable {
+    private CompositeDescription cloneCompositeDesc(CompositeDescription compositeDesc,
+            boolean reverse) throws Throwable {
         CompositeDescription[] result = new CompositeDescription[] { null };
-        Operation cloneCompositeDesc = Operation.createPost(
-                UriUtils.buildUri(host, CompositeDescriptionCloneService.SELF_LINK))
+        URI cloneOpUri = UriUtils.buildUri(host, CompositeDescriptionCloneService.SELF_LINK);
+        if (reverse) {
+            cloneOpUri = UriUtils.appendQueryParam(cloneOpUri,
+                    CompositeDescriptionCloneService.REVERSE_PARENT_LINKS_PARAM,
+                    Boolean.TRUE.toString());
+        }
+        Operation cloneCompositeDesc = Operation.createPost(cloneOpUri)
                 .setBody(compositeDesc)
                 .setCompletion(
                         (o, e) -> {
@@ -142,7 +188,34 @@ public class CompositeDescriptionCloneServiceTest extends ComputeBaseTest {
     }
 
     private void checkContainersForЕquality(ContainerDescription createdContainer,
-            ContainerDescription clonedContainer) {
+            ContainerDescription clonedContainer, boolean reverse) throws Throwable {
+
+        // we have to load the proper createdContainer and clonedContainer because the cloning
+        // operations of the composite description components are done in parallel and there's no
+        // guarantee that the original order will be kept for the cloned composite description
+        // components
+
+        if (reverse) {
+            createdContainer = getDocument(ContainerDescription.class,
+                    createdContainer.documentSelfLink);
+
+            assertNotNull(createdContainer.parentDescriptionLink);
+
+            clonedContainer = getDocument(ContainerDescription.class,
+                    createdContainer.parentDescriptionLink);
+
+            assertEquals(clonedContainer.documentSelfLink, createdContainer.parentDescriptionLink);
+            assertNull(clonedContainer.parentDescriptionLink);
+        } else {
+            assertNotNull(clonedContainer.parentDescriptionLink);
+
+            createdContainer = getDocument(ContainerDescription.class,
+                    clonedContainer.parentDescriptionLink);
+
+            assertEquals(createdContainer.documentSelfLink, clonedContainer.parentDescriptionLink);
+            assertNull(createdContainer.parentDescriptionLink);
+        }
+
         assertNotNull(createdContainer);
         assertNotNull(clonedContainer);
         assertNotEquals(createdContainer.documentSelfLink, clonedContainer.documentSelfLink);
@@ -158,12 +231,22 @@ public class CompositeDescriptionCloneServiceTest extends ComputeBaseTest {
     }
 
     private void checkCompositeForEquality(CompositeDescription createdComposite,
-            CompositeDescription clonedComposite) {
+            CompositeDescription clonedComposite, boolean reverse) throws Throwable {
+
+        createdComposite = getDocument(CompositeDescription.class,
+                createdComposite.documentSelfLink);
+
         assertNotNull(createdComposite);
         assertNotNull(clonedComposite);
         assertNotEquals(createdComposite.documentSelfLink, clonedComposite.documentSelfLink);
         assertEquals(createdComposite.name, clonedComposite.name);
-        assertEquals(createdComposite.documentSelfLink, clonedComposite.parentDescriptionLink);
+        if (reverse) {
+            assertEquals(clonedComposite.documentSelfLink, createdComposite.parentDescriptionLink);
+            assertNull(clonedComposite.parentDescriptionLink);
+        } else {
+            assertEquals(createdComposite.documentSelfLink, clonedComposite.parentDescriptionLink);
+            assertNull(createdComposite.parentDescriptionLink);
+        }
         assertEquals(createdComposite.tenantLinks, clonedComposite.tenantLinks);
         assertEquals(createdComposite.customProperties, clonedComposite.customProperties);
         assertEquals(createdComposite.descriptionLinks.size(),

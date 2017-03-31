@@ -186,6 +186,11 @@ public class ContainerNetworkDescriptionService extends StatefulService {
                 NetworkUtils.SHALLOW_MERGE_SKIP_MAPS_STRATEGY);
         PropertyUtils.mergeCustomProperties(currentState.options, patchBody.options);
 
+        if (patchBody.parentDescriptionLink != null
+                && patchBody.parentDescriptionLink.trim().isEmpty()) {
+            currentState.parentDescriptionLink = null;
+        }
+
         String newSignature = Utils.computeSignature(currentState, docDesc);
 
         boolean changed = !newSignature.equals(currentSignature);

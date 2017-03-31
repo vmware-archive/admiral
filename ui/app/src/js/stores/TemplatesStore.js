@@ -2204,7 +2204,7 @@ let TemplatesStore = Reflux.createStore({
   },
 
   onCopyTemplate: function(type, template, group) {
-    services.copyContainerTemplate(template).then((result) => {
+    services.copyContainerTemplate(template, false).then((result) => {
       actions.TemplateActions.createContainer(type,
         utils.getDocumentId(result.documentSelfLink), group);
     }).catch(this.onGenericCreateError);

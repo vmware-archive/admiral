@@ -29,6 +29,7 @@ describe('Containers integration test', function() {
     var createdDescription;
     var createdContainer;
     var templateIdNavigation;
+    var clonedDescription;
 
     services.createContainerDescription({
       image: 'voting-app-vote:latest',
@@ -67,16 +68,24 @@ describe('Containers integration test', function() {
       var templateLink = links.COMPOSITE_DESCRIPTIONS + '/' + templateIdNavigation;
 
       services.loadDocument(createdContainer.documentSelfLink).then((container) => {
-        // The description link has been changed
-        expect(container.descriptionLink).not.toEqual(createdDescription.documentSelfLink);
-
+        // The description link has not changed
+        expect(container.descriptionLink).toEqual(createdDescription.documentSelfLink);
         return services.loadDocument(container.descriptionLink);
       }).then((description) => {
-        expect(description.parentDescriptionLink).toEqual(createdDescription.documentSelfLink);
-
+        createdDescription = description;
+        // The description parent link is not empty
+        expect(createdDescription.parentDescriptionLink).not.toBeUndefined();
+        return services.loadDocument(description.parentDescriptionLink);
+      }).then((description) => {
+        clonedDescription = description; 
+        // The cloned description parent link is empty...
+        expect(clonedDescription.parentDescriptionLink).toBeUndefined();
+        // ...and the created one points to it
+        expect(createdDescription.parentDescriptionLink).toEqual(
+    	    clonedDescription.documentSelfLink);
         return services.loadDocument(templateLink);
       }).then((template) => {
-        expect(template.descriptionLinks).toEqual([createdDescription.documentSelfLink]);
+        expect(template.descriptionLinks).toEqual([clonedDescription.documentSelfLink]);
       }).then(done);
     });
   });

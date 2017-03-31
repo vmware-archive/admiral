@@ -18,6 +18,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import static com.vmware.admiral.compute.container.CompositeDescriptionCloneService.REVERSE_PARENT_LINKS_PARAM;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -40,6 +42,8 @@ import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
+import com.vmware.admiral.compute.container.CompositeDescriptionCloneService;
+import com.vmware.admiral.compute.container.CompositeDescriptionService;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
@@ -765,12 +769,14 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
                 .createContainerNetworkDescription(networkName);
         networkDesc.documentSelfLink = UUID.randomUUID().toString();
 
-        ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription("Container1");
+        ContainerDescription container1Desc = TestRequestStateFactory
+                .createContainerDescription("Container1");
         container1Desc.documentSelfLink = UUID.randomUUID().toString();
         container1Desc.networks = new HashMap<>();
         container1Desc.networks.put(networkName, new ServiceNetwork());
 
-        ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription("Container2");
+        ContainerDescription container2Desc = TestRequestStateFactory
+                .createContainerDescription("Container2");
         container2Desc.documentSelfLink = UUID.randomUUID().toString();
         container2Desc.affinity = new String[] { "!Container1:hard" };
         container2Desc.networks = new HashMap<>();
@@ -2244,7 +2250,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         request = waitForRequestToComplete(request);
 
         List<ContainerState> containerStateList = getAllContainers(computeState.documentSelfLink);
-        assertEquals("Should have one container before deleting the host.", 1, containerStateList.size());
+        assertEquals("Should have one container before deleting the host.", 1,
+                containerStateList.size());
 
         request = TestRequestStateFactory.createComputeRequestState();
         request.operation = ComputeOperationType.DELETE.id;
@@ -2254,7 +2261,89 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         request = waitForRequestToComplete(request);
 
         containerStateList = getAllContainers(computeState.documentSelfLink);
-        assertEquals("Should have zero containers after deleting the host.", 0, containerStateList.size());
+        assertEquals("Should have zero containers after deleting the host.", 0,
+                containerStateList.size());
+    }
+
+    @Test
+    public void testRequestLifeCycleWithCreateTemplateFromContainer() throws Throwable {
+        host.log("########  Start of testRequestLifeCycleWithCreateTemplateFromContainer ######## ");
+        // setup Docker Host:
+        ResourcePoolState resourcePool = createResourcePool();
+        ComputeDescription dockerHostDesc = createDockerHostDescription();
+        createDockerHost(dockerHostDesc, resourcePool);
+
+        // setup Container desc:
+        ContainerDescription containerDesc = createContainerDescription();
+
+        // setup Group Placement:
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
+
+        // 1. Request a container instance:
+        RequestBrokerState request = TestRequestStateFactory.createRequestState();
+        request.resourceDescriptionLink = containerDesc.documentSelfLink;
+        request.tenantLinks = groupPlacementState.tenantLinks;
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // wait for request completed state:
+        request = waitForRequestToComplete(request);
+
+        // Verify request status
+        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
+        assertNotNull(rs);
+        assertEquals(Integer.valueOf(100), rs.progress);
+
+        ContainerState containerState = getDocument(ContainerState.class,
+                request.resourceLinks.iterator().next());
+        assertNotNull(containerState);
+
+        // 2. Create Template from Container
+
+        // 2.1 - make a new CompositeDescription with the current ContainerDescription
+
+        CompositeDescription compositeDesc = new CompositeDescription();
+        compositeDesc.name = containerState.names.iterator().next();
+        compositeDesc.descriptionLinks = new ArrayList<String>();
+        compositeDesc.descriptionLinks.add(containerDesc.documentSelfLink);
+
+        compositeDesc = doPost(compositeDesc, CompositeDescriptionService.SELF_LINK);
+
+        // 2.2 - clone the CompositeDescription and get a new one with a new ContainerDescription
+
+        CompositeDescription clonedCompositeDesc = doPost(compositeDesc,
+                CompositeDescriptionCloneService.SELF_LINK + UriUtils.URI_QUERY_CHAR
+                        + UriUtils.buildUriQuery(REVERSE_PARENT_LINKS_PARAM, "true"));
+
+        // 3. Remove the container
+        request = TestRequestStateFactory.createRequestState();
+        request.operation = ContainerOperationType.DELETE.id;
+        request.resourceLinks = new HashSet<>();
+        request.resourceLinks.add(containerState.documentSelfLink);
+        request = startRequest(request);
+
+        request = waitForRequestToComplete(request);
+
+        // Verify request status
+        rs = getDocument(RequestStatus.class, request.requestTrackerLink);
+        assertNotNull(rs);
+        assertEquals(Integer.valueOf(100), rs.progress);
+
+        // Verify the container state is removed
+        containerState = searchForDocument(ContainerState.class, request.resourceLinks.iterator()
+                .next());
+        assertNull(containerState);
+
+        // Verify the container description is removed
+        containerDesc = searchForDocument(ContainerDescription.class,
+                containerDesc.documentSelfLink);
+        assertNull(containerDesc);
+
+        // Verify the cloned composite description exists
+        clonedCompositeDesc = getDocument(CompositeDescription.class,
+                clonedCompositeDesc.documentSelfLink);
+        assertNotNull(clonedCompositeDesc);
     }
 
     private List<ContainerState> getAllContainers(String computeSelfLink) {
@@ -2264,7 +2353,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         QueryTask.Query.Builder queryBuilder = QueryTask.Query.Builder.create()
                 .addKindFieldClause(ContainerState.class)
                 .addFieldClause(ContainerState.FIELD_NAME_PARENT_LINK, computeSelfLink);
-        QueryTask containerStateQuery =  QueryTask.Builder.create().setQuery(queryBuilder.build()).build();
+        QueryTask containerStateQuery = QueryTask.Builder.create().setQuery(queryBuilder.build())
+                .build();
         QueryUtil.addExpandOption(containerStateQuery);
         new ServiceDocumentQuery<ContainerState>(host, ContainerState.class).query(
                 containerStateQuery,
@@ -2296,11 +2386,13 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         ComputeState dockerHost2 = createDockerHost(dockerHostDesc, resourcePool, true);
         addForDeletion(dockerHost2);
 
-        ContainerDescription container1Desc = TestRequestStateFactory.createContainerDescription("Container1");
+        ContainerDescription container1Desc = TestRequestStateFactory
+                .createContainerDescription("Container1");
         container1Desc.documentSelfLink = UUID.randomUUID().toString();
         container1Desc.portBindings = null;
 
-        ContainerDescription container2Desc = TestRequestStateFactory.createContainerDescription("Container2");
+        ContainerDescription container2Desc = TestRequestStateFactory
+                .createContainerDescription("Container2");
         container2Desc.documentSelfLink = UUID.randomUUID().toString();
         container2Desc.links = new String[] { "Container1:mycontainer" };
         container1Desc.portBindings = null;

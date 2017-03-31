@@ -92,7 +92,7 @@ public class CompositeDescriptionService extends StatefulService {
         public void copyTo(ServiceDocument target) {
             super.copyTo(target);
             if (target instanceof CompositeDescription) {
-                CompositeDescription cd = (CompositeDescription)target;
+                CompositeDescription cd = (CompositeDescription) target;
                 cd.name = this.name;
                 cd.status = this.status;
                 cd.lastPublished = this.lastPublished;
@@ -233,6 +233,13 @@ public class CompositeDescriptionService extends StatefulService {
         currentState.status = mergeProperty(currentState.status, patchBody.status);
         currentState.lastPublished = mergeProperty(currentState.lastPublished,
                 patchBody.lastPublished);
+        if (patchBody.parentDescriptionLink != null
+                && patchBody.parentDescriptionLink.trim().isEmpty()) {
+            currentState.parentDescriptionLink = null;
+        } else {
+            currentState.parentDescriptionLink = mergeProperty(currentState.parentDescriptionLink,
+                    patchBody.parentDescriptionLink);
+        }
         currentState.descriptionLinks = mergeProperty(currentState.descriptionLinks,
                 patchBody.descriptionLinks);
         currentState.customProperties = mergeCustomProperties(
@@ -302,42 +309,37 @@ public class CompositeDescriptionService extends StatefulService {
 
         Map<String, String> images = new HashMap<>();
         CompositeDescriptionImages imagesResult = new CompositeDescriptionImages();
-        new ServiceDocumentQuery<>(
-                getHost(), null).query(queryTask,
-                        (r) -> {
-                            if (r.hasException()) {
-                                op.fail(r.getException());
-                            } else if (r.hasResult()) {
-                                if (r.getDocumentSelfLink()
-                                        .startsWith(ContainerDescriptionService.FACTORY_LINK)) {
-                                    ContainerDescription containerDescription = Utils.fromJson(
-                                            r.getRawResult(),
-                                            ContainerDescription.class);
-                                    images.put(containerDescription.documentSelfLink,
-                                            containerDescription.image);
-                                    imagesResult.tenantLinks = containerDescription.tenantLinks;
-                                } else if (r.getDocumentSelfLink().startsWith(
-                                        ClosureDescriptionFactoryService.FACTORY_LINK)) {
-                                    ClosureDescription closureDescription = Utils.fromJson(
-                                            r.getRawResult(),
-                                            ClosureDescription.class);
-                                    images.put(closureDescription.documentSelfLink,
-                                            closureDescription.runtime);
-                                    imagesResult.tenantLinks = closureDescription.tenantLinks;
-                                } else {
-                                    logWarning("Unexpected result type: %s",
-                                            r.getDocumentSelfLink());
-                                }
-                            } else {
-                                imagesResult.descriptionImages = images;
-                                op.setBody(imagesResult).complete();
-                            }
-                        });
+        new ServiceDocumentQuery<>(getHost(), null).query(queryTask,
+                (r) -> {
+                    if (r.hasException()) {
+                        op.fail(r.getException());
+                    } else if (r.hasResult()) {
+                        if (r.getDocumentSelfLink()
+                                .startsWith(ContainerDescriptionService.FACTORY_LINK)) {
+                            ContainerDescription containerDescription = Utils.fromJson(
+                                    r.getRawResult(), ContainerDescription.class);
+                            images.put(containerDescription.documentSelfLink,
+                                    containerDescription.image);
+                            imagesResult.tenantLinks = containerDescription.tenantLinks;
+                        } else if (r.getDocumentSelfLink().startsWith(
+                                ClosureDescriptionFactoryService.FACTORY_LINK)) {
+                            ClosureDescription closureDescription = Utils.fromJson(
+                                    r.getRawResult(), ClosureDescription.class);
+                            images.put(closureDescription.documentSelfLink,
+                                    closureDescription.runtime);
+                            imagesResult.tenantLinks = closureDescription.tenantLinks;
+                        } else {
+                            logWarning("Unexpected result type: %s", r.getDocumentSelfLink());
+                        }
+                    } else {
+                        imagesResult.descriptionImages = images;
+                        op.setBody(imagesResult).complete();
+                    }
+                });
     }
 
     private void retrieveComponentDescriptions(CompositeDescription compositeDescription,
-            CompositeDescriptionExpanded cdExpanded,
-            Operation get) {
+            CompositeDescriptionExpanded cdExpanded, Operation get) {
         List<String> componentDescriptionLinks = getComponentDescriptionLinks(compositeDescription);
 
         QueryTask componentDescriptionQueryTask = new QueryTask();
@@ -353,31 +355,30 @@ public class CompositeDescriptionService extends StatefulService {
                 componentDescriptionLinks);
 
         List<ComponentDescription> componentDescriptions = new LinkedList<>();
-        new ServiceDocumentQuery<>(
-                                getHost(), null).query(componentDescriptionQueryTask,
-                                        (r) -> {
-                                            if (r.hasException()) {
-                                                get.fail(r.getException());
-                                            } else if (r.hasResult()) {
-                                                    ComponentMeta meta = CompositeComponentRegistry
-                                                            .metaByDescriptionLink(r.getDocumentSelfLink());
-                                                    ResourceState description = Utils.fromJson(r.getRawResult(),
-                                                            meta.descriptionClass);
-                                                    if (description != null) {
-                                                        ComponentDescription cd = new ComponentDescription(
-                                                                description,
-                                                                meta.resourceType,
-                                                                description.name,
-                                                                getBindingsForComponent(description.name, cdExpanded));
-                                                        componentDescriptions.add(cd);
-                                                    } else {
-                                                        logWarning("Unexpected result type: %s", r.getDocumentSelfLink());
-                                                    }
-                                                } else {
-                                                cdExpanded.componentDescriptions = componentDescriptions;
-                                                get.setBody(cdExpanded).complete();
-                                            }
-                                        });
+        new ServiceDocumentQuery<>(getHost(), null).query(componentDescriptionQueryTask,
+                (r) -> {
+                    if (r.hasException()) {
+                        get.fail(r.getException());
+                    } else if (r.hasResult()) {
+                        ComponentMeta meta = CompositeComponentRegistry
+                                .metaByDescriptionLink(r.getDocumentSelfLink());
+                        ResourceState description = Utils.fromJson(r.getRawResult(),
+                                meta.descriptionClass);
+                        if (description != null) {
+                            ComponentDescription cd = new ComponentDescription(
+                                    description,
+                                    meta.resourceType,
+                                    description.name,
+                                    getBindingsForComponent(description.name, cdExpanded));
+                            componentDescriptions.add(cd);
+                        } else {
+                            logWarning("Unexpected result type: %s", r.getDocumentSelfLink());
+                        }
+                    } else {
+                        cdExpanded.componentDescriptions = componentDescriptions;
+                        get.setBody(cdExpanded).complete();
+                    }
+                });
     }
 
     private List<Binding> getBindingsForComponent(String componentName,
