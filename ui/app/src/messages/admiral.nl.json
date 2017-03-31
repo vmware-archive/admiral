@@ -1,5 +1,9 @@
 {
   "app": {
+    "header": {
+      "management": "Beheer",
+      "registry": "Register"
+    },
     "homepage": {
       "welcome": "Welkom!",
       "description": "Dit is de plaats waar u <b>toepassingen in containervorm kunt maken, inrichten, beheren en bewaken.</b>",
@@ -17,22 +21,30 @@
       }
     },
     "navbar": {
-      "hosts": "Hosts",
-      "placements": "Plaatsingen",
-      "templates": "Sjablonen",
       "resources": "Bronnen",
+      "hosts": "Hosts",
+      "policies": "Beleid",
+      "placements": "Plaatsingen",
+      "registries": "Registers",
+      "templates": "Sjablonen",
+      "deployment": "Implementaties",
+      "projects": "Projecten",
       "containers": "Containers",
       "applications": "Toepassingen",
       "networks": "Netwerken",
       "volumes": "Volumes",
       "closures": "Sluitingen",
-      "kubernetes": "Kubernetes",
       "eventlog": "Gebeurtenislogboek",
       "placementZones": "Plaatsingszones",
-      "environments": "Profielen",
+      "profiles": "Profielen",
       "endpoints": "Endpoints",
       "machines": "Machines",
-      "compute": "Computingbron"
+      "compute": "Computingbron",
+      "kubernetesResources": "K8S-bronnen",
+      "kubernetesDeployments": "Implementaties",
+      "kubernetesPods": "Pods",
+      "kubernetesServices": "Services",
+      "kubernetesReplicationControllers": "Replicatiecontrollers"
     },
     "host": {
       "entity": "Host",
@@ -186,7 +198,8 @@
         "certificateTitle": "Certificaat",
         "publicTitle": "Openbare sleutel",
         "publicCertificateTitle": "Openbaar certificaat",
-        "privateCertificateTitle": "Persoonlijk certificaat"
+        "privateCertificateTitle": "Persoonlijk certificaat",
+        "customProperties": "Aangepaste eigenschappen"
       }
     },
     "deploymentPolicy": {
@@ -265,6 +278,7 @@
         "false": "Nee",
         "searchCategoryFilterTitle": "Weergave:",
         "partialResultWarning": "U krijgt onvolledige zoekresultaten te zien vanwege één of meerdere mislukte query's.",
+        "continue": "Doorgaan",
         "searchCategory": {
           "all": "Alles",
           "images": "Images",
@@ -288,7 +302,15 @@
         "editDefinition": {
           "title": "Containerdefinitie bewerken"
         },
-        "editNetwork" :{
+        "editProject": {
+          "createTitle": "Project maken",
+          "updateTitle": "Project bijwerken",
+          "name": "Naam",
+          "create": "Maken",
+          "update": "Bijwerken",
+          "publicCheckboxLabel": "Dit project openbaar maken"
+        },
+        "editNetwork": {
           "newLabel": "Netwerk toevoegen",
           "newTitle": "Netwerkconfiguratie toevoegen",
           "newDropdownTitle": "Netwerk toevoegen...",
@@ -402,11 +424,11 @@
         "deploymentPolicyColumn": "Implementatiebeleid",
         "priorityColumn": "Prioriteit",
         "instancesColumn": "Instanties",
-        "cpuColumn": "CPU-gedeelten",
         "memoryColumn": "Geheugenlimiet",
         "storageColumn": "Opslaglimiet",
         "instancesPerPlacement": "Instanties per plaatsing weergeven",
-        "unlimitedInstances": "Onbeperkt"
+        "unlimitedInstances": "Onbeperkt",
+        "unlimitedMemoryLimit": "Onbeperkt"
       },
       "edit": {
         "createNew": "Nieuwe plaatsing",
@@ -421,10 +443,10 @@
         "deploymentPolicyLabel": "Implementatiebeleid",
         "selectDeploymentPolicy": "Implementatiebeleid selecteren",
         "priorityLabel": "Prioriteit",
-        "priorityPlaceholder": "Positief getal (optioneel)",
+        "priorityPlaceholder": "Positief getal",
         "priorityHint": "Leeg laten om het de laagste prioriteit te geven",
         "instancesLabel": "Instanties",
-        "instancesPlaceholder": "Aantal instanties (optioneel)",
+        "instancesPlaceholder": "Aantal instanties",
         "instancesHint": "Positief geheel getal om het maximum aantal instanties te beperken. Laat leeg of voer 0 in voor onbeperkt aantal.",
         "cpuSharesLabel": "CPU-gedeelten",
         "memoryLimitLabel": "Geheugenlimiet",
@@ -460,7 +482,7 @@
         "verified": "Geverifieerd!"
       }
     },
-    "environment": {
+    "profile": {
       "list": {
         "title": "Profielen",
         "titleSearch": "Gevonden profielen",
@@ -489,15 +511,22 @@
         "storageTab": "Opslag",
         "nameLabel": "Naam",
         "tagsLabel": "Tags",
+        "tagsHint": "Invoersleutel: waardetags",
+        "tagsPlaceholder": "Voorbeeld: compliance:yes",
         "endpointLabel": "Endpoint",
         "valueLabel": "Waarde",
-        "instanceTypeLabel": "Instantietype",
-        "imageTypeLabel": "Imagetype",
-        "bootDiskPropertyLabel": "Opstartschijfeigenschap",
+        "instanceTypeMappingLabel": "Instantietype",
+        "imageMappingLabel": "Imagetype",
+        "bootDiskPropertyMappingLabel": "Opstartschijfeigenschap",
         "cpuCountLabel": "CPU's",
-        "diskSizeMbLabel": "Schijfgrootte",
-        "memoryMbLabel": "Geheugen",
+        "diskSizeMbLabel": "Schijfgrootte (MB)",
+        "memoryMbLabel": "Geheugen (MB)",
         "subnetworksLabel": "Subnetwerken",
+        "isolationTypeLabel": "Isolatietype",
+        "isolationNetworkLabel": "Isolatienetwerk",
+        "noneIsolationTypeLabel": "Geen",
+        "subnetIsolationTypeLabel": "Subnetwerk",
+        "securityGroupIsolationTypeLabel": "Geen",
         "cidrLabel": "CIDR",
         "cidrLabelHint": "0.0.0.0/0",
         "supportPublicIpAddressLabel": "Ondersteuning voor openbaar IP",
@@ -555,7 +584,8 @@
           "hostNameLabel": "Hostnaam of IP",
           "privateKeyIdLabel": "Gebruikersnaam",
           "privateKeyLabel": "Wachtwoord",
-          "regionIdLabel": "Datacenter"
+          "regionIdLabel": "Datacenter",
+          "linkedEndpointLabel": "NSX-T-endpoint"
         }
       },
       "entity": "endpoint",
@@ -611,6 +641,7 @@
       "edit": {
         "addNew": "Subnetwerk toevoegen",
         "update": "Subnetwerk bewerken",
+        "networkLabel": "Netwerk",
         "nameLabel": "Naam",
         "cidrLabel": "CIDR",
         "supportPublicIpAddressLabel": "Ondersteuning voor openbaar IP",
@@ -620,6 +651,7 @@
         "tagsPlaceholder": "Voorbeeld: access:restricted"
       },
       "entity": "Subnetwerk",
+      "create": "Nieuw subnetwerk",
       "manage": "Subnetwerken beheren",
       "contextPanelTooltip": "Subnetwerken"
     },
@@ -645,6 +677,17 @@
             "ERROR": "FOUT"
           }
         },
+        "project": {
+          "name": "Project",
+          "description": "Beschrijving",
+          "public": "Openbaar",
+          "private": "Privé",
+          "create": "Project maken",
+          "actions": {
+            "edit": "Bewerken",
+            "remove": "Verwijderen"
+          }
+        },
         "container": {
           "create": "Container maken"
         },
@@ -659,7 +702,7 @@
         },
         "volume": {
           "create": "Volume maken",
-          "connectedDateLabel": "Verbonden sinds",
+          "connectedDateLabel": "Verbonden",
           "driverLabel": "Stuurprogramma",
           "driverOptionsLabel": "Opties van stuurprogramma",
           "scope": "Bereik",
@@ -676,6 +719,7 @@
           }
         },
         "titleSearch": {
+          "projects": "Projecten",
           "containers": "Containers",
           "applications": "Toepassingen",
           "networks": "Netwerken",
@@ -684,6 +728,7 @@
           "kubernetes": "Kubernetes"
         },
         "searchPlaceholder": {
+          "projects": "Zoeken naar projecten",
           "containers": "Zoeken naar containers",
           "applications": "Zoeken naar toepassingen",
           "networks": "Zoeken naar netwerken",
@@ -745,12 +790,17 @@
         "network": "Netwerk",
         "networkTrafficSent": "Verzonden",
         "networkTrafficReceived": "Ontvangen",
-        "showingLogsSince": "Logboeken weergeven vanaf",
+        "lines": "regels",
+        "showingLogs": "Met logboeken",
+        "logsOptionSince": "Sinds",
+        "logsOptionTail": "Staart",
         "logsFormat": "Logboekindeling",
         "logsFormatAnsi": "ANSI",
         "logsFormatRaw": "Raw",
         "networkAddresses": "Netwerkadressen",
         "attributes": {
+          "name": "Naam",
+          "value": "Waarde",
           "host": "Host",
           "createdDateLabel": "Gemaakt",
           "ports": "Poorten",
@@ -883,6 +933,8 @@
             "servicenameHint": "Voorbeeld: webserver",
             "constraint": "Beperking"
           },
+          "autoredeploy": "Automatisch opnieuw implementeren",
+          "autoredeployDescription": "Automatische herimplementatie van containers wanneer deze de status FOUT hebben.",
           "environmentVariables": "Omgevingsvariabelen",
           "environmentVariablesDescription": "Een lijst met omgevingsvariabelen",
           "environmentVariablesInputs": {
@@ -893,8 +945,8 @@
           },
           "customProperties": "Aangepaste eigenschappen",
           "customPropertiesDescription": "Aangepaste eigenschappen maken het mogelijk kenmerken toe te voegen aan de containers die worden ingericht.",
-          "healthIgnoreOnProvision": "Mislukte statuscontroles bij inrichten negeren",
-          "healthIgnoreOnProvisionDescription": "Als de statuscontrole is ingeschakeld, wordt deze niet alleen gebruikt wanneer de service actief is, maar ook tijdens het inrichten. De containers worden pas beschouwd als ingericht wanneer er een geslaagde statuscontrole heeft plaatsgevonden. Selecteer deze optie om te kunnen inrichten zonder dat er een geslaagde statuscontrole heeft plaatsgevonden.",
+          "healthIgnoreOnProvision": "Statuscontrole bij inrichten negeren",
+          "healthIgnoreOnProvisionDescription": "Als de statuscontrole is geconfigureerd, kan deze niet alleen worden gebruikt wanneer de service wordt uitgevoerd, maar tevens wanneer deze wordt ingericht. Schakel deze optie uit om statuscontrole bij het inrichten af te dwingen. Door statuscontrole af te dwingen, wordt een container pas als ingericht beschouwd wanneer één statuscontrole met goed gevolg is doorstaan.",
           "healthMode": "Modus",
           "healthConfigNone": "Geen",
           "healthConfigTCP": "TCP-verbinding",
@@ -942,7 +994,11 @@
         "UNKNOWN": "ONBEKEND",
         "RETIRED": "UIT DE HANDEL GENOMEN",
         "PROVISIONING": "INRICHTING",
-        "continuousStateSince": "{{state}} gedurende {{duration}}"
+        "continuousStateSince": "{{state}} gedurende {{duration}}",
+        "errorStatus": "{{state}}: {{status}}"
+      },
+      "status": {
+        "unhealthy": "Statuscontrole is mislukt"
       },
       "actions": {
         "start": "Beginnen",
@@ -1101,7 +1157,7 @@
       "failure": "Verificatie mislukt"
     },
     "dropdownSearchMenu": {
-      "title": "Selecteer uit de lijst {{entity}}",
+      "title": "Selecteren in de lijst {{entity}}",
       "searchPlaceholder": "Zoeken naar {{entity}}",
       "clear": "Selectie wissen",
       "showingCount": "{{count}} van {{totalCount}} weergegeven",
@@ -1114,7 +1170,9 @@
       "valueHint": "Voorbeeld: slow"
     },
     "yes": "Ja",
+    "ok": "Ok",
     "cancel": "Annuleren",
+    "error": "Fout",
     "delete": "Verwijderen",
     "enable": "Inschakelen",
     "enabled": "Ingeschakeld",
@@ -1157,7 +1215,8 @@
       "invalidPath": "Waarde moet een absoluut pad zijn.",
       "invalidPathOrName": "Waarde moet een absoluut pad of een geldige volumenaam zijn.",
       "containersConnected": "Er zijn verbonden containers.",
-      "managedByCatalog": "Beheerd per catalogus"
+      "managedByCatalog": "Beheerd per catalogus",
+      "projectsUnexpectedError": "Er is een onverwachte fout opgetreden"
     },
     "infoMessages": {
       "created": "Gemaakt!",
@@ -1172,6 +1231,6 @@
       "OFF": "UIT",
       "SUSPEND": "UITGESCHAKELD",
       "UNKNOWN": "ONBEKEND",
-      "stateSinceMessage": "vanaf {{date}}"
+      "stateSinceMessage": "sinds {{date}}"
     }
 }

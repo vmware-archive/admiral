@@ -1,5 +1,9 @@
 {
   "app": {
+    "header": {
+      "management": "Gestione",
+      "registry": "Registro"
+    },
     "homepage": {
       "welcome": "Benvenuto",
       "description": "In questa pagina è possibile <b>creare, effettuare il provisioning, gestire e monitorare le applicazioni del contenitore.</b>",
@@ -17,22 +21,30 @@
       }
     },
     "navbar": {
-      "hosts": "Host",
-      "placements": "Posizionamenti",
-      "templates": "Modelli",
       "resources": "Risorse",
+      "hosts": "Host",
+      "policies": "Criteri",
+      "placements": "Posizionamenti",
+      "registries": "Registri",
+      "templates": "Modelli",
+      "deployment": "Distribuzioni",
+      "projects": "Progetti",
       "containers": "Contenitori",
       "applications": "Applicazioni",
       "networks": "Reti",
       "volumes": "Volumi",
       "closures": "Chiusure",
-      "kubernetes": "Kubernetes",
       "eventlog": "Registro eventi",
       "placementZones": "Zone di posizionamento",
-      "environments": "Profili",
+      "profiles": "Profili",
       "endpoints": "Endpoint",
       "machines": "Macchine",
-      "compute": "Risorsa di elaborazione"
+      "compute": "Risorsa di elaborazione",
+      "kubernetesResources": "Risorse K8S",
+      "kubernetesDeployments": "Distribuzioni",
+      "kubernetesPods": "POD",
+      "kubernetesServices": "Servizi",
+      "kubernetesReplicationControllers": "Controller di replica"
     },
     "host": {
       "entity": "host",
@@ -186,7 +198,8 @@
         "certificateTitle": "Certificato",
         "publicTitle": "Chiave pubblica",
         "publicCertificateTitle": "Certificato pubblico",
-        "privateCertificateTitle": "Certificato privato"
+        "privateCertificateTitle": "Certificato privato",
+        "customProperties": "Proprietà personalizzate"
       }
     },
     "deploymentPolicy": {
@@ -265,6 +278,7 @@
         "false": "No",
         "searchCategoryFilterTitle": "Visualizza:",
         "partialResultWarning": "I risultati di ricerca visualizzati non sono completi a causa di uno o più errori relativi alla query.",
+        "continue": "Continua",
         "searchCategory": {
           "all": "Tutto",
           "images": "Immagini",
@@ -288,14 +302,22 @@
         "editDefinition": {
           "title": "Modifica definizione contenitore"
         },
-        "editNetwork" :{
+        "editProject": {
+          "createTitle": "Crea progetto",
+          "updateTitle": "Aggiorna progetto",
+          "name": "Nome",
+          "create": "Crea",
+          "update": "Aggiorna",
+          "publicCheckboxLabel": "Rendi questo progetto pubblico"
+        },
+        "editNetwork": {
           "newLabel": "Aggiungi rete",
           "newTitle": "Aggiungi configurazione di rete",
           "newDropdownTitle": "Aggiungi rete...",
           "editTitle": "Modifica configurazione di rete",
           "name": "Nome",
           "existingNetwork": "Esistente",
-          "showingCount": "Visualizzazione di {{count}} di {{totalCount}}",
+          "showingCount": "Visualizzazione di {{count}} su {{totalCount}}",
           "showingInstances": "istanze",
           "noResults": "Nessuna rete trovata",
           "hosts": "Host",
@@ -332,7 +354,7 @@
             "valueHint": "Esempio: 20 GB"
           },
           "existingVolume": "Esistente",
-          "showingCount": "Visualizzazione di {{count}} di {{totalCount}}",
+          "showingCount": "Visualizzazione di {{count}} su {{totalCount}}",
           "showingInstances": "istanze",
           "noResults": "Nessun volume trovato",
           "mountpoint": "Punto di montaggio host",
@@ -402,11 +424,11 @@
         "deploymentPolicyColumn": "Criterio di distribuzione",
         "priorityColumn": "Priorità",
         "instancesColumn": "Istanze",
-        "cpuColumn": "Quantità CPU",
         "memoryColumn": "Limite di memoria",
         "storageColumn": "Limite di storage",
         "instancesPerPlacement": "Mostra istanze per posizionamento",
-        "unlimitedInstances": "Illimitate"
+        "unlimitedInstances": "Illimitate",
+        "unlimitedMemoryLimit": "Illimitata"
       },
       "edit": {
         "createNew": "Nuovo posizionamento",
@@ -421,10 +443,10 @@
         "deploymentPolicyLabel": "Criterio di distribuzione",
         "selectDeploymentPolicy": "Seleziona criterio di distribuzione",
         "priorityLabel": "Priorità",
-        "priorityPlaceholder": "Numero positivo (facoltativo)",
+        "priorityPlaceholder": "Numero positivo",
         "priorityHint": "Lasciare questo campo vuoto per assegnare la priorità più bassa",
         "instancesLabel": "Istanze",
-        "instancesPlaceholder": "Numero di istanze (facoltativo)",
+        "instancesPlaceholder": "Numero di istanze",
         "instancesHint": "Numero intero positivo per limitare il numero massimo di istanze consentite. Lasciare questo campo vuoto o immettere 0 per impostare un numero illimitato.",
         "cpuSharesLabel": "Quantità CPU",
         "memoryLimitLabel": "Limite di memoria",
@@ -460,7 +482,7 @@
         "verified": "Verifica completata."
       }
     },
-    "environment": {
+    "profile": {
       "list": {
         "title": "Profili",
         "titleSearch": "Profili trovati",
@@ -489,15 +511,22 @@
         "storageTab": "Storage",
         "nameLabel": "Nome",
         "tagsLabel": "Tag",
+        "tagsHint": "Consente di immettere i tag chiave:valore",
+        "tagsPlaceholder": "Esempio: conformità:sì",
         "endpointLabel": "Endpoint",
         "valueLabel": "Valore",
-        "instanceTypeLabel": "Tipo di istanza",
-        "imageTypeLabel": "Tipo di immagine",
-        "bootDiskPropertyLabel": "Proprietà disco di avvio",
+        "instanceTypeMappingLabel": "Tipo di istanza",
+        "imageMappingLabel": "Tipo di immagine",
+        "bootDiskPropertyMappingLabel": "Proprietà disco di avvio",
         "cpuCountLabel": "CPU",
-        "diskSizeMbLabel": "Dimensione disco",
-        "memoryMbLabel": "Memoria",
+        "diskSizeMbLabel": "Dimensione disco (MB)",
+        "memoryMbLabel": "Memoria (MB)",
         "subnetworksLabel": "Sottoreti",
+        "isolationTypeLabel": "Tipo di isolamento",
+        "isolationNetworkLabel": "Rete di isolamento",
+        "noneIsolationTypeLabel": "Nessuno",
+        "subnetIsolationTypeLabel": "Sottorete",
+        "securityGroupIsolationTypeLabel": "Nessuno",
         "cidrLabel": "CIDR",
         "cidrLabelHint": "0.0.0.0/0",
         "supportPublicIpAddressLabel": "IP pubblico di supporto",
@@ -555,7 +584,8 @@
           "hostNameLabel": "Nome host o IP",
           "privateKeyIdLabel": "Nome utente",
           "privateKeyLabel": "Password",
-          "regionIdLabel": "Data center"
+          "regionIdLabel": "Data center",
+          "linkedEndpointLabel": "Endpoint NSX-T"
         }
       },
       "entity": "endpoint",
@@ -611,6 +641,7 @@
       "edit": {
         "addNew": "Aggiungi sottorete",
         "update": "Modifica sottorete",
+        "networkLabel": "Rete",
         "nameLabel": "Nome",
         "cidrLabel": "CIDR",
         "supportPublicIpAddressLabel": "IP pubblico di supporto",
@@ -620,6 +651,7 @@
         "tagsPlaceholder": "Esempio: accesso:limitato"
       },
       "entity": "Sottorete",
+      "create": "Nuova sottorete",
       "manage": "Gestisci sottoreti",
       "contextPanelTooltip": "Sottoreti"
     },
@@ -645,6 +677,17 @@
             "ERROR": "ERRORE"
           }
         },
+        "project": {
+          "name": "Progetto",
+          "description": "Descrizione",
+          "public": "Pubblico",
+          "private": "Privato",
+          "create": "Crea progetto",
+          "actions": {
+            "edit": "Modifica",
+            "remove": "Rimuovi"
+          }
+        },
         "container": {
           "create": "Crea contenitore"
         },
@@ -659,7 +702,7 @@
         },
         "volume": {
           "create": "Crea volume",
-          "connectedDateLabel": "Connesso da",
+          "connectedDateLabel": "Data connessione",
           "driverLabel": "Driver",
           "driverOptionsLabel": "Opzioni driver",
           "scope": "Ambito",
@@ -676,6 +719,7 @@
           }
         },
         "titleSearch": {
+          "projects": "Progetti",
           "containers": "Contenitori",
           "applications": "Applicazioni",
           "networks": "Reti",
@@ -684,6 +728,7 @@
           "kubernetes": "Kubernetes"
         },
         "searchPlaceholder": {
+          "projects": "Cerca progetti",
           "containers": "Cerca contenitori",
           "applications": "Cerca applicazioni",
           "networks": "Cerca reti",
@@ -745,12 +790,17 @@
         "network": "Rete",
         "networkTrafficSent": "Inviato",
         "networkTrafficReceived": "Ricevuto",
-        "showingLogsSince": "Visualizzazione di registri da",
+        "lines": "righe",
+        "showingLogs": "Visualizzazione di registri",
+        "logsOptionSince": "Da",
+        "logsOptionTail": "Coda",
         "logsFormat": "Formato registri",
         "logsFormatAnsi": "ANSI",
         "logsFormatRaw": "Non elaborato",
         "networkAddresses": "Indirizzi di rete",
         "attributes": {
+          "name": "Nome",
+          "value": "Valore",
           "host": "Host",
           "createdDateLabel": "Data creazione",
           "ports": "Porte",
@@ -883,6 +933,8 @@
             "servicenameHint": "Esempio: server Web",
             "constraint": "Vincolo"
           },
+          "autoredeploy": "Ridistribuisci automaticamente",
+          "autoredeployDescription": "Ridistribuzione automatica di contenitori quando si trovano nello stato ERRORE.",
           "environmentVariables": "Variabili di ambiente",
           "environmentVariablesDescription": "Elenco delle variabili di ambiente",
           "environmentVariablesInputs": {
@@ -893,8 +945,8 @@
           },
           "customProperties": "Proprietà personalizzate",
           "customPropertiesDescription": "Le proprietà personalizzate consentono di aggiungere attributi ai contenitori di cui verrà eseguito il provisioning.",
-          "healthIgnoreOnProvision": "Ignora errori del controllo di integrità durante il provisioning",
-          "healthIgnoreOnProvisionDescription": "Se è configurato il controllo di integrità, verrà utilizzato anche durante il provisioning oltre che nel corso dell'esecuzione del servizio. Il provisioning dei contenitori non sarà considerato completo fino a che un controllo di integrità non andrà a buon fine. Selezionare questa opzione per effettuare il provisioning anche senza aver completato un controllo di integrità.",
+          "healthIgnoreOnProvision": "Ignora controllo di integrità durante il provisioning",
+          "healthIgnoreOnProvisionDescription": "Se è configurato, il controllo di integrità può essere utilizzato anche durante il provisioning, oltre che nel corso dell'esecuzione del servizio. Deselezionare questa opzione per forzare il controllo di integrità durante il provisioning. In questo modo, il provisioning di un contenitore non sarà considerato completo finché un controllo di integrità non andrà a buon fine.",
           "healthMode": "Modalità",
           "healthConfigNone": "Nessuna",
           "healthConfigTCP": "Connessione TCP",
@@ -942,7 +994,11 @@
         "UNKNOWN": "SCONOSCIUTO",
         "RETIRED": "RITIRATO",
         "PROVISIONING": "PROVISIONING",
-        "continuousStateSince": "{{state}} for {{duration}}"
+        "continuousStateSince": "{{state}} per {{duration}}",
+        "errorStatus": "{{state}}: {{status}}"
+      },
+      "status": {
+        "unhealthy": "Controllo di integrità non riuscito"
       },
       "actions": {
         "start": "Avvia",
@@ -963,7 +1019,7 @@
       "tabs": {
         "all": "Tutte",
         "running": "In esecuzione",
-        "failed": "Operazione non riuscita"
+        "failed": "Non riuscita"
       },
       "actions": {
         "details": {
@@ -1104,7 +1160,7 @@
       "title": "Selezionare dall'elenco {{entity}}",
       "searchPlaceholder": "Cerca {{entity}}",
       "clear": "Cancella selezione",
-      "showingCount": "Visualizzazione di {{count}} di {{totalCount}}",
+      "showingCount": "Visualizzazione di {{count}} su {{totalCount}}",
       "noResults": "Nessun elemento trovato."
     },
     "customProperties": {
@@ -1114,7 +1170,9 @@
       "valueHint": "Esempio: lento"
     },
     "yes": "Sì",
+    "ok": "OK",
     "cancel": "Annulla",
+    "error": "Errore",
     "delete": "Elimina",
     "enable": "Attiva",
     "enabled": "Attivato",
@@ -1157,7 +1215,8 @@
       "invalidPath": "Il valore deve essere un percorso assoluto.",
       "invalidPathOrName": "Il valore deve essere un percorso assoluto o un nome di volume valido.",
       "containersConnected": "Esistono contenitori connessi.",
-      "managedByCatalog": "Gestito dal catalogo"
+      "managedByCatalog": "Gestito dal catalogo",
+      "projectsUnexpectedError": "Si è verificato un errore imprevisto"
     },
     "infoMessages": {
       "created": "Creazione completata.",

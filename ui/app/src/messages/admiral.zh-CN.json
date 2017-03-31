@@ -1,5 +1,9 @@
 {
   "app": {
+    "header": {
+      "management": "管理",
+      "registry": "注册表"
+    },
     "homepage": {
       "welcome": "欢迎使用!",
       "description": "您可以在此处<b>创建、置备、管理和监控容器化应用程序。</b>",
@@ -17,22 +21,30 @@
       }
     },
     "navbar": {
-      "hosts": "主机",
-      "placements": "放置",
-      "templates": "模板",
       "resources": "资源",
+      "hosts": "主机",
+      "policies": "策略",
+      "placements": "放置",
+      "registries": "注册表",
+      "templates": "模板",
+      "deployment": "部署",
+      "projects": "项目",
       "containers": "容器",
       "applications": "应用程序",
       "networks": "网络",
       "volumes": "卷",
       "closures": "闭包服务",
-      "kubernetes": "Kubernetes",
       "eventlog": "事件日志",
       "placementZones": "放置区域",
-      "environments": "配置文件",
+      "profiles": "配置文件",
       "endpoints": "端点",
       "machines": "计算机",
-      "compute": "计算资源"
+      "compute": "计算资源",
+      "kubernetesResources": "K8S 资源",
+      "kubernetesDeployments": "部署",
+      "kubernetesPods": "容器",
+      "kubernetesServices": "服务",
+      "kubernetesReplicationControllers": "复制控制器"
     },
     "host": {
       "entity": "主机",
@@ -127,7 +139,7 @@
         "nameTitle": "放置区域名称",
         "endpointTitle": "端点",
         "placementPolicy": "高级放置策略",
-        "placementPolicyHint": "默认情况下，资源放置在随机主机上。可以应用以下策略之一: <br><br><b>BINPACK</b> - 放置在具有最高内存使用率的主机上。<br><br><b>SPREAD</b> - 放置在资源数量最少的主机上。",
+        "placementPolicyHint": "默认情况下，资源放置在随机的主机上。可以应用以下策略之一: <br><br><b>BINPACK</b> - 放置在具有最高内存使用率的主机上。<br><br><b>SPREAD</b> - 放置在资源数量最少的主机上。",
         "dynamicTitle": "向此区域动态分配资源",
         "tagsTitle": "标记",
         "tagsHint": "输入“键:值”标记",
@@ -186,7 +198,8 @@
         "certificateTitle": "证书",
         "publicTitle": "公钥",
         "publicCertificateTitle": "公用证书",
-        "privateCertificateTitle": "私有证书"
+        "privateCertificateTitle": "私有证书",
+        "customProperties": "自定义属性"
       }
     },
     "deploymentPolicy": {
@@ -265,6 +278,7 @@
         "false": "否",
         "searchCategoryFilterTitle": "查看:",
         "partialResultWarning": "由于一个或多个查询出现错误，您无法查看完整搜索结果。",
+        "continue": "继续",
         "searchCategory": {
           "all": "全部",
           "images": "映像",
@@ -288,7 +302,15 @@
         "editDefinition": {
           "title": "编辑容器定义"
         },
-        "editNetwork" :{
+        "editProject": {
+          "createTitle": "创建项目",
+          "updateTitle": "更新项目",
+          "name": "名称",
+          "create": "创建",
+          "update": "更新",
+          "publicCheckboxLabel": "将此项目设为公共项目"
+        },
+        "editNetwork": {
           "newLabel": "添加网络",
           "newTitle": "添加网络配置",
           "newDropdownTitle": "添加网络...",
@@ -402,11 +424,11 @@
         "deploymentPolicyColumn": "部署策略",
         "priorityColumn": "优先级",
         "instancesColumn": "实例数",
-        "cpuColumn": "CPU 份额",
         "memoryColumn": "内存限制",
         "storageColumn": "存储限制",
         "instancesPerPlacement": "显示每个放置的实例数",
-        "unlimitedInstances": "不受限制"
+        "unlimitedInstances": "不受限制",
+        "unlimitedMemoryLimit": "不受限制"
       },
       "edit": {
         "createNew": "新建放置",
@@ -421,10 +443,10 @@
         "deploymentPolicyLabel": "部署策略",
         "selectDeploymentPolicy": "选择部署策略",
         "priorityLabel": "优先级",
-        "priorityPlaceholder": "正数 (可选)",
+        "priorityPlaceholder": "正数",
         "priorityHint": "留空则将其置于最低优先级",
         "instancesLabel": "实例数",
-        "instancesPlaceholder": "实例数 (可选)",
+        "instancesPlaceholder": "实例数",
         "instancesHint": "限制最大实例数的正整数。留空或为 0 表示无限数量。",
         "cpuSharesLabel": "CPU 份额",
         "memoryLimitLabel": "内存限制",
@@ -460,7 +482,7 @@
         "verified": "已成功验证!"
       }
     },
-    "environment": {
+    "profile": {
       "list": {
         "title": "配置文件",
         "titleSearch": "已找到配置文件",
@@ -489,15 +511,22 @@
         "storageTab": "存储",
         "nameLabel": "名称",
         "tagsLabel": "标记",
+        "tagsHint": "输入“键:值”标记",
+        "tagsPlaceholder": "示例: compliance:yes",
         "endpointLabel": "端点",
         "valueLabel": "值",
-        "instanceTypeLabel": "实例类型",
-        "imageTypeLabel": "映像类型",
-        "bootDiskPropertyLabel": "引导磁盘属性",
+        "instanceTypeMappingLabel": "实例类型",
+        "imageMappingLabel": "映像类型",
+        "bootDiskPropertyMappingLabel": "引导磁盘属性",
         "cpuCountLabel": "CPU",
-        "diskSizeMbLabel": "磁盘大小",
-        "memoryMbLabel": "内存",
+        "diskSizeMbLabel": "磁盘大小 (MB)",
+        "memoryMbLabel": "内存 (MB)",
         "subnetworksLabel": "子网",
+        "isolationTypeLabel": "隔离类型",
+        "isolationNetworkLabel": "隔离网络",
+        "noneIsolationTypeLabel": "无",
+        "subnetIsolationTypeLabel": "子网",
+        "securityGroupIsolationTypeLabel": "无",
         "cidrLabel": "CIDR",
         "cidrLabelHint": "0.0.0.0/0",
         "supportPublicIpAddressLabel": "支持公共 IP",
@@ -555,7 +584,8 @@
           "hostNameLabel": "主机名或 IP",
           "privateKeyIdLabel": "用户名",
           "privateKeyLabel": "密码",
-          "regionIdLabel": "数据中心"
+          "regionIdLabel": "数据中心",
+          "linkedEndpointLabel": "NSX-T 端点"
         }
       },
       "entity": "端点",
@@ -611,6 +641,7 @@
       "edit": {
         "addNew": "添加子网",
         "update": "编辑子网",
+        "networkLabel": "网络",
         "nameLabel": "名称",
         "cidrLabel": "CIDR",
         "supportPublicIpAddressLabel": "支持公共 IP",
@@ -620,6 +651,7 @@
         "tagsPlaceholder": "示例: access:restricted"
       },
       "entity": "子网",
+      "create": "新建子网",
       "manage": "管理子网",
       "contextPanelTooltip": "子网"
     },
@@ -645,6 +677,17 @@
             "ERROR": "错误"
           }
         },
+        "project": {
+          "name": "项目",
+          "description": "描述",
+          "public": "公共",
+          "private": "专用",
+          "create": "创建项目",
+          "actions": {
+            "edit": "编辑",
+            "remove": "移除"
+          }
+        },
         "container": {
           "create": "创建容器"
         },
@@ -659,7 +702,7 @@
         },
         "volume": {
           "create": "创建卷",
-          "connectedDateLabel": "连接时间",
+          "connectedDateLabel": "已连接",
           "driverLabel": "驱动程序",
           "driverOptionsLabel": "驱动程序选项",
           "scope": "范围",
@@ -676,6 +719,7 @@
           }
         },
         "titleSearch": {
+          "projects": "项目",
           "containers": "容器",
           "applications": "应用程序",
           "networks": "网络",
@@ -684,6 +728,7 @@
           "kubernetes": "Kubernetes"
         },
         "searchPlaceholder": {
+          "projects": "搜索项目",
           "containers": "搜索容器",
           "applications": "搜索应用程序",
           "networks": "搜索网络",
@@ -745,12 +790,17 @@
         "network": "网络",
         "networkTrafficSent": "已发送",
         "networkTrafficReceived": "已接收",
-        "showingLogsSince": "显示给定时间段内的日志",
+        "lines": "行",
+        "showingLogs": "显示日志",
+        "logsOptionSince": "开始",
+        "logsOptionTail": "结束",
         "logsFormat": "日志格式",
         "logsFormatAnsi": "ANSI",
         "logsFormatRaw": "原始格式",
         "networkAddresses": "网络地址",
         "attributes": {
+          "name": "名称",
+          "value": "值",
           "host": "主机",
           "createdDateLabel": "创建日期",
           "ports": "端口",
@@ -883,6 +933,8 @@
             "servicenameHint": "示例: webserver",
             "constraint": "限制"
           },
+          "autoredeploy": "自动重新部署",
+          "autoredeployDescription": "容器处于错误状态时自动重新部署容器。",
           "environmentVariables": "环境变量",
           "environmentVariablesDescription": "环境变量的列表",
           "environmentVariablesInputs": {
@@ -893,8 +945,8 @@
           },
           "customProperties": "自定义属性",
           "customPropertiesDescription": "通过自定义属性可以向将要置备的容器添加属性。",
-          "healthIgnoreOnProvision": "在置备时忽略运行状况检查故障",
-          "healthIgnoreOnProvisionDescription": "如果配置了运行状况检查，除了在服务启动并运行时使用，还将在置备时使用。在成功通过一次运行状况检查之后，容器才会被视为已置备。选中此选项可在未成功通过运行状况检查时也能进行置备。",
+          "healthIgnoreOnProvision": "置备时忽略运行状况检查",
+          "healthIgnoreOnProvisionDescription": "如果配置了运行状况检查，则除了在服务启动和运行时执行该检查之外，在置备时也会执行该检查。如果取消选中此选项，则会强制在置备时执行运行状况检查。只有成功通过运行状况检查后，容器才会被视为已置备容器。",
           "healthMode": "模式",
           "healthConfigNone": "无",
           "healthConfigTCP": "TCP 连接",
@@ -942,7 +994,11 @@
         "UNKNOWN": "未知",
         "RETIRED": "已注销",
         "PROVISIONING": "正在置备",
-        "continuousStateSince": "{{state}}状态已持续 {{duration}}"
+        "continuousStateSince": "{{state}} 状态已持续 {{duration}}",
+        "errorStatus": "{{state}}: {{status}}"
+      },
+      "status": {
+        "unhealthy": "运行状况检查失败"
       },
       "actions": {
         "start": "启动",
@@ -1101,8 +1157,8 @@
       "failure": "身份验证错误"
     },
     "dropdownSearchMenu": {
-      "title": "从{{entity}}列表选择",
-      "searchPlaceholder": "搜索{{entity}}",
+      "title": "从 {{entity}} 列表选择",
+      "searchPlaceholder": "搜索 {{entity}}",
       "clear": "清除选择",
       "showingCount": "显示 {{count}} 项 (共 {{totalCount}} 项)",
       "noResults": "未找到任何项目"
@@ -1114,7 +1170,9 @@
       "valueHint": "示例: slow"
     },
     "yes": "确定",
+    "ok": "确定",
     "cancel": "取消",
+    "error": "错误",
     "delete": "删除",
     "enable": "启用",
     "enabled": "已启用",
@@ -1157,7 +1215,8 @@
       "invalidPath": "值必须是绝对路径。",
       "invalidPathOrName": "值必须是绝对路径或有效卷名称。",
       "containersConnected": "存在已连接容器。",
-      "managedByCatalog": "由目录管理"
+      "managedByCatalog": "由目录管理",
+      "projectsUnexpectedError": "发生意外错误"
     },
     "infoMessages": {
       "created": "已成功创建!",

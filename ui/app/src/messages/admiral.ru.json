@@ -1,5 +1,9 @@
 {
   "app": {
+    "header": {
+      "management": "Управление",
+      "registry": "Реестр"
+    },
     "homepage": {
       "welcome": "Приветствуем!",
       "description": "Здесь вы можете <b>создавать, подготавливать, отслеживать приложения контейнерного исполнения, а также управлять ими.</b>",
@@ -17,22 +21,30 @@
       }
     },
     "navbar": {
-      "hosts": "Узлы",
-      "placements": "Размещения",
-      "templates": "Шаблоны",
       "resources": "Ресурсы",
+      "hosts": "Узлы",
+      "policies": "Политики",
+      "placements": "Размещения",
+      "registries": "Реестры",
+      "templates": "Шаблоны",
+      "deployment": "Развертывания",
+      "projects": "Проекты",
       "containers": "Контейнеры",
       "applications": "Приложения",
       "networks": "Сети",
       "volumes": "Тома",
       "closures": "Закрытия",
-      "kubernetes": "Kubernetes",
       "eventlog": "Журнал событий",
       "placementZones": "Зоны размещения",
-      "environments": "Профили",
+      "profiles": "Профили",
       "endpoints": "Конечные точки",
       "machines": "Компьютеры",
-      "compute": "Вычислительный ресурс"
+      "compute": "Вычислительный ресурс",
+      "kubernetesResources": "Ресурсы K8S",
+      "kubernetesDeployments": "Развертывания",
+      "kubernetesPods": "Элементы Pod",
+      "kubernetesServices": "Службы",
+      "kubernetesReplicationControllers": "Контроллеры репликации"
     },
     "host": {
       "entity": "узел",
@@ -72,7 +84,7 @@
         "add": "Добавить",
         "update": "Обновить",
         "create": "Создать",
-        "certificateWarning": "Недействительный сертификат для {{address}}. Возможно, вы пытаетесь подключиться к веб-сайту, который выдает себя за {{address}}, из-за чего безопасность вашей конфиденциальной информации может оказаться под угрозой. Хотите все равно подключиться к этому веб-сайту?",
+        "certificateWarning": "Сертификат для {{address}} является недействительным. Возможно, вы пытаетесь подключиться к веб-сайту, который выдается за {{address}}, что может поставить под угрозу вашу конфиденциальную информацию. Подключиться к веб-сайту в любом случае?",
         "showCertificate": "Показать сертификат",
         "hideCertificate": "Скрыть сертификат",
         "manageCertificates": "Управление сертификатами",
@@ -186,7 +198,8 @@
         "certificateTitle": "Сертификат",
         "publicTitle": "Общедоступный ключ",
         "publicCertificateTitle": "Общедоступный сертификат",
-        "privateCertificateTitle": "Закрытый сертификат"
+        "privateCertificateTitle": "Закрытый сертификат",
+        "customProperties": "Настраиваемые свойства"
       }
     },
     "deploymentPolicy": {
@@ -265,6 +278,7 @@
         "false": "Нет",
         "searchCategoryFilterTitle": "Представление:",
         "partialResultWarning": "Отображается неполный список результатов поиска из-за одной или нескольких ошибок запроса.",
+        "continue": "Продолжить",
         "searchCategory": {
           "all": "Все",
           "images": "Образы",
@@ -288,14 +302,22 @@
         "editDefinition": {
           "title": "Изменить определение контейнера"
         },
-        "editNetwork" :{
+        "editProject": {
+          "createTitle": "Создать проект",
+          "updateTitle": "Обновить проект",
+          "name": "Имя",
+          "create": "Создать",
+          "update": "Обновить",
+          "publicCheckboxLabel": "Сделать этот проект общедоступным"
+        },
+        "editNetwork": {
           "newLabel": "Добавить сеть",
           "newTitle": "Добавить конфигурацию сети",
           "newDropdownTitle": "Добавить сеть...",
           "editTitle": "Изменить конфигурацию сети",
           "name": "Имя",
           "existingNetwork": "Имеющиеся",
-          "showingCount": "Отображается {{count}} из {{totalCount}}",
+          "showingCount": "Показано: {{count}} из {{totalCount}}",
           "showingInstances": "экземпляры",
           "noResults": "Сети не найдены",
           "hosts": "Узлы",
@@ -332,7 +354,7 @@
             "valueHint": "Пример: 20 ГБ"
           },
           "existingVolume": "Имеющиеся",
-          "showingCount": "Отображается {{count}} из {{totalCount}}",
+          "showingCount": "Показано: {{count}} из {{totalCount}}",
           "showingInstances": "экземпляры",
           "noResults": "Тома не найдены",
           "mountpoint": "Точка монтирования узла",
@@ -402,11 +424,11 @@
         "deploymentPolicyColumn": "Политика развертывания",
         "priorityColumn": "Приоритет",
         "instancesColumn": "Экземпляры",
-        "cpuColumn": "Доли ЦП",
         "memoryColumn": "Ограничение памяти",
         "storageColumn": "Ограничение хранения",
         "instancesPerPlacement": "Показать экземпляры на одно размещение",
-        "unlimitedInstances": "Без ограничений"
+        "unlimitedInstances": "Без ограничений",
+        "unlimitedMemoryLimit": "Без ограничений"
       },
       "edit": {
         "createNew": "Новое размещение",
@@ -421,10 +443,10 @@
         "deploymentPolicyLabel": "Политика развертывания",
         "selectDeploymentPolicy": "Выберите политику развертывания",
         "priorityLabel": "Приоритет",
-        "priorityPlaceholder": "Положительное число (дополнительно)",
+        "priorityPlaceholder": "Положительное число",
         "priorityHint": "Чтобы задать самый низкий приоритет, оставьте это поле пустым",
         "instancesLabel": "Экземпляры",
-        "instancesPlaceholder": "Количество экземпляров (дополнительно)",
+        "instancesPlaceholder": "Количество экземпляров",
         "instancesHint": "Положительное целое число, которое ограничивает максимальное количество экземпляров. Чтобы не использовать ограничение, оставьте это поле пустым или введите '0'.",
         "cpuSharesLabel": "Доли ЦП",
         "memoryLimitLabel": "Ограничение памяти",
@@ -460,7 +482,7 @@
         "verified": "Проверка успешно выполнена!"
       }
     },
-    "environment": {
+    "profile": {
       "list": {
         "title": "Профили",
         "titleSearch": "Найденные профили",
@@ -489,15 +511,22 @@
         "storageTab": "Хранилище",
         "nameLabel": "Имя",
         "tagsLabel": "Теги",
+        "tagsHint": "Введите теги ключ:значение",
+        "tagsPlaceholder": "Пример: соответствие:да",
         "endpointLabel": "Конечная точка",
         "valueLabel": "Значение",
-        "instanceTypeLabel": "Тип экземпляра",
-        "imageTypeLabel": "Тип образа",
-        "bootDiskPropertyLabel": "Свойство загрузочного диска",
+        "instanceTypeMappingLabel": "Тип экземпляра",
+        "imageMappingLabel": "Тип образа",
+        "bootDiskPropertyMappingLabel": "Свойство загрузочного диска",
         "cpuCountLabel": "Процессоры",
-        "diskSizeMbLabel": "Размер диска",
-        "memoryMbLabel": "Память",
+        "diskSizeMbLabel": "Размер диска (МБ)",
+        "memoryMbLabel": "Память (МБ)",
         "subnetworksLabel": "Подсети",
+        "isolationTypeLabel": "Тип изоляции",
+        "isolationNetworkLabel": "Сеть изоляции",
+        "noneIsolationTypeLabel": "Нет",
+        "subnetIsolationTypeLabel": "Подсеть",
+        "securityGroupIsolationTypeLabel": "Нет",
         "cidrLabel": "CIDR",
         "cidrLabelHint": "0.0.0.0/0",
         "supportPublicIpAddressLabel": "Поддерживать общедоступный IP-адрес",
@@ -555,7 +584,8 @@
           "hostNameLabel": "Имя узла или IP-адрес",
           "privateKeyIdLabel": "Имя пользователя",
           "privateKeyLabel": "Пароль",
-          "regionIdLabel": "ЦОД"
+          "regionIdLabel": "ЦОД",
+          "linkedEndpointLabel": "Конечная точка NSX-T"
         }
       },
       "entity": "конечная точка",
@@ -611,6 +641,7 @@
       "edit": {
         "addNew": "Добавить подсеть",
         "update": "Изменить подсеть",
+        "networkLabel": "Сеть",
         "nameLabel": "Имя",
         "cidrLabel": "CIDR",
         "supportPublicIpAddressLabel": "Поддерживать общедоступный IP-адрес",
@@ -620,6 +651,7 @@
         "tagsPlaceholder": "Пример: access:restricted"
       },
       "entity": "Подсеть",
+      "create": "Новая подсеть",
       "manage": "Управление подсетями",
       "contextPanelTooltip": "Подсети"
     },
@@ -645,6 +677,17 @@
             "ERROR": "ОШИБКА"
           }
         },
+        "project": {
+          "name": "Проект",
+          "description": "Описание",
+          "public": "Общедоступный",
+          "private": "Частный",
+          "create": "Создать проект",
+          "actions": {
+            "edit": "Изменить",
+            "remove": "Удалить"
+          }
+        },
         "container": {
           "create": "Создать контейнер"
         },
@@ -659,7 +702,7 @@
         },
         "volume": {
           "create": "Создать том",
-          "connectedDateLabel": "Подключено с",
+          "connectedDateLabel": "Подключено",
           "driverLabel": "Драйвер",
           "driverOptionsLabel": "Параметры драйвера",
           "scope": "Область",
@@ -676,6 +719,7 @@
           }
         },
         "titleSearch": {
+          "projects": "Проекты",
           "containers": "Контейнеры",
           "applications": "Приложения",
           "networks": "Сети",
@@ -684,6 +728,7 @@
           "kubernetes": "Kubernetes"
         },
         "searchPlaceholder": {
+          "projects": "Поиск проектов",
           "containers": "Поиск контейнеров",
           "applications": "Поиск приложений",
           "networks": "Поиск сетей",
@@ -745,12 +790,17 @@
         "network": "Сеть",
         "networkTrafficSent": "Отправлено",
         "networkTrafficReceived": "Получено",
-        "showingLogsSince": "Показаны журналы с",
+        "lines": "строки",
+        "showingLogs": "Отображение журналов",
+        "logsOptionSince": "С",
+        "logsOptionTail": "Заключительный фрагмент",
         "logsFormat": "Формат журналов",
         "logsFormatAnsi": "ANSI",
         "logsFormatRaw": "Raw",
         "networkAddresses": "Сетевые адреса",
         "attributes": {
+          "name": "Имя",
+          "value": "Значение",
           "host": "Узел",
           "createdDateLabel": "Создано",
           "ports": "Порты",
@@ -883,6 +933,8 @@
             "servicenameHint": "Пример: webserver",
             "constraint": "Ограничение"
           },
+          "autoredeploy": "Автоматическое повторное развертывание",
+          "autoredeployDescription": "Автоматическое повторное развертывание контейнеров, находящихся в состоянии ОШИБКИ.",
           "environmentVariables": "Переменные среды",
           "environmentVariablesDescription": "Список переменных среды",
           "environmentVariablesInputs": {
@@ -893,8 +945,8 @@
           },
           "customProperties": "Настраиваемые свойства",
           "customPropertiesDescription": "Настраиваемые свойства позволяют добавлять атрибуты в подготавливаемые контейнеры.",
-          "healthIgnoreOnProvision": "Игнорировать результаты проверки работоспособности при подготовке",
-          "healthIgnoreOnProvisionDescription": "Проверку работоспособности можно использовать не только, когда служба запущена, но и в момент подготовки ресурса. Контейнеры не будут считаться подготовленными, пока не пройдут проверку работоспособности. Установите этот флажок, чтобы подготовить контейнер, даже если проверка выявила проблемы.",
+          "healthIgnoreOnProvision": "Пропускать проверку работоспособности при подготовке",
+          "healthIgnoreOnProvisionDescription": "Если проверка работоспособности настроена, она может выполняться не только тогда, когда служба запущена, но и в момент подготовки. Снимите этот флажок, чтобы проверка работоспособности всегда выполнялась при подготовке. В этом случае контейнер не будет считаться подготовленными, пока не пройдет данную проверку.",
           "healthMode": "Режим",
           "healthConfigNone": "Нет",
           "healthConfigTCP": "TCP-соединение",
@@ -942,7 +994,11 @@
         "UNKNOWN": "НЕТ ДАННЫХ",
         "RETIRED": "СПИСАНО",
         "PROVISIONING": "ПОДГОТОВКА",
-        "continuousStateSince": "{{state}} в течение {{duration}}"
+        "continuousStateSince": "{{state}}: {{duration}}",
+        "errorStatus": "{{state}}: {{status}}"
+      },
+      "status": {
+        "unhealthy": "Проверка работоспособности не пройдена"
       },
       "actions": {
         "start": "Пуск",
@@ -1101,10 +1157,10 @@
       "failure": "Ошибка проверки подлинности"
     },
     "dropdownSearchMenu": {
-      "title": "Выберите из списка: {{entity}}",
+      "title": "Выбор из списка {{entity}}",
       "searchPlaceholder": "Поиск: {{entity}}",
       "clear": "Очистить выбор",
-      "showingCount": "Отображается {{count}} из {{totalCount}}",
+      "showingCount": "Показано: {{count}} из {{totalCount}}",
       "noResults": "Элементы не найдены"
     },
     "customProperties": {
@@ -1114,7 +1170,9 @@
       "valueHint": "Пример: slow"
     },
     "yes": "Да",
+    "ok": "ОК",
     "cancel": "Отмена",
+    "error": "Ошибка",
     "delete": "Удалить",
     "enable": "Включить",
     "enabled": "Включено",
@@ -1157,7 +1215,8 @@
       "invalidPath": "В качестве значения должен быть указан абсолютный путь.",
       "invalidPathOrName": "В качестве значения должен быть указан абсолютный путь или действительное имя тома.",
       "containersConnected": "Есть подключенные контейнеры",
-      "managedByCatalog": "Под управлением каталога"
+      "managedByCatalog": "Под управлением каталога",
+      "projectsUnexpectedError": "Возникла непредвиденная ошибка"
     },
     "infoMessages": {
       "created": "Успешно создано!",

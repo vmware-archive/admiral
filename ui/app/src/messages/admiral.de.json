@@ -1,5 +1,9 @@
 {
   "app": {
+    "header": {
+      "management": "Management",
+      "registry": "Registrierung"
+    },
     "homepage": {
       "welcome": "Willkommen!",
       "description": "Hier können Sie <b>containerisierte Anwendungen erstellen, bereitstellen, verwalten und überwachen</b>.",
@@ -17,22 +21,30 @@
       }
     },
     "navbar": {
-      "hosts": "Hosts",
-      "placements": "Platzierungen",
-      "templates": "Vorlagen",
       "resources": "Ressourcen",
+      "hosts": "Hosts",
+      "policies": "Richtlinien",
+      "placements": "Platzierungen",
+      "registries": "Registrierungen",
+      "templates": "Vorlagen",
+      "deployment": "Bereitstellungen",
+      "projects": "Projekte",
       "containers": "Container",
       "applications": "Anwendungen",
       "networks": "Netzwerke",
       "volumes": "Volumes",
       "closures": "Abschlüsse",
-      "kubernetes": "Kubernetes",
       "eventlog": "Ereignisprotokoll",
       "placementZones": "Platzierungszonen",
-      "environments": "Profile",
+      "profiles": "Profile",
       "endpoints": "Endpoints",
       "machines": "Maschinen",
-      "compute": "Computing-Ressource"
+      "compute": "Computing-Ressource",
+      "kubernetesResources": "K8S-Ressourcen",
+      "kubernetesDeployments": "Bereitstellungen",
+      "kubernetesPods": "Pods",
+      "kubernetesServices": "Dienste",
+      "kubernetesReplicationControllers": "Replikationscontroller"
     },
     "host": {
       "entity": "Host",
@@ -72,7 +84,7 @@
         "add": "Hinzufügen",
         "update": "Aktualisieren",
         "create": "Erstellen",
-        "certificateWarning": "Das Zertifikat für {{address}} ist ungültig. Sie stellen möglicherweise eine Verbindung zu einer Website her, die vorgibt, folgende zu sein: {{address}}. Damit könnten Ihre vertraulichen Daten einem Risiko ausgesetzt werden. Möchten Sie dennoch die Verbindung zu der Website herstellen?",
+        "certificateWarning": "Das Zertifikat für {{address}} ist ungültig. Sie stellen möglicherweise eine Verbindung zu einer Website her, die vorgibt, folgende zu sein: {{address}}. Damit könnten Ihre vertraulichen Daten einem Risiko ausgesetzt werden. Möchten Sie die Verbindung zu der Website dennoch herstellen?",
         "showCertificate": "Zertifikat anzeigen",
         "hideCertificate": "Zertifikat ausblenden",
         "manageCertificates": "Zertifikate verwalten",
@@ -186,7 +198,8 @@
         "certificateTitle": "Zertifikat",
         "publicTitle": "Öffentlicher Schlüssel",
         "publicCertificateTitle": "Öffentliches Zertifikat",
-        "privateCertificateTitle": "Privates Zertifikat"
+        "privateCertificateTitle": "Privates Zertifikat",
+        "customProperties": "Benutzerdefinierte Eigenschaften"
       }
     },
     "deploymentPolicy": {
@@ -265,6 +278,7 @@
         "false": "Nein",
         "searchCategoryFilterTitle": "Anzeigen:",
         "partialResultWarning": "Es werden aufgrund mindestens eines Abfragefehlers unvollständige Suchergebnisse angezeigt.",
+        "continue": "Weiter",
         "searchCategory": {
           "all": "Alle",
           "images": "Images",
@@ -288,7 +302,15 @@
         "editDefinition": {
           "title": "Container-Definition bearbeiten"
         },
-        "editNetwork" :{
+        "editProject": {
+          "createTitle": "Projekt erstellen",
+          "updateTitle": "Projekt aktualisieren",
+          "name": "Name",
+          "create": "Erstellen",
+          "update": "Aktualisieren",
+          "publicCheckboxLabel": "Dieses Projekt veröffentlichen"
+        },
+        "editNetwork": {
           "newLabel": "Netzwerk hinzufügen",
           "newTitle": "Netzwerkkonfiguration hinzufügen",
           "newDropdownTitle": "Netzwerk hinzufügen...",
@@ -402,11 +424,11 @@
         "deploymentPolicyColumn": "Bereitstellungsrichtlinie",
         "priorityColumn": "Priorität",
         "instancesColumn": "Instanzen",
-        "cpuColumn": "CPU-Anteile",
         "memoryColumn": "Arbeitsspeicherlimit",
         "storageColumn": "Speicherlimit",
         "instancesPerPlacement": "Instanzen pro Platzierung anzeigen",
-        "unlimitedInstances": "Unbegrenzt"
+        "unlimitedInstances": "Unbegrenzt",
+        "unlimitedMemoryLimit": "Unbegrenzt"
       },
       "edit": {
         "createNew": "Neue Platzierung",
@@ -421,10 +443,10 @@
         "deploymentPolicyLabel": "Bereitstellungsrichtlinie",
         "selectDeploymentPolicy": "Bereitstellungsrichtlinie auswählen",
         "priorityLabel": "Priorität",
-        "priorityPlaceholder": "Positive Zahl (optional)",
+        "priorityPlaceholder": "Positive Zahl",
         "priorityHint": "Leer lassen für niedrigste Priorität",
         "instancesLabel": "Instanzen",
-        "instancesPlaceholder": "Anzahl Instanzen (optional)",
+        "instancesPlaceholder": "Anzahl Instanzen",
         "instancesHint": "Positive Ganzzahl zur Begrenzung der maximalen Anzahl der Instanzen. Leer lassen oder 0 für unbegrenzte Anzahl.",
         "cpuSharesLabel": "CPU-Anteile",
         "memoryLimitLabel": "Arbeitsspeicherlimit",
@@ -460,7 +482,7 @@
         "verified": "Erfolgreich überprüft."
       }
     },
-    "environment": {
+    "profile": {
       "list": {
         "title": "Profile",
         "titleSearch": "Gefundene Profile",
@@ -489,15 +511,22 @@
         "storageTab": "Speicher",
         "nameLabel": "Name",
         "tagsLabel": "Tags",
+        "tagsHint": "Schlüssel:Wert-Tags eingeben",
+        "tagsPlaceholder": "Beispiel: compliance:yes",
         "endpointLabel": "Endpoint",
         "valueLabel": "Wert",
-        "instanceTypeLabel": "Instanztyp",
-        "imageTypeLabel": "Image-Typ",
-        "bootDiskPropertyLabel": "Eigenschaft des Startdatenträgers",
+        "instanceTypeMappingLabel": "Instanztyp",
+        "imageMappingLabel": "Image-Typ",
+        "bootDiskPropertyMappingLabel": "Eigenschaft des Startdatenträgers",
         "cpuCountLabel": "CPUs",
-        "diskSizeMbLabel": "Datenträgergröße",
-        "memoryMbLabel": "Arbeitsspeicher",
+        "diskSizeMbLabel": "Festplattengröße (MB)",
+        "memoryMbLabel": "Arbeitsspeicher (MB)",
         "subnetworksLabel": "Subnetzwerke",
+        "isolationTypeLabel": "Isolierungstyp",
+        "isolationNetworkLabel": "Isolierungsnetzwerk",
+        "noneIsolationTypeLabel": "Keine",
+        "subnetIsolationTypeLabel": "Subnetzwerk",
+        "securityGroupIsolationTypeLabel": "Keine",
         "cidrLabel": "CIDR",
         "cidrLabelHint": "0.0.0.0/0",
         "supportPublicIpAddressLabel": "Öffentliche IP unterstützen",
@@ -555,7 +584,8 @@
           "hostNameLabel": "Hostname oder IP",
           "privateKeyIdLabel": "Benutzername",
           "privateKeyLabel": "Kennwort",
-          "regionIdLabel": "Datencenter"
+          "regionIdLabel": "Datencenter",
+          "linkedEndpointLabel": "NSX-T-Endpoint"
         }
       },
       "entity": "Endpoint",
@@ -611,6 +641,7 @@
       "edit": {
         "addNew": "Subnetzwerk hinzufügen",
         "update": "Subnetzwerk bearbeiten",
+        "networkLabel": "Netzwerk",
         "nameLabel": "Name",
         "cidrLabel": "CIDR",
         "supportPublicIpAddressLabel": "Öffentliche IP unterstützen",
@@ -620,6 +651,7 @@
         "tagsPlaceholder": "Beispiel: access:restricted"
       },
       "entity": "Subnetzwerk",
+      "create": "Neues Subnetzwerk",
       "manage": "Subnetzwerke verwalten",
       "contextPanelTooltip": "Subnetzwerke"
     },
@@ -645,6 +677,17 @@
             "ERROR": "FEHLER"
           }
         },
+        "project": {
+          "name": "Projekt",
+          "description": "Beschreibung",
+          "public": "Öffentlich",
+          "private": "Privat",
+          "create": "Projekt erstellen",
+          "actions": {
+            "edit": "Bearbeiten",
+            "remove": "Entfernen"
+          }
+        },
         "container": {
           "create": "Container erstellen"
         },
@@ -659,7 +702,7 @@
         },
         "volume": {
           "create": "Volume erstellen",
-          "connectedDateLabel": "Verbunden seit",
+          "connectedDateLabel": "Verbunden",
           "driverLabel": "Treiber",
           "driverOptionsLabel": "Treiberoptionen",
           "scope": "Geltungsbereich",
@@ -676,6 +719,7 @@
           }
         },
         "titleSearch": {
+          "projects": "Projekte",
           "containers": "Container",
           "applications": "Anwendungen",
           "networks": "Netzwerke",
@@ -684,6 +728,7 @@
           "kubernetes": "Kubernetes"
         },
         "searchPlaceholder": {
+          "projects": "Nach Projekten suchen",
           "containers": "Container suchen",
           "applications": "Anwendungen suchen",
           "networks": "Netzwerke suchen",
@@ -745,12 +790,17 @@
         "network": "Netzwerk",
         "networkTrafficSent": "Gesendet",
         "networkTrafficReceived": "Empfangen",
-        "showingLogsSince": "Anzeigen von Protokollen seit",
+        "lines": "Zeilen",
+        "showingLogs": "Protokolle werden angezeigt",
+        "logsOptionSince": "Seit",
+        "logsOptionTail": "///Tail",
         "logsFormat": "Protokollformat",
         "logsFormatAnsi": "ANSI",
         "logsFormatRaw": "Raw",
         "networkAddresses": "Netzwerkadressen",
         "attributes": {
+          "name": "Name",
+          "value": "Wert",
           "host": "Host",
           "createdDateLabel": "Erstellt",
           "ports": "Ports",
@@ -865,7 +915,7 @@
           "restartPolicyType": {
             "always": "Immer",
             "onFailure": "Bei Fehler",
-            "none": "Nein"
+            "none": "Keine"
           },
           "maxRestarts": "Max. Neustarts",
           "maxRestartsDescription": "Anzahl max. Neustarts bei Container-Fehlern",
@@ -883,6 +933,8 @@
             "servicenameHint": "Beispiel: Webserver",
             "constraint": "Einschränkung"
           },
+          "autoredeploy": "Automatisch erneut bereitstellen",
+          "autoredeployDescription": "Automatische erneute Bereitstellung von Containern, wenn sie den Status FEHLER aufweisen.",
           "environmentVariables": "Umgebungsvariablen",
           "environmentVariablesDescription": "Eine Liste von Umgebungsvariablen",
           "environmentVariablesInputs": {
@@ -893,8 +945,8 @@
           },
           "customProperties": "Benutzerdefinierte Eigenschaften",
           "customPropertiesDescription": "Benutzerdefinierte Eigenschaften ermöglichen das Hinzufügen von Attributen zu den Containern, die bereitgestellt werden.",
-          "healthIgnoreOnProvision": "Integritätsprüfungsfehler bei Bereitstellung ignorieren",
-          "healthIgnoreOnProvisionDescription": "Ist die Integritätsprüfung konfiguriert, wird sie nicht nur verwendet, wenn der Dienst ausgeführt wird, sondern auch bei der Bereitstellung. Die Container werden erst dann als bereitgestellt betrachtet, wenn eine Integritätsprüfung erfolgreich bestanden wurde. Aktivieren Sie diese Option, um eine Bereitstellung auch ohne erfolgreiche Integritätsprüfung durchführen zu können.",
+          "healthIgnoreOnProvision": "Integritätsprüfung bei Bereitstellung ignorieren",
+          "healthIgnoreOnProvisionDescription": "Wurde die Integritätsprüfung konfiguriert und wird der Dienst ausgeführt, kann sie auch bei der Bereitstellung verwendet werden. Deaktivieren Sie diese Option, um die Integritätsprüfung bei der Bereitstellung zu erzwingen. Dadurch gilt ein Container erst dann als bereitgestellt, wenn die Integritätsprüfung erfolgreich durchgeführt wurde.",
           "healthMode": "Modus",
           "healthConfigNone": "Keine",
           "healthConfigTCP": "TCP-Verbindung",
@@ -942,7 +994,11 @@
         "UNKNOWN": "UNBEKANNT",
         "RETIRED": "ZURÜCKGEZOGEN",
         "PROVISIONING": "BEREITSTELLUNG",
-        "continuousStateSince": "{{state}}: {{duration}}"
+        "continuousStateSince": "{{state}}: {{duration}}",
+        "errorStatus": "{{state}}: {{status}}"
+      },
+      "status": {
+        "unhealthy": "Integritätsprüfung fehlgeschlagen"
       },
       "actions": {
         "start": "Starten",
@@ -1101,7 +1157,7 @@
       "failure": "Authentifizierungsfehler"
     },
     "dropdownSearchMenu": {
-      "title": "Aus {{entity}}-Liste auswählen",
+      "title": "Aus {{entity}}-Liste wählen",
       "searchPlaceholder": "{{entity}} suchen",
       "clear": "Auswahl löschen",
       "showingCount": "{{count}} von {{totalCount}} werden angezeigt",
@@ -1114,7 +1170,9 @@
       "valueHint": "Beispiel: slow"
     },
     "yes": "Ja",
+    "ok": "OK",
     "cancel": "Abbrechen",
+    "error": "Fehler",
     "delete": "Löschen",
     "enable": "Aktivieren",
     "enabled": "Aktiviert",
@@ -1157,7 +1215,8 @@
       "invalidPath": "Wert muss ein absoluter Pfad sein.",
       "invalidPathOrName": "Wert muss ein absoluter Pfad oder ein gültiger Volume-Name sein.",
       "containersConnected": "Es sind verbundene Container vorhanden.",
-      "managedByCatalog": "Von Katalog verwaltet"
+      "managedByCatalog": "Von Katalog verwaltet",
+      "projectsUnexpectedError": "Es ist ein unbekannter Fehler aufgetreten"
     },
     "infoMessages": {
       "created": "Erfolgreich erstellt.",

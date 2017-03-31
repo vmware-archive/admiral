@@ -1,5 +1,9 @@
 {
   "app": {
+    "header": {
+      "management": "Gestion",
+      "registry": "Registre"
+    },
     "homepage": {
       "welcome": "Bienvenue !",
       "description": "Cette page vous permet de <b>créer, provisionner, gérer et surveiller les applications mises en conteneur.</b>",
@@ -17,22 +21,30 @@
       }
     },
     "navbar": {
-      "hosts": "Hôtes",
-      "placements": "Placements",
-      "templates": "Modèles",
       "resources": "Ressources",
+      "hosts": "Hôtes",
+      "policies": "Stratégies",
+      "placements": "Placements",
+      "registries": "Registres",
+      "templates": "Modèles",
+      "deployment": "Déploiements",
+      "projects": "Projets",
       "containers": "Conteneurs",
       "applications": "Applications",
       "networks": "Réseaux",
       "volumes": "Volumes",
       "closures": "Fermetures",
-      "kubernetes": "Kubernetes",
       "eventlog": "Journal des événements",
       "placementZones": "Zones de placement",
-      "environments": "Profils",
+      "profiles": "Profils",
       "endpoints": "Points de terminaison",
       "machines": "Machines",
-      "compute": "Calcul de ressources"
+      "compute": "Calcul de ressources",
+      "kubernetesResources": "Ressources K8S",
+      "kubernetesDeployments": "Déploiements",
+      "kubernetesPods": "Espaces",
+      "kubernetesServices": "Services",
+      "kubernetesReplicationControllers": "Contrôleurs de réplication"
     },
     "host": {
       "entity": "hôte",
@@ -72,7 +84,7 @@
         "add": "Ajouter",
         "update": "Mettre à jour",
         "create": "Créer",
-        "certificateWarning": "Le certificat de {{address}} n'est pas valide. Il se peut que vous vous connectiez à un site Web prétendant être {{address}}, ce qui peut constituer un risque pour vos informations confidentielles. Voulez-vous néanmoins vous connecter au site Web ?",
+        "certificateWarning": "Le certificat de {{address}} n'est pas valide. Vous pouvez vous connecter à un site Web qui prétend être {{address}}, ce qui pourrait menacer vos informations confidentielles. Voulez-vous toujours vous connecter au site Web ?",
         "showCertificate": "Afficher le certificat",
         "hideCertificate": "Masquer le certificat",
         "manageCertificates": "Gérer les certificats",
@@ -126,7 +138,7 @@
         "update": "Modifier la zone de placement",
         "nameTitle": "Nom de la zone de placement",
         "endpointTitle": "Point de terminaison",
-        "placementPolicy": "Stratégie de positionnement avancée",
+        "placementPolicy": "Stratégie de placement avancé",
         "placementPolicyHint": "Par défaut, les ressources sont placées sur des hôtes aléatoires. L'une des stratégies suivantes peut être éventuellement appliquée :<br><br><b>BINPACK</b> : placement sur l'hôte dont l'utilisation de la mémoire est la plus élevée.<br><br><b>SPREAD</b> : placement sur l'hôte ayant le moins de ressources.",
         "dynamicTitle": "Allouer dynamiquement des ressources à cette zone",
         "tagsTitle": "Balises",
@@ -186,7 +198,8 @@
         "certificateTitle": "Certificat",
         "publicTitle": "Clé publique",
         "publicCertificateTitle": "Certificat public",
-        "privateCertificateTitle": "Certificat privé"
+        "privateCertificateTitle": "Certificat privé",
+        "customProperties": "Propriétés personnalisées"
       }
     },
     "deploymentPolicy": {
@@ -265,6 +278,7 @@
         "false": "Non",
         "searchCategoryFilterTitle": "Afficher :",
         "partialResultWarning": "Les résultats de la recherche sont incomplets en raison d'un ou de plusieurs échecs de requête.",
+        "continue": "Continuer",
         "searchCategory": {
           "all": "Tout",
           "images": "Images",
@@ -288,7 +302,15 @@
         "editDefinition": {
           "title": "Modifier la définition du conteneur"
         },
-        "editNetwork" :{
+        "editProject": {
+          "createTitle": "Créer un projet",
+          "updateTitle": "Mettre à jour le projet",
+          "name": "Nom",
+          "create": "Créer",
+          "update": "Mettre à jour",
+          "publicCheckboxLabel": "Rendre ce projet public"
+        },
+        "editNetwork": {
           "newLabel": "Ajouter un réseau",
           "newTitle": "Ajouter une configuration réseau",
           "newDropdownTitle": "Ajouter un réseau…",
@@ -402,11 +424,11 @@
         "deploymentPolicyColumn": "Stratégie de déploiement",
         "priorityColumn": "Priorité",
         "instancesColumn": "Instances",
-        "cpuColumn": "Partages de CPU",
         "memoryColumn": "Limite de mémoire",
         "storageColumn": "Limite de stockage",
         "instancesPerPlacement": "Afficher les instances par placement",
-        "unlimitedInstances": "Illimité"
+        "unlimitedInstances": "Illimité",
+        "unlimitedMemoryLimit": "Illimité"
       },
       "edit": {
         "createNew": "Nouveau placement",
@@ -421,10 +443,10 @@
         "deploymentPolicyLabel": "Stratégie de déploiement",
         "selectDeploymentPolicy": "Sélectionner une stratégie de déploiement",
         "priorityLabel": "Priorité",
-        "priorityPlaceholder": "Nombre positif (facultatif)",
+        "priorityPlaceholder": "Nombre positif",
         "priorityHint": "Laissez ce champ vide pour lui attribuer la plus faible priorité.",
         "instancesLabel": "Instances",
-        "instancesPlaceholder": "Nombre d'instances (facultatif)",
+        "instancesPlaceholder": "Nombre d'instances",
         "instancesHint": "Entier positif pour limiter le nombre maximal d'instances. Laissez ce champ vide ou entrez 0 pour un nombre illimité.",
         "cpuSharesLabel": "Partages de CPU",
         "memoryLimitLabel": "Limite de mémoire",
@@ -460,7 +482,7 @@
         "verified": "Vérification effectuée !"
       }
     },
-    "environment": {
+    "profile": {
       "list": {
         "title": "Profils",
         "titleSearch": "Profils trouvés",
@@ -489,15 +511,22 @@
         "storageTab": "Stockage",
         "nameLabel": "Nom",
         "tagsLabel": "Balises",
+        "tagsHint": "Entrer des balises clé:valeur",
+        "tagsPlaceholder": "Exemple : compliance:yes",
         "endpointLabel": "Point de terminaison",
         "valueLabel": "Valeur",
-        "instanceTypeLabel": "Type d'instance",
-        "imageTypeLabel": "Type d'image",
-        "bootDiskPropertyLabel": "Propriété du disque de démarrage",
+        "instanceTypeMappingLabel": "Type d'instance",
+        "imageMappingLabel": "Type d'image",
+        "bootDiskPropertyMappingLabel": "Propriété du disque de démarrage",
         "cpuCountLabel": "CPU",
-        "diskSizeMbLabel": "Taille du disque",
-        "memoryMbLabel": "Mémoire",
+        "diskSizeMbLabel": "Taille de disque (Mo)",
+        "memoryMbLabel": "Mémoire (Mo)",
         "subnetworksLabel": "Sous-réseaux",
+        "isolationTypeLabel": "Type d'isolation",
+        "isolationNetworkLabel": "Réseau d'isolation",
+        "noneIsolationTypeLabel": "Aucun",
+        "subnetIsolationTypeLabel": "Sous-réseau",
+        "securityGroupIsolationTypeLabel": "Aucun",
         "cidrLabel": "CIDR",
         "cidrLabelHint": "0.0.0.0/0",
         "supportPublicIpAddressLabel": "Prendre en charge les adresses IP publiques",
@@ -544,7 +573,7 @@
         "update": "Modifier le point de terminaison",
         "nameLabel": "Nom",
         "typeLabel": "Type",
-        "privateKeyIdLabel": "ID de clé d'accès",
+        "privateKeyIdLabel": "ID de la clé d'accès",
         "privateKeyLabel": "Clé d'accès secrète",
         "regionIdLabel": "ID de région",
         "azure": {
@@ -555,7 +584,8 @@
           "hostNameLabel": "Nom d'hôte ou adresse IP",
           "privateKeyIdLabel": "Nom d'utilisateur",
           "privateKeyLabel": "Mot de passe",
-          "regionIdLabel": "Centre de données"
+          "regionIdLabel": "Centre de données",
+          "linkedEndpointLabel": "Point de terminaison NSX-T"
         }
       },
       "entity": "point de terminaison",
@@ -611,6 +641,7 @@
       "edit": {
         "addNew": "Ajouter un sous-réseau",
         "update": "Modifier un sous-réseau",
+        "networkLabel": "Réseau",
         "nameLabel": "Nom",
         "cidrLabel": "CIDR",
         "supportPublicIpAddressLabel": "Prendre en charge les adresses IP publiques",
@@ -620,6 +651,7 @@
         "tagsPlaceholder": "Exemple : access:restricted"
       },
       "entity": "Sous-réseau",
+      "create": "Nouveau sous-réseau",
       "manage": "Gérer les sous-réseaux",
       "contextPanelTooltip": "Sous-réseaux"
     },
@@ -645,6 +677,17 @@
             "ERROR": "ERREUR"
           }
         },
+        "project": {
+          "name": "Projet",
+          "description": "Description",
+          "public": "Public",
+          "private": "Privé",
+          "create": "Créer un projet",
+          "actions": {
+            "edit": "Modifier",
+            "remove": "Supprimer"
+          }
+        },
         "container": {
           "create": "Créer un conteneur"
         },
@@ -659,7 +702,7 @@
         },
         "volume": {
           "create": "Créer un volume",
-          "connectedDateLabel": "Connecté depuis",
+          "connectedDateLabel": "Connecté",
           "driverLabel": "Pilote",
           "driverOptionsLabel": "Options de pilote",
           "scope": "Portée",
@@ -676,6 +719,7 @@
           }
         },
         "titleSearch": {
+          "projects": "Projets",
           "containers": "Conteneurs",
           "applications": "Applications",
           "networks": "Réseaux",
@@ -684,6 +728,7 @@
           "kubernetes": "Kubernetes"
         },
         "searchPlaceholder": {
+          "projects": "Rechercher des projets",
           "containers": "Rechercher des conteneurs",
           "applications": "Rechercher des applications",
           "networks": "Rechercher des réseaux",
@@ -745,12 +790,17 @@
         "network": "Réseau",
         "networkTrafficSent": "Envoyé",
         "networkTrafficReceived": "Reçu",
-        "showingLogsSince": "Affichage des journaux depuis",
+        "lines": "lignes",
+        "showingLogs": "Affichage des journaux",
+        "logsOptionSince": "Depuis",
+        "logsOptionTail": "Tail",
         "logsFormat": "Format des journaux",
         "logsFormatAnsi": "ANSI",
         "logsFormatRaw": "Brut",
         "networkAddresses": "Adresses réseau",
         "attributes": {
+          "name": "Nom",
+          "value": "Valeur",
           "host": "Hôte",
           "createdDateLabel": "Créé",
           "ports": "Ports",
@@ -883,6 +933,8 @@
             "servicenameHint": "Exemple : webserver",
             "constraint": "Contrainte"
           },
+          "autoredeploy": "Redéploiement automatique",
+          "autoredeployDescription": "Redéploiement automatique des conteneurs présentant l'état ERREUR.",
           "environmentVariables": "Variables d'environnement",
           "environmentVariablesDescription": "Liste de variables d'environnement",
           "environmentVariablesInputs": {
@@ -893,8 +945,8 @@
           },
           "customProperties": "Propriétés personnalisées",
           "customPropertiesDescription": "Les propriétés personnalisées permettent d'ajouter des attributs aux conteneurs qui seront provisionnés.",
-          "healthIgnoreOnProvision": "Ignorer les échecs de contrôle de santé lors du provisionnement",
-          "healthIgnoreOnProvisionDescription": "Si un contrôle de santé est configuré au moment où le service est actif, il sera aussi utilisé lors du provisionnement. Les conteneurs ne seront pas considérés comme provisionnés tant qu'un contrôle de santé n'aura pas réussi. Cochez cette option pour effectuer le provisionnement sans contrôle de santé réussi.",
+          "healthIgnoreOnProvision": "Ignorer le contrôle de santé lors du provisionnement",
+          "healthIgnoreOnProvisionDescription": "Si le contrôle de santé est configuré au moment où le service est en cours d'exécution, il pourrait aussi être utilisé lors du provisionnement. Pour forcer le contrôle de santé lors du provisionnement, désélectionnez cette option. De cette façon, les conteneurs ne seront pas considérés comme provisionnés tant qu'un contrôle de santé n'aura pas réussi.",
           "healthMode": "Mode",
           "healthConfigNone": "Aucun",
           "healthConfigTCP": "Connexion TCP",
@@ -942,7 +994,11 @@
         "UNKNOWN": "INCONNU",
         "RETIRED": "RETIRÉ",
         "PROVISIONING": "PROVISIONNEMENT",
-        "continuousStateSince": "{{state}} pendant {{duration}}"
+        "continuousStateSince": "{{state}} pendant {{duration}}",
+        "errorStatus": "{{state}} : {{status}}"
+      },
+      "status": {
+        "unhealthy": "Échec du contrôle de santé"
       },
       "actions": {
         "start": "Démarrer",
@@ -1114,7 +1170,9 @@
       "valueHint": "Exemple : slow"
     },
     "yes": "Oui",
+    "ok": "OK",
     "cancel": "Annuler",
+    "error": "Erreur",
     "delete": "Supprimer",
     "enable": "Activer",
     "enabled": "Activé",
@@ -1157,7 +1215,8 @@
       "invalidPath": "La valeur doit être un chemin absolu.",
       "invalidPathOrName": "La valeur doit être un chemin absolu ou un nom de volume valide.",
       "containersConnected": "Il y a des conteneurs connectés.",
-      "managedByCatalog": "Géré par catalogue"
+      "managedByCatalog": "Géré par catalogue",
+      "projectsUnexpectedError": "Une erreur inattendue s'est produite"
     },
     "infoMessages": {
       "created": "Création effectuée !",
@@ -1172,6 +1231,6 @@
       "OFF": "DÉSACTIVÉ",
       "SUSPEND": "DÉSACTIVÉ",
       "UNKNOWN": "INCONNU",
-      "stateSinceMessage": "depuis {{date}}"
+      "stateSinceMessage": "depuis le {{date}}"
     }
 }
