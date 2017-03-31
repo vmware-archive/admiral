@@ -103,10 +103,18 @@ var HostAddView = Vue.extend({
       return !this.isDockerHost && this.isHostModelVerified;
     },
     isHostModelVerified: function() {
-      // if it is update and credentials haven't changed
-      if (this.model.isUpdate && this.model.dto.customProperties.__authCredentialsLink
+      // if it is update and credentials have not changed, return true
+      if (this.model.isUpdate && this.model.dto) {
+        // We don't have credentials in the saved host - if we don't have in the current - it's ok
+        if (!this.model.dto.customProperties.__authCredentialsLink && !this.credential) {
+          return true;
+        }
+
+        // We have credentials in the saved host - if they are the same as the current - ok
+        if (this.credential && this.model.dto.customProperties.__authCredentialsLink
                                 === this.credential.documentSelfLink) {
-        return true;
+          return true;
+        }
       }
 
       // check if model is verified
