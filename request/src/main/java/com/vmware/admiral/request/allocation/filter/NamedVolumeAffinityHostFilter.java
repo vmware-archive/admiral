@@ -32,17 +32,23 @@ import com.vmware.admiral.adapter.docker.service.DockerVolumeAdapterService;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
+import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
+import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.compute.container.volume.VolumeUtil;
 import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState;
 import com.vmware.admiral.request.utils.RequestUtils;
+import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
 /**
@@ -190,12 +196,33 @@ public class NamedVolumeAffinityHostFilter
             return;
         }
 
+        if (VolumeUtil.isContainerRequest(state.customProperties)) {
+            findVolumeDescriptionsByLinks(state, hostSelectionMap, callback, null);
+        } else {
+            findVolumeDescriptionsByComponent(state, hostSelectionMap, callback);
+        }
+    }
+
+    private void findVolumeDescriptionsByLinks(PlacementHostSelectionTaskState state,
+            Map<String, HostSelection> hostSelectionMap, HostSelectionFilterCompletion callback,
+            List<String> containerVolumeLinks) {
         final QueryTask q = QueryUtil.buildQuery(ContainerVolumeDescription.class, false);
 
         QueryUtil.addCaseInsensitiveListValueClause(q, ContainerVolumeDescription.FIELD_NAME_NAME,
                 volumeNames);
+        if (containerVolumeLinks != null) {
+            QueryUtil.addListValueClause(q,
+                    ContainerVolumeDescription.FIELD_NAME_SELF_LINK,
+                    containerVolumeLinks);
+        } else {
+            QueryTask.Query contextClause = new QueryTask.Query()
+                    .setTermPropertyName(QuerySpecification.buildCompositeFieldName(
+                            ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
+                            RequestUtils.FIELD_NAME_CONTEXT_ID_KEY))
+                    .setTermMatchValue(state.contextId);
+            q.querySpec.query.addBooleanClause(contextClause);
+        }
         QueryUtil.addExpandOption(q);
-
         final Map<String, DescName> descLinksWithNames = new HashMap<>();
         new ServiceDocumentQuery<>(host, ContainerVolumeDescription.class)
                 .query(q, (r) -> {
@@ -221,6 +248,49 @@ public class NamedVolumeAffinityHostFilter
                         }
                     }
                 });
+
+    }
+
+    private void findVolumeDescriptionsByComponent(PlacementHostSelectionTaskState state,
+            Map<String, HostSelection> hostSelectionMap, HostSelectionFilterCompletion callback) {
+        String compositeComponentLink = UriUtils
+                .buildUriPath(CompositeComponentFactoryService.SELF_LINK, state.contextId);
+        host.sendRequest(Operation.createGet(UriUtils.buildUri(host, compositeComponentLink))
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.log(Level.WARNING,
+                                "Exception while getting CompositeComponent. Error: [%s]",
+                                ex.getMessage());
+                        callback.complete(null, ex);
+                        return;
+                    }
+                    CompositeComponent body = o.getBody(CompositeComponent.class);
+                    host.sendRequest(Operation.createGet(UriUtils.buildUri(host, body.compositeDescriptionLink))
+                            .setReferer(host.getUri())
+                            .setCompletion((o2, ex2) -> {
+                                if (ex2 != null) {
+                                    host.log(Level.WARNING,
+                                            "Exception while getting CompositeDescription. Error: [%s]",
+                                            ex2.getMessage());
+                                    callback.complete(null, ex2);
+                                    return;
+                                }
+                                List<String> containerVolumeLinks = new ArrayList<>();
+                                CompositeDescription descBody = o2.getBody(CompositeDescription.class);
+                                for (String descriptionLink : descBody.descriptionLinks) {
+                                    if (descriptionLink.startsWith(ContainerVolumeDescriptionService.FACTORY_LINK)) {
+                                        containerVolumeLinks.add(descriptionLink);
+                                    }
+                                }
+                                if (containerVolumeLinks.isEmpty()) {
+                                    callback.complete(hostSelectionMap, null);
+                                    return;
+                                }
+                                findVolumeDescriptionsByLinks(state, hostSelectionMap, callback,
+                                        containerVolumeLinks);
+                            }));
+                }));
     }
 
     private void findContainerVolumes(PlacementHostSelectionTaskState state,

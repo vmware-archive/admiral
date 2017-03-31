@@ -34,6 +34,7 @@ import org.junit.Test;
 
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
+import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
@@ -88,10 +89,12 @@ public class NamedVolumeAffinityHostFilterTest extends BaseAffinityHostFilterTes
         String driver2 = "my-other-test-volume";
 
         ContainerVolumeDescription volumeDescription1 = createVolumeDescription("volume1", driver1);
-        ContainerVolumeState volumeState1 = createVolumeState(volumeDescription1);
-
         ContainerVolumeDescription volumeDescription2 = createVolumeDescription("volume2", driver2);
-        ContainerVolumeState volumeState2 = createVolumeState(volumeDescription2);
+        CompositeDescription compositeDesc = createCompositeDesc(false, false, volumeDescription1,
+                volumeDescription2);
+        ContainerVolumeState volume1 = createVolumeState(volumeDescription1);
+        ContainerVolumeState volume2 = createVolumeState(volumeDescription2);
+        createCompositeComponent(compositeDesc, volume1, volume2);
 
         ContainerDescription desc = createContainerDescription(new String[] {
                 volumeDescription1.name + ":/tmp", volumeDescription2.name + ":/tmp" });
@@ -104,10 +107,10 @@ public class NamedVolumeAffinityHostFilterTest extends BaseAffinityHostFilterTes
 
         for (HostSelection hs : selected.values()) {
             String mappedName = hs.mapNames(new String[] { volumeDescription1.name })[0];
-            assertEquals(volumeState1.name, mappedName);
+            assertEquals(volume1.name, mappedName);
 
             mappedName = hs.mapNames(new String[] { volumeDescription2.name })[0];
-            assertEquals(volumeState2.name, mappedName);
+            assertEquals(volume2.name, mappedName);
         }
     }
 
@@ -117,10 +120,12 @@ public class NamedVolumeAffinityHostFilterTest extends BaseAffinityHostFilterTes
         String driver2 = "my-test-driver-2";
 
         ContainerVolumeDescription volumeDescription1 = createVolumeDescription("volume1", driver1);
-        createVolumeState(volumeDescription1);
-
         ContainerVolumeDescription volumeDescription2 = createVolumeDescription("volume2", driver2);
-        createVolumeState(volumeDescription2);
+        CompositeDescription compositeDesc = createCompositeDesc(false, false, volumeDescription1,
+                volumeDescription2);
+        ContainerVolumeState volume1 = createVolumeState(volumeDescription1);
+        ContainerVolumeState volume2 = createVolumeState(volumeDescription2);
+        createCompositeComponent(compositeDesc, volume1, volume2);
 
         ContainerDescription desc = createContainerDescription(new String[] {
                 volumeDescription1.name + ":/tmp", volumeDescription2.name + ":/tmp" });
@@ -154,7 +159,9 @@ public class NamedVolumeAffinityHostFilterTest extends BaseAffinityHostFilterTes
     @Test
     public void testFilterHostsWhenSingleLocalVolumeShared() throws Throwable {
         ContainerVolumeDescription sharedLocalVolume = createVolumeDescription("shared", "local");
-        createVolumeState(sharedLocalVolume);
+        CompositeDescription compositeDesc = createCompositeDesc(false, false, sharedLocalVolume);
+        ContainerVolumeState volume = createVolumeState(sharedLocalVolume);
+        createCompositeComponent(compositeDesc, volume);
 
         ContainerDescription desc1 = createContainerDescription(new String[] { "shared:/tmp" });
         ContainerDescription desc2 = createContainerDescription(new String[] { "shared:/tmp" });
@@ -197,9 +204,12 @@ public class NamedVolumeAffinityHostFilterTest extends BaseAffinityHostFilterTes
         String h2Link = createDockerHostWithVolumeDrivers("local");
 
         ContainerVolumeDescription local1 = createVolumeDescription("local1", "local");
-        createVolumeState(local1);
         ContainerVolumeDescription local2 = createVolumeDescription("local2", "local");
-        createVolumeState(local2);
+        CompositeDescription compositeDesc = createCompositeDesc(false, false, local1,
+                local2);
+        ContainerVolumeState volume1 = createVolumeState(local1);
+        ContainerVolumeState volume2 = createVolumeState(local2);
+        createCompositeComponent(compositeDesc, volume1, volume2);
 
         ContainerDescription c1 = createContainerDescription(new String[] { "local1:/tmp" });
         createContainer(c1, h1Link);
@@ -225,7 +235,9 @@ public class NamedVolumeAffinityHostFilterTest extends BaseAffinityHostFilterTes
     @Test
     public void testFailWhenLocalVolumesShared2() throws Throwable {
         ContainerVolumeDescription local1 = createVolumeDescription("vol1", "local");
-        createVolumeState(local1);
+        CompositeDescription compositeDesc = createCompositeDesc(false, false, local1);
+        ContainerVolumeState volume = createVolumeState(local1);
+        createCompositeComponent(compositeDesc, volume);
 
         String h1Link = createDockerHostWithVolumeDrivers("local");
 
@@ -304,7 +316,10 @@ public class NamedVolumeAffinityHostFilterTest extends BaseAffinityHostFilterTes
 
         String hostLink = createDockerHostWithVolumeDrivers("vsphere");
 
-        createVolumeDescription("myvol", "local");
+        ContainerVolumeDescription volumeDescription = createVolumeDescription("myvol", "local");
+        CompositeDescription compositeDesc = createCompositeDesc(false, false, volumeDescription);
+        ContainerVolumeState volume = createVolumeState(volumeDescription);
+        createCompositeComponent(compositeDesc, volume);
         assertEquals(4, initialHostLinks.size());
         ContainerDescription containerDesc = createContainerDescription(
                 new String[] { "myvol:/tmp" });
