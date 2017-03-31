@@ -71,27 +71,20 @@
   padding-left: 12px;
 
 }
-.inline-editable-list .table .item.active .details-cell {
-  padding-top: 12px;
-}
-.inline-editable-list .table .item .details-cell .header {
+
+.inline-editable-list .table .item .details-cell .form-holder {
   position: relative;
+  .form-block {
+    margin: 0px;
+  }
 }
 
-.inline-editable-list .table .item .details-cell .header .title {
-  color: $main_color;
-  font-size: 16px;
-  padding: 0 0 12px 0;
-  font-weight: 300;
-  letter-spacing: 0.02em;
-}
-
-.inline-editable-list .table .item .details-cell .header .table-actions {
+.inline-editable-list .table .item .details-cell .form-holder .table-actions {
   z-index: 10;
   position: absolute;
   // align with table cell paddings
-  right: -2px;
-  top: 0;
+  right: -6px;
+  top: 4px;
 }
 
 .inline-editable-list .table .item .details-cell .content{

@@ -30,8 +30,7 @@
   </td>
   <!-- Details cell visible only when expanded/active -->
   <td class="details-cell" colspan="5">
-    <div class="header">
-      <div class="title">{{i18n "app.certificate.list.details.title"}}</div>
+    <div class="form-holder">
       <div class="table-actions">
         <a href="#" class="btn item-collapse">
           <i class="btn fa fa-eye-slash"></i>
@@ -43,32 +42,35 @@
           <i class="fa fa-trash"></i>
         </a>
       </div>
-    </div>
-    <div class="content form-horizontal">
-      <div class="form-group">
-        <label class="col-sm-4">{{i18n "app.certificate.list.details.commonName"}}</label>
-        <div class="col-sm-8">{{commonName}}</div>
-      </div>
-      <div class="form-group">
-        <label class="col-sm-4">{{i18n "app.certificate.list.details.issuerName"}}</label>
-        <div class="col-sm-8">{{issuerName}}</div>
-      </div>
-      <div class="form-group">
-        <label class="col-sm-4">{{i18n "app.certificate.list.details.serial"}}</label>
-        <div class="col-sm-8">{{serial}}</div>
-      </div>
-      <div class="form-group">
-        <label class="col-sm-4">{{i18n "app.certificate.list.details.fingerprint"}}</label>
-        <div class="col-sm-8">{{fingerprint}}</div>
-      </div>
-      <div class="form-group">
-        <label class="col-sm-4">{{i18n "app.certificate.list.details.validSince"}}</label>
-        <div class="col-sm-8">{{timestampToDate validSince}}</div>
-      </div>
-      <div class="form-group">
-        <label class="col-sm-4">{{i18n "app.certificate.list.details.validTo"}}</label>
-        <div class="col-sm-8">{{timestampToDate validTo}}</div>
-      </div>
+      <form class="compact content">
+        <div class="form-block">
+          <label>{{i18n "app.certificate.list.details.title"}}</label>
+          <div class="form-group">
+            <label>{{i18n "app.certificate.list.details.commonName"}}</label>
+            <label>{{commonName}}</label>
+          </div>
+          <div class="form-group">
+            <label>{{i18n "app.certificate.list.details.issuerName"}}</label>
+            <label>{{issuerName}}</label>
+          </div>
+          <div class="form-group">
+            <label>{{i18n "app.certificate.list.details.serial"}}</label>
+            <label>{{serial}}</label>
+          </div>
+          <div class="form-group">
+            <label>{{i18n "app.certificate.list.details.fingerprint"}}</label>
+            <label>{{fingerprint}}</label>
+          </div>
+          <div class="form-group">
+            <label>{{i18n "app.certificate.list.details.validSince"}}</label>
+            <label>{{timestampToDate validSince}}</label>
+          </div>
+          <div class="form-group">
+            <label>{{i18n "app.certificate.list.details.validTo"}}</label>
+            <label>{{timestampToDate validTo}}</label>
+          </div>
+        </div>
+      </form>
     </div>
   </td>
 </tr>
