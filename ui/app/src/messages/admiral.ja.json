@@ -1,5 +1,9 @@
 {
   "app": {
+    "header": {
+      "management": "管理",
+      "registry": "レジストリ"
+    },
     "homepage": {
       "welcome": "はじめに",
       "description": "ここでは、<b>コンテナ化されたアプリケーションを作成して、プロビジョニング、管理および監視</b>を行うことができます。",
@@ -17,22 +21,30 @@
       }
     },
     "navbar": {
-      "hosts": "ホスト",
-      "placements": "配置",
-      "templates": "テンプレート",
       "resources": "リソース",
+      "hosts": "ホスト",
+      "policies": "ポリシー",
+      "placements": "配置",
+      "registries": "レジストリ",
+      "templates": "テンプレート",
+      "deployment": "展開",
+      "projects": "プロジェクト",
       "containers": "コンテナ",
       "applications": "アプリケーション",
       "networks": "ネットワーク",
       "volumes": "ボリューム",
       "closures": "クロージャ",
-      "kubernetes": "Kubernetes",
       "eventlog": "イベント ログ",
       "placementZones": "配置ゾーン",
-      "environments": "プロファイル",
+      "profiles": "プロファイル",
       "endpoints": "エンドポイント",
       "machines": "マシン",
-      "compute": "コンピューティング"
+      "compute": "コンピューティング",
+      "kubernetesResources": "K8S リソース",
+      "kubernetesDeployments": "展開",
+      "kubernetesPods": "ポッド",
+      "kubernetesServices": "サービス",
+      "kubernetesReplicationControllers": "レプリケーション コントローラ"
     },
     "host": {
       "entity": "ホスト",
@@ -186,7 +198,8 @@
         "certificateTitle": "証明書",
         "publicTitle": "パブリック キー",
         "publicCertificateTitle": "パブリック証明書",
-        "privateCertificateTitle": "プライベート証明書"
+        "privateCertificateTitle": "プライベート証明書",
+        "customProperties": "カスタム プロパティ"
       }
     },
     "deploymentPolicy": {
@@ -265,6 +278,7 @@
         "false": "いいえ",
         "searchCategoryFilterTitle": "表示:",
         "partialResultWarning": "1 つ以上のクエリが失敗したため、表示されている検索結果は不完全です。",
+        "continue": "続行",
         "searchCategory": {
           "all": "すべて",
           "images": "イメージ",
@@ -288,14 +302,22 @@
         "editDefinition": {
           "title": "コンテナ定義の編集"
         },
-        "editNetwork" :{
+        "editProject": {
+          "createTitle": "プロジェクトの作成",
+          "updateTitle": "プロジェクトの更新",
+          "name": "名前",
+          "create": "作成",
+          "update": "更新",
+          "publicCheckboxLabel": "このプロジェクトをパブリックにする"
+        },
+        "editNetwork": {
           "newLabel": "ネットワークの追加",
           "newTitle": "ネットワーク構成の追加",
           "newDropdownTitle": "ネットワークの追加...",
           "editTitle": "ネットワーク構成の編集",
           "name": "名前",
           "existingNetwork": "既存",
-          "showingCount": "{{count}} /{{totalCount}} を表示中",
+          "showingCount": "{{count}}/{{totalCount}} を表示中",
           "showingInstances": "個のインスタンス",
           "noResults": "ネットワークが見つかりませんでした",
           "hosts": "ホスト",
@@ -332,7 +354,7 @@
             "valueHint": "例: 20GB"
           },
           "existingVolume": "既存",
-          "showingCount": "{{count}} /{{totalCount}} を表示中",
+          "showingCount": "{{count}}/{{totalCount}} を表示中",
           "showingInstances": "個のインスタンス",
           "noResults": "ボリュームが見つかりません",
           "mountpoint": "ホストのマウントポイント",
@@ -402,11 +424,11 @@
         "deploymentPolicyColumn": "展開ポリシー",
         "priorityColumn": "優先度",
         "instancesColumn": "インスタンス",
-        "cpuColumn": "CPU シェア",
         "memoryColumn": "メモリ制限",
         "storageColumn": "ストレージ制限",
         "instancesPerPlacement": "配置ごとのインスタンスの表示",
-        "unlimitedInstances": "制限なし"
+        "unlimitedInstances": "制限なし",
+        "unlimitedMemoryLimit": "制限なし"
       },
       "edit": {
         "createNew": "新しい配置",
@@ -421,10 +443,10 @@
         "deploymentPolicyLabel": "展開ポリシー",
         "selectDeploymentPolicy": "展開ポリシーの選択",
         "priorityLabel": "優先度",
-        "priorityPlaceholder": "正数 (オプション)",
+        "priorityPlaceholder": "正数",
         "priorityHint": "空白にすると優先度が最低になります",
         "instancesLabel": "インスタンス",
-        "instancesPlaceholder": "インスタンスの数 (オプション)",
+        "instancesPlaceholder": "インスタンスの数",
         "instancesHint": "インスタンスの最大数を制限するには正の整数を入力します。制限しない場合は空白または 0 にします。",
         "cpuSharesLabel": "CPU シェア",
         "memoryLimitLabel": "メモリ制限",
@@ -460,7 +482,7 @@
         "verified": "検証が正常に完了しました。"
       }
     },
-    "environment": {
+    "profile": {
       "list": {
         "title": "プロファイル",
         "titleSearch": "プロファイルが見つかりました",
@@ -489,15 +511,22 @@
         "storageTab": "ストレージ",
         "nameLabel": "名前",
         "tagsLabel": "タグ",
+        "tagsHint": "key:value タグを入力します",
+        "tagsPlaceholder": "例: compliance:yes",
         "endpointLabel": "エンドポイント",
         "valueLabel": "値",
-        "instanceTypeLabel": "インスタンス タイプ",
-        "imageTypeLabel": "イメージ タイプ",
-        "bootDiskPropertyLabel": "ブート ディスクのプロパティ",
+        "instanceTypeMappingLabel": "インスタンス タイプ",
+        "imageMappingLabel": "イメージ タイプ",
+        "bootDiskPropertyMappingLabel": "ブート ディスクのプロパティ",
         "cpuCountLabel": "CPU",
-        "diskSizeMbLabel": "ディスク サイズ",
-        "memoryMbLabel": "メモリ",
+        "diskSizeMbLabel": "ディスク サイズ (MB)",
+        "memoryMbLabel": "メモリ (MB)",
         "subnetworksLabel": "サブネットワーク",
+        "isolationTypeLabel": "隔離タイプ",
+        "isolationNetworkLabel": "隔離ネットワーク",
+        "noneIsolationTypeLabel": "なし",
+        "subnetIsolationTypeLabel": "サブネットワーク",
+        "securityGroupIsolationTypeLabel": "なし",
         "cidrLabel": "CIDR",
         "cidrLabelHint": "0.0.0.0/0",
         "supportPublicIpAddressLabel": "パブリック IP アドレスのサポート",
@@ -555,7 +584,8 @@
           "hostNameLabel": "ホスト名または IP アドレス",
           "privateKeyIdLabel": "ユーザー名",
           "privateKeyLabel": "パスワード",
-          "regionIdLabel": "データセンター"
+          "regionIdLabel": "データセンター",
+          "linkedEndpointLabel": "NSX-T エンドポイント"
         }
       },
       "entity": "エンドポイント",
@@ -611,6 +641,7 @@
       "edit": {
         "addNew": "サブネットワークの追加",
         "update": "サブネットワークの編集",
+        "networkLabel": "ネットワーク",
         "nameLabel": "名前",
         "cidrLabel": "CIDR",
         "supportPublicIpAddressLabel": "パブリック IP アドレスのサポート",
@@ -620,6 +651,7 @@
         "tagsPlaceholder": "例: access:restricted"
       },
       "entity": "サブネットワーク",
+      "create": "新規サブネットワーク",
       "manage": "サブネットワークの管理",
       "contextPanelTooltip": "サブネットワーク"
     },
@@ -645,6 +677,17 @@
             "ERROR": "エラー"
           }
         },
+        "project": {
+          "name": "プロジェクト",
+          "description": "説明",
+          "public": "パブリック",
+          "private": "プライベート",
+          "create": "プロジェクトの作成",
+          "actions": {
+            "edit": "編集",
+            "remove": "削除"
+          }
+        },
         "container": {
           "create": "コンテナの作成"
         },
@@ -659,7 +702,7 @@
         },
         "volume": {
           "create": "ボリュームの作成",
-          "connectedDateLabel": "接続日:",
+          "connectedDateLabel": "接続済み",
           "driverLabel": "ドライバ",
           "driverOptionsLabel": "ドライバのオプション",
           "scope": "スコープ",
@@ -676,6 +719,7 @@
           }
         },
         "titleSearch": {
+          "projects": "プロジェクト",
           "containers": "コンテナ",
           "applications": "アプリケーション",
           "networks": "ネットワーク",
@@ -684,6 +728,7 @@
           "kubernetes": "Kubernetes"
         },
         "searchPlaceholder": {
+          "projects": "プロジェクトの検索",
           "containers": "コンテナの検索",
           "applications": "アプリケーションの検索",
           "networks": "ネットワークの検索",
@@ -745,12 +790,17 @@
         "network": "ネットワーク",
         "networkTrafficSent": "送信済み",
         "networkTrafficReceived": "受信済み",
-        "showingLogsSince": "ログの表示時間",
+        "lines": "行",
+        "showingLogs": "ログの表示",
+        "logsOptionSince": "過去",
+        "logsOptionTail": "最新",
         "logsFormat": "ログ形式",
         "logsFormatAnsi": "ANSI",
         "logsFormatRaw": "Raw",
         "networkAddresses": "ネットワーク アドレス",
         "attributes": {
+          "name": "名前",
+          "value": "値",
           "host": "ホスト",
           "createdDateLabel": "作成日",
           "ports": "ポート",
@@ -883,6 +933,8 @@
             "servicenameHint": "例: webserver",
             "constraint": "制約"
           },
+          "autoredeploy": "自動再展開",
+          "autoredeployDescription": "コンテナがエラー状態の場合にコンテナを自動的に再展開します。",
           "environmentVariables": "環境変数",
           "environmentVariablesDescription": "環境変数のリスト",
           "environmentVariablesInputs": {
@@ -893,8 +945,8 @@
           },
           "customProperties": "カスタム プロパティ",
           "customPropertiesDescription": "[カスタム プロパティ] では、プロビジョニング対象となるコンテナに属性を追加できます。",
-          "healthIgnoreOnProvision": "プロビジョニングに関する健全性チェックの失敗を無視",
-          "healthIgnoreOnProvisionDescription": "健全性チェックが設定されていると、サービスの起動時と実行時の他に、プロビジョニング時にも健全性チェックが使用されます。コンテナは、健全性チェックに成功するまで、プロビジョニング済みとみなされません。このオプションをオンにすると、健全性チェックに成功していない場合でもプロビジョニングが可能になります。",
+          "healthIgnoreOnProvision": "プロビジョニング時に健全性チェックを無視",
+          "healthIgnoreOnProvisionDescription": "健全性チェックが設定されている場合、サービスの起動時と実行時の他に、プロビジョニング時にも健全性チェックを実行可能です。プロビジョニング時に強制的に健全性チェックを実行するには、このオプションをオフにします。強制することで、健全性チェックに成功するまでコンテナはプロビジョニング済みとみなされません。",
           "healthMode": "モード",
           "healthConfigNone": "なし",
           "healthConfigTCP": "TCP 接続",
@@ -942,7 +994,11 @@
         "UNKNOWN": "不明",
         "RETIRED": "使用中止",
         "PROVISIONING": "プロビジョニング",
-        "continuousStateSince": "{{state}} ({{duration}})"
+        "continuousStateSince": "{{state}}: {{duration}}",
+        "errorStatus": "{{state}}: {{status}}"
+      },
+      "status": {
+        "unhealthy": "健全性チェック失敗"
       },
       "actions": {
         "start": "開始",
@@ -1104,7 +1160,7 @@
       "title": "{{entity}} リストから選択します",
       "searchPlaceholder": "{{entity}} の検索",
       "clear": "選択をクリア",
-      "showingCount": "{{count}} /{{totalCount}} を表示中",
+      "showingCount": "{{count}}/{{totalCount}} を表示中",
       "noResults": "アイテムが見つかりませんでした"
     },
     "customProperties": {
@@ -1114,7 +1170,9 @@
       "valueHint": "例: slow"
     },
     "yes": "はい",
+    "ok": "OK",
     "cancel": "キャンセル",
+    "error": "エラー",
     "delete": "削除",
     "enable": "有効化",
     "enabled": "有効",
@@ -1157,7 +1215,8 @@
       "invalidPath": "値は絶対パスにする必要があります。",
       "invalidPathOrName": "値は、絶対パスまたは有効なボリューム名にする必要があります。",
       "containersConnected": "接続済みのコネクタがあります",
-      "managedByCatalog": "カタログで管理されています"
+      "managedByCatalog": "カタログで管理されています",
+      "projectsUnexpectedError": "予期しないエラーが発生しました"
     },
     "infoMessages": {
       "created": "正常に作成されました。",

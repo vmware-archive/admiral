@@ -1,5 +1,9 @@
 {
   "app": {
+    "header": {
+      "management": "管理",
+      "registry": "登錄"
+    },
     "homepage": {
       "welcome": "歡迎使用!",
       "description": "在這裡，您可以<b>建立、佈建、管理以及監控容器化應用程式。</b>",
@@ -17,22 +21,30 @@
       }
     },
     "navbar": {
-      "hosts": "主機",
-      "placements": "放置",
-      "templates": "範本",
       "resources": "資源",
+      "hosts": "主機",
+      "policies": "原則",
+      "placements": "放置",
+      "registries": "登錄",
+      "templates": "範本",
+      "deployment": "部署",
+      "projects": "專案",
       "containers": "容器",
       "applications": "應用程式",
       "networks": "網路",
       "volumes": "磁碟區",
       "closures": "閉包",
-      "kubernetes": "Kubernetes",
       "eventlog": "事件記錄",
       "placementZones": "放置區域",
-      "environments": "設定檔",
+      "profiles": "設定檔",
       "endpoints": "端點",
       "machines": "機器",
-      "compute": "計算資源"
+      "compute": "計算資源",
+      "kubernetesResources": "K8S 資源",
+      "kubernetesDeployments": "部署",
+      "kubernetesPods": "網繭",
+      "kubernetesServices": "服務",
+      "kubernetesReplicationControllers": "複寫控制站"
     },
     "host": {
       "entity": "主機",
@@ -56,9 +68,9 @@
         "destination": "目的地",
         "destinationPlaceholder": "搜尋目的地",
         "deploymentPolicy": "部署原則",
-        "tags": "標記",
+        "tags": "標籤",
         "tagsPlaceholder": "範例: location:west",
-        "tagsHint": "輸入索引鍵:值標記",
+        "tagsHint": "輸入索引鍵:值標籤",
         "autoConfigure": "自動設定",
         "autoConfigureInput":"啟用主機自動組態",
         "autoConfigureHint": "此選項會設定所提供位址與連接埠 (具有產生的自我簽署憑證) 的 Docker 遠端 API。透過 SSH 即可一次完成。支援的作業系統為: CoreOS、PhotonOS、Ubuntu Server 16.04 或更高版本。",
@@ -129,11 +141,11 @@
         "placementPolicy": "進階放置原則",
         "placementPolicyHint": "依預設，資源將置於隨機主機上。會選擇性地套用下列其中一個策略:<br><br><b>BINPACK</b> - 置於記憶體使用量最高的主機上。<br><br><b>SPREAD</b> - 置於資源數最少的主機上。",
         "dynamicTitle": "動態配置資源至此區域",
-        "tagsTitle": "標記",
-        "tagsHint": "輸入索引鍵:值標記",
+        "tagsTitle": "標籤",
+        "tagsHint": "輸入索引鍵:值標籤",
         "tagsPlaceholder": "範例: compliance:yes",
-        "tagsToMatchTitle": "要比對的標記",
-        "tagsToMatchHint": "輸入要比對的索引鍵:值標記",
+        "tagsToMatchTitle": "要比對的標籤",
+        "tagsToMatchHint": "輸入要比對的索引鍵:值標籤",
         "tagsToMatchPlaceholder": "範例: location:west"
       },
       "contextPanelTooltip": "放置區域"
@@ -186,7 +198,8 @@
         "certificateTitle": "憑證",
         "publicTitle": "公開金鑰",
         "publicCertificateTitle": "公開憑證",
-        "privateCertificateTitle": "私密憑證"
+        "privateCertificateTitle": "私密憑證",
+        "customProperties": "自訂內容"
       }
     },
     "deploymentPolicy": {
@@ -265,6 +278,7 @@
         "false": "否",
         "searchCategoryFilterTitle": "檢視:",
         "partialResultWarning": "由於一或多次查詢失敗，您看到的搜尋結果不完整。",
+        "continue": "繼續",
         "searchCategory": {
           "all": "全部",
           "images": "映像",
@@ -288,7 +302,15 @@
         "editDefinition": {
           "title": "編輯容器定義"
         },
-        "editNetwork" :{
+        "editProject": {
+          "createTitle": "建立專案",
+          "updateTitle": "更新專案",
+          "name": "名稱",
+          "create": "建立",
+          "update": "更新",
+          "publicCheckboxLabel": "使此專案成為公用"
+        },
+        "editNetwork": {
           "newLabel": "新增網路",
           "newTitle": "新增網路組態",
           "newDropdownTitle": "新增網路...",
@@ -402,11 +424,11 @@
         "deploymentPolicyColumn": "部署原則",
         "priorityColumn": "優先順序",
         "instancesColumn": "執行個體",
-        "cpuColumn": "CPU 共用率",
         "memoryColumn": "記憶體限制",
         "storageColumn": "儲存區限制",
         "instancesPerPlacement": "依放置顯示執行個體",
-        "unlimitedInstances": "無限制"
+        "unlimitedInstances": "無限制",
+        "unlimitedMemoryLimit": "無限制"
       },
       "edit": {
         "createNew": "新增放置",
@@ -421,10 +443,10 @@
         "deploymentPolicyLabel": "部署原則",
         "selectDeploymentPolicy": "選取部署原則",
         "priorityLabel": "優先順序",
-        "priorityPlaceholder": "正數 (選擇性)",
+        "priorityPlaceholder": "正數",
         "priorityHint": "將其保留為空白以使其優先順序最低",
         "instancesLabel": "執行個體",
-        "instancesPlaceholder": "執行個體數目 (選擇性)",
+        "instancesPlaceholder": "執行個體數目",
         "instancesHint": "用於限制執行個體數目上限的正整數。針對無限制的數目，請保留空白或設定為 0。",
         "cpuSharesLabel": "CPU 共用率",
         "memoryLimitLabel": "記憶體限制",
@@ -460,7 +482,7 @@
         "verified": "已成功驗證!"
       }
     },
-    "environment": {
+    "profile": {
       "list": {
         "title": "設定檔",
         "titleSearch": "已找到設定檔",
@@ -488,16 +510,23 @@
         "networkTab": "網路",
         "storageTab": "儲存區",
         "nameLabel": "名稱",
-        "tagsLabel": "標記",
+        "tagsLabel": "標籤",
+        "tagsHint": "輸入索引鍵:值標籤",
+        "tagsPlaceholder": "範例: compliance:yes",
         "endpointLabel": "端點",
         "valueLabel": "值",
-        "instanceTypeLabel": "執行個體類型",
-        "imageTypeLabel": "映像類型",
-        "bootDiskPropertyLabel": "開機磁碟內容",
+        "instanceTypeMappingLabel": "執行個體類型",
+        "imageMappingLabel": "映像類型",
+        "bootDiskPropertyMappingLabel": "開機磁碟內容",
         "cpuCountLabel": "CPU",
-        "diskSizeMbLabel": "磁碟大小",
-        "memoryMbLabel": "記憶體",
+        "diskSizeMbLabel": "磁碟大小 (MB)",
+        "memoryMbLabel": "記憶體 (MB)",
         "subnetworksLabel": "子網路",
+        "isolationTypeLabel": "隔離類型",
+        "isolationNetworkLabel": "隔離網路",
+        "noneIsolationTypeLabel": "無",
+        "subnetIsolationTypeLabel": "子網路",
+        "securityGroupIsolationTypeLabel": "無",
         "cidrLabel": "CIDR",
         "cidrLabelHint": "0.0.0.0/0",
         "supportPublicIpAddressLabel": "支援公用 IP",
@@ -555,7 +584,8 @@
           "hostNameLabel": "主機名稱或 IP",
           "privateKeyIdLabel": "使用者名稱",
           "privateKeyLabel": "密碼",
-          "regionIdLabel": "資料中心"
+          "regionIdLabel": "資料中心",
+          "linkedEndpointLabel": "NSX-T 端點"
         }
       },
       "entity": "端點",
@@ -611,15 +641,17 @@
       "edit": {
         "addNew": "新增子網路",
         "update": "編輯子網路",
+        "networkLabel": "網路",
         "nameLabel": "名稱",
         "cidrLabel": "CIDR",
         "supportPublicIpAddressLabel": "支援公用 IP",
         "defaultForZoneLabel": "區域的預設值",
-        "tagsTitle": "標記",
-        "tagsHint": "輸入索引鍵:值標記",
+        "tagsTitle": "標籤",
+        "tagsHint": "輸入索引鍵:值標籤",
         "tagsPlaceholder": "範例: access:restricted"
       },
       "entity": "子網路",
+      "create": "新增子網路",
       "manage": "管理子網路",
       "contextPanelTooltip": "子網路"
     },
@@ -645,6 +677,17 @@
             "ERROR": "錯誤"
           }
         },
+        "project": {
+          "name": "專案",
+          "description": "說明",
+          "public": "公開",
+          "private": "私人",
+          "create": "建立專案",
+          "actions": {
+            "edit": "編輯",
+            "remove": "移除"
+          }
+        },
         "container": {
           "create": "建立容器"
         },
@@ -659,7 +702,7 @@
         },
         "volume": {
           "create": "建立磁碟區",
-          "connectedDateLabel": "以下時間之後連線",
+          "connectedDateLabel": "連線日期",
           "driverLabel": "驅動程式",
           "driverOptionsLabel": "驅動程式選項",
           "scope": "範圍",
@@ -676,6 +719,7 @@
           }
         },
         "titleSearch": {
+          "projects": "專案",
           "containers": "容器",
           "applications": "應用程式",
           "networks": "網路",
@@ -684,6 +728,7 @@
           "kubernetes": "Kubernetes"
         },
         "searchPlaceholder": {
+          "projects": "搜尋專案",
           "containers": "搜尋容器",
           "applications": "搜尋應用程式",
           "networks": "搜尋網路",
@@ -745,12 +790,17 @@
         "network": "網路",
         "networkTrafficSent": "已傳送",
         "networkTrafficReceived": "已接收",
-        "showingLogsSince": "顯示指定時間後的記錄",
+        "lines": "行",
+        "showingLogs": "顯示記錄",
+        "logsOptionSince": "自",
+        "logsOptionTail": "結尾",
         "logsFormat": "記錄格式",
         "logsFormatAnsi": "ANSI",
         "logsFormatRaw": "原始格式",
         "networkAddresses": "網路位址",
         "attributes": {
+          "name": "名稱",
+          "value": "值",
           "host": "主機",
           "createdDateLabel": "建立日期",
           "ports": "連接埠",
@@ -785,8 +835,8 @@
         "inputs": {
           "image": "映像",
           "imageTag": {
-            "searchHint": "搜尋標記",
-            "loadingHint": "正在載入標記..."
+            "searchHint": "搜尋標籤",
+            "loadingHint": "正在載入標籤..."
           },
           "name": "名稱",
           "group": "專案",
@@ -883,6 +933,8 @@
             "servicenameHint": "範例: webserver",
             "constraint": "限制"
           },
+          "autoredeploy": "自動重新部署",
+          "autoredeployDescription": "當容器處於「錯誤」狀態時，自動重新部署容器。",
           "environmentVariables": "環境變數",
           "environmentVariablesDescription": "環境變數清單",
           "environmentVariablesInputs": {
@@ -893,8 +945,8 @@
           },
           "customProperties": "自訂內容",
           "customPropertiesDescription": "自訂內容允許將屬性新增到將要佈建的容器。",
-          "healthIgnoreOnProvision": "佈建時忽略健全狀況檢查失敗",
-          "healthIgnoreOnProvisionDescription": "如果已設定健全狀況檢查，除了服務啟動並執行時之外，也將在佈建時使用。在成功通過一項健全狀況檢查之前，將不會考慮佈建容器。勾選此選項，以便即使在未成功通過健全狀況檢查的情況下也能佈建。",
+          "healthIgnoreOnProvision": "佈建時忽略健全狀況檢查",
+          "healthIgnoreOnProvisionDescription": "如果已設定健全狀況檢查，除了服務啟動並執行時之外，也將在佈建時使用。取消勾選此選項會強制在佈建時進行健全狀況檢查。透過強制該檢查，在成功通過一項健全狀況檢查之前，將不會考慮佈建容器。",
           "healthMode": "模式",
           "healthConfigNone": "無",
           "healthConfigTCP": "TCP 連線",
@@ -942,7 +994,11 @@
         "UNKNOWN": "未知",
         "RETIRED": "已淘汰",
         "PROVISIONING": "佈建中",
-        "continuousStateSince": "{{state}}狀態已持續 {{duration}}"
+        "continuousStateSince": "{{state}} 已持續 {{duration}}",
+        "errorStatus": "{{state}}: {{status}}"
+      },
+      "status": {
+        "unhealthy": "健全狀況檢查失敗"
       },
       "actions": {
         "start": "啟動",
@@ -1101,8 +1157,8 @@
       "failure": "驗證錯誤"
     },
     "dropdownSearchMenu": {
-      "title": "從{{entity}}清單中選取",
-      "searchPlaceholder": "搜尋{{entity}}",
+      "title": "從 {{entity}} 清單中選取",
+      "searchPlaceholder": "搜尋 {{entity}}",
       "clear": "清除選取項目",
       "showingCount": "顯示第 {{count}} 個，共 {{totalCount}} 個",
       "noResults": "找不到項目"
@@ -1114,7 +1170,9 @@
       "valueHint": "範例: slow"
     },
     "yes": "是",
+    "ok": "確定",
     "cancel": "取消",
+    "error": "錯誤",
     "delete": "刪除",
     "enable": "啟用",
     "enabled": "已啟用",
@@ -1157,7 +1215,8 @@
       "invalidPath": "值必須為絕對路徑。",
       "invalidPathOrName": "值必須為絕對路徑或有效的磁碟區名稱。",
       "containersConnected": "存在連線的容器。",
-      "managedByCatalog": "由目錄管理"
+      "managedByCatalog": "由目錄管理",
+      "projectsUnexpectedError": "發生非預期的錯誤"
     },
     "infoMessages": {
       "created": "已成功建立!",

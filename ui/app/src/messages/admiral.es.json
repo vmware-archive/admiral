@@ -1,5 +1,9 @@
 {
   "app": {
+    "header": {
+      "management": "Administración",
+      "registry": "Registro"
+    },
     "homepage": {
       "welcome": "Le damos la bienvenida.",
       "description": "Aquí podrá <b>crear, aprovisionar, administrar y supervisar las aplicaciones en contenedores.</b>",
@@ -17,22 +21,30 @@
       }
     },
     "navbar": {
-      "hosts": "Hosts",
-      "placements": "Ubicaciones",
-      "templates": "Plantillas",
       "resources": "Recursos",
+      "hosts": "Hosts",
+      "policies": "Políticas",
+      "placements": "Ubicaciones",
+      "registries": "Registros",
+      "templates": "Plantillas",
+      "deployment": "Implementaciones",
+      "projects": "Proyectos",
       "containers": "Contenedores",
       "applications": "Aplicaciones",
       "networks": "Redes",
       "volumes": "Volúmenes",
       "closures": "Clausuras",
-      "kubernetes": "Kubernetes",
       "eventlog": "Log de eventos",
       "placementZones": "Zonas de ubicación",
-      "environments": "Perfiles",
+      "profiles": "Perfiles",
       "endpoints": "Endpoints",
       "machines": "Máquinas",
-      "compute": "Recurso informático"
+      "compute": "Recurso informático",
+      "kubernetesResources": "Recursos de K8S",
+      "kubernetesDeployments": "Implementaciones",
+      "kubernetesPods": "Pods",
+      "kubernetesServices": "Servicios",
+      "kubernetesReplicationControllers": "Controladoras de replicación"
     },
     "host": {
       "entity": "host",
@@ -186,7 +198,8 @@
         "certificateTitle": "Certificado",
         "publicTitle": "Clave pública",
         "publicCertificateTitle": "Certificado público",
-        "privateCertificateTitle": "Certificado privado"
+        "privateCertificateTitle": "Certificado privado",
+        "customProperties": "Propiedades personalizadas"
       }
     },
     "deploymentPolicy": {
@@ -265,6 +278,7 @@
         "false": "No",
         "searchCategoryFilterTitle": "Ver:",
         "partialResultWarning": "Está viendo resultados de una búsqueda incompleta debido a uno o más errores de la consulta.",
+        "continue": "Continuar",
         "searchCategory": {
           "all": "Todo",
           "images": "Imágenes",
@@ -288,7 +302,15 @@
         "editDefinition": {
           "title": "Editar definición de contenedor"
         },
-        "editNetwork" :{
+        "editProject": {
+          "createTitle": "Crear proyecto",
+          "updateTitle": "Actualizar proyecto",
+          "name": "Nombre",
+          "create": "Crear",
+          "update": "Actualizar",
+          "publicCheckboxLabel": "Hacer público este proyecto"
+        },
+        "editNetwork": {
           "newLabel": "Añadir red",
           "newTitle": "Añadir configuración de red",
           "newDropdownTitle": "Añadir red...",
@@ -402,11 +424,11 @@
         "deploymentPolicyColumn": "Política de implementación",
         "priorityColumn": "Prioridad",
         "instancesColumn": "Instancias",
-        "cpuColumn": "Recursos compartidos de CPU",
         "memoryColumn": "Límite de memoria",
         "storageColumn": "Límite de almacenamiento",
         "instancesPerPlacement": "Mostrar instancias por ubicación",
-        "unlimitedInstances": "Sin límite"
+        "unlimitedInstances": "Sin límite",
+        "unlimitedMemoryLimit": "Sin límite"
       },
       "edit": {
         "createNew": "Nueva ubicación",
@@ -421,10 +443,10 @@
         "deploymentPolicyLabel": "Política de implementación",
         "selectDeploymentPolicy": "Seleccionar política de implementación",
         "priorityLabel": "Prioridad",
-        "priorityPlaceholder": "Número positivo (opcional)",
+        "priorityPlaceholder": "Número positivo",
         "priorityHint": "Déjelo en blanco para que sea la prioridad mínima",
         "instancesLabel": "Instancias",
-        "instancesPlaceholder": "Número de instancias (opcional)",
+        "instancesPlaceholder": "Número de instancias",
         "instancesHint": "Entero positivo para limitar el número máximo de instancias. Deje vacío o en 0 para un número ilimitado.",
         "cpuSharesLabel": "Recursos compartidos de CPU",
         "memoryLimitLabel": "Límite de memoria",
@@ -460,7 +482,7 @@
         "verified": "Se ha verificado correctamente."
       }
     },
-    "environment": {
+    "profile": {
       "list": {
         "title": "Perfiles",
         "titleSearch": "Perfiles encontrados",
@@ -489,15 +511,22 @@
         "storageTab": "Almacenamiento",
         "nameLabel": "Nombre",
         "tagsLabel": "Etiquetas",
+        "tagsHint": "Introduzca etiquetas clave:valor",
+        "tagsPlaceholder": "Ejemplo: compliance:yes",
         "endpointLabel": "Endpoint",
         "valueLabel": "Valor",
-        "instanceTypeLabel": "Tipo de instancia",
-        "imageTypeLabel": "Tipo de imagen",
-        "bootDiskPropertyLabel": "Propiedad de disco de arranque",
+        "instanceTypeMappingLabel": "Tipo de instancia",
+        "imageMappingLabel": "Tipo de imagen",
+        "bootDiskPropertyMappingLabel": "Propiedad de disco de arranque",
         "cpuCountLabel": "CPU",
-        "diskSizeMbLabel": "Tamaño del disco",
-        "memoryMbLabel": "Memoria",
+        "diskSizeMbLabel": "Tamaño de disco (MB)",
+        "memoryMbLabel": "Memoria (MB)",
         "subnetworksLabel": "Subredes",
+        "isolationTypeLabel": "Tipo de aislamiento",
+        "isolationNetworkLabel": "Red de aislamiento",
+        "noneIsolationTypeLabel": "Ninguno",
+        "subnetIsolationTypeLabel": "Subred",
+        "securityGroupIsolationTypeLabel": "Ninguno",
         "cidrLabel": "CIDR",
         "cidrLabelHint": "0.0.0.0/0",
         "supportPublicIpAddressLabel": "IP pública de soporte",
@@ -555,7 +584,8 @@
           "hostNameLabel": "Nombre de host o IP",
           "privateKeyIdLabel": "Nombre de usuario",
           "privateKeyLabel": "Contraseña",
-          "regionIdLabel": "Centro de datos"
+          "regionIdLabel": "Centro de datos",
+          "linkedEndpointLabel": "Endpoint de NSX-T"
         }
       },
       "entity": "endpoint",
@@ -611,6 +641,7 @@
       "edit": {
         "addNew": "Añadir subred",
         "update": "Editar subred",
+        "networkLabel": "Red",
         "nameLabel": "Nombre",
         "cidrLabel": "CIDR",
         "supportPublicIpAddressLabel": "IP pública de soporte",
@@ -620,6 +651,7 @@
         "tagsPlaceholder": "Ejemplo: access:restricted"
       },
       "entity": "Subred",
+      "create": "Nueva subred",
       "manage": "Administrar subredes",
       "contextPanelTooltip": "Subredes"
     },
@@ -645,6 +677,17 @@
             "ERROR": "ERROR"
           }
         },
+        "project": {
+          "name": "Proyecto",
+          "description": "Descripción.",
+          "public": "Público",
+          "private": "Privado",
+          "create": "Crear proyecto",
+          "actions": {
+            "edit": "Editar",
+            "remove": "Quitar"
+          }
+        },
         "container": {
           "create": "Crear contenedor"
         },
@@ -659,7 +702,7 @@
         },
         "volume": {
           "create": "Crear volumen",
-          "connectedDateLabel": "Conectado desde",
+          "connectedDateLabel": "Conectado",
           "driverLabel": "Controlador",
           "driverOptionsLabel": "Opciones del controlador",
           "scope": "Ámbito",
@@ -676,6 +719,7 @@
           }
         },
         "titleSearch": {
+          "projects": "Proyectos",
           "containers": "Contenedores",
           "applications": "Aplicaciones",
           "networks": "Redes",
@@ -684,6 +728,7 @@
           "kubernetes": "Kubernetes"
         },
         "searchPlaceholder": {
+          "projects": "Buscar proyectos",
           "containers": "Buscar contenedores",
           "applications": "Buscar aplicaciones",
           "networks": "Buscar redes",
@@ -745,12 +790,17 @@
         "network": "Red",
         "networkTrafficSent": "Enviado",
         "networkTrafficReceived": "Recibido",
-        "showingLogsSince": "Mostrando logs desde",
+        "lines": "líneas",
+        "showingLogs": "Mostrando logs",
+        "logsOptionSince": "Desde",
+        "logsOptionTail": "Cola",
         "logsFormat": "Formato de logs",
         "logsFormatAnsi": "ANSI",
         "logsFormatRaw": "Sin formato",
         "networkAddresses": "Direcciones de red",
         "attributes": {
+          "name": "Nombre",
+          "value": "Valor",
           "host": "Host",
           "createdDateLabel": "Fecha de creación",
           "ports": "Puertos",
@@ -883,6 +933,8 @@
             "servicenameHint": "Ejemplo: webserver",
             "constraint": "Restricción"
           },
+          "autoredeploy": "Volver a implementar automáticamente",
+          "autoredeployDescription": "Reimplementación automática de los contenedores cuando se encuentran en el estado ERROR.",
           "environmentVariables": "Variables de entorno",
           "environmentVariablesDescription": "Una lista de variables de entorno",
           "environmentVariablesInputs": {
@@ -893,8 +945,8 @@
           },
           "customProperties": "Propiedades personalizadas",
           "customPropertiesDescription": "Propiedades personalizadas permite añadir atributos a los contenedores que se aprovisionarán.",
-          "healthIgnoreOnProvision": "Omitir errores de comprobación de estado durante el aprovisionamiento",
-          "healthIgnoreOnProvisionDescription": "Si la comprobación de estado está configurada, se utilizará tanto cuando el servicio esté en funcionamiento como durante el aprovisionamiento. No se considerará que los contenedores están aprovisionados hasta que aprueben una comprobación de estado. Active esta opción para aprovisionar incluso sin una comprobación de estado correcta.",
+          "healthIgnoreOnProvision": "Omitir comprobación de estado en aprovisionamiento",
+          "healthIgnoreOnProvisionDescription": "Si la comprobación de estado está configurada, podrá utilizarse cuando el servicio esté en ejecución y durante el aprovisionamiento. Desmarque esta opción para forzar la comprobación de estado en el aprovisionamiento, de modo que un contenedor no se considerará aprovisionado hasta que se supere con éxito una comprobación de estado.",
           "healthMode": "Modo",
           "healthConfigNone": "Ninguno",
           "healthConfigTCP": "Conexión de TCP",
@@ -942,7 +994,11 @@
         "UNKNOWN": "DESCONOCIDO",
         "RETIRED": "RETIRADO",
         "PROVISIONING": "APROVISIONAMIENTO",
-        "continuousStateSince": "{{state}} durante {{duration}}"
+        "continuousStateSince": "{{state}} durante {{duration}}",
+        "errorStatus": "{{state}}: {{status}}"
+      },
+      "status": {
+        "unhealthy": "Error al comprobar estado"
       },
       "actions": {
         "start": "Iniciar",
@@ -1000,7 +1056,7 @@
         "CREATED": "CREADO",
         "STARTED": "INICIADO",
         "FINISHED": "FINALIZADO",
-        "FAILED": "ERROR",
+        "FAILED": "FALLIDO",
         "CANCELLED": "CANCELADO"
       },
       "list" : {
@@ -1114,7 +1170,9 @@
       "valueHint": "Ejemplo: slow"
     },
     "yes": "Sí",
+    "ok": "Aceptar",
     "cancel": "Cancelar",
+    "error": "Error",
     "delete": "Eliminar",
     "enable": "Habilitar",
     "enabled": "Habilitado",
@@ -1157,7 +1215,8 @@
       "invalidPath": "El valor debe ser una ruta absoluta.",
       "invalidPathOrName": "El valor debe ser una ruta absoluta o un nombre de volumen válido.",
       "containersConnected": "Hay contenedores conectados.",
-      "managedByCatalog": "Administrado por catálogo"
+      "managedByCatalog": "Administrado por catálogo",
+      "projectsUnexpectedError": "Se produjo un error inesperado"
     },
     "infoMessages": {
       "created": "Se ha creado correctamente.",
