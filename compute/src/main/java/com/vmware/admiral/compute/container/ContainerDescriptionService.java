@@ -317,7 +317,7 @@ public class ContainerDescriptionService extends StatefulService {
                 indexing = PropertyIndexingOption.EXPAND)
         public String[] volumesFrom;
 
-        /** Specify volume driver name.*/
+        /** Specify volume driver name. */
         @JsonProperty("volume_driver")
         @Documentation(description = "Specify volume driver name (default \"local\")")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
@@ -611,6 +611,10 @@ public class ContainerDescriptionService extends StatefulService {
 
         PropertyUtils.mergeServiceDocuments(currentState, patchBody);
 
+        if (patchBody.parentDescriptionLink != null
+                && patchBody.parentDescriptionLink.trim().isEmpty()) {
+            currentState.parentDescriptionLink = null;
+        }
         if (patchBody.networkMode != null && patchBody.networkMode.trim().isEmpty()) {
             currentState.networkMode = null;
         }

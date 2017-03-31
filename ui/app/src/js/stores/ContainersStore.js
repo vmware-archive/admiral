@@ -1690,6 +1690,17 @@ let ContainersStore = Reflux.createStore({
 
             this.emitChange();
           }
+        }, (error) => {
+            if (error.status === constants.ERRORS.NOT_FOUND) {
+              if (currentItemDetailsCursor.getIn(['documentId']) === containerId) {
+                currentItemDetailsCursor.setIn(['descriptionLinkToConvertToTemplate'],
+                  container.descriptionLink);
+
+                this.emitChange();
+              }
+            } else {
+              console.warn('Error when loading template container description! Error: ', error);
+            }
         });
 
         services.loadHostByLink(container.parentLink).then((host) => {
@@ -1751,23 +1762,19 @@ let ContainersStore = Reflux.createStore({
 
     services.createContainerTemplateForDescription(container.names[0], container.descriptionLink)
     .then((template) => {
-      return services.copyContainerTemplate(template);
+      return services.copyContainerTemplate(template, true);
     }).then((copyTemplate) => {
-      return services.patchDocument(container.documentSelfLink, {
-        descriptionLink: copyTemplate.descriptionLinks[0]
-      }).then(() => {
-        if (cursor.getIn(['documentId']) !== container.documentId) {
-          return;
-        }
+      if (cursor.getIn(['documentId']) !== container.documentId) {
+        return;
+      }
 
-        cursor.setIn(['operationInProgress'], null);
-        this.emitChange();
+      cursor.setIn(['operationInProgress'], null);
+      this.emitChange();
 
-        var templateId = utils.getDocumentId(copyTemplate.parentDescriptionLink);
+      var templateId = utils.getDocumentId(copyTemplate.documentSelfLink);
 
-        actions.NavigationActions.openTemplateDetails(constants.TEMPLATES.TYPES.TEMPLATE,
+      actions.NavigationActions.openTemplateDetails(constants.TEMPLATES.TYPES.TEMPLATE,
           templateId);
-      });
     }).catch(this.onGenericDetailsError);
   },
 

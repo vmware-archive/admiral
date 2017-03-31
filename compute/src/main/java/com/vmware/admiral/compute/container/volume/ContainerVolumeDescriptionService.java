@@ -174,6 +174,11 @@ public class ContainerVolumeDescriptionService extends StatefulService {
         PropertyUtils.mergeCustomProperties(currentState.customProperties,
                 patchBody.customProperties);
 
+        if (patchBody.parentDescriptionLink != null
+                && patchBody.parentDescriptionLink.trim().isEmpty()) {
+            currentState.parentDescriptionLink = null;
+        }
+
         String newSignature = Utils.computeSignature(currentState, docDesc);
 
         boolean changed = !newSignature.equals(currentSignature);
@@ -202,7 +207,6 @@ public class ContainerVolumeDescriptionService extends StatefulService {
                 VolumeUtil.validateLocalVolumeName(state.name);
             }
         }
-
 
         if (state.instanceAdapterReference == null) {
             state.instanceAdapterReference = UriUtils
