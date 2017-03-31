@@ -28,7 +28,11 @@ var AcceptCertificate = Vue.extend({
   computed: {
     warningMessage: function() {
       return i18n.t('app.host.details.certificateWarning', {
-        address: this.address
+        address: this.address,
+        interpolation: {
+          // Vue.js double mustache syntax will do the escaping
+          escapeValue: false
+        }
       });
     }
   },
