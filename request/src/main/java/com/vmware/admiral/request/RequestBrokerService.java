@@ -33,12 +33,15 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
+
 import com.vmware.admiral.adapter.common.ApplicationOperationType;
 import com.vmware.admiral.adapter.common.ClosureOperationType;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.adapter.common.NetworkOperationType;
 import com.vmware.admiral.adapter.common.VolumeOperationType;
 import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
+import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
@@ -126,29 +129,47 @@ public class RequestBrokerService extends
         public static final String CONFIGURE_HOST_OPERATION = "CONFIGURE_HOST";
 
         public static enum SubStage {
-            CREATED, RESERVING, RESERVED, ALLOCATING, ALLOCATED, REQUEST_FAILED, RESERVATION_CLEANUP, RESERVATION_CLEANED_UP, COMPLETED, ERROR;
+            CREATED, RESOURCE_COUNTED, RESERVING, RESERVED, ALLOCATING, ALLOCATED, REQUEST_FAILED, RESERVATION_CLEANUP, RESERVATION_CLEANED_UP, COMPLETED, ERROR;
 
             static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
                     Arrays.asList(RESERVING, ALLOCATING, RESERVATION_CLEANUP));
         }
 
-        /** (Required) Type of resource to create. */
+        /**
+         * (Required) Type of resource to create.
+         */
         @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED }, indexing = STORE_ONLY)
         public String resourceType;
 
-        /** (Required) The operation name/id to be performed */
+        /**
+         * (Required) The operation name/id to be performed
+         */
         @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
         public String operation;
 
-        /** (Required) The description that defines the requested resource. */
+        /**
+         * (Required) The description that defines the requested resource.
+         */
         @PropertyOptions(usage = SINGLE_ASSIGNMENT, indexing = STORE_ONLY)
         public String resourceDescriptionLink;
 
-        /** (Optional- default 1) Number of resources to provision. */
+        /**
+         * (Optional- default 1) Number of resources to provision.
+         */
         @PropertyOptions(usage = { OPTIONAL, SINGLE_ASSIGNMENT }, indexing = STORE_ONLY)
         public long resourceCount;
 
-        /** Set by Task when resources are provisioned. */
+        /**
+         * Set by Task when resources are provisioned.
+         */
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, SERVICE_USE,
+                AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
+        public Long actualResourceCount;
+
+        /**
+         * Set by Task when resources are provisioned.
+         */
         @PropertyOptions(usage = { SINGLE_ASSIGNMENT, SERVICE_USE,
                 AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Set<String> resourceLinks;
@@ -203,8 +224,16 @@ public class RequestBrokerService extends
 
     @Override
     protected void handleStartedStagePatch(RequestBrokerState state) {
+        if (state.taskSubStage.ordinal() > SubStage.RESOURCE_COUNTED.ordinal()
+                && state.actualResourceCount == null) {
+            calculateActualRequestedResources(state, state.taskSubStage);
+            return;
+        }
         switch (state.taskSubStage) {
         case CREATED:
+            calculateActualRequestedResources(state, SubStage.RESOURCE_COUNTED);
+            break;
+        case RESOURCE_COUNTED:
             if (isProvisionOperation(state)) {
                 if (isCompositeComponentType(state)) {
                     createCompositionTask(state);
@@ -279,6 +308,26 @@ public class RequestBrokerService extends
             break;
         default:
             break;
+        }
+    }
+
+    private void calculateActualRequestedResources(RequestBrokerState state, SubStage next) {
+        if (isProvisionOperation(state)) {
+            if (isComputeType(state)) {
+                getComputeDescription(state, (cd) -> {
+                    proceedTo(next, s -> s.actualResourceCount =
+                            getRequestedComputeResourceCount(state, cd));
+                });
+            } else if (isContainerType(state)) {
+                getContainerDescription(state, (cd) -> {
+                    proceedTo(next, s -> s.actualResourceCount =
+                            getRequestContainerResourceCount(state, cd));
+                });
+            } else {
+                proceedTo(next, s -> s.actualResourceCount = state.resourceCount);
+            }
+        } else {
+            proceedTo(next, s -> s.actualResourceCount = state.resourceCount);
         }
     }
 
@@ -530,10 +579,11 @@ public class RequestBrokerService extends
     }
 
     private void createProvisioningContainerHostsTask(RequestBrokerState state) {
-        ProvisionContainerHostsTaskState provisionContainerHostTask = new ProvisionContainerHostsTaskState();
+        ProvisionContainerHostsTaskState provisionContainerHostTask =
+                new ProvisionContainerHostsTaskState();
         provisionContainerHostTask.documentSelfLink = getSelfId();
         provisionContainerHostTask.computeDescriptionLink = state.resourceDescriptionLink;
-        provisionContainerHostTask.resourceCount = state.resourceCount;
+        provisionContainerHostTask.resourceCount = state.actualResourceCount;
         provisionContainerHostTask.customProperties = state.customProperties;
         provisionContainerHostTask.requestTrackerLink = state.requestTrackerLink;
         provisionContainerHostTask.tenantLinks = state.tenantLinks;
@@ -858,15 +908,7 @@ public class RequestBrokerService extends
         rsrvTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, SubStage.RESERVED, TaskStage.STARTED, SubStage.ERROR);
 
-        long resourceCount;
-        if (containerDescription._cluster != null && containerDescription._cluster > 0
-                && !isClusteringOperation(state)) {
-            resourceCount = state.resourceCount * containerDescription._cluster;
-        } else {
-            resourceCount = state.resourceCount;
-        }
-
-        rsrvTask.resourceCount = resourceCount;
+        rsrvTask.resourceCount = state.actualResourceCount;
         rsrvTask.tenantLinks = state.tenantLinks;
         rsrvTask.resourceType = state.resourceType;
         rsrvTask.resourceDescriptionLink = state.resourceDescriptionLink;
@@ -905,15 +947,7 @@ public class RequestBrokerService extends
         rsrvTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, SubStage.RESERVED, TaskStage.STARTED, SubStage.ERROR);
 
-        long clusterSize = getComputeClusterSize(computeDescription);
-        long resourceCount;
-        if (clusterSize > 0 && !isClusteringOperation(state)) {
-            resourceCount = state.resourceCount * clusterSize;
-        } else {
-            resourceCount = state.resourceCount;
-        }
-
-        rsrvTask.resourceCount = resourceCount;
+        rsrvTask.resourceCount = state.actualResourceCount;
         rsrvTask.tenantLinks = state.tenantLinks;
         rsrvTask.resourceDescriptionLink = state.resourceDescriptionLink;
         rsrvTask.customProperties = mergeCustomProperties(
@@ -938,6 +972,30 @@ public class RequestBrokerService extends
                 }));
     }
 
+    private long getRequestedComputeResourceCount(RequestBrokerState state,
+            ComputeDescription computeDescription) {
+        long clusterSize = getComputeClusterSize(computeDescription);
+        long resourceCount;
+        if (clusterSize > 0 && !isClusteringOperation(state)) {
+            resourceCount = state.resourceCount * clusterSize;
+        } else {
+            resourceCount = state.resourceCount;
+        }
+        return resourceCount;
+    }
+
+    private long getRequestContainerResourceCount(RequestBrokerState state,
+            ContainerDescription containerDescription) {
+        long resourceCount;
+        if (containerDescription._cluster != null && containerDescription._cluster > 0
+                && !isClusteringOperation(state)) {
+            resourceCount = state.resourceCount * containerDescription._cluster;
+        } else {
+            resourceCount = state.resourceCount;
+        }
+        return resourceCount;
+    }
+
     private void createContainerAllocationTask(RequestBrokerState state) {
         getContainerDescription(state, (containerDesc) -> {
             ContainerAllocationTaskState allocationTask = new ContainerAllocationTaskState();
@@ -948,13 +1006,12 @@ public class RequestBrokerService extends
             allocationTask.customProperties = state.customProperties;
             allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
 
-            if (containerDesc._cluster != null && containerDesc._cluster > 1
-                    && state.resourceCount <= 1
-                    && isProvisionOperation(state) && !isClusteringOperation(state)) {
+            if (isProvisionOperation(state) && !isClusteringOperation(state)) {
                 // deploy the default number of clustered container nodes
-                allocationTask.resourceCount = Long.valueOf(containerDesc._cluster);
+                allocationTask.resourceCount = state.actualResourceCount;
             } else {
-                allocationTask.resourceCount = state.resourceCount;
+                allocationTask.resourceCount = state.resourceLinks != null
+                        ? state.resourceLinks.size() : state.actualResourceCount;
             }
 
             allocationTask.resourceType = state.resourceType;
@@ -980,7 +1037,8 @@ public class RequestBrokerService extends
 
     private void createContainerNetworkAllocationTask(RequestBrokerState state) {
         // 1. allocate the network
-        ContainerNetworkAllocationTaskState allocationTask = new ContainerNetworkAllocationTaskState();
+        ContainerNetworkAllocationTaskState allocationTask =
+                new ContainerNetworkAllocationTaskState();
         allocationTask.documentSelfLink = getSelfId();
         allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
                 getSelfLink(), TaskStage.STARTED, SubStage.ALLOCATED,
@@ -991,7 +1049,7 @@ public class RequestBrokerService extends
         allocationTask.tenantLinks = state.tenantLinks;
         allocationTask.requestTrackerLink = state.requestTrackerLink;
         allocationTask.resourceLinks = state.resourceLinks;
-        allocationTask.resourceCount = state.resourceCount;
+        allocationTask.resourceCount = state.actualResourceCount;
 
         sendRequest(Operation
                 .createPost(this, ContainerNetworkAllocationTaskService.FACTORY_LINK)
@@ -1018,7 +1076,6 @@ public class RequestBrokerService extends
         provisionTask.tenantLinks = state.tenantLinks;
         provisionTask.requestTrackerLink = state.requestTrackerLink;
         provisionTask.resourceLinks = state.resourceLinks;
-        provisionTask.resourceCount = state.resourceCount;
         provisionTask.resourceDescriptionLink = state.resourceDescriptionLink;
 
         sendRequest(Operation
@@ -1045,7 +1102,7 @@ public class RequestBrokerService extends
 
         allocationTask.tenantLinks = state.tenantLinks;
         allocationTask.requestTrackerLink = state.requestTrackerLink;
-        allocationTask.resourceCount = state.resourceCount;
+        allocationTask.resourceCount = state.actualResourceCount;
 
         sendRequest(Operation
                 .createPost(this, ComputeNetworkAllocationTaskService.FACTORY_LINK)
@@ -1072,7 +1129,6 @@ public class RequestBrokerService extends
         provisionTask.tenantLinks = state.tenantLinks;
         provisionTask.requestTrackerLink = state.requestTrackerLink;
         provisionTask.resourceLinks = state.resourceLinks;
-        provisionTask.resourceCount = state.resourceCount;
         provisionTask.resourceDescriptionLink = state.resourceDescriptionLink;
 
         sendRequest(Operation
@@ -1097,15 +1153,7 @@ public class RequestBrokerService extends
             allocationTask.customProperties = state.customProperties;
             allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
 
-            allocationTask.resourceCount = state.resourceCount;
-
-            int clusterSize = getComputeClusterSize(computeDesc);
-            if (clusterSize > 1 && state.resourceCount <= 1 && isProvisionOperation(state)
-                    && !isClusteringOperation(state)) {
-                // deploy the default number of clustered compute nodes
-                allocationTask.resourceCount = Long.valueOf(clusterSize);
-            }
-
+            allocationTask.resourceCount = state.actualResourceCount;
             allocationTask.resourceType = state.resourceType;
             allocationTask.tenantLinks = state.tenantLinks;
             allocationTask.groupResourcePlacementLink = state.groupResourcePlacementLink;
@@ -1143,7 +1191,6 @@ public class RequestBrokerService extends
     }
 
     private void createComputeProvisioningTask(RequestBrokerState state) {
-        // 2. provision the compute
         ComputeProvisionTaskState ps = new ComputeProvisionTaskState();
         ps.documentSelfLink = getSelfId();
         ps.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
@@ -1174,7 +1221,8 @@ public class RequestBrokerService extends
             return;
         }
 
-        ContainerVolumeAllocationTaskState allocationTask = new ContainerVolumeAllocationTaskState();
+        ContainerVolumeAllocationTaskState allocationTask =
+                new ContainerVolumeAllocationTaskState();
         allocationTask.documentSelfLink = getSelfId();
         allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
                 getSelfLink(), TaskStage.STARTED, SubStage.ALLOCATED,
@@ -1186,7 +1234,7 @@ public class RequestBrokerService extends
         allocationTask.tenantLinks = state.tenantLinks;
         allocationTask.requestTrackerLink = state.requestTrackerLink;
         allocationTask.resourceLinks = state.resourceLinks;
-        allocationTask.resourceCount = state.resourceCount;
+        allocationTask.resourceCount = state.actualResourceCount;
 
         sendRequest(Operation
                 .createPost(this, ContainerVolumeAllocationTaskService.FACTORY_LINK)
@@ -1214,7 +1262,6 @@ public class RequestBrokerService extends
         provisionTask.requestTrackerLink = state.requestTrackerLink;
         provisionTask.resourceType = state.resourceType;
         provisionTask.resourceLinks = state.resourceLinks;
-        provisionTask.resourceCount = state.resourceCount;
         provisionTask.resourceDescriptionLink = state.resourceDescriptionLink;
 
         sendRequest(Operation
@@ -1360,7 +1407,7 @@ public class RequestBrokerService extends
         rsrvTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, SubStage.RESERVATION_CLEANED_UP, TaskStage.FAILED,
                 SubStage.ERROR);
-        rsrvTask.resourceCount = state.resourceCount;
+        rsrvTask.resourceCount = state.actualResourceCount;
         rsrvTask.resourceDescriptionLink = state.resourceDescriptionLink;
         rsrvTask.groupResourcePlacementLink = state.groupResourcePlacementLink;
         rsrvTask.requestTrackerLink = state.requestTrackerLink;
@@ -1379,7 +1426,7 @@ public class RequestBrokerService extends
 
     private void createContainerClusteringTasks(RequestBrokerState state) {
         ClusteringTaskState clusteringState = new ClusteringTaskState();
-        clusteringState.resourceCount = state.resourceCount;
+        clusteringState.resourceCount = state.actualResourceCount;
         clusteringState.postAllocation = isPostAllocationOperation(state);
         clusteringState.customProperties = state.customProperties;
         clusteringState.tenantLinks = state.tenantLinks;
@@ -1414,7 +1461,7 @@ public class RequestBrokerService extends
 
     private void createComputeClusteringTasks(RequestBrokerState state) {
         ClusteringTaskState clusteringState = new ClusteringTaskState();
-        clusteringState.resourceCount = state.resourceCount;
+        clusteringState.resourceCount = state.actualResourceCount;
         clusteringState.postAllocation = isPostAllocationOperation(state);
         clusteringState.customProperties = state.customProperties;
         clusteringState.tenantLinks = state.tenantLinks;
@@ -1448,7 +1495,8 @@ public class RequestBrokerService extends
     }
 
     private void createConfigureHostTask(RequestBrokerState state) {
-        ConfigureHostOverSshTaskServiceState configureState = new ConfigureHostOverSshTaskServiceState();
+        ConfigureHostOverSshTaskServiceState configureState =
+                new ConfigureHostOverSshTaskServiceState();
         // Full docker address formatted as http(s)://1.2.3.4:2376
         String url = state.getCustomProperty(
                 ConfigureHostOverSshTaskService.CONFIGURE_HOST_ADDRESS_CUSTOM_PROP);
@@ -1646,7 +1694,8 @@ public class RequestBrokerService extends
         // A composite component that will be deployed/handled at once, instead of separating
         // into sub tasks for it's components. Used for tracking purposes.
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.JOIN_COMPOSITE_COMPONENT_TYPE,
-                new ArrayList<>(Arrays.asList(CompositeKubernetesProvisioningTaskService.DISPLAY_NAME)));
+                new ArrayList<>(
+                        Arrays.asList(CompositeKubernetesProvisioningTaskService.DISPLAY_NAME)));
     }
 
     private static final Map<ResourceType, List<String>> SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE;
@@ -1699,8 +1748,10 @@ public class RequestBrokerService extends
         if (isProvisionOperation(state)) {
             boolean allocationOnly = isAllocationOperation(state);
 
-            requestStatus.trackedExecutionTasksByResourceType = SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE;
-            requestStatus.trackedAllocationTasksByResourceType = SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE;
+            requestStatus.trackedExecutionTasksByResourceType =
+                    SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE;
+            requestStatus.trackedAllocationTasksByResourceType =
+                    SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE;
 
             List<String> trackedTasks = new ArrayList<>();
 

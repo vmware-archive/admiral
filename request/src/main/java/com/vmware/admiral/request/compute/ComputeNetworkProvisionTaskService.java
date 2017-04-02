@@ -58,7 +58,8 @@ public class ComputeNetworkProvisionTaskService
         extends
         AbstractTaskStatefulService<ComputeNetworkProvisionTaskService.ComputeNetworkProvisionTaskState, ComputeNetworkProvisionTaskService.ComputeNetworkProvisionTaskState.SubStage> {
 
-    public static final String FACTORY_LINK = ManagementUriParts.REQUEST_PROVISION_COMPUTE_NETWORK_TASKS;
+    public static final String FACTORY_LINK =
+            ManagementUriParts.REQUEST_PROVISION_COMPUTE_NETWORK_TASKS;
 
     public static final String DISPLAY_NAME = "Compute Network Provision";
 
@@ -66,11 +67,7 @@ public class ComputeNetworkProvisionTaskService
             com.vmware.admiral.service.common.TaskServiceDocument<ComputeNetworkProvisionTaskState.SubStage> {
 
         public enum SubStage {
-            CREATED,
-            START_PROVISIONING,
-            PROVISIONING,
-            COMPLETED,
-            ERROR;
+            CREATED, START_PROVISIONING, PROVISIONING, COMPLETED, ERROR;
 
             static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
                     Collections.singletonList(PROVISIONING));
@@ -89,15 +86,13 @@ public class ComputeNetworkProvisionTaskService
          */
         @Documentation(description = "Number of resources to provision.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
-                PropertyUsageOption.REQUIRED, PropertyUsageOption.SINGLE_ASSIGNMENT,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public Long resourceCount;
 
         /**
          * (Required) Links to already allocated resources that are going to be provisioned.
          */
-        @Documentation(
-                description = "Links to already allocated resources that are going to be provisioned.")
+        @Documentation(description = "Links to already allocated resources that are going to be provisioned.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
                 PropertyUsageOption.REQUIRED, PropertyUsageOption.SINGLE_ASSIGNMENT })
         public Set<String> resourceLinks;
@@ -107,8 +102,7 @@ public class ComputeNetworkProvisionTaskService
         /**
          * (Internal) Reference to the adapter that will fulfill the provision request.
          */
-        @Documentation(
-                description = "Reference to the adapter that will fulfill the provision request.")
+        @Documentation(description = "Reference to the adapter that will fulfill the provision request.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
                 PropertyUsageOption.SERVICE_USE, PropertyUsageOption.SINGLE_ASSIGNMENT,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
@@ -184,17 +178,17 @@ public class ComputeNetworkProvisionTaskService
                 return;
             }
 
-            resourceLinks.forEach(computeNetworkLink ->
-                    DeferredResult.completed(new Context(computeNetworkLink, subTaskLink))
-                            .thenCompose(this::populateContext)
-                            .thenCompose(this::provisionResource)
-                            .exceptionally(t -> {
-                                logSevere("Failure provisioning a subnet: %s", t);
-                                ResourceOperationResponse r = ResourceOperationResponse
-                                        .fail(null, t);
-                                completeSubTask(subTaskLink, r);
-                                return null;
-                            }));
+            resourceLinks.forEach(computeNetworkLink -> DeferredResult
+                    .completed(new Context(computeNetworkLink, subTaskLink))
+                    .thenCompose(this::populateContext)
+                    .thenCompose(this::provisionResource)
+                    .exceptionally(t -> {
+                        logSevere("Failure provisioning a subnet: %s", t);
+                        ResourceOperationResponse r = ResourceOperationResponse
+                                .fail(null, t);
+                        completeSubTask(subTaskLink, r);
+                        return null;
+                    }));
 
             logInfo("Requested provisioning of %s compute network resources.",
                     resourceLinks.size());
@@ -238,8 +232,7 @@ public class ComputeNetworkProvisionTaskService
 
         } else {
             // No!
-            ResourceOperationResponse r = ResourceOperationResponse.finish
-                    (null /* is this ok? */);
+            ResourceOperationResponse r = ResourceOperationResponse.finish(null /* is this ok? */);
             completeSubTask(context.subTaskLink, r);
             return DeferredResult.completed(context);
         }
@@ -292,11 +285,11 @@ public class ComputeNetworkProvisionTaskService
 
             return sendWithDeferredResult(
                     Operation.createGet(getHost(), uri), PhotonModelAdapterConfig.class)
-                    .thenApply(config -> {
-                        context.instanceAdapterReference = config.adapterEndpoints
-                                .get(UriPaths.AdapterTypePath.SUBNET_ADAPTER.key);
-                        return context;
-                    });
+                            .thenApply(config -> {
+                                context.instanceAdapterReference = config.adapterEndpoints
+                                        .get(UriPaths.AdapterTypePath.SUBNET_ADAPTER.key);
+                                return context;
+                            });
         }
     }
 
@@ -324,7 +317,8 @@ public class ComputeNetworkProvisionTaskService
         return this.sendWithDeferredResult(
                 Operation.createPatch(this,
                         context.profile.networkProfile.isolationNetworkCIDRAllocationLink)
-                        .setBody(request), ComputeNetworkCIDRAllocationState.class)
+                        .setBody(request),
+                ComputeNetworkCIDRAllocationState.class)
                 .thenApply(cidrAllocation -> {
                     // Store the allocated CIDR in the context.
                     context.subnetCIDR = cidrAllocation.lastAllocatedCIDR;

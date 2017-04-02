@@ -19,6 +19,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import static com.vmware.admiral.compute.container.CompositeDescriptionCloneService.REVERSE_PARENT_LINKS_PARAM;
+import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_ALLOCATION_REQUEST;
+import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,6 +35,7 @@ import java.util.UUID;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
+import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.common.util.QueryUtil;
@@ -74,7 +77,6 @@ import com.vmware.admiral.request.ReservationTaskService.ReservationTaskState;
 import com.vmware.admiral.request.composition.CompositionSubTaskService;
 import com.vmware.admiral.request.compute.ComputeOperationType;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
-import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.admiral.service.test.MockDockerNetworkAdapterService;
 import com.vmware.admiral.service.test.MockDockerVolumeAdapterService;
@@ -991,7 +993,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         day2OperationClustering.resourceCount = 1 + SCALE_SIZE;
         day2OperationClustering.documentDescription = containerDesc.documentDescription;
         day2OperationClustering.customProperties = cont1.customProperties;
-        day2OperationClustering.addCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY,
+        day2OperationClustering.addCustomProperty(FIELD_NAME_CONTEXT_ID_KEY,
                 Service.getId(cc.documentSelfLink));
 
         host.log("########  Start of request ######## ");
@@ -1320,7 +1322,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         day2OperationClustering.resourceCount = 2;
         day2OperationClustering.documentDescription = container2Desc.documentDescription;
         day2OperationClustering.customProperties = cont1.customProperties;
-        day2OperationClustering.addCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY,
+        day2OperationClustering.addCustomProperty(FIELD_NAME_CONTEXT_ID_KEY,
                 Service.getId(cc.documentSelfLink));
 
         host.log("########  Start of request ######## ");
@@ -1709,6 +1711,93 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
     }
 
     @Test
+    public void testRequestLifeCycleFailureShouldCleanClusteredReservations() throws Throwable {
+        // setup Docker Host:
+        ResourcePoolState resourcePool = createResourcePool();
+        ComputeDescription dockerHostDesc = createDockerHostDescription();
+        createDockerHost(dockerHostDesc, resourcePool);
+
+        // setup Container desc:
+        ContainerDescription desc = TestRequestStateFactory.createContainerDescription();
+        desc.documentSelfLink = UUID.randomUUID().toString();
+        desc._cluster = 5;
+        ContainerDescription containerDesc = doPost(desc, ContainerDescriptionService.FACTORY_LINK);
+
+        // setup Group Placement:
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
+        assertEquals(0, groupPlacementState.allocatedInstancesCount);
+
+        // 1. Request a container instance:
+        RequestBrokerState request = TestRequestStateFactory.createRequestState();
+        request.resourceDescriptionLink = containerDesc.documentSelfLink;
+        request.tenantLinks = groupPlacementState.tenantLinks;
+        request.customProperties = new HashMap<>();
+        request.customProperties.put(MockDockerAdapterService.FAILURE_EXPECTED,
+                Boolean.TRUE.toString());
+
+        request = startRequest(request);
+
+        // 2. Wait for reservation removed substage
+        waitForRequestToFail(request);
+
+        // 3. Verify that the group placement has been released.
+        groupPlacementState = getDocument(GroupResourcePlacementState.class,
+                groupPlacementState.documentSelfLink);
+        assertEquals(0, groupPlacementState.allocatedInstancesCount);
+        assertEquals(0,
+                groupPlacementState.resourceQuotaPerResourceDesc
+                        .get(containerDesc.documentSelfLink)
+                        .intValue());
+    }
+
+    @Test
+    public void testRequestLifeCycleFailureDuringAllocationShouldCleanClusteredReservations()
+            throws Throwable {
+        // setup Docker Host:
+        ResourcePoolState resourcePool = createResourcePool();
+        ComputeDescription dockerHostDesc = createDockerHostDescription();
+        createDockerHost(dockerHostDesc, resourcePool);
+
+        // setup Container desc:
+        ContainerDescription desc = TestRequestStateFactory.createContainerDescription();
+        desc.documentSelfLink = UUID.randomUUID().toString();
+        desc._cluster = 5;
+        ContainerDescription containerDesc = doPost(desc, ContainerDescriptionService.FACTORY_LINK);
+
+        // setup Group Placement:
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
+        assertEquals(0, groupPlacementState.allocatedInstancesCount);
+
+        // 1. Request a container instance:
+        RequestBrokerState request = TestRequestStateFactory.createRequestState();
+        request.resourceDescriptionLink = containerDesc.documentSelfLink;
+        request.tenantLinks = groupPlacementState.tenantLinks;
+        request.customProperties = new HashMap<>();
+        request.customProperties.put(FIELD_NAME_ALLOCATION_REQUEST, Boolean.TRUE.toString());
+
+        DeploymentProfileConfig.getInstance()
+                .failOnStage(ContainerAllocationTaskState.SubStage.CONTEXT_PREPARED);
+        try {
+            request = startRequest(request);
+
+            // 2. Wait for reservation removed substage
+            waitForRequestToFail(request);
+        } finally {
+            DeploymentProfileConfig.getInstance().failOnStage(null);
+        }
+        // 3. Verify that the group placement has been released.
+        groupPlacementState = getDocument(GroupResourcePlacementState.class,
+                groupPlacementState.documentSelfLink);
+        assertEquals(0, groupPlacementState.allocatedInstancesCount);
+        assertEquals(0,
+                groupPlacementState.resourceQuotaPerResourceDesc
+                        .get(containerDesc.documentSelfLink)
+                        .intValue());
+    }
+
+    @Test
     public void testRequestLifeCycleFailureShouldCleanReservations() throws Throwable {
         // setup Docker Host:
         ResourcePoolState resourcePool = createResourcePool();
@@ -1721,6 +1810,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         // setup Group Placement:
         GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
                 resourcePool);
+        assertEquals(0, groupPlacementState.allocatedInstancesCount);
 
         // 1. Request a container instance:
         RequestBrokerState request = TestRequestStateFactory.createRequestState();
@@ -1730,7 +1820,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         request.customProperties.put(MockDockerAdapterService.FAILURE_EXPECTED,
                 Boolean.TRUE.toString());
 
-        assertEquals(groupPlacementState.allocatedInstancesCount, 0);
         request = startRequest(request);
 
         // 2. Wait for reservation removed substage
@@ -1739,7 +1828,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         // 3. Verify that the group placement has been released.
         groupPlacementState = getDocument(GroupResourcePlacementState.class,
                 groupPlacementState.documentSelfLink);
-        assertEquals(groupPlacementState.allocatedInstancesCount, 0);
+        assertEquals(0, groupPlacementState.allocatedInstancesCount);
         assertEquals(0,
                 groupPlacementState.resourceQuotaPerResourceDesc
                         .get(containerDesc.documentSelfLink)
@@ -2267,7 +2356,8 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
     @Test
     public void testRequestLifeCycleWithCreateTemplateFromContainer() throws Throwable {
-        host.log("########  Start of testRequestLifeCycleWithCreateTemplateFromContainer ######## ");
+        host.log(
+                "########  Start of testRequestLifeCycleWithCreateTemplateFromContainer ######## ");
         // setup Docker Host:
         ResourcePoolState resourcePool = createResourcePool();
         ComputeDescription dockerHostDesc = createDockerHostDescription();

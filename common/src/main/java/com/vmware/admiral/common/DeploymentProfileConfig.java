@@ -17,6 +17,7 @@ package com.vmware.admiral.common;
 public class DeploymentProfileConfig {
     private static final DeploymentProfileConfig INSTANCE = new DeploymentProfileConfig();
     private boolean test;
+    private Enum taskSubStageToFail;
 
     private DeploymentProfileConfig() {
     }
@@ -31,5 +32,13 @@ public class DeploymentProfileConfig {
 
     public void setTest(boolean test) {
         this.test = test;
+    }
+
+    public <E extends Enum<E>> void failOnStage(E taskSubStageToFail) {
+        this.taskSubStageToFail = taskSubStageToFail;
+    }
+
+    public <E extends Enum<E>> boolean shouldFail(E currentStage) {
+        return currentStage == taskSubStageToFail;
     }
 }

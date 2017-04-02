@@ -286,15 +286,6 @@ public class ComputeReservationTaskService extends
                 .build();
         q.querySpec.query.addBooleanClause(numOfInstancesClause);
 
-        /*
-         * TODO Get the placements from the DB ordered by priority. This should work..but it doesn't
-         * :) QueryTask.QueryTerm sortTerm = new QueryTask.QueryTerm(); sortTerm.propertyName =
-         * GroupResourcePlacementState.FIELD_NAME_PRIORITY; sortTerm.propertyType =
-         * ServiceDocumentDescription.TypeName.LONG; q.querySpec.sortTerm = sortTerm;
-         * q.querySpec.sortOrder = QueryTask.QuerySpecification.SortOrder.ASC;
-         * q.querySpec.options.add(QueryTask.QuerySpecification.QueryOption.SORT);
-         */
-
         QueryUtil.addExpandOption(q);
 
         ServiceDocumentQuery<GroupResourcePlacementState> query = new ServiceDocumentQuery<>(
