@@ -16,7 +16,6 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -27,7 +26,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
@@ -37,7 +35,7 @@ import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputeProvisionTaskState.SubStage;
 import com.vmware.admiral.request.compute.enhancer.ComputeStateEnhancers;
-import com.vmware.admiral.request.compute.enhancer.Enhancer;
+import com.vmware.admiral.request.compute.enhancer.Enhancer.EnhanceContext;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.photon.controller.model.adapterapi.ComputeInstanceRequest;
 import com.vmware.photon.controller.model.adapterapi.ComputeInstanceRequest.InstanceRequestType;
@@ -49,7 +47,6 @@ import com.vmware.photon.controller.model.tasks.SubTaskService;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -87,10 +84,17 @@ public class ComputeProvisionTaskService extends
                     Arrays.asList(PROVISIONING_COMPUTE));
         }
 
-        /** (Required) Links to already allocated resources that are going to be provisioned. */
+        /**
+         * (Required) Links to already allocated resources that are going to be provisioned.
+         */
         @Documentation(description = "Links to already allocated resources that are going to be provisioned.")
         @PropertyOptions(indexing = STORE_ONLY, usage = { REQUIRED, SINGLE_ASSIGNMENT })
         public Set<String> resourceLinks;
+
+        /**
+         * Normalized error threshold between 0 and 1.0.
+         */
+        public double errorThreshold;
 
     }
 
@@ -129,66 +133,44 @@ public class ComputeProvisionTaskService extends
     }
 
     private void customizeCompute(ComputeProvisionTaskState state) {
-
-        OperationJoin.JoinedCompletionHandler getComputeCompletion = (opsGetComputes,
-                exsGetComputes) -> {
-
-            if (exsGetComputes != null && !exsGetComputes.isEmpty()) {
-                failTask("Error retrieving compute states",
-                        exsGetComputes.values().iterator().next());
-                return;
-            }
-
-            URI referer = UriUtils.buildUri(getHost().getPublicUri(), getSelfLink());
-
-            List<ComputeState> comps = new ArrayList<>();
-            AtomicInteger count = new AtomicInteger(opsGetComputes.values().size());
-            opsGetComputes.values().stream()
-                    .map(op -> op.getBody(ComputeState.class))
-                    .forEach(cs -> {
-                        Enhancer.EnhanceContext context = new Enhancer.EnhanceContext();
+        URI referer = UriUtils.buildUri(getHost().getPublicUri(), getSelfLink());
+        List<DeferredResult<Operation>> results = state.resourceLinks.stream()
+                .map(link -> Operation.createGet(this, link))
+                .map(o -> sendWithDeferredResult(o, ComputeState.class))
+                .map(dr -> {
+                    return dr.thenCompose(cs -> {
+                        EnhanceContext context = new EnhanceContext();
                         context.endpointType = cs.customProperties
                                 .get(ComputeConstants.CUSTOM_PROP_ENDPOINT_TYPE_NAME);
                         context.imageType = cs.customProperties.get("__requestedImageType");
 
-                        ComputeStateEnhancers.build(getHost(), referer)
-                                .enhance(context, cs)
-                                .whenComplete((c, t) -> {
-                                    comps.add(c);
-                                    if (count.decrementAndGet() == 0) {
-                                        updateComputes(comps);
-                                    }
-                                });
-                    });
-        };
+                        return ComputeStateEnhancers.build(getHost(), referer).enhance(context, cs);
+                    }).thenCompose(cs -> sendWithDeferredResult(
+                            Operation.createPatch(this, cs.documentSelfLink).setBody(cs)));
+                })
+                .collect(Collectors.toList());
 
-        Stream<Operation> getComputeOperations = state.resourceLinks.stream()
-                .map(link -> Operation.createGet(this, link));
-        OperationJoin.create(getComputeOperations).setCompletion(getComputeCompletion)
-                .sendWith(this);
-    }
-
-    private void updateComputes(List<ComputeState> comps) {
-        OperationJoin.JoinedCompletionHandler patchComputeCompletion = (ops, exs) -> {
-            if (exs != null && !exs.isEmpty()) {
-                failTask("Error patching compute states", exs.values().iterator().next());
+        DeferredResult.allOf(results).whenComplete((all, t) -> {
+            if (t != null) {
+                failTask("Error patching compute states", t);
                 return;
             }
             proceedTo(SubStage.CUSTOMIZING_COMPUTE);
-        };
-        Stream<Operation> patchComputeOperations = comps.stream()
-                .map(cs -> Operation.createPatch(this, cs.documentSelfLink).setBody(cs));
-        OperationJoin.create(patchComputeOperations).setCompletion(patchComputeCompletion)
-                .sendWith(this);
+        });
+    }
+
+    @Override
+    protected void validateStateOnStart(ComputeProvisionTaskState state)
+            throws IllegalArgumentException {
+        if (state.resourceLinks.isEmpty()) {
+            throw new LocalizableValidationException("No compute instances to provision",
+                    "request.compute.provision.empty");
+        }
     }
 
     private void provisionResources(ComputeProvisionTaskState state, String subTaskLink) {
         try {
             Set<String> resourceLinks = state.resourceLinks;
-            if (resourceLinks == null || resourceLinks.isEmpty()) {
-                throw new LocalizableValidationException("No compute instances to provision",
-                        "request.compute.provision.empty");
-            }
             if (subTaskLink == null) {
                 // recurse after creating a sub task
                 createSubTaskForProvisionCallbacks(state);
@@ -209,12 +191,12 @@ public class ComputeProvisionTaskService extends
                         return sendWithDeferredResult(
                                 Operation.createPatch(c.description.instanceAdapterReference)
                                         .setBody(cr))
-                                        .exceptionally(e -> {
-                                            ResourceOperationResponse r = ResourceOperationResponse
-                                                    .fail(c.documentSelfLink, e);
-                                            completeSubTask(subTaskLink, r);
-                                            return null;
-                                        });
+                                .exceptionally(e -> {
+                                    ResourceOperationResponse r = ResourceOperationResponse
+                                            .fail(c.documentSelfLink, e);
+                                    completeSubTask(subTaskLink, r);
+                                    return null;
+                                });
                     })).collect(Collectors.toList());
 
             DeferredResult.allOf(ops).whenComplete((all, e) -> {
@@ -234,7 +216,7 @@ public class ComputeProvisionTaskService extends
         SubTaskService.SubTaskState<SubStage> subTaskInitState = new SubTaskService.SubTaskState<>();
         // tell the sub task with what to patch us, on completion
         subTaskInitState.serviceTaskCallback = callback;
-        subTaskInitState.errorThreshold = 0;
+        subTaskInitState.errorThreshold = currentState.errorThreshold;
         subTaskInitState.completionsRemaining = currentState.resourceLinks.size();
         subTaskInitState.tenantLinks = currentState.tenantLinks;
         Operation startPost = Operation
