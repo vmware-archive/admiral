@@ -17,9 +17,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import java.net.URI;
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -29,7 +26,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.UUID;
 
 import org.junit.After;
@@ -421,9 +417,6 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     }
 
     protected ComputeDescription prepareComputeDescription() throws Exception {
-        SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd-HHmmss");
-        df.setTimeZone(TimeZone.getTimeZone("GMT"));
-
         String id = name(getEndpointType(), "test", UUID.randomUUID().toString());
         ComputeDescription computeDesc = new ComputeDescription();
         computeDesc.id = id;
@@ -441,17 +434,6 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
         extendComputeDescription(computeDesc);
         return computeDesc;
-    }
-
-    protected String nextName(String prefix) {
-        if (prefix == null || prefix.length() == 0) {
-            prefix = "";
-        } else {
-            prefix = prefix + "-";
-        }
-
-        String now = DateTimeFormatter.ofPattern("MMD-HHmmssSSS").format(LocalDateTime.now());
-        return prefix + System.getProperty("user.name") + "-" + now;
     }
 
     protected GroupResourcePlacementState createResourcePlacement(String name, EndpointType endpointType,

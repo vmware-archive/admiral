@@ -22,6 +22,8 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -558,6 +560,17 @@ public abstract class BaseIntegrationSupportIT {
 
     protected String name(EndpointType endpointType, String prefix, String suffix) {
         return String.format("%s-%s-%s", prefix, endpointType.name(), suffix);
+    }
+
+    protected String nextName(String prefix) {
+        if (prefix == null || prefix.length() == 0) {
+            prefix = "";
+        } else {
+            prefix = prefix + "-";
+        }
+
+        String now = DateTimeFormatter.ofPattern("MMD-HHmmssSSS").format(LocalDateTime.now());
+        return prefix + System.getProperty("user.name") + "-" + now;
     }
 
     protected List<String> getTenantLinks() {
