@@ -240,6 +240,7 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
         newVolumeState.documentSelfLink = volumeState.documentSelfLink;
         newVolumeState.documentExpirationTimeMicros = -1; // make sure the expiration is reset.
         newVolumeState.adapterManagementReference = volumeState.adapterManagementReference;
+        newVolumeState._healthFailureCount = 0;
 
         ContainerVolumeStateMapper.propertiesToContainerVolumeState(newVolumeState, properties);
 

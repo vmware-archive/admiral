@@ -71,7 +71,7 @@ public class HostNetworkListDataCollection extends StatefulService {
             .buildUriPath(FACTORY_LINK, DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_ID);
 
     protected static final long DATA_COLLECTION_LOCK_TIMEOUT_MILLISECONDS = Long.getLong(
-            "com.vmware.admiral.compute.container.network.datacollection.lock.timeout.milliseconds", 30000);
+            "com.vmware.admiral.compute.container.network.datacollection.lock.timeout.milliseconds", 60000 * 5);
 
     public static class HostNetworkListDataCollectionState extends
             TaskServiceDocument<DefaultSubStage> {
