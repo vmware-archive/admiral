@@ -121,6 +121,7 @@ public class ProfileServiceTest extends ComputeBaseTest {
 
         NetworkProfile networkProfile = new NetworkProfile();
         networkProfile.isolationNetworkLink = networkState.documentSelfLink;
+        networkProfile.isolatedSubnetCIDRPrefix = 28;
         networkProfile.subnetLinks = Arrays.asList(subnetState.documentSelfLink);
         networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
 

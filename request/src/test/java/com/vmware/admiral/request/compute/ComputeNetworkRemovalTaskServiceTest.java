@@ -11,8 +11,12 @@
 
 package com.vmware.admiral.request.compute;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import static com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationRequest.allocationRequest;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,6 +25,8 @@ import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService;
+import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationState;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
 import com.vmware.admiral.compute.network.ComputeNetworkService;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
@@ -71,6 +77,15 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
     public void testIsolatedNetworkRemoval() throws Throwable {
         SubnetState subnet = createSubnetState();
 
+        ComputeNetworkCIDRAllocationState cidrAllocationState =
+                createCIDRAllocation(subnet.networkLink);
+
+        doPatch(allocationRequest(subnet.documentSelfLink),
+                ComputeNetworkCIDRAllocationState.class,
+                cidrAllocationState.documentSelfLink);
+
+        validateCIDRAllocated(cidrAllocationState.documentSelfLink, subnet.documentSelfLink);
+
         ComputeNetwork cn = createNetwork("my net");
         cn.networkType = ComputeNetworkDescriptionService.NetworkType.ISOLATED;
         cn.subnetLink = subnet.documentSelfLink;
@@ -82,6 +97,8 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
 
         validateResourcesRemove(removalTask.resourceLinks.iterator().next(),
                 subnet.documentSelfLink);
+
+        validateCIDRDeallocated(cidrAllocationState.documentSelfLink, subnet.documentSelfLink);
     }
 
     @Test
@@ -166,8 +183,28 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
         return cn;
     }
 
+    private void validateCIDRAllocated(String cidrAllocationLink, String subnetLink)
+            throws Throwable {
+
+        ComputeNetworkCIDRAllocationState cidrAllocation = getDocumentNoWait
+                (ComputeNetworkCIDRAllocationState.class, cidrAllocationLink);
+
+        assertNotNull(cidrAllocation);
+        assertTrue(cidrAllocation.allocatedCIDRs.containsKey(subnetLink));
+    }
+
+    private void validateCIDRDeallocated(String cidrAllocationLink, String subnetLink)
+            throws Throwable {
+        ComputeNetworkCIDRAllocationState cidrAllocation = getDocumentNoWait
+                (ComputeNetworkCIDRAllocationState.class, cidrAllocationLink);
+
+        assertNotNull(cidrAllocation);
+        assertFalse(cidrAllocation.allocatedCIDRs.containsKey(subnetLink));
+    }
+
     private void validateResourcesRemove(String computeNetworkLink, String subnetLink)
             throws Throwable {
+
         ComputeNetwork networkState = getDocumentNoWait(ComputeNetwork.class,
                 computeNetworkLink);
         assertNull(networkState);
@@ -176,5 +213,17 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
             SubnetState subnet = getDocumentNoWait(SubnetState.class, subnetLink);
             assertNull(subnet);
         }
+
+    }
+
+    private ComputeNetworkCIDRAllocationState createCIDRAllocation(String networkLink)
+            throws Throwable {
+
+        ComputeNetworkCIDRAllocationState cidrAllocationState =
+                new ComputeNetworkCIDRAllocationState();
+        cidrAllocationState.subnetCIDRPrefixLength = 28;
+        cidrAllocationState.networkLink = networkLink;
+
+        return doPost(cidrAllocationState, ComputeNetworkCIDRAllocationService.FACTORY_LINK);
     }
 }
