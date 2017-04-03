@@ -51,6 +51,10 @@ export default Vue.component('azure-endpoint-editor', {
     model: {
       required: true,
       type: Object
+    },
+    verified: {
+      required: true,
+      type: Boolean
     }
   },
   data() {

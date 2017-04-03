@@ -10,7 +10,6 @@
  */
 
 import services from 'core/services';
-import utils from 'core/utils';
 
 export default Vue.component('vsphere-endpoint-editor', {
   template: `
@@ -35,16 +34,18 @@ export default Vue.component('vsphere-endpoint-editor', {
         @change="onPrivateKeyChange">
       </password-group>
       <dropdown-search-group
-        :disabled="!!model.documentSelfLink || !(regionIdLoading || regionIdValues.length)"
+        v-if="verified"
+        :disabled="!!model.documentSelfLink"
         :entity="i18n('app.endpoint.datacenterEntity')"
         :label="i18n('app.endpoint.edit.vsphere.regionIdLabel')"
-        :loading="regionIdLoading"
+        :loading="!regionIdValues"
         :options="regionIdValues"
-        :required="false"
+        :required="true"
         :value="convertToObject(regionId)"
         @change="onRegionIdChange">
       </dropdown-search-group>
       <dropdown-search-group
+        v-if="verified"
         :disabled="!!model.documentSelfLink && !!model.linkedEndpoint"
         :entity="i18n('app.endpoint.edit.vsphere.linkedEndpointLabel')"
         :label="i18n('app.endpoint.edit.vsphere.linkedEndpointLabel')"
@@ -58,6 +59,10 @@ export default Vue.component('vsphere-endpoint-editor', {
     model: {
       required: true,
       type: Object
+    },
+    verified: {
+      required: true,
+      type: Boolean
     }
   },
   data() {
@@ -68,30 +73,32 @@ export default Vue.component('vsphere-endpoint-editor', {
       privateKeyId: properties.privateKeyId,
       privateKey: properties.privateKey,
       regionId: properties.regionId,
-      regionIdValues: [],
-      regionIdLoading: false
+      regionIdValues: null
     };
   },
-  attached() {
+  attached: function() {
+    this.unwatchVerified = this.$watch('verified', (verified) => {
+      if (verified) {
+        this.searchRegionIds();
+      }
+      this.emitChange();
+    });
     this.emitChange();
+  },
+  detached: function() {
+     this.unwatchVerified();
   },
   methods: {
     onHostNameChange(hostName) {
       this.hostName = hostName;
-      this.regionId = null;
-      this.regionIdValues = [];
       this.emitChange();
     },
     onPrivateKeyIdChange(privateKeyId) {
       this.privateKeyId = privateKeyId;
-      this.regionId = null;
-      this.regionIdValues = [];
       this.emitChange();
     },
     onPrivateKeyChange(privateKey) {
       this.privateKey = privateKey;
-      this.regionId = null;
-      this.regionIdValues = [];
       this.emitChange();
     },
     onRegionIdChange(regionIdObject) {
@@ -103,16 +110,6 @@ export default Vue.component('vsphere-endpoint-editor', {
       this.emitChange();
     },
     emitChange() {
-      if (this.hostName && this.privateKeyId && this.privateKey) {
-        if (!this.regionIdValues.length) {
-          this.searchRegionIds();
-        }
-      } else {
-        if (!(this.model.documentSelfLink && !this.privateKey)) {
-          this.regionId = null;
-        }
-        this.regionIdValues = [];
-      }
       this.$emit('change', {
         properties: {
           hostName: this.hostName,
@@ -121,32 +118,20 @@ export default Vue.component('vsphere-endpoint-editor', {
           privateKey: this.privateKey,
           regionId: this.regionId
         },
-        valid: this.hostName && this.privateKeyId && this.privateKey && !this.regionIdLoading
+        valid: this.hostName && this.privateKeyId && this.privateKey &&
+            (!this.verified || this.regionId)
       });
     },
     searchRegionIds() {
       let {hostName, privateKeyId, privateKey} = this;
-      if (!this.regionIdLoading) {
-        this.regionIdLoading = true;
-        let request = {
-          host: hostName,
-          username: privateKeyId,
-          password: privateKey
-        };
-        api.client.patch('/provisioning/vsphere/dc-enumerator', request).then((result) => {
-          this.regionIdLoading = false;
-          this.regionIdValues = result.datacenters.map(this.convertToObject);
-          this.emitChange();
-        }, (e) => {
-          this.regionIdLoading = false;
-          if (hostName !== this.hostName || privateKeyId !== this.privateKeyId ||
-              privateKey !== this.privateKey) {
-            this.searchRegionIds();
-          } else {
-            this.$emit('error', utils.getValidationErrors(e));
-          }
-        });
-      }
+      let request = {
+        host: hostName,
+        username: privateKeyId,
+        password: privateKey
+      };
+      api.client.patch('/provisioning/vsphere/dc-enumerator', request).then((result) => {
+        this.regionIdValues = result.datacenters.map(this.convertToObject);
+      });
     },
     searchLinkedEndpoints(...args) {
       return new Promise((resolve, reject) => {

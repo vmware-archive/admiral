@@ -579,7 +579,9 @@
         "regionIdLabel": "Region ID",
         "collectLabel": "Data collection",
         "collectInventoryLabel": "Collect inventory",
+        "collectInventoryMessage": "Triggering inventory collection. It may take a few minutes to complete.",
         "collectImagesLabel": "Collect image types",
+        "collectImagesMessage": "Triggering image collection. It may take a few minutes to complete.",
         "azure": {
           "userLinkLabel": "Subscription ID",
           "tenantIdLabel": "Tenant ID"
@@ -1194,6 +1196,8 @@
     "remove": "Remove",
     "add": "Add",
     "save": "Save",
+    "verify": "Verify",
+    "verified": "Verified successfully!",
     "back": "Back",
     "refresh": "Refresh",
     "clear": "Clear",

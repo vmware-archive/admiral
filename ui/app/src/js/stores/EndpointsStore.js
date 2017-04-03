@@ -9,18 +9,19 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { EndpointsActions } from 'actions/Actions';
+import * as actions from 'actions/Actions';
 import services from 'core/services';
 import utils from 'core/utils';
 import constants from 'core/constants';
 import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
+import CertificatesStore from 'stores/CertificatesStore';
 
 const ENUMERATION_RETRIES = 10;
 const OPERATION = {
   LIST: 'list'
 };
 
-function verifyEnumeration(endpoint, retries, callback) {
+const verifyEnumeration = function(endpoint, retries, callback) {
   services.searchCompute(endpoint.resourcePoolLink, '').then((result) => {
     setTimeout(() => {
       if (result.totalCount !== 0 || retries === 0) {
@@ -30,13 +31,57 @@ function verifyEnumeration(endpoint, retries, callback) {
       }
     }, 1000);
   });
-}
+};
+
+const onOpenToolbarItem = function(name, data, shouldSelectAndComplete) {
+  var contextViewData = {
+    expanded: true,
+    activeItem: {
+      name: name,
+      data: data
+    },
+    shouldSelectAndComplete: shouldSelectAndComplete
+  };
+
+  this.setInData(['editingItemData', 'contextView'], contextViewData);
+  this.emitChange();
+};
+
+const isContextPanelActive = function(name) {
+  var activeItem = this.data.editingItemData.contextView &&
+      this.data.editingItemData.contextView.activeItem;
+  return activeItem && activeItem.name === name;
+};
 
 let EndpointsStore = Reflux.createStore({
   mixins: [CrudStoreMixin],
-  listenables: [EndpointsActions],
+  listenables: [actions.EndpointContextToolbarActions, actions.EndpointsActions],
 
   init: function() {
+
+    CertificatesStore.listen((certificatesData) => {
+      if (!this.data.editingItemData) {
+        return;
+      }
+
+      this.setInData(['editingItemData', 'certificates'], certificatesData.items);
+      if (isContextPanelActive.call(this, constants.CONTEXT_PANEL.CERTIFICATES)) {
+        this.setInData(['editingItemData', 'contextView', 'activeItem', 'data'],
+          certificatesData);
+
+        var itemToSelect = certificatesData.newItem || certificatesData.updatedItem;
+        if (itemToSelect && this.data.editingItemData.contextView.shouldSelectAndComplete) {
+          clearTimeout(this.itemSelectTimeout);
+          this.itemSelectTimeout = setTimeout(() => {
+            this.setInData(['editingItemData', 'certificate'], itemToSelect);
+            this.onCloseToolbar();
+          }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
+        }
+      }
+
+      this.emitChange();
+    });
+
     this.setInData(['deleteConfirmationLoading'], false);
   },
 
@@ -69,7 +114,9 @@ let EndpointsStore = Reflux.createStore({
 
   onEditEndpoint: function(endpoint) {
     this.setInData(['editingItemData', 'item'], endpoint);
+    this.setInData(['editingItemData', 'verified'], false);
     this.emitChange();
+    actions.CertificatesActions.retrieveCertificates();
   },
 
   onCancelEditEndpoint: function() {
@@ -164,12 +211,77 @@ let EndpointsStore = Reflux.createStore({
     });
   },
 
+  onVerifyEndpoint: function(endpoint) {
+    this.setInData(['editingItemData', 'certificateInfo'], null);
+    this.setInData(['editingItemData', 'item'], endpoint);
+    this.setInData(['editingItemData', 'validationErrors'], null);
+    this.setInData(['editingItemData', 'verifying'], true);
+    this.emitChange();
+    services.verifyEndpoint(endpoint).then((verifiedEndpoint) => {
+      if (verifiedEndpoint && verifiedEndpoint.certificateInfo) {
+        this.setInData(['editingItemData', 'certificateInfo'], verifiedEndpoint.certificateInfo);
+      } else {
+        this.setInData(['editingItemData', 'validationErrors', '_valid'], i18n.t('verified'));
+        this.setInData(['editingItemData', 'verified'], true);
+      }
+      this.setInData(['editingItemData', 'verifying'], false);
+      this.emitChange();
+      setTimeout(() => {
+        this.setInData(['editingItemData', 'validationErrors'], null);
+        this.emitChange();
+      }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
+    }).catch(this.onGenericEditError);
+  },
+
+  onAcceptVerifyEndpoint: function() {
+    this.setInData(['editingItemData', 'item', 'endpointProperties', 'certificate'],
+        this.data.editingItemData.certificateInfo.certificate);
+    this.setInData(['editingItemData', 'certificateInfo'], null);
+    this.setInData(['editingItemData', 'validationErrors', '_valid'], i18n.t('verified'));
+    this.setInData(['editingItemData', 'verified'], true);
+    this.emitChange();
+    setTimeout(() => {
+      this.setInData(['editingItemData', 'validationErrors'], null);
+      this.emitChange();
+    }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
+  },
+
+  onCancelVerifyEndpoint: function() {
+    this.setInData(['editingItemData', 'certificateInfo'], null);
+    this.emitChange();
+  },
+
   onGenericEditError: function(e) {
     var validationErrors = utils.getValidationErrors(e);
     this.setInData(['editingItemData', 'validationErrors'], validationErrors);
     this.setInData(['editingItemData', 'saving'], false);
+    this.setInData(['editingItemData', 'verifying'], false);
     console.error(e);
     this.emitChange();
+  },
+
+  onManageCertificates: function() {
+    this.setInData(['editingItemData', 'certificateInfo'], null);
+    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.CERTIFICATES,
+        CertificatesStore.getData(), true);
+  },
+
+  onOpenToolbarCertificates: function() {
+    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.CERTIFICATES,
+        CertificatesStore.getData(), false);
+  },
+
+  onCloseToolbar: function() {
+    if (!this.data.editingItemData) {
+      this.closeToolbar();
+    } else {
+      let contextViewData = {
+        expanded: false,
+        activeItem: null
+      };
+      this.setInData(['editingItemData', 'contextView'], contextViewData);
+      this.emitChange();
+    }
   }
 });
 

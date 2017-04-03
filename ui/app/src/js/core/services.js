@@ -595,7 +595,8 @@ services.countNetworksPerHost = function(hostLink) {
 };
 
 services.loadCertificates = function() {
-  return list(links.SSL_TRUST_CERTS, true);
+  return list(
+      utils.isApplicationCompute() ? links.SSL_TRUSTED_CERTIFICATES : links.SSL_TRUST_CERTS, true);
 };
 
 services.loadCertificate = function(selfLink) {
@@ -633,7 +634,9 @@ services.importCertificate = function(hostUri, acceptCertificate) {
 };
 
 services.createCertificate = function(certificate) {
-  return post(links.SSL_TRUST_CERTS, certificate);
+  return post(
+      utils.isApplicationCompute() ? links.SSL_TRUSTED_CERTIFICATES : links.SSL_TRUST_CERTS,
+      certificate);
 };
 
 services.updateCertificate = function(certificate) {

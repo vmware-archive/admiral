@@ -9,8 +9,85 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div class="endpoints-view">
+<div class="endpoints-view" v-bind:class="{'right-context-expanded':  contextExpanded}">
   <div class="main-panel">
     <endpoints-list :model="model"></endpoints-list>
   </div>
+  <context-sidepanel class="right-context-panel"
+      v-if="model.editingItemData"
+      @close="closeToolbar()">
+    <div slot="toolbar" class="toolbar">
+      <context-sidepanel-toolbar-item
+        :active="activeContextItem === 'certificates'"
+        :label="i18n('app.certificate.contextPanelTooltip')"
+        @open="openToolbarCertificates()" @close="closeToolbar()">
+      </context-sidepanel-toolbar-item>
+    </div>
+    <div slot="content" class="content">
+      <certificates-list v-if="activeContextItem === 'certificates'"
+        :model="model.editingItemData.contextView.activeItem.data"></certificates-list>
+    </div>
+  </context-sidepanel>
+  <form>
+    <modal v-if="model.editingItemData && !!model.editingItemData.certificateInfo" :show="true" size="lg" :closable="false" :has-header="false">
+      <span slot="title"></span>
+      <div slot="body">
+        <div>
+          <i class="fa fa-exclamation-circle modal-title-icon"></i>
+          <div class="certificate-warning-text">
+            {{certificateWarning}}
+          </div>
+        </div>
+        <div class="certificate-content-holder" v-if="certificateDetails">
+          <div class="certificate-content">
+            <div class="form-group">
+              <label>{{i18n('app.certificate.list.details.commonName')}}</label>
+              <div>{{model.editingItemData.certificateInfo.properties.commonName}}</div>
+            </div>
+            <div class="form-group">
+              <label>{{i18n('app.certificate.list.details.issuerName')}}</label>
+              <div>{{model.editingItemData.certificateInfo.properties.issuerName}}</div>
+            </div>
+            <div class="form-group">
+              <label>{{i18n('app.certificate.list.details.serial')}}</label>
+              <div>{{model.editingItemData.certificateInfo.properties.serial}}</div>
+            </div>
+            <div class="form-group">
+              <label>{{i18n('app.certificate.list.details.fingerprint')}}</label>
+              <div>{{model.editingItemData.certificateInfo.properties.fingerprint}}</div>
+            </div>
+            <div class="form-group">
+              <label>{{i18n('app.certificate.list.details.validSince')}}</label>
+              <div>{{model.editingItemData.certificateInfo.properties.validSince | timestampToDate}}</div>
+            </div>
+            <div class="form-group">
+              <label>{{i18n('app.certificate.list.details.validTo')}}</label>
+              <div>{{model.editingItemData.certificateInfo.properties.validTo | timestampToDate}}</div>
+            </div>
+            <div class="manage-certificates">
+              <a href="#" @click="manageCertificates($event)">{{i18n('app.host.details.manageCertificates')}}</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div slot="footer">
+        <button v-if="!certificateDetails" class="btn"
+            @click="showCertificate($event)">
+          {{i18n('app.host.details.showCertificate')}}
+        </button>
+        <button v-else class="btn"
+            @click="hideCertificate($event)">
+          {{i18n('app.host.details.hideCertificate')}}
+        </button>
+        <button class="btn"
+            @click="cancelVerification($event)">
+          {{i18n('cancel')}}
+        </button>
+        <button class="btn btn-primary"
+            @click="acceptVerification($event)">
+          {{i18n('ok')}}
+        </button>
+      </div>
+    </modal>
+  </form>
 </div>
