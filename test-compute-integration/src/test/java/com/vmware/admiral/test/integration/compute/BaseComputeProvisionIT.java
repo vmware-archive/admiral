@@ -748,7 +748,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         return np;
     }
 
-    protected NetworkProfile createIsolatedNetworkProfile(String isolatedNetworkName) throws Exception {
+    protected NetworkProfile createIsolatedNetworkProfile(String isolatedNetworkName, int cidrPrefix) throws Exception {
         QueryTask.Query query = QueryTask.Query.Builder.create()
                 .addFieldClause(NetworkState.FIELD_NAME_ID, isolatedNetworkName)
                 .build();
@@ -764,6 +764,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         np.subnetLinks = new ArrayList<>();
         np.isolationType = IsolationSupportType.SUBNET;
         np.isolationNetworkLink = networkLink;
+        np.isolatedSubnetCIDRPrefix = cidrPrefix;
         return np;
     }
 

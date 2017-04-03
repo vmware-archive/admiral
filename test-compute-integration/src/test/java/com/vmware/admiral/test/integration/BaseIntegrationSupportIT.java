@@ -59,6 +59,7 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
+import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.admiral.request.ContainerHostRemovalTaskFactoryService;
 import com.vmware.admiral.request.ContainerHostRemovalTaskService.ContainerHostRemovalTaskState;
 import com.vmware.admiral.request.RequestStatusFactoryService;
@@ -119,6 +120,8 @@ public abstract class BaseIntegrationSupportIT {
         // Allow "Host" header to be passed
         // http://stackoverflow.com/questions/7648872/can-i-override-the-host-header-where-using-javas-httpurlconnection-class
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
+
+        HostInitComputeServicesConfig.initCompositeComponentRegistry();
     }
 
     @AfterClass
