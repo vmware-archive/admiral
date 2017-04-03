@@ -25,6 +25,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
@@ -786,12 +787,11 @@ public class HostContainerListDataCollection extends StatefulService {
                             logWarning(
                                     "Retrying with count %s after error importing system container SSL certificate from '%s':\n%s",
                                     retryCount, request.hostUri, Utils.toString(e));
-                            try {
-                                Thread.sleep(SYSTEM_CONTAINER_SSL_RETRIES_WAIT);
+                            getHost().schedule(() -> {
+                                logInfo("Waiting for the system container SSL certificate from '%s' to be imported",
+                                        request.hostUri);
                                 importAgentSslCertificate(container, host, retryCount - 1);
-                            } catch (Exception ex) {
-                                logWarning("Sleep interrupted!\n%s", Utils.toString(ex));
-                            }
+                            }, SYSTEM_CONTAINER_SSL_RETRIES_WAIT, TimeUnit.MILLISECONDS);
                         } else {
                             logSevere(
                                     "Exception importing system container SSL certificate from '%s':\n%s",
