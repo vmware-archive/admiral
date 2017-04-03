@@ -67,7 +67,7 @@ public class HostVolumeListDataCollection extends StatefulService {
             .buildUriPath(FACTORY_LINK, DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_ID);
 
     protected static final long DATA_COLLECTION_LOCK_TIMEOUT_MILLISECONDS = Long.getLong(
-            "com.vmware.admiral.compute.container.volume.datacollection.lock.timeout.milliseconds", 30000);
+            "com.vmware.admiral.compute.container.volume.datacollection.lock.timeout.milliseconds", 60000 * 5);
     public static final Integer MAX_DATACOLLECTION_FAILURES = Integer.getInteger(
             "com.vmware.admiral.compute.container.volume.max.datacollection.failures", 3);
 
@@ -134,6 +134,7 @@ public class HostVolumeListDataCollection extends StatefulService {
     @Override
     public void handlePatch(Operation op) {
         VolumeListCallback body = op.getBody(VolumeListCallback.class);
+
         if (body.containerHostLink == null) {
             logFine("'containerHostLink' is required");
             op.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
@@ -143,7 +144,8 @@ public class HostVolumeListDataCollection extends StatefulService {
 
         HostVolumeListDataCollectionState state = getState(op);
         if (body.unlockDataCollectionForHost) {
-            // patch to mark that there is no active list volumes data collection for a given host.
+            // patch to mark that there is no active list volumes data collection for a given
+            // host.
             state.containerHostLinks.remove(body.containerHostLink);
             op.complete();
             return;
@@ -205,42 +207,42 @@ public class HostVolumeListDataCollection extends StatefulService {
 
         new ServiceDocumentQuery<ContainerVolumeState>(getHost(), ContainerVolumeState.class)
                 .query(queryTask,
-                    (r) -> {
-                        if (r.hasException()) {
-                            logSevere(
-                                    "Failed to query for existing ContainerVolumeState instances: %s",
-                                    r.getException() instanceof CancellationException
-                                            ? r.getException().getMessage()
-                                            : Utils.toString(r.getException()));
-                            unlockCurrentDataCollectionForHost(body.containerHostLink);
-                        } else if (r.hasResult()) {
-                            volumeStates.add(r.getResult());
-                        } else {
-                            AdapterRequest request = new AdapterRequest();
-                            request.operationTypeId = ContainerHostOperationType.LIST_VOLUMES.id;
-                            request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
-                            request.resourceReference = UriUtils.buildUri(getHost(),
-                                    body.containerHostLink);
-                            sendRequest(Operation
-                                    .createPatch(this, ManagementUriParts.ADAPTER_DOCKER_HOST)
-                                    .setBody(request)
-                                    .addPragmaDirective(
-                                            Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
-                                    .setCompletion(
-                                            (o, ex) -> {
-                                                if (ex == null) {
-                                                    VolumeListCallback callback = o
-                                                            .getBody(VolumeListCallback.class);
-                                                    updateContainerVolumeStates(callback,
-                                                            volumeStates,
-                                                            body.containerHostLink);
-                                                } else {
-                                                    unlockCurrentDataCollectionForHost(
-                                                            body.containerHostLink);
-                                                }
-                                            }));
-                        }
-                    });
+                        (r) -> {
+                            if (r.hasException()) {
+                                logSevere(
+                                        "Failed to query for existing ContainerVolumeState instances: %s",
+                                        r.getException() instanceof CancellationException
+                                                ? r.getException().getMessage()
+                                                : Utils.toString(r.getException()));
+                                unlockCurrentDataCollectionForHost(body.containerHostLink);
+                            } else if (r.hasResult()) {
+                                volumeStates.add(r.getResult());
+                            } else {
+                                AdapterRequest request = new AdapterRequest();
+                                request.operationTypeId = ContainerHostOperationType.LIST_VOLUMES.id;
+                                request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+                                request.resourceReference = UriUtils.buildUri(getHost(),
+                                        body.containerHostLink);
+                                sendRequest(Operation
+                                        .createPatch(this, ManagementUriParts.ADAPTER_DOCKER_HOST)
+                                        .setBody(request)
+                                        .addPragmaDirective(
+                                                Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
+                                        .setCompletion(
+                                                (o, ex) -> {
+                                                    if (ex == null) {
+                                                        VolumeListCallback callback = o
+                                                                .getBody(VolumeListCallback.class);
+                                                        updateContainerVolumeStates(callback,
+                                                                volumeStates,
+                                                                body.containerHostLink);
+                                                    } else {
+                                                        unlockCurrentDataCollectionForHost(
+                                                                body.containerHostLink);
+                                                    }
+                                                }));
+                            }
+                        });
     }
 
     @Override
@@ -288,6 +290,9 @@ public class HostVolumeListDataCollection extends StatefulService {
                     && discoveredVolume.driver.equals(volumeState.driver);
 
             if (existsInCallbackHost) {
+                if (volumeState.powerState != PowerState.CONNECTED) {
+                    updateVolumePowerState(volumeState);
+                }
                 callback.volumesByName.remove(volumeState.name);
             }
 
@@ -347,6 +352,8 @@ public class HostVolumeListDataCollection extends StatefulService {
                                 volumeState.parentLinks = new ArrayList<>(
                                         Arrays.asList(callback.containerHostLink));
 
+                                volumeState.powerState = PowerState.CONNECTED;
+
                                 volumeState.adapterManagementReference = UriUtils
                                         .buildUri(ManagementUriParts.ADAPTER_DOCKER_VOLUME);
 
@@ -362,6 +369,20 @@ public class HostVolumeListDataCollection extends StatefulService {
                         });
 
         sendRequest(operation);
+    }
+
+    private void updateVolumePowerState(ContainerVolumeState volumeState) {
+        ContainerVolumeState patchState = new ContainerVolumeState();
+        patchState.powerState = PowerState.CONNECTED;
+
+        sendRequest(Operation.createPatch(this, volumeState.documentSelfLink)
+                .setBody(patchState).setCompletion((o, e) -> {
+                    if (e != null) {
+                        logWarning("Could not update volume %s to state %s",
+                                volumeState.documentSelfLink, PowerState.CONNECTED);
+                    }
+                }));
+
     }
 
     private void createDiscoveredContainerVolumes(List<ContainerVolumeState> volumeStates,

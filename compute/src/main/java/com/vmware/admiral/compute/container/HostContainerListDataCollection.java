@@ -88,7 +88,7 @@ public class HostContainerListDataCollection extends StatefulService {
 
     private static final String SYSTEM_CONTAINER_NAME = "systemContainerName";
     protected static final long DATA_COLLECTION_LOCK_TIMEOUT_MILLISECONDS = Long.getLong(
-            "com.vmware.admiral.data.collection.lock.timeout.milliseconds", 30000);
+            "com.vmware.admiral.data.collection.lock.timeout.milliseconds", 60000 * 5);
 
     private static final int SYSTEM_CONTAINER_SSL_RETRIES_COUNT = Integer.getInteger(
             "com.vmware.admiral.system.container.ssl.retries", 3);
@@ -298,8 +298,8 @@ public class HostContainerListDataCollection extends StatefulService {
         ContainerListCallback body = op.getBody(ContainerListCallback.class);
 
         if (body.hostAdapterReference == null) {
-            body.hostAdapterReference =
-                    ContainerHostDataCollectionService.getDefaultHostAdapter(getHost());
+            body.hostAdapterReference = ContainerHostDataCollectionService
+                    .getDefaultHostAdapter(getHost());
         }
 
         String containerHostLink = body.containerHostLink;
@@ -335,7 +335,8 @@ public class HostContainerListDataCollection extends StatefulService {
                 logFine("Host container list callback for host [%s] with container IDs: %s " +
                         "skipped, another instance is active",
                         containerHostLink,
-                        body.containerIdsAndNames.keySet().stream().collect(Collectors.toList()));
+                        body.containerIdsAndNames.keySet().stream()
+                                .collect(Collectors.toList()));
             }
             op.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
             op.complete();
@@ -383,8 +384,9 @@ public class HostContainerListDataCollection extends StatefulService {
                                                                 .getBody(
                                                                         ContainerListCallback.class);
                                                         if (callback.hostAdapterReference == null) {
-                                                            callback.hostAdapterReference =
-                                                                    ContainerHostDataCollectionService.getDefaultHostAdapter(getHost());
+                                                            callback.hostAdapterReference = ContainerHostDataCollectionService
+                                                                    .getDefaultHostAdapter(
+                                                                            getHost());
                                                         }
                                                         updateContainerStates(callback,
                                                                 containerStates, containerHostLink);
@@ -493,8 +495,8 @@ public class HostContainerListDataCollection extends StatefulService {
                                             .get(containerState.id);
                                 }
                                 containerState.parentLink = callback.containerHostLink;
-                                containerState.adapterManagementReference =
-                                        getContainerAdapterReference(callback.hostAdapterReference);
+                                containerState.adapterManagementReference = getContainerAdapterReference(
+                                        callback.hostAdapterReference);
 
                                 containersLeft.add(containerState);
                             }
