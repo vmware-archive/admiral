@@ -14,6 +14,7 @@ import AzureEndpointEditor from 'components/endpoints/azure/EndpointEditor'; //e
 import VsphereEndpointEditor from 'components/endpoints/vsphere/EndpointEditor'; //eslint-disable-line
 import EndpointEditorVue from 'components/endpoints/EndpointEditorVue.html';
 import { EndpointsActions } from 'actions/Actions';
+import constants from 'core/constants';
 import services from 'core/services';
 import utils from 'core/utils';
 
@@ -27,13 +28,14 @@ export default Vue.component('endpoint-editor', {
   },
   computed: {
     validationErrors() {
-      return (this.model.validationErrors && this.model.validationErrors._generic) ||
-          (this.editorErrors && this.editorErrors._generic);
+      return this.model.validationErrors || this.editorErrors || {};
     }
   },
   data() {
     return {
       adapters: utils.getAdapters(),
+      certificate: null,
+      certificateDetails: false,
       editor: {
         properties: this.model.item.endpointProperties || {},
         valid: false
@@ -41,7 +43,8 @@ export default Vue.component('endpoint-editor', {
       editorErrors: null,
       endpointType: this.model.item.endpointType,
       name: this.model.item.name,
-      saveDisabled: !this.model.item.documentSelfLink
+      saveDisabled: !this.model.item.documentSelfLink,
+      verifyDisabled: !this.model.item.documentSelfLink
     };
   },
   methods: {
@@ -60,28 +63,52 @@ export default Vue.component('endpoint-editor', {
         EndpointsActions.createEndpoint(toSave);
       }
     },
+    verify($event) {
+      $event.stopImmediatePropagation();
+      $event.preventDefault();
+      this.certificate = null;
+      let toSave = this.getModel();
+      EndpointsActions.verifyEndpoint(toSave);
+    },
     collectInventory($event) {
       $event.stopImmediatePropagation();
       $event.preventDefault();
-      services.collectInventory(this.model.item);
+      services.collectInventory(this.model.item).then(() => {
+        this.editorErrors = {
+          _valid: i18n.t('app.endpoint.edit.collectInventoryMessage')
+        };
+        setTimeout(() => {
+          this.editorErrors = null;
+        }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
+      });
     },
     collectImages($event) {
       $event.stopImmediatePropagation();
       $event.preventDefault();
-      services.collectImages(this.model.item);
+      services.collectImages(this.model.item).then(() => {
+        this.editorErrors = {
+          _valid: i18n.t('app.endpoint.edit.collectImagesMessage')
+        };
+        setTimeout(() => {
+          this.editorErrors = null;
+        }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
+      });
     },
     onNameChange(name) {
       this.name = name;
       this.saveDisabled = this.isSaveDisabled();
+      this.verifyDisabled = this.isVerifyDisabled();
     },
     onEndpointTypeChange(endpointType) {
       this.endpointType = endpointType && endpointType.id;
       this.saveDisabled = this.isSaveDisabled();
+      this.verifyDisabled = this.isVerifyDisabled();
     },
     onEditorChange(editor) {
       this.editor = editor;
       this.editorErrors = null;
       this.saveDisabled = this.isSaveDisabled();
+      this.verifyDisabled = this.isVerifyDisabled();
     },
     onEditorError(errors) {
       this.editorErrors = errors;
@@ -89,10 +116,13 @@ export default Vue.component('endpoint-editor', {
     isSaveDisabled() {
       return !this.name || !this.endpointType || !this.editor.valid;
     },
+    isVerifyDisabled() {
+      return !this.name || !this.endpointType || !this.editor.valid;
+    },
     getModel() {
       return $.extend({}, this.model.item, {
-        endpointProperties: $.extend({}, this.model.item.endpointProperties || {},
-            this.editor.properties),
+        endpointProperties: $.extend({},
+            this.model.item.endpointProperties || {}, this.editor.properties),
         endpointType: this.endpointType,
         name: this.name
       });

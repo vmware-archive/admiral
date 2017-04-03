@@ -154,6 +154,9 @@ templateHelpers.register = function() {
 
   Vue.filter('timestampToDate', function(timestamp) {
     if (timestamp) {
+      if (typeof timestamp === 'string') {
+        timestamp = parseInt(timestamp, 10);
+      }
       // Formats based on locale, like August 27, 2015 2:25 PM
       return moment(timestamp).format('LLL');
     }

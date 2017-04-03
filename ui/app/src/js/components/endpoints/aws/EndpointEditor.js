@@ -37,6 +37,10 @@ export default Vue.component('aws-endpoint-editor', {
     model: {
       required: true,
       type: Object
+    },
+    verified: {
+      required: true,
+      type: Boolean
     }
   },
   data() {

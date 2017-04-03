@@ -182,7 +182,12 @@ export var ProfileActions = Reflux.createActions([
 
 export var EndpointsActions = Reflux.createActions([
   'retrieveEndpoints', 'editEndpoint', 'cancelEditEndpoint', 'createEndpoint',
-  'updateEndpoint', 'deleteEndpoint', 'openAddEndpoint'
+  'updateEndpoint', 'deleteEndpoint', 'verifyEndpoint', 'acceptVerifyEndpoint',
+  'cancelVerifyEndpoint'
+]);
+
+export var EndpointContextToolbarActions = Reflux.createActions([
+  'openToolbarCertificates', 'closeToolbar', 'manageCertificates'
 ]);
 
 export var SubnetworksActions = Reflux.createActions([
