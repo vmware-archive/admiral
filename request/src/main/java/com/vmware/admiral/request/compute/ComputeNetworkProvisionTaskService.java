@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.request.compute;
 
+import static com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationRequest.allocationRequest;
+
 import java.net.URI;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -22,7 +24,6 @@ import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationRequest;
-import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationRequest.RequestType;
 import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationState;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.NetworkType;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
@@ -311,9 +312,8 @@ public class ComputeNetworkProvisionTaskService
         AssertUtil.assertNotNull(context.subnet, "Context.subnet should not be null.");
 
         // Get new CIDR.
-        ComputeNetworkCIDRAllocationRequest request = new ComputeNetworkCIDRAllocationRequest();
-        request.requestType = RequestType.ALLOCATE;
-        request.subnetLink = context.subnet.documentSelfLink;
+        ComputeNetworkCIDRAllocationRequest request =
+                allocationRequest(context.subnet.documentSelfLink);
         return this.sendWithDeferredResult(
                 Operation.createPatch(this,
                         context.profile.networkProfile.isolationNetworkCIDRAllocationLink)
@@ -321,7 +321,7 @@ public class ComputeNetworkProvisionTaskService
                 ComputeNetworkCIDRAllocationState.class)
                 .thenApply(cidrAllocation -> {
                     // Store the allocated CIDR in the context.
-                    context.subnetCIDR = cidrAllocation.lastAllocatedCIDR;
+                    context.subnetCIDR = cidrAllocation.allocatedCIDRs.get(request.subnetLink);
                     return context;
                 });
     }
@@ -332,8 +332,7 @@ public class ComputeNetworkProvisionTaskService
 
         subnet.networkLink = profile.networkProfile.isolationNetworkLink;
         subnet.endpointLink = context.isolatedNetworkEndpoint.documentSelfLink;
-        subnet.instanceAdapterReference = UriUtils.buildUri(this.getHost(),
-                context.instanceAdapterReference);
+        subnet.instanceAdapterReference = URI.create(context.instanceAdapterReference);
         subnet.subnetCIDR = context.subnetCIDR;
 
         return this.sendWithDeferredResult(Operation.createPatch(this, subnet.documentSelfLink)

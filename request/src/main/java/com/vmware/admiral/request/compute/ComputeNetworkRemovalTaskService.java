@@ -11,13 +11,13 @@
 
 package com.vmware.admiral.request.compute;
 
+import static com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationRequest.deallocationRequest;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -26,7 +26,10 @@ import java.util.stream.Collectors;
 import com.vmware.admiral.adapter.common.NetworkOperationType;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.ServiceUtils;
+import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationRequest;
+import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationState;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.NetworkType;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
 import com.vmware.admiral.request.compute.ComputeNetworkRemovalTaskService.ComputeNetworkRemovalTaskState.SubStage;
@@ -37,12 +40,14 @@ import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.photon.controller.model.tasks.ProvisionSubnetTaskService;
 import com.vmware.photon.controller.model.tasks.ProvisionSubnetTaskService.ProvisionSubnetTaskState;
 import com.vmware.photon.controller.model.tasks.QueryUtils.QueryByPages;
+import com.vmware.photon.controller.model.tasks.QueryUtils.QueryTop;
 import com.vmware.photon.controller.model.tasks.TaskOption;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.Query;
 
 /**
  * Task implementing removal of Compute Networks.
@@ -57,7 +62,7 @@ public class ComputeNetworkRemovalTaskService extends
     public static class ComputeNetworkRemovalTaskState extends
             com.vmware.admiral.service.common.TaskServiceDocument<ComputeNetworkRemovalTaskState.SubStage> {
 
-        public static enum SubStage {
+        public enum SubStage {
             CREATED,
             INSTANCES_REMOVING,
             INSTANCES_REMOVED,
@@ -65,24 +70,27 @@ public class ComputeNetworkRemovalTaskService extends
             COMPLETED,
             ERROR;
 
-            static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
-                    Arrays.asList(REMOVING_RESOURCE_STATES));
+            static final Set<SubStage> TRANSIENT_SUB_STAGES =
+                    Collections.singleton(REMOVING_RESOURCE_STATES);
         }
 
-        /** (Required) The resources on which the given operation will be applied */
+        /**
+         * (Required) The resources on which the given operation will be applied
+         */
         @PropertyOptions(usage = { REQUIRED }, indexing = STORE_ONLY)
         public Set<String> resourceLinks;
     }
 
-    public static class Context {
+    private static class Context {
         public Context(ComputeNetwork computeNetwork, String subTaskLink) {
             this.computeNetwork = computeNetwork;
             this.subTaskLink = subTaskLink;
         }
 
-        public ComputeNetwork computeNetwork;
-        public String subTaskLink;
-        public SubnetState subnet;
+        ComputeNetwork computeNetwork;
+        String subTaskLink;
+        SubnetState subnet;
+        String cidrAllocationServiceLink;
     }
 
     // cached compute networks
@@ -158,22 +166,24 @@ public class ComputeNetworkRemovalTaskService extends
 
     private void deleteSubnets(List<ComputeNetwork> isolatedComputeNetworks, String subTaskLink) {
         try {
-            isolatedComputeNetworks.forEach(isolatedComputeNetwork -> {
-                DeferredResult.completed(new Context(isolatedComputeNetwork, subTaskLink))
-                        .thenCompose(this::populateSubnet)
-                        .thenCompose(this::destroySubnet)
-                        .exceptionally(e -> {
-                            if (e.getCause() != null && e.getCause()
-                                    instanceof ServiceHost.ServiceNotFoundException) {
-                                logWarning("Subnet State is not found at link: %s ",
-                                        isolatedComputeNetwork.subnetLink);
-                                completeSubTasksCounter(subTaskLink, null);
-                            } else {
-                                completeSubTasksCounter(subTaskLink, e);
-                            }
-                            return null;
-                        });
-            });
+            isolatedComputeNetworks.forEach(isolatedComputeNetwork ->
+                    DeferredResult.completed(new Context(isolatedComputeNetwork, subTaskLink))
+                            .thenCompose(this::populateSubnet)
+                            .thenCompose(this::populateCIDRAllocationService)
+                            .thenCompose(this::destroySubnet)
+                            .thenCompose(this::deallocateSubnet)
+                            .exceptionally(e -> {
+                                if (e.getCause() != null && e.getCause()
+                                        instanceof ServiceHost.ServiceNotFoundException) {
+                                    logWarning("Subnet State is not found at link: %s ",
+                                            isolatedComputeNetwork.subnetLink);
+                                    completeSubTasksCounter(subTaskLink, null);
+                                } else {
+                                    completeSubTasksCounter(subTaskLink, e);
+                                }
+                                return null;
+                            })
+            );
             proceedTo(SubStage.INSTANCES_REMOVING);
         } catch (Throwable e) {
             failTask("Unexpected exception while deleting subnets", e);
@@ -202,6 +212,21 @@ public class ComputeNetworkRemovalTaskService extends
         return this.sendWithDeferredResult(
                 Operation.createPost(this, ProvisionSubnetTaskService.FACTORY_LINK)
                         .setBody(provisionTaskState))
+                .thenApply(op -> context);
+    }
+
+    private DeferredResult<Context> deallocateSubnet(Context context) {
+        if (context.cidrAllocationServiceLink == null) {
+            // No CIDR allocation service found.
+            return DeferredResult.completed(context);
+        }
+
+        ComputeNetworkCIDRAllocationRequest request =
+                deallocationRequest(context.subnet.documentSelfLink);
+
+        return this.sendWithDeferredResult(
+                Operation.createPatch(this, context.cidrAllocationServiceLink)
+                        .setBody(request))
                 .thenApply(op -> context);
     }
 
@@ -254,6 +279,37 @@ public class ComputeNetworkRemovalTaskService extends
                 });
     }
 
+    private DeferredResult<Context> populateCIDRAllocationService(Context context) {
+        AssertUtil.assertNotNull(context.subnet, "context.subnet");
+
+        // Check if ComputeNetworkCIDRAllocationService exists for the isolated network.
+        Query query = Query.Builder.create()
+                .addKindFieldClause(ComputeNetworkCIDRAllocationState.class)
+                .addFieldClause(
+                        ComputeNetworkCIDRAllocationState.FIELD_NAME_NETWORK_LINK,
+                        context.subnet.networkLink)
+                .build();
+
+        QueryTop<ComputeNetworkCIDRAllocationState> queryCIDRAllocation =
+                new QueryTop<>(this.getHost(),
+                        query,
+                        ComputeNetworkCIDRAllocationState.class,
+                        context.subnet.tenantLinks)
+                        .setMaxResultsLimit(1);
+
+        return queryCIDRAllocation.collectLinks(Collectors.toList())
+                .thenApply(cidrAllocationLinks -> {
+                    if (cidrAllocationLinks != null && cidrAllocationLinks.size() == 1) {
+                        // Found existing CIDRAllocationService
+                        context.cidrAllocationServiceLink = cidrAllocationLinks.get(0);
+                    } else {
+                        this.logWarning(() -> "Unable to find CIDR allocation service for "
+                                + "network: " + context.subnet.networkLink);
+                    }
+                    return context;
+                });
+    }
+
     private void queryComputeNetworkResources(ComputeNetworkRemovalTaskState state,
             Consumer<List<ComputeNetwork>> callbackFunction) {
         if (this.computeNetworks != null) {
@@ -268,7 +324,7 @@ public class ComputeNetworkRemovalTaskService extends
 
         QueryByPages<ComputeNetwork> query = new QueryByPages<>(getHost(), builder.build(),
                 ComputeNetwork.class, state.tenantLinks);
-        query.queryDocuments(computeNetwork -> computeNetworks.add(computeNetwork))
+        query.queryDocuments(computeNetworks::add)
                 .whenComplete(((v, e) -> {
                     if (e != null) {
                         failTask("Failure retrieving query results", e);

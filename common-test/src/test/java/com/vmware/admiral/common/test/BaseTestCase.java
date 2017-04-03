@@ -813,6 +813,32 @@ public abstract class BaseTestCase {
         return outState;
     }
 
+    protected <T, R extends ServiceDocument> R doPatch(
+            T request,
+            Class<R> resultClazz,
+            String serviceDocumentSelfLink) {
+
+        TestContext ctx = testCreate(1);
+
+        host.sendWithDeferredResult(Operation.createPatch(host, serviceDocumentSelfLink)
+                .setBody(request), resultClazz)
+                .whenComplete((result, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                        return;
+                    }
+                    ctx.completeIteration();
+                });
+        ctx.await();
+
+        URI uri = UriUtils.buildUri(host, serviceDocumentSelfLink);
+
+        R outState = host.getServiceState(null,
+                resultClazz,
+                uri);
+        return outState;
+    }
+
     protected <T extends ServiceDocument> T doPut(T inState)
             throws Throwable {
         URI uri = UriUtils.buildUri(host, inState.documentSelfLink);
