@@ -55,5 +55,4 @@ components:
     type: "Compute.Network"
     data:
       name: wpnet
-      assignment: static
       networkType: isolated
