@@ -205,4 +205,66 @@ public class QueryUtilTest {
         assertEquals(tenantQuery.occurance, Occurance.MUST_OCCUR);
         assertEquals(subTenantQuery.occurance, Occurance.MUST_OCCUR);
     }
+
+    // [/tenants/tenantId]
+    @Test
+    public void testAddTenantAndUserClauseWhenOnlyTenantIsSet() {
+        List<String> tenantLinks = Arrays.asList(TENANT_ID);
+        Query query = QueryUtil.addTenantAndUserClause(tenantLinks);
+
+        assertNotNull(query);
+
+        assertEquals(query.occurance, Occurance.MUST_OCCUR);
+        assertEquals(query.term.matchValue, TENANT_ID);
+    }
+
+    // [/tenants/tenantId, /users/userId]
+    @Test
+    public void testAddTenantAndUserClauseWhenTenantAndSubTenantAreSet() {
+        List<String> tenantLinks = Arrays.asList(TENANT_ID, USER_ID);
+
+        Query query = QueryUtil.addTenantAndUserClause(tenantLinks);
+
+        Query tenantQuery = query.booleanClauses.stream()
+                .filter(l -> l.term.matchValue.contains(TENANT_ID)).findFirst().get();
+        Query userQuery = query.booleanClauses.stream()
+                .filter(l -> l.term.matchValue.contains(USER_ID)).findFirst().get();
+
+        assertNotNull(tenantQuery);
+        assertNotNull(userQuery);
+
+        assertEquals(tenantQuery.occurance, Occurance.MUST_OCCUR);
+        assertEquals(userQuery.occurance, Occurance.MUST_OCCUR);
+    }
+
+    // [/tenants/tenantId, /tenants/tenantId/groups/subtenantId]
+    @Test
+    public void testAddTenantAndUserClauseWhenTenantAndUserAreSet() {
+        List<String> tenantLinks = Arrays.asList(TENANT_ID, GROUP_ID);
+
+        Query query = QueryUtil.addTenantAndUserClause(tenantLinks);
+        assertNull("assumtion failed for query being single", query.booleanClauses);
+        assertTrue(query.term.matchValue.contains(TENANT_ID));
+    }
+
+    // [/tenants/tenantId, /tenants/tenantId/groups/subtenantId, /users/userId]
+    @Test
+    public void testAddTenantAndUserClauseWhenTenantAndSubtenantAndUserAreSet() {
+        List<String> tenantLinks = Arrays.asList(TENANT_ID, GROUP_ID, USER_ID);
+        Query query = QueryUtil.addTenantAndUserClause(tenantLinks);
+
+        Query tenantQuery = query.booleanClauses.stream()
+                .filter(l -> l.term.matchValue.contains(TENANT_ID)).findFirst().get();
+        Optional<Query> subTenantOptional = query.booleanClauses.stream()
+                .filter(l -> l.term.matchValue.contains(GROUP_ID)).findFirst();
+        Query userQuery = query.booleanClauses.stream()
+                .filter(l -> l.term.matchValue.contains(USER_ID)).findFirst().get();
+
+        assertNotNull(tenantQuery);
+        assertEquals(Optional.empty(), subTenantOptional);
+        assertNotNull(userQuery);
+
+        assertEquals(tenantQuery.occurance, Occurance.MUST_OCCUR);
+        assertEquals(userQuery.occurance, Occurance.MUST_OCCUR);
+    }
 }

@@ -117,7 +117,7 @@ public class NamedVolumeAffinityHostFilter
 
         if (tenantLinks != null && !tenantLinks.isEmpty()) {
             volumeQuery.querySpec.query
-                    .addBooleanClause(QueryUtil.addTenantGroupAndUserClause(tenantLinks));
+                    .addBooleanClause(QueryUtil.addTenantAndUserClause(tenantLinks));
         }
 
         QueryUtil.addExpandOption(volumeQuery);
