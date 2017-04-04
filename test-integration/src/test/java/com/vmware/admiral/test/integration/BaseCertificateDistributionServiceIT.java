@@ -14,6 +14,7 @@ package com.vmware.admiral.test.integration;
 import static com.vmware.admiral.test.integration.TestPropertiesUtil.getTestRequiredProp;
 
 import java.net.URI;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,6 +22,7 @@ import org.junit.Before;
 
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.container.ShellContainerExecutorService;
+import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpResponse;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
@@ -105,11 +107,14 @@ public abstract class BaseCertificateDistributionServiceIT extends BaseProvision
                 .toString();
 
         Map<String, Object> command = new HashMap<>();
-        command.put(ShellContainerExecutorService.COMMAND_KEY, new String[] {
-                "rm", "-rf", "/etc/docker/certs.d/" +  registryAddress });
+        final String[] commandParts = new String[] {
+                "rm", "-rf", "/etc/docker/certs.d/" +  registryAddress };
+        command.put(ShellContainerExecutorService.COMMAND_KEY, commandParts);
 
-        SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod.POST, url,
+        logger.info("Executing %s", Arrays.toString(commandParts));
+        HttpResponse response = SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod.POST, url,
                 Utils.toJson(command));
+        logger.info("Response: code %s, body: %s", response.statusCode, response.responseBody);
 
         waitUntilRegistryCertificateIsRemoved(hostLink, registryAddress);
     }
