@@ -16,6 +16,7 @@ import java.util.Map;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.Utils;
 
@@ -69,6 +70,13 @@ public class StorageProfileService extends StatefulService {
         }
         patch.setBody(currentState);
         patch.complete();
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
     }
 
     private StorageProfile processInput(Operation op) {

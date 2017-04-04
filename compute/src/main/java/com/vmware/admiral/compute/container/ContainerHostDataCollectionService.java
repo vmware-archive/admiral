@@ -151,8 +151,6 @@ public class ContainerHostDataCollectionService extends StatefulService {
     public ServiceDocument getDocumentTemplate() {
         ServiceDocument template = super.getDocumentTemplate();
         com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
-        // don't keep any versions for the logs
-        template.documentDescription.versionRetentionLimit = 1;
         return template;
     }
 

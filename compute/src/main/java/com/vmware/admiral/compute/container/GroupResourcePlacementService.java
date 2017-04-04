@@ -716,7 +716,6 @@ public class GroupResourcePlacementService extends StatefulService {
         // Having multiple resource descriptions hit the default limit. 1MB should be enough for
         // ~13 760 containers
         template.documentDescription.serializedStateSizeLimit = 1024 * 1024; // 1MB
-        template.documentDescription.versionRetentionLimit = 5;
 
         return template;
     }

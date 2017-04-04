@@ -24,6 +24,7 @@ import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState
 import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.StatefulService;
@@ -206,6 +207,13 @@ public class SslTrustCertificateService extends StatefulService {
         }
         delete.complete();
         notifyLastUpdatedSslTrustDocumentService();
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
     }
 
     private void validateStateOnStart(SslTrustCertificateState state) throws Exception {

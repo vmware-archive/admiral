@@ -102,8 +102,6 @@ public class LogService extends StatefulService {
 
         // logs can be big, need to increase the default size limit
         template.documentDescription.serializedStateSizeLimit = 4 * 1024 * 1024; // 4MB
-        // don't keep any versions for the logs
-        template.documentDescription.versionRetentionLimit = 1;
 
         return template;
     }

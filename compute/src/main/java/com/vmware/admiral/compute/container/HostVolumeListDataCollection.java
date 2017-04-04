@@ -262,6 +262,13 @@ public class HostVolumeListDataCollection extends StatefulService {
         put.setBody(putBody).complete();
     }
 
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
+    }
+
     private void updateContainerVolumeStates(VolumeListCallback callback,
             List<ContainerVolumeState> volumeStates, String callbackHostLink) {
 

@@ -14,6 +14,7 @@ package com.vmware.admiral.service.common;
 import com.vmware.admiral.common.ManagementUriParts;
 
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocument.Documentation;
 import com.vmware.xenon.common.ServiceDocument.UsageOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
@@ -88,6 +89,13 @@ public class EventTopicService extends StatefulService {
         @Documentation(description = "Task substage")
         @UsageOption(option = PropertyUsageOption.REQUIRED)
         public String substage;
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
     }
 
     private void validate(Operation post) {

@@ -228,6 +228,13 @@ public class ResourceNamePrefixService extends StatefulService {
         patch.complete();
     }
 
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
+    }
+
     public static String getDefaultResourceNameFormat(String baseName) {
         if (ResourceNamePrefixState.DEFAULT_PREFIX_FLAG) {
             return "%s" + ResourceNamePrefixState.PREFIX_DELIMITER + baseName;

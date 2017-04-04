@@ -106,6 +106,13 @@ public class CaSigningCertService extends StatefulService {
                 .sendWith(this);
     }
 
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
+    }
+
     private void registerCaCertIfNeeded(String caCert, String caKey, Operation startOp) {
         Operation.createGet(this, ManagementUriParts.AUTH_CREDENTIALS_CA_LINK)
                 .setCompletion((o, e) -> {
