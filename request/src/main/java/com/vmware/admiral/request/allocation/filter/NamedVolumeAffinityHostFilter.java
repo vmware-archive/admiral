@@ -34,6 +34,7 @@ import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
+import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
@@ -205,15 +206,15 @@ public class NamedVolumeAffinityHostFilter
 
     private void findVolumeDescriptionsByLinks(PlacementHostSelectionTaskState state,
             Map<String, HostSelection> hostSelectionMap, HostSelectionFilterCompletion callback,
-            List<String> containerVolumeLinks) {
+            List<String> containerVolumeDescLinks) {
         final QueryTask q = QueryUtil.buildQuery(ContainerVolumeDescription.class, false);
 
         QueryUtil.addCaseInsensitiveListValueClause(q, ContainerVolumeDescription.FIELD_NAME_NAME,
                 volumeNames);
-        if (containerVolumeLinks != null) {
+        if (containerVolumeDescLinks != null) {
             QueryUtil.addListValueClause(q,
                     ContainerVolumeDescription.FIELD_NAME_SELF_LINK,
-                    containerVolumeLinks);
+                    containerVolumeDescLinks);
         } else {
             QueryTask.Query contextClause = new QueryTask.Query()
                     .setTermPropertyName(QuerySpecification.buildCompositeFieldName(
@@ -276,19 +277,19 @@ public class NamedVolumeAffinityHostFilter
                                     callback.complete(null, ex2);
                                     return;
                                 }
-                                List<String> containerVolumeLinks = new ArrayList<>();
+                                List<String> containerVolumeDescLinks = new ArrayList<>();
                                 CompositeDescription descBody = o2.getBody(CompositeDescription.class);
                                 for (String descriptionLink : descBody.descriptionLinks) {
                                     if (descriptionLink.startsWith(ContainerVolumeDescriptionService.FACTORY_LINK)) {
-                                        containerVolumeLinks.add(descriptionLink);
+                                        containerVolumeDescLinks.add(descriptionLink);
                                     }
                                 }
-                                if (containerVolumeLinks.isEmpty()) {
+                                if (containerVolumeDescLinks.isEmpty()) {
                                     callback.complete(hostSelectionMap, null);
                                     return;
                                 }
                                 findVolumeDescriptionsByLinks(state, hostSelectionMap, callback,
-                                        containerVolumeLinks);
+                                        containerVolumeDescLinks);
                             }));
                 }));
     }
@@ -406,7 +407,11 @@ public class NamedVolumeAffinityHostFilter
         if (localVolumeNames != null) {
             // find container that share the same local volumes with us
             // and have hosts already assigned
-            queryContainersDescs(state, localVolumeNames, hostSelectionMap, callback);
+            if (VolumeUtil.isContainerRequest(state.customProperties)) {
+                queryContainersDescsByLinks(state, localVolumeNames, hostSelectionMap, callback, null);
+            } else {
+                queryContainersDescsByComponent(state, localVolumeNames, hostSelectionMap, callback);
+            }
         } else {
             try {
                 callback.complete(hostSelectionMap, null);
@@ -418,14 +423,26 @@ public class NamedVolumeAffinityHostFilter
         }
     }
 
-    private void queryContainersDescs(PlacementHostSelectionTaskState state,
+    private void queryContainersDescsByLinks(PlacementHostSelectionTaskState state,
             Set<String> volumeNames, Map<String, HostSelection> hostSelectionMap,
-            HostSelectionFilterCompletion callback) {
+            HostSelectionFilterCompletion callback, List<String> containerDescLinks) {
 
         QueryTask descQueryTask = QueryUtil.buildQuery(ContainerDescription.class, false);
 
         String volumeItemField = QueryTask.QuerySpecification.buildCollectionItemName(
                 ContainerDescription.FIELD_NAME_VOLUMES);
+        if (containerDescLinks != null) {
+            QueryUtil.addListValueClause(descQueryTask,
+                    ContainerDescription.FIELD_NAME_SELF_LINK,
+                    containerDescLinks);
+        } else {
+            QueryTask.Query contextClause = new QueryTask.Query()
+                    .setTermPropertyName(QuerySpecification.buildCompositeFieldName(
+                            ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
+                            RequestUtils.FIELD_NAME_CONTEXT_ID_KEY))
+                    .setTermMatchValue(state.contextId);
+            descQueryTask.querySpec.query.addBooleanClause(contextClause);
+        }
 
         QueryUtil.addListValueClause(descQueryTask, volumeItemField,
                 volumeNames.stream().map(v -> v + "*").collect(Collectors.toSet()),
@@ -458,6 +475,49 @@ public class NamedVolumeAffinityHostFilter
                                         callback);
                             }
                         });
+
+    }
+
+    private void queryContainersDescsByComponent(PlacementHostSelectionTaskState state,
+            Set<String> volumeNames, Map<String, HostSelection> hostSelectionMap,
+            HostSelectionFilterCompletion callback) {
+        String compositeComponentLink = UriUtils
+                .buildUriPath(CompositeComponentFactoryService.SELF_LINK, state.contextId);
+        host.sendRequest(Operation.createGet(UriUtils.buildUri(host, compositeComponentLink))
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.log(Level.WARNING,
+                                "Exception while getting CompositeComponent. Error: [%s]",
+                                ex.getMessage());
+                        callback.complete(null, ex);
+                        return;
+                    }
+                    CompositeComponent body = o.getBody(CompositeComponent.class);
+                    host.sendRequest(Operation.createGet(UriUtils.buildUri(host, body.compositeDescriptionLink))
+                            .setReferer(host.getUri())
+                            .setCompletion((o2, ex2) -> {
+                                if (ex2 != null) {
+                                    host.log(Level.WARNING,
+                                            "Exception while getting CompositeDescription. Error: [%s]",
+                                            ex2.getMessage());
+                                    callback.complete(null, ex2);
+                                    return;
+                                }
+                                List<String> containerDescLinks = new ArrayList<>();
+                                CompositeDescription descBody = o2.getBody(CompositeDescription.class);
+                                for (String descriptionLink : descBody.descriptionLinks) {
+                                    if (descriptionLink.startsWith(ContainerDescriptionService.FACTORY_LINK)) {
+                                        containerDescLinks.add(descriptionLink);
+                                    }
+                                }
+                                if (containerDescLinks.isEmpty()) {
+                                    callback.complete(hostSelectionMap, null);
+                                    return;
+                                }
+                                queryContainersDescsByLinks(state, volumeNames, hostSelectionMap, callback, containerDescLinks);
+                            }));
+                }));
 
     }
 

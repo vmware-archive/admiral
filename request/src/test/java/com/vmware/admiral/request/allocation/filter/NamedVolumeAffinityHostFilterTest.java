@@ -159,12 +159,12 @@ public class NamedVolumeAffinityHostFilterTest extends BaseAffinityHostFilterTes
     @Test
     public void testFilterHostsWhenSingleLocalVolumeShared() throws Throwable {
         ContainerVolumeDescription sharedLocalVolume = createVolumeDescription("shared", "local");
-        CompositeDescription compositeDesc = createCompositeDesc(false, false, sharedLocalVolume);
-        ContainerVolumeState volume = createVolumeState(sharedLocalVolume);
-        createCompositeComponent(compositeDesc, volume);
-
         ContainerDescription desc1 = createContainerDescription(new String[] { "shared:/tmp" });
         ContainerDescription desc2 = createContainerDescription(new String[] { "shared:/tmp" });
+        CompositeDescription compositeDesc = createCompositeDesc(false, false, sharedLocalVolume, desc1, desc2);
+
+        ContainerVolumeState volume = createVolumeState(sharedLocalVolume);
+        createCompositeComponent(compositeDesc, volume);
 
         createDockerHostWithVolumeDrivers("local");
         createDockerHostWithVolumeDrivers("local");
@@ -205,20 +205,21 @@ public class NamedVolumeAffinityHostFilterTest extends BaseAffinityHostFilterTes
 
         ContainerVolumeDescription local1 = createVolumeDescription("local1", "local");
         ContainerVolumeDescription local2 = createVolumeDescription("local2", "local");
+        ContainerDescription c1 = createContainerDescription(new String[] { "local1:/tmp" });
+        ContainerDescription c2 = createContainerDescription(new String[] { "local2:/tmp" });
         CompositeDescription compositeDesc = createCompositeDesc(false, false, local1,
-                local2);
+                local2, c1, c2);
+
         ContainerVolumeState volume1 = createVolumeState(local1);
         ContainerVolumeState volume2 = createVolumeState(local2);
+        createContainer(c1, h1Link);
+        createContainer(c2, h2Link);
         createCompositeComponent(compositeDesc, volume1, volume2);
 
-        ContainerDescription c1 = createContainerDescription(new String[] { "local1:/tmp" });
-        createContainer(c1, h1Link);
-        ContainerDescription c2 = createContainerDescription(new String[] { "local2:/tmp" });
-        createContainer(c2, h2Link);
-        ContainerDescription c3 = createContainerDescription(new String[] {
+        ContainerDescription cd3 = createContainerDescription(new String[] {
                 "local1:/etc", "local2:/tmp" });
 
-        filter = new NamedVolumeAffinityHostFilter(host, c3);
+        filter = new NamedVolumeAffinityHostFilter(host, cd3);
         Throwable e = filter(initialHostLinks);
         if (e == null) {
             fail("Expected exception");
@@ -235,13 +236,13 @@ public class NamedVolumeAffinityHostFilterTest extends BaseAffinityHostFilterTes
     @Test
     public void testFailWhenLocalVolumesShared2() throws Throwable {
         ContainerVolumeDescription local1 = createVolumeDescription("vol1", "local");
-        CompositeDescription compositeDesc = createCompositeDesc(false, false, local1);
+        ContainerDescription c1 = createContainerDescription(new String[] { "vol1:/tmp" });
+        CompositeDescription compositeDesc = createCompositeDesc(false, false, local1, c1);
         ContainerVolumeState volume = createVolumeState(local1);
         createCompositeComponent(compositeDesc, volume);
 
         String h1Link = createDockerHostWithVolumeDrivers("local");
 
-        ContainerDescription c1 = createContainerDescription(new String[] { "vol1:/tmp" });
         // place c1 on host h1 and remove h1 from the list of available hosts for selection
         createContainer(c1, h1Link);
         initialHostLinks.remove(h1Link);
