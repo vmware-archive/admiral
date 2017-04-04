@@ -1068,7 +1068,6 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                     assertNull(e);
                     responses[0] = o.getBody(ClosureDescription.class);
                     assertNotNull(responses[0]);
-                    this.host.completeIteration();
                 }));
         this.host.send(post);
         this.host.testWait();
@@ -1173,7 +1172,6 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
                     assertNull(e);
                     responses[0] = o.getBody(ClosureDescription.class);
                     assertNotNull(responses[0]);
-                    this.host.completeIteration();
                 }));
         this.host.send(post);
         this.host.testWait();
