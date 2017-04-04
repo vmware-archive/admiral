@@ -302,6 +302,29 @@ public class QueryUtil {
         return groupClause;
     }
 
+    public static Query addTenantAndUserClause(List<String> tenantLinks) {
+        Query groupClause = null;
+
+        String propertyName = QueryTask.QuerySpecification
+                .buildCollectionItemName(MultiTenantDocument.FIELD_NAME_TENANT_LINKS);
+
+        // if a tenant is not specified, search global only
+        if (tenantLinks == null || tenantLinks.isEmpty()) {
+            groupClause = new Query()
+                    .setTermPropertyName(propertyName);
+            groupClause.setTermMatchType(MatchType.WILDCARD)
+                    .setTermMatchValue(UriUtils.URI_WILDCARD_CHAR);
+            groupClause.occurance = Occurance.MUST_NOT_OCCUR;
+
+        } else {
+            groupClause = addListValueClause(propertyName, tenantLinks.stream()
+                    .filter(tenantLink -> !tenantLink.contains(MultiTenantDocument.GROUP_IDENTIFIER))
+                    .collect(Collectors.toList()), MatchType.TERM);
+        }
+
+        return groupClause;
+    }
+
     public static Query addTenantClause(List<String> tenantLinks) {
         Query groupClause = null;
 
