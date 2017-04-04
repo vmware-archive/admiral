@@ -17,6 +17,7 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.Utils;
@@ -77,6 +78,13 @@ public class ExtensibilitySubscriptionService extends StatefulService {
     @Override
     public void handleDelete(Operation delete) {
         notifyUpdatedExtensibilityDocument(delete);
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
     }
 
     static String constructKey(ExtensibilitySubscription state) {

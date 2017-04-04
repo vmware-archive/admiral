@@ -194,4 +194,11 @@ public class CounterSubTaskService extends StatefulService {
             logSevere("Can't notify parent task. Error: %s", Utils.toString(e));
         }
     }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
+    }
 }

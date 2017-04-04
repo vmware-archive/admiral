@@ -152,4 +152,11 @@ public class MockDockerHostService extends StatefulService {
 
         return body;
     }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
+    }
 }

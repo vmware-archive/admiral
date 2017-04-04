@@ -36,4 +36,11 @@ public class MockTaskService extends StatefulService {
         setState(patch, body);
         patch.complete();
     }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
+    }
 }

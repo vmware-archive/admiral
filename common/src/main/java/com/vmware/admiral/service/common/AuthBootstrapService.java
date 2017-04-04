@@ -133,6 +133,13 @@ public class AuthBootstrapService extends StatefulService {
         put.fail(Operation.STATUS_CODE_BAD_METHOD);
     }
 
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
+    }
+
     private static void initConfig(ServiceHost host, Operation post) {
 
         String localUsers = getLocalUsers(host);

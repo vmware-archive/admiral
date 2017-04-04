@@ -398,6 +398,13 @@ public class HostNetworkListDataCollection extends StatefulService {
                 }));
     }
 
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
+    }
+
     private void createDiscoveredContainerNetworks(List<ContainerNetworkState> networkStates,
             Consumer<Throwable> callback) {
         if (networkStates.isEmpty()) {

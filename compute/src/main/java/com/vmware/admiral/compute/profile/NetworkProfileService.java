@@ -249,6 +249,8 @@ public class NetworkProfileService extends StatefulService {
     @Override
     public ServiceDocument getDocumentTemplate() {
         NetworkProfile np = (NetworkProfile) super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(np);
+
         np.name = "My Network Profile";
         np.tagLinks = new HashSet<>();
         np.subnetLinks = new ArrayList<>();

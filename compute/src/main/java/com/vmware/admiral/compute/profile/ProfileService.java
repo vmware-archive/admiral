@@ -235,6 +235,13 @@ public class ProfileService extends StatefulService {
         patch.complete();
     }
 
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
+    }
+
     public static List<ProfileStateExpanded> getDefaultProfiles() {
         try {
             ObjectMapper mapper = YamlMapper.objectMapper();

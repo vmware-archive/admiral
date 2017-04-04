@@ -15,6 +15,7 @@ import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.compute.container.maintenance.ContainerMaintenance;
 import com.vmware.admiral.compute.kubernetes.maintenance.KubernetesMaintenance;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatefulService;
 
 public abstract class AbstractKubernetesObjectService<T extends BaseKubernetesState>
@@ -99,6 +100,13 @@ public abstract class AbstractKubernetesObjectService<T extends BaseKubernetesSt
             kubernetesMaintenance = KubernetesMaintenance.create(getHost(), getSelfLink());
         }
         kubernetesMaintenance.handlePeriodicMaintenance(post);
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
     }
 
 }

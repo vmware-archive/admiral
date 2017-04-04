@@ -249,6 +249,13 @@ public class RegistryService extends StatefulService {
         put.setBody(currentState).complete();
     }
 
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
+    }
+
     public static void fetchRegistryCertificate(RegistryState registry, Consumer<String> callback) {
         if (DeploymentProfileConfig.getInstance().isTest()) {
             Utils.logWarning("No ssl trust validation is performed in test mode...");

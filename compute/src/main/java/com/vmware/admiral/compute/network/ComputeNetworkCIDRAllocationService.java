@@ -134,6 +134,7 @@ public class ComputeNetworkCIDRAllocationService extends StatefulService {
     public ServiceDocument getDocumentTemplate() {
         ComputeNetworkCIDRAllocationState state =
                 (ComputeNetworkCIDRAllocationState) super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(state);
         state.networkLink = "/someNetworkLink";
         state.allocatedCIDRs = new HashMap<>();
         return state;

@@ -141,4 +141,11 @@ public class MockVicHostService extends StatefulService {
         body.put("SystemStatus", systemStatus);
         return body;
     }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
+    }
 }

@@ -140,6 +140,13 @@ public class ContainerControlLoopService extends StatefulService {
         patch.complete();
     }
 
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
+    }
+
     private void performMaintenance() {
 
         retrieveContainerDescriptions().whenComplete((containerDescriptions, e) -> {

@@ -165,6 +165,13 @@ public class HostContainerListDataCollection extends StatefulService {
         }
     }
 
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
+    }
+
     public static class ContainerVersion implements Comparable<ContainerVersion> {
         public static final String LATEST_VERSION = "latest";
         private final String version;

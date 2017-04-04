@@ -32,4 +32,10 @@ public class KVStoreService extends StatefulService {
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
     }
 
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
+    }
 }

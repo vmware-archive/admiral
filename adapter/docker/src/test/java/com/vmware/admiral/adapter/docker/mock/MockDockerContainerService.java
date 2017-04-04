@@ -177,4 +177,11 @@ public class MockDockerContainerService extends StatefulService {
         }
         post.complete();
     }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
+    }
 }

@@ -27,6 +27,7 @@ import com.vmware.admiral.common.util.FileUtil;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -108,6 +109,13 @@ public class ConfigurationService extends StatefulService {
     private void validate(ConfigurationState state) {
         assertNotEmpty(state.key, "key");
         assertNotEmpty(state.value, "value");
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
     }
 
     public static ConfigurationState[] getConfigurationProperties() {

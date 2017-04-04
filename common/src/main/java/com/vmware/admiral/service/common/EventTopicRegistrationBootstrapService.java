@@ -85,6 +85,13 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
         put.fail(Operation.STATUS_CODE_BAD_METHOD);
     }
 
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
+    }
+
     public static CompletionHandler startTask(ServiceHost host) {
         return (o, e) -> {
             if (e != null) {
