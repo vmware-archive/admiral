@@ -12,6 +12,7 @@
 package com.vmware.admiral.service.common;
 
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -153,17 +154,17 @@ public abstract class AbstractInitialBootService extends StatelessService {
                                             "Retrying with count %s after error creating default %s instance for factory %s. Error: %s",
                                             retryCount, state.documentSelfLink, factoryPath,
                                             Utils.toString(ex));
-                                    try {
-                                        /* The factory should be up an available since we
-                                           registerForServiceAvailability before that.
-                                           However, it often fails with service not found.
-                                           Hence, the retries and the wait here. */
-                                        Thread.sleep(RETRIES_WAIT);
+                                    /*
+                                     * The factory should be up an available since we
+                                     * registerForServiceAvailability before that.
+                                     * However, it often fails with service not found.
+                                     * Hence, the retries and the wait here.
+                                     */
+                                    getHost().schedule(() -> {
+                                        logInfo("Waiting for the default %s instance for factory %s to be created",
+                                                state.documentSelfLink, factoryPath);
                                         createDefaultInstance(state, callback, retryCount - 1);
-                                    } catch (Exception e) {
-                                        logWarning("Sleep interrupted %s", Utils.toString(e));
-                                        callback.accept(ex);
-                                    }
+                                    }, RETRIES_WAIT, TimeUnit.MILLISECONDS);
                                 } else {
                                     logWarning(
                                             "Error creating default %s instance for factory %s. Error: %s",
