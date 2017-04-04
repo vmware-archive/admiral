@@ -72,7 +72,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
 
         setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
         dockerBuildImageLink = getBaseUrl()
-                + createImageBuildRequestUri(IMAGE_NAME + ":latest", dockerHostCompute
+                + createImageBuildRequestUri(IMAGE_NAME + ":1.0", dockerHostCompute
                 .documentSelfLink);
         dockerBuildBaseImageLink = getBaseUrl()
                 + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
