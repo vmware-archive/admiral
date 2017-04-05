@@ -128,6 +128,10 @@ var deleteEntity = function(url) {
   });
 };
 
+var encodeQuotes = function(value) {
+  return value.replace(/\'/g, '%2527');
+};
+
 var day2operation = function(url, entity) {
   return post(url, entity);
 };
@@ -137,11 +141,11 @@ var buildTagsQuery = function(q) {
   var occurrence = pair[1] ? constants.SEARCH_OCCURRENCE.ALL : constants.SEARCH_OCCURRENCE.ANY;
   return buildOdataQuery({
     key: [{
-      val: '*' + pair[0].toLowerCase() + (pair[1] ? '' : '*'),
+      val: '*' + encodeQuotes(pair[0].toLowerCase()) + (pair[1] ? '' : '*'),
       op: 'eq'
     }],
     value: [{
-      val: (pair[0] ? '' : '*') + (pair[1] || pair[0] || '').toLowerCase() + '*',
+      val: (pair[0] ? '' : '*') + encodeQuotes((pair[1] || pair[0] || '').toLowerCase()) + '*',
       op: 'eq'
     }],
     [constants.SEARCH_OCCURRENCE.PARAM]: occurrence
@@ -167,7 +171,7 @@ var buildOdataQuery = function(queryOptions) {
             if (result.length > 0) {
               result += ' ' + operator + ' ';
             }
-            result += key + ' ' + query[i].op + ' \'' + query[i].val + '\'';
+            result += key + ' ' + query[i].op + ' \'' + encodeQuotes(query[i].val) + '\'';
           }
         }
       }
@@ -334,7 +338,7 @@ var getComputeParams = function(queryOptions) {
   if (endpointArray) {
     endpointOps[FILTER_VALUE_ALL_FIELDS] = endpointArray.map((endpoint) => {
       return {
-        val: '*' + endpoint.toLowerCase() + '*',
+        val: '*' + encodeQuotes(endpoint.toLowerCase()) + '*',
         op: 'eq'
       };
     });
@@ -490,7 +494,7 @@ services.loadTags = function(documentSelfLinks) {
 services.searchTags = function(q) {
   var params = {};
   if (q) {
-    params[ODATA_FILTER_PROP_NAME] = buildTagsQuery(q);
+    params[ODATA_FILTER_PROP_NAME] = '(' + buildTagsQuery(q) + ')';
   }
   return list(links.TAGS, true, params);
 };
@@ -1278,7 +1282,7 @@ services.updateStorageProfile = function(profile) {
 services.searchEndpoints = function(query, limit, type) {
   let endpointOps = {
     name: [{
-      val: '*' + query.toLowerCase() + '*',
+      val: '*' + encodeQuotes(query.toLowerCase()) + '*',
       op: 'eq'
     }]
   };
@@ -1940,7 +1944,7 @@ services.searchContainerVolumes = function(query, limit) {
 services.searchEntities = function(entityTypeLink, query, limit) {
   var filter = buildOdataQuery({
     name: [{
-      val: '*' + query.toLowerCase() + '*',
+      val: '*' + encodeQuotes(query.toLowerCase()) + '*',
       op: 'eq'
     }]
   });
@@ -2259,7 +2263,7 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
     if (anyArray) {
       userQueryOps[FILTER_VALUE_ALL_FIELDS] = anyArray.map((any) => {
         return {
-          val: '*' + any.toLowerCase() + '*',
+          val: '*' + encodeQuotes(any.toLowerCase()) + '*',
           op: 'eq'
         };
       });
@@ -2279,7 +2283,7 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
     if (addressArray) {
       userQueryOps.address = addressArray.map((address) => {
         return {
-          val: '*' + address.toLowerCase() + '*',
+          val: '*' + encodeQuotes(address.toLowerCase()) + '*',
           op: 'eq'
         };
       });
@@ -2289,7 +2293,7 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
     if (nameArray) {
       userQueryOps.name = nameArray.map((name) => {
         return {
-          val: '*' + name.toLowerCase() + '*',
+          val: '*' + encodeQuotes(name.toLowerCase()) + '*',
           op: 'eq'
         };
       });
@@ -2299,7 +2303,7 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
     if (typeArray) {
       userQueryOps.type = typeArray.map((type) => {
         return {
-          val: '*' + type + '*',
+          val: '*' + encodeQuotes(type) + '*',
           op: 'eq'
         };
       });

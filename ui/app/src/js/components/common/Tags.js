@@ -19,7 +19,7 @@ const SEPARATOR_ENTITY = constants.TAGS.SEPARATOR_ENTITY;
 const SEPARATOR_ENTITY_REGEX = new RegExp(constants.TAGS.SEPARATOR_ENTITY, 'g');
 
 function encode(value) {
-  return value.replace(SEPARATOR_REGEX, SEPARATOR_ENTITY);
+  return $('<p>').text(value.replace(SEPARATOR_REGEX, SEPARATOR_ENTITY)).html();
 }
 
 function decode(value) {
