@@ -13,6 +13,7 @@ package com.vmware.admiral.compute.endpoint;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import static com.vmware.admiral.compute.PlacementZoneConstants.RESOURCE_TYPE_CUSTOM_PROP_NAME;
 
@@ -28,6 +29,7 @@ import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
+import com.vmware.photon.controller.model.adapterapi.EndpointConfigRequest;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.EndpointService;
@@ -35,10 +37,8 @@ import com.vmware.photon.controller.model.resources.EndpointService.EndpointStat
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.tasks.EndpointAllocationTaskService.EndpointAllocationTaskState;
-import com.vmware.photon.controller.model.tasks.ImageEnumerationTaskService;
 import com.vmware.photon.controller.model.tasks.ScheduledTaskService;
 import com.vmware.photon.controller.model.tasks.ScheduledTaskService.ScheduledTaskState;
-import com.vmware.photon.controller.model.tasks.monitoring.StatsCollectionTaskService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.UriUtils;
@@ -190,20 +190,17 @@ public class EndpointAdapterServiceTest extends ComputeBaseTest {
     @Test
     public void testCreateEndpointWithEnumerationEnabled() throws Throwable {
 
-        EndpointState endpoint = createEndpoint("testCreateEndpointWithEnumerationEnabled");
-
-        String endpointAdapterUri = String.format("%s?operation=%s",
-                EndpointAdapterService.SELF_LINK,
-                ManagementUriParts.REQUEST_PARAM_ENUMERATE_OPERATION_NAME);
-
         ServiceDocumentQueryResult queryResult = getDocument(
                 ServiceDocumentQueryResult.class,
                 ResourcePoolService.FACTORY_LINK);
 
-        // Assign RP to enumeration.
-        endpointAdapterUri += String.format("&%s=%s",
+        final String endpointAdapterUri = String.format("%s?operation=%s&%s=%s",
+                EndpointAdapterService.SELF_LINK,
+                ManagementUriParts.REQUEST_PARAM_ENUMERATE_OPERATION_NAME,
                 ManagementUriParts.REQUEST_PARAM_TARGET_RESOURCE_POOL_LINK,
                 queryResult.documents.keySet().stream().findFirst().get());
+
+        EndpointState endpoint = createEndpoint("testCreateEndpointWithEnumerationEnabled");
 
         endpoint = doPost(endpoint, endpointAdapterUri);
 
@@ -234,37 +231,140 @@ public class EndpointAdapterServiceTest extends ComputeBaseTest {
                     ScheduledTaskState.class,
                     scheduledTaskLink);
             assertNotNull("stats-collection scheduled task is NOT created", scheduledTask);
-
-            // Check stats-collection task was created
-            final String statsCollectionTaskLink = UriUtils.buildUriPath(
-                    StatsCollectionTaskService.FACTORY_LINK,
-                    EndpointAdapterService.statsCollectionId(endpoint.documentSelfLink));
-
-            // Wait for stats-collection task cause it is scheduled with a delay
-            // NOTE: the task is created with SELF_DELETE_ON_COMPLETION so wait for its availability
-            host.waitForServiceAvailable(statsCollectionTaskLink);
         }
 
         {
-            // Check image-enumeration scheduled task was created
+            // Check PRIVATE image-enumeration scheduled task was created
+
+            String privateImagesEnumerationId = EndpointAdapterService.privateImagesEnumerationId(
+                    endpoint.documentSelfLink);
+
             String scheduledTaskLink = UriUtils.buildUriPath(
                     ScheduledTaskService.FACTORY_LINK,
-                    EndpointAdapterService.imageEnumerationId(endpoint.documentSelfLink));
+                    privateImagesEnumerationId);
 
             ScheduledTaskState scheduledTask = getDocument(
                     ScheduledTaskState.class,
                     scheduledTaskLink);
-            assertNotNull("image-enumeration scheduled task is NOT created", scheduledTask);
+            assertNotNull("Private image-enumeration scheduled task is NOT created", scheduledTask);
 
-            // Check image-enumeration task was created
-            final String imageEnumTaskLink = UriUtils.buildUriPath(
-                    ImageEnumerationTaskService.FACTORY_LINK,
-                    EndpointAdapterService.imageEnumerationId(endpoint.documentSelfLink));
+            /*
+            // Check PRIVATE image-enumeration task was created
+
+            Query imageEnumTasksQuery = Query.Builder.create()
+                    .addKindFieldClause(ImageEnumerationTaskState.class)
+                    .addCompositeFieldClause(
+                            ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
+                            ComputeProperties.CREATE_CONTEXT_PROP_NAME,
+                            scheduledTask.documentSelfLink)
+                    .build();
+
+            List<String> imageEnumTaskLinks = QueryTop.waitToComplete(
+                    new QueryTop<>(this.host, imageEnumTasksQuery, ImageEnumerationTaskState.class,
+                            scheduledTask.tenantLinks)
+                                    .setMaxResultsLimit(1)
+                                    .collectLinks(Collectors.toList()));
+
+            final String imageEnumTaskLink = imageEnumTaskLinks.get(0);
 
             // Wait for image-enumeration task cause it is scheduled with a delay
             // NOTE: the task is created with SELF_DELETE_ON_COMPLETION so wait for its availability
             host.waitForServiceAvailable(imageEnumTaskLink);
+            */
         }
+
+        {
+            // Check PUBLIC image-enumeration scheduled task was created
+
+            String publicImagesEnumerationId = EndpointAdapterService.publicImagesEnumerationId(
+                    endpoint.endpointType,
+                    endpoint.endpointProperties.get(EndpointConfigRequest.REGION_KEY));
+
+            String scheduledTaskLink = UriUtils.buildUriPath(
+                    ScheduledTaskService.FACTORY_LINK,
+                    publicImagesEnumerationId);
+
+            ScheduledTaskState scheduledTask = getDocument(
+                    ScheduledTaskState.class,
+                    scheduledTaskLink);
+            assertNotNull("Public image-enumeration scheduled task is NOT created", scheduledTask);
+
+            /*
+            // Check PUBLIC image-enumeration task was created
+
+            Query imageEnumTasksQuery = Query.Builder.create()
+                    .addKindFieldClause(ImageEnumerationTaskState.class)
+                    .addCompositeFieldClause(
+                            ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
+                            ComputeProperties.CREATE_CONTEXT_PROP_NAME,
+                            scheduledTask.documentSelfLink)
+                    .build();
+
+            List<String> imageEnumTaskLinks = QueryTop.waitToComplete(
+                    new QueryTop<>(this.host, imageEnumTasksQuery, ImageEnumerationTaskState.class,
+                            scheduledTask.tenantLinks)
+                                    .setMaxResultsLimit(1)
+                                    .collectLinks(Collectors.toList()));
+
+            final String imageEnumTaskLink = imageEnumTaskLinks.get(0);
+
+            // Wait for image-enumeration task cause it is scheduled with a delay
+            // NOTE: the task is created with SELF_DELETE_ON_COMPLETION so wait for its availability
+            host.waitForServiceAvailable(imageEnumTaskLink);
+            */
+        }
+    }
+
+    @Test
+    public void testCreateEndpointsOfSameTypeWithEnumerationEnabled() throws Throwable {
+
+        final String endpointAdapterUri = String.format("%s?operation=%s",
+                EndpointAdapterService.SELF_LINK,
+                ManagementUriParts.REQUEST_PARAM_ENUMERATE_OPERATION_NAME);
+
+        // Create two EPs of the same type {{
+        EndpointState endpoint1 = createEndpoint(
+                "testCreateEndpointsOfSameTypeWithEnumerationEnabled_1");
+
+        endpoint1 = doPost(endpoint1, endpointAdapterUri);
+
+        EndpointState endpoint2 = createEndpoint(
+                "testCreateEndpointsOfSameTypeWithEnumerationEnabled_2");
+
+        endpoint2 = doPost(endpoint2, endpointAdapterUri);
+        // }}
+
+        // Calculate links of expected ScheduledTasks {{
+        String ep1PrivateImagesScheduledTaskLink = UriUtils.buildUriPath(
+                ScheduledTaskService.FACTORY_LINK,
+                EndpointAdapterService.privateImagesEnumerationId(endpoint1.documentSelfLink));
+
+        String ep2PrivateImagesScheduledTaskLink = UriUtils.buildUriPath(
+                ScheduledTaskService.FACTORY_LINK,
+                EndpointAdapterService.privateImagesEnumerationId(endpoint2.documentSelfLink));
+
+        String epPublicImagesScheduledTaskLink = UriUtils.buildUriPath(
+                ScheduledTaskService.FACTORY_LINK,
+                EndpointAdapterService.publicImagesEnumerationId(endpoint1.endpointType,
+                        endpoint1.endpointProperties.get(EndpointConfigRequest.REGION_KEY)));
+        // }}
+
+        // Assert expected ScheduledTasks are created {{
+        ServiceDocumentQueryResult queryResult = getDocument(
+                ServiceDocumentQueryResult.class,
+                ScheduledTaskService.FACTORY_LINK);
+
+        // 2 x (1 res enum, 1 stats collection, 1 private images enum) + 1 public images enum
+        assertEquals(7, queryResult.documentLinks.size());
+
+        assertTrue("ScheduledTask is not created for Private images-enum for EP1",
+                queryResult.documentLinks.contains(ep1PrivateImagesScheduledTaskLink));
+        assertTrue("ScheduledTask is not created for Private images-enum for EP2",
+                queryResult.documentLinks.contains(ep2PrivateImagesScheduledTaskLink));
+
+        assertTrue("ScheduledTask is not created for Public images-enum for EP1 and EP2",
+                queryResult.documentLinks.contains(epPublicImagesScheduledTaskLink));
+        // }}
     }
 
     @Test
