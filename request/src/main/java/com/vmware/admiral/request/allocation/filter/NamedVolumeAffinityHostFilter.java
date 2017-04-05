@@ -133,12 +133,8 @@ public class NamedVolumeAffinityHostFilter
                         failureCallback.accept(r.getException());
                     } else if (r.hasResult()) {
                         ContainerVolumeState volume = r.getResult();
-                        if (volumeNames.contains(volume.name) && volume.external != null
-                                && volume.external) {
-                            externalVolumesByName
-                                    .computeIfAbsent(volume.name, v -> new ArrayList<>())
-                                    .add(volume);
-                        }
+                        externalVolumesByName.computeIfAbsent(volume.name, v -> new ArrayList<>())
+                                .add(volume);
                     } else {
                         if (externalVolumesByName.isEmpty()) {
                             // assume the container is not associated with any external volume
