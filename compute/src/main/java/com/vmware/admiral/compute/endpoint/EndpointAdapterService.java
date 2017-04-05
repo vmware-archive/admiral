@@ -24,6 +24,7 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.PlacementZoneConstants;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.photon.controller.model.ComputeProperties;
+import com.vmware.photon.controller.model.adapterapi.EndpointConfigRequest;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.EndpointService;
@@ -44,6 +45,7 @@ import com.vmware.photon.controller.model.tasks.monitoring.StatsCollectionTaskSe
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceErrorResponse;
+import com.vmware.xenon.common.ServiceHost.ServiceAlreadyStartedException;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
@@ -148,7 +150,8 @@ public class EndpointAdapterService extends StatelessService {
         // If 'enumerate' flag is set triggers the following end-point specific enumerations:
         // - Resource Enumeration (as part of EndpointAllocationTaskService request)
         // - Stats Collection (as part of this request)
-        // - Image Enumeration (as part of this request)
+        // - Public Image Enumeration (as part of this request)
+        // - Private Image Enumeration (as part of this request)
         final boolean enumerate = query != null
                 && query.contains(ManagementUriParts.REQUEST_PARAM_ENUMERATE_OPERATION_NAME);
 
@@ -198,11 +201,11 @@ public class EndpointAdapterService extends StatelessService {
                                     return;
                                 }
 
-                                // Once patch ResourcePoolState is done continue with EndpointState
-                                // processing
+                                // Continue with EndpointState processing
                                 if (enumerate) {
                                     triggerStatsCollection(body);
-                                    triggerImageEnumeration(body);
+                                    triggerPublicImageEnumeration(body);
+                                    triggerPrivateImageEnumeration(body);
                                 }
 
                                 post.setBody(body.endpointState).complete();
@@ -316,7 +319,7 @@ public class EndpointAdapterService extends StatelessService {
                 .sendWith(this);
 
         deleteStatsCollectionScheduledTask(endpointLink);
-        deleteImageEnumerationScheduledTask(endpointLink);
+        deletePrivateImageEnumerationScheduledTask(endpointLink);
     }
 
     private EndpointState validateState(Operation op) {
@@ -375,7 +378,6 @@ public class EndpointAdapterService extends StatelessService {
 
         EndpointState endpoint = currentState.endpointState;
 
-        String statsCollectionId = statsCollectionId(endpoint.documentSelfLink);
 
         long intervalMicros = currentState.enumerationRequest.refreshIntervalMicros != null
                 ? currentState.enumerationRequest.refreshIntervalMicros
@@ -383,7 +385,6 @@ public class EndpointAdapterService extends StatelessService {
 
         // The stats-collection task to be scheduled
         final StatsCollectionTaskState statsCollectionTask = new StatsCollectionTaskState();
-        statsCollectionTask.documentSelfLink = statsCollectionId;
         statsCollectionTask.resourcePoolLink = endpoint.resourcePoolLink;
         statsCollectionTask.options = EnumSet.of(TaskOption.SELF_DELETE_ON_COMPLETION);
         if (DeploymentProfileConfig.getInstance().isTest()) {
@@ -400,12 +401,14 @@ public class EndpointAdapterService extends StatelessService {
         // The scheduled task that should trigger the stats-collection task
         final ScheduledTaskState scheduledTaskState = new ScheduledTaskState();
 
+        // Use stable id
+        scheduledTaskState.documentSelfLink = statsCollectionId(endpoint.documentSelfLink);
+
         scheduledTaskState.factoryLink = StatsCollectionTaskService.FACTORY_LINK;
         scheduledTaskState.initialStateJson = Utils.toJson(statsCollectionTask);
         scheduledTaskState.intervalMicros = intervalMicros;
         scheduledTaskState.delayMicros = currentState.enumerationRequest.delayMicros;
 
-        scheduledTaskState.documentSelfLink = statsCollectionId;
         scheduledTaskState.tenantLinks = endpoint.tenantLinks;
         scheduledTaskState.customProperties = Collections.singletonMap(
                 ComputeProperties.ENDPOINT_LINK_PROP_NAME,
@@ -418,7 +421,7 @@ public class EndpointAdapterService extends StatelessService {
                     if (e != null) {
                         logWarning(
                                 "Error triggering stats collection task for endpoint [%s], reason: %s",
-                                endpoint.documentSelfLink, e.getMessage());
+                                endpoint.documentSelfLink, Utils.toString(e));
                     } else {
                         logInfo("Stats collection has been scheduled for endpoint [%s]",
                                 endpoint.documentSelfLink);
@@ -440,7 +443,7 @@ public class EndpointAdapterService extends StatelessService {
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         logInfo("Unable to delete scheduled stats collection task for endpoint [%s], reason: %s",
-                                endpointLink, e.getMessage());
+                                endpointLink, Utils.toString(e));
                     }
                 })
                 .sendWith(this);
@@ -458,80 +461,177 @@ public class EndpointAdapterService extends StatelessService {
         return UriUtils.getLastPathSegment(endpointLink).concat(statsCollectionSuffix);
     }
 
-    private void triggerImageEnumeration(EndpointAllocationTaskState endpointAllocationTask) {
+    private void triggerPublicImageEnumeration(EndpointAllocationTaskState endpointAllocationTask) {
 
         final EndpointState endpoint = endpointAllocationTask.endpointState;
 
-        String imageEnumerationId = imageEnumerationId(endpoint.documentSelfLink);
+        if (endpoint.endpointProperties == null) {
+            // Assume Public image enum is not supported by the end-point
+            return;
+        }
+
+        final String supportPublicImages = endpoint.endpointProperties.getOrDefault(
+                EndpointConfigRequest.SUPPORT_PUBLIC_IMAGES,
+                Boolean.FALSE.toString());
+
+        if (!Boolean.valueOf(supportPublicImages)) {
+            // Public image enum is not supported by the end-point
+            return;
+        }
+
+        final String regionId = endpoint.endpointProperties.get(EndpointConfigRequest.REGION_KEY);
+
+        // Use endpointType-regionId pair as stable id for scheduled task!
+        final String scheduledTaskId = publicImagesEnumerationId(
+                endpoint.endpointType, regionId);
 
         // The image-enum task to be scheduled
         final ImageEnumerationTaskState imageEnumTask = new ImageEnumerationTaskState();
-        imageEnumTask.documentSelfLink = imageEnumerationId;
+        // Setting 'endpointType' and optionally 'regionId' implies PUBLIC images enumeration {{
+        imageEnumTask.endpointType = endpoint.endpointType;
+        imageEnumTask.regionId = regionId;
+        // }}
+        // All images are considered global so NO tenants are set
+        imageEnumTask.tenantLinks = null;
+        imageEnumTask.options = EnumSet.of(TaskOption.SELF_DELETE_ON_COMPLETION);
+        if (DeploymentProfileConfig.getInstance().isTest()) {
+            imageEnumTask.options.add(TaskOption.IS_MOCK);
+        }
+        /*
+        // Store a link to the scheduled task that created this task
+        imageEnumTask.customProperties = Collections.singletonMap(
+                ComputeProperties.CREATE_CONTEXT_PROP_NAME,
+                UriUtils.buildUriPath(ScheduledTaskService.FACTORY_LINK, scheduledTaskId));
+         */
+
+        // The scheduled task that should trigger the image-enum task
+        final ScheduledTaskState scheduledTask = new ScheduledTaskState();
+        scheduledTask.factoryLink = ImageEnumerationTaskService.FACTORY_LINK;
+        scheduledTask.initialStateJson = Utils.toJson(imageEnumTask);
+        scheduledTask.intervalMicros = DEFAULT_SCHEDULED_IMAGE_ENUM_INTERVAL;
+        scheduledTask.delayMicros = DEFAULT_SCHEDULED_TASK_DELAY;
+
+        // Use stable id
+        scheduledTask.documentSelfLink = scheduledTaskId;
+        // All images are considered global so NO tenants are set
+        scheduledTask.tenantLinks = null;
+
+        Operation.createPost(this, ScheduledTaskService.FACTORY_LINK)
+                .setBody(scheduledTask)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
+                .setCompletion((o, e) -> {
+                    String msg = "Scheduling Public image-enumeration for '%s' endpoint type";
+                    if (e != null) {
+                        if (e instanceof ServiceAlreadyStartedException) {
+                            logInfo(() -> String.format(msg + ": SUCCESS - already started",
+                                    scheduledTaskId));
+                        } else {
+                            logWarning(() -> String.format(msg + ": ERROR - %s",
+                                    scheduledTaskId, Utils.toString(e)));
+                        }
+                    } else {
+                        logInfo(() -> String.format(msg + ": SUCCESS", scheduledTaskId));
+                    }
+                })
+                .sendWith(this);
+    }
+
+    private void triggerPrivateImageEnumeration(
+            EndpointAllocationTaskState endpointAllocationTask) {
+
+        final EndpointState endpoint = endpointAllocationTask.endpointState;
+
+        // Use end-point id as stable id for scheduled task!
+        final String scheduledTaskId = privateImagesEnumerationId(endpoint.documentSelfLink);
+
+        // The image-enum task to be scheduled
+        final ImageEnumerationTaskState imageEnumTask = new ImageEnumerationTaskState();
+        // Setting 'endpointLink' implies PRIVATE images enumeration
         imageEnumTask.endpointLink = endpoint.documentSelfLink;
         imageEnumTask.tenantLinks = endpoint.tenantLinks;
         imageEnumTask.options = EnumSet.of(TaskOption.SELF_DELETE_ON_COMPLETION);
         if (DeploymentProfileConfig.getInstance().isTest()) {
             imageEnumTask.options.add(TaskOption.IS_MOCK);
         }
+        /*
+        // Store a link to the scheduled task that created this task
+        imageEnumTask.customProperties = Collections.singletonMap(
+                ComputeProperties.CREATE_CONTEXT_PROP_NAME,
+                UriUtils.buildUriPath(ScheduledTaskService.FACTORY_LINK, scheduledTaskId));
+         */
 
         // The scheduled task that should trigger the image-enum task
         final ScheduledTaskState scheduledTask = new ScheduledTaskState();
-
         scheduledTask.factoryLink = ImageEnumerationTaskService.FACTORY_LINK;
         scheduledTask.initialStateJson = Utils.toJson(imageEnumTask);
         scheduledTask.intervalMicros = DEFAULT_SCHEDULED_IMAGE_ENUM_INTERVAL;
         scheduledTask.delayMicros = DEFAULT_SCHEDULED_TASK_DELAY;
 
-        scheduledTask.documentSelfLink = imageEnumerationId;
+        // Use stable id
+        scheduledTask.documentSelfLink = scheduledTaskId;
         scheduledTask.tenantLinks = endpoint.tenantLinks;
-        scheduledTask.customProperties = Collections.singletonMap(
-                ComputeProperties.ENDPOINT_LINK_PROP_NAME,
-                endpoint.documentSelfLink);
 
         Operation.createPost(this, ScheduledTaskService.FACTORY_LINK)
                 .setBody(scheduledTask)
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                 .setCompletion((o, e) -> {
+                    String msg = "Scheduling Private image-enumeration for '%s' endpoint";
                     if (e != null) {
-                        logWarning(
-                                "ERROR triggering image-enumeration task for endpoint [%s], reason: %s",
-                                endpoint.documentSelfLink, e.getMessage());
+                        logWarning(() -> String.format(msg + ": ERROR - %s",
+                                endpoint.name, Utils.toString(e)));
                     } else {
-                        logInfo("Image-enumeration has been scheduled for endpoint [%s]",
-                                endpoint.documentSelfLink);
+                        logInfo(() -> String.format(msg + ": SUCCESS", endpoint.name));
                     }
                 })
                 .sendWith(this);
     }
 
     /**
-     * Delete scheduled image-enumeration task.
+     * Delete scheduled private image-enumeration task.
      */
-    private void deleteImageEnumerationScheduledTask(String endpointLink) {
+    private void deletePrivateImageEnumerationScheduledTask(String endpointLink) {
         String uri = UriUtils.buildUriPath(
                 ScheduledTaskService.FACTORY_LINK,
-                imageEnumerationId(endpointLink));
+                privateImagesEnumerationId(endpointLink));
 
         Operation.createDelete(this, uri)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logInfo("Unable to delete scheduled image-enumeration task for endpoint [%s], reason: %s",
-                                endpointLink, e.getMessage());
+                        logWarning(
+                                "Unable to delete scheduled private image-enumeration task for endpoint [%s], reason: %s",
+                                endpointLink, Utils.toString(e));
                     }
                 })
                 .sendWith(this);
     }
 
     /**
-     * Create end-point specific image-enumeration id, by analogy with {#code
+     * Create end-point specific PRIVATE images enumeration id, by analogy with {#code
      * EndpointAllocationTaskService}.
      */
-    static String imageEnumerationId(String endpointLink) {
+    static String privateImagesEnumerationId(String endpointLink) {
 
         final String imageEnumerationSuffix = "-image-enumeration";
 
         // Append suffix to avoid duplication with enumeration scheduler.
         return UriUtils.getLastPathSegment(endpointLink).concat(imageEnumerationSuffix);
+    }
+
+    /**
+     * Create end-point type specific PUBLIC images enumeration id, by analogy with {#code
+     * EndpointAllocationTaskService}.
+     */
+    static String publicImagesEnumerationId(String endpointType, String regionId) {
+
+        // Use endpointType-regionId pair as stable id.
+
+        String stableId = endpointType;
+
+        if (regionId != null) {
+            stableId += "-" + regionId;
+        }
+
+        return stableId;
     }
 
 }
