@@ -32,28 +32,28 @@
                   v-bind:active="sortKey === 'name'"
                   v-bind:sort-order="sortOrders.name"
                   v-on:click="sortBy('name')"
-                  style="width: 24%">{{i18n('app.placementZone.list.nameColumn')}}</th>
+                  style="width: 30%">{{i18n('app.placementZone.list.nameColumn')}}</th>
 
               <th is="thsort"
                   v-bind:active="sortKey === 'cpuPercentage'"
                   v-bind:sort-order="sortOrders.cpuPercentage"
                   v-on:click="sortBy('cpuPercentage')"
-                  style="width: 24%">{{i18n('app.placementZone.list.cpuColumn')}}</th>
+                  style="width: 20%">{{i18n('app.placementZone.list.cpuColumn')}}</th>
 
               <th is="thsort"
                   v-bind:active="sortKey === 'memoryPercentage'"
                   v-bind:sort-order="sortOrders.memoryPercentage"
                   v-on:click="sortBy('memoryPercentage')"
-                  style="width: 24%">{{i18n('app.placementZone.list.memoryColumn')}}</th>
+                  style="width: 20%">{{i18n('app.placementZone.list.memoryColumn')}}</th>
 
               <th is="thsort"
                   v-bind:active="sortKey === 'hostsCount'"
                   v-bind:sort-order="sortOrders.hostsCount"
                   v-on:click="sortBy('hostsCount')"
-                  style="width: 14%">{{i18n('app.placementZone.list.hostsColumn')}}</th>
+                  style="width: 20%">{{i18n('app.placementZone.list.hostsColumn')}}</th>
 
               <!-- Actions column -->
-              <th style="width: 14%"></th>
+              <th style="width: 10%"></th>
             </tr>
           </thead>
           <tbody>
@@ -76,12 +76,12 @@
                     <table class="table">
                       <thead>
                         <tr>
-                          <th style="width: 24%"></th>
-                          <th style="width: 24%"></th>
-                          <th style="width: 24%"></th>
-                          <th style="width: 14%"></th>
+                          <th style="width: 30%"></th>
+                          <th style="width: 20%"></th>
+                          <th style="width: 20%"></th>
+                          <th style="width: 20%"></th>
                           <!-- Actions column -->
-                          <th style="width: 14%"></th>
+                          <th style="width: 10%"></th>
                         </tr>
                       </thead>
                       <tbody>

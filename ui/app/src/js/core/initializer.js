@@ -75,31 +75,29 @@ initializer.init = function(callback) {
     });
   };
 
-  const DEFAULT_ADAPTERS = [{
-    id: 'aws',
-    name: 'AWS',
-    iconSrc: 'image-assets/endpoints/aws.png',
-    endpointEditor: 'aws-endpoint-editor',
-    computeProfileEditor: 'aws-compute-profile-editor',
-    networkProfileEditor: 'aws-network-profile-editor',
-    storageProfileEditor: 'aws-storage-profile-editor'
-  }, {
-    id: 'azure',
-    name: 'Azure',
-    iconSrc: 'image-assets/endpoints/azure.png',
-    endpointEditor: 'azure-endpoint-editor',
-    computeProfileEditor: 'azure-compute-profile-editor',
-    networkProfileEditor: 'azure-network-profile-editor',
-    storageProfileEditor: 'azure-storage-profile-editor'
-  }, {
-    id: 'vsphere',
-    name: 'vSphere',
-    iconSrc: 'image-assets/endpoints/vsphere.png',
-    endpointEditor: 'vsphere-endpoint-editor',
-    computeProfileEditor: 'vsphere-compute-profile-editor',
-    networkProfileEditor: 'vsphere-network-profile-editor',
-    storageProfileEditor: 'vsphere-storage-profile-editor'
-  }];
+  const DEFAULT_ADAPTERS = {
+    'aws': {
+      icon: 'image-assets/endpoints/aws.png',
+      endpointEditor: 'aws-endpoint-editor',
+      computeProfileEditor: 'aws-compute-profile-editor',
+      networkProfileEditor: 'aws-network-profile-editor',
+      storageProfileEditor: 'aws-storage-profile-editor'
+    },
+    'azure': {
+      icon: 'image-assets/endpoints/azure.png',
+      endpointEditor: 'azure-endpoint-editor',
+      computeProfileEditor: 'azure-compute-profile-editor',
+      networkProfileEditor: 'azure-network-profile-editor',
+      storageProfileEditor: 'azure-storage-profile-editor'
+    },
+    'vsphere': {
+      icon: 'image-assets/endpoints/vsphere.png',
+      endpointEditor: 'vsphere-endpoint-editor',
+      computeProfileEditor: 'vsphere-compute-profile-editor',
+      networkProfileEditor: 'vsphere-network-profile-editor',
+      storageProfileEditor: 'vsphere-storage-profile-editor'
+    }
+  };
 
   var ft = require('core/ft').default;
   var services = require('core/services').default;
@@ -125,25 +123,24 @@ initializer.init = function(callback) {
 
   }).then(([adapters]) => {
 
-    utils.initializeAdapters(DEFAULT_ADAPTERS.concat(Object.values(adapters).map((adapter) => {
+    utils.initializeAdapters(Object.values(adapters).map((adapter) => {
+      const customProperties = adapter.customProperties || DEFAULT_ADAPTERS[adapter.id];
       return {
         id: adapter.id,
         name: adapter.name,
-        iconSrc: adapter.customProperties.icon.replace(/^\//, ''),
-        endpointEditor: adapter.customProperties.endpointEditor,
-        computeProfileEditor: adapter.customProperties.computeProfileEditor,
-        networkProfileEditor: adapter.customProperties.networkProfileEditor,
-        storageProfileEditor: adapter.customProperties.storageProfileEditor
+        iconSrc: customProperties.icon.replace(/^\//, ''),
+        endpointEditor: customProperties.endpointEditor,
+        computeProfileEditor: customProperties.computeProfileEditor,
+        networkProfileEditor: customProperties.networkProfileEditor,
+        storageProfileEditor: customProperties.storageProfileEditor
       };
-    })));
+    }));
 
-    return Promise.all(Object.values(adapters).map((adapter) =>
-      services.loadScript(adapter.customProperties.uiLink.replace(/^\//, ''))));
-  }).then(() => {
+    return Promise.all(Object.values(adapters)
+        .filter((adapter) => adapter.customProperties && adapter.customProperties.uiLink)
+        .map((adapter) => services.loadScript(adapter.customProperties.uiLink.replace(/^\//, ''))));
 
-    callback();
-  }).catch((err) => {
-
+  }).then(callback).catch((err) => {
     console.warn('Error when loading configuration! Error: ', err);
   });
 };
