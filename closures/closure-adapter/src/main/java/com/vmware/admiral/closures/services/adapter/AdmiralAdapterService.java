@@ -95,6 +95,7 @@ public class AdmiralAdapterService extends
     public static final String DISPLAY_NAME = "Closure Container Provisioning";
 
     private static final String BUILD_IMAGE_RETRIES_COUNT_PARAM_NAME = "build.closure.image.retries.count";
+    public static final int CLOSURE_CONTAINER_DESCRIPTION_EXPIRATION_SECONDS = 30;
 
     private final Random randomIntegers = new Random();
 
@@ -583,14 +584,34 @@ public class AdmiralAdapterService extends
 
         // Allocate container
         try {
-            logInfo("Initiating provisioning closure for: {}", containerDesc.env[0]);
+            logInfo("Initiating container provisioning for closure: %s", containerDesc.env[0]);
             startAllocationTask(allocationTask);
+
+            updateClosureContainerDescription(containerDesc);
 
             proceedTo(AdmiralAdapterTaskState.SubStage.COMPLETED);
         } catch (Throwable ex) {
             logWarning("Unable to initiate provisioning closure: " + containerDesc.env[0], ex);
             throw new RuntimeException(ex);
         }
+    }
+
+    private void updateClosureContainerDescription(
+            ContainerDescription containerDesc) {
+        containerDesc.documentExpirationTimeMicros = Utils
+                .fromNowMicrosUtc(TimeUnit.SECONDS.toMicros
+                        (CLOSURE_CONTAINER_DESCRIPTION_EXPIRATION_SECONDS));
+        sendRequest(Operation
+                .createPatch(getHost(), containerDesc.documentSelfLink)
+                .setBody(containerDesc)
+                .setCompletion((op, ex) -> {
+                    if (ex != null) {
+                        logSevere(
+                                "Unable to set expiration time on closure container description %s"
+                                        + containerDesc.documentSelfLink, ex);
+                        return;
+                    }
+                }));
     }
 
     private void startAllocationTask(ContainerAllocationTaskState allocationTask) {

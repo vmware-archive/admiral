@@ -13,11 +13,13 @@ package com.vmware.admiral.test.integration;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,11 +30,18 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.closures.services.closure.Closure;
+import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
+import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
+import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService;
 import com.vmware.admiral.request.RequestStatusService;
 import com.vmware.xenon.common.TaskState;
@@ -78,6 +87,61 @@ public class ContainerWithClosureIT extends BaseProvisioningOnCoreOsIT {
     @Test
     public void testProvision() throws Exception {
         doProvisionDockerContainerOnCoreOS(false, ContainerHostService.DockerAdapterType.API);
+    }
+
+    protected void requestContainerDelete(Set<String> resourceLinks, boolean verifyDelete)
+            throws Exception {
+
+        RequestBrokerService.RequestBrokerState day2DeleteRequest = new RequestBrokerService.RequestBrokerState();
+        String resourceLink = resourceLinks.iterator().next();
+        if (resourceLink.startsWith(CompositeComponentFactoryService.SELF_LINK)) {
+            day2DeleteRequest.resourceType = ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
+        } else {
+            CompositeComponentRegistry.ComponentMeta metaByStateLink = CompositeComponentRegistry
+                    .metaByStateLink(resourceLink);
+            day2DeleteRequest.resourceType = metaByStateLink.resourceType;
+        }
+        day2DeleteRequest.operation = ContainerOperationType.DELETE.id;
+        day2DeleteRequest.resourceLinks = resourceLinks;
+
+        List<String> compResourceLinks = fetchCompositeResources(resourceLinks.iterator().next());
+
+        day2DeleteRequest = postDocument(RequestBrokerFactoryService.SELF_LINK, day2DeleteRequest,
+                TestDocumentLifeCycle.NO_DELETE);
+
+        waitForTaskToComplete(day2DeleteRequest.documentSelfLink);
+
+        if (!verifyDelete) {
+            return;
+        }
+
+        for (String resLink : compResourceLinks) {
+            if (resLink.startsWith(ContainerFactoryService.SELF_LINK)) {
+                verifyContainer(resLink);
+            } else if (resLink.startsWith(ClosureFactoryService.FACTORY_LINK)) {
+                verifyClosureResources(resLink);
+            } else {
+                fail("Unexpected resource link found: " + resLink);
+            }
+        }
+
+    }
+
+    private List<String> fetchCompositeResources(String compLink) throws Exception {
+        CompositeComponent component = getDocument(compLink, CompositeComponent.class);
+        return component.componentLinks;
+    }
+
+    private void verifyClosureResources(String resLink) throws Exception {
+        Closure closure = getDocument(resLink, Closure.class);
+        assertNull(closure);
+    }
+
+    private void verifyContainer(String containerLink) throws Exception {
+        ContainerState component = getDocument(containerLink, ContainerState.class);
+        assertNull(component);
+        logger.info("[requestContainerDelete] Deleting container: %s", containerLink);
+        containersToDelete.remove(containerLink);
     }
 
     @Test
