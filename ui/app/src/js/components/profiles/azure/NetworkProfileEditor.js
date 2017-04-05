@@ -10,6 +10,7 @@
  */
 
 import services from 'core/services';
+import utils from 'core/utils';
 
 export default Vue.component('azure-network-profile-editor', {
   template: `
@@ -129,16 +130,29 @@ export default Vue.component('azure-network-profile-editor', {
             }
             return previous;
           }, []);
-          services.loadResourceGroups([...new Set(groupLinks)]).then((groups) => {
-            result.items.forEach((item) => {
-              if (item.groupLinks) {
-                item.groupNames = item.groupLinks.map((groupLink) => {
-                  return groups[groupLink].name;
-                });
-              }
+          if (utils.isApplicationEmbedded()) {
+            services.loadGroups([...new Set(groupLinks)]).then((groups) => {
+              result.items.forEach((item) => {
+                if (item.groupLinks) {
+                  item.groupNames = item.groupLinks.map((groupLink) => {
+                    return groups[groupLink].name;
+                  });
+                }
+              });
+              resolve(result);
             });
-            resolve(result);
-          });
+          } else {
+            services.loadResourceGroups([...new Set(groupLinks)]).then((groups) => {
+              result.items.forEach((item) => {
+                if (item.groupLinks) {
+                  item.groupNames = item.groupLinks.map((groupLink) => {
+                    return groups[groupLink].name;
+                  });
+                }
+              });
+              resolve(result);
+            });
+          }
         }).catch(reject);
       });
     },

@@ -2040,8 +2040,20 @@ services.removeEventLog = function(eventLogSelfLink) {
   return deleteEntity(eventLogSelfLink);
 };
 
-services.loadGroups = function() {
-  return list(links.GROUPS);
+services.loadGroups = function(documentSelfLinks) {
+  var params = {};
+  if (documentSelfLinks && documentSelfLinks.length) {
+    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+      documentSelfLink: documentSelfLinks.map((link) => {
+        return {
+          val: link,
+          op: 'eq'
+        };
+      }),
+      [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
+    });
+  }
+  return list(links.GROUPS, true, params);
 };
 
 services.loadProjects = function(queryOptions) {
