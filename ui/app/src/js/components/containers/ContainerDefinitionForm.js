@@ -14,6 +14,7 @@ import ContainerDefinitionFormTemplate from
 import MulticolumnInputs from 'components/common/MulticolumnInputs';
 import Component from 'components/common/Component';
 import utils from 'core/utils';
+import ft from 'core/ft';
 import { formatUtils } from 'admiral-ui-common';
 import imageUtils from 'core/imageUtils';
 import services from 'core/services';
@@ -464,7 +465,7 @@ class ContainerDefinitionForm extends Component {
     this.$el.find('.container-ports-publish-input .checkbox-control')
       .prop('checked', true);
 
-    if (!utils.isApplicationEmbedded()) {
+    if (!ft.isDeploymentPoliciesEnabled()) {
       this.$el.find('.deployment-policy-input').hide();
     }
 

@@ -65,6 +65,10 @@ var ft = {
 
   isRequestGraphEnabled: function() {
     return utils.getConfigurationPropertyBoolean('allow.ft.request-graph');
+  },
+
+  isDeploymentPoliciesEnabled: function() {
+    return utils.isApplicationEmbedded() && !utils.isApplicationCompute();
   }
 };
 
