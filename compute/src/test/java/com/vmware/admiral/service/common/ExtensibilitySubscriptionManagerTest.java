@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.test.BaseTestCase;
@@ -71,6 +72,7 @@ public class ExtensibilitySubscriptionManagerTest extends BaseTestCase {
     }
 
     @Test
+    @Ignore("VCOM-519")
     public void testAddRemoveExtensibility() throws Throwable {
         ExtensibilitySubscription state1 = createExtensibilityState("substage1", "uri1");
         ExtensibilitySubscription state2 = createExtensibilityState("substage2", "uri2");
