@@ -2,11 +2,7 @@
 @import 'node_modules/admiral-ui-common/css/mixins';
 
 grid-view {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  position: relative;
 
   .items {
     position: absolute;
