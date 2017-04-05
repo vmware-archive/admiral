@@ -135,6 +135,7 @@ export var HostsContextToolbarActions = Reflux.createActions([
 
 export var PlacementContextToolbarActions = Reflux.createActions([
   'openToolbarPlacementZones', 'createPlacementZone', 'managePlacementZones',
+  'openToolbarDeploymentPolicies', 'createDeploymentPolicy', 'manageDeploymentPolicies',
   'openToolbarResourceGroups', 'createResourceGroup', 'manageResourceGroups',
   'closeToolbar'
 ]);

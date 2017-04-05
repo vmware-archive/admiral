@@ -14,6 +14,7 @@ import PlacementsRowHighlightTemplate from
   'components/placements/PlacementsRowHighlightTemplate.html';
 import { NavigationActions } from 'actions/Actions';
 import utils from 'core/utils';
+import ft from 'core/ft';
 
 var renderers = {
   render: function(placement) {
@@ -28,6 +29,10 @@ var renderers = {
       }
     });
 
+    if (!ft.isDeploymentPoliciesEnabled()) {
+      rowRendererEl.find('td#deploymentPolicy').hide();
+    }
+
     return rowRendererEl;
   },
 
@@ -38,7 +43,21 @@ var renderers = {
     placementHighlight.isNew = isNew;
     placementHighlight.isUpdated = isUpdated;
 
-    return $(PlacementsRowHighlightTemplate(placementHighlight));
+    let highlightTemplate = $(PlacementsRowHighlightTemplate(placementHighlight));
+
+    if (!utils.isApplicationEmbedded()) {
+      highlightTemplate.find('.highlight-item').prop('colspan', 7);
+      highlightTemplate.find('th.th-wide#deployment-policy').hide();
+      highlightTemplate.find('th.th-wide').css('width', '15%');
+      highlightTemplate.find('th.th-medium').css('width', '13%');
+      highlightTemplate.find('th.th-small').css('width', '12%');
+    } else {
+      highlightTemplate.find('th.th-wide').css('width', '14%');
+      highlightTemplate.find('th.th-medium').css('width', '11%');
+      highlightTemplate.find('th.th-small').css('width', '9%');
+    }
+
+    return highlightTemplate;
   }
 };
 
