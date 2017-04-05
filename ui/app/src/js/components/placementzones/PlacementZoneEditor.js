@@ -125,11 +125,11 @@ var PlacementZoneEditor = Vue.extend({
     },
     onEndpointChange(endpoint) {
       this.endpoint = endpoint;
-      this.saveDisabled = !this.name || !this.endpoint;
+      this.saveDisabled = !this.name || (this.showEndpoint && !this.endpoint);
     },
     onNameChange() {
       this.name = (this.nameInput.val() || '').trim();
-      this.saveDisabled = !this.name || !this.endpoint;
+      this.saveDisabled = !this.name || (this.showEndpoint && !this.endpoint);
     },
     onPlacementPolicyChange(value) {
       this.placementPolicy = value && value.name;
