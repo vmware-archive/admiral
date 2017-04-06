@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.compute;
 
+import static com.vmware.admiral.common.util.CertificateUtilExtended.isSelfSignedCertificate;
+
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -39,11 +41,15 @@ public class HostConfigCertificateDistributionService extends
         try {
             HostConfigCertificateDistributionState distState =
                     op.getBody(HostConfigCertificateDistributionState.class);
+
             AssertUtil.assertNotNull(distState.hostLink, "hostLink");
+
+            op.complete();
 
             handleAddDockerHostOperation(distState.hostLink, distState.tenantLinks);
         } catch (Throwable t) {
             logSevere("Failed to process certificate distribution request. %s", Utils.toString(t));
+            op.fail(t);
         }
     }
 
@@ -61,6 +67,11 @@ public class HostConfigCertificateDistributionService extends
                     for (String registryLink : body.documentLinks) {
                         fetchRegistryState(registryLink, (registry) -> {
                             RegistryService.fetchRegistryCertificate(registry, (cert) -> {
+                                if (!isSelfSignedCertificate(cert)) {
+                                    logInfo("Skip certificate distribution for registry [%s]: certificate not self-signed.",
+                                            registryLink);
+                                    return;
+                                }
                                 uploadCertificate(hostLink, registry.address, cert, tenantLinks);
                             });
                         });
