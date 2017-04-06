@@ -98,7 +98,8 @@ export default Vue.component('azure-endpoint-editor', {
           privateKey: this.privateKey,
           userLink: this.userLink,
           azureTenantId: this.azureTenantId,
-          regionId: this.regionId
+          regionId: this.regionId,
+          provisioningPermission: true
         },
         valid: this.privateKeyId && this.privateKey && this.userLink &&
           this.azureTenantId && this.regionId
