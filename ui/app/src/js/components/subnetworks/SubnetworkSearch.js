@@ -72,7 +72,7 @@ export default Vue.component('subnetwork-search', {
   methods: {
     renderSubnetwork(network) {
       let props = [
-        i18n.t('app.profile.edit.cidrLabel') + ':' + network.subnetCIDR
+        i18n.t('app.profile.edit.cidrLabel') + ': ' + network.subnetCIDR
       ];
       if (network.supportPublicIpAddress) {
         props.push(i18n.t('app.profile.edit.supportPublicIpAddressLabel'));
