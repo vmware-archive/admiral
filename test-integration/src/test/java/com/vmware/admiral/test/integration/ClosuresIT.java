@@ -31,8 +31,6 @@ import java.util.concurrent.TimeoutException;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -87,11 +85,6 @@ public class ClosuresIT extends BaseProvisioningOnCoreOsIT {
         SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod.DELETE, dockerBuildImageLink);
         SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod.DELETE, dockerBuildBaseImageLink);
         serviceClient.stop();
-    }
-
-    @Override
-    @After
-    public void provisioningTearDown() throws Exception {
     }
 
     @Override
@@ -319,7 +312,7 @@ public class ClosuresIT extends BaseProvisioningOnCoreOsIT {
                 e.printStackTrace();
             }
         }
-        logger.info("Docker image " + imageName + " build on host: "
+        logger.info("Docker image " + imageName + " built on host: "
                 + dockerHostCompute.documentSelfLink);
         Thread.sleep(closureDescription.resources.timeoutSeconds.intValue() * 1000 + timeout);
 
