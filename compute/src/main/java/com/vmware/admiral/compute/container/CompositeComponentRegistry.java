@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.kubernetes.service.BaseKubernetesState;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.UriUtils;
 
 /**
  * This class acts as simple(not thread safe) registry of meta data related to Components supported
@@ -52,6 +53,7 @@ public class CompositeComponentRegistry {
             Class<? extends ResourceState> descriptionClass, String stateFactoryLink,
             Class<? extends ResourceState> stateClass,
             Class<? extends ResourceState> stateTemplateClass) {
+
         entries.add(new RegistryEntry(resourceType, descriptionFactoryLink, descriptionClass,
                 stateFactoryLink, stateClass, stateTemplateClass));
     }
@@ -114,11 +116,13 @@ public class CompositeComponentRegistry {
     }
 
     private static Predicate<RegistryEntry> descriptionFactoryPrefix(String descriptionLink) {
-        return r -> descriptionLink != null && descriptionLink.startsWith(r.descriptionFactoryLink);
+        return r -> r.descriptionFactoryLink.equals(descriptionLink) ||
+                UriUtils.isChildPath(descriptionLink, r.descriptionFactoryLink);
     }
 
     private static Predicate<RegistryEntry> stateFactoryPrefix(String stateLink) {
-        return r -> stateLink != null && stateLink.startsWith(r.stateFactoryLink);
+        return r -> r.stateFactoryLink.equals(stateLink) ||
+                UriUtils.isChildPath(stateLink, r.stateFactoryLink);
     }
 
     private static Predicate<RegistryEntry> equalsType(String type) {
