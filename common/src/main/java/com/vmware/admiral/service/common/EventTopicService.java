@@ -38,13 +38,9 @@ public class EventTopicService extends StatefulService {
         @UsageOption(option = PropertyUsageOption.REQUIRED)
         public Boolean blockable;
 
-        @Documentation(description = "Notification payload.")
+        @Documentation(description = "Schema of the topic.")
         @UsageOption(option = PropertyUsageOption.REQUIRED)
-        public String notificationPayload;
-
-        @Documentation(description = "Reply payload.")
-        @UsageOption(option = PropertyUsageOption.REQUIRED)
-        public String replyPayload;
+        public String schema;
 
         @Documentation(description = "Reply payload.")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
@@ -102,31 +98,31 @@ public class EventTopicService extends StatefulService {
         EventTopicState body = post.getBody(EventTopicState.class);
 
         if (body.name == null) {
-            post.fail(new Throwable("'name' is required."));
+            post.fail(new IllegalArgumentException("'name' is required."));
         }
 
         if (body.topicTaskInfo == null) {
-            post.fail(new Throwable("'TopicTaskInfo' is required."));
+            post.fail(new IllegalArgumentException("'TopicTaskInfo' is required."));
         }
 
         if (body.topicTaskInfo.task == null || body.topicTaskInfo.task.isEmpty()) {
-            post.fail(new Throwable("'Task' is required."));
+            post.fail(new IllegalArgumentException("'Task' is required."));
         }
 
         if (body.topicTaskInfo.stage == null) {
-            post.fail(new Throwable("'Stage' is required."));
+            post.fail(new IllegalArgumentException("'Stage' is required."));
         }
 
         if (body.topicTaskInfo.substage == null) {
-            post.fail(new Throwable("'SubStage' is required."));
+            post.fail(new IllegalArgumentException("'SubStage' is required."));
         }
 
         if (body.blockable == null) {
-            post.fail(new Throwable("'Blocking' is required."));
+            post.fail(new IllegalArgumentException("'Blocking' is required."));
         }
 
-        if (body.notificationPayload == null) {
-            post.fail(new Throwable("'Notification payload' is required."));
+        if (body.schema == null) {
+            post.fail(new IllegalArgumentException("'Schema' is required."));
         }
 
     }

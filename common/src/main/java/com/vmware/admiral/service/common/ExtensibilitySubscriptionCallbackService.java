@@ -74,11 +74,11 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
 
         @Documentation(description = "Defines Task fields which will be sent to client for information about the task.")
         @UsageOption(option = PropertyUsageOption.REQUIRED)
-        public ServiceTaskCallbackResponse notificationPayload;
+        public String notificationPayload;
 
         @Documentation(description = "Defines Task fields which will be merged when subscriber return response.")
         @UsageOption(option = PropertyUsageOption.REQUIRED)
-        public ServiceTaskCallbackResponse replayPayload;
+        public ServiceTaskCallbackResponse replyPayload;
 
     }
 
@@ -239,7 +239,7 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
         sendRequest(Operation
                 .createPatch(UriUtils.buildUri(getHost(), body.serviceTaskCallback.serviceSelfLink))
                 .setReferer(getHost().getUri())
-                .setBody(body.replayPayload)
+                .setBody(body.replyPayload)
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         getHost().log(Level.SEVERE,
@@ -275,16 +275,15 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
         serviceTaskCallbackResponse.addProperty(EXTENSIBILITY_RESPONSE, Boolean.TRUE.toString());
 
         // Every service task which supports extensibility should provide it's own
-        // 'extensibilityCallbackRespons' which will define suitable for modification fields, once
+        // 'extensibilityCallbackResponse' which will define suitable for modification fields, once
         // the response from subscriber is received. Here fields are merged from response to
         // callback.
         ServiceTaskCallbackResponse extensibilityResponse = op
-                .getBody(currentState.replayPayload.getClass());
+                .getBody(currentState.replyPayload.getClass());
         // Inherit original callback in order to be aware which task stage should be resumed.
         extensibilityResponse.copy(serviceTaskCallbackResponse);
         // Store extensibility callback in order to be used as finished callback response.
-        currentState.replayPayload = extensibilityResponse;
+        currentState.replyPayload = extensibilityResponse;
 
     }
-
 }

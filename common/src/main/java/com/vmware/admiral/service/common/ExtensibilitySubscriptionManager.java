@@ -81,7 +81,7 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
 
     <T extends TaskServiceDocument<?>> void handleStagePatch(
             ServiceTaskCallbackResponse notificationPayload,
-            ServiceTaskCallbackResponse replayPayload, T state,
+            ServiceTaskCallbackResponse replyPayload, T state,
             Consumer<T> callback) {
 
         ExtensibilitySubscription extensibilitySubscription = getExtensibilitySubscription(state);
@@ -94,11 +94,11 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
 
         if (extensibilitySubscription.blocking) {
             // blocking notification
-            sendBlockingNotificationCall(notificationPayload, replayPayload,
+            sendBlockingNotificationCall(notificationPayload, replyPayload,
                     extensibilitySubscription, state);
         } else {
             // asynchronous notification
-            sendAsyncNotificationCall(notificationPayload, replayPayload, extensibilitySubscription,
+            sendAsyncNotificationCall(notificationPayload, replyPayload, extensibilitySubscription,
                     state);
             // continue task execution with original state
             callback.accept(state);
@@ -186,7 +186,7 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
      *
      * @param notificationPayload
      *            payload that task sent to subscriber,
-     * @param replayPayload
+     * @param replyPayload
      *            payload which task accept for response
      * @param extensibility
      *            subscription info.
@@ -196,7 +196,7 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
     @SuppressWarnings({ "rawtypes" })
     private <T extends TaskServiceDocument> void sendBlockingNotificationCall(
             ServiceTaskCallbackResponse notificationPayload,
-            ServiceTaskCallbackResponse replayPayload,
+            ServiceTaskCallbackResponse replyPayload,
             ExtensibilitySubscription extensibility, T state) {
 
         logFine("Sending blocking notification to [%s] for [%s]",
@@ -213,7 +213,7 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
                 state.taskInfo.stage, state.taskSubStage,
                 TaskStage.STARTED, DefaultSubStage.ERROR);
         callbackState.requestTrackerLink = state.requestTrackerLink;
-        callbackState.replayPayload = replayPayload;
+        callbackState.replyPayload = replyPayload;
         callbackState.tenantLinks = state.tenantLinks;
 
         sendRequest(Operation
@@ -229,7 +229,7 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
                             .getBody(ExtensibilitySubscriptionCallback.class);
 
                     sendExternalNotification(extensibility,
-                            buildDataToSend(notificationPayload, replayPayload, result),
+                            buildDataToSend(notificationPayload, replyPayload, result),
                             state, NOTIFICATION_RETRY_COUNT);
                 }));
     }
@@ -247,7 +247,7 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
     @SuppressWarnings({ "rawtypes" })
     private <T extends TaskServiceDocument> void sendAsyncNotificationCall(
             ServiceTaskCallbackResponse notificationPayload,
-            ServiceTaskCallbackResponse replayPayload,
+            ServiceTaskCallbackResponse replyPayload,
             ExtensibilitySubscription extensibility, T state) {
         logFine("Sending async notification to [%s] for [%s]",
                 extensibility.callbackReference, state.documentSelfLink);
@@ -296,7 +296,7 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         logWarning(
-                                "Retrying [{}] times to notify [{}]. Error: [{}]",
+                                "Retrying [%s] times to notify [%s]. Error: [%s]",
                                 retriesLeft, extensibility.callbackReference,
                                 e.getMessage());
 
@@ -327,22 +327,22 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
     @SuppressWarnings("rawtypes")
     private <T extends TaskServiceDocument> ServiceDocument buildDataToSend(
             ServiceTaskCallbackResponse notificationPayload,
-            ServiceTaskCallbackResponse replayPayload,
+            ServiceTaskCallbackResponse replyPayload,
             ExtensibilitySubscriptionCallback result) {
 
         // Notification payload will give information about the task to subscriber.
         ServiceTaskCallbackResponse notificationPayloadData = Utils.fromJson(
                 result.taskStateJson, notificationPayload.getClass());
 
-        // Get service replay payload in order to notify subscriber which fields are acceptable for
+        // Get service reply payload in order to notify subscriber which fields are acceptable for
         // response.
-        ServiceTaskCallbackResponse replayPayloadData = Utils.fromJson(
-                result.taskStateJson, replayPayload.getClass());
+        ServiceTaskCallbackResponse replyPayloadData = Utils.fromJson(
+                result.taskStateJson, replyPayload.getClass());
 
         ExtensibilitySubscriptionCallback data = new ExtensibilitySubscriptionCallback();
         data.serviceCallback = UriUtils.buildUri(getHost(), result.documentSelfLink);
-        data.notificationPayload = notificationPayloadData;
-        data.replayPayload = replayPayloadData;
+        data.notificationPayload = Utils.toJson(notificationPayloadData);
+        data.replyPayload = replyPayloadData;
         data.taskStateClassName = result.taskStateClassName;
         data.tenantLinks = result.tenantLinks;
         data.taskStateJson = result.taskStateJson;

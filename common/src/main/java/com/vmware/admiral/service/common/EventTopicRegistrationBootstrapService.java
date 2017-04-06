@@ -11,11 +11,12 @@
 
 package com.vmware.admiral.service.common;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 
 import com.vmware.admiral.common.ManagementUriParts;
@@ -43,7 +44,7 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
     private static final String CONTAINER_NAME_TOPIC_ID = "com.vmware.container.name.assignment";
     private static final String CONTAINER_NAME_TOPIC_NAME = "Name assignment";
     private static final String CONTAINER_NAME_TOPIC_TASK_NAME = "ContainerAllocationTaskState";
-    private static final String CONTAINER_NAME_TOPIC_SUBSTAGE = "CONTEXT_PREPARED";
+    private static final String CONTAINER_NAME_TOPIC_SUBSTAGE = "RESOURCES_NAMED";
     private static final String CONTAINER_NAME_TOPIC_TASK_DESCRIPTION = "Assign custom container name.";
 
     public static FactoryService createFactory() {
@@ -156,11 +157,15 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
         topic.documentSelfLink = CONTAINER_NAME_TOPIC_TASK_SELF_LINK;
         topic.description = CONTAINER_NAME_TOPIC_TASK_DESCRIPTION;
         topic.blockable = Boolean.TRUE;
-        topic.notificationPayload = TaskPayloadBuilder.initialize()
-                .add(Set.class, "resourceNames")
-                .add(String.class, "resourceType")
-                .toJson();
-        topic.replyPayload = topic.notificationPayload;
+
+        // [{"resourceNames":{"dataType":"String","multivalued":"true","label":"Resource Names"}}]
+        topic.schema = SchemaBuilder.create()
+                .addField("resourceNames")
+                .addDataType(String.class.getSimpleName())
+                .addLabel("Resource Names")
+                .addDescription("Array should provide only one resource name that will be patched.")
+                .whereMultiValued(true)
+                .build();
 
         return Operation.createPost(host, EventTopicService.FACTORY_LINK)
                 .setReferer(host.getUri())
@@ -177,35 +182,84 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
                 });
     }
 
-    private static class TaskPayloadBuilder {
+    /**
+     * Helper class that creates schema for EventTopics.
+     */
+    public static class SchemaBuilder {
 
-        private static Map<Class<?>, String> entities = new ConcurrentHashMap<>();
+        private static final String FIELD_DATA_TYPE = "dataType";
+        private static final String FIELD_LABEL = "label";
+        private static final String FIELD_DESCRIPTION = "description";
+        private static final String FIELD_MULTIVALUED = "multivalued";
 
-        private static TaskPayloadBuilder initialize() {
-            return new TaskPayloadBuilder();
+        private List<Map<String, Map<String, String>>> entitiesHolder = new ArrayList<>();
+
+        // Field to its properties.
+        private Map<String, Map<String, String>> entities;
+
+        private SchemaBuilder() {
         }
 
-        public TaskPayloadBuilder add(Class<?> type, String name) {
+        public static SchemaBuilder create() {
+            return new SchemaBuilder();
+        }
 
-            validateEntity(type, name);
-            entities.put(type, name);
+        public SchemaBuilder addField(String fieldName) {
+            if (entities == null || !entities.isEmpty()) {
+                entities = new HashMap<>();
+            }
+            entities.put(fieldName, new HashMap<>());
+            entitiesHolder.add(entities);
             return this;
         }
 
-        public String toJson() {
-            return Utils.toJson(entities);
-        }
-
-        private void validateEntity(Class<?> type, String name) {
-            if (type == null) {
-                throw new IllegalArgumentException("'type' is required");
+        public SchemaBuilder addDataType(String dataType) {
+            if (entities == null) {
+                throw new IllegalArgumentException("'entities' can not be null");
             }
 
-            if (name == null) {
-                throw new IllegalArgumentException("'name' is required");
-            }
+            Entry<String, Map<String, String>> entry = entities.entrySet().iterator().next();
+            Map<String, String> value = entry.getValue();
+            value.put(FIELD_DATA_TYPE, dataType);
+            return this;
         }
 
+        public SchemaBuilder addLabel(String label) {
+            if (entities == null) {
+                throw new IllegalArgumentException("'entities' can not be null");
+            }
+
+            Entry<String, Map<String, String>> entry = entities.entrySet().iterator().next();
+            Map<String, String> value = entry.getValue();
+            value.put(FIELD_LABEL, label);
+            return this;
+        }
+
+        public SchemaBuilder addDescription(String description) {
+            if (entities == null) {
+                throw new IllegalArgumentException("'entities' can not be null");
+            }
+
+            Entry<String, Map<String, String>> entry = entities.entrySet().iterator().next();
+            Map<String, String> value = entry.getValue();
+            value.put(FIELD_DESCRIPTION, description);
+            return this;
+        }
+
+        public SchemaBuilder whereMultiValued(Boolean multivalued) {
+            if (entities == null) {
+                throw new IllegalArgumentException("'entities' can not be null");
+            }
+
+            Entry<String, Map<String, String>> entry = entities.entrySet().iterator().next();
+            Map<String, String> value = entry.getValue();
+            value.put(FIELD_MULTIVALUED, String.valueOf(multivalued));
+            return this;
+        }
+
+        public String build() {
+            return Utils.toJson(entitiesHolder);
+        }
     }
 
 }
