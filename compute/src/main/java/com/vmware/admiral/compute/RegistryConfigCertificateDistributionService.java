@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.compute;
 
+import static com.vmware.admiral.common.util.CertificateUtilExtended.isSelfSignedCertificate;
+
 import java.util.List;
 
 import com.vmware.admiral.common.ManagementUriParts;
@@ -44,10 +46,19 @@ public class RegistryConfigCertificateDistributionService
             AssertUtil.assertNotNull(distState.certState, "certState");
             AssertUtil.assertNotNull(distState.registryAddress, "registryAddress");
 
+            op.complete();
+
+            if (!isSelfSignedCertificate(distState.certState.certificate)) {
+                logInfo("Skip certificate distribution for registry [%s]: certificate not self-signed.",
+                        distState.registryAddress);
+                return;
+            }
+
             handleAddRegistryHostOperation(distState.registryAddress,
                     distState.certState.certificate, distState.tenantLinks);
         } catch (Throwable t) {
             logSevere("Failed to process certificate distribution request: %s", Utils.toString(t));
+            op.fail(t);
         }
     }
 
