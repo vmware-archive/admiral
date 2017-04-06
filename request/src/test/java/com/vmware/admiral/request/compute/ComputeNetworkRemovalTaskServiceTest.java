@@ -45,7 +45,7 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
 
     @Test
     public void testNetworkRemoval() throws Throwable {
-        ComputeNetwork cn = createNetwork("my net", true);
+        ComputeNetwork cn = createNetwork("my net");
         cn = doPost(cn,
                 ComputeNetworkService.FACTORY_LINK);
 
@@ -71,7 +71,7 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
     public void testIsolatedNetworkRemoval() throws Throwable {
         SubnetState subnet = createSubnetState();
 
-        ComputeNetwork cn = createNetwork("my net", true);
+        ComputeNetwork cn = createNetwork("my net");
         cn.networkType = ComputeNetworkDescriptionService.NetworkType.ISOLATED;
         cn.subnetLink = subnet.documentSelfLink;
         cn = doPost(cn, ComputeNetworkService.FACTORY_LINK);
@@ -86,7 +86,7 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
 
     @Test
     public void testIsolatedNetworkRemovalNoSubnetStateShouldSucceed() throws Throwable {
-        ComputeNetwork cn = createNetwork("my net", true);
+        ComputeNetwork cn = createNetwork("my net");
         cn.networkType = ComputeNetworkDescriptionService.NetworkType.ISOLATED;
         cn.subnetLink = UUID.randomUUID().toString();
         cn = doPost(cn, ComputeNetworkService.FACTORY_LINK);
@@ -104,7 +104,7 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
         subnet.instanceAdapterReference = null;
         subnet = doPut(subnet);
 
-        ComputeNetwork cn = createNetwork("my net", true);
+        ComputeNetwork cn = createNetwork("my net");
         cn.networkType = ComputeNetworkDescriptionService.NetworkType.ISOLATED;
         cn.subnetLink = subnet.documentSelfLink;
         cn = doPost(cn, ComputeNetworkService.FACTORY_LINK);
@@ -150,7 +150,7 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
             throws Throwable {
         synchronized (initializationLock) {
             if (computeNetwork == null) {
-                ComputeNetwork cn = createNetwork(name, false);
+                ComputeNetwork cn = createNetwork(name);
                 computeNetwork = doPost(cn, ComputeNetworkService.FACTORY_LINK);
                 assertNotNull(computeNetwork);
             }
@@ -158,12 +158,11 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
         }
     }
 
-    private ComputeNetwork createNetwork(String name, boolean external) {
+    private ComputeNetwork createNetwork(String name) {
         ComputeNetwork cn = TestRequestStateFactory
                 .createComputeNetworkState(name, UriUtils
                         .buildUriPath(ComputeNetworkDescriptionService.FACTORY_LINK, "test-desc"));
         cn.documentSelfLink = UUID.randomUUID().toString();
-        cn.external = external;
         return cn;
     }
 
