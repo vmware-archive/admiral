@@ -81,6 +81,7 @@ public class NodeMigrationService extends StatelessService {
         services.remove("/resources/host-container-list-data-collection");
         services.remove("/resources/container-control-loop");
         services.remove("/resources/hosts-data-collections");
+        services.remove("/config/event-topic");
 
         patch.complete();
     }
