@@ -59,8 +59,7 @@ public class ComputeNetworkAllocationTaskServiceTest extends RequestBaseTest {
 
     @Test
     public void testExternalNetworkAllocation() throws Throwable {
-        ComputeNetworkDescription networkDescription = createNetworkDescription("my net", true,
-                null);
+        ComputeNetworkDescription networkDescription = createNetworkDescription("my net", NetworkType.EXTERNAL);
         networkDescription = doPost(networkDescription,
                 ComputeNetworkDescriptionService.FACTORY_LINK);
 
@@ -74,6 +73,7 @@ public class ComputeNetworkAllocationTaskServiceTest extends RequestBaseTest {
 
         assertNotNull(networkState);
         assertEquals(networkDescription.documentSelfLink, networkState.descriptionLink);
+        assertEquals(NetworkType.EXTERNAL, networkState.networkType);
 
         assertTrue(networkState.name.contains(networkDescription.name));
     }
@@ -81,7 +81,7 @@ public class ComputeNetworkAllocationTaskServiceTest extends RequestBaseTest {
     @Test
     public void testIsolatedNetworkAllocation() throws Throwable {
         ComputeNetworkDescription networkDescription = createNetworkDescription("isolated net",
-                false, NetworkType.ISOLATED);
+                NetworkType.ISOLATED);
         networkDescription = doPost(networkDescription,
                 ComputeNetworkDescriptionService.FACTORY_LINK);
 
@@ -142,7 +142,7 @@ public class ComputeNetworkAllocationTaskServiceTest extends RequestBaseTest {
             throws Throwable {
         synchronized (initializationLock) {
             if (computeNetworkDesc == null) {
-                ComputeNetworkDescription desc = createNetworkDescription(name, false, null);
+                ComputeNetworkDescription desc = createNetworkDescription(name, null);
                 computeNetworkDesc = doPost(desc,
                         ComputeNetworkDescriptionService.FACTORY_LINK);
                 assertNotNull(containerNetworkDesc);
@@ -151,12 +151,10 @@ public class ComputeNetworkAllocationTaskServiceTest extends RequestBaseTest {
         }
     }
 
-    private ComputeNetworkDescription createNetworkDescription(String name, boolean external,
-            NetworkType networkType) {
+    private ComputeNetworkDescription createNetworkDescription(String name, NetworkType networkType) {
         ComputeNetworkDescription desc = TestRequestStateFactory
                 .createComputeNetworkDescription(name);
         desc.documentSelfLink = UUID.randomUUID().toString();
-        desc.external = external;
         desc.networkType = networkType;
         return desc;
     }
