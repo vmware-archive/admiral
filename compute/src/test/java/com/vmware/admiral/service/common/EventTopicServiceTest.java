@@ -17,17 +17,22 @@ import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
 import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.common.test.BaseTestCase;
+import com.vmware.admiral.service.common.EventTopicRegistrationBootstrapService.SchemaBuilder;
 import com.vmware.admiral.service.common.EventTopicService.EventTopicState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.common.test.TestRequestSender;
 import com.vmware.xenon.common.test.TestRequestSender.FailureResponse;
@@ -64,7 +69,7 @@ public class EventTopicServiceTest extends BaseTestCase {
     @Test
     public void testCreateEventRegistryTopic() {
         EventTopicState state = createEventTopicState(EVENT_NAME, EVENT_TASK,
-                TaskStage.FINISHED.name(), DefaultSubStage.COMPLETED.name(), false);
+                TaskStage.FINISHED.name(), DefaultSubStage.COMPLETED.name(), false, new String());
 
         URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
         EventTopicState result = sender
@@ -86,7 +91,7 @@ public class EventTopicServiceTest extends BaseTestCase {
     @Test
     public void testEmptyName() {
         EventTopicState state = createEventTopicState(null, EVENT_TASK,
-                TaskStage.FINISHED.name(), DefaultSubStage.COMPLETED.name(), false);
+                TaskStage.FINISHED.name(), DefaultSubStage.COMPLETED.name(), false, new String());
 
         URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
         Operation op = Operation
@@ -101,7 +106,7 @@ public class EventTopicServiceTest extends BaseTestCase {
     @Test
     public void testEmptyTask() {
         EventTopicState state = createEventTopicState(EVENT_NAME, null,
-                TaskStage.FINISHED.name(), DefaultSubStage.COMPLETED.name(), false);
+                TaskStage.FINISHED.name(), DefaultSubStage.COMPLETED.name(), false, new String());
 
         URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
         Operation op = Operation
@@ -116,7 +121,7 @@ public class EventTopicServiceTest extends BaseTestCase {
     @Test
     public void testEmptyStage() {
         EventTopicState state = createEventTopicState(EVENT_NAME, EVENT_TASK,
-                null, DefaultSubStage.COMPLETED.name(), false);
+                null, DefaultSubStage.COMPLETED.name(), false, new String());
 
         URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
         Operation op = Operation
@@ -131,7 +136,7 @@ public class EventTopicServiceTest extends BaseTestCase {
     @Test
     public void testEmptySubStage() {
         EventTopicState state = createEventTopicState(EVENT_NAME, EVENT_TASK,
-                TaskStage.FINISHED.name(), null, false);
+                TaskStage.FINISHED.name(), null, false, new String());
 
         URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
         Operation op = Operation
@@ -146,7 +151,7 @@ public class EventTopicServiceTest extends BaseTestCase {
     @Test
     public void testEmptyBlocking() {
         EventTopicState state = createEventTopicState(EVENT_NAME, EVENT_TASK,
-                TaskStage.FINISHED.name(), DefaultSubStage.COMPLETED.name(), null);
+                TaskStage.FINISHED.name(), DefaultSubStage.COMPLETED.name(), null, new String());
 
         URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
         Operation op = Operation
@@ -156,6 +161,21 @@ public class EventTopicServiceTest extends BaseTestCase {
         FailureResponse failure = sender.sendAndWaitFailure(op);
         assertNotNull(failure);
         assertEquals("'Blocking' is required.", failure.failure.getMessage());
+    }
+
+    @Test
+    public void testEmptySchema() {
+        EventTopicState state = createEventTopicState(EVENT_NAME, EVENT_TASK,
+                TaskStage.FINISHED.name(), DefaultSubStage.COMPLETED.name(), true, null);
+
+        URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
+        Operation op = Operation
+                .createPost(uri)
+                .setBody(state);
+
+        FailureResponse failure = sender.sendAndWaitFailure(op);
+        assertNotNull(failure);
+        assertEquals("'Schema' is required.", failure.failure.getMessage());
     }
 
     @Test
@@ -184,8 +204,44 @@ public class EventTopicServiceTest extends BaseTestCase {
 
     }
 
+    @Test
+    public void testSchemaBuilder() {
+        String fieldName = "resourceNames";
+        String dataType = String.class.getSimpleName();
+        String description = "description";
+        String label = "label";
+        boolean multivalued = true;
+
+        SchemaBuilder schemaBuilder = EventTopicRegistrationBootstrapService.SchemaBuilder.create();
+        schemaBuilder.addField(fieldName)
+                .addDataType(dataType)
+                .addDescription(description)
+                .addLabel(label)
+                .whereMultiValued(multivalued);
+
+        String schemaAsJson = schemaBuilder.build();
+
+        assertNotNull(schemaAsJson);
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Map<String, String>>> entitiesHolder = Utils.fromJson(schemaAsJson,
+                List.class);
+
+        assertNotNull(entitiesHolder);
+        assertEquals(1, entitiesHolder.size());
+
+        Map<String, Map<String, String>> fieldToProperties = entitiesHolder.get(0);
+
+        Entry<String, Map<String, String>> entry = fieldToProperties.entrySet().iterator().next();
+        assertEquals(fieldName, entry.getKey());
+
+        Map<String, String> fieldProperties = entry.getValue();
+        assertEquals(4, fieldProperties.size());
+
+    }
+
     private EventTopicState createEventTopicState(String name, String task, String stage,
-            String subStage, Boolean blocking) {
+            String subStage, Boolean blocking, String schema) {
 
         EventTopicService.TopicTaskInfo taskInfo = new EventTopicService.TopicTaskInfo();
         taskInfo.task = task;
@@ -196,8 +252,7 @@ public class EventTopicServiceTest extends BaseTestCase {
         state.name = name;
         state.topicTaskInfo = taskInfo;
         state.blockable = blocking;
-        state.notificationPayload = "notificationPayload";
-        state.replyPayload = "replayPayload";
+        state.schema = schema;
         return state;
 
     }

@@ -634,6 +634,44 @@ public class ContainerAllocationTaskService extends
         return resourceNameToHostSelection;
     }
 
+    @Override
+    protected void autoMergeState(Operation patch, ContainerAllocationTaskState patchBody,
+            ContainerAllocationTaskState currentState) {
+        if (SubStage.SUBSCRIPTION_SUB_STAGES.contains(patchBody.taskSubStage)) {
+            if (currentState.resourceNames != null && !currentState.resourceNames.isEmpty()) {
+                // A couple of possible scenarios here:
+                // 1.current names -> [a,b]; patched names -> [c]; => result will be [a,c]
+                // 2.current names -> [a,b]; patched names -> [c,d]; => result will be [c,d]
+                // 3.current names -> [a]; patched names -> [b]; => result will be [b]
+                if (patchBody.resourceNames != null && !patchBody.resourceNames.isEmpty()) {
+                    // If [patchBody.resourceNames] contains one element, and
+                    // [currentState.resourceNames] contains one element as well, than autoMerge of
+                    // documents won't replace old with new, but put it both in the set.That's why
+                    // the below logic is needed.
+                    int currentSize = currentState.resourceNames.size();
+                    int patchedSize = patchBody.resourceNames.size();
+                    int instancesToRemoveFromCurrentResourceNames = 0;
+                    if (currentSize > patchedSize) {
+                        instancesToRemoveFromCurrentResourceNames = currentSize - patchedSize;
+                    } else if (patchedSize > currentSize) {
+                        instancesToRemoveFromCurrentResourceNames = patchedSize - currentSize;
+                    } else {
+                        instancesToRemoveFromCurrentResourceNames = patchedSize;
+                    }
+
+                    Iterator<String> iterator = currentState.resourceNames.iterator();
+
+                    while (iterator.hasNext() && instancesToRemoveFromCurrentResourceNames > 0) {
+                        instancesToRemoveFromCurrentResourceNames--;
+                        iterator.next();
+                        iterator.remove();
+                    }
+                }
+            }
+        }
+        super.autoMergeState(patch, patchBody, currentState);
+    }
+
     private void createContainerState(ContainerAllocationTaskState state,
             ContainerDescription containerDesc,
             Boolean isFromTemplate,

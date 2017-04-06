@@ -287,7 +287,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             ExtensibilitySubscriptionManager manager = getExtensibilityManager();
             if (manager != null) {
                 validateServiceNotificationPayload(this);
-                manager.handleStagePatch(this.notificationPayload(), this.replayPayload(), state,
+                manager.handleStagePatch(this.notificationPayload(), this.replyPayload(), state,
                         this::handleStagePatch);
             } else {
                 // ServiceHost is not instance of ManagementHost
@@ -829,7 +829,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     /**
      * Declares service fields which will be merged once response from subscriber is received.
      */
-    protected ServiceTaskCallbackResponse replayPayload() {
+    protected ServiceTaskCallbackResponse replyPayload() {
         return notificationPayload();
     }
 
