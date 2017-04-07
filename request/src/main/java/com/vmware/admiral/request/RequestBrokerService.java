@@ -292,7 +292,7 @@ public class RequestBrokerService extends
             break;
         case RESERVATION_CLEANED_UP:
             if (isComputeType(state)) {
-                createComputeRemovalTask(state);
+                createComputeRemovalTask(state,true);
             } else if (isContainerNetworkType(state)) {
                 createContainerNetworkRemovalTask(state, true);
             } else if (isContainerVolumeType(state)) {

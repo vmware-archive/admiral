@@ -49,7 +49,6 @@ public class ReservationRemovalTaskServiceTest extends RequestBaseTest {
         boolean expectFailure = false;
         placementState = makeResourcePlacementReservationRequest(count, descLink, placementState, expectFailure);
         assertEquals(placementState.allocatedInstancesCount, count);
-        assertEquals(count, placementState.resourceQuotaPerResourceDesc.get(descLink).intValue());
 
         ReservationRemovalTaskState task = new ReservationRemovalTaskState();
         task.resourceDescriptionLink = descLink;
@@ -63,7 +62,6 @@ public class ReservationRemovalTaskServiceTest extends RequestBaseTest {
 
         placementState = getDocument(GroupResourcePlacementState.class, placementState.documentSelfLink);
         assertEquals(placementState.allocatedInstancesCount, 0);
-        assertEquals(0, placementState.resourceQuotaPerResourceDesc.get(descLink).intValue());
 
         host.log("second reservation removal starting:");
         // it should not fail (just warning) if try to remove more than the max:
@@ -79,7 +77,6 @@ public class ReservationRemovalTaskServiceTest extends RequestBaseTest {
 
         placementState = getDocument(GroupResourcePlacementState.class, placementState.documentSelfLink);
         assertEquals(placementState.allocatedInstancesCount, 0);
-        assertEquals(0, placementState.resourceQuotaPerResourceDesc.get(descLink).intValue());
     }
 
     private GroupResourcePlacementState makeResourcePlacementReservationRequest(int count,

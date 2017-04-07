@@ -29,6 +29,7 @@ import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
@@ -122,8 +123,9 @@ public class GroupResourcePlacementService extends StatefulService {
         public String resourcePoolLink;
 
         /** The priority with which the group resource placements will be applied */
-        @Documentation(description = "The priority with which the group resource placements will be applied." +
-                    " Lower number means higher priority.")
+        @Documentation(description = "The priority with which the group resource placements will be applied."
+                +
+                " Lower number means higher priority.")
         public int priority;
 
         @Documentation(description = "The resource type for which the group resource quotas will be applied.")
@@ -187,16 +189,19 @@ public class GroupResourcePlacementService extends StatefulService {
         public long availableMemory;
 
         /** Set by Task. The number of used instances linked to their Resource descriptions. */
-        @Documentation(description = "The number of used instances linked to their Resource descriptions.")
+        @Documentation(description = "Deprecated, not in use.The number of used instances linked to their Resource descriptions.")
         @UsageOption(option = PropertyUsageOption.SERVICE_USE)
         @PropertyOptions(indexing = { PropertyIndexingOption.STORE_ONLY })
+        @Deprecated
         public Map<String, Long> resourceQuotaPerResourceDesc;
 
         /** Set by Task. Memory quota per resource desc. */
-        @Documentation(description = "Memory quota per resource desc.")
+        @Documentation(description = "Deprecated, not in use.Memory quota per resource desc.")
         @UsageOption(option = PropertyUsageOption.SERVICE_USE)
         @PropertyOptions(indexing = { PropertyIndexingOption.STORE_ONLY })
+        @Deprecated
         public Map<String, Long> memoryQuotaPerResourceDesc;
+
     }
 
     /**
@@ -231,8 +236,6 @@ public class GroupResourcePlacementService extends StatefulService {
             poolState.maxNumberInstances = groupResourcePlacementState.maxNumberInstances;
             poolState.availableInstancesCount = groupResourcePlacementState.availableInstancesCount;
             poolState.allocatedInstancesCount = groupResourcePlacementState.allocatedInstancesCount;
-            poolState.resourceQuotaPerResourceDesc =
-                    groupResourcePlacementState.resourceQuotaPerResourceDesc;
             poolState.customProperties = groupResourcePlacementState.customProperties;
             poolState.cpuShares = groupResourcePlacementState.cpuShares;
             poolState.memoryLimit = groupResourcePlacementState.memoryLimit;
@@ -291,6 +294,8 @@ public class GroupResourcePlacementService extends StatefulService {
         logFine("Initial name is %s", state.name);
 
         validateStateOnStart(state, start, (o) -> {
+            state.availableInstancesCount = state.maxNumberInstances;
+            state.allocatedInstancesCount = 0;
             start.complete();
         });
     }
@@ -305,9 +310,6 @@ public class GroupResourcePlacementService extends StatefulService {
 
         GroupResourcePlacementState currentState = getState(put);
         GroupResourcePlacementState putBody = put.getBody(GroupResourcePlacementState.class);
-
-        // make sure that the active placements are not overridden before validation
-        putBody.resourceQuotaPerResourceDesc = currentState.resourceQuotaPerResourceDesc;
 
         validateStateOnStart(putBody, put, (a) -> {
             // make sure the current placements are not overridden
@@ -359,8 +361,6 @@ public class GroupResourcePlacementService extends StatefulService {
             currentState.memoryLimit = putBody.memoryLimit;
             currentState.availableMemory = currentState.memoryLimit - reservedMemory;
 
-            currentState.tenantLinks = putBody.tenantLinks;
-
             setState(put, currentState);
             put.setBody(currentState).complete();
         });
@@ -411,36 +411,6 @@ public class GroupResourcePlacementService extends StatefulService {
             patch.fail(new LocalizableValidationException("'resourceDescriptionLink' is required.",
                     "compute.placements.resource-desc.required"));
             return;
-        }
-
-        if (state.resourceQuotaPerResourceDesc == null) {
-            state.resourceQuotaPerResourceDesc = new HashMap<>();
-        }
-
-        Long countPerDesc = state.resourceQuotaPerResourceDesc
-                .get(request.resourceDescriptionLink);
-        if (countPerDesc == null) {
-            if (request.resourceCount < 0) {
-                patch.fail(new LocalizableValidationException(
-                        "Releasing placement do not exist for requested resourceDescriptionLink: "
-                                + request.resourceDescriptionLink,
-                        "compute.placements.resource.not.exists",
-                        request.resourceDescriptionLink));
-                return;
-            }
-            state.resourceQuotaPerResourceDesc.put(request.resourceDescriptionLink,
-                    request.resourceCount);
-        } else {
-            long currentCountPerDesc = countPerDesc + request.resourceCount;
-            if (currentCountPerDesc < 0) {
-                patch.fail(new LocalizableValidationException(
-                        "Releasing placement is more than previously requested for the "
-                                + "resourceDescriptionLink: " + request.resourceDescriptionLink,
-                        "compute.placements.release.too.much", request.resourceDescriptionLink));
-                return;
-            }
-            state.resourceQuotaPerResourceDesc.put(request.resourceDescriptionLink,
-                    currentCountPerDesc);
         }
 
         state.availableInstancesCount = currentCount;
@@ -513,19 +483,6 @@ public class GroupResourcePlacementService extends StatefulService {
             state.availableMemory = currentMemory;
         }
 
-        if (state.memoryQuotaPerResourceDesc == null) {
-            state.memoryQuotaPerResourceDesc = new HashMap<>();
-        }
-
-        Long allMemory = state.memoryQuotaPerResourceDesc.get(request.resourceDescriptionLink);
-
-        if (allMemory == null) {
-            state.memoryQuotaPerResourceDesc.put(request.resourceDescriptionLink, requestedMemory);
-        } else {
-            state.memoryQuotaPerResourceDesc
-                    .put(request.resourceDescriptionLink, requestedMemory + allMemory);
-        }
-
         return true;
     }
 
@@ -545,7 +502,7 @@ public class GroupResourcePlacementService extends StatefulService {
 
                 if (state.allocatedInstancesCount != count) {
                     logWarning("Reservation mismatch detected for placement %s!! "
-                                    + "allocatedInstancesCount=%d actual=%d",
+                            + "allocatedInstancesCount=%d actual=%d",
                             state.documentSelfLink, state.allocatedInstancesCount, count);
                 }
 
@@ -617,13 +574,7 @@ public class GroupResourcePlacementService extends StatefulService {
 
         validatePlacementSize(state, operation, (o) -> {
 
-            if (state.resourceQuotaPerResourceDesc == null
-                    || state.resourceQuotaPerResourceDesc.isEmpty()) {
-                state.availableInstancesCount = state.maxNumberInstances;
-                state.allocatedInstancesCount = 0;
-                state.availableMemory = state.memoryLimit;
-            }
-
+            state.availableMemory = state.memoryLimit;
             callbackFunction.accept(null);
         });
     }
@@ -650,7 +601,7 @@ public class GroupResourcePlacementService extends StatefulService {
                                         "Not enough memory in this placement zone. "
                                                 + "Total memory in placement zone: %s, "
                                                 + "requested: %s",
-                                                totalMemory, state.memoryLimit);
+                                        totalMemory, state.memoryLimit);
                                 operation.fail(new LocalizableValidationException(errorMesg,
                                         "compute.placements.not.enough.memory.in.zone",
                                         totalMemory, state.memoryLimit));
@@ -691,7 +642,7 @@ public class GroupResourcePlacementService extends StatefulService {
                 long availableMemory = totalMemory - allPlacementMemory;
                 if (availableMemory > 0 && availableMemory < state.memoryLimit) {
                     String errorMsg = String.format("Memory already reserved by other placements. "
-                                    + "Available memory: %s, requested: %s",
+                            + "Available memory: %s, requested: %s",
                             availableMemory, state.memoryLimit);
                     operation.fail(new LocalizableValidationException(errorMsg,
                             "compute.placement.memory.unavailable", availableMemory,
@@ -709,13 +660,13 @@ public class GroupResourcePlacementService extends StatefulService {
         GroupResourcePlacementState template =
                 (GroupResourcePlacementState) super.getDocumentTemplate();
         com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
-        template.resourceQuotaPerResourceDesc = new HashMap<>();
-        template.memoryQuotaPerResourceDesc = new HashMap<>();
         template.customProperties = new HashMap<String, String>(1);
         template.customProperties.put("propKey string", "customPropertyValue string");
         // Having multiple resource descriptions hit the default limit. 1MB should be enough for
         // ~13 760 containers
         template.documentDescription.serializedStateSizeLimit = 1024 * 1024; // 1MB
+        template.resourceQuotaPerResourceDesc = new HashMap<>();
+        template.memoryQuotaPerResourceDesc = new HashMap<>();
 
         return template;
     }
@@ -735,9 +686,9 @@ public class GroupResourcePlacementService extends StatefulService {
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends ServiceDocument> void countResourcesForPlacement(GroupResourcePlacementState state,
-            Consumer<ServiceDocumentQueryElementResult<T>>
-                    completionHandler) {
+    private <T extends ServiceDocument> void countResourcesForPlacement(
+            GroupResourcePlacementState state,
+            Consumer<ServiceDocumentQueryElementResult<T>> completionHandler) {
         QueryTask queryTask;
         Class<T> resourceClass;
 
@@ -750,7 +701,8 @@ public class GroupResourcePlacementService extends StatefulService {
             resourceClass = (Class<T>) ComputeState.class;
             queryTask = QueryUtil.buildPropertyQuery(resourceClass,
                     ComputeState.FIELD_NAME_RESOURCE_POOL_LINK,
-                    state.resourcePoolLink);
+                    state.resourcePoolLink, ComputeState.FIELD_NAME_TYPE,
+                    ComputeType.VM_GUEST.name());
         } else {
             throw new LocalizableValidationException("Unsupported placement resourceType "
                     + state.resourceType,
