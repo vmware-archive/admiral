@@ -137,10 +137,6 @@ public class ReservationTaskServiceTest extends RequestBaseTest {
         assertEquals(groupPlacementState.documentSelfLink, task.groupResourcePlacementLink);
 
         assertEquals(groupPlacementState.allocatedInstancesCount, task.resourceCount);
-        assertEquals(1, groupPlacementState.resourceQuotaPerResourceDesc.size());
-        Long countPerDesc = groupPlacementState.resourceQuotaPerResourceDesc
-                .get(task.resourceDescriptionLink);
-        assertEquals(task.resourceCount, countPerDesc.longValue());
 
         // check custom properties overridden:
         assertEquals(2, task.customProperties.size());
@@ -306,10 +302,7 @@ public class ReservationTaskServiceTest extends RequestBaseTest {
 
             assertEquals(groupPlacementState.documentSelfLink, task.groupResourcePlacementLink);
             assertEquals(totalAllocatedResources, groupPlacementState.allocatedInstancesCount);
-            assertEquals(1, groupPlacementState.resourceQuotaPerResourceDesc.size());
-            Long countPerDesc = groupPlacementState.resourceQuotaPerResourceDesc
-                    .get(task.resourceDescriptionLink);
-            assertEquals(totalAllocatedResources, countPerDesc.longValue());
+
         }
     }
 
@@ -363,10 +356,6 @@ public class ReservationTaskServiceTest extends RequestBaseTest {
 
             assertEquals(totalAllocatedResources, globalGroupState.allocatedInstancesCount);
             assertEquals(globalGroupState.documentSelfLink, task.groupResourcePlacementLink);
-            assertEquals(1, globalGroupState.resourceQuotaPerResourceDesc.size());
-            Long countPerDesc = globalGroupState.resourceQuotaPerResourceDesc
-                    .get(task.resourceDescriptionLink);
-            assertEquals(totalAllocatedResources, countPerDesc.longValue());
         }
     }
 
@@ -740,10 +729,6 @@ public class ReservationTaskServiceTest extends RequestBaseTest {
                 groupPlacementStateEnoughMemory.availableInstancesCount);
         assertEquals(groupPlacementStateEnoughMemory.documentSelfLink,
                 task.groupResourcePlacementLink);
-        assertEquals(1, groupPlacementStateEnoughMemory.resourceQuotaPerResourceDesc.size());
-        Long countPerDesc = groupPlacementStateEnoughMemory.resourceQuotaPerResourceDesc
-                .get(task.resourceDescriptionLink);
-        assertEquals(task.resourceCount, countPerDesc.longValue());
     }
 
     private GroupResourcePlacementState createPlacement(DeploymentPolicy policy)

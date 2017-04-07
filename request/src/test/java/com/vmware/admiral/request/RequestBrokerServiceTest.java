@@ -681,11 +681,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
             }
         }
 
-        assertEquals(0,
-                groupPlacementState.resourceQuotaPerResourceDesc.get(containerLink1).intValue());
-        assertEquals(0,
-                groupPlacementState.resourceQuotaPerResourceDesc.get(containerLink2).intValue());
-
         // Verify request status
         RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
         assertNotNull(rs);
@@ -821,11 +816,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
                 containerLink2 = link;
             }
         }
-
-        Long container1Quota = groupPlacementState.resourceQuotaPerResourceDesc.get(containerLink1);
-        Long container2Quota = groupPlacementState.resourceQuotaPerResourceDesc.get(containerLink2);
-        assertTrue((container1Quota != null && container1Quota == 0L && container2Quota == null)
-                || (container2Quota != null && container2Quota == 0L && container1Quota == null));
 
         // Verify request status
         RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
@@ -1555,11 +1545,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
             }
         }
 
-        assertEquals(0,
-                groupPlacementState.resourceQuotaPerResourceDesc.get(containerLink1).intValue());
-        assertEquals(0,
-                groupPlacementState.resourceQuotaPerResourceDesc.get(containerLink2).intValue());
-
         // Verify request status
         RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
         assertNotNull(rs);
@@ -1745,10 +1730,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         groupPlacementState = getDocument(GroupResourcePlacementState.class,
                 groupPlacementState.documentSelfLink);
         assertEquals(0, groupPlacementState.allocatedInstancesCount);
-        assertEquals(0,
-                groupPlacementState.resourceQuotaPerResourceDesc
-                        .get(containerDesc.documentSelfLink)
-                        .intValue());
     }
 
     @Test
@@ -1791,10 +1772,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         groupPlacementState = getDocument(GroupResourcePlacementState.class,
                 groupPlacementState.documentSelfLink);
         assertEquals(0, groupPlacementState.allocatedInstancesCount);
-        assertEquals(0,
-                groupPlacementState.resourceQuotaPerResourceDesc
-                        .get(containerDesc.documentSelfLink)
-                        .intValue());
     }
 
     @Test
@@ -1829,10 +1806,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         groupPlacementState = getDocument(GroupResourcePlacementState.class,
                 groupPlacementState.documentSelfLink);
         assertEquals(0, groupPlacementState.allocatedInstancesCount);
-        assertEquals(0,
-                groupPlacementState.resourceQuotaPerResourceDesc
-                        .get(containerDesc.documentSelfLink)
-                        .intValue());
     }
 
     @Test
