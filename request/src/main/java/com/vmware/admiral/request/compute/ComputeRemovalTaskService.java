@@ -45,6 +45,7 @@ import com.vmware.admiral.request.compute.ComputeRemovalTaskService.ComputeRemov
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.ComputeService.LifecycleState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.photon.controller.model.tasks.ResourceRemovalTaskService;
 import com.vmware.photon.controller.model.tasks.ResourceRemovalTaskService.ResourceRemovalTaskState;
@@ -158,7 +159,6 @@ public class ComputeRemovalTaskService extends
     }
 
     private void queryContainerHosts(ComputeRemovalTaskState state) {
-
         Query computeHost = QueryUtil.addListValueClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                 state.resourceLinks, MatchType.TERM);
         computeHost.occurance = Occurance.MUST_OCCUR;
@@ -225,6 +225,7 @@ public class ComputeRemovalTaskService extends
     private void disableComputeHosts(ComputeRemovalTaskState state) {
         ComputeState computeState = new ComputeState();
         computeState.powerState = PowerState.SUSPEND;
+        computeState.lifecycleState = LifecycleState.SUSPEND;
 
         try {
             List<Operation> operations = new ArrayList<>(state.resourceLinks.size());

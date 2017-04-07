@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.compute.container;
 
+import static org.junit.Assert.fail;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,6 +51,7 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.ComputeService.LifecycleState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
@@ -112,11 +115,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         // add preexisting container
         addContainerToMockAdapter(hostId, preexistingContainerId, preexistingContainerNames);
 
-        ComputeDescription hostDescription = new ComputeDescription();
-        hostDescription.id = UUID.randomUUID().toString();
-        hostDescription.environmentName = ComputeDescription.ENVIRONMENT_NAME_ON_PREMISE;
-        hostDescription.supportedChildren = new ArrayList<>(
-                Arrays.asList(ComputeType.DOCKER_CONTAINER.toString()));
+        ComputeDescription hostDescription = createComputeDescription();
         hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
 
         ComputeState cs = createComputeState(hostId, hostDescription);
@@ -155,11 +154,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
 
     @Test
     public void testContainersCountOnHostWithoutContainers() throws Throwable {
-        ComputeDescription hostDescription = new ComputeDescription();
-        hostDescription.id = UUID.randomUUID().toString();
-        hostDescription.environmentName = ComputeDescription.ENVIRONMENT_NAME_ON_PREMISE;
-        hostDescription.supportedChildren = new ArrayList<>(
-                Arrays.asList(ComputeType.DOCKER_CONTAINER.toString()));
+        ComputeDescription hostDescription = createComputeDescription();
         hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
 
         String hostId = UUID.randomUUID().toString();
@@ -187,11 +182,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
 
     @Test
     public void testContainersCountSystemContainerOnly() throws Throwable {
-        ComputeDescription hostDescription = new ComputeDescription();
-        hostDescription.id = UUID.randomUUID().toString();
-        hostDescription.environmentName = ComputeDescription.ENVIRONMENT_NAME_ON_PREMISE;
-        hostDescription.supportedChildren = new ArrayList<>(
-                Arrays.asList(ComputeType.DOCKER_CONTAINER.toString()));
+        ComputeDescription hostDescription = createComputeDescription();
         hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
 
         String hostId = UUID.randomUUID().toString();
@@ -235,11 +226,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         // add preexisting container
         addContainerToMockAdapter(hostId, preexistingContainerId, preexistingContainerNames);
 
-        ComputeDescription hostDescription = new ComputeDescription();
-        hostDescription.id = UUID.randomUUID().toString();
-        hostDescription.environmentName = ComputeDescription.ENVIRONMENT_NAME_ON_PREMISE;
-        hostDescription.supportedChildren = new ArrayList<>(
-                Arrays.asList(ComputeType.DOCKER_CONTAINER.toString()));
+        ComputeDescription hostDescription = createComputeDescription();
         hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
 
         ComputeState cs = createComputeState(hostId, hostDescription);
@@ -293,11 +280,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
             host.startService(Operation.createPost(adapterServiceUri), mockInspectAdapterService);
             waitForServiceAvailability(ManagementUriParts.ADAPTER_DOCKER);
 
-            ComputeDescription hostDescription = new ComputeDescription();
-            hostDescription.id = UUID.randomUUID().toString();
-            hostDescription.environmentName = ComputeDescription.ENVIRONMENT_NAME_ON_PREMISE;
-            hostDescription.supportedChildren = new ArrayList<>(
-                    Arrays.asList(ComputeType.DOCKER_CONTAINER.toString()));
+            ComputeDescription hostDescription = createComputeDescription();
             hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
 
             ComputeState cs = createComputeState(hostId, hostDescription);
@@ -344,18 +327,15 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
     }
 
     @Test
-    public void testDataCollection() throws Throwable {
+    public void testDataCollectionWhenAHostIsMarkedForDeletion() throws Throwable {
         String hostId = UUID.randomUUID().toString();
-        // add preexisting container
-        addContainerToMockAdapter(hostId, preexistingContainerId, preexistingContainerNames);
 
-        host.log(">>>> DataCollection test start <<<<<<<");
-        ComputeDescription hostDescription = new ComputeDescription();
-        hostDescription.id = UUID.randomUUID().toString();
-        hostDescription.environmentName = ComputeDescription.ENVIRONMENT_NAME_ON_PREMISE;
-        hostDescription.supportedChildren = new ArrayList<>(
-                Arrays.asList(ComputeType.DOCKER_CONTAINER.toString()));
+        ComputeDescription hostDescription = createComputeDescription();
         hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
+
+        ComputeState cs = createComputeState(hostId, hostDescription);
+        cs.lifecycleState = LifecycleState.SUSPEND;
+        cs = doPost(cs, ComputeService.FACTORY_LINK);
 
         // create a dummy ContainerState on the ComputeState (that will be marked as missing by the
         // collection)
@@ -369,8 +349,53 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         missingContainerState.system = false;
         missingContainerState = doPost(missingContainerState, ContainerFactoryService.SELF_LINK);
 
-        ComputeState cs = createComputeState(hostId, hostDescription);
+        doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
+                ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK),
+                false,
+                Service.Action.PATCH);
 
+        String csLink = cs.documentSelfLink;
+        final long timoutInMillis = 5000; // 5sec
+        long startTime = System.currentTimeMillis();
+
+        waitFor(() -> {
+            ComputeState computeState = getDocument(ComputeState.class, csLink);
+            String containers = computeState.customProperties == null ? null
+                    : computeState.customProperties
+                            .get(ContainerHostService.NUMBER_OF_CONTAINERS_PER_HOST_PROP_NAME);
+
+            if (containers != null && Integer.parseInt(containers) >= 1) {
+                fail("Should not have any containers.");
+            }
+
+            return System.currentTimeMillis() - startTime > timoutInMillis;
+        });
+    }
+
+    @Test
+    public void testDataCollection() throws Throwable {
+        String hostId = UUID.randomUUID().toString();
+        // add preexisting container
+        addContainerToMockAdapter(hostId, preexistingContainerId, preexistingContainerNames);
+
+        host.log(">>>> DataCollection test start <<<<<<<");
+
+        // create a dummy ContainerState on the ComputeState (that will be marked as missing by the
+        // collection)
+        missingContainerState = new ContainerState();
+        missingContainerState.id = UUID.randomUUID().toString();
+        missingContainerState.names = containerNames;
+        missingContainerState.parentLink = UriUtils.buildUriPath(
+                ComputeService.FACTORY_LINK,
+                hostId);
+        missingContainerState.powerState = PowerState.STOPPED;
+        missingContainerState.system = false;
+        missingContainerState = doPost(missingContainerState, ContainerFactoryService.SELF_LINK);
+
+        ComputeDescription hostDescription = createComputeDescription();
+        hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
+
+        ComputeState cs = createComputeState(hostId, hostDescription);
         cs = doPost(cs, ComputeService.FACTORY_LINK);
 
         doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
@@ -457,29 +482,10 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         host.log(">>>> DataCollection test end <<<<<<<");
     }
 
-    private ComputeState createComputeState(String hostId, ComputeDescription hostDescription) {
-        ComputeState cs = new ComputeState();
-        cs.id = hostId;
-        cs.documentSelfLink = cs.id;
-        cs.address = "test-address";
-        cs.powerState = com.vmware.photon.controller.model.resources.ComputeService.PowerState.ON;
-        cs.descriptionLink = hostDescription.documentSelfLink;
-        cs.resourcePoolLink = UriUtils.buildUriPath(
-                ResourcePoolService.FACTORY_LINK,
-                UUID.randomUUID().toString());
-        cs.customProperties = new HashMap<>();
-        cs.customProperties.put(ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME, "true");
-        return cs;
-    }
-
     @Test
     public void testResourcePoolsDataCollection() throws Throwable {
         host.log(">>>> ResourcePool data collection test start <<<<<<<");
-        ComputeDescription hostDescription = new ComputeDescription();
-        hostDescription.id = UUID.randomUUID().toString();
-        hostDescription.environmentName = ComputeDescription.ENVIRONMENT_NAME_ON_PREMISE;
-        hostDescription.supportedChildren = new ArrayList<>(
-                Arrays.asList(ComputeType.DOCKER_CONTAINER.toString()));
+        ComputeDescription hostDescription = createComputeDescription();
         hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
 
         ResourcePoolService.ResourcePoolState resourcePoolState = createAndStoreResourcePool();
@@ -616,11 +622,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
     @Test
     public void testPlacementUpdates() throws Throwable {
         host.log(">>>> ResourcePool data collection test start <<<<<<<");
-        ComputeDescription hostDescription = new ComputeDescription();
-        hostDescription.id = UUID.randomUUID().toString();
-        hostDescription.environmentName = ComputeDescription.ENVIRONMENT_NAME_ON_PREMISE;
-        hostDescription.supportedChildren = new ArrayList<>(
-                Arrays.asList(ComputeType.DOCKER_CONTAINER.toString()));
+        ComputeDescription hostDescription = createComputeDescription();
         hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
 
         ResourcePoolService.ResourcePoolState resourcePoolState = createAndStoreResourcePool();
@@ -714,11 +716,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
             host.startService(Operation.createPost(adapterServiceUri), mockInspectAdapterService);
             waitForServiceAvailability(ManagementUriParts.ADAPTER_DOCKER);
 
-            ComputeDescription hostDescription = new ComputeDescription();
-            hostDescription.id = UUID.randomUUID().toString();
-            hostDescription.environmentName = ComputeDescription.ENVIRONMENT_NAME_ON_PREMISE;
-            hostDescription.supportedChildren = new ArrayList<>(
-                    Arrays.asList(ComputeType.DOCKER_CONTAINER.toString()));
+            ComputeDescription hostDescription = createComputeDescription();
             hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
 
             ComputeState cs = createComputeState(hostId, hostDescription);
@@ -801,11 +799,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
     public void testContainersCountWhenHostIsAddedTwice() throws Throwable {
         String hostId = UUID.randomUUID().toString();
 
-        ComputeDescription hostDescription = new ComputeDescription();
-        hostDescription.id = UUID.randomUUID().toString();
-        hostDescription.environmentName = ComputeDescription.ENVIRONMENT_NAME_ON_PREMISE;
-        hostDescription.supportedChildren = new ArrayList<>(
-                Arrays.asList(ComputeType.DOCKER_CONTAINER.toString()));
+        ComputeDescription hostDescription = createComputeDescription();
         hostDescription = doPost(hostDescription, ComputeDescriptionService.FACTORY_LINK);
 
         //Add the same host for different tenants
@@ -936,6 +930,31 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         MockDockerAdapterService.addContainerId(hostId, containerId,
                 preexistingContainerId);
         MockDockerAdapterService.addContainerNames(hostId, containerId, containerName);
+    }
+
+    private ComputeState createComputeState(String hostId, ComputeDescription hostDescription) {
+        ComputeState cs = new ComputeState();
+        cs.id = hostId;
+        cs.documentSelfLink = cs.id;
+        cs.address = "test-address";
+        cs.powerState = com.vmware.photon.controller.model.resources.ComputeService.PowerState.ON;
+        cs.descriptionLink = hostDescription.documentSelfLink;
+        cs.resourcePoolLink = UriUtils.buildUriPath(
+                ResourcePoolService.FACTORY_LINK,
+                UUID.randomUUID().toString());
+        cs.customProperties = new HashMap<>();
+        cs.customProperties.put(ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME, "true");
+        return cs;
+    }
+
+    private ComputeDescription createComputeDescription() {
+        ComputeDescription cd = new ComputeDescription();
+        cd.id = UUID.randomUUID().toString();
+        cd.environmentName = ComputeDescription.ENVIRONMENT_NAME_ON_PREMISE;
+        cd.supportedChildren = new ArrayList<>(
+                Arrays.asList(ComputeType.DOCKER_CONTAINER.toString()));
+
+        return cd;
     }
 
     public static class MockInspectAdapterService extends StatelessService {

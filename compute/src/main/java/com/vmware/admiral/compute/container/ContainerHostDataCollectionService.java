@@ -64,6 +64,7 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.ComputeService.LifecycleState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
@@ -226,6 +227,11 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 patch.complete();
 
                 for (ComputeState computeState : qr.computesByLink.values()) {
+                    if (LifecycleState.SUSPEND.equals(computeState.lifecycleState)) {
+                        logInfo("Skipping data collection for host %s because it is marked for removal.", computeState.documentSelfLink);
+                        continue;
+                    }
+
                     if (!body.remove) {
                         // if we're adding a host we need to wait for the host info to be populated
                         // first
@@ -739,6 +745,11 @@ public class ContainerHostDataCollectionService extends StatefulService {
             }
 
             for (ComputeState compute : qr.computesByLink.values()) {
+                if (LifecycleState.SUSPEND.equals(compute.lifecycleState)) {
+                    logInfo("Skipping data collection for host %s because it is marked for removal.", compute.documentSelfLink);
+                    continue;
+                }
+
                 updateContainerHostInfo(compute, (o, error) -> {
                     // we complete maintOp here, not waiting for container update
                     maintOp.complete();

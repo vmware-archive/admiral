@@ -32,6 +32,7 @@ import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.ComputeService.LifecycleState;
 
 public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
     private RequestBrokerState request;
@@ -56,18 +57,8 @@ public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
 
     @Test
     public void testComputeRemovalResourceOperationCycleAfterAllocation() throws Throwable {
-        request.customProperties.put(RequestUtils.FIELD_NAME_ALLOCATION_REQUEST, "true");
-
-        request = startRequest(request);
-        waitForRequestToComplete(request);
-
-        request = getDocument(RequestBrokerState.class, request.documentSelfLink);
-        assertNotNull(request);
-
-        // verify the resources are created as expected:
-        assertEquals(request.resourceCount, request.resourceLinks.size());
-        List<String> computeStateLinks = findResourceLinks(ComputeState.class,
-                request.resourceLinks);
+        // compute states after compute allocation request
+        List<String> computeStateLinks = createComputeAllocationRequest();
 
         // create a host removal task
         ComputeRemovalTaskState state = new ComputeRemovalTaskState();
@@ -77,6 +68,17 @@ public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
         assertNotNull("task is null", state);
         String taskSelfLink = state.documentSelfLink;
         assertNotNull("task self link is missing", taskSelfLink);
+
+        // verify that lifecycleState is set to SUSPEND
+        assertNotNull("state.resourceLinks is missing", state.resourceLinks);
+        state.resourceLinks.stream().forEach(csLink -> {
+            try {
+                waitForPropertyValue(csLink, ComputeState.class,
+                        ComputeState.FIELD_NAME_LIFECYCLE_STATE, LifecycleState.SUSPEND);
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+        });
 
         waitForTaskSuccess(taskSelfLink, ComputeRemovalTaskState.class);
 
@@ -89,17 +91,8 @@ public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
     @Test
     public void testRequestBrokerComputeRemovalResourceOperationCycleAfterAllocation()
             throws Throwable {
-        request.customProperties.put(RequestUtils.FIELD_NAME_ALLOCATION_REQUEST, "true");
-        request = startRequest(request);
-        waitForRequestToComplete(request);
-
-        request = getDocument(RequestBrokerState.class, request.documentSelfLink);
-        assertNotNull(request);
-
-        // verify the resources are created as expected:
-        assertEquals(request.resourceCount, request.resourceLinks.size());
-        List<String> computeStateLinks = findResourceLinks(ComputeState.class,
-                request.resourceLinks);
+        // compute states after compute allocation request
+        List<String> computeStateLinks = createComputeAllocationRequest();
 
         assertNotNull("ComputeStates were not allocated", computeStateLinks);
         assertEquals(request.resourceCount, computeStateLinks.size());
@@ -122,17 +115,8 @@ public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
     @Test
     public void testRequestBrokerComputeRemovalResourceOperationCycleAfterProvision()
             throws Throwable {
-        request.customProperties.put(RequestUtils.FIELD_NAME_ALLOCATION_REQUEST, "true");
-        request = startRequest(request);
-        waitForRequestToComplete(request);
-
-        request = getDocument(RequestBrokerState.class, request.documentSelfLink);
-        assertNotNull(request);
-
-        // verify the resources are created as expected:
-        assertEquals(request.resourceCount, request.resourceLinks.size());
-        List<String> computeStateLinks = findResourceLinks(ComputeState.class,
-                request.resourceLinks);
+        // compute states after compute allocation request
+        List<String> computeStateLinks = createComputeAllocationRequest();
 
         assertNotNull("ComputeStates were not allocated", computeStateLinks);
         assertEquals(request.resourceCount, computeStateLinks.size());
@@ -172,17 +156,8 @@ public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
     @Test
     public void testRequestBrokerComputeRemovalWithContainerHostResourceOperationCycleAfterAllocation()
             throws Throwable {
-        request.customProperties.put(RequestUtils.FIELD_NAME_ALLOCATION_REQUEST, "true");
-        request = startRequest(request);
-        waitForRequestToComplete(request);
-
-        request = getDocument(RequestBrokerState.class, request.documentSelfLink);
-        assertNotNull(request);
-
-        // verify the resources are created as expected:
-        assertEquals(request.resourceCount, request.resourceLinks.size());
-        List<String> computeStateLinks = findResourceLinks(ComputeState.class,
-                request.resourceLinks);
+        // compute states after compute allocation request
+        List<String> computeStateLinks = createComputeAllocationRequest();
 
         assertNotNull("ComputeStates were not allocated", computeStateLinks);
         assertEquals(request.resourceCount, computeStateLinks.size());
@@ -202,5 +177,22 @@ public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
         assertTrue("ComputeStates not removed: " + computeStateLinks,
                 computeStateLinks.isEmpty());
 
+    }
+
+    private List<String> createComputeAllocationRequest() throws Throwable {
+        request.customProperties.put(RequestUtils.FIELD_NAME_ALLOCATION_REQUEST, "true");
+
+        request = startRequest(request);
+        waitForRequestToComplete(request);
+
+        request = getDocument(RequestBrokerState.class, request.documentSelfLink);
+        assertNotNull(request);
+
+        // verify the resources are created as expected:
+        assertEquals(request.resourceCount, request.resourceLinks.size());
+        List<String> computeStateLinks = findResourceLinks(ComputeState.class,
+                request.resourceLinks);
+
+        return computeStateLinks;
     }
 }
