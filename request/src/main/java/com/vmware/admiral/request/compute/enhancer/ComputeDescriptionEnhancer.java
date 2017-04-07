@@ -11,11 +11,31 @@
 
 package com.vmware.admiral.request.compute.enhancer;
 
+import java.net.URI;
+import java.util.logging.Level;
+
+import com.vmware.admiral.compute.profile.ProfileService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.xenon.common.DeferredResult;
+import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.UriUtils;
 
 /**
  * An base class to be extended by any ComputeDescription enhancer.
  */
 public abstract class ComputeDescriptionEnhancer implements Enhancer<ComputeDescription> {
 
+    protected DeferredResult<ProfileService.ProfileStateExpanded> getProfileState(ServiceHost host,
+            URI referer, EnhanceContext context) {
+        if (context.profile != null) {
+            return DeferredResult.completed(context.profile);
+        }
+        host.log(Level.INFO, "Loading profile state for %s", context.profileLink);
+
+        URI profileUri = UriUtils.buildUri(host, context.profileLink);
+        return host.sendWithDeferredResult(
+                Operation.createGet(ProfileService.ProfileStateExpanded.buildUri(profileUri)).setReferer(referer),
+                ProfileService.ProfileStateExpanded.class);
+    }
 }
