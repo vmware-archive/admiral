@@ -36,6 +36,7 @@ public class ComputeDescriptionEnhancers extends ComputeDescriptionEnhancer {
         this.enhancers.add(new ComputeDescriptionProfileEnhancer(host, referer));
         this.enhancers.add(new GuestCredentialsComputeDescriptionEnhancer(host, referer));
         this.enhancers.add(new ComputeDescriptionContainerHostRemoteAPIEnhancer());
+        this.enhancers.add(new ComputeDescriptionDiskEnhancer(host, referer));
     }
 
     public static ComputeDescriptionEnhancers build(ServiceHost host, URI referer) {

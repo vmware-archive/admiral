@@ -17,6 +17,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
+import org.junit.Test;
+
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
@@ -52,6 +54,27 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
 
         executeDay2(resourceLinks, ComputeOperationType.POWER_OFF);
         waitForComputePowerState(PowerState.OFF, resourceLinks);
+    }
+
+    @Test
+    public void testProvisionWithBootDisk() throws Throwable {
+        String resourceDescriptionLink = getResourceDescriptionLink(true);
+
+        RequestBrokerState provisionRequest = allocateAndProvision(resourceDescriptionLink);
+
+        try {
+            doWithResources(provisionRequest.resourceLinks);
+        } finally {
+            // create a host removal task - RequestBroker
+            RequestBrokerState deleteRequest = new RequestBrokerState();
+            deleteRequest.resourceType = getResourceType(resourceDescriptionLink);
+            deleteRequest.resourceLinks = provisionRequest.resourceLinks;
+            deleteRequest.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
+            RequestBrokerState cleanupRequest = postDocument(RequestBrokerFactoryService.SELF_LINK,
+                    deleteRequest);
+
+            waitForTaskToComplete(cleanupRequest.documentSelfLink);
+        }
     }
 
     private void executeDay2(Set<String> resourceLinks, ComputeOperationType computeOperation)

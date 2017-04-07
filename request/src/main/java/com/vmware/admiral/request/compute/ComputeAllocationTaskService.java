@@ -73,7 +73,6 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeStateW
 import com.vmware.photon.controller.model.resources.ComputeService.LifecycleState;
 import com.vmware.photon.controller.model.resources.DiskService;
 import com.vmware.photon.controller.model.resources.DiskService.DiskState;
-import com.vmware.photon.controller.model.resources.DiskService.DiskType;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.NetworkInterfaceDescription;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService;
@@ -116,7 +115,6 @@ public class ComputeAllocationTaskService
         public static final String FIELD_NAME_CUSTOM_PROP_ZONE = "__zoneId";
         public static final String FIELD_NAME_CUSTOM_PROP_RESOURCE_POOL_LINK = "__resourcePoolLink";
         public static final String FIELD_NAME_CUSTOM_PROP_REGION_ID = "__regionId";
-        private static final String FIELD_NAME_CUSTOM_PROP_DISK_NAME = "__diskName";
         @Documentation(description = "The description that defines the requested resource.")
         @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED, LINK }, indexing = STORE_ONLY)
         public String resourceDescriptionLink;
@@ -159,7 +157,6 @@ public class ComputeAllocationTaskService
         public static enum SubStage {
             CREATED,
             CONTEXT_PREPARED,
-            COMPUTE_DESCRIPTION_RECONFIGURED,
             RESOURCES_NAMES,
             SELECT_PLACEMENT_COMPUTES,
             START_COMPUTE_ALLOCATION,
@@ -198,10 +195,6 @@ public class ComputeAllocationTaskService
             break;
         case CONTEXT_PREPARED:
             configureComputeDescription(state, this.computeDescription, null);
-            break;
-        case COMPUTE_DESCRIPTION_RECONFIGURED:
-            createOsDiskState(state, SubStage.RESOURCES_NAMES, null,
-                    this.computeDescription);
             break;
         case RESOURCES_NAMES:
             createResourcePrefixNameSelectionTask(state, this.computeDescription);
@@ -322,83 +315,6 @@ public class ComputeAllocationTaskService
         });
     }
 
-    private void createOsDiskState(ComputeAllocationTaskState state,
-            SubStage nextStage, ProfileStateExpanded profile, ComputeDescription computeDesc) {
-        if (state.customProperties.containsKey(ComputeConstants.CUSTOM_PROP_DISK_LINK)) {
-            proceedTo(nextStage);
-            return;
-        }
-        if (profile == null) {
-            getServiceState(state.profileLink, ProfileStateExpanded.class, true,
-                    e -> createOsDiskState(state, nextStage, e, computeDesc));
-            return;
-        }
-        if (computeDesc == null) {
-            getServiceState(state.resourceDescriptionLink, ComputeDescription.class,
-                    compDesc -> createOsDiskState(state, nextStage, profile, compDesc));
-            return;
-        }
-
-        try {
-
-            DiskState rootDisk = new DiskState();
-            rootDisk.id = UUID.randomUUID().toString();
-            rootDisk.documentSelfLink = rootDisk.id;
-            String diskName = state
-                    .getCustomProperty(
-                            ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_DISK_NAME);
-            if (diskName == null) {
-                diskName = "Default disk";
-            }
-            rootDisk.name = diskName;
-            rootDisk.type = DiskType.HDD;
-            rootDisk.bootOrder = 1;
-            rootDisk.capacityMBytes = 8 * 1024;// 8GB
-
-            String imageId = computeDesc.customProperties
-                    .get(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
-
-            rootDisk.sourceImageReference = URI.create(imageId);
-            rootDisk.bootConfig = new DiskState.BootConfig();
-            rootDisk.bootConfig.label = "cidata";
-
-            Map<String, String> values = profile.storageProfile != null
-                    ? profile.storageProfile.bootDiskPropertyMapping
-                    : null;
-            if (values != null) {
-                rootDisk.customProperties = new HashMap<>(values);
-            }
-
-            String content = computeDesc.customProperties
-                    .get(ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME);
-            DiskState.BootConfig.FileEntry file = new DiskState.BootConfig.FileEntry();
-            file.path = "user-data";
-            file.contents = content;
-            rootDisk.bootConfig.files = new DiskState.BootConfig.FileEntry[] { file };
-
-            sendRequest(Operation
-                    .createPost(UriUtils.buildUri(getHost(), DiskService.FACTORY_LINK))
-                    .setBody(rootDisk)
-                    .setCompletion((o, e) -> {
-                        if (e != null) {
-                            failTask("Resource can't be created: " + rootDisk.documentSelfLink,
-                                    e);
-                            return;
-                        }
-                        DiskState diskState = o.getBody(DiskState.class);
-                        logInfo("Resource created: %s", diskState.documentSelfLink);
-                        proceedTo(nextStage, s -> {
-                            s.addCustomProperty(
-                                    ComputeConstants.CUSTOM_PROP_DISK_LINK,
-                                    diskState.documentSelfLink);
-                        });
-                    }));
-
-        } catch (Throwable t) {
-            failTask("Failure creating DiskState", t);
-        }
-    }
-
     private void queryForAllocatedResources(ComputeAllocationTaskState state) {
         // TODO pmitrov: try to remove this and retrieve the newly created ComputeState links
         // directly from the POST request response
@@ -493,11 +409,6 @@ public class ComputeAllocationTaskService
                                 + Utils.toString(t), t);
                         return;
                     }
-                    SubStage nextStage = cd.customProperties
-                            .containsKey(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME)
-                                    ? SubStage.COMPUTE_DESCRIPTION_RECONFIGURED
-                                    : SubStage.RESOURCES_NAMES;
-
                     Operation.createPut(this, state.resourceDescriptionLink)
                             .setBody(cd)
                             .setCompletion((o, e) -> {
@@ -508,7 +419,7 @@ public class ComputeAllocationTaskService
                                     return;
                                 }
                                 this.computeDescription = o.getBody(ComputeDescription.class);
-                                proceedTo(nextStage, s -> {
+                                proceedTo(SubStage.RESOURCES_NAMES, s -> {
                                     s.customProperties = this.computeDescription.customProperties;
                                 });
                             })
@@ -660,10 +571,9 @@ public class ComputeAllocationTaskService
             List<String> diskLinks,
             List<String> networkLinks, ServiceTaskCallback taskCallback) {
         if (diskLinks == null) {
-            createDiskResources(state, taskCallback, dl -> createComputeResource(
+            createDiskResources(state, cd, taskCallback, dl -> createComputeResource(
                     state, cd, profile, parentLink, placementLink, computeResourceId, computeName,
-                    dl,
-                    networkLinks, taskCallback));
+                    dl, networkLinks, taskCallback));
             return;
         }
 
@@ -731,16 +641,15 @@ public class ComputeAllocationTaskService
      * @param taskCallback
      * @param diskLinksConsumer
      */
-    private void createDiskResources(ComputeAllocationTaskState state,
+    private void createDiskResources(ComputeAllocationTaskState state, ComputeDescription cd,
             ServiceTaskCallback taskCallback, Consumer<List<String>> diskLinksConsumer) {
-        String diskDescLink = state.getCustomProperty(ComputeConstants.CUSTOM_PROP_DISK_LINK);
-        if (diskDescLink == null) {
+        List<String> diskDescLinks = cd.diskDescLinks;
+        if (diskDescLinks == null || diskDescLinks.isEmpty()) {
             diskLinksConsumer.accept(new ArrayList<>());
             return;
         }
 
-        DeferredResult<List<String>> result = DeferredResult.allOf(
-                Stream.of(diskDescLink)
+        DeferredResult<List<String>> result = DeferredResult.allOf(diskDescLinks.stream()
                         .map(link -> {
                             Operation op = Operation.createGet(this, link);
                             return this.sendWithDeferredResult(op, DiskState.class);

@@ -86,6 +86,7 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.DiskService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
@@ -312,7 +313,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         return request;
     }
 
-    private String getResourceType(String resourceDescLink) {
+    protected String getResourceType(String resourceDescLink) {
         if (resourceDescLink.startsWith(CompositeDescriptionFactoryService.SELF_LINK)) {
             return ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
         } else {
@@ -405,15 +406,49 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         return createComputeDescription().documentSelfLink;
     }
 
+    protected String getResourceDescriptionLink(boolean withDisks) throws Exception {
+        return createComputeDescription(withDisks).documentSelfLink;
+    }
+
     protected ComputeDescription createComputeDescription()
+            throws Exception {
+        return createComputeDescription(false);
+    }
+
+    protected ComputeDescription createComputeDescription(boolean withDisks)
             throws Exception {
 
         ComputeDescription computeDesc = prepareComputeDescription();
+        if (withDisks) {
+            computeDesc.diskDescLinks = createDiskStates();
+        }
 
         ComputeDescription computeDescription = postDocument(ComputeDescriptionService.FACTORY_LINK,
                 computeDesc, documentLifeCycle);
 
         return computeDescription;
+    }
+
+    protected List<String> createDiskStates() throws Exception {
+        List<String> diskLinks = new ArrayList<>();
+        diskLinks.add(prepareBootDisk().documentSelfLink);
+        return diskLinks;
+    }
+
+    protected DiskService.DiskState prepareBootDisk() throws Exception {
+        DiskService.DiskState rootDisk = new DiskService.DiskState();
+        rootDisk.id = UUID.randomUUID().toString();
+        rootDisk.documentSelfLink = rootDisk.id;
+        rootDisk.name = "Default disk";
+        rootDisk.type = DiskService.DiskType.HDD;
+        rootDisk.bootOrder = 1;
+        rootDisk.capacityMBytes = 8 * 1024;// 8GB
+        String imageId = "coreos";
+
+        rootDisk.sourceImageReference = URI.create(imageId);
+        rootDisk = postDocument(DiskService.FACTORY_LINK, rootDisk, documentLifeCycle);
+
+        return rootDisk;
     }
 
     protected ComputeDescription prepareComputeDescription() throws Exception {

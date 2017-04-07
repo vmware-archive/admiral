@@ -18,7 +18,6 @@ import java.util.logging.Level;
 
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
-import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
 import com.vmware.admiral.request.compute.NetworkProfileQueryUtils;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService;
@@ -49,7 +48,7 @@ public class ComputeDescriptionProfileEnhancer extends ComputeDescriptionEnhance
     public DeferredResult<ComputeDescription> enhance(EnhanceContext context,
             ComputeDescription cd) {
 
-        return getProfileState(context)
+        return getProfileState(host, referer, context)
                 .thenCompose(profile -> {
                     context.profile = profile;
                     DeferredResult<ComputeDescription> result = new DeferredResult<>();
@@ -158,17 +157,5 @@ public class ComputeDescriptionProfileEnhancer extends ComputeDescriptionEnhance
                     result.complete(cd);
                 })
                 .sendWith(host);
-    }
-
-    private DeferredResult<ProfileStateExpanded> getProfileState(EnhanceContext context) {
-        if (context.profile != null) {
-            return DeferredResult.completed(context.profile);
-        }
-        host.log(Level.INFO, "Loading profile state for %s", context.profileLink);
-
-        URI profileUri = UriUtils.buildUri(host, context.profileLink);
-        return host.sendWithDeferredResult(
-                Operation.createGet(ProfileStateExpanded.buildUri(profileUri)).setReferer(referer),
-                ProfileStateExpanded.class);
     }
 }
