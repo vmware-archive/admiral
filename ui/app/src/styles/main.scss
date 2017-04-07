@@ -1024,11 +1024,6 @@ $main-list-view-right: 10px;
   padding-top: 12px !important;
 }
 
-.inline-edit, .inline-edit-header {
-  display: table;
-  width: 100%;
-}
-
 .inline-edit {
   form {
     padding-top: 0;
@@ -1044,11 +1039,6 @@ $main-list-view-right: 10px;
     }
   }
 }
-
-.inline-edit > div, .inline-edit > form, .inline-edit-header > div {
-  display: table-cell;
-}
-
 
 .inline-edit-toolbar {
   width: 60px;
@@ -1654,6 +1644,7 @@ $alert-text-color: #ffffff;
 
 .alert-holder.alert-hidden {
   height: 0px;
+  visibility: hidden;
   opacity: 0;
   pointer-events: none;
 }
