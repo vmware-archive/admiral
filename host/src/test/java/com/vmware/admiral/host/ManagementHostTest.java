@@ -12,6 +12,7 @@
 package com.vmware.admiral.host;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import static com.vmware.xenon.common.CommandLineArgumentParser.ARGUMENT_ASSIGNMENT;
@@ -125,6 +126,7 @@ public class ManagementHostTest {
             host.sendRequest(op);
             host.getTestContext().await();
             assertEquals("The MockHostInteractionService didn't start.", 204, statusCode.get());
+            assertTrue(host.isProcessOwner());
         }
     }
 
