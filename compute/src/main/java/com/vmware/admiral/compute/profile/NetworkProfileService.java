@@ -348,9 +348,10 @@ public class NetworkProfileService extends StatefulService {
         ComputeNetworkCIDRAllocationState cidrAllocationState = new
                 ComputeNetworkCIDRAllocationState();
         cidrAllocationState.networkLink = networkProfile.isolationNetworkLink;
+        cidrAllocationState.tenantLinks = networkProfile.tenantLinks;
         if (networkProfile.isolatedSubnetCIDRPrefix == null) {
             // TODO: Set a default for now. Remove when UI provides a value.
-            cidrAllocationState.subnetCIDRPrefixLength = 31;
+            cidrAllocationState.subnetCIDRPrefixLength = 29;
         } else {
             cidrAllocationState.subnetCIDRPrefixLength = networkProfile.isolatedSubnetCIDRPrefix;
         }
