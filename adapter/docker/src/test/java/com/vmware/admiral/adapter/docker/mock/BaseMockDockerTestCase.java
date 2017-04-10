@@ -130,17 +130,11 @@ public class BaseMockDockerTestCase extends BaseTestCase {
         }
     }
 
-    @Override
-    protected boolean getPeerSynchronizationEnabled() {
-        return true;
-    }
-
     private void startMockDockerHost() throws Throwable {
         ServiceHost.Arguments args = new ServiceHost.Arguments();
         args.sandbox = null;
         args.port = 0;
         mockDockerHost = VerificationHost.create(args);
-        mockDockerHost.setPeerSynchronizationEnabled(this.getPeerSynchronizationEnabled());
         mockDockerHost.setMaintenanceIntervalMicros(this.getMaintenanceIntervalMillis() * 1000);
         mockDockerHost.start();
 

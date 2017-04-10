@@ -62,11 +62,6 @@ public class SystemImageRetrievalManagerTest extends BaseTestCase {
         retrievalManager = new SystemImageRetrievalManager(host);
     }
 
-    @Override
-    protected boolean getPeerSynchronizationEnabled() {
-        return true;
-    }
-
     @Test
     public void testGetFromUserResources() throws Throwable {
         Path testXenonImagesPath = Files.createTempDirectory("test-xenon-images");

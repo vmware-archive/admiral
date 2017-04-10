@@ -68,11 +68,6 @@ public abstract class AuthBaseTest extends BaseTestCase {
         return createHost(customArgs);
     }
 
-    @Override
-    protected boolean getPeerSynchronizationEnabled() {
-        return true;
-    }
-
     private static void startServices(VerificationHost host) throws Throwable {
         DeploymentProfileConfig.getInstance().setTest(true);
 

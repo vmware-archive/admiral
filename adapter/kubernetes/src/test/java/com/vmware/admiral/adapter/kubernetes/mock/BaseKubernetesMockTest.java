@@ -64,11 +64,6 @@ public class BaseKubernetesMockTest extends BaseTestCase {
         }
     }
 
-    @Override
-    protected boolean getPeerSynchronizationEnabled() {
-        return true;
-    }
-
     @Before
     public void setUpMockKubernetesHost() throws Throwable {
         ServiceHost.Arguments args = new ServiceHost.Arguments();
