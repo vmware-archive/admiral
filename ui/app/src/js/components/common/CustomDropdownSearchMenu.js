@@ -228,7 +228,7 @@ CustomDropdownSearchMenu.prototype.setSelectedOption = function(option) {
     $dropDownManage.toggleClass('hide', false);
     this.$el.find('.divider').toggleClass('hide', false);
   } else {
-    this.$el.find('.dropdown-title').html(this.componentOptions.title);
+    this.$el.find('.dropdown-title').text(this.componentOptions.title);
     if (!this.$el.find('.dropdown-title').hasClass('placeholder')) {
       this.$el.find('.dropdown-title').addClass('placeholder');
     }
