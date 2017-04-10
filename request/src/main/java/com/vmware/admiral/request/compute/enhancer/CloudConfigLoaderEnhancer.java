@@ -36,9 +36,10 @@ public class CloudConfigLoaderEnhancer extends ComputeEnhancer {
         if (fileContent == null) {
             boolean supportDocker = enableContainerHost(cs.customProperties);
             String imageType = context.imageType;
+            String fileName = String.format("/%s-content/cloud_config_%s.yml",
+                    context.endpointType, supportDocker ? imageType + "_docker" : "base");
             try {
-                fileContent = loadResource(String.format("/%s-content/cloud_config_%s.yml",
-                        context.endpointType, supportDocker ? imageType + "_docker" : "base"));
+                fileContent = loadResource(fileName);
                 if (fileContent != null && !fileContent.trim().isEmpty()) {
                     Map<String, Object> content = objectMapper().readValue(fileContent, Map.class);
 
@@ -48,7 +49,7 @@ public class CloudConfigLoaderEnhancer extends ComputeEnhancer {
                 }
             } catch (IOException e) {
                 Utils.logWarning("Error reading cloud-config data from %s, reason : %s",
-                        fileContent, e.getMessage());
+                        fileName, e.getMessage());
             }
             return DeferredResult.completed(cs);
         } else {
