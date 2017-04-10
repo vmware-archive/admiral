@@ -84,8 +84,13 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
             throws CertificateException, NoSuchAlgorithmException, KeyStoreException,
             KeyManagementException,
             IOException {
-        SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod.DELETE, dockerBuildImageLink);
-        SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod.DELETE, dockerBuildBaseImageLink);
+        if (dockerBuildImageLink != null) {
+            SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod.DELETE, dockerBuildImageLink);
+        }
+        if (dockerBuildBaseImageLink != null) {
+            SimpleHttpsClient
+                    .execute(SimpleHttpsClient.HttpMethod.DELETE, dockerBuildBaseImageLink);
+        }
         serviceClient.stop();
     }
 

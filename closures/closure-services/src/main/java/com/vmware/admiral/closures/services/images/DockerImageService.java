@@ -13,6 +13,8 @@ package com.vmware.admiral.closures.services.images;
 
 import java.util.concurrent.TimeUnit;
 
+import com.google.gson.JsonNull;
+
 import com.vmware.admiral.closures.drivers.DriverRegistry;
 import com.vmware.admiral.closures.drivers.ExecutionDriver;
 import com.vmware.admiral.closures.util.ClosureProps;
@@ -108,18 +110,14 @@ public class DockerImageService extends StatefulService {
         DockerImage requestedImageState = patch.getBody(DockerImage.class);
         DockerImage currentImageState = this.getState(patch);
         if (requestedImageState.taskInfo != null) {
-            if (!(TaskState.isFailed(requestedImageState.taskInfo) && TaskState
-                    .isFinished(currentImageState
-                            .taskInfo))) {
-                currentImageState.taskInfo = requestedImageState.taskInfo;
-            } else {
-                logInfo("Requested state not allowed!");
-            }
+            currentImageState.taskInfo = requestedImageState.taskInfo;
         }
         if (TaskState.isFailed(currentImageState.taskInfo)) {
-            currentImageState.documentExpirationTimeMicros = ServiceUtils
-                    .getExpirationTimeFromNowInMicros(TimeUnit
-                            .SECONDS.toMicros(ClosureProps.KEEP_FAILED_BUILDS_TIMEOUT_SECONDS));
+            if (currentImageState.documentExpirationTimeMicros <= 0) {
+                currentImageState.documentExpirationTimeMicros = ServiceUtils
+                        .getExpirationTimeFromNowInMicros(TimeUnit
+                                .SECONDS.toMicros(ClosureProps.KEEP_FAILED_BUILDS_TIMEOUT_SECONDS));
+            }
         } else {
             currentImageState.lastAccessedTimeMillis = System.currentTimeMillis();
             currentImageState.documentExpirationTimeMicros = requestedImageState.documentExpirationTimeMicros;
@@ -146,6 +144,7 @@ public class DockerImageService extends StatefulService {
                     imageRequest.documentExpirationTimeMicros = ServiceUtils
                             .getExpirationTimeFromNowInMicros(TimeUnit
                                     .MILLISECONDS.toMicros(1));
+                    imageRequest.imageDetails = JsonNull.INSTANCE;
                     sendSelfPatch(imageRequest);
                 });
     }

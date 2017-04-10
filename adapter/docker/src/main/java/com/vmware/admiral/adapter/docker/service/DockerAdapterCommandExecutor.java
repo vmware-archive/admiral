@@ -199,6 +199,8 @@ public interface DockerAdapterCommandExecutor {
 
     void createImage(CommandInput input, CompletionHandler completionHandler);
 
+    void tagImage(CommandInput input, CompletionHandler completionHandler);
+
     // Container operations:
     void createContainer(CommandInput input, CompletionHandler completionHandler);
 

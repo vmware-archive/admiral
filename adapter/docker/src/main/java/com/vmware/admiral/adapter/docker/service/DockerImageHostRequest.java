@@ -12,13 +12,22 @@
 package com.vmware.admiral.adapter.docker.service;
 
 import java.util.Arrays;
+import java.util.List;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ImageOperationType;
+import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.ServiceDocumentDescription;
 
 public class DockerImageHostRequest extends AdapterRequest {
 
     private byte[] dockerImageData;
+
+    /**
+     * A list of tenant links that can access this resource.
+     */
+    @ServiceDocument.UsageOption(option = ServiceDocumentDescription.PropertyUsageOption.LINKS)
+    public List<String> tenantLinks;
 
     @Override
     public void validate() {

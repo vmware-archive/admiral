@@ -21,8 +21,10 @@ public enum ImageOperationType {
     SEARCH("Image.Search"),
     PING("Image.Ping"),
     LIST_TAGS("Image.Tags"),
+    TAG("Image.Tag"),
     BUILD("Image.Build"),
     LOAD("Image.Load"),
+    CREATE("Image.Create"),
     DELETE("Image.Delete"),
     INSPECT("Image.Inspect");
 

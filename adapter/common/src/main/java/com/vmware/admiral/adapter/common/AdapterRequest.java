@@ -38,6 +38,10 @@ public class AdapterRequest {
      */
     public ServiceTaskCallback serviceTaskCallback;
 
+    public URI getContainerStateReference() {
+        return resourceReference;
+    }
+
     public void validate() {
         StringBuilder sb = new StringBuilder();
         if (resourceReference == null) {
