@@ -27,6 +27,7 @@ import com.vmware.admiral.adapter.common.NetworkOperationType;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationRequest;
 import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationState;
@@ -294,7 +295,7 @@ public class ComputeNetworkRemovalTaskService extends
                 new QueryTop<>(this.getHost(),
                         query,
                         ComputeNetworkCIDRAllocationState.class,
-                        context.subnet.tenantLinks)
+                        QueryUtil.getTenantLinks(context.subnet.tenantLinks))
                         .setMaxResultsLimit(1);
 
         return queryCIDRAllocation.collectLinks(Collectors.toList())
