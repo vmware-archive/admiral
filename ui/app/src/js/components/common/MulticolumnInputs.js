@@ -45,7 +45,7 @@ function createItem(object, model) {
         $input.append($('<option>'));
         if (model[key].options) {
           model[key].options.forEach(function(option) {
-            $input.append($('<option>').attr('value', option.value).html(option.label));
+            $input.append($('<option>').attr('value', option.value).text(option.label));
           });
         }
 

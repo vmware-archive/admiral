@@ -12,6 +12,7 @@
 import CustomDropdownSearchMenuTemplate from
  'components/common/CustomDropdownSearchMenuTemplate.html';
 import constants from 'core/constants';
+import utils from 'core/utils';
 
 function DEFAULT_RENDERER(itemSpec) {
   var result = '';
@@ -26,7 +27,7 @@ function DEFAULT_RENDERER(itemSpec) {
     result += `<span class="spinner spinner-inline"></span>`;
   }
 
-  result += `<span>${itemSpec.name}</span>`;
+  result += `<span>${utils.escapeHtml(itemSpec.name)}</span>`;
 
   return result;
 }
@@ -204,7 +205,7 @@ CustomDropdownSearchMenu.prototype.setSelectedOption = function(option) {
 
   if (option) {
     // value to select has been supplied
-    this.$el.find('.dropdown-title').html(option.name);
+    this.$el.find('.dropdown-title').text(option.name);
     this.$el.find('.dropdown-title').removeClass('placeholder');
     this.$el.find('.dropdown-options li').each(function(n, optionEl) {
       if ($(optionEl).data('spec') === option) {

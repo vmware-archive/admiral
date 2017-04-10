@@ -45,7 +45,9 @@ const HOST_RESULT_LIMIT = 10;
 function hostRenderer(host) {
   return `
     <div>
-      <div class="host-picker-item-primary" title="${host.name}">${host.name}</div>
+      <div class="host-picker-item-primary" title="${host.name}">
+        ${utils.escapeHtml(host.name)}
+      </div>
       <div class="host-picker-item-secondary" title="${host.customProperties.__computeType}">
         (${host.customProperties.__computeType})
       </div>
