@@ -58,16 +58,27 @@ public class ClosureProps {
     public static final long DEFAULT_CLOSURE_EXPIRATION_DAYS = Integer
             .getInteger("com.vmware.admiral.closures.expiration.days", 10);
 
+    public static final int CLOSURE_CONTAINER_DESCRIPTION_EXPIRATION_SECONDS = Integer
+            .getInteger("com.vmware.admiral.closures.container.description.expiration.seconds",
+                    120);
+
     /**
      * Publicly/Externally accessible URI of Admiral services. In case it exits the propery will be
      * used by closure runtime execution to callback Admiral services instead of xenon publicUri
      * property.
      */
     public static final String CLOSURE_SERVICE_CALLBACK_URI = "closure.service.callback.uri";
+
     /**
      * Trust certificates to use when talking to callback uri
      */
     public static final String CALLBACK_TRUST_CERT_FILE_PATH = "closure.service.callback.trust.certificate";
+
+    /**
+     * Sets runtime image registry. If set the runtime base image will be pulled from the
+     * registry.
+     */
+    public static final String CLOSURE_RUNTIME_IMAGE_REGISTRY = "closure.image.runtime.registry.";
 
     public static final String ENV_PROP_TASK_URI = "TASK_URI";
     public static final String ENV_PROP_TOKEN = "TOKEN";

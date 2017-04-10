@@ -11,8 +11,6 @@
 
 package com.vmware.admiral.adapter.docker.service;
 
-import java.net.URI;
-
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 
@@ -36,7 +34,4 @@ public class ContainerInstanceRequest extends AdapterRequest {
         return ContainerOperationType.instanceById(operationTypeId);
     }
 
-    public URI getContainerStateReference() {
-        return resourceReference;
-    }
 }

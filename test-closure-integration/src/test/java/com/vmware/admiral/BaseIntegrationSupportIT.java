@@ -11,6 +11,8 @@
 
 package com.vmware.admiral;
 
+import static org.junit.Assert.assertNotNull;
+
 import static com.vmware.admiral.TestPropertiesUtil.getSystemOrTestProp;
 
 import java.net.HttpURLConnection;
@@ -31,8 +33,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-
-import static org.junit.Assert.assertNotNull;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;

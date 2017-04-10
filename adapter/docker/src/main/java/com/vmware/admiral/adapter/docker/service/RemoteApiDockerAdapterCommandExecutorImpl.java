@@ -232,6 +232,26 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
     }
 
     @Override
+    public void tagImage(CommandInput input, Operation.CompletionHandler completionHandler) {
+        createOrUpdateTargetSsl(input);
+
+        Map<String, Object> props = input.getProperties();
+        String path = String
+                .format("/images/%s/tag", props.get(DockerAdapterCommandExecutor
+                        .DOCKER_IMAGE_NAME_PROP_NAME));
+        URI targetUri = UriUtils.extendUri(input.getDockerUri(), path);
+
+        props.remove(DOCKER_IMAGE_NAME_PROP_NAME);
+
+        // convert the properties to URL parameters, the way /images/{name}/tag likes them
+        targetUri = extendUriWithQuery(targetUri, input);
+
+        logger.info("Tagging image: " + targetUri);
+
+        sendPost(targetUri, null, ClientMode.DEFAULT, completionHandler);
+    }
+
+    @Override
     public void createContainer(CommandInput input, CompletionHandler completionHandler) {
         createOrUpdateTargetSsl(input);
 

@@ -31,12 +31,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 
+import com.vmware.admiral.adapter.docker.util.DockerImage;
 import com.vmware.admiral.closures.drivers.ContainerConfiguration;
 import com.vmware.xenon.common.Utils;
 
@@ -53,6 +53,11 @@ public final class ClosureUtils {
 
     public static boolean isEmpty(String str) {
         return str == null || str.trim().length() <= 0;
+    }
+
+    public static String createBaseImageName(String image) {
+        DockerImage dockerImage = DockerImage.fromImageName(image);
+        return dockerImage.getRepository() + "_base.tar.xz";
     }
 
     public static String prepareImageTag(ContainerConfiguration configuration, String
@@ -219,8 +224,7 @@ public final class ClosureUtils {
         tarEntry.setSize(size);
         tarOutputStream.putArchiveEntry(tarEntry);
         try (InputStream input = new BufferedInputStream(inStream)) {
-            long byteRead = copy(input, tarOutputStream);
-            logInfo("---- BYTES READ %s ", byteRead);
+            copy(input, tarOutputStream);
             tarOutputStream.closeArchiveEntry();
         }
     }
