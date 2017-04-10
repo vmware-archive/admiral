@@ -517,7 +517,7 @@
         "valueLabel": "Value",
         "instanceTypeMappingLabel": "Instance type",
         "imageMappingLabel": "Image type",
-        "bootDiskPropertyMappingLabel": "Boot Disk Property",
+        "diskPropertyMappingLabel": "Disk Properties",
         "cpuCountLabel": "CPUs",
         "diskSizeMbLabel": "Disk size (MB)",
         "memoryMbLabel": "Memory (MB)",
@@ -534,7 +534,10 @@
         "cidrPrefixLabel": "Subnets Prefix Length",
         "resourceGroupsLabel": "Resource groups",
         "supportPublicIpAddressLabel": "Support Public IP",
-        "defaultForZoneLabel": "Default for Zone"
+        "defaultForZoneLabel": "Default for Zone",
+        "addStorageItem": "Add Storage Item",
+        "defaultLabel": "Default",
+        "makeDescriptorDefault": "Make this descriptor default"
       },
       "instanceType": {
         "aws": {

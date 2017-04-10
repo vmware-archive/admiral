@@ -18,6 +18,7 @@ import static org.junit.Assert.assertNull;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.junit.Test;
 
@@ -82,11 +83,11 @@ public class ProfileServiceTest extends ComputeBaseTest {
 
     @Test
     public void testAzureDefault() throws Throwable {
-        String awsProfileLink = UriUtils.buildUriPath(ProfileService.FACTORY_LINK,
+        String azureProfileLink = UriUtils.buildUriPath(ProfileService.FACTORY_LINK,
                 EndpointType.azure.name());
-        waitForServiceAvailability(awsProfileLink);
+        waitForServiceAvailability(azureProfileLink);
 
-        ProfileStateExpanded profile = getDocument(ProfileStateExpanded.class, awsProfileLink,
+        ProfileStateExpanded profile = getDocument(ProfileStateExpanded.class, azureProfileLink,
                 UriUtils.URI_PARAM_ODATA_EXPAND,
                 ServiceDocumentQueryResult.FIELD_NAME_DOCUMENT_LINKS);
 
@@ -96,7 +97,9 @@ public class ProfileServiceTest extends ComputeBaseTest {
         assertNotNull(profile.computeProfile);
         assertNotNull(profile.storageProfile);
         assertEquals("Basic_A2", profile.computeProfile.instanceTypeMapping.get("large").instanceType);
-        assertEquals(3, profile.storageProfile.bootDiskPropertyMapping.size());
+        assertEquals(3, profile.storageProfile.storageItems.stream().filter(storageItem ->
+                        storageItem.defaultItem).collect(Collectors.toList()).get(0)
+                .diskProperties.size());
     }
 
     @Test
