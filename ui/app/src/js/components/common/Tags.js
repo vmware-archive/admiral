@@ -67,7 +67,9 @@ function Tags(el) {
                 { value: q + (q.indexOf(SEPARATOR) === -1 ? SEPARATOR : '')}
               ];
             }
-            async(suggestions);
+            async(suggestions.map((tag) => $.extend({}, tag, {
+              value: encode(tag.value)
+            })));
           });
         },
         display: (tag) => {
