@@ -46,11 +46,6 @@ public class NodeHealthCheckServiceTest extends BaseTestCase {
         availableServicesPaths.addAll(Arrays.asList(ConfigurationFactoryService.SELF_LINK));
     }
 
-    @Override
-    protected boolean getPeerSynchronizationEnabled() {
-        return true;
-    }
-
     @Test
     public void testHealthCheckPositiveScenario() {
 

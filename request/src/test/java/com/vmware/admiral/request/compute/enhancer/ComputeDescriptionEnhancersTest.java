@@ -92,11 +92,6 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
                 awsEndpointType);
     }
 
-    @Override
-    protected boolean getPeerSynchronizationEnabled() {
-        return true;
-    }
-
     @Test
     public void testEnhanceWithSshEnabledAndPreconfiguredPublicSshKeyAuthLink() throws Throwable {
         cd.customProperties.put(ComputeConstants.CUSTOM_PROP_ENABLE_SSH_ACCESS_NAME,

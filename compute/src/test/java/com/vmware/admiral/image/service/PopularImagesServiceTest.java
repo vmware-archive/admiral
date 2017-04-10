@@ -29,11 +29,6 @@ import com.vmware.xenon.common.UriUtils;
 
 public class PopularImagesServiceTest extends BaseTestCase {
 
-    @Override
-    protected boolean getPeerSynchronizationEnabled() {
-        return true;
-    }
-
     @Test
     public void testGetDefaultPopularImages() throws Throwable {
 

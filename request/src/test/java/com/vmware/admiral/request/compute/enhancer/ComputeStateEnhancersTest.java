@@ -92,11 +92,6 @@ public class ComputeStateEnhancersTest extends BaseTestCase {
                 awsEndpointType);
     }
 
-    @Override
-    protected boolean getPeerSynchronizationEnabled() {
-        return true;
-    }
-
     @Test
     public void testBaseEnhance() throws Throwable {
         cs.descriptionLink = createComputeDescription(null).documentSelfLink;

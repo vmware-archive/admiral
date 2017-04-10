@@ -62,7 +62,6 @@ public class BaseMockRegistryTestCase extends BaseTestCase {
         args.sandbox = null;
         args.port = 0;
         mockRegistryHost = VerificationHost.create(args);
-        mockRegistryHost.setPeerSynchronizationEnabled(this.getPeerSynchronizationEnabled());
         mockRegistryHost.setMaintenanceIntervalMicros(this.getMaintenanceIntervalMillis());
         mockRegistryHost.start();
 

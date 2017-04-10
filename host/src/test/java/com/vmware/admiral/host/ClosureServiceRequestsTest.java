@@ -71,11 +71,6 @@ public class ClosureServiceRequestsTest extends BaseTestCase {
     }
 
     @Override
-    protected boolean getPeerSynchronizationEnabled() {
-        return true;
-    }
-
-    @Override
     protected void registerInterceptors(OperationInterceptorRegistry registry) {
         CompositeComponentInterceptor.register(registry);
     }
