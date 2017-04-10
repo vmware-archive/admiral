@@ -15,19 +15,21 @@ export default Vue.component('vsphere-endpoint-editor', {
   template: `
     <div>
       <text-group
-        :disabled="!!model.documentSelfLink"
+        :disabled="!!model.documentSelfLink || !!this.verified"
         :label="i18n('app.endpoint.edit.vsphere.hostNameLabel')"
         :required="true"
         :value="hostName"
         @change="onHostNameChange">
       </text-group>
       <text-group
+        :disabled="!!this.verified"
         :label="i18n('app.endpoint.edit.vsphere.privateKeyIdLabel')"
         :required="true"
         :value="privateKeyId"
         @change="onPrivateKeyIdChange">
       </text-group>
       <password-group
+        :disabled="!!this.verified"
         :label="i18n('app.endpoint.edit.vsphere.privateKeyLabel')"
         :required="true"
         :value="privateKey"
@@ -35,7 +37,6 @@ export default Vue.component('vsphere-endpoint-editor', {
       </password-group>
       <dropdown-search-group
         v-if="verified"
-        :disabled="!!model.documentSelfLink"
         :entity="i18n('app.endpoint.datacenterEntity')"
         :label="i18n('app.endpoint.edit.vsphere.regionIdLabel')"
         :loading="!regionIdValues"
@@ -46,7 +47,6 @@ export default Vue.component('vsphere-endpoint-editor', {
       </dropdown-search-group>
       <dropdown-search-group
         v-if="verified"
-        :disabled="!!model.documentSelfLink && !!model.linkedEndpoint"
         :entity="i18n('app.endpoint.edit.vsphere.linkedEndpointLabel')"
         :label="i18n('app.endpoint.edit.vsphere.linkedEndpointLabel')"
         :filter="searchLinkedEndpoints"

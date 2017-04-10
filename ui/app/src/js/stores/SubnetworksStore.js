@@ -54,7 +54,7 @@ export default Reflux.createStore({
           }
         });
 
-        services.loadNetworks(endpointLink, networkLinks).then((networks) => {
+        services.loadNetworks(endpointLink, [...new Set(networkLinks)]).then((networks) => {
           subnetworks.forEach((subnetwork) => {
             subnetwork.network = networks[subnetwork.networkLink];
           });
