@@ -114,7 +114,8 @@ export default Vue.component('endpoint-editor', {
       this.editorErrors = errors;
     },
     isSaveDisabled() {
-      return !this.name || !this.endpointType || !this.editor.valid;
+      return !this.name || !this.endpointType || !this.editor.valid ||
+          !(this.model.verified && this.editor.valid);
     },
     isVerifyDisabled() {
       return !this.name || !this.endpointType || !this.editor.valid;

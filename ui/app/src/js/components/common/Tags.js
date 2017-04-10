@@ -11,6 +11,7 @@
 
 import constants from 'core/constants';
 import services from 'core/services';
+import utils from 'core/utils';
 
 const SEPARATOR = constants.TAGS.SEPARATOR;
 const SEPARATOR_REGEX = new RegExp(constants.TAGS.SEPARATOR, 'g');
@@ -19,7 +20,7 @@ const SEPARATOR_ENTITY = constants.TAGS.SEPARATOR_ENTITY;
 const SEPARATOR_ENTITY_REGEX = new RegExp(constants.TAGS.SEPARATOR_ENTITY, 'g');
 
 function encode(value) {
-  return $('<p>').text(value.replace(SEPARATOR_REGEX, SEPARATOR_ENTITY)).html();
+  return utils.escapeHtml(value.replace(SEPARATOR_REGEX, SEPARATOR_ENTITY));
 }
 
 function decode(value) {
