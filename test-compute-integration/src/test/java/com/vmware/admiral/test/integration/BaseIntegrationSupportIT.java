@@ -47,7 +47,6 @@ import javax.net.ssl.X509TrustManager;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -67,6 +66,7 @@ import com.vmware.admiral.request.RequestStatusService.RequestStatus;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpResponse;
+import com.vmware.photon.controller.model.adapterapi.EndpointConfigRequest;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -521,6 +521,7 @@ public abstract class BaseIntegrationSupportIT {
         endpoint.name = name(endpointType, getClass().getSimpleName().toLowerCase(), SUFFIX);
         endpoint.tenantLinks = getTenantLinks();
         endpoint.endpointProperties = new HashMap<>();
+        endpoint.endpointProperties.put(EndpointConfigRequest.ACCEPT_SELFSIGNED_CERTIFICATE, "true");
         extendEndpoint(endpoint);
 
         return postDocument(EndpointAdapterService.SELF_LINK, endpoint, documentLifeCycle);
