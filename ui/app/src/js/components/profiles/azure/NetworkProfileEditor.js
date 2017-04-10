@@ -114,7 +114,9 @@ export default Vue.component('azure-network-profile-editor', {
           (network.groupNames ? network.groupNames.join(', ') : '');
       return `
         <div>
-          <div class="host-picker-item-primary" title="${network.name}">${network.name}</div>
+          <div class="host-picker-item-primary" title="${network.name}">
+            ${utils.escapeHtml(network.name)}
+          </div>
           <div class="host-picker-item-secondary truncateText" title="${secondary}">
             ${secondary}
           </div>

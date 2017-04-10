@@ -10,6 +10,7 @@
  */
 
 import services from 'core/services';
+import utils from 'core/utils';
 
 export default Vue.component('subnetwork-search', {
   template: `
@@ -82,7 +83,9 @@ export default Vue.component('subnetwork-search', {
       let secondary = props.join(', ');
       return `
         <div>
-          <div class="host-picker-item-primary" title="${network.name}">${network.name}</div>
+          <div class="host-picker-item-primary" title="${network.name}">
+            core ${utils.escapeHtml(network.name)}
+          </div>
           <div class="host-picker-item-secondary" title="${secondary}">
             ${secondary}
           </div>
