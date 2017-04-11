@@ -1007,6 +1007,7 @@ public class ContainerHostService extends StatelessService {
         URI uri = UriUtils.buildUri(getHost(),
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK);
         ContainerHostDataCollectionState state = new ContainerHostDataCollectionState();
+        state.createOrUpdateHost = true;
         state.computeContainerHostLinks = Collections.singleton(documentSelfLink);
         sendRequest(Operation.createPatch(uri)
                 .setBody(state)

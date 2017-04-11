@@ -33,10 +33,13 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
+
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
@@ -135,6 +138,11 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 PropertyIndexingOption.STORE_ONLY,
                 PropertyIndexingOption.EXCLUDE_FROM_SIGNATURE })
         public long skipRunCount;
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
+        @PropertyOptions(indexing = {
+                PropertyIndexingOption.STORE_ONLY,
+                PropertyIndexingOption.EXCLUDE_FROM_SIGNATURE })
+        public boolean createOrUpdateHost;
     }
 
     public ContainerHostDataCollectionService() {
@@ -198,7 +206,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
             state.lastRunTimeMicros = Utils.getNowMicrosUtc();
             updateHostInfoDataCollection(patch);
         } else {
-            if (shouldSkipDC() && !DeploymentProfileConfig.getInstance().isTest()) {
+            if (shouldSkipDC(body)
+                    && !DeploymentProfileConfig.getInstance().isTest()) {
                 patch.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
                 patch.complete();
                 return;
@@ -257,7 +266,11 @@ public class ContainerHostDataCollectionService extends StatefulService {
         }
     }
 
-    private boolean shouldSkipDC() {
+    private boolean shouldSkipDC(ContainerHostDataCollectionState body) {
+        if (body.createOrUpdateHost) {
+            return false;
+        }
+
         OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
         Double systemLoadAverage = osBean.getSystemLoadAverage();
 
