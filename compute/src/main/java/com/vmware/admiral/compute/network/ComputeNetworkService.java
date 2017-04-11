@@ -59,13 +59,6 @@ public class ComputeNetworkService extends StatefulService {
         @UsageOption(option = PropertyUsageOption.REQUIRED)
         public String descriptionLink;
 
-        /**
-         * A tag or name of the Network Profile configuration to use. If not specified a default one
-         * will be calculated based on other components and placement logic.
-         */
-        @UsageOption(option = PropertyUsageOption.OPTIONAL)
-        public String connectivity;
-
         @Documentation(description = "Security groups to apply to all instances connected to this network")
         @UsageOption(option = PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL)
         public Set<String> securityGroupLinks;
@@ -131,5 +124,6 @@ public class ComputeNetworkService extends StatefulService {
 
     private void updateState(ComputeNetwork currentState, ComputeNetwork newState) {
         currentState.provisionProfileLink = newState.provisionProfileLink;
+        currentState.subnetLink = newState.subnetLink;
     }
 }

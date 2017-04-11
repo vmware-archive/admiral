@@ -33,7 +33,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -48,9 +47,7 @@ import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
-import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.NetworkType;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
-import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile.IsolationSupportType;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService;
@@ -80,8 +77,6 @@ import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionS
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService.NetworkInterfaceState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
-import com.vmware.photon.controller.model.resources.ResourceState;
-import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -92,9 +87,7 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
-import com.vmware.xenon.services.common.QueryTask.Query.Builder;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
-import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
 public class ComputeAllocationTaskService
@@ -576,7 +569,7 @@ public class ComputeAllocationTaskService
 
             createComputeResource(state, computeDescription, profile,
                     state.endpointComputeStateLink, placementComputeLinkIterator.next().hostLink,
-                    computeResourceId, name, null, null, taskCallback);
+                    computeResourceId, name, null, taskCallback);
         }
     }
 
@@ -586,25 +579,18 @@ public class ComputeAllocationTaskService
 
     private void createComputeResource(ComputeAllocationTaskState state, ComputeDescription cd,
             ProfileStateExpanded profile, String parentLink, String placementLink,
-            String computeResourceId, String computeName,
-            List<String> diskLinks,
-            List<String> networkLinks, ServiceTaskCallback taskCallback) {
+            String computeResourceId, String computeName, List<String> diskLinks,
+            ServiceTaskCallback taskCallback) {
         if (diskLinks == null) {
             createDiskResources(state, cd, taskCallback, dl -> createComputeResource(
                     state, cd, profile, parentLink, placementLink, computeResourceId, computeName,
-                    dl, networkLinks, taskCallback));
+                    dl, taskCallback));
             return;
         }
 
-        if (networkLinks == null) {
-            createNetworkResources(state, cd, profile, placementLink, taskCallback,
-                    nl -> createComputeResource(state, cd, profile, parentLink, placementLink,
-                            computeResourceId, computeName, diskLinks, nl, taskCallback));
-            return;
-        }
-
-        createComputeHost(state, cd, parentLink, placementLink, computeResourceId, computeName,
-                diskLinks, networkLinks, taskCallback);
+        createNetworkResources(state, cd, profile, taskCallback,
+                nl -> createComputeHost(state, cd, parentLink, placementLink, computeResourceId,
+                        computeName, diskLinks, nl, taskCallback));
     }
 
     private void createComputeHost(ComputeAllocationTaskState state, ComputeDescription cd,
@@ -622,7 +608,11 @@ public class ComputeAllocationTaskService
                 ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_RESOURCE_POOL_LINK);
         resource.endpointLink = state.endpointLink;
         resource.diskLinks = diskLinks;
-        resource.networkInterfaceLinks = networkLinks;
+
+        // networkLinks may be null (in which case they may be set during network provisioning if
+        // there are networks defined in the blueprint)
+        resource.networkInterfaceLinks = networkLinks != null && networkLinks.isEmpty() ? null :
+                networkLinks;
         resource.customProperties = new HashMap<>(state.customProperties);
         if (state.groupResourcePlacementLink != null) {
             resource.customProperties.put(ComputeConstants.GROUP_RESOURCE_PLACEMENT_LINK_NAME,
@@ -704,122 +694,72 @@ public class ComputeAllocationTaskService
     }
 
     private void createNetworkResources(ComputeAllocationTaskState state, ComputeDescription cd,
-            ProfileStateExpanded profile, String placementLink, ServiceTaskCallback taskCallback,
+            ProfileStateExpanded profile, ServiceTaskCallback taskCallback,
             Consumer<List<String>> networkLinksConsumer) {
-        if (cd.networkInterfaceDescLinks == null
-                || cd.networkInterfaceDescLinks.isEmpty()) {
+        if (cd.networkInterfaceDescLinks == null || cd.networkInterfaceDescLinks.isEmpty()) {
             networkLinksConsumer.accept(new ArrayList<>());
             return;
         }
 
         // get all network descriptions first, then create new network interfaces using the
         // description/template
-        List<DeferredResult<String>> drs = cd.networkInterfaceDescLinks.stream()
+        List<DeferredResult<String>> nisLinks = cd.networkInterfaceDescLinks.stream()
                 .map(nicDescLink -> this
                         .sendWithDeferredResult(
                                 Operation.createGet(this, nicDescLink),
                                 NetworkInterfaceDescription.class)
                         .thenCompose(nid -> createNicState(state, cd, nid, profile))
-                        .thenCompose(nic -> this.sendWithDeferredResult(
-                                Operation.createPost(this, NetworkInterfaceService.FACTORY_LINK)
-                                        .setBody(nic),
-                                NetworkInterfaceState.class))
-                        .thenCompose(nis -> DeferredResult.completed(nis.documentSelfLink)))
+                        .thenCompose(nic -> {
+                            if (nic != null) {
+                                return this.sendWithDeferredResult(
+                                        Operation.createPost(this, NetworkInterfaceService.FACTORY_LINK)
+                                                .setBody(nic),
+                                        NetworkInterfaceState.class);
+                            } else {
+                                return DeferredResult.completed(null);
+                            }
+                        })
+                        .thenCompose(nis -> {
+                            if (nis != null) {
+                                return DeferredResult.completed(nis.documentSelfLink);
+                            } else {
+                                return DeferredResult.completed(null);
+                            }
+                        }))
                 .collect(Collectors.toList());
 
-        DeferredResult.allOf(drs).whenComplete((all, e) -> {
+        DeferredResult.allOf(nisLinks).whenComplete((all, e) -> {
             if (e != null) {
                 completeSubTasksCounter(taskCallback, e);
                 return;
             }
-            networkLinksConsumer.accept(all);
+            patchComputeNetworks(state, cd, profile, taskCallback)
+                    .whenComplete((v, ex) -> {
+                        if (ex != null) {
+                            completeSubTasksCounter(taskCallback, ex);
+                            return;
+                        }
+                        // remove the null elements from the list of network links
+                        // (the nulls may originate from skipping the NIC state creation)
+                        all.removeIf(value -> value == null);
+                        networkLinksConsumer.accept(all);
+                    });
         });
     }
 
     private DeferredResult<NetworkInterfaceState> createNicState(ComputeAllocationTaskState state,
             ComputeDescription cd, NetworkInterfaceDescription nid, ProfileStateExpanded profile) {
-        String subnetLink = nid.subnetLink;
 
         boolean noNicVM = nid.customProperties != null
                 && nid.customProperties.containsKey(NetworkProfileQueryUtils.NO_NIC_VM);
-        DeferredResult<SubnetState> subnet = null;
-        boolean isIsolatedNetworkEnvironment = profile.networkProfile != null &&
-                profile.networkProfile.isolationType == IsolationSupportType.SUBNET;
-        boolean hasSubnetStates = profile.networkProfile != null
-                && profile.networkProfile.subnetStates != null
-                && !profile.networkProfile.subnetStates.isEmpty();
-        if (hasSubnetStates || isIsolatedNetworkEnvironment) {
-            if (!noNicVM) {
-                DeferredResult<SubnetState> subnetDeferred = new DeferredResult<>();
-                NetworkProfileQueryUtils.getSubnetForComputeNic(getHost(),
-                        UriUtils.buildUri(getHost(), getSelfLink()), state.tenantLinks,
-                        RequestUtils.getContextId(state), nid, profile,
-                        (networkAndSubnet, ex) -> {
-                            if (ex != null) {
-                                subnetDeferred.fail(ex);
-                                return;
-                            }
 
-                            patchComputeNetwork(networkAndSubnet.left, profile)
-                                    .whenComplete((operation, t) -> {
-                                        if (t != null) {
-                                            subnetDeferred.fail(t);
-                                            return;
-                                        }
-
-                                        if (networkAndSubnet.left.networkType == NetworkType.PUBLIC) {
-                                            nid.assignPublicIpAddress = true;
-
-                                            this.sendWithDeferredResult(
-                                                    Operation
-                                                            .createPatch(this, nid.documentSelfLink)
-                                                            .setBody(nid))
-                                                    .thenAccept(v -> subnetDeferred
-                                                            .complete(networkAndSubnet.right));
-                                            return;
-                                        }
-
-                                        subnetDeferred.complete(networkAndSubnet.right);
-                                    });
-                        });
-                subnet = subnetDeferred;
-            } else {
-                subnet = DeferredResult.completed(profile.networkProfile.subnetStates.get(0));
-            }
-        } else if (noNicVM && nid.networkLink != null) {
-            subnet = DeferredResult.completed(null);
-        } else if (subnetLink == null) {
-            // TODO: filter also by NetworkProfile
-            subnet = findSubnetBy(state, cd.regionId, nid);
+        if (noNicVM) {
+            return NetworkProfileQueryUtils.createNicState(getHost(),
+                    UriUtils.buildUri(getHost(), getSelfLink()), state.tenantLinks,
+                    state.endpointLink, cd, nid, profile, null, null, null);
         } else {
-            subnet = sendWithDeferredResult(Operation.createGet(this, subnetLink),
-                    SubnetState.class);
+            return DeferredResult.completed(null);
         }
-
-        DeferredResult<NetworkInterfaceState> n = subnet.thenCompose(s -> {
-            if (s == null && nid.networkLink == null) {
-                return DeferredResult.failed(
-                        new IllegalStateException("No matching network found for VM:" + cd.name));
-            }
-            NetworkInterfaceState nic = new NetworkInterfaceState();
-            nic.id = UUID.randomUUID().toString();
-            nic.documentSelfLink = nic.id;
-            nic.name = nid.name;
-            nic.deviceIndex = nid.deviceIndex;
-            nic.address = nid.address;
-            nic.networkLink = nid.networkLink != null ? nid.networkLink : s.networkLink;
-            nic.subnetLink = s != null ? s.documentSelfLink : null;
-            nic.networkInterfaceDescriptionLink = nid.documentSelfLink;
-            nic.securityGroupLinks = nid.securityGroupLinks;
-            nic.groupLinks = nid.groupLinks;
-            nic.tagLinks = nid.tagLinks;
-            nic.tenantLinks = state.tenantLinks;
-            nic.endpointLink = state.endpointLink;
-            nic.customProperties = nid.customProperties;
-
-            return DeferredResult.completed(nic);
-        });
-        return n;
     }
 
     private DeferredResult<Operation> patchComputeNetwork(ComputeNetwork computeNetwork,
@@ -831,60 +771,67 @@ public class ComputeAllocationTaskService
                         .setBody(computeNetwork));
     }
 
-    private DeferredResult<SubnetState> findSubnetBy(ComputeAllocationTaskState state,
-            String regionId, NetworkInterfaceDescription nid) {
-        Builder builder = Query.Builder.create().addKindFieldClause(SubnetState.class);
-        if (state.tenantLinks == null || state.tenantLinks.isEmpty()) {
-            builder.addClause(QueryUtil.addTenantClause(state.tenantLinks));
-        }
-        builder.addCompositeFieldClause(ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
-                ComputeProperties.INFRASTRUCTURE_USE_PROP_NAME, Boolean.TRUE.toString(),
-                Occurance.MUST_NOT_OCCUR);
-        if (regionId != null) {
-            builder.addCompositeFieldClause(ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
-                    ComputeProperties.REGION_ID, regionId);
-        } else {
-            Query clause = new Query()
-                    .setTermPropertyName(QuerySpecification.buildCompositeFieldName(
-                            ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
-                            ComputeProperties.REGION_ID))
-                    .setTermMatchType(MatchType.WILDCARD)
-                    .setTermMatchValue(UriUtils.URI_WILDCARD_CHAR);
-            clause.occurance = Occurance.MUST_NOT_OCCUR;
-            builder.addClause(clause);
+    private DeferredResult<Void> patchComputeNetworks(ComputeAllocationTaskState state,
+            ComputeDescription computeDescription, ProfileStateExpanded profile,
+            ServiceTaskCallback taskCallback) {
+
+        if (computeDescription.networkInterfaceDescLinks == null ||
+                computeDescription.networkInterfaceDescLinks.isEmpty()) {
+            return DeferredResult.completed(null);
         }
 
-        QueryByPages<SubnetState> querySubnetStates = new QueryByPages<>(getHost(), builder.build(),
-                SubnetState.class, QueryUtil.getTenantLinks(state.tenantLinks), state.endpointLink);
+        // get all network interface names
+        List<DeferredResult<String>> nidNames = computeDescription.networkInterfaceDescLinks
+                .stream()
+                .map(nicDescLink -> this
+                        .sendWithDeferredResult(
+                                Operation.createGet(this, nicDescLink),
+                                NetworkInterfaceDescription.class)
+                        .thenCompose(nid -> DeferredResult.completed(nid.name)))
+                .collect(Collectors.toList());
 
-        ArrayList<SubnetState> links = new ArrayList<>();
-        ArrayList<SubnetState> prefered = new ArrayList<>();
-        ArrayList<SubnetState> supportPublic = new ArrayList<>();
-        return querySubnetStates.queryDocuments(s -> {
-            boolean supportsPublic = s.supportPublicIpAddress != null && s.supportPublicIpAddress;
-            boolean defaultForZone = s.defaultForZone != null && s.defaultForZone;
-            if (supportsPublic && defaultForZone) {
-                prefered.add(s);
-            } else if (supportsPublic) {
-                supportPublic.add(s);
-            } else {
-                links.add(s);
+        DeferredResult<Void> patchOps = new DeferredResult<>();
+        DeferredResult.allOf(nidNames).whenComplete((all, e) -> {
+            if (e != null) {
+                completeSubTasksCounter(taskCallback, e);
+                return;
             }
-        }).thenCompose(ignore -> {
-            if (!prefered.isEmpty()) {
-                return DeferredResult.<SubnetState> completed(prefered.get(0));
-            }
-            if (!supportPublic.isEmpty()) {
-                return DeferredResult.<SubnetState> completed(supportPublic.get(0));
-            }
-            Optional<SubnetState> subnetState = links.stream().findFirst();
-            if (subnetState.isPresent()) {
-                return DeferredResult.<SubnetState> completed(subnetState.get());
-            } else {
-                return regionId != null ? findSubnetBy(state, null, nid)
-                        : (DeferredResult<SubnetState>) null;
-            }
+
+            // convert the list of names to a set for faster lookup
+            Set<String> networkNames = all.stream().collect(Collectors.toSet());
+
+            // get all compute networks within the current deployment context (i.e., same context
+            // id) which have the names in the above set
+            NetworkProfileQueryUtils.getContextComputeNetworksByName(getHost(),
+                    UriUtils.buildUri(getHost(), getSelfLink()), state.tenantLinks,
+                    RequestUtils.getContextId(state), networkNames,
+                    (computeNetworks, ex) -> {
+                        if (ex != null) {
+                            completeSubTasksCounter(taskCallback, e);
+                            return;
+                        }
+
+                        // patch the compute networks with the link to the selected network profile
+                        List<DeferredResult<Operation>> ops = computeNetworks.stream()
+                                .map(computeNetwork -> {
+                                    if (computeNetwork.provisionProfileLink != null) {
+                                        return DeferredResult.completed(new Operation());
+                                    }
+                                    return patchComputeNetwork(computeNetwork, profile);
+                                }).collect(Collectors.toList());
+
+                        DeferredResult.allOf(ops).whenComplete((allOps, t) -> {
+                            if (t != null) {
+                                completeSubTasksCounter(taskCallback, t);
+                                return;
+                            }
+
+                            patchOps.complete(null);
+                        });
+                    });
         });
+
+        return patchOps;
     }
 
     private void getResourcePool(ComputeAllocationTaskState state,

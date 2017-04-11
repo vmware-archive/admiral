@@ -223,7 +223,7 @@ public class ComputeNetworkRemovalTaskService extends
         }
 
         ComputeNetworkCIDRAllocationRequest request =
-                deallocationRequest(context.subnet.documentSelfLink);
+                deallocationRequest(context.subnet.id);
 
         return this.sendWithDeferredResult(
                 Operation.createPatch(this, context.cidrAllocationServiceLink)

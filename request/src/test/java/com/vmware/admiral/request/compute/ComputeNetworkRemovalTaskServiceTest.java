@@ -80,11 +80,11 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
         ComputeNetworkCIDRAllocationState cidrAllocationState =
                 createCIDRAllocation(subnet.networkLink);
 
-        doPatch(allocationRequest(subnet.documentSelfLink),
+        doPatch(allocationRequest(subnet.id),
                 ComputeNetworkCIDRAllocationState.class,
                 cidrAllocationState.documentSelfLink);
 
-        validateCIDRAllocated(cidrAllocationState.documentSelfLink, subnet.documentSelfLink);
+        validateCIDRAllocated(cidrAllocationState.documentSelfLink, subnet.id);
 
         ComputeNetwork cn = createNetwork("my net");
         cn.networkType = ComputeNetworkDescriptionService.NetworkType.ISOLATED;
@@ -98,7 +98,7 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
         validateResourcesRemove(removalTask.resourceLinks.iterator().next(),
                 subnet.documentSelfLink);
 
-        validateCIDRDeallocated(cidrAllocationState.documentSelfLink, subnet.documentSelfLink);
+        validateCIDRDeallocated(cidrAllocationState.documentSelfLink, subnet.id);
     }
 
     @Test
@@ -183,23 +183,23 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
         return cn;
     }
 
-    private void validateCIDRAllocated(String cidrAllocationLink, String subnetLink)
+    private void validateCIDRAllocated(String cidrAllocationLink, String subnetId)
             throws Throwable {
 
         ComputeNetworkCIDRAllocationState cidrAllocation = getDocumentNoWait
                 (ComputeNetworkCIDRAllocationState.class, cidrAllocationLink);
 
         assertNotNull(cidrAllocation);
-        assertTrue(cidrAllocation.allocatedCIDRs.containsKey(subnetLink));
+        assertTrue(cidrAllocation.allocatedCIDRs.containsKey(subnetId));
     }
 
-    private void validateCIDRDeallocated(String cidrAllocationLink, String subnetLink)
+    private void validateCIDRDeallocated(String cidrAllocationLink, String subnetId)
             throws Throwable {
         ComputeNetworkCIDRAllocationState cidrAllocation = getDocumentNoWait
                 (ComputeNetworkCIDRAllocationState.class, cidrAllocationLink);
 
         assertNotNull(cidrAllocation);
-        assertFalse(cidrAllocation.allocatedCIDRs.containsKey(subnetLink));
+        assertFalse(cidrAllocation.allocatedCIDRs.containsKey(subnetId));
     }
 
     private void validateResourcesRemove(String computeNetworkLink, String subnetLink)

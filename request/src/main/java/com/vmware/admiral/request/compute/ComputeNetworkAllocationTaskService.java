@@ -19,7 +19,6 @@ import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_I
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.Consumer;
 
 import com.vmware.admiral.common.ManagementUriParts;
@@ -27,7 +26,6 @@ import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
-import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.NetworkType;
 import com.vmware.admiral.compute.network.ComputeNetworkService;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
 import com.vmware.admiral.request.ResourceNamePrefixTaskService;
@@ -39,10 +37,7 @@ import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
-import com.vmware.photon.controller.model.resources.SubnetService;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
-import com.vmware.photon.controller.model.support.LifecycleState;
-import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
@@ -322,21 +317,6 @@ public class ComputeNetworkAllocationTaskService extends
         assertNotNull(taskCallback, "taskCallback");
 
         try {
-            if (networkDescription.networkType == NetworkType.ISOLATED && subnetState == null) {
-                // If isolation will be based on a new subnet create a state now that
-                // can be used when allocating the compute resources.
-
-                createTemplateSubnetState(state, resourceName)
-                        .whenComplete((createdSubnet, e) -> {
-                            if (e != null) {
-                                completeSubTasksCounter(taskCallback, e);
-                                return;
-                            }
-                            createComputeNetworkState(state, networkDescription, resourceName,
-                                    taskCallback, createdSubnet);
-                        });
-                return;
-            }
             final ComputeNetwork networkState = new ComputeNetwork();
             networkState.documentSelfLink = buildNetworkLink(resourceName);
             networkState.name = resourceName;
@@ -380,30 +360,6 @@ public class ComputeNetworkAllocationTaskService extends
         } catch (Throwable e) {
             failTask("System failure creating ComputeNetworkState", e);
         }
-    }
-
-    private DeferredResult<SubnetState> createTemplateSubnetState(
-            ComputeNetworkAllocationTaskState state, String name) {
-
-        // Create a new subnet to attach to VM NICs
-        SubnetState subnet = new SubnetState();
-        subnet.id = UUID.randomUUID().toString();
-        subnet.name = name;
-        // Add dummy CIDR for now.
-        subnet.subnetCIDR = "0.0.0.0/24";
-        // Dummy network link -> this should be updated after the provisioning environment is
-        // selected and before the request to provision the subnet is made.
-        subnet.networkLink = "dummyNetworkLink";
-        subnet.tenantLinks = state.tenantLinks;
-
-        subnet.lifecycleState = LifecycleState.PROVISIONING;
-
-        subnet.customProperties = state.customProperties;
-        subnet.customProperties
-                .put(FIELD_NAME_CONTEXT_ID_KEY, RequestUtils.getContextId(state));
-        return this.sendWithDeferredResult(
-                OperationUtil.createForcedPost(this, SubnetService.FACTORY_LINK)
-                        .setBody(subnet), SubnetState.class);
     }
 
     private void updateResourcesAndComplete(ComputeNetworkAllocationTaskState state) {

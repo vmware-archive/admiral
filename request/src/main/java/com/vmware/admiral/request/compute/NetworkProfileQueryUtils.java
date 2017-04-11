@@ -19,7 +19,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -35,12 +37,16 @@ import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
 import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile.IsolationSupportType;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
+import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.Constraint.Condition;
 import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.photon.controller.model.query.QueryUtils;
+import com.vmware.photon.controller.model.query.QueryUtils.QueryByPages;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.NetworkInterfaceDescription;
+import com.vmware.photon.controller.model.resources.NetworkInterfaceService.NetworkInterfaceState;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
@@ -48,7 +54,11 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.Query.Builder;
+import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
+import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
 public class NetworkProfileQueryUtils {
     public static final String NO_NIC_VM = "__noNICVM";
@@ -70,106 +80,51 @@ public class NetworkProfileQueryUtils {
     }
 
     /** Select Subnet that is applicable for compute network interface. */
-    public static void getSubnetForComputeNic(ServiceHost host, URI referer,
-            List<String> tenantLinks, String contextId, NetworkInterfaceDescription nid,
-            ProfileStateExpanded profileState,
-            BiConsumer<Pair<ComputeNetwork, SubnetState>, Throwable> consumer) {
-        // Get all context networks
-        getContextComputeNetworks(host, referer, tenantLinks, contextId,
-                (contextNetworks, e) -> {
-                    if (e != null) {
-                        consumer.accept(null, e);
-                        return;
-                    }
-                },
-                (retrievedNetworks) -> {
-                    // Find compute network for network interface
-                    ComputeNetwork computeNetwork = retrievedNetworks.get(nid.name);
-                    if (computeNetwork == null) {
-                        consumer.accept(null, getContextNetworkNotFoundError(nid.name));
-                        return;
-                    }
+    public static void getSubnetForComputeNic(ComputeNetwork computeNetwork,
+            ComputeNetworkDescription networkDescription, NetworkInterfaceDescription nid,
+            ProfileStateExpanded profileState, BiConsumer<SubnetState, Throwable> consumer) {
 
-                    List<String> constraints = new ArrayList<String>();
+        List<String> constraints = new ArrayList<>();
 
-                    host.sendWithDeferredResult(
-                            // Get network description of compute network
-                            Operation.createGet(host, computeNetwork.descriptionLink)
-                                    .setReferer(referer), ComputeNetworkDescription.class)
-                            .thenCompose(networkDescription -> {
-                                DeferredResult<Pair<ComputeNetwork, SubnetState>> result;
-                                if (networkDescription.networkType == NetworkType.ISOLATED) {
-                                    result = getSubnetForIsolatedNetwork(host, profileState,
-                                            computeNetwork, referer)
-                                            .thenApply(subnetState ->
-                                                    Pair.of(computeNetwork, subnetState));
-                                } else {
-                                     // Validate network description constraints against selected profile
-                                    Map<Condition, String> placementConstraints = TagConstraintUtils
-                                            .extractPlacementTagConditions(
-                                                    networkDescription.constraints,
-                                                    networkDescription.tenantLinks);
-                                    if (placementConstraints != null) {
-                                        constraints.addAll(placementConstraints.keySet().stream()
-                                                .map(c -> ConstraintConverter.encodeCondition(c).tag)
-                                                .collect(Collectors.toList()));
-                                    }
-                                    Stream<SubnetState> subnetsStream = TagConstraintUtils
-                                            .filterByConstraints(
-                                                    placementConstraints,
-                                                    profileState.networkProfile.subnetStates
-                                                            .stream(),
-                                                    s -> combineTags(profileState, s),
-                                                    null);
-
-                                    if (computeNetwork.networkType == NetworkType.PUBLIC) {
-                                        subnetsStream = subnetsStream.filter(s -> Boolean.TRUE
-                                                .equals(s.supportPublicIpAddress));
-                                    }
-
-                                    SubnetState subnet = subnetsStream.findAny().orElse(null);
-                                    result = DeferredResult.completed(
-                                            Pair.of(computeNetwork, subnet));
-                                }
-                                return result;
-                            })
-                            .whenComplete((pair, ex) -> {
-                                if (ex != null) {
-                                    consumer.accept(null, ex);
-                                } else if (pair == null || pair.right == null) {
-                                    consumer.accept(null, new LocalizableValidationException(
-                                            String.format(
-                                                    "Selected profile '%s' doesn't satisfy network '%s' constraints %s.",
-                                                    profileState.name, nid.name, constraints),
-                                            "compute.network.constraints.not.satisfied.by.profile",
-                                            profileState.name, nid.name, constraints));
-                                } else {
-                                    consumer.accept(pair, null);
-                                }
-                            });
-                });
-    }
-
-    private static DeferredResult<SubnetState> getSubnetForIsolatedNetwork(ServiceHost host,
-            ProfileStateExpanded profile, ComputeNetwork computeNetwork, URI referer) {
-
-        if (profile.networkProfile.isolationType != IsolationSupportType
-                .SUBNET) {
-            // Environment doesn't support new subnetc ase.
-            return DeferredResult.completed(null);
+        DeferredResult<SubnetState> subnet;
+        // Validate network description constraints against selected profile
+        Map<Condition, String> placementConstraints = TagConstraintUtils
+                .extractPlacementTagConditions(
+                        networkDescription.constraints,
+                        networkDescription.tenantLinks);
+        if (placementConstraints != null) {
+            constraints.addAll(placementConstraints.keySet().stream()
+                    .map(c -> ConstraintConverter.encodeCondition(c).tag)
+                    .collect(Collectors.toList()));
         }
+        Stream<SubnetState> subnetsStream = TagConstraintUtils
+                .filterByConstraints(
+                        placementConstraints,
+                        profileState.networkProfile.subnetStates
+                                .stream(),
+                        s -> combineTags(profileState, s),
+                        null);
 
-        if (computeNetwork.subnetLink == null) {
-            // Template subnet should be already allocated by
-            // ComputeNetworkAllocationTaskService.
-            return DeferredResult.completed(null);
-        } else {
-            // There is already allocated template subnet.
-            return host.sendWithDeferredResult(
-                    Operation.createGet(host, computeNetwork.subnetLink)
-                            .setReferer(referer),
-                    SubnetState.class);
+        if (computeNetwork.networkType == NetworkType.PUBLIC) {
+            subnetsStream = subnetsStream.filter(s -> Boolean.TRUE
+                    .equals(s.supportPublicIpAddress));
         }
+        subnet = DeferredResult.completed(subnetsStream.findAny().orElse(null));
+
+        subnet.whenComplete((s, ex) -> {
+            if (ex != null) {
+                consumer.accept(null, ex);
+            } else if (s == null) {
+                consumer.accept(null, new LocalizableValidationException(
+                        String.format(
+                                "Selected profile '%s' doesn't satisfy network '%s' constraints %s.",
+                                profileState.name, nid.name, constraints),
+                        "compute.network.constraints.not.satisfied.by.profile",
+                        profileState.name, nid.name, constraints));
+            } else {
+                consumer.accept(s, null);
+            }
+        });
     }
 
     /** Get profiles that can be used to provision compute networks. */
@@ -399,5 +354,177 @@ public class NetworkProfileQueryUtils {
         }
 
         return tagLinks;
+    }
+
+    public static void getContextComputeNetworksByName(ServiceHost host, URI referer,
+            List<String> tenantLinks, String contextId, Set<String> networkNames,
+            BiConsumer<List<ComputeNetwork>, Throwable> consumer) {
+        // Get all context networks
+        getContextComputeNetworks(host, referer, tenantLinks, contextId,
+                (contextNetworks, e) -> {
+                    if (e != null) {
+                        consumer.accept(null, e);
+                        return;
+                    }
+                },
+                (contextNetworks) -> {
+                    List<ComputeNetwork> computeNetworks = contextNetworks.entrySet()
+                            .stream()
+                            .filter(network -> networkNames.contains(network.getKey()))
+                            .map(network -> network.getValue())
+                            .collect(Collectors.toList());
+                    consumer.accept(computeNetworks, null);
+                });
+    }
+
+    public static DeferredResult<NetworkInterfaceState> createNicState(ServiceHost host,
+            URI referer, List<String> tenantLinks, String endpointLink, ComputeDescription cd,
+            NetworkInterfaceDescription nid, ProfileStateExpanded profile,
+            ComputeNetwork computeNetwork, ComputeNetworkDescription computeNetworkDescription,
+            SubnetState isolatedSubnetState) {
+
+        return selectSubnet(host, referer, tenantLinks, endpointLink, cd, nid, profile,
+                computeNetwork, computeNetworkDescription, isolatedSubnetState)
+                .thenCompose(s -> {
+                    if (s == null && nid.networkLink == null) {
+                        return DeferredResult.failed(
+                                new IllegalStateException(
+                                        "No matching network found for VM:" + cd.name));
+                    }
+                    NetworkInterfaceState nic = new NetworkInterfaceState();
+                    nic.id = UUID.randomUUID().toString();
+                    nic.documentSelfLink = nic.id;
+                    nic.name = nid.name;
+                    nic.deviceIndex = nid.deviceIndex;
+                    nic.address = nid.address;
+                    nic.networkLink = nid.networkLink != null ? nid.networkLink : s.networkLink;
+                    nic.subnetLink = s != null ? s.documentSelfLink : null;
+                    nic.networkInterfaceDescriptionLink = nid.documentSelfLink;
+                    nic.securityGroupLinks = nid.securityGroupLinks;
+                    nic.groupLinks = nid.groupLinks;
+                    nic.tagLinks = nid.tagLinks;
+                    nic.tenantLinks = tenantLinks;
+                    nic.endpointLink = endpointLink;
+                    nic.customProperties = nid.customProperties;
+
+                    return DeferredResult.completed(nic);
+                });
+    }
+
+    private static DeferredResult<SubnetState> selectSubnet(ServiceHost host, URI referer,
+            List<String> tenantLinks, String endpointLink, ComputeDescription cd,
+            NetworkInterfaceDescription nid, ProfileStateExpanded profile, ComputeNetwork
+            computeNetwork, ComputeNetworkDescription computeNetworkDescription, SubnetState
+            isolatedSubnetState) {
+        String subnetLink = nid.subnetLink;
+
+        boolean noNicVM = nid.customProperties != null
+                && nid.customProperties.containsKey(NetworkProfileQueryUtils.NO_NIC_VM);
+        DeferredResult<SubnetState> subnet = null;
+        boolean isIsolatedNetworkEnvironment = profile.networkProfile != null &&
+                profile.networkProfile.isolationType == IsolationSupportType.SUBNET;
+        boolean hasSubnetStates = profile.networkProfile != null
+                && profile.networkProfile.subnetStates != null
+                && !profile.networkProfile.subnetStates.isEmpty();
+        if (hasSubnetStates || isIsolatedNetworkEnvironment) {
+            if (!noNicVM) {
+                if (computeNetworkDescription.networkType.equals(NetworkType.ISOLATED) &&
+                        profile.networkProfile.isolationType == IsolationSupportType.SUBNET) {
+                    subnet = DeferredResult.completed(isolatedSubnetState);
+                } else {
+                    DeferredResult<SubnetState> subnetDeferred = new DeferredResult<>();
+                    NetworkProfileQueryUtils.getSubnetForComputeNic(computeNetwork,
+                            computeNetworkDescription, nid, profile,
+                            (s, ex) -> {
+                                if (ex != null) {
+                                    subnetDeferred.fail(ex);
+                                    return;
+                                }
+
+                                if (computeNetwork.networkType == NetworkType.PUBLIC) {
+                                    nid.assignPublicIpAddress = true;
+
+                                    host.sendWithDeferredResult(
+                                            Operation.createPatch(host, nid.documentSelfLink)
+                                                    .setBody(nid).setReferer(referer))
+                                            .thenAccept(v -> subnetDeferred.complete(s));
+                                } else {
+                                    subnetDeferred.complete(s);
+                                }
+                            });
+                    subnet = subnetDeferred;
+                }
+            } else {
+                subnet = DeferredResult.completed(
+                        profile.networkProfile.subnetStates.stream().filter(s -> s.defaultForZone)
+                        .findAny().orElse(profile.networkProfile.subnetStates.get(0)));
+            }
+        } else if (noNicVM && nid.networkLink != null) {
+            subnet = DeferredResult.completed(null);
+        } else if (subnetLink == null) {
+            // TODO: filter also by NetworkProfile
+            subnet = findSubnetBy(host, tenantLinks, endpointLink, cd.regionId);
+        } else {
+            subnet = host.sendWithDeferredResult(Operation.createGet(host, subnetLink)
+                    .setReferer(referer), SubnetState.class);
+        }
+
+        return subnet;
+    }
+
+    private static DeferredResult<SubnetState> findSubnetBy(ServiceHost host,
+            List<String> tenantLinks, String endpointLink, String regionId) {
+        Builder builder = Query.Builder.create().addKindFieldClause(SubnetState.class);
+        if (tenantLinks == null || tenantLinks.isEmpty()) {
+            builder.addClause(QueryUtil.addTenantClause(tenantLinks));
+        }
+        builder.addCompositeFieldClause(ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
+                ComputeProperties.INFRASTRUCTURE_USE_PROP_NAME, Boolean.TRUE.toString(),
+                Occurance.MUST_NOT_OCCUR);
+        if (regionId != null) {
+            builder.addCompositeFieldClause(ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
+                    ComputeProperties.REGION_ID, regionId);
+        } else {
+            Query clause = new Query()
+                    .setTermPropertyName(QuerySpecification.buildCompositeFieldName(
+                            ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
+                            ComputeProperties.REGION_ID))
+                    .setTermMatchType(MatchType.WILDCARD)
+                    .setTermMatchValue(UriUtils.URI_WILDCARD_CHAR);
+            clause.occurance = Occurance.MUST_NOT_OCCUR;
+            builder.addClause(clause);
+        }
+
+        QueryByPages<SubnetState> querySubnetStates = new QueryByPages<>(host, builder.build(),
+                SubnetState.class, QueryUtil.getTenantLinks(tenantLinks), endpointLink);
+
+        ArrayList<SubnetState> links = new ArrayList<>();
+        ArrayList<SubnetState> preferred = new ArrayList<>();
+        ArrayList<SubnetState> supportPublic = new ArrayList<>();
+        return querySubnetStates.queryDocuments(s -> {
+            boolean supportsPublic = s.supportPublicIpAddress != null && s.supportPublicIpAddress;
+            boolean defaultForZone = s.defaultForZone != null && s.defaultForZone;
+            if (supportsPublic && defaultForZone) {
+                preferred.add(s);
+            } else if (supportsPublic) {
+                supportPublic.add(s);
+            } else {
+                links.add(s);
+            }
+        }).thenCompose(ignore -> {
+            if (!preferred.isEmpty()) {
+                return DeferredResult.<SubnetState> completed(preferred.get(0));
+            }
+            if (!supportPublic.isEmpty()) {
+                return DeferredResult.<SubnetState> completed(supportPublic.get(0));
+            }
+            Optional<SubnetState> subnetState = links.stream().findFirst();
+            if (subnetState.isPresent()) {
+                return DeferredResult.<SubnetState> completed(subnetState.get());
+            } else {
+                return regionId != null ? findSubnetBy(host, tenantLinks, endpointLink, null)
+                        : (DeferredResult<SubnetState>) null;
+            }
+        });
     }
 }
