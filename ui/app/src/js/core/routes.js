@@ -293,6 +293,11 @@ crossroads.addRoute('/machines/new', function() {
   actions.MachineActions.openAddMachine();
 });
 
+crossroads.addRoute('/machines/{machineId*}/details', function(machineId) {
+  actions.AppActions.openView(computeConstants.VIEWS.RESOURCES.VIEWS.MACHINES.name);
+  actions.MachineActions.openMachineDetails(machineId);
+});
+
 crossroads.addRoute('/machines/{machineId*}', function(machineId) {
   actions.AppActions.openView(computeConstants.VIEWS.RESOURCES.VIEWS.MACHINES.name);
   actions.MachineActions.editMachine(machineId);
@@ -502,6 +507,10 @@ actions.NavigationActions.openAddMachine.listen(function() {
 
 actions.NavigationActions.editMachine.listen(function(machineId) {
   hasher.setHash('machines/' + machineId);
+});
+
+actions.NavigationActions.openMachineDetails.listen(function(machineId) {
+  hasher.setHash('machines/' + machineId + '/details');
 });
 
 actions.NavigationActions.openCompute.listen(function(queryOptions) {

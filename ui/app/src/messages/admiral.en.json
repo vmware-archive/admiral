@@ -640,6 +640,9 @@
       "edit": {
         "title": "Edit Compute",
         "nameLabel": "Name"
+      },
+      "actions": {
+        "details": "Details"
       }
     },
     "network": {

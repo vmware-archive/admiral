@@ -45,8 +45,14 @@ export default Vue.component('machine-grid-item', {
       }
     },
     editMachine($event) {
+      $event.stopPropagation();
       $event.preventDefault();
       NavigationActions.editMachine(this.model.selfLinkId);
+    },
+    detailsMachine($event) {
+      $event.stopPropagation();
+      $event.preventDefault();
+      NavigationActions.openMachineDetails(this.model.selfLinkId);
     }
   }
 });

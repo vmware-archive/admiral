@@ -243,6 +243,28 @@ let MachinesStore = Reflux.createStore({
     this.setInData(['editingItemData', 'item'], {});
     this.emitChange();
   },
+  onOpenMachineDetails: function(machineId) {
+    var itemDetailsCursor = this.selectFromData(['selectedItemDetails']);
+    itemDetailsCursor.merge({
+      documentSelfLink: '/resources/compute/' + machineId
+    });
+
+    services.loadHost(machineId).then((document) => {
+      let machine = toViewModel(document);
+
+      itemDetailsCursor.setIn(['instance'], machine);
+
+      this.emitChange();
+    }).catch(this.onGenericDetailsError);
+  },
+  onGenericDetailsError(e) {
+    console.error(e);
+
+    var validationErrors = utils.getValidationErrors(e);
+    this.setInData(['selectedItemDetails', 'validationErrors'], validationErrors);
+
+    this.emitChange();
+  },
   onCreateMachine(templateContent) {
     services.importContainerTemplate(templateContent).then((templateSelfLink) => {
       let documentId = utils.getDocumentId(templateSelfLink);
