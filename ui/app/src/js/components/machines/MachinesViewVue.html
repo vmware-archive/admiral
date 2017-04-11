@@ -92,5 +92,14 @@
       <machine-edit-view v-bind:model="model.editingItemData" class="content"></machine-edit-view>
     </div>
 
+    <div v-if="model.selectedItemDetails"
+       transition="slide-and-fade"
+       class="selected-context-holder closable-view">
+       <a class="close-button" v-on:click="goBack($event)"><i
+         class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
+
+      <machine-details v-bind:model="model.selectedItemDetails" />
+    </div>
+
   </div>
 </div>

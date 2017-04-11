@@ -1,0 +1,31 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+
+<alert alert-type="danger" v-bind:show-alert="hasGeneralError" v-bind:alert-message="generalError"></alert>
+
+<div class="machine-details" v-if="model.instance">
+  <div class="main-panel">
+    <div class="view-title-container">
+      <div class="view-title">
+        <div class="title">
+          {{model.instance.name}}
+          <refresh-button v-on:click="refresh()"></refresh-button>
+        </div>
+      </div>
+    </div>
+
+    <alert alert-type="danger" v-bind:show-alert="hasOperationError"
+                              v-bind:alert-message="i18n('app.container.details.operation.failure')"></alert>
+
+
+  </div>
+</div>

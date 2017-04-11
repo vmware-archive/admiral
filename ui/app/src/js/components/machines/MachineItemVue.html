@@ -41,5 +41,7 @@
   <div class="actions">
     <action-button name="edit" v-bind:label="i18n('app.host.actions.edit')"
                    icon-name="edit" v-on:click="editMachine($event)"></action-button>
+    <action-button name="display" v-bind:label="i18n('app.compute.actions.details')"
+                   icon-name="eye" v-on:click="detailsMachine($event)"></action-button>
   </div>
 </div>
