@@ -71,7 +71,6 @@ import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
-import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState.SubStage;
 import com.vmware.admiral.request.RequestStatusService.RequestStatus;
 import com.vmware.admiral.request.ReservationTaskService.ReservationTaskState;
 import com.vmware.admiral.request.composition.CompositionSubTaskService;
@@ -154,11 +153,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
                 request.resourceLinks.iterator().next());
         assertNotNull(containerState);
 
-        // Verify request status
-        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
-        assertNotNull(rs);
-        assertEquals(Integer.valueOf(100), rs.progress);
-
         // 4. Remove the container
         request = TestRequestStateFactory.createRequestState();
         request.operation = ContainerOperationType.DELETE.id;
@@ -172,11 +166,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         containerState = searchForDocument(ContainerState.class, request.resourceLinks.iterator()
                 .next());
         assertNull(containerState);
-
-        // Verify request status
-        rs = getDocument(RequestStatus.class, request.requestTrackerLink);
-        assertNotNull(rs);
-        assertEquals(Integer.valueOf(100), rs.progress);
     }
 
     @Test
@@ -240,11 +229,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
                 request.resourceLinks.iterator().next());
         assertNotNull(containerState);
 
-        // Verify request status
-        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
-        assertNotNull(rs);
-        assertEquals(Integer.valueOf(100), rs.progress);
-
         // 4. Remove the composite component
         request = TestRequestStateFactory.createRequestState();
         request.resourceType = ResourceType.COMPOSITE_COMPONENT_TYPE.getName();
@@ -260,11 +244,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         containerState = searchForDocument(ContainerState.class, request.resourceLinks.iterator()
                 .next());
         assertNull(containerState);
-
-        // Verify request status
-        rs = getDocument(RequestStatus.class, request.requestTrackerLink);
-        assertNotNull(rs);
-        assertEquals(Integer.valueOf(100), rs.progress);
     }
 
     @Test
@@ -327,12 +306,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // wait for request completed state:
         request = waitForRequestToComplete(request);
-
-        // Verify request status
-        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
-        assertNotNull(rs);
-
-        assertEquals(Integer.valueOf(100), rs.progress);
         assertEquals(1, request.resourceLinks.size());
 
         String compositeComponentLink = request.resourceLinks.iterator().next();
@@ -489,12 +462,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // wait for request completed state:
         request = waitForRequestToComplete(request);
-
-        // Verify request status
-        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
-        assertNotNull(rs);
-
-        assertEquals(Integer.valueOf(100), rs.progress);
         assertEquals(1, request.resourceLinks.size());
 
         String compositeComponentLink = request.resourceLinks.iterator().next();
@@ -587,10 +554,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         // 2. Wait for reservation removed substage
         waitForRequestToFail(request);
 
-        // Verify request status
-        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
-        assertNotNull(rs);
-
         // and there must be no container network state left
         ServiceDocumentQueryResult networkStates = getDocument(ServiceDocumentQueryResult.class,
                 ContainerNetworkService.FACTORY_LINK);
@@ -681,10 +644,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
             }
         }
 
-        // Verify request status
-        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
-        assertNotNull(rs);
-
         // and there must be no container network state left
         ServiceDocumentQueryResult networkStates = getDocument(ServiceDocumentQueryResult.class,
                 ContainerNetworkService.FACTORY_LINK);
@@ -719,13 +678,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // 2. Wait for reservation removed substage
         request = waitForRequestToFail(request);
-
-        // Verify request status
-        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
-        assertNotNull(rs);
-
-        assertEquals(TaskStage.FAILED, rs.taskInfo.stage);
-        assertEquals(SubStage.ERROR.name(), rs.subStage);
 
         // and there must be no container network state left
         ServiceDocumentQueryResult networkStates = getDocument(ServiceDocumentQueryResult.class,
@@ -817,10 +769,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
             }
         }
 
-        // Verify request status
-        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
-        assertNotNull(rs);
-
         // and there must be no container network state left
         ServiceDocumentQueryResult networkStates = getDocument(ServiceDocumentQueryResult.class,
                 ContainerNetworkService.FACTORY_LINK);
@@ -905,12 +853,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // wait for request completed state:
         request = waitForRequestToComplete(request);
-
-        // Verify request status
-        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
-        assertNotNull(rs);
-
-        assertEquals(Integer.valueOf(100), rs.progress);
         assertEquals(1, request.resourceLinks.size());
 
         CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks
@@ -991,12 +933,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // wait for request completed state:
         request = waitForRequestToComplete(request);
-
-        // Verify request status
-        rs = getDocument(RequestStatus.class, request.requestTrackerLink);
-        assertNotNull(rs);
-
-        assertEquals(Integer.valueOf(100), rs.progress);
         assertEquals(SCALE_SIZE, request.resourceLinks.size());
 
         // Verify that even there is a bigger cluster, scaled containers are placed on the cluster
@@ -1094,12 +1030,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // wait for request completed state:
         request = waitForRequestToComplete(request);
-
-        // Verify request status
-        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
-        assertNotNull(rs);
-
-        assertEquals(Integer.valueOf(100), rs.progress);
         assertEquals(1, request.resourceLinks.size());
 
         CompositeComponent cc = getDocument(CompositeComponent.class,
@@ -1183,10 +1113,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         // wait for request to fail because of the combination ExposedPortsHostFilter and
         // ContainerToNetworkAffinityHostFilter, between them there are no hosts available!
         waitForRequestToFail(request);
-
-        // Verify request status
-        rs = getDocument(RequestStatus.class, request.requestTrackerLink);
-        assertNotNull(rs);
     }
 
     @Test
@@ -1243,12 +1169,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // wait for request completed state:
         request = waitForRequestToComplete(request);
-
-        // Verify request status
-        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
-        assertNotNull(rs);
-
-        assertEquals(Integer.valueOf(100), rs.progress);
         assertEquals(1, request.resourceLinks.size());
 
         CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks
@@ -1320,12 +1240,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // wait for request completed state:
         request = waitForRequestToComplete(request);
-
-        // Verify request status
-        rs = getDocument(RequestStatus.class, request.requestTrackerLink);
-        assertNotNull(rs);
-
-        assertEquals(Integer.valueOf(100), rs.progress);
         assertEquals(1, request.resourceLinks.size());
 
         cc = getDocument(CompositeComponent.class, cc.documentSelfLink);
@@ -1398,12 +1312,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // wait for request completed state:
         request = waitForRequestToComplete(request);
-
-        // Verify request status
-        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
-        assertNotNull(rs);
-
-        assertEquals(Integer.valueOf(100), rs.progress);
         assertEquals(1, request.resourceLinks.size());
 
         String compositeComponentLink = request.resourceLinks.iterator().next();
@@ -1545,10 +1453,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
             }
         }
 
-        // Verify request status
-        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
-        assertNotNull(rs);
-
         // and there must be no container network state left
         ServiceDocumentQueryResult volumeStates = getDocument(ServiceDocumentQueryResult.class,
                 ContainerVolumeService.FACTORY_LINK);
@@ -1586,13 +1490,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // 2. Wait for reservation removed substage
         request = waitForRequestToFail(request);
-
-        // Verify request status
-        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
-        assertNotNull(rs);
-
-        assertEquals(TaskStage.FAILED, rs.taskInfo.stage);
-        assertEquals(SubStage.ERROR.name(), rs.subStage);
 
         // and there must be no container volume state left
         ServiceDocumentQueryResult volumeStates = getDocument(ServiceDocumentQueryResult.class,
@@ -1650,12 +1547,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // wait for request completed state:
         request = waitForRequestToComplete(request);
-
-        // Verify request status
-        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
-        assertNotNull(rs);
-
-        assertEquals(Integer.valueOf(100), rs.progress);
         assertEquals(1, request.resourceLinks.size());
 
         CompositeComponent cc = getDocument(CompositeComponent.class, request.resourceLinks
@@ -2160,6 +2051,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         request = startRequest(request);
         request = waitForRequestToComplete(request);
+
         Set<String> resourceLinks = request.resourceLinks;
 
         groupPlacementState = getDocument(GroupResourcePlacementState.class,
@@ -2353,11 +2245,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         // wait for request completed state:
         request = waitForRequestToComplete(request);
 
-        // Verify request status
-        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
-        assertNotNull(rs);
-        assertEquals(Integer.valueOf(100), rs.progress);
-
         ContainerState containerState = getDocument(ContainerState.class,
                 request.resourceLinks.iterator().next());
         assertNotNull(containerState);
@@ -2387,11 +2274,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         request = startRequest(request);
 
         request = waitForRequestToComplete(request);
-
-        // Verify request status
-        rs = getDocument(RequestStatus.class, request.requestTrackerLink);
-        assertNotNull(rs);
-        assertEquals(Integer.valueOf(100), rs.progress);
 
         // Verify the container state is removed
         containerState = searchForDocument(ContainerState.class, request.resourceLinks.iterator()
@@ -2491,13 +2373,6 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
 
         // wait for request completed state:
         request = waitForRequestToComplete(request);
-
-        // Verify request status
-        RequestStatus rs = getDocument(RequestStatus.class, request.requestTrackerLink);
-        assertNotNull(rs);
-
-        assertEquals(Integer.valueOf(100), rs.progress);
-        assertEquals(1, request.resourceLinks.size());
 
         return getDocument(CompositeComponent.class, request.resourceLinks.iterator().next());
     }
