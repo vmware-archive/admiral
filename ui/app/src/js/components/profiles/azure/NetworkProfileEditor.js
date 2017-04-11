@@ -52,6 +52,12 @@ export default Vue.component('azure-network-profile-editor', {
         :value="model.isolationNetwork"
         @change="onIsolationNetworkChange">
       </dropdown-search-group>
+      <number-group
+        v-if="isolationType && isolationType.id === 'SUBNET'"
+        :label="i18n('app.profile.edit.cidrPrefixLabel')"
+        :value="model.isolatedSubnetCIDRPrefix"
+        @change="onIsolatedSubnetCIDRPrefixChange">
+      </number-group>
     </div>
   `,
   props: {
@@ -109,6 +115,10 @@ export default Vue.component('azure-network-profile-editor', {
       this.isolationNetwork = value;
       this.emitChange();
     },
+    onIsolatedSubnetCIDRPrefixChange(value) {
+      this.isolatedSubnetCIDRPrefix = value;
+      this.emitChange();
+    },
     renderIsolationNetwork(network) {
       let secondary = i18n.t('app.profile.edit.resourceGroupsLabel') + ': ' +
           (network.groupNames ? network.groupNames.join(', ') : '');
@@ -160,6 +170,7 @@ export default Vue.component('azure-network-profile-editor', {
           isolationNetwork: this.isolationNetwork,
           isolationNetworkLink: this.isolationNetwork &&
               this.isolationNetwork.documentSelfLink,
+          isolatedSubnetCIDRPrefix: this.isolatedSubnetCIDRPrefix,
           name: this.name,
           subnetLinks: this.subnetworks.reduce((previous, current) => {
             if (current.name && current.name.documentSelfLink) {
