@@ -13,6 +13,7 @@ package com.vmware.admiral.host;
 
 import java.util.logging.Level;
 
+import com.vmware.photon.controller.model.PhotonModelMetricServices;
 import com.vmware.photon.controller.model.PhotonModelServices;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSAdapters;
 import com.vmware.photon.controller.model.adapters.azure.AzureAdapters;
@@ -43,6 +44,7 @@ public class HostInitPhotonModelServiceConfig {
 
         PhotonModelServices.startServices(host);
         PhotonModelTaskServices.startServices(host);
+        PhotonModelMetricServices.startServices(host);
 
         try {
             PhotonModelSecurityServices.startServices(host);
