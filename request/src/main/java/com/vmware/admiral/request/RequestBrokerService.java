@@ -1790,6 +1790,13 @@ public class RequestBrokerService extends
                     trackedTasks.addAll(SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE
                             .get(ResourceType.CLOSURE_TYPE));
                 }
+            } else if (isComputeNetworkType(state)) {
+                trackedTasks.addAll(SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
+                        .get(ResourceType.COMPUTE_NETWORK_TYPE));
+                if (!allocationOnly) {
+                    trackedTasks.addAll(SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE
+                            .get(ResourceType.COMPUTE_NETWORK_TYPE));
+                }
             } else {
                 for (List<String> vals : SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.values()) {
                     trackedTasks.addAll(vals);
@@ -1809,6 +1816,8 @@ public class RequestBrokerService extends
                 requestStatus.addTrackedTasks(ComputeProvisionTaskService.DISPLAY_NAME);
             } else if (isContainerNetworkType(state)) {
                 requestStatus.addTrackedTasks(ContainerNetworkProvisionTaskService.DISPLAY_NAME);
+            } else if (isComputeNetworkType(state)) {
+                requestStatus.addTrackedTasks(ComputeNetworkProvisionTaskService.DISPLAY_NAME);
             } else if (isContainerVolumeType(state)) {
                 requestStatus.addTrackedTasks(ContainerVolumeProvisionTaskService.DISPLAY_NAME);
             }
@@ -1830,6 +1839,8 @@ public class RequestBrokerService extends
                     requestStatus.addTrackedTasks(ClosureRemovalTaskService.DISPLAY_NAME);
                 } else if (isComputeType(state)) {
                     requestStatus.addTrackedTasks(ComputeRemovalTaskService.DISPLAY_NAME);
+                } else if (isComputeNetworkType(state)) {
+                    requestStatus.addTrackedTasks(ComputeNetworkRemovalTaskService.DISPLAY_NAME);
                 } else {
                     requestStatus.addTrackedTasks(ContainerRemovalTaskService.DISPLAY_NAME);
                 }
