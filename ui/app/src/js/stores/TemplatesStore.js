@@ -2024,30 +2024,41 @@ let TemplatesStore = Reflux.createStore({
   },
 
   onSelectImageForContainerDescription: function(imageId) {
-    var definitionInstance = {
-      image: imageId,
-      name: utils.getDocumentId(imageId)
-    };
-    var containerDefs = utils.getIn(this.getData(), ['selectedItemDetails', 'templateDetails',
-      'listView', 'items'
-    ]);
-    _enhanceContainerDescription(definitionInstance, containerDefs);
-    this.setInData(['selectedItemDetails', 'newContainerDefinition',
-                    'definitionInstance'], definitionInstance);
-    var networks = utils.getIn(this.getData(),
-                               ['selectedItemDetails', 'templateDetails', 'listView',
-                                'networks']) || [];
-    this.setInData(['selectedItemDetails', 'newContainerDefinition',
-                    'definitionInstance', 'availableNetworks'],
-                      getUserDefinedNetworkDescriptions(networks));
+    let calls = [];
 
-    var volumes = utils.getIn(this.getData(),
-                      ['selectedItemDetails', 'templateDetails', 'listView', 'volumes'])
-                  || [];
-    this.setInData(['selectedItemDetails', 'newContainerDefinition',
-                      'definitionInstance', 'availableVolumes'], volumes);
+    if (utils.isApplicationEmbedded()) {
+      calls.push(services.loadDeploymentPolicies());
+    }
 
-    this.emitChange();
+    Promise.all(calls).then(([policies]) => {
+      var definitionInstance = {
+        image: imageId,
+        name: utils.getDocumentId(imageId)
+      };
+      if (policies) {
+        definitionInstance.deploymentPolicies = policies;
+      }
+      var containerDefs = utils.getIn(this.getData(), ['selectedItemDetails', 'templateDetails',
+        'listView', 'items'
+      ]);
+      _enhanceContainerDescription(definitionInstance, containerDefs);
+      this.setInData(['selectedItemDetails', 'newContainerDefinition',
+                      'definitionInstance'], definitionInstance);
+      var networks = utils.getIn(this.getData(),
+                                 ['selectedItemDetails', 'templateDetails', 'listView',
+                                  'networks']) || [];
+      this.setInData(['selectedItemDetails', 'newContainerDefinition',
+                      'definitionInstance', 'availableNetworks'],
+                        getUserDefinedNetworkDescriptions(networks));
+
+      var volumes = utils.getIn(this.getData(),
+                        ['selectedItemDetails', 'templateDetails', 'listView', 'volumes'])
+                    || [];
+      this.setInData(['selectedItemDetails', 'newContainerDefinition',
+                        'definitionInstance', 'availableVolumes'], volumes);
+
+      this.emitChange();
+    });
   },
 
   onCreateContainer: function(type, itemId, group) {
