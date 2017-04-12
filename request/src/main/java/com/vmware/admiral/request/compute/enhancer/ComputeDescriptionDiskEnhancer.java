@@ -86,10 +86,6 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
             // Default is 8 GB
             rootDisk.capacityMBytes = diskSizeMbFromProfile > 0 ? diskSizeMbFromProfile : (8 * 1024);
 
-            String imageId = computeDesc.customProperties
-                    .get(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
-
-            rootDisk.sourceImageReference = URI.create(imageId);
             Map<String, String> values = profile.storageProfile != null
                     ? profile.storageProfile.bootDiskPropertyMapping
                     : null;
@@ -176,6 +172,10 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
      * If there is boot config content in custom properties then fill it into the boot disk.
      */
     private void fillInBootConfigContent(ComputeDescription computeDesc, DiskState diskState) {
+        String imageId = computeDesc.customProperties
+                .get(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
+
+        diskState.sourceImageReference = URI.create(imageId);
 
         if (diskState.bootConfig == null) {
             diskState.bootConfig = new DiskState.BootConfig();

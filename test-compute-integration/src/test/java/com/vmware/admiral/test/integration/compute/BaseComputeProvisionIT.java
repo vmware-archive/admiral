@@ -133,6 +133,8 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     private static final String TEST_WORKING_DIR = "/tmp";
     private static final boolean TEST_PRIVILEGED = true;
 
+    private static final long DEFAULT_DISK_SIZE = 8 * 1024;
+
     protected final Map<String, ComputeState> computesToDelete = new HashMap<>();
     private final Set<String> containersToDelete = new HashSet<>();
     private GroupResourcePlacementState groupResourcePlacementState;
@@ -239,7 +241,10 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     @Test
     public void testProvision() throws Throwable {
         String resourceDescriptionLink = getResourceDescriptionLink();
+        provision(resourceDescriptionLink);
+    }
 
+    protected void provision(String resourceDescriptionLink) throws Throwable {
         RequestBrokerState provisionRequest = allocateAndProvision(resourceDescriptionLink);
 
         try {
@@ -406,19 +411,22 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         return createComputeDescription().documentSelfLink;
     }
 
-    protected String getResourceDescriptionLink(boolean withDisks) throws Exception {
-        return createComputeDescription(withDisks).documentSelfLink;
+    protected String getResourceDescriptionLink(boolean withDisks, String imageId)
+            throws Exception {
+        return createComputeDescription(withDisks, imageId).documentSelfLink;
     }
 
     protected ComputeDescription createComputeDescription()
             throws Exception {
-        return createComputeDescription(false);
+        return createComputeDescription(false, "coreos");
     }
 
-    protected ComputeDescription createComputeDescription(boolean withDisks)
+    protected ComputeDescription createComputeDescription(boolean withDisks, String imageId)
             throws Exception {
-
-        ComputeDescription computeDesc = prepareComputeDescription();
+        if (imageId == null) {
+            imageId = "coreos";
+        }
+        ComputeDescription computeDesc = prepareComputeDescription(imageId);
         if (withDisks) {
             computeDesc.diskDescLinks = createDiskStates();
         }
@@ -431,27 +439,29 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
     protected List<String> createDiskStates() throws Exception {
         List<String> diskLinks = new ArrayList<>();
-        diskLinks.add(prepareBootDisk().documentSelfLink);
+        diskLinks.add(prepareRootDisk().documentSelfLink);
         return diskLinks;
     }
 
-    protected DiskService.DiskState prepareBootDisk() throws Exception {
+    protected DiskService.DiskState prepareRootDisk() throws Exception {
         DiskService.DiskState rootDisk = new DiskService.DiskState();
         rootDisk.id = UUID.randomUUID().toString();
         rootDisk.documentSelfLink = rootDisk.id;
         rootDisk.name = "Default disk";
         rootDisk.type = DiskService.DiskType.HDD;
         rootDisk.bootOrder = 1;
-        rootDisk.capacityMBytes = 8 * 1024;// 8GB
-        String imageId = "coreos";
+        rootDisk.capacityMBytes = getRootDiskSize();
 
-        rootDisk.sourceImageReference = URI.create(imageId);
         rootDisk = postDocument(DiskService.FACTORY_LINK, rootDisk, documentLifeCycle);
 
         return rootDisk;
     }
 
-    protected ComputeDescription prepareComputeDescription() throws Exception {
+    protected long getRootDiskSize() {
+        return DEFAULT_DISK_SIZE;
+    }
+
+    protected ComputeDescription prepareComputeDescription(String imageId) throws Exception {
         String id = name(getEndpointType(), "test", UUID.randomUUID().toString());
         ComputeDescription computeDesc = new ComputeDescription();
         computeDesc.id = id;
@@ -461,7 +471,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         computeDesc.customProperties = new HashMap<>();
         computeDesc.customProperties.put(ComputeProperties.CUSTOM_DISPLAY_NAME, computeDesc.name);
         computeDesc.customProperties
-                .put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "coreos");
+                .put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, imageId);
 
         computeDesc.customProperties.put(
                 ComputeAllocationTaskState.FIELD_NAME_CUSTOM_PROP_RESOURCE_POOL_LINK,
