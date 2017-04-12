@@ -204,8 +204,8 @@ public class RequestStatusService extends StatefulService {
             if (trackedAllocationTasks == null) {
                 trackedAllocationTasks = new ArrayList<>();
             }
-            String allocName = UriEncoder.encode(rn.name) + CompositionSubTaskService.ALLOC_SUFFIX;
-            String name = rn.name;
+            String name = UriEncoder.encode(rn.name);
+            String allocName = name + CompositionSubTaskService.ALLOC_SUFFIX;
 
             for (String k : state.requestProgressByComponent.keySet()) {
 
