@@ -166,7 +166,7 @@ public class RegistryHostConfigService extends StatelessService {
             if (sslTrust != null) {
                 validateHostAddress(hostState, sslTrust);
             }
-        } catch (IllegalArgumentException e) {
+        } catch (LocalizableValidationException e) {
             failOperation(hostSpec, op, e);
             return;
         }

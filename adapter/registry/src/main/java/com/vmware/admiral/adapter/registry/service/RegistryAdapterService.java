@@ -191,6 +191,7 @@ public class RegistryAdapterService extends StatelessService {
         public Operation operation;
         public ImageRequest request;
         public RegistryAuthState registryState;
+        public boolean tokenAlreadyRequested;
     }
 
     @Override
@@ -397,10 +398,15 @@ public class RegistryAdapterService extends StatelessService {
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         if (o.getStatusCode() == 401) {
+                            if (context.tokenAlreadyRequested) {
+                                context.operation.fail(ex);
+                                return;
+                            }
+
                             String wwwAuthHeader = getHeader(WWW_AUTHENTICATE_HEADER,
                                     o.getResponseHeaders());
 
-                            if (wwwAuthHeader != null) {
+                            if (isBearerTokenChallenge(wwwAuthHeader)) {
                                 requestAuthorizationToken(wwwAuthHeader, context,
                                         () -> sendV2SearchRequest(searchUri, searchTerm, response, context),
                                         (t) -> context.operation.fail(t));
@@ -500,10 +506,15 @@ public class RegistryAdapterService extends StatelessService {
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         if (ApiVersion.V2.equals(apiVersion) && o.getStatusCode() == 401) {
+                            if (context.tokenAlreadyRequested) {
+                                failureCallback.accept(ex);
+                                return;
+                            }
+
                             String wwwAuthHeader = getHeader(WWW_AUTHENTICATE_HEADER,
                                     o.getResponseHeaders());
 
-                            if (wwwAuthHeader != null) {
+                            if (isBearerTokenChallenge(wwwAuthHeader)) {
                                 requestAuthorizationToken(wwwAuthHeader, context,
                                         () -> doPing(apiVersion, pingEndpoint, context, failureCallback),
                                         failureCallback);
@@ -616,10 +627,15 @@ public class RegistryAdapterService extends StatelessService {
                     .setCompletion((o, ex) -> {
                         if (ex != null) {
                             if (o.getStatusCode() == 401) {
+                                if (context.tokenAlreadyRequested) {
+                                    context.operation.fail(ex);
+                                    return;
+                                }
+
                                 String wwwAuthHeader = getHeader(WWW_AUTHENTICATE_HEADER,
                                         o.getResponseHeaders());
 
-                                if (wwwAuthHeader != null) {
+                                if (isBearerTokenChallenge(wwwAuthHeader)) {
                                     requestAuthorizationToken(wwwAuthHeader, context,
                                             () -> processV2ListImageTagsRequest(context),
                                             (t) -> context.operation.fail(t));
@@ -702,6 +718,7 @@ public class RegistryAdapterService extends StatelessService {
                                 BEARER_TOKEN_PREFIX, tokenServiceResponse.token);
                         context.request.customProperties.put(AUTHORIZATION_HEADER,
                                 authorizationHeaderValue);
+                        context.tokenAlreadyRequested = true;
 
                         successCallback.run();
                     });
@@ -739,6 +756,13 @@ public class RegistryAdapterService extends StatelessService {
             }
         }
         return null;
+    }
+
+    private boolean isBearerTokenChallenge(String authorizationHeader) {
+        if (authorizationHeader == null) {
+            return false;
+        }
+        return authorizationHeader.startsWith(BEARER_REALM_WWW_AUTH_PROP);
     }
 
     private DeferredResult<ConfigurationState> getProperty(String propName) {
