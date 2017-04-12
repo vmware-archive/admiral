@@ -284,8 +284,10 @@ var VolumeDefinitionForm = Vue.extend({
       } else {
         volume.name = $(this.$el).find('.volume-name .form-control').val();
         volume.driver = $(this.$el).find('.volume-driver .form-control').val();
-        volume.options = utils.arrayToProperties(this.driverOptions.getData());
-        volume.customProperties = utils.arrayToProperties(this.customProperties.getData());
+        if (this.showAdvanced) {
+          volume.options = utils.arrayToProperties(this.driverOptions.getData());
+          volume.customProperties = utils.arrayToProperties(this.customProperties.getData());
+        }
       }
 
       if (existingTemplateVolumes && existingTemplateVolumes.length
