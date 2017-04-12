@@ -21,6 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.container.ComputeBaseTest;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.NetworkType;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.IpAssignment;
 import com.vmware.photon.controller.model.resources.SecurityGroupService;
@@ -44,8 +45,8 @@ public class ComputeNetworkServiceTest extends ComputeBaseTest {
                     network.id = prefix + "id" + index;
                     network.name = prefix + "name" + index;
 
+                    network.networkType = NetworkType.EXTERNAL;
                     network.assignment = IpAssignment.STATIC.name();
-                    network.external = true;
                     network.descriptionLink = UriUtils
                             .buildUriPath(ComputeNetworkDescriptionService.FACTORY_LINK, "my-net");
                     network.securityGroupLinks = new HashSet<>();

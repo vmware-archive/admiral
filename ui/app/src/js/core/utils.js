@@ -1207,7 +1207,7 @@ var utils = {
       return tenantLink.indexOf('/groups/') > -1;
     });
 
-    return groupId ? groupId : tenantLinks[tenantLinks.length - 1];
+    return groupId;
   },
 
   getErrorMessage: function(e) {

@@ -84,11 +84,6 @@ public class KubernetesMockTestHostAdapterServiceTest extends BaseKubernetesMock
         setupKubernetesAdapterService();
     }
 
-    @Override
-    protected boolean getPeerSynchronizationEnabled() {
-        return true;
-    }
-
     @After
     public void tearDown() throws Throwable {
         deleteKubernetesHostComputeState();

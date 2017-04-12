@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute;
+package com.vmware.admiral.service.common;
 
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;

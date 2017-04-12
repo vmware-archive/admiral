@@ -114,7 +114,9 @@ export default Vue.component('azure-network-profile-editor', {
           (network.groupNames ? network.groupNames.join(', ') : '');
       return `
         <div>
-          <div class="host-picker-item-primary" title="${network.name}">${network.name}</div>
+          <div class="host-picker-item-primary" title="${network.name}">
+            ${utils.escapeHtml(network.name)}
+          </div>
           <div class="host-picker-item-secondary truncateText" title="${secondary}">
             ${secondary}
           </div>
@@ -130,29 +132,16 @@ export default Vue.component('azure-network-profile-editor', {
             }
             return previous;
           }, []);
-          if (utils.isApplicationEmbedded()) {
-            services.loadGroups([...new Set(groupLinks)]).then((groups) => {
-              result.items.forEach((item) => {
-                if (item.groupLinks) {
-                  item.groupNames = item.groupLinks.map((groupLink) => {
-                    return groups[groupLink].name;
-                  });
-                }
-              });
-              resolve(result);
+          services.loadResourceGroups([...new Set(groupLinks)]).then((groups) => {
+            result.items.forEach((item) => {
+              if (item.groupLinks) {
+                item.groupNames = item.groupLinks.map((groupLink) => {
+                  return groups[groupLink].name;
+                });
+              }
             });
-          } else {
-            services.loadResourceGroups([...new Set(groupLinks)]).then((groups) => {
-              result.items.forEach((item) => {
-                if (item.groupLinks) {
-                  item.groupNames = item.groupLinks.map((groupLink) => {
-                    return groups[groupLink].name;
-                  });
-                }
-              });
-              resolve(result);
-            });
-          }
+            resolve(result);
+          });
         }).catch(reject);
       });
     },

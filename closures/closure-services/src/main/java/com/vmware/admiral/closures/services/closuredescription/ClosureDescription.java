@@ -14,14 +14,20 @@ package com.vmware.admiral.closures.services.closuredescription;
 import java.util.List;
 import java.util.Map;
 
+import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.gson.JsonElement;
 
 import com.vmware.admiral.closures.services.closure.ClosureInputsDeserializer;
+import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.YamlMapper;
+import com.vmware.admiral.service.common.CloneableResource;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.Utils;
@@ -33,7 +39,7 @@ import com.vmware.xenon.common.Utils;
  */
 @JsonFilter(YamlMapper.SERVICE_DOCUMENT_FILTER)
 @JsonIgnoreProperties(value = { "customProperties" }, ignoreUnknown = true)
-public class ClosureDescription extends ResourceState {
+public class ClosureDescription extends ResourceState implements CloneableResource {
 
     public static final String FIELD_NAME_RUNTIME = "runtime";
     public static final String FIELD_NAME_DESCRIPTION = "description";
@@ -114,8 +120,9 @@ public class ClosureDescription extends ResourceState {
      * Additional dependencies needed for code snippet execution. Optional parameter.
      *
      */
-    @Documentation(description = "Additional dependencies needed for code snippet execution. The format depends on "
-            + "the runtime.")
+    @Documentation(description =
+            "Additional dependencies needed for code snippet execution. The format depends on "
+                    + "the runtime.")
     @UsageOption(option = PropertyUsageOption.OPTIONAL)
     public String dependencies;
 
@@ -127,12 +134,27 @@ public class ClosureDescription extends ResourceState {
     @UsageOption(option = PropertyUsageOption.OPTIONAL)
     public String placementLink;
 
+    /** Link to the parent closure description */
+    @JsonProperty("parent_description_link")
+    @Documentation(description = "Link to the parent closure description.")
+    @UsageOption(option = PropertyUsageOption.OPTIONAL)
+    @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
+    public String parentDescriptionLink;
+
     /**
      * Notification URL that can be used as Webhook. Optional parameter.
      */
     @Documentation(description = "Notification URL that can be used as Webhook.")
     @UsageOption(option = PropertyUsageOption.OPTIONAL)
     public String notifyUrl;
+
+    @Override
+    public Operation createCloneOperation(Service sender) {
+        this.parentDescriptionLink = this.documentSelfLink;
+        this.documentSelfLink = null;
+        return Operation.createPost(sender, ClosureDescriptionFactoryService.FACTORY_LINK)
+                .setBody(this);
+    }
 
     @Override
     public String toString() {

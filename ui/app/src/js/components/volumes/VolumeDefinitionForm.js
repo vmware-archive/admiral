@@ -294,8 +294,7 @@ var VolumeDefinitionForm = Vue.extend({
         checkForDuplicateNames(existingTemplateVolumes, volume);
       }
 
-      //volume.external = this.existingVolume;
-      volume.existing = this.existingVolume;
+      volume.external = this.existingVolume;
 
       if (this.model) {
         volume.documentSelfLink = this.model.documentSelfLink;

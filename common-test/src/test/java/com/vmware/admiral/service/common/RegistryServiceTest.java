@@ -24,11 +24,6 @@ import com.vmware.admiral.service.common.RegistryService.RegistryState;
 
 public class RegistryServiceTest extends BaseRegistryStateQueryTest {
 
-    @Override
-    protected boolean getPeerSynchronizationEnabled() {
-        return true;
-    }
-
     @Test
     public void testDeleteDefaultRegistryOnStartup() throws Throwable {
         RegistryState registryState = new RegistryState();

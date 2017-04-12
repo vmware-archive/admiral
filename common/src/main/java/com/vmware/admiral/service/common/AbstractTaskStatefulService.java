@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.service.common;
 
+import static com.vmware.admiral.common.DeploymentProfileConfig.getInstance;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
 
 import java.net.URI;
@@ -59,10 +60,14 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
     private Level logLevel = DEFAULT_LOG_LEVEL;
 
-    /** SubStages that are indicating a transient state and order of patching can't be guaranteed */
+    /**
+     * SubStages that are indicating a transient state and order of patching can't be guaranteed
+     */
     protected Set<E> transientSubStages = Collections.emptySet();
 
-    /** SubStages that are eligible for subscription */
+    /**
+     * SubStages that are eligible for subscription
+     */
     protected EnumSet<E> subscriptionSubStages;
 
     private volatile String locale;
@@ -72,25 +77,39 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         public static final String FIELD_NAME_TASK_INFO = "taskInfo";
         public static final String FIELD_NAME_PROGRESS = "progress";
 
-        /** The name of the TaskService */
+        /**
+         * The name of the TaskService
+         */
         public String phase;
 
-        /** TaskInfo state of the current TaskService */
+        /**
+         * TaskInfo state of the current TaskService
+         */
         public TaskState taskInfo;
 
-        /** Substage of the current TaskService */
+        /**
+         * Substage of the current TaskService
+         */
         public String subStage;
 
-        /** progress of the task (0-100%) - should only reported by leaf tasks, otherwise null */
+        /**
+         * progress of the task (0-100%) - should only reported by leaf tasks, otherwise null
+         */
         public Integer progress;
 
-        /** Name of a given task status */
+        /**
+         * Name of a given task status
+         */
         public String name;
 
-        /** Available when task is marked failed. Link to the corresponding event log. */
+        /**
+         * Available when task is marked failed. Link to the corresponding event log.
+         */
         public String eventLogLink;
 
-        /** Set of resource links provisioned or performed operation on them. */
+        /**
+         * Set of resource links provisioned or performed operation on them.
+         */
         public Set<String> resourceLinks;
     }
 
@@ -313,7 +332,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                             } else if (TaskStage.FINISHED.name()
                                     .equals(state.taskInfo.stage.name())
                                     || TaskStage.FAILED.name().equals(state.taskInfo.stage.name())
-                                            && retryCount > 0) {
+                                    && retryCount > 0) {
                                 getHost().schedule(
                                         () -> updateRequestTracker(state, retryCount - 1),
                                         QueryUtil.QUERY_RETRY_INTERVAL_MILLIS,
@@ -331,6 +350,11 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     }
 
     protected void handleStagePatch(T state) {
+        if (getInstance().shouldFail(state.taskSubStage)) {
+            failTask("Fail task in stage [" + state.taskSubStage
+                    + "], based on DeploymentProfileConfig", null);
+            return;
+        }
         updateRequestTracker(state);
 
         // calculate whether to self-delete now because below handlers can alter the state through
@@ -469,7 +493,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     /**
      * Performs custom task state validation and merge. Allows sub-classes to provide custom
      * validation and merge code when the automatic merge based on annotations is not sufficient.
-     *
+     * <p>
      * This method must not complete/fail the given patch operation.
      */
     protected void customStateValidationAndMerge(Operation patch, T patchBody, T currentState) {

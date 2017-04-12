@@ -83,6 +83,11 @@ public class NetworkProfileService extends StatefulService {
         @PropertyOptions(usage = { OPTIONAL })
         public String isolationNetworkCIDRAllocationLink;
 
+        @Documentation(description = "The CIDR prefix length to be used for the isolated subnets "
+                + "to be created (example: Subnet with CIDR 192.168.0.0/20 has CIDR prefix "
+                + "length: 20.")
+        public Integer isolatedSubnetCIDRPrefix;
+
         /**
          * Defines the isolation network support this network profile provides.
          */
@@ -101,6 +106,7 @@ public class NetworkProfileService extends StatefulService {
                 targetState.isolationNetworkLink = this.isolationNetworkLink;
                 targetState.isolationNetworkCIDRAllocationLink =
                         this.isolationNetworkCIDRAllocationLink;
+                targetState.isolatedSubnetCIDRPrefix = this.isolatedSubnetCIDRPrefix;
             }
         }
     }
@@ -231,6 +237,14 @@ public class NetworkProfileService extends StatefulService {
             } else {
                 completion = DeferredResult.completed(currentState);
             }
+
+            if (newState.isolatedSubnetCIDRPrefix != null
+                    && !newState.isolatedSubnetCIDRPrefix.equals(
+                            currentState.isolatedSubnetCIDRPrefix)) {
+
+                currentState.isolatedSubnetCIDRPrefix = newState.isolatedSubnetCIDRPrefix;
+                completion = completion.thenCompose(this::updateIsolationSubnetCIDRPrefix);
+            }
         } catch (NoSuchFieldException | IllegalAccessException e) {
             patch.fail(e);
             return;
@@ -266,7 +280,7 @@ public class NetworkProfileService extends StatefulService {
         return state;
     }
 
-    public DeferredResult<NetworkProfile> updateIsolationNetworkCIDRAllocation(
+    private DeferredResult<NetworkProfile> updateIsolationNetworkCIDRAllocation(
             NetworkProfile networkProfile) {
 
         logInfo(() -> "Update Isolation Network CIDR Allocation for network profile: " +
@@ -303,12 +317,14 @@ public class NetworkProfileService extends StatefulService {
                         networkProfile.tenantLinks)
                         .setMaxResultsLimit(1);
 
-        return queryCIDRAllocation.collectLinks(Collectors.toList())
-                .thenApply(cidrAllocationLinks -> {
-                    if (cidrAllocationLinks != null && cidrAllocationLinks.size() == 1) {
+        return queryCIDRAllocation.collectDocuments(Collectors.toList())
+                .thenApply(cidrAllocations -> {
+                    if (cidrAllocations != null && cidrAllocations.size() == 1) {
                         // Found existing CIDRAllocationService
-                        networkProfile.isolationNetworkCIDRAllocationLink =
-                                cidrAllocationLinks.get(0);
+                        ComputeNetworkCIDRAllocationState cidrAllocation = cidrAllocations.get(0);
+
+                        networkProfile.isolationNetworkCIDRAllocationLink = cidrAllocation
+                                .documentSelfLink;
                     } else {
                         // Clean up any previous CIDRAllocation link
                         networkProfile.isolationNetworkCIDRAllocationLink = null;
@@ -332,6 +348,12 @@ public class NetworkProfileService extends StatefulService {
         ComputeNetworkCIDRAllocationState cidrAllocationState = new
                 ComputeNetworkCIDRAllocationState();
         cidrAllocationState.networkLink = networkProfile.isolationNetworkLink;
+        if (networkProfile.isolatedSubnetCIDRPrefix == null) {
+            // TODO: Set a default for now. Remove when UI provides a value.
+            cidrAllocationState.subnetCIDRPrefixLength = 31;
+        } else {
+            cidrAllocationState.subnetCIDRPrefixLength = networkProfile.isolatedSubnetCIDRPrefix;
+        }
         Operation createOp = Operation.createPost(getHost(),
                 ComputeNetworkCIDRAllocationService.FACTORY_LINK)
                 .setBody(cidrAllocationState);
@@ -344,12 +366,28 @@ public class NetworkProfileService extends StatefulService {
                 });
     }
 
+    private DeferredResult<NetworkProfile> updateIsolationSubnetCIDRPrefix(
+            NetworkProfile networkProfile) {
+
+        ComputeNetworkCIDRAllocationState allocationState = new ComputeNetworkCIDRAllocationState();
+        allocationState.subnetCIDRPrefixLength = networkProfile.isolatedSubnetCIDRPrefix;
+
+        Operation patchOp = Operation.createPatch(getHost(),
+                networkProfile.isolationNetworkCIDRAllocationLink)
+                .setBody(allocationState);
+
+
+        return sendWithDeferredResult(patchOp, ComputeNetworkCIDRAllocationState.class)
+                .thenApply(resultCIDRAllocationState -> networkProfile);
+    }
+
     /**
      * Nullifies link fields if the patch body contains NULL_LINK_VALUE links.
      * TODO: This is the same as ResourceUtils.nullifyLinkFields(). Unify in the next changelist.
      */
     private static <T extends ResourceState> boolean nullifyLinkFields(
-            ServiceDocumentDescription desc, NetworkProfile currentState, NetworkProfile patchBody) {
+            ServiceDocumentDescription desc, NetworkProfile currentState,
+            NetworkProfile patchBody) {
         boolean modified = false;
         for (PropertyDescription prop : desc.propertyDescriptions.values()) {
             if (prop.usageOptions != null &&

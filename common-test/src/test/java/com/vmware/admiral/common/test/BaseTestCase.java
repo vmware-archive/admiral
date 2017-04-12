@@ -177,8 +177,6 @@ public abstract class BaseTestCase {
         resultHost.setMaintenanceIntervalMicros(this.getMaintenanceIntervalMillis() * 1000);
         resultHost.setTimeoutSeconds(HOST_TIMEOUT_SECONDS);
 
-        resultHost.setPeerSynchronizationEnabled(this.getPeerSynchronizationEnabled());
-
         resultHost.start();
 
         return resultHost;
@@ -199,7 +197,6 @@ public abstract class BaseTestCase {
         SSLContext sslContext = CertificateUtil.createSSLContext(trustManager, null);
 
         h.setClient(createServiceClient(sslContext, 0, h));
-        h.setPeerSynchronizationEnabled(this.getPeerSynchronizationEnabled());
 
         h.start();
 
@@ -224,19 +221,6 @@ public abstract class BaseTestCase {
         } catch (URISyntaxException e) {
             throw new RuntimeException("Failed to create ServiceClient", e);
         }
-    }
-
-    /**
-     * Returns default peer synchronization flag. For hosts started in single mode it should be
-     * false till https://www.pivotaltracker.com/n/projects/1471320/stories/138426713 is resolved.
-     * <p/>
-     * Tests for clustered nodes AND tests calling registerForServiceAvailability with
-     * checkForReplica true SHOULD overwrite this method and return <code>true</code>.
-     *
-     * @return boolean value
-     */
-    protected boolean getPeerSynchronizationEnabled() {
-        return false;
     }
 
     /**
@@ -809,6 +793,32 @@ public abstract class BaseTestCase {
         @SuppressWarnings("unchecked")
         T outState = (T) host.getServiceState(null,
                 inState.getClass(),
+                uri);
+        return outState;
+    }
+
+    protected <T, R extends ServiceDocument> R doPatch(
+            T request,
+            Class<R> resultClazz,
+            String serviceDocumentSelfLink) {
+
+        TestContext ctx = testCreate(1);
+
+        host.sendWithDeferredResult(Operation.createPatch(host, serviceDocumentSelfLink)
+                .setBody(request), resultClazz)
+                .whenComplete((result, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                        return;
+                    }
+                    ctx.completeIteration();
+                });
+        ctx.await();
+
+        URI uri = UriUtils.buildUri(host, serviceDocumentSelfLink);
+
+        R outState = host.getServiceState(null,
+                resultClazz,
                 uri);
         return outState;
     }

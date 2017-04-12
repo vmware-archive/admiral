@@ -25,6 +25,7 @@ import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
@@ -40,8 +41,10 @@ import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.services.common.QueryTask;
 
 public class ContainerHostServiceTest extends ComputeBaseTest {
@@ -109,6 +112,33 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
             assertNotNull(e);
             assertEquals(ContainerHostService.CONTAINER_HOST_ALREADY_EXISTS_MESSAGE,
                     e.getMessage());
+        }
+    }
+
+    @Test
+    public void testExerciseExceptionOnSendAdapterRequest() throws Throwable {
+        // 1. Shutdown host-docker-service
+        TestContext ctx = testCreate(1);
+        Operation deleteOp = Operation.createDelete(
+                UriUtils.buildUri(host, ManagementUriParts.ADAPTER_DOCKER_HOST))
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_NO_INDEX_UPDATE)
+                .setReplicationDisabled(true)
+                .setCompletion(ctx.getCompletion())
+                .setReferer(host.getUri());
+        host.send(deleteOp);
+        ctx.await();
+
+        // 2. Create Container Host Spec.
+        List<String> tenantLinks = Arrays.asList(FIRST_TENANT_ID);
+
+        ContainerHostSpec hostSpec = createContainerHostSpec(tenantLinks, FIRST_COMPUTE_DESC_ID);
+
+        // 3. Try to create Container Host with Adapter Docker Host service stopped.
+        try {
+            createContainerHostSpec(hostSpec);
+            fail("Should have thrown an exception since the service is stopped.");
+        } catch (ServiceNotFoundException e) {
+            assertNotNull(e);
         }
     }
 

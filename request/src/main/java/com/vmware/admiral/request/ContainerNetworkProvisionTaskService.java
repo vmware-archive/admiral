@@ -87,9 +87,7 @@ public class ContainerNetworkProvisionTaskService
 
         /** (Required) Number of resources to provision. */
         @Documentation(description = "Number of resources to provision.")
-        @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
-                PropertyUsageOption.REQUIRED, PropertyUsageOption.SINGLE_ASSIGNMENT,
-                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public Long resourceCount;
 
         /** (Required) Links to already allocated resources that are going to be provisioned. */

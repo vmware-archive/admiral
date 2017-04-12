@@ -21,10 +21,10 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.compute.CloneableResource;
 import com.vmware.admiral.compute.ComponentDescription;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
+import com.vmware.admiral.service.common.CloneableResource;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;

@@ -85,11 +85,6 @@ public class ContainerImageTagsIT extends BaseTestCase {
         waitForServiceAvailability(ContainerImageTagsService.SELF_LINK);
     }
 
-    @Override
-    protected boolean getPeerSynchronizationEnabled() {
-        return true;
-    }
-
     @Test
     public void testListTagsFromV1Registry() throws Exception {
         String imageName = toFullImageName(v1RegistryAddress, TEST_IMAGE);

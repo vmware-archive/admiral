@@ -49,16 +49,6 @@ public class ComputeNetworkService extends StatefulService {
     public static class ComputeNetwork extends ResourceState {
         public String assignment;
 
-        /**
-         * Composite Template use only. If set to true, specifies that this network exists outside
-         * of the Composite Template.
-         */
-        @JsonInclude(value = Include.NON_EMPTY)
-        @Documentation(description = "Composite Template use only. If set to true, specifies that "
-                + "this network exists outside of the Composite Template.")
-        @UsageOption(option = PropertyUsageOption.OPTIONAL)
-        public Boolean external = Boolean.TRUE;
-
         @JsonInclude(value = Include.NON_EMPTY)
         @Documentation(description = "Specifies the network type e.g. public or isolated")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)

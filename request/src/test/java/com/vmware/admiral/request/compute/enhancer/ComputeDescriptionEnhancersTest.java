@@ -43,6 +43,7 @@ import com.vmware.admiral.request.compute.enhancer.Enhancer.EnhanceContext;
 import com.vmware.admiral.service.common.AbstractInitialBootService;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.photon.controller.model.resources.DiskService;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService;
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.photon.controller.model.security.util.KeyUtil;
@@ -68,7 +69,8 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         HostInitServiceHelper.startServiceFactories(host,
                 CaSigningCertService.class, ProfileService.class,
                 ComputeProfileService.class, StorageProfileService.class,
-                NetworkProfileService.class, NetworkInterfaceDescriptionService.class);
+                NetworkProfileService.class, NetworkInterfaceDescriptionService.class,
+                DiskService.class);
         waitForServiceAvailability(ProfileService.FACTORY_LINK);
         waitForServiceAvailability(CaSigningCertService.FACTORY_LINK);
         waitForServiceAvailability(ManagementUriParts.AUTH_CREDENTIALS_CA_LINK);
@@ -88,11 +90,6 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         context.endpointType = awsEndpointType;
         context.profileLink = UriUtils.buildUriPath(ProfileService.FACTORY_LINK,
                 awsEndpointType);
-    }
-
-    @Override
-    protected boolean getPeerSynchronizationEnabled() {
-        return true;
     }
 
     @Test

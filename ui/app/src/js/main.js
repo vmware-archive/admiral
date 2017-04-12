@@ -40,11 +40,11 @@ var updateHeader = function() {
 
   if (utils.isVic()) {
     $('body').append($(VICTemplate()));
-    $('head title').html('vSphere Integrated Containers');
+    $('head title').text('vSphere Integrated Containers');
     $('head').append('<link rel="icon" type="image/x-icon" href="image-assets/vic-favicon.ico" />');
   } else {
     $('body').append($(DefaultTemplate()));
-    $('head title').html('Admiral');
+    $('head title').text('Admiral');
     $('head').append('<link rel="icon" type="image/x-icon" href="image-assets/favicon.ico" />');
   }
 

@@ -55,11 +55,6 @@ public abstract class ContinuousDeliveryBaseTest extends BaseTestCase {
         MockDockerAdapterService.resetContainers();
     }
 
-    @Override
-    protected boolean getPeerSynchronizationEnabled() {
-        return true;
-    }
-
     protected void startServices(ServiceHost serviceHost) throws Throwable {
         // speed up the test (default is 500ms):
         setFinalStatic(QueryUtil.class

@@ -28,7 +28,7 @@
         @change="onNameChange">
       </text-group>
       <dropdown-group
-        :disabled="!!model.item.documentSelfLink"
+        :disabled="!!model.item.documentSelfLink || !!this.verified"
         :entity="i18n('app.endpoint.typeEntity')"
         :label="i18n('app.endpoint.edit.typeLabel')"
         :options="adapters"
@@ -59,7 +59,6 @@
     </section>
     <section class="control-btns">
       <button type="submit" class="btn btn-primary"
-          v-if="!model.verified"
           :class="{'loading': model.verifying}"
           :disabled="verifyDisabled || model.verifying"
           @click="verify($event)">
@@ -67,7 +66,6 @@
         <i class="fa fa-spinner fa-spin loader-inline"></i>
       </button>
       <button type="submit" class="btn btn-primary"
-          v-else
           :class="{'loading': model.saving}"
           :disabled="saveDisabled || model.saving"
           @click="save($event)">

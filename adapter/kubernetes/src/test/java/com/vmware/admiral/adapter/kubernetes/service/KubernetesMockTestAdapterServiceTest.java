@@ -110,11 +110,6 @@ public class KubernetesMockTestAdapterServiceTest extends BaseKubernetesMockTest
         deleteKubernetesHostComputeState();
     }
 
-    @Override
-    protected boolean getPeerSynchronizationEnabled() {
-        return true;
-    }
-
     private void createContainerDescription() throws Throwable {
         ContainerDescription containerDescription = new ContainerDescription();
 

@@ -20,6 +20,7 @@ import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.common.util.FileUtil.switchToUnixLineEnds;
 import static com.vmware.admiral.host.HostInitDockerAdapterServiceConfig.FIELD_NAME_START_MOCK_HOST_ADAPTER_INSTANCE;
+import static com.vmware.admiral.host.ManagementHostAuthUsersTest.DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.doGet;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.doRestrictedOperation;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.login;
@@ -33,6 +34,7 @@ import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -52,6 +54,7 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceRequestListener;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
 /**
@@ -194,7 +197,11 @@ public abstract class ManagementHostClusterBaseTestCase extends ManagementHostBa
 
         host = setUpHost(host.getSecurePort(), sandboxUri, peers);
 
-        waitForInitConfig(host, host.localUsers);
+        TestContext ctx = new TestContext(1,
+                Duration.ofSeconds(DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES));
+        waitForInitConfig(host, host.localUsers, ctx::completeIteration,
+                ctx::failIteration);
+        ctx.await();
 
         System.out.println("Sleep for a while, until the host starts...");
         Thread.sleep(4000);

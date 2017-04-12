@@ -101,6 +101,11 @@ public class ClosureDescriptionService extends StatefulService {
         patchedState.logConfiguration = null;
         PropertyUtils.mergeServiceDocuments(currentState, patchedState);
 
+        if (patchedState.parentDescriptionLink != null
+                && patchedState.parentDescriptionLink.trim().isEmpty()) {
+            currentState.parentDescriptionLink = null;
+        }
+
         if (!isValid(patch, currentState)) {
             return;
         }

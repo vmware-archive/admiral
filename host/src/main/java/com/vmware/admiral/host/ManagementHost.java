@@ -178,6 +178,7 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
             baseArgs.isAuthorizationEnabled = true;
         }
         ServiceHost h = super.initialize(args, baseArgs);
+        h.setProcessOwner(true);
         validatePeerArgs();
 
         ConfigurationState[] configs = ConfigurationService.getConfigurationProperties();
