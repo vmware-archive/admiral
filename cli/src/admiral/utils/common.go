@@ -15,6 +15,7 @@ import (
 	"bytes"
 	"fmt"
 	"math"
+	"net/http"
 	"reflect"
 	"strings"
 )
@@ -124,6 +125,14 @@ func IsNilOrEmptyStr(arr []string) bool {
 		return true
 	}
 	if len(arr) < 1 {
+		return true
+	}
+	return false
+}
+
+func IsApplicationJson(headers http.Header) bool {
+	contentType := headers.Get("Content-Type")
+	if contentType == "application/json" {
 		return true
 	}
 	return false

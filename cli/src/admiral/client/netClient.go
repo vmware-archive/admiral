@@ -146,28 +146,32 @@ func CheckResponseError(resp *http.Response, tokenFrom string) error {
 		return NullResponseError
 	}
 	if resp.StatusCode >= 400 && resp.StatusCode <= 500 {
-		body, err := ioutil.ReadAll(resp.Body)
-		defer resp.Body.Close()
-		//Create 2 new readers.
-		//rdrToUse will be modified. rdrToSet will stay the same and set back to the request.
-		rdrToUse := ioutil.NopCloser(bytes.NewBuffer(body))
-		rdrToSet := ioutil.NopCloser(bytes.NewBuffer(body))
-		respBody, err := ioutil.ReadAll(rdrToUse)
-		//Set unmodified reader.
-		resp.Body = rdrToSet
+		if resp.Body != nil && utils.IsApplicationJson(resp.Header) {
+			body, err := ioutil.ReadAll(resp.Body)
+			defer resp.Body.Close()
+			//Create 2 new readers.
+			//rdrToUse will be modified. rdrToSet will stay the same and set back to the request.
+			rdrToUse := ioutil.NopCloser(bytes.NewBuffer(body))
+			rdrToSet := ioutil.NopCloser(bytes.NewBuffer(body))
+			respBody, err := ioutil.ReadAll(rdrToUse)
+			//Set unmodified reader.
+			resp.Body = rdrToSet
 
-		message := &ResponseError{}
-		err = json.Unmarshal(respBody, message)
-		if err != nil {
-			return getResponseError(resp.StatusCode)
+			message := &ResponseError{}
+			err = json.Unmarshal(respBody, message)
+			if err != nil {
+				return getResponseError(resp.StatusCode)
+			}
+			if message.Message == "forbidden" {
+				return NewAuthorizationError(tokenFrom)
+			}
+			if message.Message == "" {
+				return errors.New("Connection error " + resp.Status)
+			}
+			return errors.New(message.Message)
+		} else {
+			return errors.New(resp.Status)
 		}
-		if message.Message == "forbidden" {
-			return NewAuthorizationError(tokenFrom)
-		}
-		if message.Message == "" {
-			return errors.New("Connection error " + resp.Status)
-		}
-		return errors.New(message.Message)
 	}
 	return nil
 }
@@ -209,7 +213,7 @@ func buildHttpClient() (*http.Client, error) {
 	if customTimeout != 0 {
 		timeoutDuration = time.Duration(customTimeout) * time.Second
 	} else {
-		timeoutDuration = time.Second * time.Duration(config.CLIENT_TIMEOUT)
+		timeoutDuration = time.Second * time.Duration(config.CLIENT_TIMEOUT_SECONDS)
 	}
 
 	var netTransport = &http.Transport{

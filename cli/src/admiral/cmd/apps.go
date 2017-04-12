@@ -110,8 +110,8 @@ func RunAppList(args []string) (string, error) {
 
 var appRemoveCmd = &cobra.Command{
 	Use:   "rm [APPLICATION]",
-	Short: "Stops existing application",
-	Long:  "Stops existing application",
+	Short: "Remove existing application",
+	Long:  "Remove existing application",
 
 	Run: func(cmd *cobra.Command, args []string) {
 		output, err := RunAppRemove(args)
@@ -213,7 +213,7 @@ func RunAppRun(args []string) (string, error) {
 	)
 
 	if customTimeout != 0 {
-		config.TASK_TIMEOUT = customTimeout
+		config.TASK_TIMEOUT_SECONDS = customTimeout
 	}
 
 	if !utils.IsVraMode {

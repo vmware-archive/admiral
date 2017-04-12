@@ -40,9 +40,9 @@ type PlacementZone struct {
 	EpzState          EpzState          `json:"epzState,omitempty"`
 	DocumentSelfLink  string            `json:"documentSelfLink,omitempty"`
 
-	DocumentVersion              int `json:"documentVersion"`
-	DocumentUpdateTimeMicros     int `json:"documentUpdateTimeMicros"`
-	DocumentExpirationTimeMicros int `json:"documentExpirationTimeMicros"`
+	DocumentVersion              int         `json:"documentVersion"`
+	DocumentUpdateTimeMicros     interface{} `json:"documentUpdateTimeMicros"`
+	DocumentExpirationTimeMicros interface{} `json:"documentExpirationTimeMicros"`
 }
 
 func (pz *PlacementZone) GetID() string {
@@ -163,9 +163,9 @@ type EpzState struct {
 	TagLinksToMatch  []string `json:"tagLinksToMatch,omitempty"`
 	DocumentSelfLink string   `json:"documentSelfLink,omitempty"`
 
-	DocumentVersion              int `json:"documentVersion"`
-	DocumentUpdateTimeMicros     int `json:"documentUpdateTimeMicros"`
-	DocumentExpirationTimeMicros int `json:"documentExpirationTimeMicros"`
+	DocumentVersion              int         `json:"documentVersion"`
+	DocumentUpdateTimeMicros     interface{} `json:"documentUpdateTimeMicros"`
+	DocumentExpirationTimeMicros interface{} `json:"documentExpirationTimeMicros"`
 }
 
 func (epzs *EpzState) AddTagLinks(tagsInput []string) error {
