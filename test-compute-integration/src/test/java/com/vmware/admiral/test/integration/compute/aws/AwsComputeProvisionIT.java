@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.test.integration.compute.aws;
 
+import org.junit.Test;
+
 import com.vmware.admiral.test.integration.compute.BaseComputeProvisionIT;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSConstants;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
@@ -23,6 +25,8 @@ public class AwsComputeProvisionIT extends BaseComputeProvisionIT {
     private static final String ACCESS_KEY_PROP = "test.aws.access.key";
     private static final String ACCESS_SECRET_PROP = "test.aws.secret.key";
     private static final String REGION_ID_PROP = "test.aws.region.id";
+
+    private static final long HDD_DISK_SIZE = 32 * 1024;
 
     @Override
     protected EndpointType getEndpointType() {
@@ -45,4 +49,15 @@ public class AwsComputeProvisionIT extends BaseComputeProvisionIT {
         }
     }
 
+    @Override
+    protected long getRootDiskSize() {
+        return HDD_DISK_SIZE;
+    }
+
+
+    @Test
+    public void testProvisionWithBootDisk() throws Throwable {
+        String resourceDescriptionLink = getResourceDescriptionLink(true, null);
+        provision(resourceDescriptionLink);
+    }
 }
