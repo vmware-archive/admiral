@@ -40,11 +40,11 @@ var (
 
 //Values used from commands.
 var (
-	URL            string
-	USER           string
-	TASK_TIMEOUT   int
-	CLIENT_TIMEOUT int
-	TENANT         string
+	URL                    string
+	USER                   string
+	TASK_TIMEOUT_SECONDS   int
+	CLIENT_TIMEOUT_SECONDS int
+	TENANT                 string
 )
 
 //GetCfg is trying to load configurable properties from the config file.
@@ -75,16 +75,16 @@ func GetCfg() {
 	}
 
 	if strings.TrimSpace(cfg.TaskTimeout) == "" {
-		TASK_TIMEOUT = defaultTaskTimeout
+		TASK_TIMEOUT_SECONDS = defaultTaskTimeout
 	} else {
-		TASK_TIMEOUT, err = strconv.Atoi(cfg.TaskTimeout)
+		TASK_TIMEOUT_SECONDS, err = strconv.Atoi(cfg.TaskTimeout)
 		utils.CheckBlockingError(err)
 	}
 
 	if strings.TrimSpace(cfg.ClientTimeout) == "" {
-		CLIENT_TIMEOUT = defaultClientTimeout
+		CLIENT_TIMEOUT_SECONDS = defaultClientTimeout
 	} else {
-		CLIENT_TIMEOUT, err = strconv.Atoi(cfg.ClientTimeout)
+		CLIENT_TIMEOUT_SECONDS, err = strconv.Atoi(cfg.ClientTimeout)
 		utils.CheckBlockingError(err)
 	}
 

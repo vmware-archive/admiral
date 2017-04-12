@@ -311,7 +311,7 @@ func RunHostCreateAws(args []string) (string, error) {
 	}
 
 	if customTimeout != 0 {
-		config.TASK_TIMEOUT = customTimeout
+		config.TASK_TIMEOUT_SECONDS = customTimeout
 	}
 
 	id, err := hosts.CreateHostAws(name, endpointId, instanceType, hostOS, guestCred,
@@ -362,7 +362,7 @@ func RunHostCreateAzure(args []string) (string, error) {
 	}
 
 	if customTimeout != 0 {
-		config.TASK_TIMEOUT = customTimeout
+		config.TASK_TIMEOUT_SECONDS = customTimeout
 	}
 
 	id, err := hosts.CreateHostAzure(name, endpointId, instanceType, hostOS, guestCred,
@@ -414,7 +414,7 @@ func RunHostCreateVsphere(args []string) (string, error) {
 	}
 
 	if customTimeout != 0 {
-		config.TASK_TIMEOUT = customTimeout
+		config.TASK_TIMEOUT_SECONDS = customTimeout
 	}
 
 	id, err := hosts.CreateHostVsphere(name, endpointId, instanceType, hostOS, destination, guestCred,

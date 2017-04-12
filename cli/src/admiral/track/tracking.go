@@ -116,7 +116,7 @@ func Wait(taskId string, operationType string) ([]string, error) {
 	begin := time.Now()
 	for {
 		elapsed := time.Now().Sub(begin)
-		if elapsed.Seconds() > float64(config.TASK_TIMEOUT) {
+		if elapsed.Seconds() > float64(config.TASK_TIMEOUT_SECONDS) {
 			return nil, errors.New("Task timed out.")
 		}
 

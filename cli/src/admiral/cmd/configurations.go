@@ -42,8 +42,8 @@ func init() {
 
 var cfgGetCmd = &cobra.Command{
 	Use:   "get",
-	Short: "Set value from provided key key.",
-	Long:  "Set value from provided key key.",
+	Short: "Get value from provided key key.",
+	Long:  "Get value from provided key key.",
 	Run: func(cmd *cobra.Command, args []string) {
 		output, err := RunCfgGet(args)
 		processOutput(output, err)
