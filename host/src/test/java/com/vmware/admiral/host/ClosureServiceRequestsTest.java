@@ -27,6 +27,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import com.google.gson.JsonElement;
@@ -35,6 +36,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.closures.drivers.DriverConstants;
+import com.vmware.admiral.closures.services.adapter.AdmiralAdapterFactoryService;
 import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
@@ -56,6 +58,7 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.TestContext;
 
 public class ClosureServiceRequestsTest extends BaseTestCase {
@@ -65,13 +68,22 @@ public class ClosureServiceRequestsTest extends BaseTestCase {
     @Before
     public void setUp() throws Exception {
         try {
+            this.host.log(Level.INFO, "Starting test services ...");
             startServices(this.host);
+            this.host.log(Level.INFO, "Test services started.");
 
-            waitForServiceAvailability(ComputeInitialBootService.SELF_LINK);
+            waitForServiceAvailability(AdmiralAdapterFactoryService.FACTORY_LINK);
+            this.host
+                    .log(Level.INFO, "Service ready: " + AdmiralAdapterFactoryService.FACTORY_LINK);
             waitForInitialBootServiceToBeSelfStopped(ComputeInitialBootService.SELF_LINK);
+            this.host.log(Level.INFO, "Initial Boot Service stopped: " + ComputeInitialBootService
+                    .SELF_LINK);
             createTestHostState();
+            this.host.log(Level.INFO, "Test compute created.");
 
         } catch (Throwable e) {
+            this.host.log(Level.SEVERE, "Failed to run test setup. Reason: %s", Utils.toString
+                    (e));
             throw new RuntimeException(e);
         }
     }
@@ -346,7 +358,7 @@ public class ClosureServiceRequestsTest extends BaseTestCase {
         HostInitPhotonModelServiceConfig.startServices(serviceHost);
         HostInitTestDcpServicesConfig.startServices(serviceHost);
         HostInitCommonServiceConfig.startServices(serviceHost);
-        HostInitComputeServicesConfig.startServices(serviceHost, false);
+        HostInitComputeServicesConfig.startServices(serviceHost, true);
         HostInitDockerAdapterServiceConfig.startServices(serviceHost, true);
         HostInitClosureServiceConfig.startServices(serviceHost, true);
     }
