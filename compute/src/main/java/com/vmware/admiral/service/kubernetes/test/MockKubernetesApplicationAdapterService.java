@@ -150,7 +150,7 @@ public class MockKubernetesApplicationAdapterService extends BaseMockAdapterServ
 
     private void provisionCompositeComponent(MockAdapterRequest state, CompositeComponent cc) {
         CompositeComponent toPatch = new CompositeComponent();
-        toPatch.created = Utils.getNowMicrosUtc();
+        toPatch.created = Utils.getSystemNowMicrosUtc();
 
         PROVISIONED_COMPONENTS.add(cc);
 

@@ -50,7 +50,7 @@ public class ContainerVolumeMaintenance {
         this.host = host;
         this.volumeSelfLink = volumeSelfLink;
         if (delayFirstMaintenance) {
-            this.lastInspectMaintainanceInMicros = Utils.getNowMicrosUtc();
+            this.lastInspectMaintainanceInMicros = Utils.getSystemNowMicrosUtc();
         }
     }
 
@@ -77,7 +77,7 @@ public class ContainerVolumeMaintenance {
                             }
                             ContainerVolumeState volumeState = o
                                     .getBody(ContainerVolumeState.class);
-                            long nowMicrosUtc = Utils.getNowMicrosUtc();
+                            long nowMicrosUtc = Utils.getSystemNowMicrosUtc();
 
                             /*
                              * if volume hasn't been updated for a while, slow down the

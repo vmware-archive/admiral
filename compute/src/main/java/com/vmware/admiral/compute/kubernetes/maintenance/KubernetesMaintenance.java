@@ -94,7 +94,7 @@ public class KubernetesMaintenance {
      * @return whether an inspect request was sent or not
      */
     private boolean inspectEntityIfNeeded(BaseKubernetesState kubernetesState, Operation post) {
-        long nowMicrosUtc = Utils.getNowMicrosUtc();
+        long nowMicrosUtc = Utils.getSystemNowMicrosUtc();
         long updatePeriod = isUpdatedRecently(kubernetesState, nowMicrosUtc)
                 ? MAINTENANCE_PERIOD_MICROS : MAINTENANCE_SLOW_DOWN_PERIOD_MICROS;
 

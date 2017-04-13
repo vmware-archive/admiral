@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -57,8 +57,8 @@ public class IntegratonTestStateFactory extends CommonTestStateFactory {
     public static final String KUBERNETES_COMPUTE_ID = "test-kubernetes-host-compute-id";
 
     public static void addDefaultDocumentTimeout(ServiceDocument serviceDocument) {
-        serviceDocument.documentExpirationTimeMicros = Utils.getNowMicrosUtc()
-                + IntegratonTestStateFactory.DEFAULT_DOCUMENT_EXPIRATION_MICROS;
+        serviceDocument.documentExpirationTimeMicros = Utils.fromNowMicrosUtc(
+                IntegratonTestStateFactory.DEFAULT_DOCUMENT_EXPIRATION_MICROS);
     }
 
     public static ResourcePoolState createResourcePool() {
