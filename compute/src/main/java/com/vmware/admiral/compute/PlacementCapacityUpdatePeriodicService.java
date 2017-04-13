@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.compute;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
+
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
@@ -31,7 +33,7 @@ public class PlacementCapacityUpdatePeriodicService extends StatelessService {
 
     public static final long MAINTENANCE_INTERVAL_MICROS = Long.getLong(
             "dcp.management.placement.compute.periodic.maintenance.period.micros",
-            TimeUnit.SECONDS.toMicros(300));
+            MINUTES.toMicros(30));
 
     // used to avoid refresh on compute change too soon after a previous refresh
     private static final long PAUSE_SECONDS = Long.getLong(

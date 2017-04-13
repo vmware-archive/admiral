@@ -36,7 +36,7 @@ public abstract class BaseWordpressComputeProvisionIT extends BaseComputeProvisi
     protected static final String AWS_DEFAULT_SUBNET_ID = "subnet-ce01b5e4";
     protected static final String AWS_SECONDARY_SUBNET_ID = "subnet-400f426d";
 
-    protected static final String AWS_ISOLATED_VPC_ID = "vpc-ee720888";
+    protected static final String AWS_ISOLATED_VPC_ID = "vpc-95a29bf1";
 
     private static final String WP_PATH = "mywordpresssite";
     private static final int STATUS_CODE_WAIT_POLLING_RETRY_COUNT = 300; //5 min

@@ -51,8 +51,8 @@ public class WordpressProvisionNetworkIT extends BaseWordpressComputeProvisionIT
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
                 //{ EndpointType.aws, awsEndpointExtender, awsSetUp, "WordPress_with_MySQL_compute_network.yaml", null },
-                //{ EndpointType.aws, awsEndpointExtender, awsSetUp, "WordPress_with_MySQL_compute_public_network.yaml", null },
-                { EndpointType.aws, awsEndpointExtender, awsSetUp, "WordPress_with_MySQL_compute_isolated_network.yaml", isolatedNicValidator }
+                { EndpointType.aws, awsEndpointExtender, awsSetUp, "WordPress_with_MySQL_compute_public_network.yaml", null },
+//                { EndpointType.aws, awsEndpointExtender, awsSetUp, "WordPress_with_MySQL_compute_isolated_network.yaml", isolatedNicValidator }
                 //TODO uncomment once the vsphere issues are resolved
                 //{ EndpointType.vsphere, vSphereEndpointExtender, vSphereSetUp }
         });
