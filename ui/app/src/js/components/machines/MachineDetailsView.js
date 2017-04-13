@@ -10,8 +10,9 @@
  */
 
 import MachineDetailsViewVue from 'components/machines/MachineDetailsViewVue.html';
+import Component from 'components/common/Component';
 
-export default Vue.component('machine-details', {
+Vue.component('machine-details', {
   template: MachineDetailsViewVue,
   data: function() {
     return {};
@@ -38,3 +39,36 @@ export default Vue.component('machine-details', {
     }
   }
 });
+
+class MachineDetails extends Component {
+  constructor() {
+    super();
+    this.$el = $('<div>').append('<machine-details v-bind:model="currentModel">');
+  }
+
+  getEl() {
+    return this.$el;
+  }
+
+  attached() {
+    this.vue = new Vue({
+      el: this.$el[0],
+      data: {
+        currentModel: {}
+      }
+    });
+  }
+
+  detached() {
+    if (this.vue) {
+      this.vue.$destroy();
+      this.vue = null;
+    }
+  }
+
+  setData(data) {
+    Vue.set(this.vue, 'currentModel', data);
+  }
+}
+
+export default MachineDetails;
