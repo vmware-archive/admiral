@@ -404,7 +404,6 @@ public class HostContainerListDataCollection extends StatefulService {
         final List<String> systemContainersToInstall = SystemContainerDescriptions
                 .getSystemContainerNames();
         for (ContainerState containerState : containerStates) {
-
             boolean exists = false;
             if (containerState.id != null) {
                 exists = callback.containerIdsAndNames
@@ -437,6 +436,43 @@ public class HostContainerListDataCollection extends StatefulService {
                     if (containerState.powerState == PowerState.STOPPED) {
                         logWarning("System container found but is OFF. Starting.");
                         startSystemContainer(containerState, null);
+                    } else if (containerState.powerState == PowerState.PROVISIONING) {
+                        inspectContainer(containerState,
+                                (o, e) -> {
+                                    if (e != null) {
+                                        getHost().log(
+                                                Level.WARNING,
+                                                "Failed to deploy system container on host: "
+                                                        + containerHostLink);
+                                        recreateSystemContainer(containerState, containerHostLink);
+                                        return;
+                                    }
+                                    getHost().log(
+                                            Level.WARNING,
+                                            "System container is up and running. Patch the state from provisioning to running on host "
+                                                    + containerHostLink);
+                                    ContainerState cs = new ContainerState();
+                                    cs.powerState = PowerState.RUNNING;
+
+                                    getHost().sendRequest(Operation
+                                            .createPatch(getHost(), containerState.documentSelfLink)
+                                            .setBody(cs)
+                                            .setReferer(getHost().getUri())
+                                            .setCompletion(
+                                                    (op, ex) -> {
+                                                        if (ex != null) {
+                                                            getHost().log(
+                                                                    Level.WARNING,
+                                                                    "Fail to patch the state from provisioning to running of system container state on host %s",
+                                                                    containerHostLink);
+                                                            return;
+                                                        }
+                                                        getHost().log(
+                                                                Level.FINE,
+                                                                "Patch the state from provisioning to running of system container state on host %s",
+                                                                containerHostLink);
+                                                    }));
+                                }, null);
                     }
                 }
             }
@@ -853,6 +889,39 @@ public class HostContainerListDataCollection extends StatefulService {
                                 return;
                             }
                         }));
+    }
+
+    private void inspectContainer(
+            ContainerState containerState,
+            BiConsumer<AbstractCallbackServiceHandler.CallbackServiceHandlerState, Boolean> consumer,
+            ServiceTaskCallback serviceTaskCallback) {
+
+        if (serviceTaskCallback == null) {
+            String systemContainerName = matchSystemContainerName(
+                    SystemContainerDescriptions.getSystemContainerNames(), containerState.names);
+
+            startAndCreateCallbackHandlerService(systemContainerName, consumer,
+                    (callback) -> inspectContainer(containerState, consumer, callback));
+            return;
+        }
+
+        AdapterRequest request = new AdapterRequest();
+        request.resourceReference = UriUtils.buildPublicUri(getHost(),
+                containerState.documentSelfLink);
+
+        request.operationTypeId = ContainerOperationType.INSPECT.id;
+        request.serviceTaskCallback = serviceTaskCallback;
+        getHost().sendRequest(Operation
+                .createPatch(getHost(), containerState.adapterManagementReference.toString())
+                .setBody(request)
+                .setReferer(getHost().getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        Utils.logWarning(
+                                "Exception while inspect request for container: %s. Error: %s",
+                                containerState.documentSelfLink, Utils.toString(ex));
+                    }
+                }));
     }
 
     private void startAndCreateCallbackHandlerService(
