@@ -1,4 +1,5 @@
-@import "node_modules/clarity-ui/src/color/color.clarity";
+@import "node_modules/clarity-ui/src/color/utils/colors.clarity";
+@import "node_modules/clarity-ui/src/utils/variables.clarity";
 @import "mixins";
 
 /* bootstrap mixin feature toggles */
@@ -10,7 +11,7 @@ $vmw_blue_top: #3888c5;
 $vmw_blue_bottom: #225277;
 $vmw_lightblue: #3888c5;
 
-$main_color: $clr-action-blue;
+$main_color: $action-blues-dark-midtone;
 $main-color-80: rgba(51, 153, 204, 0.80);
 $main-color-semi: rgba(51, 153, 204, 0.50);
 $link_color: $main_color;

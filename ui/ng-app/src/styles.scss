@@ -1,6 +1,8 @@
 /* You can add global styles to this file, and also import other style files */
 @import 'node_modules/admiral-ui-common/css/variables';
 @import "node_modules/admiral-ui-common/css/tokenfield-override";
+@import "node_modules/clarity-ui/src/utils/mixins.clarity";
+@import "node_modules/clarity-ui/src/utils/helpers.clarity";
 @import "node_modules/clarity-ui/src/images/images.clarity";
 @import "node_modules/clarity-ui/src/typography/typography.clarity";
 @import "node_modules/clarity-ui/src/forms/forms.clarity";
@@ -10,7 +12,13 @@
   /* Fix for fixed positioned elements http://stackoverflow.com/questions/36855473/position-fixed-not-working-is-working-like-absolute */
   -webkit-transform: none;
   background-color: #FFFFFF;
-  .content-area {
+
+  .content-container {
+    > * {
+      display: flex;
+    }
+  }
+  .content-container .content-area {
     display: flex;
     > * {
       display: flex;
@@ -33,7 +41,7 @@ grid-view {
 }
 
 .main-container .tokenfield {
-  @extend %clr-form-fields-appearance;
+  @include clr-form-fields-appearance($clr-baselineRem_2_5, $clr-form-field-border-color);
   @include input-border-bottom-animation();
 }
 
