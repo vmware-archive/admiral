@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -71,7 +71,8 @@ public class ServiceDocumentDeleteTaskService
         QueryTask query = QueryUtil.buildQuery(task.deleteDocumentKind, false);
         query.querySpec.options = EnumSet.of(QueryOption.TOP_RESULTS);
         query.querySpec.resultLimit = 50;
-        query.documentExpirationTimeMicros = Utils.getNowMicrosUtc() + TimeUnit.HOURS.toMicros(5);
+        query.documentExpirationTimeMicros = Utils.fromNowMicrosUtc(
+                TimeUnit.HOURS.toMicros(5));
         if (task.tenantLinks != null) {
             query.querySpec.query.addBooleanClause(QueryUtil.addTenantClause(task.tenantLinks));
         }

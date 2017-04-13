@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -29,20 +29,25 @@ public class ServiceUtils {
             "com.vmware.admiral.common.util.ServiceUtils.expiration.micros",
             TimeUnit.HOURS.toMicros(5));
 
-    /*
+    /**
      * The default expiration time for all Task Services.
      */
     public static long getDefaultTaskExpirationTimeInMicros() {
         return getExpirationTimeFromNowInMicros(EXPIRATION_MICROS);
     }
 
-    /*
-     * Adds the supplied argument to the value returned from Utils.getNotMicrosUtc
+    /**
+     * Adds the supplied argument to the value from
+     * {@link com.vmware.xenon.common.Utils#getSystemNowMicrosUtc()} and returns an absolute
+     * expiration time in the future
      */
     public static long getExpirationTimeFromNowInMicros(long microsFromNow) {
-        return Utils.getNowMicrosUtc() + microsFromNow;
+        return Utils.fromNowMicrosUtc(microsFromNow);
     }
 
+    /**
+     * Sends {@code DELETE} request to service {@code s}. Result is ignored.
+     */
     public static void sendSelfDelete(Service s) {
         s.sendRequest(Operation.createDelete(s.getUri()).setBody(new ServiceDocument()));
     }
@@ -72,4 +77,5 @@ public class ServiceUtils {
         }
         serviceDocument.documentDescription.serviceRequestRoutes.get(route.action).add(route);
     }
+
 }

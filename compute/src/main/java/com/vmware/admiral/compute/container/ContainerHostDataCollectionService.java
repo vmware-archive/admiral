@@ -190,7 +190,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
 
         if (body.computeContainerHostLinks == null || body.computeContainerHostLinks.isEmpty()) {
             ContainerHostDataCollectionState state = getState(patch);
-            long now = Utils.getNowMicrosUtc();
+            long now = Utils.getSystemNowMicrosUtc();
             if (state.lastRunTimeMicros + FREQUENCY_OF_GENERAL_HOST_COLLECTION_MICROS > now) {
                 if (state.skipRunCount++ > 2) {
                     // don't run general data collection on all hosts if the requests are too
@@ -204,7 +204,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 state.skipRunCount = 0;
             }
 
-            state.lastRunTimeMicros = Utils.getNowMicrosUtc();
+            state.lastRunTimeMicros = now;
             updateHostInfoDataCollection(patch);
         } else {
             if (shouldSkipDC(body)
