@@ -269,6 +269,10 @@ public class ClosureDescriptionService extends StatefulService {
             return false;
         } else if (Objects.equals(body.runtime, DriverConstants.RUNTIME_PYTHON_3)) {
             return false;
+        } else if (Objects.equals(body.runtime, DriverConstants.RUNTIME_POWERSHELL_6)) {
+            if (ClosureUtils.isAdditionalRuntimeSwitchedOn(DriverConstants.RUNTIME_POWERSHELL_6)) {
+                return false;
+            }
         } else if (Objects.equals(body.runtime, DriverConstants.RUNTIME_NASHORN)) {
             return false;
         }

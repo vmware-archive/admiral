@@ -38,6 +38,7 @@ import org.apache.commons.io.output.ByteArrayOutputStream;
 
 import com.vmware.admiral.adapter.docker.util.DockerImage;
 import com.vmware.admiral.closures.drivers.ContainerConfiguration;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.xenon.common.Utils;
 
 /**
@@ -250,6 +251,23 @@ public final class ClosureUtils {
                 bufferedOutputStream);
         tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_GNU);
         return tarArchiveOutputStream;
+    }
+
+    /**
+     * Checks for additional runtimes that are not provided out of the box. We need to provide
+     * registry to download the image from.
+     *
+     * @param runtime
+     * @return
+     */
+    public static boolean isAdditionalRuntimeSwitchedOn(String runtime) {
+        String runtimeOn = ConfigurationUtil
+                .getProperty(ClosureProps.CLOSURE_RUNTIME_IMAGE_REGISTRY + runtime);
+        if (runtimeOn == null || runtimeOn.isEmpty()) {
+            return false;
+        }
+
+        return true;
     }
 
     private static void logInfo(String message, Object... values) {
