@@ -123,7 +123,7 @@ initializer.init = function(callback) {
 
   }).then(([adapters]) => {
 
-    utils.initializeAdapters(Object.values(adapters).map((adapter) => {
+    utils.initializeAdapters(Object.values(adapters).sort(utils.templateSortFn).map((adapter) => {
       const customProperties = adapter.customProperties || DEFAULT_ADAPTERS[adapter.id];
       return {
         id: adapter.id,
