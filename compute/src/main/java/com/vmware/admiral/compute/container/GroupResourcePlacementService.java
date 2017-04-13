@@ -12,6 +12,8 @@
 package com.vmware.admiral.compute.container;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
+import static com.vmware.admiral.compute.ComputeConstants.GROUP_RESOURCE_PLACEMENT_LINK_NAME;
+import static com.vmware.photon.controller.model.resources.ResourceState.FIELD_NAME_CUSTOM_PROPERTIES;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -41,6 +43,7 @@ import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 
 /**
  * Group resource placement service - reserving resources for a given group.
@@ -700,8 +703,9 @@ public class GroupResourcePlacementService extends StatefulService {
         } else if (ResourceType.COMPUTE_TYPE.getName().equals(state.resourceType)) {
             resourceClass = (Class<T>) ComputeState.class;
             queryTask = QueryUtil.buildPropertyQuery(resourceClass,
-                    ComputeState.FIELD_NAME_RESOURCE_POOL_LINK,
-                    state.resourcePoolLink, ComputeState.FIELD_NAME_TYPE,
+                    QuerySpecification.buildCompositeFieldName(FIELD_NAME_CUSTOM_PROPERTIES,
+                            GROUP_RESOURCE_PLACEMENT_LINK_NAME),
+                    state.documentSelfLink, ComputeState.FIELD_NAME_TYPE,
                     ComputeType.VM_GUEST.name());
         } else {
             throw new LocalizableValidationException("Unsupported placement resourceType "

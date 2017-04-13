@@ -11,10 +11,12 @@
 
 package com.vmware.admiral.common.util;
 
+import java.net.URI;
 import java.util.function.Consumer;
 
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.ServiceSubscriptionState.ServiceSubscriber;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.TaskState;
@@ -24,25 +26,45 @@ import com.vmware.xenon.services.common.ReliableSubscriptionService;
 
 public class SubscriptionUtils {
 
-    public static void subscribeToNotifications(StatefulService service,
-            Consumer<Operation> notificationConsumer, String taskLink) {
+    /**
+     * Helper routine to subscribe to notifications
+     * @param host service host to invoke the operation
+     * @param onSuccessConsumer consumer callback to invoke on notification
+     * @param onFailureConsumer consumer callback to invoke on failure
+     * @param taskLink link to the task to subscribe to
+     */
+    public static void subscribeToNotifications(ServiceHost host,
+            Consumer<Operation> onSuccessConsumer,
+            Consumer<Throwable> onFailureConsumer,
+            String taskLink) {
         ServiceSubscriber subscribeBody = new ServiceSubscriber();
         subscribeBody.replayState = true;
         subscribeBody.usePublicUri = true;
         Operation subscribeOp = Operation
-                .createPost(service, taskLink)
-                .setReferer(service.getUri())
-                .setCompletion(
-                        (regOp, regEx) -> {
-                            if (regEx != null) {
-                                SubscriptionUtils.sendFailureSelfPatch(service, regEx);
-                                return;
-                            }
-                        });
+                .createPost(host, taskLink)
+                .setReferer(host.getUri())
+                .setCompletion((regOp, regEx) -> {
+                    if (regEx != null) {
+                        onFailureConsumer.accept(regEx);
+                    }
+                });
         ReliableSubscriptionService notificationTarget = ReliableSubscriptionService.create(
-                subscribeOp, subscribeBody, notificationConsumer);
-        service.getHost().startSubscriptionService(subscribeOp,
-                notificationTarget, subscribeBody);
+                subscribeOp, subscribeBody, onSuccessConsumer);
+        host.startSubscriptionService(subscribeOp, notificationTarget, subscribeBody);
+    }
+
+    /**
+     * Unsubscribe notifications.
+     *
+     * @param host service host to invoke the operation
+     * @param publisherLink the notification publisher link
+     * @param notificationTarget the notification target link
+     */
+    public static void unsubscribeNotifications(ServiceHost host, String publisherLink,
+            URI notificationTarget) {
+        host.stopSubscriptionService(
+                Operation.createDelete(host, publisherLink).setReferer(host.getUri()),
+                notificationTarget);
     }
 
     /**

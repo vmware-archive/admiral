@@ -16,12 +16,18 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import static com.vmware.admiral.compute.ComputeConstants.CUSTOM_PROP_PROFILE_LINK_NAME;
+
 import java.util.HashMap;
 import java.util.Set;
 
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.compute.profile.ComputeImageDescription;
+import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
+import com.vmware.admiral.compute.profile.InstanceTypeDescription;
+import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputeProvisionTaskState;
 import com.vmware.admiral.request.utils.RequestUtils;
@@ -55,6 +61,72 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
     }
 
     @Test
+    public void testAllocationTaskServiceLifeCycleWithTwoProfilesByInstanceType() throws Throwable {
+        ComputeDescription computeDescription = createVMComputeDescription(false);
+
+        ProfileStateExpanded p1 = createProfileWithInstanceType(
+                "small", "t2.micro", "coreos", "ami-234355");
+        ProfileStateExpanded p2 =
+                createProfileWithInstanceType("large", "t2.large", "coreos", "ami-234355");
+
+        ComputeAllocationTaskState allocationTask = createComputeAllocationTask(
+                computeDescription.documentSelfLink, 1, true);
+        allocationTask = allocate(allocationTask);
+
+        ComputeState computeState = getDocument(ComputeState.class,
+                allocationTask.resourceLinks.iterator().next());
+        assertNotNull(computeState.id);
+
+        assertEquals(computeDescription.documentSelfLink, computeState.descriptionLink);
+        assertEquals(resourcePool.documentSelfLink, computeState.resourcePoolLink);
+        assertNotNull(computeState.customProperties);
+        String profileLink = computeState.customProperties.get(CUSTOM_PROP_PROFILE_LINK_NAME);
+        assertNotNull(profileLink);
+        assertEquals(profileLink, p1.documentSelfLink);
+    }
+
+    @Test
+    public void testAllocationTaskServiceLifeCycleWithTwoProfilesByImage() throws Throwable {
+        ComputeDescription computeDescription = createVMComputeDescription(false);
+
+        ProfileStateExpanded p1 = createProfileWithInstanceType(
+                "small", "t2.micro", "linux", "ami-234355");
+        ProfileStateExpanded p2 =
+                createProfileWithInstanceType("small", "t2.large", "coreos", "ami-234355");
+
+        ComputeAllocationTaskState allocationTask = createComputeAllocationTask(
+                computeDescription.documentSelfLink, 1, true);
+        allocationTask = allocate(allocationTask);
+
+        ComputeState computeState = getDocument(ComputeState.class,
+                allocationTask.resourceLinks.iterator().next());
+        assertNotNull(computeState.id);
+
+        assertEquals(computeDescription.documentSelfLink, computeState.descriptionLink);
+        assertEquals(resourcePool.documentSelfLink, computeState.resourcePoolLink);
+        assertNotNull(computeState.customProperties);
+        String profileLink = computeState.customProperties.get(CUSTOM_PROP_PROFILE_LINK_NAME);
+        assertNotNull(profileLink);
+        assertEquals(profileLink, p2.documentSelfLink);
+    }
+
+    private ProfileStateExpanded createProfileWithInstanceType(String instanceTypeKey,
+            String instanceTypeValue, String imageKey, String imageValue) throws Throwable {
+        ComputeProfile cp1 = new ComputeProfile();
+        cp1.instanceTypeMapping = new HashMap<>();
+        InstanceTypeDescription itd = new InstanceTypeDescription();
+        itd.instanceType = instanceTypeValue;
+        cp1.instanceTypeMapping.put(instanceTypeKey, itd);
+
+        ComputeImageDescription cid = new ComputeImageDescription();
+        cid.image = imageValue;
+        cp1.imageMapping = new HashMap<>();
+        cp1.imageMapping.put(imageKey, cid);
+
+        return createProfile(cp1, null, null, computeGroupPlacementState.tenantLinks, null);
+    }
+
+    @Test
     public void testComputeAllocationWithFollowingProvisioningRequest() throws Throwable {
         host.log(">>>>>>Start: testComputeAllocationWithFollowingProvisioningRequest <<<<< ");
         ComputeDescription computeDescription = createVMComputeDescription(false);
@@ -81,7 +153,8 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         provisionTask = provision(provisionTask);
 
         // verify container state is provisioned and patched:
-        computeState = getDocument(ComputeState.class, provisionTask.resourceLinks.iterator().next());
+        computeState =
+                getDocument(ComputeState.class, provisionTask.resourceLinks.iterator().next());
         assertNotNull(computeState);
 
         assertNotNull(computeState.id);
