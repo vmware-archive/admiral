@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -404,10 +404,8 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         sendRequest(Operation
                 .createPost(webHookUri)
                 .setReferer(this.getUri())
-                .setExpiration(
-                        TimeUnit.SECONDS.toMicros(ClosureProps.DEFAULT_WEB_HOOK_EXPIRATION_TIMEOUT)
-                                + Utils
-                                .getNowMicrosUtc())
+                .setExpiration(Utils.fromNowMicrosUtc(TimeUnit.SECONDS
+                        .toMicros(ClosureProps.DEFAULT_WEB_HOOK_EXPIRATION_TIMEOUT)))
                 .setBody(closure)
                 .setCompletion((op, ex) -> {
                     if (ex != null) {

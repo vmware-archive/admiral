@@ -54,7 +54,7 @@ public class ServiceDocumentQuery<T extends ServiceDocument> {
     }
 
     public static long getDefaultQueryExpiration() {
-        return Utils.getNowMicrosUtc() + DEFAULT_EXPIRATION_TIME_IN_MICROS;
+        return Utils.fromNowMicrosUtc(DEFAULT_EXPIRATION_TIME_IN_MICROS);
     }
 
     /**
@@ -138,10 +138,8 @@ public class ServiceDocumentQuery<T extends ServiceDocument> {
 
     /**
      * Query for a list of expanded documents extending {@link ServiceDocument}s that are updated or
-     * deleted since given time in the past. The result will include both updated and deleted
-     * documents. The deleted documents will be marked as with
-     * {@link ServiceDocument#documentSignature} =
-     * {@link ServiceDocument#isDeletedTemplate(ServiceDocument)}.
+     * deleted since given time. The result will include both updated and deleted documents.
+     * If document is deleted : {@link ServiceDocument#isDeleted(ServiceDocument)}.
      *
      * @param documentSinceUpdateTimeMicros
      *            Indicating a time since the document was last updated matching the property
@@ -154,16 +152,13 @@ public class ServiceDocumentQuery<T extends ServiceDocument> {
             Consumer<ServiceDocumentQueryElementResult<T>> completionHandler) {
         AssertUtil.assertNotNull(type, "type");
         AssertUtil.assertNotNull(completionHandler, "completionHandler");
-        long nowMicrosUtc = Utils.getNowMicrosUtc();
-        AssertUtil.assertState(nowMicrosUtc > documentSinceUpdateTimeMicros,
-                "'documentSinceUpdateTimeMicros' must be in the past.");
 
         QueryTask q = QueryUtil.buildQuery(type, true);
         q.querySpec.options = EnumSet.of(QueryOption.EXPAND_CONTENT, QueryOption.INCLUDE_DELETED);
         q.querySpec.query
                 .addBooleanClause(createUpdatedSinceTimeRange(documentSinceUpdateTimeMicros));
 
-        q.documentExpirationTimeMicros = nowMicrosUtc + DEFAULT_EXPIRATION_TIME_IN_MICROS;
+        q.documentExpirationTimeMicros = Utils.fromNowMicrosUtc(DEFAULT_EXPIRATION_TIME_IN_MICROS);
         q.querySpec.resultLimit = DEFAULT_QUERY_RESULT_LIMIT;
 
         query(q, completionHandler);
@@ -341,7 +336,7 @@ public class ServiceDocumentQuery<T extends ServiceDocument> {
     }
 
     private Query createUpdatedSinceTimeRange(long timeInMicros) {
-        long limitToNowInMicros = Utils.getNowMicrosUtc() + TimeUnit.SECONDS.toMicros(10);
+        long limitToNowInMicros = Utils.fromNowMicrosUtc(TimeUnit.SECONDS.toMicros(10));
         NumericRange<Long> range = NumericRange.createLongRange(timeInMicros, limitToNowInMicros,
                 true, false);
         range.precisionStep = 64; // 4 and 8 doesn't work. 16 works but set 64 to be certain.

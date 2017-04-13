@@ -99,7 +99,7 @@ public class NotificationsService extends StatelessService {
             qt.querySpec.query.addBooleanClause(QueryUtil.addTenantGroupAndUserClause(tenantLinks));
         }
 
-        long nMinutesAgo = Utils.getNowMicrosUtc() - EVENTS_TIME_INTERVAL_MICROS;
+        long nMinutesAgo = Utils.fromNowMicrosUtc(-EVENTS_TIME_INTERVAL_MICROS);
         QueryTask.Query numOfInstancesClause = new QueryTask.Query()
                 .setTermPropertyName(ServiceDocument.FIELD_NAME_UPDATE_TIME_MICROS)
                 .setNumericRange(NumericRange.createLongRange(nMinutesAgo,

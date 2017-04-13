@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -93,7 +93,7 @@ public class ContainerMaintenance {
      * @return whether an inspect request was sent or not
      */
     private boolean inspectContainerIfNeeded(ContainerState containerState, Operation post) {
-        long nowMicrosUtc = Utils.getNowMicrosUtc();
+        long nowMicrosUtc = Utils.getSystemNowMicrosUtc();
         long updatePeriod = isUpdatedRecently(containerState, nowMicrosUtc)
                 ? MAINTENANCE_PERIOD_MICROS : MAINTENANCE_SLOW_DOWN_PERIOD_MICROS;
 
@@ -115,7 +115,7 @@ public class ContainerMaintenance {
      * @return whether a stats collection request was sent or not
      */
     private boolean collectStatsIfNeeded(ContainerState containerState, Operation post) {
-        long nowMicrosUtc = Utils.getNowMicrosUtc();
+        long nowMicrosUtc = Utils.getSystemNowMicrosUtc();
         // if the container state is recently updated, we want to collect stats on each maintenance
         long updatePeriod = isUpdatedRecently(containerState, nowMicrosUtc)
                 ? 0 : MAINTENANCE_PERIOD_MICROS;
