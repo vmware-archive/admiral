@@ -14,6 +14,8 @@ import RequestGraph from 'components/requests/RequestGraph';
 import ContainerDefinitionForm from 'components/containers/ContainerDefinitionForm';
 import ContainersStore from 'stores/ContainersStore';
 import RequestGraphStore from 'stores/RequestGraphStore';
+import MachinesStore from 'stores/MachinesStore';
+import MachineDetails from 'components/machines/MachineDetailsView';
 import * as actions from 'actions/Actions';
 import modal from 'core/modal';
 
@@ -37,6 +39,12 @@ function removeOldViews() {
 
 function openContainerDetails() {
   this.view = new ContainerDetails();
+  this.$el.append(this.view.getEl());
+  this.view.attached();
+}
+
+function openMachineDetails() {
+  this.view = new MachineDetails();
   this.$el.append(this.view.getEl());
   this.view.attached();
 }
@@ -77,6 +85,12 @@ function addEventListeners() {
       _this.view.setData(data);
     }
   });
+
+  MachinesStore.listen(function(data) {
+    if (_this.view instanceof MachineDetails && data.selectedItemDetails) {
+      _this.view.setData(data.selectedItemDetails);
+    }
+  });
 }
 
 function initRoutes() {
@@ -91,6 +105,11 @@ function initRoutes() {
   crossroads.addRoute('/containers/{containerId}', function(containerId) {
     openContainerDetails.call(_this);
     actions.ContainerActions.openContainerDetails(containerId);
+  });
+
+  crossroads.addRoute('/machines/{machineId}/details', function(machineId) {
+    openMachineDetails.call(_this);
+    actions.MachineActions.openMachineDetails(machineId);
   });
 
   crossroads.addRoute('/request-graph/{requestId}:?host:', function(requestId, query) {
