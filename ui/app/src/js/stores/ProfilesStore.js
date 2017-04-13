@@ -166,6 +166,14 @@ let ProfilesStore = Reflux.createStore({
         promises.push(Promise.resolve());
       }
 
+      if (document.computeProfile && document.computeProfile.imageMapping) {
+        promises.push(services.loadImageResources(
+            Object.keys(document.computeProfile.imageMapping).map((key) =>
+                document.computeProfile.imageMapping[key].image)).catch(() => Promise.resolve()));
+      } else {
+        promises.push(Promise.resolve());
+      }
+
       if (document.networkProfile && document.networkProfile.subnetLinks &&
           document.networkProfile.subnetLinks.length) {
         promises.push(
@@ -183,11 +191,12 @@ let ProfilesStore = Reflux.createStore({
         promises.push(Promise.resolve());
       }
 
-      Promise.all(promises).then(([endpoint, tags, subnetworks, isolationNetwork]) => {
+      Promise.all(promises).then(([endpoint, tags, images, subnetworks, isolationNetwork]) => {
         if (document.endpointLink && endpoint) {
           document.endpoint = endpoint;
         }
         document.tags = tags ? Object.values(tags) : [];
+        document.computeProfile.images = images ? Object.values(images) : [];
         document.networkProfile.subnetworks = subnetworks ? Object.values(subnetworks) : [];
         if (document.networkProfile.isolationNetworkLink && isolationNetwork) {
           document.networkProfile.isolationNetwork = isolationNetwork;

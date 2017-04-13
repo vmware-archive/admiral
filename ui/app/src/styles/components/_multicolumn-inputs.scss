@@ -55,6 +55,7 @@ $multicolumn-inputs-padding: 5px;
     padding-left: $multicolumn-inputs-padding;
     padding-right: $multicolumn-inputs-padding;
     display: table-cell;
+    vertical-align: middle;
 
     input {
       font-size: 13px;

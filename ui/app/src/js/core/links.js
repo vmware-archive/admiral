@@ -39,6 +39,7 @@ var links = Immutable({
   EPZ_CONFIG: RESOURCES + '/elastic-placement-zones-config',
   NETWORKS: RESOURCES + '/networks',
   SUBNETWORKS: RESOURCES + '/sub-networks',
+  IMAGE_RESOURCES: RESOURCES + '/images',
 
   CONTAINER_HOSTS: RESOURCES + '/hosts',
   CONTAINERS: RESOURCES + '/containers',
