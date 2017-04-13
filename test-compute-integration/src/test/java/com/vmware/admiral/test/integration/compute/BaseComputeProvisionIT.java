@@ -39,6 +39,7 @@ import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptio
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.test.BaseTestCase.TestWaitForHandler;
 import com.vmware.admiral.common.test.CommonTestStateFactory;
+import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
@@ -760,8 +761,12 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
     protected NetworkProfile createIsolatedNetworkProfile(String isolatedNetworkName, int cidrPrefix) throws Exception {
         QueryTask.Query query = QueryTask.Query.Builder.create()
-                .addFieldClause(NetworkState.FIELD_NAME_ID, isolatedNetworkName)
+                .addCaseInsensitiveFieldClause(NetworkState.FIELD_NAME_NAME, isolatedNetworkName,
+                        QueryTask.QueryTerm.MatchType.TERM, QueryTask.Query.Occurance.MUST_OCCUR)
+                .addFieldClause(NetworkState.FIELD_NAME_ENDPOINT_LINK, endpoint.documentSelfLink)
+                .addClause(QueryUtil.addTenantAndGroupClause(getTenantLinks()))
                 .build();
+
         QueryTask qt = QueryTask.Builder.createDirectTask().setQuery(query).build();
         String responseJson = sendRequest(SimpleHttpsClient.HttpMethod.POST,
                 ServiceUriPaths.CORE_QUERY_TASKS,
