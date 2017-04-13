@@ -11,7 +11,7 @@
 
 import { OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { containsTree } from '@angular/router/src/url_tree';
+// import { containsTree } from '@angular/router/src/url_tree';
 import { DocumentService } from '../../utils/document.service';
 
 export class BaseListComponent implements OnInit {
@@ -29,8 +29,9 @@ export class BaseListComponent implements OnInit {
   }
 
   isRouteActive(route) {
-    const currentUrlTree = this.router.parseUrl(this.router.url);
-    const routeUrlTree = this.router.createUrlTree([route]);
-    return containsTree(currentUrlTree, routeUrlTree, true);
+    // const currentUrlTree = this.router.parseUrl(this.router.url);
+    // const routeUrlTree = this.router.createUrlTree([route]);
+    // return containsTree(currentUrlTree, routeUrlTree, true);
+    return true;
   }
 }

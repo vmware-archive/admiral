@@ -13,6 +13,23 @@ import { AppComponent } from './app.component';
 import { TranslatePipe } from './utils/i18n.pipe';
 import { BreakOutModalDirective } from "./directives/shared/break-out-modal.directive";
 
+import { AdministrationComponent } from './views/administration/administration.component';
+import { MainResourcesComponent } from './views/main-resources/main-resources.component';
+
+import { IdentityManagementComponent } from './views/identity-management/identity-management.component';
+import { ProjectsComponent } from './views/projects/projects.component';
+import { RegistriesComponent } from './views/registries/registries.component';
+import { ConfigurationComponent } from './views/configuration/configuration.component';
+import { LogsComponent } from './views/logs/logs.component';
+
+import { DashboardComponent } from './views/dashboard/dashboard.component';
+import { ApplicationsComponent } from './views/applications/applications.component';
+import { ContainersComponent } from './views/containers/containers.component';
+import { TemplatesComponent } from './views/templates/templates.component';
+import { ProjectRepositoriesComponent } from './views/project-repositories/project-repositories.component';
+import { PublicRepositoriesComponent } from './views/public-repositories/public-repositories.component';
+import { VchClustersComponent } from './views/vch-clusters/vch-clusters.component';
+
 import { GridViewComponent } from './components/grid-view/grid-view.component';
 import { CardComponent } from './components/card/card.component';
 import { StatsComponent } from "./components/stats/stats.component";
@@ -34,6 +51,23 @@ export const ADMIRAL_DECLARATIONS = [
   AppComponent,
   TranslatePipe,
   BreakOutModalDirective,
+
+  AdministrationComponent,
+  MainResourcesComponent,
+
+  IdentityManagementComponent,
+  ProjectsComponent,
+  RegistriesComponent,
+  ConfigurationComponent,
+  LogsComponent,
+
+  DashboardComponent,
+  ApplicationsComponent,
+  ContainersComponent,
+  TemplatesComponent,
+  ProjectRepositoriesComponent,
+  PublicRepositoriesComponent,
+  VchClustersComponent,
 
   GridViewComponent,
   CardComponent,

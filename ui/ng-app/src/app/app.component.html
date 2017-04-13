@@ -17,6 +17,10 @@
             <span class="title">vSphere Integrated Containers</span>
         </a>
     </div>
+    <div class="header-nav">
+        <a class="nav-link nav-text" routerLink="/home" routerLinkActive="active">Home</a>
+        <a class="nav-link nav-text" routerLink="/administration" routerLinkActive="active">Administration</a>
+    </div>
     <div class="header-actions">
         <clr-dropdown class="dropdown bottom-right">
             <button class="nav-text" clrDropdownToggle>
@@ -31,56 +35,6 @@
     </div>
   </clr-header>
   <div class="content-container">
-    <nav class="sidenav">
-      <section class="sidenav-content">
-          <div class="select nav-context-content">
-            <select id="selects_1">
-              <option>Project Dev</option>
-              <option>Project Stage</option>
-              <option>Project Test</option>
-            </select>
-          </div>
-          <a href="..." class="nav-link active">
-              Dashboard
-          </a>
-          <section class="nav-group collapsible">
-              <input id="tabexample1" type="checkbox">
-              <label for="tabexample1">Deployments</label>
-              <ul class="nav-list">
-                  <li><a class="nav-link">Applications</a></li>
-                  <li><a class="nav-link">Containers</a></li>
-              </ul>
-          </section>
-          <section class="nav-group collapsible">
-              <input id="tabexample1" type="checkbox">
-              <label for="tabexample1">Library</label>
-              <ul class="nav-list">
-                  <li><a class="nav-link">Templates</a></li>
-                  <li><a class="nav-link">Project repositories</a></li>
-                  <li><a class="nav-link">Public repositories</a></li>
-              </ul>
-          </section>
-          <a href="..." class="nav-link">
-              Infrastructure
-          </a>
-          <section class="nav-group">
-            <div class="nav-context-content border">
-              <label>Administration</label>
-            </div>
-          </section>
-          <section class="nav-group">
-              <ul class="nav-list">
-                  <li><a class="nav-link">Identity Management</a></li>
-                  <li><a class="nav-link">Projects</a></li>
-                  <li><a class="nav-link">Registries</a></li>
-                  <li><a class="nav-link">Configuration</a></li>
-                  <li><a class="nav-link">Logs</a></li>
-              </ul>
-          </section>
-      </section>
-    </nav>
-    <div class="content-area">
-      <router-outlet></router-outlet>
-    </div>
+    <router-outlet></router-outlet>
   </div>
 </clr-main-container>

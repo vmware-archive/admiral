@@ -1,0 +1,39 @@
+<nav class="sidenav" [clr-nav-level]="2">
+  <section class="sidenav-content">
+      <div class="select nav-context-content">
+        <select id="selects_1">
+          <option>Project Dev</option>
+          <option>Project Stage</option>
+          <option>Project Test</option>
+        </select>
+      </div>
+      <a class="nav-link" routerLink="dashboard" routerLinkActive="active">Dashboard</a>
+      <section class="nav-group collapsible">
+          <input id="deploymentsCollapse" type="checkbox">
+          <label for="deploymentsCollapse">Deployments</label>
+          <ul class="nav-list">
+              <li><a class="nav-link" routerLink="applications" routerLinkActive="active">Applications</a></li>
+              <li><a class="nav-link" routerLink="containers" routerLinkActive="active">Containers</a></li>
+          </ul>
+      </section>
+      <section class="nav-group collapsible">
+          <input id="libraryCollapse" type="checkbox">
+          <label for="libraryCollapse">Library</label>
+          <ul class="nav-list">
+              <li><a class="nav-link" routerLink="templates" routerLinkActive="active">Templates</a></li>
+              <li><a class="nav-link" routerLink="project-repositories" routerLinkActive="active">Project repositories</a></li>
+              <li><a class="nav-link" routerLink="public-repositories" routerLinkActive="active">Public repositories</a></li>
+          </ul>
+      </section>
+       <section class="nav-group collapsible">
+          <input id="infrastructureCollapse" type="checkbox">
+          <label for="infrastructureCollapse">Infrastructure</label>
+          <ul class="nav-list">
+              <li><a class="nav-link" routerLink="vch-clusters" routerLinkActive="active">VCH Clusters</a></li>
+          </ul>
+      </section>
+  </section>
+</nav>
+<div class="content-area">
+    <router-outlet></router-outlet>
+</div>

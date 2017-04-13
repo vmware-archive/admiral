@@ -12,6 +12,23 @@
 import { ModuleWithProviders } from '@angular/core/src/metadata/ng_module';
 import { Routes, RouterModule } from '@angular/router';
 
+import { AdministrationComponent } from './views/administration/administration.component';
+import { MainResourcesComponent } from './views/main-resources/main-resources.component';
+
+import { IdentityManagementComponent } from './views/identity-management/identity-management.component';
+import { ProjectsComponent } from './views/projects/projects.component';
+import { RegistriesComponent } from './views/registries/registries.component';
+import { ConfigurationComponent } from './views/configuration/configuration.component';
+import { LogsComponent } from './views/logs/logs.component';
+
+import { DashboardComponent } from './views/dashboard/dashboard.component';
+import { ApplicationsComponent } from './views/applications/applications.component';
+import { ContainersComponent } from './views/containers/containers.component';
+import { TemplatesComponent } from './views/templates/templates.component';
+import { ProjectRepositoriesComponent } from './views/project-repositories/project-repositories.component';
+import { PublicRepositoriesComponent } from './views/public-repositories/public-repositories.component';
+import { VchClustersComponent } from './views/vch-clusters/vch-clusters.component';
+
 import { PodListComponent } from './kubernetes/pods/list/pod-list.component';
 import { PodDetailsComponent } from './kubernetes/pods/details/pod-details.component';
 import { DeploymentListComponent } from './kubernetes/deployments/list/deployment-list.component';
@@ -22,7 +39,7 @@ import { ServiceDetailsComponent } from './kubernetes/services/details/service-d
 
 export const ROUTES: Routes = [
     {
-        path: '', redirectTo: 'kubernetes/pods', pathMatch: 'full'
+        path: '', redirectTo: 'home', pathMatch: 'full'
     },
     {
         path: 'kubernetes/pods', component: PodListComponent,
@@ -40,6 +57,58 @@ export const ROUTES: Routes = [
         path: 'kubernetes/services', component: ServiceListComponent,
         children: [
             { path: ':id', component: ServiceDetailsComponent }
+        ]
+    },
+    {
+        path: 'home', component: MainResourcesComponent,
+        children: [
+            {
+                path: '', redirectTo: 'dashboard', pathMatch: 'full'
+            },
+            {
+                path: 'dashboard', component: DashboardComponent
+            },
+            {
+                path: 'applications', component: ApplicationsComponent
+            },
+            {
+                path: 'containers', component: ContainersComponent
+            },
+            {
+                path: 'templates', component: TemplatesComponent
+            },
+            {
+                path: 'project-repositories', component: ProjectRepositoriesComponent
+            },
+            {
+                path: 'public-repositories', component: PublicRepositoriesComponent
+            },
+            {
+                path: 'vch-clusters', component: VchClustersComponent
+            },
+        ]
+    },
+    {
+        path: 'administration', component: AdministrationComponent,
+        children: [
+            {
+                path: '', redirectTo: 'identity-management', pathMatch: 'full'
+            },
+            {
+                path: 'identity-management', component: IdentityManagementComponent
+            },
+            {
+                path: 'projects', component: ProjectsComponent
+            },
+            {
+                path: 'registries', component: RegistriesComponent
+            },
+            {
+                path: 'configuration', component: ConfigurationComponent
+            },
+            {
+                path: 'logs', component: LogsComponent
+            }
         ]
     }
 ];
