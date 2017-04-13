@@ -106,7 +106,7 @@ public class ContainerNetworkServiceTest extends ComputeBaseTest {
         URI networkUri = UriUtils.buildUri(host, network.documentSelfLink);
 
         ContainerNetworkState patch = new ContainerNetworkState();
-        long nowMicrosUtc = Utils.getNowMicrosUtc() + TimeUnit.SECONDS.toMicros(30);
+        long nowMicrosUtc = Utils.fromNowMicrosUtc(TimeUnit.SECONDS.toMicros(30));
         patch.documentExpirationTimeMicros = nowMicrosUtc;
 
         doOperation(patch, networkUri, false, Action.PATCH);

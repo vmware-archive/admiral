@@ -219,13 +219,13 @@ public class ContainerServiceTest extends ComputeBaseTest {
         URI containerUri = UriUtils.buildUri(host, container.documentSelfLink);
 
         ContainerState patch = new ContainerState();
-        long nowMicrosUtc = Utils.getNowMicrosUtc() + TimeUnit.SECONDS.toMicros(30);
-        patch.documentExpirationTimeMicros = nowMicrosUtc;
+        long expirationTime = Utils.fromNowMicrosUtc(TimeUnit.SECONDS.toMicros(30));
+        patch.documentExpirationTimeMicros = expirationTime;
 
         doOperation(patch, containerUri, false, Action.PATCH);
         ContainerState updatedContainer = getDocument(ContainerState.class,
                 container.documentSelfLink);
-        assertEquals(nowMicrosUtc, updatedContainer.documentExpirationTimeMicros);
+        assertEquals(expirationTime, updatedContainer.documentExpirationTimeMicros);
 
         patch = new ContainerState();
         patch.documentExpirationTimeMicros = -1;
