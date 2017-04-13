@@ -19,12 +19,15 @@ public final class DriverConstants {
     public static final String RUNTIME_NODEJS_4 = "nodejs";
     // python
     public static final String RUNTIME_PYTHON_3 = "python";
+    // powershell
+    public static final String RUNTIME_POWERSHELL_6 = "powershell";
     // bash
     public static final String RUNTIME_BASH = "bash";
     public static final String RUNTIME_NASHORN = "nashorn";
 
     public static final String NODEJS_4_IMAGE = VMWARE_RUNTIME + RUNTIME_NODEJS_4;
     public static final String PYTHON_3_IMAGE = VMWARE_RUNTIME + RUNTIME_PYTHON_3;
+    public static final String POWERSHEL_6_IMAGE = VMWARE_RUNTIME + RUNTIME_POWERSHELL_6;
 
     public static final String DOCKER_IMAGE_DATA_FOLDER_NAME =
             "com/vmware/admiral/closures/drivers/client/docker/image/";
