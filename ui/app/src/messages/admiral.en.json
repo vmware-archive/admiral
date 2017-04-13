@@ -1149,6 +1149,9 @@
         "outputs": "Outputs"
       }
     },
+    "image": {
+      "entity": "image"
+    },
     "help": {
         "link": "Help",
         "description": "Ensemble allows you to access relevant information for the context of the task that you are currently performing. It will refresh automatically with instructions as you continue your work. Use a second screen or split-screen to access the information in real time. You can use a mobile device, a TV, and any other screen whether it is connected to your computer or not. You can use Ensemble outside of the trusted network, while still receiving instantaneous updates.",

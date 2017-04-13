@@ -9,6 +9,8 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
+import services from 'core/services';
+
 export default Vue.component('azure-compute-profile-editor', {
   template: `
     <div>
@@ -39,7 +41,10 @@ export default Vue.component('azure-compute-profile-editor', {
           <text-control></text-control>
         </multicolumn-cell>
         <multicolumn-cell name="value">
-          <text-control></text-control>
+          <dropdown-search
+            :entity="i18n('app.image.entity')"
+            :filter="searchImages">
+          </dropdown-search>
         </multicolumn-cell>
       </multicolumn-editor-group>
     </div>
@@ -69,7 +74,8 @@ export default Vue.component('azure-compute-profile-editor', {
       imageMapping: Object.keys(imageTypeMapping).map((key) => {
         return {
           name: key,
-          value: imageTypeMapping[key].image
+          value: this.model.images.find((image) =>
+              image.id === imageTypeMapping[key].image)
         };
       })
     };
@@ -78,6 +84,14 @@ export default Vue.component('azure-compute-profile-editor', {
     this.emitChange();
   },
   methods: {
+    searchImages(...args) {
+      return new Promise((resolve, reject) => {
+        services.searchImageResources.apply(null,
+            [this.endpoint.documentSelfLink, ...args]).then((result) => {
+          resolve(result);
+        }).catch(reject);
+      });
+    },
     onInstanceTypeMappingChange(value) {
       this.instanceTypeMapping = value;
       this.emitChange();
@@ -100,7 +114,7 @@ export default Vue.component('azure-compute-profile-editor', {
           imageMapping: this.imageMapping.reduce((previous, current) => {
             if (current.name) {
               previous[current.name] = {
-                image: current.value
+                image: current.value && current.value.id
               };
             }
             return previous;
