@@ -25,6 +25,7 @@ import org.junit.Test;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
+import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.ContainerListCallback;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionState;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
@@ -63,7 +64,8 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
 
         waitForServiceAvailability(MockDockerAdapterService.SELF_LINK);
         waitForServiceAvailability(MockDockerHostAdapterService.SELF_LINK);
-        waitForServiceAvailability(HostContainerListDataCollection.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK);
+        waitForServiceAvailability(
+                HostContainerListDataCollection.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK);
 
         containerListBody = new ContainerListCallback();
         containerListBody.containerHostLink = COMPUTE_HOST_LINK;
@@ -109,7 +111,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
         // run data collection on preexisting container
         startAndWaitHostContainerListDataCollection();
 
-        ContainerState systemContainer = waitForContainer(systemContainerLink, image);
+        ContainerState systemContainer = waitForContainer(systemContainerLink, image, null, null);
         assertNotNull("System container not created or can't be retrieved.", systemContainer);
         assertEquals(systemContainerLink, systemContainer.documentSelfLink);
         assertEquals(SystemContainerDescriptions.AGENT_CONTAINER_NAME,
@@ -135,7 +137,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
         // run data collection on preexisting system container
         startAndWaitHostContainerListDataCollection();
 
-        ContainerState systemContainer = waitForContainer(systemContainerLink, image);
+        ContainerState systemContainer = waitForContainer(systemContainerLink, image, null, null);
         assertNotNull("System container not created or can't be retrieved.", systemContainer);
         assertEquals(systemContainerLink, systemContainer.documentSelfLink);
         assertEquals(SystemContainerDescriptions.AGENT_CONTAINER_NAME,
@@ -145,6 +147,46 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
                 systemContainer.descriptionLink);
         assertEquals(image, systemContainer.image);
         assertEquals(Boolean.TRUE, systemContainer.system);
+    }
+
+    @Test
+    public void testStateStuckInProvisioningWhenExistsOnHost() throws Throwable {
+        testStateStuckInProvisioning(false);
+    }
+
+    @Test
+    public void testStateStuckInProvisioningWhenDoesNotExistsOnHost() throws Throwable {
+        testStateStuckInProvisioning(true);
+    }
+
+    public void testStateStuckInProvisioning(boolean isSystemContainerMissingOnHost)
+            throws Throwable {
+        String systemContainerId = extractId(systemContainerLink);
+        String systemContainerRef = UriUtils.buildUri(host, systemContainerLink).toString();
+
+        MockDockerAdapterService.addContainerId(TEST_HOST_ID, systemContainerId,
+                systemContainerRef);
+        MockDockerAdapterService.addContainerNames(TEST_HOST_ID, systemContainerId,
+                SystemContainerDescriptions.AGENT_CONTAINER_NAME);
+        MockDockerAdapterService.addContainerImage(TEST_HOST_ID, systemContainerId, image);
+
+        startAndWaitHostContainerListDataCollection();
+        waitForContainer(systemContainerLink, image, PowerState.RUNNING,
+                "System container state should be running after regular data collection.");
+
+        ContainerState cs = new ContainerState();
+        cs.powerState = PowerState.PROVISIONING;
+        doPatch(cs, systemContainerLink);
+        waitForContainer(systemContainerLink, image, PowerState.PROVISIONING,
+                "System container state should be provisioning after patching it to provisioning.");
+
+        if (isSystemContainerMissingOnHost) {
+            MockDockerAdapterService.resetContainers();
+        }
+
+        startAndWaitHostContainerListDataCollection();
+        waitForContainer(systemContainerLink, image, PowerState.RUNNING,
+                "System container state should be running after the second data collection when the state was provisioning.");
     }
 
     @Test
@@ -166,7 +208,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
         startAndWaitHostContainerListDataCollection();
 
         // wait for the system container with the updated image
-        ContainerState systemContainer = waitForContainer(systemContainerLink, image);
+        ContainerState systemContainer = waitForContainer(systemContainerLink, image, null, null);
 
         assertNotNull("System container not created or can't be retrieved.", systemContainer);
         assertEquals(systemContainerLink, systemContainer.documentSelfLink);
@@ -199,7 +241,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
         startAndWaitHostContainerListDataCollection();
 
         // wait for the system container with the updated image
-        ContainerState systemContainer = waitForContainer(systemContainerLink, image);
+        ContainerState systemContainer = waitForContainer(systemContainerLink, image, null, null);
 
         assertNotNull("System container not created or can't be retrieved.", systemContainer);
         assertEquals(systemContainerLink, systemContainer.documentSelfLink);
@@ -227,11 +269,12 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
         waitForDataCollectionFinished();
     }
 
-    private ContainerState waitForContainer(String containerLink, String image) throws Throwable {
+    private ContainerState waitForContainer(String containerLink, String image,
+            PowerState expectedPowerState, String errorMessage) throws Throwable {
         ContainerState[] result = new ContainerState[1];
         AtomicBoolean cotinue = new AtomicBoolean();
 
-        waitFor(() -> {
+        waitFor(errorMessage, () -> {
             ServiceDocumentQuery<ContainerState> query = new ServiceDocumentQuery<>(host,
                     ContainerState.class);
             query.queryDocument(containerLink, (r) -> {
@@ -243,8 +286,11 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
                 } else if (r.hasResult()) {
                     // wait until container is ready with the expected image
                     if (r.getResult().id != null && image.equals(r.getResult().image)) {
-                        cotinue.set(true);
-                        result[0] = r.getResult();
+                        if (expectedPowerState == null
+                                || expectedPowerState.equals(r.getResult().powerState)) {
+                            cotinue.set(true);
+                            result[0] = r.getResult();
+                        }
                     }
                 }
             });
@@ -264,10 +310,12 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
                     dataCollectionLink,
                     (r) -> {
                         if (r.hasException()) {
-                            host.log("Exception while retrieving default host container list data collection: "
-                                    + (r.getException() instanceof CancellationException ? r
-                                            .getException()
-                                            .getMessage() : Utils.toString(r.getException())));
+                            host.log(
+                                    "Exception while retrieving default host container list data collection: "
+                                            + (r.getException() instanceof CancellationException ? r
+                                                    .getException()
+                                                    .getMessage()
+                                                    : Utils.toString(r.getException())));
                             cotinue.set(true);
                         } else if (r.hasResult()) {
                             if (r.getResult().containerHostLinks.isEmpty()) {
