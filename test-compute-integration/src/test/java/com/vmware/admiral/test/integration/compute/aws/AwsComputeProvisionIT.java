@@ -19,10 +19,11 @@ import com.vmware.photon.controller.model.resources.EndpointService.EndpointStat
 
 public class AwsComputeProvisionIT extends BaseComputeProvisionIT {
 
+    public static final String AWS_TAG_NAME = "Name";
     private static final String SECURITY_GROUP_PROP = "test.aws.security.group";
-    private static final String ACCESS_KEY_PROP = "test.aws.access.key";
-    private static final String ACCESS_SECRET_PROP = "test.aws.secret.key";
-    private static final String REGION_ID_PROP = "test.aws.region.id";
+    public static final String ACCESS_KEY_PROP = "test.aws.access.key";
+    public static final String ACCESS_SECRET_PROP = "test.aws.secret.key";
+    public static final String REGION_ID_PROP = "test.aws.region.id";
 
     @Override
     protected EndpointType getEndpointType() {
