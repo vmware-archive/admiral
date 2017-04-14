@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
@@ -34,6 +35,7 @@ import com.vmware.xenon.common.FileUtils;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 
 public class SystemImageRetrievalManager {
 
@@ -45,6 +47,17 @@ public class SystemImageRetrievalManager {
 
     private Map<String, List<Consumer<byte[]>>> pendingCallbacksByImagePath = new HashMap<>();
 
+    /**
+     * Map to keep a reference to loaded system images. Once loaded, the data will be added using
+     * the image file path as a key and time of the last usage will be stored. The timestamp is
+     * global for all the images. Once the defined timeout expires all the images will be cleared.
+     */
+    private static Map<String, byte[]> cachedImages = new HashMap<>();
+    private static long lastUsed;
+    private static final long CACHED_DATA_MICROS = Integer.getInteger(
+            "com.vmware.admiral.system.image.cache.micros",
+            (int) TimeUnit.SECONDS.toMicros(60));
+
     public SystemImageRetrievalManager(ServiceHost host) {
         this.host = host;
     }
@@ -53,12 +66,16 @@ public class SystemImageRetrievalManager {
             Consumer<byte[]> callback) {
 
         synchronized (RETRIEVE_LOCK) {
-            List<Consumer<byte[]>> pendingCallbacks = pendingCallbacksByImagePath
-                    .get(containerImageFilePath);
-            if (pendingCallbacks == null) {
-                pendingCallbacks = new ArrayList<>();
-                pendingCallbacksByImagePath.put(containerImageFilePath, pendingCallbacks);
+            byte[] imageData = cachedImages.get(containerImageFilePath);
+            if (imageData != null) {
+                host.log(Level.INFO, "Cached image found, %s\n", containerImageFilePath);
+                lastUsed = Utils.getSystemNowMicrosUtc();
+                callback.accept(imageData);
+                return;
             }
+
+            List<Consumer<byte[]>> pendingCallbacks = pendingCallbacksByImagePath
+                    .computeIfAbsent(containerImageFilePath, k -> new ArrayList<>());
 
             pendingCallbacks.add(callback);
 
@@ -87,10 +104,14 @@ public class SystemImageRetrievalManager {
     }
 
     private void notifyCallbacks(String containerImageFilePath, byte[] imageData) {
-        List<Consumer<byte[]>> pendingCallbacks = null;
+        List<Consumer<byte[]>> pendingCallbacks;
         synchronized (RETRIEVE_LOCK) {
+            cachedImages.put(containerImageFilePath, imageData);
+            lastUsed = Utils.getSystemNowMicrosUtc();
             pendingCallbacks = pendingCallbacksByImagePath.remove(containerImageFilePath);
         }
+        host.log(Level.INFO, "Caching system agent image data for %s", containerImageFilePath);
+        host.schedule(this::cleanCache, CACHED_DATA_MICROS, TimeUnit.MICROSECONDS);
 
         if (pendingCallbacks != null) {
             for (Consumer<byte[]> consumer : pendingCallbacks) {
@@ -105,7 +126,6 @@ public class SystemImageRetrievalManager {
                 host.log(Level.WARNING, "System image " + containerImageFilePath
                         + " does not exists.");
             }
-
             notifyCallbacks(containerImageFilePath, fileBytes);
         };
 
@@ -137,7 +157,7 @@ public class SystemImageRetrievalManager {
         Operation operation = new Operation();
         operation.setCompletion((op, ex) -> {
             if (op.hasBody()) {
-                callback.accept(op.getBody(new byte[0].getClass()));
+                callback.accept(op.getBody(byte[].class));
             } else {
                 callback.accept(null);
             }
@@ -160,4 +180,17 @@ public class SystemImageRetrievalManager {
             }
         }
     }
+
+    private void cleanCache() {
+        if (lastUsed + CACHED_DATA_MICROS < Utils.getSystemNowMicrosUtc()) {
+            // expired, clean the reference
+            cachedImages.clear();
+            lastUsed = 0;
+            host.log(Level.INFO, "System image(s) removed from cache");
+        } else {
+            // schedule next check
+            host.schedule(this::cleanCache, CACHED_DATA_MICROS, TimeUnit.MICROSECONDS);
+        }
+    }
+
 }
