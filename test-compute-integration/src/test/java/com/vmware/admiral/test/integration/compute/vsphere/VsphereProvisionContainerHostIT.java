@@ -137,7 +137,7 @@ public class VsphereProvisionContainerHostIT extends BaseIntegrationSupportIT {
         String id = name(getEndpointType(), "test", UUID.randomUUID().toString());
         ComputeDescription computeDesc = new ComputeDescription();
         computeDesc.id = id;
-        computeDesc.name = "dockervm" + String.valueOf(System.currentTimeMillis() / 1000);
+        computeDesc.name = nextName("dockervm");
         computeDesc.instanceType = "small";
         computeDesc.tenantLinks = endpoint.tenantLinks;
         computeDesc.dataStoreId = getTestRequiredProp(VsphereUtil.VC_DATASTORE_ID);

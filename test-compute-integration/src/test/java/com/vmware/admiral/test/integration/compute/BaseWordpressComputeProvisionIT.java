@@ -111,7 +111,8 @@ public abstract class BaseWordpressComputeProvisionIT extends BaseComputeProvisi
         }
     }
 
-    protected void validateComputeNic(ComputeState computeState, String expectedSubnet) throws Exception {
+    protected void validateComputeNic(ComputeState computeState, String expectedSubnet)
+            throws Exception {
         if (computeState.networkInterfaceLinks == null || computeState.networkInterfaceLinks
                 .isEmpty()) {
             fail(String.format("VM '%s' doesn't have any nics", computeState.name));
@@ -123,6 +124,8 @@ public abstract class BaseWordpressComputeProvisionIT extends BaseComputeProvisi
             fail(String.format("Unable to find network interface of VM '%s'", computeState.name));
         }
 
+        logger.info("Loading subnet %s for nic %s,on vm %", nic.subnetLink, nic.documentSelfLink,
+                computeState.name);
         SubnetState subnetState = getDocument(nic.subnetLink, SubnetState.class);
         if (subnetState == null) {
             fail(String.format(

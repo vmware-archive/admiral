@@ -17,12 +17,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
-import org.junit.Test;
-
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ResourceType;
-import com.vmware.admiral.compute.profile.ComputeImageDescription;
-import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.compute.ComputeOperationType;
@@ -44,11 +40,11 @@ import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
-    private static final String VSPHERE_COMPUTE_PROFILE = "/config/compute-profiles/vsphere";
-    private static final String VSPHERE_DISK_URI =
-            System.getProperty("test.vc.disk.uri", "vc://datastore/sof-20659-local/coreos-991.1.0/coreos-991.1.0.vmdk");
-    private static final String DISK_URI_IMAGE_ID = "coreos-disk";
+    static final String VSPHERE_COMPUTE_PROFILE = "/config/compute-profiles/vsphere";
+    static final String VSPHERE_DISK_URI = System.getProperty("test.vc.disk.uri",
+            "vc://datastore/sof-20659-local/coreos-991.1.0/coreos-991.1.0.vmdk");
     private static final long HDD_DISK_SIZE = 61 * 1024;
+    final String DISK_URI_IMAGE_ID = "coreos-disk";
 
     @Override
     protected EndpointType getEndpointType() {
@@ -67,19 +63,6 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
     @Override
     protected long getRootDiskSize() {
         return HDD_DISK_SIZE;
-    }
-
-    @Test
-    public void testProvisionWithBootDisk() throws Throwable {
-        // Get the vSphere compute profile and update imageMapping for diskUri
-        ComputeProfile computeProfile = getDocument(VSPHERE_COMPUTE_PROFILE, ComputeProfile.class);
-        ComputeImageDescription computeImageDescription = new ComputeImageDescription();
-        computeImageDescription.image = VSPHERE_DISK_URI;
-        computeProfile.imageMapping.put(DISK_URI_IMAGE_ID, computeImageDescription);
-        patchDocument(computeProfile);
-
-        String resourceDescriptionLink = getResourceDescriptionLink(true, DISK_URI_IMAGE_ID);
-        provision(resourceDescriptionLink);
     }
 
     private void executeDay2(Set<String> resourceLinks, ComputeOperationType computeOperation)
