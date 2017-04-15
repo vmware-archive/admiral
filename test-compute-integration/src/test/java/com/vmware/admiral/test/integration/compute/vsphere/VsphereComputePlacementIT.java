@@ -326,7 +326,7 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
 
     private ComputeDescription createVmComputeDescription(String vmName) throws Exception {
         ComputeDescription cd = new ComputeDescription();
-        cd.name = vmName;
+        cd.name = nextName(vmName);
         cd.tenantLinks = this.endpoint.tenantLinks;
         cd.cpuCount = 1;
         cd.totalMemoryBytes = 512 * 1024 * 1024; // 512MB
