@@ -26,7 +26,7 @@ export function slideAndFade() {
         opacity: '1',
         transform: 'translateX(100%)'
       }),
-      animate('200ms ease-in', style({transform: 'translateX(0%)'}))
+      animate('250ms ease-in', style({transform: 'translateX(0%)'}))
     ]),
     transition('active => *', [
       style({

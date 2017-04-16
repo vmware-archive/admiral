@@ -12,7 +12,7 @@
 <clr-main-container>
   <clr-header class="header-5">
     <div class="branding">
-        <a href="..." class="nav-link">
+        <a class="nav-link" routerLink="/">
             <clr-icon shape="vm-bug"></clr-icon>
             <span class="title">vSphere Integrated Containers</span>
         </a>
@@ -34,7 +34,7 @@
         </clr-dropdown>
     </div>
   </clr-header>
-  <div class="content-container">
+  <div class="content-container" [ngClass]="{'expanded': expanded}">
     <router-outlet></router-outlet>
   </div>
 </clr-main-container>

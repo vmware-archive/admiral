@@ -36,8 +36,8 @@
 
 <div [ngClass]="{'items': true, 'list': !showCardView}" [ngStyle]="itemsHolderStyle" #itemsHolder>
   <span *ngFor="let item of items; let i = index" class='card-item' [ngStyle]="getStyle(i)" #cardItem>
-    <template [ngTemplateOutlet]="gridItemTmpl" [ngOutletContext]="{item: item}">
-    </template>
+    <ng-template [ngTemplateOutlet]="gridItemTmpl" [ngOutletContext]="{item: item}">
+    </ng-template>
   </span>
   <span *ngIf="items.length === 0 && !loading" class="content-empty">
     No items

@@ -20,6 +20,7 @@ import { AppComponent } from './app.component';
 import { ROUTING } from "./app.routing";
 import { Ajax, SessionTimedOutSubject } from './utils/ajax.service';
 import { DocumentService } from './utils/document.service';
+import { ViewExpandRequestService } from './services/view-expand-request.service';
 
 import { ADMIRAL_DECLARATIONS } from './admiral';
 
@@ -36,7 +37,8 @@ import { ADMIRAL_DECLARATIONS } from './admiral';
     providers: [
         Ajax,
         SessionTimedOutSubject,
-        DocumentService
+        DocumentService,
+        ViewExpandRequestService
     ],
     bootstrap: [AppComponent]
 })

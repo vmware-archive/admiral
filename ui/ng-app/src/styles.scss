@@ -22,7 +22,16 @@
     display: flex;
     > * {
       display: flex;
+      position: relative;
     }
+  }
+
+  .content-container .sidenav {
+    transition: width 0.25s ease-in;
+  }
+  .content-container.expanded .sidenav {
+    min-width: 0;
+    width: 0;
   }
 }
 
@@ -30,14 +39,24 @@ grid-view {
   z-index: 1;
 }
 
-.details-view {
+navigation-slide-transition {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+navigation-slide-transition > * {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   background-color: white;
-  z-index: 10;
 }
 
 .main-container .tokenfield {

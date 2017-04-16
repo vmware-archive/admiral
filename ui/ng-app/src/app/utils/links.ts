@@ -17,4 +17,6 @@ export class Links {
   public static REPLICATION_CONTROLLERS = Links.RESOURCES + '/kubernetes-replication-controllers';
   public static CONTAINER_LOGS = Links.RESOURCES + '/container-logs';
   public static POD_LOGS = Links.RESOURCES + '/kubernetes-pod-logs';
+  public static PROJECTS = '/projects';
+
 }

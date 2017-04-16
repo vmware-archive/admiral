@@ -13,7 +13,7 @@ import { Component,  } from '@angular/core';
 
 @Component({
   selector: 'back-button',
-  template: `<a class="close-button"><i class="fa fa-chevron-circle-left"></i><span class="backtext">{{"back" | i18n}}</span></a>`,
+  template: `<a class="close-button"><i class="fa fa-chevron-left"></i><span class="backtext"><ng-content></ng-content></span></a>`,
   styleUrls: ['./back-button.component.scss']
 })
 export class BackButtonComponent {

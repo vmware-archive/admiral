@@ -12,6 +12,7 @@
 import { Component, Input, QueryList, OnInit, ContentChild, ContentChildren, ViewChild, ViewChildren, TemplateRef, HostListener, ViewEncapsulation } from '@angular/core';
 import { searchConstants } from 'admiral-ui-common';
 import * as I18n from 'i18next';
+import { DocumentService } from '../../utils/document.service';
 
 @Component({
   selector: 'grid-view',
@@ -23,6 +24,7 @@ export class GridViewComponent implements OnInit {
   @Input() items: any[];
   @Input() count: number;
   @Input() loading: boolean;
+  @Input() serviceEndpoint: string;
   @Input() searchPlaceholder: string;
   @Input() searchSuggestionProperties: Array<string>;
   @Input() searchQueryOptions: string;
@@ -44,9 +46,15 @@ export class GridViewComponent implements OnInit {
     label: I18n.t('occurrence.any')
   }];
 
-  constructor() { }
+  constructor(protected service: DocumentService) { }
 
   ngOnInit() {
+    this.items = [];
+    this.loading = true;
+    this.service.list(this.serviceEndpoint).then(result => {
+      this.items = result;
+      this.loading = false;
+    });
   }
 
   ngAfterContentInit() {

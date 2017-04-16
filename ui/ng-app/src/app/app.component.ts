@@ -11,6 +11,7 @@
 
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { ViewExpandRequestService } from './services/view-expand-request.service';
 
 @Component({
     selector: 'my-app',
@@ -18,8 +19,11 @@ import { Router } from '@angular/router';
     styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-    constructor(private router: Router) {
-    }
+    private expanded: boolean;
 
-    public opened: boolean;
+    constructor(private viewExpandRequestor: ViewExpandRequestService) {
+        this.viewExpandRequestor.getRequestEmitter().subscribe(isExpand => {
+            this.expanded = isExpand;
+        });
+    }
 }
