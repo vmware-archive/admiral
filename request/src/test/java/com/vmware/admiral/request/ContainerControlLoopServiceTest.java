@@ -37,7 +37,7 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState.Powe
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
 import com.vmware.admiral.request.ContainerControlLoopService.ContainerControlLoopState;
 import com.vmware.admiral.request.utils.RequestUtils;
-import com.vmware.photon.controller.model.tasks.QueryUtils.QueryByPages;
+import com.vmware.photon.controller.model.query.QueryUtils.QueryByPages;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Service;

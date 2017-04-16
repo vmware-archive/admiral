@@ -17,9 +17,9 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
+import com.vmware.photon.controller.model.query.QueryUtils;
 import com.vmware.photon.controller.model.resources.EndpointService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
-import com.vmware.photon.controller.model.tasks.QueryUtils;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
