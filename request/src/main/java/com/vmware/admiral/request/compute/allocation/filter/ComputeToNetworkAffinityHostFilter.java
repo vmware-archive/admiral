@@ -24,10 +24,10 @@ import java.util.stream.Collectors;
 
 import com.vmware.admiral.request.allocation.filter.AffinityConstraint;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter;
+import com.vmware.photon.controller.model.query.QueryUtils.QueryTop;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.NetworkInterfaceDescription;
 import com.vmware.photon.controller.model.resources.ResourceState;
-import com.vmware.photon.controller.model.tasks.QueryUtils.QueryTop;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.services.common.QueryTask.Query;
 
