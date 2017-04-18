@@ -131,6 +131,9 @@ export default Vue.component('vsphere-endpoint-editor', {
       };
       mcp.client.patch('/provisioning/vsphere/dc-enumerator', request).then((result) => {
         this.regionIdValues = result.datacenters.map(this.convertToObject);
+      }).catch((e) => {
+        console.error(e);
+        this.regionIdValues = [];
       });
     },
     searchLinkedEndpoints(...args) {

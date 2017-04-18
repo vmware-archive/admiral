@@ -28,6 +28,7 @@ import com.vmware.admiral.host.interceptor.ComputePlacementZoneInterceptor;
 import com.vmware.admiral.host.interceptor.EndpointInterceptor;
 import com.vmware.admiral.host.interceptor.InUsePlacementZoneInterceptor;
 import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
+import com.vmware.admiral.host.interceptor.PhotonModelMockRequestInterceptor;
 import com.vmware.admiral.host.interceptor.ProfileInterceptor;
 import com.vmware.admiral.host.interceptor.ResourceGroupInterceptor;
 import com.vmware.admiral.host.interceptor.SchedulerPlacementZoneInterceptor;
@@ -108,21 +109,7 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
 
     private ExtensibilitySubscriptionManager extensibilityRegistry;
 
-    private static OperationInterceptorRegistry interceptors = new OperationInterceptorRegistry();
-
-    /**
-     * Register service operation interceptors.
-     */
-    static {
-        InUsePlacementZoneInterceptor.register(interceptors);
-        SchedulerPlacementZoneInterceptor.register(interceptors);
-        CompositeComponentInterceptor.register(interceptors);
-        AuthCredentialsInterceptor.register(interceptors);
-        ResourceGroupInterceptor.register(interceptors);
-        EndpointInterceptor.register(interceptors);
-        ProfileInterceptor.register(interceptors);
-        ComputePlacementZoneInterceptor.register(interceptors);
-    }
+    private OperationInterceptorRegistry interceptors = new OperationInterceptorRegistry();
 
     public static void main(String[] args) throws Throwable {
         ManagementHost h = new ManagementHost();
@@ -134,9 +121,30 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         }));
     }
 
+    /**
+     * Registers service operation interceptors.
+     */
+    protected void registerOperationInterceptors() {
+        InUsePlacementZoneInterceptor.register(interceptors);
+        SchedulerPlacementZoneInterceptor.register(interceptors);
+        CompositeComponentInterceptor.register(interceptors);
+        AuthCredentialsInterceptor.register(interceptors);
+        ResourceGroupInterceptor.register(interceptors);
+        EndpointInterceptor.register(interceptors);
+        ProfileInterceptor.register(interceptors);
+        ComputePlacementZoneInterceptor.register(interceptors);
+
+        if (this.startMockHostAdapterInstance) {
+            PhotonModelMockRequestInterceptor.register(interceptors);
+        }
+    }
+
     protected ManagementHost initializeHostAndServices(String[] args) throws Throwable {
         log(Level.INFO, "Initializing ...");
         initialize(args);
+
+        log(Level.INFO, "Registering service interceptors ...");
+        registerOperationInterceptors();
 
         log(Level.INFO, "Starting ...");
         start();
