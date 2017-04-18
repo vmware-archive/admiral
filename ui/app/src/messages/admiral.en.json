@@ -623,6 +623,23 @@
         "loadButton": "Load from file",
         "importTemplateHint": "Composite description containing one or multiple machine descriptions",
         "importPlaceholder": ""
+      },
+      "details": {
+        "propertyName" : "Name",
+        "propertyValue": "Value",
+        "general": {
+          "id": "ID",
+          "hostName": "Host Name",
+          "address": "Address",
+          "properties": "Properties",
+          "usages": "Usages",
+          "powerState": "Power State",
+          "environment": "Environment",
+          "region": "Region"
+        },
+        "customProperties": {
+          "title" : "Custom Properties"
+        }
       }
     },
     "compute": {
