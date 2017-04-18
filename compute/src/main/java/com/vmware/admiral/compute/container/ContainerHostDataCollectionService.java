@@ -15,6 +15,7 @@ import static com.vmware.admiral.compute.ContainerHostService.RETRIES_COUNT_PROP
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
+import java.net.ConnectException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -852,8 +853,31 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 .setBody(request)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        logWarning(Utils.toString(ex));
-                        return;
+                        if (ex instanceof ConnectException) {
+                            // Change adapter reference. Needed in cluster if the node that the
+                            // reference point to is down
+                            logWarning(
+                                    "Adapter management reference for compute state %s will be updated because of %s. Adapter: %s",
+                                    computeState.documentSelfLink, ex.getMessage(),
+                                    adapterURI.toString());
+                            URI hostAdapter = getDefaultHostAdapter(getHost());
+                            if (!computeState.adapterManagementReference.equals(hostAdapter)) {
+                                ComputeState patchState = new ComputeState();
+                                patchState.adapterManagementReference = hostAdapter;
+                                computeState.adapterManagementReference = patchState.adapterManagementReference;
+                                sendRequest(
+                                        Operation.createPatch(this, computeState.documentSelfLink)
+                                                .setBody(patchState)
+                                                .setCompletion((op, e) -> {
+                                                    if (e != null) {
+                                                        logSevere(e);
+                                                    }
+                                                }));
+                            }
+                        } else {
+                            logWarning(Utils.toString(ex));
+                            return;
+                        }
                     }
                 }));
     }
