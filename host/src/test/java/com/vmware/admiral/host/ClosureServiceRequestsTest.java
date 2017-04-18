@@ -48,11 +48,13 @@ import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.common.test.HostInitTestDcpServicesConfig;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.compute.ComputeConstants;
-import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
+import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.ConfigurationService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
+import com.vmware.admiral.service.test.MockComputeHostInstanceAdapter;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
@@ -65,6 +67,11 @@ public class ClosureServiceRequestsTest extends BaseTestCase {
 
     private static final int DEFAULT_OPERATION_TIMEOUT = 30;
 
+    private ComputeDescriptionService.ComputeDescription hostDesc;
+    private ComputeService.ComputeState computeHost;
+
+    private final Object initializationLock = new Object();
+
     @Before
     public void setUp() throws Exception {
         try {
@@ -73,7 +80,8 @@ public class ClosureServiceRequestsTest extends BaseTestCase {
             this.host.log(Level.INFO, "Test services started.");
 
             // turn on powershell runtime
-            configurePullFromRegistry(DriverConstants.RUNTIME_POWERSHELL_6, "powershell.test.registry");
+            configurePullFromRegistry(DriverConstants.RUNTIME_POWERSHELL_6,
+                    "powershell.test.registry");
 
             startClosureServices(this.host);
             waitForServiceAvailability(AdmiralAdapterFactoryService.FACTORY_LINK);
@@ -82,7 +90,10 @@ public class ClosureServiceRequestsTest extends BaseTestCase {
             waitForInitialBootServiceToBeSelfStopped(ComputeInitialBootService.SELF_LINK);
             this.host.log(Level.INFO, "Initial Boot Service stopped: " + ComputeInitialBootService
                     .SELF_LINK);
-            createTestHostState();
+
+            ComputeDescriptionService.ComputeDescription dockerHostDesc = createDockerHostDescription();
+            createDockerHost(dockerHostDesc);
+
             this.host.log(Level.INFO, "Test compute created.");
 
         } catch (Throwable e) {
@@ -450,34 +461,13 @@ public class ClosureServiceRequestsTest extends BaseTestCase {
         clean(closureDefChildURI);
     }
 
-    private ComputeService.ComputeState createTestHostState() throws Throwable {
-        ComputeService.ComputeState state = createComputeState();
-        state.resourcePoolLink = GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_LINK;
-        state.powerState = ComputeService.PowerState.ON;
-        state = doPost(state, ComputeService.FACTORY_LINK);
-        return state;
-    }
-
-    private ComputeService.ComputeState createComputeState() {
-        ComputeService.ComputeState computeState = new ComputeService.ComputeState();
-        computeState.descriptionLink =
-                ComputeService.FACTORY_LINK + "/" + UUID.randomUUID().toString();
-        computeState.address = "https://test-server";
-        computeState.customProperties = new HashMap<>();
-        computeState.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
-                "authCredentialsLink");
-        computeState.customProperties.put(ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
-                ContainerHostService.DockerAdapterType.API.name());
-
-        return computeState;
-    }
-
     private static void startCoreServices(ServiceHost serviceHost) throws Throwable {
         DeploymentProfileConfig.getInstance().setTest(true);
         HostInitPhotonModelServiceConfig.startServices(serviceHost);
         HostInitTestDcpServicesConfig.startServices(serviceHost);
         HostInitCommonServiceConfig.startServices(serviceHost);
         HostInitComputeServicesConfig.startServices(serviceHost, true);
+        HostInitRequestServicesConfig.startServices(serviceHost);
         HostInitDockerAdapterServiceConfig.startServices(serviceHost, true);
     }
 
@@ -584,6 +574,63 @@ public class ClosureServiceRequestsTest extends BaseTestCase {
 
     private boolean isTimeoutElapsed(long startTime, int timeout) {
         return System.currentTimeMillis() - startTime > TimeUnit.SECONDS.toMillis(timeout);
+    }
+
+    protected ComputeService.ComputeState createDockerHost(
+            ComputeDescriptionService.ComputeDescription computeDesc) throws Throwable {
+        synchronized (initializationLock) {
+            if (computeHost == null) {
+                computeHost = createDockerHost(computeDesc, false);
+            }
+            return computeHost;
+        }
+    }
+
+    protected ComputeService.ComputeState createDockerHost(
+            ComputeDescriptionService.ComputeDescription computeDesc, boolean generateId)
+            throws Throwable {
+        ComputeService.ComputeState containerHost = TestRequestStateFactory
+                .createDockerComputeHost();
+        if (generateId) {
+            containerHost.id = UUID.randomUUID().toString();
+        }
+        containerHost.documentSelfLink = containerHost.id;
+        containerHost.resourcePoolLink = GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_LINK;
+        containerHost.tenantLinks = computeDesc.tenantLinks;
+        containerHost.descriptionLink = computeDesc.documentSelfLink;
+        containerHost.endpointLink = computeDesc.endpointLink;
+        containerHost.powerState = ComputeService.PowerState.ON;
+
+        if (containerHost.customProperties == null) {
+            containerHost.customProperties = new HashMap<>();
+        }
+
+        containerHost.customProperties.put(ComputeConstants.COMPUTE_CONTAINER_HOST_PROP_NAME,
+                "true");
+
+        containerHost.customProperties.put(ComputeConstants.GROUP_RESOURCE_PLACEMENT_LINK_NAME,
+                GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK);
+
+        containerHost = getOrCreateDocument(containerHost, ComputeService.FACTORY_LINK);
+        assertNotNull(containerHost);
+
+        return containerHost;
+    }
+
+    protected ComputeDescriptionService.ComputeDescription createDockerHostDescription()
+            throws Throwable {
+        synchronized (initializationLock) {
+            if (hostDesc == null) {
+                hostDesc = TestRequestStateFactory.createDockerHostDescription();
+                hostDesc.instanceAdapterReference = UriUtils.buildUri(host,
+                        MockComputeHostInstanceAdapter.SELF_LINK);
+                hostDesc.endpointLink = null;
+                hostDesc = doPost(hostDesc,
+                        ComputeDescriptionService.FACTORY_LINK);
+                assertNotNull(hostDesc);
+            }
+            return hostDesc;
+        }
     }
 
 }

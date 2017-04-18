@@ -233,7 +233,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
         closureDescState.runtime = RUNTIME_PYTHON;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 2;
+        constraints.timeoutSeconds = 5;
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
@@ -1261,7 +1261,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
         closureDescState.runtime = RUNTIME_PYTHON;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 2;
+        constraints.timeoutSeconds = 5;
         constraints.ramMB = 300;
         closureDescState.resources = constraints;
 
