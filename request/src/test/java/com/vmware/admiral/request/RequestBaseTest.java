@@ -693,17 +693,6 @@ public abstract class RequestBaseTest extends BaseTestCase {
         return compositeDesc;
     }
 
-    /**
-     * Use {@link #createCompositeDesc(ServiceDocument...)} instead!
-     */
-    @Deprecated
-    protected CompositeDescriptionService.CompositeDescription createCompositeDesc(
-            ResourceType type,
-            ServiceDocument... descs) throws Throwable {
-
-        return createCompositeDesc(false, type, descs);
-    }
-
     protected CompositeDescriptionService.CompositeDescription createCompositeDesc(
             ServiceDocument... descs) throws Throwable {
 

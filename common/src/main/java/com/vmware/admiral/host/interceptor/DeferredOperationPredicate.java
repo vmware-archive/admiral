@@ -13,6 +13,7 @@ package com.vmware.admiral.host.interceptor;
 
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
+import java.util.logging.Level;
 
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
@@ -61,6 +62,10 @@ public class DeferredOperationPredicate implements Predicate<Operation> {
 
         dr.whenComplete((ignore, e) -> {
             if (e != null) {
+                this.service.getHost().log(Level.INFO,
+                        "Operation interceptor %s::%s returned error: %s",
+                        this.service.getClass().getCanonicalName(), this.action.name(),
+                        e.toString());
                 operation.fail(e);
             } else {
                 this.service.getOperationProcessingChain().resumeProcessingRequest(operation, this);
