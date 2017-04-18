@@ -10,6 +10,7 @@
  */
 
 import HomeComputeVue from 'components/HomeComputeVue.html';
+import DocsHelpMixin from 'components/common/DocsHelpMixin';
 import VueAdapter from 'components/common/VueAdapter';
 import HostView from 'components/hosts/HostView'; //eslint-disable-line
 import LoginPanel from 'components/LoginPanel'; //eslint-disable-line
@@ -31,6 +32,8 @@ var HomeComputeVueComponent = Vue.extend({
       }
     }
   },
+
+  mixins: [DocsHelpMixin],
 
   methods: {
     openAddEndpoint: function() {
