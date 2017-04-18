@@ -10,12 +10,12 @@
  */
 
 import HomeVue from 'components/HomeVue.html';
+import DocsHelpMixin from 'components/common/DocsHelpMixin';
 import VueAdapter from 'components/common/VueAdapter';
 import HostView from 'components/hosts/HostView'; //eslint-disable-line
 import EasterEgg from 'components/EasterEgg'; //eslint-disable-line
 import LoginPanel from 'components/LoginPanel'; //eslint-disable-line
 import { NavigationActions } from 'actions/Actions';
-import docsHelp from 'components/common/DocsHelp';
 import utils from 'core/utils';
 
 var HomeVueComponent = Vue.extend({
@@ -35,6 +35,8 @@ var HomeVueComponent = Vue.extend({
     }
   },
 
+  mixins: [DocsHelpMixin],
+
   computed: {
     isVic: function() {
       return utils.isVic();
@@ -50,11 +52,6 @@ var HomeVueComponent = Vue.extend({
     },
     goBack: function() {
       NavigationActions.openHome();
-    },
-    openHelp: function($event) {
-      $event.stopImmediatePropagation();
-      $event.preventDefault();
-      docsHelp.open();
     }
   }
 });
