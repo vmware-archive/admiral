@@ -1098,7 +1098,6 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
         context.executor.fetchContainerStats(statsCommandInput, (o, ex) -> {
             if (ex != null) {
-                notifyFailedHealthStatus(context);
                 logWarning(
                         "Exception while fetching stats for container [%s] of host [%s]",
                         context.containerState.documentSelfLink,
@@ -1107,24 +1106,17 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
             } else {
                 handleExceptions(context.request, context.operation, () -> {
                     String stats = o.getBody(String.class);
-                    processContainerStats(context, stats, null);
+                    processContainerStats(context, stats);
                 });
             }
         });
     }
 
-    private void notifyFailedHealthStatus(RequestContext context) {
-        boolean healthCheckSuccess = false;
-        processContainerStats(context, null, healthCheckSuccess);
-    }
-
-    private void processContainerStats(RequestContext context, String stats,
-            Boolean healthCheckSuccess) {
+    private void processContainerStats(RequestContext context, String stats) {
         getHost().log(Level.FINE, "Updating container stats: %s %s",
                 context.request.resourceReference, context.request.getRequestTrackingLog());
 
         ContainerStats containerStats = ContainerStatsEvaluator.calculateStatsValues(stats);
-        containerStats.healthCheckSuccess = healthCheckSuccess;
         String containerLink = context.request.resourceReference.getPath();
         URI uri = UriUtils.buildUri(getHost(), containerLink);
         sendRequest(Operation.createPatch(uri)

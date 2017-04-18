@@ -57,7 +57,6 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.ServiceNetwork;
-import com.vmware.admiral.compute.container.maintenance.ContainerHealthEvaluator;
 import com.vmware.admiral.compute.container.maintenance.ContainerStats;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
@@ -70,7 +69,6 @@ import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.ServiceStats;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.UriUtils;
@@ -105,7 +103,6 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
     private static URI imageReference;
 
     private DockerAdapterCommandExecutor commandExecutor;
-    private DockerAdapterCommandExecutor failingCommandExecutor;
     private DockerAdapterService dockerAdapterService;
 
     @Before
@@ -137,129 +134,6 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
     @After
     public void tearDownContainerState() throws Throwable {
         DeploymentProfileConfig.getInstance().setTest(true);
-    }
-
-    @Test
-    public void testUpdateHealthStatusOnStatsFailure() throws Throwable {
-        setupDockerServiceForFailingStats();
-
-        sendFetchContainerStatsRequest();
-
-        waitFor(() -> {
-            ContainerStats containerStats = getContainerStats(containerStateReference);
-            if (containerStats.healthCheckSuccess == null) {
-                return false;
-            }
-            return containerStats.healthCheckSuccess == false
-                    && containerStats.healthFailureCount == 1;
-        });
-
-        waitFor(() -> {
-            ContainerState containerWithError = getDocument(ContainerState.class,
-                    containerStateReference.getPath());
-            if (containerWithError.status == null) {
-                return false;
-            }
-            return containerWithError.status.equals(ContainerState.CONTAINER_DEGRADED_STATUS);
-        });
-
-        // Degrade the container another time
-        sendFetchContainerStatsRequest();
-
-        waitFor(() -> {
-            ContainerStats containerStats = getContainerStats(containerStateReference);
-            return containerStats.healthCheckSuccess == false
-                    && containerStats.healthFailureCount == 2;
-        });
-
-        // Degrade the container another time - should become error
-        sendFetchContainerStatsRequest();
-        waitFor(() -> {
-            ContainerStats containerStats = getContainerStats(containerStateReference);
-            boolean condition = containerStats.healthCheckSuccess == false
-                    && containerStats.healthFailureCount == ContainerHealthEvaluator.DEFAULT_UNHEALTHY_THRESHOLD;
-
-            if (!condition) {
-                return false;
-            }
-
-            ContainerState errorContainerState = getDocument(ContainerState.class,
-                    containerStateReference.getPath());
-
-            return PowerState.ERROR == errorContainerState.powerState;
-        });
-    }
-
-    private ContainerStats getContainerStats(URI containerStateReference) throws Throwable {
-        ServiceStats serviceStats = getDocument(ServiceStats.class,
-                containerStateReference.getPath() + ServiceHost.SERVICE_URI_SUFFIX_STATS);
-        return ContainerStats.transform(serviceStats);
-    }
-
-    private void setupDockerServiceForFailingStats() throws Throwable {
-        host.stopService(dockerAdapterService);
-
-        dockerAdapterService = new DockerAdapterService() {
-            @Override
-            protected DockerAdapterCommandExecutor getCommandExecutor() {
-                return getCommandExecutorWithFailingStats();
-            }
-        };
-
-        host.startService(Operation.createPost(dockerAdapterServiceUri),
-                dockerAdapterService);
-        waitForServiceAvailability(dockerAdapterServiceUri.getPath());
-
-    }
-
-    private DockerAdapterCommandExecutor getCommandExecutorWithFailingStats() {
-        if (failingCommandExecutor == null) {
-            String serverTrust = getDockerServerTrust().certificate;
-            TrustManager testTrustManager = null;
-
-            if (serverTrust != null && !serverTrust.isEmpty()) {
-                testTrustManager = CertificateUtil.getTrustManagers("docker",
-                        getDockerServerTrust().certificate)[0];
-            }
-
-            failingCommandExecutor = new RemoteApiDockerAdapterCommandExecutorImpl(host,
-                    testTrustManager) {
-
-                @Override
-                protected void prepareRequest(Operation op, boolean longRunningRequest) {
-                    // modify the stats path which is different in the mock docker server
-                    if (isMockTarget()) {
-                        URI uri = op.getUri();
-                        String path = uri.getRawPath();
-                        if (path.endsWith("/stats")) {
-                            String newPath = path.replace("/stats",
-                                    MockDockerPathConstants.STATS);
-                            @SuppressWarnings("unchecked")
-                            Map<String, String> props = op.getBody(Map.class);
-                            props.put("fail", "true");
-                            op.setBody(props);
-
-                            try {
-                                URI newUri = new URI(uri.getScheme(), uri.getUserInfo(),
-                                        uri.getHost(), uri.getPort(), newPath, uri.getQuery(),
-                                        uri.getFragment());
-
-                                op.setUri(newUri);
-
-                            } catch (URISyntaxException x) {
-                                throw new RuntimeException(x);
-                            }
-                        }
-                    }
-
-                    super.prepareRequest(op, longRunningRequest);
-                }
-
-            };
-        }
-
-        return failingCommandExecutor;
-
     }
 
     protected void createContainerDescription() throws Throwable {
