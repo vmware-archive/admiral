@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -26,11 +26,36 @@ var NetworkRequestForm = Vue.extend({
       type: Boolean
     }
   },
+  components: {
+    hostPicker: HostPicker
+  },
   data: function() {
     return {
       creatingNetwork: false,
       disableCreatingNetworkButton: true
     };
+  },
+  attached: function() {
+    var _this = this;
+    $(this.$el).on('change input', function() {
+      _this.toggleButtonsState();
+    });
+
+    this.unwatchModelErr = this.$watch('model.error', (err) => {
+      if (err._generic) {
+        this.creatingNetwork = false;
+        this.disableCreatingNetworkButton = false;
+      }
+    });
+
+    this.unwatchModel = this.$watch('model.definitionInstance', () => {
+      this.creatingNetwork = false;
+      this.disableCreatingNetworkButton = true;
+    }, {immediate: true});
+  },
+  detached: function() {
+    this.unwatchModelErr();
+    this.unwatchModel();
   },
   methods: {
     createNetwork: function() {
@@ -45,41 +70,22 @@ var NetworkRequestForm = Vue.extend({
         this.creatingNetwork = true;
         ContainerActions.createNetwork(network, hostIds);
       }
-    }
-  },
-  attached: function() {
-    var _this = this;
-    $(this.$el).on('change input', function() {
-      toggleButtonsState.call(_this);
-    });
+    },
+    toggleButtonsState: function() {
+      var networkName = this.$refs.networkEditForm.getNetworkDefinition().name;
+      var selectedHost = this.$refs.hostPicker.getHosts();
 
-    this.unwatchModel = this.$watch('model.definitionInstance', () => {
-      this.creatingNetwork = false;
-      this.disableCreatingNetworkButton = true;
-    }, {immediate: true});
-  },
-  detached: function() {
-    this.unwatchModel();
-  },
-  components: {
-    hostPicker: HostPicker
+      this.disableCreatingNetworkButton = !networkName
+                                            || !(selectedHost && selectedHost.length > 0);
+    }
   },
   events: {
     'change': function() {
-      toggleButtonsState.call(this);
+      this.toggleButtonsState();
     }
   }
 });
 
-var toggleButtonsState = function() {
-  var networkName = this.$refs.networkEditForm.getNetworkDefinition().name;
-  var host = this.$refs.hostPicker.getHosts();
-  if (networkName && (host && host.length > 0)) {
-    this.disableCreatingNetworkButton = false;
-  } else {
-    this.disableCreatingNetworkButton = true;
-  }
-};
 Vue.component('network-request-form', NetworkRequestForm);
 
 export default NetworkRequestForm;
