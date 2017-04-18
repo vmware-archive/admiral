@@ -124,7 +124,7 @@ public abstract class BaseWordpressComputeProvisionIT extends BaseComputeProvisi
             fail(String.format("Unable to find network interface of VM '%s'", computeState.name));
         }
 
-        logger.info("Loading subnet %s for nic %s,on vm %", nic.subnetLink, nic.documentSelfLink,
+        logger.info("Loading subnet %s for nic %s,on vm %s", nic.subnetLink, nic.documentSelfLink,
                 computeState.name);
         SubnetState subnetState = getDocument(nic.subnetLink, SubnetState.class);
         if (subnetState == null) {

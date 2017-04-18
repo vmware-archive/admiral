@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -92,6 +93,7 @@ import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.Query.Builder;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
 public class ComputeAllocationTaskService
@@ -103,13 +105,14 @@ public class ComputeAllocationTaskService
     public static final String DISPLAY_NAME = "Compute Allocation";
 
     private static final String ID_DELIMITER_CHAR = "-";
+    // cached compute description
+    private transient volatile ComputeDescription computeDescription;
 
     public static class ComputeAllocationTaskState
             extends
             com.vmware.admiral.service.common.TaskServiceDocument<ComputeAllocationTaskState.SubStage> {
 
-        public static final String ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME =
-                "compute.container.host";
+        public static final String ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME = "compute.container.host";
 
         public static final String FIELD_NAME_CUSTOM_PROP_ZONE = "__zoneId";
         public static final String FIELD_NAME_CUSTOM_PROP_RESOURCE_POOL_LINK = "__resourcePoolLink";
@@ -154,16 +157,20 @@ public class ComputeAllocationTaskService
         public Set<String> resourceNames;
 
         public static enum SubStage {
-            CREATED, CONTEXT_PREPARED, RESOURCES_NAMES, SELECT_PLACEMENT_COMPUTES, START_COMPUTE_ALLOCATION, COMPUTE_ALLOCATION_COMPLETED, COMPLETED, ERROR;
+            CREATED,
+            CONTEXT_PREPARED,
+            RESOURCES_NAMES,
+            SELECT_PLACEMENT_COMPUTES,
+            START_COMPUTE_ALLOCATION,
+            COMPUTE_ALLOCATION_COMPLETED,
+            COMPLETED,
+            ERROR;
         }
     }
 
     protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
         Set<String> resourceLinks;
     }
-
-    // cached compute description
-    private transient volatile ComputeDescription computeDescription;
 
     public ComputeAllocationTaskService() {
         super(ComputeAllocationTaskState.class, SubStage.class, DISPLAY_NAME);
@@ -361,8 +368,7 @@ public class ComputeAllocationTaskService
             return;
         }
 
-        final ComputeDescription endpointComputeDescription =
-                expandedEndpointComputeState.description;
+        final ComputeDescription endpointComputeDescription = expandedEndpointComputeState.description;
         computeDesc.instanceAdapterReference = endpointComputeDescription.instanceAdapterReference;
         computeDesc.bootAdapterReference = endpointComputeDescription.bootAdapterReference;
         computeDesc.powerAdapterReference = endpointComputeDescription.powerAdapterReference;
@@ -481,8 +487,7 @@ public class ComputeAllocationTaskService
             return;
         }
 
-        ComputePlacementSelectionTaskState computePlacementSelection =
-                new ComputePlacementSelectionTaskState();
+        ComputePlacementSelectionTaskState computePlacementSelection = new ComputePlacementSelectionTaskState();
 
         computePlacementSelection.documentSelfLink = getSelfId();
         computePlacementSelection.computeDescriptionLink = state.resourceDescriptionLink;
@@ -780,7 +785,7 @@ public class ComputeAllocationTaskService
             subnet = DeferredResult.completed(null);
         } else if (subnetLink == null) {
             // TODO: filter also by NetworkProfile
-            subnet = findSubnetBy(state, nid);
+            subnet = findSubnetBy(state, cd.regionId, nid);
         } else {
             subnet = sendWithDeferredResult(Operation.createGet(this, subnetLink),
                     SubnetState.class);
@@ -822,7 +827,7 @@ public class ComputeAllocationTaskService
     }
 
     private DeferredResult<SubnetState> findSubnetBy(ComputeAllocationTaskState state,
-            NetworkInterfaceDescription nid) {
+            String regionId, NetworkInterfaceDescription nid) {
         Builder builder = Query.Builder.create().addKindFieldClause(SubnetState.class);
         if (state.tenantLinks == null || state.tenantLinks.isEmpty()) {
             builder.addClause(QueryUtil.addTenantClause(state.tenantLinks));
@@ -830,6 +835,19 @@ public class ComputeAllocationTaskService
         builder.addCompositeFieldClause(ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
                 ComputeProperties.INFRASTRUCTURE_USE_PROP_NAME, Boolean.TRUE.toString(),
                 Occurance.MUST_NOT_OCCUR);
+        if (regionId != null) {
+            builder.addCompositeFieldClause(ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
+                    ComputeProperties.REGION_ID, regionId);
+        } else {
+            Query clause = new Query()
+                    .setTermPropertyName(QuerySpecification.buildCompositeFieldName(
+                            ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
+                            ComputeProperties.REGION_ID))
+                    .setTermMatchType(MatchType.WILDCARD)
+                    .setTermMatchValue(UriUtils.URI_WILDCARD_CHAR);
+            clause.occurance = Occurance.MUST_NOT_OCCUR;
+            builder.addClause(clause);
+        }
 
         QueryByPages<SubnetState> querySubnetStates = new QueryByPages<>(getHost(), builder.build(),
                 SubnetState.class, QueryUtil.getTenantLinks(state.tenantLinks), state.endpointLink);
@@ -847,14 +865,20 @@ public class ComputeAllocationTaskService
             } else {
                 links.add(s);
             }
-        }).thenApply(ignore -> {
+        }).thenCompose(ignore -> {
             if (!prefered.isEmpty()) {
-                return prefered.get(0);
+                return DeferredResult.<SubnetState> completed(prefered.get(0));
             }
             if (!supportPublic.isEmpty()) {
-                return supportPublic.get(0);
+                return DeferredResult.<SubnetState> completed(supportPublic.get(0));
             }
-            return links.stream().findFirst().orElse(null);
+            Optional<SubnetState> subnetState = links.stream().findFirst();
+            if (subnetState.isPresent()) {
+                return DeferredResult.<SubnetState> completed(subnetState.get());
+            } else {
+                return regionId != null ? findSubnetBy(state, null, nid)
+                        : (DeferredResult<SubnetState>) null;
+            }
         });
     }
 

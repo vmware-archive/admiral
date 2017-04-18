@@ -60,6 +60,7 @@ public class AzureComputeProvisionIT extends BaseComputeProvisionIT {
         auth = postDocument(AuthCredentialsService.FACTORY_LINK, auth, documentLifeCycle);
 
         computeDescription.authCredentialsLink = auth.documentSelfLink;
+        computeDescription.name = "mcp" + String.valueOf(System.currentTimeMillis() / 1000);;
 
         computeDescription.customProperties.put(ComputeProperties.RESOURCE_GROUP_NAME,
                 "testResourceGroup" + String.valueOf(System.currentTimeMillis()));

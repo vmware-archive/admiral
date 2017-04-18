@@ -116,7 +116,8 @@ public class WordpressProvisionNetworkIT extends BaseWordpressComputeProvisionIT
                         try {
                             validateComputeNic((ComputeState) c, AWS_DEFAULT_SUBNET_ID);
                         } catch (Exception e) {
-                            fail();
+                            logger.error("Error validating nic",e);
+                            fail(e.getMessage());
                         }
                     });
         }
