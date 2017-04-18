@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.compute.kubernetes.service;
 
+import static com.vmware.admiral.common.util.ServiceUtils.addServiceRequestRoute;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -26,6 +28,7 @@ import com.vmware.admiral.service.common.LogService.LogServiceState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -107,5 +110,18 @@ public class PodLogService extends StatelessService {
                                 pod.documentSelfLink, Utils.toString(ex));
                     }
                 }));
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument d = super.getDocumentTemplate();
+        addServiceRequestRoute(d, Action.GET,
+                String.format("Get container logs for all containers in a pod. Provide the "
+                                + "PodState id in URI query parameter with key \"%s\". The response body "
+                                + "is map where the key is string containing the container name "
+                                + "and the value is LogServiceState object.",
+                        POD_ID_QUERY_PARAM),
+                Map.class);
+        return d;
     }
 }

@@ -11,11 +11,16 @@
 
 package com.vmware.admiral.common.util;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.RequestRouter;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.ServiceDocumentDescription;
 import com.vmware.xenon.common.Utils;
 
 public class ServiceUtils {
@@ -40,5 +45,31 @@ public class ServiceUtils {
 
     public static void sendSelfDelete(Service s) {
         s.sendRequest(Operation.createDelete(s.getUri()).setBody(new ServiceDocument()));
+    }
+
+    public static void addServiceRequestRoute(ServiceDocument serviceDocument, Action action,
+            String description, Class responseType) {
+        if (serviceDocument == null) {
+            return;
+        }
+
+        if (serviceDocument.documentDescription == null) {
+            serviceDocument.documentDescription = new ServiceDocumentDescription();
+        }
+
+        if (serviceDocument.documentDescription.serviceRequestRoutes == null) {
+            serviceDocument.documentDescription.serviceRequestRoutes = new HashMap<>();
+        }
+
+        RequestRouter.Route route = new RequestRouter.Route();
+        route.action = action;
+        route.description = description;
+        route.responseType = responseType;
+
+        if (!serviceDocument.documentDescription.serviceRequestRoutes.containsKey(route.action)) {
+            serviceDocument.documentDescription.serviceRequestRoutes
+                    .put(route.action, new ArrayList<>());
+        }
+        serviceDocument.documentDescription.serviceRequestRoutes.get(route.action).add(route);
     }
 }

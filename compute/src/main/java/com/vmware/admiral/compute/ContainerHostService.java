@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.compute;
 
+import static com.vmware.admiral.common.util.ServiceUtils.addServiceRequestRoute;
 import static com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription.getDockerHostUri;
 
 import java.net.HttpURLConnection;
@@ -60,6 +61,7 @@ import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
@@ -1137,4 +1139,12 @@ public class ContainerHostService extends StatelessService {
                 }));
     }
 
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument d = super.getDocumentTemplate();
+        addServiceRequestRoute(d, Action.PUT,
+                "Add container host. If host is added successfully, it's reference can be "
+                        + "acquired from \"Location\" response header.", null);
+        return d;
+    }
 }

@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.compute.kubernetes.service;
 
+import static com.vmware.admiral.common.util.ServiceUtils.addServiceRequestRoute;
 import static com.vmware.admiral.common.util.YamlMapper.splitYaml;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.isNullOrEmpty;
 
@@ -24,6 +25,7 @@ import com.vmware.admiral.compute.kubernetes.service.KubernetesDescriptionServic
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.Utils;
 
@@ -108,5 +110,15 @@ public class KubernetesDescriptionContentService extends StatelessService {
                     .collect(Collectors.toList());
             op.fail(throwables.get(0));
         }
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument d = super.getDocumentTemplate();
+        addServiceRequestRoute(d, Action.POST,
+                "Post single or multiple kubernetes YAML definitions to create composite "
+                        + "description. If there are multiple YAML definitions separate them with"
+                        + " \"---\".", String[].class);
+        return d;
     }
 }

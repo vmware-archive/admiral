@@ -12,6 +12,7 @@
 package com.vmware.admiral.service.common;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
+import static com.vmware.admiral.common.util.ServiceUtils.addServiceRequestRoute;
 
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -30,6 +31,7 @@ import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationContext;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -223,6 +225,18 @@ public class SslTrustImportService extends StatelessService {
                 .generateSelfLink(sslTrustState);
 
         return sslTrustState;
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument d = super.getDocumentTemplate();
+        addServiceRequestRoute(d, Action.PUT,
+                "Import certificate from an URI. When the certificate is downloaded and "
+                        + "validated successfully the response is empty with status code 204. If "
+                        + "the certificate is not validated, the response body contains the "
+                        + "certificate with status code 200.",
+                SslTrustCertificateState.class);
+        return d;
     }
 
 }

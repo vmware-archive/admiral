@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.service.common;
 
+import static com.vmware.admiral.common.util.ServiceUtils.addServiceRequestRoute;
+
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -21,6 +23,7 @@ import java.util.logging.Level;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.CompletionHandler;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatelessService;
 
 /**
@@ -86,5 +89,16 @@ public class NodeHealthCheckService extends StatelessService {
 
         });
 
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument d = super.getDocumentTemplate();
+        addServiceRequestRoute(d, Action.GET,
+                "Do health check of services in default node group if they are available and "
+                        + "ready for replication.", null);
+        addServiceRequestRoute(d, Action.PATCH,
+                "Register services for health check.", NodeHealthCheckService.class);
+        return d;
     }
 }

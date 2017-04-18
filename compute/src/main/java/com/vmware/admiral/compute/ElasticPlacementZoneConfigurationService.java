@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.compute;
 
+import static com.vmware.admiral.common.util.ServiceUtils.addServiceRequestRoute;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,6 +30,7 @@ import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.OperationSequence;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
@@ -463,5 +466,37 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
     private void triggerDependentUpdates(String resourcePoolLink) {
         EpzComputeEnumerationTaskService.triggerForResourcePool(this, resourcePoolLink);
         PlacementCapacityUpdateTaskService.triggerForResourcePool(this, resourcePoolLink);
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument d = super.getDocumentTemplate();
+        addServiceRequestRoute(d, Action.GET,
+                "Use the service URL to get all elastic placement zones."
+                        + " Append the resource pool link to this service URL to retrieve the"
+                        + " ElasticPlacementZoneConfigurationState for a single existing resource pool."
+                        + " For example:"
+                        + " http://host:port/resources/elastic-placement-zones-config/resources/pools/pool-1",
+                ServiceDocumentQueryResult.class);
+
+        addServiceRequestRoute(d, Action.POST,
+                "Post a valid ElasticPlacementZoneConfigurationState with no document"
+                        + " self links to create a resource pool and optionally a corresponding "
+                        + " elastic placement zone.",
+                ElasticPlacementZoneConfigurationState.class);
+
+        addServiceRequestRoute(d, Action.PATCH,
+                "Send a valid ElasticPlacementZoneConfigurationState to update the"
+                        + " resource pool and optionally the elastic placement zone. PATCH is done for the"
+                        + " resource pool and a PUT is done for the elastic placement zone.",
+                ElasticPlacementZoneConfigurationState.class);
+
+        addServiceRequestRoute(d, Action.DELETE,
+                "Append the resource pool link to this service URL to delete the placement"
+                        + " zone (both the resource pool and its corresponding EPZ state will be deleted). "
+                        + " For example: http://host:port/resources/elastic-placement-zones-config"
+                        + "/resources/pools/pool-1.",
+                null);
+        return d;
     }
 }

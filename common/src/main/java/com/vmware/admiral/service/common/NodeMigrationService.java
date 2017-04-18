@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.service.common;
 
+import static com.vmware.admiral.common.util.ServiceUtils.addServiceRequestRoute;
+
 import java.net.URI;
 import java.util.Iterator;
 import java.util.Set;
@@ -22,6 +24,7 @@ import java.util.logging.Level;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.services.common.MigrationTaskService;
@@ -221,5 +224,15 @@ public class NodeMigrationService extends StatelessService {
                 logSevere("Migration did not finish in the expected time frame");
             }
         }, MIGRATION_CHECK_DELAY_SECONDS, TimeUnit.SECONDS);
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument d = super.getDocumentTemplate();
+        addServiceRequestRoute(d, Action.GET,
+                "Do migration of documents from another xenon node.", MigrationRequest.class);
+        addServiceRequestRoute(d, Action.PATCH,
+                "Add services for migration from another xenon node.", NodeMigrationService.class);
+        return d;
     }
 }

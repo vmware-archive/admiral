@@ -12,6 +12,7 @@
 package com.vmware.admiral.image.service;
 
 import static com.vmware.admiral.adapter.registry.service.RegistryAdapterService.SEARCH_QUERY_PROP_NAME;
+import static com.vmware.admiral.common.util.ServiceUtils.addServiceRequestRoute;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -40,6 +41,7 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -255,5 +257,15 @@ public class ContainerImageService extends StatelessService {
         } catch (IllegalArgumentException e) {
             return null;
         }
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument d = super.getDocumentTemplate();
+        addServiceRequestRoute(d, Action.GET,
+                String.format("Search for images. Specify the name of the resource "
+                                + "you are searching for with URI query with key \"%s\".",
+                        SEARCH_QUERY_PROP_NAME), RegistrySearchResponse.class);
+        return d;
     }
 }
