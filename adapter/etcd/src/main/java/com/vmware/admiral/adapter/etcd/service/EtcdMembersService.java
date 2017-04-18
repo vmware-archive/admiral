@@ -11,10 +11,13 @@
 
 package com.vmware.admiral.adapter.etcd.service;
 
+import static com.vmware.admiral.common.util.ServiceUtils.addServiceRequestRoute;
+
 import java.util.ArrayList;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.services.common.NodeGroupService.NodeGroupState;
 import com.vmware.xenon.services.common.NodeState;
@@ -110,5 +113,13 @@ public class EtcdMembersService extends StatelessService {
         }
 
         return node.groupReference.toString().replace(groupPath, "");
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument d = super.getDocumentTemplate();
+        addServiceRequestRoute(d, Action.GET,
+                "Get etcd members.", EtcdMembers.class);
+        return d;
     }
 }

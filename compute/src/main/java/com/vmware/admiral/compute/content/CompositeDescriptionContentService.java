@@ -15,6 +15,7 @@ import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNullOrEmpty;
 import static com.vmware.admiral.common.util.OperationUtil.isApplicationYamlContent;
+import static com.vmware.admiral.common.util.ServiceUtils.addServiceRequestRoute;
 import static com.vmware.admiral.common.util.UriUtilsExtended.MEDIA_TYPE_APPLICATION_YAML;
 import static com.vmware.admiral.common.util.ValidationUtils.handleValidationException;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.FORMATTER;
@@ -325,7 +326,8 @@ public class CompositeDescriptionContentService extends StatelessService {
         nestedState.children = component.children;
 
         ResourceType resourceType = ResourceType.fromContentType(component.type);
-        String factoryLink = CompositeComponentRegistry.descriptionFactoryLinkByType(resourceType.getName());
+        String factoryLink = CompositeComponentRegistry
+                .descriptionFactoryLinkByType(resourceType.getName());
         nestedState.factoryLink = factoryLink;
 
         return nestedState.sendRequest(this, Action.POST);
@@ -335,6 +337,20 @@ public class CompositeDescriptionContentService extends StatelessService {
         assertNotNull(compositeTemplate, "compositeTemplate");
         assertNotEmpty(compositeTemplate.name, "name");
         assertComponentTypes(compositeTemplate.components);
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument d = super.getDocumentTemplate();
+        addServiceRequestRoute(d, Action.GET, String.format(
+                "Provide the composite description documentSelfLink in URI query parameter "
+                        + "with key \"%s\" to get it's YAML definition.", SELF_LINK_PARAM_NAME),
+                String.class);
+        addServiceRequestRoute(d, Action.POST,
+                "Import YAML definition of composite description. Resource reference of the "
+                        + "imported template can be acquired from \"Location\" response header.",
+                null);
+        return d;
     }
 
 }
