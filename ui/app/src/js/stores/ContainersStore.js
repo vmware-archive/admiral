@@ -852,6 +852,10 @@ let ContainersStore = Reflux.createStore({
   },
 
   onCreateNetwork: function(networkDescription, hostIds) {
+    // clear error
+    this.setInData(['creatingResource', 'error', '_generic'], null);
+    this.emitChange();
+
     services.createNetwork(networkDescription, hostIds).then((request) => {
       this.navigateContainersListViewAndOpenRequests(request);
     }).catch(this.onGenericCreateError);
