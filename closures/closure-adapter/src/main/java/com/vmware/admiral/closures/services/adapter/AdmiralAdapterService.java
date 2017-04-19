@@ -23,8 +23,8 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 import static com.vmware.admiral.closures.util.ClosureUtils.loadDockerImageData;
 import static com.vmware.admiral.common.ManagementUriParts.CLOSURES_CONTAINER_DESC;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
-import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
 import static com.vmware.admiral.common.util.ServiceDocumentQuery.error;
+import static com.vmware.admiral.common.util.ServiceDocumentQuery.noResult;
 import static com.vmware.admiral.common.util.ServiceDocumentQuery.result;
 import static com.vmware.admiral.common.util.ServiceDocumentQuery.resultLink;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
@@ -72,13 +72,12 @@ import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.LogConfig;
 import com.vmware.admiral.compute.container.Ulimit;
 import com.vmware.admiral.request.ContainerAllocationTaskFactoryService;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
-import com.vmware.admiral.request.ReservationTaskFactoryService;
-import com.vmware.admiral.request.ReservationTaskService;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ConfigurationService;
@@ -91,12 +90,13 @@ import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class AdmiralAdapterService extends
         AbstractTaskStatefulService<AdmiralAdapterService.AdmiralAdapterTaskState,
                 AdmiralAdapterService.AdmiralAdapterTaskState.SubStage> {
 
-    private static final String DISPLAY_NAME = "Closure Container Provisioning";
+    public static final String DISPLAY_NAME = "Closure Container Provisioning";
 
     private static final String BUILD_IMAGE_RETRIES_COUNT_PARAM_NAME = "build.closure.image.retries.count";
 
@@ -112,11 +112,9 @@ public class AdmiralAdapterService extends
         private static final String FIELD_NAME_CONTAINER_IMAGE = "imageConfig";
         private static final String FIELD_NAME_CONFIGURATION = "configuration";
 
-        public enum SubStage {
+        public static enum SubStage {
             CREATED,
-            RESERVING,
-            RESOURCE_RESERVED,
-            PLACEMENT_SELECTED,
+            RESOURCE_POOL_RESERVED,
             COMPUTE_STATE_SELECTED,
             BASE_IMAGE_PULLING,
             BASE_IMAGE_PULLED,
@@ -124,7 +122,7 @@ public class AdmiralAdapterService extends
             ERROR;
 
             static final Set<AdmiralAdapterTaskState.SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
-                    Arrays.asList(RESERVING, BASE_IMAGE_PULLING));
+                    Arrays.asList(BASE_IMAGE_PULLING));
         }
 
         /** Image configuration to use */
@@ -149,10 +147,6 @@ public class AdmiralAdapterService extends
         @PropertyOptions(usage = { SERVICE_USE, SINGLE_ASSIGNMENT, LINK,
                 AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String selectedComputeLink;
-
-        /** (Internal) Set by task after the ComputeState is found to host the containers */
-        @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
-        public List<HostSelectionFilter.HostSelection> hostSelections;
     }
 
     public AdmiralAdapterService() {
@@ -170,13 +164,8 @@ public class AdmiralAdapterService extends
         case CREATED:
             proceedWithContainerDescription(state, null);
             break;
-        case RESERVING:
-            break;
-        case RESOURCE_RESERVED:
-            proceedWithGroupPlacement(state);
-            break;
-        case PLACEMENT_SELECTED:
-            handlePlacementSelected(state);
+        case RESOURCE_POOL_RESERVED:
+            handleResourcePoolReserved(state);
             break;
         case COMPUTE_STATE_SELECTED:
             handleComputeSelected(state);
@@ -198,61 +187,28 @@ public class AdmiralAdapterService extends
         }
     }
 
-    private void createReservationTasks(AdmiralAdapterTaskState state, ContainerDescription
-            containerDesc) {
-
-        if (containerDesc == null) {
-            fetchContainerDescription(state, (cd) -> createReservationTasks(state, cd));
-            return;
-        }
-
-        ReservationTaskService.ReservationTaskState rsrvTask = new ReservationTaskService.ReservationTaskState();
-        rsrvTask.documentSelfLink = getSelfId();
-        rsrvTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
-                TaskState.TaskStage.STARTED,
-                AdmiralAdapterTaskState.SubStage.RESOURCE_RESERVED,
-                TaskState.TaskStage.STARTED,
-                AdmiralAdapterTaskState.SubStage.ERROR);
-
-        rsrvTask.resourceCount = 1;
-        rsrvTask.tenantLinks = state.tenantLinks;
-        rsrvTask.resourceType = ResourceType.CONTAINER_TYPE.getName();
-        rsrvTask.resourceDescriptionLink = containerDesc.documentSelfLink;
-        rsrvTask.customProperties = mergeCustomProperties(
-                state.customProperties, containerDesc.customProperties);
-        rsrvTask.requestTrackerLink = state.requestTrackerLink;
-
-        sendRequest(Operation.createPost(this, ReservationTaskFactoryService.SELF_LINK)
-                .setBody(rsrvTask)
-                .setContextId(getSelfId())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Failed to create closure reservation task"
-                                + containerDesc.documentSelfLink, e);
-                        return;
-                    }
-                    proceedTo(AdmiralAdapterTaskState.SubStage.RESERVING);
-                }));
-    }
-
-    private void handlePlacementSelected(AdmiralAdapterTaskState state) {
+    private void handleResourcePoolReserved(AdmiralAdapterTaskState state) {
         if (cachedContainerDescription == null) {
             fetchContainerDescription(state,
-                    (contDesc) -> selectComputeStates(state, contDesc));
+                    (contDesc) -> {
+                        selectComputeStates(state, contDesc);
+                    });
             return;
         }
 
         selectComputeStates(state, cachedContainerDescription);
     }
 
-    private void selectComputeStates(AdmiralAdapterTaskState state, ContainerDescription contDesc) {
-        proceedWithSelection(contDesc, state,
+    private void selectComputeStates(AdmiralAdapterTaskState state,
+            ContainerDescription contDesc) {
+        proceedWithComputeStates(contDesc, state, ComputeService.ComputeState.class,
+                ComputeService.ComputeState
+                        .FIELD_NAME_RESOURCE_POOL_LINK, state.placementZoneLink,
                 (computeResult) -> {
                     if (computeResult.hasException()) {
                         failTask("Unable to fetch compute states: ", computeResult.getException());
                         return;
                     }
-
                     proceedTo(AdmiralAdapterTaskState.SubStage.COMPUTE_STATE_SELECTED, (s) -> {
                         s.selectedComputeLink = computeResult.getDocumentSelfLink();
                     });
@@ -263,7 +219,9 @@ public class AdmiralAdapterService extends
     private void handleComputeSelected(AdmiralAdapterTaskState state) {
         if (cachedContainerDescription == null) {
             fetchContainerDescription(state,
-                    (contDesc) -> proceedWithBaseDockerImage(contDesc, state, 0));
+                    (contDesc) -> {
+                        proceedWithBaseDockerImage(contDesc, state, 0);
+                    });
             return;
         }
 
@@ -278,14 +236,16 @@ public class AdmiralAdapterService extends
     }
 
     @SuppressWarnings("SuspiciousMethodCalls")
-    private void seedPeers(Collection<String> availableHosts, List<String> computeStateLinks,
+    private void seedPeers(Collection<ComputeService.ComputeState> computeStates,
+            List<String> computeStateLinks,
             String selectedComputeLink, Consumer<String> consumer) {
-        //        Collection<String> availableStates = new ArrayList<>(hostLinks);
-        List<String> selectedForSeed = availableHosts.parallelStream().filter(
-                (s) -> !s.equalsIgnoreCase(selectedComputeLink) && !computeStateLinks.contains(s)
+        Collection<ComputeService.ComputeState> availableStates = new ArrayList<>(computeStates);
+        List<ComputeService.ComputeState> selectedForSeed = availableStates.parallelStream().filter(
+                (s) -> !s.documentSelfLink.equalsIgnoreCase(selectedComputeLink)
+                        && !computeStateLinks.contains(s)
         ).collect(Collectors.toList());
 
-        selectedForSeed.parallelStream().forEach((s) -> consumer.accept(s));
+        selectedForSeed.parallelStream().forEach((s) -> consumer.accept(s.documentSelfLink));
     }
 
     private void proceedWithBaseDockerImage(ContainerDescription containerDesc,
@@ -357,8 +317,8 @@ public class AdmiralAdapterService extends
                     BUILD_IMAGE_RETRIES_COUNT_PARAM_NAME);
             sendRequest(Operation.createGet(this, maxRetriesCountConfigPropPath)
                     .setCompletion((o, ex) -> {
-                        // in case of exception the default retry count will be 3
-                        retriesCount = 3;
+                        /** in case of exception the default retry count will be 3 */
+                        retriesCount = Integer.valueOf(3);
                         if (ex == null) {
                             retriesCount = Integer.valueOf(
                                     o.getBody(ConfigurationService.ConfigurationState.class).value);
@@ -393,25 +353,24 @@ public class AdmiralAdapterService extends
 
                     logInfo("Docker image request has been created successfully.");
                     // 2. Proceed with image operation request
-                    handleBaseImage(containerDesc, state, buildImage, state.selectedComputeLink,
+                    handleBaseImage(containerDesc, state, buildImage,
                             () -> proceedWithBaseDockerImage(containerDesc, state, retriesCount));
                 }));
     }
 
     private void handleBaseImage(ContainerDescription containerDesc,
-            AdmiralAdapterTaskState state, DockerImage buildImage, String targetComputeLink,
-            Runnable delegate) {
+            AdmiralAdapterTaskState state, DockerImage buildImage, Runnable delegate) {
         if (state.imageConfig.registry != null && !state.imageConfig.registry
                 .isEmpty()) {
             String baseImageName = createRegistryBaseImageName(state.imageConfig.registry,
                     buildImage.name);
-            createBaseImage(baseImageName, targetComputeLink);
+            createBaseImage(baseImageName, state.selectedComputeLink);
         } else {
             String baseImageName = ClosureUtils.createBaseImageName(containerDesc.image);
-            loadBaseImage(baseImageName, state.imageConfig, targetComputeLink);
+            loadBaseImage(baseImageName, state.imageConfig, state.selectedComputeLink);
 
             // 3. Poll for completion
-            getHost().schedule(delegate::run, 5, TimeUnit.SECONDS);
+            getHost().schedule(() -> delegate.run(), 5, TimeUnit.SECONDS);
         }
     }
 
@@ -464,11 +423,12 @@ public class AdmiralAdapterService extends
     private void createBaseImage(String baseImageName, String computeStateLink) {
         DockerImageHostRequest request = new DockerImageHostRequest();
         request.operationTypeId = ImageOperationType.CREATE.id;
-
-        request.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
+        ServiceTaskCallback serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskState.TaskStage.STARTED, AdmiralAdapterTaskState.SubStage.BASE_IMAGE_PULLED,
                 TaskState.TaskStage.STARTED,
                 AdmiralAdapterTaskState.SubStage.ERROR);
+
+        request.serviceTaskCallback = serviceTaskCallback;
         request.resourceReference = UriUtils.buildUri(getHost(), computeStateLink);
 
         logInfo("Executing CREATE operation %s to remote docker host: %s ", request
@@ -509,7 +469,7 @@ public class AdmiralAdapterService extends
         request.serviceTaskCallback = ServiceTaskCallback.create(completionServiceCallBack);
         request.resourceReference = UriUtils.buildUri(getHost(), computeStateLink);
 
-        logInfo("Loading image to remote docker host: %s ", computeStateLink);
+        logInfo("Loading image to REMOTE DOCKER HOST: %s ", request.resourceReference);
 
         request.customProperties = new HashMap<>();
         request.customProperties.putIfAbsent(DOCKER_IMAGE_NAME_PROP_NAME, baseImageName);
@@ -536,12 +496,14 @@ public class AdmiralAdapterService extends
         return String.format("%s:%s", imageConfig.baseImageName, imageConfig.baseImageVersion);
     }
 
-    private String createRegistryBaseImageName(String registry, String fullImageName) {
+    private String createRegistryBaseImageName(String registry, String
+            fullImageName) {
         return String.format("%s/%s", registry, fullImageName);
     }
 
     private void seedWithBaseDockerImage(ContainerDescription containerDesc,
-            String computeStateLink, AdmiralAdapterTaskState state) {
+            String computeStateLink,
+            AdmiralAdapterTaskState state) {
         String baseImageName = ClosureUtils.createBaseImageName(containerDesc.image);
         logInfo("Checking docker build image request for base image: %s host: %s", baseImageName,
                 computeStateLink);
@@ -631,7 +593,7 @@ public class AdmiralAdapterService extends
                     logInfo("Docker build image request has been created successfully.");
 
                     // 2. Proceed with image operation request
-                    handleBaseImage(containerDesc, state, buildImage, computeStateLink,
+                    handleBaseImage(containerDesc, state, buildImage,
                             () -> seedWithBaseDockerImage(containerDesc, computeStateLink, state));
                 }));
     }
@@ -672,7 +634,8 @@ public class AdmiralAdapterService extends
     }
 
     private String getErrorMsg(DockerImage imageRequest) {
-        return imageRequest.taskInfo.failure != null ? imageRequest.taskInfo.failure.message :
+        return imageRequest.taskInfo.failure != null ?
+                imageRequest.taskInfo.failure.message :
                 "General error";
     }
 
@@ -752,6 +715,7 @@ public class AdmiralAdapterService extends
                         logSevere(
                                 "Unable to set expiration time on closure container description %s"
                                         + containerDesc.documentSelfLink, ex);
+                        return;
                     }
                 }));
     }
@@ -919,7 +883,11 @@ public class AdmiralAdapterService extends
             return true;
         }
 
-        return !ClosureUtils.isEmpty(state.configuration.sourceURL);
+        if (!ClosureUtils.isEmpty(state.configuration.sourceURL)) {
+            return true;
+        }
+
+        return false;
     }
 
     protected void prepareRequest(Operation op, boolean longRunningRequest) {
@@ -977,9 +945,64 @@ public class AdmiralAdapterService extends
                 }));
     }
 
-    private void proceedWithSelection(ContainerDescription containerDesc, AdmiralAdapterTaskState
-            state, Consumer<ServiceDocumentQuery.ServiceDocumentQueryElementResult<ServiceDocument>>
-            completionHandler) {
+    private void proceedWithComputeStates(ContainerDescription containerDesc,
+            AdmiralAdapterTaskState state,
+            Class<? extends ServiceDocument> type, String propId, String propValue,
+            Consumer<ServiceDocumentQuery.ServiceDocumentQueryElementResult<ServiceDocument>> completionHandler) {
+        QueryTask q = QueryUtil.buildPropertyQuery(type, propId, propValue);
+        q.documentExpirationTimeMicros = ServiceDocumentQuery.getDefaultQueryExpiration();
+
+        QueryUtil.addExpandOption(q);
+
+        getHost().sendRequest(Operation
+                .createPost(UriUtils.buildUri(getHost(), ServiceUriPaths.CORE_QUERY_TASKS))
+                .setBody(q)
+                .setReferer(getHost().getUri())
+                .setCompletion(
+                        (o, e) -> {
+                            if (e != null) {
+                                completionHandler.accept(error(e));
+                                return;
+                            }
+
+                            handleFetchedComputeStates(containerDesc, state, propValue,
+                                    completionHandler, o);
+                        }));
+    }
+
+    private void handleFetchedComputeStates(ContainerDescription containerDesc,
+            AdmiralAdapterTaskState state,
+            String propValue,
+            Consumer<ServiceDocumentQuery.ServiceDocumentQueryElementResult<ServiceDocument>>
+                    completionHandler, Operation o) {
+        try {
+            QueryTask qtr = o.getBody(QueryTask.class);
+            if (qtr.results.documents == null || qtr.results.documents.isEmpty()) {
+                logWarning("No available computes configured for: %s", propValue);
+                completionHandler
+                        .accept(error(new Exception("No computes configured for: " + propValue)));
+                return;
+            } else {
+                Collection<Object> values = qtr.results.documents.values();
+                if (values.isEmpty()) {
+                    completionHandler.accept(noResult());
+                    return;
+                }
+                Collection<ComputeService.ComputeState> computeStates = convertToComputeStates(
+                        values);
+                logInfo("Size of available compute states: %s", computeStates.size());
+                proceedWithPlacement(containerDesc, computeStates, state, completionHandler);
+            }
+        } catch (Throwable ex) {
+            logSevere("Error occurred: ", ex);
+            completionHandler.accept(error(ex));
+        }
+    }
+
+    private void proceedWithPlacement(ContainerDescription containerDesc,
+            Collection<ComputeService.ComputeState> computeStates, AdmiralAdapterTaskState state,
+            Consumer<ServiceDocumentQuery.ServiceDocumentQueryElementResult<ServiceDocument>>
+                    completionHandler) {
 
         QueryTask q = QueryUtil.buildQuery(DockerImage.class, false);
         QueryTask.Query imageClause = new QueryTask.Query()
@@ -1001,11 +1024,7 @@ public class AdmiralAdapterService extends
                     computeStateLinks.add(dockerImage.computeStateLink);
                 }
             } else {
-                Set<String> selectedHosts = state.hostSelections.stream().map((item) -> item
-                        .hostLink)
-                        .collect(Collectors.toSet());
-
-                String selectedComputeLink = selectComputeLink(selectedHosts, computeStateLinks);
+                String selectedComputeLink = selectComputeLink(computeStates, computeStateLinks);
                 if (ClosureUtils.isEmpty(selectedComputeLink)) {
                     logWarning("No available hosts configured! Aborting deployment...");
                     completionHandler
@@ -1015,43 +1034,47 @@ public class AdmiralAdapterService extends
                 logInfo("Selected compute to provision: %s ", selectedComputeLink);
                 completionHandler.accept(resultLink(selectedComputeLink, 1));
 
-                seedPeers(selectedHosts, computeStateLinks, selectedComputeLink,
-                        (computeLink) -> seedWithBaseDockerImage(containerDesc, computeLink,
-                                state));
+                seedPeers(computeStates, computeStateLinks, selectedComputeLink,
+                        (computeStateLink) -> seedWithBaseDockerImage(containerDesc,
+                                computeStateLink, state));
             }
         });
     }
 
-    private String selectComputeLink(Set<String> hostLinks, List<String>
-            cachedComputeStateLinks) {
+    private String selectComputeLink(Collection<ComputeService.ComputeState> computeStates,
+            List<String> cachedComputeStateLinks) {
+        String selectedComputeLink = null;
         if (cachedComputeStateLinks.isEmpty()) {
             // Image not found anywhere cached
-            return selectFromComputeStates(hostLinks);
+            return selectFromComputeStates(computeStates);
         }
-        List<String> liveComputeStatesLinks = filterOutdatedComputes(hostLinks,
+        List<String> liveComputeStatesLinks = filterOutdatedComputes(computeStates,
                 cachedComputeStateLinks);
         if (liveComputeStatesLinks.isEmpty()) {
             // Image not found anywhere cached on live compute states
-            return selectFromComputeStates(hostLinks);
+            return selectFromComputeStates(computeStates);
         }
 
         // Select random from the list of live compute states with cached images
         return (String) nextValue(liveComputeStatesLinks);
     }
 
-    private String selectFromComputeStates(Collection<String> computeStates) {
-        String selectedCompute = (String) nextValue(computeStates);
+    private String selectFromComputeStates(Collection<ComputeService.ComputeState> computeStates) {
+        ComputeService.ComputeState selectedCompute = (ComputeService.ComputeState) nextValue(
+                computeStates);
         if (selectedCompute != null) {
-            return selectedCompute;
+            return selectedCompute.documentSelfLink;
         }
         return null;
     }
 
-    private List<String> filterOutdatedComputes(Collection<String> hostLinks,
+    private List<String> filterOutdatedComputes(
+            Collection<ComputeService.ComputeState> computeStates,
             List<String> computeStateLinks) {
 
-        return hostLinks.stream().filter(c -> computeStateLinks.contains(c))
-                .collect(Collectors.toList());
+        return computeStates.stream().filter(c -> computeStateLinks.contains(c.documentSelfLink))
+                .map(computeState ->
+                        computeState.documentSelfLink).collect(Collectors.toList());
 
     }
 
@@ -1078,17 +1101,18 @@ public class AdmiralAdapterService extends
     }
 
     private void proceedWithContainerDescription(AdmiralAdapterTaskState state, ContainerDescription
-            containerDesc) {
-        if (containerDesc == null) {
+            containerDescription) {
+        if (containerDescription == null) {
             fetchContainerDescription(state,
                     (contDesc) -> this.proceedWithContainerDescription(state, contDesc));
             return;
         }
 
-        createReservationTasks(state, containerDesc);
+        proceedWithGroupPlacement(state, containerDescription);
     }
 
-    private void proceedWithGroupPlacement(AdmiralAdapterTaskState state) {
+    private void proceedWithGroupPlacement(AdmiralAdapterTaskState state,
+            ContainerDescription containerDesc) {
         fetchGroupPlacement(state, (result) -> {
                     if (result.hasException()) {
                         failTask("No available placement group!", result.getException());
@@ -1097,13 +1121,14 @@ public class AdmiralAdapterService extends
                     GroupResourcePlacementState placement = result.getResult();
                     if (placement != null) {
                         String placementZoneLink = placement.resourcePoolLink;
-                        proceedTo(AdmiralAdapterTaskState.SubStage.PLACEMENT_SELECTED, (s) -> {
+                        proceedTo(AdmiralAdapterTaskState.SubStage.RESOURCE_POOL_RESERVED, (s) -> {
                             s.placementZoneLink = placementZoneLink;
                             s.groupResourcePlacementLink = placement.documentSelfLink;
                         });
 
                     } else {
-                        failTask("No available placement available!", null);
+                        // create closure placement
+                        failTask("No configured placement available!", null);
                         return;
                     }
                 }
@@ -1112,9 +1137,10 @@ public class AdmiralAdapterService extends
 
     private void fetchGroupPlacement(AdmiralAdapterTaskState state,
             Consumer<ServiceDocumentQuery.ServiceDocumentQueryElementResult<GroupResourcePlacementState>> callbackFunction) {
-        logInfo("Fetching group placement: %s", state.groupResourcePlacementLink);
+        String placementId = computePlacementId(state.configuration);
+        logInfo("Fetching group placement: %s", placementId);
         try {
-            getHost().sendRequest(Operation.createGet(getHost(), state.groupResourcePlacementLink)
+            getHost().sendRequest(Operation.createGet(getHost(), placementId)
                     .setReferer(getHost().getUri())
                     .setCompletion((op, ex) -> {
                         if (ex != null) {
@@ -1127,8 +1153,16 @@ public class AdmiralAdapterService extends
                     }));
 
         } catch (Throwable ex) {
-            logSevere("Unable to fetch available group placement!", ex);
+            logSevere("Unable to fetch configured group placement!", ex);
         }
+    }
+
+    private String computePlacementId(ContainerConfiguration configuration) {
+        if (ClosureUtils.isEmpty(configuration.placementLink)) {
+            return GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK;
+        }
+
+        return configuration.placementLink;
     }
 
     private void fetchContainerDescription(AdmiralAdapterTaskState state,

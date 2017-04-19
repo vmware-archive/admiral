@@ -126,6 +126,14 @@ public class ClosureDescription extends ResourceState implements CloneableResour
     @UsageOption(option = PropertyUsageOption.OPTIONAL)
     public String dependencies;
 
+    /**
+     * Link of the placement to use. Optional parameter.
+     *
+     */
+    @Documentation(description = "Link to a placement to use.")
+    @UsageOption(option = PropertyUsageOption.OPTIONAL)
+    public String placementLink;
+
     /** Link to the parent closure description */
     @JsonProperty("parent_description_link")
     @Documentation(description = "Link to the parent closure description.")

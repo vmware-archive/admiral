@@ -73,6 +73,7 @@ public abstract class DockerDriverBase implements ExecutionDriver {
 
         configuration.logConfiguration = closureDesc.logConfiguration;
         configuration.sourceURL = closureDesc.sourceURL;
+        configuration.placementLink = closureDesc.placementLink;
         configuration.dependencies = closureDesc.dependencies;
 
         List<String> vars = populateEnvs(closure, token);

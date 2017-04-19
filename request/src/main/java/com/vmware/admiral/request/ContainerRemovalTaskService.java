@@ -541,11 +541,11 @@ public class ContainerRemovalTaskService
             return null;
         }
 
-//        if (isClosureContainer(cs)) {
-//            logFine("Skipping releasing placement because container is related to closures: %s",
-//                    cs.documentSelfLink);
-//            return null;
-//        }
+        if (isClosureContainer(cs)) {
+            logFine("Skipping releasing placement because container is related to closures: %s",
+                    cs.documentSelfLink);
+            return null;
+        }
 
         ReservationRemovalTaskState rsrvTask = new ReservationRemovalTaskState();
         rsrvTask.resourceCount = 1;
