@@ -276,38 +276,42 @@ public class ContainerHostService extends StatelessService {
 
     /**
      * Fetches server certificate and stores its fingerprint as custom property. It is then used
-     * as a hash key to get the client certificate when handshaking.
-     *
-     * @return <code>false</code> ONLY if there's exception getting the server certificate. For all
-     * other cases this method will return <code>true</code> (even if http us used).
+     * as a hash key to get the client certificate when handshaking. If cannot establish connection
+     * sets host power state to unknown. It will be set to the correct one once the data collection
+     * passes.
      */
-    private boolean fetchSslTrustAliasProperty(ContainerHostSpec hostSpec) {
+    private void fetchSslTrustAliasProperty(ContainerHostSpec hostSpec, Runnable callback) {
         if (DeploymentProfileConfig.getInstance().isTest()) {
             logInfo("No ssl trust validation is performed in test mode...");
-            return true;
+            callback.run();
+            return;
         }
 
         if (!hostSpec.isSecureScheme()) {
             logInfo("Using non secure channel, skipping SSL validation for %s", hostSpec.uri);
-            return true;
+            callback.run();
+            return;
         }
 
-        try {
-            SslCertificateResolver resolver = SslCertificateResolver.connect(hostSpec.uri);
+        SslCertificateResolver.execute(hostSpec.uri, (resolver, ex) -> {
+            if (ex != null) {
+                // if we cannot connect host to get its certificate move the state to unknown,
+                // later data collection will set the proper state when host is available
+                hostSpec.hostState.powerState = ComputeService.PowerState.UNKNOWN;
+                logWarning("Cannot connect to %s to get remote certificate for sslTrustAlias",
+                        hostSpec.uri);
+                callback.run();
+                return;
+            }
 
             X509Certificate[] certificateChain = resolver.getCertificateChain();
-
             String s = CertificateUtil.generatePureFingerPrint(certificateChain);
             if (hostSpec.hostState.customProperties == null) {
                 hostSpec.hostState.customProperties = new HashMap<>();
             }
             hostSpec.hostState.customProperties.put(SSL_TRUST_ALIAS_PROP_NAME, s);
-            return true;
-        } catch (Exception e) {
-            logWarning("Cannot connect to %s to get remote certificate for sslTrustAlias",
-                    hostSpec.uri);
-            return false;
-        }
+            callback.run();
+        });
     }
 
     private void validate(ContainerHostSpec hostSpec) {
@@ -421,25 +425,20 @@ public class ContainerHostService extends StatelessService {
     private void validateVicHost(ContainerHostSpec hostSpec, Operation op) {
         String computeAddress = hostSpec.hostState.address;
         EndpointCertificateUtil.validateSslTrust(this, hostSpec, op, () -> {
-            boolean success = fetchSslTrustAliasProperty(hostSpec);
-            // if we cannot connect host to get its certificate move the state to unknown, later
-            // data collection will set the proper state when it become available
-            if (!success) {
-                hostSpec.hostState.powerState = ComputeService.PowerState.UNKNOWN;
-            }
-
-            getHostInfo(hostSpec, op, hostSpec.sslTrust,
-                    (computeState) -> {
-                        if (ContainerHostUtil.isVicHost(computeState)) {
-                            logInfo("VIC host verification passed for %s", computeAddress);
-                            completeOperationSuccess(op);
-                        } else {
-                            logInfo("VIC host verification failed for %s", computeAddress);
-                            op.fail(new LocalizableValidationException(
-                                    CONTAINER_HOST_IS_NOT_VCH_MESSAGE,
-                                    CONTAINER_HOST_IS_NOT_VCH_MESSAGE_CODE));
-                        }
-                    });
+            fetchSslTrustAliasProperty(hostSpec, () -> {
+                getHostInfo(hostSpec, op, hostSpec.sslTrust,
+                        (computeState) -> {
+                            if (ContainerHostUtil.isVicHost(computeState)) {
+                                logInfo("VIC host verification passed for %s", computeAddress);
+                                completeOperationSuccess(op);
+                            } else {
+                                logInfo("VIC host verification failed for %s", computeAddress);
+                                op.fail(new LocalizableValidationException(
+                                        CONTAINER_HOST_IS_NOT_VCH_MESSAGE,
+                                        CONTAINER_HOST_IS_NOT_VCH_MESSAGE_CODE));
+                            }
+                        });
+            });
         });
 
     }
@@ -1050,70 +1049,61 @@ public class ContainerHostService extends StatelessService {
     }
 
     private void createHost(ContainerHostSpec hostSpec, Operation op) {
-        boolean success = fetchSslTrustAliasProperty(hostSpec);
-        // if we cannot connect host to get its certificate move the state to unknown, later
-        // data collection will set the proper state when it become available
-        if (!success) {
-            hostSpec.hostState.powerState = ComputeService.PowerState.UNKNOWN;
-        }
-
-        if (hostSpec.acceptHostAddress) {
-            if (hostSpec.acceptCertificate) {
-                Operation o = Operation.createGet(null)
-                        .setCompletion((completedOp, e) -> {
-                            if (e != null) {
-                                storeHost(hostSpec, op);
-                            } else {
-                                op.setStatusCode(completedOp.getStatusCode());
-                                op.transferResponseHeadersFrom(completedOp);
-                                op.setBodyNoCloning(completedOp.getBodyRaw());
-                                op.complete();
-                            }
-                        });
-                EndpointCertificateUtil
-                        .validateSslTrust(this, hostSpec, o, () -> storeHost(hostSpec, op));
+        fetchSslTrustAliasProperty(hostSpec, () -> {
+            if (hostSpec.acceptHostAddress) {
+                if (hostSpec.acceptCertificate) {
+                    Operation o = Operation.createGet(null)
+                            .setCompletion((completedOp, e) -> {
+                                if (e != null) {
+                                    storeHost(hostSpec, op);
+                                } else {
+                                    op.setStatusCode(completedOp.getStatusCode());
+                                    op.transferResponseHeadersFrom(completedOp);
+                                    op.setBodyNoCloning(completedOp.getBodyRaw());
+                                    op.complete();
+                                }
+                            });
+                    EndpointCertificateUtil
+                            .validateSslTrust(this, hostSpec, o, () -> storeHost(hostSpec, op));
+                } else {
+                    storeHost(hostSpec, op);
+                }
             } else {
-                storeHost(hostSpec, op);
+                EndpointCertificateUtil
+                        .validateSslTrust(this, hostSpec, op, () -> storeHost(hostSpec, op));
             }
-        } else {
-            EndpointCertificateUtil
-                    .validateSslTrust(this, hostSpec, op, () -> storeHost(hostSpec, op));
-        }
+        });
     }
 
     private void updateHost(ContainerHostSpec hostSpec, Operation op) {
-        // when host is updated and ssl property cannot be fetch do not run data collection (DC) to
-        // avoid endless loop. DC will check for the ssl property and send new update for the host,
-        // and so on.
-        final boolean success = fetchSslTrustAliasProperty(hostSpec);
+        fetchSslTrustAliasProperty(hostSpec, () -> {
+            ComputeState cs = hostSpec.hostState;
+            sendRequest(Operation.createPut(this, cs.documentSelfLink)
+                    .setBody(cs)
+                    .setCompletion((o, e) -> {
+                        if (e != null) {
+                            op.fail(e);
+                            return;
+                        }
+                        createHostPortProfile(cs, op);
+                        // when host is updated and ssl property cannot be fetch (power state is
+                        // UNKNOWN) do not run data collection (DC) to avoid endless loop. DC will
+                        // check for the ssl property and send new update for the host, and so on.
+                        if (ComputeService.PowerState.UNKNOWN != hostSpec.hostState.powerState) {
+                            // run data collection only if there's no error getting its certificate
+                            updateContainerHostInfo(cs.documentSelfLink);
+                            triggerEpzEnumeration();
+                        }
+                    }));
+        });
 
-        // if we cannot connect host to get its certificate move the state to unknown, later
-        // data collection will set the proper state when it become available
-        if (!success) {
-            hostSpec.hostState.powerState = ComputeService.PowerState.UNKNOWN;
-        }
-
-        ComputeState cs = hostSpec.hostState;
-        sendRequest(Operation.createPut(this, cs.documentSelfLink)
-                .setBody(cs)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        op.fail(e);
-                        return;
-                    }
-                    createHostPortProfile(cs, op);
-                    if (success) {
-                        // run data collection only if there's no error getting its certificate
-                        updateContainerHostInfo(cs.documentSelfLink);
-                        triggerEpzEnumeration();
-                    }
-                }));
     }
 
     private void validateConnection(ContainerHostSpec hostSpec, Operation op) {
         EndpointCertificateUtil.validateSslTrust(this, hostSpec, op, () -> {
-            fetchSslTrustAliasProperty(hostSpec);
-            pingHost(hostSpec, op, hostSpec.sslTrust, () -> completeOperationSuccess(op));
+            fetchSslTrustAliasProperty(hostSpec, () -> {
+                pingHost(hostSpec, op, hostSpec.sslTrust, () -> completeOperationSuccess(op));
+            });
         });
     }
 
