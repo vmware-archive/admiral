@@ -29,6 +29,7 @@ import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
 import com.vmware.admiral.compute.profile.InstanceTypeDescription;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
+import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState.SubStage;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputeProvisionTaskState;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -160,6 +161,27 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         assertNotNull(computeState.id);
         assertEquals(computeDescription.documentSelfLink, computeState.descriptionLink);
         // assertEquals(vmHostCompute.documentSelfLink, computeState.parentLink);
+    }
+
+    @SuppressWarnings("static-access")
+    @Test
+    public void testContainerAllocationSubscriptionSubStages() throws Throwable {
+
+        ComputeDescription computeDescription = createVMComputeDescription(false);
+        ComputeAllocationTaskState allocationTask = createComputeAllocationTask
+                (computeDescription.documentSelfLink, 1, true);
+        allocationTask.customProperties = new HashMap<>();
+        allocationTask.customProperties.put("customPropB", "valueB");
+        allocationTask = allocate(allocationTask);
+
+        assertNotNull(allocationTask);
+        Set<SubStage> subscriptionSubStages = allocationTask.taskSubStage
+                .SUBSCRIPTION_SUB_STAGES;
+
+        assertNotNull(subscriptionSubStages);
+        assertEquals(1, subscriptionSubStages.size());
+        assertTrue(subscriptionSubStages
+                .contains(allocationTask.taskSubStage.RESOURCES_NAMES));
     }
 
     private ComputeAllocationTaskState allocate(ComputeAllocationTaskState allocationTask)
