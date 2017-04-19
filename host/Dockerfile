@@ -1,33 +1,8 @@
-FROM vmware/photon:1.0
-
-MAINTAINER Admiral Team, https://vmware.github.io/admiral/
-
-RUN tyum install -y openjre.x86_64 && \
-	tyum clean all && \
-	mkdir -p /usr/lib/jvm && \
-	export JAVA_HOME="/usr/lib/jvm/default-jvm" && \
-	ln -s /var/opt/$(ls /var/opt/ | grep OpenJDK) $JAVA_HOME && \
-	ln -s $JAVA_HOME/bin/* /usr/bin/
-
-ENV ADMIRAL_PORT=8282 \
-   ADMIRAL_STORAGE_PATH=/var/admiral/ \
-   USER_RESOURCES=/etc/xenon/user-resources/system-images/ \
-   ADMIRAL_ROOT=/admiral \
-   MOCK_MODE=false
-
-EXPOSE $ADMIRAL_PORT
-VOLUME $ADMIRAL_STORAGE_PATH
-
-RUN mkdir $ADMIRAL_ROOT && mkdir -p $USER_RESOURCES
+FROM vmware/admiral-base
 
 COPY target/lib target/admiral-host-*.jar $ADMIRAL_ROOT/
-
 COPY images-bin/* $USER_RESOURCES
-
 COPY entrypoint.sh /entrypoint.sh
-
-ENV DIST_CONFIG_FILE_PATH $ADMIRAL_ROOT/config/dist_configuration.properties
-ENV CONFIG_FILE_PATH $ADMIRAL_ROOT/config/configuration.properties
 COPY configuration.properties $DIST_CONFIG_FILE_PATH
 
 ENTRYPOINT ["/entrypoint.sh"]
