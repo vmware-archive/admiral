@@ -60,8 +60,7 @@ public abstract class DockerDriverBase implements ExecutionDriver {
 
     @Override
     public void executeClosure(Closure closure, ClosureDescription closureDesc, String token,
-            Consumer<Throwable>
-                    errorHandler) {
+            Consumer<Throwable> errorHandler) {
         ClosureDockerClient dockerClient = dockerClientFactory.getClient();
 
         String containerName = generateContainerName(closure);
@@ -93,9 +92,7 @@ public abstract class DockerDriverBase implements ExecutionDriver {
                 ClosureProps.CLOSURE_RUNTIME_IMAGE_REGISTRY + closureDesc.runtime);
 
         logInfo("Creating container with name: %s image: %s", containerName, containerImage);
-        dockerClient
-                .createAndStartContainer(closure.documentSelfLink, imageConfig, configuration,
-                        errorHandler);
+        dockerClient.createAndStartContainer(closure, imageConfig, configuration, errorHandler);
         logInfo("Code execution request sent.");
     }
 
