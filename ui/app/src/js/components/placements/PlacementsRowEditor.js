@@ -162,6 +162,9 @@ PlacementsRowEditor.prototype.setData = function(data) {
 
       let groupInputValue = placementObject.group ? placementObject.group.id :
         placementObject.groupId;
+
+      // todo add loading for groups input
+      this.placementGroupInput.setItems(data.groups);
       this.placementGroupInput.setValue(groupInputValue);
       this.placementZoneInput.setSelectedOption(placementObject.placementZone);
       if (this.deploymentPolicyInput) {
@@ -186,9 +189,6 @@ PlacementsRowEditor.prototype.setData = function(data) {
         data.selectedPlacementZone) {
       this.placementZoneInput.setSelectedOption(data.selectedPlacementZone.resourcePoolState);
     }
-
-    // todo add loading for groups input
-    this.placementGroupInput.setItems(data.groups);
 
     let oldSelectedGroup = oldData.item ? oldData.item.group : oldData.group;
     let selectedGroup = data.selectedGroup;
