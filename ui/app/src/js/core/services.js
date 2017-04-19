@@ -310,6 +310,10 @@ var buildPaginationUrl = function(path, filter, count, order, limit, params) {
   return mergeUrl(path, params);
 };
 
+var buildQueryPaginationUrl = function(path, query, count, order, limit, params) {
+  return buildPaginationUrl(path, buildSearchQuery(query), count, order, limit, params);
+};
+
 var list = function(url, expandQuery, paramsData) {
   paramsData = paramsData || {};
   paramsData[DOCUMENT_TYPE_PROP_NAME] = true;
@@ -2660,6 +2664,7 @@ var buildSearchQuery = function(queryOptions) {
 };
 
 var client = {
+  buildQueryPaginationUrl: buildQueryPaginationUrl,
   delete: deleteEntity,
   get: get,
   patch: patch,
@@ -2667,7 +2672,7 @@ var client = {
   put: put
 };
 
-window.api = window.api || {};
-window.api.client = client;
+window.mcp = window.mcp || {};
+window.mcp.client = client;
 
 export default services;
