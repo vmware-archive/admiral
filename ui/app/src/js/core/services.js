@@ -1407,6 +1407,10 @@ services.manageNetwork = function(networkId) {
   return get(links.CONTAINER_NETWORKS + '/' + networkId + links.MANAGE_CONTAINERS_ENDPOINT);
 };
 
+services.manageVolume = function(volumeId) {
+  return get(links.CONTAINER_VOLUMES + '/' + volumeId + links.MANAGE_CONTAINERS_ENDPOINT);
+};
+
 services.loadClosure = function(closureId) {
   return get(links.CLOSURES + '/' + closureId);
 };
