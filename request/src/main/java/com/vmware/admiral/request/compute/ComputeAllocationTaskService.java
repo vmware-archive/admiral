@@ -27,6 +27,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -165,6 +166,9 @@ public class ComputeAllocationTaskService
             COMPUTE_ALLOCATION_COMPLETED,
             COMPLETED,
             ERROR;
+
+            static final Set<ComputeAllocationTaskState.SubStage> SUBSCRIPTION_SUB_STAGES = new HashSet<>(
+                    Arrays.asList(RESOURCES_NAMES));
         }
     }
 
@@ -179,6 +183,7 @@ public class ComputeAllocationTaskService
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
+        super.subscriptionSubStages = EnumSet.copyOf(SubStage.SUBSCRIPTION_SUB_STAGES);
     }
 
     static boolean enableContainerHost(Map<String, String> customProperties) {
@@ -1040,5 +1045,55 @@ public class ComputeAllocationTaskService
                     T state = o.getBody(type);
                     callbackFunction.accept(state);
                 }));
+    }
+
+    @Override
+    protected ServiceTaskCallbackResponse notificationPayload() {
+        return new ExtensibilityCallbackResponse();
+    }
+
+    /**
+     * Defines fields which are eligible for modification in case of subscription for task.
+     */
+    protected static class ExtensibilityCallbackResponse extends ServiceTaskCallbackResponse {
+        Set<String> resourceNames;
+    }
+
+    @Override
+    protected void autoMergeState(Operation patch, ComputeAllocationTaskState patchBody,
+            ComputeAllocationTaskState currentState) {
+        if (ComputeAllocationTaskState.SubStage.SUBSCRIPTION_SUB_STAGES.contains(patchBody.taskSubStage)) {
+            if (currentState.resourceNames != null && !currentState.resourceNames.isEmpty()) {
+                // A couple of possible scenarios here:
+                // 1.current names -> [a,b]; patched names -> [c]; => result will be [a,c]
+                // 2.current names -> [a,b]; patched names -> [c,d]; => result will be [c,d]
+                // 3.current names -> [a]; patched names -> [b]; => result will be [b]
+                if (patchBody.resourceNames != null && !patchBody.resourceNames.isEmpty()) {
+                    // If [patchBody.resourceNames] contains one element, and
+                    // [currentState.resourceNames] contains one element as well, than autoMerge of
+                    // documents won't replace old with new, but put it both in the set.That's why
+                    // the below logic is needed.
+                    int currentSize = currentState.resourceNames.size();
+                    int patchedSize = patchBody.resourceNames.size();
+                    int instancesToRemoveFromCurrentResourceNames = 0;
+                    if (currentSize > patchedSize) {
+                        instancesToRemoveFromCurrentResourceNames = currentSize - patchedSize;
+                    } else if (patchedSize > currentSize) {
+                        instancesToRemoveFromCurrentResourceNames = patchedSize - currentSize;
+                    } else {
+                        instancesToRemoveFromCurrentResourceNames = patchedSize;
+                    }
+
+                    Iterator<String> iterator = currentState.resourceNames.iterator();
+
+                    while (iterator.hasNext() && instancesToRemoveFromCurrentResourceNames > 0) {
+                        instancesToRemoveFromCurrentResourceNames--;
+                        iterator.next();
+                        iterator.remove();
+                    }
+                }
+            }
+        }
+        super.autoMergeState(patch, patchBody, currentState);
     }
 }

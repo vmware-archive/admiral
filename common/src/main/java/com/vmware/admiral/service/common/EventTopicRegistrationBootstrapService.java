@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.service.common.EventTopicService.EventTopicState;
@@ -40,12 +41,18 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.EVENT_TOPIC_REGISTRY_BOOTSTRAP;
 
     public static final String CONTAINER_NAME_TOPIC_TASK_SELF_LINK = "change-container-name";
-
     private static final String CONTAINER_NAME_TOPIC_ID = "com.vmware.container.name.assignment";
-    private static final String CONTAINER_NAME_TOPIC_NAME = "Name assignment";
+    private static final String CONTAINER_NAME_TOPIC_NAME = "Container name assignment";
     private static final String CONTAINER_NAME_TOPIC_TASK_NAME = "ContainerAllocationTaskState";
     private static final String CONTAINER_NAME_TOPIC_SUBSTAGE = "RESOURCES_NAMED";
     private static final String CONTAINER_NAME_TOPIC_TASK_DESCRIPTION = "Assign custom container name.";
+
+    public static final String COMPUTE_NAME_TOPIC_TASK_SELF_LINK = "change-compute-name";
+    private static final String COMPUTE_NAME_TOPIC_ID = "com.vmware.compute.name.assignment";
+    private static final String COMPUTE_NAME_TOPIC_NAME = "Compute name assignment";
+    private static final String COMPUTE_NAME_TOPIC_TASK_NAME = "ComputeAllocationTaskState";
+    private static final String COMPUTE_NAME_TOPIC_SUBSTAGE = "RESOURCES_NAMES";
+    private static final String COMPUTE_NAME_TOPIC_TASK_DESCRIPTION = "Assign custom compute name.";
 
     public static FactoryService createFactory() {
         return FactoryService.create(EventTopicRegistrationBootstrapService.class);
@@ -121,10 +128,10 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
 
     private static void createTopics(ServiceHost host, Operation post) {
 
-        OperationJoin hostsStatsOperation = OperationJoin
+        OperationJoin topicsOperations = OperationJoin
                 .create(topicOperations(host));
 
-        hostsStatsOperation.setCompletion((ops, failures) -> {
+        topicsOperations.setCompletion((ops, failures) -> {
             if (failures != null) {
                 host.log(Level.SEVERE,
                         String.format("Failure while creating topics. Exception: %s ",
@@ -138,14 +145,33 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
 
         });
 
-        hostsStatsOperation.sendWith(host);
+        topicsOperations.sendWith(host);
     }
 
     private static List<Operation> topicOperations(ServiceHost host) {
-        return Arrays.asList(new Operation[] { createChangeContainerNameTopicOperation(host) });
+        EventTopicState[] topics = new EventTopicState[] {createChangeContainerNameTopic(host),
+                createChangeComputeNameTopic(host) };
+
+        return Arrays.stream(topics)
+                .map(topic ->
+                        Operation.createPost(host, EventTopicService.FACTORY_LINK)
+                                .setReferer(host.getUri())
+                                .setBody(topic)
+                                .addPragmaDirective(
+                                        Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
+                                .setCompletion((o, e) -> {
+                                    if (e != null) {
+                                        host.log(Level.SEVERE,
+                                                String.format(
+                                                        "Unable to register '%s' topic. "
+                                                                + "Exception: %s",
+                                                        topic.name, e.getMessage()));
+                                    }
+                                }))
+                .collect(Collectors.toList());
     }
 
-    private static Operation createChangeContainerNameTopicOperation(ServiceHost host) {
+    private static EventTopicState createChangeContainerNameTopic(ServiceHost host) {
         EventTopicState topic = new EventTopicState();
         topic.id = CONTAINER_NAME_TOPIC_ID;
         topic.name = CONTAINER_NAME_TOPIC_NAME;
@@ -167,19 +193,32 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
                 .whereMultiValued(true)
                 .build();
 
-        return Operation.createPost(host, EventTopicService.FACTORY_LINK)
-                .setReferer(host.getUri())
-                .setBody(topic)
-                .addPragmaDirective(
-                        Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        host.log(Level.SEVERE,
-                                String.format(
-                                        "Unable to register ChangeContainerName topic. Exception: %s",
-                                        e.getMessage()));
-                    }
-                });
+        return topic;
+    }
+
+    private static EventTopicState createChangeComputeNameTopic(ServiceHost host) {
+        EventTopicState topic = new EventTopicState();
+        topic.id = COMPUTE_NAME_TOPIC_ID;
+        topic.name = COMPUTE_NAME_TOPIC_NAME;
+        EventTopicService.TopicTaskInfo taskInfo = new EventTopicService.TopicTaskInfo();
+        taskInfo.task = COMPUTE_NAME_TOPIC_TASK_NAME;
+        taskInfo.stage = TaskStage.STARTED.name();
+        taskInfo.substage = COMPUTE_NAME_TOPIC_SUBSTAGE;
+        topic.topicTaskInfo = taskInfo;
+        topic.documentSelfLink = COMPUTE_NAME_TOPIC_TASK_SELF_LINK;
+        topic.description = COMPUTE_NAME_TOPIC_TASK_DESCRIPTION;
+        topic.blockable = Boolean.TRUE;
+
+        // [{"resourceNames":{"dataType":"String","multivalued":"true","label":"Resource Names"}}]
+        topic.schema = SchemaBuilder.create()
+                .addField("resourceNames")
+                .addDataType(String.class.getSimpleName())
+                .addLabel("Resource Names")
+                .addDescription("Array should provide only one resource name that will be patched.")
+                .whereMultiValued(true)
+                .build();
+
+        return topic;
     }
 
     /**
