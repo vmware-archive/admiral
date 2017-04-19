@@ -147,7 +147,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
     @AfterClass
     public static void afterClassTearDown() throws Exception {
         // remove the host
-        if (dockerHostCompute != null) {
+        if (dockerHostCompute != null && (parallel_test_counter.get() == 1)) {
             removeHost(dockerHostCompute);
         }
     }
