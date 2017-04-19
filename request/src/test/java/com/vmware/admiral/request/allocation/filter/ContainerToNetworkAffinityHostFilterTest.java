@@ -28,6 +28,7 @@ import org.junit.Test;
 
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
+import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ServiceNetwork;
@@ -66,8 +67,11 @@ public class ContainerToNetworkAffinityHostFilterTest extends BaseAffinityHostFi
         randomName = networkDescription2.name + "-name270";
         ContainerNetworkState networkState2 = createNetwork(networkDescription2, randomName);
 
+        CompositeDescription compositeDesc = createCompositeDesc(false, false, networkDescription1,
+                networkDescription2);
         ContainerDescription desc = createDescription(new String[] { networkDescription1.name,
                 networkDescription2.name });
+        createCompositeComponent(compositeDesc, networkState1, networkState2);
 
         filter = new ContainerToNetworkAffinityHostFilter(host, desc);
         Map<String, HostSelection> selected = filter();
@@ -362,6 +366,8 @@ public class ContainerToNetworkAffinityHostFilterTest extends BaseAffinityHostFi
         ContainerNetworkDescription netDesc2 = createNetworkDescription("my-net-2");
         ContainerDescription desc = createDescription(
                 new String[] { netDesc1.name, netDesc2.name });
+        CompositeDescription compositeDesc = createCompositeDesc(false, false, desc, netDesc1, netDesc2);
+        createCompositeComponent(compositeDesc, desc, netDesc1, netDesc2);
         return desc;
     }
 }
