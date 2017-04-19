@@ -45,7 +45,7 @@
         @change="onEditorChange"
         @error="onEditorError">
       </div>
-      <div class="form-group" v-if="!!model.item.documentSelfLink">
+      <!--div class="form-group" v-if="!!model.item.documentSelfLink">
         <label>{{i18n('app.endpoint.edit.collectLabel')}}</label>
         <div>
           <button class="btn btn-sm" @click="collectInventory($event)">
@@ -55,7 +55,7 @@
             {{i18n('app.endpoint.edit.collectImagesLabel')}}
           </button>
         </div>
-      </div>
+      </div-->
     </section>
     <section class="control-btns">
       <button type="submit" class="btn btn-primary"

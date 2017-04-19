@@ -2232,11 +2232,19 @@ services.collectInventory = function(endpoint) {
 };
 
 services.collectImages = function(endpoint) {
-  let request = {
+  let promises = [];
+  promises.push(ajax('POST', links.IMAGE_ENUMERATION, JSON.stringify({
     endpointLink: endpoint.documentSelfLink,
     enumerationAction: 'START'
-  };
-  return ajax('POST', links.IMAGE_ENUMERATION, JSON.stringify(request));
+  })));
+  if (endpoint.endpointProperties && endpoint.endpointProperties.supportPublicImages) {
+    promises.push(ajax('POST', links.IMAGE_ENUMERATION, JSON.stringify({
+      endpointType: endpoint.endpointType,
+      enumerationAction: 'START',
+      regionId: endpoint.endpointProperties && endpoint.endpointProperties.regionId
+    })));
+  }
+  return Promise.all(promises);
 };
 
 var toArrayIfDefined = function(obj) {
