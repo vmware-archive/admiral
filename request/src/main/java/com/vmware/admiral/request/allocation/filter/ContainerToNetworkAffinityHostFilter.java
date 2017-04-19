@@ -26,16 +26,23 @@ import java.util.stream.Collectors;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
+import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
+import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ServiceNetwork;
+import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
+import com.vmware.admiral.compute.container.volume.VolumeUtil;
 import com.vmware.admiral.request.PlacementHostSelectionTaskService;
 import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState;
 import com.vmware.admiral.request.utils.RequestUtils;
+import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 
 /**
  * A filter implementing {@link HostSelectionFilter} in order to provide affinity and network name
@@ -67,20 +74,37 @@ public class ContainerToNetworkAffinityHostFilter
         }
 
         if (isActive()) {
-            findNetworkDescriptions(state, sortedHostSelectionMap, callback);
+            if (VolumeUtil.isContainerRequest(state.customProperties)) {
+                findNetworkDescriptionsByLinks(state, sortedHostSelectionMap, callback, null);
+            } else {
+                findNetworkDescriptionsByComponent(state, sortedHostSelectionMap, callback);
+            }
         } else {
             callback.complete(sortedHostSelectionMap, null);
         }
     }
 
-    private void findNetworkDescriptions(final PlacementHostSelectionTaskState state,
+    private void findNetworkDescriptionsByLinks(final PlacementHostSelectionTaskState state,
             final Map<String, HostSelection> hostSelectionMap,
-            final HostSelectionFilterCompletion callback) {
+            final HostSelectionFilterCompletion callback,
+            List<String> containerNetworkLinks) {
 
         final QueryTask q = QueryUtil.buildQuery(ContainerNetworkDescription.class, false);
 
         QueryUtil.addCaseInsensitiveListValueClause(q, ContainerNetworkDescription.FIELD_NAME_NAME,
                 networks.keySet());
+        if (containerNetworkLinks != null) {
+            QueryUtil.addListValueClause(q,
+                    ContainerNetworkDescription.FIELD_NAME_SELF_LINK,
+                    containerNetworkLinks);
+        } else {
+            QueryTask.Query contextClause = new QueryTask.Query()
+                    .setTermPropertyName(QuerySpecification.buildCompositeFieldName(
+                            ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
+                            RequestUtils.FIELD_NAME_CONTEXT_ID_KEY))
+                    .setTermMatchValue(state.contextId);
+            q.querySpec.query.addBooleanClause(contextClause);
+        }
         QueryUtil.addExpandOption(q);
 
         final Map<String, DescName> descLinksWithNames = new HashMap<>();
@@ -108,6 +132,57 @@ public class ContainerToNetworkAffinityHostFilter
                         }
                     }
                 });
+    }
+
+    private void findNetworkDescriptionsByComponent(final PlacementHostSelectionTaskState state,
+            final Map<String, HostSelection> hostSelectionMap,
+            final HostSelectionFilterCompletion callback) {
+        String compositeComponentLink = UriUtils
+                .buildUriPath(CompositeComponentFactoryService.SELF_LINK, state.contextId);
+        host.sendRequest(Operation.createGet(UriUtils.buildUri(host, compositeComponentLink))
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        if (ex instanceof ServiceHost.ServiceNotFoundException) {
+                            // no composite componet found, just continue without fail
+                            host.log(Level.FINE,
+                                    "Exception while getting CompositeComponent. Error: [%s]",
+                                    ex.getMessage());
+                            callback.complete(hostSelectionMap, null);
+                        } else {
+                            host.log(Level.WARNING,
+                                    "Exception while getting CompositeComponent. Error: [%s]",
+                                    ex.getMessage());
+                            callback.complete(null, ex);
+                        }
+                        return;
+                    }
+                    CompositeComponent body = o.getBody(CompositeComponent.class);
+                    host.sendRequest(Operation.createGet(UriUtils.buildUri(host, body.compositeDescriptionLink))
+                            .setReferer(host.getUri())
+                            .setCompletion((o2, ex2) -> {
+                                if (ex2 != null) {
+                                    host.log(Level.WARNING,
+                                            "Exception while getting CompositeDescription. Error: [%s]",
+                                            ex2.getMessage());
+                                    callback.complete(null, ex2);
+                                    return;
+                                }
+                                List<String> containerNetworkLinks = new ArrayList<>();
+                                CompositeDescription descBody = o2.getBody(CompositeDescription.class);
+                                for (String descriptionLink : descBody.descriptionLinks) {
+                                    if (descriptionLink.startsWith(ContainerNetworkDescriptionService.FACTORY_LINK)) {
+                                        containerNetworkLinks.add(descriptionLink);
+                                    }
+                                }
+                                if (containerNetworkLinks.isEmpty()) {
+                                    callback.complete(hostSelectionMap, null);
+                                    return;
+                                }
+                                findNetworkDescriptionsByLinks(state, hostSelectionMap, callback,
+                                        containerNetworkLinks);
+                            }));
+                }));
     }
 
     private void findContainerNetworks(final PlacementHostSelectionTaskState state,

@@ -34,12 +34,12 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
-import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState;
 import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.UriUtils;
 
@@ -206,14 +206,14 @@ public class BaseAffinityHostFilterTest extends RequestBaseTest {
     }
 
     protected CompositeComponent createCompositeComponent(CompositeDescription compositeDesc,
-            ContainerVolumeState... volumes) throws Throwable {
+            ResourceState... ResourceState) throws Throwable {
         CompositeComponent compositeComponent = new CompositeComponent();
         compositeComponent.documentSelfLink = state.contextId;
         compositeComponent.name = compositeDesc.name + "-mcm-102";
         compositeComponent.compositeDescriptionLink = compositeDesc.documentSelfLink;
         compositeComponent.componentLinks = new ArrayList<>();
-        for (ContainerVolumeState containerVolumeState : volumes) {
-            compositeComponent.componentLinks.add(containerVolumeState.documentSelfLink);
+        for (ResourceState resourceState : ResourceState) {
+            compositeComponent.componentLinks.add(resourceState.documentSelfLink);
         }
         compositeComponent = doPost(compositeComponent, CompositeComponentFactoryService.SELF_LINK);
         assertNotNull(compositeComponent);
