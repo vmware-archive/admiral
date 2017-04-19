@@ -84,7 +84,7 @@ public abstract class BaseTestCase {
             "dcp.management.test.change.longer.count", 5000);
     protected static final int WAIT_THREAD_SLEEP_IN_MILLIS = Integer.getInteger(
             "dcp.management.test.wait.thread.sleep.millis", 20);
-    private static final int HOST_TIMEOUT_SECONDS = 60;
+    protected static final int HOST_TIMEOUT_SECONDS = 60;
 
     protected static final int MAINTENANCE_INTERVAL_MILLIS = 20;
     protected VerificationHost host;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -15,6 +15,8 @@ import static java.net.HttpURLConnection.HTTP_OK;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.common.util.ServerX509TrustManager.JAVAX_NET_SSL_TRUST_STORE;
 import static com.vmware.admiral.common.util.ServerX509TrustManager.JAVAX_NET_SSL_TRUST_STORE_PASSWORD;
@@ -24,6 +26,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -82,21 +86,32 @@ public class DockerSearchIT extends BaseTestCase {
         // Validate a public certificate, e.g. the Docker registry URL one.
         // Is should work because the default cacerts from the JRE is always included and trusted.
 
-        SslCertificateResolver resolver = SslCertificateResolver.connect(new URI(DOCKER_REGISTRY));
+        final CountDownLatch latch = new CountDownLatch(1);
+        SslCertificateResolver.execute(new URI(DOCKER_REGISTRY), (resolver, ex) -> {
+            try {
+                assertNull(ex);
+                trustManager.checkServerTrusted(resolver.getCertificateChain(), "RSA");
 
-        trustManager.checkServerTrusted(resolver.getCertificateChain(), "RSA");
+                // Validate a custom certificate.
+                // It should work because a trust store which contains the cert is passed as
+                // argument.
 
-        // Validate a custom certificate.
-        // It should work because a trust store which contains the cert is passed as argument.
+                URI customCertificate = DockerSearchIT.class
+                        .getResource("/certs/trusted_server.crt").toURI();
+                try (InputStream is = new FileInputStream(customCertificate.getPath())) {
+                    CertificateFactory factory = CertificateFactory.getInstance("X.509");
+                    X509Certificate certificate = (X509Certificate) factory.generateCertificate(is);
 
-        URI customCertificate = DockerSearchIT.class.getResource("/certs/trusted_server.crt")
-                .toURI();
-        try (InputStream is = new FileInputStream(customCertificate.getPath())) {
-            CertificateFactory factory = CertificateFactory.getInstance("X.509");
-            X509Certificate certificate = (X509Certificate) factory.generateCertificate(is);
-
-            trustManager.checkServerTrusted(new X509Certificate[] { certificate }, "RSA");
-        }
+                    trustManager.checkServerTrusted(new X509Certificate[] { certificate }, "RSA");
+                }
+            } catch (Throwable t) {
+                fail(t.getMessage());
+                throw new RuntimeException(t);
+            } finally {
+                latch.countDown();
+            }
+        });
+        latch.await(HOST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
     @Test

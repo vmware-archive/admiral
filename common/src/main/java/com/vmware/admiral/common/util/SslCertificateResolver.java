@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -23,7 +23,11 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,12 +39,14 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import com.vmware.xenon.common.LocalizableValidationException;
+import com.vmware.xenon.common.OperationContext;
 import com.vmware.xenon.common.Utils;
 
 /**
  * Helper class, responsible for resolving remote SSL certificates.
  */
 public class SslCertificateResolver {
+
     private static final Logger logger = Logger.getLogger(SslCertificateResolver.class.getName());
 
     private static X509TrustManager trustManager;
@@ -56,22 +62,65 @@ public class SslCertificateResolver {
     private final long timeout;
     private SSLContext sslContext;
 
-    public static SslCertificateResolver connect(URI uri) {
-        return new SslCertificateResolver(uri).connect();
+    private static final int THREAD_POOL_QUEUE_SIZE = 1000;
+    private static final int THREAD_POOL_KEEPALIVE_SECONDS = 30;
+
+    private static ExecutorService executor = new ThreadPoolExecutor(0,
+            Utils.DEFAULT_THREAD_COUNT, THREAD_POOL_KEEPALIVE_SECONDS,
+            TimeUnit.SECONDS, new LinkedBlockingQueue<>(THREAD_POOL_QUEUE_SIZE),
+            new ThreadPoolExecutor.AbortPolicy());
+
+    /**
+     * Connects to uri in separate thread and then executes the callback. First parameter for the
+     * callback function is the SSLCertificateResolver object itself or null in case there's an
+     * error. The second one is the error itself or null if no such is thrown.
+     *
+     * @param uri remote host uri
+     * @param callback BiConsumer callback function accepting SslCertificateResolver and Throwable
+     */
+    public static void execute(URI uri,
+            BiConsumer<SslCertificateResolver, Throwable> callback) {
+        final OperationContext parentContext = OperationContext.getOperationContext();
+
+        executor.execute(() -> {
+            OperationContext childContext = OperationContext.getOperationContext();
+            try {
+                // set the operation context of the parent thread in the current thread
+                OperationContext.restoreOperationContext(parentContext);
+
+                SslCertificateResolver resolver = new SslCertificateResolver(uri);
+                Throwable t = null;
+                try {
+                    resolver = resolver.connect();
+                } catch (Throwable e) {
+                    String msg = String.format("Error connecting to %s : %s",
+                            uri.toString(), e.getMessage());
+                    logger.warning(msg);
+                    t = e;
+                }
+                if (t != null) {
+                    callback.accept(null, t);
+                } else {
+                    callback.accept(resolver, null);
+                }
+            } finally {
+                OperationContext.restoreOperationContext(childContext);
+            }
+        });
     }
 
-    public SslCertificateResolver(URI uri) {
+    private SslCertificateResolver(URI uri) {
         this(uri, DEFAULT_CONNECTION_TIMEOUT_MILLIS);
     }
 
-    public SslCertificateResolver(URI uri, long timeout) {
+    private SslCertificateResolver(URI uri, long timeout) {
         this.hostAddress = uri.getHost();
         this.port = uri.getPort() == -1 ? DEFAULT_SECURE_CONNECTION_PORT : uri.getPort();
         this.timeout = timeout;
         this.uri = String.format("%s://%s:%d", uri.getScheme(), hostAddress, port);
     }
 
-    public SslCertificateResolver connect() {
+    private SslCertificateResolver connect() {
         logger.entering(logger.getName(), "connect");
         connectionCertificates = new ArrayList<>();
         // create a SocketFactory without TrustManager (well with one that accepts anything)
