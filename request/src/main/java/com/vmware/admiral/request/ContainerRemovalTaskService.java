@@ -47,6 +47,7 @@ import com.vmware.admiral.request.ReservationRemovalTaskService.ReservationRemov
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.CounterSubTaskService;
 import com.vmware.admiral.service.common.CounterSubTaskService.CounterSubTaskState;
+import com.vmware.admiral.service.common.LogService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.xenon.common.Operation;
@@ -475,6 +476,11 @@ public class ContainerRemovalTaskService
                                 return;
                             }
                             logInfo("Deleted ContainerState: " + cs.documentSelfLink);
+                            /*When removing container state, remove also if there are any logs
+                              created. This is workaround for:
+                              https://www.pivotaltracker.com/n/projects/1471320/stories/143794415 */
+                            sendRequest(Operation.createDelete(this, UriUtils.buildUriPath(
+                                    LogService.FACTORY_LINK, Service.getId(cs.documentSelfLink))));
                         });
     }
 

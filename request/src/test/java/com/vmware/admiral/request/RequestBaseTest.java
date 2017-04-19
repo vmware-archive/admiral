@@ -620,8 +620,12 @@ public abstract class RequestBaseTest extends BaseTestCase {
         // Verify request status
         RequestStatus rs = getDocument(RequestStatus.class, requestState.requestTrackerLink);
         assertNotNull(rs);
-        assertEquals(rbState.taskInfo.stage, rs.taskInfo.stage);
-        assertEquals(Integer.valueOf(100), rs.progress);
+
+        waitForPropertyValue(rs.documentSelfLink, RequestStatus.class, RequestStatus
+                .FIELD_NAME_TASK_INFO_STAGE, rbState.taskInfo.stage);
+
+        waitForPropertyValue(rs.documentSelfLink, RequestStatus.class, RequestStatus
+                .FIELD_NAME_PROGRESS, 100);
 
         return rbState;
     }
@@ -650,8 +654,12 @@ public abstract class RequestBaseTest extends BaseTestCase {
 
         RequestStatus rs = getDocument(RequestStatus.class, rbState.requestTrackerLink);
         assertNotNull(rs);
-        assertEquals(TaskStage.FAILED, rs.taskInfo.stage);
-        assertEquals(SubStage.ERROR.name(), rs.subStage);
+
+        waitForPropertyValue(rs.documentSelfLink, RequestStatus.class, RequestStatus
+                .FIELD_NAME_TASK_INFO_STAGE, TaskStage.FAILED);
+
+        waitForPropertyValue(rs.documentSelfLink, RequestStatus.class, RequestStatus
+                .FIELD_NAME_SUB_STAGE, SubStage.ERROR.name());
 
         return rbState;
     }

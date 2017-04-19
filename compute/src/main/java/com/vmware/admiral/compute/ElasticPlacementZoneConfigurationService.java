@@ -481,7 +481,7 @@ public class ElasticPlacementZoneConfigurationService extends StatelessService {
 
         addServiceRequestRoute(d, Action.POST,
                 "Post a valid ElasticPlacementZoneConfigurationState with no document"
-                        + " self links to create a resource pool and optionally a corresponding "
+                        + " self links to create a resource pool and optionally a corresponding"
                         + " elastic placement zone.",
                 ElasticPlacementZoneConfigurationState.class);
 

@@ -76,6 +76,8 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         public static final String FIELD_NAME_EVENT_LOG_LINK = "eventLogLink";
         public static final String FIELD_NAME_TASK_INFO = "taskInfo";
         public static final String FIELD_NAME_PROGRESS = "progress";
+        public static final String FIELD_NAME_SUB_STAGE = "subStage";
+        public static final String FIELD_NAME_TASK_INFO_STAGE = "taskInfo.stage";
 
         /**
          * The name of the TaskService
