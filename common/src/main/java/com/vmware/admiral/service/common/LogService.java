@@ -15,7 +15,6 @@ import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
@@ -32,11 +31,14 @@ public class LogService extends StatefulService {
     protected static final long DEFAULT_EXPIRATION_MICROS = Long.getLong(
             "com.vmware.admiral.service.common.expiration.micros", TimeUnit.MINUTES.toMicros(5));
 
-    public static class LogServiceState extends com.vmware.admiral.service.common.MultiTenantDocument {
+    public static class LogServiceState
+            extends com.vmware.admiral.service.common.MultiTenantDocument {
 
         public static final String FIELD_NAME_LOGS = "logs";
 
-        /** Stream of container log data */
+        /**
+         * Stream of container log data
+         */
         @Documentation(description = "Stream of container log data.")
         @PropertyOptions(indexing = {
                 PropertyIndexingOption.STORE_ONLY,
@@ -57,11 +59,13 @@ public class LogService extends StatefulService {
             return;
         }
 
+        /* Disabled until https://www.pivotaltracker.com/n/projects/1471320/stories/143794415
+         * is fixed */
         // Set the expiration time to be 15 minutes by default.
-        LogServiceState state = startPost.getBody(LogServiceState.class);
-        state.documentExpirationTimeMicros = ServiceUtils
-                .getExpirationTimeFromNowInMicros(
-                DEFAULT_EXPIRATION_MICROS);
+        // LogServiceState state = startPost.getBody(LogServiceState.class);
+        // state.documentExpirationTimeMicros = ServiceUtils
+        //         .getExpirationTimeFromNowInMicros(
+        //         DEFAULT_EXPIRATION_MICROS);
         startPost.complete();
     }
 
@@ -92,7 +96,13 @@ public class LogService extends StatefulService {
     @Override
     public ServiceDocument getDocumentTemplate() {
         ServiceDocument template = super.getDocumentTemplate();
-        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+
+        /* Workaround until https://www.pivotaltracker.com/n/projects/1471320/stories/143794415
+         * is fixed. Keep minimum versions of this state, because it is going to be kept until
+         * the container is existing. */
+        // com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        template.documentDescription.versionRetentionFloor = (long) 1;
+        template.documentDescription.versionRetentionLimit = (long) 2;
 
         // resource reference prop:
         ServiceDocumentDescription.PropertyDescription pd = template.documentDescription

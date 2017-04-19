@@ -24,7 +24,13 @@ var Quiet bool
 
 //If verbose flag is provided, will print the request send to the API.
 func CheckVerboseRequest(req *http.Request) {
-	if !Verbose || Quiet || req.Body == nil || !IsApplicationJson(req.Header) {
+	if !Verbose || Quiet || !IsApplicationJson(req.Header) {
+		return
+	}
+
+	fmt.Printf("%s %s\n", req.Method, req.URL)
+
+	if req.Body == nil || !IsApplicationJson(req.Header) {
 		return
 	}
 
@@ -45,14 +51,11 @@ func CheckVerboseRequest(req *http.Request) {
 	removeSensitiveFields(&requestMap)
 
 	body, err = json.MarshalIndent(requestMap, "", "    ")
-
 	CheckBlockingError(err)
-	fmt.Printf("%s %s\n", req.Method, req.URL)
-	fmt.Println(string(body))
-
 	//Set unmodified reader.
 	req.Body = rdrToSet
 
+	fmt.Println(string(body))
 }
 
 //If verbose flag is provided, will print the response send from the API.
