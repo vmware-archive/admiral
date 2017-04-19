@@ -15,7 +15,7 @@
 <div class="toolbar">
   <div class="row">
     <div class="col-sm-6 toolbar-primary">
-      <button class="btn btn-link"><i class="fa fa-plus"></i>Add new</button>
+      <ng-content select="[toolbar]"></ng-content>
     </div>
     <div class="col-sm-6 toolbar-secondary">
       <search [suggestionProperties]="searchSuggestionProperties"

@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "users": "Users",
+    "administrators": "Administrators",
+    "projectRegistry": "Project registry",
+    "public": "public"
+  }
+}

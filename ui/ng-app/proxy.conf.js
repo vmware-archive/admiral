@@ -15,7 +15,6 @@ const ENDPOINTS = [
   '/provisioning/*',
   '/resources/*',
   '/container-image-icons/*',
-  '/messages/*',
   '/projects/*'
 ];
 

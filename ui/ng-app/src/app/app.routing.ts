@@ -18,6 +18,7 @@ import { MainResourcesComponent } from './views/main-resources/main-resources.co
 import { IdentityManagementComponent } from './views/identity-management/identity-management.component';
 import { ProjectsComponent } from './views/projects/projects.component';
 import { ProjectDetailsComponent } from './views/projects/project-details/project-details.component';
+import { ProjectCreateComponent } from './views/projects/project-create/project-create.component';
 import { RegistriesComponent } from './views/registries/registries.component';
 import { ConfigurationComponent } from './views/configuration/configuration.component';
 import { LogsComponent } from './views/logs/logs.component';
@@ -101,6 +102,7 @@ export const ROUTES: Routes = [
             {
                 path: 'projects', component: ProjectsComponent,
                 children: [
+                    { path: 'new', component: ProjectCreateComponent },
                     { path: ':id', component: ProjectDetailsComponent }
                 ]
             },

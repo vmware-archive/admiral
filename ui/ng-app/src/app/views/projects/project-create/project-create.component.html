@@ -1,0 +1,10 @@
+<clr-modal [clrModalOpen]="opened" (clrModalOpenChange)="toggleModal($event)" [clrModalSize]="'lg'">
+  <h3 class="modal-title">I have a nice title</h3>
+  <div class="modal-body">
+      <p>But not much to say...</p>
+  </div>
+  <div class="modal-footer">
+      <button type="button" class="btn btn-outline" (click)="toggleModal(false)">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="toggleModal(false)">Ok</button>
+  </div>
+</clr-modal>

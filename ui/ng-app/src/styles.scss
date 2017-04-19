@@ -39,7 +39,7 @@ grid-view {
   z-index: 1;
 }
 
-navigation-slide-transition {
+navigation-container {
   position: absolute;
   top: 0;
   left: 0;
@@ -50,7 +50,11 @@ navigation-slide-transition {
   overflow: hidden;
 }
 
-navigation-slide-transition > * {
+navigation-container > * {
+  pointer-events: all;
+}
+
+navigation-container > .full-screen {
   position: absolute;
   top: 0;
   left: 0;

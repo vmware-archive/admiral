@@ -13,7 +13,7 @@
   [searchPlaceholder]="'Search for pods'"
   [searchSuggestionProperties]="['name', 'ip', 'status']">
   <div title>Pods</div>
-  <template let-item="item">
+  <ng-template let-item="item">
     <card [routerLink]="['./' + item.documentId]">
       <div card-header>{{item.name}}</div>
       <div card-content>
@@ -58,7 +58,7 @@
         </clr-dropdown>
       </div>
     </card>
-  </template>
+  </ng-template>
 </grid-view>
 <div class="details-view" [@slideAndFade]="!isRouteActive('/kubernetes/pods') && 'active'">
   <back-button [routerLink]="['./']"></back-button>

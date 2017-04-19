@@ -13,33 +13,24 @@
   [searchPlaceholder]="'Search for projects'"
   [searchSuggestionProperties]="['name', 'ip', 'status']">
   <div title>Projects</div>
-  <template let-item="item">
+  <div toolbar>
+    <button class="btn btn-link" [routerLink]="['./new']"><i class="fa fa-plus"></i>Add new</button>
+  </div>
+  <ng-template let-item="item">
     <card [routerLink]="['./' + item.documentId]">
       <div card-header>{{item.name}}</div>
       <div card-content>
         <div class="form-group">
-          <label>{{"creation" | i18n: { "ns": "kubernetes"} }}</label>
-          <div>{{item.pod?.metadata.creationTimestamp || "--"}}</div>
+          <label>{{"projects.users" | i18n}}</label>
+          <div>{{item.membersUserGroupLink}}</div>
         </div>
         <div class="form-group">
-          <label>{{"namespace" | i18n: { "ns": "kubernetes"} }}</label>
-          <div>{{item.pod?.metadata.namespace || "--"}}</div>
+          <label>{{"projects.administrators" | i18n}}</label>
+          <div>{{item.administratorsUserGroupLink}}</div>
         </div>
-        <div class="form-group">
-          <label>{{"containers" | i18n: { "ns": "kubernetes"} }}</label>
-          <div>{{item.pod?.spec.containers.length || "--"}}</div>
-        </div>
-        <div class="form-group">
-          <label>{{"pods.status" | i18n: { "ns": "kubernetes"} }}</label>
-          <div>{{item.pod?.status.phase || "--"}}</div>
-        </div>
-        <div class="form-group">
-          <label>{{"startTime" | i18n: { "ns": "kubernetes"} }}</label>
-          <div>{{item.pod?.status.startTime || "--"}}</div>
-        </div>
-        <div class="form-group">
-          <label>{{"pods.ip" | i18n: { "ns": "kubernetes"} }}</label>
-          <div>{{item.pod?.status.podIP || "--"}}</div>
+        <div class="form-group" *ngIf="item.isPublic">
+          <label>{{"projects.projectRegistry" | i18n}}</label>
+          <div>{{"projects.public" | i18n}}</div>
         </div>
       </div>
       <div card-footer>
@@ -49,19 +40,21 @@
               <clr-icon shape="caret down"></clr-icon>
           </button>
           <div class="dropdown-menu">
-              <label class="dropdown-header">Dropdown header</label>
               <a href="..." clrDropdownItem [routerLink]="['./' + item.documentId]">Details</a>
-              <a href="..." clrDropdownItem>Delete</a>
-              <a href="..." class="disabled" clrDropdownItem>Disabled Action</a>
+              <a href="..." clrDropdownItem>Make public</a>
+              <a href="..." clrDropdownItem>Add users and groups</a>
+              <a href="..." clrDropdownItem>Add clusters</a>
               <div class="dropdown-divider"></div>
+              <a href="..." clrDropdownItem>Delete</a>
           </div>
         </clr-dropdown>
       </div>
     </card>
-  </template>
+  </ng-template>
 </grid-view>
-<navigation-slide-transition [parentComponentName]="selfComponentName" (routeActivationChange)='onRouteActivationChange($event)'>
+<navigation-container [type]="navigationContainerType" (routeActivationChange)='onRouteActivationChange($event)'>
   <back-button [routerLink]="['./']">Projects</back-button>
   <router-outlet></router-outlet>
-</navigation-slide-transition>
+</navigation-container>
+
 

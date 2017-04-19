@@ -30,7 +30,7 @@ I18n.use(I18nXhrBackend)
     defaultNS: 'admiral',
     fallbackLng: 'en',
     backend: {
-      loadPath: '/messages/{{ns}}.{{lng}}.json'
+      loadPath: '/assets/i18n/{{ns}}.{{lng}}.json'
     }
   },() => {
     platformBrowserDynamic().bootstrapModule(AppModule);

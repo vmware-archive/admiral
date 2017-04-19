@@ -4,6 +4,8 @@ import { Links } from '../../utils/links';
 import { DocumentService } from '../../utils/document.service';
 import { Router } from '@angular/router';
 import { ViewExpandRequestService } from '../../services/view-expand-request.service';
+import { ProjectCreateComponent } from './project-create/project-create.component';
+import { ProjectDetailsComponent } from './project-details/project-details.component';
 
 @Component({
   selector: 'app-projects',
@@ -12,11 +14,20 @@ import { ViewExpandRequestService } from '../../services/view-expand-request.ser
 })
 export class ProjectsComponent {
   private serviceEndpoint = Links.PROJECTS;
-  private selfComponentName = ProjectsComponent.name;
+  private navigationContainerType = 'none';
 
   constructor(private viewExpandRequestor: ViewExpandRequestService) {}
 
-  private onRouteActivationChange(isActive) {
-    this.viewExpandRequestor.request(isActive);
+  private onRouteActivationChange(component) {
+    if (component === ProjectDetailsComponent) {
+      this.navigationContainerType = 'fullScreenSlide';
+      this.viewExpandRequestor.request(true);
+    } else if (component === ProjectCreateComponent) {
+      this.navigationContainerType = 'default';
+      this.viewExpandRequestor.request(false);
+    } else {
+      this.navigationContainerType = 'none';
+      this.viewExpandRequestor.request(false);
+    }
   }
 }

@@ -21,6 +21,10 @@ export function slideAndFade() {
       opacity: '1',
       'pointer-events': 'initial'
     })),
+    state('disabled', style({
+      opacity: '1',
+      'pointer-events': 'initial'
+    })),
     transition('* => active', [
       style({
         opacity: '1',

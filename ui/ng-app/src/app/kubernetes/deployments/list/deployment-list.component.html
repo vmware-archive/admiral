@@ -14,7 +14,7 @@
     [searchPlaceholder]="'Search for deployments'"
     [searchSuggestionProperties]="['name']">
     <div title>{{"deployments.plural" | i18n: { "ns": "kubernetes"} }}</div>
-    <template let-item="item">
+    <ng-template let-item="item">
       <card [routerLink]="['./' + item.documentId]">
         <div card-header>{{item.name}}</div>
         <div card-content>
@@ -55,7 +55,7 @@
           </clr-dropdown>
         </div>
       </card>
-    </template>
+    </ng-template>
   </grid-view>
   <div class="details-view" [@slideAndFade]="!isRouteActive('/kubernetes/deployments') && 'active'">
     <back-button [routerLink]="['./']"></back-button>
