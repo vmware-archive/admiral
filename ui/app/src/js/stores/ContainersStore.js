@@ -729,6 +729,19 @@ let ContainersStore = Reflux.createStore({
     }
   },
 
+  onOpenManageVolumes: function(volumeId) {
+    var operation = this.requestCancellableOperation(constants.RESOURCES.VOLUMES.OPERATION.MANAGE);
+
+    if (operation) {
+      operation.forPromise(services.manageVolume(volumeId))
+        .then((catalogResource) => {
+          if (catalogResource && catalogResource.id) {
+            redirectToCatalogItem(catalogResource.id);
+          }
+        });
+    }
+  },
+
   onOpenContainerDetails: function(containerId, clusterId, compositeComponentId) {
     this.cancelOperations(constants.CONTAINERS.OPERATION.DETAILS,
       constants.CONTAINERS.OPERATION.STATS, constants.CONTAINERS.OPERATION.LOGS);
