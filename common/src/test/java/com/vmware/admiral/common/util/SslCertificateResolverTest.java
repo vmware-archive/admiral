@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -13,33 +13,69 @@ package com.vmware.admiral.common.util;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.vmware.admiral.common.util.SslCertificateResolver;
+import com.vmware.xenon.common.ServiceHost;
 
 public class SslCertificateResolverTest {
-    private SslCertificateResolver resolver;
+
+    @Before
+    public void before() {
+        ServerX509TrustManager.init(new ServiceHost() { });
+    }
 
     @Ignore("Test is working but ignored because of external/vpn network requirements.")
     @Test
     public void testResolveCertificates() throws Exception {
-        resolver = SslCertificateResolver.connect(URI.create("https://mail.google.com"));
-        assertTrue(resolver.isCertsTrusted());
-        assertNotNull(resolver.getCertificate());
+        final CountDownLatch latch1 = new CountDownLatch(1);
+        SslCertificateResolver.execute(URI.create("https://mail.google.com"),
+                (resolver, ex) -> {
+                    try {
+                        assertNull(ex);
+                        assertTrue(resolver.isCertsTrusted());
+                        assertNotNull(resolver.getCertificate());
+                    } finally {
+                        latch1.countDown();
+                    }
+                });
+        assertTrue(latch1.await(60, TimeUnit.SECONDS));
 
-        resolver = SslCertificateResolver.connect(URI.create("https://email.vmware.com"));
-        assertTrue(resolver.isCertsTrusted());
-        assertNotNull(resolver.getCertificate());
+        final CountDownLatch latch2 = new CountDownLatch(1);
+        SslCertificateResolver.execute(URI.create("https://email.vmware.com"),
+                (resolver, ex) -> {
+                    try {
+                        assertNull(ex);
+                        assertTrue(resolver.isCertsTrusted());
+                        assertNotNull(resolver.getCertificate());
+                    } finally {
+                        latch2.countDown();
+                    }
+                });
+        assertTrue(latch2.await(60, TimeUnit.SECONDS));
 
         // self-signed cert should not be trusted
-        resolver = SslCertificateResolver.connect(URI.create("https://vcac-be.eng.vmware.com"));
-        assertFalse(resolver.isCertsTrusted());
-        assertNotNull(resolver.getCertificate());
+        final CountDownLatch latch3 = new CountDownLatch(1);
 
+        SslCertificateResolver.execute(URI.create("https://vcac-be.eng.vmware.com"),
+                (resolver, ex) -> {
+                    try {
+                        assertNull(ex);
+                        assertFalse(resolver.isCertsTrusted());
+                        assertNotNull(resolver.getCertificate());
+                    } finally {
+                        latch3.countDown();
+                    }
+                });
+        assertTrue(latch3.await(60, TimeUnit.SECONDS));
     }
+
 }
