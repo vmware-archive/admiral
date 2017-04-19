@@ -84,7 +84,9 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
             break;
         case CREATE:
             ctx.imageName = ctx.request.customProperties.get(DOCKER_IMAGE_NAME_PROP_NAME);
-            processAuthentication(ctx, () -> doCreateImage(ctx, computeState));
+            processAuthentication(ctx, () -> {
+                doCreateImage(ctx, computeState);
+            });
             op.complete();
             break;
         case TAG:
@@ -220,7 +222,7 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
     }
 
     private void doInspectImage(BaseRequestContext ctx, ComputeService.ComputeState computeState) {
-        logFine("Inspecting docker image on host: " + computeState.documentSelfLink);
+        logInfo("Inspecting docker image on host: " + computeState.documentSelfLink);
 
         Map<String, String> customProperties = ctx.request.customProperties;
 
@@ -241,7 +243,7 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
                                         ex);
                                 fail(ctx.request, o, ex);
                             } else {
-                                logFine("Completed inspect image request on remote machine: %s ",
+                                logInfo("Completed inspect image request on remote machine: %s ",
                                         computeState.documentSelfLink);
                                 JsonElement rawResult = o.getBody(JsonElement.class);
                                 ServiceTaskCallbackResponse callbackResponse = createInspectResponse(
