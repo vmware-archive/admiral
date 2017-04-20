@@ -22,7 +22,7 @@
                   [placeholder]="searchPlaceholder"
                   [queryOptions]="searchQueryOptions"
                   [occurrenceProperties]="searchOccurrenceProperties"
-                  (searchChange)="search"
+                  (searchChange)="onSearch($event)"
                   ></search>
       <span class="separator"></span>
       <button (click)="refresh()" class="btn btn-link" title="Refresh"><i class="fa fa-refresh"></i></button>
@@ -35,7 +35,8 @@
 </div>
 
 <div [ngClass]="{'items': true, 'list': !showCardView}" [ngStyle]="itemsHolderStyle" #itemsHolder>
-  <span *ngFor="let item of items; let i = index" class='card-item' [ngStyle]="getStyle(i)" #cardItem>
+  <span *ngFor="let item of items; let i = index" class='card-item' [ngStyle]="cardStyles[i]" #cardItem
+    (mouseenter)='cardEnter(i)' (mouseleave)='cardLeave(i)'>
     <ng-template [ngTemplateOutlet]="gridItemTmpl" [ngOutletContext]="{item: item}">
     </ng-template>
   </span>

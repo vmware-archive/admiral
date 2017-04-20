@@ -9,10 +9,13 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, Input, QueryList, OnInit, ContentChild, ContentChildren, ViewChild, ViewChildren, TemplateRef, HostListener, ViewEncapsulation } from '@angular/core';
+import { Component, Input, QueryList, OnInit, ContentChild,ContentChildren, ViewChild, ViewChildren, TemplateRef, HostListener, ViewEncapsulation } from '@angular/core';
 import { searchConstants } from 'admiral-ui-common';
 import * as I18n from 'i18next';
 import { DocumentService } from '../../utils/document.service';
+import { Utils } from '../../utils/utils';
+import { Router, ActivatedRoute, Route, RoutesRecognized, NavigationEnd, NavigationCancel } from '@angular/router';
+import { Subscription } from 'rxjs/Subscription';
 
 @Component({
   selector: 'grid-view',
@@ -27,7 +30,7 @@ export class GridViewComponent implements OnInit {
   @Input() serviceEndpoint: string;
   @Input() searchPlaceholder: string;
   @Input() searchSuggestionProperties: Array<string>;
-  @Input() searchQueryOptions: string;
+  @Input() searchQueryOptions: any;
 
   @ViewChildren('cardItem') cards;
   @ViewChild('itemsHolder') itemsHolder;
@@ -38,6 +41,9 @@ export class GridViewComponent implements OnInit {
   cardStyles = [];
   itemsHolderStyle: any = {};
   layoutTimeout;
+  cardOverTimeout;
+  querySub: Subscription;
+
   searchOccurrenceProperties = [{
     name: searchConstants.SEARCH_OCCURRENCE.ALL,
     label: I18n.t('occurrence.all')
@@ -46,18 +52,31 @@ export class GridViewComponent implements OnInit {
     label: I18n.t('occurrence.any')
   }];
 
-  constructor(protected service: DocumentService) { }
+  constructor(protected service: DocumentService, private router: Router, private route: ActivatedRoute) { }
 
   ngOnInit() {
     this.items = [];
     this.loading = true;
     this.service.list(this.serviceEndpoint).then(result => {
       this.items = result;
+      this.cardStyles = this.items.map(i => {
+        return {
+          opacity: '0',
+          overflow: 'hidden'
+         };
+      });
+
       this.loading = false;
     });
-  }
 
-  ngAfterContentInit() {
+    this.querySub = this.route.queryParams.subscribe(queryParams => {
+      this.searchQueryOptions = queryParams;
+    });
+
+    this.router.events.subscribe((event) => {
+      if (event instanceof NavigationEnd) {
+      }
+    });
   }
 
   ngAfterViewInit() {
@@ -65,6 +84,10 @@ export class GridViewComponent implements OnInit {
       this.throttleLayout();
     });
     this.throttleLayout();
+  }
+
+  ngOnDestroy() {
+    this.querySub.unsubscribe();
   }
 
   @HostListener('window:resize')
@@ -143,14 +166,16 @@ export class GridViewComponent implements OnInit {
         this.cardStyles[i] = {
           transform:  'translate(' + left + 'px,' + top + 'px) scale(0)',
           width: itemWidth + 'px',
-          transition: 'none'
+          transition: 'none',
+          overflow: 'hidden'
         };
         this.throttleLayout();
       } else {
         this.cardStyles[i] = {
           transform:  'translate(' + left + 'px,' + top + 'px) scale(1)',
           width: itemWidth + 'px',
-          transition: null
+          transition: null,
+          overflow: 'hidden'
         };
       }
 
@@ -176,21 +201,27 @@ export class GridViewComponent implements OnInit {
     };
   }
 
-  getStyle(index): any {
-    if (this.cardStyles[index]) {
-      return this.cardStyles[index];
-    } else {
-      return {
-        opacity: '0'
-      };
-    }
-  }
-
   reflow(el) {
     el.offsetHeight;
   }
 
   onSearch(queryOptions) {
+    this.router.navigate(['.'], {
+      relativeTo: this.route,
+      queryParams: queryOptions
+    });
+  }
 
+  cardEnter(i) {
+    clearTimeout(this.cardOverTimeout);
+    this.cardStyles[i].overflow = 'hidden';
+    this.cardOverTimeout = setTimeout(() => {
+      this.cardStyles[i].overflow = 'visible';
+    }, 300);
+  }
+
+  cardLeave(i) {
+    clearTimeout(this.cardOverTimeout);
+    this.cardStyles[i].overflow = 'hidden';
   }
 }
