@@ -529,6 +529,7 @@
         "securityGroupIsolationTypeLabel": "Security Group",
         "cidrLabel": "CIDR",
         "cidrLabelHint": "0.0.0.0/0",
+        "cidrPrefixLabel": "Isolation Subnets Prefix Length",
         "resourceGroupsLabel": "Resource groups",
         "supportPublicIpAddressLabel": "Support Public IP",
         "defaultForZoneLabel": "Default for Zone"
@@ -639,6 +640,9 @@
       "edit": {
         "title": "Edit Compute",
         "nameLabel": "Name"
+      },
+      "actions": {
+        "details": "Details"
       }
     },
     "network": {
@@ -1148,6 +1152,9 @@
         "runState": "State:",
         "outputs": "Outputs"
       }
+    },
+    "image": {
+      "entity": "image"
     },
     "help": {
         "link": "Help",

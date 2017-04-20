@@ -191,7 +191,7 @@ public class BaseClosureIntegrationTest extends BaseProvisioningOnCoreOsIT {
         return UriUtils.buildUriPath(DockerImageFactoryService.FACTORY_LINK, imageBuildRequestId);
     }
 
-    private boolean isTimeoutElapsed(long startTime, int timeout) {
+    protected boolean isTimeoutElapsed(long startTime, int timeout) {
         return System.currentTimeMillis() - startTime > TimeUnit.SECONDS.toMillis(timeout);
     }
 

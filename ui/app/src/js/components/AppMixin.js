@@ -9,11 +9,11 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
+import DocsHelpMixin from 'components/common/DocsHelpMixin';
 import { AppActions } from 'actions/Actions';
 import constants from 'core/constants';
 import utils from 'core/utils';
 import services from 'core/services';
-import docsHelp from 'components/common/DocsHelp';
 
 var AppMixin = {
   props: {
@@ -22,6 +22,7 @@ var AppMixin = {
       type: Object
     }
   },
+  mixins: [DocsHelpMixin],
   data: function() {
     return {
       constants: constants,
@@ -82,12 +83,6 @@ var AppMixin = {
       }, (e) => {
         console.log(e);
       });
-    },
-    openHelp: function($event) {
-      $event.stopPropagation();
-      $event.preventDefault();
-
-      docsHelp.open();
     },
     buildNumberSupported: function() {
       return !(utils.isApplicationEmbedded() || utils.isApplicationSingleView());

@@ -115,7 +115,7 @@ public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT
 
         logger.log(Level.INFO, "starting host one and asserting cluster");
         logger.log(Level.INFO, "All hosts are " + allHosts);
-        hostOne = startHost(hostOne, null, allHosts, 3);
+        hostOne = startHost(hostOne, hostOne.getStorageSandbox(), allHosts, 3);
         String tokenOne = login(hostOne, USERNAME, PASSWORD, true);
         assertClusterWithToken(tokenOne, hostOne);
 
@@ -174,9 +174,9 @@ public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT
          * ==== Stop all the nodes ===============================================================
          */
 
-        stopHost(hostOne, false);
-        stopHost(hostTwo, false);
-        stopHost(hostThree, false);
+        stopHost(hostOne, false, false);
+        stopHost(hostTwo, false, false);
+        stopHost(hostThree, false, false);
 
         /*
          * ==== Start all the nodes ==============================================================

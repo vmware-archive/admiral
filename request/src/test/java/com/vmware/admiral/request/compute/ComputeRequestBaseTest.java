@@ -11,17 +11,32 @@
 
 package com.vmware.admiral.request.compute;
 
+import static com.vmware.admiral.common.test.CommonTestStateFactory.ENDPOINT_ID;
+
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.Before;
 
 import com.vmware.admiral.compute.ComputeConstants;
+import com.vmware.admiral.compute.profile.ComputeProfileService;
+import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
+import com.vmware.admiral.compute.profile.NetworkProfileService;
+import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile;
+import com.vmware.admiral.compute.profile.ProfileService;
+import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
+import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
+import com.vmware.admiral.compute.profile.StorageProfileService;
+import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfile;
 import com.vmware.admiral.request.RequestBaseTest;
+import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.EndpointService;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.NetworkInterfaceDescription;
 import com.vmware.photon.controller.model.resources.NetworkService;
@@ -93,5 +108,42 @@ public class ComputeRequestBaseTest extends RequestBaseTest {
         NetworkInterfaceDescription returnState = doPost(nid,
                 NetworkInterfaceDescriptionService.FACTORY_LINK);
         return returnState;
+    }
+
+    protected ProfileStateExpanded createProfile(ComputeProfile computeProfile,
+            StorageProfile storageProfile, NetworkProfile networkProfile,
+            List<String> tenantLinks, Set<String> tagLinks) throws Throwable {
+        if (storageProfile == null) {
+            storageProfile = new StorageProfile();
+        }
+        storageProfile.tenantLinks = tenantLinks;
+        storageProfile = doPost(storageProfile, StorageProfileService.FACTORY_LINK);
+
+        if (computeProfile == null) {
+            computeProfile = new ComputeProfile();
+        }
+        computeProfile.tenantLinks = tenantLinks;
+        computeProfile = doPost(computeProfile, ComputeProfileService.FACTORY_LINK);
+
+        if (networkProfile == null) {
+            networkProfile = new NetworkProfile();
+        }
+        networkProfile.tenantLinks = tenantLinks;
+        networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
+
+        ProfileState profileState =
+                TestRequestStateFactory.createProfile("profile", networkProfile.documentSelfLink,
+                        storageProfile.documentSelfLink, computeProfile.documentSelfLink);
+        profileState.tenantLinks = tenantLinks;
+        profileState.documentSelfLink =
+                UriUtils.buildUriPath(ProfileService.FACTORY_LINK, UUID.randomUUID().toString());
+        profileState.tagLinks = tagLinks;
+        profileState.endpointType = null;
+        profileState.endpointLink =
+                UriUtils.buildUriPath(EndpointService.FACTORY_LINK, ENDPOINT_ID);
+        profileState = doPost(profileState, ProfileService.FACTORY_LINK);
+        return getDocument(ProfileStateExpanded.class,
+                ProfileStateExpanded.buildUri(UriUtils.buildUri(host,
+                        profileState.documentSelfLink)));
     }
 }

@@ -9,15 +9,29 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.auth.lightwave.pc;
+var DocsHelpMixin = {
 
-/**
- * Exception thrown by the AuthToken Tool.
- */
-public class AuthException extends Exception {
-    private static final long serialVersionUID = 1L;
+  data: function() {
+    return {
+      showHelp: false
+    };
+  },
 
-    public AuthException(String message, Throwable cause) {
-        super(message, cause);
+  methods: {
+    openHelp: function($event) {
+      $event.stopPropagation();
+      $event.preventDefault();
+
+      this.showHelp = true;
     }
-}
+  },
+
+  events: {
+    'close-help': function() {
+      this.showHelp = false;
+    }
+  }
+};
+
+
+export default DocsHelpMixin;

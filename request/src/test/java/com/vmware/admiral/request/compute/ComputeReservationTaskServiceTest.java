@@ -126,10 +126,6 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         assertEquals(groupPlacementState.documentSelfLink, task.groupResourcePlacementLink);
 
         assertEquals(groupPlacementState.allocatedInstancesCount, task.resourceCount);
-        assertEquals(1, groupPlacementState.resourceQuotaPerResourceDesc.size());
-        Long countPerDesc = groupPlacementState.resourceQuotaPerResourceDesc
-                .get(task.resourceDescriptionLink);
-        assertEquals(task.resourceCount, countPerDesc.longValue());
 
         // check custom properties overridden:
         assertEquals(2, task.customProperties.size());
@@ -237,10 +233,6 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         assertEquals(globalGroupState.documentSelfLink, task.groupResourcePlacementLink);
 
         assertEquals(globalGroupState.allocatedInstancesCount, task.resourceCount);
-        assertEquals(1, globalGroupState.resourceQuotaPerResourceDesc.size());
-        Long countPerDesc = globalGroupState.resourceQuotaPerResourceDesc
-                .get(task.resourceDescriptionLink);
-        assertEquals(task.resourceCount, countPerDesc.longValue());
     }
 
     @Test
@@ -284,11 +276,6 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
                 globalGroupState.documentSelfLink);
 
         assertEquals(globalGroupState.allocatedInstancesCount, task.resourceCount);
-        assertEquals(globalGroupState.documentSelfLink, task.groupResourcePlacementLink);
-        assertEquals(1, globalGroupState.resourceQuotaPerResourceDesc.size());
-        Long countPerDesc = globalGroupState.resourceQuotaPerResourceDesc
-                .get(task.resourceDescriptionLink);
-        assertEquals(task.resourceCount, countPerDesc.longValue());
     }
 
     @Test

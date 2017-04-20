@@ -31,6 +31,8 @@ import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
 import com.vmware.admiral.service.common.AbstractInitialBootService;
+import com.vmware.photon.controller.model.adapterapi.EndpointConfigRequest;
+import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.EndpointService;
 import com.vmware.photon.controller.model.tasks.EndpointAllocationTaskService;
 import com.vmware.photon.controller.model.tasks.TaskOption;
@@ -80,11 +82,11 @@ public abstract class ComputeBaseTest extends BaseTestCase {
     protected void startInitialBootService(
             Class<? extends AbstractInitialBootService> serviceClass,
             String bootServiceSelfLink) throws Throwable {
-        //simulate a restart of the service host
+        // simulate a restart of the service host
         host.startServiceAndWait(serviceClass, bootServiceSelfLink);
 
         TestContext ctx = testCreate(1);
-        //start initialization of system documents
+        // start initialization of system documents
         host.sendRequest(Operation.createPost(
                 UriUtils.buildUri(host, serviceClass))
                 .setReferer(host.getUri())
@@ -129,13 +131,18 @@ public abstract class ComputeBaseTest extends BaseTestCase {
     }
 
     protected EndpointService.EndpointState createEndpoint(String name) {
+
         EndpointService.EndpointState endpoint = new EndpointService.EndpointState();
-        endpoint.endpointType = "aws";
+
+        endpoint.endpointType = EndpointType.aws.name();
         endpoint.name = name;
         endpoint.endpointProperties = new HashMap<>();
-        endpoint.endpointProperties.put("privateKey", "aws.access.key");
-        endpoint.endpointProperties.put("privateKeyId", "aws.secret.key");
-        endpoint.endpointProperties.put("regionId", REGION_ID);
+        endpoint.endpointProperties.put(EndpointConfigRequest.PRIVATE_KEY_KEY, "aws.access.key");
+        endpoint.endpointProperties.put(EndpointConfigRequest.PRIVATE_KEYID_KEY, "aws.secret.key");
+        endpoint.endpointProperties.put(EndpointConfigRequest.REGION_KEY, REGION_ID);
+        endpoint.endpointProperties.put(
+                EndpointConfigRequest.SUPPORT_PUBLIC_IMAGES, Boolean.TRUE.toString());
+
         return endpoint;
     }
 }

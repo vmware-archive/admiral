@@ -17,8 +17,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
-import org.junit.Test;
-
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
@@ -42,6 +40,12 @@ import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
+    static final String VSPHERE_COMPUTE_PROFILE = "/config/compute-profiles/vsphere";
+    static final String VSPHERE_DISK_URI = System.getProperty("test.vc.disk.uri",
+            "vc://datastore/sof-20659-local/coreos-991.1.0/coreos-991.1.0.vmdk");
+    private static final long HDD_DISK_SIZE = 61 * 1024;
+    final String DISK_URI_IMAGE_ID = "coreos-disk";
+
     @Override
     protected EndpointType getEndpointType() {
         return EndpointType.vsphere;
@@ -56,29 +60,13 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
         waitForComputePowerState(PowerState.OFF, resourceLinks);
     }
 
-    @Test
-    public void testProvisionWithBootDisk() throws Throwable {
-        String resourceDescriptionLink = getResourceDescriptionLink(true);
-
-        RequestBrokerState provisionRequest = allocateAndProvision(resourceDescriptionLink);
-
-        try {
-            doWithResources(provisionRequest.resourceLinks);
-        } finally {
-            // create a host removal task - RequestBroker
-            RequestBrokerState deleteRequest = new RequestBrokerState();
-            deleteRequest.resourceType = getResourceType(resourceDescriptionLink);
-            deleteRequest.resourceLinks = provisionRequest.resourceLinks;
-            deleteRequest.operation = RequestBrokerState.REMOVE_RESOURCE_OPERATION;
-            RequestBrokerState cleanupRequest = postDocument(RequestBrokerFactoryService.SELF_LINK,
-                    deleteRequest);
-
-            waitForTaskToComplete(cleanupRequest.documentSelfLink);
-        }
+    @Override
+    protected long getRootDiskSize() {
+        return HDD_DISK_SIZE;
     }
 
     private void executeDay2(Set<String> resourceLinks, ComputeOperationType computeOperation)
-            throws Throwable, Exception {
+            throws Throwable {
         RequestBrokerState day2StartRequest = new RequestBrokerState();
         day2StartRequest.resourceType = ResourceType.COMPUTE_TYPE.getName();
         day2StartRequest.resourceLinks = resourceLinks;
@@ -86,7 +74,7 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
         day2StartRequest.tenantLinks = endpoint.tenantLinks;
         day2StartRequest = executeRequest(day2StartRequest);
 
-        day2StartRequest = getDocument(day2StartRequest.documentSelfLink, RequestBrokerState.class);
+        getDocument(day2StartRequest.documentSelfLink, RequestBrokerState.class);
     }
 
     protected RequestBrokerState executeRequest(RequestBrokerState requestBrokerState)

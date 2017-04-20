@@ -156,7 +156,7 @@ func GetOutputString(e EndpointType) string {
 		buffer.WriteString(getDestinationsOutputString())
 	}
 
-	client.SetCustomTimeout(config.CLIENT_TIMEOUT)
+	client.SetCustomTimeout(config.CLIENT_TIMEOUT_SECONDS)
 	return strings.TrimSpace(buffer.String())
 }
 

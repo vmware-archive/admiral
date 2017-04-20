@@ -11,9 +11,10 @@
 
 package com.vmware.admiral.compute.endpoint;
 
+import static java.util.concurrent.TimeUnit.HOURS;
+
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
@@ -30,7 +31,7 @@ public class EndpointHealthCheckPeriodicService extends StatelessService {
 
     public static final long MAINTENANCE_INTERVAL_MICROS = Long.getLong(
             "dcp.management.endpoint.health.check.compute.periodic.maintenance.period.micros",
-            TimeUnit.SECONDS.toMicros(300));
+            HOURS.toMicros(1));
 
     public EndpointHealthCheckPeriodicService() {
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);

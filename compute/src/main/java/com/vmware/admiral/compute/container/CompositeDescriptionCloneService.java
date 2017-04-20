@@ -12,6 +12,7 @@
 package com.vmware.admiral.compute.container;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
+import static com.vmware.admiral.common.util.ServiceUtils.addServiceRequestRoute;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -320,5 +321,14 @@ public class CompositeDescriptionCloneService extends StatelessService {
         cd.bindings = cdExpanded.bindings;
 
         return cd;
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument d = super.getDocumentTemplate();
+        addServiceRequestRoute(d, Action.POST,
+                "Post a composite description to clone it with a new copy of the "
+                        + "container descriptions inside it.", CompositeDescription.class);
+        return d;
     }
 }

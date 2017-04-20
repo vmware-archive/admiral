@@ -70,7 +70,7 @@ public class ComputeDescriptionImageEnhancer extends ComputeDescriptionEnhancer 
                     }
                     if (imageId == null) {
                         return DeferredResult.failed(new IllegalStateException(String.format(
-                                "No matching image type defined in profile: %s, for requested instance type: %s",
+                                "No matching image type defined in profile: %s, for requested image type: %s",
                                 profile.documentSelfLink, absImageId)));
                     }
                     return apply(cd, imageId);

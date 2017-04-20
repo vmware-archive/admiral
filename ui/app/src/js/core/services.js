@@ -929,6 +929,46 @@ services.updateSubnetwork = function(subnetwork) {
   return patch(subnetwork.documentSelfLink, subnetwork);
 };
 
+services.searchImageResources = function(endpointLink, query, limit) {
+  var qOps = {
+    any: query.toLowerCase(),
+    endpoint: endpointLink
+  };
+
+  let filter = buildSearchQuery(qOps);
+  let url = buildPaginationUrl(links.IMAGE_RESOURCES, filter, true,
+                               'documentUpdateTimeMicros desc', limit);
+  return get(url).then(function(data) {
+    var documentLinks = data.documentLinks || [];
+
+    var result = {
+      totalCount: data.totalCount
+    };
+
+    result.items = documentLinks.map((link) => {
+      return data.documents[link];
+    });
+
+    return result;
+  });
+};
+
+services.loadImageResources = function(ids) {
+  var params = {};
+  if (ids && ids.length) {
+    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+      id: ids.map((id) => {
+        return {
+          val: id,
+          op: 'eq'
+        };
+      }),
+      [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
+    });
+  }
+  return list(links.IMAGE_RESOURCES, true, params);
+};
+
 services.loadMachines = function(queryOptions) {
   let filter = buildHostsQuery(queryOptions, false, false);
   let url = buildPaginationUrl(links.COMPUTE_RESOURCES_SEARCH, filter, true,
@@ -2192,11 +2232,19 @@ services.collectInventory = function(endpoint) {
 };
 
 services.collectImages = function(endpoint) {
-  let request = {
+  let promises = [];
+  promises.push(ajax('POST', links.IMAGE_ENUMERATION, JSON.stringify({
     endpointLink: endpoint.documentSelfLink,
     enumerationAction: 'START'
-  };
-  return ajax('POST', links.IMAGE_ENUMERATION, JSON.stringify(request));
+  })));
+  if (endpoint.endpointProperties && endpoint.endpointProperties.supportPublicImages) {
+    promises.push(ajax('POST', links.IMAGE_ENUMERATION, JSON.stringify({
+      endpointType: endpoint.endpointType,
+      enumerationAction: 'START',
+      regionId: endpoint.endpointProperties && endpoint.endpointProperties.regionId
+    })));
+  }
+  return Promise.all(promises);
 };
 
 var toArrayIfDefined = function(obj) {

@@ -90,10 +90,14 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
     @AfterClass
     public static void afterClass()
             throws CertificateException, NoSuchAlgorithmException, KeyStoreException,
-            KeyManagementException,
-            IOException {
-        SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod.DELETE, dockerBuildImageLink);
-        SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod.DELETE, dockerBuildBaseImageLink);
+            KeyManagementException, IOException {
+        if (dockerBuildImageLink != null) {
+            SimpleHttpsClient.execute(SimpleHttpsClient.HttpMethod.DELETE, dockerBuildImageLink);
+        }
+        if (dockerBuildBaseImageLink != null) {
+            SimpleHttpsClient
+                    .execute(SimpleHttpsClient.HttpMethod.DELETE, dockerBuildBaseImageLink);
+        }
         serviceClient.stop();
     }
 

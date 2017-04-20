@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -87,7 +86,8 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
     public void testGroupPlacementResourcePoolValidation() throws Throwable {
         Set<String> linksToDelete = new HashSet<>();
 
-        ResourcePoolState resourcePool1 = createResourcePool("resourcePool1", MIN_MEMORY * 2 + 1, 1000L);
+        ResourcePoolState resourcePool1 =
+                createResourcePool("resourcePool1", MIN_MEMORY * 2 + 1, 1000L);
         linksToDelete.add(resourcePool1.documentSelfLink);
 
         // Try to create a placement with more resources than the resource pool
@@ -142,7 +142,8 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
                 FactoryService.create(GroupResourcePlacementService.class),
                 GroupResourcePlacementState.class,
                 (prefix, index) -> {
-                    GroupResourcePlacementState reservationState = new GroupResourcePlacementState();
+                    GroupResourcePlacementState reservationState =
+                            new GroupResourcePlacementState();
                     reservationState.name = prefix + "reservation-test";
                     reservationState.tenantLinks = Collections.singletonList("testGroup");
                     reservationState.resourcePoolLink = resourcePool.documentSelfLink;
@@ -152,7 +153,8 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
                     return reservationState;
                 },
                 (prefix, serviceDocument) -> {
-                    GroupResourcePlacementState reservationState = (GroupResourcePlacementState) serviceDocument;
+                    GroupResourcePlacementState reservationState =
+                            (GroupResourcePlacementState) serviceDocument;
                     assertTrue(reservationState.name.startsWith(prefix + "reservation-test"));
                     assertEquals(Collections.singletonList("testGroup"),
                             reservationState.tenantLinks);
@@ -172,7 +174,8 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
                     List<String> tenantAndGroup = new LinkedList<String>();
                     tenantAndGroup.add(TENANT);
                     tenantAndGroup.add(BUSINESS_GROUP);
-                    GroupResourcePlacementState reservationState = new GroupResourcePlacementState();
+                    GroupResourcePlacementState reservationState =
+                            new GroupResourcePlacementState();
                     reservationState.name = prefix + "reservation-test";
                     reservationState.tenantLinks = tenantAndGroup;
                     reservationState.resourcePoolLink = resourcePool.documentSelfLink;
@@ -182,7 +185,8 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
                     return reservationState;
                 },
                 (prefix, serviceDocument) -> {
-                    GroupResourcePlacementState reservationState = (GroupResourcePlacementState) serviceDocument;
+                    GroupResourcePlacementState reservationState =
+                            (GroupResourcePlacementState) serviceDocument;
                     assertEquals(TENANT, reservationState.tenantLinks.get(0));
                     assertEquals(BUSINESS_GROUP, reservationState.tenantLinks.get(1));
                 });
@@ -361,8 +365,6 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
                 expectFailure);
         assertEquals(2, placementState.availableInstancesCount);
         assertEquals(count, placementState.allocatedInstancesCount);
-        assertEquals(1, placementState.resourceQuotaPerResourceDesc.size());
-        assertEquals(count, placementState.resourceQuotaPerResourceDesc.get(descLink).longValue());
 
         // release resource placements:
         count = -5;
@@ -370,8 +372,6 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
                 expectFailure);
         assertEquals(7, placementState.availableInstancesCount);
         assertEquals(3, placementState.allocatedInstancesCount);
-        assertEquals(1, placementState.resourceQuotaPerResourceDesc.size());
-        assertEquals(3, placementState.resourceQuotaPerResourceDesc.get(descLink).longValue());
 
         // try to release resource placements more than max (success with log warning):
         count = (int) -(placementState.maxNumberInstances - placementState.availableInstancesCount
@@ -386,22 +386,8 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
                 expectFailure);
         doDelete(UriUtils.buildUri(host, descLink), false);
 
-        // in total, the requested placements to be released is ok, but not per desc:
-        count = -(count + 1);
-        assertTrue(placementState.maxNumberInstances
-                - placementState.availableInstancesCount > -count);
-        expectFailure = true;
-        placementState = makeResourcePlacementReservationRequest(count, descLink, placementState,
-                expectFailure);
-
-        // releasing placements within max but no previous reservation for desc:
-        descLink = createAndStoreContainerDescription("non-reserved-desc").documentSelfLink;
-        count = -1;
-        placementState = makeResourcePlacementReservationRequest(count, descLink, placementState,
-                expectFailure);
-
         // release what's left of the provisioned resources
-        releasePlacement(placementState);
+        releasePlacement(placementState, descLink, count);
 
         doDelete(UriUtils.buildUri(host, descLink), false);
     }
@@ -417,8 +403,6 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
         placementState = makeResourcePlacementReservationRequest(count, descLink, placementState,
                 expectFailure);
         assertEquals(CONTAINER_MEMORY / 2, placementState.availableMemory);
-        assertEquals(1, placementState.resourceQuotaPerResourceDesc.size());
-        assertEquals(count, placementState.resourceQuotaPerResourceDesc.get(descLink).longValue());
 
         // release resource placements:
         count = -5;
@@ -426,9 +410,6 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
                 expectFailure);
         assertEquals(7, placementState.availableInstancesCount);
         assertEquals(3, placementState.allocatedInstancesCount);
-        assertEquals(1, placementState.resourceQuotaPerResourceDesc.size());
-        assertEquals(3 * CONTAINER_MEMORY,
-                placementState.memoryQuotaPerResourceDesc.get(descLink).longValue());
 
         // try to release resource placements more than max (success with log warning):
         count = (int) -(placementState.maxNumberInstances - placementState.availableInstancesCount
@@ -444,8 +425,9 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
                 expectFailure);
 
         // create groupResourcePlacement without memory limit
-        GroupResourcePlacementState noLimitsGroupResourcePlacement = createAndStoreGroupResourcePlacement(
-                "test", 0L, 0L, 0, 0, resourcePool.documentSelfLink, false);
+        GroupResourcePlacementState noLimitsGroupResourcePlacement =
+                createAndStoreGroupResourcePlacement(
+                        "test", 0L, 0L, 0, 0, resourcePool.documentSelfLink, false);
         expectFailure = false;
         noLimitsGroupResourcePlacement = makeResourcePlacementReservationRequest(1, descLink,
                 noLimitsGroupResourcePlacement,
@@ -455,8 +437,9 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
         assertEquals(9, noLimitsGroupResourcePlacement.availableInstancesCount);
         assertEquals(1, noLimitsGroupResourcePlacement.allocatedInstancesCount);
 
-        ContainerDescriptionService.ContainerDescription noLimitsContainerDescription = createAndStoreContainerDescription(
-                "no-limits", 0L);
+        ContainerDescriptionService.ContainerDescription noLimitsContainerDescription =
+                createAndStoreContainerDescription(
+                        "no-limits", 0L);
         noLimitsGroupResourcePlacement = makeResourcePlacementReservationRequest(1,
                 noLimitsContainerDescription.documentSelfLink, noLimitsGroupResourcePlacement,
                 expectFailure);
@@ -466,20 +449,21 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
         assertEquals(2, noLimitsGroupResourcePlacement.allocatedInstancesCount);
 
         // release what's left of the requested resources
-        releasePlacement(placementState);
-        releasePlacement(noLimitsGroupResourcePlacement);
+        releasePlacement(placementState, descLink, count);
+        releasePlacement(noLimitsGroupResourcePlacement, descLink, 1);
+        releasePlacement(noLimitsGroupResourcePlacement,
+                noLimitsContainerDescription.documentSelfLink, 1);
 
         doDelete(UriUtils.buildUri(host, descLink), false);
         doDelete(UriUtils.buildUri(host, noLimitsContainerDescription.documentSelfLink), false);
     }
 
-    private void releasePlacement(GroupResourcePlacementState placementState)
+    private void releasePlacement(
+            com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState placementState,
+            String descLink, int count)
             throws Throwable {
 
-        for (Entry<String, Long> entry : placementState.resourceQuotaPerResourceDesc.entrySet()) {
-            makeResourcePlacementReservationRequest(-entry.getValue().intValue(), entry.getKey(),
-                    placementState, false);
-        }
+        makeResourcePlacementReservationRequest(-count, descLink, placementState, false);
     }
 
     @Test
@@ -505,7 +489,7 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
                         : host.getCompletion()));
         host.testWait("Asd", (int) TimeUnit.MINUTES.toSeconds(1));
 
-        releasePlacement(placementState);
+        releasePlacement(placementState, descLink, count);
     }
 
     @Test
@@ -619,7 +603,7 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
             // expect resourcePoolLink validation error
         }
 
-        releasePlacement(placementState);
+        releasePlacement(placementState, containerDescription.documentSelfLink, count);
     }
 
     @Test
@@ -697,8 +681,9 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
         assertEquals(0, savedPlacement.availableInstancesCount);
         assertEquals(0, savedPlacement.allocatedInstancesCount);
 
-        GroupResourcePlacementState placementStateAfterProvisioning = makeResourcePlacementReservationRequest(
-                savedPlacement, 1);
+        GroupResourcePlacementState placementStateAfterProvisioning =
+                makeResourcePlacementReservationRequest(
+                        savedPlacement, 1);
         assertEquals(0, placementStateAfterProvisioning.maxNumberInstances);
         assertEquals(0, placementStateAfterProvisioning.availableInstancesCount);
         assertEquals(1, placementStateAfterProvisioning.allocatedInstancesCount);

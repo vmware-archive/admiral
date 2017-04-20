@@ -9,17 +9,17 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div class="docs-help modal-dialog modal-lg">
-  <div class="modal-content">
-    <div class="modal-body">
-      <img src="image-assets/ensemble-reg.png" style="width: 100%">
-      <img v-bind:src="qrUrl" style="position: absolute; left: 39%; top: 70px; width: 20%;">
-      <div class="description">{{i18n('app.help.description')}}</div>
-      <div class="description">{{{i18n('app.help.descriptionOpen')}}}</div>
-    </div>
-    <div class="modal-footer">
-      <a href="#" class="btn closeHelp">{{i18n('close')}}</a>
-      <a v-bind:href="helpUrl" target="_blank" class="btn btn-primary">{{i18n('openInNewTab')}}</a>
-    </div>
+<modal :show="true" :closable="false" :has-header="false" size="xl">
+  <div slot="body">
+    <img src="image-assets/ensemble-reg.png" style="width: 100%">
+    <img :src="qrUrl" style="position: absolute; left: 39%; top: 70px; width: 20%;">
+    <div class="description">{{i18n('app.help.description')}}</div>
+    <div class="description">{{{i18n('app.help.descriptionOpen')}}}</div>
   </div>
-</div>
+  <div slot="footer">
+    <button class="btn btn-outline" type="button" data-cmd="help-modal-close"
+            @click="closeHelp($event)">{{i18n("close")}}</button>
+    <button class="btn btn-primary" type="button" data-cmd="help-modal-open-new-tab"
+            @click="openHelpInNewTab($event)">{{i18n("openInNewTab")}}</button>
+  </div>
+</modal>

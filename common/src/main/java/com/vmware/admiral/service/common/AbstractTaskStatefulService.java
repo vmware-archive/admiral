@@ -76,6 +76,8 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         public static final String FIELD_NAME_EVENT_LOG_LINK = "eventLogLink";
         public static final String FIELD_NAME_TASK_INFO = "taskInfo";
         public static final String FIELD_NAME_PROGRESS = "progress";
+        public static final String FIELD_NAME_SUB_STAGE = "subStage";
+        public static final String FIELD_NAME_TASK_INFO_STAGE = "taskInfo.stage";
 
         /**
          * The name of the TaskService
@@ -287,7 +289,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             ExtensibilitySubscriptionManager manager = getExtensibilityManager();
             if (manager != null) {
                 validateServiceNotificationPayload(this);
-                manager.handleStagePatch(this.notificationPayload(), this.replayPayload(), state,
+                manager.handleStagePatch(this.notificationPayload(), this.replyPayload(), state,
                         this::handleStagePatch);
             } else {
                 // ServiceHost is not instance of ManagementHost
@@ -829,7 +831,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     /**
      * Declares service fields which will be merged once response from subscriber is received.
      */
-    protected ServiceTaskCallbackResponse replayPayload() {
+    protected ServiceTaskCallbackResponse replyPayload() {
         return notificationPayload();
     }
 

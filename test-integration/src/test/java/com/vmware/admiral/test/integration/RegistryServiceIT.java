@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -13,6 +13,9 @@ package com.vmware.admiral.test.integration;
 
 import static com.vmware.admiral.test.integration.TestPropertiesUtil.getSystemOrTestProp;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,6 +27,7 @@ import com.vmware.xenon.common.ServiceHost;
 
 public class RegistryServiceIT {
 
+    private static final int TEST_TIMEOUT_SECONDS = 30;
     private static final String TEST_REGISTRY_ADDRESS = getSystemOrTestProp("test.registry");
     private static final String TEST_REGISTRY_ADDRESS_INVALID = "https://127.0.0.1:7890";
     private static final String TEST_REGISTRY_ADDRESS_HTTP = "http://127.0.0.1:7809";
@@ -37,10 +41,14 @@ public class RegistryServiceIT {
 
     @Test
     public void fetchRegistryCertificateValid() throws Exception {
-
         registryState.address = TEST_REGISTRY_ADDRESS;
+        final CountDownLatch latch = new CountDownLatch(1);
         final StringBuilder certificate = new StringBuilder();
-        RegistryService.fetchRegistryCertificate(registryState, certificate::append);
+        RegistryService.fetchRegistryCertificate(registryState, (cert) -> {
+            certificate.append(cert);
+            latch.countDown();
+        });
+        latch.await(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         Assert.assertNotEquals(0, certificate.length());
     }
 
@@ -51,11 +59,15 @@ public class RegistryServiceIT {
         testInvalid(TEST_REGISTRY_ADDRESS_INVALID);
     }
 
-    private void testInvalid(String address) {
+    private void testInvalid(String address) throws InterruptedException {
         registryState.address = address;
+        final CountDownLatch latch = new CountDownLatch(1);
 
-        RegistryService.fetchRegistryCertificate(registryState,
-                (cert) -> Assert.fail("should not return certificate"));
+        RegistryService.fetchRegistryCertificate(registryState, (cert) -> {
+            Assert.fail("should not return certificate");
+            latch.countDown();
+        });
+        latch.await(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
 }

@@ -20,7 +20,9 @@ package com.vmware.admiral.adapter.docker.service;
  * and license terms. Your use of these subcomponents is subject to the terms and
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -135,50 +137,37 @@ public class SystemImageRetrievalManagerTest extends BaseTestCase {
         byte[] content = IOUtils.toByteArray(Thread.currentThread().getContextClassLoader()
                 .getResourceAsStream(TEST_IMAGE));
         // Basically, rename it so it must be loaded from user resources for sure
+        String tmpFileName = TEST_IMAGE_RES + System.currentTimeMillis();
         File tmpFile = new File(
-                UriUtils.buildUriPath(imageDir.getAbsolutePath(), TEST_IMAGE_RES));
+                UriUtils.buildUriPath(imageDir.getAbsolutePath(), tmpFileName));
         tmpFile.createNewFile();
         try (OutputStream os = new FileOutputStream(tmpFile)) {
             os.write(content);
         }
 
-        AdapterRequest req = new AdapterRequest();
-        req.resourceReference = host.getUri();
 
-        List<byte[]> retrievedImages = new ArrayList<>();
-
-        int numberOfRequests = 4;
-
-        TestContext ctx = testCreate(numberOfRequests);
-
-        final ExecutorService threadPool = Executors.newFixedThreadPool(numberOfRequests);
-
-        List<Callable<Void>> callables = new ArrayList<>();
-        for (int i = 0; i < numberOfRequests; i++) {
-            callables.add(() -> {
-                host.log("Calling retrieveAgentImage");
-                retrievalManager.retrieveAgentImage(TEST_IMAGE_RES, req, (image) -> {
-                    retrievedImages.add(image);
-                    ctx.completeIteration();
-                });
-                return null;
-            });
-        }
-
-        host.log("Invoke all callables to retrieveAgentImage");
-        threadPool.invokeAll(callables);
-
-        ctx.await();
+        int numberOfRequests = 8;
+        List<byte[]> retrievedImages = runConcurrent(tmpFileName, numberOfRequests);
 
         // Assert that all callbacks were called
         assertEquals(numberOfRequests, retrievedImages.size());
         for (int i = 0; i < numberOfRequests; i++) {
             byte[] image = retrievedImages.get(i);
-            Assert.assertEquals("Unexpected content", new String(content), new String(image));
+            assertArrayEquals(content, image);
         }
 
         // Assert that service was called only once for all concurrent requests
         assertEquals(1, mockConfigurationService.getNumberOfRequests());
+
+        // run again
+        numberOfRequests = 4;
+        retrievedImages = runConcurrent(tmpFileName, numberOfRequests);
+
+        // Assert that configuration service is not called any more (still has 1 call)
+        assertEquals(1, mockConfigurationService.getNumberOfRequests());
+        assertEquals(numberOfRequests, retrievedImages.size());
+        // Assert caching data -> all the images are reference to the same byte array
+        assertTrue(retrievedImages.get(0) == retrievedImages.get(1));
     }
 
     @Test
@@ -221,6 +210,36 @@ public class SystemImageRetrievalManagerTest extends BaseTestCase {
 
         byte[] image = retrievedImageRef.get();
         Assert.assertEquals("Unexpected content", new String(content), new String(image));
+    }
+
+    private List<byte[]> runConcurrent(String imageFileName, int numberOfRequests)
+            throws Exception {
+        AdapterRequest req = new AdapterRequest();
+        req.resourceReference = host.getUri();
+        List<byte[]> retrievedImages = new ArrayList<>();
+
+        TestContext ctx = testCreate(numberOfRequests);
+
+        final ExecutorService threadPool = Executors.newFixedThreadPool(numberOfRequests);
+
+        List<Callable<Void>> callables = new ArrayList<>();
+        for (int i = 0; i < numberOfRequests; i++) {
+            final int n = i;
+            callables.add(() -> {
+                host.log("Calling retrieveAgentImage #%d", n);
+                retrievalManager.retrieveAgentImage(imageFileName, req, (image) -> {
+                    retrievedImages.add(image);
+                    ctx.completeIteration();
+                });
+                return null;
+            });
+        }
+
+        host.log("Invoke all callables to retrieveAgentImage");
+        threadPool.invokeAll(callables);
+
+        ctx.await();
+        return retrievedImages;
     }
 
     private class MockConfigurationService extends StatelessService {

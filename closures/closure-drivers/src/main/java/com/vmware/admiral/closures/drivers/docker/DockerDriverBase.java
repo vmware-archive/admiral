@@ -44,10 +44,10 @@ public abstract class DockerDriverBase implements ExecutionDriver {
     private final DriverRegistry driverRegistry;
     private final ClosureDockerClientFactory dockerClientFactory;
 
-    private static final String TRUST_CERT_PATH = ConfigurationUtil.getProperty(ClosureProps
-            .CALLBACK_TRUST_CERT_FILE_PATH);
-    private static final String CLOSURE_SERVICE_CALLBACK_URI = ConfigurationUtil.getProperty
-            (ClosureProps.CLOSURE_SERVICE_CALLBACK_URI);
+    private static final String TRUST_CERT_PATH = getConfigProperty(
+            ClosureProps.CALLBACK_TRUST_CERT_FILE_PATH);
+    private static final String CLOSURE_SERVICE_CALLBACK_URI = getConfigProperty(
+            ClosureProps.CLOSURE_SERVICE_CALLBACK_URI);
 
     public abstract String getDockerImage();
 
@@ -60,8 +60,7 @@ public abstract class DockerDriverBase implements ExecutionDriver {
 
     @Override
     public void executeClosure(Closure closure, ClosureDescription closureDesc, String token,
-            Consumer<Throwable>
-                    errorHandler) {
+            Consumer<Throwable> errorHandler) {
         ClosureDockerClient dockerClient = dockerClientFactory.getClient();
 
         String containerName = generateContainerName(closure);
@@ -89,11 +88,16 @@ public abstract class DockerDriverBase implements ExecutionDriver {
         imageConfig.baseImageName = containerImage + "_base";
         imageConfig.baseImageVersion = driverRegistry.getBaseImageVersion(closureDesc.runtime);
 
+        imageConfig.registry = getConfigProperty(
+                ClosureProps.CLOSURE_RUNTIME_IMAGE_REGISTRY + closureDesc.runtime);
+
         logInfo("Creating container with name: %s image: %s", containerName, containerImage);
-        dockerClient
-                .createAndStartContainer(closure.documentSelfLink, imageConfig, configuration,
-                        errorHandler);
+        dockerClient.createAndStartContainer(closure, imageConfig, configuration, errorHandler);
         logInfo("Code execution request sent.");
+    }
+
+    private static String getConfigProperty(String propertyName) {
+        return ConfigurationUtil.getProperty(propertyName);
     }
 
     @Override
@@ -177,19 +181,6 @@ public abstract class DockerDriverBase implements ExecutionDriver {
         String taskID = Service.getId(closure.documentSelfLink);
         return taskID + "_" + closure.documentVersion;
     }
-
-    //    private String prepareImageTag(ContainerConfiguration configuration, String... params) {
-    //        if (params != null && params.length <= 0) {
-    //            if (ClosureUtils.isEmpty(configuration.dependencies)) {
-    //                // no dependencies
-    //                return "latest";
-    //            }
-    //
-    //            return ClosureUtils.calculateHash(new String[] { configuration.dependencies });
-    //        }
-    //
-    //        return ClosureUtils.calculateHash(params);
-    //    }
 
     private List<String> populateEnvs(Closure closure, String token) {
         List<String> vars = new ArrayList<>();

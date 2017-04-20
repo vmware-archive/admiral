@@ -129,7 +129,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         logger.info("Building image on: " + targetUri);
 
         Operation op = Operation.createPost(targetUri)
-                .setBody(imageData)
+                .setBodyNoCloning(imageData)
                 .setContentType(MEDIA_TYPE_APPLICATION_TAR)
                 .setCompletion((o, ex) -> {
                     String body = o.getBody(String.class);
@@ -229,6 +229,26 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
 
         prepareRequest(op, true);
         serviceClient.send(op);
+    }
+
+    @Override
+    public void tagImage(CommandInput input, Operation.CompletionHandler completionHandler) {
+        createOrUpdateTargetSsl(input);
+
+        Map<String, Object> props = input.getProperties();
+        String path = String
+                .format("/images/%s/tag", props.get(DockerAdapterCommandExecutor
+                        .DOCKER_IMAGE_NAME_PROP_NAME));
+        URI targetUri = UriUtils.extendUri(input.getDockerUri(), path);
+
+        props.remove(DOCKER_IMAGE_NAME_PROP_NAME);
+
+        // convert the properties to URL parameters, the way /images/{name}/tag likes them
+        targetUri = extendUriWithQuery(targetUri, input);
+
+        logger.info("Tagging image: " + targetUri);
+
+        sendPost(targetUri, null, ClientMode.DEFAULT, completionHandler);
     }
 
     @Override
@@ -701,13 +721,17 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
                 .setBody(body)
                 .setCompletion(completionHandler);
 
-        prepareRequest(op, ClientMode.LARGE_DATA.equals(mode));
-
         if (ClientMode.LARGE_DATA.equals(mode)) {
+            op.setBodyNoCloning(body);
+            prepareRequest(op, true);
             largeDataClient.send(op);
         } else if (ClientMode.ATTACH.equals(mode)) {
+            op.setBody(body);
+            prepareRequest(op,false);
             attachServiceClient.send(op);
         } else {
+            op.setBody(body);
+            prepareRequest(op, false);
             serviceClient.send(op);
         }
     }

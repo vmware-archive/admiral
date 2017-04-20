@@ -12,6 +12,7 @@
 import MachinesViewVue from 'components/machines/MachinesViewVue.html';
 import MachineItem from 'components/machines/MachineItem'; //eslint-disable-line
 import MachineEditView from 'components/machines/MachineEditView'; //eslint-disable-line
+import MachineDetailsView from 'components/machines/MachineDetailsView'; //eslint-disable-line
 import RequestsList from 'components/requests/RequestsList'; //eslint-disable-line
 import EventLogList from 'components/eventlog/EventLogList'; //eslint-disable-line
 import GridHolderMixin from 'components/common/GridHolderMixin';

@@ -28,11 +28,11 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService;
 import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationState;
 import com.vmware.admiral.service.common.MultiTenantDocument;
+import com.vmware.photon.controller.model.query.QueryUtils.QueryTop;
 import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.ResourceUtils;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
-import com.vmware.photon.controller.model.tasks.QueryUtils.QueryTop;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
@@ -348,9 +348,10 @@ public class NetworkProfileService extends StatefulService {
         ComputeNetworkCIDRAllocationState cidrAllocationState = new
                 ComputeNetworkCIDRAllocationState();
         cidrAllocationState.networkLink = networkProfile.isolationNetworkLink;
+        cidrAllocationState.tenantLinks = networkProfile.tenantLinks;
         if (networkProfile.isolatedSubnetCIDRPrefix == null) {
             // TODO: Set a default for now. Remove when UI provides a value.
-            cidrAllocationState.subnetCIDRPrefixLength = 31;
+            cidrAllocationState.subnetCIDRPrefixLength = 29;
         } else {
             cidrAllocationState.subnetCIDRPrefixLength = networkProfile.isolatedSubnetCIDRPrefix;
         }

@@ -24,38 +24,43 @@ var Quiet bool
 
 //If verbose flag is provided, will print the request send to the API.
 func CheckVerboseRequest(req *http.Request) {
-	if !Verbose || Quiet {
+	if !Verbose || Quiet || !IsApplicationJson(req.Header) {
 		return
 	}
 
-	if req.Method == "PUT" || req.Method == "POST" || req.Method == "PATCH" {
-		fmt.Printf("%s %s\n", req.Method, req.URL)
-		//Read
-		buf, err := ioutil.ReadAll(req.Body)
-		CheckBlockingError(err)
-		//Create 2 new readers.
-		//rdrToUse will be modified. rdrToSet will stay the same and set back to the request.
-		rdrToUse := ioutil.NopCloser(bytes.NewBuffer(buf))
-		rdrToSet := ioutil.NopCloser(bytes.NewBuffer(buf))
+	fmt.Printf("%s %s\n", req.Method, req.URL)
 
-		//Print request.
-		body, err := ioutil.ReadAll(rdrToUse)
-		var indentBody = &bytes.Buffer{}
-		err = json.Indent(indentBody, body, "", "    ")
-
-		CheckBlockingError(err)
-		fmt.Println(string(indentBody.Bytes()))
-
-		//Set unmodified reader.
-		req.Body = rdrToSet
-	} else if req.Method == "GET" || req.Method == "DELETE" {
-		fmt.Printf("%s %s\n", req.Method, req.URL)
+	if req.Body == nil || !IsApplicationJson(req.Header) {
+		return
 	}
+
+	//Read
+	buf, err := ioutil.ReadAll(req.Body)
+	CheckBlockingError(err)
+	//Create 2 new readers.
+	//rdrToUse will be modified. rdrToSet will stay the same and set back to the request.
+	rdrToUse := ioutil.NopCloser(bytes.NewBuffer(buf))
+	rdrToSet := ioutil.NopCloser(bytes.NewBuffer(buf))
+
+	//Print request.
+	body, err := ioutil.ReadAll(rdrToUse)
+
+	requestMap := make(map[string]interface{})
+	err = json.Unmarshal(body, &requestMap)
+	CheckBlockingError(err)
+	removeSensitiveFields(&requestMap)
+
+	body, err = json.MarshalIndent(requestMap, "", "    ")
+	CheckBlockingError(err)
+	//Set unmodified reader.
+	req.Body = rdrToSet
+
+	fmt.Println(string(body))
 }
 
 //If verbose flag is provided, will print the response send from the API.
 func CheckVerboseResponse(resp *http.Response) {
-	if !Verbose || resp == nil || Quiet {
+	if !Verbose || resp == nil || Quiet || resp.Body == nil || !IsApplicationJson(resp.Header) {
 		return
 	}
 	//Read
@@ -80,4 +85,8 @@ func CheckVerboseResponse(resp *http.Response) {
 	err = json.Indent(&indentBody, jsonBody, "", "    ")
 	fmt.Println(string(indentBody.Bytes()))
 	resp.Body = rdrToSet
+}
+
+func removeSensitiveFields(requestMap *map[string]interface{}) {
+	delete(*requestMap, "password")
 }

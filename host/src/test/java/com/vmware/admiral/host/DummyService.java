@@ -102,7 +102,7 @@ public class DummyService
     }
 
     @Override
-    protected ServiceTaskCallbackResponse replayPayload() {
+    protected ServiceTaskCallbackResponse replyPayload() {
         return new CallbackCompleteResponse();
     }
 

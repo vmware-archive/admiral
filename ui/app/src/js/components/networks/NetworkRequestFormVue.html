@@ -10,22 +10,23 @@
   -->
 
 <div class="network-form">
-  <div class="title" v-else>{{i18n('app.template.details.editNetwork.createTitle')}}</div>
-  <network-definition-form v-ref:network-edit-form v-bind:model="model.definitionInstance"></network-definition-form>
+  <div class="title">{{i18n('app.template.details.editNetwork.createTitle')}}</div>
+
+  <network-definition-form v-ref:network-edit-form
+                           v-bind:model="model.definitionInstance"></network-definition-form>
+
   <form>
     <div class="form-group">
-      <label class="required">
-        {{i18n('app.template.details.editNetwork.hosts')}}
-      </label>
+      <label class="required">{{i18n('app.template.details.editNetwork.hosts')}}</label>
       <host-picker class="form-control" v-ref:host-picker></host-picker>
       <span class="help-block"></span>
     </div>
   </form>
+
   <div class="control-btns">
     <button class="btn btn-primary"
-            v-bind:class="{'loading': creatingNetwork}"
-            v-bind:disabled="disableCreatingNetworkButton"
-            v-on:click="createNetwork()">{{i18n('app.template.details.editNetwork.create')}}<i
+            :class="{'loading': creatingNetwork}" :disabled="disableCreatingNetworkButton"
+            @click="createNetwork()">{{i18n('app.template.details.editNetwork.create')}}<i
                 class="fa fa-spinner fa-spin loader-inline"></i></button>
   </div>
 </div>

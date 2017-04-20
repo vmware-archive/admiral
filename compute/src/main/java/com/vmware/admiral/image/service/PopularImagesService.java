@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.image.service;
 
+import static com.vmware.admiral.common.util.ServiceUtils.addServiceRequestRoute;
+
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -20,6 +22,7 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.FileUtil;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -110,5 +113,13 @@ public class PopularImagesService extends StatelessService {
         get.setBody(FileUtil.getClasspathResourceAsString(POPULAR_IMAGES_FILE));
         get.setContentType(Operation.MEDIA_TYPE_APPLICATION_JSON);
         get.complete();
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument d = super.getDocumentTemplate();
+        addServiceRequestRoute(d, Action.GET,
+                "Get predefined set of popular images, common for all tenants.", String.class);
+        return d;
     }
 }

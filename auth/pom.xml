@@ -24,21 +24,7 @@
     <artifactId>admiral-auth</artifactId>
     <packaging>jar</packaging>
 
-    <repositories>
-        <repository>
-            <id>lightwave</id>
-            <url>http://dl.bintray.com/vmware/lightwave-maven</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-
     <properties>
-        <lightwave.version>6.6.0</lightwave.version>
         <powermock.version>1.6.6</powermock.version>
     </properties>
 
@@ -65,28 +51,6 @@
         <dependency>
             <groupId>com.vmware.photon.controller</groupId>
             <artifactId>photon-model</artifactId>
-        </dependency>
-
-        <!-- Lightwave -->
-        <dependency>
-            <groupId>com.vmware.identity.rest.idm</groupId>
-            <artifactId>vmware-identity-rest-idm-client</artifactId>
-            <version>${lightwave.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.vmware.identity.rest.afd</groupId>
-            <artifactId>vmware-identity-rest-afd-client</artifactId>
-            <version>${lightwave.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.vmware.identity</groupId>
-            <artifactId>authentication-framework</artifactId>
-            <version>${lightwave.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.vmware.identity</groupId>
-            <artifactId>openidconnect-client-lib</artifactId>
-            <version>${lightwave.version}</version>
         </dependency>
 
         <!-- TEST -->
@@ -122,51 +86,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <profiles>
-        <profile>
-            <id>lightwave</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-shade-plugin</artifactId>
-                        <version>2.4.3</version>
-                        <executions>
-                            <execution>
-                                <id>lightwave-uber-jar</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>shade</goal>
-                                </goals>
-                                <configuration>
-                                    <finalName>${project.artifactId}-${project.version}-lightwave</finalName>
-                                    <filters>
-                                        <filter>
-                                            <artifact>*:*</artifact>
-                                            <excludes>
-                                                <exclude>META-INF/*.SF</exclude>
-                                                <exclude>META-INF/*.DSA</exclude>
-                                                <exclude>META-INF/*.RSA</exclude>
-                                            </excludes>
-                                        </filter>
-                                    </filters>
-                                    <transformers>
-                                        <transformer
-                                            implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                            <mainClass>com.vmware.admiral.auth.lightwave.util.RegisterWithLightwave</mainClass>
-                                        </transformer>
-                                    </transformers>
-                                    <shadedArtifactAttached>true</shadedArtifactAttached>
-                                    <shadedClassifierName>lightwave-uber-jar</shadedClassifierName>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 
     <!-- JaCoCo Offline Instrumentation with PowerMock: https://github.com/powermock/powermock/wiki/Code-coverage-with-JaCoCo -->
     <build>

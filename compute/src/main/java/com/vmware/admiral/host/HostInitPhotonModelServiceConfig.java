@@ -13,6 +13,7 @@ package com.vmware.admiral.host;
 
 import java.util.logging.Level;
 
+import com.vmware.photon.controller.model.PhotonModelMetricServices;
 import com.vmware.photon.controller.model.PhotonModelServices;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSAdapters;
 import com.vmware.photon.controller.model.adapters.azure.AzureAdapters;
@@ -20,6 +21,7 @@ import com.vmware.photon.controller.model.adapters.registry.PhotonModelAdaptersR
 import com.vmware.photon.controller.model.adapters.vsphere.VSphereAdapters;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.security.PhotonModelSecurityServices;
+import com.vmware.photon.controller.model.security.ssl.ServerX509TrustManager;
 import com.vmware.photon.controller.model.tasks.PhotonModelTaskServices;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.Utils;
@@ -42,10 +44,12 @@ public class HostInitPhotonModelServiceConfig {
 
         PhotonModelServices.startServices(host);
         PhotonModelTaskServices.startServices(host);
+        PhotonModelMetricServices.startServices(host);
 
         try {
             PhotonModelSecurityServices.startServices(host);
-
+            host.registerForServiceAvailability((o, e) -> ServerX509TrustManager.create(host),
+                    true, PhotonModelAdaptersRegistryAdapters.LINKS);
         } catch (Throwable e) {
             host.log(Level.WARNING,
                     "Exception staring photon model security services: %s",
@@ -54,7 +58,6 @@ public class HostInitPhotonModelServiceConfig {
 
         try {
             PhotonModelAdaptersRegistryAdapters.startServices(host);
-
         } catch (Throwable e) {
             host.log(Level.WARNING,
                     "Exception staring photon model adapter registry: %s",

@@ -42,6 +42,14 @@ public class MockDockerHostAdapterImageService extends StatelessService {
             return ImageOperationType.LOAD.id.equals(operationTypeId);
         }
 
+        public boolean isCreating() {
+            return ImageOperationType.CREATE.id.equals(operationTypeId);
+        }
+
+        public boolean isTagging() {
+            return ImageOperationType.TAG.id.equals(operationTypeId);
+        }
+
         public TaskState validateMock() {
             TaskState taskInfo = new TaskState();
             try {
@@ -78,7 +86,7 @@ public class MockDockerHostAdapterImageService extends StatelessService {
         logInfo("Request accepted for resource: %s", state.resourceReference);
         if (TaskState.TaskStage.FAILED == taskInfo.stage) {
             logInfo("Failed request for resource:  %s", state.resourceReference);
-            patchLoadingTask(state, taskInfo.failure);
+            patchTaskErrorResponse(state, taskInfo.failure);
             return;
         }
 
@@ -87,7 +95,7 @@ public class MockDockerHostAdapterImageService extends StatelessService {
                 && state.customProperties.containsKey(FAILURE_EXPECTED)) {
             logInfo("Expected failure request from custom props for resource:  %s",
                     state.resourceReference);
-            patchLoadingTask(state, new IllegalStateException("Simulated failure"));
+            patchTask(state, new IllegalStateException("Simulated failure"));
             return;
         }
 
@@ -99,22 +107,27 @@ public class MockDockerHostAdapterImageService extends StatelessService {
         if (TaskState.TaskStage.FAILED == taskInfo.stage) {
             logInfo("Failed request based on network resource:  %s",
                     state.resourceReference);
-            patchLoadingTask(state, taskInfo.failure);
+            patchTaskErrorResponse(state, taskInfo.failure);
             return;
         }
 
         if (state.isBuilding() || state.isLoading()) {
-            patchLoadingTask(state, (Throwable) null);
+            patchTask(state, (Throwable) null);
+        }
+
+        if (state.isCreating() || state.isTagging()) {
+            patchTask(state, (Throwable) null);
         }
     }
 
-    private void patchLoadingTask(MockDockerHostAdapterImageService.MockAdapterRequest state,
+    private void patchTask(MockDockerHostAdapterImageService.MockAdapterRequest state,
             Throwable exception) {
-        patchLoadingTask(state,
+        patchTaskErrorResponse(state,
                 exception == null ? null : Utils.toServiceErrorResponse(exception));
     }
 
-    private void patchLoadingTask(MockAdapterRequest state, ServiceErrorResponse errorResponse) {
+    private void patchTaskErrorResponse(MockAdapterRequest state, ServiceErrorResponse
+            errorResponse) {
         if (state.serviceTaskCallback.isEmpty()) {
             return;
         }

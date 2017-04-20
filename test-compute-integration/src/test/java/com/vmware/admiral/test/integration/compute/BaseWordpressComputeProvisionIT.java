@@ -17,9 +17,11 @@ import static org.junit.Assert.fail;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.Set;
 
 import com.vmware.admiral.common.util.YamlMapper;
+import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
@@ -27,13 +29,14 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService.NetworkInterfaceState;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocument;
 
 public abstract class BaseWordpressComputeProvisionIT extends BaseComputeProvisionIT {
 
     protected static final String AWS_DEFAULT_SUBNET_ID = "subnet-ce01b5e4";
     protected static final String AWS_SECONDARY_SUBNET_ID = "subnet-400f426d";
 
-    protected static final String AWS_ISOLATED_VPC_ID = "vpc-ee720888";
+    protected static final String AWS_ISOLATED_VPC_ID = "vpc-95a29bf1";
 
     private static final String WP_PATH = "mywordpresssite";
     private static final int STATUS_CODE_WAIT_POLLING_RETRY_COUNT = 300; //5 min
@@ -60,25 +63,33 @@ public abstract class BaseWordpressComputeProvisionIT extends BaseComputeProvisi
 
     @Override
     protected void doWithResources(Set<String> resourceLinks) throws Throwable {
-        CompositeComponent compositeComponent = getDocument(resourceLinks.iterator().next(),
-                CompositeComponent.class);
-        ComputeState wordPress = null;
-        for (String link : compositeComponent.componentLinks) {
-            ComputeState computeState = getDocument(link, ComputeState.class);
+        Set<ServiceDocument> resources = getResources(resourceLinks);
 
-            if (computeState.name.contains("wordpress")) {
-                wordPress = computeState;
-                break;
-            }
-        }
-
-        if (wordPress == null) {
-            fail("Unable to find the ComputeState corresponding to the Wordpress node");
-        }
-
-        validateComputeNic(wordPress, AWS_DEFAULT_SUBNET_ID);
+        ComputeState wordPress = (ComputeState) resources.stream()
+                .filter(c -> c instanceof ComputeState)
+                .filter(c -> ((ComputeState) c).name.contains("wordpress"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError(
+                        "Unable to find the ComputeState corresponding to the Wordpress node"));
 
         String address = wordPress.address;
+        verifyConnectivity(address);
+    }
+
+    protected Set<ServiceDocument> getResources(Set<String> resourceLinks) throws Exception {
+        CompositeComponent compositeComponent = getDocument(resourceLinks.iterator().next(),
+                CompositeComponent.class);
+        Set<ServiceDocument> computes = new HashSet<>();
+        for (String link : compositeComponent.componentLinks) {
+            Class stateClass = CompositeComponentRegistry.metaByStateLink(link).stateClass;
+            ServiceDocument document = getDocument(link, stateClass);
+            computes.add(document);
+        }
+
+        return computes;
+    }
+
+    protected void verifyConnectivity(String address) {
         URI uri = URI.create(String.format("http://%s/%s", address, WP_PATH));
 
         try {
@@ -100,7 +111,8 @@ public abstract class BaseWordpressComputeProvisionIT extends BaseComputeProvisi
         }
     }
 
-    protected void validateComputeNic(ComputeState computeState, String expectedSubnet) throws Exception {
+    protected void validateComputeNic(ComputeState computeState, String expectedSubnet)
+            throws Exception {
         if (computeState.networkInterfaceLinks == null || computeState.networkInterfaceLinks
                 .isEmpty()) {
             fail(String.format("VM '%s' doesn't have any nics", computeState.name));
@@ -112,6 +124,8 @@ public abstract class BaseWordpressComputeProvisionIT extends BaseComputeProvisi
             fail(String.format("Unable to find network interface of VM '%s'", computeState.name));
         }
 
+        logger.info("Loading subnet %s for nic %s,on vm %s", nic.subnetLink, nic.documentSelfLink,
+                computeState.name);
         SubnetState subnetState = getDocument(nic.subnetLink, SubnetState.class);
         if (subnetState == null) {
             fail(String.format(

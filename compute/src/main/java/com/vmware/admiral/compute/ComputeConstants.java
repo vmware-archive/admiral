@@ -41,6 +41,8 @@ public class ComputeConstants {
 
     public static final String CUSTOM_PROP_ENDPOINT_TYPE_NAME = "__endpointType";
 
+    public static final String CUSTOM_PROP_PROFILE_LINK_NAME = "__profileLink";
+
     public static final String CUSTOM_PROP_CLUSTER_SIZE_KEY = "clusterSize";
 
     public static final String CUSTOM_PROP_IMAGE_ID_NAME = "imageType";

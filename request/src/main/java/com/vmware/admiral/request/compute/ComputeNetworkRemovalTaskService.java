@@ -27,6 +27,7 @@ import com.vmware.admiral.adapter.common.NetworkOperationType;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationRequest;
 import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationState;
@@ -36,11 +37,11 @@ import com.vmware.admiral.request.compute.ComputeNetworkRemovalTaskService.Compu
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.photon.controller.model.adapterapi.SubnetInstanceRequest;
+import com.vmware.photon.controller.model.query.QueryUtils.QueryByPages;
+import com.vmware.photon.controller.model.query.QueryUtils.QueryTop;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.photon.controller.model.tasks.ProvisionSubnetTaskService;
 import com.vmware.photon.controller.model.tasks.ProvisionSubnetTaskService.ProvisionSubnetTaskState;
-import com.vmware.photon.controller.model.tasks.QueryUtils.QueryByPages;
-import com.vmware.photon.controller.model.tasks.QueryUtils.QueryTop;
 import com.vmware.photon.controller.model.tasks.TaskOption;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
@@ -294,7 +295,7 @@ public class ComputeNetworkRemovalTaskService extends
                 new QueryTop<>(this.getHost(),
                         query,
                         ComputeNetworkCIDRAllocationState.class,
-                        context.subnet.tenantLinks)
+                        QueryUtil.getTenantLinks(context.subnet.tenantLinks))
                         .setMaxResultsLimit(1);
 
         return queryCIDRAllocation.collectLinks(Collectors.toList())

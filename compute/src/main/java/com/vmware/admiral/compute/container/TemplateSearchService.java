@@ -16,6 +16,7 @@ import static com.vmware.admiral.common.util.QueryUtil.createKindClause;
 import static com.vmware.admiral.common.util.ServiceDocumentQuery.error;
 import static com.vmware.admiral.common.util.ServiceDocumentQuery.noResult;
 import static com.vmware.admiral.common.util.ServiceDocumentQuery.result;
+import static com.vmware.admiral.common.util.ServiceUtils.addServiceRequestRoute;
 import static com.vmware.admiral.common.util.UriUtilsExtended.flattenQueryParams;
 import static com.vmware.admiral.common.util.UriUtilsExtended.parseBooleanParam;
 import static com.vmware.xenon.common.UriUtils.URI_WILDCARD_CHAR;
@@ -49,6 +50,7 @@ import com.vmware.admiral.compute.container.TemplateSpec.TemplateType;
 import com.vmware.admiral.image.service.ContainerImageService;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
@@ -491,5 +493,18 @@ public class TemplateSearchService extends StatelessService {
             return t1Official == t2Official ? 0 : (t2Official ? 1 : -1);
         });
         return results;
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument d = super.getDocumentTemplate();
+        addServiceRequestRoute(d, Action.GET,
+                String.format("Search for composite descriptions, container images and closure "
+                                + "descriptions. Specify the type you are searching with one of the boolean "
+                                + "URI queries \"%s\", \"%s\", \"%s\". Specify the name of the resource "
+                                + "you are searching for with URI query with key \"%s\"",
+                        TEMPLATES_ONLY_PARAM, IMAGES_ONLY_PARAM, CLOSURES_ONLY_PARAM, QUERY_PARAM),
+                null);
+        return d;
     }
 }

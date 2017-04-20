@@ -11,26 +11,37 @@
 
 package com.vmware.admiral.adapter.docker.service;
 
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_IMAGE_REGISTRY_AUTH;
+import static com.vmware.admiral.common.util.QueryUtil.createAnyPropertyClause;
 import static com.vmware.admiral.compute.ContainerHostService.SSL_TRUST_ALIAS_PROP_NAME;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
+import com.vmware.admiral.adapter.docker.util.DockerImage;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.compute.container.ContainerService;
+import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
+import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
@@ -38,6 +49,7 @@ import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
+import com.vmware.xenon.services.common.QueryTask;
 
 public abstract class AbstractDockerAdapterService extends StatelessService {
     protected static final long MAINTENANCE_INTERVAL_MICROS = Long.getLong(
@@ -53,6 +65,16 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
         super.toggleOption(ServiceOption.PERIODIC_MAINTENANCE, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.setMaintenanceIntervalMicros(MAINTENANCE_INTERVAL_MICROS);
+    }
+
+    static class BaseRequestContext {
+        public AdapterRequest request;
+        public CommandInput commandInput;
+        public String imageName;
+        public List<String> tenantLinks;
+
+        /** Only for direct operations like exec */
+        public Operation operation;
     }
 
     @Override
@@ -113,6 +135,107 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
 
         getHost().log(Level.FINE, "Fetching ComputeState: %s %s", containerHostReference,
                 request.getRequestTrackingLog());
+    }
+
+    /**
+     * Create X-Registry-Auth header value containing Base64-encoded authConfig object so that
+     * docker daemon can authenticate against registries that support basic authentication.
+     *
+     * For more info, see:
+     * https://docs.docker.com/engine/reference/api/docker_remote_api/#authentication
+     *
+     * @param context
+     * @param callback
+     */
+    protected void processAuthentication(BaseRequestContext context, Runnable callback) {
+        DockerImage image = DockerImage.fromImageName(context.imageName);
+
+        if (image.getHost() == null) {
+            // if there is no registry host we assume the host is docker hub, so no authentication
+            // needed
+            callback.run();
+            return;
+        }
+
+        QueryTask registryQuery = QueryUtil.buildQuery(RegistryService.RegistryState.class, false);
+        if (context.tenantLinks != null) {
+            registryQuery.querySpec.query.addBooleanClause(QueryUtil.addTenantGroupAndUserClause(
+                    context.tenantLinks));
+        }
+        registryQuery.querySpec.query.addBooleanClause(createAnyPropertyClause(
+                String.format("*://%s", image.getHost()),
+                RegistryService.RegistryState.FIELD_NAME_ADDRESS));
+
+        List<String> registryLinks = new ArrayList<>();
+        new ServiceDocumentQuery<>(getHost(), ContainerService.ContainerState.class).query(
+                registryQuery, (r) -> {
+                    if (r.hasException()) {
+                        fail(context.request, r.getException());
+                        return;
+                    } else if (r.hasResult()) {
+                        registryLinks.add(r.getDocumentSelfLink());
+                    } else {
+                        if (registryLinks.isEmpty()) {
+                            getHost().log(Level.WARNING,
+                                    "Failed to find registry state with address '%s'.",
+                                    image.getHost());
+                            callback.run();
+                            return;
+                        }
+
+                        fetchRegistryAuthState(registryLinks.get(0), context, callback);
+                    }
+                });
+    }
+
+    private void fetchRegistryAuthState(String registryStateLink, BaseRequestContext context,
+            Runnable callback) {
+        URI registryStateUri = UriUtils.buildUri(getHost(), registryStateLink,
+                UriUtils.URI_PARAM_ODATA_EXPAND);
+
+        Operation getRegistry = Operation.createGet(registryStateUri)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        if (context.operation != null) {
+                            // direct operation
+                            context.operation.fail(ex);
+                        } else {
+                            fail(context.request, ex);
+                        }
+                        return;
+                    }
+
+                    RegistryService.RegistryAuthState registryState = o
+                            .getBody(RegistryService.RegistryAuthState.class);
+                    if (registryState.authCredentials != null) {
+                        AuthCredentialsServiceState authState = registryState.authCredentials;
+                        AuthCredentialsType authType = AuthCredentialsType.valueOf(authState.type);
+                        if (AuthCredentialsType.Password.equals(authType)) {
+                            // create and encode AuthConfig
+                            DockerAdapterService.AuthConfig authConfig = new DockerAdapterService.AuthConfig();
+                            authConfig.username = authState.userEmail;
+                            authConfig.password = EncryptionUtils.decrypt(authState.privateKey);
+                            authConfig.email = "";
+                            authConfig.auth = "";
+                            DockerImage image = DockerImage.fromImageName(context.imageName);
+                            authConfig.serveraddress = image.getHost();
+
+                            String authConfigJson = Utils.toJson(authConfig);
+                            String authConfigEncoded = new String(Base64.getEncoder().encode(
+                                    authConfigJson.getBytes()));
+                            context.commandInput.getProperties().put(DOCKER_IMAGE_REGISTRY_AUTH,
+                                    authConfigEncoded);
+
+                            getHost().log(Level.INFO,
+                                    "Detected registry requiring basic authn, %s header created.",
+                                    DOCKER_IMAGE_REGISTRY_AUTH);
+                        }
+                    }
+
+                    callback.run();
+                });
+
+        sendRequest(getRegistry);
     }
 
     protected void createHostConnection(AdapterRequest request, Operation op,

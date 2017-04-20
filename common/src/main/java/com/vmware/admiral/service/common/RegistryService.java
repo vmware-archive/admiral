@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -269,17 +269,22 @@ public class RegistryService extends StatefulService {
             return;
         }
 
-        String certificate = null;
-        try {
-            SslCertificateResolver resolver = SslCertificateResolver.connect(uri);
-            X509Certificate[] certificateChain = resolver.getCertificateChain();
-            certificate = CertificateUtil.toPEMformat(certificateChain);
-            if (callback != null) {
-                callback.accept(certificate);
-            }
-        } catch (Exception e) {
-            Utils.logWarning("Cannot connect to %s to get remote certificate", registry.address);
+        // follow the logic as before refactoring
+        if (callback == null) {
+            return;
         }
+
+        SslCertificateResolver.execute(uri, (resolver, ex) -> {
+            if (ex != null) {
+                Utils.logWarning("Cannot connect to %s to get remote certificate",
+                        registry.address);
+                return;
+            }
+            X509Certificate[] certificateChain = resolver.getCertificateChain();
+
+            String certificate = CertificateUtil.toPEMformat(certificateChain);
+            callback.accept(certificate);
+        });
     }
 
     private void updateState(RegistryState newState, RegistryState currentState) {

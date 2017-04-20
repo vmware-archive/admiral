@@ -29,7 +29,7 @@ import com.vmware.admiral.request.ContainerRecommendation.Recommendation;
 import com.vmware.admiral.request.ContainerRedeploymentTaskService.ContainerRedeploymentTaskState;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
-import com.vmware.photon.controller.model.tasks.QueryUtils.QueryByPages;
+import com.vmware.photon.controller.model.query.QueryUtils.QueryByPages;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;

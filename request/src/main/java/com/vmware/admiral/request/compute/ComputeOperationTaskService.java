@@ -23,14 +23,20 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
+import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.request.compute.ComputeOperationTaskService.ComputeOperationTaskState.SubStage;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.DefaultSubStage;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.TaskServiceDocument;
+import com.vmware.photon.controller.model.adapters.registry.operations.ResourceOperationRequest;
+import com.vmware.photon.controller.model.adapters.registry.operations.ResourceOperationSpecService.ResourceOperationSpec;
+import com.vmware.photon.controller.model.adapters.registry.operations.ResourceOperationSpecService.ResourceType;
+import com.vmware.photon.controller.model.adapters.registry.operations.ResourceOperationUtils;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeStateWithDescription;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.UriUtils;
@@ -145,35 +151,91 @@ public class ComputeOperationTaskService extends
         try {
             logInfo("Starting %s of %d container resources", state.operation, resources.size());
             for (ComputeStateWithDescription compute : resources) {
-                createAdapterRequest(state, compute, taskCallback);
+                doAdapterRequest(state, compute, taskCallback);
             }
         } catch (Throwable e) {
             failTask("Unexpected exception while requesting operation: " + state.operation, e);
         }
     }
 
-    private void createAdapterRequest(ComputeOperationTaskState state,
+    private void doAdapterRequest(ComputeOperationTaskState state,
             ComputeStateWithDescription compute, ServiceTaskCallback taskCallback) {
 
         ComputeOperationType operationType = ComputeOperationType.instanceById(state.operation);
-        URI adapterReference = operationType.getAdapterReference(compute);
-        if (adapterReference == null) {
-            logWarning("Target compute %s, doesn't support %s operation", compute.documentSelfLink,
+        URI resourceReference = UriUtils.buildUri(
+                getHost().getPublicUri(), compute.documentSelfLink);
+        URI callbackReference = UriUtils.buildUri(taskCallback.serviceSelfLink);
+        DeferredResult<AdapterRequestMetadata> drMetadata;
+        if (operationType != null) {
+            drMetadata = DeferredResult.completed(AdapterRequestMetadata.of(
+                    operationType.getAdapterReference(compute),
+                    operationType.getBody(state, resourceReference, callbackReference)));
+        } else {
+            DeferredResult<ResourceOperationSpec> drLookup =
+                    ResourceOperationUtils.lookUpByEndpointLink(
+                            getHost(), getUri(),
+                            compute.endpointLink, ResourceType.COMPUTE, state.operation);
+            drMetadata = drLookup.thenApply(s -> {
+                if (s == null) {
+                    throw new IllegalArgumentException(
+                            String.format("No operation %s, for compute: %s",
+                                    state.operation, compute.documentSelfLink));
+                }
+                ResourceOperationRequest request = new ResourceOperationRequest();
+                request.resourceReference = resourceReference;
+                request.taskReference = callbackReference;
+                request.operation = state.operation;
+                request.isMockRequest = DeploymentProfileConfig.getInstance().isTest();
+                return AdapterRequestMetadata.of(s.adapterReference, request);
+            });
+        }
+
+        drMetadata.handle((metadata, ex) -> {
+            invokeAdapter(state, compute, metadata, ex, taskCallback);
+            return null;
+        });
+
+    }
+
+    private void invokeAdapter(ComputeOperationTaskState state,
+            ComputeStateWithDescription compute,
+            AdapterRequestMetadata metadata, Throwable err,
+            ServiceTaskCallback taskCallback) {
+        if (metadata == null || err != null) {
+            logWarning("Target compute %s, doesn't support %s operation",
+                    compute.documentSelfLink,
                     state.operation);
-            completeSubTasksCounter(taskCallback, null);
+            completeSubTasksCounter(taskCallback, err);
             return;
         }
-        Object body = operationType.getBody(state,
-                UriUtils.buildUri(getHost().getPublicUri(), compute.documentSelfLink),
-                UriUtils.buildUri(taskCallback.serviceSelfLink));
-        sendRequest(Operation.createPatch(adapterReference)
-                .setBody(body)
+        sendRequest(Operation.createPatch(metadata.adapterReference)
+                .setBody(metadata.body)
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
                     if (e != null) {
+                        logSevere("Error when call adapter: %s "
+                                        + "to perform operation: %s "
+                                        + "for resource: %s."
+                                        + " Cause: %s",
+                                metadata.adapterReference,
+                                state.operation,
+                                compute.documentSelfLink,
+                                Utils.toString(e));
                         completeSubTasksCounter(taskCallback, e);
                         return;
                     }
                 }));
+    }
+
+    private static class AdapterRequestMetadata {
+        URI adapterReference;
+        Object body;
+
+        static AdapterRequestMetadata of(URI adapterReference, Object body) {
+            AdapterRequestMetadata ret = new AdapterRequestMetadata();
+            ret.adapterReference = adapterReference;
+            ret.body = body;
+            return ret;
+        }
     }
 }

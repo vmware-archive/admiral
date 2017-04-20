@@ -66,7 +66,7 @@ func Login(username, password, configUrl string) (string, error) {
 	}
 
 	if utils.Verbose {
-		fmt.Printf("%s: %s\n", "x-xenon-aut-token", token)
+		fmt.Printf("%s: %s\n", "x-xenon-auth-token", token)
 	}
 	utils.MkCliDir()
 	tokenFile, err := os.Create(utils.TokenPath())

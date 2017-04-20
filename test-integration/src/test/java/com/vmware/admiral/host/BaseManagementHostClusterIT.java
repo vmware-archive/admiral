@@ -226,7 +226,7 @@ public abstract class BaseManagementHostClusterIT {
     }
 
     protected void tearDownHost(List<ManagementHost> hosts) {
-        hosts.forEach(host -> stopHost(host, false));
+        hosts.forEach(host -> stopHost(host, false, true));
     }
 
 
@@ -242,7 +242,8 @@ public abstract class BaseManagementHostClusterIT {
         }
     }
 
-    protected void stopHost(ManagementHost host, boolean waitWhilePortIsListening) {
+    protected void stopHost(ManagementHost host, boolean waitWhilePortIsListening, boolean
+            deleteStorage) {
 
         if (host == null) {
             return;
@@ -260,12 +261,14 @@ public abstract class BaseManagementHostClusterIT {
                 waitWhilePortIsListening(host, waiter);
                 waiter.await();
             }
-            // Surrounded with try catch because on Windows OS, there is probably
-            // permissions problem and this util cannot delete the sandbox.
-            try {
-                FileUtils.deleteDirectory(new File(host.getStorageSandbox().getPath()));
-            } catch (Throwable t) {
-                logger.log(Level.WARNING, "Error when trying to remove sandbox", t);
+            if (deleteStorage) {
+                // Surrounded with try catch because on Windows OS, there is probably
+                // permissions problem and this util cannot delete the sandbox.
+                try {
+                    FileUtils.deleteDirectory(new File(host.getStorageSandbox().getPath()));
+                } catch (Throwable t) {
+                    logger.log(Level.WARNING, "Error when trying to remove sandbox", t);
+                }
             }
             logger.log(Level.INFO, String.format("Host '%s' stopped", hostname));
 
@@ -283,7 +286,7 @@ public abstract class BaseManagementHostClusterIT {
     protected void stopHostAndRemoveItFromNodeGroup(ManagementHost availableHost,
             ManagementHost hostToStop) {
 
-        stopHost(hostToStop, true);
+        stopHost(hostToStop, true, false);
 
         if (availableHost != null) {
             TestContext ctx = new TestContext(1, Duration.ofMinutes(2));
@@ -476,7 +479,7 @@ public abstract class BaseManagementHostClusterIT {
             logger.log(Level.SEVERE, "Error when trying to start host '" + hostname + "' reason: "
                     + Utils.toString(ex));
             if (retryCount > 0) {
-                stopHost(host, true);
+                stopHost(host, true, false);
                 return startHost(host, sandboxUri, peers, retryCount - 1);
             } else {
                 fail(Utils.toString(ex));

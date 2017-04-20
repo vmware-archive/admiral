@@ -123,7 +123,14 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
 
         logger.log(Level.INFO, "starting host one and asserting cluster");
         logger.log(Level.INFO, "All hosts are " + allHosts);
-        hostOne = startHost(hostOne, null, allHosts, 3);
+        hostOne = startHost(hostOne, hostOne.getStorageSandbox(), allHosts, 3);
+
+        // Update quorum of host two to 2, because ClusterMonitoringService is disabled.
+        tokenTwo = login(hostTwo, USERNAME, PASSWORD, true);
+        ctx = new TestContext(1, Duration.ofMinutes(1));
+        createUpdateQuorumOperation(hostTwo, 2, ctx, tokenTwo, AUTH_TOKEN_RETRY_COUNT);
+        ctx.await();
+
         String tokenOne = login(hostOne, USERNAME, PASSWORD, true);
         assertClusterWithToken(tokenOne, hostOne);
 
@@ -139,8 +146,8 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
          * ==== Stop both nodes ==================================================================
          */
 
-        stopHost(hostOne, false);
-        stopHost(hostTwo, false);
+        stopHost(hostOne, false, false);
+        stopHost(hostTwo, false, false);
 
         /*
          * ==== Start both nodes =================================================================
@@ -178,7 +185,7 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         ctx.await();
 
         stopHostAndRemoveItFromNodeGroup(hostOne, hostTwo);
-        hostTwo = startHost(hostTwo, null, allHosts, 3);
+        hostTwo = startHost(hostTwo, hostTwo.getStorageSandbox(), allHosts, 3);
 
         // Get token from hostOne
         headers = new HashMap<>();

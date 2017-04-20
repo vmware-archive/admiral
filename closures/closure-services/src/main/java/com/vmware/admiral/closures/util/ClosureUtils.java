@@ -31,13 +31,14 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 
+import com.vmware.admiral.adapter.docker.util.DockerImage;
 import com.vmware.admiral.closures.drivers.ContainerConfiguration;
+import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.xenon.common.Utils;
 
 /**
@@ -53,6 +54,11 @@ public final class ClosureUtils {
 
     public static boolean isEmpty(String str) {
         return str == null || str.trim().length() <= 0;
+    }
+
+    public static String createBaseImageName(String image) {
+        DockerImage dockerImage = DockerImage.fromImageName(image);
+        return dockerImage.getRepository() + "_base.tar.xz";
     }
 
     public static String prepareImageTag(ContainerConfiguration configuration, String
@@ -219,8 +225,7 @@ public final class ClosureUtils {
         tarEntry.setSize(size);
         tarOutputStream.putArchiveEntry(tarEntry);
         try (InputStream input = new BufferedInputStream(inStream)) {
-            long byteRead = copy(input, tarOutputStream);
-            logInfo("---- BYTES READ %s ", byteRead);
+            copy(input, tarOutputStream);
             tarOutputStream.closeArchiveEntry();
         }
     }
@@ -246,6 +251,23 @@ public final class ClosureUtils {
                 bufferedOutputStream);
         tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_GNU);
         return tarArchiveOutputStream;
+    }
+
+    /**
+     * Checks for additional runtimes that are not provided out of the box. We need to provide
+     * registry to download the image from.
+     *
+     * @param runtime
+     * @return
+     */
+    public static boolean isAdditionalRuntimeSwitchedOn(String runtime) {
+        String runtimeOn = ConfigurationUtil
+                .getProperty(ClosureProps.CLOSURE_RUNTIME_IMAGE_REGISTRY + runtime);
+        if (runtimeOn == null || runtimeOn.isEmpty()) {
+            return false;
+        }
+
+        return true;
     }
 
     private static void logInfo(String message, Object... values) {

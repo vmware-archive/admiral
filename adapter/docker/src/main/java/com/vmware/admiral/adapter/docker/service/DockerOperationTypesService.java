@@ -11,12 +11,15 @@
 
 package com.vmware.admiral.adapter.docker.service;
 
+import static com.vmware.admiral.common.util.ServiceUtils.addServiceRequestRoute;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatelessService;
 
 /**
@@ -43,5 +46,13 @@ public class DockerOperationTypesService extends StatelessService {
         }
         op.setBody(operationTypes);
         op.complete();
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument d = super.getDocumentTemplate();
+        addServiceRequestRoute(d, Action.GET,
+                "Get list containing docker Day 2 operation types.", String[].class);
+        return d;
     }
 }

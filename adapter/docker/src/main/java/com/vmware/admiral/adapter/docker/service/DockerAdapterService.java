@@ -60,13 +60,11 @@ import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExec
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_EXEC_COMMAND_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_IMAGE_DATA_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_IMAGE_FROM_PROP_NAME;
-import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_IMAGE_REGISTRY_AUTH;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.SINCE;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.STD_ERR;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.STD_OUT;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.TAIL;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.TIMESTAMPS;
-import static com.vmware.admiral.common.util.QueryUtil.createAnyPropertyClause;
 
 import java.io.File;
 import java.io.IOException;
@@ -74,7 +72,6 @@ import java.net.ProtocolException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -88,6 +85,7 @@ import java.util.stream.Collectors;
 
 import org.apache.http.HttpStatus;
 
+import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG;
 import com.vmware.admiral.adapter.docker.util.CommandUtil;
@@ -97,8 +95,6 @@ import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.ConfigurationUtil;
-import com.vmware.admiral.common.util.QueryUtil;
-import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
@@ -116,12 +112,8 @@ import com.vmware.admiral.compute.container.volume.VolumeBinding;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.common.LogService;
-import com.vmware.admiral.service.common.RegistryService.RegistryAuthState;
-import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
-import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
-import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.FileUtils;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -130,8 +122,6 @@ import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
-import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
-import com.vmware.xenon.services.common.QueryTask;
 
 /**
  * Service for fulfilling ContainerInstanceRequest backed by a docker server
@@ -177,20 +167,17 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
     private volatile Integer retriesCount;
 
-    private static class RequestContext {
-        public ContainerInstanceRequest request;
+    private static class RequestContext extends BaseRequestContext {
         public ComputeState computeState;
         public ContainerState containerState;
         public ContainerDescription containerDescription;
-        public CommandInput commandInput;
+
         public DockerAdapterCommandExecutor executor;
         /**
          * Flags the request as already failed. Used to avoid patching a FAILED task to FINISHED
          * state after inspecting a container.
          */
         public boolean requestFailed;
-        /** Only for direct operations like exec */
-        public Operation operation;
     }
 
     public static class AuthConfig {
@@ -213,13 +200,14 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         context.request = op.getBody(ContainerInstanceRequest.class);
         context.request.validate();// validate the request
 
-        ContainerOperationType operationType = context.request.getOperationType();
+        ContainerInstanceRequest containerRequest = (ContainerInstanceRequest) context.request;
+        ContainerOperationType operationType = containerRequest.getOperationType();
         if (ContainerOperationType.STATS != operationType
                 && ContainerOperationType.INSPECT != operationType
                 && ContainerOperationType.FETCH_LOGS != operationType) {
             logInfo("Processing operation request %s for resource %s %s",
-                    operationType, context.request.resourceReference,
-                    context.request.getRequestTrackingLog());
+                    operationType, containerRequest.resourceReference,
+                    containerRequest.getRequestTrackingLog());
         }
 
         if (operationType == ContainerOperationType.EXEC) {
@@ -283,8 +271,9 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
     }
 
     private void processOperation(RequestContext context) {
+        ContainerInstanceRequest request = (ContainerInstanceRequest) context.request;
         try {
-            switch (context.request.getOperationType()) {
+            switch (request.getOperationType()) {
             case CREATE:
                 // before the container is created the image needs to be pulled
                 processCreateImage(context);
@@ -319,12 +308,12 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 break;
 
             default:
-                fail(context.request, new IllegalArgumentException(
-                        "Unexpected request type: " + context.request.getOperationType()
-                                + context.request.getRequestTrackingLog()));
+                fail(request, new IllegalArgumentException(
+                        "Unexpected request type: " + request.getOperationType()
+                                + request.getRequestTrackingLog()));
             }
         } catch (Throwable e) {
-            fail(context.request, e);
+            fail(request, e);
         }
     }
 
@@ -372,7 +361,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 });
     }
 
-    private CommandInput constructFetchLogCommandInput(ContainerInstanceRequest request,
+    private CommandInput constructFetchLogCommandInput(AdapterRequest request,
             CommandInput commandInput, ContainerState containerState) {
         CommandInput fetchLogCommandInput = new CommandInput(commandInput);
         boolean stdErr = true;
@@ -440,62 +429,13 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                         handleExceptions(context.request, context.operation, () -> {
                             context.containerDescription = o.getBody(ContainerDescription.class);
 
+                            context.imageName = context.containerDescription.image;
                             processAuthentication(context,
                                     () -> processContainerDescription(context));
                         });
                     }
                 }));
 
-    }
-
-    /**
-     * Create X-Registry-Auth header value containing Base64-encoded authConfig object so that
-     * docker daemon can authenticate against registries that support basic authentication.
-     *
-     * For more info, see:
-     * https://docs.docker.com/engine/reference/api/docker_remote_api/#authentication
-     *
-     * @param context
-     * @param callback
-     */
-    private void processAuthentication(RequestContext context, Runnable callback) {
-        DockerImage image = DockerImage.fromImageName(context.containerDescription.image);
-
-        if (image.getHost() == null) {
-            // if there is no registry host we assume the host is docker hub, so no authentication
-            // needed
-            callback.run();
-            return;
-        }
-
-        QueryTask registryQuery = QueryUtil.buildQuery(RegistryState.class, false);
-        if (context.containerDescription.tenantLinks != null) {
-            registryQuery.querySpec.query.addBooleanClause(QueryUtil.addTenantGroupAndUserClause(
-                    context.containerDescription.tenantLinks));
-        }
-        registryQuery.querySpec.query.addBooleanClause(createAnyPropertyClause(
-                String.format("*://%s", image.getHost()), RegistryState.FIELD_NAME_ADDRESS));
-
-        List<String> registryLinks = new ArrayList<>();
-        new ServiceDocumentQuery<>(getHost(), ContainerState.class).query(
-                registryQuery, (r) -> {
-                    if (r.hasException()) {
-                        fail(context.request, r.getException());
-                        return;
-                    } else if (r.hasResult()) {
-                        registryLinks.add(r.getDocumentSelfLink());
-                    } else {
-                        if (registryLinks.isEmpty()) {
-                            getHost().log(Level.WARNING,
-                                    "Failed to find registry state with address '%s'.",
-                                    image.getHost());
-                            callback.run();
-                            return;
-                        }
-
-                        fetchRegistryAuthState(registryLinks.get(0), context, callback);
-                    }
-                });
     }
 
     private void processContainerDescription(RequestContext context) {
@@ -920,51 +860,6 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         return Boolean.valueOf(useLocalImageFirst);
     }
 
-    private void fetchRegistryAuthState(String registryStateLink, RequestContext context,
-            Runnable callback) {
-        URI registryStateUri = UriUtils.buildUri(getHost(), registryStateLink,
-                UriUtils.URI_PARAM_ODATA_EXPAND);
-
-        Operation getRegistry = Operation.createGet(registryStateUri)
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        context.operation.fail(ex);
-                        return;
-                    }
-
-                    RegistryAuthState registryState = o.getBody(RegistryAuthState.class);
-                    if (registryState.authCredentials != null) {
-                        AuthCredentialsServiceState authState = registryState.authCredentials;
-                        AuthCredentialsType authType = AuthCredentialsType.valueOf(authState.type);
-                        if (AuthCredentialsType.Password.equals(authType)) {
-                            // create and encode AuthConfig
-                            AuthConfig authConfig = new AuthConfig();
-                            authConfig.username = authState.userEmail;
-                            authConfig.password = EncryptionUtils.decrypt(authState.privateKey);
-                            authConfig.email = "";
-                            authConfig.auth = "";
-                            DockerImage image = DockerImage.fromImageName(
-                                    context.containerDescription.image);
-                            authConfig.serveraddress = image.getHost();
-
-                            String authConfigJson = Utils.toJson(authConfig);
-                            String authConfigEncoded = new String(Base64.getEncoder().encode(
-                                    authConfigJson.getBytes()));
-                            context.commandInput.getProperties().put(DOCKER_IMAGE_REGISTRY_AUTH,
-                                    authConfigEncoded);
-
-                            getHost().log(Level.INFO,
-                                    "Detected registry requiring basic authn, %s header created.",
-                                    DOCKER_IMAGE_REGISTRY_AUTH);
-                        }
-                    }
-
-                    callback.run();
-                });
-
-        sendRequest(getRegistry);
-    }
-
     /**
      * get a mapped value or add a new one if it's not mapped yet
      *
@@ -1145,7 +1040,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
         CommandInput execCommandInput = new CommandInput(context.commandInput).withProperty(
                 DOCKER_CONTAINER_ID_PROP_NAME, context.containerState.id).withProperty(
-                        DOCKER_EXEC_COMMAND_PROP_NAME, commandArr);
+                DOCKER_EXEC_COMMAND_PROP_NAME, commandArr);
 
         if (context.request.customProperties.get(DOCKER_EXEC_ATTACH_STDERR_PROP_NAME) != null) {
             execCommandInput.withProperty(DOCKER_EXEC_ATTACH_STDERR_PROP_NAME,
@@ -1203,7 +1098,6 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
         context.executor.fetchContainerStats(statsCommandInput, (o, ex) -> {
             if (ex != null) {
-                notifyFailedHealthStatus(context);
                 logWarning(
                         "Exception while fetching stats for container [%s] of host [%s]",
                         context.containerState.documentSelfLink,
@@ -1212,24 +1106,17 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
             } else {
                 handleExceptions(context.request, context.operation, () -> {
                     String stats = o.getBody(String.class);
-                    processContainerStats(context, stats, null);
+                    processContainerStats(context, stats);
                 });
             }
         });
     }
 
-    private void notifyFailedHealthStatus(RequestContext context) {
-        boolean healthCheckSuccess = false;
-        processContainerStats(context, null, healthCheckSuccess);
-    }
-
-    private void processContainerStats(RequestContext context, String stats,
-            Boolean healthCheckSuccess) {
+    private void processContainerStats(RequestContext context, String stats) {
         getHost().log(Level.FINE, "Updating container stats: %s %s",
                 context.request.resourceReference, context.request.getRequestTrackingLog());
 
         ContainerStats containerStats = ContainerStatsEvaluator.calculateStatsValues(stats);
-        containerStats.healthCheckSuccess = healthCheckSuccess;
         String containerLink = context.request.resourceReference.getPath();
         URI uri = UriUtils.buildUri(getHost(), containerLink);
         sendRequest(Operation.createPatch(uri)
@@ -1239,7 +1126,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 }));
     }
 
-    private void patchContainerState(ContainerInstanceRequest request,
+    private void patchContainerState(AdapterRequest request,
             ContainerState containerState, Map<String, Object> properties, RequestContext context) {
 
         // start with a new ContainerState object because we don't want to overwrite with stale data

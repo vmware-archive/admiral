@@ -28,6 +28,7 @@ import com.vmware.admiral.closures.drivers.ImageConfiguration;
 import com.vmware.admiral.closures.services.adapter.AdmiralAdapterFactoryService;
 import com.vmware.admiral.closures.services.adapter.AdmiralAdapterService;
 import com.vmware.admiral.closures.services.adapter.AdmiralAdapterService.AdmiralAdapterTaskState;
+import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.images.DockerImageFactoryService;
 import com.vmware.admiral.closures.util.ClosureUtils;
 import com.vmware.admiral.common.util.OperationUtil;
@@ -52,16 +53,19 @@ public class AdmiralDockerClient implements ClosureDockerClient {
     }
 
     @Override
-    public void createAndStartContainer(String closureLink, ImageConfiguration imageConfig,
+    public void createAndStartContainer(Closure closure, ImageConfiguration imageConfig,
             ContainerConfiguration configuration,
             Consumer<Throwable> errorHandler) {
-        logInfo("Sending provisioning request of execution container...%s", closureLink);
+        logInfo("Sending provisioning request of execution container...%s",
+                closure.documentSelfLink);
 
         AdmiralAdapterService.AdmiralAdapterTaskState provisioningRequest = new AdmiralAdapterTaskState();
         provisioningRequest.imageConfig = imageConfig;
         provisioningRequest.configuration = configuration;
+        provisioningRequest.tenantLinks = closure.tenantLinks;
 
-        provisioningRequest.serviceTaskCallback = ServiceTaskCallback.create(closureLink);
+        provisioningRequest.serviceTaskCallback = ServiceTaskCallback
+                .create(closure.documentSelfLink);
 
         URI uri = UriUtils.buildUri(getHost(), AdmiralAdapterFactoryService.FACTORY_LINK);
         getHost().sendRequest(OperationUtil.createForcedPost(uri)
@@ -96,7 +100,8 @@ public class AdmiralDockerClient implements ClosureDockerClient {
                         .setReferer(getHost().getUri())
                         .setCompletion((o, e) -> {
                             if (e != null) {
-                                logError("Exception while submitting remove container request: ", e);
+                                logError("Exception while submitting remove container request: ",
+                                        e);
                                 errorHandler.accept(e);
                                 return;
                             }
@@ -109,8 +114,10 @@ public class AdmiralDockerClient implements ClosureDockerClient {
     }
 
     @Override
-    public void cleanImage(String imageName, String computeStateLink, Consumer<Throwable> errorHandler) {
-        logInfo("Sending docker image clean request for image: %s on host: %s", imageName, computeStateLink);
+    public void cleanImage(String imageName, String computeStateLink,
+            Consumer<Throwable> errorHandler) {
+        logInfo("Sending docker image clean request for image: %s on host: %s", imageName,
+                computeStateLink);
 
         DockerImageHostRequest request = new DockerImageHostRequest();
         request.operationTypeId = ImageOperationType.DELETE.id;
@@ -118,7 +125,9 @@ public class AdmiralDockerClient implements ClosureDockerClient {
         request.resourceReference = UriUtils.buildUri(getHost(), computeStateLink);
         request.customProperties = new HashMap<>();
 
-        request.customProperties.putIfAbsent(DockerAdapterCommandExecutor.DOCKER_BUILD_IMAGE_TAG_PROP_NAME, imageName);
+        request.customProperties
+                .putIfAbsent(DockerAdapterCommandExecutor.DOCKER_BUILD_IMAGE_TAG_PROP_NAME,
+                        imageName);
 
         getHost().sendRequest(Operation
                 .createPatch(getHost(), DockerHostAdapterImageService.SELF_LINK)
@@ -131,7 +140,8 @@ public class AdmiralDockerClient implements ClosureDockerClient {
                         return;
                     }
 
-                    logInfo("Docker clean image request sent. Image: %s, host: %s", imageName, computeStateLink);
+                    logInfo("Docker clean image request sent. Image: %s, host: %s", imageName,
+                            computeStateLink);
                 }));
     }
 
@@ -149,7 +159,8 @@ public class AdmiralDockerClient implements ClosureDockerClient {
 
         request.customProperties = new HashMap<>();
         request.customProperties
-                .putIfAbsent(DockerAdapterCommandExecutor.DOCKER_BUILD_IMAGE_INSPECT_NAME_PROP_NAME, imageName);
+                .putIfAbsent(DockerAdapterCommandExecutor.DOCKER_BUILD_IMAGE_INSPECT_NAME_PROP_NAME,
+                        imageName);
 
         getHost().sendRequest(Operation
                 .createPatch(getHost(), DockerHostAdapterImageService.SELF_LINK)
@@ -162,12 +173,14 @@ public class AdmiralDockerClient implements ClosureDockerClient {
                         return;
                     }
 
-                    logInfo("Docker inspect image request sent. Image: %s, host: %s", imageName, computeStateLink);
+                    logInfo("Docker inspect image request sent. Image: %s, host: %s", imageName,
+                            computeStateLink);
                 }));
     }
 
     private String createImageBuildRequestUri(String imageName, String computeStateLink) {
-        String imageBuildRequestId = ClosureUtils.calculateHash(new String[] { imageName, "/", computeStateLink });
+        String imageBuildRequestId = ClosureUtils
+                .calculateHash(new String[] { imageName, "/", computeStateLink });
 
         return UriUtils.buildUriPath(DockerImageFactoryService.FACTORY_LINK, imageBuildRequestId);
     }

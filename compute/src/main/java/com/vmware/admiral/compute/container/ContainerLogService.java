@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.compute.container;
 
+import static com.vmware.admiral.common.util.ServiceUtils.addServiceRequestRoute;
+
 import java.util.Map;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
@@ -23,6 +25,7 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -108,5 +111,15 @@ public class ContainerLogService extends StatelessService {
                         return;
                     }
                 }));
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument d = super.getDocumentTemplate();
+        addServiceRequestRoute(d, Action.GET,
+                String.format("Get container logs. Provide the ContainerState id in URI query "
+                        + "parameter with key \"%s\".", CONTAINER_ID_QUERY_PARAM),
+                LogServiceState.class);
+        return d;
     }
 }

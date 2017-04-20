@@ -69,6 +69,8 @@ import com.vmware.admiral.host.RequestInitialBootService;
 import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
 import com.vmware.admiral.log.EventLogService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
+import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState.SubStage;
+import com.vmware.admiral.request.RequestStatusService.RequestStatus;
 import com.vmware.admiral.request.composition.CompositionSubTaskFactoryService;
 import com.vmware.admiral.request.composition.CompositionTaskFactoryService;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
@@ -97,6 +99,7 @@ import com.vmware.photon.controller.model.resources.ResourcePoolService.Resource
 import com.vmware.photon.controller.model.resources.SubnetService;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.TestContext;
@@ -611,7 +614,20 @@ public abstract class RequestBaseTest extends BaseTestCase {
     protected RequestBrokerState waitForRequestToComplete(RequestBrokerState requestState)
             throws Throwable {
         host.log("wait for request: " + requestState.documentSelfLink);
-        return waitForTaskSuccess(requestState.documentSelfLink, RequestBrokerState.class);
+
+        RequestBrokerState rbState = waitForTaskSuccess(requestState.documentSelfLink, RequestBrokerState.class);
+
+        // Verify request status
+        RequestStatus rs = getDocument(RequestStatus.class, requestState.requestTrackerLink);
+        assertNotNull(rs);
+
+        waitForPropertyValue(rs.documentSelfLink, RequestStatus.class, RequestStatus
+                .FIELD_NAME_TASK_INFO_STAGE, rbState.taskInfo.stage);
+
+        waitForPropertyValue(rs.documentSelfLink, RequestStatus.class, RequestStatus
+                .FIELD_NAME_PROGRESS, 100);
+
+        return rbState;
     }
 
     protected ContainerRemovalTaskService.ContainerRemovalTaskState waitForRequestToComplete(
@@ -633,7 +649,19 @@ public abstract class RequestBaseTest extends BaseTestCase {
     protected RequestBrokerState waitForRequestToFail(RequestBrokerState requestState)
             throws Throwable {
         host.log("wait for request to fail: " + requestState.documentSelfLink);
-        return waitForTaskError(requestState.documentSelfLink, RequestBrokerState.class);
+
+        RequestBrokerState rbState = waitForTaskError(requestState.documentSelfLink, RequestBrokerState.class);
+
+        RequestStatus rs = getDocument(RequestStatus.class, rbState.requestTrackerLink);
+        assertNotNull(rs);
+
+        waitForPropertyValue(rs.documentSelfLink, RequestStatus.class, RequestStatus
+                .FIELD_NAME_TASK_INFO_STAGE, TaskStage.FAILED);
+
+        waitForPropertyValue(rs.documentSelfLink, RequestStatus.class, RequestStatus
+                .FIELD_NAME_SUB_STAGE, SubStage.ERROR.name());
+
+        return rbState;
     }
 
     /**

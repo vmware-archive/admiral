@@ -22,8 +22,8 @@ export var HostActions = Reflux.createActions([
 ]);
 
 export var MachineActions = Reflux.createActions([
-  'openMachines', 'openMachinesNext', 'openAddMachine', 'createMachine',
-  'editMachine', 'updateMachine', 'operationCompleted'
+  'openMachines', 'openMachinesNext', 'openAddMachine', 'openMachineDetails',
+  'createMachine', 'editMachine', 'updateMachine', 'operationCompleted'
 ]);
 
 export var ComputeActions = Reflux.createActions([
@@ -223,7 +223,7 @@ export var NavigationActions = Reflux.createActions([
   'openNetworks', 'openContainerDetails', 'openClusterDetails', 'openCompositeContainerDetails',
   'openTemplateDetails', 'showContainersPerPlacement', 'showMachinesPerPlacement', 'openPlacements',
   'openProfiles', 'openAddProfile', 'editProfile', 'openMachines', 'openAddMachine', 'editMachine',
-  'openCompute', 'editCompute', 'openClosures', 'openClosuresSilently', 'openAddClosure',
-  'openClosureDetails', 'openCompositeClosureDetails', 'openEndpoints', 'openEndpointsSilently',
-  'openAddEndpoint', 'openVolumes'
+  'openCompute', 'editCompute', 'openMachineDetails', 'openClosures', 'openClosuresSilently',
+  'openAddClosure', 'openClosureDetails', 'openCompositeClosureDetails', 'openEndpoints',
+  'openEndpointsSilently', 'openAddEndpoint', 'openVolumes'
 ]);

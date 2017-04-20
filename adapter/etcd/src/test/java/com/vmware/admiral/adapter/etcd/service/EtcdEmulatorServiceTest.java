@@ -18,6 +18,7 @@ import static org.junit.Assert.assertNull;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.etcd.service.EtcdEmulatorService.EtcdNode;
@@ -341,6 +342,7 @@ public class EtcdEmulatorServiceTest extends BaseTestCase {
     }
 
     @Test
+    @Ignore("https://jira-hzn.eng.vmware.com/browse/VBV-1197")
     public void testGetWait() throws Throwable {
         doPut(EtcdEmulatorService.SELF_LINK + "/keyForWait", "value");
 

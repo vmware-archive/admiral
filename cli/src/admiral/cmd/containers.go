@@ -424,7 +424,7 @@ func RunContainerRun(args []string) (string, []error) {
 	}
 
 	if customTimeout != 0 {
-		config.TASK_TIMEOUT = customTimeout
+		config.TASK_TIMEOUT_SECONDS = customTimeout
 	}
 
 	cd := &containers.ContainerDescription{}

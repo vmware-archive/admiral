@@ -18,6 +18,11 @@ package com.vmware.admiral.closures.drivers;
 public class ImageConfiguration {
 
     /**
+     * Host & port of the image registry
+     */
+    public String registry;
+
+    /**
      * Name of the runtime image
      */
     public String imageName;
@@ -43,7 +48,8 @@ public class ImageConfiguration {
 
     @Override public String toString() {
         return "ImageConfiguration{" +
-                "imageName='" + imageName + '\'' +
+                "registry='" + registry + '\'' +
+                ", imageName='" + imageName + '\'' +
                 ", imageNameVersion='" + imageNameVersion + '\'' +
                 ", baseImageName='" + baseImageName + '\'' +
                 ", baseImageVersion='" + baseImageVersion + '\'' +
