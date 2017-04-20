@@ -134,7 +134,8 @@ public class DockerImageService extends StatefulService {
         }
         ExecutionDriver executionDriver = driverRegistry.getDriver();
 
-        logInfo("Verifying image: %s link: %s", imageRequest.name, imageRequest.documentSelfLink);
+        logFine("Verifying image: %s link: %s", imageRequest.name, imageRequest
+                .documentSelfLink);
         executionDriver.inspectImage(imageRequest.name, imageRequest.computeStateLink,
                 (error) -> {
                     logWarning("Unable to check docker image: %s on host: %s. Reason: %s",
