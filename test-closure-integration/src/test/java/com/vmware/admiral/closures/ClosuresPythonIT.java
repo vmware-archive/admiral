@@ -67,16 +67,20 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        serviceClient = ServiceClientFactory.createServiceClient(null);
-        testWebserverUri = getTestWebServerUrl();
+        try {
+            serviceClient = ServiceClientFactory.createServiceClient(null);
+            testWebserverUri = getTestWebServerUrl();
 
-        setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
-        dockerBuildImageLink = getBaseUrl()
-                + createImageBuildRequestUri(IMAGE_NAME + ":1.0", dockerHostCompute
-                .documentSelfLink);
-        dockerBuildBaseImageLink = getBaseUrl()
-                + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
-                .documentSelfLink);
+            setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
+            dockerBuildImageLink = getBaseUrl()
+                    + createImageBuildRequestUri(IMAGE_NAME + ":1.0", dockerHostCompute
+                    .documentSelfLink);
+            dockerBuildBaseImageLink = getBaseUrl()
+                    + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
+                    .documentSelfLink);
+        } catch (Exception ex) {
+            logger.error("Failed to setup test env: ", ex);
+        }
     }
 
     @AfterClass
@@ -233,7 +237,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
         closureDescState.runtime = RUNTIME_PYTHON;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 2;
+        constraints.timeoutSeconds = 5;
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
@@ -1261,7 +1265,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
         closureDescState.runtime = RUNTIME_PYTHON;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 2;
+        constraints.timeoutSeconds = 5;
         constraints.ramMB = 300;
         closureDescState.resources = constraints;
 

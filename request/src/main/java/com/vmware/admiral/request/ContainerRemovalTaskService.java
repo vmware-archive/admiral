@@ -389,7 +389,8 @@ public class ContainerRemovalTaskService
         }
     }
 
-    private void doDeleteResource(ContainerRemovalTaskState state, String subTaskLink, ContainerState cs) {
+    private void doDeleteResource(ContainerRemovalTaskState state, String subTaskLink,
+            ContainerState cs) {
         QueryTask compositeQueryTask = QueryUtil.buildQuery(ContainerState.class, true);
 
         String containerDescriptionLink = UriUtils.buildUriPath(
@@ -412,11 +413,13 @@ public class ContainerRemovalTaskService
                         AtomicLong skipDeleteDescriptionOperationException = new AtomicLong();
                         AtomicLong skipHostPortProfileNotFoundException = new AtomicLong();
                         List<AtomicLong> skipOperationExceptions = Arrays.asList(
-                                skipDeleteDescriptionOperationException, skipHostPortProfileNotFoundException);
+                                skipDeleteDescriptionOperationException,
+                                skipHostPortProfileNotFoundException);
 
                         Operation delContainerOpr = deleteContainer(cs);
                         Operation placementOpr = releaseResourcePlacement(state, cs, subTaskLink);
-                        Operation releasePortsOpr = releasePorts(cs, skipHostPortProfileNotFoundException);
+                        Operation releasePortsOpr = releasePorts(cs,
+                                skipHostPortProfileNotFoundException);
 
                         // list of operations to execute to release container resources
                         List<Operation> operations = new ArrayList<>();
@@ -547,12 +550,6 @@ public class ContainerRemovalTaskService
             return null;
         }
 
-        if (isClosureContainer(cs)) {
-            logFine("Skipping releasing placement because container is related to closures: %s",
-                    cs.documentSelfLink);
-            return null;
-        }
-
         ReservationRemovalTaskState rsrvTask = new ReservationRemovalTaskState();
         rsrvTask.resourceCount = 1;
         rsrvTask.resourceDescriptionLink = cs.descriptionLink;
@@ -585,7 +582,8 @@ public class ContainerRemovalTaskService
                         (o, e) -> {
                             if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND ||
                                     e instanceof CancellationException) {
-                                logWarning("Cannot find host port profile [%s]", hostPortProfileLink);
+                                logWarning("Cannot find host port profile [%s]",
+                                        hostPortProfileLink);
                                 skipOperationException.set(o.getId());
                             }
 
@@ -615,7 +613,8 @@ public class ContainerRemovalTaskService
                                     .setCompletion(
                                             (op, ex) -> {
                                                 if (ex != null) {
-                                                    logWarning("Failed releasing container ports: " + cs.documentSelfLink, ex);
+                                                    logWarning("Failed releasing container ports: "
+                                                            + cs.documentSelfLink, ex);
                                                     return;
                                                 }
                                             }));
