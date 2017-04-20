@@ -31,7 +31,7 @@ func TestMain(m *testing.M) {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	config.GetCfg()
+	config.GetCfgForTests()
 
 	code := m.Run()
 	os.Exit(code)
