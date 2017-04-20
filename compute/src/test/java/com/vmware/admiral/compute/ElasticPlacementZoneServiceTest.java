@@ -22,13 +22,23 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ElasticPlacementZoneService.ElasticPlacementZoneState;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
+import com.vmware.admiral.service.common.MultiTenantDocument;
+import com.vmware.photon.controller.model.ComputeProperties;
+import com.vmware.photon.controller.model.query.QueryUtils.QueryByPages;
+import com.vmware.photon.controller.model.query.QueryUtils.QueryTemplate;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
+import com.vmware.photon.controller.model.resources.ComputeService;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState.ResourcePoolProperty;
@@ -103,7 +113,6 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
         rp = getDocument(ResourcePoolState.class, rp.documentSelfLink);
         assertEquals(EnumSet.of(ResourcePoolProperty.ELASTIC), rp.properties);
         assertFalse(isNonElasticQuery(rp.query));
-        assertEquals(2, rp.query.booleanClauses.get(0).booleanClauses.get(0).booleanClauses.size());
 
         // add more tags through a put request
         epz.tagLinksToMatch.add("tag3");
@@ -113,7 +122,6 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
         // verify RP is updated with the new tags
         rp = getDocument(ResourcePoolState.class, rp.documentSelfLink);
         assertEquals(EnumSet.of(ResourcePoolProperty.ELASTIC), rp.properties);
-        assertEquals(4, rp.query.booleanClauses.get(0).booleanClauses.get(0).booleanClauses.size());
     }
 
     @Test
@@ -155,13 +163,11 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
         rp = getDocument(ResourcePoolState.class, rp.documentSelfLink);
         assertEquals(EnumSet.of(ResourcePoolProperty.ELASTIC), rp.properties);
         assertFalse(isNonElasticQuery(rp.query));
-        assertEquals(2, rp.query.booleanClauses.get(0).booleanClauses.get(0).booleanClauses.size());
 
         // add more tags and verify RP query is updated
         patchEpz(epzLink, "tag3", "tag4");
         rp = getDocument(ResourcePoolState.class, rp.documentSelfLink);
         assertEquals(EnumSet.of(ResourcePoolProperty.ELASTIC), rp.properties);
-        assertEquals(4, rp.query.booleanClauses.get(0).booleanClauses.get(0).booleanClauses.size());
     }
 
     @Test
@@ -199,6 +205,56 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
         assertTrue(isNonElasticQuery(rp.query));
     }
 
+    @SuppressWarnings("unused")
+    @Test
+    public void testElasticQuery() throws Throwable {
+        ResourcePoolState containerRp = createRp(false, null, Arrays.asList("A", "B"));
+        ResourcePoolState computeRp = createRp(true, "ep1", Arrays.asList("X", "Y", "Z"));
+
+        createEpz(containerRp.documentSelfLink, "tag1", "tag2");
+        createEpz(computeRp.documentSelfLink, "tag3", "tag4");
+
+        containerRp = getDocument(ResourcePoolState.class, containerRp.documentSelfLink);
+        computeRp = getDocument(ResourcePoolState.class, computeRp.documentSelfLink);
+
+        List<ComputeState> matchingContainerHosts = Arrays.asList(
+                createCompute(ComputeType.VM_GUEST, null, null, Arrays.asList("tag1", "tag2"),
+                        Arrays.asList("A", "B")),
+                createCompute(ComputeType.VM_GUEST, null, containerRp.documentSelfLink, null,
+                        Arrays.asList("A", "B")),
+                createCompute(ComputeType.VM_GUEST, null, null, Arrays.asList("tag1", "tag2", "tag3"),
+                        Arrays.asList("A", "B")));
+        List<ComputeState> notMatchingContainerHosts = Arrays.asList(
+                createCompute(ComputeType.VM_GUEST, null, null, Arrays.asList("tag1"),
+                        Arrays.asList("A", "B")),
+                createCompute(ComputeType.VM_GUEST, null, null, Arrays.asList("tag1", "tag2"),
+                        Arrays.asList("X", "Y", "Z")));
+
+        List<ComputeState> matchingComputes = Arrays.asList(
+                createCompute(ComputeType.VM_HOST, "ep1", null, Arrays.asList("tag3", "tag4"),
+                        Arrays.asList("X", "Y", "Z")),
+                createCompute(ComputeType.VM_HOST, "ep1", computeRp.documentSelfLink, null,
+                        Arrays.asList("X", "Y", "Z")),
+                createCompute(ComputeType.VM_HOST, "ep1", null, Arrays.asList("tag3", "tag4", "5"),
+                        Arrays.asList("X", "Y", "Z")),
+                createCompute(ComputeType.ZONE, "ep1", null, Arrays.asList("tag3", "tag4"),
+                        Arrays.asList("X", "Y", "Z")));
+        List<ComputeState> notMatchingComputes = Arrays.asList(
+                createCompute(ComputeType.VM_HOST, "ep1", null, Arrays.asList("tag3"),
+                        Arrays.asList("X", "Y", "Z")),
+                createCompute(ComputeType.VM_GUEST, "ep1", null, Arrays.asList("tag3", "tag4"),
+                        Arrays.asList("X", "Y", "Z")),
+                createCompute(ComputeType.VM_HOST, "ep1", null, Arrays.asList("tag3", "tag4"),
+                        Arrays.asList("X", "Y")),
+                createCompute(ComputeType.VM_HOST, "wrong-ep", null, Arrays.asList("tag3", "tag4"),
+                        Arrays.asList("X", "Y", "Z")),
+                createCompute(ComputeType.VM_HOST, null, null, Arrays.asList("tag3", "tag4"),
+                        Arrays.asList("X", "Y", "Z")));
+
+        assertEqualComputes(executeRpQuery(containerRp), matchingContainerHosts);
+        assertEqualComputes(executeRpQuery(computeRp), matchingComputes);
+    }
+
     private ElasticPlacementZoneState createEpz(String rpLink, String... tagLinks)
             throws Throwable {
         ElasticPlacementZoneState initialState = new ElasticPlacementZoneState();
@@ -215,9 +271,70 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
     }
 
     private ResourcePoolState createRp() throws Throwable {
+        return createRp(false, null, null);
+    }
+
+    private ResourcePoolState createRp(boolean isCompute, String endpointLink,
+            List<String> tenantLinks) throws Throwable {
         ResourcePoolState initialState = new ResourcePoolState();
         initialState.name = "rp-1";
+        if (isCompute) {
+            initialState.customProperties = new HashMap<>();
+            initialState.customProperties.put(PlacementZoneConstants.RESOURCE_TYPE_CUSTOM_PROP_NAME,
+                    ResourceType.COMPUTE_TYPE.getName());
+
+            if (endpointLink != null) {
+                initialState.customProperties.put(ComputeProperties.ENDPOINT_LINK_PROP_NAME,
+                        endpointLink);
+            }
+        }
+        initialState.tenantLinks = correctTenantPrefixes(tenantLinks);
         return doPost(initialState, ResourcePoolService.FACTORY_LINK);
+    }
+
+    private ComputeState createCompute(ComputeType type, String endpointLink, String rpLink, List<String> tagLinks,
+            List<String> tenantLinks) throws Throwable {
+        ComputeState state = new ComputeState();
+        state.name = UUID.randomUUID().toString();
+        state.descriptionLink = "desc-link";
+        state.type = type;
+        state.endpointLink = endpointLink;
+        state.resourcePoolLink = rpLink;
+        state.tagLinks = tagLinks != null ? new HashSet<>(tagLinks) : null;
+        state.tenantLinks = correctTenantPrefixes(tenantLinks);
+        return doPost(state, ComputeService.FACTORY_LINK);
+    }
+
+    private List<String> executeRpQuery(ResourcePoolState rp) {
+        return QueryTemplate.waitToComplete(
+                new QueryByPages<>(this.host, rp.query, ComputeState.class, rp.tenantLinks)
+                        .collectLinks(Collectors.toList()));
+    }
+
+    private void assertEqualComputes(List<String> actualLinks, List<ComputeState> expectedComputes) {
+        List<String> expectedLinks = expectedComputes.stream().map(cs -> cs.documentSelfLink)
+                .collect(Collectors.toList());
+        for (String link : actualLinks) {
+            assertTrue(expectedLinks.remove(link));
+        }
+        assertEquals(0, expectedLinks.size());
+    }
+
+    private List<String> correctTenantPrefixes(List<String> tenantLinks) {
+        if (tenantLinks == null) {
+            return null;
+        }
+        List<String> result = new ArrayList<>(tenantLinks.size());
+        if (tenantLinks.size() > 0) {
+            result.add(MultiTenantDocument.TENANTS_PREFIX + "/" + tenantLinks.get(0));
+        }
+        if (tenantLinks.size() > 1) {
+            result.add(MultiTenantDocument.GROUP_IDENTIFIER + "/" + tenantLinks.get(1));
+        }
+        if (tenantLinks.size() > 2) {
+            result.add(MultiTenantDocument.USERS_PREFIX + "/" + tenantLinks.get(2));
+        }
+        return result;
     }
 
     private static Set<String> tagSet(String... tagLinks) {

@@ -29,6 +29,7 @@ import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.Elast
 import com.vmware.admiral.compute.ElasticPlacementZoneService.ElasticPlacementZoneState;
 import com.vmware.admiral.compute.EpzComputeEnumerationTaskService.EpzComputeEnumerationTaskState;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
@@ -187,6 +188,7 @@ public class EpzComputeEnumerationTaskServiceTest extends ComputeBaseTest {
         cs.address = address;
         cs.descriptionLink = desc;
         cs.resourcePoolLink = rpLink;
+        cs.type = ComputeType.VM_GUEST;
         cs.tagLinks = tagSet(tags);
         return doPost(cs, ComputeService.FACTORY_LINK);
     }
