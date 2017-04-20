@@ -502,6 +502,7 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
         long newMemoryLimit = MIN_MEMORY;
         long newStorageLimit = 5789L;
         int newCpuShares = 45;
+        List<String> newTenantLinks = Arrays.asList(BUSINESS_GROUP);
 
         placementState.name = newName;
         placementState.maxNumberInstances = newMaxInstance;
@@ -510,6 +511,7 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
         placementState.memoryLimit = newMemoryLimit;
         placementState.storageLimit = newStorageLimit;
         placementState.cpuShares = newCpuShares;
+        placementState.tenantLinks = newTenantLinks;
 
         doOperation(placementState, UriUtils.buildUri(host, placementState.documentSelfLink),
                 false, Action.PUT);
@@ -524,6 +526,7 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
         assertEquals(newMemoryLimit, placementState.memoryLimit);
         assertEquals(newStorageLimit, placementState.storageLimit);
         assertEquals(newCpuShares, placementState.cpuShares);
+        assertEquals(newTenantLinks, placementState.tenantLinks);
 
         doDelete(UriUtils.buildUri(host, placementState.documentSelfLink), false);
     }
@@ -793,6 +796,7 @@ public class GroupResourcePlacementServiceTest extends ComputeBaseTest {
         placementState.resourcePoolLink = resourcePoolLink;
         placementState.cpuShares = cpuShares;
         placementState.priority = priority;
+        placementState.tenantLinks = Arrays.asList(TENANT);
 
         return placementState;
     }
