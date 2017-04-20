@@ -37,8 +37,9 @@ import com.vmware.xenon.services.common.ServiceUriPaths;
  * common functionality for all {@link ServiceDocument} types.
  */
 public class ServiceDocumentQuery<T extends ServiceDocument> {
+
     public static final long DEFAULT_EXPIRATION_TIME_IN_MICROS = Long.getLong(
-            "dcp.management.query.documents.default.expiration.millis",
+            "dcp.management.query.documents.default.expiration.micros",
             TimeUnit.SECONDS.toMicros(120));
     public static final Integer DEFAULT_QUERY_RESULT_LIMIT = Integer.getInteger(
             "dcp.management.query.documents.default.resultLimit", 10000);
@@ -186,6 +187,7 @@ public class ServiceDocumentQuery<T extends ServiceDocument> {
         if (!(isCountQuery(q)) && q.querySpec.resultLimit == null) {
             q.querySpec.resultLimit = DEFAULT_QUERY_RESULT_LIMIT;
         }
+        q.querySpec.options.add(QueryOption.SINGLE_USE);
 
         host.sendRequest(Operation
                 .createPost(UriUtils.buildUri(host, ServiceUriPaths.CORE_QUERY_TASKS))
@@ -451,4 +453,5 @@ public class ServiceDocumentQuery<T extends ServiceDocument> {
             throw new RuntimeException(exception);
         }
     }
+
 }
