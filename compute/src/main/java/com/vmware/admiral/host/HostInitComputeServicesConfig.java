@@ -22,6 +22,7 @@ import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.ElasticPlacementZoneService;
 import com.vmware.admiral.compute.EpzComputeEnumerationTaskService;
 import com.vmware.admiral.compute.HostConfigCertificateDistributionService;
+import com.vmware.admiral.compute.ImageSearchService;
 import com.vmware.admiral.compute.PlacementCapacityUpdateTaskService;
 import com.vmware.admiral.compute.RegistryConfigCertificateDistributionService;
 import com.vmware.admiral.compute.RegistryHostConfigService;
@@ -110,6 +111,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 RegistryConfigCertificateDistributionService.class,
                 ComputeInitialBootService.class,
                 ComputeSearchService.class,
+                ImageSearchService.class,
                 ElasticPlacementZoneConfigurationService.class,
                 ProfileMappingService.class,
                 KubernetesDescriptionContentService.class,

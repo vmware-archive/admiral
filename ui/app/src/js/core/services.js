@@ -935,13 +935,23 @@ services.updateSubnetwork = function(subnetwork) {
 
 services.searchImageResources = function(endpointLink, query, limit) {
   var qOps = {
-    any: query.toLowerCase(),
-    endpoint: endpointLink
+    any: query.toLowerCase()
   };
 
   let filter = buildSearchQuery(qOps);
+
+  let params = {
+    endpoint: buildOdataQuery({
+      documentSelfLink: [{
+        op: 'eq',
+        val: endpointLink
+      }]
+    })
+  };
+
   let url = buildPaginationUrl(links.IMAGE_RESOURCES, filter, true,
-                               'documentUpdateTimeMicros desc', limit);
+      'documentUpdateTimeMicros desc', limit, params);
+
   return get(url).then(function(data) {
     var documentLinks = data.documentLinks || [];
 
