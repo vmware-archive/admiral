@@ -21,6 +21,13 @@ public abstract class RequestUtils {
      * container states will be created and allocated but no actual provisioning will take place.
      */
     public static final String FIELD_NAME_ALLOCATION_REQUEST = "__allocation_request";
+
+    /**
+     * Property field name indicating whether a given request is a deallocation one - meaning that
+     * the resource states will be deleted and deallocated.
+     */
+    public static final String FIELD_NAME_DEALLOCATION_REQUEST = "__deallocation_request";
+
     /**
      * Context id that spreads across multiple allocation request as part of multi-container
      * composite deployment.

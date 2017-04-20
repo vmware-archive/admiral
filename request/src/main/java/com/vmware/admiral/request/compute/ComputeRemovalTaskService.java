@@ -42,6 +42,7 @@ import com.vmware.admiral.request.ContainerHostRemovalTaskService.ContainerHostR
 import com.vmware.admiral.request.ReservationRemovalTaskFactoryService;
 import com.vmware.admiral.request.ReservationRemovalTaskService.ReservationRemovalTaskState;
 import com.vmware.admiral.request.compute.ComputeRemovalTaskService.ComputeRemovalTaskState.SubStage;
+import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -234,13 +235,21 @@ public class ComputeRemovalTaskService extends
                         .createPatch(this, resourceLink)
                         .setBody(computeState));
             }
+
             OperationJoin.create(operations.toArray(new Operation[operations.size()]))
                     .setCompletion((ops, exs) -> {
                         if (exs != null) {
                             logInfo("Failed suspending ComputeStates");
                             logFine("Failed suspending ComputeStates, reason %s",
                                     Utils.toString(exs));
-                            proceedTo(SubStage.COMPLETED);
+
+                            if (state.customProperties != null && Boolean.TRUE.toString().equals(
+                                    state.customProperties.get(RequestUtils.FIELD_NAME_DEALLOCATION_REQUEST))) {
+                                proceedTo(SubStage.COMPLETED);
+                                return;
+                            }
+
+                            failTask("Unexpected exception while suspending container host", new Throwable(Utils.toString(exs)));
                             return;
                         }
                         proceedTo(SubStage.SUSPENDED_COMPUTES);
