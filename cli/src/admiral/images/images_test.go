@@ -33,7 +33,7 @@ func TestMain(m *testing.M) {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	config.GetCfg()
+	config.GetCfgForTests()
 	loginout.Login(tc.Username, tc.Password, tc.AdmiralAddress)
 
 	code := m.Run()

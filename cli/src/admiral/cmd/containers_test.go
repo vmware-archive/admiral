@@ -27,7 +27,7 @@ import (
 func TestContainerProvision(t *testing.T) {
 	// Preparing the test.
 	TestPrintln("Configuring the env.")
-	config.GetCfg()
+	config.GetCfgForTests()
 	tc, err := ConfigureTestEnv()
 	CheckTestError(err, t)
 
