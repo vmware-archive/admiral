@@ -205,8 +205,8 @@ var (
 	memoryLimitStr     string
 	memoryLimitDesc    = "Memory limit. Default unit: kb. Units supported: kb/mb/gb. Example: 1024mb"
 	priorityInt        int32
-	maxNumberInstances int32
-	cpuSharesInt       int32
+	maxNumberInstances int64
+	cpuSharesInt       int64
 
 	outputFormat     string
 	outputFormatDesc = "Output format: json, table."
