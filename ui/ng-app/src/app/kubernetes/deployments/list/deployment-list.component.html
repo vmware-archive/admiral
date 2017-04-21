@@ -10,7 +10,7 @@
   -->
 
 <div>
-  <grid-view [items]="entities" [loading]="loadingEntities"
+  <grid-view [serviceEndpoint]="serviceEndpoint"
     [searchPlaceholder]="'Search for deployments'"
     [searchSuggestionProperties]="['name']">
     <div title>{{"deployments.plural" | i18n: { "ns": "kubernetes"} }}</div>

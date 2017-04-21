@@ -56,3 +56,27 @@ export class Utils {
     return result;
   }
 }
+
+export class CancelablePromise<T> {
+  private wrappedPromise: Promise<T>;
+  private isCanceled;
+
+  constructor(promise: Promise<T>) {
+    this.wrappedPromise = new Promise((resolve, reject) => {
+      promise.then((val) =>
+        this.isCanceled ? reject({isCanceled: true}) : resolve(val)
+      );
+      promise.catch((error) =>
+        this.isCanceled ? reject({isCanceled: true}) : reject(error)
+      );
+    });
+  }
+
+  getPromise(): Promise<T> {
+    return this.wrappedPromise;
+  }
+
+  cancel() {
+    this.isCanceled = true;
+  }
+}

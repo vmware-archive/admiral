@@ -13,6 +13,7 @@ import constants from 'core/constants';
 import utils from 'core/utils';
 import links from 'core/links';
 import ft from 'core/ft';
+import { serviceUtils } from 'admiral-ui-common';
 
 const IMAGES_SEARCH_QUERY_PROP_NAME = 'q';
 const IMAGES_SEARCH_LIMIT_PROP_NAME = 'limit';
@@ -128,10 +129,6 @@ var deleteEntity = function(url) {
   });
 };
 
-var encodeQuotes = function(value) {
-  return value.replace(/\'/g, '%2527');
-};
-
 var day2operation = function(url, entity) {
   return post(url, entity);
 };
@@ -139,45 +136,18 @@ var day2operation = function(url, entity) {
 var buildTagsQuery = function(q) {
   var pair = q.split(constants.TAGS.SEPARATOR);
   var occurrence = pair[1] ? constants.SEARCH_OCCURRENCE.ALL : constants.SEARCH_OCCURRENCE.ANY;
-  return buildOdataQuery({
+  return serviceUtils.buildOdataQuery({
     key: [{
-      val: '*' + encodeQuotes(pair[0].toLowerCase()) + (pair[1] ? '' : '*'),
+      val: '*' + serviceUtils.encodeQuotes(pair[0].toLowerCase()) + (pair[1] ? '' : '*'),
       op: 'eq'
     }],
     value: [{
-      val: (pair[0] ? '' : '*') + encodeQuotes((pair[1] || pair[0] || '').toLowerCase()) + '*',
+      val: (pair[0] ? '' : '*') + serviceUtils
+        .encodeQuotes((pair[1] || pair[0] || '').toLowerCase()) + '*',
       op: 'eq'
     }],
     [constants.SEARCH_OCCURRENCE.PARAM]: occurrence
   });
-};
-
-// Simple Odata query builder. By default it will build 'and' query. If provided OCCURRENCE option,
-// then it will use it to build 'and', 'or' query. Based on the option provided, it will use
-// comparison like 'eq' or 'ne'
-var buildOdataQuery = function(queryOptions) {
-  var result = '';
-  if (queryOptions) {
-    var occurrence = queryOptions[constants.SEARCH_OCCURRENCE.PARAM];
-    delete queryOptions[constants.SEARCH_OCCURRENCE.PARAM];
-
-    var operator = occurrence === constants.SEARCH_OCCURRENCE.ANY ? 'or' : 'and';
-
-    for (var key in queryOptions) {
-      if (queryOptions.hasOwnProperty(key)) {
-        var query = queryOptions[key];
-        if (query) {
-          for (var i = 0; i < query.length; i++) {
-            if (result.length > 0) {
-              result += ' ' + operator + ' ';
-            }
-            result += key + ' ' + query[i].op + ' \'' + encodeQuotes(query[i].val) + '\'';
-          }
-        }
-      }
-    }
-  }
-  return result;
 };
 
 var makeDay2OperationRequestContainer = function(containerId, op) {
@@ -338,12 +308,12 @@ var getComputeParams = function(queryOptions) {
   if (endpointArray) {
     endpointOps[FILTER_VALUE_ALL_FIELDS] = endpointArray.map((endpoint) => {
       return {
-        val: '*' + encodeQuotes(endpoint.toLowerCase()) + '*',
+        val: '*' + serviceUtils.encodeQuotes(endpoint.toLowerCase()) + '*',
         op: 'eq'
       };
     });
     endpointOps[constants.SEARCH_OCCURRENCE.PARAM] = queryOptionsOccurrence;
-    params.endpoint = buildOdataQuery(endpointOps);
+    params.endpoint = serviceUtils.buildOdataQuery(endpointOps);
     params.operator = operator;
   }
 
@@ -425,7 +395,7 @@ services.deleteCredential = function(credential) {
 services.loadDeploymentPolicies = function(documentSelfLinks) {
   var params = {};
   if (documentSelfLinks && documentSelfLinks.length) {
-    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+    params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
       documentSelfLink: documentSelfLinks.map((link) => {
         return {
           val: link,
@@ -460,7 +430,7 @@ services.createTag = function(tag) {
 
 services.loadTag = function(key, value) {
   return list(links.TAGS, true, {
-    [ODATA_FILTER_PROP_NAME]: buildOdataQuery({
+    [ODATA_FILTER_PROP_NAME]: serviceUtils.buildOdataQuery({
       key: [{
         val: key,
         op: 'eq'
@@ -478,7 +448,7 @@ services.loadTag = function(key, value) {
 services.loadTags = function(documentSelfLinks) {
   var params = {};
   if (documentSelfLinks && documentSelfLinks.length) {
-    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+    params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
       documentSelfLink: documentSelfLinks.map((link) => {
         return {
           val: link,
@@ -519,7 +489,7 @@ services.saveTagStates = function(tags) {
 services.loadPlacementZones = function(documentSelfLinks) {
   var params = {};
   if (documentSelfLinks && documentSelfLinks.length) {
-    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+    params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
       documentSelfLink: documentSelfLinks.map((link) => {
         return {
           val: link,
@@ -530,7 +500,7 @@ services.loadPlacementZones = function(documentSelfLinks) {
     });
   } else if (utils.isApplicationCompute()) {
       // In Prelude filter COMPUTE only
-      params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+      params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
         'customProperties/__resourceType': [{
           val: constants.RESOURCE_TYPES.COMPUTE,
           op: 'eq'
@@ -539,7 +509,7 @@ services.loadPlacementZones = function(documentSelfLinks) {
       });
   } else {
     // In Admiral filter non-COMPUTE only
-    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+    params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
       'customProperties/__resourceType': [{
         val: constants.RESOURCE_TYPES.COMPUTE,
         op: 'ne'
@@ -654,7 +624,7 @@ services.deleteCertificate = function(certificate) {
 services.loadHostDescriptions = function(documentSelfLinks) {
   var params = {};
   if (documentSelfLinks && documentSelfLinks.length) {
-    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+    params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
       documentSelfLink: documentSelfLinks.map((link) => {
         return {
           val: link,
@@ -759,7 +729,7 @@ services.loadHosts = function(queryOptions, onlyContainerHosts) {
 services.loadHostsByLinks = function(documentSelfLinks) {
   var params = {};
   if (documentSelfLinks && documentSelfLinks.length) {
-    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+    params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
       documentSelfLink: documentSelfLinks.map((link) => {
         return {
           val: link,
@@ -828,7 +798,7 @@ services.loadNetwork = function(documentSelfLink) {
 services.loadNetworks = function(endpointLink, documentSelfLinks) {
   var params = {};
   if (documentSelfLinks && documentSelfLinks.length) {
-    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+    params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
       documentSelfLink: documentSelfLinks.map((link) => {
         return {
           val: link,
@@ -838,7 +808,7 @@ services.loadNetworks = function(endpointLink, documentSelfLinks) {
       [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
     });
   } else if (endpointLink) {
-    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+    params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
       endpointLink: [{
         val: endpointLink,
         op: 'eq'
@@ -876,7 +846,7 @@ services.searchNetworks = function(endpointLink, query, limit) {
 services.loadSubnetworks = function(endpointLink, documentSelfLinks) {
   var params = {};
   if (documentSelfLinks && documentSelfLinks.length) {
-    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+    params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
       documentSelfLink: documentSelfLinks.map((link) => {
         return {
           val: link,
@@ -886,7 +856,7 @@ services.loadSubnetworks = function(endpointLink, documentSelfLinks) {
       [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
     });
   } else if (endpointLink) {
-    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+    params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
       endpointLink: [{
         val: endpointLink,
         op: 'eq'
@@ -956,7 +926,7 @@ services.searchImageResources = function(endpointLink, query, limit) {
 services.loadImageResources = function(ids) {
   var params = {};
   if (ids && ids.length) {
-    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+    params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
       id: ids.map((id) => {
         return {
           val: id,
@@ -1080,7 +1050,7 @@ services.loadTemplates = function(queryOptions) {
 };
 
 services.loadTemplatesContainingComponentDescriptionLink = function(componentDescriptionLink) {
-  var query = buildOdataQuery({
+  var query = serviceUtils.buildOdataQuery({
     'descriptionLinks/item': [{
       val: componentDescriptionLink,
       op: 'eq'
@@ -1166,7 +1136,7 @@ services.loadRequests = function() {
 
 services.loadRequestByStatusLink = function(requestStatusLink) {
   let params = {
-    [ODATA_FILTER_PROP_NAME]: buildOdataQuery({
+    [ODATA_FILTER_PROP_NAME]: serviceUtils.buildOdataQuery({
       requestTrackerLink: [{
         val: requestStatusLink,
         op: 'eq'
@@ -1203,7 +1173,7 @@ services.loadRequestStatuses = function(itemsType) {
     }];
   }
 
-  var filter = buildOdataQuery(params);
+  var filter = serviceUtils.buildOdataQuery(params);
   var url = buildPaginationUrl(links.REQUEST_STATUS, filter, false,
       'documentExpirationTimeMicros desc');
   return get(url).then(function(result) {
@@ -1242,7 +1212,7 @@ services.loadPlacements = function() {
       : constants.RESOURCE_TYPES.CONTAINER;
 
   var params = {
-    [ODATA_FILTER_PROP_NAME]: buildOdataQuery({
+    [ODATA_FILTER_PROP_NAME]: serviceUtils.buildOdataQuery({
       resourceType: [{
         val: resourceType,
         op: 'eq'
@@ -1322,7 +1292,7 @@ services.updateStorageProfile = function(profile) {
 services.searchEndpoints = function(query, limit, type) {
   let endpointOps = {
     name: [{
-      val: '*' + encodeQuotes(query.toLowerCase()) + '*',
+      val: '*' + serviceUtils.encodeQuotes(query.toLowerCase()) + '*',
       op: 'eq'
     }]
   };
@@ -1332,7 +1302,7 @@ services.searchEndpoints = function(query, limit, type) {
       op: 'eq'
     }];
   }
-  let filter = buildOdataQuery(endpointOps);
+  let filter = serviceUtils.buildOdataQuery(endpointOps);
 
   let url = buildPaginationUrl(links.ENDPOINTS, filter, true,
                                'documentExpirationTimeMicros desc', limit);
@@ -1354,7 +1324,7 @@ services.searchEndpoints = function(query, limit, type) {
 services.loadEndpoints = function(documentSelfLinks) {
   var params = {};
   if (documentSelfLinks && documentSelfLinks.length) {
-    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+    params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
       documentSelfLink: documentSelfLinks.map((link) => {
         return {
           val: link,
@@ -1455,7 +1425,7 @@ services.loadCompositeComponents = function(queryOptions) {
 services.loadCompositeComponentsByLinks = function(documentSelfLinks) {
   var params = {};
   if (documentSelfLinks && documentSelfLinks.length) {
-    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+    params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
       documentSelfLink: documentSelfLinks.map((link) => {
         return {
           val: link,
@@ -1533,7 +1503,7 @@ services.loadClosures = function(queryOptions) {
 
 services.loadClosureRuns = function(closureDescriptionLink) {
   // var filter = buildResourcesSearchQuery(queryOptions);
-  let filter = buildOdataQuery({
+  let filter = serviceUtils.buildOdataQuery({
     descriptionLink: [{
       val: closureDescriptionLink + '*',
       op: 'eq'
@@ -1982,9 +1952,9 @@ services.searchContainerVolumes = function(query, limit) {
 };
 
 services.searchEntities = function(entityTypeLink, query, limit) {
-  var filter = buildOdataQuery({
+  var filter = serviceUtils.buildOdataQuery({
     name: [{
-      val: '*' + encodeQuotes(query.toLowerCase()) + '*',
+      val: '*' + serviceUtils.encodeQuotes(query.toLowerCase()) + '*',
       op: 'eq'
     }]
   });
@@ -2059,7 +2029,7 @@ services.loadEventLogs = function(itemsType) {
     }];
   }
 
-  var filter = buildOdataQuery(params);
+  var filter = serviceUtils.buildOdataQuery(params);
   var url = buildPaginationUrl(links.EVENT_LOGS, filter, false,
                                 'documentExpirationTimeMicros desc');
   return get(url).then(function(result) {
@@ -2106,7 +2076,7 @@ services.loadResourceGroups = function(documentSelfLinks) {
   var path = ft.showProjectsInNavigation() ? links.PROJECTS : links.RESOURCE_GROUPS;
   var params = {};
   if (documentSelfLinks && documentSelfLinks.length) {
-    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
+    params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
       documentSelfLink: documentSelfLinks.map((link) => {
         return {
           val: link,
@@ -2290,7 +2260,7 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
     }];
   }
 
-  var result = '(' + buildOdataQuery(qOps) + ')';
+  var result = '(' + serviceUtils.buildOdataQuery(qOps) + ')';
 
   if (queryOptions) {
     var userQueryOps = {};
@@ -2299,7 +2269,7 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
     if (anyArray) {
       userQueryOps[FILTER_VALUE_ALL_FIELDS] = anyArray.map((any) => {
         return {
-          val: '*' + encodeQuotes(any.toLowerCase()) + '*',
+          val: '*' + serviceUtils.encodeQuotes(any.toLowerCase()) + '*',
           op: 'eq'
         };
       });
@@ -2319,7 +2289,7 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
     if (addressArray) {
       userQueryOps.address = addressArray.map((address) => {
         return {
-          val: '*' + encodeQuotes(address.toLowerCase()) + '*',
+          val: '*' + serviceUtils.encodeQuotes(address.toLowerCase()) + '*',
           op: 'eq'
         };
       });
@@ -2329,7 +2299,7 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
     if (nameArray) {
       userQueryOps.name = nameArray.map((name) => {
         return {
-          val: '*' + encodeQuotes(name.toLowerCase()) + '*',
+          val: '*' + serviceUtils.encodeQuotes(name.toLowerCase()) + '*',
           op: 'eq'
         };
       });
@@ -2339,7 +2309,7 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
     if (typeArray) {
       userQueryOps.type = typeArray.map((type) => {
         return {
-          val: '*' + encodeQuotes(type) + '*',
+          val: '*' + serviceUtils.encodeQuotes(type) + '*',
           op: 'eq'
         };
       });
@@ -2402,7 +2372,7 @@ var buildHostsQuery = function(queryOptions, onlyContainerHosts, onlyCompute) {
     if (queryOptionsOccurrence) {
       userQueryOps[constants.SEARCH_OCCURRENCE.PARAM] = queryOptionsOccurrence;
     }
-    var userQueryOdata = buildOdataQuery(userQueryOps);
+    var userQueryOdata = serviceUtils.buildOdataQuery(userQueryOps);
     if (userQueryOdata) {
       result += ' and (' + userQueryOdata + ')';
     }
@@ -2431,7 +2401,7 @@ var buildClusterQuery = function(descriptionLink, compositionContextId) {
     ];
   }
 
-  return buildOdataQuery(qOps);
+  return serviceUtils.buildOdataQuery(qOps);
 };
 
 var buildResourcesSearchQuery = function(queryOptions) {
@@ -2600,7 +2570,7 @@ var buildResourcesSearchQuery = function(queryOptions) {
       }
     }
   }
-  return buildOdataQuery(newQueryOptions);
+  return serviceUtils.buildOdataQuery(newQueryOptions);
 };
 
 var buildSearchQuery = function(queryOptions) {
@@ -2656,7 +2626,7 @@ var buildSearchQuery = function(queryOptions) {
     userQueryOps[constants.SEARCH_OCCURRENCE.PARAM] = queryOptionsOccurrence;
   }
 
-  return buildOdataQuery(userQueryOps);
+  return serviceUtils.buildOdataQuery(userQueryOps);
 };
 
 var client = {

@@ -21,11 +21,7 @@ export class BaseListComponent implements OnInit {
   constructor(protected service: DocumentService, protected router: Router, protected link: string) {}
 
   ngOnInit() {
-    this.loadingEntities = true;
-    this.service.list(this.link).then(result => {
-      this.entities = result;
-      this.loadingEntities = false;
-    });
+
   }
 
   isRouteActive(route) {

@@ -1,12 +1,27 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
 <nav class="sidenav">
   <section class="sidenav-content">
-      <div class="select nav-context-content">
-        <select id="selects_1">
-          <option>Project Dev</option>
-          <option>Project Stage</option>
-          <option>Project Test</option>
-        </select>
-      </div>
+      <clr-dropdown clrMenuPosition="bottom-left" class="project-selector">
+        <button class="btn btn-link" clrDropdownToggle>
+          <div class="project-caret">Project <clr-icon shape="caret down"></clr-icon></div>
+          <div class="project-label">Dev</div>
+        </button>
+        <clr-dropdown-menu>
+          <a href="..." clrDropdownItem>Project Dev</a>
+          <a href="..." clrDropdownItem>Project Stage</a>
+          <a href="..." clrDropdownItem>Project Test</a>
+        </clr-dropdown-menu>
+      </clr-dropdown>
       <a class="nav-link" routerLink="dashboard" routerLinkActive="active">Dashboard</a>
       <section class="nav-group collapsible">
           <input id="deploymentsCollapse" type="checkbox">

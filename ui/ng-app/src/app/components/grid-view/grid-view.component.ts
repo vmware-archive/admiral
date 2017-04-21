@@ -12,8 +12,8 @@
 import { Component, Input, QueryList, OnInit, ContentChild,ContentChildren, ViewChild, ViewChildren, TemplateRef, HostListener, ViewEncapsulation } from '@angular/core';
 import { searchConstants } from 'admiral-ui-common';
 import * as I18n from 'i18next';
-import { DocumentService } from '../../utils/document.service';
-import { Utils } from '../../utils/utils';
+import { DocumentService, DocumentListResult } from '../../utils/document.service';
+import { Utils, CancelablePromise } from '../../utils/utils';
 import { Router, ActivatedRoute, Route, RoutesRecognized, NavigationEnd, NavigationCancel } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 
@@ -24,9 +24,8 @@ import { Subscription } from 'rxjs/Subscription';
   encapsulation: ViewEncapsulation.None
 })
 export class GridViewComponent implements OnInit {
-  @Input() items: any[];
-  @Input() count: number;
-  @Input() loading: boolean;
+  items: any[] = [];
+  loading: boolean;
   @Input() serviceEndpoint: string;
   @Input() searchPlaceholder: string;
   @Input() searchSuggestionProperties: Array<string>;
@@ -43,6 +42,10 @@ export class GridViewComponent implements OnInit {
   layoutTimeout;
   cardOverTimeout;
   querySub: Subscription;
+  totalItemsCount: number;
+  loadedPages: number = 0;
+  nextPageLink: string;
+  loadingPromise: CancelablePromise<DocumentListResult>;
 
   searchOccurrenceProperties = [{
     name: searchConstants.SEARCH_OCCURRENCE.ALL,
@@ -55,22 +58,10 @@ export class GridViewComponent implements OnInit {
   constructor(protected service: DocumentService, private router: Router, private route: ActivatedRoute) { }
 
   ngOnInit() {
-    this.items = [];
-    this.loading = true;
-    this.service.list(this.serviceEndpoint).then(result => {
-      this.items = result;
-      this.cardStyles = this.items.map(i => {
-        return {
-          opacity: '0',
-          overflow: 'hidden'
-         };
-      });
-
-      this.loading = false;
-    });
 
     this.querySub = this.route.queryParams.subscribe(queryParams => {
       this.searchQueryOptions = queryParams;
+      this.list();
     });
 
     this.router.events.subscribe((event) => {
@@ -111,7 +102,7 @@ export class GridViewComponent implements OnInit {
     let el = this.itemsHolder.nativeElement;
 
     let width = el.offsetWidth;
-    let items = el.children;
+    let items = el.querySelectorAll('.card-item');
     let length = items.length;
     if (length === 0) {
       el.height = 0;
@@ -149,7 +140,7 @@ export class GridViewComponent implements OnInit {
     let itemSpacing = columnsToUse === 1 || columns > length ? marginWidth :
         (width - marginWidth - columnsToUse * itemWidth) / (columnsToUse - 1);
 
-    let visible = !this.count || length === this.count ? length : rows * columnsToUse;
+    let visible = !this.totalItemsCount || length === this.totalItemsCount ? length : rows * columnsToUse;
 
     let count = 0;
     for (let i = 0; i < visible; i++) {
@@ -212,7 +203,7 @@ export class GridViewComponent implements OnInit {
     });
   }
 
-  cardEnter(i) {
+  onCardEnter(i) {
     clearTimeout(this.cardOverTimeout);
     this.cardStyles[i].overflow = 'hidden';
     this.cardOverTimeout = setTimeout(() => {
@@ -220,8 +211,101 @@ export class GridViewComponent implements OnInit {
     }, 300);
   }
 
-  cardLeave(i) {
+  onCardLeave(i) {
     clearTimeout(this.cardOverTimeout);
     this.cardStyles[i].overflow = 'hidden';
+  }
+
+  onScroll() {
+    console.log('onScroll');
+    if (this.nextPageLink) {
+      this.loadNextPage();
+    }
+  }
+
+  refresh() {
+    var pagesToLoad = this.loadedPages;
+
+    let loadMore = () => {
+      if (pagesToLoad < this.loadedPages && this.nextPageLink) {
+        this.loadNextPage().then(loadMore);
+      }
+    };
+
+    this.list().then(loadMore);
+  }
+
+  trackByFn(index, item){
+    return item.documentSelfLink;
+  }
+
+  private list() {
+    if (this.loadingPromise) {
+      this.loadingPromise.cancel();
+    }
+
+    this.loading = true;
+    this.loadedPages = 0;
+    this.loadingPromise = new CancelablePromise(this.service.list(this.serviceEndpoint, this.searchQueryOptions));
+    return this.loadingPromise.getPromise()
+    .then(result => {
+      this.loading = false;
+      this.totalItemsCount = result.totalCount;
+
+      let newCardStyles = result.documents.map((d, index) => {
+        if (index < this.cardStyles.length) {
+          return this.cardStyles[index];
+        }
+        return {
+          opacity: '0',
+          overflow: 'hidden'
+          };
+      });
+      this.cardStyles = newCardStyles;
+
+      this.items = result.documents;
+      this.nextPageLink = result.nextPageLink;
+      this.loadedPages++;
+    }).catch(e => {
+      if (e) {
+        if (e.isCanceled) {
+          // ok to be canceled
+        } else {
+          console.error('Failed loading items ', e)
+        }
+      }
+    })
+  }
+
+  private loadNextPage() {
+    if (this.loadingPromise) {
+      this.loadingPromise.cancel();
+    }
+
+    this.loading = true;
+    this.loadingPromise = new CancelablePromise(this.service.loadNextPage(this.nextPageLink));
+    return this.loadingPromise.getPromise()
+    .then(result => {
+      this.loading = false;
+      let newCardStyles = result.documents.map(i => {
+        return {
+          opacity: '0',
+          overflow: 'hidden'
+          };
+      });
+      this.cardStyles = this.cardStyles.concat(newCardStyles);
+      this.items = this.items.concat(result.documents);
+      this.nextPageLink = result.nextPageLink;
+      this.loadedPages++;
+    }).catch(e => {
+      if (e){
+        console.log(e);
+        if (e.isCanceled) {
+          // ok to be canceled
+        } else {
+          console.error('Failed loading items ', e)
+        }
+      }
+    });
   }
 }

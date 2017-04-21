@@ -9,7 +9,7 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<grid-view [items]="entities" [loading]="loadingEntities"
+<grid-view [serviceEndpoint]="serviceEndpoint"
   [searchPlaceholder]="'Search for pods'"
   [searchSuggestionProperties]="['name', 'ip', 'status']">
   <div title>Pods</div>

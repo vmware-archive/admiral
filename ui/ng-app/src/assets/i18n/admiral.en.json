@@ -2,7 +2,7 @@
   "projects": {
     "users": "Users",
     "administrators": "Administrators",
-    "projectRegistry": "Project registry",
+    "projectRegistry": "Registry",
     "public": "public"
   }
 }

@@ -3,6 +3,7 @@ var NetworkTrafficVisualization = require('./components/common/NetworkTrafficVis
 var Search = require('./components/common/Search');
 
 var formatUtils = require('./core/formatUtils');
+var serviceUtils = require('./core/serviceUtils');
 var searchConstants = require('./core/searchConstants');
 
 module.exports = {
@@ -11,5 +12,6 @@ module.exports = {
     Search: Search,
 
     formatUtils: formatUtils,
+    serviceUtils: serviceUtils,
     searchConstants: searchConstants
 }

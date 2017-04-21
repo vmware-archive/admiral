@@ -4,7 +4,7 @@
 grid-view {
   position: relative;
 
-  .items {
+  .grid-content {
     position: absolute;
     top: 130px;
     left: 0;
@@ -40,6 +40,10 @@ grid-view {
       .card-footer {
         bottom: 0;
       }
+    }
+
+    .central-block-loading {
+      z-index: 10;
     }
   }
 

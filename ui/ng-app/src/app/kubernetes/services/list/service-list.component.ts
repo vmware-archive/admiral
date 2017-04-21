@@ -23,6 +23,8 @@ import { DocumentService } from '../../../utils/document.service';
   animations: [slideAndFade()]
 })
 export class ServiceListComponent extends BaseListComponent {
+  private serviceEndpoint = Links.SERVICES;
+
   constructor(service: DocumentService, router: Router) {
     super(service, router, Links.SERVICES);
   }

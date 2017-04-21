@@ -34,15 +34,18 @@
 
 </div>
 
-<div [ngClass]="{'items': true, 'list': !showCardView}" [ngStyle]="itemsHolderStyle" #itemsHolder>
-  <span *ngFor="let item of items; let i = index" class='card-item' [ngStyle]="cardStyles[i]" #cardItem
-    (mouseenter)='cardEnter(i)' (mouseleave)='cardLeave(i)'>
-    <ng-template [ngTemplateOutlet]="gridItemTmpl" [ngOutletContext]="{item: item}">
-    </ng-template>
-  </span>
-  <span *ngIf="items.length === 0 && !loading" class="content-empty">
-    No items
-  </span>
+<div class="grid-content">
+  <div [ngClass]="{'items': true, 'list': !showCardView}" [ngStyle]="itemsHolderStyle" #itemsHolder
+    infiniteScroll [infiniteScrollDistance]="1" [infiniteScrollThrottle]="150" [scrollWindow]="false" (scrolled)="onScroll()">
+    <span *ngFor="let item of items;let i = index; trackBy:trackByFn" class='card-item' [ngStyle]="cardStyles[i]" #cardItem
+      (mouseenter)='onCardEnter(i)' (mouseleave)='onCardLeave(i)'>
+      <ng-template [ngTemplateOutlet]="gridItemTmpl" [ngOutletContext]="{item: item}">
+      </ng-template>
+    </span>
+    <span *ngIf="items.length === 0 && !loading" class="content-empty">
+      No items
+    </span>
+  </div>
   <div *ngIf="loading" class="central-block-loading">
     <span class="vertical-helper"></span>
     <div class="spinner"></div>

@@ -46,6 +46,8 @@ function getImageNamespaceAndNameFromParts(namespace, imageAndTag) {
   animations: [slideAndFade()]
 })
 export class PodListComponent extends BaseListComponent {
+  private serviceEndpoint = Links.PODS;
+
   constructor(service: DocumentService, router: Router) {
     super(service, router, Links.PODS);
   }
