@@ -49,10 +49,7 @@ export default Vue.component('vsphere-compute-profile-editor', {
           <text-control></text-control>
         </multicolumn-cell>
         <multicolumn-cell name="value">
-          <dropdown-search
-            :entity="i18n('app.image.entity')"
-            :filter="searchImages">
-          </dropdown-search>
+          <text-control></text-control>
         </multicolumn-cell>
       </multicolumn-editor-group>
     </div>
@@ -84,8 +81,11 @@ export default Vue.component('vsphere-compute-profile-editor', {
       imageMapping: Object.keys(imageTypeMapping).map((key) => {
         return {
           name: key,
+          value: imageTypeMapping[key].image
+          /*
           value: this.model.images.find((image) =>
               image.id === imageTypeMapping[key].image)
+          */
         };
       })
     };
@@ -97,7 +97,7 @@ export default Vue.component('vsphere-compute-profile-editor', {
     searchImages(...args) {
       return new Promise((resolve, reject) => {
         services.searchImageResources.apply(null,
-            [this.endpoint.documentSelfLink, ...args]).then((result) => {
+            [this.endpoint && this.endpoint.documentSelfLink, ...args]).then((result) => {
           resolve(result);
         }).catch(reject);
       });
@@ -126,7 +126,7 @@ export default Vue.component('vsphere-compute-profile-editor', {
           imageMapping: this.imageMapping.reduce((previous, current) => {
             if (current.name) {
               previous[current.name] = {
-                image: current.value && current.value.id
+                image: current.value// && current.value.id
               };
             }
             return previous;
