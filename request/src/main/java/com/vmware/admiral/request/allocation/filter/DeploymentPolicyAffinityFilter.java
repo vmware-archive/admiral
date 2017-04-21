@@ -12,7 +12,6 @@
 package com.vmware.admiral.request.allocation.filter;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -45,12 +44,7 @@ public class DeploymentPolicyAffinityFilter
 
     @Override
     public Map<String, AffinityConstraint> getAffinityConstraints() {
-        if (!isActive()) {
-            return Collections.emptyMap();
-        }
-        HashMap<String, AffinityConstraint> affinityConstraints = new HashMap<>(1);
-        affinityConstraints.put(deploymentPolicyId, new AffinityConstraint(deploymentPolicyId));
-        return affinityConstraints;
+        return Collections.emptyMap();
     }
 
     @Override
