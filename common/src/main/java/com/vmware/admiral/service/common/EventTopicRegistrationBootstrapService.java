@@ -189,8 +189,16 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
                 .addField("resourceNames")
                 .addDataType(String.class.getSimpleName())
                 .addLabel("Resource Names")
-                .addDescription("Array should provide only one resource name that will be patched.")
+                .addDescription("Generated resource names.")
                 .whereMultiValued(true)
+                .whereReadOnly(false)
+                // Add ContainerDescription custom properties.
+                .addField("containerDescProperties")
+                .addDataType(String.class.getSimpleName())
+                .addLabel("Properties of Container Description (Read Only)")
+                .addDescription("Container Description Properties.")
+                .whereMultiValued(false)
+                .whereReadOnly(true)
                 .build();
 
         return topic;
@@ -230,6 +238,7 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
         private static final String FIELD_LABEL = "label";
         private static final String FIELD_DESCRIPTION = "description";
         private static final String FIELD_MULTIVALUED = "multivalued";
+        private static final String FIELD_READONLY = "readOnly";
 
         private List<Map<String, Map<String, String>>> entitiesHolder = new ArrayList<>();
 
@@ -293,6 +302,13 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
             Entry<String, Map<String, String>> entry = entities.entrySet().iterator().next();
             Map<String, String> value = entry.getValue();
             value.put(FIELD_MULTIVALUED, String.valueOf(multivalued));
+            return this;
+        }
+
+        public SchemaBuilder whereReadOnly(Boolean readOnly) {
+            Entry<String, Map<String, String>> entry = entities.entrySet().iterator().next();
+            Map<String, String> value = entry.getValue();
+            value.put(FIELD_READONLY, String.valueOf(readOnly));
             return this;
         }
 

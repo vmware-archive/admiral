@@ -1060,6 +1060,16 @@ public class ContainerAllocationTaskService extends
      * Defines fields which are eligible for modification in case of subscription for task.
      */
     protected static class ExtensibilityCallbackResponse extends ServiceTaskCallbackResponse {
-        Set<String> resourceNames;
+        public Set<String> resourceNames;
+        public Map<String, String> containerDescProperties;
+    }
+
+    @Override
+    protected void enhanceNotificationPayload(ContainerAllocationTaskState state,
+            ServiceTaskCallbackResponse notificationPayload, Runnable callback) {
+        getContainerDescription(state, (contDesc) -> {
+            ((ExtensibilityCallbackResponse) notificationPayload).containerDescProperties = contDesc.customProperties;
+            callback.run();
+        });
     }
 }

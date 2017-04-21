@@ -288,9 +288,15 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         if (subscriptionSubStages.contains(state.taskSubStage)) {
             ExtensibilitySubscriptionManager manager = getExtensibilityManager();
             if (manager != null) {
-                validateServiceNotificationPayload(this);
-                manager.handleStagePatch(this.notificationPayload(), this.replyPayload(), state,
-                        this::handleStagePatch);
+                ServiceTaskCallbackResponse notificationPayload = this.notificationPayload();
+
+                Runnable callback = () -> {
+                    manager.handleStagePatch(notificationPayload, this.replyPayload(), state,
+                            this::handleStagePatch);
+                };
+
+                validateAndEnhanceNotificationPayload(state, notificationPayload, callback);
+
             } else {
                 // ServiceHost is not instance of ManagementHost
                 handleStagePatch(state);
@@ -306,12 +312,15 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                 .containsKey(ExtensibilitySubscriptionCallbackService.EXTENSIBILITY_RESPONSE);
     }
 
-    private void validateServiceNotificationPayload(AbstractTaskStatefulService<?, ?> taskService) {
-        if (taskService.notificationPayload() == null) {
+    private void validateAndEnhanceNotificationPayload(T state,
+            ServiceTaskCallbackResponse notificationPayload, Runnable callback) {
+        if (notificationPayload == null) {
             this.failTask(String.format(
                     "Task [%s] doesn't provide notification payload for extensibility.",
-                    taskService.getClass()), new Throwable());
+                    this.getClass()), new Throwable());
+            return;
         }
+        this.enhanceNotificationPayload(state, notificationPayload, callback);
     }
 
     protected void updateRequestTracker(T state) {
@@ -833,6 +842,27 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
      */
     protected ServiceTaskCallbackResponse replyPayload() {
         return notificationPayload();
+    }
+
+    /**
+     * Extends notification payload in order to include more data, that is not possible to be
+     * retrieved directly from task. {@link notificationPayload()} is used like schema. It declares
+     * which fields will be merged from task state just before sending an event to subscriber. For
+     * example in ContainerAllocationTaskState there is a field 'resourceDescriptionLink' which
+     * points to ContainerDescription documentSelfLink. The ContainerDescription itself is not
+     * defined in task, so additional logic is neccessary in order to retrieve the object. Here
+     * comes the method.
+     *
+     * @param state
+     *            - Task state
+     * @param notificationPayload
+     *            - notification payload of task that will be extended with more data.
+     * @param callback
+     *            - callback that will be run once enhancement is finished.
+     */
+    protected void enhanceNotificationPayload(T state,
+            ServiceTaskCallbackResponse notificationPayload, Runnable callback) {
+        callback.run();
     }
 
     private void sendRequestStateToExternalUrl(String callbackReference, T state) {

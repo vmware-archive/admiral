@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.SubscriptionManager;
@@ -334,6 +335,9 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
         ServiceTaskCallbackResponse notificationPayloadData = Utils.fromJson(
                 result.taskStateJson, notificationPayload.getClass());
 
+        //Copy enhanced payload (if some enhancements to payload have been made)
+        PropertyUtils.mergeObjects(notificationPayload, notificationPayloadData, PropertyUtils.SHALLOW_MERGE_STRATEGY);
+
         // Get service reply payload in order to notify subscriber which fields are acceptable for
         // response.
         ServiceTaskCallbackResponse replyPayloadData = Utils.fromJson(
@@ -341,11 +345,11 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
 
         ExtensibilitySubscriptionCallback data = new ExtensibilitySubscriptionCallback();
         data.serviceCallback = UriUtils.buildUri(getHost(), result.documentSelfLink);
-        data.notificationPayload = Utils.toJson(notificationPayloadData);
+        data.notificationPayload = Utils.toJson(notificationPayload);
         data.replyPayload = replyPayloadData;
         data.taskStateClassName = result.taskStateClassName;
         data.tenantLinks = result.tenantLinks;
-        data.taskStateJson = result.taskStateJson;
+
         return data;
     }
 
