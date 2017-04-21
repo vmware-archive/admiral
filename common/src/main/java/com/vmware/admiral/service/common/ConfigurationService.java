@@ -13,6 +13,7 @@ package com.vmware.admiral.service.common;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
@@ -134,15 +135,39 @@ public class ConfigurationService extends StatefulService {
         if (CUSTOM_CONFIGURATION_PROPERTIES_FILE_NAMES != null
                 && !CUSTOM_CONFIGURATION_PROPERTIES_FILE_NAMES.isEmpty()) {
             for (String fileName : CUSTOM_CONFIGURATION_PROPERTIES_FILE_NAMES.split(",")) {
-                Properties customProps = FileUtil.getProperties(
-                        fileName,
-                        false);
-                @SuppressWarnings("unchecked")
-                Enumeration<String> customEnums = (Enumeration<String>) customProps.propertyNames();
-                while (customEnums.hasMoreElements()) {
-                    String customKey = customEnums.nextElement();
-                    if (!customKey.startsWith(NO_OVERRIDE_PREFIX_MARKER_FOR_PROPERTIES)) {
-                        props.put(customKey, customProps.getProperty(customKey));
+                File f = new File(fileName);
+
+                if (f.exists()) {
+                    Properties customProps = FileUtil.getProperties(fileName, false);
+                    @SuppressWarnings("unchecked")
+                    Enumeration<String> customEnums = (Enumeration<String>) customProps
+                            .propertyNames();
+                    while (customEnums.hasMoreElements()) {
+                        String customKey = customEnums.nextElement();
+                        if (!customKey.startsWith(NO_OVERRIDE_PREFIX_MARKER_FOR_PROPERTIES)) {
+                            props.put(customKey, customProps.getProperty(customKey));
+                        }
+                    }
+                } else {
+                    // If file does not exist look it up as resource.
+                    Properties customProps = new Properties();
+
+                    try (InputStream is = FileUtil.class
+                            .getResourceAsStream(fileName)) {
+                        customProps.load(is);
+
+                        @SuppressWarnings("unchecked")
+                        Enumeration<String> customEnums = (Enumeration<String>) customProps
+                                .propertyNames();
+                        while (customEnums.hasMoreElements()) {
+                            String customKey = customEnums.nextElement();
+                            if (!customKey.startsWith(NO_OVERRIDE_PREFIX_MARKER_FOR_PROPERTIES)) {
+                                props.put(customKey, customProps.getProperty(customKey));
+                            }
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(
+                                "Unable to load resource:" + fileName, e);
                     }
                 }
             }
