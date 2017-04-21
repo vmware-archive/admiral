@@ -442,8 +442,9 @@ public class HostContainerListDataCollection extends StatefulService {
                                     if (e != null) {
                                         getHost().log(
                                                 Level.WARNING,
-                                                "Failed to deploy system container on host: "
-                                                        + containerHostLink);
+                                                String.format(
+                                                        "Failed to deploy system container on host: %s. Will try again.",
+                                                        containerHostLink));
                                         recreateSystemContainer(containerState, containerHostLink);
                                         return;
                                     }
