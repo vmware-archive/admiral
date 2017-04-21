@@ -135,6 +135,6 @@ Additional changes to the original file:
     "moment"      : true,
     "jsPlumb"     : true,
     "ace"         : true,
-    "api"         : true
+    "mcp"         : true
   }
 }

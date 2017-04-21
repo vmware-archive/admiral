@@ -129,7 +129,7 @@ export default Vue.component('vsphere-endpoint-editor', {
         username: privateKeyId,
         password: privateKey
       };
-      api.client.patch('/provisioning/vsphere/dc-enumerator', request).then((result) => {
+      mcp.client.patch('/provisioning/vsphere/dc-enumerator', request).then((result) => {
         this.regionIdValues = result.datacenters.map(this.convertToObject);
       });
     },
