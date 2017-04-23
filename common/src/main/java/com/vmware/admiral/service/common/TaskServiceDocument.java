@@ -22,6 +22,7 @@ import com.vmware.xenon.common.TaskState;
  * The base class for all ServiceDocument for Task type services.
  */
 public abstract class TaskServiceDocument<E extends Enum<E>> extends MultiTenantDocument {
+
     public static final String FIELD_NAME_TASK_SUB_STAGE = "taskSubStage";
     public static final String FIELD_NAME_TASK_INFO = "taskInfo";
     public static final String FIELD_NAME_TASK_STAGE = "taskInfo.stage";

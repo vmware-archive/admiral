@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.request.compute;
 
+import static com.vmware.admiral.compute.ComputeConstants.OPERATION_PAYLOAD_PROP_NAME;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
@@ -19,12 +20,14 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.JsonMapper;
 import com.vmware.admiral.request.compute.ComputeOperationTaskService.ComputeOperationTaskState.SubStage;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.DefaultSubStage;
@@ -185,6 +188,21 @@ public class ComputeOperationTaskService extends
                 request.resourceReference = resourceReference;
                 request.taskReference = callbackReference;
                 request.operation = state.operation;
+                if (state.customProperties != null
+                        && state.customProperties.containsKey(OPERATION_PAYLOAD_PROP_NAME)) {
+                    String payloadAsJson = state.customProperties.get(OPERATION_PAYLOAD_PROP_NAME);
+                    try {
+                        request.payload = JsonMapper.fromJSON(payloadAsJson, Map.class);
+                    } catch (Exception e) {
+                        String msg = String.format(
+                                "Failed to deserialize Payload %s of operation %s, for compute: %s.",
+                                state.operation, compute.documentSelfLink, payloadAsJson);
+                        logSevere("%s. Cause: %s",
+                                msg, Utils.toString(e));
+
+                        throw new IllegalStateException(msg, e);
+                    }
+                }
                 request.isMockRequest = DeploymentProfileConfig.getInstance().isTest();
                 return AdapterRequestMetadata.of(s.adapterReference, request);
             });
