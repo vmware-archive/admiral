@@ -27,4 +27,9 @@ ENDPOINTS.forEach((e) => {
   };
 });
 
+configs['/assets/i18n/base*.json'] = {
+  'target': `http://${env.services.ip}:${env.services.port}/ng`,
+  'secure': false
+}
+
 module.exports = configs;

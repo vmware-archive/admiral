@@ -11,8 +11,47 @@
 
 package com.vmware.admiral;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.logging.Level;
+
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 
 public class UiNgService extends BaseUiService {
     public static final String SELF_LINK = ManagementUriParts.UI_NG_SERVICE;
+
+    @Override
+    protected void startUiFileContentServices() throws Throwable {
+        super.startUiFileContentServices();
+
+        Map<Path, String> pathToURIPath = new HashMap<>();
+
+        String servicePath = Utils.buildServicePath(UiService.class);
+        Path baseResourcePath = Paths.get(Utils.UI_DIRECTORY_NAME, servicePath);
+        try {
+            pathToURIPath = discoverUiResources(baseResourcePath, this);
+        } catch (Throwable e) {
+            log(Level.WARNING, "Error enumerating UI resources for %s: %s", this.getSelfLink(),
+                    Utils.toString(e));
+        }
+        for (Entry<Path, String> e : pathToURIPath.entrySet()) {
+            String value = e.getValue();
+
+            if (value.indexOf("messages/admiral") != -1) {
+                value = value.replace("messages/admiral", "assets/i18n/base");
+
+                Operation post = Operation
+                        .createPost(UriUtils.buildUri(getHost(), value));
+                RestrictiveFileContentService fcs = new RestrictiveFileContentService(
+                        e.getKey().toFile());
+                getHost().startService(post, fcs);
+            }
+        }
+    }
 }

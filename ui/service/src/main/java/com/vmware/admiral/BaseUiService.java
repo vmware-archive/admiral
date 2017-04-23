@@ -91,12 +91,12 @@ public abstract class BaseUiService extends StatelessService {
             operation.setUri(UriUtils.buildUri(getHost(), uiResourcePath, uri.getQuery()))
                     .setCompletion((o, e) -> {
                         // Localization - browser language user preferences
-                        String acceptLanguage =
-                                get.getRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER);
+                        String acceptLanguage = get
+                                .getRequestHeader(Operation.ACCEPT_LANGUAGE_HEADER);
 
                         if (acceptLanguage != null && !acceptLanguage.trim().isEmpty()) {
-                            List<Locale.LanguageRange> parsed =
-                                    Locale.LanguageRange.parse(acceptLanguage);
+                            List<Locale.LanguageRange> parsed = Locale.LanguageRange
+                                    .parse(acceptLanguage);
 
                             if (parsed.size() > 0) {
                                 get.addResponseCookie(I18NEXT_COOKIE, parsed.get(0).getRange());
@@ -118,7 +118,7 @@ public abstract class BaseUiService extends StatelessService {
     }
 
     // As defined in ServiceHost
-    private void startUiFileContentServices() throws Throwable {
+    protected void startUiFileContentServices() throws Throwable {
         Map<Path, String> pathToURIPath = new HashMap<>();
 
         Path baseResourcePath = Utils.getServiceUiResourcePath(this);
@@ -146,7 +146,7 @@ public abstract class BaseUiService extends StatelessService {
     }
 
     // Find UI resources for this service (e.g. html, css, js)
-    private Map<Path, String> discoverUiResources(Path path, Service s)
+    protected Map<Path, String> discoverUiResources(Path path, Service s)
             throws Throwable {
         Map<Path, String> pathToURIPath = new HashMap<>();
         Path baseUriPath = Paths.get(getSelfLink());
