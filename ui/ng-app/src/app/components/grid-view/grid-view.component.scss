@@ -1,5 +1,6 @@
+@import "node_modules/clarity-ui/src/color/utils/colors.clarity";
+@import "node_modules/clarity-ui/src/utils/variables.clarity";
 @import 'node_modules/admiral-ui-common/css/variables';
-@import 'node_modules/admiral-ui-common/css/mixins';
 
 grid-view {
   position: relative;

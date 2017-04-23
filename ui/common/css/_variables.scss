@@ -1,5 +1,3 @@
-@import "node_modules/clarity-ui/src/color/utils/colors.clarity";
-@import "node_modules/clarity-ui/src/utils/variables.clarity";
 @import "mixins";
 
 /* bootstrap mixin feature toggles */
@@ -151,7 +149,7 @@ $nav-side-panel-width: 216px;
   @extend .position-expand;
   @include animation(fadein 0.4s);
   text-align: center;
-  rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 0.5);
   > .vertical-helper {
     display: inline-block;
     height: 100%;
