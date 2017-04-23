@@ -76,6 +76,13 @@ navigation-container > .full-screen {
   box-shadow: none;
 }
 
+.btn .fa.loader, .btn .fa.loader-inline {
+  display: none;
+}
+
+.btn.loading .fa.loader, .btn.loading .fa.loader-inline {
+  display: inline-block;
+}
 
 /* Clarity Ext */
 .sidenav .project-selector {

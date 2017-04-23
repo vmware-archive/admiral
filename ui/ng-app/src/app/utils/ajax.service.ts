@@ -151,6 +151,12 @@ export class Ajax {
     return this.ajax(RequestMethod.Patch, url, params, data, headers);
   }
 
+  public ajaxRaw(requestOptions: RequestOptions): Promise<any> {
+    return this.http.request(new Request(requestOptions))
+      .toPromise()
+      .catch(error => this.handleAjaxError(error));
+  }
+
   /**
    * Polls a query task url until it's finished, failed or cancelled
    *

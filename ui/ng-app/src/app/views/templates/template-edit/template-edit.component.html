@@ -1,0 +1,132 @@
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="template-details" v-on:click="hideGroups($event)">
+  <div class="details-contents">
+    <div class="list-view">
+      <div class="template-details-header">
+        <div class="title truncateText">
+          <span *ngIf="!isNewItem">{{'app.template.details.edit' | i18n: { "ns": "base"} }}</span>
+          <span>
+            <ng-container *ngIf="!editingTemplateName">
+              <span class="template-name" (click)="editingTemplateName = true">{{compositeDescription.name}}</span>
+            </ng-container>
+            <ng-container *ngIf="editingTemplateName">
+              <input type="text" #templateNameInput [value]="compositeDescription.name || ''"
+                     (keyup.enter)="saveTemplateName(templateNameInput.value)"
+                     (keyup.esc)="cancelEditTemplateName()"/>
+              <button class="btn btn-sm"
+                 (click)="saveTemplateName(templateNameInput.value)"><i class="fa fa-check"></i></button>
+              <button class="btn btn-sm"
+                 (click)="cancelEditTemplateName()"><i class="fa fa-times"></i></button>
+            </ng-container>
+          </span>
+          <button *ngIf="!editingTemplateName" class="btn btn-link" (click)="editingTemplateName = true"><i class="fa fa-pencil"></i></button>
+        </div>
+      </div>
+      <div class="grid-container" *ngIf="!isNewItem">
+        <grid-view [items]="gridComponents">
+          <div toolbar>
+            <button class="btn btn-outline">Provision</button>
+            <button class="btn btn-outline">Publish</button>
+            <button class="btn btn-outline">Export</button>
+            <button class="btn btn-outline">Delete</button>
+          </div>
+          <ng-template let-item="item">
+            <card *ngIf="item.type == 'new'">
+              <div card-content>
+                new
+              </div>
+            </card>
+          </ng-template>
+        </grid-view>
+
+        <!--<network-box v-for="network in networks | networksOrderBy" track-by="documentSelfLink" v-bind:model="network"
+             v-on:attached="networkAttached"
+             v-on:detached="networkDetached"
+             v-on:edit="editNetwork"
+             v-on:remove="removeNetwork"></network-box>
+
+        <volume-box v-for="volume in volumes | volumesOrderBy" track-by="documentSelfLink"
+                    v-bind:model="volume"
+                    v-on:attached="volumeAttached"
+                    v-on:detached="volumeDetached"
+                    v-on:edit="editVolume"
+                    v-on:remove="removeVolume"></volume-box>-->
+
+        <!--<div v-if="model.templateDetails.listView.itemsLoading" class="loading">
+          <span class="vertical-helper"></span>
+          <div class="spinner"></div>
+        </div>-->
+      </div>
+    </div>
+  </div>
+  <!--
+  <div class="edit-container-definition closable-view" v-if="editContainerDefinition" transition="slide-and-fade">
+    <div class="title">{{i18n('app.template.details.editDefinition.title')}}</div>
+    <div class="sub-title">{{i18n('app.template.details.newDefinition.containerDefinitionInfo')}}</div>
+    <container-definition-form v-ref:edit-form v-bind:model="model.editContainerDefinition.definitionInstance">
+    </container-definition-form>
+    <div class="control-btns">
+      <button class="btn btn-primary save-container-definition"
+              v-bind:class="{'loading': savingContainer}"
+              v-bind:disabled="buttonsDisabled"
+              v-on:click="saveContainerDefinition($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
+    </div>
+  </div>
+  <div class="edit-network closable-view " v-if="editNetwork" transition="slide-and-fade">
+    <div class="content">
+      <div class="title" v-if="model.editNetwork.definitionInstance.documentSelfLink">{{i18n('app.template.details.editNetwork.editTitle')}}</div>
+      <div class="title" v-else>{{i18n('app.template.details.editNetwork.newTitle')}}</div>
+      <network-definition-form v-ref:network-edit-form
+                               v-bind:model="model.editNetwork.definitionInstance"
+                               v-bind:allow-existing="true"
+                               ></network-definition-form>
+      <div class="control-btns">
+        <button class="btn btn-primary save-container-definition"
+                v-bind:class="{'loading': savingNetwork}"
+                v-bind:disabled="disableSavingNetworkButton"
+                v-on:click="saveNetwork($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
+      </div>
+    </div>
+  </div>
+  <div class="edit-volume closable-view" v-if="editVolume" transition="slide-and-fade">
+    <div class="content">
+      <div class="title" v-if="model.editVolume.definitionInstance.documentSelfLink">{{i18n('app.template.details.editVolume.editTitle')}}</div>
+      <div class="title" v-else>{{i18n('app.template.details.editVolume.newTitle')}}</div>
+      <volume-definition-form v-ref:volume-edit-form
+                              v-bind:model="model.editVolume.definitionInstance"
+                              v-bind:allow-existing="true"
+        ></volume-definition-form>
+      <div class="control-btns">
+        <button class="btn btn-primary save-container-definition" v-bind:class="{'loading': savingVolume}"
+                v-bind:disabled="disableSavingVolumeButton"
+                v-on:click="saveVolume($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
+      </div>
+    </div>
+  </div>
+  <div class="edit-kubernetes closable-view " v-if="editKubernetes" transition="slide-and-fade">
+    <div class="content">
+      <div class="title" v-if="model.editKubernetes.definitionInstance.documentSelfLink">{{i18n('app.template.details.editKubernetes.editTitle')}}</div>
+      <div class="title" v-else>{{i18n('app.template.details.editKubernetes.newTitle')}}</div>
+      <kubernetes-definition-form @content-change="kubernetesContentChange"
+                                  :show-title="false"
+                                  :model="model.editKubernetes.definitionInstance"></kubernetes-definition-form>
+      <div class="control-btns">
+        <button class="btn btn-primary"
+                v-bind:class="{'loading': savingKubernetes}"
+                v-bind:disabled="disableSavingKubernetesButton"
+                v-on:click="saveKubernetes($event)">{{i18n('save')}}<i class="fa fa-spinner fa-spin loader-inline"></i></button>
+      </div>
+    </div>
+  </div>
+  -->
+</div>

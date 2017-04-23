@@ -10,7 +10,7 @@
  */
 
 import { BrowserModule } from '@angular/platform-browser';
-import { ReactiveFormsModule }          from '@angular/forms';
+import { ReactiveFormsModule, FormsModule }          from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
@@ -21,6 +21,7 @@ import { AppComponent } from './app.component';
 import { ROUTING } from "./app.routing";
 import { Ajax, SessionTimedOutSubject } from './utils/ajax.service';
 import { DocumentService } from './utils/document.service';
+import { TemplateService } from './utils/template.service';
 import { ViewExpandRequestService } from './services/view-expand-request.service';
 
 import { ADMIRAL_DECLARATIONS } from './admiral';
@@ -30,6 +31,7 @@ import { ADMIRAL_DECLARATIONS } from './admiral';
     imports: [
         BrowserModule,
         BrowserAnimationsModule,
+        FormsModule,
         ReactiveFormsModule,
         HttpModule,
         ClarityModule.forRoot(),
@@ -40,6 +42,7 @@ import { ADMIRAL_DECLARATIONS } from './admiral';
         Ajax,
         SessionTimedOutSubject,
         DocumentService,
+        TemplateService,
         ViewExpandRequestService
     ],
     bootstrap: [AppComponent]

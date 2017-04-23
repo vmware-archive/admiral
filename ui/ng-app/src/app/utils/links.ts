@@ -19,4 +19,9 @@ export class Links {
   public static POD_LOGS = Links.RESOURCES + '/kubernetes-pod-logs';
   public static PROJECTS = '/projects';
 
+  public static COMPOSITE_DESCRIPTIONS = Links.RESOURCES + '/composite-descriptions';
+  public static COMPOSITE_DESCRIPTIONS_CLONE = Links.RESOURCES + '/composite-descriptions-clone';
+  public static COMPOSITE_DESCRIPTIONS_CONTENT = Links.RESOURCES + '/composite-templates';
+  public static COMPOSITE_COMPONENTS = Links.RESOURCES + '/composite-components';
+
 }

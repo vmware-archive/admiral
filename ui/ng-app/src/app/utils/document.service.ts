@@ -11,6 +11,7 @@
 
 import { Injectable } from '@angular/core';
 import { Ajax } from './ajax.service';
+import { Utils } from './utils';
 import { URLSearchParams } from '@angular/http';
 import { searchConstants, serviceUtils} from 'admiral-ui-common';
 
@@ -74,7 +75,7 @@ export class DocumentService {
 
   constructor(private ajax: Ajax) { }
 
-  public list(link: string, queryOptions: any): Promise<DocumentListResult> {
+  public list(factoryLink: string, queryOptions: any): Promise<DocumentListResult> {
     let params = new URLSearchParams();
     // params.set('$limit', serviceUtils.calculateLimit().toString());
     params.set('$limit', '10');
@@ -85,10 +86,10 @@ export class DocumentService {
       params.set('$filter', getFilter(queryOptions));
     }
 
-    return this.ajax.get(link, params).then(result => {
+    return this.ajax.get(factoryLink, params).then(result => {
       let documents = result.documentLinks.map(link => {
         let document = result.documents[link]
-        document.documentId = this.getDocumentId(link);
+        document.documentId = Utils.getDocumentId(link);
         return document;
       });
       return new DocumentListResult(documents, result.nextPageLink, result.totalCount);
@@ -99,7 +100,7 @@ export class DocumentService {
     return this.ajax.get(nextPageLink).then(result => {
       let documents = result.documentLinks.map(link => {
         let document = result.documents[link]
-        document.documentId = this.getDocumentId(link);
+        document.documentId = Utils.getDocumentId(link);
         return document;
       });
       return new DocumentListResult(documents, result.nextPageLink, result.totalCount);
@@ -110,8 +111,8 @@ export class DocumentService {
     return this.ajax.get(documentSelfLink);
   }
 
-   public getById(link: string, documentId: string): Promise<any> {
-    let documentSelfLink = link + '/' + documentId
+   public getById(factoryLink: string, documentId: string): Promise<any> {
+    let documentSelfLink = factoryLink + '/' + documentId
     return this.get(documentSelfLink);
   }
 
@@ -142,10 +143,12 @@ export class DocumentService {
     });
   }
 
-  private getDocumentId(documentSelfLink) {
-    if (documentSelfLink) {
-      return documentSelfLink.substring(documentSelfLink.lastIndexOf('/') + 1);
-    }
+  public patch(documentSelfLink, patchBody): Promise<any> {
+    return this.ajax.patch(documentSelfLink, null, patchBody);
+  }
+
+  public post(factoryLink, postBody): Promise<any> {
+    return this.ajax.post(factoryLink, null, postBody);
   }
 }
 

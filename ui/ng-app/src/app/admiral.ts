@@ -28,6 +28,8 @@ import { DashboardComponent } from './views/dashboard/dashboard.component';
 import { ApplicationsComponent } from './views/applications/applications.component';
 import { ContainersComponent } from './views/containers/containers.component';
 import { TemplatesComponent } from './views/templates/templates.component';
+import { TemplateImporterComponent } from './views/templates/template-importer/template-importer.component';
+import { TemplateEditComponent } from './views/templates/template-edit/template-edit.component';
 import { ProjectRepositoriesComponent } from './views/project-repositories/project-repositories.component';
 import { PublicRepositoriesComponent } from './views/public-repositories/public-repositories.component';
 import { VchClustersComponent } from './views/vch-clusters/vch-clusters.component';
@@ -40,6 +42,8 @@ import { MaximizableBehaviourComponent } from "./components/maximizable-behaviou
 import { BackButtonComponent } from "./components/back-button/back-button.component";
 import { SearchComponent } from "./components/search/search.component";
 import { NavigationContainerComponent } from "./components/navigation-container/navigation-container.component";
+import { NetworkBoxComponent } from "./components/network-box/network-box.component";
+import { VolumeBoxComponent } from "./components/volume-box/volume-box.component";
 
 import { PodListComponent } from './kubernetes/pods/list/pod-list.component';
 import { PodDetailsComponent } from './kubernetes/pods/details/pod-details.component';
@@ -70,6 +74,8 @@ export const ADMIRAL_DECLARATIONS = [
   ApplicationsComponent,
   ContainersComponent,
   TemplatesComponent,
+  TemplateImporterComponent,
+  TemplateEditComponent,
   ProjectRepositoriesComponent,
   PublicRepositoriesComponent,
   VchClustersComponent,
@@ -82,6 +88,8 @@ export const ADMIRAL_DECLARATIONS = [
   BackButtonComponent,
   SearchComponent,
   NavigationContainerComponent,
+  NetworkBoxComponent,
+  VolumeBoxComponent,
 
   PodListComponent,
   PodDetailsComponent,

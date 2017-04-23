@@ -27,6 +27,8 @@ import { DashboardComponent } from './views/dashboard/dashboard.component';
 import { ApplicationsComponent } from './views/applications/applications.component';
 import { ContainersComponent } from './views/containers/containers.component';
 import { TemplatesComponent } from './views/templates/templates.component';
+import { TemplateImporterComponent } from './views/templates/template-importer/template-importer.component';
+import { TemplateEditComponent } from './views/templates/template-edit/template-edit.component';
 import { ProjectRepositoriesComponent } from './views/project-repositories/project-repositories.component';
 import { PublicRepositoriesComponent } from './views/public-repositories/public-repositories.component';
 import { VchClustersComponent } from './views/vch-clusters/vch-clusters.component';
@@ -77,7 +79,12 @@ export const ROUTES: Routes = [
                 path: 'containers', component: ContainersComponent
             },
             {
-                path: 'templates', component: TemplatesComponent
+                path: 'templates', component: TemplatesComponent,
+                children: [
+                    { path: 'import', component: TemplateImporterComponent },
+                    { path: 'new', component: TemplateEditComponent },
+                    { path: ':id', component: TemplateEditComponent }
+                ]
             },
             {
                 path: 'project-repositories', component: ProjectRepositoriesComponent

@@ -55,6 +55,12 @@ export class Utils {
     });
     return result;
   }
+
+  public static getDocumentId(documentSelfLink) {
+    if (documentSelfLink) {
+      return documentSelfLink.substring(documentSelfLink.lastIndexOf('/') + 1);
+    }
+  }
 }
 
 export class CancelablePromise<T> {

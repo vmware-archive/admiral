@@ -24,8 +24,8 @@ import { Subscription } from 'rxjs/Subscription';
   encapsulation: ViewEncapsulation.None
 })
 export class GridViewComponent implements OnInit {
-  items: any[] = [];
   loading: boolean;
+  @Input() items: any[] = [];
   @Input() serviceEndpoint: string;
   @Input() searchPlaceholder: string;
   @Input() searchSuggestionProperties: Array<string>;
@@ -46,28 +46,27 @@ export class GridViewComponent implements OnInit {
   loadedPages: number = 0;
   nextPageLink: string;
   loadingPromise: CancelablePromise<DocumentListResult>;
+  hidePartialRows: boolean = false;
 
   searchOccurrenceProperties = [{
     name: searchConstants.SEARCH_OCCURRENCE.ALL,
-    label: I18n.t('occurrence.all')
+    label: I18n.t('occurrence.all', {ns: 'base'})
   }, {
     name: searchConstants.SEARCH_OCCURRENCE.ANY,
-    label: I18n.t('occurrence.any')
+    label: I18n.t('occurrence.any', {ns: 'base'})
   }];
 
   constructor(protected service: DocumentService, private router: Router, private route: ActivatedRoute) { }
 
   ngOnInit() {
-
-    this.querySub = this.route.queryParams.subscribe(queryParams => {
-      this.searchQueryOptions = queryParams;
-      this.list();
-    });
-
-    this.router.events.subscribe((event) => {
-      if (event instanceof NavigationEnd) {
-      }
-    });
+    // Items can be loaded from backend or provided as an input
+    if (this.serviceEndpoint) {
+      this.hidePartialRows = true;
+      this.querySub = this.route.queryParams.subscribe(queryParams => {
+        this.searchQueryOptions = queryParams;
+        this.list();
+      });
+    }
   }
 
   ngAfterViewInit() {
@@ -78,7 +77,9 @@ export class GridViewComponent implements OnInit {
   }
 
   ngOnDestroy() {
-    this.querySub.unsubscribe();
+    if (this.querySub) {
+      this.querySub.unsubscribe();
+    }
   }
 
   @HostListener('window:resize')
@@ -140,7 +141,10 @@ export class GridViewComponent implements OnInit {
     let itemSpacing = columnsToUse === 1 || columns > length ? marginWidth :
         (width - marginWidth - columnsToUse * itemWidth) / (columnsToUse - 1);
 
-    let visible = !this.totalItemsCount || length === this.totalItemsCount ? length : rows * columnsToUse;
+    let visible = length;
+    if (this.hidePartialRows && this.totalItemsCount && length !== this.totalItemsCount) {
+      visible = rows * columnsToUse;
+    }
 
     let count = 0;
     for (let i = 0; i < visible; i++) {
