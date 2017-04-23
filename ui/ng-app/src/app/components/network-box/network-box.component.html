@@ -1,0 +1,22 @@
+<div class="resource" v-on:click="showNetwork($event)">
+  <div class="resource-details">
+    <img class="resource-icon"
+          src="image-assets/resource-icons/network-small.png"/>
+    <div class="resource-label" :title="network.name">{{network.name}}</div>
+    <div class="resource-actions" v-if="!isSystemNetwork">
+      <a class="btn item-edit" v-on:click="onEdit($event)">
+        <i class="fa fa-pencil"></i>
+      </a>
+      <a class="btn item-delete" v-on:click="onDelete($event)">
+        <i class="fa fa-trash"></i>
+      </a>
+    </div>
+  </div>
+  <div class="resource-anchor-line" v-bind:class="{'shrink': !attached}"></div>
+  <div class="resource-anchor">
+    <div class="resource-label-drag">
+      {{i18n('app.template.details.network.drag')}}</div>
+    <div class="resource-label-drop">
+      {{i18n('app.template.details.network.drop')}}</div>
+  </div>
+</div>

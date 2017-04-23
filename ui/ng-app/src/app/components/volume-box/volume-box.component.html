@@ -1,0 +1,19 @@
+<div class="resource" v-on:click="showVolume($event)">
+  <div class="resource-details">
+    <img class="resource-icon" src="image-assets/resource-icons/volume-small.png"/>
+    <div class="resource-label" title="{{volume.name}}">{{volume.name}}</div>
+    <div class="resource-actions">
+      <a class="btn item-edit" v-on:click="onEdit($event)">
+        <i class="fa fa-pencil"></i>
+      </a>
+      <a class="btn item-delete" v-on:click="onDelete($event)">
+        <i class="fa fa-trash"></i>
+      </a>
+    </div>
+  </div>
+  <div class="resource-anchor-line" v-bind:class="{'shrink': !attached}"></div>
+  <div class="resource-anchor">
+    <div class="resource-label-drag">{{i18n('app.template.details.volume.drag')}}</div>
+    <div class="resource-label-drop">{{i18n('app.template.details.volume.drop')}}</div>
+  </div>
+</div>
