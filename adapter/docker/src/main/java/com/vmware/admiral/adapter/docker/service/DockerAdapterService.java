@@ -405,6 +405,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         logServiceState.tenantLinks = context.containerState.tenantLinks;
 
         sendRequest(Operation.createPost(this, LogService.FACTORY_LINK)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
                 .setBody(logServiceState)
                 .setContextId(context.request.getRequestId())
                 .setCompletion((o, ex) -> {

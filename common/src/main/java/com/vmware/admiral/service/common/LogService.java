@@ -21,6 +21,7 @@ import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.StatefulService;
+import com.vmware.xenon.common.Utils;
 
 /**
  * LogService is log management service which maintains the logs of a container.
@@ -51,6 +52,12 @@ public class LogService extends StatefulService {
         super.toggleOption(Service.ServiceOption.PERSISTENCE, true);
         super.toggleOption(Service.ServiceOption.DOCUMENT_OWNER, true);
         super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
+
+        /* Workaround for https://www.pivotaltracker.com/n/projects/1471320/stories/143794415
+         * to not overload the storage with container logs.
+         * Remove when bug is fixed.*/
+        super.toggleOption(ServiceOption.PERIODIC_MAINTENANCE, true);
+        super.setMaintenanceIntervalMicros(DEFAULT_EXPIRATION_MICROS);
     }
 
     @Override
@@ -87,6 +94,41 @@ public class LogService extends StatefulService {
         }
         setState(put, currentState);
         put.setBody(currentState).complete();
+    }
+
+    /* Workaround for https://www.pivotaltracker.com/n/projects/1471320/stories/143794415
+     * to not overload the storage with container logs.
+     * Remove when bug is fixed.*/
+    @Override
+    public void handleMaintenance(Operation post) {
+        if (getProcessingStage() != ProcessingStage.AVAILABLE) {
+            logFine("Skipping maintenance since service is not available: %s ", getUri());
+            return;
+        }
+        sendRequest(Operation
+                .createGet(this, getSelfLink())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        post.fail(ex);
+                    } else {
+                        LogServiceState state = o.getBody(LogServiceState.class);
+                        long timeSinceLastUpdateMicros =
+                                Utils.getNowMicrosUtc() - state.documentUpdateTimeMicros;
+                        if (timeSinceLastUpdateMicros >= DEFAULT_EXPIRATION_MICROS) {
+                            sendRequest(Operation.createDelete(this, state.documentSelfLink)
+                                    .setCompletion((op, err) -> {
+                                        if (err != null) {
+                                            post.fail(err);
+                                        } else {
+                                            post.complete();
+                                        }
+                                    }));
+                        } else {
+                            post.complete();
+                        }
+                    }
+
+                }));
     }
 
     /**

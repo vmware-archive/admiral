@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -95,7 +96,9 @@ public class BaseIntegrationSupportIT {
 
     protected static final Queue<ServiceDocument> documentsForDeletionAfterClass = new LinkedBlockingQueue<>();
     protected static final Queue<ServiceDocument> documentsForDeletion = new LinkedBlockingQueue<>();
-    protected static final TestLogger logger =  new TestLogger(BaseIntegrationSupportIT.class);
+    protected static final TestLogger logger = new TestLogger(BaseIntegrationSupportIT.class);
+
+    protected static AtomicInteger parallel_test_counter = new AtomicInteger(0);
 
     @Rule
     public Timeout globalTimeout = Timeout.seconds(TimeUnit.MINUTES.toSeconds(7));
@@ -117,11 +120,15 @@ public class BaseIntegrationSupportIT {
         CompositeComponentRegistry.registerComponent(ResourceType.COMPUTE_TYPE.getName(),
                 ComputeDescriptionService.FACTORY_LINK,
                 ComputeDescription.class, ComputeService.FACTORY_LINK, ComputeState.class);
+
+        parallel_test_counter.incrementAndGet();
     }
 
     @AfterClass
     public static void baseAfterClass() throws Exception {
-        deleteDocuments(documentsForDeletionAfterClass, "baseAfterClass");
+        if (parallel_test_counter.decrementAndGet() == 0) {
+            deleteDocuments(documentsForDeletionAfterClass, "baseAfterClass");
+        }
     }
 
     @After
@@ -452,7 +459,8 @@ public class BaseIntegrationSupportIT {
         }
     }
 
-    private static void deleteDocuments(Queue<ServiceDocument> documents, String fromMethod) throws Exception {
+    private static void deleteDocuments(Queue<ServiceDocument> documents, String fromMethod)
+            throws Exception {
         for (int i = 0; i < MAX_RETRYING_REMOVAL_COUNT; i++) {
             Iterator<ServiceDocument> it = documents.iterator();
             ServiceDocument docToDelete = null;
@@ -460,7 +468,8 @@ public class BaseIntegrationSupportIT {
             while (it.hasNext()) {
                 try {
                     docToDelete = it.next();
-                    logger.info("Deleting document from %s: %s", fromMethod, docToDelete.documentSelfLink);
+                    logger.info("Deleting document from %s: %s", fromMethod,
+                            docToDelete.documentSelfLink);
 
                     delete(docToDelete);
                     it.remove();
@@ -474,6 +483,8 @@ public class BaseIntegrationSupportIT {
             }
         }
 
-        throw new Exception(String.format("Deletion of documents failed from %s! %d documents left", fromMethod, documents.size()));
+        throw new Exception(
+                String.format("Deletion of documents failed from %s! %d documents left", fromMethod,
+                        documents.size()));
     }
 }

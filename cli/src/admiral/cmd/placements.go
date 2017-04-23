@@ -187,8 +187,8 @@ var placementUpdateCmd = &cobra.Command{
 
 func initPlacementUpdate() {
 	placementUpdateCmd.Flags().StringVar(&newName, "name", "", "New name")
-	placementUpdateCmd.Flags().Int32Var(&cpuSharesInt, "cpu-shares", -1, prefixNew+cpuSharesDesc)
-	placementUpdateCmd.Flags().Int32Var(&maxNumberInstances, "instances", -1, prefixNew+instancesDesc)
+	placementUpdateCmd.Flags().Int64Var(&cpuSharesInt, "cpu-shares", -1, prefixNew+cpuSharesDesc)
+	placementUpdateCmd.Flags().Int64Var(&maxNumberInstances, "instances", -1, prefixNew+instancesDesc)
 	placementUpdateCmd.Flags().Int32Var(&priorityInt, "priority", -1, prefixNew+priorityDesc)
 	placementUpdateCmd.Flags().StringVar(&projectF, "project", "", prefixNew+projectFDesc)
 	placementUpdateCmd.Flags().StringVar(&placementZoneId, "placement-zone", "", prefixNew+placementZoneIdDesc)
@@ -212,7 +212,7 @@ func RunPlacementUpdate(args []string) (string, error) {
 	if id, ok = ValidateArgsCount(args); !ok {
 		return "", MissingPlacementIdError
 	}
-	newID, err = placements.EditPlacementID(id, newName, projectF, placementZoneId, deplPolicyF, cpuSharesInt, maxNumberInstances, priorityInt, memoryLimit)
+	newID, err = placements.EditPlacementID(id, newName, projectF, placementZoneId, deplPolicyF, priorityInt, cpuSharesInt, maxNumberInstances, memoryLimit)
 
 	if err != nil {
 		return "", err

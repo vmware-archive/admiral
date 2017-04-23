@@ -201,7 +201,31 @@ public class EventTopicServiceTest extends BaseTestCase {
                 }).sendWith(host);
         ;
         context.await();
+    }
 
+    @Test
+    public void testCreateionOfChangeComputeNameTopic() {
+        // On start service creates new topic. No need for explicit post for creation.
+        URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
+        TestContext context = new TestContext(1, Duration.ofSeconds(180));
+        Operation.createGet(uri)
+                .setReferer(host.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        context.fail(e);
+                        return;
+                    }
+                    ServiceDocumentQueryResult result = o.getBody(ServiceDocumentQueryResult.class);
+                    assertNotNull(result);
+                    assertNotNull(result.documentLinks);
+                    assertTrue(result.documentLinks.contains(EventTopicService.FACTORY_LINK
+                            + "/"
+                            + EventTopicRegistrationBootstrapService.COMPUTE_NAME_TOPIC_TASK_SELF_LINK));
+
+                    context.completeIteration();
+                }).sendWith(host);
+        ;
+        context.await();
     }
 
     @Test

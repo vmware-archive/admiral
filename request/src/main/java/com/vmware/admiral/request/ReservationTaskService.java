@@ -44,6 +44,7 @@ import com.vmware.admiral.compute.container.GroupResourcePlacementService.Resour
 import com.vmware.admiral.request.PlacementHostSelectionTaskService.PlacementHostSelectionTaskState;
 import com.vmware.admiral.request.ReservationAllocationTaskService.ReservationAllocationTaskState;
 import com.vmware.admiral.request.ReservationTaskService.ReservationTaskState.SubStage;
+import com.vmware.admiral.request.allocation.filter.HostSelectionFilter;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
@@ -191,11 +192,13 @@ public class ReservationTaskService
         CallbackCompleteResponse finishedResponse = new CallbackCompleteResponse();
         finishedResponse.copy(state.serviceTaskCallback.getFinishedResponse());
         finishedResponse.groupResourcePlacementLink = state.groupResourcePlacementLink;
+        finishedResponse.hostSelections = state.hostSelections;
         return finishedResponse;
     }
 
     protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
         String groupResourcePlacementLink;
+        List<HostSelectionFilter.HostSelection> hostSelections;
     }
 
     private void createReservationAllocationTask(ReservationTaskState reservationTask,
@@ -376,7 +379,7 @@ public class ReservationTaskService
                     .filter((e) -> {
                         return e.deploymentPolicyLink != null
                                 && e.deploymentPolicyLink
-                                        .endsWith(deploymentPolicyId);
+                                .endsWith(deploymentPolicyId);
                     }).collect(Collectors.toList());
         }
 

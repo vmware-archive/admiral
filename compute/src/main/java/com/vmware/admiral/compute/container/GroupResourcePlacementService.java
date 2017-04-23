@@ -363,6 +363,7 @@ public class GroupResourcePlacementService extends StatefulService {
             }
             currentState.memoryLimit = putBody.memoryLimit;
             currentState.availableMemory = currentState.memoryLimit - reservedMemory;
+            currentState.tenantLinks = putBody.tenantLinks;
 
             setState(put, currentState);
             put.setBody(currentState).complete();

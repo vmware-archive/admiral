@@ -280,6 +280,10 @@ var buildPaginationUrl = function(path, filter, count, order, limit, params) {
   return mergeUrl(path, params);
 };
 
+var buildQueryPaginationUrl = function(path, query, count, order, limit, params) {
+  return buildPaginationUrl(path, buildSearchQuery(query), count, order, limit, params);
+};
+
 var list = function(url, expandQuery, paramsData) {
   paramsData = paramsData || {};
   paramsData[DOCUMENT_TYPE_PROP_NAME] = true;
@@ -1371,6 +1375,10 @@ services.manageComposite = function(compositeId) {
 
 services.manageNetwork = function(networkId) {
   return get(links.CONTAINER_NETWORKS + '/' + networkId + links.MANAGE_CONTAINERS_ENDPOINT);
+};
+
+services.manageVolume = function(volumeId) {
+  return get(links.CONTAINER_VOLUMES + '/' + volumeId + links.MANAGE_CONTAINERS_ENDPOINT);
 };
 
 services.loadClosure = function(closureId) {
@@ -2630,6 +2638,7 @@ var buildSearchQuery = function(queryOptions) {
 };
 
 var client = {
+  buildQueryPaginationUrl: buildQueryPaginationUrl,
   delete: deleteEntity,
   get: get,
   patch: patch,
@@ -2637,7 +2646,7 @@ var client = {
   put: put
 };
 
-window.api = window.api || {};
-window.api.client = client;
+window.mcp = window.mcp || {};
+window.mcp.client = client;
 
 export default services;

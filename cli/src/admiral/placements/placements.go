@@ -41,13 +41,13 @@ type Placement struct {
 	ResourcePoolLink        string   `json:"resourcePoolLink"`
 	Priority                int32    `json:"priority"`
 	ResourceType            string   `json:"resourceType"`
-	MaxNumberInstances      int32    `json:"maxNumberInstances"`
+	MaxNumberInstances      int64    `json:"maxNumberInstances"`
 	MemoryLimit             int64    `json:"memoryLimit"`
-	StorageLimit            int32    `json:"storageLimit"`
-	CpuShares               int32    `json:"cpuShares"`
+	StorageLimit            int64    `json:"storageLimit"`
+	CpuShares               int64    `json:"cpuShares"`
 	DeploymentPolicyLink    string   `json:"deploymentPolicyLink"`
-	AvailableInstancesCount int32    `json:"availableInstancesCount"`
-	AvailableMemory         int32    `json:"availableMemory"`
+	AvailableInstancesCount int64    `json:"availableInstancesCount"`
+	AvailableMemory         int64    `json:"availableMemory"`
 	TenantLinks             []string `json:"tenantLinks"`
 	DocumentSelfLink        *string  `json:"documentSelfLink"`
 	DocumentKind            string   `json:"documentKind,omitempty"`
@@ -115,10 +115,10 @@ type PlacementToAdd struct {
 	TenantLinks          []string        `json:"tenantLinks,omitempty"`
 	DocumentKind         string          `json:"documentKind,omitempty"`
 
-	AvailableInstancesCount      int32            `json:"availableInstancesCount,omitempty"`
-	AllocatedInstancesCount      int32            `json:"allocatedInstancesCount,omitempty"`
-	AvailableMemory              int32            `json:"availableMemory,omitempty"`
-	ResourceQuotaPerResourceDesc map[string]int32 `json:"resourceQuotaPerResourceDesc,omitempty"`
+	AvailableInstancesCount      int64            `json:"availableInstancesCount,omitempty"`
+	AllocatedInstancesCount      int64            `json:"allocatedInstancesCount,omitempty"`
+	AvailableMemory              int64            `json:"availableMemory,omitempty"`
+	ResourceQuotaPerResourceDesc map[string]int64 `json:"resourceQuotaPerResourceDesc,omitempty"`
 }
 
 func (pta *PlacementToAdd) SetTenantLinks(tenantLink string) {
@@ -164,18 +164,18 @@ type PlacementToUpdate struct {
 	ResourcePoolLink     string   `json:"resourcePoolLink,omitempty"`
 	Priority             int32    `json:"priority,omitempty"`
 	ResourceType         string   `json:"resourceType,omitempty"`
-	MaxNumberInstances   int32    `json:"maxNumberInstances"`
+	MaxNumberInstances   int64    `json:"maxNumberInstances"`
 	MemoryLimit          int64    `json:"memoryLimit"`
-	StorageLimit         int32    `json:"storageLimit,omitempty"`
-	CpuShares            int32    `json:"cpuShares,omitempty"`
+	StorageLimit         int64    `json:"storageLimit,omitempty"`
+	CpuShares            int64    `json:"cpuShares,omitempty"`
 	DeploymentPolicyLink string   `json:"deploymentPolicyLink,omitempty"`
 	TenantLinks          []string `json:"tenantLinks,omitempty"`
 	DocumentKind         string   `json:"documentKind,omitempty"`
 
-	AvailableInstancesCount      int32            `json:"availableInstancesCount,omitempty"`
-	AllocatedInstancesCount      int32            `json:"allocatedInstancesCount"`
-	AvailableMemory              int32            `json:"availableMemory,omitempty"`
-	ResourceQuotaPerResourceDesc map[string]int32 `json:"resourceQuotaPerResourceDesc"`
+	AvailableInstancesCount      int64            `json:"availableInstancesCount,omitempty"`
+	AllocatedInstancesCount      int64            `json:"allocatedInstancesCount"`
+	AvailableMemory              int64            `json:"availableMemory,omitempty"`
+	ResourceQuotaPerResourceDesc map[string]int64 `json:"resourceQuotaPerResourceDesc"`
 }
 
 func (pta *PlacementToUpdate) SetTenantLinks(tenantLink string) {
@@ -328,7 +328,9 @@ func AddPlacement(namePol, cpuShares, priority, projectId, placementZoneId, depl
 	return newPolicy.GetID(), nil
 }
 
-func EditPlacement(name, namePol, projectId, resPoolID, deplPolID string, cpuShares, instances, priority int32, memoryLimit int64) (string, error) {
+func EditPlacement(name, namePol, projectId, resPoolID, deplPolID string, priority int32,
+	cpuShares, instances, memoryLimit int64) (string, error) {
+
 	polLinks := GetPlacementLinks(name)
 	if len(polLinks) > 1 {
 		return "", DuplicateNamesError
@@ -338,10 +340,12 @@ func EditPlacement(name, namePol, projectId, resPoolID, deplPolID string, cpuSha
 	}
 
 	id := utils.GetResourceID(polLinks[0])
-	return EditPlacementID(id, namePol, projectId, resPoolID, deplPolID, cpuShares, instances, priority, memoryLimit)
+	return EditPlacementID(id, namePol, projectId, resPoolID, deplPolID, priority, cpuShares, instances, memoryLimit)
 }
 
-func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolId string, cpuShares, instances, priority int32, memoryLimit int64) (string, error) {
+func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolId string, priority int32,
+	cpuShares, instances, memoryLimit int64) (string, error) {
+
 	fullId, err := selflink.GetFullId(id, new(PlacementList), utils.PLACEMENT)
 	utils.CheckBlockingError(err)
 	link := utils.CreateResLinksForPlacement(fullId)

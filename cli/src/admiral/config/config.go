@@ -93,6 +93,12 @@ func GetCfg() {
 	}
 }
 
+func GetCfgForTests() {
+	defaultTaskTimeout = 180
+	createDefaultCfgFile()
+	GetCfg()
+}
+
 //createDefaultCfgFile is creating file with default values of the
 //configurable properties.
 func createDefaultCfgFile() {

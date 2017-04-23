@@ -33,8 +33,6 @@ public class ContainerConfiguration {
 
     public JsonElement logConfiguration;
 
-    public String placementLink;
-
     public ContainerConfiguration() {
     }
 
@@ -51,7 +49,6 @@ public class ContainerConfiguration {
                 ", dependencies='" + dependencies + '\'' +
                 ", sourceURL='" + sourceURL + '\'' +
                 ", logConfiguration=" + logConfiguration +
-                ", placementLink='" + placementLink + '\'' +
                 '}';
     }
 }
