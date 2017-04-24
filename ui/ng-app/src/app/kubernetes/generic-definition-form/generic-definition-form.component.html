@@ -1,0 +1,38 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="templateImport">
+  <div class="templateImport-header" *ngIf="showTitle">
+    <div class="title">{{"app.template.details.editKubernetes.createEntities.title" | i18n: { "ns": "base"} }}</div>
+  </div>
+  <div class="templateImport-properties">
+    <div class="template-import-option">
+      <button class="btn btn-sm btn-secondary" (click)="browseFile()" [ngClass]="{'disabled': isImportingTemplate}">
+        <span>{{"app.template.import.loadButton" | i18n: { "ns": "base"} }}</span>
+      </button>
+      <input type="file" class="upload" (change)="onFileChange($event)" #fileInput/>
+      <clr-tooltip [clrTooltipDirection]="'left'" [clrTooltipSize]="'lg'">
+          <i class="fa fa-question-circle"></i>
+          <clr-tooltip-content>
+              <span>{{'app.template.details.editKubernetes.createEntities.hint' | i18n: { 'ns': 'base'} }}</span>
+          </clr-tooltip-content>
+      </clr-tooltip>
+    </div>
+    <textarea [(ngModel)]="templateContent" class="template-input" [disabled]="isImportingTemplate"
+      [placeholder]="'app.template.details.editKubernetes.createEntities.placeholder' | i18n: { 'ns': 'base'} "></textarea>
+    <div class="templateImport-toolbar">
+      <button class="btn btn-primary" [ngClass]="{'disabled': !templateContent, 'loading': isImportingTemplate}"
+                  (click)="importTemplate()">{{"app.template.import.importButton" | i18n: { "ns": "base"} }}
+                  <i class="fa fa-spinner fa-spin loader-inline"></i>
+      </button>
+    </div>
+  </div>
+</div>

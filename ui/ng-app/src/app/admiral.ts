@@ -30,6 +30,7 @@ import { ContainersComponent } from './views/containers/containers.component';
 import { TemplatesComponent } from './views/templates/templates.component';
 import { TemplateImporterComponent } from './views/templates/template-importer/template-importer.component';
 import { TemplateEditComponent } from './views/templates/template-edit/template-edit.component';
+import { TemplateNewItemMenu } from './views/templates/template-new-item-menu.component';
 import { ProjectRepositoriesComponent } from './views/project-repositories/project-repositories.component';
 import { PublicRepositoriesComponent } from './views/public-repositories/public-repositories.component';
 import { VchClustersComponent } from './views/vch-clusters/vch-clusters.component';
@@ -52,6 +53,8 @@ import { DeploymentListComponent } from './kubernetes/deployments/list/deploymen
 import { DeploymentDetailsComponent } from './kubernetes/deployments/details/deployment-details.component';
 import { ServiceListComponent } from './kubernetes/services/list/service-list.component';
 import { ServiceDetailsComponent } from './kubernetes/services/details/service-details.component';
+import { GenericDefinitionFormComponent } from './kubernetes/generic-definition-form/generic-definition-form.component';
+import { GenericTemplateItemComponent } from './kubernetes/generic-template-item/generic-template-item.component';
 
 
 export const ADMIRAL_DECLARATIONS = [
@@ -76,6 +79,7 @@ export const ADMIRAL_DECLARATIONS = [
   TemplatesComponent,
   TemplateImporterComponent,
   TemplateEditComponent,
+  TemplateNewItemMenu,
   ProjectRepositoriesComponent,
   PublicRepositoriesComponent,
   VchClustersComponent,
@@ -97,5 +101,7 @@ export const ADMIRAL_DECLARATIONS = [
   DeploymentListComponent,
   DeploymentDetailsComponent,
   ServiceListComponent,
-  ServiceDetailsComponent
+  ServiceDetailsComponent,
+  GenericDefinitionFormComponent,
+  GenericTemplateItemComponent
 ];

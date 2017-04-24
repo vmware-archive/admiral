@@ -32,4 +32,9 @@ configs['/assets/i18n/base*.json'] = {
   'secure': false
 }
 
+configs['/image-assets/*'] = {
+  'target': `http://${env.services.ip}:${env.services.port}/`,
+  'secure': false
+}
+
 module.exports = configs;

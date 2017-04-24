@@ -25,7 +25,7 @@ import { Subscription } from 'rxjs/Subscription';
 })
 export class GridViewComponent implements OnInit {
   loading: boolean;
-  @Input() items: any[] = [];
+  _items: any[] = [];
   @Input() serviceEndpoint: string;
   @Input() searchPlaceholder: string;
   @Input() searchSuggestionProperties: Array<string>;
@@ -80,6 +80,25 @@ export class GridViewComponent implements OnInit {
     if (this.querySub) {
       this.querySub.unsubscribe();
     }
+  }
+
+  @Input()
+  set items(value: any[]) {
+    let newCardStyles = value.map((d, index) => {
+      if (index < this.cardStyles.length) {
+        return this.cardStyles[index];
+      }
+      return {
+        opacity: '0',
+        overflow: 'hidden'
+        };
+    });
+    this.cardStyles = newCardStyles;
+    this._items = value;
+  }
+
+  get items() {
+    return this._items;
   }
 
   @HostListener('window:resize')
@@ -255,18 +274,6 @@ export class GridViewComponent implements OnInit {
     .then(result => {
       this.loading = false;
       this.totalItemsCount = result.totalCount;
-
-      let newCardStyles = result.documents.map((d, index) => {
-        if (index < this.cardStyles.length) {
-          return this.cardStyles[index];
-        }
-        return {
-          opacity: '0',
-          overflow: 'hidden'
-          };
-      });
-      this.cardStyles = newCardStyles;
-
       this.items = result.documents;
       this.nextPageLink = result.nextPageLink;
       this.loadedPages++;
@@ -291,13 +298,6 @@ export class GridViewComponent implements OnInit {
     return this.loadingPromise.getPromise()
     .then(result => {
       this.loading = false;
-      let newCardStyles = result.documents.map(i => {
-        return {
-          opacity: '0',
-          overflow: 'hidden'
-          };
-      });
-      this.cardStyles = this.cardStyles.concat(newCardStyles);
       this.items = this.items.concat(result.documents);
       this.nextPageLink = result.nextPageLink;
       this.loadedPages++;

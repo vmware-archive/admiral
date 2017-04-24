@@ -41,11 +41,28 @@
             <button class="btn btn-outline">Delete</button>
           </div>
           <ng-template let-item="item">
-            <card *ngIf="item.type == 'new'">
-              <div card-content>
-                new
+            <template-new-item-menu *ngIf="isNewComponent(item)">
+              <div class="template-new-item" [attr.data-disabled]="templateHasKubernetesEntities ? 'disabled' : false" (click)="openAddNewContainerDefinition()">
+                <img src="../image-assets/resource-icons/container.png"/>
+                <span class="label">{{"app.template.details.newDefinition.newLabel" | i18n: { "ns": "base"} }}</span>
               </div>
-            </card>
+              <div class="template-new-item" [attr.data-disabled]="templateHasKubernetesEntities ? 'disabled' : false" (click)="openAddNewNetwork()">
+                <img src="../image-assets/resource-icons/network.png"/>
+                <span class="label">{{"app.template.details.editNetwork.newLabel" | i18n: { "ns": "base"} }}</span>
+              </div>
+              <div class="template-new-item"  *ngIf="areClosuresAllowed" [attr.data-disabled]="templateHasKubernetesEntities ? 'disabled' : false" class="template-new-item" (click)="openAddNewClosure()">
+                <img src="../image-assets/resource-icons/task.png"/>
+                <span class='label'>{{'app.template.details.editClosures.newTitle' | i18n: { "ns": "base"} }}</span>
+              </div>
+              <div class="template-new-item" [attr.data-disabled]="templateHasKubernetesEntities ? 'disabled' : false" (click)="openAddNewVolume()" >
+                <img src="../image-assets/resource-icons/volume.png"/>
+                <span class="label">{{"app.template.details.editVolume.newLabel" | i18n: { "ns": "base"} }}</span>
+              </div>
+              <div class="template-new-item"  *ngIf="isKubernetesEnabled" [attr.data-disabled]="templateHasGenericEntities ? 'disabled' : false" (click)="openAddNewKubernetes()">
+                <img src="../image-assets/resource-icons/kubernetes.png"/>
+                <span class='label'>{{'app.template.details.editKubernetes.newTitle' | i18n: { "ns": "base"} }}</span>
+              </div>
+            </template-new-item-menu>
           </ng-template>
         </grid-view>
 

@@ -32,7 +32,7 @@ export class TemplateEditComponent implements OnInit {
   private editKubernetes;
   private gridComponents = [
     {
-      type: 'new'
+      documentSelfLink: 'new'
     }
   ];
 
@@ -55,6 +55,10 @@ export class TemplateEditComponent implements OnInit {
     return !this.compositeDescription.documentSelfLink;
   }
 
+  isNewComponent(item) {
+    return item.documentSelfLink === 'new';
+  }
+
   saveTemplateName(value) {
     let updateBody = {
       name: value
@@ -74,6 +78,26 @@ export class TemplateEditComponent implements OnInit {
 
   cancelEditTemplateName() {
     this.editingTemplateName = false;
+  }
+
+  openAddNewContainerDefinition() {
+
+  }
+
+  openAddNewNetwork() {
+
+  }
+
+  openAddNewClosure() {
+
+  }
+
+  openAddNewVolume() {
+
+  }
+
+  openAddNewKubernetes() {
+
   }
 
 }
