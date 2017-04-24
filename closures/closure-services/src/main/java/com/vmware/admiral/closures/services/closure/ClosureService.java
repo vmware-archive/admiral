@@ -627,8 +627,26 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
             });
         }
 
+        // custom properties
+        propagateCustomProperties(closure, closureDesc);
+
         closure.documentExpirationTimeMicros = Utils.fromNowMicrosUtc(TimeUnit.DAYS
                 .toMicros(ClosureProps.DEFAULT_CLOSURE_EXPIRATION_DAYS));
+    }
+
+    private void propagateCustomProperties(Closure closure, ClosureDescription closureDesc) {
+        if (closureDesc.customProperties == null) {
+            return;
+        }
+
+        String placementProperty = closureDesc.customProperties.get(ClosureProps
+                .CUSTOM_PROPERTY_PLACEMENT);
+        if (placementProperty != null && !placementProperty.isEmpty()) {
+            if (closure.customProperties == null) {
+                closure.customProperties = new HashMap<>();
+            }
+            closure.customProperties.put(ClosureProps.CUSTOM_PROPERTY_PLACEMENT, placementProperty);
+        }
     }
 
     private void verifyPatchRequest(Closure currentState, Closure requestedState) {
@@ -643,8 +661,6 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         case FINISHED:
         case FAILED:
             break;
-        //            throw new IllegalArgumentException(
-        //                    "Invalid state change requested: " + requestedState.state + " was: " + currentState.state);
         default:
             throw new IllegalArgumentException(
                     "Unexpected state change requested: " + requestedState.state + " was: "

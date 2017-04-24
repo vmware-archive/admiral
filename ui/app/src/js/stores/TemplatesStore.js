@@ -1064,9 +1064,10 @@ let TemplatesStore = Reflux.createStore({
   loadClosurePlacement: function(closureDescription) {
     var _this = this;
 
-    if (closureDescription.placementLink) {
+    if (closureDescription.customProperties
+     && closureDescription.customProperties.__closures_placement) {
       Promise.all([
-          services.loadPlacement(closureDescription.placementLink)
+          services.loadPlacement(closureDescription.customProperties.__closures_placement)
         ])
         .then(function([placement]) {
 

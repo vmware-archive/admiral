@@ -74,17 +74,21 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        serviceClient = ServiceClientFactory.createServiceClient(null);
-        testWebserverUri = getTestWebServerUrl();
+        try {
+            serviceClient = ServiceClientFactory.createServiceClient(null);
+            testWebserverUri = getTestWebServerUrl();
 
-        setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
-        dockerBuildImageLink = getBaseUrl()
-                + createImageBuildRequestUri(IMAGE_NAME + ":1.0", dockerHostCompute
-                .documentSelfLink);
-        dockerBuildBaseImageLink = getBaseUrl()
-                + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
-                .documentSelfLink);
-
+            setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
+            dockerBuildImageLink = getBaseUrl()
+                    + createImageBuildRequestUri(IMAGE_NAME + ":1.0", dockerHostCompute
+                    .documentSelfLink);
+            dockerBuildBaseImageLink = getBaseUrl()
+                    + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
+                    .documentSelfLink);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw ex;
+        }
     }
 
     @AfterClass

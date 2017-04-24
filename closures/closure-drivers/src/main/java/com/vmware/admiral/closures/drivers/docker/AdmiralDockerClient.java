@@ -30,6 +30,7 @@ import com.vmware.admiral.closures.services.adapter.AdmiralAdapterService;
 import com.vmware.admiral.closures.services.adapter.AdmiralAdapterService.AdmiralAdapterTaskState;
 import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.images.DockerImageFactoryService;
+import com.vmware.admiral.closures.util.ClosureProps;
 import com.vmware.admiral.closures.util.ClosureUtils;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.compute.ResourceType;
@@ -63,6 +64,7 @@ public class AdmiralDockerClient implements ClosureDockerClient {
         provisioningRequest.imageConfig = imageConfig;
         provisioningRequest.configuration = configuration;
         provisioningRequest.tenantLinks = closure.tenantLinks;
+        provisioningRequest.groupResourcePlacementLink = getConfiguredPlacement(closure);
 
         provisioningRequest.serviceTaskCallback = ServiceTaskCallback
                 .create(closure.documentSelfLink);
@@ -82,6 +84,13 @@ public class AdmiralDockerClient implements ClosureDockerClient {
                             configuration);
                     errorHandler.accept(null);
                 }));
+    }
+
+    private String getConfiguredPlacement(Closure closure) {
+        if (closure.customProperties == null) {
+            return null;
+        }
+        return closure.customProperties.get(ClosureProps.CUSTOM_PROPERTY_PLACEMENT);
     }
 
     @Override

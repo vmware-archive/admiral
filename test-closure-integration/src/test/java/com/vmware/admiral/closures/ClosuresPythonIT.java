@@ -32,7 +32,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -79,7 +78,8 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
                     + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
                     .documentSelfLink);
         } catch (Exception ex) {
-            logger.error("Failed to setup test env: ", ex);
+            ex.printStackTrace();
+            throw ex;
         }
     }
 
@@ -1604,9 +1604,8 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
         assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
         assertEquals(TaskState.TaskStage.FAILED, closure.state);
 
-        Assert.assertTrue("Not expected error: " + closure.errorMsg,
-                closure.errorMsg.contains("ImportError(\"No "
-                        + "module named 'keyring'\",)"));
+        assertTrue("Not expected error: " + closure.errorMsg,
+                closure.errorMsg.contains("ImportError(\"No module named 'keyring'\",)"));
 
         cleanResource(imageRequestLink, serviceClient);
         cleanResource(createdClosure.documentSelfLink, serviceClient);

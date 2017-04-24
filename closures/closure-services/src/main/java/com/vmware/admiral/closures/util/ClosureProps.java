@@ -84,6 +84,10 @@ public class ClosureProps {
     public static final String ENV_PROP_TOKEN = "TOKEN";
     public static final String ENV_TRUST_CERTS = "TRUST_CERTS";
 
+    // Custom properties
+    public static final String CUSTOM_PROPERTY_PLACEMENT = "__closures_placement";
+
+    // General configuration properties
     public static final String MAX_LOG_FILE_SIZE = (MAX_LOG_SIZE_BYTES / 1024) + "k";
 
     public static final Integer MIN_MEMORY_MB_RES_CONSTRAINT = 50;

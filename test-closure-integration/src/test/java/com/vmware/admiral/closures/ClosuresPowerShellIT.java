@@ -70,16 +70,21 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        serviceClient = ServiceClientFactory.createServiceClient(null);
-        testWebserverUri = getTestWebServerUrl();
+        try {
+            serviceClient = ServiceClientFactory.createServiceClient(null);
+            testWebserverUri = getTestWebServerUrl();
 
-        setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
-        dockerBuildImageLink = getBaseUrl()
-                + createImageBuildRequestUri(IMAGE_NAME + ":1.0", dockerHostCompute
-                .documentSelfLink);
-        dockerBuildBaseImageLink = getBaseUrl()
-                + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
-                .documentSelfLink);
+            setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
+            dockerBuildImageLink = getBaseUrl()
+                    + createImageBuildRequestUri(IMAGE_NAME + ":1.0", dockerHostCompute
+                    .documentSelfLink);
+            dockerBuildBaseImageLink = getBaseUrl()
+                    + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
+                    .documentSelfLink);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw ex;
+        }
     }
 
     @AfterClass
@@ -1178,7 +1183,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         int expectedInVar = 3;
         double expectedResult = 4;
 
-        closureDescState.source =  "$result = $inputs.a + 1\n"
+        closureDescState.source = "$result = $inputs.a + 1\n"
                 + "$context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
                 + "Add-Content 'output.txt' $context.outputs\n";
 
