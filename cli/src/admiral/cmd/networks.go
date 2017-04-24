@@ -95,7 +95,7 @@ var networkInspectCmd = &cobra.Command{
 	Long:  "Display detailed network information",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		output, err := RunNetorkInspect(args)
+		output, err := RunNetworkInspect(args)
 		processOutput(output, err)
 	},
 }
@@ -104,7 +104,7 @@ func initNetworkInspect() {
 	NetworksRootCmd.AddCommand(networkInspectCmd)
 }
 
-func RunNetorkInspect(args []string) (string, error) {
+func RunNetworkInspect(args []string) (string, error) {
 	var (
 		id string
 		ok bool
