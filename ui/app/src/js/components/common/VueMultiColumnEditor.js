@@ -27,7 +27,7 @@ export default Vue.component('multicolumn-editor', {
   template: `
     <div class="multicolumn-inputs">
       <div class="multicolumn-inputs-list">
-        <div class="multicolumn-inputs-list-head">
+        <div class="multicolumn-inputs-list-head" v-if="headers && headers.length">
           <div class="multicolumn-input-controls">
             <ul>
               <li v-for="item in headers" track-by="$index">
