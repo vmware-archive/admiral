@@ -372,6 +372,14 @@ public class TemplateSearchService extends StatelessService {
         // remove leading asterisks as the registry will reject them
         String query = queryParams.get(QUERY_PARAM);
         query = query.replaceAll("^\\*+", "");
+
+        /* If the query is empty after remove of leading asterisks
+         * return noResult to avoid invalid request to ContainerImageService */
+        if (query.isEmpty()) {
+            resultConsumer.accept(noResult(),null);
+            return;
+        }
+
         queryParams.put(QUERY_PARAM, query);
 
         // pass on the query parameters to the image search service
