@@ -11,7 +11,9 @@
 
 package com.vmware.admiral.test.integration.compute;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.InputStream;
@@ -20,13 +22,17 @@ import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.commons.net.util.SubnetUtils;
+
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
+import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService.NetworkInterfaceState;
+import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
@@ -100,8 +106,10 @@ public abstract class BaseWordpressComputeProvisionIT extends BaseComputeProvisi
         }
     }
 
-    protected ComputeProfile loadComputeProfile() {
-        URL r = getClass().getClassLoader().getResource("test-aws-compute-profile.yaml");
+    protected ComputeProfile loadComputeProfile(EndpointType endpointType) {
+        URL r = getClass().getClassLoader().getResource(
+                "test-" + endpointType.toString().toLowerCase() + "-compute-profile.yaml");
+
         try (InputStream is = r.openStream()) {
             return YamlMapper.objectMapper().readValue(is, ComputeProfile.class);
         } catch (Exception e) {
@@ -140,5 +148,41 @@ public abstract class BaseWordpressComputeProvisionIT extends BaseComputeProvisi
                     computeState.name,
                     subnetState.name, expectedSubnet));
         }
+    }
+
+    protected static void validateIsolatedNic(Set<ServiceDocument> computes, String
+            isolatedNetworkName)  {
+        for (ServiceDocument serviceDocument : computes) {
+            if (!(serviceDocument instanceof ComputeState)) {
+                continue;
+            }
+
+            ComputeState computeState = (ComputeState) serviceDocument;
+            try {
+                NetworkInterfaceState networkInterfaceState = getDocument(
+                        computeState.networkInterfaceLinks.get(0), NetworkInterfaceState.class);
+
+                SubnetState subnetState = getDocument(
+                        networkInterfaceState.subnetLink,
+                        SubnetState.class);
+
+                assertTrue(subnetState.name.contains("wpnet"));
+
+                NetworkState networkState = getDocument(subnetState.networkLink,
+                        NetworkState.class);
+
+                assertEquals(networkState.name, isolatedNetworkName);
+
+                //validate the cidr
+                String lowSubnetAddress = new SubnetUtils(subnetState.subnetCIDR).getInfo()
+                        .getLowAddress();
+
+                assertTrue(new SubnetUtils(networkState.subnetCIDR).getInfo()
+                        .isInRange(lowSubnetAddress));
+            } catch (Exception e) {
+                fail();
+            }
+        }
+
     }
 }

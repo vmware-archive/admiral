@@ -703,7 +703,6 @@ public class ComputeNetworkProvisionTaskService
         AssertUtil.assertNotNull(context.profile.endpoint,
                 "Context.profile.endpoint should not be null.");
 
-
         return this.sendWithDeferredResult(
                 Operation.createGet(ComputeStateWithDescription
                         .buildUri(UriUtils.buildUri(getHost(), context.profile.endpoint

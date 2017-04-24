@@ -55,3 +55,5 @@ components:
     data:
       name: wpnet
       networkType: public
+      constraints:
+        - tag: "type:public:soft"

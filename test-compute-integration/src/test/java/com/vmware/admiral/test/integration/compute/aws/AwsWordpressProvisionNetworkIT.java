@@ -9,10 +9,8 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.test.integration.compute;
+package com.vmware.admiral.test.integration.compute.aws;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.test.integration.compute.aws.AwsComputeProvisionIT.ACCESS_KEY_PROP;
@@ -24,13 +22,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.ec2.model.CreateTagsRequest;
 import com.amazonaws.services.ec2.model.CreateVpcRequest;
 import com.amazonaws.services.ec2.model.CreateVpcResult;
@@ -38,24 +35,21 @@ import com.amazonaws.services.ec2.model.DeleteVpcRequest;
 import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.Vpc;
 import com.google.common.collect.Sets;
-import org.apache.commons.net.util.SubnetUtils;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfile;
+import com.vmware.admiral.test.integration.compute.BaseWordpressComputeProvisionIT;
 import com.vmware.admiral.test.integration.compute.aws.AwsComputeProvisionIT;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
-import com.vmware.photon.controller.model.resources.NetworkInterfaceService.NetworkInterfaceState;
-import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
-import com.vmware.photon.controller.model.resources.SubnetService;
 import com.vmware.xenon.common.ServiceDocument;
 
 @RunWith(Parameterized.class)
 public class AwsWordpressProvisionNetworkIT extends BaseWordpressComputeProvisionIT {
 
-    public static final int CIDR_PREFIX = 28;
+    private static final int CIDR_PREFIX = 28;
 
     private final String templateFilename;
 
@@ -64,13 +58,16 @@ public class AwsWordpressProvisionNetworkIT extends BaseWordpressComputeProvisio
         return Arrays.asList(new Object[][] {
                 {"WordPress_with_MySQL_compute_network.yaml", null },
                 {"WordPress_with_MySQL_compute_public_network.yaml", null },
-                {"WordPress_with_MySQL_compute_isolated_network.yaml", isolatedNicValidator }
+                {"WordPress_with_MySQL_compute_isolated_network.yaml",
+                        (BiConsumer<Set<ServiceDocument>, String>) BaseWordpressComputeProvisionIT
+                                ::validateIsolatedNic }
         });
     }
 
-    private final Consumer<Set<ServiceDocument>> validator;
+    private final BiConsumer<Set<ServiceDocument>, String> validator;
 
-    public AwsWordpressProvisionNetworkIT(String templateFilename, Consumer<Set<ServiceDocument>> validator) {
+    public AwsWordpressProvisionNetworkIT(String templateFilename,
+            BiConsumer<Set<ServiceDocument>, String> validator) {
         this.templateFilename = templateFilename;
         this.validator = validator;
     }
@@ -79,13 +76,15 @@ public class AwsWordpressProvisionNetworkIT extends BaseWordpressComputeProvisio
     protected void doSetUp() throws Throwable {
         createVpcIfNeeded();
 
-        createProfile(loadComputeProfile(), createNetworkProfile(AWS_SECONDARY_SUBNET_NAME, null),
+        createProfile(loadComputeProfile(getEndpointType()), createNetworkProfile(
+                AWS_SECONDARY_SUBNET_NAME, null),
                 new StorageProfile());
 
-        createProfile(loadComputeProfile(), createNetworkProfile(AWS_DEFAULT_SUBNET_NAME,
+        createProfile(loadComputeProfile(getEndpointType()), createNetworkProfile(
+                AWS_DEFAULT_SUBNET_NAME,
                 Sets.newHashSet(createTag("location", "dmz"))), new StorageProfile());
 
-        createProfile(loadComputeProfile(), createIsolatedNetworkProfile(AWS_ISOLATED_VPC_NAME,
+        createProfile(loadComputeProfile(getEndpointType()), createIsolatedNetworkProfile(AWS_ISOLATED_VPC_NAME,
                 CIDR_PREFIX),
                 new StorageProfile());
     }
@@ -110,7 +109,7 @@ public class AwsWordpressProvisionNetworkIT extends BaseWordpressComputeProvisio
 
         Set<ServiceDocument> resources = getResources(resourceLinks);
         if (validator != null) {
-            validator.accept(resources);
+            validator.accept(resources, AWS_ISOLATED_VPC_NAME);
         } else {
             super.doWithResources(resourceLinks);
             resources.stream()
@@ -126,45 +125,13 @@ public class AwsWordpressProvisionNetworkIT extends BaseWordpressComputeProvisio
 
     }
 
-    private static Consumer<Set<ServiceDocument>> isolatedNicValidator = (serviceDocuments) -> {
-
-        for (ServiceDocument serviceDocument : serviceDocuments) {
-            if (!(serviceDocument instanceof ComputeState)) {
-                continue;
-            }
-
-            ComputeState computeState = (ComputeState) serviceDocument;
-            try {
-                NetworkInterfaceState networkInterfaceState = getDocument(
-                        computeState.networkInterfaceLinks.get(0), NetworkInterfaceState.class);
-
-                SubnetService.SubnetState subnetState = getDocument(networkInterfaceState.subnetLink,
-                        SubnetService.SubnetState.class);
-
-                assertTrue(subnetState.name.contains("wpnet"));
-
-                NetworkState networkState = getDocument(subnetState.networkLink,
-                        NetworkState.class);
-
-                assertEquals(networkState.name, AWS_ISOLATED_VPC_NAME);
-
-                //validate the cidr
-                String lowSubnetAddress = new SubnetUtils(subnetState.subnetCIDR).getInfo()
-                        .getLowAddress();
-
-                assertTrue(new SubnetUtils(networkState.subnetCIDR).getInfo()
-                        .isInRange(lowSubnetAddress));
-            } catch (Exception e) {
-                fail();
-            }
-        }
-    };
-
     private void createVpcIfNeeded() throws Exception {
         // check if the vpc that we use for isolation network tests exist and create it if it doesn't
         BasicAWSCredentials cred = new BasicAWSCredentials(getTestRequiredProp(ACCESS_KEY_PROP), getTestRequiredProp(ACCESS_SECRET_PROP));
-        AmazonEC2 ec2 = new AmazonEC2Client(cred);
-        ec2.setRegion(Region.getRegion(Regions.fromName( getTestProp(REGION_ID_PROP, "us-east-1"))));
+
+        AmazonEC2 ec2 = AmazonEC2ClientBuilder.standard()
+                .withCredentials(new AWSStaticCredentialsProvider(cred))
+                .withRegion(getTestProp(REGION_ID_PROP, "us-east-1")).build();
 
         Optional<Vpc> isolatedVpc = ec2.describeVpcs().getVpcs()
                 .stream()
@@ -173,19 +140,17 @@ public class AwsWordpressProvisionNetworkIT extends BaseWordpressComputeProvisio
                             .stream()
                             .filter(t -> AWS_TAG_NAME.equals(t.getKey()))
                             .findFirst()
-                            .map(t -> t.getValue())
+                            .map(Tag::getValue)
                             .orElse("");
 
                     return AWS_ISOLATED_VPC_NAME.equals(name);
                 }).findFirst();
 
         if (!isolatedVpc.isPresent()) {
-            String vpcId = null;
-
             CreateVpcRequest request = new CreateVpcRequest();
             request.setCidrBlock("192.168.0.0/16");
             CreateVpcResult vpc = ec2.createVpc(request);
-            vpcId = vpc.getVpc().getVpcId();
+            String vpcId = vpc.getVpc().getVpcId();
 
             try {
                 ec2.createTags(new CreateTagsRequest().withResources(vpcId)

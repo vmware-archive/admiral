@@ -135,7 +135,6 @@ public class ComputeAllocationTaskService
 
         public static final String FIELD_NAME_CUSTOM_PROP_ZONE = "__zoneId";
         public static final String FIELD_NAME_CUSTOM_PROP_RESOURCE_POOL_LINK = "__resourcePoolLink";
-        public static final String FIELD_NAME_CUSTOM_PROP_REGION_ID = "__regionId";
         @Documentation(description = "The description that defines the requested resource.")
         @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED, LINK }, indexing = STORE_ONLY)
         public String resourceDescriptionLink;

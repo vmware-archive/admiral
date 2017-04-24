@@ -24,15 +24,15 @@ import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsSe
 
 public class AzureComputeProvisionIT extends BaseComputeProvisionIT {
 
-    private static final String SUBSCRIPTION_PROP = "test.azure.subscription.id";
-    private static final String TENANT_ID_PROP = "test.azure.tenant.id";
-    private static final String ACCESS_KEY_PROP = "test.azure.access.key";
-    private static final String ACCESS_SECRET_PROP = "test.azure.secret.key";
+    public static final String SUBSCRIPTION_PROP = "test.azure.subscription.id";
+    public static final String TENANT_ID_PROP = "test.azure.tenant.id";
+    public static final String ACCESS_KEY_PROP = "test.azure.access.key";
+    public static final String ACCESS_SECRET_PROP = "test.azure.secret.key";
 
     private static final String VM_ADMIN_USERNAME = "test.azure.vm.admin.username";
     private static final String VM_ADMIN_PASSWORD = "test.azure.vm.admin.password";
 
-    private static final String REGION_ID_PROP = "test.azure.region.id";
+    public static final String REGION_ID_PROP = "test.azure.region.id";
 
     @Override
     protected EndpointType getEndpointType() {
@@ -40,7 +40,7 @@ public class AzureComputeProvisionIT extends BaseComputeProvisionIT {
     }
 
     @Override
-    protected void extendEndpoint(EndpointState endpoint) {
+    public void extendEndpoint(EndpointState endpoint) {
         endpoint.endpointProperties.put("privateKeyId", getTestRequiredProp(ACCESS_KEY_PROP));
         endpoint.endpointProperties.put("privateKey", getTestRequiredProp(ACCESS_SECRET_PROP));
         endpoint.endpointProperties.put("userLink", getTestRequiredProp(SUBSCRIPTION_PROP));
