@@ -48,6 +48,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                     TimeUnit.SECONDS.toMillis(3));
     private static final Level DEFAULT_LOG_LEVEL = Level.parse(System.getProperty(
             "com.vmware.admiral.service.tasks.log.level", Level.INFO.getName()));
+    public static final int MAX_STATE_SIZE = 1024 * 1024;
 
     private ExtensibilitySubscriptionManager extensibilityManager;
 
@@ -902,6 +903,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     public ServiceDocument getDocumentTemplate() {
         ServiceDocument template = super.getDocumentTemplate();
         com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        template.documentDescription.serializedStateSizeLimit = MAX_STATE_SIZE;
         return template;
     }
 }
