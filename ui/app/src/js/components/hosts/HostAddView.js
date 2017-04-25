@@ -150,6 +150,9 @@ var HostAddView = Vue.extend({
     isVchOptionEnabled: function() {
       return ft.isVchHostOptionEnabled();
     },
+    isVic: function() {
+      return utils.isVic();
+    },
     isKubernetesOptionEnabled: function() {
       return ft.isKubernetesHostOptionEnabled();
     },

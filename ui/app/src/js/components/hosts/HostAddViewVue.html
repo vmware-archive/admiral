@@ -30,7 +30,7 @@
     <div class="select">
       <select class="form-control" v-model="selectedHostType">
         <option value="DOCKER">Docker</option>
-        <option value="VCH" v-if="isVchOptionEnabled">VCH</option>
+        <option value="VCH" v-if="isVchOptionEnabled" v-bind:selected="isVic">VCH</option>
         <option value="KUBERNETES" v-if="isKubernetesOptionEnabled">Kubernetes</option>
       </select>
     </div>
