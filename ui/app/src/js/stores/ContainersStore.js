@@ -1299,6 +1299,11 @@ let ContainersStore = Reflux.createStore({
   },
 
   onOperationCompleted: function(operationType, resourceIds) {
+    if (utils.getIn(this.data, ['creatingResource'])) {
+      // on another screen, do nothing
+      return;
+    }
+
     if (operationType === constants.CONTAINERS.OPERATION.START) {
       // Container Started
       this.backFromContainerAction(operationType, resourceIds);
