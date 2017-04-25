@@ -45,9 +45,11 @@ func init() {
 	}
 
 	RootCmd.Flags().BoolVar(&ShowVersion, "version", false, "Admiral CLI Version.")
-	RootCmd.PersistentFlags().BoolVar(&utils.Verbose, "verbose", false, "Showing every request/response json body.")
+	RootCmd.PersistentFlags().BoolVar(&utils.Verbose, "verbose", false, "Show every request/response json body.")
 	RootCmd.PersistentFlags().StringVar(&utils.TokenFromFlagVar, "token", "", tokenDesc)
 	RootCmd.PersistentFlags().BoolVar(&utils.Quiet, "quiet", false, "The output of the commands will be only the expected entity's ID.")
+	RootCmd.PersistentFlags().BoolVar(&utils.InsecureConnection, "insecure", false,
+		"Allow insecure SSL connection to Admiral server.")
 	RootCmd.SetUsageTemplate(help.DefaultUsageTemplate)
 }
 

@@ -24,6 +24,8 @@ var (
 	IsVraMode = isVraMode()
 
 	IsTest bool
+
+	InsecureConnection bool
 )
 
 //PromptAgreement is asking the user to enter either "y"/"yes" or "n"/"no".
