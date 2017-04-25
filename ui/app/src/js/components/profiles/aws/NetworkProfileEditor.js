@@ -11,6 +11,17 @@
 
 import services from 'core/services';
 
+const ISOLATION_TYPES = [{
+  name: i18n.t('app.profile.edit.noneIsolationTypeLabel'),
+  value: 'NONE'
+}, {
+  name: i18n.t('app.profile.edit.subnetIsolationTypeLabel'),
+  value: 'SUBNET'
+}, {
+  name: i18n.t('app.profile.edit.securityGroupIsolationTypeLabel'),
+  value: 'SECURITY_GROUP'
+}];
+
 export default Vue.component('aws-network-profile-editor', {
   template: `
     <div>
@@ -30,25 +41,26 @@ export default Vue.component('aws-network-profile-editor', {
       </section>
       <section class="form-block" v-if="endpoint">
         <label>{{i18n('app.profile.edit.isolationLabel')}}</label>
-        <dropdown-group
-          :entity="i18n('app.profile.edit.isolationNetworkLabel')"
+        <select-group
           :label="i18n('app.profile.edit.isolationTypeLabel')"
           :options="isolationTypes"
-          :value="convertToObject(model.isolationType)"
+          :value="isolationType"
           @change="onIsolationTypeChange">
-        </dropdown-group>
+        </select-group>
         <dropdown-search-group
-          v-if="isolationType && isolationType.id === 'SUBNET'"
+          v-if="isolationType && isolationType.value === 'SUBNET'"
           :entity="i18n('app.network.entity')"
           :filter="searchIsolationNetworks"
           :label="i18n('app.profile.edit.isolationNetworkLabel')"
-          :value="model.isolationNetwork"
+          :required="true"
+          :value="isolationNetwork"
           @change="onIsolationNetworkChange">
         </dropdown-search-group>
         <number-group
-          v-if="isolationType && isolationType.id === 'SUBNET'"
+          v-if="isolationType && isolationType.value === 'SUBNET'"
           :label="i18n('app.profile.edit.cidrPrefixLabel')"
-          :value="model.isolatedSubnetCIDRPrefix"
+          :required="true"
+          :value="isolatedSubnetCIDRPrefix"
           @change="onIsolatedSubnetCIDRPrefixChange">
         </number-group>
       </section>
@@ -68,18 +80,11 @@ export default Vue.component('aws-network-profile-editor', {
     let subnetworks = this.model.subnetworks &&
         this.model.subnetworks.asMutable() || [];
     return {
+      isolatedSubnetCIDRPrefix: this.model.isolatedSubnetCIDRPrefix,
       isolationNetwork: this.model.isolationNetwork,
-      isolationType: this.model.isolationType,
-      isolationTypes: [{
-        id: 'NONE',
-        name: i18n.t('app.profile.edit.noneIsolationTypeLabel')
-      }, {
-        id: 'SUBNET',
-        name: i18n.t('app.profile.edit.subnetIsolationTypeLabel')
-      }, {
-        id: 'SECURITY_GROUP',
-        name: i18n.t('app.profile.edit.securityGroupIsolationTypeLabel')
-      }],
+      isolationType: ISOLATION_TYPES.find((type) => type.value === this.model.isolationType) ||
+          ISOLATION_TYPES[0],
+      isolationTypes: ISOLATION_TYPES,
       subnetworks: subnetworks.map((subnetwork) => {
         return {
           name: subnetwork
@@ -116,18 +121,13 @@ export default Vue.component('aws-network-profile-editor', {
         }).catch(reject);
       });
     },
-    convertToObject(value) {
-      if (value) {
-        return this.isolationTypes.find((type) => type.id === value);
-      }
-    },
     manageSubnetworks() {
       this.$emit('manage.subnetworks');
     },
     emitChange() {
       this.$emit('change', {
         properties: {
-          isolationType: this.isolationType && this.isolationType.id,
+          isolationType: this.isolationType && this.isolationType.value,
           isolationNetworkLink: this.isolationNetwork &&
               this.isolationNetwork.documentSelfLink,
           isolatedSubnetCIDRPrefix: this.isolatedSubnetCIDRPrefix,
@@ -138,7 +138,9 @@ export default Vue.component('aws-network-profile-editor', {
             return previous;
           }, [])
         },
-        valid: true
+        valid: this.isolationType === ISOLATION_TYPES[0] ||
+            (this.isolationType === ISOLATION_TYPES[1] &&
+            this.isolationNetwork && this.isolatedSubnetCIDRPrefix)
       });
     }
   }

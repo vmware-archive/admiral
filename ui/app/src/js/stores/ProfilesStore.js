@@ -218,7 +218,7 @@ let ProfilesStore = Reflux.createStore({
   },
 
   onCreateProfile(model, tagRequest) {
-    Promise.all(services.updateStorageTags(model.storageProfile.storageItems))
+    Promise.all(services.updateStorageTags(model.storageProfile.storageItems || []))
       .then((storageItemTagAssignmentResponses) => {
         let storageItems = [];
         for (let i = 0; i < storageItemTagAssignmentResponses.length; i++) {
@@ -258,7 +258,7 @@ let ProfilesStore = Reflux.createStore({
   },
 
   onUpdateProfile(model, tagRequest) {
-    Promise.all(services.updateStorageTags(model.storageProfile.storageItems))
+    Promise.all(services.updateStorageTags(model.storageProfile.storageItems || []))
       .then((storageItemTagAssignmentResponses) => {
         let storageItems = [];
         for (let i = 0; i < storageItemTagAssignmentResponses.length; i++) {

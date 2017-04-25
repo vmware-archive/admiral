@@ -79,12 +79,12 @@ export default Vue.component('azure-storage-profile-editor', {
 
 Vue.component('storage-item', {
   template: `
-		<div class="align-right toolbar">
-			<a @click="onRemoveItem" class="btn btn-circle-outline">
-				<i class="fa fa-minus"></i>
-			</a>
-		</div>
-		<text-group
+    <div class="align-right toolbar">
+      <a @click="onRemoveItem" class="btn btn-circle-outline">
+        <i class="fa fa-minus"></i>
+      </a>
+    </div>
+    <text-group
       :label="i18n('app.profile.edit.nameLabel')"
       :value="storageItem.name"
       :required="true"
@@ -111,7 +111,7 @@ Vue.component('storage-item', {
         <input type="radio" name="defaultRadio" id="default-radio-{{index}}"
         :checked="storageItem.defaultItem" @click="onDefaultChange">
         <label for="default-radio-{{index}}">
-        	{{i18n('app.profile.edit.makeDescriptorDefault')}}</label>
+          {{i18n('app.profile.edit.makeDescriptorDefault')}}</label>
       </div>
     </div>
     <tags-group
@@ -121,7 +121,7 @@ Vue.component('storage-item', {
       :value="tags"
       @change="onTagsChange">
     </tags-group>
-	`,
+  `,
   props: {
     storageItem: {
       required: true,

@@ -45,15 +45,15 @@ export default Vue.component('profile-edit-view', {
       adapters: utils.getAdapters(),
       computeProfileEditor: {
         properties: this.model.item.computeProfile || {},
-        valid: false
+        valid: true
       },
       networkProfileEditor: {
         properties: this.model.item.networkProfile || {},
-        valid: false
+        valid: true
       },
       storageProfileEditor: {
         properties: this.model.item.storageProfile || {},
-        valid: false
+        valid: true
       },
       currentView: 'basic',
       editorErrors: null,
@@ -68,7 +68,8 @@ export default Vue.component('profile-edit-view', {
   },
   computed: {
     saveDisabled() {
-      return !this.name || !this.endpointType;
+      return !this.name || !this.endpointType || !this.computeProfileEditor.valid ||
+          !this.networkProfileEditor.valid || !this.storageProfileEditor.valid;
     },
     validationErrors() {
       return this.model.validationErrors || this.editorErrors || {};
