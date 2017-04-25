@@ -35,6 +35,7 @@ func TestMain(m *testing.M) {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+	utils.IsTest = true
 	config.GetCfgForTests()
 	loginout.Login(tc.Username, tc.Password, tc.AdmiralAddress)
 

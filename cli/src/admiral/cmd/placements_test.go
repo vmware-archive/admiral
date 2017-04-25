@@ -22,6 +22,7 @@ import (
 	"admiral/config"
 	"admiral/hosts"
 	. "admiral/testutils"
+	"admiral/utils"
 )
 
 func TestPlacementAddRemove(t *testing.T) {
@@ -36,6 +37,7 @@ func TestPlacementAddRemove(t *testing.T) {
 
 	// Preparing the test
 	TestPrintln("Configuring the env.")
+	utils.IsTest = true
 	config.GetCfgForTests()
 	tc, err := ConfigureTestEnv()
 	CheckTestError(err, t)

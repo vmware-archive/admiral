@@ -20,6 +20,7 @@ import (
 	"admiral/config"
 	"admiral/hosts"
 	. "admiral/testutils"
+	"admiral/utils"
 )
 
 //TestContainerProvision will add host and credentials,
@@ -27,6 +28,7 @@ import (
 func TestContainerProvision(t *testing.T) {
 	// Preparing the test.
 	TestPrintln("Configuring the env.")
+	utils.IsTest = true
 	config.GetCfgForTests()
 	tc, err := ConfigureTestEnv()
 	CheckTestError(err, t)

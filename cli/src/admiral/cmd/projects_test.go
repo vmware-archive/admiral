@@ -14,17 +14,19 @@
 package cmd
 
 import (
-	"admiral/config"
 	"strings"
 	"testing"
 
+	"admiral/config"
 	"admiral/hosts"
 	. "admiral/testutils"
+	"admiral/utils"
 )
 
 func TestAddUseRemoveProjects(t *testing.T) {
 	// Preparing the test.
 	TestPrintln("Configuring the env.")
+	utils.IsTest = true
 	config.GetCfgForTests()
 	tc, err := ConfigureTestEnv()
 	CheckTestError(err, t)

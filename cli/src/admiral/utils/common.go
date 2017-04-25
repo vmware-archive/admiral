@@ -22,6 +22,8 @@ import (
 
 var (
 	IsVraMode = isVraMode()
+
+	IsTest bool
 )
 
 //PromptAgreement is asking the user to enter either "y"/"yes" or "n"/"no".

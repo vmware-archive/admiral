@@ -20,6 +20,7 @@ import (
 
 	"admiral/config"
 	. "admiral/testutils"
+	"admiral/utils"
 )
 
 var tc = &TestConfig{}
@@ -31,6 +32,7 @@ func TestMain(m *testing.M) {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+	utils.IsTest = true
 	config.GetCfgForTests()
 
 	code := m.Run()

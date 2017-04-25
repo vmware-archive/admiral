@@ -43,6 +43,12 @@ type TaskStatus struct {
 	ResourceLinks []string `json:"resourceLinks"`
 }
 
+func (ts *TaskStatus) String() string {
+	jsonBody, err := json.MarshalIndent(ts, "", "    ")
+	utils.CheckBlockingError(err)
+	return string(jsonBody)
+}
+
 type OperationResponse struct {
 	Operation          string `json:"operation"`
 	RequestTrackerLink string `json:"requestTrackerLink"`
@@ -117,6 +123,11 @@ func Wait(taskId string, operationType string) ([]string, error) {
 	for {
 		elapsed := time.Now().Sub(begin)
 		if elapsed.Seconds() > float64(config.TASK_TIMEOUT_SECONDS) {
+			// If task timeout in test, print it's latest state
+			// for debugging purposes.
+			if utils.IsTest {
+				fmt.Println(taskStatus.String())
+			}
 			return nil, errors.New("Task timed out.")
 		}
 
