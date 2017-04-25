@@ -366,6 +366,8 @@ var TemplateDetailsView = Vue.extend({
             return 'image-assets/closure-nodejs.png';
           } else if (this.model.runtime.startsWith('python')) {
             return 'image-assets/closure-python.png';
+          } else if (this.model.runtime.startsWith('powershell')) {
+            return 'image-assets/closure-powershell.png';
           }
           return 'image-assets/closure-unknown.png';
         },
@@ -374,6 +376,8 @@ var TemplateDetailsView = Vue.extend({
             return 'NodeJS 4';
           } else if (this.model.runtime === 'python') {
             return 'Python 3';
+          } else if (this.model.runtime === 'powershell') {
+            return 'Powershell 6';
           }
           return 'Unknown';
         }

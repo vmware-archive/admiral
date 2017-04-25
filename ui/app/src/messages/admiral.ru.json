@@ -1078,7 +1078,8 @@
           "sourceURL": "URL-адрес источника",
           "runtimeTypes": {
             "nodejs": "NodeJs 4",
-            "python": "Python 3"
+            "python": "Python 3",
+            "powershell": "Powershell 6"
           },
           "logConfigOptionsInputs" : {
             "name": "Имя",
