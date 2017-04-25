@@ -127,14 +127,17 @@
           <div class="spinner"></div>
         </div>
 
-        <network-box v-for="network in networks | networksOrderBy" track-by="documentSelfLink" v-bind:model="network"
-             v-on:attached="networkAttached"
-             v-on:detached="networkDetached"
-             v-on:edit="editNetwork"
-             v-on:remove="removeNetwork"></network-box>
+        <network-box v-for="network in networks | networksOrderBy" track-by="documentSelfLink"
+                     :model="network"
+                     mode="create"
+                     v-on:attached="networkAttached"
+                     v-on:detached="networkDetached"
+                     v-on:edit="editNetwork"
+                     v-on:remove="removeNetwork"></network-box>
 
         <volume-box v-for="volume in volumes | volumesOrderBy" track-by="documentSelfLink"
-                    v-bind:model="volume"
+                    :model="volume"
+                    mode="create"
                     v-on:attached="volumeAttached"
                     v-on:detached="volumeDetached"
                     v-on:edit="editVolume"
