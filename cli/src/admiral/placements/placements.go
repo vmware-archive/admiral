@@ -37,20 +37,22 @@ var (
 )
 
 type Placement struct {
-	Name                    string   `json:"name"`
-	ResourcePoolLink        string   `json:"resourcePoolLink"`
-	Priority                int32    `json:"priority"`
-	ResourceType            string   `json:"resourceType"`
-	MaxNumberInstances      int64    `json:"maxNumberInstances"`
-	MemoryLimit             int64    `json:"memoryLimit"`
-	StorageLimit            int64    `json:"storageLimit"`
-	CpuShares               int64    `json:"cpuShares"`
-	DeploymentPolicyLink    string   `json:"deploymentPolicyLink"`
-	AvailableInstancesCount int64    `json:"availableInstancesCount"`
-	AvailableMemory         int64    `json:"availableMemory"`
-	TenantLinks             []string `json:"tenantLinks"`
-	DocumentSelfLink        *string  `json:"documentSelfLink"`
-	DocumentKind            string   `json:"documentKind,omitempty"`
+	Name                         string           `json:"name"`
+	ResourcePoolLink             string           `json:"resourcePoolLink"`
+	Priority                     int32            `json:"priority"`
+	ResourceType                 string           `json:"resourceType"`
+	MaxNumberInstances           int64            `json:"maxNumberInstances"`
+	MemoryLimit                  int64            `json:"memoryLimit"`
+	StorageLimit                 int64            `json:"storageLimit"`
+	CpuShares                    int64            `json:"cpuShares"`
+	DeploymentPolicyLink         string           `json:"deploymentPolicyLink"`
+	AvailableInstancesCount      int64            `json:"availableInstancesCount"`
+	AllocatedInstancesCount      int64            `json:"allocatedInstancesCount"`
+	AvailableMemory              int64            `json:"availableMemory"`
+	TenantLinks                  []string         `json:"tenantLinks"`
+	ResourceQuotaPerResourceDesc map[string]int64 `json:"resourceQuotaPerResourceDesc,omitempty"`
+	DocumentSelfLink             *string          `json:"documentSelfLink"`
+	DocumentKind                 string           `json:"documentKind,omitempty"`
 }
 
 func (p *Placement) GetID() string {
@@ -92,6 +94,16 @@ func (p *Placement) GetTenantId() string {
 		}
 	}
 	return ""
+}
+
+func (p *Placement) String() string {
+	jsonBody, err := json.MarshalIndent(p, "", "    ")
+	utils.CheckBlockingError(err)
+	return string(jsonBody)
+}
+
+func (p *Placement) GetInstancesString() string {
+	return fmt.Sprintf("%d of %d", p.AllocatedInstancesCount, p.AvailableInstancesCount)
 }
 
 func (p *Placement) GetDeploymentPolicyName() string {
@@ -235,10 +247,10 @@ func (pl *PlacementList) GetOutputString() string {
 	}
 	var buffer bytes.Buffer
 	if utils.IsVraMode {
-		buffer.WriteString("ID\tNAME\tBUSINESS GROUP\tPLACEMENT ZONE\tDEPLOYMENT POLICY\tPRIORITY\tINSTANCES\tCPU SHARES\tMEMORY LIMIT")
+		buffer.WriteString("ID\tNAME\tBUSINESS GROUP\tPLACEMENT ZONE\tDEPLOYMENT POLICY\tPRIORITY\tINSTANCES\tCPU SHARES\tMEMORY LIMIT\tINSTANCES")
 		buffer.WriteString("\n")
 	} else {
-		buffer.WriteString("ID\tNAME\tPROJECT\tPLACEMENT ZONE\tPRIORITY\tINSTANCES\tCPU SHARES\tMEMORY LIMIT")
+		buffer.WriteString("ID\tNAME\tPROJECT\tPLACEMENT ZONE\tPRIORITY\tINSTANCES\tCPU SHARES\tMEMORY LIMIT\tINSTANCES")
 		buffer.WriteString("\n")
 	}
 	for _, link := range pl.DocumentLinks {
@@ -255,12 +267,12 @@ func (pl *PlacementList) GetOutputString() string {
 			businessGroup := val.GetTenantOrProjectName()
 			deploymentPolicy := val.GetDeploymentPolicyName()
 			output := utils.GetTabSeparatedString(val.GetID(), val.Name, businessGroup, placementZone, deploymentPolicy, val.Priority,
-				val.AvailableInstancesCount, val.CpuShares, val.GetFormattedMemoryLimit())
+				val.AvailableInstancesCount, val.CpuShares, val.GetFormattedMemoryLimit(), val.GetInstancesString())
 			buffer.WriteString(output)
 			buffer.WriteString("\n")
 		} else {
 			output := utils.GetTabSeparatedString(val.GetID(), val.Name, val.GetTenantOrProjectName(), placementZone, val.Priority,
-				val.AvailableInstancesCount, val.CpuShares, val.GetFormattedMemoryLimit())
+				val.AvailableInstancesCount, val.CpuShares, val.GetFormattedMemoryLimit(), val.GetInstancesString())
 			buffer.WriteString(output)
 			buffer.WriteString("\n")
 		}
@@ -400,6 +412,22 @@ func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolId string, 
 	err = json.Unmarshal(respBody, newPlacement)
 	utils.CheckBlockingError(err)
 	return newPlacement.GetID(), nil
+}
+
+func InspectPlacement(idOrName string) (string, error) {
+	fullId, err := selflink.GetFullId(idOrName, new(PlacementList), utils.PLACEMENT)
+	utils.CheckBlockingError(err)
+	link := utils.CreateResLinksForPlacement(fullId)
+	url := config.URL + link
+	req, _ := http.NewRequest("GET", url, nil)
+	_, respBody, respErr := client.ProcessRequest(req)
+	if respErr != nil {
+		return "", respErr
+	}
+	placement := &Placement{}
+	err = json.Unmarshal(respBody, placement)
+	utils.CheckBlockingError(err)
+	return placement.String(), nil
 }
 
 func haveNeeded(resourcePool string) bool {

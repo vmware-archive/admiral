@@ -15,49 +15,45 @@ import utils from 'core/utils';
 export default Vue.component('azure-network-profile-editor', {
   template: `
     <div>
-      <text-group
-        :label="i18n('app.profile.edit.nameLabel')"
-        :value="name"
-        @change="onNameChange">
-      </text-group>
-      <multicolumn-editor-group
-        v-if="endpoint"
-        :headers="[
-          i18n('app.profile.edit.nameLabel')
-        ]"
-        :label="i18n('app.profile.edit.subnetworksLabel')"
-        :value="subnetworks"
-        @change="onSubnetworkChange">
-        <multicolumn-cell name="name">
-          <subnetwork-search
-            :endpoint="endpoint"
-            :manage-action="manageSubnetworks">
-          </subnetwork-search>
-        </multicolumn-cell>
-      </multicolumn-editor-group>
-      <dropdown-group
-        v-if="endpoint"
-        :entity="i18n('app.profile.edit.isolationNetworkLabel')"
-        :label="i18n('app.profile.edit.isolationTypeLabel')"
-        :options="isolationTypes"
-        :value="convertToObject(model.isolationType)"
-        @change="onIsolationTypeChange">
-      </dropdown-group>
-      <dropdown-search-group
-        v-if="isolationType && isolationType.id === 'SUBNET'"
-        :entity="i18n('app.network.entity')"
-        :filter="searchIsolationNetworks"
-        :label="i18n('app.profile.edit.isolationNetworkLabel')"
-        :renderer="renderIsolationNetwork"
-        :value="model.isolationNetwork"
-        @change="onIsolationNetworkChange">
-      </dropdown-search-group>
-      <number-group
-        v-if="isolationType && isolationType.id === 'SUBNET'"
-        :label="i18n('app.profile.edit.cidrPrefixLabel')"
-        :value="model.isolatedSubnetCIDRPrefix"
-        @change="onIsolatedSubnetCIDRPrefixChange">
-      </number-group>
+      <section class="form-block" v-if="endpoint">
+        <label>{{i18n('app.profile.edit.existingLabel')}}</label>
+        <multicolumn-editor-group
+          :label="i18n('app.profile.edit.subnetworksLabel')"
+          :value="subnetworks"
+          @change="onSubnetworkChange">
+          <multicolumn-cell name="name">
+            <subnetwork-search
+              :endpoint="endpoint"
+              :manage-action="manageSubnetworks">
+            </subnetwork-search>
+          </multicolumn-cell>
+        </multicolumn-editor-group>
+      </section>
+      <section class="form-block" v-if="endpoint">
+        <label>{{i18n('app.profile.edit.isolationLabel')}}</label>
+        <dropdown-group
+          :entity="i18n('app.profile.edit.isolationNetworkLabel')"
+          :label="i18n('app.profile.edit.isolationTypeLabel')"
+          :options="isolationTypes"
+          :value="convertToObject(model.isolationType)"
+          @change="onIsolationTypeChange">
+        </dropdown-group>
+        <dropdown-search-group
+          v-if="isolationType && isolationType.id === 'SUBNET'"
+          :entity="i18n('app.network.entity')"
+          :filter="searchIsolationNetworks"
+          :label="i18n('app.profile.edit.isolationNetworkLabel')"
+          :renderer="renderIsolationNetwork"
+          :value="model.isolationNetwork"
+          @change="onIsolationNetworkChange">
+        </dropdown-search-group>
+        <number-group
+          v-if="isolationType && isolationType.id === 'SUBNET'"
+          :label="i18n('app.profile.edit.cidrPrefixLabel')"
+          :value="model.isolatedSubnetCIDRPrefix"
+          @change="onIsolatedSubnetCIDRPrefixChange">
+        </number-group>
+      </section>
     </div>
   `,
   props: {
@@ -86,7 +82,6 @@ export default Vue.component('azure-network-profile-editor', {
         id: 'SECURITY_GROUP',
         name: i18n.t('app.profile.edit.securityGroupIsolationTypeLabel')
       }],
-      name: this.model.name,
       subnetworks: subnetworks.map((subnetwork) => {
         return {
           name: subnetwork
@@ -98,10 +93,6 @@ export default Vue.component('azure-network-profile-editor', {
     this.emitChange();
   },
   methods: {
-    onNameChange(value) {
-      this.name = value;
-      this.emitChange();
-    },
     onSubnetworkChange(value) {
       this.subnetworks = value;
       this.emitChange();
@@ -171,7 +162,6 @@ export default Vue.component('azure-network-profile-editor', {
           isolationNetworkLink: this.isolationNetwork &&
               this.isolationNetwork.documentSelfLink,
           isolatedSubnetCIDRPrefix: this.isolatedSubnetCIDRPrefix,
-          name: this.name,
           subnetLinks: this.subnetworks.reduce((previous, current) => {
             if (current.name && current.name.documentSelfLink) {
               previous.push(current.name.documentSelfLink);

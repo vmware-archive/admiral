@@ -15,6 +15,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.profile.InstanceTypeDescription;
 import com.vmware.admiral.compute.profile.ProfileService;
+import com.vmware.admiral.compute.profile.StorageProfileService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.DiskService;
 import com.vmware.photon.controller.model.resources.DiskService.DiskState;
@@ -86,9 +88,16 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
             // Default is 8 GB
             rootDisk.capacityMBytes = diskSizeMbFromProfile > 0 ? diskSizeMbFromProfile : (8 * 1024);
 
-            Map<String, String> values = profile.storageProfile != null
-                    ? profile.storageProfile.bootDiskPropertyMapping
-                    : null;
+            Map<String, String> values = null;
+            if (profile.storageProfile != null && profile.storageProfile.storageItems != null) {
+                Optional<StorageProfileService.StorageItem> defaultStorageItem = profile
+                        .storageProfile.storageItems.stream().filter(storageItem ->
+                        storageItem.defaultItem).findFirst();
+                if (defaultStorageItem.isPresent()) {
+                    values = defaultStorageItem.get().diskProperties;
+                }
+            }
+
             if (values != null) {
                 rootDisk.customProperties = new HashMap<>(values);
             }

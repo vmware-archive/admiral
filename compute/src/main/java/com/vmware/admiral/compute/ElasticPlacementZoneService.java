@@ -12,6 +12,7 @@
 package com.vmware.admiral.compute;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -21,7 +22,10 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.service.common.MultiTenantDocument;
+import com.vmware.photon.controller.model.ComputeProperties;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
@@ -178,13 +182,18 @@ public class ElasticPlacementZoneService extends StatefulService {
      */
     private void setResourcePoolElasticity(ElasticPlacementZoneState epz,
             Consumer<Throwable> callback) {
-        ResourcePoolState patchRpState = new ResourcePoolState();
-        patchRpState.properties = EnumSet.of(ResourcePoolProperty.ELASTIC);
-        patchRpState.query = generateRpQuery(epz);
-        sendRequest(Operation
-                .createPatch(getHost(), epz.resourcePoolLink)
-                .setBody(patchRpState)
-                .setCompletion((op, ex) -> callback.accept(ex)));
+        Operation getRpOp = Operation.createGet(getHost(), epz.resourcePoolLink);
+        sendWithDeferredResult(getRpOp, ResourcePoolState.class)
+                .thenCompose(currentRpState -> {
+                    ResourcePoolState patchRpState = new ResourcePoolState();
+                    patchRpState.properties = EnumSet.of(ResourcePoolProperty.ELASTIC);
+                    patchRpState.query = generateRpQuery(epz, currentRpState);
+                    Operation patchRpOp = Operation
+                            .createPatch(getHost(), epz.resourcePoolLink)
+                            .setBody(patchRpState);
+                    return sendWithDeferredResult(patchRpOp);
+                })
+                .whenComplete((op, ex) -> callback.accept(ex));
     }
 
     /**
@@ -225,27 +234,72 @@ public class ElasticPlacementZoneService extends StatefulService {
     }
 
     /**
-     * Generates a ComputeState query based on the tag links defined in the elastic placement zone.
+     * Generates a ComputeState query based on the tag links defined in the elastic placement zone
+     * and the configuration of the underlying resource pool.
      *
      * The query includes computes matched by tags and computes explicitly assigned to the RP:
-     * is-compute AND (match-tags OR explicitly-assigned)
+     *   is of type ComputeState AND
+     *   (compute RP
+     *     ? (match endpoint AND compute type in VM_HOST, ZONE)
+     *     : (compute type is VM_GUEST)) AND
+     *   (match-tags OR explicitly-assigned) AND
+     *   tenant links matches RP tenant links
      */
-    private static Query generateRpQuery(ElasticPlacementZoneState epz) {
+    private static Query generateRpQuery(ElasticPlacementZoneState epz, ResourcePoolState rp) {
         Query.Builder tagQueryBuilder = Query.Builder.create();
         for (String tagLink : epz.tagLinksToMatch) {
             // all tagLinksToMatch must be set on the compute
             tagQueryBuilder.addCollectionItemClause(ResourceState.FIELD_NAME_TAG_LINKS, tagLink);
         }
 
+        Query kindClause = Query.Builder.create().addKindFieldClause(ComputeState.class).build();
         Query assignmentClause = Query.Builder.create()
                 .addClause(tagQueryBuilder.build().setOccurance(Occurance.SHOULD_OCCUR))
                 .addFieldClause(ComputeState.FIELD_NAME_RESOURCE_POOL_LINK, epz.resourcePoolLink,
                         Occurance.SHOULD_OCCUR)
                 .build();
-        Query kindClause = Query.Builder.create().addKindFieldClause(ComputeState.class).build();
+        Query rpSpecificClause = isComputeRp(rp) ? generateComputeRpQuery(rp)
+                : generateContainerRpQuery();
+        Query tenantClause = QueryUtil.addTenantClause(rp.tenantLinks);
 
-        Query epzQuery = Query.Builder.create().addClauses(assignmentClause, kindClause).build();
+        Query epzQuery = Query.Builder.create()
+                .addClauses(kindClause, assignmentClause, rpSpecificClause, tenantClause)
+                .build();
         return epzQuery;
+    }
+
+    /**
+     * Checks if the given resource pool is compute or not.
+     */
+    private static boolean isComputeRp(ResourcePoolState rp) {
+        return rp.customProperties != null && ResourceType.COMPUTE_TYPE.getName().equalsIgnoreCase(
+                rp.customProperties.get(PlacementZoneConstants.RESOURCE_TYPE_CUSTOM_PROP_NAME));
+    }
+
+    /**
+     * Generates a query clause for computes in a compute RP.
+     */
+    private static Query generateComputeRpQuery(ResourcePoolState rp) {
+        final Collection<String> computeTypes = Arrays.asList(ComputeType.VM_HOST.name(),
+                ComputeType.ZONE.name());
+        Query.Builder queryBuilder = Query.Builder.create()
+                .addInClause(ComputeState.FIELD_NAME_TYPE, computeTypes);
+
+        String rpEndpointLink = rp.customProperties != null
+                ? rp.customProperties.get(ComputeProperties.ENDPOINT_LINK_PROP_NAME) : null;
+        if (rpEndpointLink != null) {
+            queryBuilder.addFieldClause(ComputeState.FIELD_NAME_ENDPOINT_LINK, rpEndpointLink);
+        }
+
+        return queryBuilder.build();
+    }
+
+    /**
+     * Generates a query clause for computes in a container RP.
+     */
+    private static Query generateContainerRpQuery() {
+        return Query.Builder.create()
+                .addFieldClause(ComputeState.FIELD_NAME_TYPE, ComputeType.VM_GUEST.name()).build();
     }
 
     @Override

@@ -20,6 +20,8 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -28,7 +30,6 @@ import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.service.common.EventTopicRegistrationBootstrapService.SchemaBuilder;
 import com.vmware.admiral.service.common.EventTopicService.EventTopicState;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
@@ -59,11 +60,6 @@ public class EventTopicServiceTest extends BaseTestCase {
         host.startFactory(new EventTopicRegistrationBootstrapService());
 
         waitForServiceAvailability(EventTopicRegistrationBootstrapService.FACTORY_LINK);
-
-        sender.sendPostAndWait(
-                UriUtils.buildUri(host, EventTopicRegistrationBootstrapService.FACTORY_LINK),
-                new ServiceDocument(), ServiceDocument.class);
-
     }
 
     @Test
@@ -180,51 +176,21 @@ public class EventTopicServiceTest extends BaseTestCase {
 
     @Test
     public void testCreateionOfChangeContainerNameTopic() {
-        // On start service creates new topic. No need for explicit post for creation.
-        URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
-        TestContext context = new TestContext(1, Duration.ofSeconds(180));
-        Operation.createGet(uri)
-                .setReferer(host.getUri())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        context.fail(e);
-                        return;
-                    }
-                    ServiceDocumentQueryResult result = o.getBody(ServiceDocumentQueryResult.class);
-                    assertNotNull(result);
-                    assertNotNull(result.documentLinks);
-                    assertTrue(result.documentLinks.contains(EventTopicService.FACTORY_LINK
-                            + "/"
-                            + EventTopicRegistrationBootstrapService.CONTAINER_NAME_TOPIC_TASK_SELF_LINK));
 
-                    context.completeIteration();
-                }).sendWith(host);
-        ;
+        // On start service creates new topic. No need for explicit post for creation.
+        TestContext context = new TestContext(1, Duration.ofSeconds(120));
+        verifyThatTopicExists(
+                EventTopicRegistrationBootstrapService.CONTAINER_NAME_TOPIC_TASK_SELF_LINK,
+                context);
         context.await();
     }
 
     @Test
     public void testCreateionOfChangeComputeNameTopic() {
         // On start service creates new topic. No need for explicit post for creation.
-        URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
-        TestContext context = new TestContext(1, Duration.ofSeconds(180));
-        Operation.createGet(uri)
-                .setReferer(host.getUri())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        context.fail(e);
-                        return;
-                    }
-                    ServiceDocumentQueryResult result = o.getBody(ServiceDocumentQueryResult.class);
-                    assertNotNull(result);
-                    assertNotNull(result.documentLinks);
-                    assertTrue(result.documentLinks.contains(EventTopicService.FACTORY_LINK
-                            + "/"
-                            + EventTopicRegistrationBootstrapService.COMPUTE_NAME_TOPIC_TASK_SELF_LINK));
-
-                    context.completeIteration();
-                }).sendWith(host);
-        ;
+        TestContext context = new TestContext(1, Duration.ofSeconds(120));
+        verifyThatTopicExists(
+                EventTopicRegistrationBootstrapService.COMPUTE_NAME_TOPIC_TASK_SELF_LINK, context);
         context.await();
     }
 
@@ -261,6 +227,107 @@ public class EventTopicServiceTest extends BaseTestCase {
 
         Map<String, String> fieldProperties = entry.getValue();
         assertEquals(4, fieldProperties.size());
+
+    }
+
+    @Test
+    public void testSchemaBuilderWithMultipleFields() {
+
+        String fieldName = "resourceNames";
+        String dataType = String.class.getSimpleName();
+        String description = UUID.randomUUID().toString();
+        String label = UUID.randomUUID().toString();
+        boolean multivalued = true;
+        boolean readOnly = false;
+
+        String fieldName2 = "containerDescProperties";
+        String dataType2 = String.class.getSimpleName();
+        String description2 = UUID.randomUUID().toString();
+        String label2 = UUID.randomUUID().toString();
+        boolean multivalued2 = false;
+        boolean readOnly2 = false;
+
+        SchemaBuilder schemaBuilder = EventTopicRegistrationBootstrapService.SchemaBuilder.create();
+        schemaBuilder.addField(fieldName)
+                .addDataType(dataType)
+                .addDescription(description)
+                .addLabel(label)
+                .whereMultiValued(multivalued)
+                .whereReadOnly(readOnly)
+                // Add another field
+                .addField(fieldName2)
+                .addDataType(dataType2)
+                .addDescription(description2)
+                .addLabel(label2)
+                .whereMultiValued(multivalued2)
+                .whereReadOnly(readOnly2);
+
+        String schemaAsJson = schemaBuilder.build();
+
+        assertNotNull(schemaAsJson);
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Map<String, String>>> entitiesHolder = Utils.fromJson(schemaAsJson,
+                List.class);
+
+        assertNotNull(entitiesHolder);
+        assertEquals(2, entitiesHolder.size());
+
+        entitiesHolder.stream().forEach(entity -> {
+            if (entity.containsKey(fieldName)) {
+                Map<String, String> fieldProperties = entity.get(fieldName);
+                assertNotNull(fieldProperties);
+                assertEquals(5, fieldProperties.size());
+                assertEquals(dataType, fieldProperties.get("dataType"));
+                assertEquals(description, fieldProperties.get("description"));
+                assertEquals(label, fieldProperties.get("label"));
+                assertEquals(String.valueOf(multivalued), fieldProperties.get("multivalued"));
+                assertEquals(String.valueOf(readOnly), fieldProperties.get("readOnly"));
+            } else {
+                Map<String, String> fieldProperties = entity.get(fieldName2);
+                assertNotNull(fieldProperties);
+                assertEquals(5, fieldProperties.size());
+                assertEquals(dataType2, fieldProperties.get("dataType"));
+                assertEquals(description2, fieldProperties.get("description"));
+                assertEquals(label2, fieldProperties.get("label"));
+                assertEquals(String.valueOf(multivalued2), fieldProperties.get("multivalued"));
+                assertEquals(String.valueOf(readOnly2), fieldProperties.get("readOnly"));
+
+            }
+        });
+
+    }
+
+    private void verifyThatTopicExists(String topicSelfLink, TestContext context) {
+        // On start service creates new topic. No need for explicit post for creation.
+        URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
+        Operation.createGet(uri)
+                .setReferer(host.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.schedule(() -> {
+                            verifyThatTopicExists(topicSelfLink, context);
+                        }, 3, TimeUnit.SECONDS);
+                        return;
+                    }
+                    ServiceDocumentQueryResult result = o.getBody(ServiceDocumentQueryResult.class);
+                    assertNotNull(result);
+                    assertNotNull(result.documentLinks);
+
+                    if (result.documentLinks.isEmpty()) {
+                        // Topics are not created yet. Let's try next iteration?
+                        host.schedule(() -> {
+                            verifyThatTopicExists(topicSelfLink, context);
+                        }, 3, TimeUnit.SECONDS);
+                        return;
+                    }
+
+                    assertTrue(result.documentLinks.contains(EventTopicService.FACTORY_LINK
+                            + "/"
+                            + topicSelfLink));
+                    context.completeIteration();
+
+                }).sendWith(host);
 
     }
 

@@ -10,7 +10,7 @@
  */
 
 import { EndpointsActions, ProfileActions, NavigationActions,
-    SubnetworksActions} from 'actions/Actions';
+    SubnetworksActions } from 'actions/Actions';
 import ContextPanelStoreMixin from 'stores/mixins/ContextPanelStoreMixin';
 import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
 import EndpointsStore from 'stores/EndpointsStore';
@@ -218,29 +218,39 @@ let ProfilesStore = Reflux.createStore({
   },
 
   onCreateProfile(model, tagRequest) {
-    Promise.all([
-      services.createComputeProfile(model.computeProfile),
-      services.createNetworkProfile(model.networkProfile),
-      services.createStorageProfile(model.storageProfile)
-    ]).then(([computeProfile, networkProfile, storageProfile]) => {
-      let data = $.extend(model, {
-        computeProfileLink: computeProfile.documentSelfLink,
-        networkProfileLink: networkProfile.documentSelfLink,
-        storageProfileLink: storageProfile.documentSelfLink
-      });
-      return services.createProfile(data);
-    }).then((createdProfile) => {
-      if (tagRequest) {
-        tagRequest.resourceLink = createdProfile.documentSelfLink;
-        return services.updateTagAssignment(tagRequest);
-      }
-      return Promise.resolve();
-    }).then(() => {
-      NavigationActions.openProfiles();
-      this.setInData(['editingItemData'], null);
-      this.emitChange();
-    }).catch(this.onGenericEditError);
-
+    Promise.all(services.updateStorageTags(model.storageProfile.storageItems))
+      .then((storageItemTagAssignmentResponses) => {
+        let storageItems = [];
+        for (let i = 0; i < storageItemTagAssignmentResponses.length; i++) {
+          let storageItem = model.storageProfile.storageItems[i];
+          storageItem.tagLinks = storageItemTagAssignmentResponses[i].tagLinks;
+          storageItems.push(storageItem);
+        }
+        this.setInData(['editingItemData', 'item',
+          'storageProfile', 'storageItems'], storageItems);
+        Promise.all([
+          services.createComputeProfile(model.computeProfile),
+          services.createNetworkProfile(model.networkProfile),
+          services.createStorageProfile(model.storageProfile)
+        ]).then(([computeProfile, networkProfile, storageProfile]) => {
+          let data = $.extend(model, {
+            computeProfileLink: computeProfile.documentSelfLink,
+            networkProfileLink: networkProfile.documentSelfLink,
+            storageProfileLink: storageProfile.documentSelfLink
+          });
+          return services.createProfile(data);
+        }).then((createdProfile) => {
+          if (tagRequest) {
+            tagRequest.resourceLink = createdProfile.documentSelfLink;
+            return services.updateTagAssignment(tagRequest);
+          }
+          return Promise.resolve();
+        }).then(() => {
+          NavigationActions.openProfiles();
+          this.setInData(['editingItemData'], null);
+          this.emitChange();
+        }).catch(this.onGenericEditError);
+      }).catch(this.onGenericEditError);
     this.setInData(['editingItemData', 'item'], model);
     this.setInData(['editingItemData', 'validationErrors'], null);
     this.setInData(['editingItemData', 'saving'], true);
@@ -248,17 +258,28 @@ let ProfilesStore = Reflux.createStore({
   },
 
   onUpdateProfile(model, tagRequest) {
-    Promise.all([
-      services.updateComputeProfile(model.computeProfile),
-      services.updateNetworkProfile(model.networkProfile),
-      services.updateStorageProfile(model.storageProfile),
-      services.updateProfile(model),
-      services.updateTagAssignment(tagRequest)
-    ]).then(() => {
-      NavigationActions.openProfiles();
-      this.setInData(['editingItemData'], null);
-      this.emitChange();
-    }).catch(this.onGenericEditError);
+    Promise.all(services.updateStorageTags(model.storageProfile.storageItems))
+      .then((storageItemTagAssignmentResponses) => {
+        let storageItems = [];
+        for (let i = 0; i < storageItemTagAssignmentResponses.length; i++) {
+          let storageItem = model.storageProfile.storageItems[i];
+          storageItem.tagLinks = storageItemTagAssignmentResponses[i].tagLinks;
+          storageItems.push(storageItem);
+        }
+        this.setInData(['editingItemData', 'item',
+          'storageProfile', 'storageItems'], storageItems);
+        Promise.all([
+          services.updateComputeProfile(model.computeProfile),
+          services.updateNetworkProfile(model.networkProfile),
+          services.updateStorageProfile(model.storageProfile),
+          services.updateProfile(model),
+          services.updateTagAssignment(tagRequest)
+        ]).then(() => {
+          NavigationActions.openProfiles();
+          this.setInData(['editingItemData'], null);
+          this.emitChange();
+        }).catch(this.onGenericEditError);
+      }).catch(this.onGenericEditError);
 
     this.setInData(['editingItemData', 'item'], model);
     this.setInData(['editingItemData', 'validationErrors'], null);
@@ -334,6 +355,13 @@ let ProfilesStore = Reflux.createStore({
   onManageSubnetworks() {
     onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.SUBNETWORKS,
         SubnetworksStore.getData(), true);
+  },
+  onLoadStorageTags(tagLinks) {
+    let tags = {};
+    services.loadTags(tagLinks).then((tagsResponse) => {
+      tags = Object.values(tagsResponse);
+    });
+    return tags;
   }
 });
 

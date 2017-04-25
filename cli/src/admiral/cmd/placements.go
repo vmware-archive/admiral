@@ -41,6 +41,7 @@ func init() {
 	initPlacementUpdate()
 	initPlacementList()
 	initPlacementRemove()
+	initPlacementInspect()
 }
 
 var placementAddCmd = &cobra.Command{
@@ -219,4 +220,30 @@ func RunPlacementUpdate(args []string) (string, error) {
 	} else {
 		return PlacementUpdatedMessage + newID, err
 	}
+}
+
+var placementInspectCmd = &cobra.Command{
+	Use:   "inspect [PLACEMENT]",
+	Short: "Inspect placement.",
+	Long:  "Inspect placement.",
+
+	Run: func(cmd *cobra.Command, args []string) {
+		output, err := RunPlacementInspect(args)
+		processOutput(output, err)
+	},
+}
+
+func initPlacementInspect() {
+	PlacementsRootCmd.AddCommand(placementInspectCmd)
+}
+
+func RunPlacementInspect(args []string) (string, error) {
+	var (
+		id string
+		ok bool
+	)
+	if id, ok = ValidateArgsCount(args); !ok {
+		return "", MissingPlacementIdError
+	}
+	return placements.InspectPlacement(id)
 }

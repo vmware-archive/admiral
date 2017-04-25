@@ -145,10 +145,11 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
     }
 
     @AfterClass
-    public static void afterClassTearDown() throws Exception {
+    public static synchronized void afterClassTearDown() throws Exception {
         // remove the host
         if (dockerHostCompute != null && (parallel_test_counter.get() == 1)) {
             removeHost(dockerHostCompute);
+            dockerHostCompute = null;
         }
     }
 
@@ -178,13 +179,17 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
         setupCoreOsHost(adapterType, false);
     }
 
-    protected static void setupCoreOsHost(DockerAdapterType adapterType, boolean setupOnCluster)
+    protected static synchronized void setupCoreOsHost(DockerAdapterType adapterType, boolean
+            setupOnCluster)
             throws Exception {
         logger.info("********************************************************************");
         logger.info("----------  Setup: Add CoreOS VM as DockerHost ComputeState --------");
         logger.info("********************************************************************");
+        if (dockerHostCompute != null || dockerHostsInCluster != null) {
+            logger.info("---------- Host/s already configured!");
+            return;
+        }
         logger.info("---------- 1. Create a Docker Host Container Description. --------");
-
         logger.info(
                 "---------- 2. Setup auth credentials for the CoreOS VM (Container Host). --------");
         dockerHostAuthCredentials = IntegratonTestStateFactory.createAuthCredentials(true);

@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.compute.profile;
 
+import java.util.List;
 import java.util.Map;
 
 import com.vmware.admiral.common.ManagementUriParts;
@@ -26,9 +27,34 @@ import com.vmware.xenon.common.Utils;
 public class StorageProfileService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.STORAGE_PROFILES;
 
+    public static class StorageItem {
+
+        /**
+         * Name of the storage properties defined for Jason's reference.
+         */
+        public String name;
+        /**
+         * Tags to be specified in the blueprint against each disk. To
+         *  be used in filtering which storage item is to be used
+         */
+        public List<String> tagLinks;
+        /**
+         * Map of storage properties that
+         * are to be used by the provider when provisioning disks
+         */
+        public Map<String, String> diskProperties;
+        /**
+         * defines if this particular storage item contains default
+         * storage properties
+         */
+        public boolean defaultItem;
+    }
+
     public static class StorageProfile extends MultiTenantDocument {
-        // TODO: temporary needed for Azure; to be generalized
-        public Map<String, String> bootDiskPropertyMapping;
+
+        @Documentation(description = "Contains storageItems that define disk properties to be "
+                + "used by providers")
+        public List<StorageItem> storageItems;
     }
 
     public StorageProfileService() {

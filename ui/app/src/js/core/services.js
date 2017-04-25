@@ -1293,6 +1293,19 @@ services.updateStorageProfile = function(profile) {
   return put(profile.documentSelfLink, profile);
 };
 
+services.updateStorageTags = function(storageItems) {
+  let promiseArray = [];
+  for (let storageItem of storageItems) {
+    if (storageItem.tags && storageItem.tags.length) {
+      let tagAssignmentRequest = {
+        tagsToAssign: storageItem.tags
+      };
+      promiseArray.push(this.updateTagAssignment(tagAssignmentRequest));
+    }
+  }
+  return promiseArray;
+};
+
 services.searchEndpoints = function(query, limit, type) {
   let endpointOps = {
     name: [{

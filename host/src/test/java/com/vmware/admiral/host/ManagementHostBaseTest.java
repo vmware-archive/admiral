@@ -52,7 +52,7 @@ public class ManagementHostBaseTest extends ServiceHost {
     static ManagementHost createManagementHost(String[] args) throws Throwable {
         ManagementHost h = new ManagementHost();
         h.initialize(args);
-
+        h.registerOperationInterceptors();
         h.start();
 
         h.setAuthorizationContext(h.getSystemAuthorizationContext());

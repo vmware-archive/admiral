@@ -59,7 +59,9 @@ var ClosureRequestForm = Vue.extend({
         this.savingTask = false;
         var closureDefinition = this.definitionForm.getClosureDefinition();
         if (this.placement) {
-          closureDefinition.placementLink = this.placement.documentSelfLink;
+          closureDefinition.customProperties = {
+            '__closures_placement': this.placement.documentSelfLink
+          };
         }
         if (this.model.tasks.editingItemData) {
           closureDefinition.documentSelfLink =
@@ -81,7 +83,10 @@ var ClosureRequestForm = Vue.extend({
         let closureDefinition = this.definitionForm.getClosureDefinition();
         let inputs = this.definitionForm.getClosureInputs();
         if (this.placement) {
-          closureDefinition.placementLink = this.placement.documentSelfLink;
+          closureDefinition.customProperties = {
+            '__closures_placement': this.placement.documentSelfLink
+          };
+          // closureDefinition.placementLink = this.placement.documentSelfLink;
         }
         if (this.model.tasks.editingItemData) {
           closureDefinition.documentSelfLink =
@@ -104,7 +109,9 @@ var ClosureRequestForm = Vue.extend({
         this.savingTemplate = true;
         var closureDefinition = this.definitionForm.getClosureDefinition();
         if (this.placement) {
-          closureDefinition.placementLink = this.placement.documentSelfLink;
+          closureDefinition.customProperties = {
+            '__closures_placement': this.placement.documentSelfLink
+          };
         }
         TemplateActions.createClosureTemplate(closureDefinition);
       }

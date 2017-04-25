@@ -17,8 +17,12 @@ computeProfile:
     ubuntu-1604:
       image: "canonical:ubuntuserver:16.04.0-LTS:latest"
 storageProfile:
-  bootDiskPropertyMapping:
-    azureStorageAccountType: "Standard_RAGRS"
-    azureOsDiskCaching: "None"
-    azureStorageAccountName: "basestorage1"  
+  storageItems:
+  - name: default
+    tagLinks: []
+    defaultItem: true
+    diskProperties:
+      azureStorageAccountType: "Standard_RAGRS"
+      azureOsDiskCaching: "None"
+      azureStorageAccountName: "basestorage1"
 networkProfile: {}

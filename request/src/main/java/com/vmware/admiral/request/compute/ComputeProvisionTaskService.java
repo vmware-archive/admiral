@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -220,7 +219,7 @@ public class ComputeProvisionTaskService extends
         subTaskInitState.completionsRemaining = currentState.resourceLinks.size();
         subTaskInitState.tenantLinks = currentState.tenantLinks;
         Operation startPost = Operation
-                .createPost(this, UUID.randomUUID().toString())
+                .createPost(this, SubTaskService.FACTORY_LINK)
                 .setBody(subTaskInitState)
                 .setCompletion(
                         (o, e) -> {
@@ -235,7 +234,7 @@ public class ComputeProvisionTaskService extends
                             // continue, passing the sub task link
                             provisionResources(currentState, body.documentSelfLink);
                         });
-        getHost().startService(startPost, new SubTaskService<SubStage>());
+        sendRequest(startPost);
     }
 
     private void completeSubTask(String subTaskLink, Object body) {

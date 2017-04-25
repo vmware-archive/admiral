@@ -15,8 +15,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.junit.After;
 import org.junit.Before;
@@ -60,7 +63,7 @@ public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
         // compute states after compute allocation request
         List<String> computeStateLinks = createComputeAllocationRequest();
 
-        // create a host removal task
+        // create a compute removal task
         ComputeRemovalTaskState state = new ComputeRemovalTaskState();
         state.resourceLinks = request.resourceLinks;
         state = doPost(state, ComputeRemovalTaskService.FACTORY_LINK);
@@ -89,6 +92,55 @@ public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
     }
 
     @Test
+    public void testComputeRemovalResourceOperationCycleAfterAllocationShouldFail() throws Throwable {
+        // compute states after compute allocation request
+        createComputeAllocationRequest();
+
+        Set<String> extendedResourceLink = new HashSet<>(request.resourceLinks);
+        extendedResourceLink.add("missing compute link");
+
+        // create a compute removal task with missing compute link
+        ComputeRemovalTaskState state = new ComputeRemovalTaskState();
+        state.resourceLinks = extendedResourceLink;
+        state = doPost(state, ComputeRemovalTaskService.FACTORY_LINK);
+
+        assertNotNull("task is null", state);
+        String taskSelfLink = state.documentSelfLink;
+        assertNotNull("task self link is missing", taskSelfLink);
+
+        waitForTaskError(taskSelfLink, ComputeRemovalTaskState.class);
+    }
+
+    @Test
+    public void testComputeRemovalResourceOperationCycleAfterAllocationShouldCompleteOnDeallocationRequest() throws Throwable {
+        // compute states after compute allocation request
+        List<String> computeStateLinks = createComputeAllocationRequest();
+
+        Set<String> extendedResourceLink = new HashSet<>(request.resourceLinks);
+        extendedResourceLink.add("missing compute link");
+
+        // create a compute removal task with missing compute link
+        ComputeRemovalTaskState state = new ComputeRemovalTaskState();
+        state.resourceLinks = extendedResourceLink;
+        Map<String, String> customProps = new HashMap<>();
+        customProps.put(RequestUtils.FIELD_NAME_DEALLOCATION_REQUEST, Boolean.TRUE.toString());
+        state.customProperties = customProps;
+
+        state = doPost(state, ComputeRemovalTaskService.FACTORY_LINK);
+
+        assertNotNull("task is null", state);
+        String taskSelfLink = state.documentSelfLink;
+        assertNotNull("task self link is missing", taskSelfLink);
+
+        waitForTaskSuccess(taskSelfLink, ComputeRemovalTaskState.class);
+
+        // verify that the compute states were not removed
+        computeStateLinks = findResourceLinks(ComputeState.class, computeStateLinks);
+        assertTrue("ComputeState is removed: " + computeStateLinks,
+                !computeStateLinks.isEmpty());
+    }
+
+    @Test
     public void testRequestBrokerComputeRemovalResourceOperationCycleAfterAllocation()
             throws Throwable {
         // compute states after compute allocation request
@@ -97,7 +149,7 @@ public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
         assertNotNull("ComputeStates were not allocated", computeStateLinks);
         assertEquals(request.resourceCount, computeStateLinks.size());
 
-        // create a host removal task - RequestBroker
+        // create a compute removal task - RequestBroker
         RequestBrokerState request = new RequestBrokerState();
         request.resourceType = ResourceType.COMPUTE_TYPE.getName();
         request.resourceLinks = new HashSet<>(computeStateLinks);
@@ -162,7 +214,7 @@ public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
         assertNotNull("ComputeStates were not allocated", computeStateLinks);
         assertEquals(request.resourceCount, computeStateLinks.size());
 
-        // create a host removal task - RequestBroker
+        // create a compute removal task - RequestBroker
         RequestBrokerState request = new RequestBrokerState();
         request.resourceType = ResourceType.COMPUTE_TYPE.getName();
         request.resourceLinks = new HashSet<>(computeStateLinks);

@@ -82,6 +82,7 @@ public class ManagementHostTest {
                 args.add(extraArg);
             }
             initialize(args.toArray(new String[args.size()]));
+            registerOperationInterceptors();
         }
 
         @Override

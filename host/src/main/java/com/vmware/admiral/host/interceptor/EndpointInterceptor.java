@@ -20,7 +20,9 @@ import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
 import com.vmware.photon.controller.model.query.QueryUtils;
 import com.vmware.photon.controller.model.resources.EndpointService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.DeferredResult;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
@@ -30,9 +32,43 @@ import com.vmware.xenon.services.common.QueryTask.Query;
  * Endpoint-related service interceptors.
  */
 public class EndpointInterceptor {
+    public static final String ENDPOINT_NAME_EXISTS_MESSAGE = "Endpoint name must be unique";
+    public static final String ENDPOINT_NAME_EXISTS_MESSAGE_CODE = "endpoint.name.exists";
+
     public static void register(OperationInterceptorRegistry registry) {
+        registry.addFactoryServiceInterceptor(
+                EndpointService.class, Action.POST, EndpointInterceptor::interceptCreate);
         registry.addServiceInterceptor(
                 EndpointService.class, Action.DELETE, EndpointInterceptor::interceptDelete);
+    }
+
+    /**
+     * Endpoint name uniqueness check.
+     */
+    public static DeferredResult<Void> interceptCreate(Service service, Operation operation) {
+        if (operation.isSynchronize()) {
+            return null;
+        }
+        EndpointState endpoint = operation.getBody(EndpointState.class);
+        if (endpoint.name == null) {
+            // skipping the check if no name is given (this will fail in factory validation anyway)
+            return null;
+        }
+
+        Query endpointByNameQuery = Query.Builder.create()
+                .addKindFieldClause(EndpointState.class)
+                .addFieldClause(ResourceState.FIELD_NAME_NAME, endpoint.name)
+                .build();
+        QueryUtils.QueryTop<EndpointState> queryHelper = new QueryUtils.QueryTop<>(
+                service.getHost(), endpointByNameQuery, EndpointState.class, endpoint.tenantLinks);
+        queryHelper.setMaxResultsLimit(1);
+        return queryHelper.collectLinks(Collectors.toList()).thenAccept(links -> {
+            if (!links.isEmpty()) {
+                throw new LocalizableValidationException(
+                        ENDPOINT_NAME_EXISTS_MESSAGE,
+                        ENDPOINT_NAME_EXISTS_MESSAGE_CODE);
+            }
+        });
     }
 
     /**
