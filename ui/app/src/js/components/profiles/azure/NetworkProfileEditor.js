@@ -170,7 +170,8 @@ export default Vue.component('azure-network-profile-editor', {
         },
         valid: this.isolationType === ISOLATION_TYPES[0] ||
             (this.isolationType === ISOLATION_TYPES[1] &&
-            this.isolationNetwork && this.isolatedSubnetCIDRPrefix)
+            this.isolationNetwork && this.isolatedSubnetCIDRPrefix) ||
+            this.isolationType === ISOLATION_TYPES[2]
       });
     }
   }
