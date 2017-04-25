@@ -64,9 +64,10 @@ let getFilter = function(queryOptions: any): string {
 
 let slowPromise = function<T>(result: T):Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    setTimeout(() => {
-      resolve(result);
-    }, 1000);
+    resolve(result);
+    // setTimeout(() => {
+    //   resolve(result);
+    // }, 1000);
   });
 }
 

@@ -38,8 +38,6 @@ import { MaximizableBehaviourComponent } from "./components/maximizable-behaviou
 import { BackButtonComponent } from "./components/back-button/back-button.component";
 import { SearchComponent } from "./components/search/search.component";
 import { NavigationContainerComponent } from "./components/navigation-container/navigation-container.component";
-import { NetworkBoxComponent } from "./components/network-box/network-box.component";
-import { VolumeBoxComponent } from "./components/volume-box/volume-box.component";
 
 import { PodListComponent } from './kubernetes/pods/list/pod-list.component';
 import { PodDetailsComponent } from './kubernetes/pods/details/pod-details.component';
@@ -48,8 +46,6 @@ import { DeploymentListComponent } from './kubernetes/deployments/list/deploymen
 import { DeploymentDetailsComponent } from './kubernetes/deployments/details/deployment-details.component';
 import { ServiceListComponent } from './kubernetes/services/list/service-list.component';
 import { ServiceDetailsComponent } from './kubernetes/services/details/service-details.component';
-import { GenericDefinitionFormComponent } from './kubernetes/generic-definition-form/generic-definition-form.component';
-import { GenericTemplateItemComponent } from './kubernetes/generic-template-item/generic-template-item.component';
 
 
 export const ADMIRAL_DECLARATIONS = [
@@ -82,8 +78,6 @@ export const ADMIRAL_DECLARATIONS = [
   BackButtonComponent,
   SearchComponent,
   NavigationContainerComponent,
-  NetworkBoxComponent,
-  VolumeBoxComponent,
 
   PodListComponent,
   PodDetailsComponent,
@@ -91,7 +85,5 @@ export const ADMIRAL_DECLARATIONS = [
   DeploymentListComponent,
   DeploymentDetailsComponent,
   ServiceListComponent,
-  ServiceDetailsComponent,
-  GenericDefinitionFormComponent,
-  GenericTemplateItemComponent
+  ServiceDetailsComponent
 ];

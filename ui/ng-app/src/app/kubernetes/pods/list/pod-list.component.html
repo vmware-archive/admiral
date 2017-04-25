@@ -60,8 +60,8 @@
     </card>
   </ng-template>
 </grid-view>
-<div class="details-view" [@slideAndFade]="!isRouteActive('/kubernetes/pods') && 'active'">
-  <back-button [routerLink]="['./']"></back-button>
+<navigation-container [typePerComponent]="navigationContainerTypePerComponent">
+  <back-button [routerLink]="['./']">Pods</back-button>
   <router-outlet></router-outlet>
-</div>
+</navigation-container>
 

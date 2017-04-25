@@ -40,10 +40,31 @@ configs['/image-assets/*'] = {
   'secure': false
 }
 
-configs['/former/*'] = {
+configs['/index-no-navigation.html*'] = {
   'target': `http://${env.services.ip}:8282/`,
   'secure': false
 }
 
+configs['/lib/*'] = {
+  'target': `http://${env.services.ip}:8282/`,
+  'secure': false
+}
+configs['/js/*'] = {
+  'target': `http://${env.services.ip}:8282/`,
+  'secure': false
+}
+configs['/styles/*'] = {
+  'target': `http://${env.services.ip}:8282/`,
+  'secure': false
+}
+configs['/messages/*'] = {
+  'target': `http://${env.services.ip}:8282/`,
+  'secure': false
+}
+
+configs['/fonts/*'] = {
+  'target': `http://${env.services.ip}:8282/`,
+  'secure': false
+}
 
 module.exports = configs;

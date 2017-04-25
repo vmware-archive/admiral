@@ -12,9 +12,10 @@
 import { Component } from '@angular/core';
 import { slideAndFade } from '../../../utils/transitions';
 import { Links } from '../../../utils/links';
-import { BaseListComponent } from '../../../components/base/base-list.component';
 import { Router } from '@angular/router';
 import { DocumentService } from '../../../utils/document.service';
+import { DeploymentDetailsComponent } from '../details/deployment-details.component';
+import { NavigationContainerType } from '../../../components/navigation-container/navigation-container.component';
 
 @Component({
   selector: 'deployment-list',
@@ -22,10 +23,9 @@ import { DocumentService } from '../../../utils/document.service';
   styleUrls: ['./deployment-list.component.scss'],
   animations: [slideAndFade()]
 })
-export class DeploymentListComponent extends BaseListComponent {
-  private serviceEndpoint = Links.DEPLOYMENTS;
-
-  constructor(service: DocumentService, router: Router) {
-    super(service, router, Links.DEPLOYMENTS);
+export class DeploymentListComponent {
+  serviceEndpoint = Links.DEPLOYMENTS;
+  navigationContainerTypePerComponent = {
+    DeploymentDetailsComponent: NavigationContainerType.Fullscreen
   }
 }

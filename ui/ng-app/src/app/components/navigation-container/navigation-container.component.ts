@@ -1,5 +1,6 @@
 import { Component, Input, Output, OnInit, OnDestroy, EventEmitter } from '@angular/core';
 import { slideAndFade } from '../../utils/transitions';
+import { ViewExpandRequestService } from '../../services/view-expand-request.service';
 import { Router, ActivatedRoute, Route, RoutesRecognized, NavigationEnd, NavigationCancel } from '@angular/router';
 import { Subscription } from 'rxjs';
 
@@ -17,18 +18,21 @@ import { Subscription } from 'rxjs';
 export class NavigationContainerComponent implements OnInit, OnDestroy {
   private oldComponent: any;
   private routeObserve: Subscription;
-  @Input() type: string;
-  @Output() routeActivationChange: EventEmitter<any> = new EventEmitter<any>();
+  type: string;
+  @Input() typePerComponent: Map<string, NavigationContainerType>;
 
-  constructor(private router: Router, private route: ActivatedRoute) {}
+  constructor(private router: Router, private route: ActivatedRoute,
+    private viewExpandRequestor: ViewExpandRequestService) {}
 
   ngOnInit() {
     this.routeObserve = this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
-        var newComponent = this.route.children.length != 0 && this.route.children[0].component;
+        var newComponent: any = this.route.children.length != 0 && this.route.children[0].component;
         if (newComponent != this.oldComponent) {
           this.oldComponent = newComponent;
-          this.routeActivationChange.emit(newComponent);
+          var selectedType = this.typePerComponent[newComponent.name] || NavigationContainerType.None;
+          this.type = selectedType.toString();
+          this.viewExpandRequestor.requestFullScreen(selectedType === NavigationContainerType.Fullscreen);
         }
       }
     });
@@ -37,4 +41,10 @@ export class NavigationContainerComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.routeObserve.unsubscribe();
   }
+}
+
+export enum NavigationContainerType {
+    Fullscreen = <any>'fullScreenSlide',
+    Default = <any>'default',
+    None = <any>'none'
 }

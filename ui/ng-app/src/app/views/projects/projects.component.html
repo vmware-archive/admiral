@@ -55,7 +55,7 @@
     </card>
   </ng-template>
 </grid-view>
-<navigation-container [type]="navigationContainerType" (routeActivationChange)='onRouteActivationChange($event)'>
+<navigation-container [typePerComponent]="navigationContainerTypePerComponent">
   <back-button [routerLink]="['./']">Projects</back-button>
   <router-outlet></router-outlet>
 </navigation-container>

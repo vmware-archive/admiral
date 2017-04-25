@@ -11,10 +11,10 @@
 
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { BaseListComponent } from '../../../components/base/base-list.component';
 import { slideAndFade } from '../../../utils/transitions';
 import { Links } from '../../../utils/links';
 import { DocumentService } from '../../../utils/document.service';
+import { NavigationContainerType } from '../../../components/navigation-container/navigation-container.component';
 
 @Component({
   selector: 'service-list',
@@ -22,10 +22,9 @@ import { DocumentService } from '../../../utils/document.service';
   styleUrls: ['./service-list.component.scss'],
   animations: [slideAndFade()]
 })
-export class ServiceListComponent extends BaseListComponent {
-  private serviceEndpoint = Links.SERVICES;
-
-  constructor(service: DocumentService, router: Router) {
-    super(service, router, Links.SERVICES);
+export class ServiceListComponent {
+  serviceEndpoint = Links.SERVICES;
+  navigationContainerTypePerComponent = {
+    ProjectDetailsComponent: NavigationContainerType.Fullscreen
   }
 }

@@ -33,7 +33,7 @@ export class FormerViewComponent implements OnInit, OnDestroy {
         if (!this.frameHolder.nativeElement.querySelector('iframe')) {
           this.frameHolder.nativeElement.appendChild(FormerViewComponent.iframe);
         }
-        FormerViewComponent.iframe.src = '/former/index-no-navigation.html#' + url;
+        FormerViewComponent.iframe.src = '/index-no-navigation.html#' + url;
         this.viewExpandRequestService.requestExpandScreen(true);
       }
     });

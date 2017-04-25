@@ -8,9 +8,9 @@ import { FormGroup, FormControl, Validators } from "@angular/forms";
   styleUrls: ['./project-create.component.scss']
 })
 export class ProjectCreateComponent implements AfterViewInit {
-  private opened: boolean;
+  opened: boolean;
 
-  private projectForm = new FormGroup({
+  projectForm = new FormGroup({
       name: new FormControl('', Validators.required),
       description: new FormControl(''),
       icon: new FormControl('')
@@ -24,14 +24,14 @@ export class ProjectCreateComponent implements AfterViewInit {
     });
   }
 
-  private toggleModal(open) {
+  toggleModal(open) {
     this.opened = open;
     if (!open) {
       this.router.navigate(['../'], { relativeTo: this.route });
     }
   }
 
-  private saveProject() {
+  saveProject() {
     if (this.projectForm.valid) {
       // this.projectForm.value
       this.toggleModal(false);

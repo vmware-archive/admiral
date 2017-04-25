@@ -12,7 +12,7 @@
 <clr-modal [clrModalOpen]="opened" (clrModalOpenChange)="toggleModal($event)" [clrModalSize]="'lg'">
     <h3 class="modal-title">New Project</h3>
     <div class="modal-body">
-        <form class="form" [formGroup]="projectForm" (ngSubmit)="onSubmit()" [hidden]="submitted">
+        <form class="form" [formGroup]="projectForm">
             <section class="form-block">
                 <div class="form-group">
                     <label for="name" class="required">Name</label>

@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Links } from '../../utils/links';
-import { ViewExpandRequestService } from '../../services/view-expand-request.service';
 import { ProjectCreateComponent } from './project-create/project-create.component';
 import { ProjectDetailsComponent } from './project-details/project-details.component';
+import { NavigationContainerType } from '../../components/navigation-container/navigation-container.component';
 
 @Component({
   selector: 'app-projects',
@@ -10,21 +10,9 @@ import { ProjectDetailsComponent } from './project-details/project-details.compo
   styleUrls: ['./projects.component.scss']
 })
 export class ProjectsComponent {
-  private serviceEndpoint = Links.PROJECTS;
-  private navigationContainerType = 'none';
-
-  constructor(private viewExpandRequestor: ViewExpandRequestService) {}
-
-  private onRouteActivationChange(component) {
-    if (component === ProjectDetailsComponent) {
-      this.navigationContainerType = 'fullScreenSlide';
-      this.viewExpandRequestor.requestFullScreen(true);
-    } else if (component === ProjectCreateComponent) {
-      this.navigationContainerType = 'default';
-      this.viewExpandRequestor.requestFullScreen(false);
-    } else {
-      this.navigationContainerType = 'none';
-      this.viewExpandRequestor.requestFullScreen(false);
-    }
+  serviceEndpoint = Links.PROJECTS;
+  navigationContainerTypePerComponent = {
+    ProjectDetailsComponent: NavigationContainerType.Fullscreen,
+    ProjectCreateComponent: NavigationContainerType.Default
   }
 }

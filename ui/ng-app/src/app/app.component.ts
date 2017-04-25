@@ -19,8 +19,8 @@ import { ViewExpandRequestService } from './services/view-expand-request.service
     styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-    private expanded: boolean;
-    private fullScreen: boolean;
+    expanded: boolean;
+    fullScreen: boolean;
 
     constructor(private viewExpandRequestor: ViewExpandRequestService) {
         this.viewExpandRequestor.getExpandRequestEmitter().subscribe(isExpand => {
