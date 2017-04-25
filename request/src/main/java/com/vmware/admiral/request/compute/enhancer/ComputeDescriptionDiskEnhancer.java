@@ -14,16 +14,19 @@ package com.vmware.admiral.request.compute.enhancer;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.HashSet;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.profile.InstanceTypeDescription;
 import com.vmware.admiral.compute.profile.ProfileService;
-import com.vmware.admiral.compute.profile.StorageProfileService;
+import com.vmware.admiral.compute.profile.StorageProfileService.StorageItem;
+import com.vmware.admiral.request.compute.StorageProfileUtils;
+import com.vmware.admiral.request.compute.TagConstraintUtils;
+import com.vmware.photon.controller.model.Constraint;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.DiskService;
 import com.vmware.photon.controller.model.resources.DiskService.DiskState;
@@ -88,22 +91,13 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
             // Default is 8 GB
             rootDisk.capacityMBytes = diskSizeMbFromProfile > 0 ? diskSizeMbFromProfile : (8 * 1024);
 
-            Map<String, String> values = null;
             if (profile.storageProfile != null && profile.storageProfile.storageItems != null) {
-                Optional<StorageProfileService.StorageItem> defaultStorageItem = profile
-                        .storageProfile.storageItems.stream().filter(storageItem ->
-                        storageItem.defaultItem).findFirst();
-                if (defaultStorageItem.isPresent()) {
-                    values = defaultStorageItem.get().diskProperties;
+                StorageItem storageItem = findDefaultStorageItem(profile);
+                if (storageItem != null && storageItem.diskProperties != null) {
+                    rootDisk.customProperties = new HashMap<>(storageItem.diskProperties);
                 }
             }
-
-            if (values != null) {
-                rootDisk.customProperties = new HashMap<>(values);
-            }
-
             fillInBootConfigContent(computeDesc, rootDisk);
-
             DeferredResult<ComputeDescription> result = this.host
                     .sendWithDeferredResult(createDiskDescriptionState(rootDisk),
                             DiskState.class)
@@ -134,19 +128,26 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                             return this.host.sendWithDeferredResult(getOp, DiskState.class);
                         })
                         .map(dr -> dr.thenCompose(diskState -> {
-                            // TODO This code has to be changes as follows for storage profile:
-                            // Every DiskState will have a set of requirements (name, hard/ soft)
-                            // Storage Profile will be having a diskPropertyMapping which
-                            // will be have a Map of constraint name mapped to set of attributes (key
-                            // / value pairs.)
-                            // Step 1: Form the DiskState requirements map the name of the requirement
-                            // to the diskPropertyMapping key to fetch the map of key / value pairs
-                            // what that requirement translates to.
-                            // Step 2: Push this as a set of customProperties into the DiskState so
-                            // that adapter can use this to create the disks.
                             if (diskState.type != null
                                     && diskState.type == DiskService.DiskType.HDD) {
                                 fillInBootConfigContent(cd, diskState);
+                            }
+                            // Match the constraints from Disk to the profile to extract the
+                            // provider specific properties.
+                            if (profile != null && profile.storageProfile != null
+                                    && profile.storageProfile.storageItems != null
+                                    && !profile.storageProfile.storageItems.isEmpty()) {
+                                StorageItem storageItem = findStorageItem(profile, diskState
+                                        .constraint);
+                                if (storageItem == null) {
+                                    return DeferredResult.failed(new IllegalStateException(String.format(
+                                            "No matching storage defined in profile: %s, for requested disk: %s",
+                                            profile.name, diskState.name)));
+                                } else {
+                                    if (storageItem.diskProperties != null) {
+                                        diskState.customProperties = new HashMap<>(storageItem.diskProperties);
+                                    }
+                                }
                             }
                             return this.host
                                     .sendWithDeferredResult(updateDiskDescriptionState(diskState),
@@ -157,6 +158,57 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                 .thenApply(links -> cd);
 
         return compDescResult;
+    }
+
+    /**
+     * Find the storage item that is matching the given set of constraints
+     */
+    private StorageItem findStorageItem(ProfileService.ProfileStateExpanded profile,
+            Constraint constraint) {
+        // Step 1: Find if there are hard constraints. Then all of them will be available in one
+        // of the storage item in the profile, as placement would have done this filtering to chose
+        // this profile.
+        // Step 2: If all are soft, there should be an entry which matches all or at-least some.
+        // If all are matched then that storage item is chosen, if not then the max matching item
+        // will be chosen.
+        // Step 3: If all are soft and nothing matches then default properties are picked.
+        StorageItem storageItem = null;
+        if (constraint != null && constraint.conditions != null && !constraint.conditions
+                .isEmpty()) {
+            Stream<StorageItem> siFilteredStream = TagConstraintUtils.filterByConstraints(
+                    StorageProfileUtils
+                            .extractStorageTagConditions(constraint, profile.tenantLinks),
+                    profile.storageProfile.storageItems.stream(),
+                    si -> si.tagLinks != null ? si.tagLinks : new HashSet<>(), (i1, i2) -> {
+                        if (i1.defaultItem && i2.defaultItem) {
+                            return 0;
+                        } else {
+                            if (i1.defaultItem) {
+                                return -1;
+                            } else if (i2.defaultItem) {
+                                return 1;
+                            } else {
+                                return 0;
+                            }
+                        }
+                    });
+
+            if (siFilteredStream != null) {
+                storageItem = siFilteredStream.findFirst().orElse(null);
+            }
+        }
+        return storageItem;
+    }
+
+    /**
+     * Get default storage item if present, else null.
+     */
+    private StorageItem findDefaultStorageItem(ProfileService
+            .ProfileStateExpanded profile) {
+        return profile.storageProfile.storageItems.stream()
+                .filter(si -> si.defaultItem)
+                .findFirst()
+                .orElse(null);
     }
 
     /**

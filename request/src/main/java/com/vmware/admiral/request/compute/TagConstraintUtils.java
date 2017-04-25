@@ -101,7 +101,7 @@ public class TagConstraintUtils {
                 .count();
     }
 
-    private static String getTagLinkForCondition(Condition condition,
+    public static String getTagLinkForCondition(Condition condition,
             List<String> tenantLinks) {
         if (!Condition.Type.TAG.equals(condition.type) || condition.expression == null
                 || condition.expression.propertyName == null) {
