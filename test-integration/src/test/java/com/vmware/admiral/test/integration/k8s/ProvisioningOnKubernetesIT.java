@@ -13,17 +13,13 @@ package com.vmware.admiral.test.integration.k8s;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.test.integration.TestPropertiesUtil.getTestRequiredProp;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.Test;
@@ -31,24 +27,19 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.PlacementZoneConstants;
 import com.vmware.admiral.compute.PlacementZoneConstants.PlacementZoneType;
-import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.kubernetes.KubernetesHostConstants;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.test.integration.BaseIntegrationSupportIT;
-import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
 import com.vmware.admiral.test.integration.data.IntegratonTestStateFactory;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
-import com.vmware.xenon.common.ServiceDocumentQueryResult;
-import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
@@ -107,8 +98,6 @@ public class ProvisioningOnKubernetesIT extends BaseIntegrationSupportIT {
 
         String credLink = kubernetesHostAuthCredentials.documentSelfLink;
 
-        assertTrue(listContainers().isEmpty());
-
         logger.info("---------- 2. Creating Placement Zone for K8S. --------");
         placementZone = createSchedulerPlacementZone();
 
@@ -142,24 +131,6 @@ public class ProvisioningOnKubernetesIT extends BaseIntegrationSupportIT {
         //                ComputeState.class);
         //        int containers = Integer.valueOf(compute.customProperties.get("__Containers"));
         //        assertTrue(containers > 0);
-    }
-
-    private List<ContainerState> listContainers() {
-        String body;
-        try {
-            body = sendRequest(HttpMethod.GET, ManagementUriParts.CONTAINERS + "?expand", null);
-        } catch (Exception e) {
-            return Collections.emptyList();
-        }
-        ServiceDocumentQueryResult result = Utils.fromJson(body, ServiceDocumentQueryResult.class);
-
-        if (result.documents != null) {
-            return result.documents.values().stream()
-                    .map((d) -> Utils.fromJson(d, ContainerState.class))
-                    .collect(Collectors.toList());
-        }
-
-        return Collections.emptyList();
     }
 
     @Test
