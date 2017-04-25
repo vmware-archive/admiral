@@ -11,6 +11,7 @@
 
 import constants from 'core/constants';
 import links from 'core/links';
+import ft from 'core/ft';
 
 const URL_PROTOCOL_PART = /^(https?):\/\//;
 const URL_DEFAULT_PROTOCOL = 'http://';
@@ -1201,6 +1202,14 @@ var utils = {
   getGroup: function(tenantLinks) {
     if (!tenantLinks) {
       return null;
+    }
+
+    if (ft.showProjectsInNavigation()) {
+      let projectId = tenantLinks.find((tenantLink) => {
+        return tenantLink.indexOf('/projects/') > -1;
+      });
+
+      return projectId;
     }
 
     let groupId = tenantLinks.find((tenantLink) => {
