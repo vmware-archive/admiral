@@ -15,7 +15,10 @@ const ENDPOINTS = [
   '/provisioning/*',
   '/resources/*',
   '/container-image-icons/*',
-  '/projects/*'
+  '/projects/*',
+  '/config/*',
+  '/templates/*',
+  '/groups/*'
 ];
 
 var configs = {};
@@ -36,5 +39,11 @@ configs['/image-assets/*'] = {
   'target': `http://${env.services.ip}:${env.services.port}/`,
   'secure': false
 }
+
+configs['/former/*'] = {
+  'target': `http://${env.services.ip}:8282/`,
+  'secure': false
+}
+
 
 module.exports = configs;

@@ -25,12 +25,7 @@ import { ConfigurationComponent } from './views/configuration/configuration.comp
 import { LogsComponent } from './views/logs/logs.component';
 
 import { DashboardComponent } from './views/dashboard/dashboard.component';
-import { ApplicationsComponent } from './views/applications/applications.component';
-import { ContainersComponent } from './views/containers/containers.component';
-import { TemplatesComponent } from './views/templates/templates.component';
-import { TemplateImporterComponent } from './views/templates/template-importer/template-importer.component';
-import { TemplateEditComponent } from './views/templates/template-edit/template-edit.component';
-import { TemplateNewItemMenu } from './views/templates/template-new-item-menu.component';
+import { FormerViewComponent } from './views/former-view/former-view.component';
 import { ProjectRepositoriesComponent } from './views/project-repositories/project-repositories.component';
 import { PublicRepositoriesComponent } from './views/public-repositories/public-repositories.component';
 import { VchClustersComponent } from './views/vch-clusters/vch-clusters.component';
@@ -74,12 +69,7 @@ export const ADMIRAL_DECLARATIONS = [
   LogsComponent,
 
   DashboardComponent,
-  ApplicationsComponent,
-  ContainersComponent,
-  TemplatesComponent,
-  TemplateImporterComponent,
-  TemplateEditComponent,
-  TemplateNewItemMenu,
+  FormerViewComponent,
   ProjectRepositoriesComponent,
   PublicRepositoriesComponent,
   VchClustersComponent,

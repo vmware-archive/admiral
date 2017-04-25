@@ -1,6 +1,7 @@
-import { Component, Input, Output, OnInit, EventEmitter } from '@angular/core';
+import { Component, Input, Output, OnInit, OnDestroy, EventEmitter } from '@angular/core';
 import { slideAndFade } from '../../utils/transitions';
 import { Router, ActivatedRoute, Route, RoutesRecognized, NavigationEnd, NavigationCancel } from '@angular/router';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'navigation-container',
@@ -13,15 +14,16 @@ import { Router, ActivatedRoute, Route, RoutesRecognized, NavigationEnd, Navigat
   `,
   animations: [slideAndFade()]
 })
-export class NavigationContainerComponent implements OnInit {
+export class NavigationContainerComponent implements OnInit, OnDestroy {
   private oldComponent: any;
+  private routeObserve: Subscription;
   @Input() type: string;
   @Output() routeActivationChange: EventEmitter<any> = new EventEmitter<any>();
 
   constructor(private router: Router, private route: ActivatedRoute) {}
 
   ngOnInit() {
-    this.router.events.subscribe((event) => {
+    this.routeObserve = this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
         var newComponent = this.route.children.length != 0 && this.route.children[0].component;
         if (newComponent != this.oldComponent) {
@@ -30,5 +32,9 @@ export class NavigationContainerComponent implements OnInit {
         }
       }
     });
+  }
+
+  ngOnDestroy() {
+    this.routeObserve.unsubscribe();
   }
 }

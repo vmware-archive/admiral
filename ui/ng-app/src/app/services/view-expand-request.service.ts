@@ -2,16 +2,24 @@ import { Injectable, EventEmitter } from '@angular/core';
 
 @Injectable()
 export class ViewExpandRequestService {
-  private requestEmitter: EventEmitter<boolean> = new EventEmitter();
+  private fullScreenRequestEmitter: EventEmitter<boolean> = new EventEmitter();
+  private expandRequestEmitter: EventEmitter<boolean> = new EventEmitter();
 
   constructor() {}
 
-  request(isExpand) {
-    this.requestEmitter.emit(isExpand);
+  requestFullScreen(value) {
+    this.fullScreenRequestEmitter.emit(value);
   }
 
-  getRequestEmitter(): EventEmitter<boolean> {
-    return this.requestEmitter;
+  getFullScreenRequestEmitter(): EventEmitter<boolean> {
+    return this.fullScreenRequestEmitter;
   }
 
+  requestExpandScreen(value) {
+    this.expandRequestEmitter.emit(value);
+  }
+
+  getExpandRequestEmitter(): EventEmitter<boolean> {
+    return this.expandRequestEmitter;
+  }
 }

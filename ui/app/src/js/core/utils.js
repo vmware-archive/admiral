@@ -25,6 +25,7 @@ const VERSION_REG_EX = /^(\*|\d+(\.\d+){0,2}(\.\*)?)/g;
 
 var isEmbedded = window.isEmbedded;
 var isSingleView = window.isSingleView;
+var isNavigationLess = window.isNavigationLess;
 
 var configurationAdapters = null;
 var configurationProperties = null;
@@ -652,6 +653,10 @@ var utils = {
 
   isApplicationSingleView: function() {
     return isSingleView;
+  },
+
+  isNavigationLess: function() {
+    return isNavigationLess;
   },
 
   isApplicationCompute: function() {

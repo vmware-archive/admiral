@@ -18,13 +18,13 @@ export class ProjectsComponent {
   private onRouteActivationChange(component) {
     if (component === ProjectDetailsComponent) {
       this.navigationContainerType = 'fullScreenSlide';
-      this.viewExpandRequestor.request(true);
+      this.viewExpandRequestor.requestFullScreen(true);
     } else if (component === ProjectCreateComponent) {
       this.navigationContainerType = 'default';
-      this.viewExpandRequestor.request(false);
+      this.viewExpandRequestor.requestFullScreen(false);
     } else {
       this.navigationContainerType = 'none';
-      this.viewExpandRequestor.request(false);
+      this.viewExpandRequestor.requestFullScreen(false);
     }
   }
 }

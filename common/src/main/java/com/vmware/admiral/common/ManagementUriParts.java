@@ -208,7 +208,7 @@ public interface ManagementUriParts {
 
     String KV_STORE = "/kv-store";
     // UI Service:
-    String UI_SERVICE = System.getProperty("dcp.management.ui.path", "/");
+    String UI_SERVICE = System.getProperty("dcp.management.ui.path", "/former");
     String UI_NG_SERVICE = UI_SERVICE + "ng";
 
     String CONTAINER_ICONS_RESOURCE_PATH = UI_SERVICE + "/container-icons";

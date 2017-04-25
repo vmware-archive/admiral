@@ -16,14 +16,17 @@
   background-color: #FFFFFF;
 
   .content-container {
-    > * {
+    > *:not(router-outlet) {
       display: flex;
+      flex: 1 1 auto;
     }
   }
   .content-container .content-area {
     display: flex;
-    > * {
+    flex: 1 1 auto;
+    > *:not(router-outlet) {
       display: flex;
+      flex: 1 1 auto;
       position: relative;
     }
   }
@@ -31,9 +34,13 @@
   .content-container .sidenav {
     transition: width 0.25s ease-in;
   }
-  .content-container.expanded .sidenav {
+  .content-container.full-screen .sidenav {
     min-width: 0;
     width: 0;
+  }
+
+  .content-container.expanded .content-area {
+    padding: 0;
   }
 }
 

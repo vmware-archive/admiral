@@ -34,7 +34,8 @@ var appInitializer = function(App, Store) {
 
 var updateHeader = function() {
   if (utils.isApplicationEmbedded() ||
-    utils.isApplicationSingleView()) {
+    utils.isApplicationSingleView()
+    || utils.isNavigationLess()) {
     return;
   }
 

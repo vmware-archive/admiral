@@ -20,10 +20,15 @@ import { ViewExpandRequestService } from './services/view-expand-request.service
 })
 export class AppComponent {
     private expanded: boolean;
+    private fullScreen: boolean;
 
     constructor(private viewExpandRequestor: ViewExpandRequestService) {
-        this.viewExpandRequestor.getRequestEmitter().subscribe(isExpand => {
+        this.viewExpandRequestor.getExpandRequestEmitter().subscribe(isExpand => {
             this.expanded = isExpand;
+        });
+
+        this.viewExpandRequestor.getFullScreenRequestEmitter().subscribe(isFullScreen => {
+            this.fullScreen = isFullScreen;
         });
     }
 }

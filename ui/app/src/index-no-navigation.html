@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<!--
+  ~ Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="styles/main.css">
+
+  <!-- For testing purposes only, remove when APIs are finalized -->
+  <style>
+    .app-view:not(.no-side) .side-view {
+      display: none;
+    }
+    .app-view:not(.no-side) .center-view {
+      left: 0;
+    }
+  </style>
+</head>
+<body class="admiral-embedded">
+  <div id="main"></div>
+  <!-- Show loading immediately. When main.js is loaded and application is initialized, it will be removed -->
+  <div class="loading">
+    <span class="vertical-helper"></span>
+    <div class="spinner"></div>
+  </div>
+
+  <script src="lib/vendor.js"></script>
+  <script>
+    window.isNavigationLess = true;
+  </script>
+  <script src="js/main.js"></script>
+</body>
+</html>
