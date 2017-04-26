@@ -9,7 +9,10 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
+
 export class Utils {
+  private static configurationProperties;
+
   public static getHashWithQuery(hash:string, queryOptions:any):string {
     var queryString;
     if (queryOptions) {
@@ -60,6 +63,25 @@ export class Utils {
     if (documentSelfLink) {
       return documentSelfLink.substring(documentSelfLink.lastIndexOf('/') + 1);
     }
+  }
+
+  public static initializeConfigurationProperties(props) {
+    if (this.configurationProperties) {
+      throw new Error('Properties already set');
+    }
+    this.configurationProperties = props;
+  }
+
+  public static getConfigurationProperty(property) {
+    return this.configurationProperties && this.configurationProperties[property];
+  }
+
+  public static getConfigurationPropertyBoolean(property) {
+    return this.configurationProperties && this.configurationProperties[property] === 'true';
+  }
+
+  public static existsConfigurationProperty(property) {
+    return this.configurationProperties.hasOwnProperty(property);
   }
 }
 

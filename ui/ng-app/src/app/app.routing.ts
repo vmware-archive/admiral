@@ -42,24 +42,6 @@ export const ROUTES: Routes = [
         path: '', redirectTo: 'home', pathMatch: 'full'
     },
     {
-        path: 'kubernetes/pods', component: PodListComponent,
-        children: [
-            { path: ':id', component: PodDetailsComponent }
-        ]
-    },
-    {
-        path: 'kubernetes/deployments', component: DeploymentListComponent,
-        children: [
-            { path: ':id', component: DeploymentDetailsComponent }
-        ]
-    },
-    {
-        path: 'kubernetes/services', component: ServiceListComponent,
-        children: [
-            { path: ':id', component: ServiceDetailsComponent }
-        ]
-    },
-    {
         path: 'home', component: MainResourcesComponent,
         children: [
             {
@@ -76,6 +58,24 @@ export const ROUTES: Routes = [
             },
             {
                 path: 'vch-clusters', component: VchClustersComponent
+            },
+            {
+                path: 'kubernetes/pods', component: PodListComponent,
+                children: [
+                    { path: ':id', component: PodDetailsComponent }
+                ]
+            },
+            {
+                path: 'kubernetes/deployments', component: DeploymentListComponent,
+                children: [
+                    { path: ':id', component: DeploymentDetailsComponent }
+                ]
+            },
+            {
+                path: 'kubernetes/services', component: ServiceListComponent,
+                children: [
+                    { path: ':id', component: ServiceDetailsComponent }
+                ]
             },
             {
                  path: '**', component: FormerViewComponent,

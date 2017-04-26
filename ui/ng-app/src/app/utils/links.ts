@@ -10,6 +10,7 @@
  */
 
 export class Links {
+
   public static RESOURCES = '/resources';
   public static PODS = Links.RESOURCES + '/kubernetes-pods';
   public static DEPLOYMENTS = Links.RESOURCES + '/kubernetes-deployments';
@@ -23,5 +24,8 @@ export class Links {
   public static COMPOSITE_DESCRIPTIONS_CLONE = Links.RESOURCES + '/composite-descriptions-clone';
   public static COMPOSITE_DESCRIPTIONS_CONTENT = Links.RESOURCES + '/composite-templates';
   public static COMPOSITE_COMPONENTS = Links.RESOURCES + '/composite-components';
+
+  public static CONFIG = '/config';
+  public static CONFIG_PROPS = Links.CONFIG + '/props';
 
 }

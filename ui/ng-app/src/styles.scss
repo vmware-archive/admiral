@@ -92,6 +92,21 @@ navigation-container > .full-screen {
 }
 
 /* Clarity Ext */
+
+
+.sidenav .collapsible {
+  .nav-group {
+    margin-top: 0;
+  }
+  .collapsible {
+    label {
+      padding-left: 0;
+    }
+    .nav-list {
+      padding-left: 10px;
+    }
+  }
+}
 .sidenav .project-selector {
   width: 100%;
   background-color: $clr-selection-color;

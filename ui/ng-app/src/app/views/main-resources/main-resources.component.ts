@@ -1,4 +1,6 @@
+import { FT } from './../../utils/ft';
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
+
 
 @Component({
   selector: 'app-main-resources',
@@ -7,6 +9,8 @@ import { Component, OnInit, ViewEncapsulation } from '@angular/core';
   encapsulation: ViewEncapsulation.None
 })
 export class MainResourcesComponent implements OnInit {
+
+  kubernetesEnabled = FT.isKubernetesHostOptionEnabled();
 
   constructor() { }
 

@@ -12,9 +12,11 @@
 import './polyfills.ts';
 
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
-import { enableProdMode } from '@angular/core';
+import { enableProdMode, ReflectiveInjector } from '@angular/core';
 import { environment } from './environments/environment';
 import { AppModule } from './app/app.module';
+import { Utils } from './app/utils/utils';
+import { Links } from './app/utils/links';
 import * as I18n from 'i18next';
 import * as I18nXhrBackend from 'i18next-xhr-backend';
 import * as I18nLanguageDetector from 'i18next-browser-languagedetector';
@@ -33,5 +35,21 @@ I18n.use(I18nXhrBackend)
       loadPath: '/assets/i18n/{{ns}}.{{lng}}.json'
     }
   },() => {
-    platformBrowserDynamic().bootstrapModule(AppModule);
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState == XMLHttpRequest.DONE) {
+          let properties = JSON.parse(xhr.responseText).documents;
+          var configurationProperties = {};
+          for (var prop in properties) {
+            if (properties.hasOwnProperty(prop)) {
+              configurationProperties[properties[prop].key] = properties[prop].value;
+            }
+          }
+
+          Utils.initializeConfigurationProperties(configurationProperties);
+          platformBrowserDynamic().bootstrapModule(AppModule);
+        }
+    };
+    xhr.open('GET', Links.CONFIG_PROPS + '?expand=true', true);
+    xhr.send(null);
   });

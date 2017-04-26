@@ -31,6 +31,20 @@
               <li><a class="nav-link" routerLink="containers" routerLinkActive="active">Containers</a></li>
               <li><a class="nav-link" routerLink="networks" routerLinkActive="active">Networks</a></li>
               <li><a class="nav-link" routerLink="volumes" routerLinkActive="active">Volumes</a></li>
+              <li *ngIf="kubernetesEnabled">
+                  <section class="nav-group collapsible">
+                      <input id="deploymentsCollapse" type="checkbox">
+                        <label for="deploymentsCollapse">Kubernetes</label>
+                        <ul class="nav-list">
+                            <li><a class="nav-link" routerLink="kubernetes/deployments"
+                                routerLinkActive="active">Deployments</a></li>
+                            <li><a class="nav-link" routerLink="kubernetes/pods"
+                                routerLinkActive="active">Pods</a></li>
+                            <li><a class="nav-link" routerLink="kubernetes/services"
+                                routerLinkActive="active">Services</a></li>
+                        </ul>
+                  </section>
+              </li>
           </ul>
       </section>
       <section class="nav-group collapsible">
@@ -46,7 +60,8 @@
           <input id="infrastructureCollapse" type="checkbox">
           <label for="infrastructureCollapse">Infrastructure</label>
           <ul class="nav-list">
-              <li><a class="nav-link" routerLink="vch-clusters" routerLinkActive="active">VCH Clusters</a></li>
+              <li><a class="nav-link" routerLink="vch-clusters" routerLinkActive="active">Clusters</a></li>
+              <li><a class="nav-link" routerLink="hosts" routerLinkActive="active">Hosts (old)</a></li>
           </ul>
       </section>
   </section>
