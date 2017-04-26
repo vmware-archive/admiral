@@ -180,15 +180,14 @@ func isTaskCompleted(taskStatus *TaskStatus, operationType string) bool {
 	if taskStatus.TaskInfo.Stage != StageFinished {
 		return false
 	}
-	if taskStatus.SubStage == SubstageCompleted && operationType == ProvisionResourceOperation {
-		if taskStatus.ResourceLinks == nil || len(taskStatus.ResourceLinks) == 0 {
-			return false
+	if operationType == ProvisionResourceOperation {
+		if taskStatus.SubStage == SubstageCompleted &&
+			(taskStatus.ResourceLinks != nil && len(taskStatus.ResourceLinks) > 0) {
+			return true
 		}
-		return true
-	} else if taskStatus.SubStage == SubstageCompleted && operationType != ProvisionResourceOperation {
-		return true
+		return false
 	}
-	return false
+	return true
 }
 
 func isTaskFailed(taskStatus *TaskStatus) bool {
