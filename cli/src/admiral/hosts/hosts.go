@@ -18,21 +18,23 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"admiral/certificates"
 	"admiral/client"
+	"admiral/common"
+	"admiral/common/base_types"
+	"admiral/common/utils"
+	"admiral/common/utils/selflink_utils"
+	"admiral/common/utils/uri_utils"
 	"admiral/config"
 	"admiral/credentials"
-	"admiral/deplPolicy"
+	"admiral/deployment_policy"
 	"admiral/placementzones"
 	"admiral/properties"
 	"admiral/tags"
 	"admiral/track"
-	"admiral/utils"
-	"admiral/utils/selflink"
-	"admiral/utils/urlutils"
-	"strconv"
 )
 
 var (
@@ -43,6 +45,8 @@ var (
 
 //Struct part of "ListHosts" struct in order to parse inner data.
 type Host struct {
+	base_types.ServiceDocument
+
 	Id               string             `json:"id,omitempty"`
 	Address          string             `json:"address,omitempty"`
 	PowerState       string             `json:"powerState,omitempty"`
@@ -50,18 +54,9 @@ type Host struct {
 	ResourcePoolLink string             `json:"resourcePoolLink,omitempty"`
 	TagLinks         []string           `json:"tagLinks,omitempty"`
 	Name             string             `json:"name,omitempty"`
+	DescriptionLink  string             `json:"descriptionLink,omitempty"`
 
-	CreationTimeMicros           interface{} `json:"creationTimeMicros,omitempty"`
-	DescriptionLink              string      `json:"descriptionLink,omitempty"`
-	DocumentSelfLink             string      `json:"documentSelfLink,omitempty"`
-	DocumentVersion              int         `json:"documentVersion,omitempty"`
-	DocumentEpoch                int         `json:"documentEpoch,omitempty"`
-	DocumentKind                 string      `json:"documentKind,omitempty"`
-	DocumentUpdateTimeMicros     interface{} `json:"documentUpdateTimeMicros,omitempty"`
-	DocumentUpdateAction         string      `json:"documentUpdateAction,omitempty"`
-	DocumentExpirationTimeMicros interface{} `json:"documentExpirationTimeMicros,omitempty"`
-	DocumentOwner                string      `json:"documentOwner,omitempty"`
-	DocumentAuthPrincipalLink    string      `json:"documentAuthPrincipalLink,omitempty"`
+	CreationTimeMicros interface{} `json:"creationTimeMicros,omitempty"`
 }
 
 func (h *Host) GetName() string {
@@ -136,14 +131,14 @@ func (h *Host) SetCustomProperties(ipF, deplPolicyID, name, credID,
 			newCredID = ""
 		}
 	} else {
-		newCredID, err = selflink.GetFullId(credID, new(credentials.CredentialsList), utils.CREDENTIALS)
+		newCredID, err = selflink_utils.GetFullId(credID, new(credentials.CredentialsList), common.CREDENTIALS)
 		utils.CheckBlockingError(err)
 	}
 
 	credLink = utils.CreateResLinkForCredentials(newCredID)
 
 	if deplPolicyID != "" {
-		fullDpId, err := selflink.GetFullId(deplPolicyID, new(deplPolicy.DeploymentPolicyList), utils.DEPLOYMENT_POLICY)
+		fullDpId, err := selflink_utils.GetFullId(deplPolicyID, new(deployment_policy.DeploymentPolicyList), common.DEPLOYMENT_POLICY)
 		utils.CheckBlockingError(err)
 		dpLink = utils.CreateResLinkForDeploymentPolicies(fullDpId)
 	}
@@ -158,7 +153,7 @@ func (h *Host) SetResourcePoolLink(placementZoneID string) {
 	if placementZoneID == "" {
 		return
 	}
-	fullPzId, err := selflink.GetFullId(placementZoneID, new(placementzones.PlacementZoneList), utils.PLACEMENT_ZONE)
+	fullPzId, err := selflink_utils.GetFullId(placementZoneID, new(placementzones.PlacementZoneList), common.PLACEMENT_ZONE)
 	utils.CheckBlockingError(err)
 	pzLink := utils.CreateResLinkForResourcePool(fullPzId)
 	h.ResourcePoolLink = pzLink
@@ -241,7 +236,7 @@ func (hl *HostsList) GetCount() int {
 	return len(hl.DocumentLinks)
 }
 
-func (hl *HostsList) GetResource(index int) selflink.Identifiable {
+func (hl *HostsList) GetResource(index int) selflink_utils.Identifiable {
 	resource := hl.Documents[hl.DocumentLinks[index]]
 	return &resource
 }
@@ -277,14 +272,15 @@ type OperationHost struct {
 //all hosts should be fetched, pass empty string as parameter.
 //Returns the count of fetched hosts.
 func (hl *HostsList) FetchHosts(queryF string) (int, error) {
-	cqm := urlutils.GetCommonQueryMap()
+	cqm := uri_utils.GetCommonQueryMap()
 	cqm["$orderby"] = "documentSelfLink%20asc"
-	cqm["$filter"] = "descriptionLink%20ne%20%27/resources/compute-descriptions/*-parent-compute-desc%27%20and%20customProperties/__computeHost%20eq%20%27*%27%20and%20customProperties/__computeContainerHost%20eq%20%27*%27"
+	cqm["$filter"] = "descriptionLink%20ne%20%27/resources/compute-descriptions/*-parent-compute-desc%27%20and%20custom" +
+		"Properties/__computeHost%20eq%20%27*%27%20and%20customProperties/__computeContainerHost%20eq%20%27*%27"
 	if strings.TrimSpace(queryF) != "" {
 		query := fmt.Sprintf("+and+ALL_FIELDS+eq+'*%s*'", queryF)
 		cqm["$filter"] = cqm["$filter"].(string) + query
 	}
-	url := urlutils.BuildUrl(urlutils.Compute, cqm, true)
+	url := uri_utils.BuildUrl(uri_utils.Compute, cqm, true)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -298,7 +294,7 @@ func (hl *HostsList) FetchHosts(queryF string) (int, error) {
 //Print already fetched hosts.
 func (hl *HostsList) GetOutputString() string {
 	if hl.GetCount() < 1 {
-		return utils.NoElementsFoundMessage
+		return selflink_utils.NoElementsFoundMessage
 	}
 	var buffer bytes.Buffer
 	buffer.WriteString("ID\tADDRESS\tNAME\tSTATE\tCONTAINERS\tPLACEMENT ZONE\tTAGS")
@@ -328,7 +324,7 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 	autoAccept bool,
 	custProps, tags []string) (string, error) {
 
-	url := urlutils.BuildUrl(urlutils.Host, nil, true)
+	url := uri_utils.BuildUrl(uri_utils.Host, nil, true)
 
 	if ok, err := allFlagReadyHost(ipF); !ok {
 		return "", err
@@ -412,8 +408,8 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 //the host is added. Returns the address of the removed host and error = nil, or empty string
 //and error != nil.
 func RemoveHost(id string, asyncTask bool) (string, error) {
-	url := urlutils.BuildUrl(urlutils.RequestBrokerService, nil, true)
-	fullId, err := selflink.GetFullId(id, new(HostsList), utils.HOST)
+	url := uri_utils.BuildUrl(uri_utils.RequestBrokerService, nil, true)
+	fullId, err := selflink_utils.GetFullId(id, new(HostsList), common.HOST)
 	utils.CheckBlockingError(err)
 	link := utils.CreateResLinksForHosts(fullId)
 
@@ -441,7 +437,7 @@ func RemoveHost(id string, asyncTask bool) (string, error) {
 }
 
 func DisableHost(id string) (string, error) {
-	fullId, err := selflink.GetFullId(id, new(HostsList), utils.HOST)
+	fullId, err := selflink_utils.GetFullId(id, new(HostsList), common.HOST)
 	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinksForHosts(fullId)
 	hostp := HostPatch{
@@ -459,7 +455,7 @@ func DisableHost(id string) (string, error) {
 }
 
 func EnableHost(id string) (string, error) {
-	fullId, err := selflink.GetFullId(id, new(HostsList), utils.HOST)
+	fullId, err := selflink_utils.GetFullId(id, new(HostsList), common.HOST)
 	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinksForHosts(fullId)
 	hostp := HostPatch{
@@ -493,7 +489,7 @@ func GetPublicCustomProperties(id string) (map[string]*string, error) {
 }
 
 func GetCustomProperties(id string) (map[string]*string, error) {
-	fullId, err := selflink.GetFullId(id, new(HostsList), utils.HOST)
+	fullId, err := selflink_utils.GetFullId(id, new(HostsList), common.HOST)
 	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinksForHosts(fullId)
 	req, _ := http.NewRequest("GET", url, nil)
@@ -508,7 +504,7 @@ func GetCustomProperties(id string) (map[string]*string, error) {
 }
 
 func AddCustomProperties(id string, keys, vals []string) error {
-	fullId, err := selflink.GetFullId(id, new(HostsList), utils.HOST)
+	fullId, err := selflink_utils.GetFullId(id, new(HostsList), common.HOST)
 	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinksForHosts(fullId)
 	var lowerLen []string
@@ -535,7 +531,7 @@ func AddCustomProperties(id string, keys, vals []string) error {
 }
 
 func RemoveCustomProperties(id string, keys []string) error {
-	fullId, err := selflink.GetFullId(id, new(HostsList), utils.HOST)
+	fullId, err := selflink_utils.GetFullId(id, new(HostsList), common.HOST)
 	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinksForHosts(fullId)
 	custProps := make(map[string]*string)
@@ -558,7 +554,7 @@ func RemoveCustomProperties(id string, keys []string) error {
 func EditHost(id, name, placementZoneId, deplPolicyF, credId string,
 	autoAccept bool,
 	tagsToAdd, tagsToRemove []string) (string, error) {
-	url := urlutils.BuildUrl(urlutils.Host, nil, true)
+	url := uri_utils.BuildUrl(uri_utils.Host, nil, true)
 
 	oldHost, err := GetHost(id)
 	if err != nil {
@@ -609,7 +605,7 @@ func removeNewCredentials(credID string, isNewCred bool) {
 }
 
 func GetHost(id string) (*Host, error) {
-	fullId, err := selflink.GetFullId(id, new(HostsList), utils.HOST)
+	fullId, err := selflink_utils.GetFullId(id, new(HostsList), common.HOST)
 	utils.CheckBlockingError(err)
 	link := utils.CreateResLinksForHosts(fullId)
 	url := config.URL + link

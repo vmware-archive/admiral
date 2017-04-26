@@ -16,9 +16,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"admiral/common/utils"
 	"admiral/credentials"
 	"admiral/hosts"
-	"admiral/utils"
 
 	"github.com/spf13/cobra"
 )

@@ -22,7 +22,7 @@ import (
 	"net/url"
 	"os"
 
-	"admiral/utils"
+	"admiral/common/utils"
 )
 
 var (

@@ -18,9 +18,9 @@ import (
 	"strings"
 	"syscall"
 
+	"admiral/auth"
+	"admiral/common/utils"
 	"admiral/config"
-	"admiral/loginout"
-	"admiral/utils"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
@@ -67,7 +67,7 @@ func initLogin() {
 
 func RunLogin(args []string) (string, error) {
 	if tokenInfo {
-		return loginout.GetInfo(), nil
+		return auth.GetInfo(), nil
 	}
 	if strings.TrimSpace(username) == "" {
 		if config.USER == "" {
@@ -81,10 +81,10 @@ func RunLogin(args []string) (string, error) {
 	}
 	url := urlRemoveTrailingSlash(urlF)
 	if againstVra {
-		return loginout.Loginvra(username, password, tenant, url)
+		return auth.Loginvra(username, password, tenant, url)
 
 	}
-	message, err := loginout.Login(username, password, url)
+	message, err := auth.Login(username, password, url)
 	return message, err
 }
 
@@ -122,5 +122,5 @@ func initLogout() {
 }
 
 func RunLogout() (string, error) {
-	return loginout.Logout()
+	return auth.Logout()
 }

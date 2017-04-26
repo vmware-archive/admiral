@@ -17,10 +17,10 @@ import (
 	"strings"
 	"testing"
 
+	"admiral/common/utils"
+	. "admiral/common/utils"
 	"admiral/config"
 	"admiral/hosts"
-	. "admiral/testutils"
-	"admiral/utils"
 )
 
 //TestContainerProvision will add host and credentials,

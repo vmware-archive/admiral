@@ -12,15 +12,17 @@
 package images
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"sort"
 	"strings"
 
 	"admiral/client"
-	"admiral/utils"
-	"admiral/utils/urlutils"
-	"bytes"
+	"admiral/common/base_types"
+	"admiral/common/utils"
+	"admiral/common/utils/selflink_utils"
+	"admiral/common/utils/uri_utils"
 )
 
 type ImageSorter []Image
@@ -35,10 +37,11 @@ func (is ImageSorter) Less(i, j int) bool {
 }
 
 type Image struct {
+	base_types.ServiceDocument
+
 	Name             string   `json:"name"`
 	TemplateType     string   `json:"templateType"`
 	DescriptionLinks []string `json:"descriptionLinks"`
-	DocumentSelfLink string   `json:"documentSelfLink"`
 	IsAutomated      bool     `json:"is_automated"`
 	IsOfficial       bool     `json:"is_official"`
 	IsTrusted        bool     `json:"is_trusted"`
@@ -85,7 +88,7 @@ func (li *ImagesList) GetOuputString() string {
 			buffer.WriteString("\n")
 		}
 	} else {
-		return utils.NoElementsFoundMessage
+		return selflink_utils.NoElementsFoundMessage
 	}
 	return strings.TrimSpace(buffer.String())
 }
@@ -115,9 +118,9 @@ func cutImgName(name string) string {
 //The function returns the count of the fetched images.
 func (li *ImagesList) QueryImages(imgName string) (int, error) {
 	//url := config.URL + "/templates?&documentType=true&imagesOnly=true&q=" + imgName
-	cqm := urlutils.GetCommonQueryMap()
+	cqm := uri_utils.GetCommonQueryMap()
 	cqm["q"] = imgName
-	url := urlutils.BuildUrl(urlutils.Image, cqm, true)
+	url := uri_utils.BuildUrl(uri_utils.Image, cqm, true)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -134,7 +137,7 @@ type PopularImages []Image
 //This function is called when user execute "admiral search"
 //without passing any name as parameter.
 func GetPopular() (string, error) {
-	url := urlutils.BuildUrl(urlutils.PopularImages, urlutils.GetCommonQueryMap(), true)
+	url := uri_utils.BuildUrl(uri_utils.PopularImages, uri_utils.GetCommonQueryMap(), true)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {

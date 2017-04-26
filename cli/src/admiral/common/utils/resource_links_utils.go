@@ -12,6 +12,7 @@
 package utils
 
 import (
+	"admiral/common"
 	"fmt"
 	"strings"
 )
@@ -236,94 +237,94 @@ func GetResourceIDs(s []string) []string {
 // GetIdFilterUrl returns string which is URL required to check if the initially
 // provided ID for some operation is unique and try to retrieve the full ID,
 // assuming the user has used short ID.
-func GetIdFilterUrl(shortId string, restype ResourceType) string {
+func GetIdFilterUrl(shortId string, restype common.ResourceType) string {
 	var url string
 	switch restype {
-	case APPLICATION:
+	case common.APPLICATION:
 		shortSelfLink := CreateResLinksForApps([]string{shortId})
-		url = ApplicationFilterID + createIdFilter(shortSelfLink[0])
-	case CERTIFICATE:
+		url = common.ApplicationFilterID + createIdFilter(shortSelfLink[0])
+	case common.CERTIFICATE:
 		shortSelfLink := CreateResLinkForCerts(shortId)
-		url = CertFilterID + createIdFilter(shortSelfLink)
-	case CONTAINER:
+		url = common.CertFilterID + createIdFilter(shortSelfLink)
+	case common.CONTAINER:
 		shortSelfLink := CreateResLinksForContainer([]string{shortId})
-		url = ContainerFilterID + createIdFilter(shortSelfLink[0])
-	case CREDENTIALS:
+		url = common.ContainerFilterID + createIdFilter(shortSelfLink[0])
+	case common.CREDENTIALS:
 		shortSelfLink := CreateResLinkForCredentials(shortId)
-		url = CredentialsFilterID + createIdFilter(shortSelfLink)
-	case DEPLOYMENT_POLICY:
+		url = common.CredentialsFilterID + createIdFilter(shortSelfLink)
+	case common.DEPLOYMENT_POLICY:
 		shortSelfLink := CreateResLinkForDeploymentPolicies(shortId)
-		url = DeploymentPolicyFilterID + createIdFilter(shortSelfLink)
-	case HOST:
+		url = common.DeploymentPolicyFilterID + createIdFilter(shortSelfLink)
+	case common.HOST:
 		shortSelfLink := CreateResLinksForHosts(shortId)
-		url = HostFilterID + createIdFilter(shortSelfLink)
-	case NETWORK:
+		url = common.HostFilterID + createIdFilter(shortSelfLink)
+	case common.NETWORK:
 		shortSelfLink := CreateResLinksForNetwork([]string{shortId})
-		url = NetworkFilterID + createIdFilter(shortSelfLink[0])
-	case PLACEMENT:
+		url = common.NetworkFilterID + createIdFilter(shortSelfLink[0])
+	case common.PLACEMENT:
 		shortSelfLink := CreateResLinksForPlacement(shortId)
-		url = PlacementFilterID + createIdFilter(shortSelfLink)
-	case PLACEMENT_ZONE:
+		url = common.PlacementFilterID + createIdFilter(shortSelfLink)
+	case common.PLACEMENT_ZONE:
 		shortSelfLink := CreateResLinkForResourcePool(shortId)
-		url = PlacementZoneFilterID + createIdFilter(shortSelfLink)
-	case PROJECT:
+		url = common.PlacementZoneFilterID + createIdFilter(shortSelfLink)
+	case common.PROJECT:
 		shortSelfLink := CreateResLinkForProject(shortId)
-		url = ProjectFilterID + createIdFilter(shortSelfLink)
-	case REGISTRY:
+		url = common.ProjectFilterID + createIdFilter(shortSelfLink)
+	case common.REGISTRY:
 		shortSelfLink := CreateResLinkForRegistry(shortId)
-		url = RegistryFilterID + createIdFilter(shortSelfLink)
-	case REQUEST:
+		url = common.RegistryFilterID + createIdFilter(shortSelfLink)
+	case common.REQUEST:
 		shortSelfLink := CreateResLinkForRequest(shortId)
-		url = RequestFilterID + createIdFilter(shortSelfLink)
-	case TEMPLATE:
+		url = common.RequestFilterID + createIdFilter(shortSelfLink)
+	case common.TEMPLATE:
 		shortSelfLink := CreateResLinkForTemplate(shortId)
-		url = TemplateFilterID + createIdFilter(shortSelfLink)
-	case ENDPOINT:
+		url = common.TemplateFilterID + createIdFilter(shortSelfLink)
+	case common.ENDPOINT:
 		shortSelfLink := CreateResLinkForEndpoint(shortId)
-		url = EndpointFilterID + createIdFilter(shortSelfLink)
-	case CLOSURE:
+		url = common.EndpointFilterID + createIdFilter(shortSelfLink)
+	case common.CLOSURE:
 		shortSelfLink := CreateResLinkForClosure(shortId)
-		url = ClosureFilterID + createIdFilter(shortSelfLink)
-	case CLOSURE_DESCRIPTION:
+		url = common.ClosureFilterID + createIdFilter(shortSelfLink)
+	case common.CLOSURE_DESCRIPTION:
 		shortSelfLink := CreateResLinkForClosureDescription(shortId)
-		url = ClosureDescriptionFilterID + createIdFilter(shortSelfLink)
+		url = common.ClosureDescriptionFilterID + createIdFilter(shortSelfLink)
 	}
 	return url
 }
 
-func GetNameFilterUrl(name string, restype ResourceType) string {
+func GetNameFilterUrl(name string, restype common.ResourceType) string {
 	var url string
 	switch restype {
-	case APPLICATION:
-		url = ApplicationFilterName + createNameFilter(name)
-	case CERTIFICATE:
-		url = CertFilterName + createNameFilter(name)
-	case CLOSURE:
-		url = ClosureFilterName + createNameFilter(name)
-	case CLOSURE_DESCRIPTION:
-		url = ClosureDescriptionFilterName + createNameFilter(name)
-	case CONTAINER:
-		url = ContainerFilterName + createNameFilter(name)
-	case CREDENTIALS:
-		url = CredentialsFilterName + createNameFilter(name)
-	case DEPLOYMENT_POLICY:
-		url = DeploymentPolicyFilterName + createNameFilter(name)
-	case ENDPOINT:
-		url = EndpointFilterName + createNameFilter(name)
-	case HOST:
+	case common.APPLICATION:
+		url = common.ApplicationFilterName + createNameFilter(name)
+	case common.CERTIFICATE:
+		url = common.CertFilterName + createNameFilter(name)
+	case common.CLOSURE:
+		url = common.ClosureFilterName + createNameFilter(name)
+	case common.CLOSURE_DESCRIPTION:
+		url = common.ClosureDescriptionFilterName + createNameFilter(name)
+	case common.CONTAINER:
+		url = common.ContainerFilterName + createNameFilter(name)
+	case common.CREDENTIALS:
+		url = common.CredentialsFilterName + createNameFilter(name)
+	case common.DEPLOYMENT_POLICY:
+		url = common.DeploymentPolicyFilterName + createNameFilter(name)
+	case common.ENDPOINT:
+		url = common.EndpointFilterName + createNameFilter(name)
+	case common.HOST:
 		url = createNameFilterHost(name)
-	case NETWORK:
-		url = NetworkFilterName + createNameFilter(name)
-	case PLACEMENT:
-		url = PlacementFilterName + createNameFilter(name)
-	case PLACEMENT_ZONE:
-		url = PlacementZoneFilterName + createNameFilter(name)
-	case PROJECT:
-		url = ProjectFilterName + createNameFilter(name)
-	case REGISTRY:
-		url = RegistryFilterName + createNameFilter(name)
-	case TEMPLATE:
-		url = TemplateFilterName + createNameFilter(name)
+	case common.NETWORK:
+		url = common.NetworkFilterName + createNameFilter(name)
+	case common.PLACEMENT:
+		url = common.PlacementFilterName + createNameFilter(name)
+	case common.PLACEMENT_ZONE:
+		url = common.PlacementZoneFilterName + createNameFilter(name)
+	case common.PROJECT:
+		url = common.ProjectFilterName + createNameFilter(name)
+	case common.REGISTRY:
+		url = common.RegistryFilterName + createNameFilter(name)
+	case common.TEMPLATE:
+		url = common.TemplateFilterName + createNameFilter(name)
 
 	}
 	return url
@@ -339,5 +340,5 @@ func createNameFilter(name string) string {
 }
 
 func createNameFilterHost(name string) string {
-	return fmt.Sprintf(HostFilterName, name, name, name)
+	return fmt.Sprintf(common.HostFilterName, name, name, name)
 }

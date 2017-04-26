@@ -17,7 +17,7 @@ import (
 	"admiral/apps"
 	"admiral/help"
 
-	"admiral/utils"
+	"admiral/common/utils"
 
 	"strings"
 

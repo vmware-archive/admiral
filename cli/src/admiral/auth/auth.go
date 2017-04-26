@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package loginout
+package auth
 
 import (
 	"bytes"
@@ -23,9 +23,9 @@ import (
 	"time"
 
 	"admiral/client"
+	"admiral/common/utils"
+	"admiral/common/utils/uri_utils"
 	"admiral/config"
-	"admiral/utils"
-	"admiral/utils/urlutils"
 )
 
 var (
@@ -45,7 +45,7 @@ func Login(username, password, configUrl string) (string, error) {
 		config.SetProperty("Url", configUrl)
 	}
 	os.Remove(utils.TokenPath())
-	url := urlutils.BuildUrl(urlutils.LoginOut, nil, true)
+	url := uri_utils.BuildUrl(uri_utils.LoginOut, nil, true)
 	login := &LogInOut{
 		RequestType: "LOGIN",
 	}
@@ -94,7 +94,7 @@ func logoutStandalone() error {
 		RequestType: "LOGOUT",
 	}
 	jsonBody, _ := json.Marshal(logout)
-	url := urlutils.BuildUrl(urlutils.LoginOut, nil, true)
+	url := uri_utils.BuildUrl(uri_utils.LoginOut, nil, true)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, _, respErr := client.ProcessRequest(req)
 	return respErr

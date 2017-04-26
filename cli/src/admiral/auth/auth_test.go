@@ -11,16 +11,15 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package loginout
+package auth
 
 import (
 	"fmt"
 	"os"
 	"testing"
 
+	. "admiral/common/utils"
 	"admiral/config"
-	. "admiral/testutils"
-	"admiral/utils"
 )
 
 var tc = &TestConfig{}
@@ -32,7 +31,7 @@ func TestMain(m *testing.M) {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	utils.IsTest = true
+	IsTest = true
 	config.GetCfgForTests()
 
 	code := m.Run()

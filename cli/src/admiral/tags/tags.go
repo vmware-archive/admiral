@@ -19,8 +19,9 @@ import (
 	"strings"
 
 	"admiral/client"
+	"admiral/common/base_types"
+	"admiral/common/utils"
 	"admiral/config"
-	"admiral/utils"
 )
 
 type TagError struct {
@@ -39,9 +40,10 @@ func NewTagError(input string) *TagError {
 }
 
 type Tag struct {
-	Key              string `json:"key"`
-	Value            string `json:"value"`
-	DocumentSelfLink string `json:"documentSelfLink,omitempty"`
+	base_types.ServiceDocument
+
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
 func (t *Tag) String() string {

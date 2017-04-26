@@ -9,18 +9,19 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package urlutils
+package uri_utils
 
 import (
-	"admiral/config"
 	"bytes"
 	"fmt"
 	"strings"
+
+	"admiral/config"
 )
 
-type ResourceType int
+type ResourceUri int
 
-func (rt ResourceType) GetBaseUrl() string {
+func (rt ResourceUri) GetBaseUrl() string {
 	switch rt {
 	case Project:
 		return "/resources/groups"
@@ -86,7 +87,7 @@ func (rt ResourceType) GetBaseUrl() string {
 }
 
 const (
-	Project ResourceType = iota
+	Project ResourceUri = iota
 	CompositeComponent
 	RequestBrokerService
 	Certificate
@@ -117,7 +118,7 @@ const (
 	TagAssignment
 )
 
-func BuildUrl(resType ResourceType, queryParameters map[string]interface{}, includeAdmiralUrl bool) string {
+func BuildUrl(resType ResourceUri, queryParameters map[string]interface{}, includeAdmiralUrl bool) string {
 	var url string
 	if includeAdmiralUrl {
 		url = config.URL + resType.GetBaseUrl()

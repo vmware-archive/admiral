@@ -19,10 +19,10 @@ import (
 	"testing"
 	"time"
 
+	"admiral/common/utils"
+	. "admiral/common/utils"
 	"admiral/config"
 	"admiral/hosts"
-	. "admiral/testutils"
-	"admiral/utils"
 )
 
 func TestPlacementAddRemove(t *testing.T) {

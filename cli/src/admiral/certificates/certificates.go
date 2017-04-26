@@ -22,10 +22,12 @@ import (
 	"time"
 
 	"admiral/client"
+	"admiral/common"
+	"admiral/common/base_types"
+	"admiral/common/utils"
+	"admiral/common/utils/selflink_utils"
+	"admiral/common/utils/uri_utils"
 	"admiral/config"
-	"admiral/utils"
-	"admiral/utils/selflink"
-	"admiral/utils/urlutils"
 )
 
 var (
@@ -35,18 +37,19 @@ var (
 )
 
 type Certificate struct {
-	CommonName        string `json:"commonName"`
-	IssuerName        string `json:"issuerName"`
-	Serial            string `json:"serial"`
-	Fingerprint       string `json:"fingerprint"`
-	ValidSince        int64  `json:"validSince"`
-	ValidTo           int64  `json:"validTo"`
-	DocumentSelfLinks string `json:"documentSelfLink"`
+	base_types.ServiceDocument
+
+	CommonName  string `json:"commonName"`
+	IssuerName  string `json:"issuerName"`
+	Serial      string `json:"serial"`
+	Fingerprint string `json:"fingerprint"`
+	ValidSince  int64  `json:"validSince"`
+	ValidTo     int64  `json:"validTo"`
 }
 
 //GetID returns string containing the last part of the document self link.
 func (c *Certificate) GetID() string {
-	return strings.Replace(c.DocumentSelfLinks, "/config/trust-certs/", "", -1)
+	return strings.Replace(c.DocumentSelfLink, "/config/trust-certs/", "", -1)
 }
 
 //GetValidSince returns string showing since when is valid the certificate.
@@ -84,7 +87,7 @@ func (cl *CertificateList) GetCount() int {
 	return len(cl.Documents)
 }
 
-func (cl *CertificateList) GetResource(index int) selflink.Identifiable {
+func (cl *CertificateList) GetResource(index int) selflink_utils.Identifiable {
 	resource := cl.Documents[cl.DocumentLinks[index]]
 	return &resource
 }
@@ -95,7 +98,7 @@ func (cl *CertificateList) Renew() {
 
 //FetchCertificates is fetching all certificates and returns their count.
 func (cl *CertificateList) FetchCertificates() (int, error) {
-	url := urlutils.BuildUrl(urlutils.Certificate, urlutils.GetCommonQueryMap(), true)
+	url := uri_utils.BuildUrl(uri_utils.Certificate, uri_utils.GetCommonQueryMap(), true)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -109,7 +112,7 @@ func (cl *CertificateList) FetchCertificates() (int, error) {
 //Print is printing already fetched certificates.
 func (cl *CertificateList) GetOutputString() string {
 	if len(cl.DocumentLinks) < 1 {
-		return utils.NoElementsFoundMessage
+		return selflink_utils.NoElementsFoundMessage
 	}
 	var buffer bytes.Buffer
 	buffer.WriteString("ID\tNAME\tVALID SINCE\tVALID TO")
@@ -137,28 +140,11 @@ func GetCertLinks(name string) []string {
 	return links
 }
 
-//RemoveCertificate looks for certificate with name matching the parameter.
-//If find a single certificate with the same name, extract it's ID and pass it
-//to the function that removes by id. Returns ID of the removed certificate and error,
-//error is != nil if the count of certificates matching the name from parameter is less than 0,
-//or more than 1.
-func RemoveCertificate(name string) (string, error) {
-	links := GetCertLinks(name)
-	if len(links) < 1 {
-		return "", CertNotFoundError
-	}
-	if len(links) > 1 {
-		return "", DuplicateNamesError
-	}
-	id := utils.GetResourceID(links[0])
-	return RemoveCertificateID(id)
-}
-
 //RemoveCertificateID removes certificate by the ID provided.
 //Returns the ID of removed certificate and error, error is != nil
 //if response code is != 200.
 func RemoveCertificateID(id string) (string, error) {
-	fullId, err := selflink.GetFullId(id, new(CertificateList), utils.CERTIFICATE)
+	fullId, err := selflink_utils.GetFullId(id, new(CertificateList), common.CERTIFICATE)
 	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForCerts(fullId)
 	url := config.URL + link
@@ -168,25 +154,6 @@ func RemoveCertificateID(id string) (string, error) {
 		return "", respErr
 	}
 	return fullId, nil
-}
-
-//EditCertificate looks for certificate with name matching the parameter.
-//If find a single certificate with the same name, extract it's ID and pass it
-//to the function that edits by id. Returns ID of the edited certificate and error,
-//error is != nil if the count of certificates matching the name from parameter is less than 0,
-//or more than 1.
-func EditCertificate(name, dirF, urlF string) (string, error) {
-	links := GetCertLinks(name)
-	if len(links) < 1 {
-		return "", CertNotFoundError
-	}
-	if len(links) > 1 {
-		return "", DuplicateNamesError
-	}
-
-	id := utils.GetResourceID(links[0])
-
-	return EditCertificateID(id, dirF, urlF)
 }
 
 //EditCertificateID edits certificate by the ID provided.
@@ -200,7 +167,7 @@ func EditCertificateID(id, dirF, urlF string) (string, error) {
 			Certificate: string(importFile),
 		}
 		jsonBody, err := json.Marshal(cff)
-		fullId, err := selflink.GetFullId(id, new(CertificateList), utils.CERTIFICATE)
+		fullId, err := selflink_utils.GetFullId(id, new(CertificateList), common.CERTIFICATE)
 		utils.CheckBlockingError(err)
 		url := config.URL + utils.CreateResLinkForCerts(fullId)
 		req, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonBody))
@@ -233,7 +200,7 @@ func AddFromFile(dirF string) (string, error) {
 		Certificate: string(importFile),
 	}
 	jsonBody, err := json.Marshal(cff)
-	url := urlutils.BuildUrl(urlutils.Certificate, nil, true)
+	url := uri_utils.BuildUrl(uri_utils.Certificate, nil, true)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -278,7 +245,7 @@ func CheckTrustCert(respBody []byte, autoAccept bool) bool {
 	cert := &Certificate{}
 	err := json.Unmarshal(respBody, cert)
 	utils.CheckBlockingError(err)
-	url := urlutils.BuildUrl(urlutils.Certificate, nil, true)
+	url := uri_utils.BuildUrl(uri_utils.Certificate, nil, true)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(respBody))
 	req.Header.Add("Pragma", "xn-force-index-update")
 	if autoAccept {

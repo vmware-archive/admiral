@@ -20,9 +20,9 @@ import (
 	"time"
 
 	"admiral/client"
+	"admiral/common/utils"
 	"admiral/config"
 	"admiral/events"
-	"admiral/utils"
 )
 
 type FailureMessage struct {

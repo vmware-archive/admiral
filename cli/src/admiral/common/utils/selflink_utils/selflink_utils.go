@@ -9,17 +9,18 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package selflink
+package selflink_utils
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
 	"admiral/client"
+	"admiral/common"
+	"admiral/common/utils"
 	"admiral/config"
-	"admiral/utils"
-	"errors"
 )
 
 var (
@@ -36,7 +37,7 @@ var (
 type SelfLinkError struct {
 	message string
 	id      string
-	resType utils.ResourceType
+	resType common.ResourceType
 }
 
 func (err *SelfLinkError) Error() string {
@@ -44,7 +45,7 @@ func (err *SelfLinkError) Error() string {
 }
 
 // Function factory to produce SelfLinkError.
-func NewSelfLinkError(msg, id string, resType utils.ResourceType) *SelfLinkError {
+func NewSelfLinkError(msg, id string, resType common.ResourceType) *SelfLinkError {
 	err := &SelfLinkError{
 		message: msg,
 		resType: resType,
@@ -68,7 +69,7 @@ type ResourceList interface {
 // parameter is the short ID, the second parameter should be empty object which implements the interface
 // ResourceList and the third parameter is constant of type utils.ResourceType to specify the type of the
 // resource which you're trying to get the full ID.
-func GetFullId(idOrName string, resList ResourceList, resType utils.ResourceType) (string, error) {
+func GetFullId(idOrName string, resList ResourceList, resType common.ResourceType) (string, error) {
 	var (
 		id      string
 		idErr   error
@@ -88,7 +89,7 @@ func GetFullId(idOrName string, resList ResourceList, resType utils.ResourceType
 }
 
 // GetFullIds is same as GetFullId but it's working with slice of short IDs and returns slice of full IDs.
-func GetFullIds(shortIds []string, resList ResourceList, resType utils.ResourceType) ([]string, error) {
+func GetFullIds(shortIds []string, resList ResourceList, resType common.ResourceType) ([]string, error) {
 	fullIds := make([]string, 0)
 	for _, shortId := range shortIds {
 		fullId, err := GetFullId(shortId, resList, resType)
@@ -100,7 +101,7 @@ func GetFullIds(shortIds []string, resList ResourceList, resType utils.ResourceT
 	return fullIds, nil
 }
 
-func getFullIdByShortId(shortId string, resList ResourceList, resType utils.ResourceType) (string, error) {
+func getFullIdByShortId(shortId string, resList ResourceList, resType common.ResourceType) (string, error) {
 	url := config.URL + utils.GetIdFilterUrl(shortId, resType)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -119,7 +120,7 @@ func getFullIdByShortId(shortId string, resList ResourceList, resType utils.Reso
 	return resource.GetID(), nil
 }
 
-func getFullIdByName(name string, resList ResourceList, resType utils.ResourceType) (string, error) {
+func getFullIdByName(name string, resList ResourceList, resType common.ResourceType) (string, error) {
 	url := config.URL + utils.GetNameFilterUrl(name, resType)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -138,7 +139,7 @@ func getFullIdByName(name string, resList ResourceList, resType utils.ResourceTy
 	return resource.GetID(), nil
 }
 
-func buildIdError(idError, nameError error, idOrName string, resType utils.ResourceType) error {
+func buildIdError(idError, nameError error, idOrName string, resType common.ResourceType) error {
 	if idError == NotFound && nameError == NotFound {
 		return NewSelfLinkError(NoElementsFoundMessage, idOrName, resType)
 	} else if idError == NonUnique && nameError == NonUnique {

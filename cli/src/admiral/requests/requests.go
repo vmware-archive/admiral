@@ -21,10 +21,12 @@ import (
 	"time"
 
 	"admiral/client"
+	"admiral/common"
+	"admiral/common/base_types"
+	"admiral/common/utils"
+	"admiral/common/utils/selflink_utils"
 	"admiral/config"
 	"admiral/events"
-	"admiral/utils"
-	"admiral/utils/selflink"
 )
 
 const (
@@ -55,6 +57,8 @@ type TaskInfo struct {
 }
 
 type RequestInfo struct {
+	base_types.ServiceDocument
+
 	TaskInfo                 TaskInfo    `json:"taskInfo"`
 	Phase                    string      `json:"phase"`
 	Name                     string      `json:"name"`
@@ -63,7 +67,6 @@ type RequestInfo struct {
 	DocumentUpdateTimeMicros interface{} `json:"documentUpdateTimeMicros"`
 	EventLogInfo             string      `json:"eventLogInfo"`
 	EventLogLink             string      `json:"eventLogLink"`
-	DocumentSelfLink         string      `json:"documentSelfLink"`
 }
 
 func (ri *RequestInfo) GetResourceID(index int) string {
@@ -144,7 +147,7 @@ func (rl *RequestsList) GetCount() int {
 	return len(rl.DocumentLinks)
 }
 
-func (rl *RequestsList) GetResource(index int) selflink.Identifiable {
+func (rl *RequestsList) GetResource(index int) selflink_utils.Identifiable {
 	resource := rl.Documents[rl.DocumentLinks[index]]
 	return &resource
 }
@@ -168,7 +171,8 @@ func (rl *RequestsList) ClearAllRequests() (string, []error) {
 }
 
 func (rl *RequestsList) FetchRequests() (int, error) {
-	url := config.URL + "/request-status?documentType=true&$count=false&$limit=1000&$orderby=documentExpirationTimeMicros+desc&$filter=taskInfo/stage+eq+'*'"
+	url := config.URL + "/request-status?documentType=true&$count=false&$limit=1000&$orderby=documentExpiration" +
+		"TimeMicros+desc&$filter=taskInfo/stage+eq+'*'"
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -203,7 +207,7 @@ func (rl *RequestsList) Print(what string) {
 }
 
 func RemoveRequestID(id string) (string, error) {
-	fullId, err := selflink.GetFullId(id, new(RequestsList), utils.REQUEST)
+	fullId, err := selflink_utils.GetFullId(id, new(RequestsList), common.REQUEST)
 	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinkForRequest(fullId)
 	req, _ := http.NewRequest("DELETE", url, nil)
@@ -225,7 +229,7 @@ type InspectedRequest struct {
 }
 
 func InspectRequestID(id string) (string, error) {
-	fullId, err := selflink.GetFullId(id, new(RequestsList), utils.REQUEST)
+	fullId, err := selflink_utils.GetFullId(id, new(RequestsList), common.REQUEST)
 	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinkForRequest(fullId)
 	req, _ := http.NewRequest("GET", url, nil)

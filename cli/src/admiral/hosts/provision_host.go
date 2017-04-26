@@ -19,14 +19,16 @@ import (
 	"strings"
 
 	"admiral/client"
+	"admiral/common"
+	"admiral/common/base_types"
+	"admiral/common/utils"
+	"admiral/common/utils/selflink_utils"
+	"admiral/common/utils/uri_utils"
 	"admiral/credentials"
 	"admiral/endpoints"
 	"admiral/properties"
 	"admiral/tags"
 	"admiral/track"
-	"admiral/utils"
-	"admiral/utils/selflink"
-	"admiral/utils/urlutils"
 )
 
 var (
@@ -43,20 +45,21 @@ const (
 )
 
 type ComputeDescription struct {
+	base_types.ServiceDocument
+
 	AuthCredentialsLink string                 `json:"authCredentialsLink,omitempty"`
 	Name                string                 `json:"name,omitempty"`
 	InstanceType        string                 `json:"instanceType,omitempty"`
 	SupportedChildren   []string               `json:"supportedChildren,omitempty"`
 	TagLinks            []string               `json:"tagLinks,omitempty"`
 	CustomProperties    map[string]interface{} `json:"customProperties,omitempty"`
-	DocumentSelfLink    string                 `json:"documentSelfLink,omitempty"`
 }
 
 func (cd *ComputeDescription) SetAuthCredentialsLink(id string) error {
 	if id == "" {
 		return nil
 	}
-	fullId, err := selflink.GetFullId(id, new(credentials.CredentialsList), utils.CREDENTIALS)
+	fullId, err := selflink_utils.GetFullId(id, new(credentials.CredentialsList), common.CREDENTIALS)
 	if err != nil {
 		return err
 	}
@@ -83,7 +86,7 @@ func (cd *ComputeDescription) SetDestination(destinationId string) {
 }
 
 func (cd *ComputeDescription) SetEndpoint(endpointId string) error {
-	fullId, err := selflink.GetFullId(endpointId, new(endpoints.EndpointList), utils.ENDPOINT)
+	fullId, err := selflink_utils.GetFullId(endpointId, new(endpoints.EndpointList), common.ENDPOINT)
 	if err != nil {
 		return err
 	}
@@ -233,7 +236,7 @@ func processComputeDescription(cd *ComputeDescription, clusterSize int, asyncTas
 	jsonBody, err := json.Marshal(cd)
 	utils.CheckBlockingError(err)
 
-	url := urlutils.BuildUrl(urlutils.ComputeDescription, nil, true)
+	url := uri_utils.BuildUrl(uri_utils.ComputeDescription, nil, true)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -248,7 +251,7 @@ func processComputeDescription(cd *ComputeDescription, clusterSize int, asyncTas
 	jsonBody, err = json.Marshal(pho)
 	utils.CheckBlockingError(err)
 
-	url = urlutils.BuildUrl(urlutils.RequestBrokerService, nil, true)
+	url = uri_utils.BuildUrl(uri_utils.RequestBrokerService, nil, true)
 	req, _ = http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr = client.ProcessRequest(req)
 	if respErr != nil {

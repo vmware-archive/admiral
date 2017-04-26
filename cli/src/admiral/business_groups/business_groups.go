@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package businessgroups
+package business_groups
 
 import (
 	"bytes"
@@ -18,9 +18,10 @@ import (
 	"strings"
 
 	"admiral/client"
+	"admiral/common"
+	"admiral/common/utils"
+	"admiral/common/utils/selflink_utils"
 	"admiral/config"
-	"admiral/utils"
-	"admiral/utils/selflink"
 )
 
 type BusinessGroup struct {
@@ -42,8 +43,8 @@ func (bgl *BusinessGroupList) GetCount() int {
 }
 
 // GetResource returns resource at the specified index,
-// which resource implements the interface selflink.Identifiable.
-func (bgl *BusinessGroupList) GetResource(index int) selflink.Identifiable {
+// which resource implements the interface selflink_utils.Identifiable.
+func (bgl *BusinessGroupList) GetResource(index int) selflink_utils.Identifiable {
 	resource := (*bgl)[index]
 	return &resource
 }
@@ -97,7 +98,7 @@ func GetFullId(idOrLabel string) (string, error) {
 	if nameErr == nil {
 		return id, nil
 	}
-	resultError := buildIdError(idErr, nameErr, idOrLabel, utils.BUSINESS_GROUP)
+	resultError := buildIdError(idErr, nameErr, idOrLabel, common.BUSINESS_GROUP)
 	return "", resultError
 }
 
@@ -114,10 +115,10 @@ func getFullIdByShortId(shortId string) (string, error) {
 		lastMatchIndex = i
 	}
 	if matchedCount < 1 {
-		return "", selflink.NotFound
+		return "", selflink_utils.NotFound
 	}
 	if matchedCount > 1 {
-		return "", selflink.NonUnique
+		return "", selflink_utils.NonUnique
 	}
 	return bgl.GetResource(lastMatchIndex).GetID(), nil
 }
@@ -135,23 +136,23 @@ func getFullIdByLabel(label string) (string, error) {
 		lastMatchIndex = i
 	}
 	if matchedCount < 1 {
-		return "", selflink.NotFound
+		return "", selflink_utils.NotFound
 	}
 	if matchedCount > 1 {
-		return "", selflink.NonUnique
+		return "", selflink_utils.NonUnique
 	}
 	return bgl.GetResource(lastMatchIndex).GetID(), nil
 }
 
-func buildIdError(idError, nameError error, idOrName string, resType utils.ResourceType) error {
-	if idError == selflink.NotFound && nameError == selflink.NotFound {
-		return selflink.NewSelfLinkError(selflink.NoElementsFoundMessage, idOrName, resType)
-	} else if idError == selflink.NonUnique && nameError == selflink.NonUnique {
-		return selflink.NewSelfLinkError(selflink.NonUniqueIdMessage, idOrName, resType)
-	} else if idError == selflink.NonUnique && nameError == selflink.NotFound {
-		return selflink.NewSelfLinkError(selflink.NonUniqueIdAndNoElementsWithName, idOrName, resType)
-	} else if idError == selflink.NotFound && nameError == selflink.NonUnique {
-		return selflink.NewSelfLinkError(selflink.NotFoundIdAndDuplicateName, idOrName, resType)
+func buildIdError(idError, nameError error, idOrName string, resType common.ResourceType) error {
+	if idError == selflink_utils.NotFound && nameError == selflink_utils.NotFound {
+		return selflink_utils.NewSelfLinkError(selflink_utils.NoElementsFoundMessage, idOrName, resType)
+	} else if idError == selflink_utils.NonUnique && nameError == selflink_utils.NonUnique {
+		return selflink_utils.NewSelfLinkError(selflink_utils.NonUniqueIdMessage, idOrName, resType)
+	} else if idError == selflink_utils.NonUnique && nameError == selflink_utils.NotFound {
+		return selflink_utils.NewSelfLinkError(selflink_utils.NonUniqueIdAndNoElementsWithName, idOrName, resType)
+	} else if idError == selflink_utils.NotFound && nameError == selflink_utils.NonUnique {
+		return selflink_utils.NewSelfLinkError(selflink_utils.NotFoundIdAndDuplicateName, idOrName, resType)
 	} else {
 		return nil
 	}

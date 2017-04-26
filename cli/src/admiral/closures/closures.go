@@ -18,16 +18,19 @@ import (
 	"strings"
 
 	"admiral/client"
+	"admiral/common"
+	"admiral/common/base_types"
+	"admiral/common/utils"
+	"admiral/common/utils/selflink_utils"
+	"admiral/common/utils/uri_utils"
 	"admiral/config"
-	"admiral/utils"
-	"admiral/utils/selflink"
-	"admiral/utils/urlutils"
 )
 
 type Closure struct {
-	State            string `json:"state"`
-	Name             string `json:"name"`
-	DocumentSelfLink string `json:"documentSelfLink"`
+	base_types.ServiceDocument
+
+	State string `json:"state"`
+	Name  string `json:"name"`
 }
 
 func (c *Closure) GetID() string {
@@ -43,7 +46,7 @@ func (cl *ClosureList) GetCount() int {
 	return len(cl.Documents)
 }
 
-func (cl *ClosureList) GetResource(index int) selflink.Identifiable {
+func (cl *ClosureList) GetResource(index int) selflink_utils.Identifiable {
 	resource := cl.Documents[cl.DocumentLinks[index]]
 	return &resource
 }
@@ -53,7 +56,7 @@ func (cl *ClosureList) Renew() {
 }
 
 func (cl *ClosureList) FetchClosures() (int, error) {
-	url := urlutils.BuildUrl(urlutils.Closure, urlutils.GetCommonQueryMap(), true)
+	url := uri_utils.BuildUrl(uri_utils.Closure, uri_utils.GetCommonQueryMap(), true)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -66,7 +69,7 @@ func (cl *ClosureList) FetchClosures() (int, error) {
 
 func (cl *ClosureList) GetOutputString() string {
 	if cl.GetCount() < 1 {
-		return utils.NoElementsFoundMessage
+		return selflink_utils.NoElementsFoundMessage
 	}
 	var buffer bytes.Buffer
 	buffer.WriteString("ID\tNAME\tSTATUS\n")
@@ -79,7 +82,7 @@ func (cl *ClosureList) GetOutputString() string {
 }
 
 func RemoveClosure(idOrName string) (string, error) {
-	fullId, err := selflink.GetFullId(idOrName, new(ClosureList), utils.CLOSURE)
+	fullId, err := selflink_utils.GetFullId(idOrName, new(ClosureList), common.CLOSURE)
 	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinkForClosure(fullId)
 	req, _ := http.NewRequest("DELETE", url, nil)
@@ -88,7 +91,7 @@ func RemoveClosure(idOrName string) (string, error) {
 }
 
 func GetClosure(id string) *Closure {
-	fullId, err := selflink.GetFullId(id, new(ClosureList), utils.CLOSURE)
+	fullId, err := selflink_utils.GetFullId(id, new(ClosureList), common.CLOSURE)
 	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinkForClosure(fullId)
 	req, _ := http.NewRequest("GET", url, nil)

@@ -21,11 +21,11 @@ import (
 	"strings"
 
 	"admiral/client"
+	"admiral/common/utils"
+	"admiral/common/utils/uri_utils"
 	"admiral/config"
 	"admiral/endpoints"
 	"admiral/hosts"
-	"admiral/utils"
-	"admiral/utils/urlutils"
 )
 
 const (
@@ -40,7 +40,11 @@ const (
 	NotAvailableImageTypes    = "Image types are not avialable"
 	NotAvailableDestination   = "Destinations are not avialable"
 
-	DestinationsFetchLinkFormat = "/resources/compute?documentType=true&$count=true&$limit=10&$orderby=creationTimeMicros+asc&$filter=descriptionLink+ne+'/resources/compute-descriptions/*-parent-compute-desc'+and+customProperties/__endpointType+ne+'*'+and+customProperties/__computeContainerHost+ne+'*'+and+customProperties/__computeType+ne+'VirtualMachine'+and+powerState+eq+'ON'+and+resourcePoolLink+eq+'%s'"
+	DestinationsFetchLinkFormat = "/resources/compute?documentType=true&$count=true&$limit=10&" +
+		"$orderby=creationTimeMicros+asc&$filter=descriptionLink+ne+'/resources/compute-descriptions/" +
+		"*-parent-compute-desc'+and+customProperties/__endpointType+ne+'*'+and+customProperties" +
+		"/__computeContainerHost+ne+'*'+and+customProperties/" +
+		"__computeType+ne+'VirtualMachine'+and+powerState+eq+'ON'+and+resourcePoolLink+eq+'%s'"
 )
 
 var (
@@ -102,11 +106,11 @@ func (em *EnvMapping) fetchMappings(e EndpointType) error {
 	var url string
 	switch e {
 	case AWS:
-		url = urlutils.BuildUrl(urlutils.EnvironmentsAws, urlutils.GetCommonQueryMap(), true)
+		url = uri_utils.BuildUrl(uri_utils.EnvironmentsAws, uri_utils.GetCommonQueryMap(), true)
 	case AZURE:
-		url = urlutils.BuildUrl(urlutils.EnvironmentsAzure, urlutils.GetCommonQueryMap(), true)
+		url = uri_utils.BuildUrl(uri_utils.EnvironmentsAzure, uri_utils.GetCommonQueryMap(), true)
 	case VSPHERE:
-		url = urlutils.BuildUrl(urlutils.EnvironmentsVsphere, urlutils.GetCommonQueryMap(), true)
+		url = uri_utils.BuildUrl(uri_utils.EnvironmentsVsphere, uri_utils.GetCommonQueryMap(), true)
 	default:
 		return errors.New("Invalid endpoint type.")
 	}

@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package testutils
+package utils
 
 import (
 	"encoding/json"

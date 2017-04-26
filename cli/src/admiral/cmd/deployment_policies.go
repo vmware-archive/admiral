@@ -14,7 +14,7 @@ package cmd
 import (
 	"errors"
 
-	"admiral/deplPolicy"
+	"admiral/deployment_policy"
 	"admiral/help"
 
 	"github.com/spf13/cobra"
@@ -64,7 +64,7 @@ func RunDeploymentPolicyAdd(args []string) (string, error) {
 	if dpName, ok = ValidateArgsCount(args); !ok {
 		return "", MissingDeploymentPolicyNameError
 	}
-	id, err = deplPolicy.AddDP(dpName, dpDescription)
+	id, err = deployment_policy.AddDP(dpName, dpDescription)
 
 	if err != nil {
 		return "", err
@@ -90,7 +90,7 @@ func initDeploymentPolicyList() {
 }
 
 func RunDeploymentPolicyList(args []string) (string, error) {
-	dpl := &deplPolicy.DeploymentPolicyList{}
+	dpl := &deployment_policy.DeploymentPolicyList{}
 	_, err := dpl.FetchDP()
 	if err != nil {
 		return "", err
@@ -124,7 +124,7 @@ func RunDeploymentPolicyRemove(args []string) (string, error) {
 	if id, ok = ValidateArgsCount(args); !ok {
 		return "", MissingDeploymentPolicyIdError
 	}
-	newID, err = deplPolicy.RemoveDPID(id)
+	newID, err = deployment_policy.RemoveDPID(id)
 
 	if err != nil {
 		return "", err
@@ -161,7 +161,7 @@ func RunDeploymentPolicyUpdate(args []string) (string, error) {
 	if id, ok = ValidateArgsCount(args); !ok {
 		return "", MissingDeploymentPolicyIdError
 	}
-	newID, err = deplPolicy.EditDPID(id, dpName, dpDescription)
+	newID, err = deployment_policy.EditDPID(id, dpName, dpDescription)
 
 	if err != nil {
 		return "", err

@@ -18,7 +18,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"admiral/utils"
+	"admiral/common/utils"
 )
 
 var (

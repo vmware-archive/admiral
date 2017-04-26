@@ -23,11 +23,13 @@ import (
 	"time"
 
 	"admiral/client"
+	"admiral/common"
+	"admiral/common/base_types"
+	"admiral/common/utils"
+	"admiral/common/utils/selflink_utils"
+	"admiral/common/utils/uri_utils"
 	"admiral/config"
 	"admiral/track"
-	"admiral/utils"
-	"admiral/utils/selflink"
-	"admiral/utils/urlutils"
 )
 
 var (
@@ -36,20 +38,21 @@ var (
 )
 
 type Container struct {
-	Id               string                 `json:"id"`
-	Address          string                 `json:"address"`
-	Names            []string               `json:"names"`
-	PowerState       string                 `json:"powerState"`
-	Ports            []Port                 `json:"ports"`
-	Networks         map[string]interface{} `json:"networks"`
-	DescriptionLink  string                 `json:"descriptionLink"`
-	System           bool                   `json:"system"`
-	Created          int64                  `json:"created"`
-	Started          int64                  `json:"started"`
-	Command          []string               `json:"command"`
-	PolicyLink       string                 `json:"groupResourcePolicyLink"`
-	Attributes       Attributes             `json:"attributes"`
-	DocumentSelfLink string                 `json:"documentSelfLink"`
+	base_types.ServiceDocument
+
+	Id              string                 `json:"id"`
+	Address         string                 `json:"address"`
+	Names           []string               `json:"names"`
+	PowerState      string                 `json:"powerState"`
+	Ports           []Port                 `json:"ports"`
+	Networks        map[string]interface{} `json:"networks"`
+	DescriptionLink string                 `json:"descriptionLink"`
+	System          bool                   `json:"system"`
+	Created         int64                  `json:"created"`
+	Started         int64                  `json:"started"`
+	Command         []string               `json:"command"`
+	PolicyLink      string                 `json:"groupResourcePolicyLink"`
+	Attributes      Attributes             `json:"attributes"`
 }
 
 //GetID returns the ID of the container.
@@ -221,7 +224,7 @@ type ContainersOperationScale struct {
 // for this task is needed.
 // Usage of short unique IDs is supported for this operation.
 func StartContainer(containers []string, asyncTask bool) ([]string, error) {
-	fullIds, err := selflink.GetFullIds(containers, new(ContainersList), utils.CONTAINER)
+	fullIds, err := selflink_utils.GetFullIds(containers, new(ContainersList), common.CONTAINER)
 	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForContainer(fullIds)
 
@@ -242,7 +245,7 @@ func StartContainer(containers []string, asyncTask bool) ([]string, error) {
 // for this task is needed.
 // Usage of short unique IDs is supported for this operation.
 func StopContainer(containers []string, asyncTask bool) ([]string, error) {
-	fullIds, err := selflink.GetFullIds(containers, new(ContainersList), utils.CONTAINER)
+	fullIds, err := selflink_utils.GetFullIds(containers, new(ContainersList), common.CONTAINER)
 	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForContainer(fullIds)
 
@@ -262,7 +265,7 @@ func StopContainer(containers []string, asyncTask bool) ([]string, error) {
 // for this task is needed.
 // Usage of short unique IDs is supported for this operation.
 func RemoveContainer(containers []string, asyncTask bool) ([]string, error) {
-	fullIds, err := selflink.GetFullIds(containers, new(ContainersList), utils.CONTAINER)
+	fullIds, err := selflink_utils.GetFullIds(containers, new(ContainersList), common.CONTAINER)
 	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForContainer(fullIds)
 
@@ -304,7 +307,7 @@ func RemoveMany(container string, asyncTask bool) ([]string, error) {
 // for this task is needed.
 // Usage of short unique IDs is supported for this operation.
 func ScaleContainer(containerID string, scaleCount int32, asyncTask bool) (string, error) {
-	fullIds, err := selflink.GetFullIds([]string{containerID}, new(ContainersList), utils.CONTAINER)
+	fullIds, err := selflink_utils.GetFullIds([]string{containerID}, new(ContainersList), common.CONTAINER)
 	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForContainer(fullIds)
 	url := config.URL + links[0]
@@ -332,7 +335,7 @@ func ScaleContainer(containerID string, scaleCount int32, asyncTask bool) (strin
 }
 
 func processContainersOperation(co ContainersOperator, asyncTask bool) ([]string, error) {
-	url := urlutils.BuildUrl(urlutils.RequestBrokerService, nil, true)
+	url := uri_utils.BuildUrl(uri_utils.RequestBrokerService, nil, true)
 	jsonBody, err := json.Marshal(co)
 	utils.CheckBlockingError(err)
 
@@ -352,7 +355,7 @@ func processContainersOperation(co ContainersOperator, asyncTask bool) ([]string
 // ExecuteCmd executes command in container.
 // Usage of short unique IDs is supported for this operation.
 func ExecuteCmd(container string, command string) {
-	fullIds, err := selflink.GetFullIds([]string{container}, new(ContainersList), utils.CONTAINER)
+	fullIds, err := selflink_utils.GetFullIds([]string{container}, new(ContainersList), common.CONTAINER)
 	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForContainer(fullIds)
 	contLink := links[0]
@@ -374,7 +377,7 @@ func ExecuteCmd(container string, command string) {
 
 // InspectContainer returns information about container in JSON format.
 func InspectContainer(id string) ([]byte, error) {
-	fullIds, err := selflink.GetFullIds([]string{id}, new(ContainersList), utils.CONTAINER)
+	fullIds, err := selflink_utils.GetFullIds([]string{id}, new(ContainersList), common.CONTAINER)
 	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForContainer(fullIds)
 	url := config.URL + links[0]
@@ -397,7 +400,7 @@ func InspectContainer(id string) ([]byte, error) {
 // GetContainer return pointer to object of type Container,
 // which is fetched from Admiral by the provided ID.
 func GetContainer(id string) *Container {
-	fullId, err := selflink.GetFullId(id, new(ContainersList), utils.CONTAINER)
+	fullId, err := selflink_utils.GetFullId(id, new(ContainersList), common.CONTAINER)
 	utils.CheckBlockingError(err)
 	link := utils.CreateResLinksForContainer([]string{fullId})[0]
 	url := config.URL + link

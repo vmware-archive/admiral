@@ -18,12 +18,12 @@ import (
 	"os"
 	"testing"
 
+	"admiral/auth"
+	. "admiral/common"
+	. "admiral/common/utils"
 	"admiral/config"
 	"admiral/credentials"
 	"admiral/hosts"
-	"admiral/loginout"
-	. "admiral/testutils"
-	"admiral/utils"
 )
 
 var tc = &TestConfig{}
@@ -35,9 +35,9 @@ func TestMain(m *testing.M) {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	utils.IsTest = true
+	IsTest = true
 	config.GetCfgForTests()
-	loginout.Login(tc.Username, tc.Password, tc.AdmiralAddress)
+	auth.Login(tc.Username, tc.Password, tc.AdmiralAddress)
 
 	code := m.Run()
 
@@ -53,8 +53,8 @@ func TestProvisionRemoveContainer(t *testing.T) {
 	containerName := "ubuntu"
 	imageName := "ubuntu"
 	cd := ContainerDescription{
-		Name:  utils.NilString{containerName},
-		Image: utils.NilString{imageName},
+		Name:  NilString{containerName},
+		Image: NilString{imageName},
 	}
 
 	// Testing phase 1
@@ -113,8 +113,8 @@ func TestStopStartContainer(t *testing.T) {
 	containerName := "ubuntu"
 	imageName := "ubuntu"
 	cd := ContainerDescription{
-		Name:  utils.NilString{containerName},
-		Image: utils.NilString{imageName},
+		Name:  NilString{containerName},
+		Image: NilString{imageName},
 	}
 	contId, err := cd.RunContainer("", false)
 	CheckTestError(err, t)

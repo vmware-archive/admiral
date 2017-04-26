@@ -12,7 +12,7 @@
 package cmd
 
 import (
-	"admiral/businessgroups"
+	"admiral/business_groups"
 
 	"github.com/spf13/cobra"
 )
@@ -37,7 +37,7 @@ func initBusinessGroupsList() {
 }
 
 func RunBusinessGroupList(args []string) (string, error) {
-	bgl := &businessgroups.BusinessGroupList{}
+	bgl := &business_groups.BusinessGroupList{}
 	_, err := bgl.FetchBusinessGroups()
 	if err != nil {
 		return "", err

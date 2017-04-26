@@ -19,9 +19,9 @@ import (
 	"strings"
 
 	"admiral/client"
-	"admiral/utils"
-	"admiral/utils/selflink"
-	"admiral/utils/urlutils"
+	"admiral/common/utils"
+	"admiral/common/utils/selflink_utils"
+	"admiral/common/utils/uri_utils"
 )
 
 type ContainersList struct {
@@ -34,7 +34,7 @@ func (lc *ContainersList) GetCount() int {
 	return len(lc.DocumentLinks)
 }
 
-func (lc *ContainersList) GetResource(index int) selflink.Identifiable {
+func (lc *ContainersList) GetResource(index int) selflink_utils.Identifiable {
 	resource := lc.Documents[lc.DocumentLinks[index]]
 	return &resource
 }
@@ -47,14 +47,14 @@ func (cl *ContainersList) Renew() {
 //In case you want to fetch all containers, pass empty string as parameter.
 //The return result is the count of fetched containers.
 func (lc *ContainersList) FetchContainers(queryF string) (int, error) {
-	cqm := urlutils.GetCommonQueryMap()
+	cqm := uri_utils.GetCommonQueryMap()
 	cqm["$orderby"] = "documentSelfLink+asc"
 	cqm["$filter"] = "system+ne+true"
 	if strings.TrimSpace(queryF) != "" {
 		queryFilter := fmt.Sprintf("+and+ALL_FIELDS+eq+'*%s*'", queryF)
 		cqm["$filter"] = cqm["$filter"].(string) + queryFilter
 	}
-	url := urlutils.BuildUrl(urlutils.Container, cqm, true)
+	url := uri_utils.BuildUrl(uri_utils.Container, cqm, true)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
