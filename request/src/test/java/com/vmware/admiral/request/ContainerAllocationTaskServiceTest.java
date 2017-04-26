@@ -723,9 +723,8 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         Set<SubStage> subscriptionSubStages = allocationTask.taskSubStage.SUBSCRIPTION_SUB_STAGES;
 
         assertNotNull(subscriptionSubStages);
-        assertEquals(2, subscriptionSubStages.size());
-        assertTrue(subscriptionSubStages.contains(allocationTask.taskSubStage.CONTEXT_PREPARED));
-        assertTrue(subscriptionSubStages.contains(allocationTask.taskSubStage.RESOURCES_NAMED));
+        assertEquals(1, subscriptionSubStages.size());
+        assertTrue(subscriptionSubStages.contains(allocationTask.taskSubStage.BUILD_RESOURCES_LINKS));
     }
 
     private void validatePorts(ContainerDescription containerDescription,

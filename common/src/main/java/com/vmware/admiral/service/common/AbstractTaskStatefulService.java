@@ -291,12 +291,22 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             if (manager != null) {
                 ServiceTaskCallbackResponse notificationPayload = this.notificationPayload();
 
-                Runnable callback = () -> {
-                    manager.handleStagePatch(notificationPayload, this.replyPayload(), state,
-                            this::handleStagePatch);
+                //Once payload being enhanced, manager will sent notification to client.
+                Runnable notificationCallback = () -> {
+
+                    // Callback will trigger notification call to client.
+                    Runnable callback = () -> {
+                        manager.sendNotification(manager.getExtensibilitySubscription(state),
+                                notificationPayload, this.replyPayload(), state,
+                                this::handleStagePatch);
+                    };
+
+                    this.validateAndEnhanceNotificationPayload(state, notificationPayload,
+                            callback);
                 };
 
-                validateAndEnhanceNotificationPayload(state, notificationPayload, callback);
+                manager.handleStagePatch(notificationPayload, this.replyPayload(), state,
+                        this::handleStagePatch, notificationCallback);
 
             } else {
                 // ServiceHost is not instance of ManagementHost

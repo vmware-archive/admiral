@@ -44,7 +44,7 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
     private static final String CONTAINER_NAME_TOPIC_ID = "com.vmware.container.name.assignment";
     private static final String CONTAINER_NAME_TOPIC_NAME = "Container name assignment";
     private static final String CONTAINER_NAME_TOPIC_TASK_NAME = "ContainerAllocationTaskState";
-    private static final String CONTAINER_NAME_TOPIC_SUBSTAGE = "RESOURCES_NAMED";
+    private static final String CONTAINER_NAME_TOPIC_SUBSTAGE = "BUILD_RESOURCES_LINKS";
     private static final String CONTAINER_NAME_TOPIC_TASK_DESCRIPTION = "Assign custom container name.";
 
     public static final String COMPUTE_NAME_TOPIC_TASK_SELF_LINK = "change-compute-name";
@@ -197,6 +197,14 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
                 .addDataType(String.class.getSimpleName())
                 .addLabel("Properties of Container Description (Read Only)")
                 .addDescription("Container Description Properties.")
+                .whereMultiValued(false)
+                .whereReadOnly(true)
+                // Add resourceToHostSelection info
+                .addField("resourceToHostSelection")
+                .addDataType(String.class.getSimpleName())
+                .addLabel("Resource to host selection (Read Only)")
+                .addDescription(
+                        "Eeach string entry represents resource and host on which it will be deployed.")
                 .whereMultiValued(false)
                 .whereReadOnly(true)
                 .build();

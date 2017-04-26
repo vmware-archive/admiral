@@ -39,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -46,6 +47,8 @@ import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.OperationUtil;
+import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
@@ -72,12 +75,14 @@ import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask;
 
 /**
  * Task implementing the provision container request resource work flow.
@@ -109,7 +114,7 @@ public class ContainerAllocationTaskService extends
             CREATED,
             CONTEXT_PREPARED,
             RESOURCES_NAMED,
-            RESOURCES_LINKS_BUILT,
+            BUILD_RESOURCES_LINKS,
             PLACEMENT_HOST_SELECTED,
             PROCESSING_SERVICE_LINKS,
             HOST_ALLOCATED,
@@ -126,7 +131,7 @@ public class ContainerAllocationTaskService extends
                     Arrays.asList(PROVISIONING));
 
             static final Set<SubStage> SUBSCRIPTION_SUB_STAGES = new HashSet<>(
-                    Arrays.asList(CONTEXT_PREPARED, RESOURCES_NAMED));
+                    Arrays.asList(BUILD_RESOURCES_LINKS));
 
         }
 
@@ -143,8 +148,8 @@ public class ContainerAllocationTaskService extends
         public String groupResourcePlacementLink;
 
         /** (Required) Number of resources to provision. */
-        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, AUTO_MERGE_IF_NOT_NULL },
-                indexing = STORE_ONLY)
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT,
+                AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Long resourceCount;
 
         /** Set by a Task with the links of the provisioned resources. */
@@ -204,20 +209,20 @@ public class ContainerAllocationTaskService extends
             }
             break;
         case RESOURCES_NAMED:
-            proceedTo(SubStage.RESOURCES_LINKS_BUILT, s -> {
-                if (!state.postAllocation) {
-                    s.resourceLinks = buildResourceLinks(state);
-                }
-            });
-            break;
-        case RESOURCES_LINKS_BUILT:
             if (state.hostSelections == null || state.hostSelections.isEmpty()) {
                 selectPlacementComputeHost(state, null);
             } else {
                 // in specific cases when the host is pre-selected
                 // (ex: installing agents directly to a host, this step is not needed)
-                proceedTo(SubStage.PLACEMENT_HOST_SELECTED);
+                proceedTo(SubStage.BUILD_RESOURCES_LINKS);
             }
+            break;
+        case BUILD_RESOURCES_LINKS:
+            proceedTo(SubStage.PLACEMENT_HOST_SELECTED, s -> {
+                if (!state.postAllocation) {
+                    s.resourceLinks = buildResourceLinks(state);
+                }
+            });
             break;
         case PLACEMENT_HOST_SELECTED:
             proceedAfterHostSelection(state);
@@ -458,7 +463,7 @@ public class ContainerAllocationTaskService extends
         placementTask.customProperties = state.customProperties;
         placementTask.contextId = getContextId(state);
         placementTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
-                TaskStage.STARTED, SubStage.PLACEMENT_HOST_SELECTED,
+                TaskStage.STARTED, SubStage.BUILD_RESOURCES_LINKS,
                 TaskStage.STARTED, SubStage.ERROR);
         placementTask.requestTrackerLink = state.requestTrackerLink;
 
@@ -800,12 +805,10 @@ public class ContainerAllocationTaskService extends
 
         // if it is composition allocation request, move to COMPLETED SubStage when complete
         // if it is Admiral provisioning request, move to START_PROVISIONING SubStage when complete
-        SubStage completionStage = allocationRequest ?
-                SubStage.COMPLETED :
-                SubStage.START_PROVISIONING;
+        SubStage completionStage = allocationRequest ? SubStage.COMPLETED
+                : SubStage.START_PROVISIONING;
 
-        ContainerPortsAllocationTaskService.ContainerPortsAllocationTaskState portsAllocationTask =
-                new ContainerPortsAllocationTaskService.ContainerPortsAllocationTaskState();
+        ContainerPortsAllocationTaskService.ContainerPortsAllocationTaskState portsAllocationTask = new ContainerPortsAllocationTaskService.ContainerPortsAllocationTaskState();
         portsAllocationTask.containerStateLinks = state.resourceLinks;
         portsAllocationTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.STARTED, completionStage,
@@ -999,10 +1002,12 @@ public class ContainerAllocationTaskService extends
      * Takes volumes from ContainerDescription in format [/host-directory:/container-directory] or
      * [namedVolume:/container-directory] and puts the suffix for host part of the volume name.
      *
-     * @param cd            - ContainerDescription
-     * @param hostSelection - HostSelection for resource.
+     * @param cd
+     *            - ContainerDescription
+     * @param hostSelection
+     *            - HostSelection for resource.
      * @return new volume name equals to old one, but with suffix for host directory like:
-     * [namedVolume-mcm376:/container-directory]
+     *         [namedVolume-mcm376:/container-directory]
      */
     private static String[] mapVolumes(ContainerDescription cd, HostSelection hostSelection) {
 
@@ -1062,14 +1067,77 @@ public class ContainerAllocationTaskService extends
     protected static class ExtensibilityCallbackResponse extends ServiceTaskCallbackResponse {
         public Set<String> resourceNames;
         public Map<String, String> containerDescProperties;
+        public Map<String, String> resourceToHostSelection;
     }
 
     @Override
     protected void enhanceNotificationPayload(ContainerAllocationTaskState state,
             ServiceTaskCallbackResponse notificationPayload, Runnable callback) {
-        getContainerDescription(state, (contDesc) -> {
-            ((ExtensibilityCallbackResponse) notificationPayload).containerDescProperties = contDesc.customProperties;
+        if (state.taskSubStage == SubStage.BUILD_RESOURCES_LINKS) {
+            getContainerDescription(state, (contDesc) -> {
+                ((ExtensibilityCallbackResponse) notificationPayload).containerDescProperties =
+                        contDesc.customProperties;
+                //Finished with ContainerDescription customProperties. Now get host selections.
+                retrieveHostsAddresses(state, notificationPayload, callback);
+            });
+        } else {
             callback.run();
-        });
+        }
+    }
+
+    private void retrieveHostsAddresses(ContainerAllocationTaskState state,
+            ServiceTaskCallbackResponse notificationPayload, Runnable callback) {
+
+        if (state.hostSelections != null && !state.hostSelections.isEmpty()) {
+
+            Map<String, String> hostSelfLinkToAddress = new HashMap<>();
+
+            QueryTask.Query.Builder queryBuilder = QueryTask.Query.Builder.create()
+                    .addKindFieldClause(ComputeState.class)
+                    .addInClause(ComputeState.FIELD_NAME_SELF_LINK, state.hostSelections
+                            .stream().map(h -> h.hostLink).collect(Collectors.toList()));
+
+            QueryTask q = QueryTask.Builder.create().setQuery(queryBuilder.build()).build();
+            q.querySpec.resultLimit = ServiceDocumentQuery.DEFAULT_QUERY_RESULT_LIMIT;
+            QueryUtil.addExpandOption(q);
+
+            new ServiceDocumentQuery<>(getHost(), ComputeState.class).query(q, (r) -> {
+                if (r.hasException()) {
+                    String errorMsg = String.format("Exception while quering containers during "
+                                    + "payload enhancement. Error: [%s]",
+                            r.getException().getMessage());
+
+                    getHost().log(Level.SEVERE,
+                            errorMsg);
+                    failTask(errorMsg, new Throwable());
+                    return;
+                } else if (r.hasResult()) {
+                    hostSelfLinkToAddress.put(r.getDocumentSelfLink(), r.getResult().address);
+                } else {
+                    if (hostSelfLinkToAddress.isEmpty()) {
+                        callback.run();
+                        return;
+                    }
+                    //Populate resource to host address map and invoke callback.
+                    setResourceToHostSelection(state, notificationPayload, callback,
+                            hostSelfLinkToAddress);
+                }
+            });
+        }
+    }
+
+    private void setResourceToHostSelection(ContainerAllocationTaskState state,
+            ServiceTaskCallbackResponse notificationPayload, Runnable callback,
+            Map<String, String> hostSelfLinkToAddress) {
+
+        ((ExtensibilityCallbackResponse) notificationPayload).resourceToHostSelection =
+                selectHostPerResourceName(state.resourceNames, state.hostSelections)
+                        .entrySet
+                                ().stream()
+                        .collect(Collectors.toMap(Map.Entry::getKey, entry
+                                -> hostSelfLinkToAddress.get(entry
+                                .getValue().hostLink)));
+
+        callback.run();
     }
 }

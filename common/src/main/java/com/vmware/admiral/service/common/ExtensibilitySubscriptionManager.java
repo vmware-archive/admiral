@@ -83,7 +83,7 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
     <T extends TaskServiceDocument<?>> void handleStagePatch(
             ServiceTaskCallbackResponse notificationPayload,
             ServiceTaskCallbackResponse replyPayload, T state,
-            Consumer<T> callback) {
+            Consumer<T> callback, Runnable notificationCallback ) {
 
         ExtensibilitySubscription extensibilitySubscription = getExtensibilitySubscription(state);
 
@@ -92,6 +92,13 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
             callback.accept(state);
             return;
         }
+
+        notificationCallback.run();
+    }
+
+    <T extends TaskServiceDocument<?>> void sendNotification(ExtensibilitySubscription
+            extensibilitySubscription, ServiceTaskCallbackResponse notificationPayload,
+            ServiceTaskCallbackResponse replyPayload, T state, Consumer<T> callback) {
 
         if (extensibilitySubscription.blocking) {
             // blocking notification
@@ -104,7 +111,6 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
             // continue task execution with original state
             callback.accept(state);
         }
-
     }
 
     /**
@@ -425,8 +431,7 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
                 state.taskInfo.stage.name(), state.taskSubStage.name());
     }
 
-    private ExtensibilitySubscription getExtensibilitySubscription(TaskServiceDocument<?> task) {
+    protected ExtensibilitySubscription getExtensibilitySubscription(TaskServiceDocument<?> task) {
         return subscriptions.get(constructKey(task));
     }
-
 }
