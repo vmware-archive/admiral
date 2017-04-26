@@ -33,19 +33,29 @@
                 :active="sortKey === 'name'"
                 :sort-order="sortOrders.name"
                 @click="sortBy('name')"
-                style="width: 40%">{{i18n('app.subnetwork.list.nameColumn')}}</th>
+                style="width: 20%">{{i18n('app.subnetwork.list.nameColumn')}}</th>
             <th is="thsort"
-                :active="sortKey === 'name'"
-                :sort-order="sortOrders.name"
-                @click="sortBy('cidr')"
-                style="width: 45%">{{i18n('app.subnetwork.list.cidrColumn')}}</th>
+                :active="sortKey === 'subnetCIDR'"
+                :sort-order="sortOrders.subnetCIDR"
+                @click="sortBy('subnetCIDR')"
+                style="width: 20%">{{i18n('app.subnetwork.list.cidrColumn')}}</th>
+            <th is="thsort"
+                :active="sortKey === 'networkName'"
+                :sort-order="sortOrders.networkName"
+                @click="sortBy('networkName')"
+                style="width: 20%">{{i18n('app.subnetwork.list.networkColumn')}}</th>
+            <th is="thsort"
+                :active="sortKey === 'supportPublicIpAddress'"
+                :sort-order="sortOrders.supportPublicIpAddress"
+                @click="sortBy('supportPublicIpAddress')"
+                style="width: 30%">{{i18n('app.subnetwork.list.supportPublicIpAddressColumn')}}</th>
             <!-- Actions column -->
-            <th style="width: 15%"></th>
+            <th style="width: 10%"></th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="isEditingNewItem()">
-            <td colspan="3" class="inline-edit-holder">
+            <td colspan="5" class="inline-edit-holder">
               <subnetwork-editor
                 :endpoint-link="model.endpointLink"
                 :model="model.editingItemData">
@@ -54,7 +64,7 @@
           </tr>
           <tr class="item" v-for="item in model.items | orderBy sortKey sortOrders[sortKey]" track-by="documentSelfLink">
             <template v-if="isHighlightedItem(item)">
-             <td colspan="3" class="highlight-item" :class="{'highlight-item-fail': model.validationErrors}">
+             <td colspan="5" class="highlight-item" :class="{'highlight-item-fail': model.validationErrors}">
                 <div>
                   <div class="help-text"><i class="fa fa-check"></i>
                     <span v-if="model.validationErrors">{{model.validationErrors._generic}}</span>
@@ -66,15 +76,19 @@
                   <table class="table">
                     <thead>
                       <tr>
-                        <th style="width: 40%"></th>
-                        <th style="width: 45%"></th>
+                        <th style="width: 20%"></th>
+                        <th style="width: 20%"></th>
+                        <th style="width: 30%"></th>
+                        <th style="width: 20%"></th>
                         <!-- Actions column -->
-                        <th style="width: 15%"></th>
+                        <th style="width: 10%"></th>
                       </tr>
                     </thead>
                     <tbody>
                       <td class="truncateText primary-cell" :title="item.name">{{item.name}}</td>
                       <td class="truncateText primary-cell" :title="item.subnetCIDR">{{item.subnetCIDR}}</td>
+                      <td class="truncateText primary-cell" :title="item.networkName">{{item.networkName}}</td>
+                      <td class="truncateText primary-cell" :title="item.supportPublicIpAddress">{{item.supportPublicIpAddress}}</td>
                       <!-- Actions column -->
                       <td></td>
                     </tbody>
@@ -83,7 +97,7 @@
               </td>
             </template>
             <template v-if="isEditingItem(item)">
-              <td colspan="3" class="inline-edit-holder">
+              <td colspan="5" class="inline-edit-holder">
                 <subnetwork-editor
                     :endpoint-link="model.endpointLink"
                     :model="model.editingItemData">
@@ -93,6 +107,8 @@
             <template v-if="!isEditingOrHighlightedItem(item)">
               <td class="truncateText primary-cell" :title="item.name">{{item.name}}</td>
               <td class="truncateText primary-cell" :title="item.subnetCIDR">{{item.subnetCIDR}}</td>
+              <td class="truncateText primary-cell" :title="item.networkName">{{item.networkName}}</td>
+              <td class="truncateText primary-cell" :title="item.supportPublicIpAddress">{{i18n(item.supportPublicIpAddress ? 'yes' : 'no')}}</td>
               <!-- Actions column -->
               <td class="table-actions">
                 <div :class="{hide: isDeleting(item)}">

@@ -532,6 +532,7 @@
         "cidrLabel": "CIDR",
         "cidrLabelHint": "0.0.0.0/0",
         "cidrPrefixLabel": "Subnets Prefix Length",
+        "networkLabel": "Network",
         "resourceGroupsLabel": "Resource groups",
         "supportPublicIpAddressLabel": "Support Public IP",
         "defaultForZoneLabel": "Default for Zone",
@@ -675,7 +676,9 @@
         "title": "Subnetworks",
         "addButton": "Add",
         "nameColumn": "Name",
-        "cidrColumn": "CIDR"
+        "cidrColumn": "CIDR",
+        "supportPublicIpAddressColumn": "Support Public IP",
+        "networkColumn": "Network"
       },
       "edit": {
         "addNew": "Add Subnetwork",
@@ -1213,6 +1216,7 @@
       "valueHint": "Example: slow"
     },
     "yes": "Yes",
+    "no": "No",
     "ok": "Ok",
     "cancel": "Cancel",
     "error": "Error",

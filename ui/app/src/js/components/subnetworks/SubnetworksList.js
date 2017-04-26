@@ -24,7 +24,9 @@ export default Vue.component('subnetworks-list', {
   data() {
     let sortOrders = {
       name: 1,
-      cidr: 1
+      subnetCIDR: 1,
+      supportPublicIpAddress: 1,
+      networkName: 1
     };
     return {
       deleteConfirmationItem: null,
@@ -105,9 +107,8 @@ export default Vue.component('subnetworks-list', {
       }
       let order = reverse && reverse < 0 ? -1 : 1;
       return items.asMutable().sort((a, b) => {
-        a = a[sortKey];
-        b = b[sortKey];
-
+        a = a[sortKey] + '';
+        b = b[sortKey] + '';
         if (!a) {
           a = '';
         }
