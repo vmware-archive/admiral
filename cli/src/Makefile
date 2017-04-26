@@ -7,52 +7,35 @@
 # and license terms. Your use of these subcomponents is subject to the terms and
 # conditions of the subcomponent's license, as noted in the LICENSE file.
 
-BINARY=admiral
-BINARY_WIN=admiral.exe
-BUILD_PACKAGE=admiral
-VERSION=$(shell perl -lne 'print "$$&" if /(?<=<version>).*?(?=<\/version>)/' ../../pom.xml | head -1)
-LDFLAGS=-ldflags "-X admiral/cmd.version=${VERSION}"
+BUILD_PACKAGE	:=admiral
+VERSION 		:=$(shell perl -lne 'print "$$&" if /(?<=<version>).*?(?=<\/version>)/' ../../pom.xml | head -1)
+LDFLAGS         :=-ldflags "-X admiral/cmd.version=$(VERSION)"
+GOPATH			:=$(CURDIR)/..
 
-LINUX_BUILD_AMD64=env GOPATH=$(CURDIR)/.. GOOS=linux GOARCH=amd64 go build ${LDFLAGS} -o ../bin/linux-amd64/${BINARY} ${BUILD_PACKAGE}
-LINUX_BUILD_i386=env GOPATH=$(CURDIR)/.. GOOS=linux GOARCH=386 go build ${LDFLAGS} -o ../bin/linux-i386/${BINARY} ${BUILD_PACKAGE}
-DARWIN_BUILD_AMD64=env GOPATH=$(CURDIR)/.. GOOS=darwin GOARCH=amd64 go build ${LDFLAGS} -o ../bin/darwin-amd64/${BINARY} ${BUILD_PACKAGE}
-DARWIN_BUILD_i386=env GOPATH=$(CURDIR)/.. GOOS=darwin GOARCH=386 go build ${LDFLAGS} -o ../bin/darwin-i386/${BINARY} ${BUILD_PACKAGE}
-WINDOWS_BUILD_AMD64=env GOPATH=$(CURDIR)/.. GOOS=windows GOARCH=amd64 go build ${LDFLAGS} -o ../bin/windows-amd64/${BINARY_WIN} ${BUILD_PACKAGE}
-WINDOWS_BUILD_i386=env GOPATH=$(CURDIR)/.. GOOS=windows GOARCH=386 go build ${LDFLAGS} -o ../bin/windows-i386/${BINARY_WIN} ${BUILD_PACKAGE}
 
-TEST_INTEGRATION=env GOPATH=$(CURDIR)/.. go test -v -p=1 -tags=integration admiral/...
-TEST_E2E=env GOPATH=$(CURDIR)/.. go test -v -p=1 -tags=e2e admiral/...
+all: linux darwin windows
 
-all:
-	make clean
-	make linux
-	make darwin
-	make windows
+prepare:
+	GOPATH=$(GOPATH) go env
 
-linux:
-	./prepare.sh
-	#linux-amd64 build
-	${LINUX_BUILD_AMD64}
-	#linux-i386 build
-	${LINUX_BUILD_i386}
+deps: prepare
+	git submodule init && git submodule update
 
-darwin:
-	./prepare.sh
-	#darwin-amd64 build
-	${DARWIN_BUILD_AMD64}
-	#darwin-i386 build
-	${DARWIN_BUILD_i386}
+linux: deps
+	GOPATH=$(GOPATH) GOOS=linux GOARCH=amd64   go install $(LDFLAGS) $(BUILD_PACKAGE)
+	GOPATH=$(GOPATH) GOOS=linux GOARCH=386     go install $(LDFLAGS) $(BUILD_PACKAGE)
 
-windows:
-	./prepare.sh
-	#windows-amd64 build
-	${WINDOWS_BUILD_AMD64}
-	#windows-i386 build
-	${WINDOWS_BUILD_i386}
+darwin: deps
+	GOPATH=$(GOPATH) GOOS=darwin GOARCH=amd64  go install $(LDFLAGS) $(BUILD_PACKAGE)
+	GOPATH=$(GOPATH) GOOS=darwin GOARCH=386    go install $(LDFLAGS) $(BUILD_PACKAGE)
 
-test:
-	${TEST_INTEGRATION}
-	${TEST_E2E}
-    
+windows: deps
+	GOPATH=$(GOPATH) GOOS=windows GOARCH=amd64 go install $(LDFLAGS) $(BUILD_PACKAGE)
+	GOPATH=$(GOPATH) GOOS=windows GOARCH=386   go install $(LDFLAGS) $(BUILD_PACKAGE)
+
+test: deps
+	GOPATH=$(GOPATH) go test -v -p=1 -tags=integration admiral/...
+	GOPATH=$(GOPATH) go test -v -p=1 -tags=e2e admiral/...
+
 clean:
-	$(shell rm -rf ../bin)
+	rm -rf ../bin ../pkg
