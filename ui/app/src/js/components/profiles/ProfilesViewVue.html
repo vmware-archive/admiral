@@ -15,9 +15,19 @@
       <div class="list-view profiles-list scroll-view" v-if="model.listView">
         <a class="close-button hide" @click="goBack($event)"><i
           class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
+        <list-title v-on:refresh-list="refresh()"
+                      v-bind:has-search-query="isShowingSearchResults" v-bind:count="itemsCount"
+                      v-bind:title="i18n('app.profile.list.title')"
+                      v-bind:title-search="i18n('app.profile.list.titleSearch')"></list-title>
 
         <div class="toolbar">
-          <search v-bind:suggestion-properties="searchSuggestions"
+          <div class="row">
+            <div class="col-sm-6 toolbar-primary">
+               <a class="btn btn-link createProfile-btn" v-on:click="addProfile"><i
+           class="fa fa-plus"></i>{{i18n("app.profile.list.addButton")}}</a>
+            </div>
+            <div class="col-sm-6 toolbar-secondary">
+              <search v-bind:suggestion-properties="searchSuggestions"
                   v-bind:placeholder="i18n('app.profile.list.searchPlaceholder')"
                   v-bind:query-options="model.listView.queryOptions"
                   v-bind:occurrence-properties="
@@ -29,16 +39,12 @@
                         label: i18n('occurrence.any')
                       }]"
                   v-on:search-change="search">
-         </search>
-         <a class="btn btn-primary createProfile-btn" v-on:click="addProfile"><i
-           class="fa fa-plus-circle"></i>{{i18n("app.profile.list.addButton")}}</a>
+              </search>
+            </div>
+          </div>
         </div>
 
         <div class="grid-container">
-          <list-title v-on:refresh-list="refresh()"
-                      v-bind:has-search-query="isShowingSearchResults" v-bind:count="itemsCount"
-                      v-bind:title="i18n('app.profile.list.title')"
-                      v-bind:title-search="i18n('app.profile.list.titleSearch')"></list-title>
           <div class="content">
             <grid v-bind:context-selected="model.selectedItem"
                   v-bind:preferred-width="preferredGridWidth"

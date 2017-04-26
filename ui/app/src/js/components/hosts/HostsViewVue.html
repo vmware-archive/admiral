@@ -18,40 +18,45 @@
            v-bind:show-alert="alertMessage"
            v-bind:alert-message="alertMessage"></alert>
     <div class="list-view scroll-view" v-if="model.listView">
-
+      <list-title v-on:refresh-list="refresh()"
+                    v-bind:has-search-query="isShowingSearchResults" v-bind:count="itemsCount"
+                    v-bind:title="i18n('app.host.list.title')"
+                    v-bind:title-search="i18n('app.host.list.titleSearch')">
+          <refresh-button v-on:click="triggerDataCollection($event)"
+                          v-bind:supported="operationSupported('DATACOLLECT')"
+                          v-bind:icon-name="'gears'"
+                          v-bind:tooltip="i18n('app.host.list.dataCollect')"
+                          v-bind:time="15000"
+                          v-bind:stop-spin="model.dataCollectionEnd"></refresh-button>
+      </list-title>
       <a class="close-button hide" v-on:click="goBack($event)"><i
         class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
 
       <div class="toolbar">
-        <search v-bind:suggestion-properties="searchSuggestions"
-                v-bind:placeholder="i18n('app.host.list.searchPlaceholder')"
-                v-bind:query-options="model.listView.queryOptions"
-                v-bind:occurrence-properties="
-                    [{
-                      name: constants.SEARCH_OCCURRENCE.ALL,
-                      label: i18n('occurrence.all')
-                    }, {
-                      name: constants.SEARCH_OCCURRENCE.ANY,
-                      label: i18n('occurrence.any')
-                    }]"
-                v-on:search-change="search">
-          </search>
-        <a class="btn btn-primary addHost-btn" v-on:click="addHost()"><i
-          class="fa fa-plus-circle"></i>{{i18n("app.homepage.addHost")}}</a>
+        <div class="row">
+          <div class="col-sm-6 toolbar-primary">
+            <a class="btn btn-link addHost-btn" v-on:click="addHost()"><i
+          class="fa fa-plus"></i>{{i18n("app.host.list.create")}}</a>
+          </div>
+          <div class="col-sm-6 toolbar-secondary">
+            <search v-bind:suggestion-properties="searchSuggestions"
+                  v-bind:placeholder="i18n('app.host.list.searchPlaceholder')"
+                  v-bind:query-options="model.listView.queryOptions"
+                  v-bind:occurrence-properties="
+                      [{
+                        name: constants.SEARCH_OCCURRENCE.ALL,
+                        label: i18n('occurrence.all')
+                      }, {
+                        name: constants.SEARCH_OCCURRENCE.ANY,
+                        label: i18n('occurrence.any')
+                      }]"
+                  v-on:search-change="search">
+            </search>
+          </div>
+        </div>
       </div>
 
       <div class="grid-container">
-        <list-title v-on:refresh-list="refresh()"
-                    v-bind:has-search-query="isShowingSearchResults" v-bind:count="itemsCount"
-                    v-bind:title="i18n('app.host.list.title')"
-                    v-bind:title-search="i18n('app.host.list.titleSearch')">
-            <refresh-button v-on:click="triggerDataCollection($event)"
-                            v-bind:supported="operationSupported('DATACOLLECT')"
-                            v-bind:icon-name="'gears'"
-                            v-bind:tooltip="i18n('app.host.list.dataCollect')"
-                            v-bind:time="15000"
-                            v-bind:stop-spin="model.dataCollectionEnd"></refresh-button>
-          </list-title>
         <div class="content">
           <grid v-bind:preferred-width="preferredGridWidth"
                 v-bind:count="itemsCount"

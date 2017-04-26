@@ -15,82 +15,87 @@
       <div class="list-view containers-list scroll-view" v-if="model.listView">
         <a class="close-button" @click="goBack($event)"><i
                 class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
+        <list-title v-on:refresh-list="refresh()"
+                    v-bind:has-search-query="isShowingSearchResults" v-bind:count="itemsCount"
+                    v-bind:title="i18n('app.container.list.title')"
+                    v-bind:title-search="titleSearch">
+          <title-action-button v-bind:name="'multiSelect'" v-bind:icon-name="'hand-pointer-o'"
+                               v-bind:confirmable="false" v-bind:button-type="'TOGGLE'"
+                               v-bind:tooltip="i18n('app.resources.selectMultiple')"
+                               v-bind:show="multiSelectionSupported()"
+                               v-bind:toggle-off="!selectionMode"
+                                ></title-action-button>
+          <timeout-alert v-bind:show="selectionMode"
+                         v-bind:text="i18n('app.resources.message.selectShift')"></timeout-alert>
+          <div class="title-second-day-operations hide" transition="fade-in">
+            <title-action-button v-if="multiSelectionOperationSupported('STOP')"
+                                 v-bind:name="'multiStop'" v-bind:icon-name="'stop'"
+                                 v-bind:confirmable="false" v-bind:button-type="'SPIN_TIMEOUT'"
+                                 v-bind:tooltip="i18n('app.container.actions.stop')"
+                                 v-bind:show="selectionMode"></title-action-button>
+            <title-action-button v-if="multiSelectionOperationSupported('START')"
+                                 v-bind:name="'multiStart'" v-bind:icon-name="'play'"
+                                 v-bind:confirmable="false" v-bind:button-type="'SPIN_TIMEOUT'"
+                                 v-bind:tooltip="i18n('app.container.actions.start')"
+                                 v-bind:show="selectionMode"></title-action-button>
+            <title-action-button v-if="multiSelectionOperationSupported('REMOVE')"
+                                 v-bind:name="'multiRemove'" v-bind:icon-name="'trash'"
+                                 v-bind:confirmable="true" v-bind:button-type="'SPIN_TIMEOUT'"
+                                 v-bind:tooltip="i18n('delete')"
+                                 v-bind:show="selectionMode"></title-action-button>
+          </div>
+        </list-title>
         <div class="toolbar">
-          <search v-bind:suggestion-properties-by-category="searchSuggestionsByCategoryMap"
-                  v-bind:placeholder-by-category="placeholderByCategoryMap"
-                  v-bind:query-options="model.listView.queryOptions"
-                  v-bind:occurrence-properties="
-                    [{
-                      name: constants.SEARCH_OCCURRENCE.ALL,
-                      label: i18n('occurrence.all')
-                    }, {
-                      name: constants.SEARCH_OCCURRENCE.ANY,
-                      label: i18n('occurrence.any')
-                    }]"
-                  v-on:search-change="search"
-                  ></search>
-          <a href="#/projects/new" class="btn btn-primary create-resource-btn"
-             v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.PROJECTS">
-            <i class="fa fa-plus-circle"></i>{{i18n("app.resource.list.project.create")}}
-          </a>
-          <a href="#/containers/new" class="btn btn-primary create-resource-btn"
-             v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS">
-            <i class="fa fa-plus-circle"></i>{{i18n("app.resource.list.container.create")}}
-          </a>
-          <a href="#/applications/new" class="btn btn-primary create-resource-btn"
-             v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS">
-            <i class="fa fa-plus-circle"></i>{{i18n("app.resource.list.application.create")}}
-          </a>
-          <a href="#/networks/new" class="btn btn-primary create-resource-btn"
-             v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS">
-            <i class="fa fa-plus-circle"></i>{{i18n("app.resource.list.network.create")}}
-          </a>
-          <a href="#/volumes/new" class="btn btn-primary create-resource-btn"
-             v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.VOLUMES">
-            <i class="fa fa-plus-circle"></i>{{i18n("app.resource.list.volume.create")}}
-          </a>
-          <a href="#/closures/new" class="btn btn-primary create-resource-btn"
-             v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CLOSURES && areClosuresAllowed">
-            <i class="fa fa-plus-circle"></i>{{i18n("app.resource.list.closure.create")}}
-          </a>
-          <a href="#/kubernetes/new" class="btn btn-primary create-resource-btn"
-             v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.KUBERNETES">
-            <i class="fa fa-plus-circle"></i>{{i18n("app.resource.list.kubernetes.create")}}
-          </a>
+          <div class="row">
+            <div class="col-sm-6 toolbar-primary">
+              <a href="#/projects/new" class="btn btn-link create-resource-btn"
+                 v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.PROJECTS">
+                <i class="fa fa-plus"></i>{{i18n("app.resource.list.project.create")}}
+              </a>
+              <a href="#/containers/new" class="btn btn-link create-resource-btn"
+                 v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CONTAINERS">
+                <i class="fa fa-plus"></i>{{i18n("app.resource.list.container.create")}}
+              </a>
+              <a href="#/applications/new" class="btn btn-link create-resource-btn"
+                 v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.APPLICATIONS">
+                <i class="fa fa-plus"></i>{{i18n("app.resource.list.application.create")}}
+              </a>
+              <a href="#/networks/new" class="btn btn-link create-resource-btn"
+                 v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.NETWORKS">
+                <i class="fa fa-plus"></i>{{i18n("app.resource.list.network.create")}}
+              </a>
+              <a href="#/volumes/new" class="btn btn-link create-resource-btn"
+                 v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.VOLUMES">
+                <i class="fa fa-plus"></i>{{i18n("app.resource.list.volume.create")}}
+              </a>
+              <a href="#/closures/new" class="btn btn-link create-resource-btn"
+                 v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.CLOSURES && areClosuresAllowed">
+                <i class="fa fa-plus"></i>{{i18n("app.resource.list.closure.create")}}
+              </a>
+              <a href="#/kubernetes/new" class="btn btn-link create-resource-btn"
+                 v-if="selectedCategory === constants.RESOURCES.SEARCH_CATEGORY.KUBERNETES">
+                <i class="fa fa-plus"></i>{{i18n("app.resource.list.kubernetes.create")}}
+              </a>
+            </div>
+            <div class="col-sm-6 toolbar-secondary">
+              <search v-bind:suggestion-properties-by-category="searchSuggestionsByCategoryMap"
+                      v-bind:placeholder-by-category="placeholderByCategoryMap"
+                      v-bind:query-options="model.listView.queryOptions"
+                      v-bind:occurrence-properties="
+                        [{
+                          name: constants.SEARCH_OCCURRENCE.ALL,
+                          label: i18n('occurrence.all')
+                        }, {
+                          name: constants.SEARCH_OCCURRENCE.ANY,
+                          label: i18n('occurrence.any')
+                        }]"
+                      v-on:search-change="search"
+                      ></search>
+            </div>
+          </div>
         </div>
 
         <div class="grid-container">
-          <list-title v-on:refresh-list="refresh()"
-                      v-bind:has-search-query="isShowingSearchResults" v-bind:count="itemsCount"
-                      v-bind:title="i18n('app.container.list.title')"
-                      v-bind:title-search="titleSearch">
-            <title-action-button v-bind:name="'multiSelect'" v-bind:icon-name="'hand-pointer-o'"
-                                 v-bind:confirmable="false" v-bind:button-type="'TOGGLE'"
-                                 v-bind:tooltip="i18n('app.resources.selectMultiple')"
-                                 v-bind:show="multiSelectionSupported()"
-                                 v-bind:toggle-off="!selectionMode"
-                                  ></title-action-button>
-            <timeout-alert v-bind:show="selectionMode"
-                           v-bind:text="i18n('app.resources.message.selectShift')"></timeout-alert>
-            <div class="title-second-day-operations hide" transition="fade-in">
-              <title-action-button v-if="multiSelectionOperationSupported('STOP')"
-                                   v-bind:name="'multiStop'" v-bind:icon-name="'stop'"
-                                   v-bind:confirmable="false" v-bind:button-type="'SPIN_TIMEOUT'"
-                                   v-bind:tooltip="i18n('app.container.actions.stop')"
-                                   v-bind:show="selectionMode"></title-action-button>
-              <title-action-button v-if="multiSelectionOperationSupported('START')"
-                                   v-bind:name="'multiStart'" v-bind:icon-name="'play'"
-                                   v-bind:confirmable="false" v-bind:button-type="'SPIN_TIMEOUT'"
-                                   v-bind:tooltip="i18n('app.container.actions.start')"
-                                   v-bind:show="selectionMode"></title-action-button>
-              <title-action-button v-if="multiSelectionOperationSupported('REMOVE')"
-                                   v-bind:name="'multiRemove'" v-bind:icon-name="'trash'"
-                                   v-bind:confirmable="true" v-bind:button-type="'SPIN_TIMEOUT'"
-                                   v-bind:tooltip="i18n('delete')"
-                                   v-bind:show="selectionMode"></title-action-button>
-            </div>
-          </list-title>
-
           <div class="content">
             <grid v-bind:context-selected="model.selectedItem"
                   v-bind:preferred-width="preferredGridWidth"
