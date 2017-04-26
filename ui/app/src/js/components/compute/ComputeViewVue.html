@@ -15,28 +15,34 @@
       <div class="list-view compute-list scroll-view" v-if="model.listView">
         <a class="close-button hide" v-on:click="goBack($event)"><i
           class="fa fa-chevron-circle-left"></i><span class="backtext">{{i18n("back")}}</span></a>
-
-        <div class="toolbar">
-          <search v-bind:suggestion-properties="searchSuggestions"
-                  v-bind:placeholder="i18n('app.compute.list.searchPlaceholder')"
-                  v-bind:query-options="model.listView.queryOptions"
-                  v-bind:occurrence-properties="
-                      [{
-                        name: constants.SEARCH_OCCURRENCE.ALL,
-                        label: i18n('occurrence.all')
-                      }, {
-                        name: constants.SEARCH_OCCURRENCE.ANY,
-                        label: i18n('occurrence.any')
-                      }]"
-                  v-on:search-change="search">
-          </search>
-        </div>
-
-        <div class="grid-container">
-          <list-title v-on:refresh-list="refresh()"
+        <list-title v-on:refresh-list="refresh()"
                       v-bind:has-search-query="isShowingSearchResults" v-bind:count="itemsCount"
                       v-bind:title="i18n('app.compute.list.title')"
                       v-bind:title-search="i18n('app.compute.list.titleSearch')"></list-title>
+
+        <div class="toolbar">
+          <div class="row">
+            <div class="col-sm-6 toolbar-primary">
+            </div>
+            <div class="col-sm-6 toolbar-secondary"> 
+              <search v-bind:suggestion-properties="searchSuggestions"
+                      v-bind:placeholder="i18n('app.compute.list.searchPlaceholder')"
+                      v-bind:query-options="model.listView.queryOptions"
+                      v-bind:occurrence-properties="
+                          [{
+                            name: constants.SEARCH_OCCURRENCE.ALL,
+                            label: i18n('occurrence.all')
+                          }, {
+                            name: constants.SEARCH_OCCURRENCE.ANY,
+                            label: i18n('occurrence.any')
+                          }]"
+                      v-on:search-change="search">
+              </search>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-container">
           <div class="content">
             <grid v-bind:context-selected="model.selectedItem"
                   v-bind:preferred-width="preferredGridWidth"

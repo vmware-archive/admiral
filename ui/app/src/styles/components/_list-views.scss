@@ -5,40 +5,9 @@
   margin-right: 45px;
 }
 
-.list-view .toolbar .query-search-input {
-  margin-right: 310px;
-}
-
-.compute-view .list-view .toolbar .query-search-input {
-  margin-right: 0;
-}
-
-.list-view .toolbar > .btn-primary,
-.list-view .toolbar > .btn-outline,
-.list-view .title > .btn-primary,
-.list-view .title > .btn-outline {
-  position: absolute;
-  top: 0;
-  right: 0;
-  margin: 0;
-  padding: 0 20px;
-  font-size: 17px;
-  letter-spacing: 0.02em;
-  line-height: 36px;
-  height: 36px;
-  width: 280px;
-  text-align: center;
-}
-
-.list-view .toolbar > .btn .fa {
-  margin-right: 10px;
-  font-size: 21px;
-  transform: translate(0, 1px);
-}
-
 .list-view .grid-container {
   position: absolute;
-  top: 65px;
+  top: 90px;
   bottom: 0;
   left: 0;
   right: 0;
@@ -62,15 +31,10 @@
   overflow: hidden;
   overflow-y: auto;
   height: 100%;
-  margin-bottom: -60px;
-  border-bottom: 60px solid transparent;
 }
 
 .scroll-view .grid-container .content + .loading,  {
   height: 100%;
-  margin-bottom: -60px;
-  padding-bottom: 60px;
-  top: 60px;
 }
 
 // Leave some space for the error banner
@@ -83,20 +47,16 @@
   top: 120px;
 }
 
-.list-view .grid-container > .title, .list-view .grid-container > .title-search,  {
+.list-view > .title, .list-view > .title-search,  {
   @include view-title();
 }
 
-.list-view .grid-container .total-items {
+.list-view .total-items {
   font-size: 16px;
   margin-left: 4px;
 }
 
-.list-view .grid-container .category-filter {
-  position: absolute;
-  right: 50px;
-  top: 15px;
-
+.list-view .category-filter {
   .title {
     color: $secondary_inactive_button_color;
   }
@@ -325,11 +285,8 @@
 /* Images */
 
 .images-view {
-  .list-view .toolbar {
-    margin-right: 62px;
-  }
-  .list-view .grid-container .category-filter {
-    right: 42px;
+  .list-view .grid-container{
+    top: 120px;
   }
   .list-view .image-item {
     margin: 20px;
@@ -1105,7 +1062,7 @@ $elements-side-margin: $elements-margin / 2;
     z-index: 1;
     > .title {
       @include view-title();
-      margin: 30px 0 20px 45px;
+      margin: 20px 0 20px 20px;
       z-index: 1;
       position: absolute;
       > .total-items {
@@ -1117,7 +1074,6 @@ $elements-side-margin: $elements-margin / 2;
       display: none;
     }
     > .list-holder {
-      margin: 10px 0 35px 25px;
       overflow: hidden !important;
       .toolbar {
         margin: 0 50px 25px 0;
@@ -1132,7 +1088,7 @@ $elements-side-margin: $elements-margin / 2;
       .inline-editable-list-table {
         overflow: auto;
         position: absolute;
-        top: 50px;
+        top: 80px;
         left: 0;
         right: 0px;
         bottom: 0;
@@ -1147,6 +1103,16 @@ $elements-side-margin: $elements-margin / 2;
     @extend .position-expand;
     z-index: 2;
     left: 100%;
+  }
+}
+
+.center-view .placements-view {
+  > .main-panel > .list-holder {
+    top: 48px;
+
+    .inline-editable-list-table {
+      top: 52px;
+    }
   }
 }
 
