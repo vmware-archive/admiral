@@ -48,7 +48,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                     TimeUnit.SECONDS.toMillis(3));
     private static final Level DEFAULT_LOG_LEVEL = Level.parse(System.getProperty(
             "com.vmware.admiral.service.tasks.log.level", Level.INFO.getName()));
-    public static final int MAX_STATE_SIZE = 1024 * 1024;
+    public static final int MAX_STATE_SIZE = 1024 * 128;
 
     private ExtensibilitySubscriptionManager extensibilityManager;
 
