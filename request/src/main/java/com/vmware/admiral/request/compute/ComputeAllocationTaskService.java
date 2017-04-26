@@ -557,7 +557,7 @@ public class ComputeAllocationTaskService
                         CompositeComponentFactoryService.SELF_LINK, contextId));
         state.customProperties.put(ComputeConstants.COMPUTE_HOST_PROP_NAME, "true");
 
-        logInfo("Creating %d provision tasks, reporting through sub task %s",
+        logInfo("Creating %d allocation tasks, reporting through sub task %s",
                 state.resourceCount, taskCallback.serviceSelfLink);
 
         Iterator<HostSelection> placementComputeLinkIterator = state.selectedComputePlacementHosts
@@ -733,6 +733,16 @@ public class ComputeAllocationTaskService
                 completeSubTasksCounter(taskCallback, e);
                 return;
             }
+            boolean noNicVM = cd.customProperties != null
+                    && cd.customProperties.containsKey(NetworkProfileQueryUtils.NO_NIC_VM);
+
+            if (noNicVM) {
+                // remove the null elements from the list of network links
+                // (the nulls may originate from skipping the NIC state creation)
+                all.removeIf(value -> value == null);
+                networkLinksConsumer.accept(all);
+                return;
+            }
             patchComputeNetworks(state, cd, profile, taskCallback)
                     .whenComplete((v, ex) -> {
                         if (ex != null) {
@@ -750,8 +760,8 @@ public class ComputeAllocationTaskService
     private DeferredResult<NetworkInterfaceState> createNicState(ComputeAllocationTaskState state,
             ComputeDescription cd, NetworkInterfaceDescription nid, ProfileStateExpanded profile) {
 
-        boolean noNicVM = nid.customProperties != null
-                && nid.customProperties.containsKey(NetworkProfileQueryUtils.NO_NIC_VM);
+        boolean noNicVM = cd.customProperties != null
+                && cd.customProperties.containsKey(NetworkProfileQueryUtils.NO_NIC_VM);
 
         if (noNicVM) {
             return NetworkProfileQueryUtils.createNicState(getHost(),

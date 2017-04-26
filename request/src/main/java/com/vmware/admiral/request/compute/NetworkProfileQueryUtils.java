@@ -145,9 +145,9 @@ public class NetworkProfileQueryUtils {
             builder.addClause(QueryUtil.addTenantClause(tenantLinks));
         }
 
-        QueryUtils.QueryByPages<ProfileState> query =
-                new QueryUtils.QueryByPages<>(host, builder.build(), ProfileState.class,
-                        QueryUtil.getTenantLinks(tenantLinks));
+        QueryUtils.QueryByPages<ProfileState> query = new QueryUtils.QueryByPages<>(host,
+                builder.build(), ProfileState.class,
+                QueryUtil.getTenantLinks(tenantLinks));
         query.queryLinks(profileLink -> profileLinks.add(profileLink))
                 .whenComplete(((v, e) -> {
                     if (e != null) {
@@ -201,12 +201,13 @@ public class NetworkProfileQueryUtils {
                                     .collect(Collectors.toList());
                         } else {
                             Stream<Pair<ProfileStateExpanded, SubnetState>> pairs = all.stream()
-                                    .flatMap(profile -> profile.networkProfile.subnetStates.stream().map(
-                                            s -> Pair.of(profile, s)));
+                                    .flatMap(profile -> profile.networkProfile.subnetStates.stream()
+                                            .map(
+                                                    s -> Pair.of(profile, s)));
 
                             if (networkDescription.networkType == NetworkType.PUBLIC) {
-                                pairs = pairs.filter(p -> p.right.supportPublicIpAddress != null ?
-                                      p.right.supportPublicIpAddress : false);
+                                pairs = pairs.filter(p -> p.right.supportPublicIpAddress != null
+                                        ? p.right.supportPublicIpAddress : false);
                             }
 
                             selectedProfiles = TagConstraintUtils
@@ -251,8 +252,8 @@ public class NetworkProfileQueryUtils {
                                     NetworkInterfaceDescription.class);
                         })
                         .map(nidr -> nidr.thenApply(nid -> {
-                            if (nid.customProperties != null
-                                    && nid.customProperties.containsKey(NO_NIC_VM)) {
+                            if (computeDescription.customProperties != null
+                                    && computeDescription.customProperties.containsKey(NO_NIC_VM)) {
                                 // VM was requested without NIC then simply return a no constraint
                                 // compute network
                                 return new ComputeNetwork();
@@ -286,7 +287,8 @@ public class NetworkProfileQueryUtils {
     }
 
     public static void getContextComputeNetworks(ServiceHost host, URI referer,
-            List<String> tenantLinks, String contextId, BiConsumer<List<String>, Throwable> consumer,
+            List<String> tenantLinks, String contextId,
+            BiConsumer<List<String>, Throwable> consumer,
             Consumer<Map<String, ComputeNetwork>> callbackFunction) {
         Map<String, ComputeNetwork> contextNetworks = new HashMap<>();
         if (StringUtils.isBlank(contextId)) {
@@ -385,41 +387,42 @@ public class NetworkProfileQueryUtils {
 
         return selectSubnet(host, referer, tenantLinks, endpointLink, cd, nid, profile,
                 computeNetwork, computeNetworkDescription, isolatedSubnetState)
-                .thenCompose(s -> {
-                    if (s == null && nid.networkLink == null) {
-                        return DeferredResult.failed(
-                                new IllegalStateException(
-                                        "No matching network found for VM:" + cd.name));
-                    }
-                    NetworkInterfaceState nic = new NetworkInterfaceState();
-                    nic.id = UUID.randomUUID().toString();
-                    nic.documentSelfLink = nic.id;
-                    nic.name = nid.name;
-                    nic.deviceIndex = nid.deviceIndex;
-                    nic.address = nid.address;
-                    nic.networkLink = nid.networkLink != null ? nid.networkLink : s.networkLink;
-                    nic.subnetLink = s != null ? s.documentSelfLink : null;
-                    nic.networkInterfaceDescriptionLink = nid.documentSelfLink;
-                    nic.securityGroupLinks = nid.securityGroupLinks;
-                    nic.groupLinks = nid.groupLinks;
-                    nic.tagLinks = nid.tagLinks;
-                    nic.tenantLinks = tenantLinks;
-                    nic.endpointLink = endpointLink;
-                    nic.customProperties = nid.customProperties;
+                        .thenCompose(s -> {
+                            if (s == null && nid.networkLink == null) {
+                                return DeferredResult.failed(
+                                        new IllegalStateException(
+                                                "No matching network found for VM:" + cd.name));
+                            }
+                            NetworkInterfaceState nic = new NetworkInterfaceState();
+                            nic.id = UUID.randomUUID().toString();
+                            nic.documentSelfLink = nic.id;
+                            nic.name = nid.name;
+                            nic.deviceIndex = nid.deviceIndex;
+                            nic.address = nid.address;
+                            nic.networkLink = nid.networkLink != null ? nid.networkLink
+                                    : s != null ? s.networkLink : null;
+                            nic.subnetLink = s != null ? s.documentSelfLink : null;
+                            nic.networkInterfaceDescriptionLink = nid.documentSelfLink;
+                            nic.securityGroupLinks = nid.securityGroupLinks;
+                            nic.groupLinks = nid.groupLinks;
+                            nic.tagLinks = nid.tagLinks;
+                            nic.tenantLinks = tenantLinks;
+                            nic.endpointLink = endpointLink;
+                            nic.customProperties = nid.customProperties;
 
-                    return DeferredResult.completed(nic);
-                });
+                            return DeferredResult.completed(nic);
+                        });
     }
 
     private static DeferredResult<SubnetState> selectSubnet(ServiceHost host, URI referer,
             List<String> tenantLinks, String endpointLink, ComputeDescription cd,
-            NetworkInterfaceDescription nid, ProfileStateExpanded profile, ComputeNetwork
-            computeNetwork, ComputeNetworkDescription computeNetworkDescription, SubnetState
-            isolatedSubnetState) {
+            NetworkInterfaceDescription nid, ProfileStateExpanded profile,
+            ComputeNetwork computeNetwork, ComputeNetworkDescription computeNetworkDescription,
+            SubnetState isolatedSubnetState) {
         String subnetLink = nid.subnetLink;
 
-        boolean noNicVM = nid.customProperties != null
-                && nid.customProperties.containsKey(NetworkProfileQueryUtils.NO_NIC_VM);
+        boolean noNicVM = cd.customProperties != null
+                && cd.customProperties.containsKey(NetworkProfileQueryUtils.NO_NIC_VM);
         DeferredResult<SubnetState> subnet = null;
         boolean isIsolatedNetworkEnvironment = profile.networkProfile != null &&
                 profile.networkProfile.isolationType == IsolationSupportType.SUBNET;
@@ -456,8 +459,9 @@ public class NetworkProfileQueryUtils {
                 }
             } else {
                 subnet = DeferredResult.completed(
-                        profile.networkProfile.subnetStates.stream().filter(s -> s.defaultForZone)
-                        .findAny().orElse(profile.networkProfile.subnetStates.get(0)));
+                        profile.networkProfile.subnetStates.stream()
+                                .filter(s -> s.defaultForZone != null && s.defaultForZone)
+                                .findAny().orElse(profile.networkProfile.subnetStates.get(0)));
             }
         } else if (noNicVM && nid.networkLink != null) {
             subnet = DeferredResult.completed(null);
