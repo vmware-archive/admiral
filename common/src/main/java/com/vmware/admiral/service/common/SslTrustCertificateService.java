@@ -27,7 +27,9 @@ import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
+import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.StatefulService;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 /**
@@ -240,13 +242,28 @@ public class SslTrustCertificateService extends StatefulService {
     private void notifyLastUpdatedSslTrustDocumentService() {
         ConfigurationState body = new ConfigurationState();
         body.key = SslTrustCertificateService.SSL_TRUST_LAST_UPDATED_DOCUMENT_KEY;
-        body.documentSelfLink = body.key;
+        body.documentSelfLink = UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK,
+                body.key);
         body.value = getSelfLink();
 
-        sendRequest(Operation.createPost(this, ConfigurationFactoryService.SELF_LINK)
+        sendRequest(Operation.createPut(this, body.documentSelfLink)
                 .setBody(body)
                 .setCompletion((o, e) -> {
                     if (e != null) {
+                        if (e instanceof ServiceNotFoundException) {
+                            sendRequest(Operation.createPost(this, ConfigurationFactoryService.SELF_LINK)
+                                    .setBody(body)
+                                    .setCompletion((oo, ee) -> {
+                                        if (ee != null) {
+                                            logWarning(
+                                                    "Error notifying last updated ssl trust document: %s. Error: %s",
+                                                    getSelfLink(), Utils.toString(ee));
+                                            return;
+                                        }
+                                        logFine("Last updated ssl trust document completed.");
+                                    }));
+                            return;
+                        }
                         logWarning(
                                 "Error notifying last updated ssl trust document: %s. Error: %s",
                                 getSelfLink(), Utils.toString(e));

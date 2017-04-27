@@ -56,12 +56,12 @@ public class PopularImagesServiceTest extends BaseTestCase {
                 ConfigurationFactoryService.SELF_LINK, FileUtil.USER_RESOURCES_PATH_VARIABLE)));
 
         ConfigurationState config = new ConfigurationState();
-        config.documentSelfLink = FileUtil.USER_RESOURCES_PATH_VARIABLE;
+        config.documentSelfLink = UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, FileUtil.USER_RESOURCES_PATH_VARIABLE);
         config.key = FileUtil.USER_RESOURCES_PATH_VARIABLE;
         config.value = Paths.get(PopularImagesServiceTest.class.getResource("/containers").toURI())
                 .toString();
 
-        ConfigurationState storedConfig = doPost(config, ConfigurationFactoryService.SELF_LINK);
+        ConfigurationState storedConfig = doPut(config);
         assertNotNull(storedConfig);
 
         HostInitImageServicesConfig.startServices(host);

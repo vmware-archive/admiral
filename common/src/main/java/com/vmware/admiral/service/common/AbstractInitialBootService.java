@@ -51,6 +51,10 @@ public abstract class AbstractInitialBootService extends StatelessService {
      */
     protected void initInstances(Operation post, boolean checkIfExists, boolean selfDelete,
             ServiceDocument... states) {
+        if (states == null || states.length == 0) {
+            post.complete();
+            return;
+        }
         final AtomicInteger countDown = new AtomicInteger(states.length);
         final Consumer<Throwable> callback = (e) -> countDown(countDown, selfDelete, post, e);
         for (ServiceDocument state : states) {
@@ -112,7 +116,7 @@ public abstract class AbstractInitialBootService extends StatelessService {
      */
     private void ensureInstanceExists(ServiceDocument state, Consumer<Throwable> callback) {
         new ServiceDocumentQuery<>(getHost(), state.getClass())
-                .queryDocument(state.documentSelfLink, (r) -> {
+                .queryUpdatedDocumentSince(0, state.documentSelfLink, (r) -> {
                     if (r.hasException()) {
                         logSevere("Can't query for system document: %s. Error: %s",
                                 state.documentSelfLink,
@@ -122,7 +126,8 @@ public abstract class AbstractInitialBootService extends StatelessService {
                         callback.accept(r.getException());
                         return;
                     } else if (r.hasResult()) {
-                        logFine("Document %s already exists.", state.documentSelfLink);
+                        logFine("Not creating document %s as it has been created before",
+                                state.documentSelfLink);
                         callback.accept(null);
                     } else {
                         createDefaultInstance(state, callback, RETRIES_COUNT);

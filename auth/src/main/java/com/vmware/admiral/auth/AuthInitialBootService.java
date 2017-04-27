@@ -11,13 +11,10 @@
 
 package com.vmware.admiral.auth;
 
-import java.util.ArrayList;
-
 import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.service.common.AbstractInitialBootService;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.ServiceDocument;
 
 /**
  * Initial boot service for creating system default documents for the auth module.
@@ -27,13 +24,7 @@ public class AuthInitialBootService extends AbstractInitialBootService {
 
     @Override
     public void handlePost(Operation post) {
-        ArrayList<ServiceDocument> states = new ArrayList<>();
-        initInstances(Operation.createGet(null), false, false,
-                states.toArray(new ServiceDocument[states.size()]));
-
-        states = new ArrayList<>();
-        states.add(ProjectService.buildDefaultProjectInstance());
-
-        initInstances(post, states.toArray(new ServiceDocument[states.size()]));
+        initInstances(post, ProjectService.buildDefaultProjectInstance());
     }
+
 }
