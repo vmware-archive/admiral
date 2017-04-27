@@ -13,19 +13,62 @@
 <alert alert-type="danger" v-bind:show-alert="hasGeneralError" v-bind:alert-message="generalError"></alert>
 
 <div class="machine-details" v-if="model.instance">
-  <div class="main-panel">
-    <div class="view-title-container">
-      <div class="view-title">
-        <div class="title">
-          {{model.instance.name}}
-          <refresh-button v-on:click="refresh()"></refresh-button>
-        </div>
+
+  <div class="machine-details-header">
+    <div class="title">
+      {{model.instance.name}}
+      <refresh-button v-on:click="refresh()"></refresh-button>
+      <div :class="'status-state status ' + stateMessage(model.instance.powerState)">
+        {{stateMessage(model.instance.powerState)}}
       </div>
     </div>
+  </div>
 
-    <alert alert-type="danger" v-bind:show-alert="hasOperationError"
-                              v-bind:alert-message="i18n('app.container.details.operation.failure')"></alert>
+  <div class="content">
+    <maximizable-behaviour class="machine-details-usages">
+      <div class="machine-details-header-small">{{i18n('app.machine.details.general.usages')}}</div>
 
+      <div class="content">
+        <machine-stats v-bind:model="model"></machine-stats>
+      </div>
+    </maximizable-behaviour>
 
+    <maximizable-behaviour class="machine-details-properties">
+      <div class="machine-details-header-small">{{i18n('app.machine.details.general.properties')}}</div>
+
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>{{i18n('app.machine.details.propertyName')}}</th>
+            <th>{{i18n('app.machine.details.propertyValue')}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{{i18n('app.machine.details.general.id')}}</td>
+            <td>{{model.instance.id}}</td>
+          </tr>
+          <tr>
+            <td>{{i18n('app.machine.details.general.address')}}</td>
+            <td>{{model.instance.address}}</td>
+          </tr>
+          <tr>
+            <td>{{i18n('app.machine.details.general.hostName')}}</td>
+            <td>{{model.instance.hostName}}</td>
+          </tr>
+          <tr>
+            <td>Endpoint</td>
+            <td :title="model.instance.endpoint.name">
+                <img class="machine-details-endpoint-icon" v-bind:src="endpointIconSrc">
+                <a :href="'#/compute?endpoint=' + model.instance.endpoint.name"
+                  class="navigation-link">{{model.instance.endpoint.name}}</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </maximizable-behaviour>
   </div>
 </div>
+
+<alert alert-type="danger" v-bind:show-alert="hasOperationError"
+                          v-bind:alert-message="i18n('app.container.details.operation.failure')"></alert>

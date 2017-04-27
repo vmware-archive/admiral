@@ -17,8 +17,6 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.vmware.admiral.closures.util.ClosureUtils;
-
 /**
  * Implementation of execution driver registry.
  *
@@ -41,10 +39,9 @@ public final class DriverRegistryImpl implements DriverRegistry {
     public DriverRegistryImpl() {
         supportedRuntimes.put(DriverConstants.RUNTIME_NODEJS_4, DriverConstants.NODEJS_4_IMAGE);
         supportedRuntimes.put(DriverConstants.RUNTIME_PYTHON_3, DriverConstants.PYTHON_3_IMAGE);
-        if (ClosureUtils.isAdditionalRuntimeSwitchedOn(DriverConstants.RUNTIME_POWERSHELL_6)) {
-            supportedRuntimes
-                    .put(DriverConstants.RUNTIME_POWERSHELL_6, DriverConstants.POWERSHEL_6_IMAGE);
-        }
+        supportedRuntimes
+                .put(DriverConstants.RUNTIME_POWERSHELL_6, DriverConstants.POWERSHEL_6_IMAGE);
+
         supportedRuntimes.put(DriverConstants.RUNTIME_NASHORN, null);
     }
 
@@ -61,7 +58,7 @@ public final class DriverRegistryImpl implements DriverRegistry {
         } else if (DriverConstants.RUNTIME_PYTHON_3.equalsIgnoreCase(runtime)) {
             return PYTHON_IMAGE_VERSION;
         } else if (DriverConstants.RUNTIME_POWERSHELL_6.equalsIgnoreCase(runtime)) {
-            return  POWERSHELL_IMAGE_VERSION;
+            return POWERSHELL_IMAGE_VERSION;
         }
 
         throw new IllegalArgumentException("No available image for runtime: " + runtime);

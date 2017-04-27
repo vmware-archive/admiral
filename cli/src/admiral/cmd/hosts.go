@@ -15,9 +15,9 @@ import (
 	"errors"
 	"fmt"
 
+	"admiral/common/utils"
 	"admiral/help"
 	"admiral/hosts"
-	"admiral/utils"
 
 	"os"
 	"text/tabwriter"

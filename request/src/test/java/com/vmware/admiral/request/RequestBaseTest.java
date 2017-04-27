@@ -579,6 +579,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
 
     protected SubnetState createSubnetState() throws Throwable {
         SubnetState subnet = new SubnetState();
+        subnet.id = UUID.randomUUID().toString();
         subnet.networkLink = createNetworkState().documentSelfLink;
         subnet.endpointLink = createEndpoint().documentSelfLink;
         subnet.subnetCIDR = "0.0.0.0/24";

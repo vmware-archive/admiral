@@ -127,8 +127,7 @@ public class ComputeDescriptionProfileEnhancer extends ComputeDescriptionEnhance
         }
     }
 
-    private void createNicDesc(
-            com.vmware.admiral.request.compute.enhancer.Enhancer.EnhanceContext context,
+    private void createNicDesc(EnhanceContext context,
             ComputeDescription cd, String networkLink, String subnetLink,
             DeferredResult<ComputeDescription> result) {
         NetworkInterfaceDescription nid = new NetworkInterfaceDescription();
@@ -139,7 +138,6 @@ public class ComputeDescriptionProfileEnhancer extends ComputeDescriptionEnhance
         nid.subnetLink = subnetLink;
         nid.tenantLinks = cd.tenantLinks;
         nid.customProperties = new HashMap<>();
-        nid.customProperties.put(NetworkProfileQueryUtils.NO_NIC_VM, Boolean.TRUE.toString());
 
         Operation.createPost(this.host, NetworkInterfaceDescriptionService.FACTORY_LINK)
                 .setBody(nid)
@@ -154,6 +152,11 @@ public class ComputeDescriptionProfileEnhancer extends ComputeDescriptionEnhance
                     NetworkInterfaceDescription b = o.getBody(NetworkInterfaceDescription.class);
                     cd.networkInterfaceDescLinks = new ArrayList<>();
                     cd.networkInterfaceDescLinks.add(b.documentSelfLink);
+                    if (cd.customProperties == null) {
+                        cd.customProperties = new HashMap<>();
+                    }
+                    cd.customProperties.put(NetworkProfileQueryUtils.NO_NIC_VM,
+                            Boolean.TRUE.toString());
                     result.complete(cd);
                 })
                 .sendWith(host);

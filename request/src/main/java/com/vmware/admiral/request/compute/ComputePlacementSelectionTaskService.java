@@ -44,7 +44,6 @@ import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.C
 import com.vmware.admiral.request.compute.allocation.filter.FilterContext;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
-import com.vmware.photon.controller.model.query.QueryUtils.QueryByPages;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -53,8 +52,6 @@ import com.vmware.photon.controller.model.tasks.helpers.ResourcePoolQueryHelper;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.services.common.QueryTask.Query;
-import com.vmware.xenon.services.common.QueryTask.Query.Builder;
 
 /**
  * Task implementing compute placement selection for provisioning a given number of instances of a
@@ -74,13 +71,6 @@ public class ComputePlacementSelectionTaskService extends
      */
     public static class ComputePlacementSelectionTaskState extends
             com.vmware.admiral.service.common.TaskServiceDocument<ComputePlacementSelectionTaskState.SubStage> {
-
-        public static enum SubStage {
-            CREATED,
-            FILTER,
-            COMPLETED,
-            ERROR;
-        }
 
         @Documentation(description = "The description that defines the requested resource.")
         @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED, LINK }, indexing = STORE_ONLY)
@@ -116,6 +106,13 @@ public class ComputePlacementSelectionTaskService extends
         @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Map<String, HostSelection> hostSelectionMap;
+
+        public static enum SubStage {
+            CREATED,
+            FILTER,
+            COMPLETED,
+            ERROR;
+        }
     }
 
     /**
@@ -138,6 +135,10 @@ public class ComputePlacementSelectionTaskService extends
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
+    }
+
+    private static boolean isNoSelection(Map<String, HostSelection> filteredHostSelectionMap) {
+        return filteredHostSelectionMap == null || filteredHostSelectionMap.isEmpty();
     }
 
     @Override
@@ -179,42 +180,11 @@ public class ComputePlacementSelectionTaskService extends
 
     private void selectPlacement(ComputePlacementSelectionTaskState state) {
 
-        Builder builder = Query.Builder.create().addKindFieldClause(ComputeDescription.class);
-        if (state.tenantLinks == null || state.tenantLinks.isEmpty()) {
-            builder.addClause(QueryUtil.addTenantClause(state.tenantLinks));
-        }
-        builder.addCollectionItemClause(ComputeDescription.FIELD_NAME_SUPPORTED_CHILDREN,
-                ComputeType.VM_GUEST.toString());
-
-        QueryByPages<ComputeDescription> queryCDs = new QueryByPages<>(getHost(), builder.build(),
-                ComputeDescription.class, QueryUtil.getTenantLinks(state.tenantLinks),
-                state.endpointLink);
-
-        queryCDs.collectLinks(Collectors.toSet())
-                .whenComplete((cdLinks, e) -> {
-                    if (e != null) {
-                        failTask("Error querying for placement compute description.", e);
-                        return;
-                    }
-                    if (cdLinks.isEmpty()) {
-                        failTask(null, new LocalizableValidationException(
-                                "No ComputeDescription found for compute placement",
-                                "request.compute.placement.compute-description.missing"));
-                        return;
-                    }
-                    proceedComputeSelection(state, cdLinks);
-                });
-    }
-
-    private void proceedComputeSelection(ComputePlacementSelectionTaskState state,
-            Collection<String> computeDescriptionLinks) {
-
         ResourcePoolQueryHelper helper = ResourcePoolQueryHelper.createForResourcePools(getHost(),
                 state.resourcePoolLinks);
         helper.setExpandComputes(true);
         helper.setAdditionalQueryClausesProvider(qb -> {
-            qb.addInClause(ComputeState.FIELD_NAME_DESCRIPTION_LINK, computeDescriptionLinks)
-                    .addFieldClause(ComputeState.FIELD_NAME_POWER_STATE, PowerState.ON.toString())
+            qb.addFieldClause(ComputeState.FIELD_NAME_POWER_STATE, PowerState.ON.toString())
                     .addInClause(ComputeState.FIELD_NAME_TYPE,
                             Arrays.asList(ComputeType.VM_HOST.name(), ComputeType.ZONE.name()));
         });
@@ -291,10 +261,6 @@ public class ComputePlacementSelectionTaskService extends
                 filter(state, filterContext, filteredHostSelectionMap, filters);
             });
         }
-    }
-
-    private static boolean isNoSelection(Map<String, HostSelection> filteredHostSelectionMap) {
-        return filteredHostSelectionMap == null || filteredHostSelectionMap.isEmpty();
     }
 
     private Map<String, HostSelection> buildHostSelectionMap(

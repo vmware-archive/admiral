@@ -66,4 +66,30 @@ public class DockerAdapterUtils {
         return result;
     }
 
+    /**
+     * Sometimes docker error message can be large and cause serialization errors,
+     * this method will extract the lines which contains error information.
+     */
+    public static String normalizeDockerError(String error) {
+        String errorDetailLine = "{\"errorDetail\":";
+        String[] splitError = error.split("\n");
+        StringBuilder errorToReturn = new StringBuilder();
+
+        for (String line : splitError) {
+            if (line.startsWith(errorDetailLine)) {
+                errorToReturn.append(line);
+                errorToReturn.append("\n");
+            }
+        }
+
+        String errorLines = errorToReturn.toString().trim();
+
+        // If no error information is extracted, the parameter format
+        // is unknown, we better return the original error in order not to lose data.
+        if (errorLines.isEmpty()) {
+            return error;
+        }
+        return errorLines;
+    }
+
 }

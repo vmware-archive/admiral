@@ -33,6 +33,7 @@ import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
 import com.vmware.admiral.compute.ElasticPlacementZoneService.ElasticPlacementZoneState;
+import com.vmware.admiral.compute.PlacementZoneConstants;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
@@ -181,6 +182,10 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
         epzState.resourcePoolState.name = name;
         epzState.documentSelfLink = getExistingLink(ResourcePoolService.FACTORY_LINK, name);
         epzState.resourcePoolState.customProperties = new HashMap<>();
+        epzState.resourcePoolState.customProperties.put(
+                PlacementZoneConstants.RESOURCE_TYPE_CUSTOM_PROP_NAME,
+                ResourceType.COMPUTE_TYPE.getName());
+
         if (endpoint != null) {
             epzState.resourcePoolState.customProperties.put(
                     ComputeProperties.ENDPOINT_LINK_PROP_NAME, endpoint.documentSelfLink);

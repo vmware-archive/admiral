@@ -34,6 +34,8 @@ import VueCheckboxControl from 'components/common/VueCheckboxControl';
 import VueCheckboxGroup from 'components/common/VueCheckboxGroup';
 import VueInputControl from 'components/common/VueInputControl';
 import VueInputGroup from 'components/common/VueInputGroup';
+import VueSelectControl from 'components/common/VueSelectControl';
+import VueSelectGroup from 'components/common/VueSelectGroup';
 import VueTags from 'components/common/VueTags';
 import VueTagsGroup from 'components/common/VueTagsGroup';
 import VueTypeahead from 'components/common/VueTypeahead';

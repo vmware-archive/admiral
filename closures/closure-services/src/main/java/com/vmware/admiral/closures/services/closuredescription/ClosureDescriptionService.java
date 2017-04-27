@@ -14,7 +14,6 @@ package com.vmware.admiral.closures.services.closuredescription;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Objects;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -194,7 +193,7 @@ public class ClosureDescriptionService extends StatefulService {
     }
 
     private boolean isValid(Operation op, ClosureDescription body) {
-        if (isRuntimeNotSupported(body)) {
+        if (!isRuntimeSupported(body)) {
             String errorMsg = String.format("Runtime '%s' is not supported!", body.runtime);
             logWarning(errorMsg);
             op.setStatusCode(Operation.STATUS_CODE_BAD_REQUEST);
@@ -264,20 +263,16 @@ public class ClosureDescriptionService extends StatefulService {
         return true;
     }
 
-    private boolean isRuntimeNotSupported(ClosureDescription body) {
-        if (Objects.equals(body.runtime, DriverConstants.RUNTIME_NODEJS_4)) {
-            return false;
-        } else if (Objects.equals(body.runtime, DriverConstants.RUNTIME_PYTHON_3)) {
-            return false;
-        } else if (Objects.equals(body.runtime, DriverConstants.RUNTIME_POWERSHELL_6)) {
-            if (ClosureUtils.isAdditionalRuntimeSwitchedOn(DriverConstants.RUNTIME_POWERSHELL_6)) {
-                return false;
-            }
-        } else if (Objects.equals(body.runtime, DriverConstants.RUNTIME_NASHORN)) {
+    private boolean isRuntimeSupported(ClosureDescription closureDesc) {
+        switch (closureDesc.runtime) {
+        case DriverConstants.RUNTIME_NODEJS_4:
+        case DriverConstants.RUNTIME_PYTHON_3:
+        case DriverConstants.RUNTIME_POWERSHELL_6:
+        case DriverConstants.RUNTIME_NASHORN:
+            return true;
+        default:
             return false;
         }
-
-        return true;
     }
 
     private boolean isBodyEmpty(Operation op) {

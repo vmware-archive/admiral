@@ -75,7 +75,6 @@ grid-view {
 
   .title {
     @include view-title();
-    margin-bottom: 0;
   }
 
   .content-empty {

@@ -18,9 +18,9 @@ import (
 	"os"
 	"testing"
 
+	"admiral/auth"
+	. "admiral/common/utils"
 	"admiral/config"
-	"admiral/loginout"
-	. "admiral/testutils"
 )
 
 var tc = &TestConfig{}
@@ -32,8 +32,9 @@ func TestMain(m *testing.M) {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+	IsTest = true
 	config.GetCfgForTests()
-	loginout.Login(tc.Username, tc.Password, tc.AdmiralAddress)
+	auth.Login(tc.Username, tc.Password, tc.AdmiralAddress)
 
 	code := m.Run()
 	os.Exit(code)

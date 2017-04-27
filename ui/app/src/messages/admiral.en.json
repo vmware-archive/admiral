@@ -109,7 +109,8 @@
         "searchPlaceholder": "Search for hosts",
         "dataCollect": "Data collect",
         "dataCollectStart": "Triggering data collection. It might take a few minutes to complete.",
-        "dataCollectEnd": "Data collection has finished."
+        "dataCollectEnd": "Data collection has finished.",
+        "create": "Host"
       },
       "actions": {
         "start": "Start",
@@ -126,7 +127,7 @@
       "entity": "placement zone",
       "list": {
         "title": "Placement Zones",
-        "addButton": "Add",
+        "addButton": "Placement Zone",
         "nameColumn": "Name",
         "cpuColumn": "CPU",
         "memoryColumn": "Memory",
@@ -160,7 +161,7 @@
       "contextPanelTooltip": "Projects",
       "list": {
         "title": "Project",
-        "addButton": "Add",
+        "addButton": "Project",
         "nameColumn": "Name",
         "details": {
           "title": "Project details"
@@ -179,7 +180,7 @@
       "contextPanelTooltip": "Credentials",
       "list": {
         "title": "Credentials",
-        "addButton": "Add",
+        "addButton": "Credential",
         "nameColumn": "Name",
         "typeColumn": "Type",
         "credentialsColumn": "Credentials"
@@ -209,7 +210,7 @@
       "contextPanelTooltip": "Depl. Policies",
       "list": {
         "title": "Deployment Policies",
-        "addButton": "Add",
+        "addButton": "Policy",
         "nameColumn": "Name",
         "descriptionColumn": "Description",
         "details": {
@@ -230,7 +231,7 @@
       "contextPanelTooltip": "Certificates",
       "list": {
         "title": "Certificates",
-        "addButton": "Add",
+        "addButton": "Certificate",
         "nameColumn": "Name",
         "serialColumn": "Serial",
         "shaColumn": "SHA",
@@ -416,7 +417,7 @@
     "placement": {
       "list": {
         "title": "Placements",
-        "addButton": "Add",
+        "addButton": "Placement",
         "nameColumn": "Name",
         "groupColumn": "Project",
         "businessGroupColumn": "Business Group",
@@ -465,7 +466,7 @@
     "registry": {
       "list": {
         "title": "Existing Registries",
-        "addButton": "Add",
+        "addButton": "Registry",
         "addressColumn": "Address",
         "nameColumn": "Name",
         "statusColumn": "Status"
@@ -487,7 +488,7 @@
         "title": "Profiles",
         "titleSearch": "Found profiles",
         "searchPlaceholder": "Search for profiles",
-        "addButton": "Create Profile",
+        "addButton": "Profile",
         "addPropertyButton": "Add Property",
         "nameColumn": "Name",
         "endpointTypeColumn": "Endpoint Type",
@@ -532,6 +533,7 @@
         "cidrLabel": "CIDR",
         "cidrLabelHint": "0.0.0.0/0",
         "cidrPrefixLabel": "Subnets Prefix Length",
+        "networkLabel": "Network",
         "resourceGroupsLabel": "Resource groups",
         "supportPublicIpAddressLabel": "Support Public IP",
         "defaultForZoneLabel": "Default for Zone",
@@ -571,7 +573,7 @@
     "endpoint": {
       "list": {
         "title": "Endpoints",
-        "addButton": "Add",
+        "addButton": "Endpoint",
         "nameColumn": "Name",
         "typeColumn": "Type"
       },
@@ -612,7 +614,7 @@
         "title": "Machines",
         "titleSearch": "Found Machines",
         "searchPlaceholder": "Search for machines",
-        "addButton": "Create Machine"
+        "addButton": "Machine"
       },
       "edit": {
         "addTitle": "Create Machine",
@@ -623,6 +625,23 @@
         "loadButton": "Load from file",
         "importTemplateHint": "Composite description containing one or multiple machine descriptions",
         "importPlaceholder": ""
+      },
+      "details": {
+        "propertyName" : "Name",
+        "propertyValue": "Value",
+        "general": {
+          "id": "ID",
+          "hostName": "Host Name",
+          "address": "Address",
+          "properties": "Properties",
+          "usages": "Usages",
+          "powerState": "Power State",
+          "environment": "Environment",
+          "region": "Region"
+        },
+        "customProperties": {
+          "title" : "Custom Properties"
+        }
       }
     },
     "compute": {
@@ -656,9 +675,11 @@
     "subnetwork": {
       "list": {
         "title": "Subnetworks",
-        "addButton": "Add",
+        "addButton": "Subnetwork",
         "nameColumn": "Name",
-        "cidrColumn": "CIDR"
+        "cidrColumn": "CIDR",
+        "supportPublicIpAddressColumn": "Support Public IP",
+        "networkColumn": "Network"
       },
       "edit": {
         "addNew": "Add Subnetwork",
@@ -690,7 +711,7 @@
           "connectedContainers": "Containers",
           "parentHosts": "Hosts",
           "external": "External",
-          "create": "Create Network",
+          "create": "Network",
           "state": {
             "UNKNOWN": "UNKNOWN",
             "PROVISIONING": "PROVISIONING",
@@ -704,26 +725,26 @@
           "description": "Description",
           "public": "Public",
           "private": "Private",
-          "create": "Create Project",
+          "create": "Project",
           "actions": {
             "edit": "Edit",
             "remove": "Remove"
           }
         },
         "container": {
-          "create": "Create Container"
+          "create": "Container"
         },
         "application": {
-          "create": "Create Application"
+          "create": "Application"
         },
         "closure": {
-          "create": "Create Closure"
+          "create": "Closure"
         },
         "kubernetes": {
-          "create": "Create"
+          "create": "Definition"
         },
         "volume": {
-          "create": "Create Volume",
+          "create": "Volume",
           "connectedDateLabel": "Connected",
           "driverLabel": "Driver",
           "driverOptionsLabel": "Driver Options",
@@ -1100,7 +1121,8 @@
           "sourceURL": "Source URL",
           "runtimeTypes": {
             "nodejs": "NodeJs 4",
-            "python": "Python 3"
+            "python": "Python 3",
+            "powershell": "Powershell 6"
           },
           "logConfigOptionsInputs" : {
             "name": "Name",
@@ -1195,6 +1217,7 @@
       "valueHint": "Example: slow"
     },
     "yes": "Yes",
+    "no": "No",
     "ok": "Ok",
     "cancel": "Cancel",
     "error": "Error",

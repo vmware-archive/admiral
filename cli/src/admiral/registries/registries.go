@@ -20,11 +20,13 @@ import (
 
 	"admiral/certificates"
 	"admiral/client"
+	"admiral/common"
+	"admiral/common/base_types"
+	"admiral/common/utils"
+	"admiral/common/utils/selflink_utils"
+	"admiral/common/utils/uri_utils"
 	"admiral/config"
 	"admiral/credentials"
-	"admiral/utils"
-	"admiral/utils/selflink"
-	"admiral/utils/urlutils"
 )
 
 var (
@@ -36,17 +38,18 @@ var (
 )
 
 type Registry struct {
+	base_types.ServiceDocument
+
 	Name                 string  `json:"name"`
 	Address              string  `json:"address,omitempty"`
 	EndpointType         string  `json:"endpointType,omitempty"`
 	AuthCredentialsLinks *string `json:"authCredentialsLink,omitempty"`
 	Disabled             bool    `json:"disabled,omitempty"`
-	DocumentSelfLink     *string `json:"documentSelfLink,omitempty"`
 	RegistryState        string  `json:"registryState,omitempty"`
 }
 
 func (r *Registry) GetID() string {
-	return strings.Replace(*r.DocumentSelfLink, "/config/registries/", "", -1)
+	return strings.Replace(r.DocumentSelfLink, "/config/registries/", "", -1)
 }
 
 func (r *Registry) Status() string {
@@ -66,7 +69,7 @@ func (rl *RegistryList) GetCount() int {
 	return len(rl.DocumentLinks)
 }
 
-func (rl *RegistryList) GetResource(index int) selflink.Identifiable {
+func (rl *RegistryList) GetResource(index int) selflink_utils.Identifiable {
 	resource := rl.Documents[rl.DocumentLinks[index]]
 	return &resource
 }
@@ -76,7 +79,7 @@ func (rl *RegistryList) Renew() {
 }
 
 func (rl *RegistryList) FetchRegistries() (int, error) {
-	url := urlutils.BuildUrl(urlutils.Registry, urlutils.GetCommonQueryMap(), true)
+	url := uri_utils.BuildUrl(uri_utils.Registry, uri_utils.GetCommonQueryMap(), true)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -90,7 +93,7 @@ func (rl *RegistryList) FetchRegistries() (int, error) {
 func (rl *RegistryList) GetOutputString() string {
 	var buffer bytes.Buffer
 	if rl.GetCount() < 1 {
-		return utils.NoElementsFoundMessage
+		return selflink_utils.NoElementsFoundMessage
 	}
 	buffer.WriteString("ID\tNAME\tADDRESS\tSTATUS\n")
 	for _, link := range rl.DocumentLinks {
@@ -102,19 +105,8 @@ func (rl *RegistryList) GetOutputString() string {
 	return strings.TrimSpace(buffer.String())
 }
 
-func RemoveRegistry(address string) (string, error) {
-	links := getRegLink(address)
-	if len(links) < 1 {
-		return "", RegistryNotFoundError
-	} else if len(links) > 1 {
-		return "", DuplicateNamesError
-	}
-	id := utils.GetResourceID(links[0])
-	return RemoveRegistryID(id)
-}
-
 func RemoveRegistryID(id string) (string, error) {
-	fullId, err := selflink.GetFullId(id, new(RegistryList), utils.REGISTRY)
+	fullId, err := selflink_utils.GetFullId(id, new(RegistryList), common.REGISTRY)
 	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForRegistry(fullId)
 	url := config.URL + link
@@ -149,7 +141,7 @@ func AddRegistry(regName, addressF, credID, publicCert, privateCert, userName, p
 			newCredID = ""
 		}
 	} else {
-		newCredID, err = selflink.GetFullId(credID, new(credentials.CredentialsList), utils.CREDENTIALS)
+		newCredID, err = selflink_utils.GetFullId(credID, new(credentials.CredentialsList), common.CREDENTIALS)
 		utils.CheckBlockingError(err)
 	}
 
@@ -213,22 +205,8 @@ func AddRegistry(regName, addressF, credID, publicCert, privateCert, userName, p
 	}
 }
 
-func EditRegistry(address, newAddress, newName, newCred string, autoAccept bool) (string, error) {
-	links := getRegLink(address)
-	if len(links) < 1 {
-		return "", RegistryNotFoundError
-	}
-
-	if len(links) > 1 {
-		return "", DuplicateNamesError
-	}
-
-	id := utils.GetResourceID(links[0])
-	return EditRegistryID(id, newAddress, newName, newCred, autoAccept)
-}
-
 func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (string, error) {
-	fullId, err := selflink.GetFullId(id, new(RegistryList), utils.REGISTRY)
+	fullId, err := selflink_utils.GetFullId(id, new(RegistryList), common.REGISTRY)
 	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForRegistry(fullId)
 	url := config.URL + link
@@ -247,7 +225,7 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 		reg.Name = newName
 	}
 	if newCred != "" {
-		fullCredId, err := selflink.GetFullId(newCred, new(credentials.CredentialsList), utils.CREDENTIALS)
+		fullCredId, err := selflink_utils.GetFullId(newCred, new(credentials.CredentialsList), common.CREDENTIALS)
 		utils.CheckBlockingError(err)
 		credLink := utils.CreateResLinkForCredentials(fullCredId)
 		reg.AuthCredentialsLinks = &credLink
@@ -297,22 +275,8 @@ func EditRegistryID(id, newAddress, newName, newCred string, autoAccept bool) (s
 	}
 }
 
-func Disable(address string) (string, error) {
-	links := getRegLink(address)
-	if len(links) < 1 {
-		return "", RegistryNotFoundError
-	}
-
-	if len(links) > 1 {
-		return "", DuplicateNamesError
-	}
-
-	id := utils.GetResourceID(links[0])
-	return DisableID(id)
-}
-
 func DisableID(id string) (string, error) {
-	fullId, err := selflink.GetFullId(id, new(RegistryList), utils.REGISTRY)
+	fullId, err := selflink_utils.GetFullId(id, new(RegistryList), common.REGISTRY)
 	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForRegistry(fullId)
 	rs := &RegistryStatus{
@@ -330,22 +294,8 @@ func DisableID(id string) (string, error) {
 	return "", respErr
 }
 
-func Enable(address string) (string, error) {
-	links := getRegLink(address)
-	if len(links) < 1 {
-		return "", RegistryNotFoundError
-	}
-
-	if len(links) > 1 {
-		return "", DuplicateNamesError
-	}
-
-	id := utils.GetResourceID(links[0])
-	return EnableID(id)
-}
-
 func EnableID(id string) (string, error) {
-	fullId, err := selflink.GetFullId(id, new(RegistryList), utils.REGISTRY)
+	fullId, err := selflink_utils.GetFullId(id, new(RegistryList), common.REGISTRY)
 	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForRegistry(fullId)
 	rs := &RegistryStatus{

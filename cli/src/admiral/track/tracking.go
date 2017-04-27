@@ -20,9 +20,9 @@ import (
 	"time"
 
 	"admiral/client"
+	"admiral/common/utils"
 	"admiral/config"
 	"admiral/events"
-	"admiral/utils"
 )
 
 type FailureMessage struct {
@@ -41,6 +41,12 @@ type TaskStatus struct {
 	SubStage      string   `json:"subStage"`
 	EventLogLink  string   `json:"eventLogLink"`
 	ResourceLinks []string `json:"resourceLinks"`
+}
+
+func (ts *TaskStatus) String() string {
+	jsonBody, err := json.MarshalIndent(ts, "", "    ")
+	utils.CheckBlockingError(err)
+	return string(jsonBody)
 }
 
 type OperationResponse struct {
@@ -117,6 +123,11 @@ func Wait(taskId string, operationType string) ([]string, error) {
 	for {
 		elapsed := time.Now().Sub(begin)
 		if elapsed.Seconds() > float64(config.TASK_TIMEOUT_SECONDS) {
+			// If task timeout in test, print it's latest state
+			// for debugging purposes.
+			if utils.IsTest {
+				fmt.Println(taskStatus.String())
+			}
 			return nil, errors.New("Task timed out.")
 		}
 
@@ -169,15 +180,14 @@ func isTaskCompleted(taskStatus *TaskStatus, operationType string) bool {
 	if taskStatus.TaskInfo.Stage != StageFinished {
 		return false
 	}
-	if taskStatus.SubStage == SubstageCompleted && operationType == ProvisionResourceOperation {
-		if taskStatus.ResourceLinks == nil || len(taskStatus.ResourceLinks) == 0 {
-			return false
+	if operationType == ProvisionResourceOperation {
+		if taskStatus.SubStage == SubstageCompleted &&
+			(taskStatus.ResourceLinks != nil && len(taskStatus.ResourceLinks) > 0) {
+			return true
 		}
-		return true
-	} else if taskStatus.SubStage == SubstageCompleted && operationType != ProvisionResourceOperation {
-		return true
+		return false
 	}
-	return false
+	return true
 }
 
 func isTaskFailed(taskStatus *TaskStatus) bool {

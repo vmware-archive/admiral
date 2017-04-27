@@ -12,25 +12,28 @@
 package templates
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"admiral/client"
+	"admiral/common"
+	"admiral/common/base_types"
+	"admiral/common/utils"
+	"admiral/common/utils/selflink_utils"
+	"admiral/common/utils/uri_utils"
 	"admiral/config"
-	"admiral/utils"
-	"admiral/utils/selflink"
-	"admiral/utils/urlutils"
-	"bytes"
-	"strings"
 )
 
 type ClosureDescription struct {
-	Runtime          string         `json:"runtime"`
-	Name             string         `json:"name"`
-	Source           string         `json:"source"`
-	Description      string         `json:"description"`
-	Resources        map[string]int `json:"resources"`
-	DocumentSelfLink string         `json:"documentSelfLink"`
+	base_types.ServiceDocument
+
+	Runtime     string         `json:"runtime"`
+	Name        string         `json:"name"`
+	Source      string         `json:"source"`
+	Description string         `json:"description"`
+	Resources   map[string]int `json:"resources"`
 }
 
 func (cd *ClosureDescription) GetID() string {
@@ -60,7 +63,7 @@ func (cdl *ClosureDescriptionList) GetCount() int {
 	return len(cdl.DocumentLinks)
 }
 
-func (cdl *ClosureDescriptionList) GetResource(index int) selflink.Identifiable {
+func (cdl *ClosureDescriptionList) GetResource(index int) selflink_utils.Identifiable {
 	resource := cdl.Documents[cdl.DocumentLinks[index]]
 	return &resource
 }
@@ -70,7 +73,7 @@ func (cdl *ClosureDescriptionList) Renew() {
 }
 
 func (cdl *ClosureDescriptionList) FetchClosures() (int, error) {
-	url := urlutils.BuildUrl(urlutils.ClosureDescription, urlutils.GetCommonQueryMap(), true)
+	url := uri_utils.BuildUrl(uri_utils.ClosureDescription, uri_utils.GetCommonQueryMap(), true)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -84,7 +87,7 @@ func (cdl *ClosureDescriptionList) FetchClosures() (int, error) {
 func (cdl *ClosureDescriptionList) GetOutputString() string {
 	var buffer bytes.Buffer
 	if cdl.GetCount() < 1 {
-		return utils.NoElementsFoundMessage
+		return selflink_utils.NoElementsFoundMessage
 	}
 	buffer.WriteString("ID\tNAME\tRUNTIME\tMEMORY(MB)\tTIMEOUT(s)\tDESCRIPTION\n")
 	for _, link := range cdl.DocumentLinks {
@@ -98,7 +101,7 @@ func (cdl *ClosureDescriptionList) GetOutputString() string {
 }
 
 func RemoveClosureDescription(idOrName string) (string, error) {
-	fullId, err := selflink.GetFullId(idOrName, new(ClosureDescriptionList), utils.CLOSURE_DESCRIPTION)
+	fullId, err := selflink_utils.GetFullId(idOrName, new(ClosureDescriptionList), common.CLOSURE_DESCRIPTION)
 	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinkForClosureDescription(fullId)
 	req, _ := http.NewRequest("DELETE", url, nil)

@@ -23,11 +23,13 @@ import (
 	"strings"
 
 	"admiral/client"
+	"admiral/common"
+	"admiral/common/base_types"
+	"admiral/common/utils"
+	"admiral/common/utils/selflink_utils"
+	"admiral/common/utils/uri_utils"
 	"admiral/config"
 	"admiral/containers"
-	"admiral/utils"
-	"admiral/utils/selflink"
-	"admiral/utils/urlutils"
 )
 
 var (
@@ -66,7 +68,7 @@ func (cdl *CompositeDescriptionList) GetCount() int {
 	return len(cdl.DocumentLinks)
 }
 
-func (cdl *CompositeDescriptionList) GetResource(index int) selflink.Identifiable {
+func (cdl *CompositeDescriptionList) GetResource(index int) selflink_utils.Identifiable {
 	resource := cdl.Documents[cdl.DocumentLinks[index]]
 	return &resource
 }
@@ -82,10 +84,11 @@ func (ts TemplateSorter) Swap(i, j int)      { ts[i], ts[j] = ts[j], ts[i] }
 func (ts TemplateSorter) Less(i, j int) bool { return ts[i].Name < ts[j].Name }
 
 type Template struct {
+	base_types.ServiceDocument
+
 	Name                  string   `json:"name"`
 	TemplateType          string   `json:"templateType"`
 	DescriptionLinks      []string `json:"descriptionLinks"`
-	DocumentSelfLink      *string  `json:"documentSelfLink"`
 	IsAutomated           bool     `json:"is_automated"`
 	IsOfficial            bool     `json:"is_official"`
 	StarsCount            int32    `json:"star_count"`
@@ -106,7 +109,7 @@ func (t *Template) GetContainersCount() int {
 func (t *Template) GetNetworksCount() int {
 	count := 0
 	for _, link := range t.DescriptionLinks {
-		if strings.Contains(link, urlutils.NetworkDescription.GetBaseUrl()) {
+		if strings.Contains(link, uri_utils.NetworkDescription.GetBaseUrl()) {
 			count++
 		}
 	}
@@ -116,7 +119,7 @@ func (t *Template) GetNetworksCount() int {
 func (t *Template) GetClosuresCount() int {
 	count := 0
 	for _, link := range t.DescriptionLinks {
-		if strings.Contains(link, urlutils.ClosureDescription.GetBaseUrl()) {
+		if strings.Contains(link, uri_utils.ClosureDescription.GetBaseUrl()) {
 			count++
 		}
 	}
@@ -125,25 +128,25 @@ func (t *Template) GetClosuresCount() int {
 
 //GetID returns the ID of the template.
 func (t *Template) GetID() string {
-	return utils.GetResourceID(*t.DocumentSelfLink)
+	return utils.GetResourceID(t.DocumentSelfLink)
 }
 
 func (t *Template) IsContainer(index int) bool {
 	link := t.DescriptionLinks[index]
-	if strings.Contains(link, urlutils.ContainerDescription.GetBaseUrl()) {
+	if strings.Contains(link, uri_utils.ContainerDescription.GetBaseUrl()) {
 		return true
 	}
 	return false
 }
 
-func (t *Template) GetResourceType(index int) utils.ResourceType {
+func (t *Template) GetResourceType(index int) common.ResourceType {
 	link := t.DescriptionLinks[index]
-	if strings.Contains(link, urlutils.ContainerDescription.GetBaseUrl()) {
-		return utils.CONTAINER
-	} else if strings.Contains(link, urlutils.NetworkDescription.GetBaseUrl()) {
-		return utils.NETWORK
-	} else if strings.Contains(link, urlutils.ClosureDescription.GetBaseUrl()) {
-		return utils.CLOSURE
+	if strings.Contains(link, uri_utils.ContainerDescription.GetBaseUrl()) {
+		return common.CONTAINER
+	} else if strings.Contains(link, uri_utils.NetworkDescription.GetBaseUrl()) {
+		return common.NETWORK
+	} else if strings.Contains(link, uri_utils.ClosureDescription.GetBaseUrl()) {
+		return common.CLOSURE
 	} else {
 		return -1
 	}
@@ -157,7 +160,7 @@ func (tl *TemplatesList) GetCount() int {
 	return len(tl.Results)
 }
 
-func (tl *TemplatesList) GetResource(index int) selflink.Identifiable {
+func (tl *TemplatesList) GetResource(index int) selflink_utils.Identifiable {
 	resource := tl.Results[0]
 	return &resource
 }
@@ -194,7 +197,7 @@ func (lt *TemplatesList) FetchTemplates(queryF string) (int, error) {
 func (lt *TemplatesList) GetOutputStringWithoutContainers() string {
 	var buffer bytes.Buffer
 	if len(lt.Results) < 1 {
-		return utils.NoElementsFoundMessage
+		return selflink_utils.NoElementsFoundMessage
 	}
 	sort.Sort(TemplateSorter(lt.Results))
 	buffer.WriteString("ID\tNAME\tCONTAINERS\tNETWORKS\tCLOSURES\n")
@@ -216,7 +219,7 @@ func (lt *TemplatesList) GetOutputStringWithContainers() (string, error) {
 	url := config.URL
 	var buffer bytes.Buffer
 	if len(lt.Results) < 1 {
-		return utils.NoElementsFoundMessage, nil
+		return selflink_utils.NoElementsFoundMessage, nil
 	}
 	buffer.WriteString("ID\tNAME\tCONTAINERS\tNETWORKS\tCLOSURES\n")
 	for _, template := range lt.Results {
@@ -249,7 +252,7 @@ func (lt *TemplatesList) GetTemplateLinks(tmplName string) []string {
 		if tmplName == tmpl.Name {
 			var selfLink string
 			if tmpl.TemplateType != "CONTAINER_IMAGE_DESCRIPTION" {
-				selfLink = *tmpl.DocumentSelfLink
+				selfLink = tmpl.DocumentSelfLink
 				links = append(links, selfLink)
 			}
 		}
@@ -257,27 +260,11 @@ func (lt *TemplatesList) GetTemplateLinks(tmplName string) []string {
 	return links
 }
 
-//RemoveTemplate removes template by name passed as parameter.
-//Returns the ID of the removed template and error = nil or
-//ID = empty string and error != nil.
-func RemoveTemplate(name string) (string, error) {
-	tl := &TemplatesList{}
-	tl.FetchTemplates(name)
-	if len(tl.Results) > 1 {
-		return "", DuplicateNamesError
-	} else if len(tl.Results) < 1 {
-		return "", TemplateNotFoundError
-	}
-
-	id := utils.GetResourceID(*tl.Results[0].DocumentSelfLink)
-	return RemoveTemplateID(id)
-}
-
 //RemoveTemplateID removes template by ID passed as parameter.
 //Returns the ID of the removed template and error = nil or
 //ID = empty string and error != nil.
 func RemoveTemplateID(id string) (string, error) {
-	fullId, err := selflink.GetFullId(id, new(CompositeDescriptionList), utils.TEMPLATE)
+	fullId, err := selflink_utils.GetFullId(id, new(CompositeDescriptionList), common.TEMPLATE)
 	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForTemplate(fullId)
 	url := config.URL + link
@@ -331,7 +318,7 @@ func Export(id, dirF, format string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fullId, err := selflink.GetFullId(id, new(CompositeDescriptionList), utils.TEMPLATE)
+	fullId, err := selflink_utils.GetFullId(id, new(CompositeDescriptionList), common.TEMPLATE)
 	utils.CheckBlockingError(err)
 	url := config.URL + "/resources/composite-templates?selfLink=" + fullId
 	if format == "docker" {
@@ -396,7 +383,7 @@ type TemplateComponent struct {
 }
 
 func InspectID(id string) (string, error) {
-	fullId, err := selflink.GetFullId(id, new(CompositeDescriptionList), utils.TEMPLATE)
+	fullId, err := selflink_utils.GetFullId(id, new(CompositeDescriptionList), common.TEMPLATE)
 	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForTemplate(fullId)
 	url := config.URL + link
@@ -419,15 +406,15 @@ func InspectID(id string) (string, error) {
 		component := &TemplateComponent{}
 		component.Id = utils.GetResourceID(descLink)
 		switch template.GetResourceType(i) {
-		case utils.CONTAINER:
+		case common.CONTAINER:
 			component.ComponentType = Container_Description
 			cd := containers.GetContainerDescription(component.Id)
 			component.NetworksConnected = utils.ValuesToStrings(utils.GetMapKeys(cd.Networks))
 			component.Image = cd.Image.Value
-		case utils.NETWORK:
+		case common.NETWORK:
 			component.ComponentType = Network_Description
 			component.Name = GetNetworkDescriptionName(descLink)
-		case utils.CLOSURE:
+		case common.CLOSURE:
 			closureDescription := GetClosureDescription(component.Id)
 			component.ComponentType = Closure_Description
 			component.Name = closureDescription.Name
@@ -440,8 +427,8 @@ func InspectID(id string) (string, error) {
 }
 
 func GetNetworkDescriptionName(link string) string {
-	if !strings.Contains(link, urlutils.NetworkDescription.GetBaseUrl()) {
-		link = urlutils.NetworkDescription.GetBaseUrl() + link
+	if !strings.Contains(link, uri_utils.NetworkDescription.GetBaseUrl()) {
+		link = uri_utils.NetworkDescription.GetBaseUrl() + link
 	}
 	url := config.URL + link
 	req, _ := http.NewRequest("GET", url, nil)

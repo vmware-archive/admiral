@@ -16,28 +16,22 @@ import links from 'core/links';
 import constants from 'core/constants';
 import { NavigationActions} from 'actions/Actions';
 
-const TEMPLATE = `<div class="resource" v-on:click="showNetwork($event)">
-                    <div class="resource-details">
-                      <img class="resource-icon"
-                           src="image-assets/resource-icons/network-small.png"/>
-                      <div class="resource-label" :title="model.name">{{model.name}}</div>
-                      <div class="resource-actions" v-if="!isSystemNetwork">
-                        <a class="btn item-edit" v-on:click="onEdit($event)">
-                          <i class="fa fa-pencil"></i>
-                        </a>
-                        <a class="btn item-delete" v-on:click="onDelete($event)">
-                          <i class="fa fa-trash"></i>
-                        </a>
-                      </div>
-                    </div>
-                    <div class="resource-anchor-line" v-bind:class="{'shrink': !attached}"></div>
-                    <div class="resource-anchor">
-                      <div class="resource-label-drag">
-                        {{i18n('app.template.details.network.drag')}}</div>
-                      <div class="resource-label-drop">
-                        {{i18n('app.template.details.network.drop')}}</div>
-                    </div>
-                  </div>`;
+const TEMPLATE =
+  `<div class="resource" v-on:click="showNetwork($event)">
+    <div class="resource-details">
+      <img class="resource-icon" src="image-assets/resource-icons/network-small.png"/>
+      <div class="resource-label" :title="model.name">{{model.name}}</div>
+      <div v-if="!isSystemNetwork && (mode === 'create')" class="resource-actions">
+        <a class="btn item-edit" v-on:click="onEdit($event)"><i class="fa fa-pencil"></i></a>
+        <a class="btn item-delete" v-on:click="onDelete($event)"><i class="fa fa-trash"></i></a>
+      </div>
+    </div>
+    <div class="resource-anchor-line" v-bind:class="{'shrink': !attached}"></div>
+    <div class="resource-anchor">
+      <div class="resource-label-drag">{{i18n('app.template.details.network.drag')}}</div>
+      <div class="resource-label-drop">{{i18n('app.template.details.network.drop')}}</div>
+    </div>
+  </div>`;
 
 var removeConfirmationHolder = function($deleteConfirmationHolder) {
   utils.fadeOut($deleteConfirmationHolder, function() {
@@ -48,7 +42,13 @@ var removeConfirmationHolder = function($deleteConfirmationHolder) {
 var NetworkBox = Vue.extend({
   template: TEMPLATE,
   props: {
-    model: {required: true}
+    model: {
+      required: true
+    },
+    mode: {
+      required: false,
+      default: 'show'
+    }
   },
   data: function() {
     return {
@@ -75,6 +75,9 @@ var NetworkBox = Vue.extend({
     },
     isSystemNetwork: function() {
       return this.model && this.model.documentSelfLink.indexOf(links.SYSTEM_NETWORK_LINK) === 0;
+    },
+    isNewNetwork: function() {
+      return (this.mode === 'create' && !this.model.external);
     }
   },
   methods: {
@@ -123,7 +126,8 @@ var NetworkBox = Vue.extend({
       this.$dispatch('remove', this);
     },
     showNetwork(e) {
-      if (this.isConfirmDelete) {
+      if (this.isConfirmDelete || this.isNewNetwork) {
+        // if network is new - nowhere to navigate to.
          return;
       }
 

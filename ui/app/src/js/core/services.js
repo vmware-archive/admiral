@@ -1294,14 +1294,18 @@ services.updateStorageProfile = function(profile) {
 };
 
 services.updateStorageTags = function(storageItems) {
-  let promiseArray = [];
+  let promiseArray = [], tagAssignmentRequest;
   for (let storageItem of storageItems) {
     if (storageItem.tags && storageItem.tags.length) {
-      let tagAssignmentRequest = {
+      tagAssignmentRequest = {
         tagsToAssign: storageItem.tags
       };
-      promiseArray.push(this.updateTagAssignment(tagAssignmentRequest));
+    } else {
+      tagAssignmentRequest = {
+        tagsToAssign: []
+      };
     }
+    promiseArray.push(this.updateTagAssignment(tagAssignmentRequest));
   }
   return promiseArray;
 };

@@ -160,7 +160,7 @@ public class NetworkProfileServiceTest extends ComputeBaseTest {
 
         if (allocateSubnet) {
             // Allocate one subnet.
-            ComputeNetworkCIDRAllocationRequest request = allocationRequest("subnetLink");
+            ComputeNetworkCIDRAllocationRequest request = allocationRequest("subnetId");
             doPatch(request, ComputeNetworkCIDRAllocationState.class,
                     cidrAllocation.documentSelfLink);
         }

@@ -19,10 +19,12 @@ import (
 	"strings"
 
 	"admiral/client"
+	"admiral/common"
+	"admiral/common/base_types"
+	"admiral/common/utils"
+	"admiral/common/utils/selflink_utils"
+	"admiral/common/utils/uri_utils"
 	"admiral/config"
-	"admiral/utils"
-	"admiral/utils/selflink"
-	"admiral/utils/urlutils"
 )
 
 const (
@@ -33,7 +35,7 @@ const (
 
 var (
 	AddEndpointUrl   = "/config/endpoints?enumerate"
-	FetchEndpointUrl = urlutils.BuildUrl(urlutils.Endpoint, urlutils.GetCommonQueryMap(), true)
+	FetchEndpointUrl = uri_utils.BuildUrl(uri_utils.Endpoint, uri_utils.GetCommonQueryMap(), true)
 
 	RequiredParametersMissingError = errors.New("Required parameters are missing.")
 )
@@ -49,25 +51,17 @@ type EndpointProperties struct {
 }
 
 type Endpoint struct {
+	base_types.ServiceDocument
+
 	EndpointType       string              `json:"endpointType,omitempty"`
 	EndpointProperties *EndpointProperties `json:"endpointProperties,omitempty"`
 	Name               string              `json:"name,omitempty"`
-	DocumentSelfLink   string              `json:"documentSelfLink,omitempty"`
 
 	AuthCredentialsLink    string `json:"authCredentialsLink,omitempty"`
 	ComputeLink            string `json:"computeLink,omitempty"`
 	ComputeDescriptionLink string `json:"computeDescriptionLink,omitempty"`
 	ResourcePoolLink       string `json:"resourcePoolLink,omitempty"`
 	Id                     string `json:"id,omitempty"`
-
-	DocumentVersion              int    `json:"documentVersion,omitempty"`
-	DocumentEpoch                int64  `json:"documentEpoch,omitempty"`
-	DocumentKind                 string `json:"documentKind,omitempty"`
-	DocumentUpdateTimeMicros     int64  `json:"documentUpdateTimeMicros,omitempty"`
-	DocumentUpdateAction         string `json:"documentUpdateAction,omitempty"`
-	DocumentExpirationTimeMicros int64  `json:"documentExpirationTimeMicros,omitempty"`
-	DocumentOwner                string `json:"documentOwner,omitempty"`
-	DocumentAuthPrincipalLink    string `json:"documentAuthPrincipalLink,omitempty"`
 }
 
 func NewEndpoint(name, endpointType string) *Endpoint {
@@ -91,7 +85,7 @@ func (el *EndpointList) GetCount() int {
 	return len(el.DocumentLinks)
 }
 
-func (el *EndpointList) GetResource(index int) selflink.Identifiable {
+func (el *EndpointList) GetResource(index int) selflink_utils.Identifiable {
 	resource := el.Documents[el.DocumentLinks[index]]
 	return &resource
 }
@@ -101,7 +95,7 @@ func (el *EndpointList) Renew() {
 }
 
 func (el *EndpointList) FetchEndpoints() (int, error) {
-	url := urlutils.BuildUrl(urlutils.Endpoint, urlutils.GetCommonQueryMap(), true)
+	url := uri_utils.BuildUrl(uri_utils.Endpoint, uri_utils.GetCommonQueryMap(), true)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -114,7 +108,7 @@ func (el *EndpointList) FetchEndpoints() (int, error) {
 
 func (el *EndpointList) GetOutputString() string {
 	if el.GetCount() < 1 {
-		return utils.NoElementsFoundMessage
+		return selflink_utils.NoElementsFoundMessage
 	}
 	var buffer bytes.Buffer
 	buffer.WriteString("ID\tNAME\tTYPE\n")
@@ -172,9 +166,9 @@ func processEndpointAddRequest(endpoint *Endpoint) (string, error) {
 	jsonBody, err := json.Marshal(endpoint)
 	utils.CheckBlockingError(err)
 
-	cqm := urlutils.GetCommonQueryMap()
+	cqm := uri_utils.GetCommonQueryMap()
 	cqm["enumerate"] = true
-	url := urlutils.BuildUrl(urlutils.Endpoint, cqm, true)
+	url := uri_utils.BuildUrl(uri_utils.Endpoint, cqm, true)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	req.Header.Set("Pragma", "xn-force-index-update")
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -191,7 +185,7 @@ func processEndpointAddRequest(endpoint *Endpoint) (string, error) {
 }
 
 func RemoveEndpoint(id string) (string, error) {
-	fullId, err := selflink.GetFullId(id, new(EndpointList), utils.ENDPOINT)
+	fullId, err := selflink_utils.GetFullId(id, new(EndpointList), common.ENDPOINT)
 	utils.CheckBlockingError(err)
 
 	url := config.URL + utils.CreateResLinkForEndpoint(fullId)
@@ -205,7 +199,7 @@ func RemoveEndpoint(id string) (string, error) {
 }
 
 func getEndpoint(id string) (*Endpoint, error) {
-	fullId, err := selflink.GetFullId(id, new(EndpointList), utils.ENDPOINT)
+	fullId, err := selflink_utils.GetFullId(id, new(EndpointList), common.ENDPOINT)
 	utils.CheckBlockingError(err)
 
 	url := config.URL + utils.CreateResLinkForEndpoint(fullId)
@@ -300,7 +294,7 @@ func processEndpointUpdateRequest(endpoint *Endpoint) (string, error) {
 	jsonBody, err := json.Marshal(endpoint)
 	utils.CheckBlockingError(err)
 
-	url := urlutils.BuildUrl(urlutils.Endpoint, nil, true) + utils.CreateResLinkForEndpoint(endpoint.GetID())
+	url := uri_utils.BuildUrl(uri_utils.Endpoint, nil, true) + utils.CreateResLinkForEndpoint(endpoint.GetID())
 	req, _ := http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
 	req.Header.Set("Pragma", "xn-force-index-update")
 	_, _, respErr := client.ProcessRequest(req)

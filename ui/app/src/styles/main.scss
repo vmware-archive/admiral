@@ -15,6 +15,7 @@
 @import "clarity-ui.min.css";
 @import "radialProgress.css";
 
+@import "components/machine-details";
 @import "components/inline-editable-list";
 @import "components/list-views";
 @import "components/container-details";
@@ -232,7 +233,7 @@ textarea {
 .btn-circle .fa-plus {
   transform: translate(0.04em, 0);
 }
-.refresh-button, .import-template {
+.refresh-button {
   display: inline-block;
   margin-left: 10px;
 }
@@ -305,13 +306,6 @@ textarea {
   text-decoration: none;
 }
 
-.toolbar > .new-item:last-child {
-  font-size: 16px;
-  font-weight: 200;
-  letter-spacing: 0.02em;
-  position: relative;
-  top: 2px;
-}
 .btn-circle .fa.fa-play {
   transform: translate(1px, 0);
 }

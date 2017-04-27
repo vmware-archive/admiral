@@ -11,6 +11,10 @@
 
 import MachineDetailsViewVue from 'components/machines/MachineDetailsViewVue.html';
 import Component from 'components/common/Component';
+import MaximizableBehaviour from 'components/common/MaximizableBehaviour'; //eslint-disable-line
+import MachineStats from 'components/machines/MachineStats'; //eslint-disable-line
+
+import utils from 'core/utils';
 
 Vue.component('machine-details', {
   template: MachineDetailsViewVue,
@@ -31,11 +35,18 @@ Vue.component('machine-details', {
     },
     generalError() {
       return this.hasGeneralError ? this.model.validationErrors._generic : '';
+    },
+
+    endpointIconSrc() {
+      return utils.getAdapter(this.model.instance.endpoint.endpointType).iconSrc;
     }
   },
 
   methods: {
-    refresh: function() {
+    refresh: function() {},
+
+    stateMessage(state) {
+      return i18n.t('state.' + state);
     }
   }
 });

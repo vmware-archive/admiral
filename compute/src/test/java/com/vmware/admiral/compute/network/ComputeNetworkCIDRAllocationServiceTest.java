@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.commons.net.util.SubnetUtils;
 import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
@@ -117,15 +118,16 @@ public class ComputeNetworkCIDRAllocationServiceTest extends Suite {
             return state.documentSelfLink;
         }
 
-        String createSubnet(int index) throws Throwable {
+        SubnetState createSubnet(int index) throws Throwable {
             SubnetState subnet = new SubnetState();
+            subnet.id = UUID.randomUUID().toString();
             subnet.name = "isolatedSubnet" + index;
             subnet.networkLink = NETWORK_LINK;
             subnet.subnetCIDR = "0.0.0.0/16";
 
             subnet = doPost(subnet, SubnetService.FACTORY_LINK);
 
-            return subnet.documentSelfLink;
+            return subnet;
         }
     }
 
@@ -191,27 +193,27 @@ public class ComputeNetworkCIDRAllocationServiceTest extends Suite {
         @Test
         public void testCompleteFlow() throws Throwable {
             String cidrAllocationLink = this.createNetworkCIDRAllocationState();
-            String[] subnetLinks = new String[config.numberOfAllocationRequests];
+            String[] subnetIds = new String[config.numberOfAllocationRequests];
 
             // Allocate
             for (int i = 0; i < config.numberOfAllocationRequests; i++) {
-                String subnetLink = createSubnet(i);
-                subnetLinks[i] = subnetLink;
+                SubnetState subnet = createSubnet(i);
+                subnetIds[i] = subnet.id;
 
-                ComputeNetworkCIDRAllocationRequest request = allocationRequest(subnetLink);
+                ComputeNetworkCIDRAllocationRequest request = allocationRequest(subnet.id);
 
                 ComputeNetworkCIDRAllocationState allocation =
                         doPatch(request, ComputeNetworkCIDRAllocationState.class,
                                 cidrAllocationLink);
 
-                String lastAllocatedCIDR = allocation.allocatedCIDRs.get(request.subnetLink);
+                String lastAllocatedCIDR = allocation.allocatedCIDRs.get(request.subnetId);
                 assertNotNull(lastAllocatedCIDR);
                 assertTrue(NETWORK_INFO.isInRange(lastAllocatedCIDR.split("/")[0]));
                 assertEquals(SUBNET_CIDRS[i], lastAllocatedCIDR);
 
                 assertNotNull(allocation.allocatedCIDRs);
                 assertEquals(i + 1, allocation.allocatedCIDRs.size());
-                assertTrue(allocation.allocatedCIDRs.containsKey(request.subnetLink));
+                assertTrue(allocation.allocatedCIDRs.containsKey(request.subnetId));
             }
 
             // Deallocate
@@ -219,13 +221,13 @@ public class ComputeNetworkCIDRAllocationServiceTest extends Suite {
                 for (int i = 0; i < config.numberOfDeallocationRequests; i++) {
                     // Now deallocate.
                     ComputeNetworkCIDRAllocationRequest deallocationRequest =
-                            deallocationRequest(subnetLinks[i]);
+                            deallocationRequest(subnetIds[i]);
 
                     ComputeNetworkCIDRAllocationState deallocation = doPatch(deallocationRequest,
                             ComputeNetworkCIDRAllocationState.class, cidrAllocationLink);
 
                     assertFalse(deallocation.allocatedCIDRs
-                            .containsKey(deallocationRequest.subnetLink));
+                            .containsKey(deallocationRequest.subnetId));
                     assertFalse(deallocation.allocatedCIDRs.containsValue(SUBNET_CIDRS[i]));
                     assertTrue(deallocation.deallocatedCIDRs.contains(SUBNET_CIDRS[i]));
                 }
@@ -241,7 +243,7 @@ public class ComputeNetworkCIDRAllocationServiceTest extends Suite {
                             doPatch(request, ComputeNetworkCIDRAllocationState.class,
                                     cidrAllocationLink);
                     assertEquals(SUBNET_CIDRS[i],
-                            allocation.allocatedCIDRs.get(request.subnetLink));
+                            allocation.allocatedCIDRs.get(request.subnetId));
                 }
             }
         }

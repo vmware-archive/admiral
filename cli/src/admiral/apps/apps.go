@@ -19,30 +19,33 @@ import (
 	"strings"
 
 	"admiral/client"
+	"admiral/common"
+	"admiral/common/base_types"
+	"admiral/common/utils"
+	"admiral/common/utils/selflink_utils"
+	"admiral/common/utils/uri_utils"
 	"admiral/config"
 	"admiral/containers"
-	"admiral/utils"
-	"admiral/utils/selflink"
-	"admiral/utils/urlutils"
 )
 
 type App struct {
+	base_types.ServiceDocument
+
 	Name                     string   `json:"name"`
 	CompositeDescriptionLink string   `json:"compositeDescriptionLink"`
-	DocumentSelfLink         string   `json:"documentSelfLink"`
 	ComponentLinks           []string `json:"componentLinks"`
 }
 
 // IsContainer returns boolean which specify if the
 // component at the given index is container.
-func (a *App) GetComponentResourceType(index int) utils.ResourceType {
+func (a *App) GetComponentResourceType(index int) common.ResourceType {
 	link := a.ComponentLinks[index]
 	if strings.Contains(link, "/containers/") {
-		return utils.CONTAINER
+		return common.CONTAINER
 	} else if strings.Contains(link, "/closures/") {
-		return utils.CLOSURE
+		return common.CLOSURE
 	} else if strings.Contains(link, "/container-networks/") {
-		return utils.NETWORK
+		return common.NETWORK
 	}
 	return -1
 }
@@ -94,14 +97,14 @@ type ListApps struct {
 }
 
 // GetCount returns the count of fetched applications.
-// It is used to implement the interface selflink.ResourceList
+// It is used to implement the interface utils.ResourceList
 func (la *ListApps) GetCount() int {
 	return len(la.DocumentLinks)
 }
 
 // GetResource returns resource at the specified index,
-// which resource implements the interface selflink.Identifiable.
-func (la *ListApps) GetResource(index int) selflink.Identifiable {
+// which resource implements the interface selflink_utils.Identifiable.
+func (la *ListApps) GetResource(index int) selflink_utils.Identifiable {
 	resource := la.Documents[la.DocumentLinks[index]]
 	return &resource
 }
@@ -113,11 +116,11 @@ func (la *ListApps) Renew() {
 // FetchApps makes REST call to populate ListApps object
 // with Apps. The url of this call is /resources/composite-components/
 func (la *ListApps) FetchApps(queryF string) (int, error) {
-	cqm := urlutils.GetCommonQueryMap()
+	cqm := uri_utils.GetCommonQueryMap()
 	if strings.TrimSpace(queryF) != "" {
 		cqm["$filter"] = fmt.Sprintf("ALL_FIELDS+eq+'*%s*'", queryF)
 	}
-	url := urlutils.BuildUrl(urlutils.CompositeComponent, cqm, true)
+	url := uri_utils.BuildUrl(uri_utils.CompositeComponent, cqm, true)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -133,14 +136,15 @@ func (la *ListApps) FetchApps(queryF string) (int, error) {
 // this string requires formatting before printing it to the console.
 func (listApps *ListApps) GetOutputStringWithoutContainers() string {
 	if listApps.GetCount() < 1 {
-		return utils.NoElementsFoundMessage
+		return common.NoElementsFoundMessage
 	}
 	var buffer bytes.Buffer
 	buffer.WriteString("ID\tNAME\tCONTAINERS\tNETWORKS\tCLOSURES")
 	buffer.WriteString("\n")
 	for _, link := range listApps.DocumentLinks {
 		app := listApps.Documents[link]
-		output := utils.GetTabSeparatedString(app.GetID(), app.Name, app.GetContainersCount(), app.GetNetworksCount(), app.GetClosuresCount())
+		output := utils.GetTabSeparatedString(app.GetID(), app.Name, app.GetContainersCount(),
+			app.GetNetworksCount(), app.GetClosuresCount())
 		buffer.WriteString(output)
 		buffer.WriteString("\n")
 	}

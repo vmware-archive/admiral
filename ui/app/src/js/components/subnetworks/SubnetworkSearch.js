@@ -70,21 +70,22 @@ export default Vue.component('subnetwork-search', {
     };
   },
   methods: {
-    renderSubnetwork(network) {
+    renderSubnetwork(subnetwork) {
       let props = [
-        i18n.t('app.profile.edit.cidrLabel') + ': ' + network.subnetCIDR
+        i18n.t('app.profile.edit.cidrLabel') + ': ' + subnetwork.subnetCIDR,
+        i18n.t('app.profile.edit.networkLabel') + ': ' + subnetwork.networkName
       ];
-      if (network.supportPublicIpAddress) {
+      if (subnetwork.supportPublicIpAddress) {
         props.push(i18n.t('app.profile.edit.supportPublicIpAddressLabel'));
       }
-      if (network.defaultForZone) {
+      if (subnetwork.defaultForZone) {
         props.push(i18n.t('app.profile.edit.defaultForZoneLabel'));
       }
       let secondary = props.join(', ');
       return `
         <div>
-          <div class="host-picker-item-primary" title="${network.name}">
-            core ${utils.escapeHtml(network.name)}
+          <div class="host-picker-item-primary" title="${subnetwork.name}">
+            core ${utils.escapeHtml(subnetwork.name)}
           </div>
           <div class="host-picker-item-secondary" title="${secondary}">
             ${secondary}
@@ -95,7 +96,13 @@ export default Vue.component('subnetwork-search', {
       return new Promise((resolve, reject) => {
         services.searchSubnetworks.apply(null,
             [this.endpoint.documentSelfLink, ...args]).then((result) => {
-          resolve(result);
+          let networkLinks = [...new Set(result.items.map((item) => item.networkLink))];
+          services.loadNetworks(this.endpoint.documentSelfLink, networkLinks).then((networks) => {
+            result.items.forEach((item) => {
+              item.networkName = networks[item.networkLink].name;
+            });
+            resolve(result);
+          });
         }).catch(reject);
       });
     },

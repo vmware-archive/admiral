@@ -18,19 +18,21 @@ import (
 	"net/http"
 	"strings"
 
-	"admiral/businessgroups"
+	"admiral/business_groups"
 	"admiral/client"
+	"admiral/common"
+	"admiral/common/base_types"
+	"admiral/common/utils"
+	"admiral/common/utils/selflink_utils"
+	"admiral/common/utils/uri_utils"
 	"admiral/config"
 	"admiral/images"
 	"admiral/projects"
 	"admiral/track"
-	"admiral/utils"
-	"admiral/utils/selflink"
-	"admiral/utils/urlutils"
 )
 
 type LogConfig struct {
-	Type utils.NilString `json:"type"`
+	Type common.NilString `json:"type"`
 }
 
 func (lc *LogConfig) SetType(s string) error {
@@ -38,33 +40,35 @@ func (lc *LogConfig) SetType(s string) error {
 		s == "syslog" || s == "journald" || s == "gelf" ||
 		s == "fluentd" || s == "awslogs" || s == "splunk" ||
 		s == "etwlogs" || s == "gcplogs" {
-		lc.Type = utils.NilString{s}
+		lc.Type = common.NilString{s}
 		return nil
 	}
 	return errors.New("Invalid log driver.")
 }
 
 type ContainerDescription struct {
-	Image              utils.NilString        `json:"image"`
-	Name               utils.NilString        `json:"name"`
-	ClusterSize        utils.NilInt32         `json:"_cluster"`
+	base_types.ServiceDocument
+
+	Image              common.NilString       `json:"image"`
+	Name               common.NilString       `json:"name"`
+	ClusterSize        common.NilInt32        `json:"_cluster"`
 	Commands           []string               `json:"command"`
-	CpuShares          utils.NilString        `json:"cpuShares"`
-	DeploymentPolicyID utils.NilString        `json:"deploymentPolicyId"`
+	CpuShares          common.NilString       `json:"cpuShares"`
+	DeploymentPolicyID common.NilString       `json:"deploymentPolicyId"`
 	Env                []string               `json:"env"`
 	ExposeServices     []string               `json:"exposeService"`
-	Hostname           utils.NilString        `json:"hostname"`
+	Hostname           common.NilString       `json:"hostname"`
 	Links              []string               `json:"links"`
 	LogConfig          LogConfig              `json:"logConfig"`
 	Networks           map[string]interface{} `json:"networks"`
-	MaximumRetryCount  utils.NilInt32         `json:"maximumRetryCount"`
-	MemoryLimit        utils.NilInt64         `json:"memoryLimit"`
-	MemorySwapLimit    utils.NilInt64         `json:"memorySwapLimit"`
-	NetworkMode        utils.NilString        `json:"networkMode"`
+	MaximumRetryCount  common.NilInt32        `json:"maximumRetryCount"`
+	MemoryLimit        common.NilInt64        `json:"memoryLimit"`
+	MemorySwapLimit    common.NilInt64        `json:"memorySwapLimit"`
+	NetworkMode        common.NilString       `json:"networkMode"`
 	PortBindings       []Port                 `json:"portBindings"`
 	PublishAll         bool                   `json:"publishAll"`
-	RestartPolicy      utils.NilString        `json:"restartPolicy"`
-	WorkingDir         utils.NilString        `json:"workingDir"`
+	RestartPolicy      common.NilString       `json:"restartPolicy"`
+	WorkingDir         common.NilString       `json:"workingDir"`
 	Volumes            []string               `json:"volumes"`
 }
 
@@ -72,20 +76,20 @@ func (cd *ContainerDescription) SetImage(imageName string) error {
 	if imageName == "" {
 		return errors.New("Empty image name.")
 	}
-	cd.Image = utils.NilString{imageName}
+	cd.Image = common.NilString{imageName}
 	return nil
 }
 
 func (cd *ContainerDescription) SetName(name string) error {
 	if name != "" {
-		cd.Name = utils.NilString{name}
+		cd.Name = common.NilString{name}
 		return nil
 	}
 	if name == "" && cd.Image.Value != "" {
 		splittedImageName := strings.Split(cd.Image.Value, "/")
 		nameToSet := splittedImageName[len(splittedImageName)-1]
 		nameToSet = strings.Split(nameToSet, ":")[0]
-		cd.Name = utils.NilString{nameToSet}
+		cd.Name = common.NilString{nameToSet}
 		return nil
 	}
 	if name == "" {
@@ -98,7 +102,7 @@ func (cd *ContainerDescription) SetClusterSize(clusterSize int32) error {
 	if clusterSize <= 0 {
 		return errors.New("Cluster size cannot be negative or 0 number.")
 	}
-	cd.ClusterSize = utils.NilInt32{clusterSize}
+	cd.ClusterSize = common.NilInt32{clusterSize}
 	return nil
 }
 
@@ -107,11 +111,11 @@ func (cd *ContainerDescription) SetCommands(commands []string) {
 }
 
 func (cd *ContainerDescription) SetCpuShares(cpuShares string) {
-	cd.CpuShares = utils.NilString{cpuShares}
+	cd.CpuShares = common.NilString{cpuShares}
 }
 
 func (cd *ContainerDescription) SetDeploymentPolicyId(dpId string) {
-	cd.DeploymentPolicyID = utils.NilString{dpId}
+	cd.DeploymentPolicyID = common.NilString{dpId}
 }
 
 func (cd *ContainerDescription) SetEnvVars(envVars []string) {
@@ -129,7 +133,7 @@ func (cd *ContainerDescription) SetExposeServices(exposeServices []string) {
 }
 
 func (cd *ContainerDescription) SetHostName(hostName string) {
-	cd.Hostname = utils.NilString{hostName}
+	cd.Hostname = common.NilString{hostName}
 }
 
 func (cd *ContainerDescription) SetLinks(links []string) {
@@ -150,7 +154,7 @@ func (cd *ContainerDescription) SetLogConfig(logDriver string) error {
 }
 
 func (cd *ContainerDescription) SetMaxRetryCount(maxRetries int32) {
-	cd.MaximumRetryCount = utils.NilInt32{maxRetries}
+	cd.MaximumRetryCount = common.NilInt32{maxRetries}
 }
 
 func (cd *ContainerDescription) SetMemoryLimit(memoryLimit int64) error {
@@ -160,7 +164,7 @@ func (cd *ContainerDescription) SetMemoryLimit(memoryLimit int64) error {
 	if memoryLimit > 0 && memoryLimit < 4194304 {
 		return errors.New("Memory limit should be at least 4194304 bytes (4MB)")
 	}
-	cd.MemoryLimit = utils.NilInt64{memoryLimit}
+	cd.MemoryLimit = common.NilInt64{memoryLimit}
 	return nil
 }
 
@@ -168,7 +172,7 @@ func (cd *ContainerDescription) SetMemorySwapLimit(memorySwapLimit int64) error 
 	if memorySwapLimit <= -1 {
 		return errors.New("Memory swap limit cannot be less than -1.")
 	}
-	cd.MemorySwapLimit = utils.NilInt64{memorySwapLimit}
+	cd.MemorySwapLimit = common.NilInt64{memorySwapLimit}
 	return nil
 }
 
@@ -176,7 +180,7 @@ func (cd *ContainerDescription) SetNetworkMode(networkMode string) error {
 	if networkMode != "none" && networkMode != "host" && networkMode != "bridge" {
 		return errors.New("Invalid network mode.")
 	}
-	cd.NetworkMode = utils.NilString{networkMode}
+	cd.NetworkMode = common.NilString{networkMode}
 	return nil
 }
 
@@ -202,12 +206,12 @@ func (cd *ContainerDescription) SetRestartPolicy(restartPolicy string) error {
 	if restartPolicy != "no" && restartPolicy != "always" && restartPolicy != "on-failure" {
 		return errors.New("Invalid restart policy.")
 	}
-	cd.RestartPolicy = utils.NilString{restartPolicy}
+	cd.RestartPolicy = common.NilString{restartPolicy}
 	return nil
 }
 
 func (cd *ContainerDescription) SetWorkingDir(workingDir string) {
-	cd.WorkingDir = utils.NilString{workingDir}
+	cd.WorkingDir = common.NilString{workingDir}
 }
 
 func (cd *ContainerDescription) SetVolumes(volumes []string) {
@@ -225,7 +229,7 @@ func (cd *ContainerDescription) RunContainer(tenantLinkId string, asyncTask bool
 		return "", err
 	}
 
-	url := urlutils.BuildUrl(urlutils.RequestBrokerService, nil, true)
+	url := uri_utils.BuildUrl(uri_utils.RequestBrokerService, nil, true)
 	runContainer := &RunContainer{
 		ResourceType:            "DOCKER_CONTAINER",
 		ResourceDescriptionLink: linkToRun,
@@ -253,7 +257,7 @@ func (cd *ContainerDescription) RunContainer(tenantLinkId string, asyncTask bool
 // Resource Description Link needed to provision container.
 func (cd *ContainerDescription) getContainerDescriptionRunLink() (string, error) {
 	var runLink string
-	url := urlutils.BuildUrl(urlutils.ContainerDescription, nil, true)
+	url := uri_utils.BuildUrl(uri_utils.ContainerDescription, nil, true)
 	jsonBody, err := json.MarshalIndent(cd, "", "    ")
 	utils.CheckBlockingError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
@@ -281,12 +285,12 @@ func (rc *RunContainer) setTenantLink(tenantLinkId string) {
 	}
 	tenantLinks := make([]string, 0)
 	if !utils.IsVraMode {
-		fullProjectId, err := selflink.GetFullId(tenantLinkId, new(projects.ProjectList), utils.PROJECT)
+		fullProjectId, err := selflink_utils.GetFullId(tenantLinkId, new(projects.ProjectList), common.PROJECT)
 		utils.CheckBlockingError(err)
 		projectLink := utils.CreateResLinkForProject(fullProjectId)
 		tenantLinks = append(tenantLinks, projectLink)
 	} else {
-		fullBusinessGroupId, err := businessgroups.GetFullId(tenantLinkId)
+		fullBusinessGroupId, err := business_groups.GetFullId(tenantLinkId)
 		utils.CheckBlockingError(err)
 		businessGroupLink := utils.CreateResLinkForBusinessGroup(fullBusinessGroupId, config.TENANT)
 		tenantLinks = append(tenantLinks, businessGroupLink)

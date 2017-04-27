@@ -13,6 +13,7 @@ package com.vmware.admiral.compute.profile;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.service.common.MultiTenantDocument;
@@ -37,7 +38,7 @@ public class StorageProfileService extends StatefulService {
          * Tags to be specified in the blueprint against each disk. To
          *  be used in filtering which storage item is to be used
          */
-        public List<String> tagLinks;
+        public Set<String> tagLinks;
         /**
          * Map of storage properties that
          * are to be used by the provider when provisioning disks

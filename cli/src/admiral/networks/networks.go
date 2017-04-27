@@ -22,12 +22,14 @@ import (
 	"strings"
 
 	"admiral/client"
+	"admiral/common"
+	"admiral/common/base_types"
+	"admiral/common/utils"
+	"admiral/common/utils/selflink_utils"
+	"admiral/common/utils/uri_utils"
 	"admiral/config"
 	"admiral/hosts"
 	"admiral/track"
-	"admiral/utils"
-	"admiral/utils/selflink"
-	"admiral/utils/urlutils"
 )
 
 var (
@@ -35,6 +37,8 @@ var (
 )
 
 type Network struct {
+	base_types.ServiceDocument
+
 	Name                     string            `json:"name,omitempty"`
 	External                 bool              `json:"external,omitempty"`
 	Driver                   string            `json:"driver,omitempty"`
@@ -45,7 +49,6 @@ type Network struct {
 	Id                       string            `json:"id,omitempty"`
 	Options                  map[string]string `json:"options,omitempty"`
 	CustomProperties         map[string]string `json:"customProperties"`
-	DocumentSelfLink         string            `json:"documentSelfLink,omitempty"`
 }
 
 func (n *Network) SetName(name string) {
@@ -148,7 +151,7 @@ func (nl *NetworkList) GetCount() int {
 	return len(nl.DocumentLinks)
 }
 
-func (nl *NetworkList) GetResource(index int) selflink.Identifiable {
+func (nl *NetworkList) GetResource(index int) selflink_utils.Identifiable {
 	resource := nl.Documents[nl.DocumentLinks[index]]
 	return &resource
 }
@@ -158,7 +161,7 @@ func (nl *NetworkList) Renew() {
 }
 
 type NetworkDescription struct {
-	DocumentSelfLink string `json:"documentSelfLink"`
+	base_types.ServiceDocument
 }
 
 type NetworkOperation struct {
@@ -170,7 +173,7 @@ type NetworkOperation struct {
 }
 
 func (no *NetworkOperation) SetHosts(hostsIds []string) {
-	fullHostIds, err := selflink.GetFullIds(hostsIds, new(hosts.HostsList), utils.HOST)
+	fullHostIds, err := selflink_utils.GetFullIds(hostsIds, new(hosts.HostsList), common.HOST)
 	utils.CheckBlockingError(err)
 	if len(fullHostIds) < 1 {
 		return
@@ -180,7 +183,7 @@ func (no *NetworkOperation) SetHosts(hostsIds []string) {
 }
 
 func (nl *NetworkList) FetchNetworks() (int, error) {
-	url := urlutils.BuildUrl(urlutils.Network, urlutils.GetCommonQueryMap(), true)
+	url := uri_utils.BuildUrl(uri_utils.Network, uri_utils.GetCommonQueryMap(), true)
 	req, err := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -209,7 +212,7 @@ func (nl *NetworkList) GetOutputString() string {
 }
 
 func RemoveNetwork(ids []string, asyncTask bool) ([]string, error) {
-	fullIds, err := selflink.GetFullIds(ids, new(NetworkList), utils.NETWORK)
+	fullIds, err := selflink_utils.GetFullIds(ids, new(NetworkList), common.NETWORK)
 	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForNetwork(fullIds)
 	no := &NetworkOperation{
@@ -223,7 +226,7 @@ func RemoveNetwork(ids []string, asyncTask bool) ([]string, error) {
 }
 
 func InspectNetwork(id string) (string, error) {
-	fullIds, err := selflink.GetFullIds([]string{id}, new(NetworkList), utils.NETWORK)
+	fullIds, err := selflink_utils.GetFullIds([]string{id}, new(NetworkList), common.NETWORK)
 	utils.CheckBlockingError(err)
 	links := utils.CreateResLinksForNetwork(fullIds)
 	url := config.URL + links[0]
@@ -252,7 +255,7 @@ func CreateNetwork(name, networkDriver, ipamDriver string,
 	network.SetCustomProperties(customProperties)
 	network.SetIPAMConfig(subnets, gateways, ipranges, ipamDriver)
 
-	url := urlutils.BuildUrl(urlutils.NetworkDescription, nil, true)
+	url := uri_utils.BuildUrl(uri_utils.NetworkDescription, nil, true)
 	jsonBody, err := json.Marshal(network)
 	utils.CheckBlockingError(err)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
@@ -278,7 +281,7 @@ func CreateNetwork(name, networkDriver, ipamDriver string,
 func processNetworkOperation(no *NetworkOperation, asyncTask bool) ([]string, error) {
 	jsonBody, err := json.Marshal(no)
 	utils.CheckBlockingError(err)
-	url := urlutils.BuildUrl(urlutils.RequestBrokerService, nil, true)
+	url := uri_utils.BuildUrl(uri_utils.RequestBrokerService, nil, true)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {

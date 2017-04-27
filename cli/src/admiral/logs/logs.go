@@ -17,31 +17,35 @@ import (
 	"net/http"
 
 	"admiral/client"
+	"admiral/common"
+	"admiral/common/base_types"
+	"admiral/common/utils"
+	"admiral/common/utils/selflink_utils"
+	"admiral/common/utils/uri_utils"
 	"admiral/containers"
-	"admiral/utils"
-	"admiral/utils/selflink"
-	"admiral/utils/urlutils"
 )
 
-type LogResponse struct {
+type LogServiceState struct {
+	base_types.ServiceDocument
+
 	Logs string `json:"logs"`
 }
 
 func GetLog(id string, since int) (string, error) {
-	fullId, err := selflink.GetFullId(id, new(containers.ContainersList), utils.CONTAINER)
+	fullId, err := selflink_utils.GetFullId(id, new(containers.ContainersList), common.CONTAINER)
 	utils.CheckBlockingError(err)
 
 	queryMap := make(map[string]interface{})
 	queryMap["id"] = fullId
 	queryMap["since"] = since
-	url := urlutils.BuildUrl(urlutils.ContainerLogs, queryMap, true)
+	url := uri_utils.BuildUrl(uri_utils.ContainerLogs, queryMap, true)
 
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
 		return "", respErr
 	}
-	lresp := &LogResponse{}
+	lresp := &LogServiceState{}
 	err = json.Unmarshal(respBody, lresp)
 	utils.CheckBlockingError(err)
 	log, err := base64.StdEncoding.DecodeString(lresp.Logs)

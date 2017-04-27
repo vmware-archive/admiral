@@ -1,8 +1,7 @@
 @import "components/inline-delete-confirmation";
 
 .right-context-panel .inline-editable-list, .right-context-panel .requests-list, .right-context-panel .eventlog-list {
-  /*position: relative;*/
-  margin: 30px 20px 20px;
+  margin: 20px 20px 20px;
 }
 
 .inline-editable-list > .title, .requests-list > .title, .eventlog-list > .title {
@@ -24,14 +23,10 @@
   margin-bottom: 16px;
 }
 
-.inline-editable-list .toolbar {
-  display: inline;
-  float: right;
-}
-
 .inline-editable-list > .table,
 .inline-editable-list > div > .table {
   table-layout: fixed;
+  margin: 0;
   .inline-editable-list > .table {
     margin: 0 0 10px;
     > thead th,

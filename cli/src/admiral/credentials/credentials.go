@@ -24,14 +24,14 @@ import (
 	"syscall"
 
 	"admiral/client"
+	"admiral/common"
+	"admiral/common/utils"
 	"admiral/config"
 	"admiral/properties"
-	"admiral/utils"
 
-	"admiral/utils/selflink"
-
-	"admiral/utils/urlutils"
-
+	"admiral/common/base_types"
+	"admiral/common/utils/selflink_utils"
+	"admiral/common/utils/uri_utils"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -45,12 +45,13 @@ type CustomProperties struct {
 }
 
 type Credentials struct {
+	base_types.ServiceDocument
+
 	UserEmail        string             `json:"userEmail"`
 	PrivateKey       string             `json:"privateKey,omitempty"`
 	PublicKey        string             `json:"publicKey,omitempty"`
 	Type             string             `json:"type,omitempty"`
 	CustomProperties map[string]*string `json:"customProperties"`
-	DocumentSelfLink string             `json:"documentSelfLink,omitempty"`
 }
 
 func (c *Credentials) GetID() string {
@@ -72,7 +73,7 @@ type CredentialsList struct {
 	DocumentLinks []string               `json:"documentLinks"`
 }
 
-func (lc *CredentialsList) GetResource(index int) selflink.Identifiable {
+func (lc *CredentialsList) GetResource(index int) selflink_utils.Identifiable {
 	resource := lc.Documents[lc.DocumentLinks[index]]
 	return &resource
 }
@@ -88,9 +89,9 @@ func (cl *CredentialsList) Renew() {
 //FetchCredentials fetches all credentials. It return the count
 //of fetched credentials.
 func (lc *CredentialsList) FetchCredentials() (int, error) {
-	cqm := urlutils.GetCommonQueryMap()
+	cqm := uri_utils.GetCommonQueryMap()
 	cqm["$filter"] = "customProperties/scope%20ne%20%27SYSTEM%27"
-	url := urlutils.BuildUrl(urlutils.Credentials, cqm, true)
+	url := uri_utils.BuildUrl(uri_utils.Credentials, cqm, true)
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
 	if respErr != nil {
@@ -104,7 +105,7 @@ func (lc *CredentialsList) FetchCredentials() (int, error) {
 //Print prints already fetched credentials.
 func (lc *CredentialsList) GetOutputString() string {
 	if lc.GetCount() < 1 {
-		return utils.NoElementsFoundMessage
+		return selflink_utils.NoElementsFoundMessage
 	}
 	var buffer bytes.Buffer
 	buffer.WriteString("ID\tNAME\tTYPE")
@@ -172,7 +173,7 @@ func GetCredentialsLinks(name string) []string {
 //take a look at "properties" package.
 func AddByUsername(name, userName, passWord string,
 	custProps []string) (string, error) {
-	url := urlutils.BuildUrl(urlutils.Credentials, nil, true)
+	url := uri_utils.BuildUrl(uri_utils.Credentials, nil, true)
 	reader := bufio.NewReader(os.Stdin)
 
 	if userName == "" {
@@ -220,7 +221,7 @@ func AddByUsername(name, userName, passWord string,
 //take a look at "properties" package.
 func AddByCert(name, publicCert, privateCert string,
 	custProps []string) (string, error) {
-	url := urlutils.BuildUrl(urlutils.Credentials, nil, true)
+	url := uri_utils.BuildUrl(uri_utils.Credentials, nil, true)
 	bytePrivate, err := ioutil.ReadFile(privateCert)
 	if err != nil {
 		return "", err
@@ -255,27 +256,11 @@ func AddByCert(name, publicCert, privateCert string,
 	return creds.GetID(), nil
 }
 
-//RemoveCredentials removes credentials by name that is passed as parameter.
-//Returns the ID of the removed credentials and error which is != nil if
-//none or more that one credentials have the same name or if the response code
-//is different from 200.
-func RemoveCredentials(name string) (string, error) {
-	links := GetCredentialsLinks(name)
-	if len(links) < 1 {
-		return "", CredentialsNotFoundError
-	}
-
-	if len(links) > 1 {
-		return "", DuplicateNamesError
-	}
-	return RemoveCredentialsID(links[0])
-}
-
 //RemoveCredentialsID removes credentials by ID that is passed as parameter.
 //Returns the ID of removed credentials and error which is != nil if
 //the response code is different from 200.
 func RemoveCredentialsID(id string) (string, error) {
-	fullId, err := selflink.GetFullId(id, new(CredentialsList), utils.CREDENTIALS)
+	fullId, err := selflink_utils.GetFullId(id, new(CredentialsList), common.CREDENTIALS)
 	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForCredentials(fullId)
 	url := config.URL + link
@@ -287,31 +272,13 @@ func RemoveCredentialsID(id string) (string, error) {
 	return fullId, nil
 }
 
-//EditCredentials edits credentials by name that is passed as parameter.
-//Other parameters are the desired properties to edit, pass empty string in case
-//you don't want to modify the property.
-//Returns the ID of the edited credentials and error which is != nil if
-//none or more that one credentials have the same name or if the response code
-//is different from 200.
-func EditCredetials(credName, publicCert, privateCert, userName, passWord string) (string, error) {
-	links := GetCredentialsLinks(credName)
-	if len(links) < 1 {
-		return "", CredentialsNotFoundError
-	}
-	if len(links) > 1 {
-		return "", DuplicateNamesError
-
-	}
-	return EditCredetialsID(links[0], publicCert, privateCert, userName, passWord)
-}
-
 //EditCredentialsID edits credentials by ID that is passed as parameter.
 //Other parameters are the desired properties to edit, pass empty string in case
 //you don't want to modify the property.
 //Returns the ID of the edited credentials and error which is != nil if
 //the response code is different from 200.
 func EditCredetialsID(id, publicCert, privateCert, userName, passWord string) (string, error) {
-	fullId, err := selflink.GetFullId(id, new(CredentialsList), utils.CREDENTIALS)
+	fullId, err := selflink_utils.GetFullId(id, new(CredentialsList), common.CREDENTIALS)
 	utils.CheckBlockingError(err)
 	url := config.URL + utils.CreateResLinkForCredentials(fullId)
 	var cred interface{}
@@ -378,7 +345,7 @@ func GetPublicCustomProperties(id string) (map[string]*string, error) {
 //custom properties of the credentials.  Note that keys are strings,
 //but values are pointer to strings.
 func GetCustomProperties(id string) (map[string]*string, error) {
-	fullId, err := selflink.GetFullId(id, new(CredentialsList), utils.CREDENTIALS)
+	fullId, err := selflink_utils.GetFullId(id, new(CredentialsList), common.CREDENTIALS)
 	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForCredentials(fullId)
 	url := config.URL + link
@@ -399,7 +366,7 @@ func GetCustomProperties(id string) (map[string]*string, error) {
 //matching the same indexes from both arrays. That also means if the one array is longer
 //than the other, it's left elements are ignored.
 func AddCustomProperties(id string, keys, vals []string) error {
-	fullId, err := selflink.GetFullId(id, new(CredentialsList), utils.CREDENTIALS)
+	fullId, err := selflink_utils.GetFullId(id, new(CredentialsList), common.CREDENTIALS)
 	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForCredentials(fullId)
 	url := config.URL + link
@@ -431,7 +398,7 @@ func AddCustomProperties(id string, keys, vals []string) error {
 //The function takes as parameter the ID of the credentials
 //and array of keys to be removed.
 func RemoveCustomProperties(id string, keys []string) error {
-	fullId, err := selflink.GetFullId(id, new(CredentialsList), utils.CREDENTIALS)
+	fullId, err := selflink_utils.GetFullId(id, new(CredentialsList), common.CREDENTIALS)
 	utils.CheckBlockingError(err)
 	link := utils.CreateResLinkForCredentials(fullId)
 	url := config.URL + link

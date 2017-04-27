@@ -12,24 +12,27 @@
 package events
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"admiral/client"
+	"admiral/common/base_types"
+	"admiral/common/utils"
+	"admiral/common/utils/selflink_utils"
+	"admiral/common/utils/uri_utils"
 	"admiral/config"
-	"admiral/utils"
-	"admiral/utils/urlutils"
-	"bytes"
-	"fmt"
-	"strconv"
-	"time"
 )
 
 type EventInfo struct {
-	EventLogType             string      `json:"eventLogType"`
-	Description              string      `json:"description"`
-	DocumentUpdateTimeMicros interface{} `json:"documentUpdateTimeMicros"`
+	base_types.ServiceDocument
+
+	EventLogType string `json:"eventLogType"`
+	Description  string `json:"description"`
 }
 
 func (ei *EventInfo) GetDocumentUpdateTimeMicros() int64 {
@@ -81,9 +84,9 @@ func (el *EventList) GetCount() int {
 
 //FetchEvents fetches all events and returns their count.
 func (el *EventList) FetchEvents() (int, error) {
-	cqm := urlutils.GetCommonQueryMap()
+	cqm := uri_utils.GetCommonQueryMap()
 	cqm["$orderby"] = "documentExpirationTimeMicros+desc"
-	url := urlutils.BuildUrl(urlutils.Events, cqm, true)
+	url := uri_utils.BuildUrl(uri_utils.Events, cqm, true)
 
 	req, _ := http.NewRequest("GET", url, nil)
 	_, respBody, respErr := client.ProcessRequest(req)
@@ -98,7 +101,7 @@ func (el *EventList) FetchEvents() (int, error) {
 //Print already fetched events.
 func (el *EventList) GetOutputString() string {
 	if el.GetCount() < 1 {
-		return utils.NoElementsFoundMessage
+		return selflink_utils.NoElementsFoundMessage
 	}
 	var buffer bytes.Buffer
 	header := fmt.Sprintf("%-15s %s\n", "SINCE", "DESCRIPTION")

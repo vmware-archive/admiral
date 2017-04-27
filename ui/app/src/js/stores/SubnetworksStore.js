@@ -57,6 +57,7 @@ export default Reflux.createStore({
         services.loadNetworks(endpointLink, [...new Set(networkLinks)]).then((networks) => {
           subnetworks.forEach((subnetwork) => {
             subnetwork.network = networks[subnetwork.networkLink];
+            subnetwork.networkName = subnetwork.network.name;
           });
           return Promise.all(tagsPromises);
         }).then(() => {

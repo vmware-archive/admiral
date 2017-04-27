@@ -22,7 +22,7 @@ import (
 	"net/url"
 	"os"
 
-	"admiral/utils"
+	"admiral/common/utils"
 )
 
 var (
@@ -109,6 +109,8 @@ func setupCAPool() (*x509.CertPool, error) {
 func validateConnection(url *url.URL) {
 	if url.Scheme == "http" {
 		return
+	} else if url.Scheme == "https" && utils.InsecureConnection {
+		skipSSLVerification = true
 	} else if url.Scheme == "https" {
 		skipSSLVerification = validateCertificates(url)
 		if !skipSSLVerification {

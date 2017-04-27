@@ -249,11 +249,28 @@ let MachinesStore = Reflux.createStore({
       documentSelfLink: '/resources/compute/' + machineId
     });
 
+    var machine = null;
+
     services.loadHost(machineId).then((document) => {
-      let machine = toViewModel(document);
+      machine = toViewModel(document);
+
+      return this.getDescriptions([machine]);
+    }).then((result) => {
+      let memory = result[machine.descriptionLink].totalMemoryBytes;
+
+      machine.stats = {
+        cpuCount: result[machine.descriptionLink].cpuCount,
+        cpuMhzPerCore: result[machine.descriptionLink].cpuMhzPerCore,
+        cpuUsage: this.getRandomArbitrary(0, 100),         // random
+        memory: memory,
+        memoryUsage: this.getRandomArbitrary(0, memory)       //random
+      };
+
+      return services.loadEndpoint(machine.endpointLink);
+    }).then((endpoint) => {
+      machine.endpoint = endpoint;
 
       itemDetailsCursor.setIn(['instance'], machine);
-
       this.emitChange();
     }).catch(this.onGenericDetailsError);
   },
@@ -412,6 +429,11 @@ let MachinesStore = Reflux.createStore({
       this.setInData(['listView', 'descriptions'], $.extend({}, descriptions, newDescriptions));
       return utils.getIn(this.data, ['listView', 'descriptions']);
     });
+  },
+
+  // TODO: delete once we have a real data
+  getRandomArbitrary(min, max) {
+    return Math.floor(Math.random() * (max - min)) + min;
   }
 });
 

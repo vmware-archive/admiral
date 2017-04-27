@@ -12,16 +12,15 @@
 import InlineDeleteConfirmationTemplate from
   'components/common/InlineDeleteConfirmationTemplate.html';
 import utils from 'core/utils';
-//import links from 'core/links';
 import constants from 'core/constants';
 import { NavigationActions} from 'actions/Actions';
 
 const TEMPLATE =
-  `<div class="resource" v-on:click="showVolume($event)">
+  `<div class="resource" @click="showVolume($event)">
     <div class="resource-details">
       <img class="resource-icon" src="image-assets/resource-icons/volume-small.png"/>
       <div class="resource-label" title="{{model.name}}">{{model.name}}</div>
-      <div class="resource-actions">
+      <div v-if="mode === 'create'" class="resource-actions">
         <a class="btn item-edit" v-on:click="onEdit($event)">
           <i class="fa fa-pencil"></i>
         </a>
@@ -48,6 +47,10 @@ var VolumeBox = Vue.extend({
   props: {
     model: {
       required: true
+    },
+    mode: {
+      required: false,
+      default: 'show'
     }
   },
   data: function() {
@@ -72,6 +75,9 @@ var VolumeBox = Vue.extend({
     volumeId: function() {
       return this.model && this.model.documentSelfLink
               && utils.getDocumentId(this.model.documentSelfLink);
+    },
+    isNewVolume: function() {
+      return (this.mode === 'create' && !this.model.external);
     }
   },
   methods: {
@@ -122,7 +128,8 @@ var VolumeBox = Vue.extend({
       this.$dispatch('remove', this);
     },
     showVolume(e) {
-      if (this.isConfirmDelete) {
+      if (this.isConfirmDelete || this.isNewVolume) {
+        // if volume is new - nowhere to navigate to.
         return;
       }
 

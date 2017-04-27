@@ -17,14 +17,16 @@ import (
 	"strings"
 	"testing"
 
+	"admiral/common/utils"
+	. "admiral/common/utils"
 	"admiral/config"
 	"admiral/hosts"
-	. "admiral/testutils"
 )
 
 func TestApplicationProvision(t *testing.T) {
 	// Preparing the test
 	TestPrintln("Configuring the env.")
+	utils.IsTest = true
 	config.GetCfgForTests()
 	tc, err := ConfigureTestEnv()
 	CheckTestError(err, t)

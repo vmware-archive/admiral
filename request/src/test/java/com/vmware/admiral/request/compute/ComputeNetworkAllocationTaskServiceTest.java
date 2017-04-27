@@ -13,6 +13,7 @@ package com.vmware.admiral.request.compute;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
@@ -95,7 +96,7 @@ public class ComputeNetworkAllocationTaskServiceTest extends RequestBaseTest {
 
         assertNotNull(networkState);
         assertEquals(networkDescription.documentSelfLink, networkState.descriptionLink);
-        assertNotNull("subnetLink should be non empty in case of isolated netwrok.",
+        assertNull("subnetLink should be empty in case of isolated networks.",
                 networkState.subnetLink);
 
         assertTrue(networkState.name.contains(networkDescription.name));

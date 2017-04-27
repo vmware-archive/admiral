@@ -11,6 +11,7 @@
 
 import constants from 'core/constants';
 import links from 'core/links';
+import ft from 'core/ft';
 
 const URL_PROTOCOL_PART = /^(https?):\/\//;
 const URL_DEFAULT_PROTOCOL = 'http://';
@@ -1208,6 +1209,14 @@ var utils = {
       return null;
     }
 
+    if (ft.showProjectsInNavigation()) {
+      let projectId = tenantLinks.find((tenantLink) => {
+        return tenantLink.indexOf('/projects/') > -1;
+      });
+
+      return projectId;
+    }
+
     let groupId = tenantLinks.find((tenantLink) => {
       return tenantLink.indexOf('/groups/') > -1;
     });
@@ -1317,6 +1326,8 @@ var utils = {
         runtimeIcon = 'image-assets/closure-nodejs.png';
       } else if (runtime.startsWith('python')) {
         runtimeIcon = 'image-assets/closure-python.png';
+      } else if (runtime.startsWith('powershell')) {
+        runtimeIcon = 'image-assets/closure-powershell.png';
       }
     }
     return runtimeIcon;
