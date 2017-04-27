@@ -32,7 +32,7 @@ I18n.use(I18nXhrBackend)
     defaultNS: 'admiral',
     fallbackLng: 'en',
     backend: {
-      loadPath: '/assets/i18n/{{ns}}.{{lng}}.json'
+      loadPath: 'assets/i18n/{{ns}}.{{lng}}.json'
     }
   },() => {
     var xhr = new XMLHttpRequest();

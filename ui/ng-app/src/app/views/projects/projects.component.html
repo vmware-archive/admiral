@@ -19,7 +19,7 @@
   <ng-template let-item="item">
     <card [routerLink]="['./' + item.documentId]">
       <div card-header>
-        <img [src]="'container-image-icons?container-image=' + item.documentSelfLink"/>
+        <img [src]="'/container-image-icons?container-image=' + item.documentSelfLink"/>
         {{item.name}}
       </div>
       <div card-content>

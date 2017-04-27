@@ -32,7 +32,7 @@
   }
 
   .content-container .sidenav {
-    transition: width 0.25s ease-in;
+    transition: all 0.25s ease-in;
   }
   .content-container.full-screen .sidenav {
     min-width: 0;

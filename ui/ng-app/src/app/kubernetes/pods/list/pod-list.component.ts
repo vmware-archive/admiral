@@ -80,7 +80,7 @@ export class PodListComponent {
     if (!image) {
       return;
     }
-    let l = 'container-image-icons?container-image=' + this.getImageNamespaceAndName(image);
+    let l = '/container-image-icons?container-image=' + this.getImageNamespaceAndName(image);
     return l;
   }
 
