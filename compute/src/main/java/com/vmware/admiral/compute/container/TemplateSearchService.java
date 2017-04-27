@@ -19,6 +19,7 @@ import static com.vmware.admiral.common.util.ServiceDocumentQuery.result;
 import static com.vmware.admiral.common.util.ServiceUtils.addServiceRequestRoute;
 import static com.vmware.admiral.common.util.UriUtilsExtended.flattenQueryParams;
 import static com.vmware.admiral.common.util.UriUtilsExtended.parseBooleanParam;
+import static com.vmware.admiral.compute.container.util.ContainerUtil.removeTagFromContainerImageName;
 import static com.vmware.xenon.common.UriUtils.URI_WILDCARD_CHAR;
 
 import java.net.URI;
@@ -87,6 +88,7 @@ public class TemplateSearchService extends StatelessService {
         Map<String, String> queryParams = UriUtils.parseUriQueryParams(get.getUri());
         String query = queryParams.get(QUERY_PARAM);
         AssertUtil.assertNotEmpty(query, QUERY_PARAM);
+        query = removeTagFromContainerImageName(query);
 
         // FIXME search doesn't work when the text contain non alpha chars so disable for now
         // searching fields indexed as TEXT, so case insensitive
@@ -372,6 +374,7 @@ public class TemplateSearchService extends StatelessService {
         // remove leading asterisks as the registry will reject them
         String query = queryParams.get(QUERY_PARAM);
         query = query.replaceAll("^\\*+", "");
+        query = removeTagFromContainerImageName(query);
 
         /* If the query is empty after remove of leading asterisks
          * return noResult to avoid invalid request to ContainerImageService */

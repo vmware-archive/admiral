@@ -258,7 +258,7 @@ var (
 
 	//Placement zone flags
 	isScheduler     bool
-	isSchedulerDesc = "Specify the placement zone is for scheduler hosts."
+	isSchedulerDesc = "Mark placement zone for scheduler hosts."
 )
 
 var admiralLogo = `
