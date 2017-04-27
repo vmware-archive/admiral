@@ -99,9 +99,11 @@
                 <div v-bind:class="{hide: !isDeleting(item)}" class="delete-inline-item-confirmation-holder">
                   <div v-if="isDeleting(item)" class="delete-inline-item-confirmation" transition="slide-and-fade">
                     <a href="#" class="delete-inline-item-confirmation-cancel"
-                                v-on:click="cancelDelete($event)"><span>{{i18n('cancel')}}</span></a>
+                      data-cmd="inline-delete-cancel"
+                      @click="cancelDelete($event)"><span>{{i18n('cancel')}}</span></a>
                     <a href="#" class="delete-inline-item-confirmation-confirm"
-                                v-on:click="deleteItem($event)">
+                      data-cmd="inline-delete-confirm"
+                      @click="deleteItem($event)">
                       <span v-bind:class="{'not-underlined': isDeleteConfirmationLoading}">
                         {{i18n('delete')}}
                         <i class="fa fa-spinner fa-spin loader-inline"
