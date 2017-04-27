@@ -5,6 +5,7 @@ param(
     [string]$closure_uri,
     [string]$token,
     [string]$source_name,
+    [string]$handler_name,
     [string]$trusted_certs
 )
 
@@ -69,4 +70,8 @@ $inputs = @"
 "@ | ConvertFrom-JSON;
  
 $ScriptToRun = 'user_scripts/' + $source_name
-&$ScriptToRun
+. $ScriptToRun
+
+&$handler_name $context
+
+Add-Content 'output.txt' $context.outputs
