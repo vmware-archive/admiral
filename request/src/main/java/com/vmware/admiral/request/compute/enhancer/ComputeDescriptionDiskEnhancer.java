@@ -89,8 +89,7 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                     .get(computeDesc.instanceType);
             long diskSizeMbFromProfile = instanceDesc != null ? instanceDesc.diskSizeMb : 0;
             // Default is 8 GB
-            rootDisk.capacityMBytes = diskSizeMbFromProfile > 0 ? diskSizeMbFromProfile
-                    : (8 * 1024);
+            rootDisk.capacityMBytes = diskSizeMbFromProfile > 0 ? diskSizeMbFromProfile : (8 * 1024);
 
             if (profile.storageProfile != null && profile.storageProfile.storageItems != null) {
                 StorageItem storageItem = findDefaultStorageItem(profile);
@@ -135,21 +134,15 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                             }
                             // Match the constraints from Disk to the profile to extract the
                             // provider specific properties.
-                            if (profile != null && profile.storageProfile != null
-                                    && profile.storageProfile.storageItems != null
-                                    && !profile.storageProfile.storageItems.isEmpty()) {
-                                StorageItem storageItem = findStorageItem(profile,
-                                        diskState.constraint);
-                                if (storageItem == null) {
-                                    return DeferredResult
-                                            .failed(new IllegalStateException(String.format(
-                                                    "No matching storage defined in profile: %s, for requested disk: %s",
-                                                    profile.name, diskState.name)));
-                                } else {
-                                    if (storageItem.diskProperties != null) {
-                                        diskState.customProperties = new HashMap<>(
-                                                storageItem.diskProperties);
-                                    }
+                            StorageItem storageItem = findStorageItem(profile, diskState.constraint);
+                            if (storageItem == null) {
+                                return DeferredResult
+                                        .failed(new IllegalStateException(String.format(
+                                                "No matching storage defined in profile: %s, for requested disk: %s",
+                                                profile.documentSelfLink, diskState.name)));
+                            } else {
+                                if (storageItem.diskProperties != null) {
+                                    diskState.customProperties = new HashMap<>(storageItem.diskProperties);
                                 }
                             }
                             return this.host
@@ -176,41 +169,76 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
         // will be chosen.
         // Step 3: If all are soft and nothing matches then default properties are picked.
         StorageItem storageItem = null;
-        if (constraint != null && constraint.conditions != null && !constraint.conditions
-                .isEmpty()) {
-            Stream<StorageItem> siFilteredStream = TagConstraintUtils.filterByConstraints(
-                    StorageProfileUtils
-                            .extractStorageTagConditions(constraint, profile.tenantLinks),
-                    profile.storageProfile.storageItems.stream(),
-                    si -> si.tagLinks != null ? si.tagLinks : new HashSet<>(), (i1, i2) -> {
-                        if (i1.defaultItem && i2.defaultItem) {
-                            return 0;
+        Stream<StorageItem> siFilteredStream = TagConstraintUtils.filterByConstraints(
+                StorageProfileUtils
+                        .extractStorageTagConditions(constraint, profile.tenantLinks),
+                profile.storageProfile.storageItems.stream(),
+                si -> si.tagLinks != null ? si.tagLinks : new HashSet<>(), (i1, i2) -> {
+                    if (i1.defaultItem && i2.defaultItem) {
+                        return 0;
+                    } else {
+                        if (i1.defaultItem) {
+                            return -1;
+                        } else if (i2.defaultItem) {
+                            return 1;
                         } else {
-                            if (i1.defaultItem) {
-                                return -1;
-                            } else if (i2.defaultItem) {
-                                return 1;
-                            } else {
-                                return 0;
-                            }
+                            return 0;
                         }
-                    });
+                    }
+                });
 
-            if (siFilteredStream != null) {
-                storageItem = siFilteredStream.findFirst().orElse(null);
+        if (siFilteredStream != null) {
+            storageItem = siFilteredStream.findFirst().orElse(null);
+        }
+
+        if (storageItem == null) {
+            // Empty Storage item as it shouldn't fail as there are no constraints or
+            // If there are hard constraints and there are no storage items
+            // configured for the profile, then it has to fail the request
+            if (checkIfNoConstraintAvailable(constraint) || (checkIfNoStorageItemsAvailable(profile)
+                    && !checkIfHardConstraintAvailable(constraint)) ) {
+                storageItem = new StorageItem();
             }
-        } else {
-            // No constraint on the disk, use default storage item if present
-            storageItem = profile.storageProfile.storageItems.stream().filter(si -> si.defaultItem)
-                    .findFirst().orElse(null);
         }
         return storageItem;
+    }
+
+    /**
+     * Check if constraint is present or not.
+     */
+    private boolean checkIfNoConstraintAvailable(Constraint constraint) {
+        return constraint == null || constraint.conditions == null || constraint.conditions
+                .isEmpty();
+    }
+
+    /**
+     * Check if there are storage items present or not.
+     */
+    private boolean checkIfNoStorageItemsAvailable(ProfileService.ProfileStateExpanded profile) {
+        return profile.storageProfile == null
+                || profile.storageProfile.storageItems == null
+                || profile.storageProfile.storageItems.isEmpty();
+    }
+
+    /**
+     * Check if there are hard constraints that are requested for the disk
+     */
+    private boolean checkIfHardConstraintAvailable(Constraint constraint) {
+        if (checkIfNoConstraintAvailable(constraint)) {
+            return false;
+        }
+        return constraint.conditions.stream()
+                .filter(c -> Constraint.Condition.Enforcement.HARD.equals(c.enforcement)).count() > 0;
     }
 
     /**
      * Get default storage item if present, else null.
      */
     private StorageItem findDefaultStorageItem(ProfileService.ProfileStateExpanded profile) {
+        if (checkIfNoStorageItemsAvailable(profile)) {
+            return null;
+        }
+
         return profile.storageProfile.storageItems.stream()
                 .filter(si -> si.defaultItem)
                 .findFirst()

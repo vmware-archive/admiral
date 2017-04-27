@@ -30,11 +30,11 @@ public class StorageProfileUtils {
      */
     public static Map<Constraint.Condition, String> extractStorageTagConditions(
             Constraint constraint, List<String> tenantLinks) {
+        Map<Constraint.Condition, String> tagLinkByCondition = new HashMap<>();
         if (constraint == null) {
-            return null;
+            return tagLinkByCondition;
         }
 
-        Map<Constraint.Condition, String> tagLinkByCondition = new HashMap<>();
         List<String> tLinks = QueryUtil.getTenantLinks(tenantLinks);
         for (Constraint.Condition condition : constraint.conditions) {
             String tagLink = getTagLinkForCondition(condition, tLinks);
