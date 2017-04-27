@@ -14,7 +14,7 @@ import { Subscription } from 'rxjs';
   animations: [slideAndFade()]
 })
 export class NavigationContainerComponent implements OnInit, OnDestroy {
-  private oldComponent: any;
+  private oldComponent: string;
   private routeObserve: Subscription;
 
   contentStyle: any = {
@@ -24,7 +24,7 @@ export class NavigationContainerComponent implements OnInit, OnDestroy {
   };
 
   type: string;
-  @Input() typePerComponent: Map<string, NavigationContainerType>;
+  @Input() typePerComponent: Map<any, NavigationContainerType>;
   @ViewChild('contentHolder') contentHolder;
 
   constructor(private router: Router, private route: ActivatedRoute,
@@ -34,10 +34,7 @@ export class NavigationContainerComponent implements OnInit, OnDestroy {
     this.routeObserve = this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
         var newComponent: any = this.route.children.length != 0 && this.route.children[0].component;
-        // setTimeout(() => {
-          this.handleNewComponent(newComponent);
-        // }, 40);
-
+        this.handleNewComponent(newComponent);
       }
     });
   }
@@ -45,7 +42,7 @@ export class NavigationContainerComponent implements OnInit, OnDestroy {
   handleNewComponent(newComponent) {
     if (newComponent != this.oldComponent) {
       this.oldComponent = newComponent;
-      var selectedType = this.typePerComponent[newComponent.name] || NavigationContainerType.None;
+      var selectedType = this.typePerComponent[newComponent] || NavigationContainerType.None;
       this.type = selectedType.toString();
       this.viewExpandRequestor.requestFullScreen(selectedType === NavigationContainerType.Fullscreen);
 

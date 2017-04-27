@@ -49,7 +49,7 @@ function getImageNamespaceAndNameFromParts(namespace, imageAndTag) {
 export class PodListComponent {
   serviceEndpoint = Links.PODS;
   navigationContainerTypePerComponent = {
-    PodDetailsComponent: NavigationContainerType.Fullscreen
+    [<any>PodDetailsComponent]: NavigationContainerType.Fullscreen
   }
 
   getImageNamespaceAndName(image) {

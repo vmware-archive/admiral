@@ -15,6 +15,8 @@ import { slideAndFade } from '../../../utils/transitions';
 import { Links } from '../../../utils/links';
 import { DocumentService } from '../../../utils/document.service';
 import { NavigationContainerType } from '../../../components/navigation-container/navigation-container.component';
+import { ServiceDetailsComponent } from './../details/service-details.component';
+
 
 @Component({
   selector: 'service-list',
@@ -25,6 +27,6 @@ import { NavigationContainerType } from '../../../components/navigation-containe
 export class ServiceListComponent {
   serviceEndpoint = Links.SERVICES;
   navigationContainerTypePerComponent = {
-    ProjectDetailsComponent: NavigationContainerType.Fullscreen
+    [<any>ServiceDetailsComponent]: NavigationContainerType.Fullscreen
   }
 }

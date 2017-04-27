@@ -37,7 +37,12 @@
   .content-container.full-screen .sidenav {
     min-width: 0;
     width: 0;
+
+    .sidenav-content {
+      min-width: 500px;
+    }
   }
+
 
   .content-container.expanded .content-area {
     padding: 0;

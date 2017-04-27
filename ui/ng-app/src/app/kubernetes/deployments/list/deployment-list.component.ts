@@ -26,6 +26,6 @@ import { NavigationContainerType } from '../../../components/navigation-containe
 export class DeploymentListComponent {
   serviceEndpoint = Links.DEPLOYMENTS;
   navigationContainerTypePerComponent = {
-    DeploymentDetailsComponent: NavigationContainerType.Fullscreen
+    [<any>DeploymentDetailsComponent]: NavigationContainerType.Fullscreen
   }
 }
