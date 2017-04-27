@@ -28,7 +28,7 @@ public class CommonInitialBootService extends AbstractInitialBootService {
     @Override
     public void handlePost(Operation post) {
         ConfigurationState[] configs = ConfigurationService.getConfigurationProperties();
-        initInstances(Operation.createGet(null), false, false, configs);
+        initInstances(Operation.createGet(null), true, false, configs);
 
         List<ServiceDocument> resources = new ArrayList<>();
         resources.add(ResourceNamePrefixService.buildDefaultStateInstance());

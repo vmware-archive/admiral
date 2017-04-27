@@ -80,7 +80,7 @@ public class SystemImageRetrievalManagerTest extends BaseTestCase {
         config.key = FileUtil.USER_RESOURCES_PATH_VARIABLE;
         config.value = testXenonImagesPath.toAbsolutePath().toString();
 
-        doPost(config, ConfigurationFactoryService.SELF_LINK);
+        doPut(config);
 
         File imageDir = new File(UriUtils.buildUriPath(testXenonImagesPath.toString(),
                 SystemImageRetrievalManager.SYSTEM_IMAGES_PATH));

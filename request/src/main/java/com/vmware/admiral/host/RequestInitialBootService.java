@@ -11,13 +11,10 @@
 
 package com.vmware.admiral.host;
 
-import java.util.ArrayList;
-
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.request.ContainerControlLoopService;
 import com.vmware.admiral.service.common.AbstractInitialBootService;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.ServiceDocument;
 
 /**
  * Initial boot service for creating system default documents for the common module.
@@ -27,13 +24,7 @@ public class RequestInitialBootService extends AbstractInitialBootService {
 
     @Override
     public void handlePost(Operation post) {
-        ArrayList<ServiceDocument> states = new ArrayList<>();
-        initInstances(Operation.createGet(null), false, false,
-                states.toArray(new ServiceDocument[states.size()]));
-
-        states = new ArrayList<>();
-        states.add(ContainerControlLoopService.buildDefaultStateInstance());
-
-        initInstances(post, states.toArray(new ServiceDocument[states.size()]));
+        initInstances(post, ContainerControlLoopService.buildDefaultStateInstance());
     }
+
 }

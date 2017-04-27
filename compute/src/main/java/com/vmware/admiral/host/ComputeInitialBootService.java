@@ -35,12 +35,10 @@ public class ComputeInitialBootService extends AbstractInitialBootService {
 
     @Override
     public void handlePost(Operation post) {
-        ArrayList<ServiceDocument> states = new ArrayList<>();
-        states.add(SystemContainerDescriptions.buildCoreAgentContainerDescription());
         initInstances(Operation.createGet(null), false, false,
-                states.toArray(new ServiceDocument[states.size()]));
+                SystemContainerDescriptions.buildCoreAgentContainerDescription());
 
-        states = new ArrayList<>();
+        ArrayList<ServiceDocument> states = new ArrayList<>();
         states.addAll(ProfileService.getAllDefaultDocuments());
         states.add(ContainerHostDataCollectionService.buildDefaultStateInstance());
         states.add(KubernetesEntityDataCollection.buildDefaultStateInstance());

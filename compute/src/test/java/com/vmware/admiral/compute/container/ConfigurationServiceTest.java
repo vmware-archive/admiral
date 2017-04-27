@@ -100,7 +100,8 @@ public class ConfigurationServiceTest extends ComputeBaseTest {
         configurationState = getDocument(ConfigurationState.class,
                 UriUtils.buildUriPath(ConfigurationFactoryService.SELF_LINK, selfLinkId));
 
-        assertEquals(value2, configurationState.value);
+        //the value should not be override because of VBV-986
+        assertEquals(value1, configurationState.value);
     }
 
     private void postForValidation(ConfigurationState state) throws Throwable {

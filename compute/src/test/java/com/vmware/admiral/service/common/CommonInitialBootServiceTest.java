@@ -15,24 +15,32 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import java.net.URI;
+
 import org.junit.Test;
 
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.admiral.service.common.ResourceNamePrefixService.ResourceNamePrefixState;
+import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
+import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.test.TestContext;
 
 public class CommonInitialBootServiceTest extends ComputeBaseTest {
 
     @Test
     public void testVerifyInitialBootServiceWillStopAfterAllInstancesCreated() throws Throwable {
-        waitForServiceAvailability(ResourceNamePrefixService.DEFAULT_RESOURCE_NAME_PREFIX_SELF_LINK);
+        waitForServiceAvailability(
+                ResourceNamePrefixService.DEFAULT_RESOURCE_NAME_PREFIX_SELF_LINK);
 
         waitForInitialBootServiceToBeSelfStopped(CommonInitialBootService.SELF_LINK);
     }
 
     @Test
     public void testDefaultResourcePrefixNameCreatedOnStartUp() throws Throwable {
-        waitForServiceAvailability(ResourceNamePrefixService.DEFAULT_RESOURCE_NAME_PREFIX_SELF_LINK);
+        waitForServiceAvailability(
+                ResourceNamePrefixService.DEFAULT_RESOURCE_NAME_PREFIX_SELF_LINK);
         ResourceNamePrefixState defaultNamePrefixState = getDocument(ResourceNamePrefixState.class,
                 ResourceNamePrefixService.DEFAULT_RESOURCE_NAME_PREFIX_SELF_LINK);
         assertNotNull(defaultNamePrefixState);
@@ -47,11 +55,28 @@ public class CommonInitialBootServiceTest extends ComputeBaseTest {
         assertNotNull(registryState);
         assertEquals(RegistryService.DEFAULT_REGISTRY_ADDRESS, registryState.address);
         assertEquals(RegistryState.DOCKER_REGISTRY_ENDPOINT_TYPE, registryState.endpointType);
+
+        waitForInitialBootServiceToBeSelfStopped(CommonInitialBootService.SELF_LINK);
+
+        doDelete(UriUtils.buildUri(host, RegistryService.DEFAULT_INSTANCE_LINK), false);
+
+        registryState = getDocumentNoQueueForServiceAvailability(RegistryState.class,
+                UriUtils.buildUri(host, RegistryService.DEFAULT_INSTANCE_LINK));
+        assertNull(registryState);
+
+        //simulate a restart of the service host
+        startInitialBootService(CommonInitialBootService.class, CommonInitialBootService.SELF_LINK);
+        waitForInitialBootServiceToBeSelfStopped(CommonInitialBootService.SELF_LINK);
+
+        registryState = getDocumentNoQueueForServiceAvailability(RegistryState.class,
+                UriUtils.buildUri(host, RegistryService.DEFAULT_INSTANCE_LINK));
+        assertNull(registryState);
     }
 
     @Test
     public void testVerifyRestartOfInitialBootServiceDoesNotUpdateInstance() throws Throwable {
-        waitForServiceAvailability(ResourceNamePrefixService.DEFAULT_RESOURCE_NAME_PREFIX_SELF_LINK);
+        waitForServiceAvailability(
+                ResourceNamePrefixService.DEFAULT_RESOURCE_NAME_PREFIX_SELF_LINK);
         ResourceNamePrefixState defaultNamePrefixState = getDocument(ResourceNamePrefixState.class,
                 ResourceNamePrefixService.DEFAULT_RESOURCE_NAME_PREFIX_SELF_LINK);
         assertNotNull(defaultNamePrefixState);
@@ -69,5 +94,32 @@ public class CommonInitialBootServiceTest extends ComputeBaseTest {
         assertNotNull(defaultNamePrefixState);
         assertEquals("Document should not be updated once it exists.", 0,
                 defaultNamePrefixState.documentVersion);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected <T> T getDocumentNoQueueForServiceAvailability(Class<T> type, URI uri)
+            throws Throwable {
+        TestContext ctx = testCreate(1);
+        Object[] result = new Object[1];
+        Operation get = Operation
+                .createGet(UriUtils.buildUri(host, RegistryService.DEFAULT_INSTANCE_LINK))
+                .setReferer(host.getReferer())
+                .setCompletion(
+                        (o, e) -> {
+                            if (e != null) {
+                                if (e instanceof ServiceNotFoundException) {
+                                    result[0] = null;
+                                    ctx.completeIteration();
+                                } else {
+                                    ctx.failIteration(e);
+                                }
+                            } else {
+                                result[0] = o.getBody(type);
+                                ctx.completeIteration();
+                            }
+                        });
+        host.send(get);
+        ctx.await();
+        return (T) result[0];
     }
 }
