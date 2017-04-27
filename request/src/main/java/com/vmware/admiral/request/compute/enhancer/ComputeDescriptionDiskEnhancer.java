@@ -89,7 +89,8 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                     .get(computeDesc.instanceType);
             long diskSizeMbFromProfile = instanceDesc != null ? instanceDesc.diskSizeMb : 0;
             // Default is 8 GB
-            rootDisk.capacityMBytes = diskSizeMbFromProfile > 0 ? diskSizeMbFromProfile : (8 * 1024);
+            rootDisk.capacityMBytes = diskSizeMbFromProfile > 0 ? diskSizeMbFromProfile
+                    : (8 * 1024);
 
             if (profile.storageProfile != null && profile.storageProfile.storageItems != null) {
                 StorageItem storageItem = findDefaultStorageItem(profile);
@@ -137,15 +138,17 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                             if (profile != null && profile.storageProfile != null
                                     && profile.storageProfile.storageItems != null
                                     && !profile.storageProfile.storageItems.isEmpty()) {
-                                StorageItem storageItem = findStorageItem(profile, diskState
-                                        .constraint);
+                                StorageItem storageItem = findStorageItem(profile,
+                                        diskState.constraint);
                                 if (storageItem == null) {
-                                    return DeferredResult.failed(new IllegalStateException(String.format(
-                                            "No matching storage defined in profile: %s, for requested disk: %s",
-                                            profile.name, diskState.name)));
+                                    return DeferredResult
+                                            .failed(new IllegalStateException(String.format(
+                                                    "No matching storage defined in profile: %s, for requested disk: %s",
+                                                    profile.name, diskState.name)));
                                 } else {
                                     if (storageItem.diskProperties != null) {
-                                        diskState.customProperties = new HashMap<>(storageItem.diskProperties);
+                                        diskState.customProperties = new HashMap<>(
+                                                storageItem.diskProperties);
                                     }
                                 }
                             }
@@ -196,6 +199,10 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
             if (siFilteredStream != null) {
                 storageItem = siFilteredStream.findFirst().orElse(null);
             }
+        } else {
+            // No constraint on the disk, use default storage item if present
+            storageItem = profile.storageProfile.storageItems.stream().filter(si -> si.defaultItem)
+                    .findFirst().orElse(null);
         }
         return storageItem;
     }
@@ -203,8 +210,7 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
     /**
      * Get default storage item if present, else null.
      */
-    private StorageItem findDefaultStorageItem(ProfileService
-            .ProfileStateExpanded profile) {
+    private StorageItem findDefaultStorageItem(ProfileService.ProfileStateExpanded profile) {
         return profile.storageProfile.storageItems.stream()
                 .filter(si -> si.defaultItem)
                 .findFirst()
