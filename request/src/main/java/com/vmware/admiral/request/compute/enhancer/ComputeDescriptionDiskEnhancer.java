@@ -24,6 +24,7 @@ import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.profile.InstanceTypeDescription;
 import com.vmware.admiral.compute.profile.ProfileService;
 import com.vmware.admiral.compute.profile.StorageProfileService.StorageItem;
+import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfile;
 import com.vmware.admiral.request.compute.StorageProfileUtils;
 import com.vmware.admiral.request.compute.TagConstraintUtils;
 import com.vmware.photon.controller.model.Constraint;
@@ -89,14 +90,14 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                     .get(computeDesc.instanceType);
             long diskSizeMbFromProfile = instanceDesc != null ? instanceDesc.diskSizeMb : 0;
             // Default is 8 GB
-            rootDisk.capacityMBytes = diskSizeMbFromProfile > 0 ? diskSizeMbFromProfile : (8 * 1024);
+            rootDisk.capacityMBytes = diskSizeMbFromProfile > 0 ? diskSizeMbFromProfile
+                    : (8 * 1024);
 
-            if (profile.storageProfile != null && profile.storageProfile.storageItems != null) {
-                StorageItem storageItem = findDefaultStorageItem(profile);
-                if (storageItem != null && storageItem.diskProperties != null) {
-                    rootDisk.customProperties = new HashMap<>(storageItem.diskProperties);
-                }
+            StorageItem storageItem = findDefaultStorageItem(profile);
+            if (storageItem != null && storageItem.diskProperties != null) {
+                rootDisk.customProperties = new HashMap<>(storageItem.diskProperties);
             }
+
             fillInBootConfigContent(computeDesc, rootDisk);
             DeferredResult<ComputeDescription> result = this.host
                     .sendWithDeferredResult(createDiskDescriptionState(rootDisk),
@@ -134,7 +135,8 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                             }
                             // Match the constraints from Disk to the profile to extract the
                             // provider specific properties.
-                            StorageItem storageItem = findStorageItem(profile, diskState.constraint);
+                            StorageItem storageItem = findStorageItem(profile,
+                                    diskState.constraint);
                             if (storageItem == null) {
                                 return DeferredResult
                                         .failed(new IllegalStateException(String.format(
@@ -142,7 +144,8 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                                                 profile.documentSelfLink, diskState.name)));
                             } else {
                                 if (storageItem.diskProperties != null) {
-                                    diskState.customProperties = new HashMap<>(storageItem.diskProperties);
+                                    diskState.customProperties = new HashMap<>(
+                                            storageItem.diskProperties);
                                 }
                             }
                             return this.host
@@ -161,6 +164,10 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
      */
     private StorageItem findStorageItem(ProfileService.ProfileStateExpanded profile,
             Constraint constraint) {
+        // if no constraints return default
+        if (checkIfNoConstraintAvailable(constraint)) {
+            return findDefaultStorageItem(profile);
+        }
         // Step 1: Find if there are hard constraints. Then all of them will be available in one
         // of the storage item in the profile, as placement would have done this filtering to chose
         // this profile.
@@ -168,11 +175,10 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
         // If all are matched then that storage item is chosen, if not then the max matching item
         // will be chosen.
         // Step 3: If all are soft and nothing matches then default properties are picked.
-        StorageItem storageItem = null;
-        Stream<StorageItem> siFilteredStream = TagConstraintUtils.filterByConstraints(
+        return TagConstraintUtils.filterByConstraints(
                 StorageProfileUtils
                         .extractStorageTagConditions(constraint, profile.tenantLinks),
-                profile.storageProfile.storageItems.stream(),
+                storageItemsStream(profile.storageProfile),
                 si -> si.tagLinks != null ? si.tagLinks : new HashSet<>(), (i1, i2) -> {
                     if (i1.defaultItem && i2.defaultItem) {
                         return 0;
@@ -185,22 +191,12 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                             return 0;
                         }
                     }
-                });
+                }).findFirst().orElse(null);
+    }
 
-        if (siFilteredStream != null) {
-            storageItem = siFilteredStream.findFirst().orElse(null);
-        }
-
-        if (storageItem == null) {
-            // Empty Storage item as it shouldn't fail as there are no constraints or
-            // If there are hard constraints and there are no storage items
-            // configured for the profile, then it has to fail the request
-            if (checkIfNoConstraintAvailable(constraint) || (checkIfNoStorageItemsAvailable(profile)
-                    && !checkIfHardConstraintAvailable(constraint)) ) {
-                storageItem = new StorageItem();
-            }
-        }
-        return storageItem;
+    private Stream<StorageItem> storageItemsStream(StorageProfile storageProfile) {
+        return storageProfile != null && storageProfile.storageItems != null
+                ? storageProfile.storageItems.stream() : Stream.empty();
     }
 
     /**
@@ -221,28 +217,17 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
     }
 
     /**
-     * Check if there are hard constraints that are requested for the disk
-     */
-    private boolean checkIfHardConstraintAvailable(Constraint constraint) {
-        if (checkIfNoConstraintAvailable(constraint)) {
-            return false;
-        }
-        return constraint.conditions.stream()
-                .filter(c -> Constraint.Condition.Enforcement.HARD.equals(c.enforcement)).count() > 0;
-    }
-
-    /**
      * Get default storage item if present, else null.
      */
     private StorageItem findDefaultStorageItem(ProfileService.ProfileStateExpanded profile) {
         if (checkIfNoStorageItemsAvailable(profile)) {
-            return null;
+            return new StorageItem();
         }
 
         return profile.storageProfile.storageItems.stream()
                 .filter(si -> si.defaultItem)
                 .findFirst()
-                .orElse(null);
+                .orElse(new StorageItem());
     }
 
     /**
