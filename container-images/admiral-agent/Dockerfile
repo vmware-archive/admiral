@@ -11,11 +11,12 @@
 
 FROM vmware/photon:1.0
 
-RUN tyum install gawk procps-ng -y && tyum clean all
-
-COPY /tocopy /
+RUN tyum install procps-ng -y && tyum clean all
 
 # Used by ShellInABox
 EXPOSE 4200
 
 ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
+
+COPY /tocopy /
+
