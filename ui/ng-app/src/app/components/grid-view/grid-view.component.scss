@@ -7,14 +7,14 @@ grid-view {
 
   .grid-content {
     position: absolute;
-    top: 130px;
+    top: 110px;
     left: 0;
     right: 0;
     bottom: 0;
     overflow: auto;
 
     @media (min-width: 576px) {
-      top: 80px;
+      top: 70px;
     }
 
     .card-item {

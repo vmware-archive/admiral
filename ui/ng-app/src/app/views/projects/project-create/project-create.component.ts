@@ -1,3 +1,5 @@
+import { Links } from './../../../utils/links';
+import { DocumentService } from './../../../utils/document.service';
 import { Component, AfterViewInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
@@ -16,7 +18,7 @@ export class ProjectCreateComponent implements AfterViewInit {
       icon: new FormControl('')
   });
 
-  constructor(private router: Router, private route: ActivatedRoute) {}
+  constructor(private router: Router, private route: ActivatedRoute, private ds: DocumentService) {}
 
   ngAfterViewInit() {
     setTimeout(() => {
@@ -33,8 +35,9 @@ export class ProjectCreateComponent implements AfterViewInit {
 
   saveProject() {
     if (this.projectForm.valid) {
-      // this.projectForm.value
-      this.toggleModal(false);
+      this.ds.post(Links.PROJECTS, this.projectForm.value).then(() => {
+        this.toggleModal(false);
+      });
     }
   }
 }

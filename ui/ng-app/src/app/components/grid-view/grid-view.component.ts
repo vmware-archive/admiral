@@ -59,14 +59,16 @@ export class GridViewComponent implements OnInit {
   constructor(protected service: DocumentService, private router: Router, private route: ActivatedRoute) { }
 
   ngOnInit() {
-    // Items can be loaded from backend or provided as an input
-    if (this.serviceEndpoint) {
-      this.hidePartialRows = true;
-      this.querySub = this.route.queryParams.subscribe(queryParams => {
-        this.searchQueryOptions = queryParams;
-        this.list();
-      });
-    }
+    this.router.events.subscribe((event) => {
+      if (event instanceof NavigationEnd && this.route.children.length === 0 && this.serviceEndpoint) {
+        // Items can be loaded from backend or provided as an input
+        this.hidePartialRows = true;
+        this.querySub = this.route.queryParams.subscribe(queryParams => {
+          this.searchQueryOptions = queryParams;
+          this.list();
+        });
+      }
+    });
   }
 
   ngAfterViewInit() {
