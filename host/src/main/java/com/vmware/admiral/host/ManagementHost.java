@@ -246,7 +246,6 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         HostInitUiServicesConfig.startServices(this);
         HostInitDockerAdapterServiceConfig.startServices(this, startMockHostAdapterInstance);
         HostInitKubernetesAdapterServiceConfig.startServices(this, startMockHostAdapterInstance);
-        HostInitEtcdAdapterServiceConfig.startServices(this, startEtcdEmulator);
         HostInitContinuousDeliveryServicesConfig.startServices(this);
         HostInitRegistryAdapterServiceConfig.startServices(this);
 
