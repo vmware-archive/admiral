@@ -204,6 +204,35 @@ public class ManagementHostAuthUsersTest extends ManagementHostBaseTest {
         return new SimpleEntry<>(responseCode, responseBody);
     }
 
+    public static SimpleEntry<Integer, String> doDelete(URI uri, Map<String, String> headers)
+            throws IOException {
+
+        HttpURLConnection conn = getConnection(uri);
+        conn.setRequestMethod("DELETE");
+
+        if (headers != null) {
+            for (Entry<String, String> header : headers.entrySet()) {
+                conn.setRequestProperty(header.getKey(), header.getValue());
+            }
+        }
+
+        System.out.println(">>>> Sending 'DELETE' request to URL : " + uri);
+
+        int responseCode = conn.getResponseCode();
+
+        String responseBody;
+        try {
+            responseBody = readStream(conn.getInputStream());
+        } catch (IOException e) {
+            responseBody = readStream(conn.getErrorStream());
+        }
+
+        System.out.println("Response Code : " + responseCode);
+        System.out.println("Response Body : " + responseBody);
+
+        return new SimpleEntry<>(responseCode, responseBody);
+    }
+
     /*
      * Returns the auth token or null if the credentials are invalid.
      */

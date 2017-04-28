@@ -178,10 +178,10 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
         assertContainerDescription(hostOne, headers);
         assertContainerDescription(hostTwo, headers);
 
-        // Update quorum of host two to 1, because ClusterMonitoringService is disabled.
-        String tokenTwo = login(hostTwo, USERNAME, PASSWORD, true);
+        // Update quorum of host one to 1, because ClusterMonitoringService is disabled.
+        String tokenOne = login(hostOne, USERNAME, PASSWORD, true);
         TestContext ctx = new TestContext(1, Duration.ofMinutes(1));
-        createUpdateQuorumOperation(hostTwo, 1, ctx, tokenTwo, AUTH_TOKEN_RETRY_COUNT);
+        createUpdateQuorumOperation(hostOne, 1, ctx, tokenOne, AUTH_TOKEN_RETRY_COUNT);
         ctx.await();
 
         stopHostAndRemoveItFromNodeGroup(hostOne, hostTwo);
