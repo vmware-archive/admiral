@@ -1005,24 +1005,15 @@ public class ComputeAllocationTaskService
     }
 
     @Override
-    protected BaseExtensibilityCallbackResponse notificationPayload() {
+    protected ServiceTaskCallbackResponse notificationPayload() {
         return new ExtensibilityCallbackResponse();
     }
 
     /**
      * Defines fields which are eligible for modification in case of subscription for task.
      */
-    protected static class ExtensibilityCallbackResponse extends BaseExtensibilityCallbackResponse {
+    protected static class ExtensibilityCallbackResponse extends ServiceTaskCallbackResponse {
         public Set<String> resourceNames;
-    }
-
-    @Override
-    protected void enhanceNotificationPayload(ComputeAllocationTaskState state,
-            BaseExtensibilityCallbackResponse notificationPayload, Runnable callback) {
-        getComputeDescription(state.resourceDescriptionLink, (contDesc) -> {
-            notificationPayload.customProperties = contDesc.customProperties;
-            callback.run();
-        });
     }
 
     @Override
