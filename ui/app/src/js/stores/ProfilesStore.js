@@ -197,14 +197,31 @@ let ProfilesStore = Reflux.createStore({
         }
         document.tags = tags ? Object.values(tags) : [];
         document.computeProfile.images = images ? Object.values(images) : [];
-        document.networkProfile.subnetworks = subnetworks ? Object.values(subnetworks) : [];
         if (document.networkProfile.isolationNetworkLink && isolationNetwork) {
           document.networkProfile.isolationNetwork = isolationNetwork;
         }
 
-        this.setInData(['editingItemData', 'item'], Immutable(document));
-        this.setInData(['editingItemData', 'endpoints'], this.data.endpoints);
-        this.emitChange();
+        new Promise((resolve, reject) => {
+          if (subnetworks) {
+            let values = Object.values(subnetworks);
+            let networkLinks = [...new Set(values.map((subnetwork) =>
+                subnetwork.networkLink))];
+            services.loadNetworks(document.endpointLink, networkLinks).then((networks) => {
+              values.forEach((subnetwork) => {
+                subnetwork.networkName = networks[subnetwork.networkLink].name;
+              });
+              resolve(values);
+            }, reject);
+          } else {
+            resolve([]);
+          }
+        }).then((subnetworks) => {
+          document.networkProfile.subnetworks = subnetworks;
+
+          this.setInData(['editingItemData', 'item'], Immutable(document));
+          this.setInData(['editingItemData', 'endpoints'], this.data.endpoints);
+          this.emitChange();
+        });
       });
 
     }).catch(this.onGenericEditError);

@@ -47,6 +47,10 @@ export default Vue.component('dropdown', {
     value: {
       required: false,
       type: Object
+    },
+    valueRenderer: {
+      required: false,
+      type: Function
     }
   },
   attached: function() {
@@ -68,6 +72,9 @@ export default Vue.component('dropdown', {
     dropdownSearchMenu.setOptions(this.options);
     if (this.manage) {
       dropdownSearchMenu.setManageOptions(this.manage);
+    }
+    if (this.valueRenderer) {
+      dropdownSearchMenu.setValueRenderer(this.valueRenderer);
     }
     dropdownSearchMenu.setSelectedOption(this.value);
 

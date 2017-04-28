@@ -29,6 +29,7 @@ export default Vue.component('dropdown-group', {
         :options="options"
         :renderer="renderer"
         :value="value"
+        :value-renderer="valueRenderer"
         @change="onChange">
       </dropdown>
     </form-group>
@@ -78,6 +79,10 @@ export default Vue.component('dropdown-group', {
     value: {
       required: false,
       type: Object
+    },
+    valueRenderer: {
+      required: false,
+      type: Function
     }
   },
   methods: {

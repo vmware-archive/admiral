@@ -10,6 +10,7 @@
  */
 
 import services from 'core/services';
+import utils from 'core/utils';
 
 const ISOLATION_TYPES = [{
   name: i18n.t('app.profile.edit.noneIsolationTypeLabel'),
@@ -52,6 +53,7 @@ export default Vue.component('aws-network-profile-editor', {
           :entity="i18n('app.network.entity')"
           :filter="searchIsolationNetworks"
           :label="i18n('app.profile.edit.isolationNetworkLabel')"
+          :renderer="renderIsolationNetwork"
           :required="true"
           :value="isolationNetwork"
           @change="onIsolationNetworkChange">
@@ -112,6 +114,19 @@ export default Vue.component('aws-network-profile-editor', {
     onIsolatedSubnetCIDRPrefixChange(value) {
       this.isolatedSubnetCIDRPrefix = value;
       this.emitChange();
+    },
+    renderIsolationNetwork(network) {
+      let secondary = i18n.t('app.profile.edit.cidrLabel') + ': ' +
+          utils.escapeHtml(network.subnetCIDR);
+      return `
+        <div>
+          <div class="host-picker-item-primary" title="${network.name}">
+            ${utils.escapeHtml(network.name)}
+          </div>
+          <div class="host-picker-item-secondary truncateText" title="${secondary}">
+            ${secondary}
+          </div>
+        </div>`;
     },
     searchIsolationNetworks(...args) {
       return new Promise((resolve, reject) => {

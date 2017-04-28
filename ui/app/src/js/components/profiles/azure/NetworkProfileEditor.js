@@ -116,8 +116,10 @@ export default Vue.component('azure-network-profile-editor', {
       this.emitChange();
     },
     renderIsolationNetwork(network) {
-      let secondary = i18n.t('app.profile.edit.resourceGroupsLabel') + ': ' +
-          (network.groupNames ? network.groupNames.join(', ') : '');
+      let secondary = i18n.t('app.profile.edit.cidrLabel') + ': ' +
+          utils.escapeHtml(network.subnetCIDR) + ', ' +
+          i18n.t('app.profile.edit.resourceGroupsLabel') + ': ' +
+          (network.groupNames ? utils.escapeHtml(network.groupNames.join(', ')) : '');
       return `
         <div>
           <div class="host-picker-item-primary" title="${network.name}">

@@ -610,6 +610,10 @@ $main-list-view-right: 10px;
     .dropdown-title {
       float: left;
       color: #333;
+      span {
+        color: #999;
+        margin: 0;
+      }
     }
 
     .dropdown-title.placeholder {
