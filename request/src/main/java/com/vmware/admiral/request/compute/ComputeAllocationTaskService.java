@@ -764,9 +764,11 @@ public class ComputeAllocationTaskService
                 && cd.customProperties.containsKey(NetworkProfileQueryUtils.NO_NIC_VM);
 
         if (noNicVM) {
-            return NetworkProfileQueryUtils.createNicState(getHost(),
+            return NetworkProfileQueryUtils.selectSubnet(getHost(),
                     UriUtils.buildUri(getHost(), getSelfLink()), state.tenantLinks,
-                    state.endpointLink, cd, nid, profile, null, null, null);
+                    state.endpointLink, cd, nid, profile, null, null, null)
+                    .thenCompose(subnetState -> NetworkProfileQueryUtils.createNicState(subnetState,
+                            state.tenantLinks, state.endpointLink, cd, nid, null));
         } else {
             return DeferredResult.completed(null);
         }

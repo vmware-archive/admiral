@@ -15,6 +15,7 @@ import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_I
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -47,6 +48,7 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.NetworkInterfaceDescription;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService.NetworkInterfaceState;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
@@ -379,42 +381,37 @@ public class NetworkProfileQueryUtils {
                 });
     }
 
-    public static DeferredResult<NetworkInterfaceState> createNicState(ServiceHost host,
-            URI referer, List<String> tenantLinks, String endpointLink, ComputeDescription cd,
-            NetworkInterfaceDescription nid, ProfileStateExpanded profile,
-            ComputeNetwork computeNetwork, ComputeNetworkDescription computeNetworkDescription,
-            SubnetState isolatedSubnetState) {
+    public static DeferredResult<NetworkInterfaceState> createNicState(SubnetState subnet,
+            List<String> tenantLinks, String endpointLink, ComputeDescription cd,
+            NetworkInterfaceDescription nid, SecurityGroupState isolationSecurityGroup) {
 
-        return selectSubnet(host, referer, tenantLinks, endpointLink, cd, nid, profile,
-                computeNetwork, computeNetworkDescription, isolatedSubnetState)
-                        .thenCompose(s -> {
-                            if (s == null && nid.networkLink == null) {
-                                return DeferredResult.failed(
-                                        new IllegalStateException(
-                                                "No matching network found for VM:" + cd.name));
-                            }
-                            NetworkInterfaceState nic = new NetworkInterfaceState();
-                            nic.id = UUID.randomUUID().toString();
-                            nic.documentSelfLink = nic.id;
-                            nic.name = nid.name;
-                            nic.deviceIndex = nid.deviceIndex;
-                            nic.address = nid.address;
-                            nic.networkLink = nid.networkLink != null ? nid.networkLink
-                                    : s != null ? s.networkLink : null;
-                            nic.subnetLink = s != null ? s.documentSelfLink : null;
-                            nic.networkInterfaceDescriptionLink = nid.documentSelfLink;
-                            nic.securityGroupLinks = nid.securityGroupLinks;
-                            nic.groupLinks = nid.groupLinks;
-                            nic.tagLinks = nid.tagLinks;
-                            nic.tenantLinks = tenantLinks;
-                            nic.endpointLink = endpointLink;
-                            nic.customProperties = nid.customProperties;
+        if (subnet == null && nid.networkLink == null) {
+            return DeferredResult.failed(
+                    new IllegalStateException(
+                            "No matching network found for VM:" + cd.name));
+        }
+        NetworkInterfaceState nic = new NetworkInterfaceState();
+        nic.id = UUID.randomUUID().toString();
+        nic.documentSelfLink = nic.id;
+        nic.name = nid.name;
+        nic.deviceIndex = nid.deviceIndex;
+        nic.address = nid.address;
+        nic.networkLink = nid.networkLink != null ? nid.networkLink
+                : subnet != null ? subnet.networkLink : null;
+        nic.subnetLink = subnet != null ? subnet.documentSelfLink : null;
+        nic.networkInterfaceDescriptionLink = nid.documentSelfLink;
+        nic.securityGroupLinks = combineSecurityGroups(nid.securityGroupLinks,
+                isolationSecurityGroup);
+        nic.groupLinks = nid.groupLinks;
+        nic.tagLinks = nid.tagLinks;
+        nic.tenantLinks = tenantLinks;
+        nic.endpointLink = endpointLink;
+        nic.customProperties = nid.customProperties;
 
-                            return DeferredResult.completed(nic);
-                        });
+        return DeferredResult.completed(nic);
     }
 
-    private static DeferredResult<SubnetState> selectSubnet(ServiceHost host, URI referer,
+    public static DeferredResult<SubnetState> selectSubnet(ServiceHost host, URI referer,
             List<String> tenantLinks, String endpointLink, ComputeDescription cd,
             NetworkInterfaceDescription nid, ProfileStateExpanded profile,
             ComputeNetwork computeNetwork, ComputeNetworkDescription computeNetworkDescription,
@@ -424,15 +421,15 @@ public class NetworkProfileQueryUtils {
         boolean noNicVM = cd.customProperties != null
                 && cd.customProperties.containsKey(NetworkProfileQueryUtils.NO_NIC_VM);
         DeferredResult<SubnetState> subnet = null;
-        boolean isIsolatedNetworkEnvironment = profile.networkProfile != null &&
+        boolean isIsolatedBySubnetNetworkProfile = profile.networkProfile != null &&
                 profile.networkProfile.isolationType == IsolationSupportType.SUBNET;
         boolean hasSubnetStates = profile.networkProfile != null
                 && profile.networkProfile.subnetStates != null
                 && !profile.networkProfile.subnetStates.isEmpty();
-        if (hasSubnetStates || isIsolatedNetworkEnvironment) {
+        if (hasSubnetStates || isIsolatedBySubnetNetworkProfile) {
             if (!noNicVM) {
                 if (computeNetworkDescription.networkType.equals(NetworkType.ISOLATED) &&
-                        profile.networkProfile.isolationType == IsolationSupportType.SUBNET) {
+                        isIsolatedBySubnetNetworkProfile) {
                     subnet = DeferredResult.completed(isolatedSubnetState);
                 } else {
                     DeferredResult<SubnetState> subnetDeferred = new DeferredResult<>();
@@ -530,5 +527,17 @@ public class NetworkProfileQueryUtils {
                         : DeferredResult.completed(null);
             }
         });
+    }
+
+    private static List<String> combineSecurityGroups(List<String> existingSecurityGroupLinks,
+            SecurityGroupState isolationSecurityGroup) {
+        if (isolationSecurityGroup == null) {
+            return existingSecurityGroupLinks;
+        } else if (existingSecurityGroupLinks == null) {
+            return Arrays.asList(isolationSecurityGroup.documentSelfLink);
+        } else {
+            existingSecurityGroupLinks.add(isolationSecurityGroup.documentSelfLink);
+            return existingSecurityGroupLinks;
+        }
     }
 }
