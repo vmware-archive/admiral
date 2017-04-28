@@ -149,7 +149,7 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
     }
 
     private static List<Operation> topicOperations(ServiceHost host) {
-        EventTopicState[] topics = new EventTopicState[] {createChangeContainerNameTopic(host),
+        EventTopicState[] topics = new EventTopicState[] { createChangeContainerNameTopic(host),
                 createChangeComputeNameTopic(host) };
 
         return Arrays.stream(topics)
@@ -185,20 +185,13 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
         topic.blockable = Boolean.TRUE;
 
         // [{"resourceNames":{"dataType":"String","multivalued":"true","label":"Resource Names"}}]
-        topic.schema = SchemaBuilder.create()
+        topic.schema = addCommonSchemaFields(SchemaBuilder.create())
                 .addField("resourceNames")
                 .addDataType(String.class.getSimpleName())
                 .addLabel("Resource Names")
                 .addDescription("Generated resource names.")
                 .whereMultiValued(true)
                 .whereReadOnly(false)
-                // Add ContainerDescription custom properties.
-                .addField("containerDescProperties")
-                .addDataType(String.class.getSimpleName())
-                .addLabel("Properties of Container Description (Read Only)")
-                .addDescription("Container Description Properties.")
-                .whereMultiValued(false)
-                .whereReadOnly(true)
                 // Add resourceToHostSelection info
                 .addField("resourceToHostSelection")
                 .addDataType(String.class.getSimpleName())
@@ -226,7 +219,7 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
         topic.blockable = Boolean.TRUE;
 
         // [{"resourceNames":{"dataType":"String","multivalued":"true","label":"Resource Names"}}]
-        topic.schema = SchemaBuilder.create()
+        topic.schema = addCommonSchemaFields(SchemaBuilder.create())
                 .addField("resourceNames")
                 .addDataType(String.class.getSimpleName())
                 .addLabel("Resource Names")
@@ -235,6 +228,48 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
                 .build();
 
         return topic;
+    }
+
+    private static SchemaBuilder addCommonSchemaFields(SchemaBuilder builder) {
+        builder
+                .addField("requestId")
+                .addDataType(String.class.getSimpleName())
+                .addLabel("Request id")
+                .addDescription("Request id")
+                .whereMultiValued(false)
+
+                .addField("componentId")
+                .addDataType(String.class.getSimpleName())
+                .addLabel("Component id")
+                .addDescription("Component id")
+                .whereMultiValued(false)
+
+                .addField("blueprintId")
+                .addDataType(String.class.getSimpleName())
+                .addLabel("Blueprint name")
+                .addDescription("Blueprint name")
+                .whereMultiValued(false)
+
+                .addField("componentTypeId")
+                .addDataType(String.class.getSimpleName())
+                .addLabel("Component type id")
+                .addDescription("Component type id")
+                .whereMultiValued(false)
+
+                .addField("owner")
+                .addDataType(String.class.getSimpleName())
+                .addLabel("Owner")
+                .addDescription("Owner")
+                .whereMultiValued(false)
+
+                .addField("customProperties")
+                .addDataType(String.class.getSimpleName())
+                .addLabel("Properties of the resource(Read Only)")
+                .addDescription("Resource Properties.")
+                .whereMultiValued(false)
+                .whereReadOnly(true);
+
+        return builder;
     }
 
     /**

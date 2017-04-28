@@ -135,37 +135,53 @@ public class ContainerAllocationTaskService extends
 
         }
 
-        /** The description that defines the requested resource. */
+        /**
+         * The description that defines the requested resource.
+         */
         @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED }, indexing = STORE_ONLY)
         public String resourceDescriptionLink;
 
-        /** (Required) Type of resource to create. */
+        /**
+         * (Required) Type of resource to create.
+         */
         @PropertyOptions(usage = { SINGLE_ASSIGNMENT, REQUIRED }, indexing = STORE_ONLY)
         public String resourceType;
 
-        /** (Required) the groupResourcePlacementState that links to ResourcePool */
+        /**
+         * (Required) the groupResourcePlacementState that links to ResourcePool
+         */
         @PropertyOptions(usage = { SINGLE_ASSIGNMENT }, indexing = STORE_ONLY)
         public String groupResourcePlacementLink;
 
-        /** (Required) Number of resources to provision. */
+        /**
+         * (Required) Number of resources to provision.
+         */
         @PropertyOptions(usage = { SINGLE_ASSIGNMENT,
                 AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Long resourceCount;
 
-        /** Set by a Task with the links of the provisioned resources. */
+        /**
+         * Set by a Task with the links of the provisioned resources.
+         */
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Set<String> resourceLinks;
 
-        /** Indicating that it is in the second phase after allocation */
+        /**
+         * Indicating that it is in the second phase after allocation
+         */
         public boolean postAllocation;
 
         // Service use fields:
 
-        /** (Internal) Set by task after resource name prefixes requested. */
+        /**
+         * (Internal) Set by task after resource name prefixes requested.
+         */
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Set<String> resourceNames;
 
-        /** (Internal) Set by task after the ComputeState is found to host the containers */
+        /**
+         * (Internal) Set by task after the ComputeState is found to host the containers
+         */
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public List<HostSelection> hostSelections;
 
@@ -176,11 +192,15 @@ public class ContainerAllocationTaskService extends
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public Map<String, HostSelection> resourceNameToHostSelection;
 
-        /** (Internal) Set by task */
+        /**
+         * (Internal) Set by task
+         */
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public URI instanceAdapterReference;
 
-        /** (Internal) Set by task with ContainerDescription name. */
+        /**
+         * (Internal) Set by task with ContainerDescription name.
+         */
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public String descName;
     }
@@ -1002,12 +1022,10 @@ public class ContainerAllocationTaskService extends
      * Takes volumes from ContainerDescription in format [/host-directory:/container-directory] or
      * [namedVolume:/container-directory] and puts the suffix for host part of the volume name.
      *
-     * @param cd
-     *            - ContainerDescription
-     * @param hostSelection
-     *            - HostSelection for resource.
+     * @param cd            - ContainerDescription
+     * @param hostSelection - HostSelection for resource.
      * @return new volume name equals to old one, but with suffix for host directory like:
-     *         [namedVolume-mcm376:/container-directory]
+     * [namedVolume-mcm376:/container-directory]
      */
     private static String[] mapVolumes(ContainerDescription cd, HostSelection hostSelection) {
 
@@ -1057,25 +1075,24 @@ public class ContainerAllocationTaskService extends
     }
 
     @Override
-    protected ServiceTaskCallbackResponse notificationPayload() {
+    protected BaseExtensibilityCallbackResponse notificationPayload() {
         return new ExtensibilityCallbackResponse();
     }
 
     /**
      * Defines fields which are eligible for modification in case of subscription for task.
      */
-    protected static class ExtensibilityCallbackResponse extends ServiceTaskCallbackResponse {
+    protected static class ExtensibilityCallbackResponse extends BaseExtensibilityCallbackResponse {
         public Set<String> resourceNames;
-        public Map<String, String> containerDescProperties;
         public Map<String, String> resourceToHostSelection;
     }
 
     @Override
     protected void enhanceNotificationPayload(ContainerAllocationTaskState state,
-            ServiceTaskCallbackResponse notificationPayload, Runnable callback) {
+            BaseExtensibilityCallbackResponse notificationPayload, Runnable callback) {
         if (state.taskSubStage == SubStage.BUILD_RESOURCES_LINKS) {
             getContainerDescription(state, (contDesc) -> {
-                ((ExtensibilityCallbackResponse) notificationPayload).containerDescProperties =
+                ((BaseExtensibilityCallbackResponse) notificationPayload).customProperties =
                         contDesc.customProperties;
                 //Finished with ContainerDescription customProperties. Now get host selections.
                 retrieveHostsAddresses(state, notificationPayload, callback);
