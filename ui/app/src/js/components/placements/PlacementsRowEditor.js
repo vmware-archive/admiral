@@ -160,12 +160,6 @@ PlacementsRowEditor.prototype.setData = function(data) {
         placementObject = {};
       }
 
-      let groupInputValue = placementObject.group ? placementObject.group.id :
-        placementObject.groupId;
-
-      // todo add loading for groups input
-      this.placementGroupInput.setItems(data.groups);
-      this.placementGroupInput.setValue(groupInputValue);
       this.placementZoneInput.setSelectedOption(placementObject.placementZone);
       if (this.deploymentPolicyInput) {
         this.deploymentPolicyInput.setSelectedOption(placementObject.deploymentPolicy);
@@ -190,19 +184,26 @@ PlacementsRowEditor.prototype.setData = function(data) {
       this.placementZoneInput.setSelectedOption(data.selectedPlacementZone.resourcePoolState);
     }
 
-    let oldSelectedGroup = oldData.item ? oldData.item.group : oldData.group;
+    // Business groups / Projects
+    this.placementGroupInput.setItems(data.groups);
+
     let selectedGroup = data.selectedGroup;
     if (!selectedGroup) {
       selectedGroup = data.item ? data.item.group : data.group;
     }
-    if (oldSelectedGroup !== selectedGroup && selectedGroup) {
-      let placementGroupValue = selectedGroup.id ? selectedGroup.id : selectedGroup.name;
-      if (!placementGroupValue) {
-        placementGroupValue = selectedGroup;
-      }
+    let placementGroupValue = selectedGroup && selectedGroup.id;
+    if (!placementGroupValue) {
+      placementGroupValue = data.item.groupId;
+    }
+
+    let oldSelectedGroup = oldData.item ? oldData.item.group : oldData.group;
+    let oldPlacementGroupValue = oldSelectedGroup && oldSelectedGroup.id;
+
+    if (oldPlacementGroupValue !== placementGroupValue) {
       this.placementGroupInput.setValue(placementGroupValue);
     }
 
+    // Deployment policies
     if (data.deploymentPolicies === constants.LOADING) {
       this.deploymentPolicyInput.setLoading(true);
     } else {
