@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
@@ -33,6 +34,7 @@ import com.vmware.photon.controller.model.resources.ComputeService.LifecycleStat
 /**
  * Tests for the {@link ComputeRemovalWatchService} service.
  */
+@Ignore
 public class ComputeRemovalWatchServiceTest extends ComputeRequestBaseTest {
     private RequestBrokerState request;
 

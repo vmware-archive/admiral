@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.host;
 
-
 import com.vmware.admiral.request.ClosureAllocationTaskService;
 import com.vmware.admiral.request.ClosureProvisionTaskService;
 import com.vmware.admiral.request.ClosureRemovalTaskFactoryService;
@@ -50,7 +49,6 @@ import com.vmware.admiral.request.compute.ComputeOperationTaskService;
 import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService;
 import com.vmware.admiral.request.compute.ComputeRemovalTaskService;
-import com.vmware.admiral.request.compute.ComputeRemovalWatchService;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService;
 import com.vmware.admiral.request.compute.ProvisionContainerHostsTaskService;
 import com.vmware.admiral.request.kubernetes.CompositeKubernetesProvisioningTaskService;
@@ -77,7 +75,6 @@ public class HostInitRequestServicesConfig extends HostInitServiceHelper {
                 CompositionTaskFactoryService.class,
                 RequestStatusFactoryService.class,
                 NotificationsService.class,
-                ComputeRemovalWatchService.class,
                 RequestInitialBootService.class,
                 TagAssignmentService.class,
                 RequestBrokerGraphService.class);

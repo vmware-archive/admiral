@@ -527,7 +527,7 @@ public class NetworkProfileQueryUtils {
                 return DeferredResult.<SubnetState> completed(subnetState.get());
             } else {
                 return regionId != null ? findSubnetBy(host, tenantLinks, endpointLink, null)
-                        : (DeferredResult<SubnetState>) null;
+                        : DeferredResult.completed(null);
             }
         });
     }
