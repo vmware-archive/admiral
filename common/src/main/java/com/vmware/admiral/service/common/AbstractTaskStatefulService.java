@@ -17,6 +17,8 @@ import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties
 import java.net.URI;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
@@ -289,7 +291,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         if (subscriptionSubStages.contains(state.taskSubStage)) {
             ExtensibilitySubscriptionManager manager = getExtensibilityManager();
             if (manager != null) {
-                ServiceTaskCallbackResponse notificationPayload = this.notificationPayload();
+                BaseExtensibilityCallbackResponse notificationPayload = this.notificationPayload();
 
                 Runnable callback = () -> {
                     manager.handleStagePatch(notificationPayload, this.replyPayload(), state,
@@ -314,14 +316,17 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     }
 
     private void validateAndEnhanceNotificationPayload(T state,
-            ServiceTaskCallbackResponse notificationPayload, Runnable callback) {
+            BaseExtensibilityCallbackResponse notificationPayload, Runnable callback) {
         if (notificationPayload == null) {
             this.failTask(String.format(
                     "Task [%s] doesn't provide notification payload for extensibility.",
                     this.getClass()), new Throwable());
             return;
         }
-        this.enhanceNotificationPayload(state, notificationPayload, callback);
+
+        this.fillCommonFields(state, notificationPayload, () -> {
+            this.enhanceNotificationPayload(state, notificationPayload, callback);
+        });
     }
 
     protected void updateRequestTracker(T state) {
@@ -834,7 +839,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     /**
      * Declares service fields which will be sent to client for information about the task.
      */
-    protected ServiceTaskCallbackResponse notificationPayload() {
+    protected BaseExtensibilityCallbackResponse notificationPayload() {
         return null;
     }
 
@@ -862,7 +867,22 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
      *            - callback that will be run once enhancement is finished.
      */
     protected void enhanceNotificationPayload(T state,
-            ServiceTaskCallbackResponse notificationPayload, Runnable callback) {
+            BaseExtensibilityCallbackResponse notificationPayload, Runnable callback) {
+        callback.run();
+    }
+
+    protected void fillCommonFields(T state,
+            BaseExtensibilityCallbackResponse notificationPayload, Runnable callback) {
+
+        Map<String, String> properties = state.customProperties != null ? state.customProperties :
+                new HashMap<>();
+
+        notificationPayload.requestId = properties.get("container_request_id");
+        notificationPayload.componentId = properties.get("__component_id");
+        notificationPayload.blueprintId = properties.get("__blueprint_id");
+        notificationPayload.componentTypeId = properties.get("__component_type_id");
+        notificationPayload.owner = properties.get("__compute_owner");
+
         callback.run();
     }
 
@@ -937,5 +957,13 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
         template.documentDescription.serializedStateSizeLimit = MAX_STATE_SIZE;
         return template;
+    }
+
+    protected static class BaseExtensibilityCallbackResponse extends ServiceTaskCallbackResponse {
+        public String requestId;
+        public String componentId;
+        public String blueprintId;
+        public String componentTypeId;
+        public String owner;
     }
 }

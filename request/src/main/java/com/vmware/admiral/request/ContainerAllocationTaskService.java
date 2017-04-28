@@ -1052,23 +1052,22 @@ public class ContainerAllocationTaskService extends
     }
 
     @Override
-    protected ServiceTaskCallbackResponse notificationPayload() {
+    protected BaseExtensibilityCallbackResponse notificationPayload() {
         return new ExtensibilityCallbackResponse();
     }
 
     /**
      * Defines fields which are eligible for modification in case of subscription for task.
      */
-    protected static class ExtensibilityCallbackResponse extends ServiceTaskCallbackResponse {
+    protected static class ExtensibilityCallbackResponse extends BaseExtensibilityCallbackResponse {
         public Set<String> resourceNames;
-        public Map<String, String> containerDescProperties;
     }
 
     @Override
     protected void enhanceNotificationPayload(ContainerAllocationTaskState state,
-            ServiceTaskCallbackResponse notificationPayload, Runnable callback) {
+            BaseExtensibilityCallbackResponse notificationPayload, Runnable callback) {
         getContainerDescription(state, (contDesc) -> {
-            ((ExtensibilityCallbackResponse) notificationPayload).containerDescProperties = contDesc.customProperties;
+            notificationPayload.customProperties = contDesc.customProperties;
             callback.run();
         });
     }
