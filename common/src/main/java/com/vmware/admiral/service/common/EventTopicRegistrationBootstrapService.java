@@ -51,7 +51,7 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
     private static final String COMPUTE_NAME_TOPIC_ID = "com.vmware.compute.name.assignment";
     private static final String COMPUTE_NAME_TOPIC_NAME = "Compute name assignment";
     private static final String COMPUTE_NAME_TOPIC_TASK_NAME = "ComputeAllocationTaskState";
-    private static final String COMPUTE_NAME_TOPIC_SUBSTAGE = "RESOURCES_NAMES";
+    private static final String COMPUTE_NAME_TOPIC_SUBSTAGE = "SELECT_PLACEMENT_COMPUTES";
     private static final String COMPUTE_NAME_TOPIC_TASK_DESCRIPTION = "Assign custom compute name.";
 
     public static FactoryService createFactory() {

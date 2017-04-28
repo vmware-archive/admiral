@@ -161,7 +161,7 @@ public class ComputeAllocationTaskService
             ERROR;
 
             static final Set<ComputeAllocationTaskState.SubStage> SUBSCRIPTION_SUB_STAGES = new HashSet<>(
-                    Arrays.asList(RESOURCES_NAMES));
+                    Arrays.asList(SELECT_PLACEMENT_COMPUTES));
         }
     }
 
@@ -1013,7 +1013,7 @@ public class ComputeAllocationTaskService
      * Defines fields which are eligible for modification in case of subscription for task.
      */
     protected static class ExtensibilityCallbackResponse extends ServiceTaskCallbackResponse {
-        Set<String> resourceNames;
+        public Set<String> resourceNames;
     }
 
     @Override
