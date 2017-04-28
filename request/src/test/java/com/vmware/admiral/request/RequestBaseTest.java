@@ -581,7 +581,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
         subnet.id = UUID.randomUUID().toString();
         subnet.networkLink = createNetworkState().documentSelfLink;
         subnet.endpointLink = createEndpoint().documentSelfLink;
-        subnet.subnetCIDR = "0.0.0.0/24";
+        subnet.subnetCIDR = "0.0.0.0/28";
         subnet.instanceAdapterReference = UriUtils.buildUri(this.host,
                 AWSSubnetService.SELF_LINK);
         subnet = doPost(subnet, SubnetService.FACTORY_LINK);

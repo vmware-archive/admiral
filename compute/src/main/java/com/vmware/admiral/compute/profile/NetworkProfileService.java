@@ -52,6 +52,7 @@ import com.vmware.xenon.services.common.QueryTask.Query;
  */
 public class NetworkProfileService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.NETWORK_PROFILES;
+    private static final int MAX_CIDR_PREFIX_LENGTH = 29;
 
     public static class NetworkProfile extends MultiTenantDocument {
         public static final String FIELD_NAME_NAME = "name";
@@ -238,12 +239,15 @@ public class NetworkProfileService extends StatefulService {
                 completion = DeferredResult.completed(currentState);
             }
 
-            if (newState.isolatedSubnetCIDRPrefix != null
-                    && !newState.isolatedSubnetCIDRPrefix.equals(
-                            currentState.isolatedSubnetCIDRPrefix)) {
+            if (newState.isolatedSubnetCIDRPrefix != null) {
+                if (newState.isolatedSubnetCIDRPrefix < 1 ||
+                        newState.isolatedSubnetCIDRPrefix > MAX_CIDR_PREFIX_LENGTH) {
+                    throw new IllegalArgumentException(
+                            "Isolation Subnet Prefix Length should be between 1 and " +
+                                    MAX_CIDR_PREFIX_LENGTH + ".");
+                }
 
                 currentState.isolatedSubnetCIDRPrefix = newState.isolatedSubnetCIDRPrefix;
-                completion = completion.thenCompose(this::updateIsolationSubnetCIDRPrefix);
             }
         } catch (NoSuchFieldException | IllegalAccessException e) {
             patch.fail(e);
@@ -349,12 +353,6 @@ public class NetworkProfileService extends StatefulService {
                 ComputeNetworkCIDRAllocationState();
         cidrAllocationState.networkLink = networkProfile.isolationNetworkLink;
         cidrAllocationState.tenantLinks = networkProfile.tenantLinks;
-        if (networkProfile.isolatedSubnetCIDRPrefix == null) {
-            // TODO: Set a default for now. Remove when UI provides a value.
-            cidrAllocationState.subnetCIDRPrefixLength = 29;
-        } else {
-            cidrAllocationState.subnetCIDRPrefixLength = networkProfile.isolatedSubnetCIDRPrefix;
-        }
         Operation createOp = Operation.createPost(getHost(),
                 ComputeNetworkCIDRAllocationService.FACTORY_LINK)
                 .setBody(cidrAllocationState);
@@ -365,21 +363,6 @@ public class NetworkProfileService extends StatefulService {
                             resultCIDRAllocationState.documentSelfLink;
                     return networkProfile;
                 });
-    }
-
-    private DeferredResult<NetworkProfile> updateIsolationSubnetCIDRPrefix(
-            NetworkProfile networkProfile) {
-
-        ComputeNetworkCIDRAllocationState allocationState = new ComputeNetworkCIDRAllocationState();
-        allocationState.subnetCIDRPrefixLength = networkProfile.isolatedSubnetCIDRPrefix;
-
-        Operation patchOp = Operation.createPatch(getHost(),
-                networkProfile.isolationNetworkCIDRAllocationLink)
-                .setBody(allocationState);
-
-
-        return sendWithDeferredResult(patchOp, ComputeNetworkCIDRAllocationState.class)
-                .thenApply(resultCIDRAllocationState -> networkProfile);
     }
 
     /**

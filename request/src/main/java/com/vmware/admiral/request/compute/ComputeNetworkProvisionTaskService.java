@@ -121,7 +121,8 @@ public class ComputeNetworkProvisionTaskService
         /**
          * (Required) Links to already allocated resources that are going to be provisioned.
          */
-        @Documentation(description = "Links to already allocated resources that are going to be provisioned.")
+        @Documentation(
+                description = "Links to already allocated resources that are going to be provisioned.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
                 PropertyUsageOption.REQUIRED, PropertyUsageOption.SINGLE_ASSIGNMENT })
         public Set<String> resourceLinks;
@@ -131,7 +132,8 @@ public class ComputeNetworkProvisionTaskService
         /**
          * (Internal) Reference to the adapter that will fulfill the provision request.
          */
-        @Documentation(description = "Reference to the adapter that will fulfill the provision request.")
+        @Documentation(
+                description = "Reference to the adapter that will fulfill the provision request.")
         @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
                 PropertyUsageOption.SERVICE_USE, PropertyUsageOption.SINGLE_ASSIGNMENT,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
@@ -432,7 +434,7 @@ public class ComputeNetworkProvisionTaskService
                 .whenComplete((ctx, t) -> {
                     if (t != null) {
                         failTask("Failure retrieving compute states and network interface "
-                                        + "descriptions", t);
+                                + "descriptions", t);
                         return;
                     }
                     result.complete(ctx);
@@ -523,11 +525,18 @@ public class ComputeNetworkProvisionTaskService
 
     private DeferredResult<Context> allocateSubnetCIDR(Context context) {
         AssertUtil.assertNotNull(context.profile, "Context.profile should not be null.");
+        AssertUtil.assertNotNull(context.profile.networkProfile.isolatedSubnetCIDRPrefix,
+                "Context.profile.networkProfile.isolatedSubnetCIDRPrefix should "
+                        + "not be null.");
         AssertUtil.assertNotNull(context.subnet, "Context.subnet should not be null.");
 
-        // Get new CIDR.
+        // TODO: get optional network CIDR from the profile
+        // (for endpoints that have networks with no CIDRs).
+        String optionalNetworkCIDR = null;
         ComputeNetworkCIDRAllocationRequest request =
-                allocationRequest(context.subnet.id);
+                allocationRequest(context.subnet.id,
+                        context.profile.networkProfile.isolatedSubnetCIDRPrefix,
+                        optionalNetworkCIDR);
         return this.sendWithDeferredResult(
                 Operation.createPatch(this,
                         context.profile.networkProfile.isolationNetworkCIDRAllocationLink)
@@ -645,7 +654,7 @@ public class ComputeNetworkProvisionTaskService
             result.complete(context);
         });
 
-        return  result;
+        return result;
     }
 
     private DeferredResult<Context> patchComputeNetwork(Context context) {

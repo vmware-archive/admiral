@@ -80,7 +80,7 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
         ComputeNetworkCIDRAllocationState cidrAllocationState =
                 createCIDRAllocation(subnet.networkLink);
 
-        doPatch(allocationRequest(subnet.id),
+        doPatch(allocationRequest(subnet.id, 28),
                 ComputeNetworkCIDRAllocationState.class,
                 cidrAllocationState.documentSelfLink);
 
@@ -221,7 +221,6 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
 
         ComputeNetworkCIDRAllocationState cidrAllocationState =
                 new ComputeNetworkCIDRAllocationState();
-        cidrAllocationState.subnetCIDRPrefixLength = 28;
         cidrAllocationState.networkLink = networkLink;
 
         return doPost(cidrAllocationState, ComputeNetworkCIDRAllocationService.FACTORY_LINK);
