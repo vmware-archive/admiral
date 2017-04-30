@@ -131,13 +131,14 @@ public class ContainerControlLoopServiceTest extends RequestBaseTest {
         containerDescription1 = createContainerDescription(false);
         containerDescription1._cluster = 2;
 
-        HealthConfig healthConfig = createHealthConfigTcp();
+        ServerSocket serverSocket = new ServerSocket(0);
+        HealthConfig healthConfig = createHealthConfigTcp(serverSocket.getLocalPort());
         healthConfig.autoredeploy = true;
         containerDescription1.healthConfig = healthConfig;
         doPut(containerDescription1);
 
         // starting a listener for the health check
-        try (ServerSocket serverSocket = new ServerSocket(RequestBaseTest.HEALTH_CHECK_PORT)) {
+        try {
             // provision 2 containers in cluster
             ContainerState state = provisionContainer(containerDescription1.documentSelfLink);
             // change the power state of one of them
@@ -184,6 +185,10 @@ public class ContainerControlLoopServiceTest extends RequestBaseTest {
 
                 return containerFromDesc1Redeployed.get();
             });
+        } finally {
+            if (serverSocket != null) {
+                serverSocket.close();
+            }
         }
     }
 
@@ -191,14 +196,16 @@ public class ContainerControlLoopServiceTest extends RequestBaseTest {
     @Test
     public void redeploymentOfSingleContainers() throws Throwable {
         containerDescription2 = createContainerDescription(false);
-        HealthConfig healthConfig = createHealthConfigTcp();
+
+        ServerSocket serverSocket = new ServerSocket();
+        HealthConfig healthConfig = createHealthConfigTcp(serverSocket.getLocalPort());
         healthConfig.autoredeploy = true;
         containerDescription2.healthConfig = healthConfig;
         containerDescription2.tenantLinks = resourcePool.tenantLinks;
         doPut(containerDescription2);
 
         // starting a listener for the health check
-        try (ServerSocket serverSocket = new ServerSocket(RequestBaseTest.HEALTH_CHECK_PORT)) {
+        try  {
             // provision 3 single containers, 2 of them in ERROR state
             ContainerState state = null;
             for (int i = 0; i < SINGLE_CONTAINERS_TO_BE_PROVISIONED; i++) {
@@ -248,6 +255,10 @@ public class ContainerControlLoopServiceTest extends RequestBaseTest {
 
                 return containerFromDesc2Redeployed.get();
             });
+        } finally {
+            if (serverSocket != null) {
+                serverSocket.close();
+            }
         }
     }
 
@@ -255,14 +266,17 @@ public class ContainerControlLoopServiceTest extends RequestBaseTest {
     @Test
     public void periodicMaintenanceTest() throws Throwable {
         containerDescription2 = createContainerDescription(false);
-        HealthConfig healthConfig = createHealthConfigTcp();
+        ServerSocket serverSocket = new ServerSocket(0);
+
+        HealthConfig healthConfig = createHealthConfigTcp(serverSocket.getLocalPort());
         healthConfig.autoredeploy = true;
+
         containerDescription2.healthConfig = healthConfig;
         containerDescription2.tenantLinks = resourcePool.tenantLinks;
         doPut(containerDescription2);
 
         // starting a listener for the health check
-        try (ServerSocket serverSocket = new ServerSocket(RequestBaseTest.HEALTH_CHECK_PORT)) {
+        try  {
             // provision 3 single containers, 2 of them in ERROR state
             ContainerState state = null;
             for (int i = 0; i < SINGLE_CONTAINERS_TO_BE_PROVISIONED; i++) {
@@ -310,6 +324,10 @@ public class ContainerControlLoopServiceTest extends RequestBaseTest {
 
                 return containerFromDesc2Redeployed.get();
             });
+        } finally {
+            if (serverSocket != null) {
+                serverSocket.close();
+            }
         }
     }
 

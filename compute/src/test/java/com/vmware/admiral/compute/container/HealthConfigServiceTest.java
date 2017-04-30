@@ -244,8 +244,9 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
         ContainerDescription containerDesc = createContainerDescription();
         containerDesc.documentSelfLink = mockContainerDescriptionLink;
 
+        ServerSocket serverSocket = new ServerSocket(0);
         containerDesc.healthConfig.protocol = RequestProtocol.TCP;
-        containerDesc.healthConfig.port = 8800;
+        containerDesc.healthConfig.port = serverSocket.getLocalPort();
         containerDesc.healthConfig.healthyThreshold = 1;
         containerDesc = doPost(containerDesc, ContainerDescriptionService.FACTORY_LINK);
 
@@ -263,8 +264,10 @@ public class HealthConfigServiceTest extends ComputeBaseTest {
         URI uri = UriUtils.buildUri(host, container.documentSelfLink);
         doOperation(patch, uri, false, Action.PATCH);
 
-        try (ServerSocket serverSocket = new ServerSocket(8800)) {
+        try {
             verifyHealthSuccessAfterTreshold(containerDesc.healthConfig.healthyThreshold, containerDesc, container);
+        } finally {
+            serverSocket.close();
         }
 
     }

@@ -112,7 +112,6 @@ import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 public abstract class RequestBaseTest extends BaseTestCase {
 
     protected static final String DEFAULT_GROUP_RESOURCE_POLICY = GroupResourcePlacementService.DEFAULT_RESOURCE_PLACEMENT_LINK;
-    protected static final int HEALTH_CHECK_PORT = 8800;
     protected static final String DEFAULT_HEALTH_CHECK_TIMEOUT = "5000";
     protected static final String DEFAULT_HEALTH_CHECK_DELAY = "1000";
 
@@ -738,10 +737,10 @@ public abstract class RequestBaseTest extends BaseTestCase {
         return compositeDesc;
     }
 
-    protected HealthConfig createHealthConfigTcp() {
+    protected HealthConfig createHealthConfigTcp(int port) {
         HealthConfig healthConfig = new HealthConfig();
         healthConfig.protocol = RequestProtocol.TCP;
-        healthConfig.port = RequestBaseTest.HEALTH_CHECK_PORT;
+        healthConfig.port = port;
         healthConfig.healthyThreshold = 2;
         healthConfig.unhealthyThreshold = 2;
         healthConfig.timeoutMillis = 2000;
