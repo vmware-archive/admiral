@@ -21,6 +21,7 @@ fi
 
 
 JAVA_OPTS="$JAVA_OPTS $MEMORY_OPTS"
+JAVA_OPTS="$JAVA_OPTS -XX:+HeapDumpOnOutOfMemoryError"
 
 java -Dconfiguration.properties=$CONFIG_FILES $JAVA_OPTS -cp $ADMIRAL_ROOT/*:$ADMIRAL_ROOT/lib/*:/etc/xenon/dynamic-services/* com.vmware.admiral.host.ManagementHost --bindAddress=0.0.0.0 --port=$ADMIRAL_PORT --sandbox=$ADMIRAL_STORAGE_PATH $XENON_OPTS &
 PID=$!
