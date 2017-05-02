@@ -105,7 +105,6 @@ export default Vue.component('vsphere-network-profile-editor', {
     },
     onIsolationTypeChange(value) {
       this.isolationType = value;
-      this.isolationNetwork = null;
       this.emitChange();
     },
     onIsolationNetworkChange(value) {

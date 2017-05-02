@@ -104,7 +104,6 @@ export default Vue.component('aws-network-profile-editor', {
     },
     onIsolationTypeChange(value) {
       this.isolationType = value;
-      this.isolationNetwork = null;
       this.emitChange();
     },
     onIsolationNetworkChange(value) {
