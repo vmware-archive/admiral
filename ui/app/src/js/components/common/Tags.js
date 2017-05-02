@@ -55,22 +55,26 @@ function Tags(el) {
             suggestions.sort((a, b) => a.value === b.value ? 0 : +(a.value > b.value) || -1);
             if (values.length) {
               if (q.indexOf(SEPARATOR) === -1) {
-                suggestions = [{ value: encode(values[0].key) + SEPARATOR}, ...suggestions];
+                suggestions = [{
+                  value: encode(values[0].key) + SEPARATOR
+                }, ...suggestions];
               }
               if (!values.find((tag) => tag.key === q)) {
-                suggestions = [
-                  { value: q + (q.indexOf(SEPARATOR) === -1 ? SEPARATOR : '')},
-                  ...suggestions
-                ];
+                suggestions = [{
+                  value: encode(q) + (q.indexOf(SEPARATOR) === -1 ? SEPARATOR : '')
+                }, ...suggestions];
               }
+            } else if (q.indexOf(SEPARATOR) === -1) {
+              suggestions = [{
+                value: encode(q) + SEPARATOR
+              }];
             } else {
-              suggestions = [
-                { value: q + (q.indexOf(SEPARATOR) === -1 ? SEPARATOR : '')}
-              ];
+              let pair = q.split(SEPARATOR);
+              suggestions = [{
+                value: encode(pair[0]) + SEPARATOR + encode(pair[1])
+              }];
             }
-            async(suggestions.map((tag) => $.extend({}, tag, {
-              value: encode(tag.value)
-            })));
+            async(suggestions);
           });
         },
         display: (tag) => {
