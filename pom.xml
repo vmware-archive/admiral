@@ -220,6 +220,24 @@
                 <artifactId>maven-failsafe-plugin</artifactId>
             </plugin>
             <plugin>
+                <groupId>org.commonjava.maven.plugins</groupId>
+                <artifactId>directory-maven-plugin</artifactId>
+                <version>0.1</version>
+                <executions>
+                    <execution>
+                        <id>directories</id>
+                        <goals>
+                            <goal>highest-basedir</goal>
+                        </goals>
+                        <phase>validate</phase>
+                        <configuration>
+                            <property>main.basedir</property>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
                 <version>3.0.0</version>
@@ -229,6 +247,7 @@
                     <failOnError>true</failOnError>
                     <xmlOutput>true</xmlOutput>
                     <omitVisitors>UnreadFields,DefaultEncodingDetector</omitVisitors>
+                    <excludeFilterFile>${main.basedir}/tools/build/findbugs-exclude.xml</excludeFilterFile>
                 </configuration>
                 <executions>
                     <execution>
@@ -250,7 +269,7 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <configLocation>tools/build/checkstyle.xml</configLocation>
+                    <configLocation>${main.basedir}/tools/build/checkstyle.xml</configLocation>
                     <encoding>UTF-8</encoding>
                     <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>
