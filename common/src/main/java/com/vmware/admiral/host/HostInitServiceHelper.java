@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 
+import com.vmware.admiral.service.common.EventTopicDeclarator;
 import com.vmware.admiral.service.common.NodeHealthCheckService;
 import com.vmware.admiral.service.common.NodeMigrationService;
 import com.vmware.xenon.common.Operation;
@@ -44,6 +45,7 @@ public abstract class HostInitServiceHelper {
             populateServicesForHealthCheck(host, serviceInstance, serviceClass,
                     services, true);
             host.startFactory(serviceInstance);
+            handleEventTopicDeclarators(serviceInstance, host);
         }
         registerServiceForHelathcheck(host, services);
         registerServiceForMigration(host, services);
@@ -66,6 +68,7 @@ public abstract class HostInitServiceHelper {
                     services, false);
 
             startService(host, serviceClass, serviceInstance);
+            handleEventTopicDeclarators(serviceInstance, host);
         }
         registerServiceForHelathcheck(host, services);
         registerServiceForMigration(host, services);
@@ -144,6 +147,12 @@ public abstract class HostInitServiceHelper {
                                 "Exception while register services for migration: %s", e);
                     }
                 }));
+    }
+
+    private static void handleEventTopicDeclarators(Service service, ServiceHost host) {
+        if (service instanceof EventTopicDeclarator) {
+            ((EventTopicDeclarator) service).registerEventTopics(host);
+        }
     }
 
 }

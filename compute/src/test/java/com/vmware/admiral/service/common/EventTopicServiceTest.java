@@ -17,23 +17,20 @@ import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.common.test.BaseTestCase;
-import com.vmware.admiral.service.common.EventTopicRegistrationBootstrapService.SchemaBuilder;
 import com.vmware.admiral.service.common.EventTopicService.EventTopicState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.common.test.TestRequestSender;
 import com.vmware.xenon.common.test.TestRequestSender.FailureResponse;
@@ -42,6 +39,8 @@ public class EventTopicServiceTest extends BaseTestCase {
 
     private static final String EVENT_TASK = "DummyTask";
     private static final String EVENT_NAME = "Name assignment";
+    private static final String CHANGE_CONTAINER_NAME_SELF_LINK = "change-container-name";
+    private static final String CHANGE_COMPUTE_NAME_SELF_LINK = "change-compute-name";
 
     private TestRequestSender sender;
 
@@ -53,18 +52,12 @@ public class EventTopicServiceTest extends BaseTestCase {
 
         waitForServiceAvailability(EventTopicService.FACTORY_LINK);
 
-        host.registerForServiceAvailability(EventTopicRegistrationBootstrapService.startTask(host),
-                true,
-                EventTopicRegistrationBootstrapService.FACTORY_LINK);
-
-        host.startFactory(new EventTopicRegistrationBootstrapService());
-
-        waitForServiceAvailability(EventTopicRegistrationBootstrapService.FACTORY_LINK);
+        initializeChangeResourceNameTopics();
     }
 
     @Test
     public void testCreateEventRegistryTopic() {
-        EventTopicState state = createEventTopicState(EVENT_NAME, EVENT_TASK,
+        EventTopicState state = createEventTopicState("dummy-link", EVENT_NAME, EVENT_TASK,
                 TaskStage.FINISHED.name(), DefaultSubStage.COMPLETED.name(), false, new String());
 
         URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
@@ -86,7 +79,7 @@ public class EventTopicServiceTest extends BaseTestCase {
 
     @Test
     public void testEmptyName() {
-        EventTopicState state = createEventTopicState(null, EVENT_TASK,
+        EventTopicState state = createEventTopicState(null, null, EVENT_TASK,
                 TaskStage.FINISHED.name(), DefaultSubStage.COMPLETED.name(), false, new String());
 
         URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
@@ -101,7 +94,7 @@ public class EventTopicServiceTest extends BaseTestCase {
 
     @Test
     public void testEmptyTask() {
-        EventTopicState state = createEventTopicState(EVENT_NAME, null,
+        EventTopicState state = createEventTopicState(null, EVENT_NAME, null,
                 TaskStage.FINISHED.name(), DefaultSubStage.COMPLETED.name(), false, new String());
 
         URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
@@ -116,7 +109,7 @@ public class EventTopicServiceTest extends BaseTestCase {
 
     @Test
     public void testEmptyStage() {
-        EventTopicState state = createEventTopicState(EVENT_NAME, EVENT_TASK,
+        EventTopicState state = createEventTopicState(null, EVENT_NAME, EVENT_TASK,
                 null, DefaultSubStage.COMPLETED.name(), false, new String());
 
         URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
@@ -131,7 +124,7 @@ public class EventTopicServiceTest extends BaseTestCase {
 
     @Test
     public void testEmptySubStage() {
-        EventTopicState state = createEventTopicState(EVENT_NAME, EVENT_TASK,
+        EventTopicState state = createEventTopicState(null, EVENT_NAME, EVENT_TASK,
                 TaskStage.FINISHED.name(), null, false, new String());
 
         URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
@@ -146,7 +139,7 @@ public class EventTopicServiceTest extends BaseTestCase {
 
     @Test
     public void testEmptyBlocking() {
-        EventTopicState state = createEventTopicState(EVENT_NAME, EVENT_TASK,
+        EventTopicState state = createEventTopicState(null, EVENT_NAME, EVENT_TASK,
                 TaskStage.FINISHED.name(), DefaultSubStage.COMPLETED.name(), null, new String());
 
         URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
@@ -161,7 +154,7 @@ public class EventTopicServiceTest extends BaseTestCase {
 
     @Test
     public void testEmptySchema() {
-        EventTopicState state = createEventTopicState(EVENT_NAME, EVENT_TASK,
+        EventTopicState state = createEventTopicState(null, EVENT_NAME, EVENT_TASK,
                 TaskStage.FINISHED.name(), DefaultSubStage.COMPLETED.name(), true, null);
 
         URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
@@ -176,12 +169,9 @@ public class EventTopicServiceTest extends BaseTestCase {
 
     @Test
     public void testCreateionOfChangeContainerNameTopic() {
-
         // On start service creates new topic. No need for explicit post for creation.
         TestContext context = new TestContext(1, Duration.ofSeconds(120));
-        verifyThatTopicExists(
-                EventTopicRegistrationBootstrapService.CONTAINER_NAME_TOPIC_TASK_SELF_LINK,
-                context);
+        verifyThatTopicExists(CHANGE_CONTAINER_NAME_SELF_LINK, context);
         context.await();
     }
 
@@ -189,113 +179,8 @@ public class EventTopicServiceTest extends BaseTestCase {
     public void testCreateionOfChangeComputeNameTopic() {
         // On start service creates new topic. No need for explicit post for creation.
         TestContext context = new TestContext(1, Duration.ofSeconds(120));
-        verifyThatTopicExists(
-                EventTopicRegistrationBootstrapService.COMPUTE_NAME_TOPIC_TASK_SELF_LINK, context);
+        verifyThatTopicExists(CHANGE_COMPUTE_NAME_SELF_LINK, context);
         context.await();
-    }
-
-    @Test
-    public void testSchemaBuilder() {
-        String fieldName = "resourceNames";
-        String dataType = String.class.getSimpleName();
-        String description = "description";
-        String label = "label";
-        boolean multivalued = true;
-
-        SchemaBuilder schemaBuilder = EventTopicRegistrationBootstrapService.SchemaBuilder.create();
-        schemaBuilder.addField(fieldName)
-                .addDataType(dataType)
-                .addDescription(description)
-                .addLabel(label)
-                .whereMultiValued(multivalued);
-
-        String schemaAsJson = schemaBuilder.build();
-
-        assertNotNull(schemaAsJson);
-
-        @SuppressWarnings("unchecked")
-        List<Map<String, Map<String, String>>> entitiesHolder = Utils.fromJson(schemaAsJson,
-                List.class);
-
-        assertNotNull(entitiesHolder);
-        assertEquals(1, entitiesHolder.size());
-
-        Map<String, Map<String, String>> fieldToProperties = entitiesHolder.get(0);
-
-        Entry<String, Map<String, String>> entry = fieldToProperties.entrySet().iterator().next();
-        assertEquals(fieldName, entry.getKey());
-
-        Map<String, String> fieldProperties = entry.getValue();
-        assertEquals(4, fieldProperties.size());
-
-    }
-
-    @Test
-    public void testSchemaBuilderWithMultipleFields() {
-
-        String fieldName = "resourceNames";
-        String dataType = String.class.getSimpleName();
-        String description = UUID.randomUUID().toString();
-        String label = UUID.randomUUID().toString();
-        boolean multivalued = true;
-        boolean readOnly = false;
-
-        String fieldName2 = "containerDescProperties";
-        String dataType2 = String.class.getSimpleName();
-        String description2 = UUID.randomUUID().toString();
-        String label2 = UUID.randomUUID().toString();
-        boolean multivalued2 = false;
-        boolean readOnly2 = false;
-
-        SchemaBuilder schemaBuilder = EventTopicRegistrationBootstrapService.SchemaBuilder.create();
-        schemaBuilder.addField(fieldName)
-                .addDataType(dataType)
-                .addDescription(description)
-                .addLabel(label)
-                .whereMultiValued(multivalued)
-                .whereReadOnly(readOnly)
-                // Add another field
-                .addField(fieldName2)
-                .addDataType(dataType2)
-                .addDescription(description2)
-                .addLabel(label2)
-                .whereMultiValued(multivalued2)
-                .whereReadOnly(readOnly2);
-
-        String schemaAsJson = schemaBuilder.build();
-
-        assertNotNull(schemaAsJson);
-
-        @SuppressWarnings("unchecked")
-        List<Map<String, Map<String, String>>> entitiesHolder = Utils.fromJson(schemaAsJson,
-                List.class);
-
-        assertNotNull(entitiesHolder);
-        assertEquals(2, entitiesHolder.size());
-
-        entitiesHolder.stream().forEach(entity -> {
-            if (entity.containsKey(fieldName)) {
-                Map<String, String> fieldProperties = entity.get(fieldName);
-                assertNotNull(fieldProperties);
-                assertEquals(5, fieldProperties.size());
-                assertEquals(dataType, fieldProperties.get("dataType"));
-                assertEquals(description, fieldProperties.get("description"));
-                assertEquals(label, fieldProperties.get("label"));
-                assertEquals(String.valueOf(multivalued), fieldProperties.get("multivalued"));
-                assertEquals(String.valueOf(readOnly), fieldProperties.get("readOnly"));
-            } else {
-                Map<String, String> fieldProperties = entity.get(fieldName2);
-                assertNotNull(fieldProperties);
-                assertEquals(5, fieldProperties.size());
-                assertEquals(dataType2, fieldProperties.get("dataType"));
-                assertEquals(description2, fieldProperties.get("description"));
-                assertEquals(label2, fieldProperties.get("label"));
-                assertEquals(String.valueOf(multivalued2), fieldProperties.get("multivalued"));
-                assertEquals(String.valueOf(readOnly2), fieldProperties.get("readOnly"));
-
-            }
-        });
-
     }
 
     private void verifyThatTopicExists(String topicSelfLink, TestContext context) {
@@ -331,7 +216,8 @@ public class EventTopicServiceTest extends BaseTestCase {
 
     }
 
-    private EventTopicState createEventTopicState(String name, String task, String stage,
+    private EventTopicState createEventTopicState(String documentSelfLink, String name, String
+            task, String stage,
             String subStage, Boolean blocking, String schema) {
 
         EventTopicService.TopicTaskInfo taskInfo = new EventTopicService.TopicTaskInfo();
@@ -340,11 +226,55 @@ public class EventTopicServiceTest extends BaseTestCase {
         taskInfo.substage = subStage;
 
         EventTopicState state = new EventTopicState();
+        state.documentSelfLink = documentSelfLink;
         state.name = name;
         state.topicTaskInfo = taskInfo;
         state.blockable = blocking;
         state.schema = schema;
         return state;
+
+    }
+
+    private void initializeChangeResourceNameTopics() {
+
+        EventTopicState changeContainerName = createEventTopicState(CHANGE_CONTAINER_NAME_SELF_LINK,
+                "Change Container's name",
+                "ContainerAllocationTaskState", TaskStage.STARTED.name(), "BUILD_RESOURCE_LINKS",
+                true, new String());
+
+        EventTopicState changeComputeName = createEventTopicState(CHANGE_COMPUTE_NAME_SELF_LINK,
+                "Change Compute's name",
+                "ComputeAllocationTaskState", TaskStage.STARTED.name(), "SELECT_PLACEMENT_COMPUTES",
+                true, new String());
+
+        List<EventTopicState> topics = Arrays.asList(new EventTopicState[]
+                { changeContainerName, changeComputeName });
+
+        TestContext context = new TestContext(2, Duration.ofMinutes(1));
+
+        topics.stream().forEach(topic -> {
+
+            host.sendRequest(Operation.createPost(host, EventTopicService.FACTORY_LINK)
+                    .setReferer(host.getUri())
+                    .setBody(topic)
+                    .addPragmaDirective(
+                            Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
+                    .setCompletion((o, e) -> {
+                        if (e != null) {
+                            host.log(Level.SEVERE,
+                                    String.format(
+                                            "Unable to register '%s' topic. "
+                                                    + "Exception: %s",
+                                            topic.name, e.getMessage()));
+                            context.failIteration(e);
+                            return;
+                        }
+                        context.completeIteration();
+                    }));
+
+        });
+
+        context.await();
 
     }
 

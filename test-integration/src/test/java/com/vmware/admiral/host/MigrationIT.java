@@ -31,7 +31,6 @@ import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
-import com.vmware.admiral.service.common.EventTopicRegistrationBootstrapService;
 import com.vmware.admiral.service.common.NodeMigrationService;
 import com.vmware.admiral.service.common.NodeMigrationService.MigrationRequest;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
@@ -42,7 +41,6 @@ import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service.Action;
-import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.VerificationHost;
 import com.vmware.xenon.services.common.MigrationTaskService;
@@ -65,11 +63,7 @@ public class MigrationIT extends RequestBaseTest {
         startServices(host);
         host.waitForServiceAvailable(ComputeService.FACTORY_LINK, ResourcePoolService.FACTORY_LINK,
                 ElasticPlacementZoneConfigurationService.SELF_LINK,
-                ElasticPlacementZoneService.FACTORY_LINK,
-                EventTopicRegistrationBootstrapService.FACTORY_LINK);
-        host.getTestRequestSender().sendPostAndWait(
-                UriUtils.buildUri(host, EventTopicRegistrationBootstrapService.FACTORY_LINK),
-                new ServiceDocument(), ServiceDocument.class);
+                ElasticPlacementZoneService.FACTORY_LINK);
 
         targetHost = createHost();
         startServices(targetHost);
