@@ -10,6 +10,7 @@
  */
 
 import services from 'core/services';
+import utils from 'core/utils';
 
 export default Vue.component('azure-storage-profile-editor', {
   template: `
@@ -24,6 +25,7 @@ export default Vue.component('azure-storage-profile-editor', {
     <storage-item
     :storage-item="item"
     :index="index"
+    :storage-accounts="storageAccounts"
     @change="onStorageItemChange"
     @remove="onRemoveStorageItem">
     </storage-item>
@@ -43,8 +45,18 @@ export default Vue.component('azure-storage-profile-editor', {
     let storageItems = this.model.storageItems &&
       this.model.storageItems.asMutable({deep: true}) || [];
     return {
-      storageItems: storageItems
+      storageItems: storageItems,
+      storageAccounts: []
     };
+  },
+  created() {
+    services.loadStorageAccounts().then((response) => {
+      let documents = utils.getDocumentArray(response);
+      let accountNames = documents.map((document) => {
+        return document.name;
+      });
+      this.storageAccounts = accountNames || [];
+    });
   },
   attached() {
     this.emitChange();
@@ -77,6 +89,34 @@ export default Vue.component('azure-storage-profile-editor', {
   }
 });
 
+const STORAGE_ACCOUNT_TYPES = [{
+  name: i18n.t('app.profile.storageAccountType.standardLRS'),
+  value: 'Standard_LRS'
+}, {
+  name: i18n.t('app.profile.storageAccountType.standardZRS'),
+  value: 'Standard_ZRS'
+}, {
+  name: i18n.t('app.profile.storageAccountType.standardGRS'),
+  value: 'Standard_GRS'
+}, {
+  name: i18n.t('app.profile.storageAccountType.standardRAGRS'),
+  value: 'Standard_RAGRS'
+}, {
+  name: i18n.t('app.profile.storageAccountType.premiumLRS'),
+  value: 'Premium_LRS'
+}];
+
+const OS_DISK_CACHING_TYPES = [{
+  name: i18n.t('app.profile.osDiskCachingType.none'),
+  value: 'None'
+}, {
+  name: i18n.t('app.profile.osDiskCachingType.readOnly'),
+  value: 'ReadOnly'
+}, {
+  name: i18n.t('app.profile.osDiskCachingType.readWrite'),
+  value: 'ReadWrite'
+}];
+
 Vue.component('storage-item', {
   template: `
     <div class="align-right toolbar">
@@ -90,21 +130,34 @@ Vue.component('storage-item', {
       :required="true"
       @change="onNameChange">
     </text-group>
-    <multicolumn-editor-group
-      :headers="[
-      i18n('app.profile.edit.nameLabel'),
-      i18n('app.profile.edit.valueLabel')
-      ]"
-      :label="i18n('app.profile.edit.diskPropertyMappingLabel')"
-      :value="diskPropertyMapping"
-      @change="onDiskPropertyChange">
-      <multicolumn-cell name="name">
-        <text-control></text-control>
-      </multicolumn-cell>
-      <multicolumn-cell name="value">
-        <text-control></text-control>
-      </multicolumn-cell>
-    </multicolumn-editor-group>
+    <div class="form-group">
+      <form-label :required="true">{{i18n('app.profile.edit.storageAccountNameLabel')}}</form-label>
+      <div class="form-control">
+        <input type="text" list="storageaccounts" class="form-control"
+         @change="onAccountNameChange($event)" :value="storageAccount">
+        <datalist id="storageaccounts">
+          <option v-for="account of storageAccounts" value="{{account}}"></option>
+        </datalist>
+      </div>
+     </div>
+    <div class="form-group" v-if="!existingAccountSelected">
+      <form-label :required="true">{{i18n('app.profile.edit.storageAccountTypeLabel')}}</form-label>
+      <div class="form-control select">
+        <select @change="onAccountTypeChange" v-model="storageAccountType">
+          <option v-for="accountType of accountTypes" value="{{accountType.value}}">
+          {{accountType.name}}</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <form-label :required="true">{{i18n('app.profile.edit.osDiskCachingLabel')}}</form-label>
+      <div class="form-control select">
+        <select @change="onOSDiskCachingChange" v-model="osDiskCaching">
+          <option v-for="cachingType of cachingTypes" value="{{cachingType.value}}">
+          {{cachingType.name}}</option>
+        </select>
+      </div>
+    </div>
     <div class="form-group">
       <label>{{i18n('app.profile.edit.defaultLabel')}}</label>
       <div class="radio">
@@ -130,6 +183,10 @@ Vue.component('storage-item', {
     index: {
       required: true,
       type: Number
+    },
+    storageAccounts: {
+      required: true,
+      type: Array
     }
   },
   created() {
@@ -148,24 +205,17 @@ Vue.component('storage-item', {
     let tagLinks = this.storageItem.tagLinks;
     this.storageItem.tags = [];
     return {
-      diskPropertyMapping: Object.keys(diskProperties).map((key) => {
-        return {
-          name: key,
-          value: diskProperties[key]
-        };
-      }),
+      storageAccount: diskProperties.azureStorageAccountName || '',
+      storageAccountType: diskProperties.azureStorageAccountType || '',
+      osDiskCaching: diskProperties.azureOsDiskCaching || '',
       tagLinks: tagLinks,
-      tags: []
+      tags: [],
+      accountTypes: STORAGE_ACCOUNT_TYPES,
+      cachingTypes: OS_DISK_CACHING_TYPES,
+      existingAccountSelected: true
     };
   },
   methods: {
-    onDiskPropertyChange(diskPropertyArray) {
-      this.storageItem.diskProperties = diskPropertyArray.reduce((propertyMap, diskProperty) => {
-        return Object.assign(propertyMap, {
-          [diskProperty.name]: diskProperty.value
-        });
-      }, {});
-    },
     onTagsChange(tags) {
       this.storageItem.tags = tags;
       this.tags = tags;
@@ -178,6 +228,22 @@ Vue.component('storage-item', {
     },
     onDefaultChange($event) {
       this.storageItem.defaultItem = $event.target.checked;
+    },
+    onAccountNameChange($event) {
+      let value = $event.target.value;
+      this.existingAccountSelected = this.storageAccounts.find((storageAccount) => {
+        return storageAccount === value;
+      });
+      this.onDiskPropertyChange('azureStorageAccountName', value);
+    },
+    onAccountTypeChange($event) {
+      this.onDiskPropertyChange('azureStorageAccountType', $event.target.value);
+    },
+    onOSDiskCachingChange($event) {
+      this.onDiskPropertyChange('azureOsDiskCaching', $event.target.value);
+    },
+    onDiskPropertyChange(diskPropertyName, value) {
+      this.storageItem.diskProperties[diskPropertyName] = value;
     }
   }
 });

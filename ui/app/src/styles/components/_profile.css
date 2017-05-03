@@ -63,3 +63,7 @@
 .not-last-storage-item {
   border-bottom: 1px solid #ddd;
 }
+
+input::-webkit-calendar-picker-indicator {
+  display: none;
+}
