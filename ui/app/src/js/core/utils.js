@@ -1391,6 +1391,12 @@ var utils = {
       tagsToAssign: tagsToAssign
     };
     return request;
+  },
+
+  getDocumentArray(documentResponse) {
+    return documentResponse.documentLinks.map((documentLink) => {
+      return documentResponse.documents[documentLink];
+    });
   }
 };
 

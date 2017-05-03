@@ -2216,6 +2216,17 @@ services.loadAdapters = function() {
   return list(links.ADAPTERS, true);
 };
 
+services.loadStorageAccounts = function() {
+  let storageQuery = {};
+  storageQuery['customProperties.storageType'] = [{
+    val: 'Microsoft.Storage/storageAccounts',
+    op: 'eq'
+  }];
+  return get(links.STORAGE_ACCOUNTS, {
+    [ODATA_FILTER_PROP_NAME]: buildOdataQuery(storageQuery)
+  });
+};
+
 services.loadScript = function(src) {
   return new Promise((resolve, reject) => {
     $.getScript(src).done(resolve).fail(reject);

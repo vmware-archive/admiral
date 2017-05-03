@@ -539,7 +539,10 @@
         "defaultForZoneLabel": "Default for Zone",
         "addStorageItem": "Add Storage Item",
         "defaultLabel": "Default",
-        "makeDescriptorDefault": "Make this descriptor default"
+        "makeDescriptorDefault": "Make this descriptor default",
+        "storageAccountNameLabel": "Storage Account Name",
+        "storageAccountTypeLabel": "Storage Account Type",
+        "osDiskCachingLabel": "OS Disk Caching"
       },
       "instanceType": {
         "aws": {
@@ -568,6 +571,18 @@
         "coreos": "CoreOS",
         "photon": "Photon OS",
         "ubuntu-1604": "Ubuntu"
+      },
+      "storageAccountType": {
+        "standardLRS": "Standard LRS",
+        "standardZRS": "Standard ZRS",
+        "standardGRS": "Standard GRS",
+        "standardRAGRS": "Standard RAGRS",
+        "premiumLRS": "Premium LRS"
+      },
+      "osDiskCachingType": {
+        "none": "None",
+        "readOnly": "Read Only",
+        "readWrite": "Read Write"
       }
     },
     "endpoint": {
