@@ -40,8 +40,7 @@ public interface ManagementUriParts {
     String EXTENSIBILITY_MANAGER = EXTENSIBILITY + "-manager";
     String EXTENSIBILITY_CALLBACKS = EXTENSIBILITY + "-callbacks";
 
-    String EVENT_TOPIC_REGISTRY = CONFIG + "/event-topic";
-    String EVENT_TOPIC_REGISTRY_BOOTSTRAP = CONFIG + "/event-topic-registry";
+    String EVENT_TOPIC = CONFIG + "/event-topic";
 
     // Resources:
     String DESCRIPTION_SUFFIX = "-descriptions";

@@ -57,8 +57,13 @@ import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAl
 import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState;
 import com.vmware.admiral.request.compute.enhancer.ComputeDescriptionEnhancers;
 import com.vmware.admiral.request.compute.enhancer.Enhancer.EnhanceContext;
+import com.vmware.admiral.request.utils.EventTopicConstants;
+import com.vmware.admiral.request.utils.EventTopicUtils;
+import com.vmware.admiral.request.utils.EventTopicUtils.SchemaBuilder;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
+import com.vmware.admiral.service.common.EventTopicDeclarator;
+import com.vmware.admiral.service.common.EventTopicService;
 import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
@@ -82,6 +87,7 @@ import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationSequence;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -91,8 +97,8 @@ import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
 public class ComputeAllocationTaskService
-        extends
-        AbstractTaskStatefulService<ComputeAllocationTaskService.ComputeAllocationTaskState, ComputeAllocationTaskService.ComputeAllocationTaskState.SubStage> {
+        extends AbstractTaskStatefulService<ComputeAllocationTaskService.ComputeAllocationTaskState, ComputeAllocationTaskService.ComputeAllocationTaskState.SubStage>
+        implements EventTopicDeclarator {
 
     public static final String FACTORY_LINK = ManagementUriParts.REQUEST_COMPUTE_ALLOCATION_TASKS;
 
@@ -1063,5 +1069,34 @@ public class ComputeAllocationTaskService
             }
         }
         super.autoMergeState(patch, patchBody, currentState);
+    }
+
+    private void changeComputeNameEventTopic(ServiceHost host) {
+        EventTopicService.TopicTaskInfo taskInfo = new EventTopicService.TopicTaskInfo();
+        taskInfo.task = ComputeAllocationTaskState.class.getSimpleName();
+        taskInfo.stage = TaskStage.STARTED.name();
+        taskInfo.substage = SubStage.SELECT_PLACEMENT_COMPUTES.name();
+
+        EventTopicUtils.registerEventTopic(EventTopicConstants
+                        .COMPUTE_NAME_TOPIC_ID,
+                EventTopicConstants.COMPUTE_NAME_TOPIC_NAME, EventTopicConstants
+                        .COMPUTE_NAME_TOPIC_TASK_DESCRIPTION, EventTopicConstants
+                        .COMPUTE_NAME_TOPIC_TASK_SELF_LINK, Boolean.TRUE,
+                changeComputeNameTopicSchema(), taskInfo, host);
+    }
+
+    private SchemaBuilder changeComputeNameTopicSchema() {
+        return SchemaBuilder.create()
+                .addField(EventTopicConstants.COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES)
+                .addDataType(String.class.getSimpleName())
+                .addLabel(EventTopicConstants.COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES_LABEL)
+                .addDescription(EventTopicConstants
+                        .COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION)
+                .whereMultiValued(true);
+    }
+
+    @Override
+    public void registerEventTopics(ServiceHost host) {
+        changeComputeNameEventTopic(host);
     }
 }

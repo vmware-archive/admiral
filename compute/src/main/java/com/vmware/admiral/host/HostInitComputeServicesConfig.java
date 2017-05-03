@@ -83,7 +83,6 @@ import com.vmware.admiral.compute.profile.NetworkProfileService;
 import com.vmware.admiral.compute.profile.ProfileMappingService;
 import com.vmware.admiral.compute.profile.ProfileService;
 import com.vmware.admiral.compute.profile.StorageProfileService;
-import com.vmware.admiral.service.common.EventTopicRegistrationBootstrapService;
 import com.vmware.admiral.service.test.MockConfigureHostOverSshTaskServiceWithoutValidate;
 import com.vmware.admiral.service.test.MockContainerHostService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
@@ -148,9 +147,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 DeploymentService.class,
                 ReplicationControllerService.class,
                 ServiceEntityHandler.class,
-                ReplicaSetService.class,
-                EventTopicRegistrationBootstrapService.class);
-
+                ReplicaSetService.class);
 
 
 

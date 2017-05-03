@@ -22,7 +22,7 @@ import com.vmware.xenon.common.StatefulService;
 
 public class EventTopicService extends StatefulService {
 
-    public static final String FACTORY_LINK = ManagementUriParts.EVENT_TOPIC_REGISTRY;
+    public static final String FACTORY_LINK = ManagementUriParts.EVENT_TOPIC;
 
     public static class EventTopicState extends MultiTenantDocument {
 
@@ -58,6 +58,7 @@ public class EventTopicService extends StatefulService {
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
+        super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
     }
 
     @Override
