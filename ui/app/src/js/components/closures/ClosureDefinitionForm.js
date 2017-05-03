@@ -536,6 +536,11 @@ function updateCodeFormater(runtime, sourceEditor) {
       path: 'ace/mode/powershell',
       v: Date.now()
     });
+  } else if (runtime === 'java') {
+    sourceEditor.getSession().setMode({
+      path: 'ace/mode/java',
+      v: Date.now()
+    });
   }
 }
 
@@ -551,6 +556,11 @@ function updateDependenciesFormater(runtime, dependencyEditor) {
       v: Date.now()
     });
   } else if (runtime === 'powershell') {
+    dependencyEditor.getSession().setMode({
+      path: 'ace/mode/text',
+      v: Date.now()
+    });
+  } else if (runtime === 'java') {
     dependencyEditor.getSession().setMode({
       path: 'ace/mode/text',
       v: Date.now()

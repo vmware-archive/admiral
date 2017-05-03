@@ -1323,6 +1323,8 @@ var utils = {
         runtimeIcon = 'image-assets/closure-python.png';
       } else if (runtime.startsWith('powershell')) {
         runtimeIcon = 'image-assets/closure-powershell.png';
+      } else if (runtime.startsWith('java')) {
+        runtimeIcon = 'image-assets/closure-java.png';
       }
     }
     return runtimeIcon;
