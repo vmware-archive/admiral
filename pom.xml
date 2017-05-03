@@ -244,7 +244,7 @@
                         <goals>
                             <goal>highest-basedir</goal>
                         </goals>
-                        <phase>initialize</phase>
+                        <phase>validate</phase>
                         <configuration>
                             <property>main.basedir</property>
                         </configuration>
@@ -283,7 +283,7 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <configLocation>tools/build/checkstyle.xml</configLocation>
+                    <configLocation>${main.basedir}/tools/build/checkstyle.xml</configLocation>
                     <encoding>UTF-8</encoding>
                     <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>
