@@ -12,33 +12,28 @@
 package com.vmware.admiral.common.util;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.util.SubscriptionManager.SubscriptionNotification;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
-import com.vmware.xenon.common.test.TestNodeGroupManager;
-import com.vmware.xenon.common.test.TestRequestSender;
 import com.vmware.xenon.common.test.VerificationHost;
 import com.vmware.xenon.services.common.ExampleService;
 import com.vmware.xenon.services.common.ExampleService.ExampleServiceState;
+import com.vmware.xenon.services.common.NodeGroupService.NodeGroupConfig;
 
-@Ignore
 public class ReliableSubscriptionManagerTest {
 
     @FunctionalInterface
@@ -46,77 +41,71 @@ public class ReliableSubscriptionManagerTest {
         boolean test() throws Throwable;
     }
 
-    private static final int WAIT_FOR_STATE_CHANGE_COUNT = Integer.getInteger(
-            "dcp.management.test.change.count", 2500);
-    private static final int WAIT_THREAD_SLEEP_IN_MILLIS = Integer.getInteger(
-            "dcp.management.test.wait.thread.sleep.millis", 20);
-    private static final long SUBSCRIPTION_START_TIMEOUT_SECONDS = 10;
-    private static final long NOTIFICATION_TIMEOUT_SECONDS = 10;
+    private static final int WAIT_FOR_OPERATION_RESPONSE = Integer.getInteger(
+            "dcp.management.test.wait.operation.response.seconds", 30);
+    private static final long SUBSCRIPTION_START_TIMEOUT_SECONDS = Integer.getInteger(
+            "dcp.management.test.subscription.start.timeout.seconds", 10);
+    private static final long NOTIFICATION_TIMEOUT_SECONDS = Integer.getInteger(
+            "dcp.management.test.notification.timeout.seconds", 10);
 
     private static final String INITIAL_NAME_FIELD_VALUE = "initial-name";
     private static final String PATCHED_NAME_FIELD_VALUE = "patched-name";
+    private static final int CLUSTER_NODES = 3;
 
-    private ServiceHost peer;
-    private TestRequestSender sender;
-    private TestNodeGroupManager nodeGroup;
     private ExampleServiceState exampleState;
+    private VerificationHost cluster;
+    private VerificationHost peerHost;
 
     @Before
-    public void setup() throws Throwable {
-        this.nodeGroup = new TestNodeGroupManager();
-
+    public void setUp() throws Throwable {
         // create and start 3 verification hosts
-        for (int i = 0; i < 3; i++) {
-            VerificationHost host = createAndStartHost();
-            this.nodeGroup.addHost(host);
-        }
-        // and join nodes
-        this.nodeGroup.joinNodeGroupAndWaitForConvergence();
-        this.nodeGroup.setTimeout(Duration.ofSeconds(30));
-        this.nodeGroup.updateQuorum(2);
+        cluster = VerificationHost.create();
+        ServiceHost.Arguments args = VerificationHost.buildDefaultServiceHostArguments(0);
+        VerificationHost.initialize(cluster, args);
+        cluster.start();
+        cluster.setMaintenanceIntervalMicros(TimeUnit.MILLISECONDS.toMicros(100));
 
-        // wait for factory availability
-        this.nodeGroup.waitForFactoryServiceAvailable(ExampleService.FACTORY_LINK);
+        // join nodes
+        cluster.setUpPeerHosts(CLUSTER_NODES);
+        cluster.joinNodesAndVerifyConvergence(3);
+        cluster.setNodeGroupQuorum(2);
 
-        // choose random host as sender
-        this.peer = this.nodeGroup.getHost();
-        this.sender = new TestRequestSender(this.peer);
+        // peer used to send posts.
+        peerHost = cluster.getPeerHost();
+
+        // wait for replicated factory availability
+        cluster.waitForReplicatedFactoryServiceAvailable(UriUtils.buildUri(peerHost,
+                ExampleService.FACTORY_LINK));
 
         // create example service
-        this.exampleState = createExampleServiceState();
+        exampleState = createExampleServiceState();
     }
 
     @After
     public void tearDown() {
-        if (this.nodeGroup != null) {
-            for (ServiceHost host : this.nodeGroup.getAllHosts()) {
-                ((VerificationHost) host).tearDown();
-            }
-            this.nodeGroup = null;
+        if (cluster != null) {
+            cluster.tearDown();
+            cluster.tearDownInProcessPeers();
         }
     }
 
     @Test
-    public void testReliableSubscriptionsAfterDOcumentOwnerChange() throws Throwable {
-        // subscribe for service updates
-        final int runningHosts = nodeGroup.getAllHosts().size() - 1;
-        this.nodeGroup.getHost().log(Level.INFO, "Subscribing...");
-        CountDownLatch remainingNotifications = new CountDownLatch(runningHosts);
-        this.nodeGroup.getAllHosts().forEach((host) -> {
-            // subscription managers usually should be closed, but the all the hosts will be torn
-            // down after the test execution completes
-            subscribe(host, this.exampleState, (notification) -> {
+    public void testReliableSubscriptionsAfterDocumentOwnerChange() throws Throwable {
+        final int runningHosts = cluster.getPeerCount() - 1;
+        AtomicInteger counter = new AtomicInteger();
+        cluster.getInProcessHostMap().values().forEach((h) -> {
+            subscribe(h, this.exampleState, (notification) -> {
                 String documentLink = notification.getResult().documentSelfLink;
                 if (notification.isDelete()) {
-                    host.log(Level.INFO,
+                    cluster.log(Level.INFO,
                             String.format(
                                     "Delete notification received for %s. Ignoring (waiting for updates).",
                                     documentLink));
                 }
                 if (notification.isUpdate()) {
-                    host.log(Level.INFO, String.format(
+                    cluster.log(Level.INFO, String.format(
                             "Update notification received for %s. Counting down.", documentLink));
-                    remainingNotifications.countDown();
+                    counter.incrementAndGet();
                 }
             });
         });
@@ -128,92 +117,133 @@ public class ReliableSubscriptionManagerTest {
 
         this.exampleState = getDocument(exampleState.documentSelfLink);
         Assert.assertNotEquals(oldOwner, this.exampleState.documentOwner);
-        this.nodeGroup.getHost().log(Level.INFO, "New owner is %s",
-                this.exampleState.documentOwner);
+        this.cluster.log(Level.INFO, "New owner is %s", this.exampleState.documentOwner);
 
-        // patch the service
-        this.nodeGroup.getHost().log(Level.INFO,
-                "Patching document. Will wait for %d notifications", runningHosts);
         this.exampleState = patchDocument(this.exampleState.documentSelfLink);
 
-        // wait for all notifications. If the subscriptions are reliable, all notifications should
-        // arrive even after the ownership change for the service
-        boolean waited = remainingNotifications.await(NOTIFICATION_TIMEOUT_SECONDS,
-                TimeUnit.SECONDS);
-        if (!waited) {
-            Assert.fail(String.format("Failed to wait for %d more update notification(s)",
-                    remainingNotifications.getCount()));
-        }
-        this.nodeGroup.getHost().log(Level.INFO, "All notifications received! Test successful.");
-    }
-
-    private VerificationHost createAndStartHost() throws Throwable {
-        VerificationHost host = VerificationHost.create(0);
-        host.start();
-
-        return host;
+        TestContext waiter = new TestContext(1,
+                Duration.ofSeconds(NOTIFICATION_TIMEOUT_SECONDS));
+        waitFor(() -> {
+            cluster.log("Waiting for notifications, currently got: %d", counter.get());
+            if (counter.get() == runningHosts) {
+                return true;
+            }
+            return false;
+        }, waiter);
     }
 
     private ExampleServiceState createExampleServiceState() {
         ExampleServiceState body = new ExampleServiceState();
         body.name = INITIAL_NAME_FIELD_VALUE;
-        Operation post = Operation.createPost(this.peer, ExampleService.FACTORY_LINK).setBody(body);
-        ExampleServiceState postResult = this.sender.sendAndWait(post, ExampleServiceState.class);
-        assertEquals(INITIAL_NAME_FIELD_VALUE, postResult.name);
-        return postResult;
+
+        // This single element array is used to extract the result from lambda.
+        final ExampleServiceState[] postResult = new ExampleServiceState[1];
+        TestContext ctx = new TestContext(1, Duration.ofSeconds(WAIT_FOR_OPERATION_RESPONSE));
+        Operation.createPost(this.peerHost, ExampleService.FACTORY_LINK)
+                .setBody(body)
+                .setReferer(cluster.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                    } else {
+                        postResult[0] = o.getBody(ExampleServiceState.class);
+                        assertEquals(INITIAL_NAME_FIELD_VALUE, postResult[0].name);
+                        ctx.completeIteration();
+                    }
+                }).sendWith(cluster);
+
+        ctx.await();
+        return postResult[0];
     }
 
     private ExampleServiceState patchDocument(String serviceLink) {
         ExampleServiceState patchBody = new ExampleServiceState();
         patchBody.name = PATCHED_NAME_FIELD_VALUE;
-        Operation patch = Operation.createPatch(this.peer, serviceLink).setBody(patchBody);
-        ExampleServiceState patchResult = this.sender.sendAndWait(patch, ExampleServiceState.class);
-        assertEquals(PATCHED_NAME_FIELD_VALUE, patchResult.name);
+
+        // This single element array is used to extract the result from lambda.
+        final ExampleServiceState[] patchResult = new ExampleServiceState[1];
+        TestContext ctx = new TestContext(1, Duration.ofSeconds(WAIT_FOR_OPERATION_RESPONSE));
+        Operation.createPatch(this.peerHost, serviceLink)
+                .setBody(patchBody)
+                .setReferer(cluster.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                    } else {
+                        patchResult[0] = o.getBody(ExampleServiceState.class);
+                        assertEquals(PATCHED_NAME_FIELD_VALUE, patchResult[0].name);
+                        ctx.completeIteration();
+                    }
+                }).sendWith(cluster);
+        ctx.await();
         return getDocument(serviceLink);
     }
 
     private ExampleServiceState getDocument(String serviceLink) {
-        return getDocument(this.peer, this.sender, serviceLink);
+
+        // This single element array is used to extract the result from lambda.
+        final ExampleServiceState[] getResult = new ExampleServiceState[1];
+        TestContext ctx = new TestContext(1, Duration.ofSeconds(WAIT_FOR_OPERATION_RESPONSE));
+        Operation.createGet(this.peerHost, serviceLink)
+                .setReferer(cluster.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                    } else {
+                        getResult[0] = o.getBody(ExampleServiceState.class);
+                        ctx.completeIteration();
+                    }
+                }).sendWith(cluster);
+        ctx.await();
+        return getResult[0];
     }
 
     private ExampleServiceState getDocument(ServiceHost onHost, String serviceLink) {
-        return getDocument(onHost, this.sender, serviceLink);
-    }
 
-    private ExampleServiceState getDocument(ServiceHost onHost, TestRequestSender withSender,
-            String serviceLink) {
-        Operation getAfterPatch = Operation.createGet(onHost, serviceLink);
-        return withSender.sendAndWait(getAfterPatch, ExampleServiceState.class);
+        // This single element array is used to extract the result from lambda.
+        final ExampleServiceState[] getResult = new ExampleServiceState[1];
+        TestContext ctx = new TestContext(1, Duration.ofSeconds(WAIT_FOR_OPERATION_RESPONSE));
+        Operation.createGet(onHost, serviceLink)
+                .setReferer(onHost.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                    } else {
+                        getResult[0] = o.getBody(ExampleServiceState.class);
+                        ctx.completeIteration();
+                    }
+                }).sendWith(cluster);
+        ctx.await();
+        return getResult[0];
     }
 
     private void stopOwnerNode(ExampleServiceState serviceState) {
         // find owner and stop it
-        String serviceLink = serviceState.documentSelfLink;
-        VerificationHost owner = (VerificationHost) this.nodeGroup.getAllHosts().stream()
-                .filter(host -> host.getId().contentEquals(serviceState.documentOwner))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("couldn't find owner node"));
+        VerificationHost owner = null;
+        for (VerificationHost h : this.cluster.getInProcessHostMap().values()) {
+            if (!h.getId().equals(serviceState.documentOwner)) {
+                peerHost = h;
+            } else {
+                owner = h;
+            }
+        }
+
         owner.log(Level.INFO, "Stopping owner node %s...", owner.getId());
-        owner.tearDown();
-        this.nodeGroup.removeHost(owner);
 
-        // get remaining peers
-        List<VerificationHost> availablePeers = this.nodeGroup.getAllHosts().stream()
-                .filter(host -> !host.getId().contentEquals(owner.getId()))
-                .map(host -> (VerificationHost) host)
-                .collect(Collectors.toList());
+        // Patching the NodeGroupConfig so the stopped node get "kicked" from the group faster.
+        NodeGroupConfig cfg = new NodeGroupConfig();
+        cfg.nodeRemovalDelayMicros = TimeUnit.SECONDS.toMicros(2);
+        this.cluster.setNodeGroupConfig(cfg);
+        this.cluster.stopHost(owner);
 
-        // use one for sender
-        this.peer = availablePeers.get(0);
-        this.sender = new TestRequestSender(this.peer);
+        cluster.waitForReplicatedFactoryServiceAvailable(UriUtils.buildUri(peerHost,
+                ExampleService.FACTORY_LINK));
 
-        this.nodeGroup.waitForConvergence();
-        availablePeers.forEach(p -> p.waitForServiceAvailable(serviceLink));
     }
 
     private void waitForOwnerChange(String oldOwner, String serviceLink) throws Throwable {
-        for (ServiceHost host : this.nodeGroup.getAllHosts()) {
-            waitForOwnerChangeOnHost(host, oldOwner, serviceLink);
+        for (ServiceHost h : this.cluster.getInProcessHostMap().values()) {
+            waitForOwnerChangeOnHost(h, oldOwner, serviceLink);
         }
     }
 
@@ -226,18 +256,29 @@ public class ReliableSubscriptionManagerTest {
         });
     }
 
-    private SubscriptionManager<ExampleServiceState> subscribe(ServiceHost host,
+    private SubscriptionManager<ExampleServiceState> subscribe(ServiceHost h,
             ExampleServiceState serviceState,
             Consumer<SubscriptionNotification<ExampleServiceState>> notificationConsumer) {
         SubscriptionManager<ExampleServiceState> subscriptionManager = new SubscriptionManager<>(
-                host, host.getId(), serviceState.documentSelfLink, ExampleServiceState.class);
-        String subscriptionServiceLink = subscriptionManager.start(notificationConsumer);
+                h, h.getId(), serviceState.documentSelfLink, ExampleServiceState.class);
 
-        host.log(Level.INFO, "Waiting for subscription for %s on host %s",
-                serviceState.documentSelfLink, host.getId());
+        TestContext ctx = new TestContext(1,
+                Duration.ofSeconds(SUBSCRIPTION_START_TIMEOUT_SECONDS));
+        String subscriptionServiceLink;
+        // This single element array is used to extract the result from lambda.
+        final String[] subscriptionServiceLinkResult = new String[1];
+        subscriptionManager.start(notificationConsumer, (subscriptionLink) -> {
+            subscriptionServiceLinkResult[0] = subscriptionLink;
+            ctx.completeIteration();
+        });
+        ctx.await();
+        subscriptionServiceLink = subscriptionServiceLinkResult[0];
+
+        cluster.log(Level.INFO, "Waiting for subscription for %s on host %s",
+                serviceState.documentSelfLink, cluster.getId());
         TestContext testCtx = new TestContext(1,
                 Duration.ofSeconds(SUBSCRIPTION_START_TIMEOUT_SECONDS));
-        host.registerForServiceAvailability((o, e) -> {
+        h.registerForServiceAvailability((o, e) -> {
             if (e != null) {
                 testCtx.fail(e);
             } else {
@@ -248,17 +289,28 @@ public class ReliableSubscriptionManagerTest {
         return subscriptionManager;
     }
 
-    private static void waitFor(String errorMessage, TestWaitForHandler handler)
+    private void waitFor(TestWaitForHandler handler, TestContext context)
             throws Throwable {
-        int iterationCount = WAIT_FOR_STATE_CHANGE_COUNT;
-        Thread.sleep(WAIT_THREAD_SLEEP_IN_MILLIS / 5);
-        for (int i = 0; i < iterationCount; i++) {
-            if (handler.test()) {
-                return;
-            }
-            Thread.sleep(WAIT_THREAD_SLEEP_IN_MILLIS);
+        if (!handler.test()) {
+            cluster.schedule(() -> {
+                try {
+                    waitFor(handler, context);
+                } catch (Throwable throwable) {
+                }
+            }, 1, TimeUnit.SECONDS);
+        } else {
+            context.completeIteration();
         }
-        fail(errorMessage);
+    }
+
+    private void waitFor(String errorMessage, TestWaitForHandler handler) throws Throwable {
+        TestContext context = new TestContext(1, Duration.ofMinutes(1));
+        waitFor(handler, context);
+        try {
+            context.await();
+        } catch (Exception e) {
+            throw new Exception(errorMessage, e);
+        }
     }
 
 }

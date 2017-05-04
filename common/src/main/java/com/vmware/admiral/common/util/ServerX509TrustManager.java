@@ -224,7 +224,7 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
     private void subscribeForSslTrustCertNotifications() {
         this.subscriptionManager.start((n) -> {
             loadSslTrustCertServices();
-        });
+        }, null);
     }
 
     @Override

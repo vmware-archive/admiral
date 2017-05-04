@@ -63,7 +63,7 @@ public class SubscriptionManagementTest extends ComputeBaseTest {
     }
 
     private String subscribe() throws Throwable {
-        TestContext ctx = testCreate(1);
+        TestContext ctx = testCreate(2);
         subscriptionManager.setCompletionHandler((e) -> {
             if (e != null) {
                 ctx.failIteration(e);
@@ -71,11 +71,15 @@ public class SubscriptionManagementTest extends ComputeBaseTest {
             }
             ctx.completeIteration();
         });
-        String subscriptionId = subscriptionManager.start(handler());
+        final String[] subscriptionId = new String[1];
+        subscriptionManager.start(handler(), (id) -> {
+            subscriptionId[0] = id;
+            ctx.completeIteration();
+        });
         testWait(ctx);
         // reset completion handler
         subscriptionManager.setCompletionHandler(null);
-        return subscriptionId;
+        return subscriptionId[0];
     }
 
     @Test

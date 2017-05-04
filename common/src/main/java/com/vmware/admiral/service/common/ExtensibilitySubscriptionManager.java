@@ -139,7 +139,7 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
                 ExtensibilitySubscriptionService.LAST_UPDATED_DOCUMENT_KEY,
                 ConfigurationState.class, true);
 
-        subscriptionManager.start(this::updateExtensibilityCache);
+        subscriptionManager.start(this::updateExtensibilityCache, null);
     }
 
     private void loadExtensibilityStates(Operation op) {
