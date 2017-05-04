@@ -52,17 +52,43 @@
             <td>{{i18n('app.machine.details.general.address')}}</td>
             <td>{{model.instance.address}}</td>
           </tr>
-          <tr>
-            <td>{{i18n('app.machine.details.general.hostName')}}</td>
-            <td>{{model.instance.hostName}}</td>
+          <tr v-if="model.instance.parentName">
+            <td>{{i18n('app.machine.details.general.placementHost')}}</td>
+            <td>{{model.instance.parentName}}</td>
           </tr>
           <tr>
-            <td>Endpoint</td>
+            <td>{{i18n('app.machine.details.general.endpoint')}}</td>
             <td :title="model.instance.endpoint.name">
                 <img class="machine-details-endpoint-icon" v-bind:src="endpointIconSrc">
-                <a :href="'#/compute?endpoint=' + model.instance.endpoint.name"
-                  class="navigation-link">{{model.instance.endpoint.name}}</a>
+                {{model.instance.endpoint.name}}
             </td>
+          </tr>
+          <tr>
+            <td>{{i18n('app.host.details.placementZone')}}</td>
+            <td>{{model.instance.placementZoneName}}</td>
+          </tr>
+          <tr v-if="model.instance.profileName">
+            <td>{{i18n('app.machine.details.general.profile')}}</td>
+            <td>{{model.instance.profileName}}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="machine-details-header-small" v-if="model.instance.displayCustomProperties.length > 0">
+        {{i18n('app.machine.details.customProperties.title')}}
+      </div>
+
+      <table class="table table-hover" v-if="model.instance.displayCustomProperties.length > 0">
+        <thead>
+          <tr>
+            <th>{{i18n('app.machine.details.propertyName')}}</th>
+            <th>{{i18n('app.machine.details.propertyValue')}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in model.instance.displayCustomProperties" track-by="name">
+            <td>{{item.name}}</td>
+            <td>{{item.value}}</td>
           </tr>
         </tbody>
       </table>

@@ -246,7 +246,8 @@ let MachinesStore = Reflux.createStore({
   onOpenMachineDetails: function(machineId) {
     var itemDetailsCursor = this.selectFromData(['selectedItemDetails']);
     itemDetailsCursor.merge({
-      documentSelfLink: '/resources/compute/' + machineId
+      documentSelfLink: '/resources/compute/' + machineId,
+      machineId: machineId
     });
 
     var machine = null;
@@ -254,24 +255,78 @@ let MachinesStore = Reflux.createStore({
     services.loadHost(machineId).then((document) => {
       machine = toViewModel(document);
 
-      return this.getDescriptions([machine]);
-    }).then((result) => {
-      let memory = result[machine.descriptionLink].totalMemoryBytes;
+      machine.displayCustomProperties =
+        machine.customProperties.filter((property) => !property.name.startsWith('_'));
 
-      machine.stats = {
-        cpuCount: result[machine.descriptionLink].cpuCount,
-        cpuMhzPerCore: result[machine.descriptionLink].cpuMhzPerCore,
-        cpuUsage: this.getRandomArbitrary(0, 100),         // random
-        memory: memory,
-        memoryUsage: this.getRandomArbitrary(0, memory)       //random
+      var findCustomProperty = function(customPropertyName) {
+        for (var i = 0; i < machine.customProperties.length; i++) {
+          var customProperty = machine.customProperties[i];
+          if (customProperty.name === customPropertyName) {
+            return customProperty.value;
+          }
+        }
+
+        return null;
       };
 
-      return services.loadEndpoint(machine.endpointLink);
-    }).then((endpoint) => {
-      machine.endpoint = endpoint;
+      let promises = [];
 
-      itemDetailsCursor.setIn(['instance'], machine);
-      this.emitChange();
+      // get machine descriptors
+      promises.push(this.getDescriptions([machine]).catch(() => Promise.resolve()));
+
+      // get endpoint details
+      promises.push(services.loadEndpoint(machine.endpointLink).catch(() => Promise.resolve()));
+
+      // get placement zone
+      promises.push(this.getPlacementZones([machine]).catch(() => Promise.resolve()));
+
+      // get parent compute
+      var placementLink = findCustomProperty('__placementLink');
+      if (placementLink) {
+        promises.push(services.loadHostByLink(placementLink).catch(() => Promise.resolve()));
+      } else {
+        promises.push(Promise.resolve());
+      }
+
+      // get profile
+      let profileLink = findCustomProperty('__profileLink');
+      if (profileLink) {
+        promises.push(services.loadHostByLink(profileLink).catch(() => Promise.resolve()));
+      } else {
+        promises.push(Promise.resolve());
+      }
+
+      return Promise.all(promises).then(
+          ([descriptors, endpoint, placementZones, parent, profile]) => {
+        // calculate stats
+        let memory = descriptors[machine.descriptionLink].totalMemoryBytes;
+
+        machine.stats = {
+          cpuCount: descriptors[machine.descriptionLink].cpuCount,
+          cpuMhzPerCore: descriptors[machine.descriptionLink].cpuMhzPerCore,
+          cpuUsage: this.getRandomArbitrary(0, 100),         // random
+          memory: memory,
+          memoryUsage: this.getRandomArbitrary(0, memory)       //random
+        };
+
+        machine.endpoint = endpoint;
+
+        machine.placementZoneName =
+                 placementZones[machine.resourcePoolLink].resourcePoolState.name;
+
+        // get parent name
+        if (parent) {
+          machine.parentName = parent.name;
+        }
+
+        // get profile name
+        if (profile) {
+          machine.profileName = profile.name;
+        }
+
+        itemDetailsCursor.setIn(['instance'], machine);
+        this.emitChange();
+      });
     }).catch(this.onGenericDetailsError);
   },
   onGenericDetailsError(e) {
@@ -281,6 +336,11 @@ let MachinesStore = Reflux.createStore({
     this.setInData(['selectedItemDetails', 'validationErrors'], validationErrors);
 
     this.emitChange();
+  },
+  onRefreshMachineDetails: function() {
+    var machineId = this.selectFromData(['selectedItemDetails']).getIn('machineId');
+
+    this.onOpenMachineDetails(machineId);
   },
   onCreateMachine(templateContent) {
     services.importContainerTemplate(templateContent).then((templateSelfLink) => {

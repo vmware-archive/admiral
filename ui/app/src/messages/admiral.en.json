@@ -631,13 +631,15 @@
         "propertyValue": "Value",
         "general": {
           "id": "ID",
-          "hostName": "Host Name",
+          "placementHost": "Placement Host",
           "address": "Address",
+          "endpoint": "Endpoint",
           "properties": "Properties",
           "usages": "Usages",
           "powerState": "Power State",
           "environment": "Environment",
-          "region": "Region"
+          "region": "Region",
+          "profile": "Profile"
         },
         "customProperties": {
           "title" : "Custom Properties"

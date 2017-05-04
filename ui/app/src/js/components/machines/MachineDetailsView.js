@@ -14,6 +14,8 @@ import Component from 'components/common/Component';
 import MaximizableBehaviour from 'components/common/MaximizableBehaviour'; //eslint-disable-line
 import MachineStats from 'components/machines/MachineStats'; //eslint-disable-line
 
+import { MachineActions } from 'actions/Actions';
+
 import utils from 'core/utils';
 
 Vue.component('machine-details', {
@@ -43,7 +45,9 @@ Vue.component('machine-details', {
   },
 
   methods: {
-    refresh: function() {},
+    refresh: function() {
+      MachineActions.refreshMachineDetails();
+    },
 
     stateMessage(state) {
       return i18n.t('state.' + state);
