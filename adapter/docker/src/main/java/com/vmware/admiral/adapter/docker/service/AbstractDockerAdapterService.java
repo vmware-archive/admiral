@@ -117,7 +117,6 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
             BiConsumer<ComputeState, CommandInput> callbackFunction) {
 
         sendRequest(Operation.createGet(containerHostReference)
-                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
                 .setContextId(request.getRequestId())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
