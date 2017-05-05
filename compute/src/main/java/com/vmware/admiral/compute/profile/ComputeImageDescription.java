@@ -26,6 +26,15 @@ public class ComputeImageDescription {
     public String image;
 
     /**
+     * Self-link to the {@link com.vmware.photon.controller.model.resources.ImageService.ImageState image}
+     * used to create an instance of this disk service.
+     *
+     * <p>Set either this or {@link #image} property. If both are set this
+     * property has precedence.
+     */
+    public String imageLink;
+
+    /**
      * Specifies different image identifiers by region; useful (and only applicable) to environments
      * defined for all endpoints of a given type. The {@link #image} field must be {@code null} in
      * order for this field to be used.

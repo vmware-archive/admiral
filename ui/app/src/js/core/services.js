@@ -934,12 +934,10 @@ services.updateSubnetwork = function(subnetwork) {
 };
 
 services.searchImageResources = function(endpointLink, query, limit) {
-  var qOps = {
+  let qOps = {
     any: query.toLowerCase()
   };
-
   let filter = buildSearchQuery(qOps);
-
   let params = {
     endpoint: buildOdataQuery({
       documentSelfLink: [{
@@ -948,39 +946,43 @@ services.searchImageResources = function(endpointLink, query, limit) {
       }]
     })
   };
-
-  let url = buildPaginationUrl(links.IMAGE_RESOURCES, filter, true,
+  let url = buildPaginationUrl(links.IMAGE_RESOURCES_SEARCH, filter, true,
       'documentUpdateTimeMicros desc', limit, params);
-
   return get(url).then(function(data) {
-    var documentLinks = data.documentLinks || [];
-
-    var result = {
+    let documentLinks = data.documentLinks || [];
+    let result = {
       totalCount: data.totalCount
     };
-
     result.items = documentLinks.map((link) => {
       return data.documents[link];
     });
-
     return result;
   });
 };
 
-services.loadImageResources = function(ids) {
-  var params = {};
-  if (ids && ids.length) {
-    params[ODATA_FILTER_PROP_NAME] = buildOdataQuery({
-      id: ids.map((id) => {
-        return {
-          val: id,
-          op: 'eq'
-        };
-      }),
-      [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
-    });
-  }
-  return list(links.IMAGE_RESOURCES, true, params);
+services.loadImageResources = function(endpointLink, names) {
+  let endpointQuery = buildOdataQuery({
+    endpointLink: [{
+      val: endpointLink,
+      op: 'eq'
+    }]
+  });
+  let nameQuery = buildOdataQuery({
+    name: names.map((name) => {
+      return {
+        val: name.toLowerCase(),
+        op: 'eq'
+      };
+    }),
+    [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
+  });
+  return list(links.IMAGE_RESOURCES, true, {
+    [ODATA_FILTER_PROP_NAME]: endpointQuery + ' and (' + nameQuery + ')'
+  });
+};
+
+services.loadImage = function(documentSelfLink) {
+  return get(documentSelfLink);
 };
 
 services.loadMachines = function(queryOptions) {
@@ -1285,7 +1287,9 @@ services.deletePlacement = function(placement) {
 };
 
 services.loadProfiles = function(queryOptions) {
-  let filter = buildSearchQuery(queryOptions);
+  let filter = buildSearchQuery($.extend({
+    endpoint: '*'
+  }, queryOptions));
   let url = buildPaginationUrl(links.PROFILES, filter, true,
       'documentExpirationTimeMicros desc');
   return get(url).then(function(result) {

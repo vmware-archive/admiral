@@ -41,7 +41,9 @@ export default Vue.component('azure-compute-profile-editor', {
           <text-control></text-control>
         </multicolumn-cell>
         <multicolumn-cell name="value">
-          <text-control></text-control>
+          <typeahead-control
+            :source="searchImages">
+          </typeahead-control>
         </multicolumn-cell>
       </multicolumn-editor-group>
     </div>
@@ -68,14 +70,10 @@ export default Vue.component('azure-compute-profile-editor', {
           value: instanceTypeMapping[key].instanceType
         };
       }),
-      imageMapping: Object.keys(imageTypeMapping).map((key) => {
+      imageMapping: Object.keys(imageTypeMapping).map((key, index) => {
         return {
           name: key,
-          value: imageTypeMapping[key].image
-          /*
-          value: this.model.images.find((image) =>
-              image.id === imageTypeMapping[key].image)
-          */
+          value: this.model.images[index]
         };
       })
     };
@@ -85,9 +83,14 @@ export default Vue.component('azure-compute-profile-editor', {
   },
   methods: {
     searchImages(...args) {
+      if (!this.endpoint) {
+        return Promise.resolve([]);
+      }
       return new Promise((resolve, reject) => {
-        services.searchImageResources.apply(null,
-            [this.endpoint && this.endpoint.documentSelfLink, ...args]).then((result) => {
+        services.searchImageResources.apply(null, [
+          this.endpoint && this.endpoint.documentSelfLink,
+          ...args
+        ]).then((result) => {
           resolve(result);
         }).catch(reject);
       });
@@ -114,7 +117,7 @@ export default Vue.component('azure-compute-profile-editor', {
           imageMapping: this.imageMapping.reduce((previous, current) => {
             if (current.name) {
               previous[current.name] = {
-                image: current.value// && current.value.id
+                image: current.value
               };
             }
             return previous;

@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-export default Vue.component('typeahead', {
+export default Vue.component('typeahead-control', {
   template: `
     <div class="form-control search-input">
       <input
@@ -82,6 +82,14 @@ export default Vue.component('typeahead', {
           }
         }
       }
+    }).on('typeahead:select', (ev, suggestion) => {
+      this.$emit('change', suggestion[this.display]);
     });
+    this.unwatchValue = this.$watch('value', (value) => {
+      $(this.$el).find('input').typeahead('val', value);
+    });
+  },
+  detached() {
+    this.unwatchValue();
   }
 });
