@@ -930,20 +930,29 @@ services.searchImageResources = function(endpointLink, query, limit) {
   });
 };
 
-services.loadImageResources = function(ids) {
-  var params = {};
-  if (ids && ids.length) {
-    params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
-      id: ids.map((id) => {
-        return {
-          val: id,
-          op: 'eq'
-        };
-      }),
-      [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
-    });
-  }
-  return list(links.IMAGE_RESOURCES, true, params);
+services.loadImageResources = function(endpointLink, names) {
+  let endpointQuery = serviceUtils.buildOdataQuery({
+    endpointLink: [{
+      val: endpointLink,
+      op: 'eq'
+    }]
+  });
+  let nameQuery = serviceUtils.buildOdataQuery({
+    name: names.map((name) => {
+      return {
+        val: name.toLowerCase(),
+        op: 'eq'
+      };
+    }),
+    [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
+  });
+  return list(links.IMAGE_RESOURCES, true, {
+    [ODATA_FILTER_PROP_NAME]: endpointQuery + ' and (' + nameQuery + ')'
+  });
+};
+
+services.loadImage = function(documentSelfLink) {
+  return get(documentSelfLink);
 };
 
 services.loadImage = function(documentSelfLink) {
