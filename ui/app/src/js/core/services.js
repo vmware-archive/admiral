@@ -129,6 +129,10 @@ var deleteEntity = function(url) {
   });
 };
 
+var encodeQuotes = function(value) {
+  return value.replace(/\'/g, '%2527');
+};
+
 var day2operation = function(url, entity) {
   return post(url, entity);
 };
@@ -148,6 +152,34 @@ var buildTagsQuery = function(q) {
     }],
     [constants.SEARCH_OCCURRENCE.PARAM]: occurrence
   });
+};
+
+// Simple Odata query builder. By default it will build 'and' query. If provided OCCURRENCE option,
+// then it will use it to build 'and', 'or' query. Based on the option provided, it will use
+// comparison like 'eq' or 'ne'
+var buildOdataQuery = function(queryOptions) {
+  var result = '';
+  if (queryOptions) {
+    var occurrence = queryOptions[constants.SEARCH_OCCURRENCE.PARAM];
+    delete queryOptions[constants.SEARCH_OCCURRENCE.PARAM];
+
+    var operator = occurrence === constants.SEARCH_OCCURRENCE.ANY ? 'or' : 'and';
+
+    for (var key in queryOptions) {
+      if (queryOptions.hasOwnProperty(key)) {
+        var query = queryOptions[key];
+        if (query) {
+          for (var i = 0; i < query.length; i++) {
+            if (result.length > 0) {
+              result += ' ' + operator + ' ';
+            }
+            result += key + ' ' + query[i].op + ' \'' + encodeQuotes(query[i].val) + '\'';
+          }
+        }
+      }
+    }
+  }
+  return result;
 };
 
 var makeDay2OperationRequestContainer = function(containerId, op) {
@@ -949,6 +981,10 @@ services.loadImageResources = function(endpointLink, names) {
   return list(links.IMAGE_RESOURCES, true, {
     [ODATA_FILTER_PROP_NAME]: endpointQuery + ' and (' + nameQuery + ')'
   });
+};
+
+services.loadImage = function(documentSelfLink) {
+  return get(documentSelfLink);
 };
 
 services.loadImage = function(documentSelfLink) {
