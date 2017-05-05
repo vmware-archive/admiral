@@ -356,6 +356,7 @@ func AddHost(ipF, placementZoneID, hostType, deplPolicyID, credID, publicCert, p
 	host.SetResourcePoolLink(placementZoneID)
 	isNewCred, err := host.SetCustomProperties(ipF, deplPolicyID, hostName, credID, publicCert,
 		privateCert, userName, passWord, custProps)
+	utils.CheckBlockingError(err)
 	err = host.SetHostType(hostType)
 	utils.CheckBlockingError(err)
 	if err != nil {

@@ -58,15 +58,31 @@ let CertificatesStore = Reflux.createStore({
       var immutableCertificate = Immutable(createdCertificate);
 
       var certificates = this.data.items.asMutable();
-      certificates.push(immutableCertificate);
+
+      /*
+       * Since the service that handles certificates is with IDEMPOTENT_POST option,
+       * in case we try to create existing certificate, the POST will be converted to PUT,
+       * we want to display in the UI that there was no new certificate added, but updated
+       * existing one.
+       */
+      var foundIdx = certificates.findIndex((cert) => {
+        return cert.documentSelfLink === immutableCertificate.documentSelfLink;
+      });
+      if (foundIdx < 0) {
+        certificates.push(immutableCertificate);
+        this.setInData(['newItem'], immutableCertificate);
+      } else {
+        certificates[foundIdx] = immutableCertificate;
+        this.setInData(['updatedItem'], immutableCertificate);
+      }
 
       this.setInData(['items'], certificates);
-      this.setInData(['newItem'], immutableCertificate);
       this.setInData(['editingItemData'], null);
       this.emitChange();
 
-      // After we notify listeners, the new item is no logner actual
+      // After we notify listeners, the new or updated item is no longer actual
       this.setInData(['newItem'], null);
+      this.setInData(['updatedItem'], null);
     }).catch(this.onGenericEditError);
   },
 
