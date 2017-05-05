@@ -987,14 +987,6 @@ services.loadImage = function(documentSelfLink) {
   return get(documentSelfLink);
 };
 
-services.loadImage = function(documentSelfLink) {
-  return get(documentSelfLink);
-};
-
-services.loadImage = function(documentSelfLink) {
-  return get(documentSelfLink);
-};
-
 services.loadMachines = function(queryOptions) {
   let filter = buildHostsQuery(queryOptions, false, false);
   let url = buildPaginationUrl(links.COMPUTE_RESOURCES_SEARCH, filter, true,
