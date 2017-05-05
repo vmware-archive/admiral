@@ -748,6 +748,11 @@
     .list-view .grid-container {
       top: 35px;
 
+      > .title {
+        @include view-title();
+        margin: 15px 0px 35px 0px;
+      }
+
       .grid-item {
         background-color: #ffffff;
 
