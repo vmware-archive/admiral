@@ -166,10 +166,16 @@ let ProfilesStore = Reflux.createStore({
         promises.push(Promise.resolve());
       }
 
-      if (document.computeProfile && document.computeProfile.imageMapping) {
-        promises.push(services.loadImageResources(
-            Object.keys(document.computeProfile.imageMapping).map((key) =>
-                document.computeProfile.imageMapping[key].image)).catch(() => Promise.resolve()));
+      if (document.computeProfile && document.computeProfile.imageMapping &&
+          Object.keys(document.computeProfile.imageMapping).length) {
+        let values = Object.values(document.computeProfile.imageMapping);
+        promises.push(Promise.all(values.map((value) => {
+          if (value.imageLink) {
+            return services.loadImage(value.imageLink).then((image) => image.name);
+          } else {
+            return Promise.resolve(value.image);
+          }
+        })));
       } else {
         promises.push(Promise.resolve());
       }
@@ -196,7 +202,7 @@ let ProfilesStore = Reflux.createStore({
           document.endpoint = endpoint;
         }
         document.tags = tags ? Object.values(tags) : [];
-        document.computeProfile.images = images ? Object.values(images) : [];
+        document.computeProfile.images = images || [];
         if (document.networkProfile.isolationNetworkLink && isolationNetwork) {
           document.networkProfile.isolationNetwork = isolationNetwork;
         }
@@ -245,8 +251,27 @@ let ProfilesStore = Reflux.createStore({
         }
         this.setInData(['editingItemData', 'item',
           'storageProfile', 'storageItems'], storageItems);
+        return services.loadImageResources(model.endpointLink,
+            Object.values(model.computeProfile.imageMapping).map((value) => value.image));
+      }).then((images) => {
+        let imageMapping = Object.keys(model.computeProfile.imageMapping).reduce((prev, curr) => {
+          let name = model.computeProfile.imageMapping[curr].image;
+          let image = Object.values(images).find((image) => image.name === name);
+          if (image) {
+            prev[curr] = {
+              imageLink: image.documentSelfLink
+            };
+          } else {
+            prev[curr] = {
+              image: name
+            };
+          }
+          return prev;
+        }, {});
         Promise.all([
-          services.createComputeProfile(model.computeProfile),
+          services.createComputeProfile($.extend({}, model.computeProfile, {
+            imageMapping
+          })),
           services.createNetworkProfile(model.networkProfile),
           services.createStorageProfile(model.storageProfile)
         ]).then(([computeProfile, networkProfile, storageProfile]) => {
@@ -285,8 +310,27 @@ let ProfilesStore = Reflux.createStore({
         }
         this.setInData(['editingItemData', 'item',
           'storageProfile', 'storageItems'], storageItems);
+        return services.loadImageResources(model.endpointLink,
+            Object.values(model.computeProfile.imageMapping).map((value) => value.image));
+      }).then((images) => {
+        let imageMapping = Object.keys(model.computeProfile.imageMapping).reduce((prev, curr) => {
+          let name = model.computeProfile.imageMapping[curr].image;
+          let image = Object.values(images).find((image) => image.name === name);
+          if (image) {
+            prev[curr] = {
+              imageLink: image.documentSelfLink
+            };
+          } else {
+            prev[curr] = {
+              image: name
+            };
+          }
+          return prev;
+        }, {});
         Promise.all([
-          services.updateComputeProfile(model.computeProfile),
+          services.updateComputeProfile($.extend({}, model.computeProfile, {
+            imageMapping
+          })),
           services.updateNetworkProfile(model.networkProfile),
           services.updateStorageProfile(model.storageProfile),
           services.updateProfile(model),

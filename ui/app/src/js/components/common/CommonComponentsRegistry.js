@@ -38,7 +38,7 @@ import VueSelectControl from 'components/common/VueSelectControl';
 import VueSelectGroup from 'components/common/VueSelectGroup';
 import VueTags from 'components/common/VueTags';
 import VueTagsGroup from 'components/common/VueTagsGroup';
-import VueTypeahead from 'components/common/VueTypeahead';
+import VueTypeaheadControl from 'components/common/VueTypeaheadControl';
 import VueActionButton from 'components/common/VueActionButton';
 import VueBigActionButton from 'components/common/VueBigActionButton';
 import VueNavigationLink from 'components/common/VueNavigationLink';
