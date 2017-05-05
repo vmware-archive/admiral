@@ -19,7 +19,12 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
+import com.google.gson.JsonPrimitive;
 import junit.framework.TestCase;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -96,8 +101,10 @@ public class ClosuresJavaIT extends BaseClosureIntegrationTest {
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
 
-        closureDescState.source = "class test {\n"
-                + "    public static void main(String[] args) {\n"
+        closureDescState.source = "import com.vmware.admiral.closure.Context;\n"
+                + "\n"
+                + "public class Test {\n"
+                + "    public void test(Context context) {\n"
                 + "        System.out.println(\"Hello World!\");\n"
                 + "    }\n"
                 + "}"
@@ -143,6 +150,10 @@ public class ClosuresJavaIT extends BaseClosureIntegrationTest {
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
 
+        int expectedInVar = 3;
+        int expectedInVar2 = 4;
+        int expectedResult = 7;
+
         closureDescState.sourceURL = testWebserverUri + "/test_script_java.zip";
         closureDescState.source = "should not be used";
         closureDescState.runtime = RUNTIME_JAVA;
@@ -164,6 +175,10 @@ public class ClosuresJavaIT extends BaseClosureIntegrationTest {
 
         // Execute the created Closure
         Closure closureRequest = new Closure();
+        Map inputs = new HashMap<>();
+        inputs.put("a", new JsonPrimitive(expectedInVar));
+        inputs.put("b", new JsonPrimitive(expectedInVar2));
+        closureRequest.inputs = inputs;
 
         executeClosure(createdClosure, closureRequest, serviceClient);
 
@@ -178,7 +193,78 @@ public class ClosuresJavaIT extends BaseClosureIntegrationTest {
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
 
+        assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsInt());
+        assertEquals(expectedInVar2, fetchedClosure.inputs.get("b").getAsInt());
+        assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsInt(), 0);
+
         cleanResource(imageRequestLink, serviceClient);
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
+    }
+
+    @Test
+    public void executeJavaNumberParametersTest() throws Throwable {
+        // Create Closure Definition
+        ClosureDescription closureDescState = new ClosureDescription();
+        closureDescState.name = "test";
+
+        int expectedInVar = 3;
+        int expectedInVar2 = 4;
+        int expectedResult = 7;
+
+        closureDescState.source = "import com.google.gson.JsonObject;\n"
+                + "import com.vmware.admiral.closure.Context;\n"
+                + "\n"
+                + "public class Test {\n"
+                + "    public void test(Context context) {\n"
+                + "        int a = context.inputs.get(\"a\").getAsInt();\n"
+                + "        int b = context.inputs.get(\"b\").getAsInt();\n"
+                + "        int result = a + b;\n"
+                + "        System.out.println(result);\n"
+                + "        context.outputs.addProperty(\"result\", result);\n"
+                + "    }\n"
+                + "}\n";
+
+        closureDescState.runtime = RUNTIME_JAVA;
+        closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 10;
+        constraints.ramMB = 200;
+        closureDescState.resources = constraints;
+
+        String taskDefPayload = Utils.toJson(closureDescState);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
+
+        // Create Closure
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
+
+        // Execute the created Closure
+        Closure closureRequest = new Closure();
+        Map inputs = new HashMap<>();
+        inputs.put("a", new JsonPrimitive(expectedInVar));
+        inputs.put("b", new JsonPrimitive(expectedInVar2));
+        closureRequest.inputs = inputs;
+
+        executeClosure(createdClosure, closureRequest, serviceClient);
+
+        // Wait for the completion timeout
+        waitForBuildCompletion(IMAGE_NAME, closureDescription);
+
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED,
+                serviceClient);
+
+        Closure closure = getClosure(createdClosure.documentSelfLink, serviceClient);
+        TestCase.assertNotNull(closure);
+
+        assertEquals(createdClosure.descriptionLink, closure.descriptionLink);
+        assertEquals(TaskState.TaskStage.FINISHED, closure.state);
+
+        assertEquals(expectedInVar, closure.inputs.get("a").getAsInt());
+        assertEquals(expectedInVar2, closure.inputs.get("b").getAsInt());
+        assertEquals(expectedResult, closure.outputs.get("result").getAsInt(), 0);
+
         cleanResource(createdClosure.documentSelfLink, serviceClient);
         cleanResource(closureDescription.documentSelfLink, serviceClient);
     }

@@ -1,3 +1,5 @@
+package com.vmware.admiral.closure;
+
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -8,10 +10,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.Charset;
+import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -32,27 +35,26 @@ import org.apache.http.impl.client.HttpClientBuilder;
 public class AppRunner {
 
     public static final String SRC_DIR = "./user_scripts";
-    public static final String SRC_REQ_FILE = "requirements.txt";
     public static final String TRUSTED_CERTS = "/app/trust.pem";
     public static final String SRC_FILE_ZIP = "script.zip";
     public static final String SOURCE_URL = "sourceURL";
     public static final String GET = "GET";
-    public static final String POST = "POST";
-    public static final String PATCH = "PATCH";
-    public static final String PUT = "PUT";
-    public static final String DELETE = "DELETE";
     public static final String TOKEN = System.getenv("TOKEN");
     public static final String CLOSURE_URI = System.getenv("TASK_URI");
     public static final int BUFFER_SIZE = 10 * 1024;
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         Date date = new Date();
         String currentTime = dateFormat.format(date);
         System.out.format("Script run started at: %s%n", currentTime);
 
         AppRunner closure = new AppRunner();
-        closure.proceedWithClosureExecution();
+        try {
+            closure.proceedWithClosureExecution();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void saveSourceInFile(JsonObject closureDescription, String moduleName) {
@@ -78,9 +80,9 @@ public class AppRunner {
         }
     }
 
-    public void patchResult(String outputs, String closureSemaphore) throws Exception {
+    public void patchResult(JsonObject outputs, String closureSemaphore) throws Exception {
         String state = "FINISHED";
-        String data = String.format("{\"state\": %s, \"closureSemaphore\": %s, \"outputs\": %s}", state, closureSemaphore, outputs);
+        String data = String.format("{\"state\": %s, \"closureSemaphore\": %s, \"outputs\": %s}", state, closureSemaphore, outputs.toString());
 
         HttpClient client = HttpClientBuilder.create().build();
         HttpPatch patch = new HttpPatch(CLOSURE_URI);
@@ -93,7 +95,7 @@ public class AppRunner {
             System.out.println("Script run state: " + state);
         } else {
             String message = "Unable to patch result for closure from URI: " + CLOSURE_URI + " Status code: " + statusCode;
-            patchFailure(closureSemaphore, new Exception(message));
+            patchFailure(closureSemaphore, message);
         }
     }
 
@@ -103,100 +105,7 @@ public class AppRunner {
         request.setHeader("x-xenon-auth-token", TOKEN);
     }
 
-    public static class Context {
-        private String closureUri;
-        private String closureSemaphore;
-        private String inputs;
-        private String outputs;
-
-        public Context(String closureUri, String closureSemaphore, String inputs) {
-            this.closureUri = closureUri;
-            this.closureSemaphore = closureSemaphore;
-            this.inputs = inputs;
-            this.outputs = "{}";
-        }
-
-        public String readResponse (InputStream response) throws IOException {
-            BufferedReader reader = null;
-            StringBuffer result = null;
-            try {
-                reader = new BufferedReader(new InputStreamReader(response));
-                result = new StringBuffer();
-                String line = "";
-                while ((line = reader.readLine()) != null) {
-                    result.append(line);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                reader.close();
-            }
-            return result.toString();
-        }
-
-        public String executeRequest(HttpRequest request, HttpClient client) {
-            setHeaders(request);
-            String resp = null;
-            try {
-                HttpResponse response = client.execute((HttpUriRequest) request);
-                resp = readResponse(response.getEntity().getContent());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return resp;
-        }
-
-        public String executeRequestWithBody(HttpEntityEnclosingRequestBase request, HttpClient client, String body) {
-            setHeaders(request);
-            try {
-                request.setEntity(new StringEntity(body));
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
-            String resp = null;
-            try {
-                HttpResponse response = client.execute((HttpUriRequest) request);
-                resp = readResponse(response.getEntity().getContent());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return resp;
-        }
-
-
-        public void executeDelegate (String link, String operation, String body, String handler) throws Exception {
-            String op = operation.toUpperCase();
-            String targetUri = buildClosureDescriptionUri(link);
-            HttpClient client = HttpClientBuilder.create().build();
-            String resp = null;
-            switch (op) {
-            case GET: HttpGet get = new HttpGet(targetUri);
-                resp = executeRequest(get, client);
-                break;
-            case POST: HttpPost post = new HttpPost(targetUri);
-                resp = executeRequestWithBody(post, client, body);
-                break;
-            case PATCH: HttpPatch patch = new HttpPatch(targetUri);
-                resp = executeRequestWithBody(patch, client, body);
-                break;
-            case PUT: HttpPut put = new HttpPut(targetUri);
-                resp = executeRequestWithBody(put, client, body);
-                break;
-            case DELETE: HttpDelete delete = new HttpDelete(targetUri);
-                resp = executeRequest(delete, client);
-                break;
-            default: System.out.println("Unsupported operation on context.executeDelegate(): " + operation);
-                patchFailure(this.closureSemaphore, new Exception("Unsupported operation: " + operation));
-                break;
-            }
-
-            if (handler != null) {
-                System.out.println(resp);
-            }
-        }
-    }
-
-    public void executeSavedSource(String inputs, String closureSemaphore, String moduleName, String handlerName) throws Exception {
+    public void executeSavedSource(JsonObject inputs, String closureSemaphore, String handlerName) {
         System.out.println("Script run logs:");
         System.out.println("*******************");
         try {
@@ -205,15 +114,23 @@ public class AppRunner {
             Path filePath = currentDir.resolve(SRC_DIR);
 
             Context context = new Context(CLOSURE_URI, closureSemaphore, inputs);
-            runProcess("javac user_scripts/index.java", closureSemaphore);
-            runProcess("java -cp ./user_scripts " + handlerName, closureSemaphore);
+            runProcess("javac -cp gson-2.6.2.jar:. -sourcepath user_scripts/ user_scripts/Test.java", closureSemaphore);
+            File file = new File("user_scripts/");
+            URL url = file.toURI().toURL();
+            URL[] urls = new URL[]{url};
+            ClassLoader classLoader = new URLClassLoader(urls);
+            Class loadClass = classLoader.loadClass("Test");
+            Constructor constructor = loadClass.getConstructor();
+            Object object = constructor.newInstance();
+            Method method = loadClass.getMethod(handlerName, Context.class);
+            method.invoke(object, context);
             System.out.println("*******************");
             patchResult(context.outputs, closureSemaphore);
         } catch (Exception ex) {
             System.out.println("*******************");
             System.out.println("Script run failed with: " + ex);
-            patchFailure(closureSemaphore, ex);
-            System.exit(1);
+            ex.printStackTrace();
+            patchFailure(closureSemaphore, ex.toString());
         } finally {
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
             Date date = new Date();
@@ -240,7 +157,7 @@ public class AppRunner {
         }
     }
 
-    public void runProcess (String command, String closureSemaphore) throws Exception {
+    public void runProcess (String command, String closureSemaphore) {
         try {
             Process process = Runtime.getRuntime().exec(command);
             printOutput(process.getInputStream());
@@ -249,8 +166,7 @@ public class AppRunner {
                 System.out.println("*******************");
                 System.out.println("Script run failed with: ");
                 printOutput(process.getErrorStream());
-                patchFailure(closureSemaphore, new Exception(process.getErrorStream().toString()));
-                System.exit(1);
+                patchFailure(closureSemaphore, process.getErrorStream().toString());
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -263,27 +179,6 @@ public class AppRunner {
         String pattern = "/resources/closures/";
         String uriHead = CLOSURE_URI.split(pattern)[0];
         return uriHead + closureDescLink;
-    }
-
-    public void extractFile(ZipInputStream zipInput, String filePath) {
-        BufferedOutputStream outputStream = null;
-        try {
-            outputStream = new BufferedOutputStream(
-                    new FileOutputStream(filePath));
-            byte[] bytesInput = new byte[BUFFER_SIZE];
-            int read = 0;
-            while ((read = zipInput.read(bytesInput)) != -1) {
-                outputStream.write(bytesInput, 0, read);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                outputStream.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     public HttpURLConnection getContentOfZipFile(String sourceUrl) {
@@ -312,6 +207,12 @@ public class AppRunner {
             if (output != null) {
                 try {
                     output.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (input != null) {
+                try {
                     input.close();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -321,7 +222,7 @@ public class AppRunner {
         return connection;
     }
 
-    public void downloadAndSaveSource(String sourceUrl, String moduleName) {
+    public void downloadAndSaveSource(String sourceUrl, String closureSemaphore) {
         BufferedWriter bufferedWriter = null;
         try {
             HttpURLConnection connection = getContentOfZipFile(sourceUrl);
@@ -329,25 +230,35 @@ public class AppRunner {
             String contentType = connection.getHeaderField("content-type");
             if (sourceUrlResponse != 200) {
                 String message = "Unable to fetch script source from: " + sourceUrl;
-                throw new Exception(message);
+                patchFailure(closureSemaphore, message);
             }
             ZipInputStream zipInput = null;
             try {
                 if (contentType.equals("application/zip") || contentType
                         .equals("application/octet-stream")) {
                     System.out.println("Processing ZIP source file...");
-                    zipInput = new ZipInputStream(new FileInputStream(SRC_FILE_ZIP),
-                            Charset
-                                    .forName("ISO-8859-1"));
+                    byte[] buffer = new byte[BUFFER_SIZE];
+                    File src = new File(SRC_DIR);
+                    if (!src.exists()) {
+                        src.mkdir();
+                    }
+                    zipInput = new ZipInputStream(new FileInputStream(SRC_FILE_ZIP));
                     ZipEntry entry = zipInput.getNextEntry();
-                    while (entry != null) {
-                        String filePath = SRC_DIR + File.separator + moduleName + ".java";
-                        if (!entry.isDirectory()) {
-                            extractFile(zipInput, filePath);
-                        } else {
-                            File directory = new File(filePath);
-                            Files.createDirectories(Paths.get(directory.toString()));
+
+                    while(entry!=null){
+
+                        String fileName = entry.getName();
+                        File newFile = new File(SRC_DIR + File.separator + fileName);
+                        new File(newFile.getParent()).mkdirs();
+
+                        FileOutputStream fileOutputStream = new FileOutputStream(newFile);
+
+                        int len;
+                        while ((len = zipInput.read(buffer)) > 0) {
+                            fileOutputStream.write(buffer, 0, len);
                         }
+
+                        fileOutputStream.close();
                         zipInput.closeEntry();
                         entry = zipInput.getNextEntry();
                     }
@@ -379,17 +290,17 @@ public class AppRunner {
 
     public String[] createEntryPoint(JsonObject closureDescription) {
         String handlerName = closureDescription.get("name").getAsString();
-        String[] handlerAndIndexNames = {"index", handlerName};
+        String[] handlerAndIndexNames = {"Test", handlerName};
         if (closureDescription.has("entrypoint")) {
             String entryPoint = closureDescription.get("entrypoint").getAsString();
             if (!entryPoint.isEmpty()) {
-                String[] entries = entryPoint.split(".", 1);
+                String[] entries = entryPoint.split("", 1);
                 return entries;
             } else {
                 return  handlerAndIndexNames;
             }
         } else {
-            System.out.println("Entrypoint is empty. Will use closure name for a handler name: " + handlerName);
+            System.out.println("Entry point is empty. Will use closure name for a handler name: " + handlerName);
             return handlerAndIndexNames;
         }
     }
@@ -420,41 +331,53 @@ public class AppRunner {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            try {
-                reader.close();
-            } catch (IOException e) {
-                e.printStackTrace();
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
         return responseContent.toString();
     }
 
-    public void proceedWithClosureDescription(String closureDescUri, String inputs, String closureSemaphore) throws Exception {
+    public void proceedWithClosureDescription(String closureDescUri, JsonObject inputs, String closureSemaphore) {
         HttpResponse response = getClosureContent(closureDescUri);
         String responseContent = getResponseContent(response);
         int closureDescResponse = response.getStatusLine().getStatusCode();
+        String message = null;
+        try {
+            if (closureDescResponse == 200) {
+                Gson gson = new Gson();
+                JsonObject closureDescription = gson
+                        .fromJson(responseContent.toString(), JsonObject.class);
+                String[] moduleAndIndexNames = createEntryPoint(closureDescription);
+                String moduleName = moduleAndIndexNames[0];
+                String handlerName = moduleAndIndexNames[1];
 
-        if (closureDescResponse == 200) {
-            Gson gson = new Gson();
-            JsonObject closureDescription = gson.fromJson(responseContent.toString(), JsonObject.class);
-            String[] moduleAndIndexNames = createEntryPoint(closureDescription);
-            String moduleName = moduleAndIndexNames[0];
-            String handlerName = moduleAndIndexNames[1];
-
-            if (closureDescription.has(SOURCE_URL)) {
-                String sourceUrl = closureDescription.get(SOURCE_URL).getAsString();
-                if (!sourceUrl.isEmpty()) {
-                    downloadAndSaveSource(sourceUrl, moduleName);
+                if (closureDescription.has(SOURCE_URL)) {
+                    String sourceUrl = closureDescription.get(SOURCE_URL).getAsString();
+                    if (!sourceUrl.isEmpty()) {
+                        downloadAndSaveSource(sourceUrl, closureSemaphore);
+                    } else {
+                        saveSourceInFile(closureDescription, moduleName);
+                    }
                 } else {
                     saveSourceInFile(closureDescription, moduleName);
                 }
+                executeSavedSource(inputs, closureSemaphore, handlerName);
             } else {
-                saveSourceInFile(closureDescription, moduleName);
+                message = "Unable to get closure description from URI: " + CLOSURE_URI + " Reason: "
+                        + closureDescResponse;
             }
-            executeSavedSource(inputs, closureSemaphore, moduleName, handlerName);
-        } else {
-            String message = "Unable to get closure description from URI: " + CLOSURE_URI + " Reason: " + closureDescResponse;
-            throw new Exception(message);
+        } catch (Exception e) {
+            e.printStackTrace();
+            try {
+                patchFailure(closureSemaphore, message);
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            }
         }
     }
 
@@ -471,7 +394,7 @@ public class AppRunner {
         int statusCode = response.getStatusLine().getStatusCode();
         if (statusCode != 200) {
             String message = "Unable to start closure from URI: " + CLOSURE_URI + " Status code: " + statusCode;
-            throw new Exception(message);
+            patchFailure(closureSemaphore, message);
         }
     }
 
@@ -490,30 +413,27 @@ public class AppRunner {
         String responseContent = getResponseContent(response);
         int closureResponse = response.getStatusLine().getStatusCode();
 
-        String closureInputs;
+        JsonObject closureInputs;
+        String closureSemaphore = null;
         if (closureResponse == 200) {
             Gson gson = new Gson();
             JsonObject closureData = gson.fromJson(responseContent.toString(), JsonObject.class);
-            String closureSemaphore = closureData.get("closureSemaphore").getAsString();
+            closureSemaphore = closureData.get("closureSemaphore").getAsString();
 
             patchClosureStarted(closureSemaphore);
 
-            if (closureData.get("inputs").toString().equals("{}")) {
-                closureInputs = "{}";
-            } else {
-                closureInputs = closureData.get("inputs").toString();
-            }
+            closureInputs = (JsonObject) closureData.get("inputs");
 
             String closureDescLink = closureData.get("descriptionLink").getAsString();
             String closureDescUri = buildClosureDescriptionUri(closureDescLink);
             proceedWithClosureDescription(closureDescUri, closureInputs, closureSemaphore);
         } else {
             String message = "Unable to get closure data from URI: " + CLOSURE_URI + " Reason: " + closureResponse;
-            throw new Exception(message);
+            patchFailure(closureSemaphore, message);
         }
     }
 
-    public static void patchFailure(String closureSemaphore, Exception error)  throws Exception{
+    public static void patchFailure(String closureSemaphore, String error) {
         String state = "FAILED";
         String data;
         if (closureSemaphore == null) {
@@ -521,18 +441,18 @@ public class AppRunner {
         } else {
             data = String.format("{\"state\": %s,\"closureSemaphore\": %s, \"errorMsg\": %s}", state, closureSemaphore, error);
         }
-
-        HttpClient client = HttpClientBuilder.create().build();
-        HttpPatch patch = new HttpPatch(CLOSURE_URI);
-        setHeaders(patch);
-        patch.setEntity(new StringEntity(data));
-        HttpResponse response = client.execute(patch);
-        int statusCode = response.getStatusLine().getStatusCode();
-        if (statusCode == 200) {
-            System.out.println("Script run state: " + state);
-        } else {
-            String message = "Unable to patch failure closure from URI: " + CLOSURE_URI + " Status code: " + statusCode;
-            throw new Exception(message);
+        try {
+            HttpClient client = HttpClientBuilder.create().build();
+            HttpPatch patch = new HttpPatch(CLOSURE_URI);
+            setHeaders(patch);
+            patch.setEntity(new StringEntity(data));
+            HttpResponse response = client.execute(patch);
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode == 200) {
+                System.out.println("Script run state: " + state);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

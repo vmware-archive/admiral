@@ -10,6 +10,7 @@ ENV TRUST_CERTS ${TRUST_CERTS}
 WORKDIR /app
 
 COPY app/*.* /app/
+COPY app/com/vmware/admiral/closure /app/com/vmware/admiral/closure
 
 ENTRYPOINT ["./run.sh"]
 
