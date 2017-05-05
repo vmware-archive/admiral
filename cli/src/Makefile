@@ -18,22 +18,19 @@ all: linux darwin windows
 prepare:
 	GOPATH=$(GOPATH) go env
 
-deps: prepare
-	git submodule init && git submodule update
-
-linux: deps
+linux: prepare
 	GOPATH=$(GOPATH) GOOS=linux GOARCH=amd64   go install $(LDFLAGS) $(BUILD_PACKAGE)
 	GOPATH=$(GOPATH) GOOS=linux GOARCH=386     go install $(LDFLAGS) $(BUILD_PACKAGE)
 
-darwin: deps
+darwin: prepare
 	GOPATH=$(GOPATH) GOOS=darwin GOARCH=amd64  go install $(LDFLAGS) $(BUILD_PACKAGE)
 	GOPATH=$(GOPATH) GOOS=darwin GOARCH=386    go install $(LDFLAGS) $(BUILD_PACKAGE)
 
-windows: deps
+windows: prepare
 	GOPATH=$(GOPATH) GOOS=windows GOARCH=amd64 go install $(LDFLAGS) $(BUILD_PACKAGE)
 	GOPATH=$(GOPATH) GOOS=windows GOARCH=386   go install $(LDFLAGS) $(BUILD_PACKAGE)
 
-test: deps
+test: prepare
 	GOPATH=$(GOPATH) go test -v -p=1 -tags=integration admiral/...
 	GOPATH=$(GOPATH) go test -v -p=1 -tags=e2e admiral/...
 
