@@ -17,11 +17,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.amazonaws.util.StringInputStream;
 import net.schmizz.sshj.SSHClient;
 
 import org.junit.Assert;
@@ -42,6 +44,7 @@ public class SshUtilIT extends BaseTestCase {
     public static final String SSH_USER = getSystemOrTestProp("ssh.host.username");
     public static final String SSH_PASS = getSystemOrTestProp("ssh.host.password");
     public static final String SSH_PKEY_FILE = getSystemOrTestProp("ssh.host.pkey");
+    public static final String FILE_PROTOCOL = "file://";
 
     @Test
     public void testPasswordAuth() throws IOException {
@@ -126,26 +129,25 @@ public class SshUtilIT extends BaseTestCase {
 
     @Test
     public void testScp() throws IOException {
-        String testResource = "pkey";
+        String payload = UUID.randomUUID().toString();
         AuthCredentialsServiceState creds = getPasswordCredentials();
         String remotePath = "/tmp/test" + System.currentTimeMillis();
         Assert.assertNull(SshUtil.upload(SSH_HOST, creds,
-                Thread.currentThread().getContextClassLoader().getResourceAsStream(testResource),
+                new StringInputStream(payload),
                 remotePath));
         File target = File.createTempFile("test", "txt");
         Assert.assertNull(SshUtil.download(SSH_HOST, creds, target.getAbsolutePath(), remotePath));
-        String expected = FileUtil.getResourceAsString("/" + testResource, true);
         String actual = FileUtil.getResourceAsString(target.getAbsolutePath(), false);
-        Assert.assertEquals(expected, actual);
+        Assert.assertEquals(payload, actual);
     }
 
     @Test
     public void testScpError() throws IOException {
-        String testResource = "pkey";
+        String payload = UUID.randomUUID().toString();
         AuthCredentialsServiceState creds = getPasswordCredentials();
         String remotePath = "/";
         Assert.assertTrue(SshUtil.upload(SSH_HOST, creds,
-                Thread.currentThread().getContextClassLoader().getResourceAsStream(testResource),
+                new StringInputStream(payload),
                 remotePath).getMessage().contains("Permission denied"));
 
         Assert.assertTrue(SshUtil.download(SSH_HOST, creds,
@@ -156,11 +158,11 @@ public class SshUtilIT extends BaseTestCase {
     @Test
     public void testAsyncScp()
             throws IOException, InterruptedException, ExecutionException, TimeoutException {
-        String testResource = "pkey";
+        String payload = UUID.randomUUID().toString();
         AuthCredentialsServiceState creds = getPasswordCredentials();
         String remotePath = "/tmp/test" + System.currentTimeMillis();
         Future<Throwable> uploadFuture = SshUtil.asyncUpload(SSH_HOST, creds,
-                Thread.currentThread().getContextClassLoader().getResourceAsStream(testResource),
+                new StringInputStream(payload),
                 remotePath);
         Assert.assertNull(uploadFuture.get(60, TimeUnit.SECONDS));
 
@@ -169,9 +171,8 @@ public class SshUtilIT extends BaseTestCase {
                 target.getAbsolutePath(), remotePath);
         Assert.assertNull(downloadFuture.get(60, TimeUnit.SECONDS));
 
-        String expected = FileUtil.getResourceAsString("/" + testResource, true);
         String actual = FileUtil.getResourceAsString(target.getAbsolutePath(), false);
-        Assert.assertEquals(expected, actual);
+        Assert.assertEquals(payload, actual);
     }
 
     @Test
@@ -275,7 +276,13 @@ public class SshUtilIT extends BaseTestCase {
         creds.type = "PublicKey";
         Assert.assertNotNull("'ssh.host.pkey' not specified", SSH_PKEY_FILE);
         try {
-            creds.privateKey = FileUtil.getResourceAsString(SSH_PKEY_FILE, true);
+            boolean resource = true;
+            String path = SSH_PKEY_FILE;
+            if (path.startsWith(FILE_PROTOCOL)) {
+                resource = false;
+                path = path.substring(FILE_PROTOCOL.length());
+            }
+            creds.privateKey = FileUtil.getResourceAsString(path, resource);
         } catch (NullPointerException npe) {
             System.err.println("NPE getting resource '" + SSH_PKEY_FILE + "' as string");
             throw npe;

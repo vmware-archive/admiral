@@ -49,6 +49,7 @@
     <properties>
         <!-- Avoid platform dependent build warnings: set encoding to UTF8 -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <!-- Java -->
         <java.source.version>1.8</java.source.version>

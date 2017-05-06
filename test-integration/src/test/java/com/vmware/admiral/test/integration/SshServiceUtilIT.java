@@ -88,7 +88,7 @@ public class SshServiceUtilIT extends BaseTestCase {
         gcAndWaitCompletion(sshServiceUtil);
 
         execResult = SshUtil.exec(SSH_HOST, getPasswordCredentials(), "ls " + target);
-        Assert.assertEquals("Uploaded file should have been scrapped", 2, execResult.exitCode);
+        Assert.assertNotEquals("Uploaded file should have been scrapped", 0, execResult.exitCode);
     }
 
     @Test
