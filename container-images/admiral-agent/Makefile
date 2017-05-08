@@ -26,12 +26,14 @@ buildgo: prepare
 	docker ${DOCKER_ARGS} build ${BUILD_ARGS} --tag admiral-agent-go-image-$(TAG) -f ./Dockerfile.buildgo .
 	docker ${DOCKER_ARGS} run -v /var/run/docker.sock:/var/run/docker.sock --name admiral-agent-go-$(TAG) admiral-agent-go-image-$(TAG) /bin/true
 	# Copies the resulting binary locally, prepared for the final agent
+	rm -fr tocopy/agent
 	docker ${DOCKER_ARGS} cp admiral-agent-go-$(TAG):/go/bin/ tocopy/agent/
 	docker ${DOCKER_ARGS} rm -f admiral-agent-go-$(TAG)
 
 buildsib: prepare
 	# Builds shellinabox from sources from github inside a Linux container
 	docker ${DOCKER_ARGS} rm -f admiral-agent-sib-$(TAG) || true
+	rm -fr tocopy/usr
 	mkdir -p tocopy/usr/local/
 	docker ${DOCKER_ARGS} build ${BUILD_ARGS} --tag admiral-agent-sib-image-$(TAG) -f ./Dockerfile.buildsib .
 	docker ${DOCKER_ARGS} run --name admiral-agent-sib-$(TAG) admiral-agent-sib-image-$(TAG) /bin/true
@@ -52,10 +54,11 @@ buildagent: buildgo buildsib $(ADMIRAL_AGENT_IMAGE_TAR_FILENAME)-export-$(TAG)
 		../../host/images-bin/$(ADMIRAL_AGENT_IMAGE_TAR_FILENAME).tar.xz
 
 clean:
-	docker rmi admiral-agent-go-image-$(TAG)
-	docker rmi admiral-agent-sib-image-$(TAG)
-	rm -fr tocopy/agent/*
+	docker rmi admiral-agent-go-image-$(TAG) || true
+	docker rmi admiral-agent-sib-image-$(TAG) || true
 	rm -fr $(ADMIRAL_AGENT_IMAGE_TAR_FILENAME)-export-*
 
 run:
-	docker ${DOCKER_ARGS} run -P -ti -v /var/run/docker.sock:/var/run/docker.sock --name admiral_agent $(ADMIRAL_AGENT_IMAGE_NAME):$(ADMIRAL_AGENT_IMAGE_VERSION)  /bin/sh
+	docker ${DOCKER_ARGS} kill admiral_agent || true
+	docker ${DOCKER_ARGS} rm admiral_agent || true
+	docker ${DOCKER_ARGS} run --rm -P -ti -v /var/run/docker.sock:/var/run/docker.sock --name admiral_agent $(ADMIRAL_AGENT_IMAGE_NAME):$(ADMIRAL_AGENT_IMAGE_VERSION)
