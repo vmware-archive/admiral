@@ -11,7 +11,7 @@
 
 FROM vmware/photon:1.0
 
-RUN tyum install procps-ng -y && tyum clean all
+RUN tyum install gawk procps-ng -y && tyum clean all
 
 # Used by ShellInABox
 EXPOSE 4200
