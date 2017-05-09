@@ -221,6 +221,7 @@ public class ComputeNetworkProvisionTaskService
                     .thenCompose(this::provisionResource)
                     .exceptionally(t -> {
                         logSevere("Failure provisioning a subnet: %s", t);
+                        completeSubTask(callback, t);
                         return null;
                     }));
 
@@ -563,7 +564,7 @@ public class ComputeNetworkProvisionTaskService
             provisionTaskState.options = EnumSet.of(TaskOption.IS_MOCK);
         }
         provisionTaskState.requestType = InstanceRequestType.CREATE;
-        provisionTaskState.parentTaskLink = context.serviceTaskCallback.serviceSelfLink;
+        provisionTaskState.serviceTaskCallback = context.serviceTaskCallback;
         provisionTaskState.tenantLinks = context.computeNetwork.tenantLinks;
         provisionTaskState.documentExpirationTimeMicros = ServiceUtils
                 .getDefaultTaskExpirationTimeInMicros();

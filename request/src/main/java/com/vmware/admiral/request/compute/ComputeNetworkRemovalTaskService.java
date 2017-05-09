@@ -42,11 +42,14 @@ import com.vmware.photon.controller.model.query.QueryUtils.QueryTop;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.photon.controller.model.tasks.ProvisionSubnetTaskService;
 import com.vmware.photon.controller.model.tasks.ProvisionSubnetTaskService.ProvisionSubnetTaskState;
+import com.vmware.photon.controller.model.tasks.ServiceTaskCallback;
+import com.vmware.photon.controller.model.tasks.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.tasks.TaskOption;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
 
@@ -83,13 +86,13 @@ public class ComputeNetworkRemovalTaskService extends
     }
 
     private static class Context {
-        public Context(ComputeNetwork computeNetwork, String subTaskLink) {
+        public Context(ComputeNetwork computeNetwork, ServiceTaskCallback<?> serviceTaskCallback) {
             this.computeNetwork = computeNetwork;
-            this.subTaskLink = subTaskLink;
+            this.serviceTaskCallback = serviceTaskCallback;
         }
 
         ComputeNetwork computeNetwork;
-        String subTaskLink;
+        ServiceTaskCallback<?> serviceTaskCallback;
         SubnetState subnet;
         String cidrAllocationServiceLink;
     }
@@ -160,15 +163,19 @@ public class ComputeNetworkRemovalTaskService extends
             proceedTo(SubStage.INSTANCES_REMOVED);
             return;
         }
-        createCounterSubTask(state, isolatedComputeNetworks.size(),
-                SubStage.INSTANCES_REMOVED,
-                (subTaskLink) -> deleteSubnets(isolatedComputeNetworks, subTaskLink));
+
+        ServiceTaskCallback<SubStage> callback = ServiceTaskCallback.create(getSelfLink());
+        callback.onSuccessTo(SubStage.INSTANCES_REMOVED);
+        callback.onErrorTo(SubStage.ERROR);
+
+        deleteSubnets(isolatedComputeNetworks, callback);
     }
 
-    private void deleteSubnets(List<ComputeNetwork> isolatedComputeNetworks, String subTaskLink) {
+    private void deleteSubnets(List<ComputeNetwork> isolatedComputeNetworks,
+            ServiceTaskCallback<?> serviceTaskCallback) {
         try {
             isolatedComputeNetworks.forEach(isolatedComputeNetwork ->
-                    DeferredResult.completed(new Context(isolatedComputeNetwork, subTaskLink))
+                    DeferredResult.completed(new Context(isolatedComputeNetwork, serviceTaskCallback))
                             .thenCompose(this::populateSubnet)
                             .thenCompose(this::populateCIDRAllocationService)
                             .thenCompose(this::destroySubnet)
@@ -178,9 +185,9 @@ public class ComputeNetworkRemovalTaskService extends
                                         instanceof ServiceHost.ServiceNotFoundException) {
                                     logWarning("Subnet State is not found at link: %s ",
                                             isolatedComputeNetwork.subnetLink);
-                                    completeSubTasksCounter(subTaskLink, null);
+                                    completeSubTask(serviceTaskCallback, null);
                                 } else {
-                                    completeSubTasksCounter(subTaskLink, e);
+                                    completeSubTask(serviceTaskCallback, e);
                                 }
                                 return null;
                             })
@@ -204,7 +211,7 @@ public class ComputeNetworkRemovalTaskService extends
             provisionTaskState.options = EnumSet.of(TaskOption.IS_MOCK);
         }
         provisionTaskState.requestType = SubnetInstanceRequest.InstanceRequestType.DELETE;
-        provisionTaskState.parentTaskLink = context.subTaskLink;
+        provisionTaskState.serviceTaskCallback = context.serviceTaskCallback;
         provisionTaskState.tenantLinks = context.computeNetwork.tenantLinks;
         provisionTaskState.documentExpirationTimeMicros = ServiceUtils
                 .getDefaultTaskExpirationTimeInMicros();
@@ -235,7 +242,7 @@ public class ComputeNetworkRemovalTaskService extends
         return this.sendWithDeferredResult(
                 Operation.createDelete(this, context.subnet.documentSelfLink))
                 .thenCompose(o -> {
-                    completeSubTasksCounter(context.subTaskLink, null);
+                    completeSubTask(context.serviceTaskCallback, null);
                     return DeferredResult.completed(context);
                 });
     }
@@ -339,6 +346,25 @@ public class ComputeNetworkRemovalTaskService extends
                     } else {
                         this.computeNetworks = computeNetworks;
                         callbackFunction.accept(this.computeNetworks);
+                    }
+                }));
+    }
+
+    private void completeSubTask(ServiceTaskCallback taskCallback, Throwable ex) {
+        ServiceTaskCallbackResponse response;
+        if (ex == null) {
+            response = taskCallback.getFinishedResponse();
+        } else {
+            response = taskCallback.getFailedResponse(ex);
+        }
+
+        sendRequest(Operation.createPatch(UriUtils.buildUri(this.getHost(),
+                taskCallback.serviceSelfLink))
+                .setBody(response)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Notifying calling task failed: %s", e);
                     }
                 }));
     }
