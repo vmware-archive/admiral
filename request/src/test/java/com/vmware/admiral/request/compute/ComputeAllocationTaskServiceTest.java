@@ -162,7 +162,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         assertNotNull(subscriptionSubStages);
         assertEquals(1, subscriptionSubStages.size());
         assertTrue(subscriptionSubStages
-                .contains(allocationTask.taskSubStage.SELECT_PLACEMENT_COMPUTES));
+                .contains(allocationTask.taskSubStage.START_COMPUTE_ALLOCATION));
     }
 
 

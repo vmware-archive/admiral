@@ -32,11 +32,13 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -58,7 +60,6 @@ import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAl
 import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState;
 import com.vmware.admiral.request.compute.enhancer.ComputeDescriptionEnhancers;
 import com.vmware.admiral.request.compute.enhancer.Enhancer.EnhanceContext;
-import com.vmware.admiral.request.utils.EventTopicConstants;
 import com.vmware.admiral.request.utils.EventTopicUtils;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
@@ -69,6 +70,7 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.data.SchemaBuilder;
+import com.vmware.photon.controller.model.data.SchemaField.Constraint;
 import com.vmware.photon.controller.model.data.SchemaField.Type;
 import com.vmware.photon.controller.model.query.QueryUtils.QueryByPages;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -106,6 +108,23 @@ public class ComputeAllocationTaskService
     public static final String FACTORY_LINK = ManagementUriParts.REQUEST_COMPUTE_ALLOCATION_TASKS;
 
     public static final String DISPLAY_NAME = "Compute Allocation";
+
+    //Compute name assignment topic
+    private static final String COMPUTE_NAME_TOPIC_TASK_SELF_LINK = "change-compute-name";
+    private static final String COMPUTE_NAME_TOPIC_ID = "com.vmware.compute.name.assignment";
+    private static final String COMPUTE_NAME_TOPIC_NAME = "Compute name assignment";
+    private static final String COMPUTE_NAME_TOPIC_TASK_DESCRIPTION = "Assign custom compute name.";
+    private static final String COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES = "resourceNames";
+    private static final String COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES_LABEL = "\"Generated "
+            + "resource names.\"";
+    private static final String COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION =
+            "\"Generated resource names.\"";
+    private static final String COMPUTE_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_SELECTIONS =
+            "resourceToHostSelection";
+    private static final String COMPUTE_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_LABEL = "Resource"
+            + " to host selection (Read Only)";
+    private static final String COMPUTE_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_DESCRIPTION = "Eeach "
+            + "string entry represents resource and host on which it will be deployed.";
 
     private static final String ID_DELIMITER_CHAR = "-";
     // cached compute description
@@ -170,7 +189,7 @@ public class ComputeAllocationTaskService
             ERROR;
 
             static final Set<ComputeAllocationTaskState.SubStage> SUBSCRIPTION_SUB_STAGES = new HashSet<>(
-                    Arrays.asList(SELECT_PLACEMENT_COMPUTES));
+                    Arrays.asList(START_COMPUTE_ALLOCATION));
         }
     }
 
@@ -178,12 +197,6 @@ public class ComputeAllocationTaskService
         Set<String> resourceLinks;
     }
 
-    /**
-     * Defines fields which are eligible for modification in case of subscription for task.
-     */
-    protected static class ExtensibilityCallbackResponse extends BaseExtensibilityCallbackResponse {
-        public Set<String> resourceNames;
-    }
 
     public ComputeAllocationTaskService() {
         super(ComputeAllocationTaskState.class, SubStage.class, DISPLAY_NAME);
@@ -1028,6 +1041,15 @@ public class ComputeAllocationTaskService
                 }));
     }
 
+
+    /**
+     * Defines fields which are eligible for modification in case of subscription for task.
+     */
+    protected static class ExtensibilityCallbackResponse extends BaseExtensibilityCallbackResponse {
+        public Set<String> resourceNames;
+        public Map<String, String> resourceToHostSelection;
+    }
+
     @Override
     protected BaseExtensibilityCallbackResponse notificationPayload() {
         return new ExtensibilityCallbackResponse();
@@ -1038,7 +1060,9 @@ public class ComputeAllocationTaskService
             BaseExtensibilityCallbackResponse notificationPayload, Runnable callback) {
         getComputeDescription(state.resourceDescriptionLink, (contDesc) -> {
             notificationPayload.customProperties = contDesc.customProperties;
-            callback.run();
+
+            //Finished with ConмпутеDescription customProperties. Now get host selections.
+            retrieveHostsAddresses(state, notificationPayload, callback);
         });
     }
 
@@ -1087,26 +1111,103 @@ public class ComputeAllocationTaskService
         taskInfo.stage = TaskStage.STARTED.name();
         taskInfo.substage = SubStage.SELECT_PLACEMENT_COMPUTES.name();
 
-        EventTopicUtils.registerEventTopic(EventTopicConstants.COMPUTE_NAME_TOPIC_ID,
-                EventTopicConstants.COMPUTE_NAME_TOPIC_NAME,
-                EventTopicConstants.COMPUTE_NAME_TOPIC_TASK_DESCRIPTION,
-                EventTopicConstants.COMPUTE_NAME_TOPIC_TASK_SELF_LINK, Boolean.TRUE,
-                changeComputeNameTopicSchema(), taskInfo, host);
+        EventTopicUtils.registerEventTopic(COMPUTE_NAME_TOPIC_ID, COMPUTE_NAME_TOPIC_NAME,
+                COMPUTE_NAME_TOPIC_TASK_DESCRIPTION, COMPUTE_NAME_TOPIC_TASK_SELF_LINK,
+                Boolean.TRUE, changeComputeNameTopicSchema(), taskInfo, host);
     }
 
     private SchemaBuilder changeComputeNameTopicSchema() {
+
         return new SchemaBuilder()
-                .addField(EventTopicConstants.COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES)
+                .addField(COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES)
                 .withType(Type.LIST)
                 .withDataType(DATATYPE_STRING)
-                .withLabel(EventTopicConstants.COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES_LABEL)
-                .withDescription(EventTopicConstants
-                        .COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION)
+                .withLabel(COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES_LABEL)
+                .withDescription(COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION)
+                .done()
+                // Add resourceToHostSelection info
+                .addField(COMPUTE_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_SELECTIONS)
+                .withType(Type.MAP)
+                .withLabel(COMPUTE_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_LABEL)
+                .withDescription(COMPUTE_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_DESCRIPTION)
+                .withConstraint(Constraint.readOnly, true)
+                .withDataType(DATATYPE_STRING)
                 .done();
+    }
+
+    private void retrieveHostsAddresses(ComputeAllocationTaskState state,
+            ServiceTaskCallbackResponse notificationPayload, Runnable callback) {
+
+        if (state.selectedComputePlacementHosts != null && !state.selectedComputePlacementHosts
+                .isEmpty()) {
+
+            Map<String, String> hostSelfLinkToAddress = new HashMap<>();
+
+            QueryTask.Query.Builder queryBuilder = QueryTask.Query.Builder.create()
+                    .addKindFieldClause(ComputeState.class)
+                    .addInClause(ComputeState.FIELD_NAME_SELF_LINK,
+                            state.selectedComputePlacementHosts
+                                    .stream().map(h -> h.hostLink).collect(Collectors.toList()));
+
+            QueryTask q = QueryTask.Builder.create().setQuery(queryBuilder.build()).build();
+            q.querySpec.resultLimit = ServiceDocumentQuery.DEFAULT_QUERY_RESULT_LIMIT;
+            QueryUtil.addExpandOption(q);
+
+            new ServiceDocumentQuery<>(getHost(), ComputeState.class).query(q, (r) -> {
+                if (r.hasException()) {
+                    String errorMsg = String.format("Exception while quering ComputeStates during "
+                                    + "payload enhancement. Error: [%s]",
+                            r.getException().getMessage());
+
+                    getHost().log(Level.SEVERE,
+                            errorMsg);
+                    failTask(errorMsg, r.getException());
+                    return;
+                } else if (r.hasResult()) {
+                    hostSelfLinkToAddress.put(r.getDocumentSelfLink(), r.getResult().address);
+                } else {
+                    if (hostSelfLinkToAddress.isEmpty()) {
+                        callback.run();
+                        return;
+                    }
+                    //Populate resource to host address map and invoke callback.
+                    setResourceToHostSelection(state, notificationPayload, callback,
+                            hostSelfLinkToAddress);
+                }
+            });
+        } else {
+            callback.run();
+        }
+    }
+
+    private void setResourceToHostSelection(ComputeAllocationTaskState state,
+            ServiceTaskCallbackResponse notificationPayload, Runnable callback,
+            Map<String, String> hostSelfLinkToAddress) {
+
+        ((ComputeAllocationTaskService.ExtensibilityCallbackResponse) notificationPayload).resourceToHostSelection =
+                buildResourceToHostSelectionMap(state)
+                        .entrySet
+                                ().stream()
+                        .collect(Collectors.toMap(Map.Entry::getKey, entry
+                                -> hostSelfLinkToAddress.get(entry.getValue())));
+
+        callback.run();
+    }
+
+    private Map<String, String> buildResourceToHostSelectionMap(ComputeAllocationTaskState state) {
+        Map<String, String> resourceToHost = new LinkedHashMap<>();
+        Iterator<HostSelection> placementComputeLinkIterator = state.selectedComputePlacementHosts
+                .iterator();
+        Iterator<String> namesIterator = state.resourceNames.iterator();
+        while (namesIterator.hasNext() && placementComputeLinkIterator.hasNext()) {
+            resourceToHost.put(namesIterator.next(), placementComputeLinkIterator.next().hostLink);
+        }
+        return resourceToHost;
     }
 
     @Override
     public void registerEventTopics(ServiceHost host) {
         changeComputeNameEventTopic(host);
     }
+
 }
