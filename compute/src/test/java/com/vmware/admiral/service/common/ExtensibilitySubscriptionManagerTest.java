@@ -17,11 +17,12 @@ import static org.junit.Assert.assertNotNull;
 
 import java.lang.reflect.Field;
 import java.net.URI;
+import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.test.BaseTestCase;
@@ -29,6 +30,7 @@ import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFacto
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionService.ExtensibilitySubscription;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.common.test.TestRequestSender;
 
 public class ExtensibilitySubscriptionManagerTest extends BaseTestCase {
@@ -72,7 +74,6 @@ public class ExtensibilitySubscriptionManagerTest extends BaseTestCase {
     }
 
     @Test
-    @Ignore("VCOM-519")
     public void testAddRemoveExtensibility() throws Throwable {
         ExtensibilitySubscription state1 = createExtensibilityState("substage1", "uri1");
         ExtensibilitySubscription state2 = createExtensibilityState("substage2", "uri2");
@@ -109,7 +110,23 @@ public class ExtensibilitySubscriptionManagerTest extends BaseTestCase {
     }
 
     private void verifyMapSize(@SuppressWarnings("rawtypes") Map map, int count) throws Throwable {
-        waitFor(() -> map.size() == count);
+        waitFor(map, count);
+    }
+
+    private void waitFor(Map map, int count) {
+        TestContext context = new TestContext(1, Duration.ofMinutes(1));
+        schedule(map, count, context);
+        context.await();
+    }
+
+    private void schedule(Map map, int count, TestContext context) {
+        if (map.size() != count) {
+            host.schedule(() -> {
+                schedule(map, count, context);
+                return;
+            }, 3000, TimeUnit.MILLISECONDS);
+        }
+        context.completeIteration();
     }
 
     private ExtensibilitySubscription createExtensibilityState(String substage, String uri) {
