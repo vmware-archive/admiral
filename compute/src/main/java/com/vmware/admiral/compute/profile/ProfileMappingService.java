@@ -126,6 +126,6 @@ public class ProfileMappingService extends StatelessService {
             a.addAll(b);
 
             return a;
-        }).get());
+        }).orElse(new LinkedHashSet<String>()));
     }
 }
