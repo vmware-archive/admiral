@@ -176,8 +176,7 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
         // will be chosen.
         // Step 3: If all are soft and nothing matches then default properties are picked.
         return TagConstraintUtils.filterByConstraints(
-                StorageProfileUtils
-                        .extractStorageTagConditions(constraint, profile.tenantLinks),
+                StorageProfileUtils.extractStorageTagConditions(constraint, profile.tenantLinks),
                 storageItemsStream(profile.storageProfile),
                 si -> si.tagLinks != null ? si.tagLinks : new HashSet<>(), (i1, i2) -> {
                     if (i1.defaultItem && i2.defaultItem) {
@@ -196,7 +195,7 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
 
     private Stream<StorageItem> storageItemsStream(StorageProfile storageProfile) {
         return storageProfile != null && storageProfile.storageItems != null
-                ? storageProfile.storageItems.stream() : Stream.empty();
+                ? storageProfile.storageItems.stream() : Stream.of(new StorageItem());
     }
 
     /**
