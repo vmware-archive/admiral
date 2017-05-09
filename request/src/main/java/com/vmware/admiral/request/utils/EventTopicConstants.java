@@ -16,6 +16,9 @@ package com.vmware.admiral.request.utils;
  */
 public interface EventTopicConstants {
 
+    public static final String ALL_TOPICS_RESOURCE_NAME = "Resource Name";
+    public static final String ALL_TOPICS_HOST_PLACEMENT = "Host Placement";
+
     public static final String CONTAINER_NAME_TOPIC_TASK_SELF_LINK = "change-container-name";
     public static final String CONTAINER_NAME_TOPIC_ID = "com.vmware.container.name.assignment";
     public static final String CONTAINER_NAME_TOPIC_NAME = "Container name assignment";
@@ -44,5 +47,4 @@ public interface EventTopicConstants {
             + "resource names.\"";
     public static final String COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION =
             "\"Generated resource names.\"";
-
 }

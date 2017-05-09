@@ -17,6 +17,7 @@ import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties
 import java.net.URI;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
@@ -333,9 +334,8 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             return;
         }
 
-        this.fillCommonFields(state, notificationPayload, () -> {
-            this.enhanceNotificationPayload(state, notificationPayload, callback);
-        });
+        this.enhanceNotificationPayload(state, notificationPayload, () ->
+                this.fillCommonFields(state, notificationPayload, callback));
     }
 
     protected void updateRequestTracker(T state) {
@@ -883,15 +883,18 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     protected void fillCommonFields(T state,
             BaseExtensibilityCallbackResponse notificationPayload, Runnable callback) {
 
-        Map<String, String> properties = state.customProperties;
+        Map<String, String> properties = state.customProperties != null ? state.customProperties
+                : new HashMap<>();
 
-        if (properties != null) {
-            notificationPayload.requestId = properties.get("container_request_id");
-            notificationPayload.componentId = properties.get("__component_id");
-            notificationPayload.blueprintId = properties.get("__blueprint_id");
-            notificationPayload.componentTypeId = properties.get("__component_type_id");
-            notificationPayload.owner = properties.get("__compute_owner");
+        if (notificationPayload.customProperties != null) {
+            properties.putAll(notificationPayload.customProperties);
         }
+
+        notificationPayload.requestId = properties.get("__request_id");
+        notificationPayload.componentId = properties.get("__component_id");
+        notificationPayload.blueprintId = properties.get("__blueprint_id");
+        notificationPayload.componentTypeId = properties.get("__component_type_id");
+        notificationPayload.owner = properties.get("__owner");
 
         callback.run();
     }
@@ -969,7 +972,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         return template;
     }
 
-    protected static class BaseExtensibilityCallbackResponse extends ServiceTaskCallbackResponse {
+    public static class BaseExtensibilityCallbackResponse extends ServiceTaskCallbackResponse {
         public String requestId;
         public String componentId;
         public String blueprintId;

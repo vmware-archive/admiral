@@ -11,14 +11,20 @@
 
 package com.vmware.admiral.request;
 
+import static com.vmware.admiral.request.utils.EventTopicConstants.ALL_TOPICS_HOST_PLACEMENT;
+import static com.vmware.admiral.request.utils.EventTopicConstants.ALL_TOPICS_RESOURCE_NAME;
+import static com.vmware.photon.controller.model.data.SchemaField.DATATYPE_STRING;
+
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState.SubStage;
 import com.vmware.admiral.request.utils.EventTopicConstants;
 import com.vmware.admiral.request.utils.EventTopicUtils;
-import com.vmware.admiral.request.utils.EventTopicUtils.SchemaBuilder;
 import com.vmware.admiral.service.common.EventTopicDeclarator;
 import com.vmware.admiral.service.common.EventTopicService;
+import com.vmware.photon.controller.model.data.SchemaBuilder;
+import com.vmware.photon.controller.model.data.SchemaField.Constraint;
+import com.vmware.photon.controller.model.data.SchemaField.Type;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
@@ -44,19 +50,30 @@ public class ContainerAllocationTaskFactoryService extends FactoryService implem
     }
 
     private SchemaBuilder changeContainerNameTopicSchema() {
-        return SchemaBuilder.create().addField(EventTopicConstants.CONTAINER_NAME_TOPIC_FIELD_RESOURCE_NAMES)
-                .addDataType(String.class.getSimpleName())
-                .addLabel(EventTopicConstants.CONTAINER_NAME_TOPIC_FIELD_RESOURCE_NAMES_LABEL)
-                .addDescription(EventTopicConstants.CONTAINER_NAME_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION)
-                .whereMultiValued(true)
-                .whereReadOnly(false)
+        return new SchemaBuilder()
+                .addField(EventTopicConstants.CONTAINER_NAME_TOPIC_FIELD_RESOURCE_NAMES)
+                .withType(Type.LIST)
+                .withDataType(DATATYPE_STRING)
+                .withLabel(EventTopicConstants.CONTAINER_NAME_TOPIC_FIELD_RESOURCE_NAMES_LABEL)
+                .withDescription(EventTopicConstants.CONTAINER_NAME_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION)
+                .done()
+
                 // Add resourceToHostSelection info
                 .addField(EventTopicConstants.CONTAINER_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_SELECTIONS)
-                .addDataType(String.class.getSimpleName())
-                .addLabel(EventTopicConstants.CONTAINER_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_LABEL)
-                .addDescription(EventTopicConstants.CONTAINER_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_DESCRIPTION)
-                .whereMultiValued(false)
-                .whereReadOnly(true);
+                .withType(Type.LIST)
+                .withLabel(EventTopicConstants.CONTAINER_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_LABEL)
+                .withDescription(EventTopicConstants
+                        .CONTAINER_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_DESCRIPTION)
+                .withConstraint(Constraint.readOnly, true)
+                .withSchema()
+                    .addField(ALL_TOPICS_RESOURCE_NAME)
+                    .withDataType(DATATYPE_STRING)
+                    .done()
+                    .addField(ALL_TOPICS_HOST_PLACEMENT)
+                    .withDataType(DATATYPE_STRING)
+                    .done()
+                .done()
+                .done();
     }
 
     private void changeContainerNameEventTopic(ServiceHost host) {

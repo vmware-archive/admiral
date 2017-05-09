@@ -42,18 +42,24 @@ import com.vmware.admiral.request.ContainerHostRemovalTaskService.ContainerHostR
 import com.vmware.admiral.request.ReservationRemovalTaskFactoryService;
 import com.vmware.admiral.request.ReservationRemovalTaskService.ReservationRemovalTaskState;
 import com.vmware.admiral.request.compute.ComputeRemovalTaskService.ComputeRemovalTaskState.SubStage;
+import com.vmware.admiral.request.utils.EventTopicUtils;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
+import com.vmware.admiral.service.common.EventTopicDeclarator;
+import com.vmware.admiral.service.common.EventTopicService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
+import com.vmware.photon.controller.model.data.SchemaBuilder;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.LifecycleState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.photon.controller.model.tasks.ResourceRemovalTaskService;
 import com.vmware.photon.controller.model.tasks.ResourceRemovalTaskService.ResourceRemovalTaskState;
 import com.vmware.photon.controller.model.tasks.TaskOption;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
@@ -68,7 +74,8 @@ import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
  * Task implementing removal of compute hosts.
  */
 public class ComputeRemovalTaskService extends
-        AbstractTaskStatefulService<ComputeRemovalTaskService.ComputeRemovalTaskState, ComputeRemovalTaskService.ComputeRemovalTaskState.SubStage> {
+        AbstractTaskStatefulService<ComputeRemovalTaskService.ComputeRemovalTaskState, ComputeRemovalTaskService.ComputeRemovalTaskState.SubStage>
+        implements EventTopicDeclarator {
 
     public static final String DISPLAY_NAME = "Compute Removal";
 
@@ -95,7 +102,8 @@ public class ComputeRemovalTaskService extends
          */
         @Documentation(description = "Links to auto-generated placement zones that needs to "
                 + "be deleted after the removal operation succeeds.")
-        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY )
+        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, SERVICE_USE, AUTO_MERGE_IF_NOT_NULL },
+                indexing = STORE_ONLY)
         public List<String> deletePlacementZonesLinks;
 
         public static enum SubStage {
@@ -113,6 +121,9 @@ public class ComputeRemovalTaskService extends
             static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
                     Arrays.asList(SUSPENDING_COMPUTES, DEALLOCATING_RESOURCES,
                             REMOVING_CONTAINER_HOSTS));
+
+            static final Set<SubStage> SUBSCRIPTION_SUB_STAGES = new HashSet<>(
+                    Arrays.asList(REMOVED_CONTAINER_HOSTS));
         }
     }
 
@@ -122,6 +133,7 @@ public class ComputeRemovalTaskService extends
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.transientSubStages = SubStage.TRANSIENT_SUB_STAGES;
+        super.subscriptionSubStages = EnumSet.copyOf(SubStage.SUBSCRIPTION_SUB_STAGES);
     }
 
     @Override
@@ -244,12 +256,14 @@ public class ComputeRemovalTaskService extends
                                     Utils.toString(exs));
 
                             if (state.customProperties != null && Boolean.TRUE.toString().equals(
-                                    state.customProperties.get(RequestUtils.FIELD_NAME_DEALLOCATION_REQUEST))) {
+                                    state.customProperties
+                                            .get(RequestUtils.FIELD_NAME_DEALLOCATION_REQUEST))) {
                                 proceedTo(SubStage.COMPLETED);
                                 return;
                             }
 
-                            failTask("Unexpected exception while suspending container host", new Throwable(Utils.toString(exs)));
+                            failTask("Unexpected exception while suspending container host",
+                                    new Throwable(Utils.toString(exs)));
                             return;
                         }
                         proceedTo(SubStage.SUSPENDED_COMPUTES);
@@ -322,7 +336,8 @@ public class ComputeRemovalTaskService extends
                 .setBody(rsrvTask)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logWarning("Quotas can't be cleaned up for: " + groupResourcePlacementLink, e);
+                        logWarning("Quotas can't be cleaned up for: " + groupResourcePlacementLink,
+                                e);
                         completeSubTasksCounter(taskCallback, e);
                         return;
                     }
@@ -348,7 +363,7 @@ public class ComputeRemovalTaskService extends
             removalServiceState.tenantLinks = state.tenantLinks;
 
             Operation
-                    .createPost(this,ResourceRemovalTaskService.FACTORY_LINK)
+                    .createPost(this, ResourceRemovalTaskService.FACTORY_LINK)
                     .setBody(removalServiceState)
                     .setCompletion((o, e) -> {
                         if (e != null) {
@@ -407,7 +422,8 @@ public class ComputeRemovalTaskService extends
     }
 
     private void subscribeToResourceRemovalTask(ComputeRemovalTaskState state) {
-        String taskLink = UriUtils.buildUriPath(ResourceRemovalTaskService.FACTORY_LINK,getSelfId());
+        String taskLink = UriUtils
+                .buildUriPath(ResourceRemovalTaskService.FACTORY_LINK, getSelfId());
         Consumer<Operation> notificationTarget = (op) -> {
             // We only care about listening to PATCH updates...
             if (!op.hasBody() || !PATCH.equals(op.getAction())) {
@@ -418,7 +434,8 @@ public class ComputeRemovalTaskService extends
             ResourceRemovalTaskState deletionState = op.getBody(ResourceRemovalTaskState.class);
             op.complete();
             if (TaskState.isFinished(deletionState.taskInfo)) {
-                logInfo("ResourceRemoval Task completed successfully: %s", deletionState.documentSelfLink);
+                logInfo("ResourceRemoval Task completed successfully: %s",
+                        deletionState.documentSelfLink);
                 SubscriptionUtils.unsubscribeNotifications(getHost(), taskLink, op.getUri());
                 removeAutoGeneratedPlacementZones(state);
             } else if (TaskState.isCancelled(deletionState.taskInfo) ||
@@ -433,7 +450,7 @@ public class ComputeRemovalTaskService extends
                 state.resourceLinks.size());
 
         SubscriptionUtils.subscribeToNotifications(getHost(), notificationTarget,
-                e -> failTask("Error subscribing for resource removal",e),taskLink);
+                e -> failTask("Error subscribing for resource removal", e), taskLink);
 
     }
 
@@ -481,7 +498,8 @@ public class ComputeRemovalTaskService extends
                         GroupResourcePlacementState.FIELD_NAME_CUSTOM_PROPERTIES,
                         GroupResourcePlacementState.AUTOGENERATED_PLACEMENT_PROP_NAME),
                 Boolean.toString(true));
-        QueryUtil.addListValueClause(queryTask, GroupResourcePlacementState.FIELD_NAME_RESOURCE_POOL_LINK,
+        QueryUtil.addListValueClause(queryTask,
+                GroupResourcePlacementState.FIELD_NAME_RESOURCE_POOL_LINK,
                 deletedPlacementZonesLinks);
 
         ArrayList<Operation> deleteOps = new ArrayList<>();
@@ -521,15 +539,74 @@ public class ComputeRemovalTaskService extends
 
     private Operation createDeleteOperationForAutogeneratedResource(String documentLink) {
         return Operation.createDelete(this, documentLink)
-        .setReferer(getUri())
-        .setCompletion((o, e) -> {
-            if (e != null) {
-                logWarning("Could not delete auto-generated resource %s: %s",
-                        documentLink, Utils.toString(e));
-                // do not fail the compute removal task
+                .setReferer(getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logWarning("Could not delete auto-generated resource %s: %s",
+                                documentLink, Utils.toString(e));
+                        // do not fail the compute removal task
+                    } else {
+                        logFine("Successfully deleted auto-generated resource %s", documentLink);
+                    }
+                });
+    }
+
+    @Override
+    protected void enhanceNotificationPayload(ComputeRemovalTaskState state,
+            BaseExtensibilityCallbackResponse notificationPayload, Runnable callback) {
+        List<DeferredResult<ComputeState>> results = state.resourceLinks.stream()
+                .map(link -> Operation.createGet(this, link))
+                .map(o -> sendWithDeferredResult(o, ComputeState.class))
+                .collect(Collectors.toList());
+
+        DeferredResult.allOf(results).whenComplete((states, err) -> {
+            if (err == null) {
+                ExtensibilityCallbackResponse payload = (ExtensibilityCallbackResponse)
+                        notificationPayload;
+                //squash-merge all properties until we fire an event per resource
+                payload.customProperties = states.stream().flatMap(s -> s.customProperties
+                        .entrySet().stream())
+                        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
             } else {
-                logFine("Successfully deleted auto-generated resource %s", documentLink);
+                failTask("Failed retreiving custom properties", err);
             }
+            callback.run();
         });
+    }
+
+    protected static class ExtensibilityCallbackResponse extends BaseExtensibilityCallbackResponse {
+    }
+
+    @Override
+    protected BaseExtensibilityCallbackResponse notificationPayload() {
+        return new ExtensibilityCallbackResponse();
+    }
+
+    public static final String RESOURCE_REMOVAL_TOPIC_TASK_SELF_LINK =
+            "resource-removal";
+    public static final String RESOURCE_REMOVAL_TOPIC_ID = "com.vmware.compute.removal.pre";
+    public static final String RESOURCE_REMOVAL_TOPIC_NAME = "Compute Resource removal";
+    public static final String RESOURCE_REMOVAL_TOPIC_TASK_DESCRIPTION = "Fired when a compute "
+            + "resource is being destroyed.";
+
+    private void resourceRemovalEventTopic(ServiceHost host) {
+        EventTopicService.TopicTaskInfo taskInfo = new EventTopicService.TopicTaskInfo();
+        taskInfo.task = ComputeRemovalTaskState.class.getSimpleName();
+        taskInfo.stage = TaskStage.STARTED.name();
+        taskInfo.substage = SubStage.REMOVED_CONTAINER_HOSTS.name();
+
+        EventTopicUtils.registerEventTopic(RESOURCE_REMOVAL_TOPIC_ID,
+                RESOURCE_REMOVAL_TOPIC_NAME, RESOURCE_REMOVAL_TOPIC_TASK_DESCRIPTION,
+                RESOURCE_REMOVAL_TOPIC_TASK_SELF_LINK, Boolean.TRUE,
+                resourceRemovalTopicSchema(), taskInfo, host);
+    }
+
+    private SchemaBuilder resourceRemovalTopicSchema() {
+        return new SchemaBuilder();//no special fields needed
+    }
+
+    @Override
+    public void registerEventTopics(ServiceHost host) {
+        resourceRemovalEventTopic(host);
     }
 }

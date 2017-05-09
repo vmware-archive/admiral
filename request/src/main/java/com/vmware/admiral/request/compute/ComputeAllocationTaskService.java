@@ -14,6 +14,7 @@ package com.vmware.admiral.request.compute;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 import static com.vmware.admiral.request.utils.RequestUtils.getContextId;
+import static com.vmware.photon.controller.model.data.SchemaField.DATATYPE_STRING;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.LINK;
@@ -59,7 +60,6 @@ import com.vmware.admiral.request.compute.enhancer.ComputeDescriptionEnhancers;
 import com.vmware.admiral.request.compute.enhancer.Enhancer.EnhanceContext;
 import com.vmware.admiral.request.utils.EventTopicConstants;
 import com.vmware.admiral.request.utils.EventTopicUtils;
-import com.vmware.admiral.request.utils.EventTopicUtils.SchemaBuilder;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.EventTopicDeclarator;
@@ -68,6 +68,8 @@ import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.ComputeProperties;
+import com.vmware.photon.controller.model.data.SchemaBuilder;
+import com.vmware.photon.controller.model.data.SchemaField.Type;
 import com.vmware.photon.controller.model.query.QueryUtils.QueryByPages;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
@@ -1093,13 +1095,14 @@ public class ComputeAllocationTaskService
     }
 
     private SchemaBuilder changeComputeNameTopicSchema() {
-        return SchemaBuilder.create()
+        return new SchemaBuilder()
                 .addField(EventTopicConstants.COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES)
-                .addDataType(String.class.getSimpleName())
-                .addLabel(EventTopicConstants.COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES_LABEL)
-                .addDescription(
-                        EventTopicConstants.COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION)
-                .whereMultiValued(true);
+                .withType(Type.LIST)
+                .withDataType(DATATYPE_STRING)
+                .withLabel(EventTopicConstants.COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES_LABEL)
+                .withDescription(EventTopicConstants
+                        .COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION)
+                .done();
     }
 
     @Override
