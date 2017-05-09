@@ -15,6 +15,9 @@ GOPATH			:=$(CURDIR)/..
 
 all: linux darwin windows
 
+deps:
+        git submodule init && git submodule update
+
 prepare:
 	GOPATH=$(GOPATH) go env
 
