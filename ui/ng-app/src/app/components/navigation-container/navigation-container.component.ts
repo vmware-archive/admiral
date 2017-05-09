@@ -40,11 +40,11 @@ export class NavigationContainerComponent implements OnInit, OnDestroy {
   }
 
   handleNewComponent(newComponent) {
+    let selectedType;
     if (newComponent != this.oldComponent) {
       this.oldComponent = newComponent;
-      var selectedType = this.typePerComponent[newComponent] || NavigationContainerType.None;
+      selectedType = this.typePerComponent[newComponent] || NavigationContainerType.None;
       this.type = selectedType.toString();
-      this.viewExpandRequestor.requestFullScreen(selectedType === NavigationContainerType.Fullscreen);
 
       if (selectedType === NavigationContainerType.None) {
         this.contentStyle.opacity = '0';
@@ -59,10 +59,13 @@ export class NavigationContainerComponent implements OnInit, OnDestroy {
         this.contentStyle.pointerEvents = 'all';
       }
     }
+
+    this.viewExpandRequestor.requestFullScreen(selectedType === NavigationContainerType.Fullscreen);
   }
 
   ngOnDestroy() {
     this.routeObserve.unsubscribe();
+    this.viewExpandRequestor.requestFullScreen(false);
   }
 }
 

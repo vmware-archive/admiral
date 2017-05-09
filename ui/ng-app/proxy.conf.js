@@ -18,7 +18,10 @@ const ENDPOINTS = [
   '/projects/*',
   '/config/*',
   '/templates/*',
-  '/groups/*'
+  '/groups/*',
+  '/image-assets/*',
+  '/user-session/*',
+  '/popular-images/*'
 ];
 
 var configs = {};
@@ -32,11 +35,6 @@ ENDPOINTS.forEach((e) => {
 
 configs['/assets/i18n/base*.json'] = {
   'target': `http://${env.services.ip}:${env.services.port}/ng`,
-  'secure': false
-}
-
-configs['/image-assets/*'] = {
-  'target': `http://${env.services.ip}:${env.services.port}/`,
   'secure': false
 }
 
