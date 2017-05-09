@@ -181,8 +181,7 @@ func isTaskCompleted(taskStatus *TaskStatus, operationType string) bool {
 		return false
 	}
 	if operationType == ProvisionResourceOperation {
-		if taskStatus.SubStage == SubstageCompleted &&
-			(taskStatus.ResourceLinks != nil && len(taskStatus.ResourceLinks) > 0) {
+		if taskStatus.ResourceLinks != nil && len(taskStatus.ResourceLinks) > 0 {
 			return true
 		}
 		return false
