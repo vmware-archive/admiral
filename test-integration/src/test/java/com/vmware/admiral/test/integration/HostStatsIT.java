@@ -16,6 +16,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ContainerHostService;
@@ -28,6 +29,7 @@ public class HostStatsIT extends BaseProvisioningOnCoreOsIT {
         setupCoreOsHost(ContainerHostService.DockerAdapterType.API);
     }
 
+    @Ignore("https://jira-hzn.eng.vmware.com/browse/VBV-1220")
     @Test
     public void testShellCommandExecution() throws Exception {
         // The total memory, available memory, cpu usage should be populated in
