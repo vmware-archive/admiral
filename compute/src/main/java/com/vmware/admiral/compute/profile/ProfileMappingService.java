@@ -28,6 +28,7 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
 import com.vmware.admiral.service.common.MultiTenantDocument;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
@@ -40,7 +41,7 @@ import com.vmware.xenon.common.Utils;
  */
 public class ProfileMappingService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.PROFILE_MAPPINGS;
-    private static Map<String, Class<? extends MultiTenantDocument>> profiles = new HashMap<>();
+    private static Map<String, Class<? extends ResourceState>> profiles = new HashMap<>();
 
     {
         profiles.put(ComputeProfileService.FACTORY_LINK, ComputeProfile.class);
@@ -74,7 +75,7 @@ public class ProfileMappingService extends StatelessService {
                         state.mappings = new HashMap<>();
                     } else {
                         Collection<Object> values = body.documents.values();
-                        Class<? extends MultiTenantDocument> type = profiles
+                        Class<? extends ResourceState> type = profiles
                                 .get(o.getUri().getPath());
                         List<Field> fields = Arrays.asList(type.getDeclaredFields());
                         state.mappings = fields.stream()
@@ -109,7 +110,7 @@ public class ProfileMappingService extends StatelessService {
         }
     }
 
-    private List<String> getMappingIntersection(Class<? extends MultiTenantDocument> type,
+    private List<String> getMappingIntersection(Class<? extends ResourceState> type,
             Field field,
             Collection<Object> values) {
         return new ArrayList<>(values.stream().map(value -> {

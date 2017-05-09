@@ -33,6 +33,8 @@ import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.profile.ComputeProfileService;
+import com.vmware.admiral.compute.profile.ImageProfileService;
+import com.vmware.admiral.compute.profile.InstanceTypeService;
 import com.vmware.admiral.compute.profile.NetworkProfileService;
 import com.vmware.admiral.compute.profile.ProfileService;
 import com.vmware.admiral.compute.profile.StorageProfileService;
@@ -79,7 +81,8 @@ public class ComputeStateEnhancersTest extends BaseTestCase {
                 TestInitialBootService.class);
         HostInitServiceHelper.startServiceFactories(host,
                 CaSigningCertService.class, ProfileService.class,
-                ComputeProfileService.class, StorageProfileService.class,
+                ComputeProfileService.class, StorageProfileService.class, ImageProfileService.class,
+                InstanceTypeService.class,
                 NetworkProfileService.class, ComputeDescriptionService.class);
         waitForServiceAvailability(ProfileService.FACTORY_LINK);
         waitForServiceAvailability(CaSigningCertService.FACTORY_LINK);

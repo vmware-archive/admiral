@@ -30,10 +30,12 @@ import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.PropertyMapping;
 import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
+import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile;
 import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfileExpanded;
 import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfile;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.FileUtils;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -134,6 +136,75 @@ public class ProfileService extends StatefulService {
         super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
     }
 
+    public static List<ProfileStateExpanded> getDefaultProfiles() {
+        try {
+            ObjectMapper mapper = YamlMapper.objectMapper();
+            List<ProfileStateExpanded> profiles = FileUtils
+                    .findResources(ProfileStateExpanded.class, "profiles").stream()
+                    .filter(r -> r.url != null)
+                    .map(r -> {
+                        try (InputStream is = r.url.openStream()) {
+                            return mapper.readValue(is, ProfileStateExpanded.class);
+                        } catch (Exception e) {
+                            Utils.log(ProfileService.class,
+                                    ProfileService.class.getSimpleName(), Level.WARNING,
+                                    "Failure reading default profile: %s, reason: %s", r.url,
+                                    e.getMessage());
+                            return null;
+                        }
+                    }).filter(profile -> profile != null)
+                    .collect(Collectors.toList());
+
+            // populate pre-defined self links
+            profiles.forEach(profile -> setDefaultSelfLinks(profile));
+
+            return profiles;
+        } catch (Exception e) {
+            Utils.log(ProfileService.class, ProfileService.class.getSimpleName(),
+                    Level.SEVERE, "Failure reading default profiles, reason: %s",
+                    e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    public static List<ServiceDocument> getAllDefaultDocuments() {
+        List<ServiceDocument> docs = new ArrayList<>();
+        getDefaultProfiles().forEach(profile -> {
+            if (profile.computeProfile != null) {
+                docs.add(profile.computeProfile);
+            }
+            if (profile.storageProfile != null) {
+                docs.add(profile.storageProfile);
+            }
+            if (profile.networkProfile != null) {
+                docs.add(profile.networkProfile);
+            }
+            docs.add(profile);
+        });
+        return docs;
+    }
+
+    private static void setDefaultSelfLinks(ProfileStateExpanded profile) {
+        profile.documentSelfLink = UriUtils.buildUriPath(ProfileService.FACTORY_LINK,
+                profile.endpointType);
+
+        if (profile.computeProfile != null) {
+            profile.computeProfileLink = UriUtils.buildUriPath(ComputeProfileService.FACTORY_LINK,
+                    profile.endpointType);
+            profile.computeProfile.documentSelfLink = profile.computeProfileLink;
+        }
+        if (profile.storageProfile != null) {
+            profile.storageProfileLink = UriUtils.buildUriPath(StorageProfileService.FACTORY_LINK,
+                    profile.endpointType);
+            profile.storageProfile.documentSelfLink = profile.storageProfileLink;
+        }
+        if (profile.networkProfile != null) {
+            profile.networkProfileLink = UriUtils.buildUriPath(NetworkProfileService.FACTORY_LINK,
+                    profile.endpointType);
+            profile.networkProfile.documentSelfLink = profile.networkProfileLink;
+        }
+    }
+
     @Override
     public void handleGet(Operation get) {
         ProfileState currentState = getState(get);
@@ -204,8 +275,8 @@ public class ProfileService extends StatefulService {
 
     @Override
     public void handleCreate(Operation post) {
-        processInput(post);
-        post.complete();
+        ProfileState state = processInput(post);
+        updateChildProfiles(post, state);
     }
 
     @Override
@@ -218,7 +289,7 @@ public class ProfileService extends StatefulService {
 
         ProfileState newState = processInput(put);
         setState(put, newState);
-        put.complete();
+        updateChildProfiles(put, newState);
     }
 
     @Override
@@ -232,7 +303,7 @@ public class ProfileService extends StatefulService {
             return;
         }
         patch.setBody(currentState);
-        patch.complete();
+        updateChildProfiles(patch, currentState);
     }
 
     @Override
@@ -240,75 +311,6 @@ public class ProfileService extends StatefulService {
         ServiceDocument template = super.getDocumentTemplate();
         com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
         return template;
-    }
-
-    public static List<ProfileStateExpanded> getDefaultProfiles() {
-        try {
-            ObjectMapper mapper = YamlMapper.objectMapper();
-            List<ProfileStateExpanded> profiles = FileUtils
-                    .findResources(ProfileStateExpanded.class, "profiles").stream()
-                    .filter(r -> r.url != null)
-                    .map(r -> {
-                        try (InputStream is = r.url.openStream()) {
-                            return mapper.readValue(is, ProfileStateExpanded.class);
-                        } catch (Exception e) {
-                            Utils.log(ProfileService.class,
-                                    ProfileService.class.getSimpleName(), Level.WARNING,
-                                    "Failure reading default profile: %s, reason: %s", r.url,
-                                    e.getMessage());
-                            return null;
-                        }
-                    }).filter(profile -> profile != null)
-                    .collect(Collectors.toList());
-
-            // populate pre-defined self links
-            profiles.forEach(profile -> setDefaultSelfLinks(profile));
-
-            return profiles;
-        } catch (Exception e) {
-            Utils.log(ProfileService.class, ProfileService.class.getSimpleName(),
-                    Level.SEVERE, "Failure reading default profiles, reason: %s",
-                    e.getMessage());
-            return Collections.emptyList();
-        }
-    }
-
-    public static List<ServiceDocument> getAllDefaultDocuments() {
-        List<ServiceDocument> docs = new ArrayList<>();
-        getDefaultProfiles().forEach(profile -> {
-            if (profile.computeProfile != null) {
-                docs.add(profile.computeProfile);
-            }
-            if (profile.storageProfile != null) {
-                docs.add(profile.storageProfile);
-            }
-            if (profile.networkProfile != null) {
-                docs.add(profile.networkProfile);
-            }
-            docs.add(profile);
-        });
-        return docs;
-    }
-
-    private static void setDefaultSelfLinks(ProfileStateExpanded profile) {
-        profile.documentSelfLink = UriUtils.buildUriPath(ProfileService.FACTORY_LINK,
-                profile.endpointType);
-
-        if (profile.computeProfile != null) {
-            profile.computeProfileLink = UriUtils.buildUriPath(ComputeProfileService.FACTORY_LINK,
-                    profile.endpointType);
-            profile.computeProfile.documentSelfLink = profile.computeProfileLink;
-        }
-        if (profile.storageProfile != null) {
-            profile.storageProfileLink = UriUtils.buildUriPath(StorageProfileService.FACTORY_LINK,
-                    profile.endpointType);
-            profile.storageProfile.documentSelfLink = profile.storageProfileLink;
-        }
-        if (profile.networkProfile != null) {
-            profile.networkProfileLink = UriUtils.buildUriPath(NetworkProfileService.FACTORY_LINK,
-                    profile.endpointType);
-            profile.networkProfile.documentSelfLink = profile.networkProfileLink;
-        }
     }
 
     private ProfileState processInput(Operation op) {
@@ -319,7 +321,8 @@ public class ProfileService extends StatefulService {
         AssertUtil.assertNotNull(state.name, "name");
         Utils.validateState(getStateDescription(), state);
         if (state.endpointLink == null && state.endpointType == null) {
-            throw new LocalizableValidationException("Endpoint or endpoint type must be specified", "compute.endpoint.type.required");
+            throw new LocalizableValidationException("Endpoint or endpoint type must be specified",
+                    "compute.endpoint.type.required");
         }
         if (state.endpointLink != null && state.endpointType != null) {
             throw new LocalizableValidationException(
@@ -327,5 +330,43 @@ public class ProfileService extends StatefulService {
                     "compute.endpoint.link.or.type.only");
         }
         return state;
+    }
+
+    private void updateChildProfiles(Operation op, ProfileState state) {
+        DeferredResult<Operation> dr = DeferredResult.completed(null);
+        if (state.computeProfileLink != null) {
+            ComputeProfile cp = new ComputeProfile();
+            cp.name = state.name;
+            cp.endpointLink = state.endpointLink;
+            cp.endpointType = state.endpointType;
+
+            dr = dr.thenCompose(ignore -> sendWithDeferredResult(
+                    Operation.createPatch(this, state.computeProfileLink).setBody(cp)));
+        }
+
+        if (state.networkProfileLink != null) {
+            NetworkProfile np = new NetworkProfile();
+            np.name = state.name;
+            np.endpointLink = state.endpointLink;
+
+            dr = dr.thenCompose(ignore -> sendWithDeferredResult(
+                    Operation.createPatch(this, state.networkProfileLink).setBody(np)));
+        }
+
+        if (state.storageProfileLink != null) {
+            StorageProfile sp = new StorageProfile();
+            sp.name = state.name;
+            sp.endpointLink = state.endpointLink;
+
+            dr = dr.thenCompose(ignore -> sendWithDeferredResult(
+                    Operation.createPatch(this, state.storageProfileLink).setBody(sp)));
+        }
+
+        dr.whenComplete((o, e) -> {
+            if (e != null) {
+                logWarning("Error updating child profiles, reason:[%s]", Utils.toString(e));
+            }
+            op.complete();
+        });
     }
 }

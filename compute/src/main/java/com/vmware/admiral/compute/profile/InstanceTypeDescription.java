@@ -15,9 +15,14 @@ package com.vmware.admiral.compute.profile;
  * Describes a compute instance type.
  */
 public class InstanceTypeDescription {
+
+    public String name;
+
+    public String description;
+
     /**
-     * Instance type identifier valid in the context of the particular endpoint this description
-     * is created for. If {@code null}, detailed instance figures such as CPU and memory must be
+     * Instance type identifier valid in the context of the particular endpoint this description is
+     * created for. If {@code null}, detailed instance figures such as CPU and memory must be
      * provided instead.
      */
     public String instanceType;

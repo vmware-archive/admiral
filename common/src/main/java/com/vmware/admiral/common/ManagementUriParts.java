@@ -29,6 +29,8 @@ public interface ManagementUriParts {
     String COMPUTE_PROFILES = CONFIG + "/compute-profiles";
     String STORAGE_PROFILES = CONFIG + "/storage-profiles";
     String NETWORK_PROFILES = CONFIG + "/network-profiles";
+    String IMAGE_PROFILES = CONFIG + "/image-profiles";
+    String INSTANCE_TYPE_PROFILES = CONFIG + "/instance-types";
     String MIGRATION = CONFIG + "/migration";
 
     String CERT_DISTRIBUTION_ADD_REGISTRY = CONFIG + "/cert-dist-add-reg";

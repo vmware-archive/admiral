@@ -11,58 +11,61 @@
 
 package com.vmware.admiral.compute.profile;
 
-import java.util.List;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
+
 import java.util.Map;
-import java.util.Set;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.Utils;
 
 /**
- * Endpoint storage profile.
+ * CRUD service for managing image profiles.
  */
-public class StorageProfileService extends StatefulService {
-    public static final String FACTORY_LINK = ManagementUriParts.STORAGE_PROFILES;
+public class ImageProfileService extends StatefulService {
+    public static final String FACTORY_LINK = ManagementUriParts.IMAGE_PROFILES;
 
-    public static class StorageItem {
-
-        /**
-         * Name of the storage properties defined for Jason's reference.
-         */
-        public String name;
-        /**
-         * Tags to be specified in the blueprint against each disk. To be used in filtering which
-         * storage item is to be used
-         */
-        public Set<String> tagLinks;
-        /**
-         * Map of storage properties that are to be used by the provider when provisioning disks
-         */
-        public Map<String, String> diskProperties;
-        /**
-         * defines if this particular storage item contains default storage properties
-         */
-        public boolean defaultItem;
-    }
-
-    public static class StorageProfile extends ResourceState {
+    /**
+     * Describes an image profile - configuration and mapping for a specific endpoint that allows
+     * compute provisioning that is agnostic on the target endpoint type.
+     */
+    public static class ImageProfileState extends ResourceState {
+        public static final String FIELD_NAME_ENDPOINT_LINK = "endpointLink";
+        public static final String FIELD_NAME_ENDPOINT_TYPE = "endpointType";
 
         @Documentation(description = "Link to the endpoint this profile is associated with")
-        @PropertyOptions(usage = { PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
         public String endpointLink;
 
-        @Documentation(description = "Contains storageItems that define disk properties to be "
-                + "used by providers")
-        public List<StorageItem> storageItems;
+        @Documentation(description = "The endpoint type if this profile is not for a specific endpoint ")
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
+        public String endpointType;
+
+        /**
+         * Compute images provided by the particular endpoint. Keyed by global image type
+         * identifiers used to unify image types among heterogeneous set of endpoint types.
+         */
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
+        public Map<String, ComputeImageDescription> imageMapping;
+
+        @Override
+        public void copyTo(ResourceState target) {
+            super.copyTo(target);
+            if (target instanceof ImageProfileState) {
+                ImageProfileState targetState = (ImageProfileState) target;
+                targetState.endpointLink = this.endpointLink;
+                targetState.endpointType = this.endpointType;
+                targetState.imageMapping = this.imageMapping;
+            }
+        }
     }
 
-    public StorageProfileService() {
-        super(StorageProfile.class);
+    public ImageProfileService() {
+        super(ImageProfileState.class);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
@@ -83,17 +86,17 @@ public class StorageProfileService extends StatefulService {
             return;
         }
 
-        StorageProfile newState = processInput(put);
+        ImageProfileState newState = processInput(put);
         setState(put, newState);
         put.complete();
     }
 
     @Override
     public void handlePatch(Operation patch) {
-        StorageProfile currentState = getState(patch);
+        ImageProfileState currentState = getState(patch);
         try {
             Utils.mergeWithStateAdvanced(getStateDescription(), currentState,
-                    StorageProfile.class, patch);
+                    ImageProfileState.class, patch);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             patch.fail(e);
             return;
@@ -109,11 +112,12 @@ public class StorageProfileService extends StatefulService {
         return template;
     }
 
-    private StorageProfile processInput(Operation op) {
+    private ImageProfileState processInput(Operation op) {
         if (!op.hasBody()) {
-            throw (new IllegalArgumentException("body is required"));
+            throw new IllegalArgumentException("body is required");
         }
-        StorageProfile state = op.getBody(StorageProfile.class);
+        ImageProfileState state = op.getBody(ImageProfileState.class);
+        AssertUtil.assertNotNull(state.name, "name");
         Utils.validateState(getStateDescription(), state);
         return state;
     }
