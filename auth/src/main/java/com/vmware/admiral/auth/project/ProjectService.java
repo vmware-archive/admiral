@@ -12,21 +12,23 @@
 package com.vmware.admiral.auth.project;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
 
+import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.util.ProjectUtil;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
-import com.vmware.admiral.common.util.OperationUtil;
+import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.photon.controller.model.ServiceUtils;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.OperationJoin;
+import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
@@ -46,15 +48,10 @@ import com.vmware.xenon.services.common.UserService.UserState;
  */
 public class ProjectService extends StatefulService {
 
-    private static final String FAILED_TO_RETRIEVE_STATE_WITH_MEMBERS_MESSAGE_FORMAT =
-            "Failed to retrieve project state with members for project %s";
-    private static final String FAILED_TO_RETRIEVE_STATE_WITH_MEMBERS_MESSAGE_CODE =
-            "auth.project.retrieve.state.with.members.failed";
-
     public static final String FACTORY_LINK = ManagementUriParts.PROJECTS;
     public static final String DEFAULT_PROJECT_ID = "default-project";
-    public static final String DEFAULT_PROJECT_LINK = UriUtils.buildUriPath(
-            ProjectService.FACTORY_LINK, DEFAULT_PROJECT_ID);
+    public static final String DEFAULT_PROJECT_LINK = UriUtils.buildUriPath(FACTORY_LINK,
+            DEFAULT_PROJECT_ID);
 
     public static ProjectState buildDefaultProjectInstance() {
         ProjectState project = new ProjectState();
@@ -94,8 +91,30 @@ public class ProjectService extends StatefulService {
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL, PropertyUsageOption.LINK,
                 PropertyUsageOption.SINGLE_ASSIGNMENT, PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public String membersUserGroupLink;
+
+        public void copyTo(ProjectState destination) {
+            super.copyTo(destination);
+            destination.isPublic = this.isPublic;
+            destination.description = this.description;
+            destination.administratorsUserGroupLink = this.administratorsUserGroupLink;
+            destination.membersUserGroupLink = this.membersUserGroupLink;
+        }
+
+        public static ProjectState copyOf(ProjectState source) {
+            if (source == null) {
+                return null;
+            }
+
+            ProjectState result = new ProjectState();
+            source.copyTo(result);
+            return result;
+        }
     }
 
+    /**
+     * This class represents the expanded document state associated with a
+     * {@link com.vmware.admiral.auth.project.ProjectService}.
+     */
     public static class ProjectStateWithMembers extends ProjectState {
 
         /** List of administrators for this project. */
@@ -106,6 +125,15 @@ public class ProjectService extends StatefulService {
         @Documentation(description = "List of members for this project.")
         public List<UserState> members;
 
+        public void copyTo(ProjectStateWithMembers destination) {
+            super.copyTo(destination);
+            if (administrators != null) {
+                destination.administrators = new ArrayList<>(administrators);
+            }
+            if (members != null) {
+                destination.members = new ArrayList<>(members);
+            }
+        }
     }
 
     public ProjectService() {
@@ -125,9 +153,12 @@ public class ProjectService extends StatefulService {
         ProjectState createBody = post.getBody(ProjectState.class);
         validateState(createBody);
 
-        if (isDevOpsAdmin(post)) {
-            createAdminAndMemberGroups(post);
-            // Operation will be completed after a successful creation of the groups
+        if (AuthUtils.isDevOpsAdmin(post)) {
+            createAdminAndMemberGroups(createBody, post.getAuthorizationContext())
+                    .thenAccept((projectState) -> {
+                        post.setBody(projectState);
+                    })
+                    .whenCompleteNotify(post);
         } else {
             post.complete();
         }
@@ -148,31 +179,62 @@ public class ProjectService extends StatefulService {
             return;
         }
 
-        ProjectState putBody = put.getBody(ProjectState.class);
-        validateState(putBody);
-
-        this.setState(put, putBody);
-        put.setBody(putBody).complete();
+        ProjectState projectPut = put.getBody(ProjectState.class);
+        ProjectRoles rolesPut = put.getBody(ProjectRoles.class);
+        if (rolesPut.administrators != null || rolesPut.members != null) {
+            // this is an update of the roles
+            new ProjectRolesHandler(getHost(), getSelfLink()).handleRolesUpdate(rolesPut)
+                    .thenAccept((ignore) -> put.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED))
+                    .whenCompleteNotify(put);
+        } else {
+            // this is an update of the state
+            validateState(projectPut);
+            this.setState(put, projectPut);
+            put.setBody(projectPut).complete();
+            return;
+        }
     }
 
     @Override
     public void handlePatch(Operation patch) {
-        ProjectState currentState = getState(patch);
-        ProjectState patchBody = patch.getBody(ProjectState.class);
+        if (!patch.hasBody()) {
+            patch.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
+            patch.complete();
+            return;
+        }
 
-        ServiceDocumentDescription docDesc = getDocumentTemplate().documentDescription;
-        String currentSignature = Utils.computeSignature(currentState, docDesc);
-
-        PropertyUtils.mergeServiceDocuments(currentState, patchBody);
-
-        String newSignature = Utils.computeSignature(currentState, docDesc);
-
-        // if the signature hasn't change we shouldn't modify the state
-        if (currentSignature.equals(newSignature)) {
+        // Patch project state properties
+        ProjectState projectPatch = patch.getBody(ProjectState.class);
+        if (projectPatch != null) {
+            boolean stateModified = handleProjectPatch(getState(patch), projectPatch);
+            if (!stateModified) {
+                // if the signature hasn't change we shouldn't modify the state
+                patch.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
+            }
+        } else {
             patch.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
         }
 
-        patch.complete();
+        // Patch roles
+        ProjectRoles rolesPatch = patch.getBody(ProjectRoles.class);
+        if (rolesPatch != null) {
+            new ProjectRolesHandler(getHost(), getSelfLink()).handleRolesUpdate(rolesPatch)
+                    .whenCompleteNotify(patch);
+        } else {
+            patch.complete();
+        }
+
+    }
+
+    /** Returns whether the projects state signature was changed after the patch. */
+    private boolean handleProjectPatch(ProjectState currentState, ProjectState patchState) {
+        ServiceDocumentDescription docDesc = getDocumentTemplate().documentDescription;
+        String currentSignature = Utils.computeSignature(currentState, docDesc);
+
+        PropertyUtils.mergeServiceDocuments(currentState, patchState);
+        String newSignature = Utils.computeSignature(currentState, docDesc);
+
+        return !currentSignature.equals(newSignature);
     }
 
     @Override
@@ -183,14 +245,15 @@ public class ProjectService extends StatefulService {
             return;
         }
 
-        QueryTask queryTask = ProjectUtil.createQueryTaskForProjectAssociatedWithPlacement(state, null);
-
+        QueryTask queryTask = ProjectUtil.createQueryTaskForProjectAssociatedWithPlacement(state,
+                null);
 
         sendRequest(Operation.createPost(getHost(), ServiceUriPaths.CORE_QUERY_TASKS)
                 .setBody(queryTask)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logSevere("Failed to retrieve placements associated with project: " + state.documentSelfLink);
+                        logSevere("Failed to retrieve placements associated with project: "
+                                + state.documentSelfLink);
                         delete.fail(e);
                         return;
                     } else {
@@ -222,11 +285,6 @@ public class ProjectService extends StatefulService {
         return template;
     }
 
-    private boolean isDevOpsAdmin(Operation op) {
-        // TODO extract this to a common utility
-        return !OperationUtil.isGuestUser(op);
-    }
-
     /**
      * Creates a {@link ProjectStateWithMembers} based on the current state of the service by
      * additionally building the lists of administrators and members. When done, the prepared
@@ -236,89 +294,39 @@ public class ProjectService extends StatefulService {
     private void retrieveExpandedState(ProjectState simpleState, Operation get) {
         ProjectStateWithMembers expandedState = new ProjectStateWithMembers();
         simpleState.copyTo(expandedState);
-        expandedState.isPublic = simpleState.isPublic;
-        expandedState.description = simpleState.description;
-        expandedState.administratorsUserGroupLink = simpleState.administratorsUserGroupLink;
-        expandedState.membersUserGroupLink = simpleState.membersUserGroupLink;
 
-        Operation adminsOp = buildUsersRetrievalHelperOperation((adminsList) -> {
-            expandedState.administrators = adminsList;
-        });
-        Operation membersOp = buildUsersRetrievalHelperOperation((membersList) -> {
-            expandedState.members = membersList;
-        });
-        OperationJoin.create(adminsOp, membersOp).setCompletion((ops, exs) -> {
-            if (exs != null && !exs.isEmpty()) {
-                String error = String.format(FAILED_TO_RETRIEVE_STATE_WITH_MEMBERS_MESSAGE_FORMAT,
-                        simpleState.documentSelfLink);
-                get.fail(new LocalizableValidationException(exs.values().iterator().next(), error,
-                        FAILED_TO_RETRIEVE_STATE_WITH_MEMBERS_MESSAGE_CODE,
-                        simpleState.documentSelfLink));
-            } else {
-                get.setBody(expandedState).complete();
-            }
-        });
+        DeferredResult<Void> retrieveAdmins = retrieveUserGroupMembers(
+                simpleState.administratorsUserGroupLink)
+                        .thenAccept((adminsList) -> expandedState.administrators = adminsList);
+        DeferredResult<Void> retrieveMembers = retrieveUserGroupMembers(
+                simpleState.membersUserGroupLink)
+                        .thenAccept((membersList) -> expandedState.members = membersList);
 
-        retrieveUserGroupMembers(simpleState.administratorsUserGroupLink, adminsOp);
-        retrieveUserGroupMembers(simpleState.membersUserGroupLink, membersOp);
+        DeferredResult.allOf(retrieveAdmins, retrieveMembers)
+                .thenAccept((ignore) -> get.setBody(expandedState))
+                .whenCompleteNotify(get);
     }
 
     /**
-     * Creates a helper {@link Operation} that is supposed to be completed when the {@link List} of
-     * members of a specific user group has been populated. On successful completion, the operation
-     * body is expected to be the list of {@link UserState}s
-     */
-    @SuppressWarnings("unchecked")
-    private Operation buildUsersRetrievalHelperOperation(
-            Consumer<List<UserState>> successHandler) {
-
-        Operation result = new Operation();
-        result.setCompletion((o, e) -> {
-            if (e != null) {
-                result.fail(e);
-            } else {
-                // o.getRawBody() is used instead of o.getBody(List.class) to avoid
-                // converting the list of UserState-s to list of LinkedTreeMap-s
-                successHandler.accept((List<UserState>) o.getBodyRaw());
-            }
-        });
-        return result;
-    }
-
-    /**
-     * Retrieves the list of members for the specified by document link user group, sets that list
-     * as a body for the provided operation and completes it. If <code>groupLink</code> is
-     * <code>null</code>, an empty list will be returned in the <code>callerOp</code> body.
+     * Retrieves the list of members for the specified by document link user group.
      *
-     * @see #retrieveUserStatesForGroup(UserGroupState, Operation)
+     * @see #retrieveUserStatesForGroup(UserGroupState)
      */
-    private void retrieveUserGroupMembers(String groupLink, Operation callerOp) {
+    private DeferredResult<List<UserState>> retrieveUserGroupMembers(String groupLink) {
         if (groupLink == null) {
-            callerOp.setBody(new ArrayList<>(0)).complete();
-            return;
+            return DeferredResult.completed(new ArrayList<>(0));
         }
 
-        Operation.createGet(getHost(), groupLink)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        logWarning("Failed to retrieve UserGroupState %s: %s", groupLink,
-                                Utils.toString(e));
-                        callerOp.fail(e);
-                        return;
-                    }
-
-                    UserGroupState groupState = o.getBody(UserGroupState.class);
-                    retrieveUserStatesForGroup(groupState, callerOp);
-                }).sendWith(this);
+        Operation groupGet = Operation.createGet(getHost(), groupLink).setReferer(getUri());
+        return getHost().sendWithDeferredResult(groupGet, UserGroupState.class)
+                .thenCompose(this::retrieveUserStatesForGroup);
     }
 
     /**
-     * Retrieves the list of members for the specified user group, sets that list as a body for the
-     * provided operation and completes it.
-     *
-     * @see #retrieveUserStatesForGroup(UserGroupState, Operation)
+     * Retrieves the list of members for the specified user group.
      */
-    private void retrieveUserStatesForGroup(UserGroupState groupState, Operation callerOp) {
+    private DeferredResult<List<UserState>> retrieveUserStatesForGroup(UserGroupState groupState) {
+        DeferredResult<List<UserState>> deferredResult = new DeferredResult<>();
         ArrayList<UserState> resultList = new ArrayList<>();
 
         QueryTask queryTask = QueryUtil.buildQuery(UserState.class, true, groupState.query);
@@ -328,13 +336,15 @@ public class ProjectService extends StatefulService {
                     if (r.hasException()) {
                         logWarning("Failed to retrieve members of UserGroupState %s: %s",
                                 groupState.documentSelfLink, Utils.toString(r.getException()));
-                        callerOp.fail(r.getException());
+                        deferredResult.fail(r.getException());
                     } else if (r.hasResult()) {
                         resultList.add(r.getResult());
                     } else {
-                        callerOp.setBody(resultList).complete();
+                        deferredResult.complete(resultList);
                     }
                 });
+
+        return deferredResult;
     }
 
     private void validateState(ProjectState state) {
@@ -342,50 +352,44 @@ public class ProjectService extends StatefulService {
         AssertUtil.assertNotNullOrEmpty(state.name, ProjectState.FIELD_NAME_NAME);
     }
 
-    private void createAdminAndMemberGroups(Operation createPost) {
-        ProjectState createBody = createPost.getBody(ProjectState.class);
-        if (createBody.administratorsUserGroupLink != null
-                && createBody.membersUserGroupLink != null
-                && !createBody.administratorsUserGroupLink.trim().isEmpty()
-                && !createBody.membersUserGroupLink.trim().isEmpty()) {
-            // No groups to create, complete the operation
-            createPost.complete();
-            return;
+    private DeferredResult<ProjectState> createAdminAndMemberGroups(ProjectState projectState,
+            AuthorizationContext authContext) {
+
+        if (projectState.administratorsUserGroupLink != null
+                && projectState.membersUserGroupLink != null
+                && !projectState.administratorsUserGroupLink.trim().isEmpty()
+                && !projectState.membersUserGroupLink.trim().isEmpty()) {
+            // No groups to create
+            return DeferredResult.completed(projectState);
         }
 
-        // Prepare operations to create only the missing UserGroup-s
-        ArrayList<Operation> operations = new ArrayList<>(2);
-        Query defaultQuery = createDefaultUserGroupQuery(createPost);
-        if (createBody.administratorsUserGroupLink == null
-                || createBody.administratorsUserGroupLink.trim().isEmpty()) {
-            Operation createAdminsGroup = buildCreateUserGroupOperation(defaultQuery,
-                    (userState) -> {
-                        createBody.administratorsUserGroupLink = userState.documentSelfLink;
-                    });
-            operations.add(createAdminsGroup);
+        ArrayList<DeferredResult<Void>> deferredResults = new ArrayList<>();
+        Query defaultQuery = createDefaultUserGroupQuery(authContext);
+
+        if (projectState.administratorsUserGroupLink == null
+                || projectState.administratorsUserGroupLink.trim().isEmpty()) {
+            deferredResults.add(getHost()
+                    .sendWithDeferredResult(buildCreateUserGroupOperation(defaultQuery),
+                            UserGroupState.class)
+                    .thenAccept((groupState) -> {
+                        projectState.administratorsUserGroupLink = groupState.documentSelfLink;
+                    }));
         }
-        if (createBody.membersUserGroupLink == null
-                || createBody.membersUserGroupLink.trim().isEmpty()) {
-            Operation createMembersGroup = buildCreateUserGroupOperation(defaultQuery,
-                    (userState) -> {
-                        createBody.membersUserGroupLink = userState.documentSelfLink;
-                    });
-            operations.add(createMembersGroup);
+        if (projectState.membersUserGroupLink == null
+                || projectState.membersUserGroupLink.trim().isEmpty()) {
+            deferredResults.add(getHost()
+                    .sendWithDeferredResult(buildCreateUserGroupOperation(defaultQuery),
+                            UserGroupState.class)
+                    .thenAccept((groupState) -> {
+                        projectState.membersUserGroupLink = groupState.documentSelfLink;
+                    }));
         }
 
-        // Execute the prepared operations and complete the createPost on success
-        OperationJoin.create(operations)
-                .setCompletion((ops, ers) -> {
-                    if (ers != null && ers.size() > 0) {
-                        createPost.fail(ers.values().iterator().next());
-                    } else {
-                        createPost.complete();
-                    }
-                }).sendWith(getHost());
+        return DeferredResult.allOf(deferredResults)
+                .thenCompose((ignore) -> DeferredResult.completed(projectState));
     }
 
-    private Operation buildCreateUserGroupOperation(Query userGroupQuery,
-            Consumer<UserState> successHandler) {
+    private Operation buildCreateUserGroupOperation(Query userGroupQuery) {
         UserGroupState userGroupState = UserGroupState.Builder
                 .create()
                 .withQuery(userGroupQuery)
@@ -393,22 +397,16 @@ public class ProjectService extends StatefulService {
 
         return Operation.createPost(getHost(), UserGroupService.FACTORY_LINK)
                 .setReferer(getHost().getUri())
-                .setBody(userGroupState)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        logWarning(Utils.toString(e));
-                        return;
-                        // error will be handled in joined completion handler
-                    }
-                    if (successHandler != null) {
-                        successHandler.accept(o.getBody(UserState.class));
-                    }
-                });
+                .setBody(userGroupState);
     }
 
-    private Query createDefaultUserGroupQuery(Operation callerOp) {
-        String userLink = callerOp.getAuthorizationContext().getClaims().getSubject();
-        return QueryUtil.buildPropertyQuery(UserState.class, UserState.FIELD_NAME_SELF_LINK,
-                userLink).querySpec.query;
+    private Query createDefaultUserGroupQuery(AuthorizationContext authContext) {
+        return AuthUtils
+                .buildUsersQuery(Collections.singletonList(getAuthorizedUserLink(authContext)));
     }
+
+    private String getAuthorizedUserLink(AuthorizationContext authContext) {
+        return authContext.getClaims().getSubject();
+    }
+
 }

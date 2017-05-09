@@ -64,6 +64,7 @@ public interface ManagementUriParts {
 
     String COMPUTE_NETWORK_CIDR_ALLOCATIONS = RESOURCES + "/compute-network-cidr-allocations";
 
+    // Projects
     String PROJECTS = "/projects";
 
     String IDM = "/idm";

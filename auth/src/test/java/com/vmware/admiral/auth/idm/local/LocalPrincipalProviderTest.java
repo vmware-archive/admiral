@@ -37,7 +37,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         if (!hostField.isAccessible()) {
             hostField.setAccessible(true);
         }
-        host.assumeIdentity(buildUserServicePath(ADMIN_USERNAME));
+        host.assumeIdentity(buildUserServicePath(USERNAME_ADMIN));
         hostField.set(provider, host);
         hostField.setAccessible(false);
     }

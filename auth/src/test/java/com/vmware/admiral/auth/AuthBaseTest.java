@@ -37,7 +37,9 @@ import com.vmware.xenon.services.common.UserService;
 public abstract class AuthBaseTest extends BaseTestCase {
     public static final int DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES = 180;
 
-    protected static final String ADMIN_USERNAME = "fritz@admiral.com";
+    protected static final String USERNAME_ADMIN = "fritz@admiral.com";
+    protected static final String USERNAME_GLORIA = "gloria@admiral.com";
+    protected static final String USERNAME_CONNIE = "connie@admiral.com";
 
     private static final String LOCAL_USERS_FILE = "/local-users.json";
 
