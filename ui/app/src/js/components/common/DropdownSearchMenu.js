@@ -206,7 +206,11 @@ DropdownSearchMenu.prototype.setSelectedOption = function(option) {
 
   if (option) {
     // value to select has been supplied
-    this.$el.find('.dropdown-title').text(option.name);
+    if (this.valueRenderer) {
+      this.$el.find('.dropdown-title').html(this.valueRenderer(option));
+    } else {
+      this.$el.find('.dropdown-title').text(option.name);
+    }
     this.$el.find('.dropdown-title').removeClass('placeholder');
     this.$el.find('.dropdown-options li').each(function(n, optionEl) {
       if ($(optionEl).data('spec') === option) {
@@ -261,6 +265,10 @@ DropdownSearchMenu.prototype.setClearOptionSelectCallback = function(clearOption
 
 DropdownSearchMenu.prototype.setOptionsRenderer = function(optionsRenderer) {
   this.optionsRenderer = optionsRenderer;
+};
+
+DropdownSearchMenu.prototype.setValueRenderer = function(valueRenderer) {
+  this.valueRenderer = valueRenderer;
 };
 
 function updateFilteredOptions($el, options, filter, selectedOption, optionsRenderer) {

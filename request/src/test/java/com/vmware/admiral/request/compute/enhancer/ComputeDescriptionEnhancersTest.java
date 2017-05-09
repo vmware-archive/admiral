@@ -191,11 +191,12 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         ArrayList<String> diskLinks = buildDiskStates();
         cd.diskDescLinks = diskLinks;
 
-        // Use case 1: CD with all hard constraints
-        // Use case 2: CD with all soft constraints & all matching
-        // Use case 3: CD with all hard & soft constraints
-        // Use case 4: CD with all soft constraints & few matching
-        // Use case 5: CD with all soft constraints & nothing match
+        // Use case 1: CD (Disk1) with all hard constraints
+        // Use case 2: CD (Disk2) with all soft constraints & all matching
+        // Use case 3: CD (Disk3) with all hard & soft constraints
+        // Use case 4: CD (Disk4) with all soft constraints & few matching
+        // Use case 5: CD (Disk5) with all soft constraints & nothing match
+        // Use case 6: CD (Disk6) with constraint null.
         ComputeDescriptionDiskEnhancer enhancer = new ComputeDescriptionDiskEnhancer(this.host,
                 this.host.getReferer());
 
@@ -225,19 +226,16 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
             }
             ops.values().forEach(op -> {
                 DiskState diskState = op.getBody(DiskState.class);
-                if (diskState.name.equals("Disk1")) {
+                if (diskState.name.equals("Disk1") || diskState.name.equals("Disk3")) {
                     assertNotNull(diskState.customProperties);
                     assertEquals(1, diskState.customProperties.size());
                 } else if (diskState.name.equals("Disk2")) {
                     assertNotNull(diskState.customProperties);
                     assertEquals(3, diskState.customProperties.size());
-                } else if (diskState.name.equals("Disk3")) {
-                    assertNotNull(diskState.customProperties);
-                    assertEquals(1, diskState.customProperties.size());
                 } else if (diskState.name.equals("Disk4")) {
                     assertNotNull(diskState.customProperties);
                     assertEquals(4, diskState.customProperties.size());
-                } else {
+                } else if (diskState.name.equals("Disk5") || diskState.name.equals("Disk6")) {
                     assertNotNull(diskState.customProperties);
                     assertEquals(2, diskState.customProperties.size());
                 }
@@ -246,6 +244,57 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         }).sendWith(this.host);
         joinCtx.await();
     }
+
+    @Test
+    public void testEnhanceDiskWithNoStorageItems() throws Throwable {
+        context.imageType = "CoreOs";
+        cd.instanceType = "xLarge";
+        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "vc://datastore/test.iso");
+
+        // Build disk description
+        ArrayList<String> diskLinks = buildDiskStatesForNoStorageItems();
+        cd.diskDescLinks = diskLinks;
+
+        // Use case 1: Disk1 with all hard constraints. It should fail.
+        // Use case 2: Disk2 with all soft constraints
+        // Use case 3: Disk3 with no constraints.
+        ComputeDescriptionDiskEnhancer enhancer = new ComputeDescriptionDiskEnhancer(this.host,
+                this.host.getReferer());
+
+        TestContext ctx = testCreate(1);
+        DeferredResult<ComputeDescription> result = enhancer.enhance(context, cd);
+        result.whenComplete((desc, t) -> {
+            if (t != null) {
+                assertNotNull(t.getMessage());
+                ctx.completeIteration();
+                return;
+            }
+            ctx.completeIteration();
+        });
+        ctx.await();
+
+        assertNotNull(cd.diskDescLinks);
+        // Now get all the disk states to find the properties size.
+        List<Operation> getOps = new ArrayList<>(diskLinks.size());
+        diskLinks.stream().forEach(link -> {
+            getOps.add(Operation.createGet(this.host, link).setReferer(this.host.getReferer()));
+        });
+
+        TestContext joinCtx = testCreate(1);
+        OperationJoin.create(getOps).setCompletion((ops, ex) -> {
+            if (ex != null && !ex.isEmpty()) {
+                joinCtx.failIteration(new Throwable(ex.toString()));
+                return;
+            }
+            ops.values().forEach(op -> {
+                DiskState diskState = op.getBody(DiskState.class);
+                assertNull(diskState.customProperties);
+            });
+            joinCtx.completeIteration();
+        }).sendWith(this.host);
+        joinCtx.await();
+    }
+
 
     @Test
     public void testEnhanceFull() {
@@ -497,6 +546,63 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         diskState5.constraint.conditions = conditions;
         diskState5 = doPost(diskState5, DiskService.FACTORY_LINK);
         diskLinks.add(diskState5.documentSelfLink);
+
+        DiskState diskState6 = new DiskState();
+        diskState6.capacityMBytes = 512;
+        diskState6.type = DiskService.DiskType.FLOPPY;
+        diskState6.bootOrder = 6;
+        diskState6.name = "Disk6";
+        diskState6.constraint = null;
+
+        diskState6 = doPost(diskState6, DiskService.FACTORY_LINK);
+        diskLinks.add(diskState6.documentSelfLink);
+
+        return diskLinks;
+    }
+
+    private ArrayList<String> buildDiskStatesForNoStorageItems() throws Throwable {
+        ArrayList<String> diskLinks = new ArrayList<>();
+
+        DiskState diskState1 = new DiskState();
+        diskState1.capacityMBytes = 1024;
+        diskState1.type = DiskService.DiskType.HDD;
+        diskState1.bootOrder = 1;
+        diskState1.name = "Disk1";
+        diskState1.constraint = new Constraint();
+
+        List<Constraint.Condition> conditions = new ArrayList<>();
+        conditions.add(Constraint.Condition.forTag("FAST", null,
+                Constraint.Condition.Enforcement.HARD, QueryTask.Query.Occurance.MUST_OCCUR));
+        conditions.add(Constraint.Condition.forTag("HA", null,
+                Constraint.Condition.Enforcement.HARD, QueryTask.Query.Occurance.MUST_OCCUR));
+        diskState1.constraint.conditions = conditions;
+        diskState1 = doPost(diskState1, DiskService.FACTORY_LINK);
+        diskLinks.add(diskState1.documentSelfLink);
+
+        DiskState diskState2 = new DiskState();
+        diskState2.capacityMBytes = 2048;
+        diskState2.type = DiskService.DiskType.SSD;
+        diskState2.bootOrder = 2;
+        diskState2.name = "Disk2";
+        diskState2.constraint = new Constraint();
+
+        conditions = new ArrayList<>();
+        conditions.add(Constraint.Condition.forTag("LOGS_OPTIMIZED", null,
+                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.MUST_OCCUR));
+        conditions.add(Constraint.Condition.forTag("REPLICATED", null,
+                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.MUST_OCCUR));
+        diskState2.constraint.conditions = conditions;
+        diskState2 = doPost(diskState2, DiskService.FACTORY_LINK);
+        diskLinks.add(diskState2.documentSelfLink);
+
+        DiskState diskState3 = new DiskState();
+        diskState3.capacityMBytes = 1024;
+        diskState3.type = DiskService.DiskType.CDROM;
+        diskState3.bootOrder = 3;
+        diskState3.name = "Disk3";
+        diskState3.constraint = new Constraint();
+        diskState3 = doPost(diskState3, DiskService.FACTORY_LINK);
+        diskLinks.add(diskState3.documentSelfLink);
 
         return diskLinks;
     }

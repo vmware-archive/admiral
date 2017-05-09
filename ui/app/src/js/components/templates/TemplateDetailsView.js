@@ -368,6 +368,8 @@ var TemplateDetailsView = Vue.extend({
             return 'image-assets/closure-python.png';
           } else if (this.model.runtime.startsWith('powershell')) {
             return 'image-assets/closure-powershell.png';
+          } else if (this.model.runtime.startsWith('java')) {
+            return 'image-assets/closure-java.png';
           }
           return 'image-assets/closure-unknown.png';
         },
@@ -378,6 +380,8 @@ var TemplateDetailsView = Vue.extend({
             return 'Python 3';
           } else if (this.model.runtime === 'powershell') {
             return 'Powershell 6';
+          } else if (this.model.runtime === 'java') {
+            return 'Java 8';
           }
           return 'Unknown';
         }

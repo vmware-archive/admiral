@@ -187,6 +187,17 @@ public class ContainerUtil {
         return null;
     }
 
+    public static String removeTagFromContainerImageName(String name) {
+        int lastIndex = name.lastIndexOf(":");
+
+        //No tag specified, return without any modification.
+        if (lastIndex == -1) {
+            return name;
+        }
+
+        return name.substring(0, lastIndex);
+    }
+
     /**
      * The class provides ability for updating the ContainerDescription based on ContainerState.
      */

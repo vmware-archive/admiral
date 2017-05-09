@@ -1,0 +1,19 @@
+[submodule "cli/src/github.com/inconshreveable/mousetrap"]
+	path = cli/src/github.com/inconshreveable/mousetrap
+	url = https://github.com/inconshreveable/mousetrap.git
+
+[submodule "cli/src/github.com/mitchellh/go-homedir"]
+	path = cli/src/github.com/mitchellh/go-homedir
+	url = https://github.com/mitchellh/go-homedir.git
+
+[submodule "cli/src/github.com/spf13/cobra"]
+	path = cli/src/github.com/spf13/cobra
+	url = https://github.com/spf13/cobra.git
+
+[submodule "cli/src/github.com/spf13/pflag"]
+	path = cli/src/github.com/spf13/pflag
+	url = https://github.com/spf13/pflag.git
+
+[submodule "cli/src/golang.org/x/crypto"]
+	path = cli/src/golang.org/x/crypto
+	url = https://github.com/golang/crypto.git

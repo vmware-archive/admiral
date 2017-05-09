@@ -127,21 +127,26 @@ public class SubscriptionManager<T extends ServiceDocument> implements Closeable
      * Subscribe for the specified service link and provide a notification handler to be callback
      * when there is an update or delete of the specified services.
      *
-     * @return the subscriptionLink for the subscription created.
+     * The Consumer<String> callback will contain either the subscription ID or null in case
+     * something went wrong.
      */
-    public String start(Consumer<SubscriptionNotification<T>> notificationHandler) {
-        return start(notificationHandler, false);
+    public void start(Consumer<SubscriptionNotification<T>> notificationHandler,
+            Consumer<String> callback) {
+        start(notificationHandler, false, callback);
     }
 
-    public String start(Consumer<SubscriptionNotification<T>> notificationHandler,
-            boolean replayState) {
+    public void start(Consumer<SubscriptionNotification<T>> notificationHandler,
+            boolean replayState, Consumer<String> callback) {
         if (!subscribeForNotifications) {
             documentUpdateTimeMicros = Utils.getNowMicrosUtc();
             schedulePolling(notificationHandler);
             if (completionHandler != null) {
                 completionHandler.accept(null);
             }
-            return null;
+            if (callback != null) {
+                callback.accept(null);
+            }
+            return;
         }
 
         CountDownLatch countDown = new CountDownLatch(1);
@@ -159,7 +164,7 @@ public class SubscriptionManager<T extends ServiceDocument> implements Closeable
         try {
             waited = countDown.await(10, TimeUnit.SECONDS);
             if (!waited) {
-                host.log(Level.WARNING, "Waiting for subscription timedout: %s",
+                host.log(Level.WARNING, "Waiting for subscription timed out: %s",
                         subscribeForServiceLink);
             }
         } catch (InterruptedException ex) {
@@ -167,7 +172,7 @@ public class SubscriptionManager<T extends ServiceDocument> implements Closeable
         }
 
         Operation subscribe = Operation
-                .createPost(buildSubscribeForUri())
+                .createPost(UriUtils.buildSubscriptionUri(host, subscribeForServiceLink))
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_SKIPPED_NOTIFICATIONS)
                 .setReferer(host.getUri())
                 .setCompletion((o, e) -> {
@@ -191,20 +196,20 @@ public class SubscriptionManager<T extends ServiceDocument> implements Closeable
         notificationTarget.setSelfLink(UriUtils.buildUriPath("subscriptions",
                 uniqueSubscriptionId, "resource",
                 Service.getId(subscribeForServiceLink)));
-        try {
-            // TODO send delete instead of stopping the service?
 
-            // don't expect exception but in case something happen should not stop the subscription
-            // process
-            host.stopService(notificationTarget);
-        } catch (Throwable e) {
-            Utils.logWarning("Error while stopping subscription service %s",
-                    Utils.toString(e));
-        }
-
-        host.startSubscriptionService(subscribe, notificationTarget, sr);
-        this.subscriptionLink = notificationTarget.getSelfLink();
-        return subscriptionLink;
+        Operation.createDelete(host, notificationTarget.getSelfLink())
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        Utils.logWarning("Error while stopping subscription service %s",
+                                Utils.toString(ex));
+                    }
+                    host.startSubscriptionService(subscribe, notificationTarget, sr);
+                    this.subscriptionLink = notificationTarget.getSelfLink();
+                    if (callback != null) {
+                        callback.accept(subscriptionLink);
+                    }
+                }).sendWith(host);
     }
 
     private void schedulePolling(Consumer<SubscriptionNotification<T>> notificationHandler) {
@@ -311,7 +316,8 @@ public class SubscriptionManager<T extends ServiceDocument> implements Closeable
         return UriUtils.buildSubscriptionUri(host, subscribeForServiceLink);
     }
 
-    private void handleNotification(Operation op, Consumer<SubscriptionNotification<T>> notificationHandler) {
+    private void handleNotification(Operation op,
+            Consumer<SubscriptionNotification<T>> notificationHandler) {
         try {
             host.log(Level.INFO, "Notification received for action: [%s] and uri: [%s]",
                     op.getAction(), op.getUri());

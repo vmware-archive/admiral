@@ -28,7 +28,7 @@ import (
 	"admiral/common/utils/uri_utils"
 	"admiral/config"
 	"admiral/deployment_policy"
-	"admiral/placementzones"
+	"admiral/placement_zones"
 	"admiral/projects"
 )
 
@@ -169,7 +169,7 @@ func (pta *PlacementToAdd) SetDeploymentPolicy(dpId string) {
 }
 
 func (pta *PlacementToAdd) SetResourcePool(rpId string) {
-	fullRpId, err := selflink_utils.GetFullId(rpId, new(placementzones.PlacementZoneList), common.PLACEMENT_ZONE)
+	fullRpId, err := selflink_utils.GetFullId(rpId, new(placement_zones.PlacementZoneList), common.PLACEMENT_ZONE)
 	utils.CheckBlockingError(err)
 	pta.ResourcePoolLink = utils.CreateResLinkForResourcePool(fullRpId)
 }
@@ -265,7 +265,7 @@ func (pl *PlacementList) GetOutputString() string {
 		if strings.TrimSpace(val.ResourcePoolLink) == "" {
 			placementZone = ""
 		} else {
-			placementZone, _ = placementzones.GetPZName(val.ResourcePoolLink)
+			placementZone, _ = placement_zones.GetPZName(val.ResourcePoolLink)
 		}
 
 		if utils.IsVraMode {
@@ -376,7 +376,7 @@ func EditPlacementID(id, namePol, projectId, placementZoneID, deplPolId string, 
 		oldPlacement.Priority = priority
 	}
 	if placementZoneID != "" {
-		fullPzId, err := selflink_utils.GetFullId(placementZoneID, new(placementzones.PlacementZoneList), common.PLACEMENT_ZONE)
+		fullPzId, err := selflink_utils.GetFullId(placementZoneID, new(placement_zones.PlacementZoneList), common.PLACEMENT_ZONE)
 		utils.CheckBlockingError(err)
 		oldPlacement.ResourcePoolLink = utils.CreateResLinkForResourcePool(fullPzId)
 	}

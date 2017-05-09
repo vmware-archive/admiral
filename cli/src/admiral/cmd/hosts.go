@@ -80,6 +80,7 @@ func initHostAdd() {
 	hostAddCmd.Flags().BoolVar(&autoAccept, "accept", false, autoAcceptDesc)
 	hostAddCmd.Flags().StringSliceVar(&custProps, "cp", []string{}, custPropsDesc)
 	hostAddCmd.Flags().StringSliceVar(&tags, "tag", []string{}, tagsDesc)
+	hostAddCmd.Flags().StringVar(&hostType, "type", "docker", hostTypeDesc)
 	HostsRootCmd.AddCommand(hostAddCmd)
 }
 
@@ -88,7 +89,8 @@ func RunAddHost(args []string) (string, error) {
 		newID string
 		err   error
 	)
-	newID, err = hosts.AddHost(ipF, placementZoneId, deplPolicyF, credId, publicCert, privateCert, userName, passWord,
+	newID, err = hosts.AddHost(ipF, placementZoneId, hostType, deplPolicyF,
+		credId, publicCert, privateCert, userName, passWord,
 		autoAccept,
 		custProps, tags)
 

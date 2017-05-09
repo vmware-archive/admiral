@@ -23,7 +23,8 @@ export var HostActions = Reflux.createActions([
 
 export var MachineActions = Reflux.createActions([
   'openMachines', 'openMachinesNext', 'openAddMachine', 'openMachineDetails',
-  'createMachine', 'editMachine', 'updateMachine', 'operationCompleted'
+  'createMachine', 'editMachine', 'updateMachine', 'operationCompleted',
+  'refreshMachineDetails'
 ]);
 
 export var ComputeActions = Reflux.createActions([

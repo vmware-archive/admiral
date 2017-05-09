@@ -12,6 +12,7 @@
 <div class="endpoints-view" v-bind:class="{'right-context-expanded':  contextExpanded}">
   <div class="main-panel">
     <endpoints-list :model="model"></endpoints-list>
+    <div class="mask" :class="{'hide': !contextExpanded}"></div>
   </div>
   <context-sidepanel class="right-context-panel"
       v-if="model.editingItemData"

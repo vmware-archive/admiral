@@ -14,9 +14,11 @@ package com.vmware.admiral.request.compute;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.Assert;
@@ -27,6 +29,7 @@ import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
+import com.vmware.admiral.compute.profile.StorageProfileService;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService.ComputeReservationTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.MultiTenantDocument;
@@ -39,11 +42,13 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
+import com.vmware.photon.controller.model.resources.DiskService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.TagService;
 import com.vmware.photon.controller.model.resources.TagService.TagState;
+import com.vmware.xenon.services.common.QueryTask;
 
 public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
 
@@ -335,7 +340,130 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         task = doPost(task, ComputeReservationTaskService.FACTORY_LINK);
         assertNotNull(task);
 
-        task = waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
+        waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
+    }
+
+    @Test
+    public void testDiskSatisfiedHardRequirement() throws Throwable {
+        GroupResourcePlacementState groupPlacementState = TestRequestStateFactory
+                .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
+        groupPlacementState.resourcePoolLink = computeResourcePool.documentSelfLink;
+        groupPlacementState = doPost(groupPlacementState,
+                GroupResourcePlacementService.FACTORY_LINK);
+        addForDeletion(groupPlacementState);
+
+        TagState tag = new TagState();
+        tag.key = "cap";
+        tag.value = "pci";
+        tag.tenantLinks = TestRequestStateFactory
+                .createTenantLinks(TestRequestStateFactory.TENANT_NAME);
+        tag = doPost(tag, TagService.FACTORY_LINK);
+
+        ResourcePoolState rpPatch = new ResourcePoolState();
+        rpPatch.tagLinks = Collections.singleton(tag.documentSelfLink);
+        doPatch(rpPatch, computeResourcePool.documentSelfLink);
+
+        ComputeDescription descPatch = new ComputeDescription();
+        addConstraintToComputeDesc(descPatch, "cap", "pci", true, false);
+        descPatch.diskDescLinks = buildDiskStateWithHardConstraint();
+        doPatch(descPatch, hostDesc.documentSelfLink);
+
+        StorageProfileService.StorageProfile storageProfile = buildStorageProfileWithConstraints
+                (groupPlacementState.tenantLinks);
+        createProfileWithInstanceType(
+                "small", "t1.micro", "coreos", "ami-123456", storageProfile, groupPlacementState);
+        createProfileWithInstanceType(
+                "small", "t2.micro", "coreos", "ami-234355", storageProfile, groupPlacementState);
+
+        ComputeReservationTaskState task = new ComputeReservationTaskState();
+        task.tenantLinks = groupPlacementState.tenantLinks;
+        task.resourceDescriptionLink = hostDesc.documentSelfLink;
+        task.resourceCount = 1;
+        task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+
+        task = doPost(task, ComputeReservationTaskService.FACTORY_LINK);
+        assertNotNull(task);
+
+        waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
+    }
+
+    @Test
+    public void testDiskUnSatisfiedHardRequirement() throws Throwable {
+        GroupResourcePlacementState groupPlacementState = TestRequestStateFactory
+                .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
+        groupPlacementState.resourcePoolLink = computeResourcePool.documentSelfLink;
+        groupPlacementState = doPost(groupPlacementState,
+                GroupResourcePlacementService.FACTORY_LINK);
+        addForDeletion(groupPlacementState);
+
+        TagState tag = new TagState();
+        tag.key = "cap";
+        tag.value = "pci";
+        tag.tenantLinks = TestRequestStateFactory
+                .createTenantLinks(TestRequestStateFactory.TENANT_NAME);
+        tag = doPost(tag, TagService.FACTORY_LINK);
+
+        ResourcePoolState rpPatch = new ResourcePoolState();
+        rpPatch.tagLinks = Collections.singleton(tag.documentSelfLink);
+        doPatch(rpPatch, computeResourcePool.documentSelfLink);
+
+        ComputeDescription descPatch = new ComputeDescription();
+        addConstraintToComputeDesc(descPatch, "cap", "pci", true, false);
+        descPatch.diskDescLinks = buildDiskStateWithHardConstraint();
+        doPatch(descPatch, hostDesc.documentSelfLink);
+
+        ComputeReservationTaskState task = new ComputeReservationTaskState();
+        task.tenantLinks = groupPlacementState.tenantLinks;
+        task.resourceDescriptionLink = hostDesc.documentSelfLink;
+        task.resourceCount = 1;
+        task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+
+        task = doPost(task, ComputeReservationTaskService.FACTORY_LINK);
+        assertNotNull(task);
+
+        waitForTaskError(task.documentSelfLink, ComputeReservationTaskState.class);
+    }
+
+    @Test
+    public void testDiskSoftRequirement() throws Throwable {
+        GroupResourcePlacementState groupPlacementState = TestRequestStateFactory
+                .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
+        groupPlacementState.resourcePoolLink = computeResourcePool.documentSelfLink;
+        groupPlacementState = doPost(groupPlacementState,
+                GroupResourcePlacementService.FACTORY_LINK);
+        addForDeletion(groupPlacementState);
+
+        TagState tag = new TagState();
+        tag.key = "cap";
+        tag.value = "pci";
+        tag.tenantLinks = TestRequestStateFactory
+                .createTenantLinks(TestRequestStateFactory.TENANT_NAME);
+        tag = doPost(tag, TagService.FACTORY_LINK);
+
+        ResourcePoolState rpPatch = new ResourcePoolState();
+        rpPatch.tagLinks = Collections.singleton(tag.documentSelfLink);
+        doPatch(rpPatch, computeResourcePool.documentSelfLink);
+
+        ComputeDescription descPatch = new ComputeDescription();
+        addConstraintToComputeDesc(descPatch, "cap", "pci", true, false);
+        descPatch.diskDescLinks = buildDiskStateWithSoftConstraint();
+        doPatch(descPatch, hostDesc.documentSelfLink);
+
+        StorageProfileService.StorageProfile storageProfile = buildStorageProfileWithConstraints
+                (groupPlacementState.tenantLinks);
+        createProfileWithInstanceType(
+                "small", "t1.micro", "coreos", "ami-123456", storageProfile, groupPlacementState);
+
+        ComputeReservationTaskState task = new ComputeReservationTaskState();
+        task.tenantLinks = groupPlacementState.tenantLinks;
+        task.resourceDescriptionLink = hostDesc.documentSelfLink;
+        task.resourceCount = 1;
+        task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+
+        task = doPost(task, ComputeReservationTaskService.FACTORY_LINK);
+        assertNotNull(task);
+
+        waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
     }
 
     @Test
@@ -387,7 +515,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         task = doPost(task, ComputeReservationTaskService.FACTORY_LINK);
         assertNotNull(task);
 
-        task = waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
+        waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
     }
 
     private static void addConstraintToComputeDesc(ComputeDescription computeDesc, String tagKey,
@@ -397,6 +525,68 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
                 tagValue, isHard, isAnti));
         computeDesc.constraints = new HashMap<>();
         computeDesc.constraints.put(ComputeConstants.COMPUTE_PLACEMENT_CONSTRAINT_KEY, constraint);
+    }
+
+    private ArrayList<String> buildDiskStateWithHardConstraint() throws Throwable {
+        ArrayList<String> diskLinks = new ArrayList<>();
+
+        DiskService.DiskState diskState1 = new DiskService.DiskState();
+        diskState1.capacityMBytes = 1024;
+        diskState1.type = DiskService.DiskType.HDD;
+        diskState1.bootOrder = 1;
+        diskState1.name = "Disk1";
+        diskState1.constraint = new Constraint();
+
+        List<Constraint.Condition> conditions = new ArrayList<>();
+        conditions.add(Constraint.Condition.forTag("FAST", null,
+                Constraint.Condition.Enforcement.HARD, QueryTask.Query.Occurance.MUST_OCCUR));
+        conditions.add(Constraint.Condition.forTag("HA", null,
+                Constraint.Condition.Enforcement.HARD, QueryTask.Query.Occurance.MUST_OCCUR));
+        diskState1.constraint.conditions = conditions;
+        diskState1 = getOrCreateDocument(diskState1, DiskService.FACTORY_LINK);
+        diskLinks.add(diskState1.documentSelfLink);
+
+        return diskLinks;
+    }
+
+    private ArrayList<String> buildDiskStateWithSoftConstraint() throws Throwable {
+        ArrayList<String> diskLinks = new ArrayList<>();
+
+        DiskService.DiskState diskState1 = new DiskService.DiskState();
+        diskState1.capacityMBytes = 1024;
+        diskState1.type = DiskService.DiskType.HDD;
+        diskState1.bootOrder = 1;
+        diskState1.name = "Disk1";
+        diskState1.constraint = new Constraint();
+
+        List<Constraint.Condition> conditions = new ArrayList<>();
+        conditions.add(Constraint.Condition.forTag("CRITICAL", null,
+                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.MUST_OCCUR));
+        conditions.add(Constraint.Condition.forTag("NON_REPLICATED", null,
+                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.MUST_OCCUR));
+        conditions.add(Constraint.Condition.forTag("NORMAL", null,
+                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.MUST_OCCUR));
+        diskState1.constraint.conditions = conditions;
+        diskState1 = doPost(diskState1, DiskService.FACTORY_LINK);
+        diskLinks.add(diskState1.documentSelfLink);
+
+        DiskService.DiskState diskState2 = new DiskService.DiskState();
+        diskState2.capacityMBytes = 512;
+        diskState2.type = DiskService.DiskType.FLOPPY;
+        diskState2.bootOrder = 2;
+        diskState2.name = "Disk2";
+        diskState2.constraint = new Constraint();
+
+        conditions = new ArrayList<>();
+        conditions.add(Constraint.Condition.forTag("NON_REPLICATED", null,
+                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.MUST_OCCUR));
+        conditions.add(Constraint.Condition.forTag("NORMAL", null,
+                Constraint.Condition.Enforcement.SOFT, QueryTask.Query.Occurance.MUST_OCCUR));
+        diskState2.constraint.conditions = conditions;
+        diskState2 = doPost(diskState2, DiskService.FACTORY_LINK);
+        diskLinks.add(diskState2.documentSelfLink);
+
+        return diskLinks;
     }
 
     private EndpointState createGlobalEndpoint() throws Throwable {

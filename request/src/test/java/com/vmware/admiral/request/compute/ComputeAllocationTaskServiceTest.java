@@ -24,9 +24,6 @@ import java.util.Set;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ResourceType;
-import com.vmware.admiral.compute.profile.ComputeImageDescription;
-import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
-import com.vmware.admiral.compute.profile.InstanceTypeDescription;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState.SubStage;
@@ -111,22 +108,6 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         assertEquals(profileLink, p2.documentSelfLink);
     }
 
-    private ProfileStateExpanded createProfileWithInstanceType(String instanceTypeKey,
-            String instanceTypeValue, String imageKey, String imageValue) throws Throwable {
-        ComputeProfile cp1 = new ComputeProfile();
-        cp1.instanceTypeMapping = new HashMap<>();
-        InstanceTypeDescription itd = new InstanceTypeDescription();
-        itd.instanceType = instanceTypeValue;
-        cp1.instanceTypeMapping.put(instanceTypeKey, itd);
-
-        ComputeImageDescription cid = new ComputeImageDescription();
-        cid.image = imageValue;
-        cp1.imageMapping = new HashMap<>();
-        cp1.imageMapping.put(imageKey, cid);
-
-        return createProfile(cp1, null, null, computeGroupPlacementState.tenantLinks, null);
-    }
-
     @Test
     public void testComputeAllocationWithFollowingProvisioningRequest() throws Throwable {
         host.log(">>>>>>Start: testComputeAllocationWithFollowingProvisioningRequest <<<<< ");
@@ -181,7 +162,14 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         assertNotNull(subscriptionSubStages);
         assertEquals(1, subscriptionSubStages.size());
         assertTrue(subscriptionSubStages
-                .contains(allocationTask.taskSubStage.RESOURCES_NAMES));
+                .contains(allocationTask.taskSubStage.SELECT_PLACEMENT_COMPUTES));
+    }
+
+
+    private ProfileStateExpanded createProfileWithInstanceType(String instanceTypeKey,
+            String instanceTypeValue, String imageKey, String imageValue) throws Throwable {
+        return createProfileWithInstanceType(instanceTypeKey, instanceTypeValue, imageKey, imageValue,
+                null, computeGroupPlacementState);
     }
 
     private ComputeAllocationTaskState allocate(ComputeAllocationTaskState allocationTask)

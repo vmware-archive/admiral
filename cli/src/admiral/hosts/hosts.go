@@ -31,10 +31,16 @@ import (
 	"admiral/config"
 	"admiral/credentials"
 	"admiral/deployment_policy"
-	"admiral/placementzones"
+	"admiral/placement_zones"
 	"admiral/properties"
 	"admiral/tags"
 	"admiral/track"
+)
+
+const (
+	KubernetesHostType = "KUBERNETES"
+	DockerHostType     = "DOCKER"
+	VchHostType        = "VCH"
 )
 
 var (
@@ -121,7 +127,7 @@ func (h *Host) SetCustomProperties(ipF, deplPolicyID, name, credID,
 				return isCredNew, err
 			}
 			isCredNew = true
-		} else if publicCert != "" && privateCert != "" {
+		} else if userName != "" && passWord != "" {
 			newCredID, err = credentials.AddByUsername(ipF, userName, passWord, nil)
 			if err != nil {
 				return isCredNew, err
@@ -149,11 +155,24 @@ func (h *Host) SetCustomProperties(ipF, deplPolicyID, name, credID,
 	return isCredNew, nil
 }
 
+func (h *Host) SetHostType(hostType string) error {
+	hostType = strings.ToUpper(hostType)
+	if hostType != VchHostType && hostType != KubernetesHostType && hostType != DockerHostType {
+		return errors.New("Invalid host type: " + hostType)
+	}
+
+	if h.CustomProperties == nil {
+		h.CustomProperties = make(map[string]*string, 0)
+	}
+	h.CustomProperties["__containerHostType"] = &hostType
+	return nil
+}
+
 func (h *Host) SetResourcePoolLink(placementZoneID string) {
 	if placementZoneID == "" {
 		return
 	}
-	fullPzId, err := selflink_utils.GetFullId(placementZoneID, new(placementzones.PlacementZoneList), common.PLACEMENT_ZONE)
+	fullPzId, err := selflink_utils.GetFullId(placementZoneID, new(placement_zones.PlacementZoneList), common.PLACEMENT_ZONE)
 	utils.CheckBlockingError(err)
 	pzLink := utils.CreateResLinkForResourcePool(fullPzId)
 	h.ResourcePoolLink = pzLink
@@ -300,7 +319,7 @@ func (hl *HostsList) GetOutputString() string {
 	buffer.WriteString("ID\tADDRESS\tNAME\tSTATE\tCONTAINERS\tPLACEMENT ZONE\tTAGS")
 	buffer.WriteString("\n")
 	for _, val := range hl.Documents {
-		pzName, err := placementzones.GetPZName(val.ResourcePoolLink)
+		pzName, err := placement_zones.GetPZName(val.ResourcePoolLink)
 		if err != nil {
 			pzName = "n/a"
 		}
@@ -320,7 +339,7 @@ func (hl *HostsList) GetOutputString() string {
 //which if is true will automatically accept if there is prompt for new certificate, otherwise will prompt
 //the user to either agree or disagree. custProps is array of custom properties. Returns the ID of the new
 //host that is added and error.
-func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert, userName, passWord string,
+func AddHost(ipF, placementZoneID, hostType, deplPolicyID, credID, publicCert, privateCert, userName, passWord string,
 	autoAccept bool,
 	custProps, tags []string) (string, error) {
 
@@ -335,13 +354,23 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 	host.SetAddress(ipF)
 	host.SetId(ipF)
 	host.SetResourcePoolLink(placementZoneID)
-	isNewCred, err := host.SetCustomProperties(ipF, deplPolicyID, hostName, credID, publicCert, privateCert, userName, passWord, custProps)
+	isNewCred, err := host.SetCustomProperties(ipF, deplPolicyID, hostName, credID, publicCert,
+		privateCert, userName, passWord, custProps)
+	err = host.SetHostType(hostType)
+	utils.CheckBlockingError(err)
 	if err != nil {
 		removeNewCredentials(host.GetCredentialsID(), isNewCred)
 		return "", err
 	}
 
 	err = host.AddTagLinks(tags)
+	if err != nil {
+		removeNewCredentials(host.GetCredentialsID(), isNewCred)
+		return "", err
+	}
+
+	err = validateHost(host)
+
 	if err != nil {
 		removeNewCredentials(host.GetCredentialsID(), isNewCred)
 		return "", err
@@ -401,6 +430,27 @@ func AddHost(ipF, placementZoneID, deplPolicyID, credID, publicCert, privateCert
 		return addedHost.GetID(), nil
 	}
 	return "", respErr
+}
+
+func validateHost(host *Host) error {
+	query := make(map[string]interface{})
+	query["validate"] = true
+	url := uri_utils.BuildUrl(uri_utils.Host, query, true)
+	hostObj := HostObj{
+		HostState: *host,
+	}
+
+	jsonBody, err := json.Marshal(hostObj)
+	utils.CheckBlockingError(err)
+
+	req, _ := http.NewRequest("PUT", url, bytes.NewBuffer(jsonBody))
+	_, _, respErr := client.ProcessRequest(req)
+
+	if respErr != nil {
+		return respErr
+	}
+
+	return nil
 }
 
 //RemoveHost removes host by address passed as parameter, the other parameter is boolean

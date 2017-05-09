@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -55,6 +56,7 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.NetworkInterfaceDescription;
+import com.vmware.photon.controller.model.resources.NetworkInterfaceService.NetworkInterfaceState;
 import com.vmware.photon.controller.model.resources.SubnetService;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.photon.controller.model.resources.TagService;
@@ -422,6 +424,266 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
         assertEquals(subnetState2.documentSelfLink, subnets.iterator().next());
     }
 
+    @Test
+    public void testGetContextComputeNetworksByName() throws Throwable {
+        ComputeNetworkDescription networkDescription1 = createNetworkDescription("my net", null);
+        String contextId = UUID.randomUUID().toString();
+        List<String> subnets = Arrays.asList(
+                createSubnet("sub-1", networkDescription1.tenantLinks, null).documentSelfLink,
+                createSubnet("sub-2", networkDescription1.tenantLinks, null).documentSelfLink);
+        NetworkProfile networkProfile = createNetworkProfile(subnets,
+                networkDescription1.tenantLinks, null, IsolationSupportType.SECURITY_GROUP);
+        ProfileState profile = createProfile(networkProfile.documentSelfLink,
+                networkProfile.tenantLinks, null);
+        createComputeNetwork(networkDescription1, contextId, Arrays.asList(profile.documentSelfLink));
+        // Same name, different context
+        ComputeNetworkDescription networkDescription2 = createNetworkDescription("my net", null);
+        createComputeNetwork(networkDescription2, UUID.randomUUID().toString(), Arrays.asList(
+                profile.documentSelfLink));
+        // Different name, same context
+        ComputeNetworkDescription networkDescription3 = createNetworkDescription("my other net",
+                null);
+        createComputeNetwork(networkDescription3, UUID.randomUUID().toString(), Arrays.asList(
+                profile.documentSelfLink));
+
+        Set<String> networkNames = new HashSet<>();
+        networkNames.add("my net");
+
+        TestContext ctx = testCreate(1);
+        Set<ComputeNetwork> networks = new HashSet<>();
+        NetworkProfileQueryUtils.getContextComputeNetworksByName(host, referer,
+                networkDescription1.tenantLinks,
+                contextId, networkNames,
+                (all, e) -> {
+                    if (e != null) {
+                        ctx.fail(e);
+                        return;
+                    }
+                    networks.addAll(all);
+                    ctx.complete();
+                });
+        ctx.await();
+
+        assertFalse(networks.isEmpty());
+        assertEquals(1, networks.size());
+    }
+
+    @Test
+    public void testCreateNicState() throws Throwable {
+        SubnetState subnet = createSubnet("sub", TestRequestStateFactory.createTenantLinks
+                        ("test-group"),null);
+        NetworkInterfaceDescription nid = createComputeNetworkInterfaceDescription("my net");
+        ComputeDescription cd = createComputeDescription(UUID.randomUUID().toString(), Arrays.asList
+                (nid.documentSelfLink));
+
+        TestContext ctx = testCreate(1);
+        Set<NetworkInterfaceState> networkInterfaceStates = new HashSet<>();
+        NetworkProfileQueryUtils.createNicState(subnet, subnet.tenantLinks, null, cd,
+                nid, null ).whenComplete((nis, e) ->  {
+                    if (e != null) {
+                        ctx.fail(e);
+                        return;
+                    }
+                    networkInterfaceStates.add(nis);
+                    ctx.complete();
+                });
+
+        ctx.await();
+
+        assertFalse(networkInterfaceStates.isEmpty());
+        assertEquals(1, networkInterfaceStates.size());
+        NetworkInterfaceState nis = networkInterfaceStates.iterator().next();
+        assertNotNull(nis);
+        assertEquals(nis.subnetLink, subnet.documentSelfLink);
+        assertEquals(nis.name, nid.name);
+        assertEquals(nis.networkLink, subnet.networkLink);
+    }
+
+    @Test
+    public void testCreateNicStateFailure() throws Throwable {
+        NetworkInterfaceDescription nid = createComputeNetworkInterfaceDescription("my net");
+        ComputeDescription cd = createComputeDescription(UUID.randomUUID().toString(), Arrays.asList
+                (nid.documentSelfLink));
+
+        TestContext ctx = testCreate(1);
+        Set<NetworkInterfaceState> networkInterfaceStates = new HashSet<>();
+        List<Throwable> exceptions = new ArrayList<>();
+        NetworkProfileQueryUtils.createNicState(null, nid.tenantLinks, null, cd,
+                nid, null ).whenComplete((nis, e) ->  {
+                    if (e != null) {
+                        ctx.complete();
+                        exceptions.add(e);
+                        return;
+                    }
+                    networkInterfaceStates.add(nis);
+                    ctx.complete();
+                });
+
+        ctx.await();
+
+        assertTrue(networkInterfaceStates.isEmpty());
+        assertFalse(exceptions.isEmpty());
+    }
+
+    @Test
+    public void testSelectAnySubnet() throws Throwable {
+        ComputeNetworkDescription nd = createNetworkDescription("my net", null, NetworkType.EXTERNAL);
+        String contextId = UUID.randomUUID().toString();
+        List<String> subnets = Arrays.asList(
+                createSubnet("sub-1", nd.tenantLinks, null).documentSelfLink,
+                createSubnet("sub-2", nd.tenantLinks, null).documentSelfLink);
+        NetworkProfile networkProfile = createNetworkProfile(subnets,
+                nd.tenantLinks, null, IsolationSupportType.SUBNET);
+        ProfileStateExpanded profile = createProfile(networkProfile.documentSelfLink,
+                networkProfile.tenantLinks, null);
+        ComputeNetwork cn = createComputeNetwork(nd, contextId, Arrays.asList
+                (profile.documentSelfLink));
+
+        NetworkInterfaceDescription nid = createComputeNetworkInterfaceDescription("my net");
+        ComputeDescription cd = createComputeDescription(UUID.randomUUID().toString(), Arrays.asList
+                (nid.documentSelfLink));
+
+        TestContext ctx = testCreate(1);
+        Set<SubnetState> subnetStates = new HashSet<>();
+        NetworkProfileQueryUtils.selectSubnet(host, referer,
+                nd.tenantLinks, null, cd, nid, profile, cn, nd, null)
+                .whenComplete((subnet, e) -> {
+                    if (e != null) {
+                        ctx.fail(e);
+                        return;
+                    }
+                    subnetStates.add(subnet);
+                    ctx.complete();
+                });
+        ctx.await();
+
+        assertFalse(subnetStates.isEmpty());
+        assertEquals(1, subnetStates.size());
+        SubnetState selectedSubnet = subnetStates.iterator().next();
+        assertNotNull(selectedSubnet);
+        assertTrue(selectedSubnet.name.equals("sub-1") || selectedSubnet.name.equals("sub-2"));
+    }
+
+    @Test
+    public void testSelectDefaultSubnetForNoNicVM() throws Throwable {
+        ComputeNetworkDescription nd = createNetworkDescription("my net", null, NetworkType.EXTERNAL);
+        String contextId = UUID.randomUUID().toString();
+        List<String> subnets = Arrays.asList(
+                createSubnet("sub-not-default", nd.tenantLinks, null).documentSelfLink,
+                createSubnet("sub-default", nd.tenantLinks, null, true).documentSelfLink);
+        NetworkProfile networkProfile = createNetworkProfile(subnets,
+                nd.tenantLinks, null, IsolationSupportType.SUBNET);
+        ProfileStateExpanded profile = createProfile(networkProfile.documentSelfLink,
+                networkProfile.tenantLinks, null);
+        ComputeNetwork cn = createComputeNetwork(nd, contextId, Arrays.asList
+                (profile.documentSelfLink));
+
+        NetworkInterfaceDescription nid = createComputeNetworkInterfaceDescription("my net");
+        Map<String, String> customProperties = new HashMap<>();
+        customProperties.put(NetworkProfileQueryUtils.NO_NIC_VM, "true");
+        ComputeDescription cd = createComputeDescription(UUID.randomUUID().toString(), Arrays.asList
+                (nid.documentSelfLink), customProperties);
+
+        TestContext ctx = testCreate(1);
+        Set<SubnetState> subnetStates = new HashSet<>();
+        NetworkProfileQueryUtils.selectSubnet(host, referer,
+                nd.tenantLinks, null, cd, nid, profile, cn, nd, null)
+                .whenComplete((subnet, e) -> {
+                    if (e != null) {
+                        ctx.fail(e);
+                        return;
+                    }
+                    subnetStates.add(subnet);
+                    ctx.complete();
+                });
+        ctx.await();
+
+        assertFalse(subnetStates.isEmpty());
+        assertEquals(1, subnetStates.size());
+        SubnetState selectedSubnet = subnetStates.iterator().next();
+        assertNotNull(selectedSubnet);
+        assertTrue(selectedSubnet.name.equals("sub-default"));
+    }
+
+    @Test
+    public void testSelectIsolatedSubnet() throws Throwable {
+        ComputeNetworkDescription nd = createNetworkDescription("my net", null, NetworkType.ISOLATED);
+        String contextId = UUID.randomUUID().toString();
+        List<String> subnets = Arrays.asList(
+                createSubnet("sub-1", nd.tenantLinks, null).documentSelfLink,
+                createSubnet("sub-2", nd.tenantLinks, null).documentSelfLink);
+        NetworkProfile networkProfile = createNetworkProfile(subnets,
+                nd.tenantLinks, null, IsolationSupportType.SUBNET);
+        ProfileStateExpanded profile = createProfile(networkProfile.documentSelfLink,
+                networkProfile.tenantLinks, null);
+        ComputeNetwork cn = createComputeNetwork(nd, contextId, Arrays.asList
+                (profile.documentSelfLink));
+
+        NetworkInterfaceDescription nid = createComputeNetworkInterfaceDescription("my net");
+        ComputeDescription cd = createComputeDescription(UUID.randomUUID().toString(), Arrays.asList
+                (nid.documentSelfLink));
+
+        SubnetState isolatedSubnet = createSubnet("isolated-network", nd.tenantLinks, null);
+
+        TestContext ctx = testCreate(1);
+        Set<SubnetState> subnetStates = new HashSet<>();
+        NetworkProfileQueryUtils.selectSubnet(host, referer,
+                nd.tenantLinks, null, cd, nid, profile, cn, nd, isolatedSubnet)
+                .whenComplete((subnet, e) -> {
+                    if (e != null) {
+                        ctx.fail(e);
+                        return;
+                    }
+                    subnetStates.add(subnet);
+                    ctx.complete();
+                });
+        ctx.await();
+
+        assertFalse(subnetStates.isEmpty());
+        assertEquals(1, subnetStates.size());
+        SubnetState selectedSubnet = subnetStates.iterator().next();
+        assertNotNull(selectedSubnet);
+        assertEquals(selectedSubnet, isolatedSubnet);
+    }
+
+    @Test
+    public void testFindSubnetBy() throws Throwable {
+        ComputeNetworkDescription nd = createNetworkDescription("my net", null, NetworkType.EXTERNAL);
+        String contextId = UUID.randomUUID().toString();
+        NetworkProfile networkProfile = createNetworkProfile(null,
+                nd.tenantLinks, null);
+        ProfileStateExpanded profile = createProfile(networkProfile.documentSelfLink,
+                networkProfile.tenantLinks, null);
+        ComputeNetwork cn = createComputeNetwork(nd, contextId, Arrays.asList
+                (profile.documentSelfLink));
+
+        NetworkInterfaceDescription nid = createComputeNetworkInterfaceDescription("my net");
+        ComputeDescription cd = createComputeDescription(UUID.randomUUID().toString(), Arrays.asList
+                (nid.documentSelfLink));
+
+        SubnetState existingSubnet = createSubnet("sub-1", nd.tenantLinks, null);
+
+        TestContext ctx = testCreate(1);
+        Set<SubnetState> subnetStates = new HashSet<>();
+        NetworkProfileQueryUtils.selectSubnet(host, referer,
+                nd.tenantLinks, null, cd, nid, profile, cn, nd, null)
+                .whenComplete((subnet, e) -> {
+                    if (e != null) {
+                        ctx.fail(e);
+                        return;
+                    }
+                    subnetStates.add(subnet);
+                    ctx.complete();
+                });
+        ctx.await();
+
+        assertFalse(subnetStates.isEmpty());
+        assertEquals(1, subnetStates.size());
+        SubnetState selectedSubnet = subnetStates.iterator().next();
+        assertNotNull(selectedSubnet);
+        assertEquals(selectedSubnet.documentSelfLink, existingSubnet.documentSelfLink);
+    }
+
     private ComputeNetworkDescription createNetworkDescription(String name,
             List<Condition> conditions) throws Throwable {
         return createNetworkDescription(name, conditions, null);
@@ -454,10 +716,19 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
 
     private ComputeDescription createComputeDescription(String contextId,
             List<String> networkInterfaceDescriptions) throws Throwable {
+        return createComputeDescription(contextId, networkInterfaceDescriptions, null);
+    }
+
+    private ComputeDescription createComputeDescription(String contextId,
+            List<String> networkInterfaceDescriptions,
+            Map<String, String> customProperties) throws Throwable {
         ComputeDescription compute = TestRequestStateFactory
                 .createComputeDescriptionForVmGuestChildren();
         compute.documentSelfLink = UUID.randomUUID().toString();
         compute.customProperties.put(FIELD_NAME_CONTEXT_ID_KEY, contextId);
+        if (customProperties != null && !customProperties.isEmpty()) {
+            compute.customProperties.putAll(customProperties);
+        }
         compute.networkInterfaceDescLinks = networkInterfaceDescriptions;
         return doPost(compute, ComputeDescriptionService.FACTORY_LINK);
     }
@@ -508,14 +779,22 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
         return doPost(net, ComputeNetworkService.FACTORY_LINK);
     }
 
-    private SubnetState createSubnet(String name, List<String> tenantLinks, Set<String> tagLinks)
+    private SubnetState createSubnet(String name, List<String> tenantLinks, Set<String> tagLinks,
+            boolean isDefault)
             throws Throwable {
         SubnetState subnet = TestRequestStateFactory.createSubnetState(
                 name, tenantLinks);
+        subnet.name = name;
         subnet.documentSelfLink = UUID.randomUUID().toString();
         subnet.tagLinks = tagLinks;
         subnet.networkLink = UUID.randomUUID().toString();
+        subnet.defaultForZone = isDefault;
         return doPost(subnet, SubnetService.FACTORY_LINK);
+    }
+
+    private SubnetState createSubnet(String name, List<String> tenantLinks, Set<String> tagLinks)
+            throws Throwable {
+        return createSubnet(name, tenantLinks, tagLinks, false);
     }
 
     private String createTag(String key, String value, List<String> tenantLinks)

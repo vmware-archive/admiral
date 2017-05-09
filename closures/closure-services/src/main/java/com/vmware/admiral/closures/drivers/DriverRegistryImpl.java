@@ -32,6 +32,8 @@ public final class DriverRegistryImpl implements DriverRegistry {
     private final String PYTHON_BASE_IMAGE_VERSION = "1.0";
     private final String POWERSHELL_IMAGE_VERSION = "1.0";
     private final String POWERSHELL_BASE_IMAGE_VERSION = "1.0";
+    private final String JAVA_IMAGE_VERSION = "1.0";
+    private final String JAVA_BASE_IMAGE_VERSION = "1.0";
 
     private final Map<String, String> supportedRuntimes = new HashMap<>();
     private final Map<String, ExecutionDriver> executionDrivers = new HashMap<>();
@@ -41,7 +43,7 @@ public final class DriverRegistryImpl implements DriverRegistry {
         supportedRuntimes.put(DriverConstants.RUNTIME_PYTHON_3, DriverConstants.PYTHON_3_IMAGE);
         supportedRuntimes
                 .put(DriverConstants.RUNTIME_POWERSHELL_6, DriverConstants.POWERSHEL_6_IMAGE);
-
+        supportedRuntimes.put(DriverConstants.RUNTIME_JAVA_8, DriverConstants.JAVA_8_IMAGE);
         supportedRuntimes.put(DriverConstants.RUNTIME_NASHORN, null);
     }
 
@@ -59,6 +61,8 @@ public final class DriverRegistryImpl implements DriverRegistry {
             return PYTHON_IMAGE_VERSION;
         } else if (DriverConstants.RUNTIME_POWERSHELL_6.equalsIgnoreCase(runtime)) {
             return POWERSHELL_IMAGE_VERSION;
+        } else if (DriverConstants.RUNTIME_JAVA_8.equalsIgnoreCase(runtime)) {
+            return JAVA_IMAGE_VERSION;
         }
 
         throw new IllegalArgumentException("No available image for runtime: " + runtime);
@@ -72,6 +76,8 @@ public final class DriverRegistryImpl implements DriverRegistry {
             return PYTHON_BASE_IMAGE_VERSION;
         } else if (DriverConstants.RUNTIME_POWERSHELL_6.equalsIgnoreCase(runtime)) {
             return POWERSHELL_BASE_IMAGE_VERSION;
+        } else if (DriverConstants.RUNTIME_JAVA_8.equalsIgnoreCase(runtime)) {
+            return JAVA_BASE_IMAGE_VERSION;
         }
 
         throw new IllegalArgumentException("No available base image for runtime: " + runtime);

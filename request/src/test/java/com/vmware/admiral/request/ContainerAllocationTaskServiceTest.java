@@ -181,7 +181,9 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
     @Test
     public void testContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncluded() throws Throwable {
         host.log(">>>>>>Start: testContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncluded <<<<< ");
-        containerDesc.healthConfig = createHealthConfigTcp();
+
+        ServerSocket serverSocket = new ServerSocket(0);
+        containerDesc.healthConfig = createHealthConfigTcp(serverSocket.getLocalPort());
         doOperation(containerDesc, UriUtils.buildUri(host, containerDesc.documentSelfLink),
                 false, Action.PUT);
 
@@ -201,18 +203,22 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         provisioningRequest.operation = ContainerOperationType.CREATE.id;
 
         // start listener
-        try (ServerSocket serverSocket = new ServerSocket(RequestBaseTest.HEALTH_CHECK_PORT)) {
+        try  {
             provisioningRequest = doPost(provisioningRequest, RequestBrokerFactoryService.SELF_LINK);
             assertNotNull(provisioningRequest);
 
             waitForTaskSuccess(allocationTask.documentSelfLink, ContainerAllocationTaskState.class);
+        } finally {
+            if (serverSocket != null) {
+                serverSocket.close();
+            }
         }
     }
 
     @Test
     public void testContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncludedShouldFail() throws Throwable {
         host.log(">>>>>>Start: testContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncludedShouldFail <<<<< ");
-        containerDesc.healthConfig = createHealthConfigTcp();
+        containerDesc.healthConfig = createHealthConfigTcp(2);
         containerDesc.healthConfig.ignoreOnProvision = false;
         doOperation(containerDesc, UriUtils.buildUri(host, containerDesc.documentSelfLink),
                 false, Action.PUT);
@@ -246,7 +252,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
     @Test
     public void testContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncludedWhichFailsContinueProvisioning() throws Throwable {
         host.log(">>>>>>Start: testContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncludedWhichFailsContinueProvisioning <<<<< ");
-        containerDesc.healthConfig = createHealthConfigTcp();
+        containerDesc.healthConfig = createHealthConfigTcp(2);
 
         doOperation(containerDesc, UriUtils.buildUri(host, containerDesc.documentSelfLink),
                 false, Action.PUT);
@@ -282,7 +288,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
             throws Throwable {
         host.log(
                 ">>>>>>Start: testContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncludedWhichFailsContinueProvisioningImmediately <<<<< ");
-        containerDesc.healthConfig = createHealthConfigTcp();
+        containerDesc.healthConfig = createHealthConfigTcp(2);
 
         doOperation(containerDesc, UriUtils.buildUri(host, containerDesc.documentSelfLink),
                 false, Action.PUT);
@@ -321,7 +327,9 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
     public void testClusteredContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncluded() throws Throwable {
         host.log(">>>>>>Start: testClusteredContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncluded <<<<< ");
         final int clusterSize = 5;
-        containerDesc.healthConfig = createHealthConfigTcp();
+
+        ServerSocket serverSocket = new ServerSocket(0);
+        containerDesc.healthConfig = createHealthConfigTcp(serverSocket.getLocalPort());
         containerDesc._cluster = clusterSize;
         doOperation(containerDesc, UriUtils.buildUri(host, containerDesc.documentSelfLink),
                 false, Action.PUT);
@@ -343,11 +351,15 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         provisioningRequest.operation = ContainerOperationType.CREATE.id;
 
         // start listener
-        try (ServerSocket serverSocket = new ServerSocket(RequestBaseTest.HEALTH_CHECK_PORT)) {
+        try  {
             provisioningRequest = doPost(provisioningRequest, RequestBrokerFactoryService.SELF_LINK);
             assertNotNull(provisioningRequest);
 
             waitForTaskSuccess(allocationTask.documentSelfLink, ContainerAllocationTaskState.class);
+        } finally {
+            if (serverSocket != null) {
+                serverSocket.close();
+            }
         }
     }
 
@@ -355,7 +367,7 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
     public void testClusteredContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncludedShoudFail() throws Throwable {
         host.log(">>>>>>Start: testClusteredContainerAllocationWithFollowingProvisioningRequestWithHeathCheckIncludedShoudFail <<<<< ");
         final int clusterSize = 5;
-        containerDesc.healthConfig = createHealthConfigTcp();
+        containerDesc.healthConfig = createHealthConfigTcp(2);
         containerDesc.healthConfig.ignoreOnProvision = false;
         containerDesc._cluster = clusterSize;
         doOperation(containerDesc, UriUtils.buildUri(host, containerDesc.documentSelfLink),
@@ -723,9 +735,8 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         Set<SubStage> subscriptionSubStages = allocationTask.taskSubStage.SUBSCRIPTION_SUB_STAGES;
 
         assertNotNull(subscriptionSubStages);
-        assertEquals(2, subscriptionSubStages.size());
-        assertTrue(subscriptionSubStages.contains(allocationTask.taskSubStage.CONTEXT_PREPARED));
-        assertTrue(subscriptionSubStages.contains(allocationTask.taskSubStage.RESOURCES_NAMED));
+        assertEquals(1, subscriptionSubStages.size());
+        assertTrue(subscriptionSubStages.contains(allocationTask.taskSubStage.BUILD_RESOURCES_LINKS));
     }
 
     private void validatePorts(ContainerDescription containerDescription,

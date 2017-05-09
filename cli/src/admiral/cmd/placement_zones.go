@@ -15,7 +15,7 @@ import (
 	"errors"
 
 	"admiral/help"
-	"admiral/placementzones"
+	"admiral/placement_zones"
 
 	"github.com/spf13/cobra"
 )
@@ -53,6 +53,7 @@ func initPlacementZoneAdd() {
 	//placementZoneAddCmd.Flags().StringSliceVar(&custProps, "cp", []string{}, custPropsDesc)
 	placementZoneAddCmd.Flags().StringSliceVarP(&tags, "tag", "t", []string{}, tagsDesc)
 	placementZoneAddCmd.Flags().StringSliceVarP(&tagsToMatch, "tag-to-match", "T", []string{}, tagsToMatchDesc)
+	placementZoneAddCmd.Flags().BoolVarP(&isScheduler, "scheduler", "s", false, isSchedulerDesc)
 	PlacementZonesRootCmd.AddCommand(placementZoneAddCmd)
 }
 
@@ -64,7 +65,7 @@ func RunPlacementZoneAdd(args []string) (string, error) {
 	if pzName, ok = ValidateArgsCount(args); !ok {
 		return "", MissingPlacementZoneNameError
 	}
-	id, err := placementzones.AddPZ(pzName, custProps, tags, tagsToMatch)
+	id, err := placement_zones.AddPZ(pzName, isScheduler, custProps, tags, tagsToMatch)
 	if err != nil {
 		return "", err
 	} else {
@@ -89,7 +90,7 @@ func initPlacementZoneList() {
 }
 
 func RunPlacementZoneList(args []string) (string, error) {
-	pzl := placementzones.PlacementZoneList{}
+	pzl := placement_zones.PlacementZoneList{}
 	_, err := pzl.FetchPZ()
 	return pzl.GetOutputString(), err
 }
@@ -120,7 +121,7 @@ func RunPlacementZoneRemove(args []string) (string, error) {
 	if id, ok = ValidateArgsCount(args); !ok {
 		return "", MissingPlacementZoneIdError
 	}
-	newID, err = placementzones.RemovePZID(id)
+	newID, err = placement_zones.RemovePZID(id)
 
 	if err != nil {
 		return "", err
@@ -160,7 +161,7 @@ func RunPlacementZoneUpdate(args []string) (string, error) {
 	if id, ok = ValidateArgsCount(args); !ok {
 		return "", MissingPlacementZoneIdError
 	}
-	newID, err = placementzones.EditPZID(id, newName, tags, tagsToRemove, tagsToMatch, tagsToMatchToRemove)
+	newID, err = placement_zones.EditPZID(id, newName, tags, tagsToRemove, tagsToMatch, tagsToMatchToRemove)
 
 	if err != nil {
 		return "", err

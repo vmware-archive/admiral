@@ -19,6 +19,7 @@ import static org.junit.Assert.fail;
 import static com.vmware.admiral.host.HostInitDockerAdapterServiceConfig.FIELD_NAME_START_MOCK_HOST_ADAPTER_INSTANCE;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.DELAY_BETWEEN_AUTH_TOKEN_RETRIES;
+import static com.vmware.admiral.host.ManagementHostAuthUsersTest.doDelete;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.doRestrictedOperation;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.login;
 import static com.vmware.admiral.service.common.AuthBootstrapService.waitForInitConfig;
@@ -257,9 +258,13 @@ public abstract class BaseManagementHostClusterIT {
             host.stop();
             secureListener.stop();
             if (waitWhilePortIsListening) {
-                TestContext waiter = new TestContext(1, Duration.ofMinutes(5));
-                waitWhilePortIsListening(host, waiter);
-                waiter.await();
+                try {
+                    TestContext waiter = new TestContext(1, Duration.ofMinutes(2));
+                    waitWhilePortIsListening(host, waiter);
+                    waiter.await();
+                } catch (Exception ex) {
+                    logger.log(Level.WARNING, "Waiting for host's port to stop timed out", ex);
+                }
             }
             if (deleteStorage) {
                 // Surrounded with try catch because on Windows OS, there is probably
@@ -275,6 +280,21 @@ public abstract class BaseManagementHostClusterIT {
         } catch (Exception e) {
             throw new RuntimeException("Exception stopping host!", e);
         }
+    }
+
+    private void sendDeleteToStopHost(ManagementHost host) throws IOException {
+        URI hostUri = host.getUri();
+        hostUri = UriUtils.extendUri(hostUri, "/core/management");
+        String token = login(host, USERNAME, PASSWORD, true);
+        Map<String, String> headers = new HashMap<>();
+        headers.put(Operation.REQUEST_AUTH_TOKEN_HEADER, token);
+        SimpleEntry<Integer, String> result = doDelete(hostUri, headers);
+        if (Operation.STATUS_CODE_ACCEPTED != result.getKey()) {
+            throw new IllegalStateException(String.format("Sending DELETE to /core/management "
+                    + "failed with status code %d and response body %s", result.getKey(), result
+                    .getValue()));
+        }
+
     }
 
     /**

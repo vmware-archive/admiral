@@ -46,6 +46,7 @@ import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSele
 import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService.ComputePlacementSelectionTaskState;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService.ComputeReservationTaskState.SubStage;
 import com.vmware.admiral.request.compute.ProfileQueryUtils.ProfileEntry;
+import com.vmware.admiral.request.compute.enhancer.ComputeDescriptionDiskEnhancer;
 import com.vmware.admiral.request.compute.enhancer.ComputeDescriptionImageEnhancer;
 import com.vmware.admiral.request.compute.enhancer.ComputeDescriptionInstanceTypeEnhancer;
 import com.vmware.admiral.request.compute.enhancer.ComputeDescriptionProfileEnhancer;
@@ -418,6 +419,8 @@ public class ComputeReservationTaskService extends
                             getHost(), referer);
                     ComputeDescriptionImageEnhancer imageEnhancer = new ComputeDescriptionImageEnhancer(
                             getHost(), referer);
+                    ComputeDescriptionDiskEnhancer diskEnhancer = new
+                            ComputeDescriptionDiskEnhancer(getHost(), referer);
 
                     List<DeferredResult<Pair<ComputeDescription, ProfileEntry>>> list = profileEntries
                             .stream()
@@ -439,6 +442,8 @@ public class ComputeReservationTaskService extends
                                                 .thenCompose(cd -> instanceTypeEnhancer
                                                         .enhance(p.getLeft(), cd))
                                                 .thenCompose(cd -> imageEnhancer
+                                                        .enhance(p.getLeft(), cd))
+                                                .thenCompose(cd -> diskEnhancer
                                                         .enhance(p.getLeft(), cd))
                                                 .whenComplete((cd, t) -> {
                                                     if (t != null) {

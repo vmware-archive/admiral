@@ -22,6 +22,7 @@ export default Vue.component('subnetwork-search', {
         :renderer="renderSubnetwork"
         :manage="manage"
         :value="value"
+        :value-renderer="renderSubnetworkValue"
         @change="onChange">
       </dropdown-search>
     </div>
@@ -72,8 +73,8 @@ export default Vue.component('subnetwork-search', {
   methods: {
     renderSubnetwork(subnetwork) {
       let props = [
-        i18n.t('app.profile.edit.cidrLabel') + ': ' + subnetwork.subnetCIDR,
-        i18n.t('app.profile.edit.networkLabel') + ': ' + subnetwork.networkName
+        i18n.t('app.profile.edit.cidrLabel') + ': ' + utils.escapeHtml(subnetwork.subnetCIDR),
+        i18n.t('app.profile.edit.networkLabel') + ': ' + utils.escapeHtml(subnetwork.networkName)
       ];
       if (subnetwork.supportPublicIpAddress) {
         props.push(i18n.t('app.profile.edit.supportPublicIpAddressLabel'));
@@ -91,6 +92,20 @@ export default Vue.component('subnetwork-search', {
             ${secondary}
           </div>
         </div>`;
+    },
+    renderSubnetworkValue(subnetwork) {
+      let props = [
+        i18n.t('app.profile.edit.cidrLabel') + ': ' + utils.escapeHtml(subnetwork.subnetCIDR),
+        i18n.t('app.profile.edit.networkLabel') + ': ' + utils.escapeHtml(subnetwork.networkName)
+      ];
+      if (subnetwork.supportPublicIpAddress) {
+        props.push(i18n.t('app.profile.edit.supportPublicIpAddressLabel'));
+      }
+      if (subnetwork.defaultForZone) {
+        props.push(i18n.t('app.profile.edit.defaultForZoneLabel'));
+      }
+      let secondary = props.join(', ');
+      return `${utils.escapeHtml(subnetwork.name)} <span>(${secondary})</span>`;
     },
     searchSubnetworks(...args) {
       return new Promise((resolve, reject) => {

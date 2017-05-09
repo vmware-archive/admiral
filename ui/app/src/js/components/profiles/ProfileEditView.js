@@ -71,6 +71,9 @@ export default Vue.component('profile-edit-view', {
       return !this.name || !this.endpointType || !this.computeProfileEditor.valid ||
           !this.networkProfileEditor.valid || !this.storageProfileEditor.valid;
     },
+    tabsDisabled() {
+      return !this.name || !this.endpointType;
+    },
     validationErrors() {
       return this.model.validationErrors || this.editorErrors || {};
     },

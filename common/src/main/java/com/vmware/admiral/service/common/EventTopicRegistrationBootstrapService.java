@@ -44,14 +44,14 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
     private static final String CONTAINER_NAME_TOPIC_ID = "com.vmware.container.name.assignment";
     private static final String CONTAINER_NAME_TOPIC_NAME = "Container name assignment";
     private static final String CONTAINER_NAME_TOPIC_TASK_NAME = "ContainerAllocationTaskState";
-    private static final String CONTAINER_NAME_TOPIC_SUBSTAGE = "RESOURCES_NAMED";
+    private static final String CONTAINER_NAME_TOPIC_SUBSTAGE = "BUILD_RESOURCES_LINKS";
     private static final String CONTAINER_NAME_TOPIC_TASK_DESCRIPTION = "Assign custom container name.";
 
     public static final String COMPUTE_NAME_TOPIC_TASK_SELF_LINK = "change-compute-name";
     private static final String COMPUTE_NAME_TOPIC_ID = "com.vmware.compute.name.assignment";
     private static final String COMPUTE_NAME_TOPIC_NAME = "Compute name assignment";
     private static final String COMPUTE_NAME_TOPIC_TASK_NAME = "ComputeAllocationTaskState";
-    private static final String COMPUTE_NAME_TOPIC_SUBSTAGE = "RESOURCES_NAMES";
+    private static final String COMPUTE_NAME_TOPIC_SUBSTAGE = "SELECT_PLACEMENT_COMPUTES";
     private static final String COMPUTE_NAME_TOPIC_TASK_DESCRIPTION = "Assign custom compute name.";
 
     public static FactoryService createFactory() {
@@ -149,7 +149,7 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
     }
 
     private static List<Operation> topicOperations(ServiceHost host) {
-        EventTopicState[] topics = new EventTopicState[] {createChangeContainerNameTopic(host),
+        EventTopicState[] topics = new EventTopicState[] { createChangeContainerNameTopic(host),
                 createChangeComputeNameTopic(host) };
 
         return Arrays.stream(topics)
@@ -185,18 +185,19 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
         topic.blockable = Boolean.TRUE;
 
         // [{"resourceNames":{"dataType":"String","multivalued":"true","label":"Resource Names"}}]
-        topic.schema = SchemaBuilder.create()
+        topic.schema = addCommonSchemaFields(SchemaBuilder.create())
                 .addField("resourceNames")
                 .addDataType(String.class.getSimpleName())
                 .addLabel("Resource Names")
                 .addDescription("Generated resource names.")
                 .whereMultiValued(true)
                 .whereReadOnly(false)
-                // Add ContainerDescription custom properties.
-                .addField("containerDescProperties")
+                // Add resourceToHostSelection info
+                .addField("resourceToHostSelection")
                 .addDataType(String.class.getSimpleName())
-                .addLabel("Properties of Container Description (Read Only)")
-                .addDescription("Container Description Properties.")
+                .addLabel("Resource to host selection (Read Only)")
+                .addDescription(
+                        "Eeach string entry represents resource and host on which it will be deployed.")
                 .whereMultiValued(false)
                 .whereReadOnly(true)
                 .build();
@@ -218,7 +219,7 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
         topic.blockable = Boolean.TRUE;
 
         // [{"resourceNames":{"dataType":"String","multivalued":"true","label":"Resource Names"}}]
-        topic.schema = SchemaBuilder.create()
+        topic.schema = addCommonSchemaFields(SchemaBuilder.create())
                 .addField("resourceNames")
                 .addDataType(String.class.getSimpleName())
                 .addLabel("Resource Names")
@@ -227,6 +228,48 @@ public class EventTopicRegistrationBootstrapService extends StatefulService {
                 .build();
 
         return topic;
+    }
+
+    private static SchemaBuilder addCommonSchemaFields(SchemaBuilder builder) {
+        builder
+                .addField("requestId")
+                .addDataType(String.class.getSimpleName())
+                .addLabel("Request id")
+                .addDescription("Request id")
+                .whereMultiValued(false)
+
+                .addField("componentId")
+                .addDataType(String.class.getSimpleName())
+                .addLabel("Component id")
+                .addDescription("Component id")
+                .whereMultiValued(false)
+
+                .addField("blueprintId")
+                .addDataType(String.class.getSimpleName())
+                .addLabel("Blueprint name")
+                .addDescription("Blueprint name")
+                .whereMultiValued(false)
+
+                .addField("componentTypeId")
+                .addDataType(String.class.getSimpleName())
+                .addLabel("Component type id")
+                .addDescription("Component type id")
+                .whereMultiValued(false)
+
+                .addField("owner")
+                .addDataType(String.class.getSimpleName())
+                .addLabel("Owner")
+                .addDescription("Owner")
+                .whereMultiValued(false)
+
+                .addField("customProperties")
+                .addDataType(String.class.getSimpleName())
+                .addLabel("Properties of the resource(Read Only)")
+                .addDescription("Resource Properties.")
+                .whereMultiValued(false)
+                .whereReadOnly(true);
+
+        return builder;
     }
 
     /**

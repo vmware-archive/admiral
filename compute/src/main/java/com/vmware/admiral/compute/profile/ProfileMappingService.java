@@ -65,31 +65,38 @@ public class ProfileMappingService extends StatelessService {
                 get.fail(es.values().iterator().next());
                 return;
             }
-            List<ProfileMappingState> states = os.values().stream().map(o -> {
-                ProfileMappingState state = new ProfileMappingState();
-                state.documentSelfLink = o.getUri().getPath();
-                ServiceDocumentQueryResult body = o.getBody(ServiceDocumentQueryResult.class);
-                if (body == null || body.documents == null) {
-                    state.mappings = new HashMap<>();
-                } else {
-                    Collection<Object> values = body.documents.values();
-                    Class<? extends MultiTenantDocument> type = profiles.get(o.getUri().getPath());
-                    List<Field> fields = Arrays.asList(type.getDeclaredFields());
-                    state.mappings = fields.stream()
-                            .filter(f -> Map.class.isAssignableFrom(f.getType()))
-                            .map(field -> new AbstractMap.SimpleEntry<String, List<String>>(
-                                    field.getName(),
-                                    getMappingIntersection(type, field, values)))
-                            .collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue()));
-                    if (!values.isEmpty()) {
-                        state.tenantLinks = Utils.fromJson(values.iterator().next(),
-                                type).tenantLinks;
+            try {
+                List<ProfileMappingState> states = os.values().stream().map(o -> {
+                    ProfileMappingState state = new ProfileMappingState();
+                    state.documentSelfLink = o.getUri().getPath();
+                    ServiceDocumentQueryResult body = o.getBody(ServiceDocumentQueryResult.class);
+                    if (body == null || body.documents == null) {
+                        state.mappings = new HashMap<>();
+                    } else {
+                        Collection<Object> values = body.documents.values();
+                        Class<? extends MultiTenantDocument> type = profiles
+                                .get(o.getUri().getPath());
+                        List<Field> fields = Arrays.asList(type.getDeclaredFields());
+                        state.mappings = fields.stream()
+                                .filter(f -> Map.class.isAssignableFrom(f.getType()))
+                                .map(field -> new AbstractMap.SimpleEntry<String, List<String>>(
+                                        field.getName(),
+                                        getMappingIntersection(type, field, values)))
+                                .collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue()));
+                        if (!values.isEmpty()) {
+                            state.tenantLinks = Utils.fromJson(values.iterator().next(),
+                                    type).tenantLinks;
+                        }
                     }
-                }
-                return state;
-            }).collect(Collectors.toList());
-            get.setBody(QueryUtil.createQueryResult(states));
-            get.complete();
+                    return state;
+                }).collect(Collectors.toList());
+                get.setBody(QueryUtil.createQueryResult(states));
+                get.complete();
+            } catch (Exception e) {
+                logSevere("Error getting ProfileMappingStates for %s. Error: %s",
+                        get.getUri(), Utils.toString(e));
+                get.fail(e);
+            }
         }).sendWith(getHost());
     }
 
@@ -117,6 +124,7 @@ public class ProfileMappingService extends StatelessService {
                 return new LinkedHashSet<String>(b);
             }
             a.addAll(b);
+
             return a;
         }).get());
     }

@@ -121,7 +121,7 @@ public class EndpointHealthCheckTaskService extends
                     proceedTo(EndpointHealthCheckTaskState.SubStage.UPDATING_ENDPOINT,
                             s -> s.validationOutcome = eats.taskInfo.stage);
                 }
-            }, true);
+            }, true, null);
             break;
         case UPDATING_ENDPOINT:
             switch (state.validationOutcome) {

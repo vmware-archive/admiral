@@ -97,7 +97,7 @@ public class DummyService
     }
 
     @Override
-    protected ServiceTaskCallbackResponse notificationPayload() {
+    protected BaseExtensibilityCallbackResponse notificationPayload() {
         return new CallbackCompleteResponse();
     }
 
@@ -106,7 +106,7 @@ public class DummyService
         return new CallbackCompleteResponse();
     }
 
-    protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
+    protected static class CallbackCompleteResponse extends BaseExtensibilityCallbackResponse {
         String name;
         Boolean blocking;
         ContainerState containerState;

@@ -1,8 +1,9 @@
 FROM vmware/admiral-base
 
-COPY target/lib target/admiral-host-*.jar $ADMIRAL_ROOT/
-COPY images-bin/* $USER_RESOURCES
+ENTRYPOINT ["/entrypoint.sh"]
+
 COPY entrypoint.sh /entrypoint.sh
 COPY configuration.properties $DIST_CONFIG_FILE_PATH
 
-ENTRYPOINT ["/entrypoint.sh"]
+COPY images-bin/* $USER_RESOURCES
+COPY target/lib target/admiral-host-*.jar $ADMIRAL_ROOT/

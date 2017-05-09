@@ -14,6 +14,8 @@ package com.vmware.admiral.compute.container.util.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import static com.vmware.admiral.compute.container.util.ContainerUtil.removeTagFromContainerImageName;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -118,7 +120,7 @@ public class ContainerUtilTest extends ComputeBaseTest {
         ComputeService.ComputeState computeState = createComputeHost();
         ContainerState containerState = createContainerState(computeState.documentSelfLink, true);
         HostPortProfileService.HostPortProfileState profile = createHostPortProfile(computeState,
-                containerState, new Long[] {new Long(5000), new Long(3045)});
+                containerState, new Long[] { new Long(5000), new Long(3045) });
         final String profileDescrLink = profile.documentSelfLink;
 
         ContainerState patch = new ContainerState();
@@ -171,7 +173,7 @@ public class ContainerUtilTest extends ComputeBaseTest {
         ContainerState containerState = createContainerState(computeState.documentSelfLink, false);
         doPut(containerState);
         HostPortProfileService.HostPortProfileState profile = createHostPortProfile(computeState,
-                containerState, new Long[] {new Long(5000), new Long(3045)});
+                containerState, new Long[] { new Long(5000), new Long(3045) });
         final String profileDescrLink = profile.documentSelfLink;
 
         ContainerState patch = new ContainerState();
@@ -196,7 +198,20 @@ public class ContainerUtilTest extends ComputeBaseTest {
         });
     }
 
-    private ContainerState createContainerState(String parentLink, boolean isDiscovered) throws Throwable {
+    @Test
+    public void testRemoveTagFromContainerImageName() {
+        String[] input = new String[] { "postgres:9.4", "ubuntu" };
+        String[] expectedOutput = new String[] { "postgres", "ubuntu" };
+
+        for (int i = 0; i < input.length; i++) {
+            String actualOutput = removeTagFromContainerImageName(input[i]);
+            assertEquals("Failed on iteration: " + i, expectedOutput[i], actualOutput);
+        }
+
+    }
+
+    private ContainerState createContainerState(String parentLink, boolean isDiscovered)
+            throws Throwable {
 
         ContainerState containerState = new ContainerState();
         containerState.descriptionLink = isDiscovered ? String.format("%s-%s",

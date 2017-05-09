@@ -1,6 +1,6 @@
-LICENSE
+open_source_licenses.txt
 
-Admiral version 1.1.0 GA
+Admiral version 1.1.1 GA
 
 Copyright 2017 VMware, Inc.  All rights reserved.
 
@@ -88,7 +88,7 @@ limitations under the License.
 
 =======================================================================
 
-Admiral version 1.1.0 includes a number of components with separate copyright notices and license terms.  This product does not necessarily use all the open source components referred to below. Your use of the source code for these components is subject to the terms and conditions of the following licenses.
+Admiral version 1.1.1 includes a number of components with separate copyright notices and license terms.  This product does not necessarily use all the open source components referred to below. Your use of the source code for these components is subject to the terms and conditions of the following licenses.
 
 ======================= TABLE OF CONTENTS =============================
 
@@ -97,6 +97,7 @@ The following is a listing of the open source components detailed in
 this document. This list is provided for your convenience; please read
 further if you wish to review the copyright notice(s) and the full text
 of the license associated with each component.
+
 
 
 SECTION 1: BSD-STYLE, MIT-STYLE, OR SIMILAR STYLE LICENSES
@@ -178,9 +179,9 @@ SECTION 2: Apache License, V2.0
    >>> com.vmware.photon.controller:photon-azure-adapter-0.6.6
    >>> com.vmware.photon.controller:photon-model-0.6.6
    >>> com.vmware.photon.controller:photon-model-tasks-0.6.6
-   >>> com.vmware.xenon:xenon-common-1.3.7
-   >>> com.vmware.xenon:xenon-loader-1.3.7
-   >>> com.vmware.xenon:xenon-ui-1.3.7
+   >>> com.vmware.xenon:xenon-common-1.4.2
+   >>> com.vmware.xenon:xenon-loader-1.4.2
+   >>> com.vmware.xenon:xenon-ui-1.4.2
    >>> commons-beanutils:commons-beanutils-1.9.2
    >>> commons-codec:commons-codec-1.6
    >>> commons-digester:commons-digester-1.8.1
@@ -254,7 +255,6 @@ APPENDIX. Standard License Files
    >>> Creative Commons Attribution 2.5 
 
    >>> SIL OPEN FONT LICENSE, V1.1
-   
 
 
 --------------- SECTION 1:  BSD-STYLE, MIT-STYLE, OR SIMILAR STYLE LICENSES ----------
@@ -663,7 +663,6 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations under
 the License.
 
-
 > MIT
 
 d3-3.5.16.tar.gz\d3-3.5.16.tar\d3-3.5.16\lib\geographiclib\LICENSE
@@ -983,7 +982,6 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 
-
 ADDITIONAL LICENSE INFORMATION:
 
 > MIT
@@ -1003,7 +1001,6 @@ Pulled Live from Git Tue Aug  2 23:20:01 UTC 2011
 Last Commit: 244c198ee73c1992ab005e0ac5f20fdcd50f14d9
 
 > GPL 2.0
-
 
 *****VMware does not distribute the sub-components licensed under GPL 2.0*****
 
@@ -1075,7 +1072,6 @@ Hasher-1.2.0.tar.gz\Hasher-1.2.0.tar\Hasher-1.2.0\dev\build\jsdoc-toolkit\app\fr
 
 > GPL 2.0
 
-
 *****VMware does not distribute the sub-components licensed under GPL 2.0*****
 
 Hasher-1.2.0.tar.gz\Hasher-1.2.0.tar\Hasher-1.2.0\dev\build\jsdoc-toolkit\app\frame\Dumper.js
@@ -1093,7 +1089,6 @@ it under the terms of the Perl Artistic License
 See http:www.perl.comperlmiscArtistic.html
 <pre>
 
-
 > Apache 2.0
 
 [PLEASE NOTE:  VMWARE, INC. ELECTS TO USE AND DISTRIBUTE THIS COMPONENT UNDER THE TERMS OF THE APACHE 2.0.  PLEASE SEE APPENDIX FOR THE FULL TEXT OF THE APACHE 2.0.  THE ORIGINAL LICENSE TERMS ARE REPRODUCED BELOW ONLY AS A REFERENCE.]
@@ -1104,8 +1099,7 @@ HTML Parser By John Resig (ejohn.org)
 Original code by Erik Arvidsson, Mozilla Public License
 http://erik.eae.net/simplehtmlparser/simplehtmlparser.js
 
-
-> BSD
+> BSD-3 Clause
 
 Hasher-1.2.0.tar.gz\Hasher-1.2.0.tar\Hasher-1.2.0\dev\build\jsdoc-toolkit\templates\hasher\js\showdown_license.txt
 
@@ -1564,12 +1558,9 @@ limitations under the License.
 compiler.jar
 jslint4java-1.4.6.jar
 
-
 > GPL 2.0
 
-
 *****VMware does not distribute the sub-components licensed under GPL 2.0*****
-
 
 js-signals-1.0.0.tar.gz\js-signals-1.0.0.tar\js-signals-1.0.0\build\closure_compiler\compiler.jar\com\google\javascript\jscomp\mozilla\rhino\resources\Messages.properties
 
@@ -1633,7 +1624,7 @@ Official home: http://www.jcip.net
 compiler.jar
 
 
-> BSD
+> BSD-3 Clause
 
 js-signals-1.0.0.tar.gz\js-signals-1.0.0.tar\js-signals-1.0.0\build\jsdoc-toolkit\templates\jsdoc-simple\js\showdown_license.txt
 
@@ -1678,9 +1669,7 @@ jslint4java-1.4.6.jar
 
 > GPL 2.0
 
-
 *****VMware does not distribute the sub-components licensed under GPL 2.0*****
-
 
 js-signals-1.0.0.tar.gz\js-signals-1.0.0.tar\js-signals-1.0.0\build\jsdoc-toolkit\app\frame\Dumper.js
 
@@ -1694,9 +1683,7 @@ it under the terms of the Perl Artistic License
 
 See http://www.perl.com/perl/misc/Artistic.html
 
-
 > MPL 2.0
-
 
 *****VMware does not distribute the sub-components licensed under MPL 2.0*****
 
@@ -2199,7 +2186,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-
 ADDITIONAL LICENSE INFORMATION:
 
 > Public Domain
@@ -2480,7 +2466,29 @@ This product is licensed to you under the Apache License, Version 2.0 (the "Lice
 This product may include a number of components with separate copyright notices and license terms.  Your use of the source code for these components is subject to the terms and conditions of the respective component license as noted in the LICENSE file.
 
 
->>> com.vmware.xenon:xenon-common-1.3.7
+>>> com.vmware.xenon:xenon-common-1.4.2
+
+Xenon version 0.2
+
+Copyright (c) 2014-2015 VMware, Inc. All rights reserved.
+
+This product is licensed to you under the Apache License version 2.0 (the License).
+
+This product may include a number of components with separate copyright notices and license terms. Your use of the source code for these components is subject to the terms and conditions of the respective component license as noted in the LICENSE file.
+
+Copyright (c) 2014-2015 VMware, Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License.  You may obtain a copy of
+the License at http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed
+under the License is distributed on an "AS IS" BASIS, without warranties or
+conditions of any kind, EITHER EXPRESS OR IMPLIED.  See the License for the
+specific language governing permissions and limitations under the License.
+
+
+>>> com.vmware.xenon:xenon-loader-1.4.2
 
 Xenon version 0.2
 
@@ -2491,18 +2499,7 @@ This product is licensed to you under the Apache License version 2.0 (the Licens
 This product may include a number of components with separate copyright notices and license terms. Your use of the source code for these components is subject to the terms and conditions of the respective component license as noted in the LICENSE file.
 
 
->>> com.vmware.xenon:xenon-loader-1.3.7
-
-Xenon version 0.2
-
-Copyright (c) 2014-2015 VMware, Inc. All rights reserved.
-
-This product is licensed to you under the Apache License version 2.0 (the License).
-
-This product may include a number of components with separate copyright notices and license terms. Your use of the source code for these components is subject to the terms and conditions of the respective component license as noted in the LICENSE file.
-
-
->>> com.vmware.xenon:xenon-ui-1.3.7
+>>> com.vmware.xenon:xenon-ui-1.4.2
 
 Xenon version 0.2
 
@@ -2781,7 +2778,6 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 License for the specific language governing permissions and limitations
 under the License.
 
-
 ADDITIONAL LICENSE INFORMATION:
 
 > MIT
@@ -2810,7 +2806,7 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE,  ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-> BSD 3Clause
+> BSD-3 Clause
 
 netty-all-4.1.6.Final-sources(1).jar\io\netty\handler\codec\http\websocketx\WebSocket08FrameDecoder.java
 
@@ -2875,7 +2871,7 @@ License: Apache 2.0
 
 >>> io.swagger:swagger-core-1.5.10
 
-License : Apache 2.0
+License: Apache 2.0
 
 
 >>> javax.validation:validation-api-1.1.0.Final
@@ -3074,7 +3070,6 @@ maven pom organized by organization.
 
 Apache HttpClient
 
-
 From: 'The Apache Software Foundation' (http://www.apache.org/)
 - Apache Commons Codec (http://commons.apache.org/proper/commons-codec/) commons-codec:commons-codec:jar:1.9
 License: The Apache Software License, Version 2.0  (http://www.apache.org/licenses/LICENSE-2.0.txt)
@@ -3219,7 +3214,7 @@ information on the Apache Software Foundation, please see
 
 ADDITIONAL LICENSE INFORMATION:
 
-> CC-Attibution 2.5
+> CC-Attribution 2.5
 
 httpcore-4.4.4-sources.jar\META-INF\LICENSE
 
@@ -3230,60 +3225,7 @@ See http://www.jcip.net and the Creative Commons Attribution License
 (http://creativecommons.org/licenses/by/2.5)
 Full text: http://creativecommons.org/licenses/by/2.5/legalcode
 
-License
-
-THE WORK (AS DEFINED BELOW) IS PROVIDED UNDER THE TERMS OF THIS CREATIVE COMMONS PUBLIC LICENSE ("CCPL" OR "LICENSE"). THE WORK IS PROTECTED BY COPYRIGHT AND/OR OTHER APPLICABLE LAW. ANY USE OF THE WORK OTHER THAN AS AUTHORIZED UNDER THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
-
-BY EXERCISING ANY RIGHTS TO THE WORK PROVIDED HERE, YOU ACCEPT AND AGREE TO BE BOUND BY THE TERMS OF THIS LICENSE. THE LICENSOR GRANTS YOU THE RIGHTS CONTAINED HERE IN CONSIDERATION OF YOUR ACCEPTANCE OF SUCH TERMS AND CONDITIONS.
-
-1. Definitions
-
-"Collective Work" means a work, such as a periodical issue, anthology or encyclopedia, in which the Work in its entirety in unmodified form, along with a number of other contributions, constituting separate and independent works in themselves, are assembled into a collective whole. A work that constitutes a Collective Work will not be considered a Derivative Work (as defined below) for the purposes of this License.
-"Derivative Work" means a work based upon the Work or upon the Work and other pre-existing works, such as a translation, musical arrangement, dramatization, fictionalization, motion picture version, sound recording, art reproduction, abridgment, condensation, or any other form in which the Work may be recast, transformed, or adapted, except that a work that constitutes a Collective Work will not be considered a Derivative Work for the purpose of this License. For the avoidance of doubt, where the Work is a musical composition or sound recording, the synchronization of the Work in timed-relation with a moving image ("synching") will be considered a Derivative Work for the purpose of this License.
-"Licensor" means the individual or entity that offers the Work under the terms of this License.
-"Original Author" means the individual or entity who created the Work.
-"Work" means the copyrightable work of authorship offered under the terms of this License.
-"You" means an individual or entity exercising rights under this License who has not previously violated the terms of this License with respect to the Work, or who has received express permission from the Licensor to exercise rights under this License despite a previous violation.
-
-2. Fair Use Rights. Nothing in this license is intended to reduce, limit, or restrict any rights arising from fair use, first sale or other limitations on the exclusive rights of the copyright owner under copyright law or other applicable laws.
-
-3. License Grant. Subject to the terms and conditions of this License, Licensor hereby grants You a worldwide, royalty-free, non-exclusive, perpetual (for the duration of the applicable copyright) license to exercise the rights in the Work as stated below:
-
-to reproduce the Work, to incorporate the Work into one or more Collective Works, and to reproduce the Work as incorporated in the Collective Works;
-to create and reproduce Derivative Works;
-to distribute copies or phonorecords of, display publicly, perform publicly, and perform publicly by means of a digital audio transmission the Work including as incorporated in Collective Works;
-to distribute copies or phonorecords of, display publicly, perform publicly, and perform publicly by means of a digital audio transmission Derivative Works.
-
-For the avoidance of doubt, where the work is a musical composition:
-Performance Royalties Under Blanket Licenses. Licensor waives the exclusive right to collect, whether individually or via a performance rights society (e.g. ASCAP, BMI, SESAC), royalties for the public performance or public digital performance (e.g. webcast) of the Work.
-Mechanical Rights and Statutory Royalties. Licensor waives the exclusive right to collect, whether individually or via a music rights agency or designated agent (e.g. Harry Fox Agency), royalties for any phonorecord You create from the Work ("cover version") and distribute, subject to the compulsory license created by 17 USC Section 115 of the US Copyright Act (or the equivalent in other jurisdictions).
-Webcasting Rights and Statutory Royalties. For the avoidance of doubt, where the Work is a sound recording, Licensor waives the exclusive right to collect, whether individually or via a performance-rights society (e.g. SoundExchange), royalties for the public digital performance (e.g. webcast) of the Work, subject to the compulsory license created by 17 USC Section 114 of the US Copyright Act (or the equivalent in other jurisdictions).
-
-The above rights may be exercised in all media and formats whether now known or hereafter devised. The above rights include the right to make such modifications as are technically necessary to exercise the rights in other media and formats. All rights not expressly granted by Licensor are hereby reserved.
-
-4. Restrictions.The license granted in Section 3 above is expressly made subject to and limited by the following restrictions:
-
-You may distribute, publicly display, publicly perform, or publicly digitally perform the Work only under the terms of this License, and You must include a copy of, or the Uniform Resource Identifier for, this License with every copy or phonorecord of the Work You distribute, publicly display, publicly perform, or publicly digitally perform. You may not offer or impose any terms on the Work that alter or restrict the terms of this License or the recipients' exercise of the rights granted hereunder. You may not sublicense the Work. You must keep intact all notices that refer to this License and to the disclaimer of warranties. You may not distribute, publicly display, publicly perform, or publicly digitally perform the Work with any technological measures that control access or use of the Work in a manner inconsistent with the terms of this License Agreement. The above applies to the Work as incorporated in a Collective Work, but this does not require the Collective Work apart from the Work itself to be made subject to the terms of this License. If You create a Collective Work, upon notice from any Licensor You must, to the extent practicable, remove from the Collective Work any credit as required by clause 4(b), as requested. If You create a Derivative Work, upon notice from any Licensor You must, to the extent practicable, remove from the Derivative Work any credit as required by clause 4(b), as requested.
-If you distribute, publicly display, publicly perform, or publicly digitally perform the Work or any Derivative Works or Collective Works, You must keep intact all copyright notices for the Work and provide, reasonable to the medium or means You are utilizing: (i) the name of the Original Author (or pseudonym, if applicable) if supplied, and/or (ii) if the Original Author and/or Licensor designate another party or parties (e.g. a sponsor institute, publishing entity, journal) for attribution in Licensor's copyright notice, terms of service or by other reasonable means, the name of such party or parties; the title of the Work if supplied; to the extent reasonably practicable, the Uniform Resource Identifier, if any, that Licensor specifies to be associated with the Work, unless such URI does not refer to the copyright notice or licensing information for the Work; and in the case of a Derivative Work, a credit identifying the use of the Work in the Derivative Work (e.g., "French translation of the Work by Original Author," or "Screenplay based on original Work by Original Author"). Such credit may be implemented in any reasonable manner; provided, however, that in the case of a Derivative Work or Collective Work, at a minimum such credit will appear where any other comparable authorship credit appears and in a manner at least as prominent as such other comparable authorship credit.
-
-5. Representations, Warranties and Disclaimer
-
-UNLESS OTHERWISE MUTUALLY AGREED TO BY THE PARTIES IN WRITING, LICENSOR OFFERS THE WORK AS-IS AND MAKES NO REPRESENTATIONS OR WARRANTIES OF ANY KIND CONCERNING THE WORK, EXPRESS, IMPLIED, STATUTORY OR OTHERWISE, INCLUDING, WITHOUT LIMITATION, WARRANTIES OF TITLE, MERCHANTIBILITY, FITNESS FOR A PARTICULAR PURPOSE, NONINFRINGEMENT, OR THE ABSENCE OF LATENT OR OTHER DEFECTS, ACCURACY, OR THE PRESENCE OF ABSENCE OF ERRORS, WHETHER OR NOT DISCOVERABLE. SOME JURISDICTIONS DO NOT ALLOW THE EXCLUSION OF IMPLIED WARRANTIES, SO SUCH EXCLUSION MAY NOT APPLY TO YOU.
-
-6. Limitation on Liability. EXCEPT TO THE EXTENT REQUIRED BY APPLICABLE LAW, IN NO EVENT WILL LICENSOR BE LIABLE TO YOU ON ANY LEGAL THEORY FOR ANY SPECIAL, INCIDENTAL, CONSEQUENTIAL, PUNITIVE OR EXEMPLARY DAMAGES ARISING OUT OF THIS LICENSE OR THE USE OF THE WORK, EVEN IF LICENSOR HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
-
-7. Termination
-
-This License and the rights granted hereunder will terminate automatically upon any breach by You of the terms of this License. Individuals or entities who have received Derivative Works or Collective Works from You under this License, however, will not have their licenses terminated provided such individuals or entities remain in full compliance with those licenses. Sections 1, 2, 5, 6, 7, and 8 will survive any termination of this License.
-Subject to the above terms and conditions, the license granted here is perpetual (for the duration of the applicable copyright in the Work). Notwithstanding the above, Licensor reserves the right to release the Work under different license terms or to stop distributing the Work at any time; provided, however that any such election will not serve to withdraw this License (or any other license that has been, or is required to be, granted under the terms of this License), and this License will continue in full force and effect unless terminated as stated above.
-
-8. Miscellaneous
-
-Each time You distribute or publicly digitally perform the Work or a Collective Work, the Licensor offers to the recipient a license to the Work on the same terms and conditions as the license granted to You under this License.
-Each time You distribute or publicly digitally perform a Derivative Work, Licensor offers to the recipient a license to the original Work on the same terms and conditions as the license granted to You under this License.
-If any provision of this License is invalid or unenforceable under applicable law, it shall not affect the validity or enforceability of the remainder of the terms of this License, and without further action by the parties to this agreement, such provision shall be reformed to the minimum extent necessary to make such provision valid and enforceable.
-No term or provision of this License shall be deemed waived and no breach consented to unless such waiver or consent shall be in writing and signed by the party to be charged with such waiver or consent.
-This License constitutes the entire agreement between the parties with respect to the Work licensed here. There are no understandings, agreements or representations with respect to the Work not specified here. Licensor shall not be bound by any additional provisions that may appear in any communication from You. This License may not be modified without the mutual written agreement of the Licensor and You.
+[THE TEXT OF THE CC-ATTRIBUTION 2.5 LICENSE IS SET FORTH IN THE APPENDIX OF THIS DOCUMENT.]
 
 
 >>> org.apache.lucene lucene-misc-6.0.0
@@ -3699,7 +3641,7 @@ which can be obtained from
 
 or
 
-  http://jaist.dl.sourceforge.net/project/mecab/mecab-ipadic/2.7.0-20070801/mecab-ipadic-2.7.0-20070801.tar.gz
+ http://jaist.dl.sourceforge.net/project/mecab/mecab-ipadic/2.7.0-20070801/mecab-ipadic-2.7.0-20070801.tar.gz
 
 ===========================================================================
 mecab-ipadic-2.7.0-20070801 Notice
@@ -3797,7 +3739,6 @@ from those sources:
  * for internal or external distribution as long as this notice
  * remains attached.
  */
-
 
 Some code in core/src/java/org/apache/lucene/util/ArrayUtil.java was
 derived from Python 2.4.2 sources available at
@@ -4171,8 +4112,7 @@ developed by Dawid Weiss and Marcin Milkowski (http://morfologik.blogspot.com/).
 
 *****VMware does not distribute the sub-components licensed under LGPL 3.0*****
 
-
-[PLEASE NOTE:  VMWARE, INC. ELECTS TO USE AND DISTRIBUTE THIS COMPONENT UNDER THE TERMS OF THE LGPL 3.0 LICENSE.  PLEASE SEE APPENDIX FOR THE FULL TEXT OF THE LGPL 3.0 LICENSE.  THE ORIGINAL LICENSE TERMS ARE REPRODUCED BELOW ONLY AS A REFERENCE.]
+[PLEASE NOTE:  VMWARE, INC. ELECTS TO USE AND DISTRIBUTE THIS COMPONENT UNDER THE TERMS OF THE LGPL 3.0 LICENSE.  PLEASE SEE THE APPENDIX FOR THE FULL TEXT OF THE LGPL 3.0 LICENSE.  THE ORIGINAL LICENSE TERMS ARE REPRODUCED BELOW ONLY AS A REFERENCE.]
 
 Morfologik uses data from Polish ispell/myspell dictionary
 (http://www.sjp.pl/slownik/en/) licenced on the terms of (inter alia)
@@ -4182,7 +4122,6 @@ Morfologic includes data from BSD-licensed dictionary of Polish (SGJP)
 (http://sgjp.pl/morfeusz/)
 
 *****VMware does not distribute the sub-components licensed under CDDL 1.1 *****
-
 
 Servlet-api.jar and javax.servlet-*.jar are under the CDDL license, the original
 source code for this can be found at http://www.eclipse.org/jetty/downloads.php
@@ -6690,4 +6629,4 @@ Source Files is valid for three years from the date you acquired this
 software product. Alternatively, the Source Files may accompany the
 VMware product.
 
-[BELLEVUE110GASR041417]
+[BELLEVUE111GASR050417]

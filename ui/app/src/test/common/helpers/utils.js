@@ -12,6 +12,7 @@
 (function(global) {
   var CHECK_INTERVAL = 20;
   // Very close to the jasmine default timeout, so that it fails (if timesout) before the test timeout.
+  jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
   var SMALL_TIMEOUT_INTERVAL = global.jasmine.DEFAULT_TIMEOUT_INTERVAL - 200;
   var TIMES_TO_CHECK = Math.floor(SMALL_TIMEOUT_INTERVAL / CHECK_INTERVAL);
 

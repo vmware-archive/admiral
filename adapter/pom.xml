@@ -29,6 +29,5 @@
         <module>docker</module>
         <module>kubernetes</module>
         <module>registry</module>
-        <module>etcd</module>
     </modules>
 </project>

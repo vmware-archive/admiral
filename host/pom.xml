@@ -80,11 +80,6 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>admiral-adapter-etcd</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>continuous-delivery</artifactId>
             <version>${project.version}</version>
         </dependency>

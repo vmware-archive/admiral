@@ -13,6 +13,7 @@ package com.vmware.admiral.request.compute;
 
 import static com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationRequest.allocationRequest;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
+import static com.vmware.photon.controller.model.tasks.ProvisionSecurityGroupTaskService.NETWORK_STATE_ID_PROP_NAME;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -41,7 +42,8 @@ import com.vmware.admiral.request.compute.ComputeNetworkProvisionTaskService.Com
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.photon.controller.model.UriPaths;
-import com.vmware.photon.controller.model.adapterapi.ResourceOperationResponse;
+import com.vmware.photon.controller.model.UriPaths.AdapterTypePath;
+import com.vmware.photon.controller.model.adapterapi.SecurityGroupInstanceRequest;
 import com.vmware.photon.controller.model.adapterapi.SubnetInstanceRequest.InstanceRequestType;
 import com.vmware.photon.controller.model.adapters.registry.PhotonModelAdaptersRegistryService;
 import com.vmware.photon.controller.model.adapters.registry.PhotonModelAdaptersRegistryService.PhotonModelAdapterConfig;
@@ -49,17 +51,25 @@ import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.photon.controller.model.query.QueryUtils;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeStateWithDescription;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.NetworkInterfaceDescription;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService.NetworkInterfaceState;
+import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
+import com.vmware.photon.controller.model.resources.SecurityGroupService;
+import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState;
+import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState.Rule;
+import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState.Rule.Access;
 import com.vmware.photon.controller.model.resources.SubnetService;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.photon.controller.model.support.LifecycleState;
+import com.vmware.photon.controller.model.tasks.ProvisionSecurityGroupTaskService;
+import com.vmware.photon.controller.model.tasks.ProvisionSecurityGroupTaskService.ProvisionSecurityGroupTaskState;
 import com.vmware.photon.controller.model.tasks.ProvisionSubnetTaskService;
 import com.vmware.photon.controller.model.tasks.ProvisionSubnetTaskService.ProvisionSubnetTaskState;
 import com.vmware.photon.controller.model.tasks.ServiceTaskCallback;
-import com.vmware.photon.controller.model.tasks.SubTaskService;
+import com.vmware.photon.controller.model.tasks.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.tasks.TaskOption;
 import com.vmware.photon.controller.model.util.AssertUtil;
 import com.vmware.xenon.common.DeferredResult;
@@ -68,7 +78,6 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask.Query.Builder;
 
 /**
@@ -131,25 +140,29 @@ public class ComputeNetworkProvisionTaskService
     }
 
     private static class Context {
-        public Context(String computeNetworkLink, ComputeNetworkProvisionTaskState state, String
-                subTaskLink) {
+        public Context(String computeNetworkLink, ComputeNetworkProvisionTaskState state,
+                ServiceTaskCallback<?> serviceTaskCallback) {
             this.computeNetworkLink = computeNetworkLink;
             this.state = state;
-            this.subTaskLink = subTaskLink;
+            this.serviceTaskCallback = serviceTaskCallback;
         }
 
         public String computeNetworkLink;
-        public String subTaskLink;
         public ComputeNetwork computeNetwork;
         public ProfileStateExpanded profile;
         public SubnetState subnet;
         public EndpointState isolatedNetworkEndpoint;
-        public String instanceAdapterReference;
+        public String subnetInstanceAdapterReference;
+        public String securityGroupInstanceAdapterReference;
         public String subnetCIDR;
         public ComputeNetworkDescription computeNetworkDescription;
         public Map<ComputeState, Pair<ComputeDescription, NetworkInterfaceDescription>>
                 computeStates;
         public ComputeNetworkProvisionTaskState state;
+        public SecurityGroupState isolationSecurityGroup;
+        public NetworkState subnetNetworkState;
+        public ComputeStateWithDescription endpointComputeState;
+        public ServiceTaskCallback<?> serviceTaskCallback;
     }
 
     public ComputeNetworkProvisionTaskService() {
@@ -175,7 +188,7 @@ public class ComputeNetworkProvisionTaskService
     protected void handleStartedStagePatch(ComputeNetworkProvisionTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:
-            provisionResources(state, null);
+            provisionResources(state);
             break;
         case PROVISIONING:
             break;
@@ -190,7 +203,7 @@ public class ComputeNetworkProvisionTaskService
         }
     }
 
-    private void provisionResources(ComputeNetworkProvisionTaskState state, String subTaskLink) {
+    private void provisionResources(ComputeNetworkProvisionTaskState state) {
         try {
             Set<String> resourceLinks = state.resourceLinks;
             if (resourceLinks == null || resourceLinks.isEmpty()) {
@@ -198,21 +211,16 @@ public class ComputeNetworkProvisionTaskService
                         "No compute network instances to provision",
                         "request.compute.network.provision.empty");
             }
-            if (subTaskLink == null) {
-                // recurse after creating a sub task
-                createSubTaskForProvisionCallbacks(state);
-                return;
-            }
+            ServiceTaskCallback<SubStage> callback = ServiceTaskCallback.create(getSelfLink());
+            callback.onSuccessTo(SubStage.COMPLETED);
+            callback.onErrorTo(SubStage.ERROR);
 
             resourceLinks.forEach(computeNetworkLink -> DeferredResult
-                    .completed(new Context(computeNetworkLink, state, subTaskLink))
+                    .completed(new Context(computeNetworkLink, state, callback))
                     .thenCompose(this::populateContext)
                     .thenCompose(this::provisionResource)
                     .exceptionally(t -> {
                         logSevere("Failure provisioning a subnet: %s", t);
-                        ResourceOperationResponse r = ResourceOperationResponse
-                                .fail(null, t);
-                        completeSubTask(subTaskLink, r);
                         return null;
                     }));
 
@@ -244,27 +252,36 @@ public class ComputeNetworkProvisionTaskService
     }
 
     private DeferredResult<Context> provisionResource(Context context) {
-        // Should we provision a new Subnet?
-        if (context.computeNetwork.networkType == NetworkType.ISOLATED) {
-            // Yes!
+        if (context.computeNetwork.networkType == NetworkType.ISOLATED &&
+                context.profile.networkProfile.isolationType.equals(IsolationSupportType.SUBNET)) {
+            // Provision a new subnet
             if (context.subnet == null) {
                 throw new IllegalArgumentException(
                         String.format("Subnet is required to provision an ISOLATED network '%s'.",
-                                context.computeNetwork.name));
+                                context.computeNetworkDescription.name));
             }
             return DeferredResult.completed(context)
                     .thenCompose(this::allocateSubnetCIDR)
                     .thenCompose(this::createSubnet)
                     .thenCompose(this::createNicStates)
                     .thenCompose(this::provisionSubnet);
-
+        } else if (context.computeNetwork.networkType == NetworkType.ISOLATED &&
+                context.profile.networkProfile.isolationType.equals(
+                        IsolationSupportType.SECURITY_GROUP)) {
+            // Provision a new security group
+            return DeferredResult.completed(context)
+                    .thenCompose(this::populateEndpointComputeState)
+                    .thenCompose(this::createSecurityGroup)
+                    .thenCompose(this::createNicStates)
+                    .thenCompose(this::pupulateSubnetNetworkState)
+                    .thenCompose(this::provisionSecurityGroup);
         } else {
-            // No!
+            // No new resources need to be provisioned.
+            // Simply create the NIC states and finish the task.
             return DeferredResult.completed(context)
                     .thenCompose(this::createNicStates)
                     .thenCompose(ctx -> {
-                        ResourceOperationResponse r = ResourceOperationResponse.finish(null /* is this ok? */);
-                        completeSubTask(context.subTaskLink, r);
+                        completeSubTask(context.serviceTaskCallback, null);
                         return DeferredResult.completed(ctx);
                     });
         }
@@ -290,6 +307,9 @@ public class ComputeNetworkProvisionTaskService
     }
 
     private DeferredResult<Context> populateProfile(Context context) {
+        AssertUtil.assertNotNull(context.computeNetwork.provisionProfileLink,
+                "Context.computeNetwork.provisionProfileLink should not be null");
+
         URI uri = UriUtils.buildUri(this.getHost(), context.computeNetwork.provisionProfileLink);
         uri = UriUtils.buildExpandLinksQueryUri(uri);
 
@@ -319,19 +339,39 @@ public class ComputeNetworkProvisionTaskService
     }
 
     private DeferredResult<Context> populateInstanceAdapterReference(Context context) {
-        if (context.isolatedNetworkEndpoint == null) {
+        if (context.profile.networkProfile.isolationType.equals(IsolationSupportType.NONE)) {
             return DeferredResult.completed(context);
         } else {
-            String uri = UriUtils.buildUriPath(PhotonModelAdaptersRegistryService.FACTORY_LINK,
-                    context.isolatedNetworkEndpoint.endpointType);
-
-            return sendWithDeferredResult(
-                    Operation.createGet(getHost(), uri), PhotonModelAdapterConfig.class)
-                    .thenApply(config -> {
-                        context.instanceAdapterReference = config.adapterEndpoints
-                                .get(UriPaths.AdapterTypePath.SUBNET_ADAPTER.key);
-                        return context;
-                    });
+            if (context.profile.networkProfile.isolationType.equals(IsolationSupportType.SUBNET)) {
+                AssertUtil.assertNotNull(context.isolatedNetworkEndpoint.endpointType,
+                        "Context.isolatedNetworkEndpoint.endpointType should not be null.");
+                return sendWithDeferredResult(
+                        Operation.createGet(getHost(),
+                                UriUtils.buildUriPath(PhotonModelAdaptersRegistryService.FACTORY_LINK,
+                                        context.isolatedNetworkEndpoint.endpointType)),
+                        PhotonModelAdapterConfig.class)
+                        .thenApply(config -> {
+                            context.subnetInstanceAdapterReference = config.adapterEndpoints
+                                    .get(UriPaths.AdapterTypePath.SUBNET_ADAPTER.key);
+                            return context;
+                        });
+            } else if (context.profile.networkProfile.isolationType.equals
+                    (IsolationSupportType.SECURITY_GROUP)) {
+                AssertUtil.assertNotNull(context.profile.endpoint.endpointType,
+                        "Context.profile.endpoint.endpointType should not be null.");
+                return sendWithDeferredResult(
+                        Operation.createGet(getHost(),
+                                UriUtils.buildUriPath(PhotonModelAdaptersRegistryService.FACTORY_LINK,
+                                        context.profile.endpoint.endpointType)),
+                        PhotonModelAdapterConfig.class)
+                        .thenApply(config -> {
+                            context.securityGroupInstanceAdapterReference = config.adapterEndpoints
+                                    .get(AdapterTypePath.SECURITY_GROUP_ADAPTER.key);
+                            return context;
+                        });
+            } else {
+                return DeferredResult.completed(context);
+            }
         }
     }
 
@@ -401,6 +441,12 @@ public class ComputeNetworkProvisionTaskService
     }
 
     private DeferredResult<Context> populateSubnet(Context context) {
+        AssertUtil.assertNotNull(context.profile, "Context.profile should not be null.");
+        AssertUtil.assertNotNull(context.computeNetwork,
+                "Context.computeNetwork should not be null.");
+        AssertUtil.assertNotNull(context.profile.networkProfile,
+                "Context.profile.networkProfile should not be null.");
+
         if (context.computeNetwork.subnetLink != null) {
             return this.sendWithDeferredResult(
                     Operation.createGet(this, context.computeNetwork.subnetLink), SubnetState.class)
@@ -430,6 +476,50 @@ public class ComputeNetworkProvisionTaskService
         }
     }
 
+    private DeferredResult<Context> createSecurityGroup(Context context) {
+        AssertUtil.assertNotNull(context.profile, "Context.profile should not be null.");
+        AssertUtil.assertNotNull(context.computeNetwork,
+                "Context.computeNetwork should not be null.");
+        AssertUtil.assertNotNull(context.profile.networkProfile,
+                "Context.profile.networkProfile should not be null.");
+        AssertUtil.assertTrue(context.computeNetwork.networkType.equals(NetworkType.ISOLATED),
+                "Context.computeNetwork.networkType should be ISOLATED");
+        AssertUtil.assertTrue(context.profile.networkProfile.isolationType.equals(
+                IsolationSupportType.SECURITY_GROUP),
+                "Context.profile.networkProfile.isolationType should be SECURITY_GROUP");
+        AssertUtil.assertNotNull(context.endpointComputeState,
+                "Context.endpointComputeState should not be null");
+
+        // Create a new security group for this network
+        SecurityGroupState securityGroup = new SecurityGroupState();
+        securityGroup.id = UUID.randomUUID().toString();
+        securityGroup.documentSelfLink = securityGroup.id;
+        securityGroup.name =
+                String.format("Isolation Security Group for network [%s] and "
+                                + "deployment [%s]", context.computeNetworkDescription.name,
+                        RequestUtils.getContextId(context.state));
+        securityGroup.desc = securityGroup.name;
+        securityGroup.regionId = context.endpointComputeState.description.regionId;
+        securityGroup.endpointLink = context.profile.endpointLink;
+        securityGroup.tenantLinks = context.state.tenantLinks;
+        securityGroup.instanceAdapterReference =
+                URI.create(context.securityGroupInstanceAdapterReference);
+        securityGroup.resourcePoolLink = context.profile.endpoint.resourcePoolLink;
+        securityGroup.authCredentialsLink = context.profile.endpoint.authCredentialsLink;
+
+        // build "deny-all" rules for now
+        securityGroup.ingress = buildIsolationRules();
+        securityGroup.egress = buildIsolationRules();
+
+        return this.sendWithDeferredResult(
+                Operation.createPost(this, SecurityGroupService.FACTORY_LINK)
+                        .setBody(securityGroup), SecurityGroupState.class)
+                .thenApply(sg -> {
+                    context.isolationSecurityGroup = sg;
+                    return context;
+                });
+    }
+
     private DeferredResult<Context> allocateSubnetCIDR(Context context) {
         AssertUtil.assertNotNull(context.profile, "Context.profile should not be null.");
         AssertUtil.assertNotNull(context.subnet, "Context.subnet should not be null.");
@@ -455,7 +545,7 @@ public class ComputeNetworkProvisionTaskService
 
         subnet.networkLink = profile.networkProfile.isolationNetworkLink;
         subnet.endpointLink = context.isolatedNetworkEndpoint.documentSelfLink;
-        subnet.instanceAdapterReference = URI.create(context.instanceAdapterReference);
+        subnet.instanceAdapterReference = URI.create(context.subnetInstanceAdapterReference);
         subnet.subnetCIDR = context.subnetCIDR;
 
         return this.sendWithDeferredResult(
@@ -473,7 +563,7 @@ public class ComputeNetworkProvisionTaskService
             provisionTaskState.options = EnumSet.of(TaskOption.IS_MOCK);
         }
         provisionTaskState.requestType = InstanceRequestType.CREATE;
-        provisionTaskState.parentTaskLink = context.subTaskLink;
+        provisionTaskState.parentTaskLink = context.serviceTaskCallback.serviceSelfLink;
         provisionTaskState.tenantLinks = context.computeNetwork.tenantLinks;
         provisionTaskState.documentExpirationTimeMicros = ServiceUtils
                 .getDefaultTaskExpirationTimeInMicros();
@@ -485,46 +575,30 @@ public class ComputeNetworkProvisionTaskService
                 .thenApply(op -> context);
     }
 
-    private void completeSubTask(String subTaskLink, Object body) {
-        Operation.createPatch(this, subTaskLink)
-                .setBody(body)
-                .setCompletion(
-                        (o, ex) -> {
-                            if (ex != null) {
-                                logWarning("Unable to complete subtask: %s, reason: %s",
-                                        subTaskLink, Utils.toString(ex));
-                            }
-                        })
-                .sendWith(this);
-    }
+    private DeferredResult<Context> provisionSecurityGroup(Context context) {
 
-    private void createSubTaskForProvisionCallbacks(ComputeNetworkProvisionTaskState currentState) {
-        ServiceTaskCallback<SubStage> callback = ServiceTaskCallback.create(getSelfLink());
-        callback.onSuccessTo(SubStage.COMPLETED);
-        SubTaskService.SubTaskState<ComputeNetworkProvisionTaskState.SubStage> subTaskInitState =
-                new SubTaskService.SubTaskState<>();
-        // tell the sub task with what to patch us, on completion
-        subTaskInitState.serviceTaskCallback = callback;
-        subTaskInitState.errorThreshold = 0;
-        subTaskInitState.completionsRemaining = currentState.resourceLinks.size();
-        subTaskInitState.tenantLinks = currentState.tenantLinks;
-        Operation startPost = Operation
-                .createPost(this, SubTaskService.FACTORY_LINK)
-                .setBody(subTaskInitState)
-                .setCompletion(
-                        (o, e) -> {
-                            if (e != null) {
-                                logWarning("Failure creating sub task: %s",
-                                        Utils.toString(e));
-                                failTask("Failure creating sub task", e);
-                                return;
-                            }
-                            SubTaskService.SubTaskState<?> body = o
-                                    .getBody(SubTaskService.SubTaskState.class);
-                            // continue, passing the sub task link
-                            provisionResources(currentState, body.documentSelfLink);
-                        });
-        sendRequest(startPost);
+        AssertUtil.assertNotNull(context.isolationSecurityGroup,
+                "Context.isolationSecurityGroup should not be null.");
+        AssertUtil.assertNotNull(context.subnetNetworkState,
+                "Context.isolationSecurityGroup should not be null.");
+
+        ProvisionSecurityGroupTaskState provisionTaskState = new ProvisionSecurityGroupTaskState();
+        provisionTaskState.isMockRequest = DeploymentProfileConfig.getInstance().isTest();
+        provisionTaskState.requestType = SecurityGroupInstanceRequest.InstanceRequestType.CREATE;
+        provisionTaskState.tenantLinks = context.computeNetwork.tenantLinks;
+        provisionTaskState.documentExpirationTimeMicros = ServiceUtils
+                .getDefaultTaskExpirationTimeInMicros();
+        provisionTaskState.securityGroupDescriptionLink = context.isolationSecurityGroup
+                .documentSelfLink;
+        provisionTaskState.serviceTaskCallback = context.serviceTaskCallback;
+        provisionTaskState.customProperties = new HashMap<>();
+        provisionTaskState.customProperties.put(NETWORK_STATE_ID_PROP_NAME, context
+                .subnetNetworkState.id);
+
+        return this.sendWithDeferredResult(
+                Operation.createPost(this, ProvisionSecurityGroupTaskService.FACTORY_LINK)
+                        .setBody(provisionTaskState))
+                .thenApply(op -> context);
     }
 
     private DeferredResult<Context> createNicStates(Context context) {
@@ -537,13 +611,21 @@ public class ComputeNetworkProvisionTaskService
 
         List<DeferredResult<Operation>> patchOps = context.computeStates.keySet().stream()
                 .map(cs ->
-                        NetworkProfileQueryUtils.createNicState(getHost(),
+                        NetworkProfileQueryUtils.selectSubnet(getHost(),
                                 UriUtils.buildUri(getHost(), getSelfLink()),
                                 context.state.tenantLinks, context.profile.endpointLink,
                                 context.computeStates.get(cs).left,
                                 context.computeStates.get(cs).right, context.profile,
                                 context.computeNetwork, context.computeNetworkDescription,
                                 context.subnet)
+                                .thenApply(subnetState -> context.subnet = subnetState)
+                                .thenCompose(subnetState ->
+                                        NetworkProfileQueryUtils.createNicState(subnetState,
+                                                context.state.tenantLinks,
+                                                context.profile.endpointLink,
+                                                context.computeStates.get(cs).left,
+                                                context.computeStates.get(cs).right,
+                                                context.isolationSecurityGroup))
                                 .thenCompose(nic -> this.sendWithDeferredResult(
                                         Operation.createPost(this,
                                                 NetworkInterfaceService.FACTORY_LINK).setBody(nic),
@@ -581,5 +663,63 @@ public class ComputeNetworkProvisionTaskService
         return this.sendWithDeferredResult(
                 Operation.createPatch(this, computeState.documentSelfLink)
                         .setBody(computeState));
+    }
+
+    private List<Rule> buildIsolationRules() {
+        Rule isolationRule = new Rule();
+        isolationRule.name = "Default Rule for Isolation Security Group";
+        isolationRule.protocol = SecurityGroupService.ANY;
+        isolationRule.ipRangeCidr = "0.0.0.0/0";
+        isolationRule.access = Access.Deny;
+        isolationRule.ports = "1-65535";
+
+        return Arrays.asList(isolationRule);
+    }
+
+    private DeferredResult<Context> pupulateSubnetNetworkState(Context context) {
+        AssertUtil.assertNotNull(context.subnet,
+                "Context.subnet should not be null.");
+
+        return this.sendWithDeferredResult(
+                Operation.createGet(this, context.subnet.networkLink), NetworkState.class)
+                .thenApply(networkState -> {
+                    context.subnetNetworkState = networkState;
+                    return context;
+                });
+    }
+
+    private DeferredResult<Context> populateEndpointComputeState(Context context) {
+        AssertUtil.assertNotNull(context.profile.endpoint,
+                "Context.profile.endpoint should not be null.");
+
+
+        return this.sendWithDeferredResult(
+                Operation.createGet(ComputeStateWithDescription
+                        .buildUri(UriUtils.buildUri(getHost(), context.profile.endpoint
+                                .computeLink))),
+                ComputeStateWithDescription.class)
+                .thenApply(computeState -> {
+                    context.endpointComputeState = computeState;
+                    return context;
+                });
+    }
+
+    private void completeSubTask(ServiceTaskCallback taskCallback, Throwable ex) {
+        ServiceTaskCallbackResponse response;
+        if (ex == null) {
+            response = taskCallback.getFinishedResponse();
+        } else {
+            response = taskCallback.getFailedResponse(ex);
+        }
+
+        sendRequest(Operation.createPatch(UriUtils.buildUri(this.getHost(),
+                taskCallback.serviceSelfLink))
+                .setBody(response)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Notifying calling task failed: %s", e);
+                    }
+                }));
     }
 }

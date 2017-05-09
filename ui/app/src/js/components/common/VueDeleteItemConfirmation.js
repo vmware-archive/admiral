@@ -14,13 +14,15 @@ import utils from 'core/utils';
 var VueDeleteItemConfirmation = Vue.extend({
   template: `<div class="delete-inline-item-confirmation-holder hide">
               <div class="delete-inline-item-confirmation">
-                <a href="#" class="delete-inline-item-confirmation-cancel"
-                            v-on:click="cancelDelete($event)"><span>{{i18n('cancel')}}</span></a>
-                <a href="#" class="delete-inline-item-confirmation-confirm"
-                            v-on:click="confirmDelete($event)">
-                  <span>{{i18n('delete')}}
-                  <i class="fa fa-spinner fa-spin loader-inline not-underlined hide">
-                  </i></span></a>
+                <div class="delete-inline-item-confirmation-cancel">
+                  <div><a data-cmd="inline-delete-cancel"
+                          href="#" @click="cancelDelete($event)">{{i18n('cancel')}}</a></div>
+                </div>
+                <div class="delete-inline-item-confirmation-confirm">
+                  <div><a data-cmd="inline-delete-confirm"
+                          href="#" @click="confirmDelete($event)">{{i18n('delete')}}</a><i
+                        class="fa fa-spinner fa-spin loader-inline not-underlined"></i></div>
+                </div>
               </div>
             </div>`,
 
@@ -70,9 +72,8 @@ var VueDeleteItemConfirmation = Vue.extend({
 
       // Hide cancel button and show loading indication
       var $deleteButton = $(this.$el).find('.delete-inline-item-confirmation-confirm');
-      $deleteButton.prev('.delete-inline-item-confirmation-cancel').addClass('hide');
-      $deleteButton.css('float', 'right');
-      $deleteButton.find('span').addClass('not-underlined');
+      $deleteButton.prev('.delete-inline-item-confirmation-cancel').addClass('hideVisibility');
+      $deleteButton.find('div').addClass('not-underlined');
       $deleteButton.find('.fa').removeClass('hide');
 
       if (!this.loading) {
@@ -95,9 +96,9 @@ var VueDeleteItemConfirmation = Vue.extend({
       var _this = this;
       utils.fadeOut($deleteConfirmationHolder, function() {
         $deleteConfirmationHolder.addClass('hide');
-        $deleteButton.prev('.delete-inline-item-confirmation-cancel').removeClass('hide');
+        $deleteButton.prev('.delete-inline-item-confirmation-cancel').removeClass('hideVisibility');
         $deleteButton.find('.fa').addClass('hide');
-        $deleteButton.find('span').removeClass('not-underlined');
+        $deleteButton.removeClass('not-underlined');
 
         _this.loading = false;
         if (eventToDispatch) {

@@ -113,8 +113,10 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
 
-        closureDescState.source = "Write-Host \"Hello, world!\""
-                + "\n";
+        closureDescState.source = "function test($context)\n"
+                + "{\n"
+                + "    Write-Host \"Hello, world!\""
+                + "}\n";
         closureDescState.runtime = RUNTIME_POWERSHELL;
 
         ResourceConstraints constraints = new ResourceConstraints();
@@ -159,9 +161,11 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         int expectedInVar2 = 4;
         int expectedResult = 7;
 
-        closureDescState.source = "$result = $inputs.a + $inputs.b\n"
-                + "$context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
-                + "Add-Content 'output.txt' $context.outputs\n";
+        closureDescState.source = "function test($context)\n"
+                + "{\n"
+                + "    $result = $inputs.a + $inputs.b\n"
+                + "    $context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
+                + "}\n";
 
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
@@ -215,12 +219,14 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         Integer[] expectedInVar = { 1, 2, 3 };
         Integer[] expectedResult = { 2, 3, 4 };
 
-        closureDescState.source = "$inputs.a[0] = $inputs.a[0] + 1\n"
-                + "$inputs.a[1] = $inputs.a[1] + 1\n"
-                + "$inputs.a[2] = $inputs.a[2] + 1\n"
-                + "$result = $inputs.a\n"
-                + "$context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
-                + "Add-Content 'output.txt' $context.outputs\n";
+        closureDescState.source = "function test($context)\n"
+                + "{\n"
+                + "    $inputs.a[0] = $inputs.a[0] + 1\n"
+                + "    $inputs.a[1] = $inputs.a[1] + 1\n"
+                + "    $inputs.a[2] = $inputs.a[2] + 1\n"
+                + "    $result = $inputs.a\n"
+                + "    $context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
+                + "}\n";
 
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
@@ -275,9 +281,11 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         String expectedInVar = "a";
         String expectedResult = "ac";
 
-        closureDescState.source = "$result = $inputs.a + 'c'\n"
-                + "$context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
-                + "Add-Content 'output.txt' $context.outputs\n";
+        closureDescState.source = "function test($context)\n"
+                + "{\n"
+                + "    $result = $inputs.a + 'c'\n"
+                + "    $context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
+                + "}\n";
 
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
@@ -330,13 +338,15 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         String[] expectedInVar = { "a", "b", "c" };
         String[] expectedResult = { "a_t", "b_t", "c_t" };
 
-        closureDescState.source = "$inputs.a[0] = $inputs.a[0] + '_t'\n"
-                + "$inputs.a[1] = $inputs.a[1] + '_t'\n"
-                + "$inputs.a[2] = $inputs.a[2] + '_t'\n"
+        closureDescState.source = "function test($context)\n"
+                + "{\n"
+                + "    $inputs.a[0] = $inputs.a[0] + '_t'\n"
+                + "    $inputs.a[1] = $inputs.a[1] + '_t'\n"
+                + "    $inputs.a[2] = $inputs.a[2] + '_t'\n"
                 + "\n"
-                + "$result = $inputs.a\n"
-                + "$context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
-                + "Add-Content 'output.txt' $context.outputs\n";
+                + "    $result = $inputs.a\n"
+                + "    $context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
+                + "}\n";
 
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
@@ -394,9 +404,12 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         String expectedInVar = "True";
         boolean expectedResult = false;
 
-        closureDescState.source = "$result = -not $inputs.a\n"
-                + "$context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
-                + "Add-Content 'output.txt' $context.outputs\n";
+        closureDescState.source = "function test($context)\n"
+                + "{\n"
+                + "    $result = -not $inputs.a\n"
+                + "    $context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
+                + "}\n";
+
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
@@ -448,13 +461,16 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         String[] expectedInVar = { "True", "True", "True" };
         Boolean[] expectedResult = { false, false, false };
 
-        closureDescState.source = "$inputs.a[0] = -not $inputs.a[0]\n"
-                + "$inputs.a[1] = -not $inputs.a[1]\n"
-                + "$inputs.a[2] = -not $inputs.a[2]\n"
+        closureDescState.source = "function test($context)\n"
+                + "{\n"
+                + "    $inputs.a[0] = -not $inputs.a[0]\n"
+                + "    $inputs.a[1] = -not $inputs.a[1]\n"
+                + "    $inputs.a[2] = -not $inputs.a[2]\n"
                 + "\n"
-                + "$result = $inputs.a\n"
-                + "$context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
-                + "Add-Content 'output.txt' $context.outputs\n";
+                + "    $result = $inputs.a\n"
+                + "    $context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
+                + "}\n";
+
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
@@ -529,13 +545,14 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         String expectedResult = expectedInVar.strTest + "_changed";
         Boolean expectedBoolResult = false;
 
-        closureDescState.source = "$inputs.a.strTest = $inputs.a.strTest +  "
-                + "'_changed'\n"
-                + "$inputs.a.intTest = $inputs.a.intTest + 1\n"
-                + "$inputs.a.boolTest = -not $inputs.a.boolTest\n"
-                + "$result = $inputs.a\n"
-                + "$context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
-                + "Add-Content 'output.txt' $context.outputs\n";
+        closureDescState.source = "function test($context)\n"
+                + "{\n"
+                + "    $inputs.a.strTest = $inputs.a.strTest + '_changed'\n"
+                + "    $inputs.a.intTest = $inputs.a.intTest + 1\n"
+                + "    $inputs.a.boolTest = -not $inputs.a.boolTest\n"
+                + "    $result = $inputs.a\n"
+                + "    $context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
+                + "}\n";
 
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
@@ -605,13 +622,14 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         String expectedResult = expectedInVar.strTest + "_changed";
         Boolean expectedBoolResult = false;
 
-        closureDescState.source = "$inputs.a[0].strTest = "
-                + "$inputs.a[0].strTest + '_changed'\n"
-                + "$inputs.a[0].intTest = $inputs.a[0].intTest + 1\n"
-                + "$inputs.a[0].boolTest = -not $inputs.a[0].boolTest\n"
-                + "$result = $inputs.a[0]\n"
-                + "$context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
-                + "Add-Content 'output.txt' $context.outputs\n";
+        closureDescState.source = "function test($context)\n"
+                + "{\n"
+                + "    $inputs.a[0].strTest = $inputs.a[0].strTest + '_changed'\n"
+                + "    $inputs.a[0].intTest = $inputs.a[0].intTest + 1\n"
+                + "    $inputs.a[0].boolTest = -not $inputs.a[0].boolTest\n"
+                + "    $result = $inputs.a[0]\n"
+                + "    $context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
+                + "}\n";
 
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
@@ -689,16 +707,15 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         String expectedResult = expectedInVar.objTest.strTest + "_changed";
         Boolean expectedBoolResult = false;
 
-        closureDescState.source = "$inputs.a.boolTest = "
-                + "[boolean]$inputs.a.boolTest\n"
-                + "$inputs.a.objTest.strTest = $inputs.a.objTest.strTest + "
-                + "'_changed'\n"
-                + "$inputs.a.objTest.intTest = $inputs.a.objTest.intTest + 1\n"
-                + "$inputs.a.objTest.boolTest = "
-                + "-not $inputs.a.objTest.boolTest\n"
-                + "$result = $inputs.a\n"
-                + "$context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
-                + "Add-Content 'output.txt' $context.outputs\n";
+        closureDescState.source = "function test($context)\n"
+                + "{\n"
+                + "    $inputs.a.boolTest = [boolean]$inputs.a.boolTest\n"
+                + "    $inputs.a.objTest.strTest = $inputs.a.objTest.strTest + '_changed'\n"
+                + "    $inputs.a.objTest.intTest = $inputs.a.objTest.intTest + 1\n"
+                + "    $inputs.a.objTest.boolTest = -not $inputs.a.objTest.boolTest\n"
+                + "    $result = $inputs.a\n"
+                + "    $context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
+                + "}\n";
 
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
@@ -761,10 +778,14 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
+
         closureDescState.source = "#!/usr/bin/powershell\n"
-                + "Write-Host \"Waiting...\"\n"
-                + "Start-Sleep -s 15\n"
-                + "Write-Host \"After sleep\"\n";
+                + "function test($context)\n"
+                + "{\n"
+                + "    Write-Host \"Waiting...\"\n"
+                + "    Start-Sleep -s 15\n"
+                + "    Write-Host \"After sleep\"\n"
+                + "}\n";
 
         closureDescState.runtime = RUNTIME_POWERSHELL;
         ResourceConstraints constraints = new ResourceConstraints();
@@ -804,11 +825,14 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
-        closureDescState.source = "#!/usr/bin/powershell\n"
-                + "Write-Host \"Waiting...\"\n"
-                + "Start-Sleep -s 60\n"
 
-                + "Write-Host \"After sleep\"\n";
+        closureDescState.source = "#!/usr/bin/powershell\n"
+                + "function test($context)\n"
+                + "{\n"
+                + "    Write-Host \"Waiting...\"\n"
+                + "    Start-Sleep -s 60\n"
+                + "    Write-Host \"After sleep\"\n"
+                + "}\n";
 
         closureDescState.runtime = RUNTIME_POWERSHELL;
         ResourceConstraints constraints = new ResourceConstraints();
@@ -896,10 +920,14 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
+
         closureDescState.source = "#!/usr/bin/powershell\n"
-                + "Write-Host \"Waiting...\"\n"
-                + "Start-Sleep -s 60\n"
-                + "Write-Host \"After sleep\"\n";
+                + "function test($context)\n"
+                + "{\n"
+                + "    Write-Host \"Waiting...\"\n"
+                + "    Start-Sleep -s 60\n"
+                + "    Write-Host \"After sleep\"\n"
+                + "}\n";
 
         closureDescState.runtime = RUNTIME_POWERSHELL;
         ResourceConstraints constraints = new ResourceConstraints();
@@ -974,9 +1002,13 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
-        closureDescState.source = "$a = 1\n"
-                + "$a\n"
-                + "a\n";
+
+        closureDescState.source = "function test($context)\n"
+                + "{\n"
+                + "    $a = 1\n"
+                + "    $a\n"
+                + "    a\n"
+                + "}\n";
 
         closureDescState.runtime = RUNTIME_POWERSHELL;
         ResourceConstraints constraints = new ResourceConstraints();
@@ -1022,9 +1054,13 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
 
         int expectedInVar = 3;
 
-        closureDescState.source = "$param.b\n"
-                + "$result = $param.b\n"
-                + "return $result\n";
+        closureDescState.source = "function test($context)\n"
+                + "{\n"
+                + "    $context.b\n"
+                + "    $result = $context.b\n"
+                + "    return $result\n"
+                + "}\n";
+
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
@@ -1183,9 +1219,11 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         int expectedInVar = 3;
         double expectedResult = 4;
 
-        closureDescState.source = "$result = $inputs.a + 1\n"
-                + "$context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
-                + "Add-Content 'output.txt' $context.outputs\n";
+        closureDescState.source = "function handler($context)\n"
+                + "{\n"
+                + "    $result = $inputs.a + 1\n"
+                + "    $context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
+                + "}\n";
 
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
@@ -1238,9 +1276,11 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         int expectedInVar = 3;
         double expectedResult = 4;
 
-        closureDescState.source = "$result = $inputs.a + 1\n"
-                + "$context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
-                + "Add-Content 'output.txt' $context.outputs\n";
+        closureDescState.source = "function handler($context)\n"
+                + "{\n"
+                + "    $result = $inputs.a + 1\n"
+                + "    $context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
+                + "}\n";
 
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));

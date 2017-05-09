@@ -61,7 +61,7 @@
           <grid v-bind:preferred-width="preferredGridWidth"
                 v-bind:count="itemsCount"
                 v-infinite-scroll="loadMore()">
-              <grid-item v-for="item in model.listView.items" track-by="id">
+            <grid-item v-for="item in model.listView.items" track-by="documentSelfLink">
               <host-grid-item v-bind:model="item"></host-grid-item>
             </grid-item>
           </grid>

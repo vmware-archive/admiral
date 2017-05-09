@@ -16,7 +16,6 @@ import static com.vmware.photon.controller.model.adapters.azure.constants.AzureC
 import java.util.UUID;
 
 import com.vmware.admiral.test.integration.compute.BaseComputeProvisionIT;
-import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
@@ -60,10 +59,8 @@ public class AzureComputeProvisionIT extends BaseComputeProvisionIT {
         auth = postDocument(AuthCredentialsService.FACTORY_LINK, auth, documentLifeCycle);
 
         computeDescription.authCredentialsLink = auth.documentSelfLink;
-        computeDescription.name = "mcp" + String.valueOf(System.currentTimeMillis() / 1000);;
+        computeDescription.name = "mcp";
 
-        computeDescription.customProperties.put(ComputeProperties.RESOURCE_GROUP_NAME,
-                "testResourceGroup" + String.valueOf(System.currentTimeMillis()));
     }
 
 }

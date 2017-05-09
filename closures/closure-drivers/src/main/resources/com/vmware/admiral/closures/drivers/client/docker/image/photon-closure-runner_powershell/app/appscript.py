@@ -53,7 +53,7 @@ def patch_results(outputs, closure_semaphore, token):
         patch_resp.raise_for_status()
 
 
-def execute_saved_source(closure_uri, inputs, outputsName, closure_semaphore, module_name):
+def execute_saved_source(closure_uri, inputs, outputsName, closure_semaphore, module_name, handler_name):
     print ('Script run logs:')
     print ('*******************')
     try:
@@ -67,12 +67,13 @@ def execute_saved_source(closure_uri, inputs, outputsName, closure_semaphore, mo
         closure_sem = '-closure_semaphore "' + str(closure_semaphore) + '"'
         closure_uri = '-closure_uri "' + str(closure_uri) + '"'
         closure_token = '-token "' + token + '"'
+        handler_name = '-handler_name "' + handler_name + '"'
         trusted_certs = '-trusted_certs "' + TRUSTED_CERTS + '"'
-        print ('Input ' + input)
+
         (out, err) = subprocess.Popen('/usr/bin/powershell -file ../context_object_class.ps1 "'
                                       + input + '" ' + outputs + ' ' + closure_sem + ' '
                                       + closure_uri+ ' ' + closure_token + ' ' + source_name
-                                      + ' ' + trusted_certs,
+                                      + ' ' + handler_name + ' ' + trusted_certs,
                                       shell=True, universal_newlines=True, stderr=subprocess.PIPE,
                                       stdout=subprocess.PIPE).communicate()
 
@@ -87,7 +88,6 @@ def execute_saved_source(closure_uri, inputs, outputsName, closure_semaphore, mo
             output =  save_output()
         else:
             output = {}
-        print ('Output ' + str(output))
         print ('*******************')
         patch_results(output, closure_semaphore, token)
     except Exception as ex:
@@ -157,7 +157,7 @@ def proceed_with_closure_description(closure_uri, closure_desc_uri, inputs, clos
         else:
             save_source_in_file(closure_description, module_name)
 
-        execute_saved_source(closure_uri, inputs, outputsName, closure_semaphore, module_name)
+        execute_saved_source(closure_uri, inputs, outputsName, closure_semaphore, module_name, handler_name)
     else:
         closure_desc_response.raise_for_status()
 

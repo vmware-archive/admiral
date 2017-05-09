@@ -30,6 +30,7 @@ export default Vue.component('dropdown-search-group', {
         :options="options"
         :renderer="renderer"
         :value="value"
+        :value-renderer="valueRenderer"
         @change="onChange">
       </dropdown-search>
     </form-group>
@@ -83,6 +84,10 @@ export default Vue.component('dropdown-search-group', {
     value: {
       required: false,
       type: Object
+    },
+    valueRenderer: {
+      required: false,
+      type: Function
     }
   },
   methods: {

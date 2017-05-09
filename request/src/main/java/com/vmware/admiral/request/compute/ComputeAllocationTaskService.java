@@ -161,7 +161,7 @@ public class ComputeAllocationTaskService
             ERROR;
 
             static final Set<ComputeAllocationTaskState.SubStage> SUBSCRIPTION_SUB_STAGES = new HashSet<>(
-                    Arrays.asList(RESOURCES_NAMES));
+                    Arrays.asList(SELECT_PLACEMENT_COMPUTES));
         }
     }
 
@@ -764,9 +764,11 @@ public class ComputeAllocationTaskService
                 && cd.customProperties.containsKey(NetworkProfileQueryUtils.NO_NIC_VM);
 
         if (noNicVM) {
-            return NetworkProfileQueryUtils.createNicState(getHost(),
+            return NetworkProfileQueryUtils.selectSubnet(getHost(),
                     UriUtils.buildUri(getHost(), getSelfLink()), state.tenantLinks,
-                    state.endpointLink, cd, nid, profile, null, null, null);
+                    state.endpointLink, cd, nid, profile, null, null, null)
+                    .thenCompose(subnetState -> NetworkProfileQueryUtils.createNicState(subnetState,
+                            state.tenantLinks, state.endpointLink, cd, nid, null));
         } else {
             return DeferredResult.completed(null);
         }
@@ -1005,15 +1007,24 @@ public class ComputeAllocationTaskService
     }
 
     @Override
-    protected ServiceTaskCallbackResponse notificationPayload() {
+    protected BaseExtensibilityCallbackResponse notificationPayload() {
         return new ExtensibilityCallbackResponse();
     }
 
     /**
      * Defines fields which are eligible for modification in case of subscription for task.
      */
-    protected static class ExtensibilityCallbackResponse extends ServiceTaskCallbackResponse {
-        Set<String> resourceNames;
+    protected static class ExtensibilityCallbackResponse extends BaseExtensibilityCallbackResponse {
+        public Set<String> resourceNames;
+    }
+
+    @Override
+    protected void enhanceNotificationPayload(ComputeAllocationTaskState state,
+            BaseExtensibilityCallbackResponse notificationPayload, Runnable callback) {
+        getComputeDescription(state.resourceDescriptionLink, (contDesc) -> {
+            notificationPayload.customProperties = contDesc.customProperties;
+            callback.run();
+        });
     }
 
     @Override

@@ -268,6 +268,7 @@ public class ClosureDescriptionService extends StatefulService {
         case DriverConstants.RUNTIME_NODEJS_4:
         case DriverConstants.RUNTIME_PYTHON_3:
         case DriverConstants.RUNTIME_POWERSHELL_6:
+        case DriverConstants.RUNTIME_JAVA_8:
         case DriverConstants.RUNTIME_NASHORN:
             return true;
         default:
