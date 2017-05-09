@@ -11,17 +11,17 @@
 
 package com.vmware.admiral.request.utils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
+import static com.vmware.photon.controller.model.data.SchemaField.DATATYPE_STRING;
+
 import java.util.logging.Level;
 
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.service.common.EventTopicService;
 import com.vmware.admiral.service.common.EventTopicService.EventTopicState;
-
+import com.vmware.photon.controller.model.data.Schema;
+import com.vmware.photon.controller.model.data.SchemaBuilder;
+import com.vmware.photon.controller.model.data.SchemaField.Constraint;
+import com.vmware.photon.controller.model.data.SchemaField.Type;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.Utils;
@@ -44,7 +44,7 @@ public abstract class EventTopicUtils {
         topic.description = description;
         topic.documentSelfLink = documentSelfLink;
         topic.blockable = blockable;
-        topic.schema = extendSchemaWithCommonFields(schema);
+        topic.schema = Utils.toJson(extendSchemaWithCommonFields(schema));
         topic.topicTaskInfo = taskInfo;
 
         registerEventTopic(host, topic);
@@ -80,142 +80,52 @@ public abstract class EventTopicUtils {
         AssertUtil.assertNotNull(host, "'host' can not be null");
     }
 
-    private static String extendSchemaWithCommonFields(SchemaBuilder schema) {
+    private static Schema extendSchemaWithCommonFields(SchemaBuilder schema) {
         if (schema == null) {
-            schema = SchemaBuilder.create();
+            schema = new SchemaBuilder();
         }
         addCommonSchemaFields(schema);
         return schema.build();
     }
 
-    /**
-     * Helper class that creates schema for EventTopics.
-     */
-    public static class SchemaBuilder {
-
-        private static final String FIELD_DATA_TYPE = "dataType";
-        private static final String FIELD_LABEL = "label";
-        private static final String FIELD_DESCRIPTION = "description";
-        private static final String FIELD_MULTIVALUED = "multivalued";
-        private static final String FIELD_READONLY = "readOnly";
-
-        private List<Map<String, Map<String, String>>> entitiesHolder = new ArrayList<>();
-
-        // Field to its properties.
-        private Map<String, Map<String, String>> entities;
-
-        private SchemaBuilder() {
-        }
-
-        public static SchemaBuilder create() {
-            return new EventTopicUtils.SchemaBuilder();
-        }
-
-        public SchemaBuilder addField(String fieldName) {
-            if (entities == null || !entities.isEmpty()) {
-                entities = new HashMap<>();
-            }
-            entities.put(fieldName, new HashMap<>());
-            entitiesHolder.add(entities);
-            return this;
-        }
-
-        public SchemaBuilder addDataType(String dataType) {
-            if (entities == null) {
-                throw new IllegalArgumentException("'entities' can not be null");
-            }
-
-            Entry<String, Map<String, String>> entry = entities.entrySet().iterator().next();
-            Map<String, String> value = entry.getValue();
-            value.put(FIELD_DATA_TYPE, dataType);
-            return this;
-        }
-
-        public SchemaBuilder addLabel(String label) {
-            if (entities == null) {
-                throw new IllegalArgumentException("'entities' can not be null");
-            }
-
-            Entry<String, Map<String, String>> entry = entities.entrySet().iterator().next();
-            Map<String, String> value = entry.getValue();
-            value.put(FIELD_LABEL, label);
-            return this;
-        }
-
-        public SchemaBuilder addDescription(String description) {
-            if (entities == null) {
-                throw new IllegalArgumentException("'entities' can not be null");
-            }
-
-            Entry<String, Map<String, String>> entry = entities.entrySet().iterator().next();
-            Map<String, String> value = entry.getValue();
-            value.put(FIELD_DESCRIPTION, description);
-            return this;
-        }
-
-        public SchemaBuilder whereMultiValued(Boolean multivalued) {
-            if (entities == null) {
-                throw new IllegalArgumentException("'entities' can not be null");
-            }
-
-            Entry<String, Map<String, String>> entry = entities.entrySet().iterator().next();
-            Map<String, String> value = entry.getValue();
-            value.put(FIELD_MULTIVALUED, String.valueOf(multivalued));
-            return this;
-        }
-
-        public SchemaBuilder whereReadOnly(Boolean readOnly) {
-            Entry<String, Map<String, String>> entry = entities.entrySet().iterator().next();
-            Map<String, String> value = entry.getValue();
-            value.put(FIELD_READONLY, String.valueOf(readOnly));
-            return this;
-        }
-
-        public String build() {
-            return Utils.toJson(entitiesHolder);
-        }
-    }
-
     private static SchemaBuilder addCommonSchemaFields(SchemaBuilder schema) {
-        schema
+        return schema
                 .addField("requestId")
-                .addDataType(String.class.getSimpleName())
-                .addLabel("Request id")
-                .addDescription("Request id")
-                .whereMultiValued(false)
+                .withDataType(DATATYPE_STRING)
+                .withLabel("Request id")
+                .withDescription("Request id")
+                .done()
 
                 .addField("componentId")
-                .addDataType(String.class.getSimpleName())
-                .addLabel("Component id")
-                .addDescription("Component id")
-                .whereMultiValued(false)
+                .withDataType(DATATYPE_STRING)
+                .withLabel("Component id")
+                .withDescription("Component id")
+                .done()
 
                 .addField("blueprintId")
-                .addDataType(String.class.getSimpleName())
-                .addLabel("Blueprint name")
-                .addDescription("Blueprint name")
-                .whereMultiValued(false)
+                .withDataType(DATATYPE_STRING)
+                .withLabel("Blueprint name")
+                .withDescription("Blueprint name")
+                .done()
 
                 .addField("componentTypeId")
-                .addDataType(String.class.getSimpleName())
-                .addLabel("Component type id")
-                .addDescription("Component type id")
-                .whereMultiValued(false)
+                .withDataType(DATATYPE_STRING)
+                .withLabel("Component type id")
+                .withDescription("Component type id")
+                .done()
 
                 .addField("owner")
-                .addDataType(String.class.getSimpleName())
-                .addLabel("Owner")
-                .addDescription("Owner")
-                .whereMultiValued(false)
+                .withDataType(DATATYPE_STRING)
+                .withLabel("Owner")
+                .withDescription("Owner")
+                .done()
 
                 .addField("customProperties")
-                .addDataType(String.class.getSimpleName())
-                .addLabel("Properties of the resource(Read Only)")
-                .addDescription("Resource Properties.")
-                .whereMultiValued(false)
-                .whereReadOnly(true);
-
-        return schema;
+                .withType(Type.MAP)
+                .withDataType(DATATYPE_STRING)
+                .withLabel("Properties of the resource(Read Only)")
+                .withDescription("Resource Properties.")
+                .withConstraint(Constraint.readOnly, true)
+                .done();
     }
-
 }

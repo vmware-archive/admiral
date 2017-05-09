@@ -11,12 +11,14 @@
 
 package com.vmware.admiral.request.compute;
 
+import static com.vmware.photon.controller.model.data.SchemaField.DATATYPE_STRING;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
 import java.net.URI;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -35,10 +37,15 @@ import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAl
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputeProvisionTaskState.SubStage;
 import com.vmware.admiral.request.compute.enhancer.ComputeStateEnhancers;
 import com.vmware.admiral.request.compute.enhancer.Enhancer.EnhanceContext;
+import com.vmware.admiral.request.utils.EventTopicUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
+import com.vmware.admiral.service.common.EventTopicDeclarator;
+import com.vmware.admiral.service.common.EventTopicService;
 import com.vmware.photon.controller.model.adapterapi.ComputeInstanceRequest;
 import com.vmware.photon.controller.model.adapterapi.ComputeInstanceRequest.InstanceRequestType;
 import com.vmware.photon.controller.model.adapterapi.ResourceOperationResponse;
+import com.vmware.photon.controller.model.data.SchemaBuilder;
+import com.vmware.photon.controller.model.data.SchemaField.Type;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeStateWithDescription;
 import com.vmware.photon.controller.model.tasks.ServiceTaskCallback;
@@ -47,6 +54,8 @@ import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
@@ -59,7 +68,8 @@ import com.vmware.xenon.services.common.ServiceUriPaths;
  * Task implementing the provisioning of a compute resource.
  */
 public class ComputeProvisionTaskService extends
-        AbstractTaskStatefulService<ComputeProvisionTaskService.ComputeProvisionTaskState, ComputeProvisionTaskService.ComputeProvisionTaskState.SubStage> {
+        AbstractTaskStatefulService<ComputeProvisionTaskService.ComputeProvisionTaskState, ComputeProvisionTaskService.ComputeProvisionTaskState.SubStage>
+        implements EventTopicDeclarator {
 
     private static final int WAIT_CONNECTION_RETRY_COUNT = 10;
 
@@ -81,6 +91,8 @@ public class ComputeProvisionTaskService extends
 
             static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
                     Arrays.asList(PROVISIONING_COMPUTE));
+            static final Set<SubStage> SUBSCRIPTION_SUB_STAGES = new HashSet<>(
+                    Arrays.asList(CUSTOMIZING_COMPUTE));
         }
 
         /**
@@ -104,6 +116,7 @@ public class ComputeProvisionTaskService extends
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.transientSubStages = SubStage.TRANSIENT_SUB_STAGES;
+        super.subscriptionSubStages = EnumSet.copyOf(SubStage.SUBSCRIPTION_SUB_STAGES);
     }
 
     @Override
@@ -358,5 +371,77 @@ public class ComputeProvisionTaskService extends
                 callback.accept(null);
             }
         }).sendWith(this);
+    }
+
+    protected static class ExtensibilityCallbackResponse extends BaseExtensibilityCallbackResponse {
+        public Set<String> resourceNames;
+    }
+
+    @Override
+    protected void enhanceNotificationPayload(ComputeProvisionTaskState state,
+            BaseExtensibilityCallbackResponse notificationPayload, Runnable callback) {
+        List<DeferredResult<ComputeState>> results = state.resourceLinks.stream()
+                .map(link -> Operation.createGet(this, link))
+                .map(o -> sendWithDeferredResult(o, ComputeState.class))
+                .collect(Collectors.toList());
+
+        DeferredResult.allOf(results).whenComplete((states, err) -> {
+            if (err == null) {
+                ExtensibilityCallbackResponse payload = (ExtensibilityCallbackResponse)
+                        notificationPayload;
+                payload.resourceNames = states.stream().map(s -> s.name)
+                        .collect(Collectors.toSet());
+
+                //squash-merge all properties until we fire an event per resource
+                payload.customProperties = states.stream().flatMap(s -> s.customProperties
+                        .entrySet().stream())
+                        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+            } else {
+                failTask("Failed retreiving custom properties.", err);
+            }
+            callback.run();
+        });
+    }
+
+    public static final String COMPUTE_PROVISION_TOPIC_TASK_SELF_LINK =
+            "compute-provision";
+    public static final String COMPUTE_PROVISION_TOPIC_ID = "com.vmware.compute.provision.pre";
+    public static final String COMPUTE_PROVISION_TOPIC_NAME = "Compute Provision";
+    public static final String COMPUTE_PROVISION_TOPIC_TASK_DESCRIPTION = "Fired when a compute "
+            + "resource is being provisioned.";
+    public static final String COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES = "resourceNames";
+    public static final String COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES_LABEL = "Resource names.";
+    public static final String COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION =
+            "Array of the resources names.";
+
+    @Override
+    protected BaseExtensibilityCallbackResponse notificationPayload() {
+        return new ExtensibilityCallbackResponse();
+    }
+
+    private void computeProvisionEventTopic(ServiceHost host) {
+        EventTopicService.TopicTaskInfo taskInfo = new EventTopicService.TopicTaskInfo();
+        taskInfo.task = ComputeProvisionTaskState.class.getSimpleName();
+        taskInfo.stage = TaskStage.STARTED.name();
+        taskInfo.substage = SubStage.CUSTOMIZING_COMPUTE.name();
+
+        EventTopicUtils.registerEventTopic(COMPUTE_PROVISION_TOPIC_ID, COMPUTE_PROVISION_TOPIC_NAME,
+                COMPUTE_PROVISION_TOPIC_TASK_DESCRIPTION, COMPUTE_PROVISION_TOPIC_TASK_SELF_LINK,
+                Boolean.TRUE, computeProvisionTopicSchema(), taskInfo, host);
+    }
+
+    private SchemaBuilder computeProvisionTopicSchema() {
+        return new SchemaBuilder()
+                .addField(COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES)
+                .withType(Type.LIST)
+                .withDataType(DATATYPE_STRING)
+                .withLabel(COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES_LABEL)
+                .withDescription(COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION)
+                .done();
+    }
+
+    @Override
+    public void registerEventTopics(ServiceHost host) {
+        computeProvisionEventTopic(host);
     }
 }
