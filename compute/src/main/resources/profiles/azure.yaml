@@ -24,5 +24,4 @@ storageProfile:
     diskProperties:
       azureStorageAccountType: "Standard_RAGRS"
       azureOsDiskCaching: "None"
-      azureStorageAccountName: "basestorage1"
 networkProfile: {}

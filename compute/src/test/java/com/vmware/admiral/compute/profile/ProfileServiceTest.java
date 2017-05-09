@@ -97,7 +97,7 @@ public class ProfileServiceTest extends ComputeBaseTest {
         assertNotNull(profile.computeProfile);
         assertNotNull(profile.storageProfile);
         assertEquals("Basic_A2", profile.computeProfile.instanceTypeMapping.get("large").instanceType);
-        assertEquals(3, profile.storageProfile.storageItems.stream().filter(storageItem ->
+        assertEquals(2, profile.storageProfile.storageItems.stream().filter(storageItem ->
                         storageItem.defaultItem).collect(Collectors.toList()).get(0)
                 .diskProperties.size());
     }
