@@ -74,6 +74,12 @@ public class NetworkProfileService extends StatefulService {
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL, OPTIONAL })
         public String isolationNetworkLink;
 
+        @Documentation(description = "CIDR of the isolation network. If not provided it will be "
+                + "retrieved from the isolation network itself. To be used when isolation network"
+                + " doesn't have a CIDR itself.")
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL, OPTIONAL })
+        public String isolationNetworkCIDR;
+
         @Documentation(description = "Link to CIDR Allocation Service matching the provided ")
         @PropertyOptions(usage = { OPTIONAL })
         public String isolationNetworkCIDRAllocationLink;
@@ -100,7 +106,9 @@ public class NetworkProfileService extends StatefulService {
                 targetState.subnetLinks = this.subnetLinks;
                 targetState.isolationType = this.isolationType;
                 targetState.isolationNetworkLink = this.isolationNetworkLink;
-                targetState.isolationNetworkCIDRAllocationLink = this.isolationNetworkCIDRAllocationLink;
+                targetState.isolationNetworkCIDRAllocationLink =
+                        this.isolationNetworkCIDRAllocationLink;
+                targetState.isolationNetworkCIDR = this.isolationNetworkCIDR;
                 targetState.isolatedSubnetCIDRPrefix = this.isolatedSubnetCIDRPrefix;
             }
         }
