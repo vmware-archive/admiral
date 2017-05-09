@@ -16,6 +16,8 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import java.net.URI;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -25,6 +27,7 @@ import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService;
 import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationState;
 import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile;
+import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfileExpanded;
 import com.vmware.photon.controller.model.resources.NetworkService;
 import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
 import com.vmware.photon.controller.model.resources.ResourceUtils;
@@ -84,6 +87,29 @@ public class NetworkProfileServiceTest extends ComputeBaseTest {
                     assertNull("No CIDRAllocation should be set.",
                             networkProfile.isolationNetworkCIDRAllocationLink);
                 });
+    }
+
+    @Test
+    public void testGetExpandedNetworkProfile() throws Throwable {
+        ComputeNetworkCIDRAllocationState cidrAllocation = createNetworkCIDRAllocationState();
+
+        NetworkProfile networkProfile = new NetworkProfile();
+        networkProfile.name = "networkProfileName";
+        networkProfile.isolationNetworkLink = cidrAllocation.networkLink;
+        networkProfile.isolationNetworkCIDR = "192.168.0.0/16";
+
+        networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
+
+        URI uri = UriUtils.buildUri(host, networkProfile.documentSelfLink);
+        URI expandUri = UriUtils.extendUriWithQuery(uri, UriUtils.URI_PARAM_ODATA_EXPAND,
+                Boolean.TRUE.toString());
+
+        NetworkProfileExpanded expanded = getDocument(NetworkProfileExpanded.class, expandUri);
+
+        assertNotNull(expanded.isolatedNetworkState);
+        assertEquals(networkProfile.isolatedSubnetCIDRPrefix, expanded.isolatedSubnetCIDRPrefix);
+        assertEquals(networkProfile.isolationNetworkCIDR, expanded.isolationNetworkCIDR);
+        assertEquals(networkProfile.isolationNetworkLink, expanded.isolationNetworkLink);
     }
 
     @Test
