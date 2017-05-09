@@ -16,7 +16,9 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import java.util.Map;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.service.common.MultiTenantDocument;
+import com.vmware.admiral.compute.profile.ImageProfileService.ImageProfileState;
+import com.vmware.admiral.compute.profile.InstanceTypeService.InstanceTypeState;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatefulService;
@@ -28,7 +30,16 @@ import com.vmware.xenon.common.Utils;
 public class ComputeProfileService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.COMPUTE_PROFILES;
 
-    public static class ComputeProfile extends MultiTenantDocument {
+    public static class ComputeProfile extends ResourceState {
+
+        @Documentation(description = "Link to the endpoint this profile is associated with")
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
+        public String endpointLink;
+
+        @Documentation(description = "The endpoint type if this profile is not for a specific endpoint ")
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
+        public String endpointType;
+
         /**
          * Instance types provided by the particular endpoint. Keyed by global instance type
          * identifiers used to unify instance types among heterogeneous set of endpoint types.
@@ -42,6 +53,14 @@ public class ComputeProfileService extends StatefulService {
          */
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
         public Map<String, ComputeImageDescription> imageMapping;
+
+        @Documentation(description = "Link to the image profile for this profile")
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
+        public String imageProfileLink;
+
+        @Documentation(description = "Link to the instance type profile for this profile")
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
+        public String instanceTypeProfileLink;
     }
 
     public ComputeProfileService() {
@@ -55,7 +74,26 @@ public class ComputeProfileService extends StatefulService {
     @Override
     public void handleCreate(Operation post) {
         processInput(post);
-        post.complete();
+        ComputeProfile state = post.getBody(ComputeProfile.class);
+        ImageProfileState imageProfile = createImageProfile(state);
+        InstanceTypeState instanceTypeState = createInstanceTypeProfile(state);
+        sendWithDeferredResult(
+                Operation.createPost(this, ImageProfileService.FACTORY_LINK).setBody(imageProfile),
+                ImageProfileState.class)
+                        .thenApply(ip -> state.imageProfileLink = ip.documentSelfLink)
+                        .thenCompose(
+                                x -> sendWithDeferredResult(
+                                        Operation.createPost(this, InstanceTypeService.FACTORY_LINK)
+                                                .setBody(instanceTypeState),
+                                        InstanceTypeState.class))
+                        .thenApply(it -> state.instanceTypeProfileLink = it.documentSelfLink)
+                        .whenComplete((ignore, t) -> {
+                            if (t != null) {
+                                post.fail(t);
+                            } else {
+                                post.complete();
+                            }
+                        });
     }
 
     @Override
@@ -68,7 +106,24 @@ public class ComputeProfileService extends StatefulService {
 
         ComputeProfile newState = processInput(put);
         setState(put, newState);
-        put.complete();
+        ImageProfileState imageProfile = createImageProfile(newState);
+        InstanceTypeState instanceTypeState = createInstanceTypeProfile(newState);
+        sendWithDeferredResult(
+                Operation.createPatch(this, newState.imageProfileLink).setBody(imageProfile),
+                ImageProfileState.class)
+                        .thenCompose(
+                                x -> sendWithDeferredResult(
+                                        Operation
+                                                .createPatch(this, newState.instanceTypeProfileLink)
+                                                .setBody(instanceTypeState),
+                                        InstanceTypeState.class))
+                        .whenComplete((ignore, t) -> {
+                            if (t != null) {
+                                put.fail(t);
+                            } else {
+                                put.complete();
+                            }
+                        });
     }
 
     @Override
@@ -82,7 +137,25 @@ public class ComputeProfileService extends StatefulService {
             return;
         }
         patch.setBody(currentState);
-        patch.complete();
+        ImageProfileState imageProfile = createImageProfile(currentState);
+        InstanceTypeState instanceTypeState = createInstanceTypeProfile(currentState);
+        sendWithDeferredResult(
+                Operation.createPatch(this, currentState.imageProfileLink).setBody(imageProfile),
+                ImageProfileState.class)
+                        .thenCompose(
+                                x -> sendWithDeferredResult(
+                                        Operation.createPatch(this,
+                                                currentState.instanceTypeProfileLink)
+                                                .setBody(instanceTypeState),
+                                        InstanceTypeState.class))
+                        .whenComplete((ignore, t) -> {
+                            if (t != null) {
+                                patch.fail(t);
+                            } else {
+                                patch.complete();
+                            }
+                        });
+
     }
 
     private ComputeProfile processInput(Operation op) {
@@ -99,5 +172,24 @@ public class ComputeProfileService extends StatefulService {
         ServiceDocument template = super.getDocumentTemplate();
         com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
         return template;
+    }
+
+    private InstanceTypeState createInstanceTypeProfile(ComputeProfile state) {
+        InstanceTypeState its = new InstanceTypeState();
+        its.name = "instance";
+        its.endpointType = state.endpointType;
+        its.instanceTypeMapping = state.instanceTypeMapping;
+        its.tenantLinks = state.tenantLinks;
+        return its;
+    }
+
+    private ImageProfileState createImageProfile(ComputeProfile state) {
+        ImageProfileState ips = new ImageProfileState();
+        ips.name = "image";
+        ips.endpointLink = state.endpointLink;
+        ips.endpointType = state.endpointType;
+        ips.imageMapping = state.imageMapping;
+        ips.tenantLinks = state.tenantLinks;
+        return ips;
     }
 }

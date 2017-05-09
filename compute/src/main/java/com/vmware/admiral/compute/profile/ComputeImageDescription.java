@@ -13,12 +13,20 @@ package com.vmware.admiral.compute.profile;
 
 import java.util.Map;
 
+import com.vmware.photon.controller.model.Constraint;
+import com.vmware.xenon.common.ServiceDocument.UsageOption;
+import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.SystemHostInfo.OsFamily;
 
 /**
  * Describes a compute instance type.
  */
 public class ComputeImageDescription {
+
+    public String name;
+
+    public String description;
+
     /**
      * Image identifier (name, path, location, uri, etc.) valid in the context of the particular
      * endpoint this description is created for.
@@ -45,4 +53,12 @@ public class ComputeImageDescription {
      * Optional OS family.
      */
     public OsFamily osFamily;
+
+    /**
+     * Constraints of this image to other resources. Different services can specify their specific
+     * constraints by using different keys in the map, so that multiple constraints are supported
+     * for different purposes - e.g. placement constraints, grouping constraints, etc.
+     */
+    @UsageOption(option = PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL)
+    public Map<String, Constraint> constraints;
 }

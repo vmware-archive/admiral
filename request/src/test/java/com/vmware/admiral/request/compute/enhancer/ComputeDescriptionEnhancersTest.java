@@ -36,6 +36,8 @@ import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
 import com.vmware.admiral.compute.profile.ComputeProfileService;
+import com.vmware.admiral.compute.profile.ImageProfileService;
+import com.vmware.admiral.compute.profile.InstanceTypeService;
 import com.vmware.admiral.compute.profile.NetworkProfileService;
 import com.vmware.admiral.compute.profile.ProfileService;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
@@ -91,8 +93,9 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
                 TestInitialBootService.class);
         HostInitServiceHelper.startServiceFactories(host,
                 CaSigningCertService.class, ProfileService.class,
-                ComputeProfileService.class, StorageProfileService.class,
-                NetworkProfileService.class, NetworkInterfaceDescriptionService.class,
+                ComputeProfileService.class, StorageProfileService.class, ImageProfileService.class,
+                InstanceTypeService.class, NetworkProfileService.class,
+                NetworkInterfaceDescriptionService.class,
                 DiskService.class);
         host.startFactory(TagService.class, TagFactoryService::new);
         waitForServiceAvailability(ProfileService.FACTORY_LINK);
@@ -189,6 +192,7 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
     @Test
     public void testEnhanceDisk() throws Throwable {
         cd.instanceType = "xLarge";
+        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "vc://datastore/test.iso");
 
         // Build Profile service
         ProfileStateExpanded profileState = buildProfileServiceWithStorage();

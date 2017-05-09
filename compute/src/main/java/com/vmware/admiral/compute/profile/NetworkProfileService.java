@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -27,8 +26,8 @@ import org.apache.commons.lang3.StringUtils;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService;
 import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationState;
-import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.photon.controller.model.query.QueryUtils.QueryTop;
+import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.ResourceUtils;
@@ -54,17 +53,12 @@ public class NetworkProfileService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.NETWORK_PROFILES;
     private static final int MAX_CIDR_PREFIX_LENGTH = 29;
 
-    public static class NetworkProfile extends MultiTenantDocument {
-        public static final String FIELD_NAME_NAME = "name";
+    public static class NetworkProfile extends ResourceState {
         public static final String FIELD_NAME_SUBNET_LINKS = "subnetLinks";
 
-        @Documentation(description = "The name that can be used to refer to this network profile")
+        @Documentation(description = "Link to the endpoint this profile is associated with")
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
-        public String name;
-
-        @Documentation(description = "TagStates associated with the network profile")
-        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
-        public Set<String> tagLinks;
+        public String endpointLink;
 
         @Documentation(description = "SubnetStates included in this network profile")
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
@@ -73,7 +67,7 @@ public class NetworkProfileService extends StatefulService {
         @Documentation(description = "Specifies the isolation support type e.g. none, subnet or "
                 + "security group")
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL, OPTIONAL })
-        public IsolationSupportType isolationType = IsolationSupportType.NONE;
+        public IsolationSupportType isolationType;
 
         @Documentation(description = "Link to the network used for creating isolated subnets. "
                 + "This field should be populated only when isolation Type is SUBNET.")
@@ -93,20 +87,20 @@ public class NetworkProfileService extends StatefulService {
          * Defines the isolation network support this network profile provides.
          */
         public enum IsolationSupportType {
-            NONE, SUBNET, SECURITY_GROUP
+            NONE,
+            SUBNET,
+            SECURITY_GROUP
         }
 
-        public void copyTo(MultiTenantDocument target) {
+        public void copyTo(ResourceState target) {
             super.copyTo(target);
             if (target instanceof NetworkProfile) {
                 NetworkProfile targetState = (NetworkProfile) target;
-                targetState.name = this.name;
-                targetState.tagLinks = this.tagLinks;
+                targetState.endpointLink = this.endpointLink;
                 targetState.subnetLinks = this.subnetLinks;
                 targetState.isolationType = this.isolationType;
                 targetState.isolationNetworkLink = this.isolationNetworkLink;
-                targetState.isolationNetworkCIDRAllocationLink =
-                        this.isolationNetworkCIDRAllocationLink;
+                targetState.isolationNetworkCIDRAllocationLink = this.isolationNetworkCIDRAllocationLink;
                 targetState.isolatedSubnetCIDRPrefix = this.isolatedSubnetCIDRPrefix;
             }
         }
@@ -116,6 +110,8 @@ public class NetworkProfileService extends StatefulService {
         public List<SubnetState> subnetStates;
 
         public NetworkState isolatedNetworkState;
+
+        public EndpointState endpointState;
 
         public static URI buildUri(URI networkProfileUri) {
             return UriUtils.buildExpandLinksQueryUri(networkProfileUri);
@@ -128,6 +124,29 @@ public class NetworkProfileService extends StatefulService {
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
         super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
+    }
+
+    /**
+     * Nullifies link fields if the patch body contains NULL_LINK_VALUE links. TODO: This is the
+     * same as ResourceUtils.nullifyLinkFields(). Unify in the next changelist.
+     */
+    private static <T extends ResourceState> boolean nullifyLinkFields(
+            ServiceDocumentDescription desc, NetworkProfile currentState,
+            NetworkProfile patchBody) {
+        boolean modified = false;
+        for (PropertyDescription prop : desc.propertyDescriptions.values()) {
+            if (prop.usageOptions != null &&
+                    prop.usageOptions.contains(PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL) &&
+                    prop.usageOptions.contains(PropertyUsageOption.LINK)) {
+                Object patchValue = ReflectionUtils.getPropertyValue(prop, patchBody);
+                if (ResourceUtils.NULL_LINK_VALUE.equals(patchValue)) {
+                    Object currentValue = ReflectionUtils.getPropertyValue(prop, currentState);
+                    modified |= currentValue != null;
+                    ReflectionUtils.setPropertyValue(prop, currentState, null);
+                }
+            }
+        }
+        return modified;
     }
 
     @Override
@@ -147,14 +166,13 @@ public class NetworkProfileService extends StatefulService {
 
         List<Operation> getOps = new ArrayList<>();
         if (currentState.subnetLinks != null) {
-            currentState.subnetLinks.forEach(sp ->
-                    getOps.add(Operation.createGet(this, sp)
-                            .setReferer(this.getUri())
-                            .setCompletion((o, e) -> {
-                                if (e == null) {
-                                    expanded.subnetStates.add(o.getBody(SubnetState.class));
-                                }
-                            })));
+            currentState.subnetLinks.forEach(sp -> getOps.add(Operation.createGet(this, sp)
+                    .setReferer(this.getUri())
+                    .setCompletion((o, e) -> {
+                        if (e == null) {
+                            expanded.subnetStates.add(o.getBody(SubnetState.class));
+                        }
+                    })));
         }
         if (currentState.isolationNetworkLink != null) {
             getOps.add(Operation.createGet(this, currentState.isolationNetworkLink)
@@ -162,6 +180,15 @@ public class NetworkProfileService extends StatefulService {
                     .setCompletion((o, e) -> {
                         if (e == null) {
                             expanded.isolatedNetworkState = o.getBody(NetworkState.class);
+                        }
+                    }));
+        }
+
+        if (currentState.endpointLink != null) {
+            getOps.add(Operation.createGet(this, currentState.endpointLink)
+                    .setCompletion((o, e) -> {
+                        if (e == null) {
+                            expanded.endpointState = o.getBody(EndpointState.class);
                         }
                     }));
         }
@@ -224,9 +251,9 @@ public class NetworkProfileService extends StatefulService {
         DeferredResult<NetworkProfile> completion;
         try {
             ServiceDocumentDescription description = getStateDescription();
-            EnumSet<MergeResult> mergeResult =
-                    Utils.mergeWithStateAdvanced(description, currentState,
-                            NetworkProfile.class, patch);
+            EnumSet<MergeResult> mergeResult = Utils.mergeWithStateAdvanced(description,
+                    currentState,
+                    NetworkProfile.class, patch);
 
             if (!mergeResult.contains(Utils.MergeResult.SPECIAL_MERGE)) {
                 nullifyLinkFields(description, currentState, patch.getBody(NetworkProfile.class));
@@ -270,6 +297,7 @@ public class NetworkProfileService extends StatefulService {
         com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(np);
 
         np.name = "My Network Profile";
+        np.isolationType = NetworkProfile.IsolationSupportType.NONE;
         np.tagLinks = new HashSet<>();
         np.subnetLinks = new ArrayList<>();
         return np;
@@ -281,6 +309,9 @@ public class NetworkProfileService extends StatefulService {
         }
         NetworkProfile state = op.getBody(NetworkProfile.class);
         Utils.validateState(getStateDescription(), state);
+        if (state.isolationType == null) {
+            state.isolationType = NetworkProfile.IsolationSupportType.NONE;
+        }
         return state;
     }
 
@@ -314,11 +345,11 @@ public class NetworkProfileService extends StatefulService {
                         networkProfile.isolationNetworkLink)
                 .build();
 
-        QueryTop<ComputeNetworkCIDRAllocationState> queryCIDRAllocation =
-                new QueryTop<>(this.getHost(),
-                        query,
-                        ComputeNetworkCIDRAllocationState.class,
-                        networkProfile.tenantLinks)
+        QueryTop<ComputeNetworkCIDRAllocationState> queryCIDRAllocation = new QueryTop<>(
+                this.getHost(),
+                query,
+                ComputeNetworkCIDRAllocationState.class,
+                networkProfile.tenantLinks)
                         .setMaxResultsLimit(1);
 
         return queryCIDRAllocation.collectDocuments(Collectors.toList())
@@ -327,8 +358,7 @@ public class NetworkProfileService extends StatefulService {
                         // Found existing CIDRAllocationService
                         ComputeNetworkCIDRAllocationState cidrAllocation = cidrAllocations.get(0);
 
-                        networkProfile.isolationNetworkCIDRAllocationLink = cidrAllocation
-                                .documentSelfLink;
+                        networkProfile.isolationNetworkCIDRAllocationLink = cidrAllocation.documentSelfLink;
                     } else {
                         // Clean up any previous CIDRAllocation link
                         networkProfile.isolationNetworkCIDRAllocationLink = null;
@@ -349,8 +379,7 @@ public class NetworkProfileService extends StatefulService {
         logInfo(() -> "Create new Network CIDR Allocation for network: " +
                 networkProfile.isolationNetworkLink);
 
-        ComputeNetworkCIDRAllocationState cidrAllocationState = new
-                ComputeNetworkCIDRAllocationState();
+        ComputeNetworkCIDRAllocationState cidrAllocationState = new ComputeNetworkCIDRAllocationState();
         cidrAllocationState.networkLink = networkProfile.isolationNetworkLink;
         cidrAllocationState.tenantLinks = networkProfile.tenantLinks;
         Operation createOp = Operation.createPost(getHost(),
@@ -359,32 +388,8 @@ public class NetworkProfileService extends StatefulService {
 
         return sendWithDeferredResult(createOp, ComputeNetworkCIDRAllocationState.class)
                 .thenApply(resultCIDRAllocationState -> {
-                    networkProfile.isolationNetworkCIDRAllocationLink =
-                            resultCIDRAllocationState.documentSelfLink;
+                    networkProfile.isolationNetworkCIDRAllocationLink = resultCIDRAllocationState.documentSelfLink;
                     return networkProfile;
                 });
-    }
-
-    /**
-     * Nullifies link fields if the patch body contains NULL_LINK_VALUE links.
-     * TODO: This is the same as ResourceUtils.nullifyLinkFields(). Unify in the next changelist.
-     */
-    private static <T extends ResourceState> boolean nullifyLinkFields(
-            ServiceDocumentDescription desc, NetworkProfile currentState,
-            NetworkProfile patchBody) {
-        boolean modified = false;
-        for (PropertyDescription prop : desc.propertyDescriptions.values()) {
-            if (prop.usageOptions != null &&
-                    prop.usageOptions.contains(PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL) &&
-                    prop.usageOptions.contains(PropertyUsageOption.LINK)) {
-                Object patchValue = ReflectionUtils.getPropertyValue(prop, patchBody);
-                if (ResourceUtils.NULL_LINK_VALUE.equals(patchValue)) {
-                    Object currentValue = ReflectionUtils.getPropertyValue(prop, currentState);
-                    modified |= currentValue != null;
-                    ReflectionUtils.setPropertyValue(prop, currentState, null);
-                }
-            }
-        }
-        return modified;
     }
 }
