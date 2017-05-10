@@ -16,6 +16,7 @@ import static org.junit.Assert.assertTrue;
 
 import static com.vmware.admiral.test.integration.TestPropertiesUtil.getSystemOrTestProp;
 
+import java.net.ConnectException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,6 +53,7 @@ import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
+import com.vmware.xenon.services.common.ServiceHostManagementService;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
@@ -239,7 +241,7 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         validateResources(ManagementUriParts.COMPOSITE_DESC,
                 com.vmware.admiral.test.integration.client.CompositeDescription.class);
 
-         // certificate
+        // certificate
         validateResources(ManagementUriParts.SSL_TRUST_CERTS,
                 com.vmware.admiral.test.integration.client.SslTrustCertificateState.class);
 
@@ -290,12 +292,36 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
                 .createAuthCredentials(false);
         postDocument(AuthCredentialsService.FACTORY_LINK, credentials);
 
+        AuthCredentialsServiceState authCheck = getDocument(CREDENTIALS_SELF_LINK, AuthCredentialsServiceState.class);
+        assertTrue(authCheck != null);
+
         // placement zone
         ElasticPlacementZoneConfigurationState epzConfigState = new ElasticPlacementZoneConfigurationState();
         epzConfigState.resourcePoolState = IntegratonTestStateFactory.createResourcePool();
         postDocument(ManagementUriParts.ELASTIC_PLACEMENT_ZONE_CONFIGURATION, epzConfigState);
 
+        // gracefully shut down Admiral to prevent loss of in-memory data like the authState;
+        shutDownAdmiral(admiralContainer);
+
         setBaseURI(null);
+    }
+
+    private void shutDownAdmiral(ContainerState admiralContainer) throws Exception {
+        delete(ServiceHostManagementService.SELF_LINK);
+
+        String hostManagementServiceLink = getBaseUrl()
+                + buildServiceUri(ServiceHostManagementService.SELF_LINK);
+        try {
+            for (int i = 0; i < 10; i++) {
+                SimpleHttpsClient.execute(HttpMethod.GET, hostManagementServiceLink);
+                Thread.sleep(1000);
+            }
+        } catch (ConnectException e) {
+            // Admiral has shut down
+            return;
+        }
+
+        logger.error("Admiral did not shut down within expected time!");
     }
 
     private <T> void validateResources(String endpoint, Class<? extends T> clazz) throws Exception {
