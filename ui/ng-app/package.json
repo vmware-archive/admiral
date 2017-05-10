@@ -40,7 +40,8 @@
     "ts-helpers": "1.1.2",
     "wamda-typeahead": "0.11.1",
     "web-animations-js": "2.2.2",
-    "zone.js": "0.8.4"
+    "zone.js": "0.8.4",
+    "ngx-infinite-scroll": "0.5.1"
   },
   "devDependencies": {
     "@angular/compiler-cli": "4.0.1",

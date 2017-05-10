@@ -911,7 +911,7 @@ services.searchImageResources = function(endpointLink, query, limit) {
   let filter = buildSearchQuery(qOps);
 
   let params = {
-    endpoint: buildOdataQuery({
+    endpoint: serviceUtils.buildOdataQuery({
       documentSelfLink: [{
         op: 'eq',
         val: endpointLink
