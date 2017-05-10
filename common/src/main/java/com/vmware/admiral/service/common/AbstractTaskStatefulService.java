@@ -463,7 +463,6 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
         if (patchBody.taskInfo.failure != null) {
             currentState.taskInfo.failure = patchBody.taskInfo.failure;
-            currentState.taskInfo.stage = TaskStage.FAILED;
         }
 
         // update current stage to new stage

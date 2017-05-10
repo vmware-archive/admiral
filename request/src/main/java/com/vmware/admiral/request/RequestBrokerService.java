@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -224,11 +224,6 @@ public class RequestBrokerService extends
 
     @Override
     protected void handleStartedStagePatch(RequestBrokerState state) {
-        if (state.taskSubStage.ordinal() > SubStage.RESOURCE_COUNTED.ordinal()
-                && state.actualResourceCount == null) {
-            calculateActualRequestedResources(state, state.taskSubStage);
-            return;
-        }
         switch (state.taskSubStage) {
         case CREATED:
             calculateActualRequestedResources(state, SubStage.RESOURCE_COUNTED);
@@ -265,6 +260,11 @@ public class RequestBrokerService extends
             }
             break;
         case REQUEST_FAILED:
+            // handle the case when REQUEST_FAILED stage is called directly
+            if (state.actualResourceCount == null && state.taskInfo.failure == null) {
+                calculateActualRequestedResources(state, SubStage.REQUEST_FAILED);
+            }
+
             if (isProvisionOperation(state)) {
                 createReservationRemovalTask(state);
             } else if (isPostAllocationOperation(state)) {
