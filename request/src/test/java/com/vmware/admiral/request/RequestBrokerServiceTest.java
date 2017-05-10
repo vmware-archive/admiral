@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -166,6 +166,33 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         containerState = searchForDocument(ContainerState.class, request.resourceLinks.iterator()
                 .next());
         assertNull(containerState);
+    }
+
+    /**
+     * Tests that request won't enter an endless loop, moving from REQUEST_FAILED to REQUEST_FAILED,
+     * and consuming all available storage space with logs.
+     */
+    @Test
+    public void testRequestFail() throws Throwable {
+        host.log("########  Start of testRequestFail ######## ");
+        // setup Docker Host:
+        ResourcePoolState resourcePool = createResourcePool();
+        ComputeDescription dockerHostDesc = createDockerHostDescription();
+        createDockerHost(dockerHostDesc, resourcePool);
+
+        // setup Group Placement:
+        GroupResourcePlacementState groupPlacementState = createGroupResourcePlacement(
+                resourcePool);
+
+        // 1. Request a container instance:
+        RequestBrokerState request = TestRequestStateFactory.createRequestState();
+        request.resourceDescriptionLink = "non-existing";
+        request.tenantLinks = groupPlacementState.tenantLinks;
+        host.log("########  Start of request ######## ");
+        request = startRequest(request);
+
+        // wait for request completed state:
+        request = waitForRequestToFail(request);
     }
 
     @Test
