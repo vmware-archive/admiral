@@ -16,10 +16,12 @@ import static com.vmware.admiral.test.integration.TestPropertiesUtil.getSystemOr
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
@@ -28,6 +30,7 @@ import com.vmware.xenon.common.ServiceHost;
 public class RegistryServiceIT {
 
     private static final int TEST_TIMEOUT_SECONDS = 30;
+    private static final int TEST_TIMEOUT_SHORT_SECONDS = 10;
     private static final String TEST_REGISTRY_ADDRESS = getSystemOrTestProp("test.registry");
     private static final String TEST_REGISTRY_ADDRESS_INVALID = "https://127.0.0.1:7890";
     private static final String TEST_REGISTRY_ADDRESS_HTTP = "http://127.0.0.1:7809";
@@ -35,8 +38,14 @@ public class RegistryServiceIT {
 
     @Before
     public void setUp() {
+        DeploymentProfileConfig.getInstance().setTest(false);
         registryState = new RegistryState();
         ServerX509TrustManager.init(new ServiceHost() { });
+    }
+
+    @After
+    public void tearDown() {
+        DeploymentProfileConfig.getInstance().setTest(true);
     }
 
     @Test
@@ -67,7 +76,7 @@ public class RegistryServiceIT {
             Assert.fail("should not return certificate");
             latch.countDown();
         });
-        latch.await(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        latch.await(TEST_TIMEOUT_SHORT_SECONDS, TimeUnit.SECONDS);
     }
 
 }
