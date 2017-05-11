@@ -319,9 +319,10 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         } catch (ConnectException e) {
             // Admiral has shut down
             return;
+        } finally {
+            setBaseURI(null);
         }
         logger.error("Admiral did not shut down within expected time!");
-        setBaseURI(null);
     }
 
     private <T> void validateResources(String endpoint, Class<? extends T> clazz) throws Exception {
