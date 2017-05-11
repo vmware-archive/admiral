@@ -27,6 +27,15 @@ export default Vue.component('aws-network-profile-editor', {
   template: `
     <div>
       <section class="form-block" v-if="endpoint">
+        <label>{{i18n('app.profile.edit.generalLabel')}}</label>
+        <dropdown-search-group
+          :label="i18n('app.profile.edit.securityGroupIsolationTypeLabel')"
+          :filter="searchSecurityGroups"
+          :value="securityGroup"
+          @change="onSecurityGroupChange">
+        </dropdown-group>
+      </dropdown-search-group>
+      <section class="form-block" v-if="endpoint">
         <label>{{i18n('app.profile.edit.existingLabel')}}</label>
         <multicolumn-editor-group
           :label="i18n('app.profile.edit.subnetworksLabel')"
@@ -91,13 +100,19 @@ export default Vue.component('aws-network-profile-editor', {
         return {
           name: subnetwork
         };
-      })
+      }),
+      securityGroup: this.model.securityGroupStates && this.model.securityGroupStates.length > 0
+          ? this.model.securityGroupStates[0] : null
     };
   },
   attached() {
     this.emitChange();
   },
   methods: {
+    onSecurityGroupChange(value) {
+      this.securityGroup = value;
+      this.emitChange();
+    },
     onSubnetworkChange(value) {
       this.subnetworks = value;
       this.emitChange();
@@ -158,7 +173,8 @@ export default Vue.component('aws-network-profile-editor', {
               previous.push(current.name.documentSelfLink);
             }
             return previous;
-          }, [])
+          }, []),
+          securityGroupLinks: this.securityGroup ? [this.securityGroup.documentSelfLink] : []
         },
         valid: this.isolationType === ISOLATION_TYPES[0] ||
             (this.isolationType === ISOLATION_TYPES[1] &&

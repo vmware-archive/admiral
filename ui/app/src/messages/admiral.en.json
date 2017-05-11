@@ -522,6 +522,7 @@
         "cpuCountLabel": "CPUs",
         "diskSizeMbLabel": "Disk size (MB)",
         "memoryMbLabel": "Memory (MB)",
+        "generalLabel": "General",
         "existingLabel": "Existing",
         "subnetworksLabel": "Subnetworks",
         "isolationLabel": "Isolation",
