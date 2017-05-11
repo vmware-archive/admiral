@@ -306,6 +306,7 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
     }
 
     private void shutDownAdmiral(ContainerState admiralContainer) throws Exception {
+        changeBaseURI(admiralContainer);
         delete(ServiceHostManagementService.SELF_LINK);
 
         String hostManagementServiceLink = getBaseUrl()
@@ -319,8 +320,8 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
             // Admiral has shut down
             return;
         }
-
         logger.error("Admiral did not shut down within expected time!");
+        setBaseURI(null);
     }
 
     private <T> void validateResources(String endpoint, Class<? extends T> clazz) throws Exception {
