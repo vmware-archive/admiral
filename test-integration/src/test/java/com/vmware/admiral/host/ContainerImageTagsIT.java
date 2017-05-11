@@ -29,11 +29,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.registry.service.RegistryAdapterService;
+import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.admiral.compute.RegistryHostConfigService;
@@ -74,6 +76,7 @@ public class ContainerImageTagsIT extends BaseTestCase {
 
     @Before
     public void setUp() throws Throwable {
+        DeploymentProfileConfig.getInstance().setTest(false);
         HostInitCommonServiceConfig.startServices(host);
         HostInitRegistryAdapterServiceConfig.startServices(host);
         HostInitImageServicesConfig.startServices(host);
@@ -83,6 +86,11 @@ public class ContainerImageTagsIT extends BaseTestCase {
         waitForServiceAvailability(ContainerImageService.SELF_LINK);
         waitForServiceAvailability(RegistryService.DEFAULT_INSTANCE_LINK);
         waitForServiceAvailability(ContainerImageTagsService.SELF_LINK);
+    }
+
+    @After
+    public void tearDown() {
+        DeploymentProfileConfig.getInstance().setTest(true);
     }
 
     @Test
