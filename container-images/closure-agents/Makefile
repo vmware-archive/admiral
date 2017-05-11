@@ -25,21 +25,25 @@ buildall: build_nodejsbase build_pythonbase build_javabase build_powershellbase
 
 build_nodejsbase: $(ADMIRAL_CLOSURE_NODEJS_IMAGE_TAR_FILENAME)-export-$(TAG)
 	rm -f ../../host/images-bin/$(ADMIRAL_CLOSURE_NODEJS_IMAGE_TAR_FILENAME).tar.xz
+	mkdir -p ../../host/images-bin || true
 	cp -l $(ADMIRAL_CLOSURE_NODEJS_IMAGE_TAR_FILENAME)-export-$(TAG) \
 	  ../../host/images-bin/$(ADMIRAL_CLOSURE_NODEJS_IMAGE_TAR_FILENAME).tar.xz
 
 build_pythonbase: $(ADMIRAL_CLOSURE_PYTHON_IMAGE_TAR_FILENAME)-export-$(TAG)
 	rm -f ../../host/images-bin/$(ADMIRAL_CLOSURE_PYTHON_IMAGE_TAR_FILENAME).tar.xz
+	mkdir -p ../../host/images-bin || true
 	cp -l $(ADMIRAL_CLOSURE_PYTHON_IMAGE_TAR_FILENAME)-export-$(TAG) \
 	  ../../host/images-bin/$(ADMIRAL_CLOSURE_PYTHON_IMAGE_TAR_FILENAME).tar.xz
 
 build_javabase: $(ADMIRAL_CLOSURE_JAVA_IMAGE_TAR_FILENAME)-export-$(TAG)
 	rm -f ../../host/images-bin/$(ADMIRAL_CLOSURE_JAVA_IMAGE_TAR_FILENAME).tar.xz
+	mkdir -p ../../host/images-bin || true
 	cp -l $(ADMIRAL_CLOSURE_JAVA_IMAGE_TAR_FILENAME)-export-$(TAG) \
 	  ../../host/images-bin/$(ADMIRAL_CLOSURE_JAVA_IMAGE_TAR_FILENAME).tar.xz
 
 build_powershellbase: $(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_NAME)-export-$(TAG)
 	rm -f ../../host/images-bin/$(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_NAME).tar.xz
+	mkdir -p ../../host/images-bin || true
 	cp -l $(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_NAME)-export-$(TAG) \
 	  ../../host/images-bin/$(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_NAME).tar.xz
 
