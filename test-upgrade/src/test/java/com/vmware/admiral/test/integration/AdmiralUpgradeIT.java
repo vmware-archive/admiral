@@ -155,6 +155,8 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
             removeData(admiralMasterContainer);
         } else {
             logger.info("---------- Skipping content validation. --------");
+            // gracefully shut down Admiral to prevent loss of in-memory data like the authState;
+            shutDownAdmiral(admiralBranchContainer);
         }
     }
 
@@ -299,9 +301,6 @@ public class AdmiralUpgradeIT extends BaseProvisioningOnCoreOsIT {
         ElasticPlacementZoneConfigurationState epzConfigState = new ElasticPlacementZoneConfigurationState();
         epzConfigState.resourcePoolState = IntegratonTestStateFactory.createResourcePool();
         postDocument(ManagementUriParts.ELASTIC_PLACEMENT_ZONE_CONFIGURATION, epzConfigState);
-
-        // gracefully shut down Admiral to prevent loss of in-memory data like the authState;
-        shutDownAdmiral(admiralContainer);
 
         setBaseURI(null);
     }
