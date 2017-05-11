@@ -126,7 +126,6 @@ public class SubscriptionManager<T extends ServiceDocument> implements Closeable
     /**
      * Subscribe for the specified service link and provide a notification handler to be callback
      * when there is an update or delete of the specified services.
-     *
      * The Consumer<String> callback will contain either the subscription ID or null in case
      * something went wrong.
      */
@@ -199,10 +198,17 @@ public class SubscriptionManager<T extends ServiceDocument> implements Closeable
 
         Operation.createDelete(host, notificationTarget.getSelfLink())
                 .setReferer(host.getUri())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        Utils.logWarning("Error while stopping subscription service %s",
-                                Utils.toString(ex));
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        // Lower logging level in case the subscription service is not found
+                        // because this is expected behavior for this DELETE request.
+                        if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
+                            host.log(Level.FINE, "Subscription service not found in attempt to "
+                                    + "stop it, before actually starting it: " + Utils.toString(e));
+                        } else {
+                            Utils.logWarning("Error while stopping subscription service %s",
+                                    Utils.toString(e));
+                        }
                     }
                     host.startSubscriptionService(subscribe, notificationTarget, sr);
                     this.subscriptionLink = notificationTarget.getSelfLink();
