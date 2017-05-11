@@ -19,12 +19,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
+import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.request.ClusteringTaskService;
 import com.vmware.admiral.request.ClusteringTaskService.ClusteringTaskState;
@@ -39,46 +39,37 @@ import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 
-@Ignore
 public class ComputeClusteringTaskServiceTest extends ComputeRequestBaseTest {
 
     private RequestBrokerState request;
     private ComputeDescription description;
 
     @Override
+    protected ResourceType placementResourceType() {
+        return ResourceType.COMPUTE_TYPE;
+    }
+
+    @Override
     public void setUp() throws Throwable {
         super.setUp();
-        createVmHostCompute(true);
-        description = createComputeDescription();
-        description = doPost(description, ComputeDescriptionService.FACTORY_LINK);
+        description = createVMComputeDescription(false);
 
         request = TestRequestStateFactory.createComputeRequestState();
         request.resourceDescriptionLink = description.documentSelfLink;
-        request.tenantLinks = groupPlacementState.tenantLinks;
+        request.tenantLinks = computeGroupPlacementState.tenantLinks;
         request.resourceCount = 3;
         Map<String, String> customProp = new HashMap<>();
         customProp.put(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, "test");
         request.customProperties = customProp;
     }
 
-    private ComputeDescription createComputeDescription() {
-        ComputeDescription cd = new ComputeDescription();
-        cd.id = UUID.randomUUID().toString();
-        cd.name = "testVM";
-        cd.instanceType = "small";
-        cd.customProperties = new HashMap<>();
-        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME,
-                "linux");
-        return cd;
-    }
-
     @Test
-    public void testContainerClusteringTaskServiceIncrementByOne()
+    public void testComputeClusteringTaskServiceIncrementByOne()
             throws Throwable {
 
-        // Set up a ContainerDescription with _cluster =2
+        // Set up a ComputeDescription with _cluster =2
         int clusterSize = 2;
-        ComputeDescription clustered = TestRequestStateFactory.createDockerHostDescription();
+        ComputeDescription clustered = createComputeDescription(false);
         clustered.name = "clustered";
 
         clustered.customProperties.put(ComputeConstants.CUSTOM_PROP_CLUSTER_SIZE_KEY,
@@ -102,7 +93,7 @@ public class ComputeClusteringTaskServiceTest extends ComputeRequestBaseTest {
         RequestBrokerState day2OperationClustering = TestRequestStateFactory
                 .createComputeRequestState();
         day2OperationClustering.resourceDescriptionLink = initialState.resourceDescriptionLink;
-        day2OperationClustering.tenantLinks = groupPlacementState.tenantLinks;
+        day2OperationClustering.tenantLinks = computeGroupPlacementState.tenantLinks;
         day2OperationClustering.operation = RequestBrokerState.CLUSTER_RESOURCE_OPERATION;
         int desiredResourceCount = clusterSize + 1;
         day2OperationClustering.resourceCount = desiredResourceCount;
@@ -124,12 +115,12 @@ public class ComputeClusteringTaskServiceTest extends ComputeRequestBaseTest {
     }
 
     @Test
-    public void testContainerClusteringTaskServiceIncrementByTwo()
+    public void testComputeClusteringTaskServiceIncrementByTwo()
             throws Throwable {
 
-        // Set up a ContainerDescription with _cluster =2
+        // Set up a ComputeDescription with _cluster =2
         int clusterSize = 2;
-        ComputeDescription clustered = TestRequestStateFactory.createDockerHostDescription();
+        ComputeDescription clustered = createComputeDescription(false);
         clustered.name = "clustered";
 
         clustered.customProperties.put(ComputeConstants.CUSTOM_PROP_CLUSTER_SIZE_KEY,
@@ -153,7 +144,7 @@ public class ComputeClusteringTaskServiceTest extends ComputeRequestBaseTest {
         RequestBrokerState day2OperationClustering = TestRequestStateFactory
                 .createComputeRequestState();
         day2OperationClustering.resourceDescriptionLink = initialState.resourceDescriptionLink;
-        day2OperationClustering.tenantLinks = groupPlacementState.tenantLinks;
+        day2OperationClustering.tenantLinks = computeGroupPlacementState.tenantLinks;
         day2OperationClustering.operation = RequestBrokerState.CLUSTER_RESOURCE_OPERATION;
         int desiredResourceCount = clusterSize + 2;
         day2OperationClustering.resourceCount = desiredResourceCount;
@@ -179,7 +170,14 @@ public class ComputeClusteringTaskServiceTest extends ComputeRequestBaseTest {
     }
 
     @Test
-    public void testContainerClusteringTaskServiceAddContainers() throws Throwable {
+    public void testComputeClusteringTaskServiceAddComputes() throws Throwable {
+
+        GroupResourcePlacementService.GroupResourcePlacementPoolState placementState = getDocument(
+                GroupResourcePlacementService.GroupResourcePlacementPoolState.class,
+                computeGroupPlacementState.documentSelfLink);
+
+        assertEquals(10, placementState.availableInstancesCount);
+        assertEquals(0, placementState.allocatedInstancesCount);
 
         request = startRequest(request);
         RequestBrokerState initialState = waitForRequestToComplete(request);
@@ -191,12 +189,12 @@ public class ComputeClusteringTaskServiceTest extends ComputeRequestBaseTest {
         RequestBrokerState day2OperationClustering = TestRequestStateFactory
                 .createComputeRequestState();
         day2OperationClustering.resourceDescriptionLink = initialState.resourceDescriptionLink;
-        day2OperationClustering.tenantLinks = groupPlacementState.tenantLinks;
+        day2OperationClustering.tenantLinks = computeGroupPlacementState.tenantLinks;
         day2OperationClustering.operation = RequestBrokerState.CLUSTER_RESOURCE_OPERATION;
         // Set 'resourceCount' to 5, which is 2 more than initial resources. This means that 2 new
         // containers should be provisioned.
         day2OperationClustering.resourceCount = 5;
-        day2OperationClustering.documentDescription = containerDesc.documentDescription;
+        day2OperationClustering.documentDescription = description.documentDescription;
         day2OperationClustering.customProperties = initialState.customProperties;
 
         try {
@@ -215,20 +213,20 @@ public class ComputeClusteringTaskServiceTest extends ComputeRequestBaseTest {
 
         List<ComputeState> computes = queryComputeByDescriptionLink(
                 initialState.resourceDescriptionLink);
-        long containersNumberAfterClustering = computes.size();
+        long computesNumberAfterClustering = computes.size();
         // Number of containers after clustering, should be increased with 7.
-        assertEquals(5, containersNumberAfterClustering);
+        assertEquals(5, computesNumberAfterClustering);
 
-        GroupResourcePlacementService.GroupResourcePlacementPoolState placementState = getDocument(
+        placementState = getDocument(
                 GroupResourcePlacementService.GroupResourcePlacementPoolState.class,
-                groupPlacementState.documentSelfLink);
+                computeGroupPlacementState.documentSelfLink);
 
         assertEquals(5, placementState.availableInstancesCount);
         assertEquals(5, placementState.allocatedInstancesCount);
     }
 
     @Test
-    public void testContainerClusteringTaskAddContainersServiceRemove()
+    public void testComputeClusteringTaskAddComputesServiceRemove()
             throws Throwable {
 
         request = startRequest(request);
@@ -244,7 +242,7 @@ public class ComputeClusteringTaskServiceTest extends ComputeRequestBaseTest {
         RequestBrokerState day2OperationClustering = TestRequestStateFactory
                 .createComputeRequestState();
         day2OperationClustering.resourceDescriptionLink = initialState.resourceDescriptionLink;
-        day2OperationClustering.tenantLinks = groupPlacementState.tenantLinks;
+        day2OperationClustering.tenantLinks = computeGroupPlacementState.tenantLinks;
         day2OperationClustering.operation = RequestBrokerState.CLUSTER_RESOURCE_OPERATION;
         // Decrease to 2
         day2OperationClustering.resourceCount = 2;

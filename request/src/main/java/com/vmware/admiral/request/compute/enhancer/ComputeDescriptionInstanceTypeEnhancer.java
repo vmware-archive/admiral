@@ -20,6 +20,7 @@ import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.ServiceHost;
 
 public class ComputeDescriptionInstanceTypeEnhancer extends ComputeDescriptionEnhancer {
+    static final String REQUESTED_INSTANCE_TYPE = "__requestedInstanceType";
     private ServiceHost host;
     private URI referer;
 
@@ -32,7 +33,7 @@ public class ComputeDescriptionInstanceTypeEnhancer extends ComputeDescriptionEn
     public DeferredResult<ComputeDescription> enhance(EnhanceContext context,
             ComputeDescription cd) {
 
-        if (cd.instanceType == null) {
+        if (cd.instanceType == null && !cd.customProperties.containsKey(REQUESTED_INSTANCE_TYPE)) {
             return DeferredResult.completed(cd);
         }
 
@@ -40,15 +41,20 @@ public class ComputeDescriptionInstanceTypeEnhancer extends ComputeDescriptionEn
                 .thenCompose(profile -> {
                     context.profile = profile;
 
+                    String requestedInstanceType = cd.customProperties
+                            .containsKey(REQUESTED_INSTANCE_TYPE)
+                                    ? cd.customProperties.get(REQUESTED_INSTANCE_TYPE)
+                                    : cd.instanceType;
                     InstanceTypeDescription instanceTypeDescription = null;
                     if (profile.computeProfile != null
                             && profile.computeProfile.instanceTypeMapping != null) {
                         instanceTypeDescription = PropertyUtils.getPropertyCaseInsensitive(
-                                profile.computeProfile.instanceTypeMapping, cd.instanceType);
+                                profile.computeProfile.instanceTypeMapping, requestedInstanceType);
                     }
 
                     if (instanceTypeDescription != null) {
                         if (instanceTypeDescription.instanceType != null) {
+                            cd.customProperties.put(REQUESTED_INSTANCE_TYPE, requestedInstanceType);
                             cd.instanceType = instanceTypeDescription.instanceType;
                         } else {
                             cd.cpuCount = instanceTypeDescription.cpuCount;
@@ -59,7 +65,7 @@ public class ComputeDescriptionInstanceTypeEnhancer extends ComputeDescriptionEn
                     }
                     return DeferredResult.failed(new IllegalStateException(String.format(
                             "No matching instance type defined in profile: %s, for requested instance type: %s",
-                            profile.documentSelfLink, cd.instanceType)));
+                            profile.documentSelfLink, requestedInstanceType)));
 
                 });
 

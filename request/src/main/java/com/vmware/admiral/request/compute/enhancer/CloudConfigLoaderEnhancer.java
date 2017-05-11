@@ -35,7 +35,7 @@ public class CloudConfigLoaderEnhancer extends ComputeEnhancer {
                 ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME);
         if (fileContent == null) {
             boolean supportDocker = enableContainerHost(cs.customProperties);
-            String imageType = context.imageType;
+            String imageType = cs.customProperties.get(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
             String fileName = String.format("/%s-content/cloud_config_%s.yml",
                     context.endpointType, supportDocker ? imageType + "_docker" : "base");
             try {

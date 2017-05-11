@@ -115,28 +115,44 @@ public abstract class RequestBaseTest extends BaseTestCase {
     protected static final String DEFAULT_HEALTH_CHECK_TIMEOUT = "5000";
     protected static final String DEFAULT_HEALTH_CHECK_DELAY = "1000";
 
-    protected ResourcePoolState resourcePool;
-    protected ResourcePoolState computeResourcePool;
-    protected EndpointState endpoint;
-    protected ComputeDescription hostDesc;
-    protected ComputeState computeHost;
-    protected ComputeDescription vmGuestComputeDescription;
-    protected ComputeState vmGuestComputeState;
-    protected ContainerDescription containerDesc;
-    protected ContainerState containerState;
-    protected HostPortProfileService.HostPortProfileState hostPortProfileState;
-    protected ContainerNetworkDescription containerNetworkDesc;
-    protected ContainerVolumeDescription containerVolumeDesc;
-    protected CompositeDescription compositeDescription;
-    protected GroupResourcePlacementState groupPlacementState;
-    protected GroupResourcePlacementState computeGroupPlacementState;
-    protected final Object initializationLock = new Object();
-    private final List<ServiceDocument> documentsForDeletion = new ArrayList<>();
-
     static {
         System.setProperty(ContainerPortsAllocationTaskService.CONTAINER_PORT_ALLOCATION_ENABLED,
                 Boolean.TRUE.toString());
     }
+
+    protected final Object initializationLock = new Object();
+
+    private final List<ServiceDocument> documentsForDeletion = new ArrayList<>();
+
+    protected ResourcePoolState resourcePool;
+
+    protected ResourcePoolState computeResourcePool;
+
+    protected EndpointState endpoint;
+
+    protected ComputeDescription hostDesc;
+
+    protected ComputeState computeHost;
+
+    protected ComputeDescription vmGuestComputeDescription;
+
+    protected ComputeState vmGuestComputeState;
+
+    protected ContainerDescription containerDesc;
+
+    protected ContainerState containerState;
+
+    protected HostPortProfileService.HostPortProfileState hostPortProfileState;
+
+    protected ContainerNetworkDescription containerNetworkDesc;
+
+    protected ContainerVolumeDescription containerVolumeDesc;
+
+    protected CompositeDescription compositeDescription;
+
+    protected GroupResourcePlacementState groupPlacementState;
+
+    protected GroupResourcePlacementState computeGroupPlacementState;
 
     @Before
     public void setUp() throws Throwable {
@@ -260,7 +276,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
         synchronized (initializationLock) {
             if (groupPlacementState == null) {
                 groupPlacementState = TestRequestStateFactory
-                        .createGroupResourcePlacementState(placementResourceType());
+                        .createGroupResourcePlacementState(ResourceType.CONTAINER_TYPE);
                 groupPlacementState.maxNumberInstances = numberOfInstances;
                 groupPlacementState.resourcePoolLink = resourcePool.documentSelfLink;
                 groupPlacementState = getOrCreateDocument(groupPlacementState,
@@ -280,6 +296,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 computeGroupPlacementState = TestRequestStateFactory
                         .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE);
                 computeGroupPlacementState.maxNumberInstances = numberOfInstances;
+                computeGroupPlacementState.name = "compute-placement";
                 computeGroupPlacementState.resourcePoolLink = resourcePool.documentSelfLink;
                 computeGroupPlacementState = getOrCreateDocument(computeGroupPlacementState,
                         GroupResourcePlacementService.FACTORY_LINK);
@@ -615,17 +632,18 @@ public abstract class RequestBaseTest extends BaseTestCase {
             throws Throwable {
         host.log("wait for request: " + requestState.documentSelfLink);
 
-        RequestBrokerState rbState = waitForTaskSuccess(requestState.documentSelfLink, RequestBrokerState.class);
+        RequestBrokerState rbState = waitForTaskSuccess(requestState.documentSelfLink,
+                RequestBrokerState.class);
 
         // Verify request status
         RequestStatus rs = getDocument(RequestStatus.class, requestState.requestTrackerLink);
         assertNotNull(rs);
 
-        waitForPropertyValue(rs.documentSelfLink, RequestStatus.class, RequestStatus
-                .FIELD_NAME_TASK_INFO_STAGE, rbState.taskInfo.stage);
+        waitForPropertyValue(rs.documentSelfLink, RequestStatus.class,
+                RequestStatus.FIELD_NAME_TASK_INFO_STAGE, rbState.taskInfo.stage);
 
-        waitForPropertyValue(rs.documentSelfLink, RequestStatus.class, RequestStatus
-                .FIELD_NAME_PROGRESS, 100);
+        waitForPropertyValue(rs.documentSelfLink, RequestStatus.class,
+                RequestStatus.FIELD_NAME_PROGRESS, 100);
 
         return rbState;
     }
@@ -650,16 +668,17 @@ public abstract class RequestBaseTest extends BaseTestCase {
             throws Throwable {
         host.log("wait for request to fail: " + requestState.documentSelfLink);
 
-        RequestBrokerState rbState = waitForTaskError(requestState.documentSelfLink, RequestBrokerState.class);
+        RequestBrokerState rbState = waitForTaskError(requestState.documentSelfLink,
+                RequestBrokerState.class);
 
         RequestStatus rs = getDocument(RequestStatus.class, rbState.requestTrackerLink);
         assertNotNull(rs);
 
-        waitForPropertyValue(rs.documentSelfLink, RequestStatus.class, RequestStatus
-                .FIELD_NAME_TASK_INFO_STAGE, TaskStage.FAILED);
+        waitForPropertyValue(rs.documentSelfLink, RequestStatus.class,
+                RequestStatus.FIELD_NAME_TASK_INFO_STAGE, TaskStage.FAILED);
 
-        waitForPropertyValue(rs.documentSelfLink, RequestStatus.class, RequestStatus
-                .FIELD_NAME_SUB_STAGE, SubStage.ERROR.name());
+        waitForPropertyValue(rs.documentSelfLink, RequestStatus.class,
+                RequestStatus.FIELD_NAME_SUB_STAGE, SubStage.ERROR.name());
 
         return rbState;
     }
@@ -826,7 +845,8 @@ public abstract class RequestBaseTest extends BaseTestCase {
     }
 
     protected ContainerState provisionContainer(String descriptionLink) throws Throwable {
-        RequestBrokerState request = TestRequestStateFactory.createRequestState(ResourceType.CONTAINER_TYPE.getName(), descriptionLink);
+        RequestBrokerState request = TestRequestStateFactory
+                .createRequestState(ResourceType.CONTAINER_TYPE.getName(), descriptionLink);
         request = startRequest(request);
         request = waitForRequestToComplete(request);
 

@@ -72,6 +72,17 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
     private ComputeDescription cd;
     private EnhanceContext context;
 
+    public static class TestInitialBootService extends AbstractInitialBootService {
+        public static final String SELF_LINK = ManagementUriParts.CONFIG + "/test-initial-boot";
+
+        @Override
+        public void handlePost(Operation post) {
+            ArrayList<ServiceDocument> states = new ArrayList<>();
+            states.addAll(ProfileService.getAllDefaultDocuments());
+            initInstances(post, false, true, states.toArray(new ServiceDocument[states.size()]));
+        }
+    }
+
     @Before
     public void setup() throws Throwable {
         host.registerForServiceAvailability(CaSigningCertService.startTask(host), true,
@@ -96,10 +107,10 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
 
         cd = new ComputeDescription();
         cd.customProperties = new HashMap<>();
+        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "ubuntu-1604");
 
         String awsEndpointType = EndpointType.aws.name();
         context = new EnhanceContext();
-        context.imageType = "ubuntu-1604";
         context.endpointType = awsEndpointType;
         context.profileLink = UriUtils.buildUriPath(ProfileService.FACTORY_LINK,
                 awsEndpointType);
@@ -155,8 +166,8 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
 
     @Test
     public void testEnhanceImageInstanceTypeCaseInsensitive() throws JsonProcessingException {
-        context.imageType = "CoreOs";
         cd.instanceType = "xLarge";
+        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "CoreOs");
 
         TestContext ctx = testCreate(1);
         DeferredResult<ComputeDescription> result = ComputeDescriptionEnhancers
@@ -177,9 +188,7 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
 
     @Test
     public void testEnhanceDisk() throws Throwable {
-        context.imageType = "CoreOs";
         cd.instanceType = "xLarge";
-        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "vc://datastore/test.iso");
 
         // Build Profile service
         ProfileStateExpanded profileState = buildProfileServiceWithStorage();
@@ -200,6 +209,7 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         ComputeDescriptionDiskEnhancer enhancer = new ComputeDescriptionDiskEnhancer(this.host,
                 this.host.getReferer());
 
+        context.resolvedImage = "vc://datastore/test.iso";
         TestContext ctx = testCreate(1);
         DeferredResult<ComputeDescription> result = enhancer.enhance(context, cd);
         result.whenComplete((desc, t) -> {
@@ -247,9 +257,9 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
 
     @Test
     public void testEnhanceDiskWithNoStorageItems() throws Throwable {
-        context.imageType = "CoreOs";
         cd.instanceType = "xLarge";
-        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "vc://datastore/test.iso");
+        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME,
+                "vc://datastore/test.iso");
 
         // Build disk description
         ArrayList<String> diskLinks = buildDiskStatesForNoStorageItems();
@@ -296,9 +306,9 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
 
     @Test
     public void testEnhanceDiskWithNoStorageItemsForSoftConstraint() throws Throwable {
-        context.imageType = "CoreOs";
         cd.instanceType = "xLarge";
-        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "vc://datastore/test.iso");
+        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME,
+                "vc://datastore/test.iso");
 
         // Build disk description
         ArrayList<String> diskLinks = buildSoftConstraintDisk();
@@ -366,17 +376,6 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         assertNull("Expected to have content", context.content);
     }
 
-    public static class TestInitialBootService extends AbstractInitialBootService {
-        public static final String SELF_LINK = ManagementUriParts.CONFIG + "/test-initial-boot";
-
-        @Override
-        public void handlePost(Operation post) {
-            ArrayList<ServiceDocument> states = new ArrayList<>();
-            states.addAll(ProfileService.getAllDefaultDocuments());
-            initInstances(post, false, true, states.toArray(new ServiceDocument[states.size()]));
-        }
-    }
-
     private AuthCredentialsServiceState getClientPublicSshKeyAuth() throws Throwable {
         AuthCredentialsServiceState state = new AuthCredentialsServiceState();
         state.type = AuthCredentialsType.Public.name();
@@ -418,12 +417,14 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
                 UriUtils.URI_PARAM_ODATA_EXPAND,
                 ServiceDocumentQueryResult.FIELD_NAME_DOCUMENT_LINKS);
         assertEquals(storage.documentSelfLink, retrievedExpandedProfile.storageProfileLink);
-        assertEquals(storage.documentSelfLink, retrievedExpandedProfile.storageProfile.documentSelfLink);
+        assertEquals(storage.documentSelfLink,
+                retrievedExpandedProfile.storageProfile.documentSelfLink);
 
         return retrievedExpandedProfile;
     }
 
-    private StorageProfileService.StorageProfile buildStorageProfileWithConstraints() throws Throwable {
+    private StorageProfileService.StorageProfile buildStorageProfileWithConstraints()
+            throws Throwable {
         ArrayList<String> tags = buildTagLinks();
 
         StorageProfileService.StorageItem storageItem1 = new StorageProfileService.StorageItem();

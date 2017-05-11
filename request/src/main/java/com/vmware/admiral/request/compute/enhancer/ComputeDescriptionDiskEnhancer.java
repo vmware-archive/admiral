@@ -63,9 +63,9 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                     // Iterate over all the disk desc links to get the disk state, if nothing is
                     // available then create a default disk
                     if (cd.diskDescLinks == null || cd.diskDescLinks.isEmpty()) {
-                        return createOsDiskState(profile, cd);
+                        return createOsDiskState(context, profile, cd);
                     } else {
-                        return enhanceDiskStates(profile, cd);
+                        return enhanceDiskStates(context, profile, cd);
                     }
                 });
     }
@@ -73,7 +73,7 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
     /**
      * Create a Boot disk if there are no disks provided as input.
      */
-    private DeferredResult<ComputeDescription> createOsDiskState(
+    private DeferredResult<ComputeDescription> createOsDiskState(EnhanceContext context,
             ProfileService.ProfileStateExpanded profile, ComputeDescription computeDesc) {
         try {
             DiskState rootDisk = new DiskState();
@@ -98,7 +98,7 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                 rootDisk.customProperties = new HashMap<>(storageItem.diskProperties);
             }
 
-            fillInBootConfigContent(computeDesc, rootDisk);
+            fillInBootConfigContent(context, computeDesc, rootDisk);
             DeferredResult<ComputeDescription> result = this.host
                     .sendWithDeferredResult(createDiskDescriptionState(rootDisk),
                             DiskState.class)
@@ -117,7 +117,7 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
     /**
      * Enhances the disk state with the properties that are available in the profile.
      */
-    private DeferredResult<ComputeDescription> enhanceDiskStates(
+    private DeferredResult<ComputeDescription> enhanceDiskStates(EnhanceContext context,
             ProfileService.ProfileStateExpanded profile,
             ComputeDescription cd) {
         DeferredResult<ComputeDescription> compDescResult = DeferredResult.allOf(
@@ -131,7 +131,7 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                         .map(dr -> dr.thenCompose(diskState -> {
                             if (diskState.type != null
                                     && diskState.type == DiskService.DiskType.HDD) {
-                                fillInBootConfigContent(cd, diskState);
+                                fillInBootConfigContent(context, cd, diskState);
                             }
                             // Match the constraints from Disk to the profile to extract the
                             // provider specific properties.
@@ -250,9 +250,9 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
     /**
      * If there is boot config content in custom properties then fill it into the boot disk.
      */
-    private void fillInBootConfigContent(ComputeDescription computeDesc, DiskState diskState) {
-        String imageId = computeDesc.customProperties
-                .get(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
+    private void fillInBootConfigContent(EnhanceContext context, ComputeDescription computeDesc,
+            DiskState diskState) {
+        String imageId = context.resolvedImage;
 
         diskState.sourceImageReference = URI.create(imageId);
 

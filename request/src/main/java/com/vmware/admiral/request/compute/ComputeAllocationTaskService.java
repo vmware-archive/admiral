@@ -97,7 +97,8 @@ import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
 public class ComputeAllocationTaskService
-        extends AbstractTaskStatefulService<ComputeAllocationTaskService.ComputeAllocationTaskState, ComputeAllocationTaskService.ComputeAllocationTaskState.SubStage>
+        extends
+        AbstractTaskStatefulService<ComputeAllocationTaskService.ComputeAllocationTaskState, ComputeAllocationTaskService.ComputeAllocationTaskState.SubStage>
         implements EventTopicDeclarator {
 
     public static final String FACTORY_LINK = ManagementUriParts.REQUEST_COMPUTE_ALLOCATION_TASKS;
@@ -173,6 +174,13 @@ public class ComputeAllocationTaskService
 
     protected static class CallbackCompleteResponse extends ServiceTaskCallbackResponse {
         Set<String> resourceLinks;
+    }
+
+    /**
+     * Defines fields which are eligible for modification in case of subscription for task.
+     */
+    protected static class ExtensibilityCallbackResponse extends BaseExtensibilityCallbackResponse {
+        public Set<String> resourceNames;
     }
 
     public ComputeAllocationTaskService() {
@@ -289,7 +297,7 @@ public class ComputeAllocationTaskService
                             failTask("Error getting profile constraints: ", e);
                             return;
                         }
-                        queryProfile(state, endpoint,
+                        queryProfiles(state, endpoint,
                                 QueryUtil.getTenantLinks(state.tenantLinks), networkProfileLinks,
                                 (links) -> prepareContext(state, computeDesc, resourcePool,
                                         endpoint, links));
@@ -399,8 +407,6 @@ public class ComputeAllocationTaskService
         context.regionId = endpointComputeDescription.regionId;
         context.zoneId = endpointComputeDescription.zoneId;
         context.endpointType = state.endpointType;
-        context.imageType = computeDesc.customProperties
-                .remove(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
 
         enhanceComputeDescription(computeDesc, context, state, new ArrayList<>(state.profileLinks));
 
@@ -419,6 +425,8 @@ public class ComputeAllocationTaskService
                             failTask("Failed patching compute description : "
                                     + Utils.toString(t), t);
                         } else {
+                            context.resolvedImage = null;
+                            context.content = null;
                             enhanceComputeDescription(computeDesc, context, state, profileLinks);
                         }
                         return;
@@ -617,8 +625,8 @@ public class ComputeAllocationTaskService
 
         // networkLinks may be null (in which case they may be set during network provisioning if
         // there are networks defined in the blueprint)
-        resource.networkInterfaceLinks = networkLinks != null && networkLinks.isEmpty() ? null :
-                networkLinks;
+        resource.networkInterfaceLinks = networkLinks != null && networkLinks.isEmpty() ? null
+                : networkLinks;
         resource.customProperties = new HashMap<>(state.customProperties);
         if (state.groupResourcePlacementLink != null) {
             resource.customProperties.put(ComputeConstants.GROUP_RESOURCE_PLACEMENT_LINK_NAME,
@@ -718,7 +726,8 @@ public class ComputeAllocationTaskService
                         .thenCompose(nic -> {
                             if (nic != null) {
                                 return this.sendWithDeferredResult(
-                                        Operation.createPost(this, NetworkInterfaceService.FACTORY_LINK)
+                                        Operation.createPost(this,
+                                                NetworkInterfaceService.FACTORY_LINK)
                                                 .setBody(nic),
                                         NetworkInterfaceState.class);
                             } else {
@@ -900,7 +909,7 @@ public class ComputeAllocationTaskService
                 }).sendWith(this);
     }
 
-    private void queryProfile(ComputeAllocationTaskState state,
+    private void queryProfiles(ComputeAllocationTaskState state,
             EndpointState endpoint, List<String> tenantLinks, List<String> profileLinks,
             Consumer<List<String>> callbackFunction) {
 
@@ -945,7 +954,7 @@ public class ComputeAllocationTaskService
                     }
                     if (foundProfiles.isEmpty()) {
                         if (tenantLinks != null && !tenantLinks.isEmpty()) {
-                            queryProfile(state, endpoint, null,
+                            queryProfiles(state, endpoint, null,
                                     profileLinks, callbackFunction);
                         } else {
                             failTask(String.format(
@@ -955,6 +964,7 @@ public class ComputeAllocationTaskService
                         }
                         return;
                     }
+
                     // Sort profiles based on order of profileLinks
                     Stream<ProfileState> sortedProfiles = foundProfiles.stream();
                     if (profileLinks != null && !profileLinks.isEmpty()) {
@@ -967,11 +977,15 @@ public class ComputeAllocationTaskService
                             .partitioningBy(p -> endpoint.documentSelfLink.equals(p.endpointLink)));
 
                     List<ProfileState> endpointProfs = map.get(Boolean.TRUE);
-                    callbackFunction
-                            .accept((endpointProfs.isEmpty() ? map.get(Boolean.FALSE)
-                                    : endpointProfs).stream()
-                                            .map(p -> p.documentSelfLink)
-                                            .collect(Collectors.toList()));
+                    List<String> matchingProfilesLinks = (endpointProfs.isEmpty()
+                            ? map.get(Boolean.FALSE)
+                            : endpointProfs).stream()
+                                    .map(p -> p.documentSelfLink)
+                                    .collect(Collectors.toList());
+
+                    logInfo("The following profiles are available for endpoint [%s]: %s",
+                            endpoint.documentSelfLink, matchingProfilesLinks);
+                    callbackFunction.accept(matchingProfilesLinks);
                 });
     }
 
@@ -1017,13 +1031,6 @@ public class ComputeAllocationTaskService
         return new ExtensibilityCallbackResponse();
     }
 
-    /**
-     * Defines fields which are eligible for modification in case of subscription for task.
-     */
-    protected static class ExtensibilityCallbackResponse extends BaseExtensibilityCallbackResponse {
-        public Set<String> resourceNames;
-    }
-
     @Override
     protected void enhanceNotificationPayload(ComputeAllocationTaskState state,
             BaseExtensibilityCallbackResponse notificationPayload, Runnable callback) {
@@ -1036,7 +1043,8 @@ public class ComputeAllocationTaskService
     @Override
     protected void autoMergeState(Operation patch, ComputeAllocationTaskState patchBody,
             ComputeAllocationTaskState currentState) {
-        if (ComputeAllocationTaskState.SubStage.SUBSCRIPTION_SUB_STAGES.contains(patchBody.taskSubStage)) {
+        if (ComputeAllocationTaskState.SubStage.SUBSCRIPTION_SUB_STAGES
+                .contains(patchBody.taskSubStage)) {
             if (currentState.resourceNames != null && !currentState.resourceNames.isEmpty()) {
                 // A couple of possible scenarios here:
                 // 1.current names -> [a,b]; patched names -> [c]; => result will be [a,c]
@@ -1077,11 +1085,10 @@ public class ComputeAllocationTaskService
         taskInfo.stage = TaskStage.STARTED.name();
         taskInfo.substage = SubStage.SELECT_PLACEMENT_COMPUTES.name();
 
-        EventTopicUtils.registerEventTopic(EventTopicConstants
-                        .COMPUTE_NAME_TOPIC_ID,
-                EventTopicConstants.COMPUTE_NAME_TOPIC_NAME, EventTopicConstants
-                        .COMPUTE_NAME_TOPIC_TASK_DESCRIPTION, EventTopicConstants
-                        .COMPUTE_NAME_TOPIC_TASK_SELF_LINK, Boolean.TRUE,
+        EventTopicUtils.registerEventTopic(EventTopicConstants.COMPUTE_NAME_TOPIC_ID,
+                EventTopicConstants.COMPUTE_NAME_TOPIC_NAME,
+                EventTopicConstants.COMPUTE_NAME_TOPIC_TASK_DESCRIPTION,
+                EventTopicConstants.COMPUTE_NAME_TOPIC_TASK_SELF_LINK, Boolean.TRUE,
                 changeComputeNameTopicSchema(), taskInfo, host);
     }
 
@@ -1090,8 +1097,8 @@ public class ComputeAllocationTaskService
                 .addField(EventTopicConstants.COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES)
                 .addDataType(String.class.getSimpleName())
                 .addLabel(EventTopicConstants.COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES_LABEL)
-                .addDescription(EventTopicConstants
-                        .COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION)
+                .addDescription(
+                        EventTopicConstants.COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION)
                 .whereMultiValued(true);
     }
 

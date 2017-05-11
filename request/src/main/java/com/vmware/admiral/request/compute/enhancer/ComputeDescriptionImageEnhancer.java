@@ -39,16 +39,15 @@ public class ComputeDescriptionImageEnhancer extends ComputeDescriptionEnhancer 
             ComputeDescription cd) {
 
         if (cd.customProperties.containsKey(ComputeConstants.CUSTOM_PROP_IMAGE_REF_NAME)) {
-            cd.customProperties.put("__requestedImageType",
+            return apply(context, cd,
                     cd.customProperties.get(ComputeConstants.CUSTOM_PROP_IMAGE_REF_NAME));
-            return apply(cd, cd.customProperties.get(ComputeConstants.CUSTOM_PROP_IMAGE_REF_NAME));
         }
         if (cd.customProperties.containsKey(TEMPLATE_LINK)) {
-            cd.customProperties.put("__requestedImageType", context.imageType);
-            cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, context.imageType);
             return DeferredResult.completed(cd);
         }
-        if (context.imageType == null) {
+
+        String imageType = cd.customProperties.get(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
+        if (imageType == null) {
             return DeferredResult.failed(new IllegalStateException(
                     String.format("No imageType specified for requested compute %s", cd.name)));
         }
@@ -56,8 +55,7 @@ public class ComputeDescriptionImageEnhancer extends ComputeDescriptionEnhancer 
         return getProfileState(host, referer, context)
                 .thenCompose(profile -> {
                     context.profile = profile;
-                    cd.customProperties.put("__requestedImageType", context.imageType);
-                    String absImageId = context.imageType;
+                    String absImageId = imageType;
                     String imageId = null;
                     ComputeImageDescription imageDesc = getComputeImageDescription(profile,
                             absImageId);
@@ -73,11 +71,12 @@ public class ComputeDescriptionImageEnhancer extends ComputeDescriptionEnhancer 
                                 "No matching image type defined in profile: %s, for requested image type: %s",
                                 profile.documentSelfLink, absImageId)));
                     }
-                    return apply(cd, imageId);
+                    return apply(context, cd, imageId);
                 });
     }
 
-    private DeferredResult<ComputeDescription> apply(ComputeDescription cd, String image) {
+    private DeferredResult<ComputeDescription> apply(EnhanceContext context, ComputeDescription cd,
+            String image) {
         try {
             URI imageUri = URI.create(image);
             String scheme = imageUri.getScheme();
@@ -86,7 +85,7 @@ public class ComputeDescriptionImageEnhancer extends ComputeDescriptionEnhancer 
                             || scheme.startsWith("file"))) {
                 cd.customProperties.put(OVA_URI, imageUri.toString());
             }
-            cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, image);
+            context.resolvedImage = image;
         } catch (Throwable t) {
             return DeferredResult.failed(t);
         }
