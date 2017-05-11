@@ -60,6 +60,17 @@ public class ComputeStateEnhancersTest extends BaseTestCase {
     private ComputeState cs;
     private EnhanceContext context;
 
+    public static class TestInitialBootService extends AbstractInitialBootService {
+        public static final String SELF_LINK = ManagementUriParts.CONFIG + "/test-initial-boot";
+
+        @Override
+        public void handlePost(Operation post) {
+            ArrayList<ServiceDocument> states = new ArrayList<>();
+            states.addAll(ProfileService.getAllDefaultDocuments());
+            initInstances(post, false, true, states.toArray(new ServiceDocument[states.size()]));
+        }
+    }
+
     @Before
     public void setup() throws Throwable {
         host.registerForServiceAvailability(CaSigningCertService.startTask(host), true,
@@ -83,10 +94,10 @@ public class ComputeStateEnhancersTest extends BaseTestCase {
 
         cs = new ComputeState();
         cs.customProperties = new HashMap<>();
+        cs.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "ubuntu-1604");
 
         String awsEndpointType = EndpointType.aws.name();
         context = new EnhanceContext();
-        context.imageType = "ubuntu-1604";
         context.endpointType = awsEndpointType;
         context.profileLink = UriUtils.buildUriPath(ProfileService.FACTORY_LINK,
                 awsEndpointType);
@@ -335,8 +346,7 @@ public class ComputeStateEnhancersTest extends BaseTestCase {
     @SuppressWarnings("unchecked")
     @Test
     public void testEnhanceWithRemoteAPIAndCustomPortOnCoreOs() throws Throwable {
-        context.imageType = "coreos";
-
+        cs.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "coreos");
         cs.customProperties.put(ComputeAllocationTaskState.ENABLE_COMPUTE_CONTAINER_HOST_PROP_NAME,
                 "true");
         cs.customProperties.put(ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
@@ -406,17 +416,6 @@ public class ComputeStateEnhancersTest extends BaseTestCase {
                 cs.customProperties.get(ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME));
     }
 
-    public static class TestInitialBootService extends AbstractInitialBootService {
-        public static final String SELF_LINK = ManagementUriParts.CONFIG + "/test-initial-boot";
-
-        @Override
-        public void handlePost(Operation post) {
-            ArrayList<ServiceDocument> states = new ArrayList<>();
-            states.addAll(ProfileService.getAllDefaultDocuments());
-            initInstances(post, false, true, states.toArray(new ServiceDocument[states.size()]));
-        }
-    }
-
     private AuthCredentialsServiceState getClientPublicKeyAuth() throws Throwable {
         AuthCredentialsServiceState state = new AuthCredentialsServiceState();
         state.type = AuthCredentialsType.PublicKey.name();
@@ -466,6 +465,7 @@ public class ComputeStateEnhancersTest extends BaseTestCase {
         cd.customProperties = new HashMap<>();
         cd.customProperties.put(ComputeConstants.CUSTOM_PROP_ENABLE_SSH_ACCESS_NAME,
                 "true");
+        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "ubuntu-1604");
 
         return doPost(cd, ComputeDescriptionService.FACTORY_LINK);
     }

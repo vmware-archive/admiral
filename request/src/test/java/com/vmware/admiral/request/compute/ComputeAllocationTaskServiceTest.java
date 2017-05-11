@@ -80,7 +80,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         assertNotNull(computeState.customProperties);
         String profileLink = computeState.customProperties.get(CUSTOM_PROP_PROFILE_LINK_NAME);
         assertNotNull(profileLink);
-        assertEquals(profileLink, p1.documentSelfLink);
+        assertEquals(p1.documentSelfLink, profileLink);
     }
 
     @Test

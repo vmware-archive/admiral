@@ -141,7 +141,6 @@ public class ComputeProvisionTaskService extends
                         EnhanceContext context = new EnhanceContext();
                         context.endpointType = cs.customProperties
                                 .get(ComputeConstants.CUSTOM_PROP_ENDPOINT_TYPE_NAME);
-                        context.imageType = cs.customProperties.get("__requestedImageType");
 
                         return ComputeStateEnhancers.build(getHost(), referer).enhance(context, cs);
                     }).thenCompose(cs -> sendWithDeferredResult(

@@ -37,7 +37,7 @@ public interface Enhancer<T extends ResourceState> {
         public String regionId;
         public String zoneId;
         public String endpointType;
-        public String imageType;
+        public String resolvedImage;
         public Map<String, Object> content;
         public boolean skipNetwork;
 

@@ -38,7 +38,6 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.ResourcePlacementReservationRequest;
@@ -429,8 +428,6 @@ public class ComputeReservationTaskService extends
                                         ComputeDescription cloned = Utils.cloneObject(computeDesc);
                                         EnhanceContext context = new EnhanceContext();
                                         context.profileLink = profileLink;
-                                        context.imageType = cloned.customProperties
-                                                .remove(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
                                         context.skipNetwork = true;
                                         context.regionId = profileEntry.endpoint.endpointProperties
                                                 .get(EndpointConfigRequest.REGION_KEY);

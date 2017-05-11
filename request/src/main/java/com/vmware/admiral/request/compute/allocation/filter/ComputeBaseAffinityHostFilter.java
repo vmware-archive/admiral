@@ -38,6 +38,39 @@ public abstract class ComputeBaseAffinityHostFilter
         this.host = host;
     }
 
+    protected static QueryTask getBidirectionalDescQuery(String fieldName, String value,
+            Collection<String> affinity) {
+        final QueryTask descQuery = QueryUtil.buildQuery(ComputeDescription.class, false);
+
+        QueryTask.Query otherComputesWithAffinityToThis = new QueryTask.Query()
+                .setTermPropertyName(fieldName)
+                .setTermMatchType(QueryTask.QueryTerm.MatchType.WILDCARD)
+                .setTermMatchValue(value);
+
+        if (affinity != null && !affinity.isEmpty()) {
+            QueryTask.Query descClause = new QueryTask.Query();
+            otherComputesWithAffinityToThis.occurance = QueryTask.Query.Occurance.SHOULD_OCCUR;
+            descClause.addBooleanClause(otherComputesWithAffinityToThis);
+
+            QueryTask.Query listValueClause = QueryUtil
+                    .addCaseInsensitiveListValueClause(ComputeDescription.FIELD_NAME_NAME,
+                            affinity, QueryTask.QueryTerm.MatchType.TERM);
+
+            listValueClause.occurance = QueryTask.Query.Occurance.SHOULD_OCCUR;
+            descClause.addBooleanClause(listValueClause);
+
+            descClause.occurance = QueryTask.Query.Occurance.MUST_OCCUR;
+            descQuery.querySpec.query.addBooleanClause(descClause);
+
+        } else {
+            descQuery.querySpec.query.addBooleanClause(otherComputesWithAffinityToThis);
+        }
+
+        QueryUtil.addExpandOption(descQuery);
+
+        return descQuery;
+    }
+
     @Override
     public void filter(FilterContext state,
             final Map<String, HostSelection> hostSelectionMap,
@@ -69,13 +102,14 @@ public abstract class ComputeBaseAffinityHostFilter
                 return completeWhenNoComputeDescriptionsFound(state, hostSelectionMap,
                         computeDescs);
             }
-            return findComputes(state, hostSelectionMap, computeDescs);
-        }).thenApply(filteredHosts -> {
-            Map<String, HostSelection> result = applyAffinityConstraints(
-                    state, hostSelectionMap, filteredHosts);
-            host.log(Level.INFO, "Selected host links for %s:  - %s", getAffinity(),
-                    hostSelectionMap.keySet());
-            return result;
+            return findComputes(state, hostSelectionMap, computeDescs)
+                    .thenApply(filteredHosts -> {
+                        Map<String, HostSelection> result = applyAffinityConstraints(
+                                state, hostSelectionMap, filteredHosts);
+                        host.log(Level.INFO, "Selected host links for %s:  - %s", getAffinity(),
+                                hostSelectionMap.keySet());
+                        return result;
+                    });
         }).whenComplete((res, ex) -> {
             if (ex != null) {
                 callback.complete(null, ex);
@@ -144,7 +178,6 @@ public abstract class ComputeBaseAffinityHostFilter
 
         QueryUtil.addExpandOption(queryTask);
 
-
         final Map<String, HostSelection> filteredHostSelectionMap = new HashMap<>();
         DeferredResult<Map<String, HostSelection>> result = new DeferredResult<>();
         new ServiceDocumentQuery<>(host, ComputeState.class)
@@ -198,39 +231,7 @@ public abstract class ComputeBaseAffinityHostFilter
             final Map<String, HostSelection> filteredHostSelectionMap,
             final Map<String, DescName> computeDescLinksWithNames) {
         final String errMsg = String.format("No compute descriptions with [%s].", getAffinity());
-        return DeferredResult.failed(new HostSelectionFilterException(errMsg, "request.affinity.no.compute-doesc", getAffinity()));
-    }
-
-    protected static QueryTask getBidirectionalDescQuery(String fieldName, String value,
-            Collection<String> affinity) {
-        final QueryTask descQuery = QueryUtil.buildQuery(ComputeDescription.class, false);
-
-        QueryTask.Query otherComputesWithAffinityToThis = new QueryTask.Query()
-                .setTermPropertyName(fieldName)
-                .setTermMatchType(QueryTask.QueryTerm.MatchType.WILDCARD)
-                .setTermMatchValue(value);
-
-        if (affinity != null && !affinity.isEmpty()) {
-            QueryTask.Query descClause = new QueryTask.Query();
-            otherComputesWithAffinityToThis.occurance = QueryTask.Query.Occurance.SHOULD_OCCUR;
-            descClause.addBooleanClause(otherComputesWithAffinityToThis);
-
-            QueryTask.Query listValueClause = QueryUtil
-                    .addCaseInsensitiveListValueClause(ComputeDescription.FIELD_NAME_NAME,
-                            affinity, QueryTask.QueryTerm.MatchType.TERM);
-
-            listValueClause.occurance = QueryTask.Query.Occurance.SHOULD_OCCUR;
-            descClause.addBooleanClause(listValueClause);
-
-            descClause.occurance = QueryTask.Query.Occurance.MUST_OCCUR;
-            descQuery.querySpec.query.addBooleanClause(descClause);
-
-        } else {
-            descQuery.querySpec.query.addBooleanClause(otherComputesWithAffinityToThis);
-        }
-
-        QueryUtil.addExpandOption(descQuery);
-
-        return descQuery;
+        return DeferredResult.failed(new HostSelectionFilterException(errMsg,
+                "request.affinity.no.compute-doesc", getAffinity()));
     }
 }
