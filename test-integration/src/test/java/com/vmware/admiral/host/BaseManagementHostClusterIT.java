@@ -68,7 +68,6 @@ import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.C
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.HostContainerListDataCollection;
-import com.vmware.admiral.compute.container.HostContainerListDataCollection.HostContainerListDataCollectionState;
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection;
 import com.vmware.admiral.compute.container.HostNetworkListDataCollection.HostNetworkListDataCollectionState;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
@@ -353,9 +352,6 @@ public abstract class BaseManagementHostClusterIT {
 
         defaultContent.put(ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK,
                 ContainerHostDataCollectionState.class);
-        defaultContent.put(
-                HostContainerListDataCollection.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK,
-                HostContainerListDataCollectionState.class);
         defaultContent.put(
                 HostNetworkListDataCollection.DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK,
                 HostNetworkListDataCollectionState.class);
