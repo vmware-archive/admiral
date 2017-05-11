@@ -222,7 +222,7 @@ public class ComputeProvisionTaskService extends
 
     private void createSubTaskForProvisionCallbacks(ComputeProvisionTaskState currentState) {
 
-        ServiceTaskCallback<SubStage> callback = ServiceTaskCallback.create(getSelfLink());
+        ServiceTaskCallback<SubStage> callback = ServiceTaskCallback.create(getUri());
         callback.onSuccessTo(SubStage.PROVISIONING_COMPUTE_COMPLETED);
         SubTaskService.SubTaskState<SubStage> subTaskInitState = new SubTaskService.SubTaskState<>();
         // tell the sub task with what to patch us, on completion

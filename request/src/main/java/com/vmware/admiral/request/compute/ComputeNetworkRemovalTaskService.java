@@ -49,7 +49,6 @@ import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
-import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
 
@@ -164,7 +163,7 @@ public class ComputeNetworkRemovalTaskService extends
             return;
         }
 
-        ServiceTaskCallback<SubStage> callback = ServiceTaskCallback.create(getSelfLink());
+        ServiceTaskCallback<SubStage> callback = ServiceTaskCallback.create(getUri());
         callback.onSuccessTo(SubStage.INSTANCES_REMOVED);
         callback.onErrorTo(SubStage.ERROR);
 
@@ -358,8 +357,7 @@ public class ComputeNetworkRemovalTaskService extends
             response = taskCallback.getFailedResponse(ex);
         }
 
-        sendRequest(Operation.createPatch(UriUtils.buildUri(this.getHost(),
-                taskCallback.serviceSelfLink))
+        sendRequest(Operation.createPatch(taskCallback.serviceURI)
                 .setBody(response)
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
                 .setCompletion((o, e) -> {
