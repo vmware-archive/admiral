@@ -12,6 +12,7 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { ViewExpandRequestService } from './services/view-expand-request.service';
+import { FT } from './utils/ft';
 
 @Component({
     selector: 'my-app',
@@ -33,6 +34,6 @@ export class AppComponent {
     }
 
     get embedded(): boolean {
-        return window['isEmbedded'];
+        return FT.isApplicationEmbedded();
     }
 }

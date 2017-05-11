@@ -66,7 +66,7 @@ export class Ajax {
     }
 
     let requestOptions = new RequestOptions({
-      url: url,
+      url: this.serviceUrl(url),
       body: data,
       method: method,
       headers: headers,
@@ -156,6 +156,8 @@ export class Ajax {
   }
 
   public ajaxRaw(requestOptions: RequestOptions): Promise<any> {
+    requestOptions.url = this.serviceUrl(requestOptions.url);
+
     return this.http.request(new Request(requestOptions))
       .toPromise()
       .catch(error => this.handleAjaxError(error));
@@ -210,4 +212,13 @@ export class Ajax {
         interval);
     });
   }
+
+  // It could be set on App level to send calls to a different base.
+  private serviceUrl(path) {
+    let wnd:any = window;
+    if (wnd.getBaseServiceUrl) {
+      return wnd.getBaseServiceUrl(path);
+    }
+    return path;
+  };
 }

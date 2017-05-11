@@ -57,7 +57,7 @@ function initApp() {
         configPropsUrl = window['getBaseServiceUrl'](configPropsUrl);
       }
 
-      xhr.open('GET', configPropsUrl + '?expand=true', true);
+      xhr.open('GET', configPropsUrl + '?expand=true&documentType=true', true);
       xhr.send(null);
   });
 }
@@ -74,7 +74,6 @@ function loadScript(retries) {
 }
 
 if (window.parent) {
-  window['isEmbedded'] = true;
   loadScript(50);
 } else {
   initApp();

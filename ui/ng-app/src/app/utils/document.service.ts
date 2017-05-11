@@ -81,6 +81,7 @@ export class DocumentService {
     // params.set('$limit', serviceUtils.calculateLimit().toString());
     params.set('$limit', '10');
     params.set('expand', 'true');
+    params.set('documentType', 'true');
     params.set('$count', 'true');
 
     if (queryOptions) {

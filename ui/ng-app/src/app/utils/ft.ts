@@ -67,4 +67,9 @@ export class FT {
   public static isRequestGraphEnabled() {
     return Utils.getConfigurationPropertyBoolean('allow.ft.request-graph');
   }
+
+  public static isApplicationEmbedded() {
+    return Utils.getConfigurationPropertyBoolean('embedded');
+  }
+
 };
