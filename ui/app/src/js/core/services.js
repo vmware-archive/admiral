@@ -877,6 +877,30 @@ services.searchNetworks = function(endpointLink, query, limit) {
   });
 };
 
+services.searchSecurityGroups = function(endpointLink, query, limit) {
+  var qOps = {
+    any: query.toLowerCase(),
+    endpoint: endpointLink
+  };
+
+  let filter = buildSearchQuery(qOps);
+  let url = buildPaginationUrl(links.SECURITY_GROUPS, filter, true,
+                               'documentUpdateTimeMicros desc', limit);
+  return get(url).then(function(data) {
+    var documentLinks = data.documentLinks || [];
+
+    var result = {
+      totalCount: data.totalCount
+    };
+
+    result.items = documentLinks.map((link) => {
+      return data.documents[link];
+    });
+
+    return result;
+  });
+};
+
 services.loadSubnetworks = function(endpointLink, documentSelfLinks) {
   var params = {};
   if (documentSelfLinks && documentSelfLinks.length) {

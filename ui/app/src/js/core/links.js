@@ -37,6 +37,7 @@ var links = Immutable({
   TAGS: RESOURCES + '/tags',
   TAG_ASSIGNMENT: RESOURCES + '/tag-assignment',
   EPZ_CONFIG: RESOURCES + '/elastic-placement-zones-config',
+  SECURITY_GROUPS: RESOURCES + '/security-groups',
   NETWORKS: RESOURCES + '/networks',
   SUBNETWORKS: RESOURCES + '/sub-networks',
   IMAGE_RESOURCES: RESOURCES + '/images',

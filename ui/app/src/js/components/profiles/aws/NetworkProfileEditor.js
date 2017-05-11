@@ -135,6 +135,14 @@ export default Vue.component('aws-network-profile-editor', {
         }).catch(reject);
       });
     },
+    searchSecurityGroups(...args) {
+      return new Promise((resolve, reject) => {
+        services.searchSecurityGroups.apply(null,
+            [this.endpoint.documentSelfLink, ...args]).then((result) => {
+          resolve(result);
+        }).catch(reject);
+      });
+    },
     manageSubnetworks() {
       this.$emit('manage.subnetworks');
     },
