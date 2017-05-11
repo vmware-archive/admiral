@@ -213,7 +213,7 @@ public class ComputeNetworkProvisionTaskService
                         "No compute network instances to provision",
                         "request.compute.network.provision.empty");
             }
-            ServiceTaskCallback<SubStage> callback = ServiceTaskCallback.create(getSelfLink());
+            ServiceTaskCallback<SubStage> callback = ServiceTaskCallback.create(getUri());
             callback.onSuccessTo(SubStage.COMPLETED);
             callback.onErrorTo(SubStage.ERROR);
 
@@ -722,8 +722,7 @@ public class ComputeNetworkProvisionTaskService
             response = taskCallback.getFailedResponse(ex);
         }
 
-        sendRequest(Operation.createPatch(UriUtils.buildUri(this.getHost(),
-                taskCallback.serviceSelfLink))
+        sendRequest(Operation.createPatch(taskCallback.serviceURI)
                 .setBody(response)
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
                 .setCompletion((o, e) -> {
