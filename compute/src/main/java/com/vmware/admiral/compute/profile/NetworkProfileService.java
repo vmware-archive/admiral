@@ -19,11 +19,15 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
+
+import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService;
 import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationState;
 import com.vmware.photon.controller.model.query.QueryUtils.QueryTop;
@@ -31,6 +35,7 @@ import com.vmware.photon.controller.model.resources.EndpointService.EndpointStat
 import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.ResourceUtils;
+import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
@@ -64,6 +69,11 @@ public class NetworkProfileService extends StatefulService {
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
         public List<String> subnetLinks;
 
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
+        @Documentation(description = "SecurityGroupStates included in this network profile")
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
+        public List<String> securityGroupLinks;
+
         @Documentation(description = "Specifies the isolation support type e.g. none, subnet or "
                 + "security group")
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL, OPTIONAL })
@@ -74,6 +84,7 @@ public class NetworkProfileService extends StatefulService {
         @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL, OPTIONAL })
         public String isolationNetworkLink;
 
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
         @Documentation(description = "CIDR of the isolation network. If not provided it will be "
                 + "retrieved from the isolation network itself. To be used when isolation network"
                 + " doesn't have a CIDR itself.")
@@ -104,6 +115,7 @@ public class NetworkProfileService extends StatefulService {
                 NetworkProfile targetState = (NetworkProfile) target;
                 targetState.endpointLink = this.endpointLink;
                 targetState.subnetLinks = this.subnetLinks;
+                targetState.securityGroupLinks = this.securityGroupLinks;
                 targetState.isolationType = this.isolationType;
                 targetState.isolationNetworkLink = this.isolationNetworkLink;
                 targetState.isolationNetworkCIDRAllocationLink =
@@ -116,6 +128,8 @@ public class NetworkProfileService extends StatefulService {
 
     public static class NetworkProfileExpanded extends NetworkProfile {
         public List<SubnetState> subnetStates;
+
+        public List<SecurityGroupState> securityGroupStates;
 
         public NetworkState isolatedNetworkState;
 
@@ -169,7 +183,8 @@ public class NetworkProfileService extends StatefulService {
         }
 
         NetworkProfileExpanded expanded = new NetworkProfileExpanded();
-        expanded.subnetStates = new ArrayList<>();
+        expanded.subnetStates = new CopyOnWriteArrayList<>();
+        expanded.securityGroupStates = new CopyOnWriteArrayList<>();
         currentState.copyTo(expanded);
 
         List<Operation> getOps = new ArrayList<>();
@@ -181,6 +196,16 @@ public class NetworkProfileService extends StatefulService {
                             expanded.subnetStates.add(o.getBody(SubnetState.class));
                         }
                     })));
+        }
+        if (currentState.securityGroupLinks != null) {
+            currentState.securityGroupLinks.forEach(sp ->
+                    getOps.add(Operation.createGet(this, sp)
+                            .setReferer(this.getUri())
+                            .setCompletion((o, e) -> {
+                                if (e == null) {
+                                    expanded.securityGroupStates.add(o.getBody(SecurityGroupState.class));
+                                }
+                            })));
         }
         if (currentState.isolationNetworkLink != null) {
             getOps.add(Operation.createGet(this, currentState.isolationNetworkLink)
@@ -308,6 +333,7 @@ public class NetworkProfileService extends StatefulService {
         np.isolationType = NetworkProfile.IsolationSupportType.NONE;
         np.tagLinks = new HashSet<>();
         np.subnetLinks = new ArrayList<>();
+        np.securityGroupLinks = new ArrayList<>();
         return np;
     }
 

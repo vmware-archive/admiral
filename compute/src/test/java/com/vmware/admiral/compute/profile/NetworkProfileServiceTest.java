@@ -17,6 +17,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.UUID;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -31,6 +34,8 @@ import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfileEx
 import com.vmware.photon.controller.model.resources.NetworkService;
 import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
 import com.vmware.photon.controller.model.resources.ResourceUtils;
+import com.vmware.photon.controller.model.resources.SecurityGroupService;
+import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.UriUtils;
 
@@ -93,10 +98,23 @@ public class NetworkProfileServiceTest extends ComputeBaseTest {
     public void testGetExpandedNetworkProfile() throws Throwable {
         ComputeNetworkCIDRAllocationState cidrAllocation = createNetworkCIDRAllocationState();
 
+        SecurityGroupState securityGroupState = new SecurityGroupState();
+        securityGroupState.name = "securityGroupStateName";
+        securityGroupState.documentSelfLink = UUID.randomUUID().toString();
+        securityGroupState.egress = new ArrayList<>();
+        securityGroupState.ingress = new ArrayList<>();
+        securityGroupState.regionId = "regionId";
+        securityGroupState.authCredentialsLink = UUID.randomUUID().toString();
+        securityGroupState.resourcePoolLink = UUID.randomUUID().toString();
+        securityGroupState.instanceAdapterReference = new URI(
+                "http://instanceAdapterReference");
+        securityGroupState = doPost(securityGroupState, SecurityGroupService.FACTORY_LINK);
+
         NetworkProfile networkProfile = new NetworkProfile();
         networkProfile.name = "networkProfileName";
         networkProfile.isolationNetworkLink = cidrAllocation.networkLink;
         networkProfile.isolationNetworkCIDR = "192.168.0.0/16";
+        networkProfile.securityGroupLinks = Arrays.asList(securityGroupState.documentSelfLink);
 
         networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
 
@@ -110,6 +128,7 @@ public class NetworkProfileServiceTest extends ComputeBaseTest {
         assertEquals(networkProfile.isolatedSubnetCIDRPrefix, expanded.isolatedSubnetCIDRPrefix);
         assertEquals(networkProfile.isolationNetworkCIDR, expanded.isolationNetworkCIDR);
         assertEquals(networkProfile.isolationNetworkLink, expanded.isolationNetworkLink);
+        assertEquals(securityGroupState.documentSelfLink, expanded.securityGroupStates.iterator().next().documentSelfLink);
     }
 
     @Test
