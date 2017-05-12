@@ -13,11 +13,13 @@ package com.vmware.admiral.request;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.net.ServerSocket;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -31,11 +33,14 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
+import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.HealthChecker.HealthConfig;
 import com.vmware.admiral.request.ContainerControlLoopService.ContainerControlLoopState;
+import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
+import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.photon.controller.model.query.QueryUtils.QueryByPages;
 import com.vmware.xenon.common.DeferredResult;
@@ -124,12 +129,21 @@ public class ContainerControlLoopServiceTest extends RequestBaseTest {
         });
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testRedeploymentOfAContainerInCluster() throws Throwable {
+        redeploymentOfAContainerInCluster(2, 1);
+    }
 
-        containerDescription1 = createContainerDescription(false);
-        containerDescription1._cluster = 2;
+    @Test
+    public void testRedeploymentOfAContainerInClusterAllContainersInError() throws Throwable {
+        redeploymentOfAContainerInCluster(2, 2);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void redeploymentOfAContainerInCluster(int containersInCluster, int containerInError) throws Throwable {
+        assertTrue(containersInCluster >= containerInError);
+        containerDescription1 = createContainerDescription();
+        containerDescription1._cluster = containersInCluster;
 
         ServerSocket serverSocket = new ServerSocket(0);
         HealthConfig healthConfig = createHealthConfigTcp(serverSocket.getLocalPort());
@@ -137,13 +151,22 @@ public class ContainerControlLoopServiceTest extends RequestBaseTest {
         containerDescription1.healthConfig = healthConfig;
         doPut(containerDescription1);
 
-        // starting a listener for the health check
         try {
-            // provision 2 containers in cluster
-            ContainerState state = provisionContainer(containerDescription1.documentSelfLink);
-            // change the power state of one of them
-            state.powerState = PowerState.ERROR;
-            doPut(state);
+            RequestBrokerState request = TestRequestStateFactory.createRequestState(ResourceType.CONTAINER_TYPE.getName(), containerDescription1.documentSelfLink);
+            request = startRequest(request);
+            request = waitForRequestToComplete(request);
+
+            Iterator<String> iterator = request.resourceLinks.iterator();
+
+            ContainerState containerState = null;
+
+            for (int i = 0; i < containerInError; i++) {
+                assertTrue(iterator.hasNext());
+                containerState = searchForDocument(ContainerState.class, iterator.next());
+                assertNotNull(containerState);
+                containerState.powerState = PowerState.ERROR;
+                doPut(containerState);
+            }
 
             Map<String, List<String>> containersPerContextId = new HashMap<>();
 

@@ -39,6 +39,11 @@ public abstract class RequestUtils {
      */
     public static final String CLUSTERING_OPERATION_CUSTOM_PROP = "__clustering_operation";
 
+    /**
+     * Flag that tells if this is a container redeployment operation
+     */
+    public static final String CONTAINER_REDEPLOYMENT_CUSTOM_PROP = "__container_redeployment";
+
     private RequestUtils() {
     }
 

@@ -193,7 +193,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
     }
 
     protected static List<String> getTenantLinks() {
-        return createTenantLinks("test-group");
+        return createTenantLinks(TENANT_NAME);
     }
 
     public static NetworkProfile createNetworkProfile(String name) {

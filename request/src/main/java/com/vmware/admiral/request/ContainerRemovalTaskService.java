@@ -15,10 +15,12 @@ import static com.vmware.admiral.common.ManagementUriParts.CLOSURES_CONTAINER_DE
 import static com.vmware.admiral.common.ManagementUriParts.CONTAINER_DESC;
 import static com.vmware.admiral.compute.container.SystemContainerDescriptions.isDiscoveredContainer;
 import static com.vmware.admiral.compute.container.SystemContainerDescriptions.isSystemContainer;
+import static com.vmware.admiral.request.utils.RequestUtils.CONTAINER_REDEPLOYMENT_CUSTOM_PROP;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
+
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -435,7 +437,9 @@ public class ContainerRemovalTaskService
                             operations.add(releasePortsOpr);
                         }
                         // delete container description when deleting all its containers
-                        if (state.resourceLinks.containsAll(resourcesSharingDesc)) {
+                        if (state.resourceLinks.containsAll(resourcesSharingDesc)
+                                && (state.customProperties != null && !state.customProperties
+                                        .containsKey(CONTAINER_REDEPLOYMENT_CUSTOM_PROP))) {
                             // there could be a race condition when containers are in cluster and
                             // the same description tries to be deleted multiple times, that's why
                             // we need to skipOperationException is the description is NOT FOUND

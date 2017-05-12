@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.request;
 
+import static com.vmware.admiral.request.utils.RequestUtils.CONTAINER_REDEPLOYMENT_CUSTOM_PROP;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
@@ -178,6 +179,7 @@ public class ContainerRedeploymentTaskService
                 TaskStage.STARTED, SubStage.CLUSTER, TaskStage.FAILED,
                 SubStage.ERROR);
         requestBrokerState.addCustomProperty(FIELD_NAME_CONTEXT_ID_KEY, state.contextId);
+        requestBrokerState.addCustomProperty(CONTAINER_REDEPLOYMENT_CUSTOM_PROP, "container_redeployment");
 
         sendRequest(Operation.createPost(this, RequestBrokerFactoryService.SELF_LINK)
                 .setBody(requestBrokerState).setCompletion((o, e) -> {
