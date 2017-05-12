@@ -16,7 +16,7 @@ package com.vmware.admiral.adapter.docker.mock;
  */
 public interface MockDockerPathConstants {
     public static final String BASE_PATH = "/mock/docker";
-    public static final String API_VERSION = "1.21";
+    public static final String API_VERSION = "1.24";
     public static final String BASE_VERSIONED_PATH = BASE_PATH + "/v" + API_VERSION;
 
     public static final String CREATE = "/create";
