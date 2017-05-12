@@ -121,7 +121,7 @@ __export(__webpack_require__(158));
 
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.environment = {
-    production: false
+    production: true
 };
 //# sourceMappingURL=/Users/druk/Sites/admiral/src/src/src/environments/environment.js.map
 
@@ -364,7 +364,7 @@ exports = module.exports = __webpack_require__(38)(false);
 
 
 // module
-exports.push([module.i, ".clr-icon.clr-clarity-logo {\n  background-image: url(/admiral/images/vmw_oss.svg); }\n\n.hero {\n  background-color: #ddd;\n  text-align: center;\n  padding-bottom: 3em;\n  padding-top: 3em;\n  width: 100%; }\n  .hero .btn-custom {\n    display: inline-block;\n    text-align: center;\n    margin: auto; }\n\n.hero-image img {\n  max-width: 360px; }\n\n.icon {\n  display: inline-block;\n  height: 32px;\n  vertical-align: middle;\n  width: 32px; }\n  .icon.icon-github {\n    background: url(/admiral/images/github_icon.svg) no-repeat left -2px; }\n\n.nav-group label {\n  display: block;\n  margin-bottom: 1em; }\n\n.sidenav .nav-link {\n  padding: 3px 6px; }\n  .sidenav .nav-link:hover {\n    background: #eee; }\n  .sidenav .nav-link.active {\n    background: #d9e4ea;\n    color: #000; }\n\n.section {\n  padding: .5em 0; }\n\n.contributor {\n  border-radius: 50%;\n  border: 1px solid #ccc;\n  margin-bottom: 1.5em;\n  margin-right: 2.5em;\n  max-width: 104px;\n  text-decoration: none; }\n\n#license {\n  padding-bottom: 44vh; }\n", ""]);
+exports.push([module.i, ".clr-icon.clr-clarity-logo {\n  background-image: url(/admiral/images/vmw_oss.svg); }\n\n.hero {\n  background-color: #ddd;\n  text-align: center;\n  padding-bottom: 3em;\n  padding-top: 3em;\n  width: 100%; }\n  .hero .btn-custom {\n    display: inline-block;\n    text-align: center;\n    margin: auto; }\n\n.hero-image img {\n  max-width: 360px; }\n\n.icon {\n  display: inline-block;\n  height: 32px;\n  vertical-align: middle;\n  width: 32px; }\n  .icon.icon-github {\n    background: url(/admiral/images/github_icon.svg) no-repeat left -2px; }\n\n.nav-group label {\n  display: block;\n  margin-bottom: 1em; }\n\n.sidenav .nav-link {\n  padding: 3px 6px; }\n  .sidenav .nav-link:hover {\n    background: #eee; }\n  .sidenav .nav-link.active {\n    background: #d9e4ea;\n    color: #000; }\n\n.section {\n  padding: .5em 0; }\n\n.contributor {\n  border-radius: 50%;\n  border: 1px solid #ccc;\n  margin-bottom: 1.5em;\n  margin-right: 2.5em;\n  max-width: 104px;\n  text-decoration: none; }\n\n#license {\n  padding-bottom: 48vh; }\n", ""]);
 
 // exports
 
