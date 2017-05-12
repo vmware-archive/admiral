@@ -21,6 +21,10 @@ export class FormerViewComponent implements OnInit, OnDestroy {
   ngOnInit() {
     if (!FormerViewComponent.iframe) {
       FormerViewComponent.iframe = document.createElement('iframe');
+
+      FormerViewComponent.iframe.onload = function() {
+        FormerViewComponent.iframe.contentWindow['getBaseServiceUrl'] = window['getBaseServiceUrl'];
+      };
     }
 
     this.routeObserve = this.router.events.subscribe((event) => {
@@ -33,7 +37,9 @@ export class FormerViewComponent implements OnInit, OnDestroy {
         if (!this.frameHolder.nativeElement.querySelector('iframe')) {
           this.frameHolder.nativeElement.appendChild(FormerViewComponent.iframe);
         }
-        FormerViewComponent.iframe.src = '/index-no-navigation.html#' + url;
+
+        FormerViewComponent.iframe.src = '../index-no-navigation.html#' + url;
+
         this.viewExpandRequestService.requestExpandScreen(true);
       }
     });

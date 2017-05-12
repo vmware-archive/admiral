@@ -31,4 +31,8 @@ export class AppComponent {
             this.fullScreen = isFullScreen;
         });
     }
+
+    get embedded(): boolean {
+        return window['isEmbedded'];
+    }
 }

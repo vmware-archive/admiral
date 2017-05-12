@@ -10,7 +10,7 @@
   -->
 
 <clr-main-container>
-  <clr-header class="header-5">
+  <clr-header class="header-5" *ngIf="!embedded">
     <div class="branding">
         <a class="nav-link" routerLink="/">
             <clr-icon shape="vm-bug"></clr-icon>

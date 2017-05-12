@@ -61,6 +61,10 @@ export class Ajax {
     headers.append('X-Requested-With', 'XMLHttpRequest');
     headers.append('Content-Type', 'application/json');
 
+    if (window['getBaseServiceUrl']) {
+      url = window['getBaseServiceUrl'](url);
+    }
+
     let requestOptions = new RequestOptions({
       url: url,
       body: data,

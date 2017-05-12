@@ -25,18 +25,19 @@ if (environment.production) {
   enableProdMode();
 }
 
-I18n.use(I18nXhrBackend)
-  .use(I18nLanguageDetector)
-  .init({
-    ns: ['admiral', 'kubernetes', 'base'],
-    defaultNS: 'admiral',
-    fallbackLng: 'en',
-    backend: {
-      loadPath: 'assets/i18n/{{ns}}.{{lng}}.json'
-    }
-  },() => {
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function() {
+function initApp() {
+  I18n.use(I18nXhrBackend)
+    .use(I18nLanguageDetector)
+    .init({
+        ns: ['admiral', 'kubernetes', 'base'],
+        defaultNS: 'admiral',
+        fallbackLng: 'en',
+        backend: {
+            loadPath: 'assets/i18n/{{ns}}.{{lng}}.json'
+        }
+    }, () => {
+      var xhr = new XMLHttpRequest();
+      xhr.onreadystatechange = function () {
         if (xhr.readyState == XMLHttpRequest.DONE) {
           let properties = JSON.parse(xhr.responseText).documents;
           var configurationProperties = {};
@@ -49,7 +50,32 @@ I18n.use(I18nXhrBackend)
           Utils.initializeConfigurationProperties(configurationProperties);
           platformBrowserDynamic().bootstrapModule(AppModule);
         }
-    };
-    xhr.open('GET', Links.CONFIG_PROPS + '?expand=true', true);
-    xhr.send(null);
+      };
+
+      let configPropsUrl = Links.CONFIG_PROPS;
+      if (window['getBaseServiceUrl']) {
+        configPropsUrl = window['getBaseServiceUrl'](configPropsUrl);
+      }
+
+      xhr.open('GET', configPropsUrl + '?expand=true', true);
+      xhr.send(null);
   });
+}
+
+// Load main script asynchronously so that the ones that embed can inject things onload
+function loadScript(retries) {
+  if (window['getBaseServiceUrl'] ||  retries === 0) {
+    initApp();
+  } else {
+    setTimeout(function() {
+      loadScript(retries - 1);
+    }, 50);
+  }
+}
+
+if (window.parent) {
+  window['isEmbedded'] = true;
+  loadScript(50);
+} else {
+  initApp();
+}

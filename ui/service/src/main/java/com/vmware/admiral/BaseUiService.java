@@ -83,9 +83,7 @@ public abstract class BaseUiService extends StatelessService {
             get.complete();
             return;
         } else if (requestUri.equals(selfLinkWithTrailing)) {
-            String indexFileName = ConfigurationUtil.isEmbedded()
-                    ? INDEX_EMBEDDED_PATH
-                    : ServiceUriPaths.UI_RESOURCE_DEFAULT_FILE;
+            String indexFileName = ServiceUriPaths.UI_RESOURCE_DEFAULT_FILE;
             String uiResourcePath = selfLinkWithTrailing + indexFileName;
             Operation operation = get.clone();
             operation.setUri(UriUtils.buildUri(getHost(), uiResourcePath, uri.getQuery()))

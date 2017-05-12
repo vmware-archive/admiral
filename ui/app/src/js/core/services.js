@@ -2223,7 +2223,7 @@ services.loadStorageAccounts = function() {
     op: 'eq'
   }];
   return get(links.STORAGE_ACCOUNTS, {
-    [ODATA_FILTER_PROP_NAME]: buildOdataQuery(storageQuery)
+    [ODATA_FILTER_PROP_NAME]: serviceUtils.buildOdataQuery(storageQuery)
   });
 };
 
