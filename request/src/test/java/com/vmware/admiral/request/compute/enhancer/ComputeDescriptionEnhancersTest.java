@@ -19,14 +19,19 @@ import java.security.KeyPair;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletionException;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,14 +40,19 @@ import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
+import com.vmware.admiral.compute.profile.ComputeImageDescription;
 import com.vmware.admiral.compute.profile.ComputeProfileService;
+import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
 import com.vmware.admiral.compute.profile.ImageProfileService;
+import com.vmware.admiral.compute.profile.InstanceTypeDescription;
 import com.vmware.admiral.compute.profile.InstanceTypeService;
 import com.vmware.admiral.compute.profile.NetworkProfileService;
+import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile;
 import com.vmware.admiral.compute.profile.ProfileService;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
 import com.vmware.admiral.compute.profile.StorageProfileService;
+import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfile;
 import com.vmware.admiral.host.CaSigningCertService;
 import com.vmware.admiral.host.HostInitServiceHelper;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
@@ -53,6 +63,7 @@ import com.vmware.photon.controller.model.constants.PhotonModelConstants.Endpoin
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.DiskService;
 import com.vmware.photon.controller.model.resources.DiskService.DiskState;
+import com.vmware.photon.controller.model.resources.ImageService;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService;
 import com.vmware.photon.controller.model.resources.TagFactoryService;
 import com.vmware.photon.controller.model.resources.TagService;
@@ -150,18 +161,7 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
                 DockerAdapterType.API.name());
         cd.customProperties.put(ContainerHostService.DOCKER_HOST_PORT_PROP_NAME, "2376");
 
-        TestContext ctx = testCreate(1);
-        DeferredResult<ComputeDescription> result = ComputeDescriptionEnhancers
-                .build(host, UriUtils.buildUri(host, "test")).enhance(context,
-                        cd);
-        result.whenComplete((desc, t) -> {
-            if (t != null) {
-                ctx.failIteration(t);
-                return;
-            }
-            ctx.completeIteration();
-        });
-        ctx.await();
+        enhance(ComputeDescriptionEnhancers.build(host, UriUtils.buildUri(host, "test")));
 
         assertEquals(ManagementUriParts.AUTH_CREDENTIALS_CLIENT_LINK,
                 cd.customProperties.get(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME));
@@ -172,18 +172,7 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         cd.instanceType = "xLarge";
         cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "CoreOs");
 
-        TestContext ctx = testCreate(1);
-        DeferredResult<ComputeDescription> result = ComputeDescriptionEnhancers
-                .build(host, UriUtils.buildUri(host, "test")).enhance(context,
-                        cd);
-        result.whenComplete((desc, t) -> {
-            if (t != null) {
-                ctx.failIteration(t);
-                return;
-            }
-            ctx.completeIteration();
-        });
-        ctx.await();
+        enhance(ComputeDescriptionEnhancers.build(host, UriUtils.buildUri(host, "test")));
 
         assertNotNull(cd.instanceType);
         assertNotNull(cd.customProperties.get(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME));
@@ -192,17 +181,15 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
     @Test
     public void testEnhanceDisk() throws Throwable {
         cd.instanceType = "xLarge";
+        // Build disk description
+        cd.diskDescLinks = buildDiskStates();
         cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME, "vc://datastore/test.iso");
 
-        // Build Profile service
-        ProfileStateExpanded profileState = buildProfileServiceWithStorage();
-        EnhanceContext context = new EnhanceContext();
-        context.profileLink = profileState.documentSelfLink;
-        context.profile = profileState;
-
-        // Build disk description
-        ArrayList<String> diskLinks = buildDiskStates();
-        cd.diskDescLinks = diskLinks;
+        // OVERRIDE original Context configured by 'setup' method
+        context = new EnhanceContext();
+        context.profile = buildProfileServiceWithStorage();
+        context.profileLink = context.profile.documentSelfLink;
+        context.resolvedImage = "vc://datastore/test.iso";
 
         // Use case 1: CD (Disk1) with all hard constraints
         // Use case 2: CD (Disk2) with all soft constraints & all matching
@@ -210,53 +197,24 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         // Use case 4: CD (Disk4) with all soft constraints & few matching
         // Use case 5: CD (Disk5) with all soft constraints & nothing match
         // Use case 6: CD (Disk6) with constraint null.
-        ComputeDescriptionDiskEnhancer enhancer = new ComputeDescriptionDiskEnhancer(this.host,
-                this.host.getReferer());
 
-        context.resolvedImage = "vc://datastore/test.iso";
-        TestContext ctx = testCreate(1);
-        DeferredResult<ComputeDescription> result = enhancer.enhance(context, cd);
-        result.whenComplete((desc, t) -> {
-            if (t != null) {
-                ctx.failIteration(t);
-                return;
+        enhance(new ComputeDescriptionDiskEnhancer(host, host.getReferer()));
+
+        assertDiskStates(diskState -> {
+            if (diskState.name.equals("Disk1") || diskState.name.equals("Disk3")) {
+                assertNotNull(diskState.customProperties);
+                assertEquals(1, diskState.customProperties.size());
+            } else if (diskState.name.equals("Disk2")) {
+                assertNotNull(diskState.customProperties);
+                assertEquals(3, diskState.customProperties.size());
+            } else if (diskState.name.equals("Disk4")) {
+                assertNotNull(diskState.customProperties);
+                assertEquals(4, diskState.customProperties.size());
+            } else if (diskState.name.equals("Disk5") || diskState.name.equals("Disk6")) {
+                assertNotNull(diskState.customProperties);
+                assertEquals(2, diskState.customProperties.size());
             }
-            ctx.completeIteration();
         });
-        ctx.await();
-
-        assertNotNull(cd.diskDescLinks);
-        // Now get all the disk states to find the properties size.
-        List<Operation> getOps = new ArrayList<>(diskLinks.size());
-        diskLinks.stream().forEach(link -> {
-            getOps.add(Operation.createGet(this.host, link).setReferer(this.host.getReferer()));
-        });
-
-        TestContext joinCtx = testCreate(1);
-        OperationJoin.create(getOps).setCompletion((ops, ex) -> {
-            if (ex != null && !ex.isEmpty()) {
-                joinCtx.failIteration(new Throwable(ex.toString()));
-                return;
-            }
-            ops.values().forEach(op -> {
-                DiskState diskState = op.getBody(DiskState.class);
-                if (diskState.name.equals("Disk1") || diskState.name.equals("Disk3")) {
-                    assertNotNull(diskState.customProperties);
-                    assertEquals(1, diskState.customProperties.size());
-                } else if (diskState.name.equals("Disk2")) {
-                    assertNotNull(diskState.customProperties);
-                    assertEquals(3, diskState.customProperties.size());
-                } else if (diskState.name.equals("Disk4")) {
-                    assertNotNull(diskState.customProperties);
-                    assertEquals(4, diskState.customProperties.size());
-                } else if (diskState.name.equals("Disk5") || diskState.name.equals("Disk6")) {
-                    assertNotNull(diskState.customProperties);
-                    assertEquals(2, diskState.customProperties.size());
-                }
-            });
-            joinCtx.completeIteration();
-        }).sendWith(this.host);
-        joinCtx.await();
     }
 
     @Test
@@ -271,11 +229,12 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
 
         // Use case 1: Disk1 with all hard constraints. It should fail.
         // Use case 2: Disk2 with no constraints.
-        ComputeDescriptionDiskEnhancer enhancer = new ComputeDescriptionDiskEnhancer(this.host,
-                this.host.getReferer());
+        ComputeDescriptionDiskEnhancer enhancer = new ComputeDescriptionDiskEnhancer(host,
+                host.getReferer());
+
+        DeferredResult<ComputeDescription> result = enhancer.enhance(context, cd);
 
         TestContext ctx = testCreate(1);
-        DeferredResult<ComputeDescription> result = enhancer.enhance(context, cd);
         result.whenComplete((desc, t) -> {
             if (t != null) {
                 assertNotNull(t.getMessage());
@@ -286,26 +245,8 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         });
         ctx.await();
 
-        assertNotNull(cd.diskDescLinks);
         // Now get all the disk states to find the properties size.
-        List<Operation> getOps = new ArrayList<>(diskLinks.size());
-        diskLinks.stream().forEach(link -> {
-            getOps.add(Operation.createGet(this.host, link).setReferer(this.host.getReferer()));
-        });
-
-        TestContext joinCtx = testCreate(1);
-        OperationJoin.create(getOps).setCompletion((ops, ex) -> {
-            if (ex != null && !ex.isEmpty()) {
-                joinCtx.failIteration(new Throwable(ex.toString()));
-                return;
-            }
-            ops.values().forEach(op -> {
-                DiskState diskState = op.getBody(DiskState.class);
-                assertNull(diskState.customProperties);
-            });
-            joinCtx.completeIteration();
-        }).sendWith(this.host);
-        joinCtx.await();
+        assertDiskStates(diskState -> assertNull(diskState.customProperties));
     }
 
     @Test
@@ -319,40 +260,10 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         cd.diskDescLinks = diskLinks;
 
         // Use case 1: Disk1 with all soft constraints. It shouldn't fail
-        ComputeDescriptionDiskEnhancer enhancer = new ComputeDescriptionDiskEnhancer(this.host,
-                this.host.getReferer());
+        enhance(new ComputeDescriptionDiskEnhancer(this.host, this.host.getReferer()));
 
-        TestContext ctx = testCreate(1);
-        DeferredResult<ComputeDescription> result = enhancer.enhance(context, cd);
-        result.whenComplete((desc, t) -> {
-            if (t != null) {
-                ctx.failIteration(t);
-                return;
-            }
-            ctx.completeIteration();
-        });
-        ctx.await();
-
-        assertNotNull(cd.diskDescLinks);
         // Now get all the disk states to find the properties size.
-        List<Operation> getOps = new ArrayList<>(diskLinks.size());
-        diskLinks.stream().forEach(link -> {
-            getOps.add(Operation.createGet(this.host, link).setReferer(this.host.getReferer()));
-        });
-
-        TestContext joinCtx = testCreate(1);
-        OperationJoin.create(getOps).setCompletion((ops, ex) -> {
-            if (ex != null && !ex.isEmpty()) {
-                joinCtx.failIteration(new Throwable(ex.toString()));
-                return;
-            }
-            ops.values().forEach(op -> {
-                DiskState diskState = op.getBody(DiskState.class);
-                assertNull(diskState.customProperties);
-            });
-            joinCtx.completeIteration();
-        }).sendWith(this.host);
-        joinCtx.await();
+        assertDiskStates(diskState -> assertNull(diskState.customProperties));
     }
 
     @Test
@@ -364,20 +275,107 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         cd.customProperties.put(ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
                 DockerAdapterType.API.name());
 
-        TestContext ctx = testCreate(1);
-        DeferredResult<ComputeDescription> result = ComputeDescriptionEnhancers
-                .build(host, UriUtils.buildUri(host, "test")).enhance(context,
-                        cd);
-        result.whenComplete((desc, t) -> {
-            if (t != null) {
-                ctx.failIteration(t);
-                return;
-            }
-            ctx.completeIteration();
-        });
-        ctx.await();
+        enhance(ComputeDescriptionEnhancers.build(host, UriUtils.buildUri(host, "test")));
 
         assertNull("Expected to have content", context.content);
+    }
+
+    /**
+     * Validates native 'imageId' is populated from Profile through EnhanceContext to DiskState.
+     */
+    @Test
+    public void testEnhanceImage_imageId() throws Throwable {
+
+        ProfileWithComputeBuilder profileBuilder = new ProfileWithComputeBuilder(
+                ProfileWithComputeBuilder.IMAGE_ID);
+
+        // OVERRIDE original Profile configured by 'setup' method
+        context.profileLink = profileBuilder.build().documentSelfLink;
+
+        // Method under testing...
+        enhance(ComputeDescriptionEnhancers.build(host,
+                UriUtils.buildUri(host, "testEnhanceImage_imageId")));
+
+        assertEquals("EnhanceContext.resolvedImage", profileBuilder.imageIdValue,
+                context.resolvedImage);
+        assertNull("EnhanceContext.resolvedImageLink", context.resolvedImageLink);
+
+        assertDiskStates(diskState -> {
+            assertEquals("DiskState.sourceImageReference", profileBuilder.imageIdValue,
+                    diskState.sourceImageReference.toString());
+            assertNull("DiskState.diskState", diskState.imageLink);
+        });
+    }
+
+    /**
+     * Validates 'imageLink' is populated from Profile through EnhanceContext to DiskState.
+     */
+    @Test
+    public void testEnhanceImage_imageLink() throws Throwable {
+
+        ProfileWithComputeBuilder profileBuilder = new ProfileWithComputeBuilder(
+                ProfileWithComputeBuilder.IMAGE_LINK);
+
+        // Override original Profile configured by 'setup' method
+        context.profileLink = profileBuilder.build().documentSelfLink;
+
+        // Method under testing...
+        enhance(ComputeDescriptionEnhancers.build(host, UriUtils.buildUri(host, "test")));
+
+        assertEquals("EnhanceContext.resolvedImageLink", profileBuilder.imageLinkValue,
+                context.resolvedImageLink);
+        assertNull("EnhanceContext.resolvedImage", context.resolvedImage);
+
+        assertDiskStates(diskState -> {
+            assertEquals("DiskState.diskState", profileBuilder.imageLinkValue, diskState.imageLink);
+            assertNull("DiskState.sourceImageReference", diskState.sourceImageReference);
+        });
+    }
+
+    /**
+     * Validates 'imageLink' has precedence over 'imageId'.
+     */
+    @Test
+    public void testEnhanceImage_imageLinkHasPrecedence() throws Throwable {
+
+        ProfileWithComputeBuilder profileBuilder = new ProfileWithComputeBuilder(
+                ProfileWithComputeBuilder.BOTH);
+
+        // Override original Profile configured by 'setup' method
+        context.profileLink = profileBuilder.build().documentSelfLink;
+
+        // Method under testing...
+        enhance(ComputeDescriptionEnhancers.build(host, UriUtils.buildUri(host, "test")));
+
+        assertEquals("EnhanceContext.resolvedImageLink", profileBuilder.imageLinkValue,
+                context.resolvedImageLink);
+        assertNull("EnhanceContext.resolvedImage", context.resolvedImage);
+
+        assertDiskStates(diskState -> {
+            assertEquals("DiskState.diskState", profileBuilder.imageLinkValue, diskState.imageLink);
+            assertNull("DiskState.sourceImageReference", diskState.sourceImageReference);
+        });
+    }
+
+    /**
+     * Validates 'imageLink' is populated from Profile through EnhanceContext to DiskState.
+     */
+    @Test
+    public void testEnhanceImage_none() throws Throwable {
+
+        ProfileWithComputeBuilder profileBuilder = new ProfileWithComputeBuilder("NONE");
+
+        // Override original Profile configured by 'setup' method
+        context.profileLink = profileBuilder.build().documentSelfLink;
+
+        try {
+            // Method under testing...
+            enhance(ComputeDescriptionEnhancers.build(host, UriUtils.buildUri(host, "test")));
+
+            Assert.fail("IllegalStateException expected");
+        } catch (CompletionException exc) {
+            Assert.assertTrue("IllegalStateException expected", exc.getCause() instanceof IllegalStateException);
+        }
     }
 
     private AuthCredentialsServiceState getClientPublicSshKeyAuth() throws Throwable {
@@ -425,6 +423,80 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
                 retrievedExpandedProfile.storageProfile.documentSelfLink);
 
         return retrievedExpandedProfile;
+    }
+
+    private class ProfileWithComputeBuilder {
+
+        static final String BOTH = "BOTH";
+        static final String IMAGE_ID = "IMAGE_ID";
+        static final String IMAGE_LINK = "IMAGE_LINK";
+
+        // Instruct which ComputeImageDescription field to populate
+        final String imageSpec;
+
+        String instanceTypeKey = cd.instanceType;
+        String instanceTypeValue = "endpoint.specific.instanceType.xLarge";
+
+        String imageKey = cd.customProperties.get(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
+
+        String imageIdValue = "http://vmware.com/endpointSpecificImageId";
+        String imageLinkValue = "http://localhost" + ImageService.FACTORY_LINK
+                + "/endpointSpecificImageStateSelfLink";
+
+        ProfileWithComputeBuilder(String imageSpec) {
+            this.imageSpec = imageSpec;
+        }
+
+        ProfileStateExpanded build() throws Throwable {
+
+            ComputeProfile computeProfile = new ComputeProfile();
+            {
+                InstanceTypeDescription instanceTypeDesc = new InstanceTypeDescription();
+                instanceTypeDesc.instanceType = instanceTypeValue;
+                computeProfile.instanceTypeMapping = Collections.singletonMap(instanceTypeKey,
+                        instanceTypeDesc);
+
+                ComputeImageDescription imageProfile = new ComputeImageDescription();
+                if (imageSpec == IMAGE_ID) {
+
+                    imageProfile.image = imageIdValue;
+
+                } else if (imageSpec == IMAGE_LINK) {
+
+                    imageProfile.imageLink = imageLinkValue;
+
+                } else if (imageSpec == BOTH) {
+
+                    imageProfile.image = imageIdValue;
+                    imageProfile.imageLink = imageLinkValue;
+                } else {
+                    // Everything else is considered as NONE
+                }
+                computeProfile.imageMapping = Collections.singletonMap(imageKey, imageProfile);
+
+                computeProfile = doPost(computeProfile, ComputeProfileService.FACTORY_LINK);
+            }
+
+            StorageProfile storageProfile = doPost(new StorageProfile(),
+                    StorageProfileService.FACTORY_LINK);
+
+            NetworkProfile networkProfile = doPost(new NetworkProfile(),
+                    NetworkProfileService.FACTORY_LINK);
+
+            // Create the Profile with Compute profile set and empty Net/Storage profiles
+            ProfileState profile = new ProfileState();
+            profile.name = "ProfileWithCompute";
+            profile.endpointType = EndpointType.vsphere.name();
+            profile.computeProfileLink = computeProfile.documentSelfLink;
+            profile.storageProfileLink = storageProfile.documentSelfLink;
+            profile.networkProfileLink = networkProfile.documentSelfLink;
+            profile = doPost(profile, ProfileService.FACTORY_LINK);
+
+            return getDocument(ProfileStateExpanded.class,
+                    profile.documentSelfLink,
+                    UriUtils.URI_PARAM_ODATA_EXPAND,
+                    ServiceDocumentQueryResult.FIELD_NAME_DOCUMENT_LINKS);
+        }
     }
 
     private StorageProfileService.StorageProfile buildStorageProfileWithConstraints()
@@ -661,5 +733,60 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         diskLinks.add(diskState2.documentSelfLink);
 
         return diskLinks;
+    }
+
+    /**
+     * Blocking version of
+     * {@link ComputeDescriptionEnhancer#enhance(EnhanceContext, ComputeDescription)}.
+     */
+    private void enhance(ComputeDescriptionEnhancer enhancer) {
+
+        DeferredResult<ComputeDescription> result = enhancer.enhance(context, cd);
+
+        TestContext ctx = testCreate(1);
+
+        result.whenComplete((desc, t) -> {
+            if (t != null) {
+                ctx.failIteration(t);
+                return;
+            }
+            ctx.completeIteration();
+        });
+
+        ctx.await();
+    }
+
+    /**
+     * Helper method traversing 'cd.diskDescLinks' and asserting DiskStates.
+     */
+    private void assertDiskStates(Consumer<DiskState> assertion) {
+
+        assertNotNull("ComputeDescriptor.diskDescLinks", cd.diskDescLinks);
+
+        List<Operation> getOps = cd.diskDescLinks.stream()
+                .map(diskLink -> Operation.createGet(host, diskLink).setReferer(host.getReferer()))
+                .collect(Collectors.toList());
+
+        TestContext ctx = testCreate(1);
+
+        OperationJoin.create(getOps).setCompletion((ops, exs) -> {
+            if (exs != null && !exs.isEmpty()) {
+                ctx.failIteration(new Throwable(exs.toString()));
+                return;
+            }
+
+            ops.values().forEach(op -> {
+                try {
+                    assertion.accept(op.getBody(DiskState.class));
+                } catch (Throwable t) {
+                    ctx.failIteration(t);
+                }
+            });
+
+            ctx.completeIteration();
+
+        }).sendWith(host);
+
+        ctx.await();
     }
 }
