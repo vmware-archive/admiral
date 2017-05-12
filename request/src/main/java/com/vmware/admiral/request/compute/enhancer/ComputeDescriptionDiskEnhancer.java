@@ -63,9 +63,9 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                     // Iterate over all the disk desc links to get the disk state, if nothing is
                     // available then create a default disk
                     if (cd.diskDescLinks == null || cd.diskDescLinks.isEmpty()) {
-                        return createOsDiskState(context, profile, cd);
+                        return createOsDiskState(context, cd);
                     } else {
-                        return enhanceDiskStates(context, profile, cd);
+                        return enhanceDiskStates(context, cd);
                     }
                 });
     }
@@ -73,8 +73,8 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
     /**
      * Create a Boot disk if there are no disks provided as input.
      */
-    private DeferredResult<ComputeDescription> createOsDiskState(EnhanceContext context,
-            ProfileService.ProfileStateExpanded profile, ComputeDescription computeDesc) {
+    private DeferredResult<ComputeDescription> createOsDiskState(
+            EnhanceContext context, ComputeDescription computeDesc) {
         try {
             DiskState rootDisk = new DiskState();
             rootDisk.id = UUID.randomUUID().toString();
@@ -86,14 +86,14 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
             rootDisk.name = diskName;
             rootDisk.type = DiskService.DiskType.HDD;
             rootDisk.bootOrder = 1;
-            InstanceTypeDescription instanceDesc = profile.computeProfile.instanceTypeMapping
+            InstanceTypeDescription instanceDesc = context.profile.computeProfile.instanceTypeMapping
                     .get(computeDesc.instanceType);
             long diskSizeMbFromProfile = instanceDesc != null ? instanceDesc.diskSizeMb : 0;
             // Default is 8 GB
             rootDisk.capacityMBytes = diskSizeMbFromProfile > 0 ? diskSizeMbFromProfile
                     : (8 * 1024);
 
-            StorageItem storageItem = findDefaultStorageItem(profile);
+            StorageItem storageItem = findDefaultStorageItem(context.profile);
             if (storageItem != null && storageItem.diskProperties != null) {
                 rootDisk.customProperties = new HashMap<>(storageItem.diskProperties);
             }
@@ -117,8 +117,8 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
     /**
      * Enhances the disk state with the properties that are available in the profile.
      */
-    private DeferredResult<ComputeDescription> enhanceDiskStates(EnhanceContext context,
-            ProfileService.ProfileStateExpanded profile,
+    private DeferredResult<ComputeDescription> enhanceDiskStates(
+            EnhanceContext context,
             ComputeDescription cd) {
         DeferredResult<ComputeDescription> compDescResult = DeferredResult.allOf(
                 cd.diskDescLinks.stream()
@@ -135,13 +135,13 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                             }
                             // Match the constraints from Disk to the profile to extract the
                             // provider specific properties.
-                            StorageItem storageItem = findStorageItem(profile,
+                            StorageItem storageItem = findStorageItem(context.profile,
                                     diskState.constraint);
                             if (storageItem == null) {
                                 return DeferredResult
                                         .failed(new IllegalStateException(String.format(
                                                 "No matching storage defined in profile: %s, for requested disk: %s",
-                                                profile.documentSelfLink, diskState.name)));
+                                                context.profile.documentSelfLink, diskState.name)));
                             } else {
                                 if (storageItem.diskProperties != null) {
                                     diskState.customProperties = new HashMap<>(
@@ -252,9 +252,12 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
      */
     private void fillInBootConfigContent(EnhanceContext context, ComputeDescription computeDesc,
             DiskState diskState) {
-        String imageId = context.resolvedImage;
 
-        diskState.sourceImageReference = URI.create(imageId);
+        if (context.resolvedImageLink != null) {
+            diskState.imageLink = context.resolvedImageLink;
+        } else if (context.resolvedImage != null) {
+            diskState.sourceImageReference = URI.create(context.resolvedImage);
+        }
 
         if (diskState.bootConfig == null) {
             diskState.bootConfig = new DiskState.BootConfig();

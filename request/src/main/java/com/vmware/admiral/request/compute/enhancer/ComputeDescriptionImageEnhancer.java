@@ -24,6 +24,7 @@ import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.ServiceHost;
 
 public class ComputeDescriptionImageEnhancer extends ComputeDescriptionEnhancer {
+
     static final String TEMPLATE_LINK = "__templateComputeLink";
 
     private ServiceHost host;
@@ -35,13 +36,19 @@ public class ComputeDescriptionImageEnhancer extends ComputeDescriptionEnhancer 
     }
 
     @Override
-    public DeferredResult<ComputeDescription> enhance(EnhanceContext context,
+    public DeferredResult<ComputeDescription> enhance(
+            EnhanceContext context,
             ComputeDescription cd) {
 
         if (cd.customProperties.containsKey(ComputeConstants.CUSTOM_PROP_IMAGE_REF_NAME)) {
-            return apply(context, cd,
-                    cd.customProperties.get(ComputeConstants.CUSTOM_PROP_IMAGE_REF_NAME));
+            apply(context,
+                    cd,
+                    cd.customProperties.get(ComputeConstants.CUSTOM_PROP_IMAGE_REF_NAME),
+                    null /* imageLink */);
+
+            return DeferredResult.completed(cd);
         }
+
         if (cd.customProperties.containsKey(TEMPLATE_LINK)) {
             return DeferredResult.completed(cd);
         }
@@ -53,46 +60,54 @@ public class ComputeDescriptionImageEnhancer extends ComputeDescriptionEnhancer 
         }
 
         return getProfileState(host, referer, context)
-                .thenCompose(profile -> {
+                .thenAccept(profile -> {
+
                     context.profile = profile;
-                    String absImageId = imageType;
-                    String imageId = null;
-                    ComputeImageDescription imageDesc = getComputeImageDescription(profile,
-                            absImageId);
+
+                    String profileImage = null;
+                    String profileImageLink = null;
+
+                    ComputeImageDescription imageDesc = getComputeImageDescription(profile, imageType);
                     if (imageDesc != null) {
-                        if (imageDesc.image != null) {
-                            imageId = imageDesc.image;
+                        if (imageDesc.imageLink != null) {
+                            profileImageLink = imageDesc.imageLink;
+                        } else if (imageDesc.image != null) {
+                            profileImage = imageDesc.image;
                         } else if (imageDesc.imageByRegion != null) {
-                            imageId = imageDesc.imageByRegion.get(context.regionId);
+                            profileImage = imageDesc.imageByRegion.get(context.regionId);
                         }
-                    }
-                    if (imageId == null) {
-                        return DeferredResult.failed(new IllegalStateException(String.format(
+                        if (profileImage == null && profileImageLink == null) {
+                            throw new IllegalStateException(String.format(
+                                    "The profile '%s' matched for requested image type '%s' does not specify image",
+                                    profile.documentSelfLink, imageType));
+                        }
+                    } else {
+                        throw new IllegalStateException(String.format(
                                 "No matching image type defined in profile: %s, for requested image type: %s",
-                                profile.documentSelfLink, absImageId)));
+                                profile.documentSelfLink, imageType));
                     }
-                    return apply(context, cd, imageId);
-                });
+                    apply(context, cd, profileImage, profileImageLink);
+                })
+                .thenApply(woid -> cd);
     }
 
-    private DeferredResult<ComputeDescription> apply(EnhanceContext context, ComputeDescription cd,
-            String image) {
-        try {
+    private void apply(EnhanceContext context, ComputeDescription cd, String image, String imageLink) {
+        if (imageLink != null) {
+            context.resolvedImageLink = imageLink;
+        } else {
             URI imageUri = URI.create(image);
             String scheme = imageUri.getScheme();
             if (scheme != null
-                    && (scheme.startsWith("http")
-                            || scheme.startsWith("file"))) {
+                    && (scheme.toLowerCase().startsWith("http")
+                            || scheme.toLowerCase().startsWith("file"))) {
                 cd.customProperties.put(OVA_URI, imageUri.toString());
             }
             context.resolvedImage = image;
-        } catch (Throwable t) {
-            return DeferredResult.failed(t);
         }
-        return DeferredResult.completed(cd);
     }
 
-    private ComputeImageDescription getComputeImageDescription(ProfileStateExpanded profile,
+    private ComputeImageDescription getComputeImageDescription(
+            ProfileStateExpanded profile,
             String imageId) {
         if (profile.computeProfile != null && profile.computeProfile.imageMapping != null) {
             return PropertyUtils.getPropertyCaseInsensitive(profile.computeProfile.imageMapping,

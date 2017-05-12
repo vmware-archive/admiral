@@ -37,7 +37,19 @@ public interface Enhancer<T extends ResourceState> {
         public String regionId;
         public String zoneId;
         public String endpointType;
+
+        /**
+         * Optional image reference as configured by the profile.
+         * Set by {@link ComputeDescriptionImageEnhancer}.
+         */
         public String resolvedImage;
+
+        /**
+         * Optional link of the ImageState as configured by the profile.
+         * Set by {@link ComputeDescriptionImageEnhancer}.
+         */
+        public String resolvedImageLink;
+
         public Map<String, Object> content;
         public boolean skipNetwork;
 
