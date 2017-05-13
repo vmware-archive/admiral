@@ -185,7 +185,8 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
         if (host.isStopping()) {
             return;
         }
-        host.schedule(() -> {
+
+        Runnable task = () -> {
             try {
                 host.log(Level.INFO, "Host " + host.getPublicUri() + ": reloading all certificates");
                 documentUpdateTimeMicros = 0;
@@ -200,7 +201,13 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
 
                 schedulePeriodicCertificatesReload();
             }
-        }, nextDelay, TimeUnit.MICROSECONDS);
+        };
+
+        try {
+            host.schedule(task, nextDelay, TimeUnit.MICROSECONDS);
+        } catch (Exception e) {
+            host.log(Level.INFO, "Host is stopping");
+        }
     }
 
     @Override

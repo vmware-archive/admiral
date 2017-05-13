@@ -7,6 +7,7 @@ target
 *~
 \#*#
 build
+.vscode/
 !tools/build
 lib/extjs/extjs/
 .DS_Store
