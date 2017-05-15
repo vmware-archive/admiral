@@ -25,6 +25,8 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 public class ContainerVolumeMaintenance {
+    public static final String SERVICE_REFERRER_PATH = "/container-volume-maintenance";
+
     public static final long MAINTENANCE_INTERVAL_MICROS = Long.getLong(
             "dcp.management.container.volume.periodic.maintenance.period.micros",
             TimeUnit.SECONDS.toMicros(30));
@@ -65,7 +67,7 @@ public class ContainerVolumeMaintenance {
         host.log(Level.FINE, "Performing maintenance for: %s", volumeSelfLink);
         host.sendRequest(Operation
                 .createGet(host, volumeSelfLink)
-                .setReferer(host.getUri())
+                .setReferer(UriUtils.buildUri(host, SERVICE_REFERRER_PATH))
                 .setCompletion(
                         (o, ex) -> {
                             if (ex != null) {
@@ -138,7 +140,7 @@ public class ContainerVolumeMaintenance {
         host.sendRequest(Operation
                 .createPatch(host, volumeState.adapterManagementReference.toString())
                 .setBody(request)
-                .setReferer(host.getUri())
+                .setReferer(UriUtils.buildUri(host, SERVICE_REFERRER_PATH))
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         Utils.logWarning(

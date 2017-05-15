@@ -63,6 +63,8 @@ import com.vmware.xenon.services.common.QueryTask;
  */
 
 public class HealthChecker {
+    public static final String SERVICE_REFERRER_PATH = "/health-checker";
+
     private static final int DEFAULT_PORT = 80;
     private static final int DEFAULT_TIMEOUT = 2000;
     private static volatile HealthChecker instance;
@@ -153,7 +155,7 @@ public class HealthChecker {
     void doHealthCheck(ServiceHost host, String containerDescriptionLink) {
         host.sendRequest(Operation
                 .createGet(host, containerDescriptionLink)
-                .setReferer(host.getPublicUri())
+                .setReferer(UriUtils.buildUri(host, SERVICE_REFERRER_PATH))
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         host.log(Level.SEVERE, "Failed to fetch %s : %s",
@@ -241,7 +243,7 @@ public class HealthChecker {
 
         host.sendRequest(Operation
                 .createPost(executeUri)
-                .setReferer(host.getPublicUri())
+                .setReferer(UriUtils.buildUri(host, SERVICE_REFERRER_PATH))
                 .setBody(executorState)
                 .setCompletion((o, e) -> {
                     String body = o.getBody(String.class);
@@ -307,7 +309,7 @@ public class HealthChecker {
         Operation op = Operation
                 .createGet(uri)
                 .setAction(healthConfig.httpMethod)
-                .setReferer(host.getPublicUri())
+                .setReferer(UriUtils.buildUri(host, SERVICE_REFERRER_PATH))
                 .setCompletion((o, ex) -> handleHealthResponse(host, containerState, ex, callback));
 
         if (healthConfig.httpVersion == HttpVersion.HTTP_v2) {
@@ -375,7 +377,7 @@ public class HealthChecker {
             Consumer<ComputeState> callback) {
         host.sendRequest(Operation
                 .createGet(UriUtils.buildUri(host, parentLink))
-                .setReferer(host.getPublicUri())
+                .setReferer(UriUtils.buildUri(host, SERVICE_REFERRER_PATH))
                 .setCompletion(
                         (ob, ex) -> {
                             if (ex != null) {
@@ -403,7 +405,7 @@ public class HealthChecker {
         URI uri = UriUtils.buildUri(host, containerState.documentSelfLink);
         host.sendRequest(Operation.createPatch(uri)
                 .setBody(containerStats)
-                .setReferer(host.getPublicUri())
+                .setReferer(UriUtils.buildUri(host, SERVICE_REFERRER_PATH))
                 .setCompletion((ob, exception) -> {
                     if (exception != null) {
                         host.log(Level.WARNING,

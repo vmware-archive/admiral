@@ -238,7 +238,6 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
     private void notifyParentTask(ExtensibilitySubscriptionCallback body) {
         sendRequest(Operation
                 .createPatch(UriUtils.buildUri(getHost(), body.serviceTaskCallback.serviceSelfLink))
-                .setReferer(getHost().getUri())
                 .setBody(body.replyPayload)
                 .setCompletion((o, e) -> {
                     if (e != null) {
