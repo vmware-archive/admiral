@@ -29,12 +29,14 @@ import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
+import com.google.common.collect.Iterables;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
@@ -93,6 +95,10 @@ public class ContainerHostDataCollectionService extends StatefulService {
             TimeUnit.MINUTES.toMicros(5));
     private static final int MAX_RETRIES_COUNT = Integer.getInteger(
             "com.vmware.admiral.compute.container.host.maintenance.max.retries", 3);
+    private static final int DC_DELAY_SECONDS = Integer.parseInt(System.getProperty(
+            "com.vmware.admiral.compute.container.host.dc.delay", "5"));
+    private static final int DC_BATCH_SIZE = Integer.parseInt(System.getProperty(
+            "com.vmware.admiral.compute.container.host.dc.delay", "10"));
 
     private static final String LOAD_SKIP_DC_PARAMETER = "com.vmware.admiral.compute.container.load.average.dc.skip";
 
@@ -743,33 +749,14 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 maintOp.fail(qr.error);
                 return;
             }
-
-            for (ComputeState compute : qr.computesByLink.values()) {
-                if (LifecycleState.SUSPEND.equals(compute.lifecycleState)) {
-                    logInfo("Skipping data collection for host %s because it is marked for removal.", compute.documentSelfLink);
-                    continue;
-                }
-
-                updateContainerHostInfo(compute, (o, error) -> {
-                    // we complete maintOp here, not waiting for container update
-                    maintOp.complete();
-                    if (error != null) {
-                        handleHostNotAvailable(compute, error);
-                    } else {
-                        handleHostAvailable(compute);
-                    }
-                }, null);
-
-                if (PowerState.ON.equals(compute.powerState)) {
-                    if (ContainerHostUtil.isKubernetesHost(compute)) {
-                        updateKubernetesEntities(compute.documentSelfLink);
-                    } else {
-                        updateContainerHostContainers(compute);
-                        updateContainerHostNetworks(compute);
-                        updateContainerHostVolumes(compute.documentSelfLink);
-                    }
-                }
-            }
+            maintOp.complete();
+            List<ComputeState> computeList = new ArrayList<ComputeState>(
+                    qr.computesByLink.values());
+            final AtomicInteger counter = new AtomicInteger();
+            Iterables.partition(computeList, DC_BATCH_SIZE)
+                    .forEach(list -> getHost().schedule(() -> {
+                        updateContainerHosts(list);
+                    }, counter.getAndIncrement() * DC_DELAY_SECONDS, TimeUnit.SECONDS));
 
             for (ResourcePoolData rpData : qr.resourcesPools.values()) {
                 updateResourcePool(rpData.resourcePoolState, rpData.computeStateLinks.stream()
@@ -777,6 +764,34 @@ public class ContainerHostDataCollectionService extends StatefulService {
                         .collect(Collectors.toList()));
             }
         });
+    }
+
+    private void updateContainerHosts(List<ComputeState> hosts) {
+        for (ComputeState compute : hosts) {
+            if (LifecycleState.SUSPEND.equals(compute.lifecycleState)) {
+                logInfo("Skipping data collection for host %s because it is marked for removal.",
+                        compute.documentSelfLink);
+                continue;
+            }
+
+            updateContainerHostInfo(compute, (o, error) -> {
+                if (error != null) {
+                    handleHostNotAvailable(compute, error);
+                } else {
+                    handleHostAvailable(compute);
+                }
+            }, null);
+
+            if (PowerState.ON.equals(compute.powerState)) {
+                if (ContainerHostUtil.isKubernetesHost(compute)) {
+                    updateKubernetesEntities(compute.documentSelfLink);
+                } else {
+                    updateContainerHostContainers(compute);
+                    updateContainerHostNetworks(compute);
+                    updateContainerHostVolumes(compute.documentSelfLink);
+                }
+            }
+        }
     }
 
     private QueryTask createDockerComputeDescriptionQuery() {
