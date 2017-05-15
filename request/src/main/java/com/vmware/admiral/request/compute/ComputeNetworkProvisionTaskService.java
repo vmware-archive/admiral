@@ -530,9 +530,7 @@ public class ComputeNetworkProvisionTaskService
                         + "not be null.");
         AssertUtil.assertNotNull(context.subnet, "Context.subnet should not be null.");
 
-        // TODO: get optional network CIDR from the profile
-        // (for endpoints that have networks with no CIDRs).
-        String optionalNetworkCIDR = null;
+        String optionalNetworkCIDR = context.profile.networkProfile.isolationNetworkCIDR;
         ComputeNetworkCIDRAllocationRequest request =
                 allocationRequest(context.subnet.id,
                         context.profile.networkProfile.isolatedSubnetCIDRPrefix,
