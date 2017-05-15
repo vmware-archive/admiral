@@ -296,7 +296,6 @@ public class ProjectService extends StatefulService {
         }
 
         Operation.createGet(getHost(), groupLink)
-                .setReferer(getUri())
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         logWarning("Failed to retrieve UserGroupState %s: %s", groupLink,
@@ -307,7 +306,7 @@ public class ProjectService extends StatefulService {
 
                     UserGroupState groupState = o.getBody(UserGroupState.class);
                     retrieveUserStatesForGroup(groupState, callerOp);
-                }).sendWith(getHost());
+                }).sendWith(this);
     }
 
     /**

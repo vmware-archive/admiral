@@ -300,7 +300,6 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         if (isDone(closure)) {
             sendRequest(Operation
                     .createGet(this, closure.descriptionLink)
-                    .setReferer(this.getUri())
                     .setCompletion((op, ex) -> {
                         if (ex != null) {
                             logWarning(
@@ -385,7 +384,6 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
             URI callbackUri = URI.create(callbackReference);
             sendRequest(Operation.createPost(callbackUri)
                     .setBody(state)
-                    .setReferer(this.getUri())
                     .forceRemote()
                     .setCompletion((op, ex) -> {
                         if (ex != null) {
@@ -403,7 +401,6 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         URI webHookUri = UriUtils.buildUri(webHookUriStr);
         sendRequest(Operation
                 .createPost(webHookUri)
-                .setReferer(this.getUri())
                 .setExpiration(Utils.fromNowMicrosUtc(TimeUnit.SECONDS
                         .toMicros(ClosureProps.DEFAULT_WEB_HOOK_EXPIRATION_TIMEOUT)))
                 .setBody(closure)

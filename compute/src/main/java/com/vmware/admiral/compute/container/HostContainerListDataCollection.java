@@ -455,10 +455,9 @@ public class HostContainerListDataCollection extends StatefulService {
                                     ContainerState cs = new ContainerState();
                                     cs.powerState = PowerState.RUNNING;
 
-                                    getHost().sendRequest(Operation
+                                    sendRequest(Operation
                                             .createPatch(getHost(), containerState.documentSelfLink)
                                             .setBody(cs)
-                                            .setReferer(getHost().getUri())
                                             .setCompletion(
                                                     (op, ex) -> {
                                                         if (ex != null) {
@@ -912,10 +911,9 @@ public class HostContainerListDataCollection extends StatefulService {
 
         request.operationTypeId = ContainerOperationType.INSPECT.id;
         request.serviceTaskCallback = serviceTaskCallback;
-        getHost().sendRequest(Operation
+        sendRequest(Operation
                 .createPatch(getHost(), containerState.adapterManagementReference.toString())
                 .setBody(request)
-                .setReferer(getHost().getUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         Utils.logWarning(

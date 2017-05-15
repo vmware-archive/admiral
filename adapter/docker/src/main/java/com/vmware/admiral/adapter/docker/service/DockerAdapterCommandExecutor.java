@@ -250,5 +250,6 @@ public interface DockerAdapterCommandExecutor {
 
     void removeVolume(CommandInput input, CompletionHandler completionHandler);
 
-    void handleMaintenance(Operation post);
+    void handlePeriodicMaintenance(Operation post);
+
 }

@@ -507,7 +507,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
     }
 
     @Override
-    public void handleMaintenance(Operation post) {
+    public void handlePeriodicMaintenance(Operation post) {
         if (attachServiceClient != null) {
             attachServiceClient.handleMaintenance(post);
         }

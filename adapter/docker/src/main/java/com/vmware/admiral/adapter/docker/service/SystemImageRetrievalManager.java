@@ -39,6 +39,7 @@ import com.vmware.xenon.common.Utils;
 
 public class SystemImageRetrievalManager {
 
+    public static final String SERVICE_REFERRER_PATH = "/system-image-retrieval-manager";
     public static final String SYSTEM_IMAGES_PATH = "/system-images";
 
     private ServiceHost host;
@@ -90,7 +91,7 @@ public class SystemImageRetrievalManager {
 
         host.sendRequest(Operation
                 .createGet(propsUri)
-                .setReferer(host.getUri())
+                .setReferer(UriUtils.buildUri(host, SERVICE_REFERRER_PATH))
                 .setCompletion((res, ex) -> {
                     String userResourcesPath = null;
                     if (ex == null && res.hasBody()) {

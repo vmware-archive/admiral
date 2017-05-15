@@ -85,7 +85,7 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
     }
 
     @Override
-    public void handleMaintenance(Operation post) {
+    public void handlePeriodicMaintenance(Operation post) {
         if (getProcessingStage() != ProcessingStage.AVAILABLE) {
             logFine("Skipping maintenance since service is not available: %s ", getUri());
             post.complete();
@@ -100,7 +100,7 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
 
         logFine("Performing maintenance for: %s", getUri());
 
-        getCommandExecutor().handleMaintenance(Operation.createPost(post.getUri()));
+        getCommandExecutor().handlePeriodicMaintenance(Operation.createPost(post.getUri()));
 
         post.complete();
     }
