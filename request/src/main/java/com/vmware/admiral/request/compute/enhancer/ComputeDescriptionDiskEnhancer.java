@@ -15,6 +15,9 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -24,10 +27,12 @@ import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.profile.InstanceTypeDescription;
 import com.vmware.admiral.compute.profile.ProfileService;
 import com.vmware.admiral.compute.profile.StorageProfileService.StorageItem;
-import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfile;
+import com.vmware.admiral.compute.profile.StorageProfileService.StorageItemExpanded;
+import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfileExpanded;
 import com.vmware.admiral.request.compute.StorageProfileUtils;
 import com.vmware.admiral.request.compute.TagConstraintUtils;
 import com.vmware.photon.controller.model.Constraint;
+import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.DiskService;
 import com.vmware.photon.controller.model.resources.DiskService.DiskState;
@@ -118,54 +123,66 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
      * Enhances the disk state with the properties that are available in the profile.
      */
     private DeferredResult<ComputeDescription> enhanceDiskStates(
-            EnhanceContext context,
-            ComputeDescription cd) {
-        DeferredResult<ComputeDescription> compDescResult = DeferredResult.allOf(
-                cd.diskDescLinks.stream()
-                        .map(link -> {
-                            Operation getOp = Operation
-                                    .createGet(this.host, link)
-                                    .setReferer(this.referer);
-                            return this.host.sendWithDeferredResult(getOp, DiskState.class);
-                        })
-                        .map(dr -> dr.thenCompose(diskState -> {
-                            if (diskState.type != null
-                                    && diskState.type == DiskService.DiskType.HDD) {
-                                fillInBootConfigContent(context, cd, diskState);
-                            }
-                            // Match the constraints from Disk to the profile to extract the
-                            // provider specific properties.
-                            StorageItem storageItem = findStorageItem(context.profile,
-                                    diskState.constraint);
-                            if (storageItem == null) {
-                                return DeferredResult
-                                        .failed(new IllegalStateException(String.format(
-                                                "No matching storage defined in profile: %s, for requested disk: %s",
-                                                context.profile.documentSelfLink, diskState.name)));
-                            } else {
-                                if (storageItem.diskProperties != null) {
-                                    diskState.customProperties = new HashMap<>(
-                                            storageItem.diskProperties);
-                                }
-                            }
-                            return this.host
-                                    .sendWithDeferredResult(updateDiskDescriptionState(diskState),
-                                            DiskState.class);
-                        }))
-                        .map(dr -> dr.thenApply(diskState -> diskState.documentSelfLink))
-                        .collect(Collectors.toList()))
-                .thenApply(links -> cd);
-
-        return compDescResult;
+            EnhanceContext context, ComputeDescription cd) {
+        List<DeferredResult<Pair<DiskState, Throwable>>> diskStateResults = cd.diskDescLinks
+                .stream()
+                .map(link -> {
+                    Operation getOp = Operation
+                            .createGet(this.host, link)
+                            .setReferer(this.referer);
+                    return this.host.sendWithDeferredResult(getOp, DiskState.class);
+                })
+                .map(dr -> dr.thenCompose(diskState -> {
+                    if (diskState.type != null
+                            && diskState.type == DiskService.DiskType.HDD) {
+                        fillInBootConfigContent(context, cd, diskState);
+                    }
+                    // Match the constraints from Disk to the profile to extract the
+                    // provider specific properties.
+                    StorageItemExpanded storageItem = findStorageItem(context.profile, diskState);
+                    if (storageItem == null) {
+                        return DeferredResult
+                                .failed(new IllegalStateException(String.format(
+                                        "No matching storage defined in profile: %s, for requested disk: %s",
+                                        context.profile.documentSelfLink, diskState.name)));
+                    } else {
+                        diskState.storageDescriptionLink = storageItem.storageDescriptionLink;
+                        if (storageItem.diskProperties != null) {
+                            diskState.customProperties = new HashMap<>(
+                                    storageItem.diskProperties);
+                        }
+                    }
+                    return this.host
+                            .sendWithDeferredResult(updateDiskDescriptionState(diskState),
+                                    DiskState.class);
+                }))
+                .map(dr -> dr
+                        .thenApply(ds -> Pair.of(ds, (Throwable) null))
+                        .exceptionally(t -> Pair.of(null, t)))
+                .collect(Collectors.toList());
+        DeferredResult<ComputeDescription> result = DeferredResult.allOf(diskStateResults)
+                .thenCompose(pairs -> {
+                    // Collect error messages if any for all the disks.
+                    StringJoiner stringJoiner = new StringJoiner(",");
+                    pairs.stream().filter(p -> p.left == null).forEach(p -> stringJoiner.add(p
+                            .right.getMessage()));
+                    if (stringJoiner.length() > 0) {
+                        return DeferredResult.failed(new Throwable(stringJoiner
+                                .toString()));
+                    } else {
+                        return DeferredResult.completed(cd);
+                    }
+                });
+        return result;
     }
 
     /**
      * Find the storage item that is matching the given set of constraints
      */
-    private StorageItem findStorageItem(ProfileService.ProfileStateExpanded profile,
-            Constraint constraint) {
+    private StorageItemExpanded findStorageItem(ProfileService.ProfileStateExpanded profile,
+            DiskState diskState) {
         // if no constraints return default
-        if (checkIfNoConstraintAvailable(constraint)) {
+        if (checkIfNoConstraintAvailable(diskState.constraint)) {
             return findDefaultStorageItem(profile);
         }
         // Step 1: Find if there are hard constraints. Then all of them will be available in one
@@ -176,9 +193,10 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
         // will be chosen.
         // Step 3: If all are soft and nothing matches then default properties are picked.
         return TagConstraintUtils.filterByConstraints(
-                StorageProfileUtils.extractStorageTagConditions(constraint, profile.tenantLinks),
+                StorageProfileUtils.extractStorageTagConditions(diskState.constraint, profile
+                        .tenantLinks),
                 storageItemsStream(profile.storageProfile),
-                si -> si.tagLinks != null ? si.tagLinks : new HashSet<>(), (i1, i2) -> {
+                si -> storageItemTagLinks(si), (i1, i2) -> {
                     if (i1.defaultItem && i2.defaultItem) {
                         return 0;
                     } else {
@@ -190,12 +208,26 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                             return 0;
                         }
                     }
-                }).findFirst().orElse(null);
+                }).filter(si -> (si.storageDescription == null || !diskState.encrypted) ?
+                true : diskState.encrypted == si.storageDescription.supportsEncryption)
+                .findFirst().orElse(null);
     }
 
-    private Stream<StorageItem> storageItemsStream(StorageProfile storageProfile) {
-        return storageProfile != null && storageProfile.storageItems != null
-                ? storageProfile.storageItems.stream() : Stream.of(new StorageItem());
+    private Stream<StorageItemExpanded> storageItemsStream(StorageProfileExpanded storageProfile) {
+        return storageProfile != null && storageProfile.storageItemsExpanded != null
+                ? storageProfile.storageItemsExpanded.stream() : Stream.of(new StorageItemExpanded());
+    }
+
+    /**
+     * Merge tagLinks if any from the storage description to the storage item tagLinks.
+     */
+    private Set<String> storageItemTagLinks(StorageItemExpanded siExpanded) {
+        Set<String> tagLinks = siExpanded.tagLinks != null ? siExpanded.tagLinks : new HashSet<>();
+        if (siExpanded.storageDescription != null
+                && siExpanded.storageDescription.tagLinks != null) {
+            tagLinks.addAll(siExpanded.storageDescription.tagLinks);
+        }
+        return tagLinks;
     }
 
     /**
@@ -211,22 +243,22 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
      */
     private boolean checkIfNoStorageItemsAvailable(ProfileService.ProfileStateExpanded profile) {
         return profile.storageProfile == null
-                || profile.storageProfile.storageItems == null
-                || profile.storageProfile.storageItems.isEmpty();
+                || profile.storageProfile.storageItemsExpanded == null
+                || profile.storageProfile.storageItemsExpanded.isEmpty();
     }
 
     /**
      * Get default storage item if present, else null.
      */
-    private StorageItem findDefaultStorageItem(ProfileService.ProfileStateExpanded profile) {
+    private StorageItemExpanded findDefaultStorageItem(ProfileService.ProfileStateExpanded profile) {
         if (checkIfNoStorageItemsAvailable(profile)) {
-            return new StorageItem();
+            return new StorageItemExpanded();
         }
 
-        return profile.storageProfile.storageItems.stream()
+        return profile.storageProfile.storageItemsExpanded.stream()
                 .filter(si -> si.defaultItem)
                 .findFirst()
-                .orElse(new StorageItem());
+                .orElse(new StorageItemExpanded());
     }
 
     /**

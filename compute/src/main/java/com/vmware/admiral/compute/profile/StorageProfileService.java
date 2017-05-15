@@ -11,16 +11,24 @@
 
 package com.vmware.admiral.compute.profile;
 
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
+
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.photon.controller.model.resources.StorageDescriptionService.StorageDescription;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.StatefulService;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 /**
@@ -30,7 +38,10 @@ public class StorageProfileService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.STORAGE_PROFILES;
 
     public static class StorageItem {
-
+        /**
+         * Link to the Storage description associated with this storage item.
+         */
+        public String storageDescriptionLink;
         /**
          * Name of the storage properties defined for Jason's reference.
          */
@@ -48,6 +59,14 @@ public class StorageProfileService extends StatefulService {
          * defines if this particular storage item contains default storage properties
          */
         public boolean defaultItem;
+
+        public void copyTo(StorageItem target) {
+            target.storageDescriptionLink = this.storageDescriptionLink;
+            target.name = this.name;
+            target.tagLinks = this.tagLinks;
+            target.diskProperties = this.diskProperties;
+            target.defaultItem = this.defaultItem;
+        }
     }
 
     public static class StorageProfile extends ResourceState {
@@ -58,7 +77,30 @@ public class StorageProfileService extends StatefulService {
 
         @Documentation(description = "Contains storageItems that define disk properties to be "
                 + "used by providers")
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL })
         public List<StorageItem> storageItems;
+
+        @Override
+        public void copyTo(ResourceState target) {
+            super.copyTo(target);
+            if (target instanceof StorageProfile) {
+                StorageProfile targetState = (StorageProfile) target;
+                targetState.storageItems = this.storageItems;
+                targetState.endpointLink = this.endpointLink;
+            }
+        }
+    }
+
+    public static class StorageProfileExpanded extends StorageProfile {
+        public List<StorageItemExpanded> storageItemsExpanded;
+
+        public static URI buildUri(URI storageProfileUri) {
+            return UriUtils.buildExpandLinksQueryUri(storageProfileUri);
+        }
+    }
+
+    public static class StorageItemExpanded extends StorageItem {
+        public StorageDescription storageDescription;
     }
 
     public StorageProfileService() {
@@ -100,6 +142,65 @@ public class StorageProfileService extends StatefulService {
         }
         patch.setBody(currentState);
         patch.complete();
+    }
+
+    @Override
+    public void handleGet(Operation get) {
+        StorageProfile currentState = getState(get);
+        boolean doExpand = get.getUri().getQuery() != null &&
+                UriUtils.hasODataExpandParamValue(get.getUri());
+
+        if (!doExpand) {
+            get.setBody(currentState).complete();
+            return;
+        }
+
+        StorageProfileExpanded spExpanded = new StorageProfileExpanded();
+        currentState.copyTo(spExpanded);
+
+        if (spExpanded.storageItems == null || spExpanded.storageItems.isEmpty()) {
+            get.setBody(spExpanded).complete();
+            return;
+        }
+
+        spExpanded.storageItemsExpanded = new ArrayList<>(spExpanded.storageItems.size());
+        List<Operation> getOps = new ArrayList<>(spExpanded.storageItems.size());
+        Map<String, StorageDescription> storageDescriptions = new HashMap<>(spExpanded.storageItems.size());
+        spExpanded.storageItems.stream().forEach(si -> {
+            StorageItemExpanded sIExpanded = new StorageItemExpanded();
+            si.copyTo(sIExpanded);
+            spExpanded.storageItemsExpanded.add(sIExpanded);
+            if (sIExpanded.storageDescriptionLink != null && !storageDescriptions.containsKey
+                    (sIExpanded.storageDescriptionLink)) {
+                getOps.add(Operation.createGet(this, sIExpanded.storageDescriptionLink)
+                        .setReferer(this.getUri())
+                        .setCompletion((o, e) -> {
+                            if (e == null) {
+                                storageDescriptions.put(sIExpanded.storageDescriptionLink, o
+                                        .getBody(StorageDescription.class));
+                            }
+                        }));
+                storageDescriptions.put(sIExpanded.storageDescriptionLink, null);
+            }
+        });
+
+        if (!getOps.isEmpty()) {
+            OperationJoin.create(getOps)
+                    .setCompletion((ops, exs) -> {
+                        if (exs != null) {
+                            get.fail(new Throwable(Utils.toString(exs)));
+                        } else {
+                            // Update storage description entries in the expanded storage item
+                            spExpanded.storageItemsExpanded.stream().forEach(si ->  {
+                                si.storageDescription = storageDescriptions.get(si
+                                        .storageDescriptionLink);
+                            });
+                            get.setBody(spExpanded).complete();
+                        }
+                    }).sendWith(this);
+        } else {
+            get.setBody(spExpanded).complete();
+        }
     }
 
     @Override
