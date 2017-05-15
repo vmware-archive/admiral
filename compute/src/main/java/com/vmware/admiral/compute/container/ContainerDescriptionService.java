@@ -27,6 +27,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import com.esotericsoftware.kryo.serializers.VersionFieldSerializer;
@@ -437,6 +439,16 @@ public class ContainerDescriptionService extends StatefulService {
                         .get(ComputeConstants.HOST_URI_PROP_NAME);
             }
 
+            // debugging dockerHostAddress is null issue
+            if (dockerHostAddress == null) {
+                Logger.getLogger(ContainerDescription.class.getName()).log(Level.INFO,
+                        String.format(
+                                "dockerHostAddress for host %s is null, version: %d, description: %s, creationTime: %d, id: %s, powerState: %s, customProperties: %s",
+                                hostComputeState.documentSelfLink, hostComputeState.documentVersion,
+                                hostComputeState.descriptionLink,
+                                hostComputeState.creationTimeMicros, hostComputeState.id,
+                                hostComputeState.powerState, hostComputeState.customProperties));
+            }
             AssertUtil.assertNotNull(dockerHostAddress, "address");
 
             URI uri = UriUtilsExtended.buildDockerUri(dockerHostScheme,
