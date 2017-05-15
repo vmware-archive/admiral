@@ -90,20 +90,32 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
             directHostInfo(request, op, hostComputeState);
         } else if (ContainerHostOperationType.LIST_CONTAINERS == request.getOperationType()
                 && request.serviceTaskCallback.isEmpty()) {
+            // debugging dockerHostAddress is null issue
+            logInfo("DockerHostAdapterService.handlePatch (list containers): compute: %s",
+                    request.resourceReference);
             getContainerHost(request, op, request.resourceReference,
                     (computeState, commandInput) -> directListContainers(request, op, computeState,
                             commandInput));
         } else if (ContainerHostOperationType.LIST_NETWORKS == request.getOperationType()
                 && request.serviceTaskCallback.isEmpty()) {
+            // debugging dockerHostAddress is null issue
+            logInfo("DockerHostAdapterService.handlePatch (list networks): compute: %s",
+                    request.resourceReference);
             getContainerHost(request, op, request.resourceReference,
                     (computeState, commandInput) -> directListNetworks(request, op, computeState,
                             commandInput));
         } else if (ContainerHostOperationType.LIST_VOLUMES == request.getOperationType()
                 && request.serviceTaskCallback.isEmpty()) {
+            // debugging dockerHostAddress is null issue
+            logInfo("DockerHostAdapterService.handlePatch (list volumes): compute: %s",
+                    request.resourceReference);
             getContainerHost(request, op, request.resourceReference,
                     (computeState, commandInput) -> directListVolumes(request, op, computeState,
                             commandInput));
         } else {
+            // debugging dockerHostAddress is null issue
+            logInfo("DockerHostAdapterService.handlePatch (else): compute: %s",
+                    request.resourceReference);
             getContainerHost(request, op, request.resourceReference,
                     (computeState, commandInput) -> processOperation(request, computeState,
                             commandInput));
