@@ -85,7 +85,6 @@ public class CounterSubTaskService extends StatefulService {
 
             Operation postOp = Operation.createPost(service, CounterSubTaskService.FACTORY_LINK)
                     .setBody(subTaskInitState)
-                    .setReferer(service.getUri())
                     .setCompletion((o, e) -> {
                         if (e != null) {
                             service.failTask("Failure creating counter sub task: " + link, e);
@@ -97,7 +96,7 @@ public class CounterSubTaskService extends StatefulService {
                                 subTaskInitState.completionsRemaining, body.documentSelfLink);
                         callbackFunc.accept(body.documentSelfLink);
                     });
-            service.getHost().sendRequest(postOp);
+            service.sendRequest(postOp);
         } catch (Throwable e) {
             service.failTask("Failure posting counter sub task", e);
         }

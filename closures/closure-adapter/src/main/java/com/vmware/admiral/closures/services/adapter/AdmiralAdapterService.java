@@ -295,8 +295,7 @@ public class AdmiralAdapterService extends
         String dockerBuildImageLink = createImageBuildRequestUri(
                 createBaseImageDockerName(state.imageConfig),
                 state.selectedComputeLink);
-        getHost().sendRequest(Operation.createGet(getHost(), dockerBuildImageLink)
-                .setReferer(getHost().getUri())
+        sendRequest(Operation.createGet(getHost(), dockerBuildImageLink)
                 .setCompletion((op, ex) -> {
                     if (ex != null) {
                         if (op.getStatusCode() == 404) {
@@ -325,8 +324,7 @@ public class AdmiralAdapterService extends
                 containerDesc.image, state.selectedComputeLink, retriesCount);
         String dockerBuildImageLink = createImageBuildRequestUri(containerDesc.image,
                 state.selectedComputeLink);
-        getHost().sendRequest(Operation.createGet(getHost(), dockerBuildImageLink)
-                .setReferer(getHost().getUri())
+        sendRequest(Operation.createGet(getHost(), dockerBuildImageLink)
                 .setCompletion((op, ex) -> {
                     if (ex != null) {
                         if (op.getStatusCode() == 404) {
@@ -380,9 +378,8 @@ public class AdmiralAdapterService extends
                 state.selectedComputeLink);
 
         logInfo("Creating docker image request: %s ", uri);
-        getHost().sendRequest(OperationUtil.createForcedPost(uri)
+        sendRequest(OperationUtil.createForcedPost(uri)
                 .setBody(buildImage)
-                .setReferer(getHost().getUri())
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         logSevere("Exception while submitting docker image request: ", e);
@@ -437,10 +434,9 @@ public class AdmiralAdapterService extends
         request.customProperties
                 .putIfAbsent(DOCKER_IMAGE_TAG_PROP_NAME, imageConfig.baseImageVersion);
 
-        getHost().sendRequest(Operation
+        sendRequest(Operation
                 .createPatch(getHost(), ManagementUriParts.ADAPTER_DOCKER_IMAGE_HOST)
                 .setBody(request)
-                .setReferer(getHost().getUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         String errMsg = String.format("Tag Image operation %s failed on docker "
@@ -477,10 +473,9 @@ public class AdmiralAdapterService extends
         request.customProperties = new HashMap<>();
         request.customProperties.putIfAbsent(DOCKER_IMAGE_NAME_PROP_NAME, baseImageName);
 
-        getHost().sendRequest(Operation
+        sendRequest(Operation
                 .createPatch(getHost(), ManagementUriParts.ADAPTER_DOCKER_IMAGE_HOST)
                 .setBody(request)
-                .setReferer(getHost().getUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         String errMsg = String.format("Create Image operation %s failed on docker "
@@ -513,10 +508,9 @@ public class AdmiralAdapterService extends
         request.customProperties = new HashMap<>();
         request.customProperties.putIfAbsent(DOCKER_IMAGE_NAME_PROP_NAME, baseImageName);
 
-        getHost().sendRequest(Operation
+        sendRequest(Operation
                 .createPatch(getHost(), ManagementUriParts.ADAPTER_DOCKER_IMAGE_HOST)
                 .setBody(request)
-                .setReferer(getHost().getUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         String errMsg = String.format("Load image operation %s failed on docker "
@@ -546,8 +540,7 @@ public class AdmiralAdapterService extends
                 computeStateLink);
         String dockerBuildImageLink = createImageBuildRequestUri(createBaseImageDockerName
                 (state.imageConfig), computeStateLink);
-        getHost().sendRequest(Operation.createGet(getHost(), dockerBuildImageLink)
-                .setReferer(getHost().getUri())
+        sendRequest(Operation.createGet(getHost(), dockerBuildImageLink)
                 .setCompletion((op, ex) -> {
                     if (ex != null) {
                         if (op.getStatusCode() == 404) {
@@ -584,8 +577,7 @@ public class AdmiralAdapterService extends
                 computeStateLink);
         String dockerBuildImageLink = createImageBuildRequestUri(containerDesc.image,
                 computeStateLink);
-        getHost().sendRequest(Operation.createGet(getHost(), dockerBuildImageLink)
-                .setReferer(getHost().getUri())
+        sendRequest(Operation.createGet(getHost(), dockerBuildImageLink)
                 .setCompletion((op, ex) -> {
                     if (ex != null) {
                         if (op.getStatusCode() == 404) {
@@ -617,9 +609,8 @@ public class AdmiralAdapterService extends
         buildImage.documentSelfLink = createImageBuildRequestUri(buildImage.name, computeStateLink);
 
         logInfo("Creating docker build base image request: %s", uri);
-        getHost().sendRequest(OperationUtil.createForcedPost(uri)
+        sendRequest(OperationUtil.createForcedPost(uri)
                 .setBody(buildImage)
-                .setReferer(getHost().getUri())
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         logSevere("Exception while submitting docker build image request: ", e);
@@ -757,9 +748,8 @@ public class AdmiralAdapterService extends
 
     private void startAllocationTask(ContainerAllocationTaskState allocationTask) {
         URI uri = UriUtils.buildUri(getHost(), ContainerAllocationTaskFactoryService.SELF_LINK);
-        getHost().sendRequest(OperationUtil.createForcedPost(uri)
+        sendRequest(OperationUtil.createForcedPost(uri)
                 .setBody(allocationTask)
-                .setReferer(getHost().getUri())
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         logSevere("Exception while submitting allocation closure: ", e);
@@ -768,7 +758,6 @@ public class AdmiralAdapterService extends
 
                     logInfo("Allocation closure submitted successfully");
                 }));
-
     }
 
     private ContainerAllocationTaskState prepareContainerAllocationTask(
@@ -809,9 +798,8 @@ public class AdmiralAdapterService extends
                 computeStateLink);
 
         logInfo("Creating docker build image request: %s", uri);
-        getHost().sendRequest(OperationUtil.createForcedPost(uri)
+        sendRequest(OperationUtil.createForcedPost(uri)
                 .setBody(buildImage)
-                .setReferer(getHost().getUri())
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         logSevere("Exception while submitting docker build image request: ", e);
@@ -827,7 +815,6 @@ public class AdmiralAdapterService extends
                             () -> seedWithDockerImage(containerDesc, computeStateLink, state),
                             3, TimeUnit.SECONDS);
                 }));
-
     }
 
     private void proceedWithDockerImageCreation(ContainerDescription containerDesc,
@@ -844,9 +831,8 @@ public class AdmiralAdapterService extends
                 state.selectedComputeLink);
 
         logInfo("Creating docker build image request: %s, retries: %s", uri, retriesCount);
-        getHost().sendRequest(OperationUtil.createForcedPost(uri)
+        sendRequest(OperationUtil.createForcedPost(uri)
                 .setBody(buildImage)
-                .setReferer(getHost().getUri())
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         logSevere("Exception while submitting docker build image request: ", e);
@@ -862,7 +848,6 @@ public class AdmiralAdapterService extends
                             () -> proceedWithDockerImage(containerDesc, state, retriesCount), 3,
                             TimeUnit.SECONDS);
                 }));
-
     }
 
     private void buildDockerImage(ContainerDescription containerDesc, String computeStateLink,
@@ -896,7 +881,6 @@ public class AdmiralAdapterService extends
         Operation op = Operation
                 .createPatch(getHost(), ManagementUriParts.ADAPTER_DOCKER_IMAGE_HOST)
                 .setBody(request)
-                .setReferer(getHost().getUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         logSevere("Unable to build image on docker host: ", ex);
@@ -910,7 +894,7 @@ public class AdmiralAdapterService extends
                 });
 
         prepareRequest(op, true);
-        getHost().sendRequest(op);
+        sendRequest(op);
     }
 
     private boolean mustSetTaskUri(AdmiralAdapterTaskState state) {
@@ -962,9 +946,8 @@ public class AdmiralAdapterService extends
 
     private void touchDockerImage(String dockerBuildImageLink, DockerImage imageRequest) {
         logInfo("Updating docker build image request: {}", dockerBuildImageLink);
-        getHost().sendRequest(Operation.createPatch(getHost(), dockerBuildImageLink)
+        sendRequest(Operation.createPatch(getHost(), dockerBuildImageLink)
                 .setBody(imageRequest)
-                .setReferer(getHost().getUri())
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         logWarning("Exception while updating docker build image request: ", e);
@@ -1114,8 +1097,7 @@ public class AdmiralAdapterService extends
             Consumer<ServiceDocumentQuery.ServiceDocumentQueryElementResult<GroupResourcePlacementState>> callbackFunction) {
         logInfo("Fetching group placement: %s", state.groupResourcePlacementLink);
         try {
-            getHost().sendRequest(Operation.createGet(getHost(), state.groupResourcePlacementLink)
-                    .setReferer(getHost().getUri())
+            sendRequest(Operation.createGet(getHost(), state.groupResourcePlacementLink)
                     .setCompletion((op, ex) -> {
                         if (ex != null) {
                             callbackFunction.accept(error(ex));
@@ -1180,8 +1162,7 @@ public class AdmiralAdapterService extends
         if (!ClosureUtils.isEmpty(state.configuration.sourceURL)) {
             URI sourceURI = UriUtils.buildUri(state.configuration.sourceURL);
             // Replace with HEAD as soon as it is supported
-            getHost().sendRequest(Operation.createGet(sourceURI)
-                    .setReferer(getHost().getUri())
+            sendRequest(Operation.createGet(sourceURI)
                     .setCompletion((op, ex) -> {
                         if (ex != null) {
                             logWarning("Unable to fetch external source from uri: "
@@ -1213,9 +1194,8 @@ public class AdmiralAdapterService extends
         URI uri = UriUtils.buildUri(getHost(), ContainerDescriptionService.FACTORY_LINK);
 
         logInfo("Creating execution container description: %s", uri);
-        getHost().sendRequest(OperationUtil.createForcedPost(uri)
+        sendRequest(OperationUtil.createForcedPost(uri)
                 .setBody(containerDesc)
-                .setReferer(getHost().getUri())
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         logSevere("Exception while creating container description: ", e);

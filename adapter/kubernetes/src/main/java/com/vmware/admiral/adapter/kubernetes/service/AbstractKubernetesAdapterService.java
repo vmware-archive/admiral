@@ -79,7 +79,7 @@ public abstract class AbstractKubernetesAdapterService extends StatelessService 
     }
 
     @Override
-    public void handleMaintenance(Operation post) {
+    public void handlePeriodicMaintenance(Operation post) {
         if (getProcessingStage() != ProcessingStage.AVAILABLE) {
             logFine("Skipping maintenance since service is not available: %s ", getUri());
             post.complete();

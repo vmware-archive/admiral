@@ -100,7 +100,7 @@ public class LogService extends StatefulService {
      * to not overload the storage with container logs.
      * Remove when bug is fixed.*/
     @Override
-    public void handleMaintenance(Operation post) {
+    public void handlePeriodicMaintenance(Operation post) {
         if (getProcessingStage() != ProcessingStage.AVAILABLE) {
             logFine("Skipping maintenance since service is not available: %s ", getUri());
             return;
