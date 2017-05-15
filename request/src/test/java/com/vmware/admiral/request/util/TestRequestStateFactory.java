@@ -479,8 +479,9 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         endpoint.endpointProperties.put("privateKeyId", "testId");
         endpoint.endpointProperties.put("privateKey",
                 getFileContent("docker-host-private-key.PEM"));
-        endpoint.endpointProperties.put("regionId", ENDPOINT_REGION_ID);
+        endpoint.regionId = ENDPOINT_REGION_ID;
         endpoint.endpointProperties.put("hostName", "127.0.0.1");
+
 
         return endpoint;
     }

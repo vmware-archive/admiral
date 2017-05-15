@@ -4,4 +4,4 @@ instanceTypeMapping:
     instanceType: "t2.micro"
 imageMapping:
   ubuntu-1604:
-    image: "ami-f4cc1de2"
+    image: "ami-a8d2d7ce"

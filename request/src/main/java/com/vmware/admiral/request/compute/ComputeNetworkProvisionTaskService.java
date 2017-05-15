@@ -256,7 +256,7 @@ public class ComputeNetworkProvisionTaskService
 
     private DeferredResult<Context> provisionResource(Context context) {
         if (context.computeNetwork.networkType == NetworkType.ISOLATED &&
-                context.profile.networkProfile.isolationType.equals(IsolationSupportType.SUBNET)) {
+                context.profile.networkProfile.isolationType == IsolationSupportType.SUBNET) {
             // Provision a new subnet
             if (context.subnet == null) {
                 throw new IllegalArgumentException(
@@ -269,8 +269,8 @@ public class ComputeNetworkProvisionTaskService
                     .thenCompose(this::createNicStates)
                     .thenCompose(this::provisionSubnet);
         } else if (context.computeNetwork.networkType == NetworkType.ISOLATED &&
-                context.profile.networkProfile.isolationType.equals(
-                        IsolationSupportType.SECURITY_GROUP)) {
+                context.profile.networkProfile.isolationType
+                        == IsolationSupportType.SECURITY_GROUP) {
             // Provision a new security group
             return DeferredResult.completed(context)
                     .thenCompose(this::populateEndpointComputeState)
@@ -350,7 +350,8 @@ public class ComputeNetworkProvisionTaskService
                         "Context.isolatedNetworkEndpoint.endpointType should not be null.");
                 return sendWithDeferredResult(
                         Operation.createGet(getHost(),
-                                UriUtils.buildUriPath(PhotonModelAdaptersRegistryService.FACTORY_LINK,
+                                UriUtils.buildUriPath(
+                                        PhotonModelAdaptersRegistryService.FACTORY_LINK,
                                         context.isolatedNetworkEndpoint.endpointType)),
                         PhotonModelAdapterConfig.class)
                         .thenApply(config -> {
@@ -364,7 +365,8 @@ public class ComputeNetworkProvisionTaskService
                         "Context.profile.endpoint.endpointType should not be null.");
                 return sendWithDeferredResult(
                         Operation.createGet(getHost(),
-                                UriUtils.buildUriPath(PhotonModelAdaptersRegistryService.FACTORY_LINK,
+                                UriUtils.buildUriPath(
+                                        PhotonModelAdaptersRegistryService.FACTORY_LINK,
                                         context.profile.endpoint.endpointType)),
                         PhotonModelAdapterConfig.class)
                         .thenApply(config -> {
@@ -457,8 +459,8 @@ public class ComputeNetworkProvisionTaskService
                         context.subnet = subnetState;
                         return context;
                     });
-        } else if (context.computeNetwork.networkType.equals(NetworkType.ISOLATED) &&
-                context.profile.networkProfile.isolationType.equals(IsolationSupportType.SUBNET)) {
+        } else if (context.computeNetwork.networkType == NetworkType.ISOLATED &&
+                context.profile.networkProfile.isolationType == IsolationSupportType.SUBNET) {
             // Create a new subnet template to attach to the VM NICs
             SubnetState subnet = new SubnetState();
             subnet.id = UUID.randomUUID().toString();

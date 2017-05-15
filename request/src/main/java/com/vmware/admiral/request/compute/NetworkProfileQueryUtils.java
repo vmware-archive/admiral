@@ -427,7 +427,7 @@ public class NetworkProfileQueryUtils {
                 && !profile.networkProfile.subnetStates.isEmpty();
         if (hasSubnetStates || isIsolatedBySubnetNetworkProfile) {
             if (!noNicVM) {
-                if (computeNetworkDescription.networkType.equals(NetworkType.ISOLATED) &&
+                if (computeNetworkDescription.networkType == NetworkType.ISOLATED &&
                         isIsolatedBySubnetNetworkProfile) {
                     subnet = DeferredResult.completed(isolatedSubnetState);
                 } else {

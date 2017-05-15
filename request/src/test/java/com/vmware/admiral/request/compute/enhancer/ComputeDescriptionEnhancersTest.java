@@ -65,6 +65,7 @@ import com.vmware.photon.controller.model.resources.DiskService;
 import com.vmware.photon.controller.model.resources.DiskService.DiskState;
 import com.vmware.photon.controller.model.resources.ImageService;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.TagFactoryService;
 import com.vmware.photon.controller.model.resources.TagService;
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
@@ -81,6 +82,8 @@ import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsSe
 import com.vmware.xenon.services.common.QueryTask;
 
 public class ComputeDescriptionEnhancersTest extends BaseTestCase {
+
+    private static final String DEFAULT_REGION_ID = "eu-west-1";
 
     private ComputeDescription cd;
     private EnhanceContext context;
@@ -128,6 +131,7 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         context.endpointType = awsEndpointType;
         context.profileLink = UriUtils.buildUriPath(ProfileService.FACTORY_LINK,
                 awsEndpointType);
+        context.regionId = DEFAULT_REGION_ID;
     }
 
     @Test
@@ -737,7 +741,7 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
 
     /**
      * Blocking version of
-     * {@link ComputeDescriptionEnhancer#enhance(EnhanceContext, ComputeDescription)}.
+     * {@link ComputeDescriptionEnhancer#enhance(EnhanceContext, ResourceState)}.
      */
     private void enhance(ComputeDescriptionEnhancer enhancer) {
 

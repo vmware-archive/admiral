@@ -56,7 +56,6 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.Constraint.Condition;
-import com.vmware.photon.controller.model.adapterapi.EndpointConfigRequest;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.DeferredResult;
@@ -429,8 +428,7 @@ public class ComputeReservationTaskService extends
                                         EnhanceContext context = new EnhanceContext();
                                         context.profileLink = profileLink;
                                         context.skipNetwork = true;
-                                        context.regionId = profileEntry.endpoint.endpointProperties
-                                                .get(EndpointConfigRequest.REGION_KEY);
+                                        context.regionId = profileEntry.endpoint.regionId;
                                         return Pair.of(context, cloned);
                                     })
                                     .map(p -> {

@@ -45,5 +45,4 @@ public class AwsComputeProvisionIT extends BaseComputeProvisionIT {
             computeDescription.customProperties.put(AWSConstants.AWS_SECURITY_GROUP, securityGroup);
         }
     }
-
 }
