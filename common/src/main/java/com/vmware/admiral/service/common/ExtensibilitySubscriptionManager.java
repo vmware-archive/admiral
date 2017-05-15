@@ -299,7 +299,6 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
 
         sendRequest(Operation.createPost(extensibility.callbackReference)
                 .setBody(body)
-                .setReferer(getUri())
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         logWarning(
@@ -326,9 +325,7 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
 
                         }
                     }
-
                 }));
-
     }
 
     @SuppressWarnings("rawtypes")

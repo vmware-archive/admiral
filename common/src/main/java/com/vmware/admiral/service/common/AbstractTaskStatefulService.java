@@ -907,7 +907,6 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             URI callbackUri = URI.create(callbackReference);
             Operation.createPost(callbackUri)
                     .setBody(state)
-                    .setReferer(this.getUri())
                     .forceRemote()
                     .setCompletion((op, ex) -> {
                         if (ex != null) {
