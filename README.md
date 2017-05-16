@@ -1,8 +1,8 @@
-![Admiral](https://vmware.github.io/admiral/assets/img/admiral.png "VMware Admiral")
+![Admiral](https://vmware.github.io/admiral/images/admiral.png "VMware Admiral")
 
 # Admiral
 
-###Contents
+### Contents
 - [What is Admiral](#what-is-admiral)
 - [Getting started](#getting-started)
 - [Contributing](#contributing)
