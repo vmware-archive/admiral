@@ -39,6 +39,7 @@ const ODATA_COUNT_PROP_NAME = '$count';
 const ODATA_FILTER_PROP_NAME = '$filter';
 const ODATA_LIMIT_PROP_NAME = '$limit';
 const ODATA_ORDERBY_PROP_NAME = '$orderby';
+const DEFAULT_XENON_LIMIT = 10000;
 
 const PRAGMA_HEADER = 'pragma';
 const PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE = 'xn-force-index-update';
@@ -290,6 +291,9 @@ var list = function(url, expandQuery, paramsData) {
   if (expandQuery) {
     paramsData[EXPAND_QUERY_PROP_NAME] = true;
   }
+  if (!paramsData[ODATA_LIMIT_PROP_NAME]) {
+    paramsData[ODATA_LIMIT_PROP_NAME] = DEFAULT_XENON_LIMIT;
+  }
   return get(mergeUrl(url, paramsData)).then(function(result) {
     // The result.documents check is added to support vRA.
     if (expandQuery && result.documentLinks && result.documents) {
@@ -361,12 +365,12 @@ services.loadCredentials = function() {
   The problem is that nested properties should be filtered by "/"
   (see filter section http://www.odata.org/documentation/odata-version-2-0/uri-conventions/)
 
-  customPropertis.scope ne 'SYSTEM' throws in CAFE: System request parameter
+  customProperties.scope ne 'SYSTEM' throws in CAFE: System request parameter
   $filter=customProperties.scope ne 'SYSTEM' is not properly formatted. Details:
   Unable to read expression with tokens: [[customProperties], [.], [scope]]
 
-  customPropertis/scope ne 'SYSTEM' throws in DCP: DCP error with Http code: [400]...
-  it hould be fixed on DCP level, the problem lies in
+  customProperties/scope ne 'SYSTEM' throws in DCP: DCP error with Http code: [400]...
+  it should be fixed on DCP level, the problem lies in
   com.vmware.xenon.common.ODataTokenizer.tokenize()
   */
   return list(links.CREDENTIALS, true);
