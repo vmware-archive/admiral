@@ -21,7 +21,7 @@ import com.vmware.admiral.auth.idm.PrincipalProvider;
 
 public class LocalPrincipalProvider implements PrincipalProvider {
 
-    private static final List<String> PRINCIPALS = Arrays.asList("Jason", "Shauna", "Scott");
+    private static final List<String> PRINCIPALS = Arrays.asList("Fritz", "Gloria", "Connie");
 
     @Override
     public String getPrincipal(String principalId) {

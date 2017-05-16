@@ -14,23 +14,16 @@ package com.vmware.admiral.auth.idm;
 import java.util.List;
 import java.util.ServiceLoader;
 
+import com.vmware.xenon.common.Utils;
+
 public class PrincipalService implements PrincipalProvider {
+
+    private static final String PREFERRED_PROVIDER_PACKAGE = "com.vmware.admiral.auth.idm.psc";
 
     private PrincipalProvider provider;
 
     public PrincipalService() {
-        ServiceLoader<PrincipalProvider> loader = ServiceLoader.load(PrincipalProvider.class);
-
-        for (PrincipalProvider principalProvider : loader) {
-            if (provider != null) {
-                break;
-            }
-            provider = principalProvider;
-        }
-
-        if (provider == null) {
-            throw new IllegalStateException("No PrincipalProvider found!");
-        }
+        provider = getPreferredProvider(PrincipalProvider.class);
     }
 
     @Override
@@ -41,6 +34,30 @@ public class PrincipalService implements PrincipalProvider {
     @Override
     public List<String> getPrincipals(String criteria) {
         return provider.getPrincipals(criteria);
+    }
+
+    private static <T> T getPreferredProvider(Class<T> clazz) {
+
+        ServiceLoader<T> loader = ServiceLoader.load(clazz);
+
+        T provider = null;
+
+        for (T loaderProvider : loader) {
+            if (provider != null
+                    && provider.getClass().getName().startsWith(PREFERRED_PROVIDER_PACKAGE)) {
+                Utils.logWarning("Ignoring provider '%s'.", loaderProvider.getClass().getName());
+                continue;
+            }
+
+            Utils.logWarning("Using provider '%s'.", loaderProvider.getClass().getName());
+            provider = loaderProvider;
+        }
+
+        if (provider == null) {
+            throw new IllegalStateException("No provider found!");
+        }
+
+        return provider;
     }
 
 }

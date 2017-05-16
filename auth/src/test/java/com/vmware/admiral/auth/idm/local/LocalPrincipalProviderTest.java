@@ -28,31 +28,31 @@ public class LocalPrincipalProviderTest {
     @Test
     public void testGetPrincipal() {
         assertNull(provider.getPrincipal(""));
-        assertEquals("Jason", provider.getPrincipal("jason"));
-        assertEquals("Shauna", provider.getPrincipal("Shauna"));
-        assertEquals(null, provider.getPrincipal("scot"));
+        assertEquals("Fritz", provider.getPrincipal("fritz"));
+        assertEquals("Gloria", provider.getPrincipal("Gloria"));
+        assertEquals(null, provider.getPrincipal("conie"));
     }
 
     @Test
     public void testPrincipals() {
         assertTrue(provider.getPrincipals("").isEmpty());
 
-        List<String> principals = provider.getPrincipals("jason");
-        assertTrue(principals.size() == 1 && principals.contains("Jason"));
+        List<String> principals = provider.getPrincipals("fritz");
+        assertTrue(principals.size() == 1 && principals.contains("Fritz"));
 
-        principals = provider.getPrincipals("Shauna");
-        assertTrue(principals.size() == 1 && principals.contains("Shauna"));
+        principals = provider.getPrincipals("Gloria");
+        assertTrue(principals.size() == 1 && principals.contains("Gloria"));
 
-        principals = provider.getPrincipals("scot");
-        assertTrue(principals.size() == 1 && principals.contains("Scott"));
+        principals = provider.getPrincipals("conni");
+        assertTrue(principals.size() == 1 && principals.contains("Connie"));
 
-        principals = provider.getPrincipals("s");
-        assertTrue(principals.size() == 3 && principals.contains("Jason")
-                && principals.contains("Shauna") && principals.contains("Scott"));
+        principals = provider.getPrincipals("i");
+        assertTrue(principals.size() == 3 && principals.contains("Fritz")
+                && principals.contains("Gloria") && principals.contains("Connie"));
 
-        principals = provider.getPrincipals("A");
-        assertTrue(principals.size() == 2 && principals.contains("Jason")
-                && principals.contains("Shauna"));
+        principals = provider.getPrincipals("O");
+        assertTrue(principals.size() == 2 && principals.contains("Gloria")
+                && principals.contains("Connie"));
     }
 
 }
