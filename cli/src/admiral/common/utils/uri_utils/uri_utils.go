@@ -156,5 +156,6 @@ func GetCommonQueryMap() map[string]interface{} {
 	cqm := make(map[string]interface{})
 	cqm["documentType"] = true
 	cqm["expand"] = true
+	cqm["$limit"] = 10000
 	return cqm
 }
