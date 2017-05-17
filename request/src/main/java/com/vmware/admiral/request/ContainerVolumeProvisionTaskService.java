@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -126,7 +126,8 @@ public class ContainerVolumeProvisionTaskService
         state.resourceCount = (long) state.resourceLinks.size();
 
         if (state.resourceCount < 1) {
-            throw new LocalizableValidationException("'resourceCount' must be greater than 0.", "request.resource-count.zero");
+            throw new LocalizableValidationException("'resourceCount' must be greater than 0.",
+                    "request.resource-count.zero");
         }
     }
 
@@ -159,7 +160,7 @@ public class ContainerVolumeProvisionTaskService
                 getVolumeByName(state, volumeDescription.name, (volumeState) -> {
                     updateContainerVolumeState(state, volumeState, () -> {
                         proceedTo(SubStage.COMPLETED, s -> {
-                            // Small workaround to get the actual self link for discovered volumes...
+                            // Small workaround to get the actual self link for discovered volumes..
                             s.customProperties = new HashMap<>();
                             s.customProperties.put("__externalVolumeSelfLink",
                                     volumeState.documentSelfLink);
@@ -183,8 +184,9 @@ public class ContainerVolumeProvisionTaskService
                                 }
                             }
                         } else {
-                            String err = String.format(
-                                    "Unexpected size of resource links and hosts, hosts should be one or equal to resource links! Actual resources - [%s], hosts - [%s]",
+                            String err = String.format("Unexpected size of resource links and"
+                                            + " hosts, hosts should be one or equal to resource"
+                                            + " links! Actual resources - [%s], hosts - [%s]",
                                     state.resourceLinks.size(), hosts.size());
                             failTask(err, null);
                         }
@@ -441,7 +443,7 @@ public class ContainerVolumeProvisionTaskService
                         failTask("AdapterRequest failed for volume: " + volumeSelfLink, e);
                         return;
                     }
-                    logInfo("Volume provisioning started  for: " + volumeSelfLink);
+                    logInfo("Volume provisioning started for: %s", volumeSelfLink);
                 }));
     }
 
