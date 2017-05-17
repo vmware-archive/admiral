@@ -13,15 +13,20 @@ package com.vmware.admiral.compute;
 
 import static com.vmware.admiral.common.util.CertificateUtilExtended.isSelfSignedCertificate;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
-import com.vmware.photon.controller.model.resources.ComputeService;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 
 /**
  * Service for distribution of self-signed trusted registry certificate to all docker hosts.
@@ -65,17 +70,30 @@ public class RegistryConfigCertificateDistributionService
     private void handleAddRegistryHostOperation(String registryAddress, String certificate,
             List<String> tenantLinks) {
 
-        sendRequest(Operation.createGet(this, ComputeService.FACTORY_LINK)
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        o.fail(ex);
-                    } else {
-                        ServiceDocumentQueryResult doc = o
-                                .getBody(ServiceDocumentQueryResult.class);
-                        for (String hostLink : doc.documentLinks) {
-                            uploadCertificate(hostLink, registryAddress, certificate, tenantLinks);
-                        }
-                    }
-                }));
+        QueryTask q = QueryUtil.buildQuery(ComputeState.class, true);
+        QueryTask.Query hostTypeClause = new QueryTask.Query()
+                .setTermPropertyName(QuerySpecification.buildCompositeFieldName(
+                        ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
+                        ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME))
+                .setTermMatchValue(ContainerHostType.DOCKER.toString());
+        q.querySpec.query.addBooleanClause(hostTypeClause);
+        q.querySpec.resultLimit = ServiceDocumentQuery.DEFAULT_QUERY_RESULT_LIMIT;
+        q.documentExpirationTimeMicros = ServiceDocumentQuery.getDefaultQueryExpiration();
+
+        List<String> hostLinks = new ArrayList<>();
+        ServiceDocumentQuery<ComputeState> query = new ServiceDocumentQuery<>(getHost(),
+                ComputeState.class);
+        query.query(q, (r) -> {
+            if (r.hasException()) {
+                logWarning("Exception while retrieving docker host states. Error: %s",
+                        Utils.toString(r.getException()));
+            } else if (r.hasResult()) {
+                hostLinks.add(r.getDocumentSelfLink());
+            } else {
+                for (String hostLink : hostLinks) {
+                    uploadCertificate(hostLink, registryAddress, certificate, tenantLinks);
+                }
+            }
+        });
     }
 }
