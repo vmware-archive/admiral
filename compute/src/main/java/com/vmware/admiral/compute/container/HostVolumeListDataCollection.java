@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -26,6 +27,7 @@ import java.util.logging.Logger;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
+import com.vmware.admiral.adapter.common.VolumeOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.OperationUtil;
@@ -62,14 +64,22 @@ import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 public class HostVolumeListDataCollection extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.HOST_VOLUME_LIST_DATA_COLLECTION;
 
-    public static final String DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_ID = "__default-list-data-collection";
+    public static final String DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_ID =
+            "__default-list-data-collection";
     public static final String DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK = UriUtils
             .buildUriPath(FACTORY_LINK, DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_ID);
 
-    protected static final long DATA_COLLECTION_LOCK_TIMEOUT_MILLISECONDS = Long.getLong(
-            "com.vmware.admiral.compute.container.volume.datacollection.lock.timeout.milliseconds", 60000 * 5);
-    public static final Integer MAX_DATACOLLECTION_FAILURES = Integer.getInteger(
+    private static final long DATA_COLLECTION_LOCK_TIMEOUT_MILLISECONDS = Long.getLong(
+            "com.vmware.admiral.compute.container.volume.datacollection.lock.timeout.milliseconds",
+            TimeUnit.MINUTES.toMillis(5));
+    private static final Integer MAX_DATA_COLLECTION_FAILURES = Integer.getInteger(
             "com.vmware.admiral.compute.container.volume.max.datacollection.failures", 3);
+
+    private static final int VOLUME_INSPECT_RETRY_COUNT = Integer.parseInt(System.getProperty(
+            "com.vmware.admiral.compute.container.volume.inspect.retry.count", "3"));
+
+    private static final int VOLUME_INSPECT_RETRY_INTERVAL_SECONDS = Integer.parseInt(System.getProperty(
+            "com.vmware.admiral.compute.container.volume.inspect.retry.interval.seconds", "10"));
 
     public static class HostVolumeListDataCollectionState extends
             TaskServiceDocument<DefaultSubStage> {
@@ -172,7 +182,7 @@ public class HostVolumeListDataCollection extends StatefulService {
             // continue with the data collection.
         }
 
-        List<ContainerVolumeState> volumeStates = new ArrayList<ContainerVolumeState>();
+        List<ContainerVolumeState> volumeStates = new ArrayList<>();
 
         QueryTask queryTask = QueryUtil.buildQuery(ContainerVolumeState.class, true);
 
@@ -210,7 +220,8 @@ public class HostVolumeListDataCollection extends StatefulService {
                         (r) -> {
                             if (r.hasException()) {
                                 logSevere(
-                                        "Failed to query for existing ContainerVolumeState instances: %s",
+                                        "Failed to query for existing ContainerVolumeState"
+                                                + " instances: %s",
                                         r.getException() instanceof CancellationException
                                                 ? r.getException().getMessage()
                                                 : Utils.toString(r.getException()));
@@ -219,13 +230,14 @@ public class HostVolumeListDataCollection extends StatefulService {
                                 volumeStates.add(r.getResult());
                             } else {
                                 AdapterRequest request = new AdapterRequest();
-                                request.operationTypeId = ContainerHostOperationType.LIST_VOLUMES.id;
+                                request.operationTypeId =
+                                        ContainerHostOperationType.LIST_VOLUMES.id;
                                 request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
                                 request.resourceReference = UriUtils.buildUri(getHost(),
                                         body.containerHostLink);
                                 sendRequest(Operation
                                         .createPatch(this, ManagementUriParts.ADAPTER_DOCKER_HOST)
-                                        .setBody(request)
+                                        .setBodyNoCloning(request)
                                         .addPragmaDirective(
                                                 Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
                                         .setCompletion(
@@ -321,7 +333,7 @@ public class HostVolumeListDataCollection extends StatefulService {
         }
 
         // finished removing existing ContainerVolumeState, now deal with remaining names
-        List<ContainerVolumeState> volumesLeft = new ArrayList<ContainerVolumeState>();
+        List<ContainerVolumeState> volumesLeft = new ArrayList<>();
 
         Operation operation = Operation
                 .createGet(this, callback.containerHostLink)
@@ -336,39 +348,37 @@ public class HostVolumeListDataCollection extends StatefulService {
                             ComputeState host = o.getBody(ComputeState.class);
                             List<String> group = host.tenantLinks;
 
-                            for (ContainerVolumeState volume : callback.volumesByName.values()) {
-                                ContainerVolumeState volumeState = new ContainerVolumeState();
-                                volumeState.name = volume.name;
-
-                                volumeState.external = true;
-
-                                volumeState.tenantLinks = group;
-                                volumeState.descriptionLink = String.format("%s-%s",
-                                        ContainerVolumeDescriptionService.DISCOVERED_DESCRIPTION_LINK,
-                                        UUID.randomUUID().toString());
-
-                                volumeState.originatingHostLink = callback.containerHostLink;
-
-                                volumeState.parentLinks = new ArrayList<>(
-                                        Arrays.asList(callback.containerHostLink));
-
-                                volumeState.powerState = PowerState.CONNECTED;
-
-                                volumeState.adapterManagementReference = UriUtils
-                                        .buildUri(ManagementUriParts.ADAPTER_DOCKER_VOLUME);
-
-                                volumesLeft.add(volumeState);
+                            for (ContainerVolumeState v : callback.volumesByName.values()) {
+                                volumesLeft.add(
+                                        buildVolumeState(host.documentSelfLink, group, v.name));
                             }
 
                             createDiscoveredContainerVolumes(
                                     volumesLeft,
-                                    (e) -> {
-                                        unlockCurrentDataCollectionForHost(
-                                                callback.containerHostLink);
-                                    });
+                                    (e) -> unlockCurrentDataCollectionForHost(host.documentSelfLink)
+                            );
                         });
 
         sendRequest(operation);
+    }
+
+    private ContainerVolumeState buildVolumeState(String containerHostLink, List<String> group,
+            String name) {
+        ContainerVolumeState volume = new ContainerVolumeState();
+        volume.name = name;
+        volume.external = true;
+        volume.tenantLinks = group;
+        volume.descriptionLink = String.format("%s-%s",
+                ContainerVolumeDescriptionService.DISCOVERED_DESCRIPTION_LINK,
+                UUID.randomUUID().toString());
+
+        volume.originatingHostLink = containerHostLink;
+        volume.parentLinks = new ArrayList<>(Arrays.asList(containerHostLink));
+        volume.powerState = PowerState.CONNECTED;
+        volume.adapterManagementReference = UriUtils.buildUri(
+                ManagementUriParts.ADAPTER_DOCKER_VOLUME);
+
+        return volume;
     }
 
     private void updateVolumePowerState(ContainerVolumeState volumeState) {
@@ -376,7 +386,8 @@ public class HostVolumeListDataCollection extends StatefulService {
         patchState.powerState = PowerState.CONNECTED;
 
         sendRequest(Operation.createPatch(this, volumeState.documentSelfLink)
-                .setBody(patchState).setCompletion((o, e) -> {
+                .setBodyNoCloning(patchState)
+                .setCompletion((o, e) -> {
                     if (e != null) {
                         logWarning("Could not update volume %s to state %s",
                                 volumeState.documentSelfLink, PowerState.CONNECTED);
@@ -404,23 +415,23 @@ public class HostVolumeListDataCollection extends StatefulService {
 
         sendRequest(OperationUtil
                 .createForcedPost(this, ContainerVolumeService.FACTORY_LINK)
-                .setBody(volumeState)
+                .setBodyNoCloning(volumeState)
                 .setCompletion(
                         (o, ex) -> {
                             if (ex != null) {
-                                logSevere(
-                                        "Failed to create ContainerVolumeState for discovered volume (name=%s): %s",
-                                        volumeState.name,
-                                        ex.getMessage());
+                                logSevere("Failed to create ContainerVolumeState for discovered"
+                                                + " volume (name=%s): %s",
+                                        volumeState.name, ex.getMessage());
                                 callback.accept(ex);
                                 return;
-                            } else {
-                                logInfo("Created ContainerVolumeState for discovered volume: %s",
-                                        volumeState.name);
                             }
+                            logInfo("Created ContainerVolumeState for discovered volume: %s",
+                                    volumeState.name);
+
 
                             ContainerVolumeState body = o.getBody(ContainerVolumeState.class);
                             createDiscoveredContainerVolumeDescription(body);
+                            inspectVolumeWithRetry(body, VOLUME_INSPECT_RETRY_COUNT);
 
                             if (counter.decrementAndGet() == 0) {
                                 callback.accept(null);
@@ -437,19 +448,18 @@ public class HostVolumeListDataCollection extends StatefulService {
 
         sendRequest(OperationUtil
                 .createForcedPost(this, ContainerVolumeDescriptionService.FACTORY_LINK)
-                .setBody(volumeDesc)
+                .setBodyNoCloning(volumeDesc)
                 .setCompletion(
                         (o, ex) -> {
                             if (ex != null) {
-                                logSevere(
-                                        "Failed to create ContainerVolumeDescription for discovered volume (name=%s): %s",
+                                logSevere( "Failed to create ContainerVolumeDescription for"
+                                                + " discovered volume (name=%s): %s",
                                         volumeState.name, ex.getMessage());
                             } else {
-                                logInfo("Created ContainerVolumeDescription for discovered volume: %s",
-                                        volumeState.name);
+                                logInfo("Created ContainerVolumeDescription for discovered"
+                                                + " volume: %s", volumeState.name);
                             }
                         }));
-
     }
 
     private void handleMissingContainerVolume(ContainerVolumeState volumeState) {
@@ -457,7 +467,7 @@ public class HostVolumeListDataCollection extends StatefulService {
                 ? Integer.valueOf(volumeState._healthFailureCount + 1)
                 : Integer.valueOf(1);
 
-        if (MAX_DATACOLLECTION_FAILURES.equals(healthFailureCount)) {
+        if (MAX_DATA_COLLECTION_FAILURES.equals(healthFailureCount)) {
             // clean up transient volume states (these point to volumes that are auto-created by
             // docker upon container provisioning and are not not tracked by us; nevertheless, they
             // are auto-discovered and later deleted by docker during container removal requests)
@@ -483,7 +493,7 @@ public class HostVolumeListDataCollection extends StatefulService {
         patchVolumeState._healthFailureCount = healthFailureCount;
         sendRequest(Operation
                 .createPatch(this, volumeState.documentSelfLink)
-                .setBody(patchVolumeState)
+                .setBodyNoCloning(patchVolumeState)
                 .setCompletion((o, ex) -> {
                     if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
                         logFine("Volume %s not found to be marked as missing.",
@@ -503,7 +513,7 @@ public class HostVolumeListDataCollection extends StatefulService {
         body.containerHostLink = containerHostLink;
         body.unlockDataCollectionForHost = true;
         sendRequest(Operation.createPatch(getUri())
-                .setBody(body)
+                .setBodyNoCloning(body)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         logWarning("Self patch failed: %s",
@@ -525,7 +535,7 @@ public class HostVolumeListDataCollection extends StatefulService {
 
         sendRequest(Operation
                 .createPatch(this, volumeState.documentSelfLink)
-                .setBody(patchVolumeState)
+                .setBodyNoCloning(patchVolumeState)
                 .setCompletion((o, ex) -> {
                     if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
                         logFine("Volume %s not found to be updated its parent links.",
@@ -539,4 +549,32 @@ public class HostVolumeListDataCollection extends StatefulService {
                     }
                 }));
     }
+
+    private void inspectVolumeWithRetry(ContainerVolumeState volume, int retry) {
+        AssertUtil.assertTrue(retry > 0, "Negative retry count.");
+
+        AdapterRequest request = new AdapterRequest();
+        request.resourceReference = UriUtils.buildPublicUri(getHost(), volume.documentSelfLink);
+        request.operationTypeId = VolumeOperationType.INSPECT.id;
+        request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+
+        final int retriesRemaining = retry - 1;
+        final int delaySeconds = (VOLUME_INSPECT_RETRY_COUNT - retriesRemaining) *
+                VOLUME_INSPECT_RETRY_INTERVAL_SECONDS;
+
+        sendRequest(Operation.createPatch(this, volume.adapterManagementReference.toString())
+                .setBodyNoCloning(request)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        logWarning("Error while inspect volume: %s. Reties left: %d. Error: %s",
+                                volume.documentSelfLink, retriesRemaining, Utils.toString(ex));
+                        if (retriesRemaining > 0) {
+                            getHost().schedule(() ->
+                                            inspectVolumeWithRetry(volume, retriesRemaining),
+                                    delaySeconds, TimeUnit.SECONDS);
+                        }
+                    }
+                }));
+    }
+
 }

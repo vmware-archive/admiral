@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -22,7 +22,6 @@ import java.util.Map;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
-import com.vmware.admiral.compute.container.maintenance.ContainerVolumeMaintenance;
 import com.vmware.admiral.compute.container.util.CompositeComponentNotifier;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
@@ -41,8 +40,6 @@ public class ContainerVolumeService extends StatefulService {
 
     public static final String FACTORY_LINK = ManagementUriParts.CONTAINER_VOLUMES;
 
-    private volatile ContainerVolumeMaintenance containerVolumeMaintenance;
-
     public static class ContainerVolumeState extends ResourceState {
 
         public static final String FIELD_NAME_NAME = "name";
@@ -52,10 +49,11 @@ public class ContainerVolumeService extends StatefulService {
         public static final String FIELD_NAME_SCOPE = "scope";
         public static final String FIELD_NAME_PARENT_LINKS = "parentLinks";
         public static final String FIELD_NAME_ORIGINATING_HOST_LINK = "originatingHostLink";
-        public static final String FIELD_NAME_ADAPTER_MANAGEMENT_REFERENCE = "adapterManagementReference";
+        public static final String FIELD_NAME_ADAPTER_MANAGEMENT_REFERENCE =
+                "adapterManagementReference";
         public static final String FIELD_NAME_COMPOSITE_COMPONENT_LINKS = "compositeComponentLinks";
 
-        public static enum PowerState {
+        public enum PowerState {
             UNKNOWN,
             PROVISIONING,
             CONNECTED,
@@ -77,7 +75,8 @@ public class ContainerVolumeService extends StatefulService {
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public String originatingHostLink;
 
-        @Documentation(description = "Links to CompositeComponents when a volume is part of App/Composition request.")
+        @Documentation(description = "Links to CompositeComponents when a volume is part of"
+                + " App/Composition request.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL })
         public List<String> compositeComponentLinks;
 
@@ -98,7 +97,8 @@ public class ContainerVolumeService extends StatefulService {
         public List<String> parentLinks;
 
         /** Name of the volume driver to use. Defaults to local for the name. */
-        @Documentation(description = "Name of the volume driver to use. Defaults to local for the name.")
+        @Documentation(description = "Name of the volume driver to use. Defaults to local for"
+                + " the name.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.OPTIONAL })
         public String driver;
@@ -106,8 +106,8 @@ public class ContainerVolumeService extends StatefulService {
         /**
          * If set to true, specifies that this volume exists independently of any application.
          */
-        @Documentation(description = "If set to true, specifies that this volume exists independently "
-                + "of any application.")
+        @Documentation(description = "If set to true, specifies that this volume exists"
+                + " independently of any application.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public Boolean external;
@@ -116,7 +116,9 @@ public class ContainerVolumeService extends StatefulService {
          * Scope describes the level at which the volume exists, can be one of global for
          * cluster-wide or local for machine level. The default is local.
          */
-        @Documentation(description = "Scope describes the level at which the volume exists, can be one of global for cluster-wide or local for machine level. The default is local.")
+        @Documentation(description = "Scope describes the level at which the volume exists, can"
+                + " be one of global for cluster-wide or local for machine level. The default is"
+                + " local.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.OPTIONAL })
         public String scope;
@@ -134,7 +136,7 @@ public class ContainerVolumeService extends StatefulService {
          * that are to be used by the volume drivers.
          */
         @Documentation(description = "A map of field-value pairs for a given volume. These are used"
-                + "to specify volume options that are used by the volume drivers.")
+                + " to specify volume options that are used by the volume drivers.")
         @PropertyOptions(indexing = { PropertyIndexingOption.EXPAND }, usage = {
                 PropertyUsageOption.OPTIONAL, PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public Map<String, String> options;
@@ -143,7 +145,9 @@ public class ContainerVolumeService extends StatefulService {
          * Low-level details about the volume, provided by the volume driver. Details are returned
          * as a map with key/value pairs: {"key":"value","key2":"value2"}
          */
-        @Documentation(description = "Low-level details about the volume, provided by the volume driver. Details are returned as a map with key/value pairs: {\"key\":\"value\",\"key2\":\"value2\"}")
+        @Documentation(description = "Low-level details about the volume, provided by the volume"
+                + " driver. Details are returned as a map with key/value pairs:"
+                + " {\"key\":\"value\",\"key2\":\"value2\"}")
         @PropertyOptions(indexing = { PropertyIndexingOption.EXPAND }, usage = {
                 PropertyUsageOption.OPTIONAL })
         public Map<String, String> status;
@@ -167,8 +171,6 @@ public class ContainerVolumeService extends StatefulService {
         toggleOption(ServiceOption.PERSISTENCE, true);
         toggleOption(ServiceOption.REPLICATION, true);
         toggleOption(ServiceOption.OWNER_SELECTION, true);
-        toggleOption(ServiceOption.PERIODIC_MAINTENANCE, true);
-        super.setMaintenanceIntervalMicros(ContainerVolumeMaintenance.MAINTENANCE_INTERVAL_MICROS);
     }
 
     @Override
@@ -180,9 +182,6 @@ public class ContainerVolumeService extends StatefulService {
         }
 
         body.connected = new Date().getTime();
-
-        // start the monitoring service instance for this network
-        startMonitoringContainerVolumeState(body);
 
         CompositeComponentNotifier.notifyCompositionComponents(this,
                 body.compositeComponentLinks, create.getAction());
@@ -234,43 +233,6 @@ public class ContainerVolumeService extends StatefulService {
                 currentState.compositeComponentLinks, delete.getAction());
 
         super.handleDelete(delete);
-    }
-
-    @Override
-    public void handlePeriodicMaintenance(Operation post) {
-        if (getProcessingStage() != ProcessingStage.AVAILABLE) {
-            logFine("Skipping maintenance since service is not available: %s ", getUri());
-            return;
-        }
-
-        if (containerVolumeMaintenance == null) {
-            sendRequest(Operation.createGet(getUri()).setCompletion((o, e) -> {
-                if (e == null) {
-                    ContainerVolumeState currentState = o.getBody(ContainerVolumeState.class);
-                    containerVolumeMaintenance = ContainerVolumeMaintenance.create(getHost(),
-                            getSelfLink(),
-                            currentState.descriptionLink != null
-                                    && !currentState.descriptionLink.startsWith(
-                                            ContainerVolumeDescriptionService.DISCOVERED_DESCRIPTION_LINK));
-                    containerVolumeMaintenance.handlePeriodicMaintenance(post);
-                }
-            }));
-            return;
-        }
-        containerVolumeMaintenance.handlePeriodicMaintenance(post);
-    }
-
-    private void startMonitoringContainerVolumeState(ContainerVolumeState body) {
-        // perform maintenance on startup to refresh the volume attributes
-        // but only for volumes that already exist
-        getHost().registerForServiceAvailability((o, ex) -> {
-            if (ex != null) {
-                logWarning("Skipping maintenance because service failed to start: "
-                        + ex.getMessage());
-            } else {
-                handlePeriodicMaintenance(o);
-            }
-        }, getSelfLink());
     }
 
     /**
@@ -329,8 +291,8 @@ public class ContainerVolumeService extends StatefulService {
         // https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/#/inspect-a-volume
         template.mountpoint = "/var/lib/docker/volumes/";
 
-        template.compositeComponentLinks = new ArrayList<String>(0);
-        template.parentLinks = new ArrayList<String>(0);
+        template.compositeComponentLinks = new ArrayList<>(0);
+        template.parentLinks = new ArrayList<>(0);
 
         return template;
     }
