@@ -117,7 +117,6 @@ func cutImgName(name string) string {
 //QueryImages fetches images matching the imgName parameter.
 //The function returns the count of the fetched images.
 func (li *ImagesList) QueryImages(imgName string) (int, error) {
-	//url := config.URL + "/templates?&documentType=true&imagesOnly=true&q=" + imgName
 	cqm := uri_utils.GetCommonQueryMap()
 	cqm["q"] = imgName
 	url := uri_utils.BuildUrl(uri_utils.Image, cqm, true)
