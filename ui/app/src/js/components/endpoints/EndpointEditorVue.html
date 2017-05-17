@@ -36,16 +36,28 @@
         :value="convertToObject(model.item.endpointType)"
         @change="onEndpointTypeChange">
       </dropdown-group>
+
       <div
         v-for="adapter in adapters"
-        v-if="endpointType === adapter.id"
+        v-if="endpointType === adapter.id && endpointEditorType !== 'html'"
         :is="adapter.endpointEditor"
         :model="model.item"
         :verified="model.verified"
         @change="onEditorChange"
         @error="onEditorError">
       </div>
-      <!--div class="form-group" v-if="!!model.item.documentSelfLink">
+
+      <iframe id="htmlEndpointEditor"
+        v-if="endpointEditorType === 'html'"
+        width="100%" height="50px" frameborder="0"
+        :src="htmlEditor.htmlEndpointEditorSrc"
+        scrolling="no"
+        @load="htmlEditorInit"
+        >
+      </iframe>
+      <!--
+      onload="alert('model: ' + model);internalMcpApi(this, model.item);"
+      div class="form-group" v-if="!!model.item.documentSelfLink">
         <label>{{i18n('app.endpoint.edit.collectLabel')}}</label>
         <div>
           <button class="btn btn-sm" @click="collectInventory($event)">

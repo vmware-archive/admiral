@@ -2337,6 +2337,40 @@ services.collectImages = function(endpoint) {
   return Promise.all(promises);
 };
 
+//this method encodes scheme, hostname and port parts of the given uri
+// e.g. for given input like https://host:1234/path?p1=v2&p2=v2#fragment
+// return: https%3A%2F%2Fhost%3A1234/path?p1=v2&p2=v2#fragment
+// this could be used to prepare the url to pass as path fragment to (adapters) reverse proxy
+services.encodeSchemeAndHost = function(uri) {
+  var urlParts = utils.getURLParts(uri);
+  var partToEncode = '';
+  if (urlParts.scheme) {
+    partToEncode = urlParts.scheme + ':';
+  }
+  if (urlParts.host) {
+    partToEncode += urlParts.host;
+  }
+  if (urlParts.port) {
+    partToEncode += ':' + urlParts.port;
+  }
+
+  var ret = '';
+  if (partToEncode) {
+    ret = encodeURIComponent(partToEncode);
+  }
+  if (urlParts.path) {
+    ret += urlParts.path;
+  }
+  if (urlParts.query) {
+    ret += '?' + urlParts.query;
+  }
+  if (urlParts.fragment) {
+    ret += urlParts.fragment;
+  }
+
+  return ret;
+};
+
 var toArrayIfDefined = function(obj) {
   if ($.isArray(obj)) {
     return obj;
@@ -2749,7 +2783,7 @@ var buildSearchQuery = function(queryOptions) {
   return serviceUtils.buildOdataQuery(userQueryOps);
 };
 
-var client = {
+var mcpClient = {
   buildQueryPaginationUrl: buildQueryPaginationUrl,
   delete: deleteEntity,
   get: get,
@@ -2758,7 +2792,21 @@ var client = {
   put: put
 };
 
+services.mcpApi = {
+  htmlInit: function(iframe, model, component) {
+    if (iframe) {
+      try {
+        iframe.contentWindow.mcpComponent = component;
+        iframe.contentWindow.mcpEditor = component.editor;
+        iframe.contentWindow.init(model);
+      } catch (err) {
+        alert('Cannot init editor. Cause: ' + err);
+      }
+    }
+  }
+};
+
 window.mcp = window.mcp || {};
-window.mcp.client = client;
+window.mcp.client = mcpClient;
 
 export default services;

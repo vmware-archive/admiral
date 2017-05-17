@@ -42,9 +42,14 @@ export default Vue.component('endpoint-editor', {
       },
       editorErrors: null,
       endpointType: this.model.item.endpointType,
+      endpointEditorType: null,
       name: this.model.item.name,
       saveDisabled: !this.model.item.documentSelfLink,
-      verifyDisabled: !this.model.item.documentSelfLink
+      verifyDisabled: !this.model.item.documentSelfLink,
+      htmlEditor: {
+        htmlEndpointEditorSrc: null,
+        loaded: false
+      }
     };
   },
   methods: {
@@ -96,6 +101,9 @@ export default Vue.component('endpoint-editor', {
     },
     onNameChange(name) {
       this.name = name;
+      this.onChange();
+    },
+    onChange() {
       this.saveDisabled = this.isSaveDisabled();
       this.verifyDisabled = this.isVerifyDisabled();
     },
@@ -103,6 +111,13 @@ export default Vue.component('endpoint-editor', {
       this.endpointType = endpointType && endpointType.id;
       this.saveDisabled = this.isSaveDisabled();
       this.verifyDisabled = this.isVerifyDisabled();
+      this.endpointEditorType = endpointType.endpointEditorType;
+      if (endpointType && endpointType.endpointEditorType === 'html') {
+        var res = services.encodeSchemeAndHost(endpointType.endpointEditor);
+        if (res) {
+          this.htmlEditor.htmlEndpointEditorSrc = 'uerp/' + res;
+        }
+      }
     },
     onEditorChange(editor) {
       this.editor = editor;
@@ -121,9 +136,16 @@ export default Vue.component('endpoint-editor', {
       return !this.name || !this.endpointType || !this.editor.valid;
     },
     getModel() {
+      var props;
+      if (this.endpointEditorType === 'html') {
+        var iframe = document.getElementById('htmlEndpointEditor');
+        props = iframe.contentWindow.getModel();//htmlEndpointEditor
+      } else {
+        props = this.editor.properties;
+      }
       return $.extend({}, this.model.item, {
         endpointProperties: $.extend({},
-            this.model.item.endpointProperties || {}, this.editor.properties),
+          this.model.item.endpointProperties || {}, props),
         endpointType: this.endpointType,
         name: this.name
       });
@@ -135,6 +157,16 @@ export default Vue.component('endpoint-editor', {
           name: this.adapters.find((type) => type.id === value).name
         };
       }
+    },
+    htmlEditorInit(event) {
+      var frame = event.target;
+      services.mcpApi.htmlInit(frame, this.model.item, this);
+      var body = frame.contentWindow.document.body;
+
+      var height = Math.max(body.scrollHeight, body.offsetHeight);
+      frame.height = height + 'px';
+
+      this.htmlEditor.loaded = true;
     }
   }
 });

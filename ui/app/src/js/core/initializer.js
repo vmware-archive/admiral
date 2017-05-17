@@ -137,7 +137,8 @@ initializer.init = function(initProperties, callback) {
         endpointEditor: customProperties.endpointEditor,
         computeProfileEditor: customProperties.computeProfileEditor,
         networkProfileEditor: customProperties.networkProfileEditor,
-        storageProfileEditor: customProperties.storageProfileEditor
+        storageProfileEditor: customProperties.storageProfileEditor,
+        endpointEditorType: customProperties.endpointEditorType
       };
     }));
 

@@ -86,6 +86,7 @@ import com.vmware.admiral.compute.profile.NetworkProfileService;
 import com.vmware.admiral.compute.profile.ProfileMappingService;
 import com.vmware.admiral.compute.profile.ProfileService;
 import com.vmware.admiral.compute.profile.StorageProfileService;
+import com.vmware.admiral.service.common.UrlEncodedReverseProxyService;
 import com.vmware.admiral.service.test.MockConfigureHostOverSshTaskServiceWithoutValidate;
 import com.vmware.admiral.service.test.MockContainerHostService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
@@ -120,7 +121,8 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ElasticPlacementZoneConfigurationService.class,
                 ProfileMappingService.class,
                 KubernetesDescriptionContentService.class,
-                PodLogService.class);
+                PodLogService.class,
+                UrlEncodedReverseProxyService.class);
 
         startServiceFactories(host, CaSigningCertService.class,
                 ContainerDescriptionService.class,
@@ -156,8 +158,6 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ReplicationControllerService.class,
                 ServiceEntityHandler.class,
                 ReplicaSetService.class);
-
-
 
         if (startMockContainerHostService) {
             startServices(host, MockContainerHostService.class);
@@ -213,20 +213,24 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
                 PodService.FACTORY_LINK, PodState.class);
 
-        CompositeComponentRegistry.registerComponent(ResourceType.KUBERNETES_DEPLOYMENT_TYPE.getName(),
-                KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
-                DeploymentService.FACTORY_LINK, DeploymentState.class);
+        CompositeComponentRegistry
+                .registerComponent(ResourceType.KUBERNETES_DEPLOYMENT_TYPE.getName(),
+                        KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
+                        DeploymentService.FACTORY_LINK, DeploymentState.class);
 
         CompositeComponentRegistry.registerComponent(ResourceType.KUBERNETES_SERVICE_TYPE.getName(),
                 KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
                 ServiceEntityHandler.FACTORY_LINK, ServiceState.class);
 
-        CompositeComponentRegistry.registerComponent(ResourceType.KUBERNETES_REPLICATION_CONTROLLER_TYPE.getName(),
-                KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
-                ReplicationControllerService.FACTORY_LINK, ReplicationControllerState.class);
+        CompositeComponentRegistry
+                .registerComponent(ResourceType.KUBERNETES_REPLICATION_CONTROLLER_TYPE.getName(),
+                        KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
+                        ReplicationControllerService.FACTORY_LINK,
+                        ReplicationControllerState.class);
 
-        CompositeComponentRegistry.registerComponent(ResourceType.KUBERNETES_REPLICA_SET_TYPE.getName(),
-                KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
-                ReplicaSetService.FACTORY_LINK, ReplicaSetState.class);
+        CompositeComponentRegistry
+                .registerComponent(ResourceType.KUBERNETES_REPLICA_SET_TYPE.getName(),
+                        KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
+                        ReplicaSetService.FACTORY_LINK, ReplicaSetState.class);
     }
 }
