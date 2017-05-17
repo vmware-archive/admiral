@@ -12,6 +12,7 @@
 package com.vmware.admiral.service.common;
 
 import java.net.URI;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -258,8 +259,8 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
      *
      * @param currentState
      *            existing state
-     * @param receivedState
-     *            received state from the client
+     * @param op
+     *            the current service operation
      */
     private void syncTaskStates(
             ExtensibilitySubscriptionCallback currentState, Operation op) {
@@ -269,15 +270,17 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
         // Original callback to task which has to be resumed.
         ServiceTaskCallbackResponse serviceTaskCallbackResponse = currentState.serviceTaskCallback
                 .getFinishedResponse();
-
         // Every service task which supports extensibility should provide it's own
         // 'extensibilityCallbackResponse' which will define suitable for modification fields, once
         // the response from subscriber is received. Here fields are merged from response to
         // callback.
         ServiceTaskCallbackResponse extensibilityResponse = op
                 .getBody(currentState.replyPayload.getClass());
+        // Save the properties that came back from the response to support update
+        Map<String, String> customProperties = extensibilityResponse.customProperties;
         // Inherit original callback in order to be aware which task stage should be resumed.
         extensibilityResponse.copy(serviceTaskCallbackResponse);
+        extensibilityResponse.customProperties = customProperties;
         // Store extensibility callback in order to be used as finished callback response.
         currentState.replyPayload = extensibilityResponse;
 

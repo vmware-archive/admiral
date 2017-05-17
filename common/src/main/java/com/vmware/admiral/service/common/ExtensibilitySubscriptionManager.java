@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
@@ -244,8 +245,10 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
     /**
      * Sends notification to subscriber
      *
-     * @param service
-     *            task service
+     * @param notificationPayload
+     *            notification payload
+     * @param replyPayload
+     *            reply payload
      * @param extensibility
      *            extensibility state
      * @param state
@@ -339,7 +342,11 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
                 result.taskStateJson, notificationPayload.getClass());
 
         //Copy enhanced payload (if some enhancements to payload have been made)
-        PropertyUtils.mergeObjects(notificationPayload, notificationPayloadData, PropertyUtils.SHALLOW_MERGE_STRATEGY);
+        PropertyUtils.mergeObjects(notificationPayload, notificationPayloadData,
+                PropertyUtils.SHALLOW_MERGE_STRATEGY);
+        notificationPayload.customProperties = notificationPayload
+                .customProperties != null ? filterSystemProperties(notificationPayload
+                .customProperties) : null;
 
         // Get service reply payload in order to notify subscriber which fields are acceptable for
         // response.
@@ -354,6 +361,12 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
         data.tenantLinks = result.tenantLinks;
 
         return data;
+    }
+
+    private static Map<String, String> filterSystemProperties(Map<String, String> properties) {
+        return properties.entrySet().stream()
+                .filter(e -> !e.getKey().startsWith("_"))
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
     }
 
     private void ensureSubscriptionTargetExists(Operation op, Runnable callback) {

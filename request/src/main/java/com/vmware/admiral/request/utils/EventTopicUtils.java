@@ -20,7 +20,6 @@ import com.vmware.admiral.service.common.EventTopicService;
 import com.vmware.admiral.service.common.EventTopicService.EventTopicState;
 import com.vmware.photon.controller.model.data.Schema;
 import com.vmware.photon.controller.model.data.SchemaBuilder;
-import com.vmware.photon.controller.model.data.SchemaField.Constraint;
 import com.vmware.photon.controller.model.data.SchemaField.Type;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
@@ -125,7 +124,6 @@ public abstract class EventTopicUtils {
                 .withDataType(DATATYPE_STRING)
                 .withLabel("Properties of the resource(Read Only)")
                 .withDescription("Resource Properties.")
-                .withConstraint(Constraint.readOnly, true)
                 .done();
     }
 }

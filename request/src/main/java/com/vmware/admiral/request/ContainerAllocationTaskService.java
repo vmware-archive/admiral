@@ -1129,7 +1129,8 @@ public class ContainerAllocationTaskService extends
                     failTask(errorMsg, new Throwable());
                     return;
                 } else if (r.hasResult()) {
-                    hostSelfLinkToAddress.put(r.getDocumentSelfLink(), r.getResult().address);
+                    hostSelfLinkToAddress.put(r.getDocumentSelfLink(), r.getResult().address !=
+                            null ? r.getResult().address : "N/A");
                 } else {
                     if (hostSelfLinkToAddress.isEmpty()) {
                         callback.run();

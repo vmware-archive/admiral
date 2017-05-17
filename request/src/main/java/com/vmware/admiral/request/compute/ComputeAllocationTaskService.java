@@ -115,16 +115,12 @@ public class ComputeAllocationTaskService
     private static final String COMPUTE_NAME_TOPIC_NAME = "Compute name assignment";
     private static final String COMPUTE_NAME_TOPIC_TASK_DESCRIPTION = "Assign custom compute name.";
     private static final String COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES = "resourceNames";
-    private static final String COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES_LABEL = "\"Generated "
-            + "resource names.\"";
-    private static final String COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION =
-            "\"Generated resource names.\"";
+    private static final String COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES_LABEL = "Generated resource names";
+    private static final String COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION = "Generated resource names";
     private static final String COMPUTE_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_SELECTIONS =
             "resourceToHostSelection";
-    private static final String COMPUTE_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_LABEL = "Resource"
-            + " to host selection (Read Only)";
-    private static final String COMPUTE_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_DESCRIPTION = "Eeach "
-            + "string entry represents resource and host on which it will be deployed.";
+    private static final String COMPUTE_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_LABEL = "Resource to host selection(Read Only)";
+    private static final String COMPUTE_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_DESCRIPTION = "Eeach string entry represents resource and host on which it will be deployed";
 
     private static final String ID_DELIMITER_CHAR = "-";
     // cached compute description
@@ -1109,7 +1105,7 @@ public class ComputeAllocationTaskService
         EventTopicService.TopicTaskInfo taskInfo = new EventTopicService.TopicTaskInfo();
         taskInfo.task = ComputeAllocationTaskState.class.getSimpleName();
         taskInfo.stage = TaskStage.STARTED.name();
-        taskInfo.substage = SubStage.SELECT_PLACEMENT_COMPUTES.name();
+        taskInfo.substage = SubStage.START_COMPUTE_ALLOCATION.name();
 
         EventTopicUtils.registerEventTopic(COMPUTE_NAME_TOPIC_ID, COMPUTE_NAME_TOPIC_NAME,
                 COMPUTE_NAME_TOPIC_TASK_DESCRIPTION, COMPUTE_NAME_TOPIC_TASK_SELF_LINK,
@@ -1164,7 +1160,8 @@ public class ComputeAllocationTaskService
                     failTask(errorMsg, r.getException());
                     return;
                 } else if (r.hasResult()) {
-                    hostSelfLinkToAddress.put(r.getDocumentSelfLink(), r.getResult().address);
+                    hostSelfLinkToAddress.put(r.getDocumentSelfLink(), r.getResult().address !=
+                            null ? r.getResult().address : "N/A");
                 } else {
                     if (hostSelfLinkToAddress.isEmpty()) {
                         callback.run();

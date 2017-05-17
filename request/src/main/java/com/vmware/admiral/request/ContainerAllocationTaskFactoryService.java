@@ -43,14 +43,10 @@ public class ContainerAllocationTaskFactoryService extends FactoryService implem
     private static final String CONTAINER_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_SELECTIONS =
             "resourceToHostSelection";
     private static final String CONTAINER_NAME_TOPIC_FIELD_RESOURCE_NAMES = "resourceNames";
-    private static final String CONTAINER_NAME_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION =
-            "\"Generated resource names.\"";
-    private static final String CONTAINER_NAME_TOPIC_FIELD_RESOURCE_NAMES_LABEL = "\"Generated "
-            + "resource names.\"";
-    private static final String CONTAINER_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_LABEL = "Resource"
-            + " to host selection (Read Only)";
-    private static final String CONTAINER_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_DESCRIPTION = "Eeach "
-            + "string entry represents resource and host on which it will be deployed.";
+    private static final String CONTAINER_NAME_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION = "Generated resource names";
+    private static final String CONTAINER_NAME_TOPIC_FIELD_RESOURCE_NAMES_LABEL = "Generated resource names";
+    private static final String CONTAINER_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_LABEL = "Resource to host selection(Read Only)";
+    private static final String CONTAINER_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_DESCRIPTION = "Eeach string entry represents resource and host on which it will be deployed";
 
     public ContainerAllocationTaskFactoryService() {
         super(ContainerAllocationTaskState.class);

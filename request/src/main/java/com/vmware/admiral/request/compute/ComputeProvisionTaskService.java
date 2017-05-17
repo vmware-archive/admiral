@@ -458,13 +458,32 @@ public class ComputeProvisionTaskService extends
     protected void enhanceExtensibilityResponse(ComputeProvisionTaskState state,
             ServiceTaskCallbackResponse replyPayload,
             Runnable callback) {
-        if (state.taskSubStage.equals(SubStage.CUSTOMIZING_COMPUTE)) {
 
+        patchCustomProperties(state, replyPayload, () -> {
             setIpAddress(state, replyPayload, callback);
+        });
+    }
 
-        } else {
+    private void patchCustomProperties(ComputeProvisionTaskState state,
+            ServiceTaskCallbackResponse replyPayload, Runnable callback) {
+        List<DeferredResult<Operation>> results = state.resourceLinks.stream()
+                .map(link -> Operation.createGet(this, link))
+                .map(o -> sendWithDeferredResult(o, ComputeState.class))
+                .map(dr -> dr.thenCompose(cs -> {
+                    cs.customProperties.putAll(replyPayload.customProperties);
+                    return sendWithDeferredResult(
+                            Operation.createPatch(this, cs.documentSelfLink).setBody(cs));
+                }))
+                .collect(Collectors.toList());
+
+        DeferredResult.allOf(results).whenComplete((all, t) -> {
+            if (t != null) {
+                failTask("Error patching compute states", t);
+                return;
+            }
+
             callback.run();
-        }
+        });
     }
 
     /**
@@ -489,7 +508,8 @@ public class ComputeProvisionTaskService extends
         ExtensibilityCallbackResponse extensibilityResponse = (ExtensibilityCallbackResponse) replyPayload;
 
         //Check if client patched address field
-        if (extensibilityResponse.addresses != null) {
+        if (state.taskSubStage.equals(SubStage.CUSTOMIZING_COMPUTE) && extensibilityResponse
+                .addresses != null) {
 
             //If subnetwork is not provided this ip assignment is pointless.
             if (extensibilityResponse.subnetName == null) {
