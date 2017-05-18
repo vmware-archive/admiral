@@ -13,6 +13,9 @@ package com.vmware.admiral.test.integration.compute.vsphere;
 
 import static org.junit.Assert.assertNotNull;
 
+import static com.vmware.admiral.test.integration.compute.vsphere.VsphereComputeProvisionIT.VSPHERE_COMPUTE_PROFILE;
+import static com.vmware.admiral.test.integration.compute.vsphere.VsphereUtil.VC_VM_IMAGE;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Set;
@@ -26,6 +29,8 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
+import com.vmware.admiral.compute.profile.ComputeImageDescription;
+import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.compute.ProvisionContainerHostsTaskService;
@@ -59,6 +64,17 @@ public class VsphereProvisionContainerHostIT extends BaseIntegrationSupportIT {
         endpointType = getEndpointType();
         endpoint = createEndpoint(endpointType, TestDocumentLifeCycle.NO_DELETE);
         triggerAndWaitForEndpointEnumeration(endpoint);
+
+        // Get the vSphere compute profile and update imageMapping for ovf
+        String image = getTestProp(VC_VM_IMAGE);
+        if (image != null) {
+            ComputeProfile computeProfile = getDocument(VSPHERE_COMPUTE_PROFILE,
+                    ComputeProfile.class);
+            ComputeImageDescription computeImageDescription = new ComputeImageDescription();
+            computeImageDescription.image = image;
+            computeProfile.imageMapping.put("coreos", computeImageDescription);
+            patchDocument(computeProfile);
+        }
 
         restrictAvailablePlacements();
     }

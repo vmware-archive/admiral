@@ -27,4 +27,5 @@ public class VsphereUtil {
     public static final String VC_TARGET_FOLDER_PATH = "test.vsphere.vm.folder";
     public static final String VC_VM_DISK_URI = "test.vsphere.disk.uri";
     public static final String VC_VM_DISK_URI_TEMPLATE = "test.vsphere.disk.%s.uri";
+    public static final String VC_VM_IMAGE = "test.vsphere.image";
 }
