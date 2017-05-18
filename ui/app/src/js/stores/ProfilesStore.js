@@ -256,7 +256,7 @@ let ProfilesStore = Reflux.createStore({
       }).then((images) => {
         let imageMapping = Object.keys(model.computeProfile.imageMapping).reduce((prev, curr) => {
           let name = model.computeProfile.imageMapping[curr].image;
-          let image = Object.values(images).find((image) => image.name === name);
+          let image = images.find((image) => image.name === name);
           if (image) {
             prev[curr] = {
               imageLink: image.documentSelfLink
@@ -315,7 +315,7 @@ let ProfilesStore = Reflux.createStore({
       }).then((images) => {
         let imageMapping = Object.keys(model.computeProfile.imageMapping).reduce((prev, curr) => {
           let name = model.computeProfile.imageMapping[curr].image;
-          let image = Object.values(images).find((image) => image.name === name);
+          let image = images.find((image) => image.name === name);
           if (image) {
             prev[curr] = {
               imageLink: image.documentSelfLink

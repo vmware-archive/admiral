@@ -978,12 +978,14 @@ services.loadImageResources = function(endpointLink, names) {
     return Promise.resolve([]);
   }
 
-  let endpointQuery = serviceUtils.buildOdataQuery({
-    endpointLink: [{
-      val: endpointLink,
-      op: 'eq'
-    }]
-  });
+  let params = {
+    endpoint: serviceUtils.buildOdataQuery({
+      documentSelfLink: [{
+        op: 'eq',
+        val: endpointLink
+      }]
+    })
+  };
 
   let nameQuery = serviceUtils.buildOdataQuery({
     name: names.map((name) => {
@@ -994,8 +996,16 @@ services.loadImageResources = function(endpointLink, names) {
     }),
     [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
   });
-  return list(links.IMAGE_RESOURCES, true, {
-    [ODATA_FILTER_PROP_NAME]: endpointQuery + ' and (' + nameQuery + ')'
+
+  let url = buildPaginationUrl(links.IMAGE_RESOURCES_SEARCH, nameQuery, true,
+      'documentUpdateTimeMicros desc', DEFAULT_LIMIT, params);
+
+  return get(url).then(function(data) {
+    let documentLinks = data.documentLinks || [];
+    let result = documentLinks.map((link) => {
+      return data.documents[link];
+    });
+    return result;
   });
 };
 
