@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -88,7 +88,7 @@ public class HostContainerListDataCollectionTest extends ComputeBaseTest {
         systemContainerLink = SystemContainerDescriptions.getSystemContainerSelfLink(
                 SystemContainerDescriptions.AGENT_CONTAINER_NAME, TEST_HOST_ID);
         image = String.format("%s:%s", SystemContainerDescriptions.AGENT_IMAGE_NAME,
-                SystemContainerDescriptions.AGENT_IMAGE_VERSION);
+                SystemContainerDescriptions.getAgentImageVersion());
     }
 
     @After

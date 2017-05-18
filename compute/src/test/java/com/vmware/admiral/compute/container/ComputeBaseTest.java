@@ -11,8 +11,6 @@
 
 package com.vmware.admiral.compute.container;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -95,31 +93,11 @@ public abstract class ComputeBaseTest extends BaseTestCase {
         ctx.await();
     }
 
-    protected void setFinalStatic(Class<?> clazz, String fieldName, Object newValue)
-            throws NoSuchFieldException, IllegalAccessException {
-        Field field = clazz.getDeclaredField(fieldName);
-        field.setAccessible(true);
-        Field modifiers = field.getClass().getDeclaredField("modifiers");
-        modifiers.setAccessible(true);
-        modifiers.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-
-        Object oldValue = field.get(null);
-
-        staticFieldValuesResetRunners.add(() -> {
-            try {
-                field.set(null, oldValue);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
-
-        field.set(null, newValue);
-    }
-
     protected EndpointAllocationTaskService.EndpointAllocationTaskState allocateEndpoint(
             EndpointService.EndpointState endpoint)
             throws Throwable {
-        EndpointAllocationTaskService.EndpointAllocationTaskState state = new EndpointAllocationTaskService.EndpointAllocationTaskState();
+        EndpointAllocationTaskService.EndpointAllocationTaskState state =
+                new EndpointAllocationTaskService.EndpointAllocationTaskState();
         state.endpointState = endpoint;
         state.options = EnumSet.of(TaskOption.IS_MOCK);
         state.taskInfo = new TaskState();
