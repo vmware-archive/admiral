@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -36,13 +36,14 @@ public class SystemContainerDescriptions {
     public static final String AGENT_IMAGE_NAME = System.getProperty(
             "dcp.management.images.agent.name", "vmware/admiral_agent");
     public static final String AGENT_IMAGE_TAR_FILENAME = "admiral_agent";
-    public static final String AGENT_IMAGE_VERSION = System.getProperty(
-            "dcp.management.images.agent.version", "0.9.3");
     public static final String AGENT_IMAGE_REFERENCE = System.getProperty(
             "dcp.management.images.agent.reference", AGENT_IMAGE_TAR_FILENAME + ".tar.xz");
     static final String[] AGENT_CONTAINER_VOLUMES = {
             "/var/run/docker.sock:/var/run/docker.sock",
             "/etc/docker:/etc/docker" };
+    public static final String AGENT_IMAGE_VERSION_PROPERTY_NAME =
+            "dcp.management.images.agent.version";
+    private static final String AGENT_IMAGE_VERSION = "0.9.3";
 
     /** Create a container description to be used for installing host agents containers. */
     public static ContainerDescription buildCoreAgentContainerDescription() {
@@ -56,6 +57,10 @@ public class SystemContainerDescriptions {
         cd.restartPolicy = "always";
 
         return cd;
+    }
+
+    public static String getAgentImageVersion() {
+        return System.getProperty(AGENT_IMAGE_VERSION_PROPERTY_NAME, AGENT_IMAGE_VERSION);
     }
 
     public static boolean isSystemContainer(ContainerState containerState) {
@@ -84,6 +89,7 @@ public class SystemContainerDescriptions {
     }
 
     public static String getAgentImageNameAndVersion() {
-        return String.format("%s:%s", AGENT_IMAGE_NAME, AGENT_IMAGE_VERSION);
+        return String.format("%s:%s", AGENT_IMAGE_NAME, getAgentImageVersion());
     }
+
 }
