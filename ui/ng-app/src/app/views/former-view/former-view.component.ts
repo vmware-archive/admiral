@@ -30,15 +30,17 @@ export class FormerViewComponent implements OnInit, OnDestroy {
     this.routeObserve = this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
         console.log('event.url ' + event.url);
+
         let url = event.url.substring('/home/'.length);
         let route = this.route;
-        console.log('route ', route);
+        console.log('route ', route, 'url', url);
 
         if (!this.frameHolder.nativeElement.querySelector('iframe')) {
           this.frameHolder.nativeElement.appendChild(FormerViewComponent.iframe);
         }
 
         FormerViewComponent.iframe.src = '../index-no-navigation.html#' + url;
+        FormerViewComponent.iframe.id = 'former-view-frame';
 
         this.viewExpandRequestService.requestExpandScreen(true);
       }

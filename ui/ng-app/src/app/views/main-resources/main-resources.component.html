@@ -11,7 +11,7 @@
 
 <nav class="sidenav">
   <section class="sidenav-content">
-      <clr-dropdown clrMenuPosition="bottom-left" class="project-selector">
+      <clr-dropdown *ngIf="!embeddedMode" clrMenuPosition="bottom-left" class="project-selector">
         <button class="btn btn-link" clrDropdownToggle>
           <div class="project-caret">Project <clr-icon shape="caret down"></clr-icon></div>
           <div class="project-label">Dev</div>
@@ -22,7 +22,7 @@
           <a href="..." clrDropdownItem>Project Test</a>
         </clr-dropdown-menu>
       </clr-dropdown>
-      <a class="nav-link" routerLink="dashboard" routerLinkActive="active">Dashboard</a>
+      <!--a class="nav-link" routerLink="dashboard" routerLinkActive="active">Dashboard</a-->
       <section class="nav-group collapsible">
           <input id="deploymentsCollapse" type="checkbox">
           <label for="deploymentsCollapse">Deployments</label>
@@ -47,21 +47,28 @@
               </li>
           </ul>
       </section>
+      <section *ngIf="embeddedMode" class="nav-group collapsible">
+          <input id="policiesCollapse" type="checkbox">
+          <label for="policiesCollapse">Policies</label>
+          <ul class="nav-list">
+              <li><a class="nav-link" routerLink="placements" routerLinkActive="active">Placements</a></li>
+          </ul>
+      </section>
       <section class="nav-group collapsible">
           <input id="libraryCollapse" type="checkbox">
           <label for="libraryCollapse">Library</label>
           <ul class="nav-list">
               <li><a class="nav-link" routerLink="templates" routerLinkActive="active">Templates</a></li>
-              <li><a class="nav-link" routerLink="project-repositories" routerLinkActive="active">Project repositories</a></li>
-              <li><a class="nav-link" routerLink="public-repositories" routerLinkActive="active">Public repositories</a></li>
+              <li *ngIf="embeddedMode"><a class="nav-link" routerLink="registries" routerLinkActive="active">Registries</a></li>
+              <li *ngIf="!embeddedMode"><a class="nav-link" routerLink="project-repositories" routerLinkActive="active">Project repositories</a></li>
+              <li *ngIf="!embeddedMode"><a class="nav-link" routerLink="public-repositories" routerLinkActive="active">Public repositories</a></li>
           </ul>
       </section>
        <section class="nav-group collapsible">
           <input id="infrastructureCollapse" type="checkbox">
           <label for="infrastructureCollapse">Infrastructure</label>
           <ul class="nav-list">
-              <li><a class="nav-link" routerLink="vch-clusters" routerLinkActive="active">Clusters</a></li>
-              <li><a class="nav-link" routerLink="hosts" routerLinkActive="active">Hosts (old)</a></li>
+              <li><a class="nav-link" routerLink="hosts" routerLinkActive="active">Clusters</a></li>
           </ul>
       </section>
   </section>

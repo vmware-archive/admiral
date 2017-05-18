@@ -45,7 +45,7 @@ export const ROUTES: Routes = [
         path: 'home', component: MainResourcesComponent,
         children: [
             {
-                path: '', redirectTo: 'dashboard', pathMatch: 'full'
+                path: '', redirectTo: 'hosts', pathMatch: 'full'
             },
             {
                 path: 'dashboard', component: DashboardComponent
@@ -55,6 +55,9 @@ export const ROUTES: Routes = [
             },
             {
                 path: 'public-repositories', component: PublicRepositoriesComponent
+            },
+            {
+                path: 'registries', component: FormerViewComponent
             },
             {
                 path: 'vch-clusters', component: VchClustersComponent
@@ -78,7 +81,7 @@ export const ROUTES: Routes = [
                 ]
             },
             {
-                 path: '**', component: FormerViewComponent,
+                 path: '**', component: FormerViewComponent
             }
         ]
     },
