@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -29,15 +29,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -55,13 +54,14 @@ import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.TestContext;
 
 /**
- * Similar to {@link ManagementHostAuthUsersIT} but this test includes 2 nodes, only SSL enabled and
- * the users' passwords are encrypted.
+ * Similar to {@link ManagementHostAuthUsersTest} but this test includes 2 nodes, only SSL enabled
+ * and the users' passwords are encrypted.
  */
 public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT {
 
     private List<ManagementHost> hostsToTeardown;
 
+    private static int portOffset = ThreadLocalRandom.current().nextInt(2000);
     private int portOne;
     private int portTwo;
 
@@ -74,6 +74,7 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
 
     @Before
     public void setUp() {
+        scheduler = Executors.newScheduledThreadPool(1);
         DeploymentProfileConfig.getInstance().setTest(true);
         setupHostWithRetry(3);
     }
@@ -81,16 +82,12 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
     @After
     public void tearDown() {
         tearDownHost(hostsToTeardown);
-    }
-
-    @BeforeClass
-    public static void init() {
-        scheduler = Executors.newScheduledThreadPool(1);
-    }
-
-    @AfterClass
-    public static void shutdown() {
-        scheduler.shutdown();
+        scheduler.shutdownNow();
+        try {
+            scheduler.awaitTermination(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            logger.warning("Error waiting scheduler shutdown: " + e.getMessage());
+        }
     }
 
     @Test
@@ -308,8 +305,9 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
     private void setupHostWithRetry(int retryCount) {
         try {
             // Get ports
-            portOne = 20000 + new Random().nextInt(5000);
+            portOne = 20000 + portOffset;
             portTwo = portOne + 1;
+            portOffset += 100;
 
             // Build addresses
             hostOneAddress = LOCALHOST + portOne;
@@ -338,6 +336,7 @@ public class ManagementHostClusterOf2NodesIT extends BaseManagementHostClusterIT
             logger.log(Level.SEVERE, "Setting up hosts failed: " + Utils.toString(ex));
             if (retryCount > 0) {
                 tearDownHost(hostsToTeardown);
+                sleep(10);  // try again in 10 seconds
                 setupHostWithRetry(retryCount - 1);
             } else {
                 fail(Utils.toString(ex));
