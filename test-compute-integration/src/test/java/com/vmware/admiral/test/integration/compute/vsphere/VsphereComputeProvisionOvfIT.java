@@ -11,12 +11,12 @@
 
 package com.vmware.admiral.test.integration.compute.vsphere;
 
+import static com.vmware.admiral.test.integration.compute.vsphere.VsphereUtil.OVF_URI;
+
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 
 public class VsphereComputeProvisionOvfIT extends VsphereComputeProvisionIT {
-
-    public static final String OVF_URI = "test.vsphere.ovf.uri";
 
     @Override
     protected void extendComputeDescription(ComputeDescription cd)

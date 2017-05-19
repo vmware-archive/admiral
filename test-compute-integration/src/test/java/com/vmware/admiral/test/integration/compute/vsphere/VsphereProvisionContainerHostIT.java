@@ -14,7 +14,7 @@ package com.vmware.admiral.test.integration.compute.vsphere;
 import static org.junit.Assert.assertNotNull;
 
 import static com.vmware.admiral.test.integration.compute.vsphere.VsphereComputeProvisionIT.VSPHERE_COMPUTE_PROFILE;
-import static com.vmware.admiral.test.integration.compute.vsphere.VsphereUtil.VC_VM_IMAGE;
+import static com.vmware.admiral.test.integration.compute.vsphere.VsphereUtil.OVF_URI;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -66,7 +66,7 @@ public class VsphereProvisionContainerHostIT extends BaseIntegrationSupportIT {
         triggerAndWaitForEndpointEnumeration(endpoint);
 
         // Get the vSphere compute profile and update imageMapping for ovf
-        String image = getTestProp(VC_VM_IMAGE);
+        String image = getTestProp(OVF_URI);
         if (image != null) {
             ComputeProfile computeProfile = getDocument(VSPHERE_COMPUTE_PROFILE,
                     ComputeProfile.class);
