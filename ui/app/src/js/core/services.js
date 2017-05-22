@@ -985,6 +985,10 @@ services.searchImageResources = function(endpointLink, query, limit) {
 };
 
 services.loadImageResources = function(endpointLink, names) {
+  if (names == null || names.length === 0) {
+    return Promise.resolve([]);
+  }
+
   let endpointQuery = buildOdataQuery({
     endpointLink: [{
       val: endpointLink,
