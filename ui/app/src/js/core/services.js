@@ -2259,8 +2259,20 @@ services.loadStorageAccounts = function() {
     val: 'Microsoft.Storage/storageAccounts',
     op: 'eq'
   }];
-  return get(links.STORAGE_ACCOUNTS, {
+  return get(links.STORAGE_DESCRIPTIONS, {
     [ODATA_FILTER_PROP_NAME]: serviceUtils.buildOdataQuery(storageQuery)
+  });
+};
+
+services.loadVsphereDatastores = function(endpointLink) {
+  let datastoreQuery = {
+    endpointLink: [{
+      val: endpointLink,
+      op: 'eq'
+    }]
+  };
+  return get(links.STORAGE_DESCRIPTIONS, {
+    [ODATA_FILTER_PROP_NAME]: serviceUtils.buildOdataQuery(datastoreQuery)
   });
 };
 

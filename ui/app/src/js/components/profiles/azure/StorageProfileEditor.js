@@ -11,6 +11,7 @@
 
 import services from 'core/services';
 import utils from 'core/utils';
+import StorageItemVue from 'components/profiles/azure/StorageItemVue.html';
 
 export default Vue.component('azure-storage-profile-editor', {
   template: `
@@ -22,13 +23,13 @@ export default Vue.component('azure-storage-profile-editor', {
   <div v-for="(index, item) in storageItems" track-by="$index"
     class="storage-item"
     :class="index !== storageItems.length - 1 ? 'not-last-storage-item' : ''">
-    <storage-item
+    <azure-storage-item
     :storage-item="item"
     :index="index"
     :storage-accounts="storageAccounts"
     @change="onStorageItemChange"
     @remove="onRemoveStorageItem">
-    </storage-item>
+    </azure-storage-item>
   </div>
   `,
   props: {
@@ -90,91 +91,35 @@ export default Vue.component('azure-storage-profile-editor', {
 });
 
 const STORAGE_ACCOUNT_TYPES = [{
-  name: i18n.t('app.profile.storageAccountType.standardLRS'),
+  name: i18n.t('app.profile.azureStorageAccountType.standardLRS'),
   value: 'Standard_LRS'
 }, {
-  name: i18n.t('app.profile.storageAccountType.standardZRS'),
+  name: i18n.t('app.profile.azureStorageAccountType.standardZRS'),
   value: 'Standard_ZRS'
 }, {
-  name: i18n.t('app.profile.storageAccountType.standardGRS'),
+  name: i18n.t('app.profile.azureStorageAccountType.standardGRS'),
   value: 'Standard_GRS'
 }, {
-  name: i18n.t('app.profile.storageAccountType.standardRAGRS'),
+  name: i18n.t('app.profile.azureStorageAccountType.standardRAGRS'),
   value: 'Standard_RAGRS'
 }, {
-  name: i18n.t('app.profile.storageAccountType.premiumLRS'),
+  name: i18n.t('app.profile.azureStorageAccountType.premiumLRS'),
   value: 'Premium_LRS'
 }];
 
 const OS_DISK_CACHING_TYPES = [{
-  name: i18n.t('app.profile.osDiskCachingType.none'),
+  name: i18n.t('app.profile.azureOSDiskCachingType.none'),
   value: 'None'
 }, {
-  name: i18n.t('app.profile.osDiskCachingType.readOnly'),
+  name: i18n.t('app.profile.azureOSDiskCachingType.readOnly'),
   value: 'ReadOnly'
 }, {
-  name: i18n.t('app.profile.osDiskCachingType.readWrite'),
+  name: i18n.t('app.profile.azureOSDiskCachingType.readWrite'),
   value: 'ReadWrite'
 }];
 
-Vue.component('storage-item', {
-  template: `
-    <div class="align-right toolbar">
-      <a @click="onRemoveItem" class="btn btn-circle-outline">
-        <i class="fa fa-minus"></i>
-      </a>
-    </div>
-    <text-group
-      :label="i18n('app.profile.edit.nameLabel')"
-      :value="storageItem.name"
-      :required="true"
-      @change="onNameChange">
-    </text-group>
-    <div class="form-group">
-      <form-label :required="true">{{i18n('app.profile.edit.storageAccountNameLabel')}}</form-label>
-      <div class="form-control">
-        <input type="text" list="storageaccounts" class="form-control"
-         @change="onAccountNameChange($event)" :value="storageAccount">
-        <datalist id="storageaccounts">
-          <option v-for="account of storageAccounts" value="{{account}}"></option>
-        </datalist>
-      </div>
-     </div>
-    <div class="form-group" v-if="!existingAccountSelected">
-      <form-label :required="true">{{i18n('app.profile.edit.storageAccountTypeLabel')}}</form-label>
-      <div class="form-control select">
-        <select @change="onAccountTypeChange" v-model="storageAccountType">
-          <option v-for="accountType of accountTypes" value="{{accountType.value}}">
-          {{accountType.name}}</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-group">
-      <form-label :required="true">{{i18n('app.profile.edit.osDiskCachingLabel')}}</form-label>
-      <div class="form-control select">
-        <select @change="onOSDiskCachingChange" v-model="osDiskCaching">
-          <option v-for="cachingType of cachingTypes" value="{{cachingType.value}}">
-          {{cachingType.name}}</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-group">
-      <label>{{i18n('app.profile.edit.defaultLabel')}}</label>
-      <div class="radio">
-        <input type="radio" name="defaultRadio" id="default-radio-{{index}}"
-        :checked="storageItem.defaultItem" @click="onDefaultChange">
-        <label for="default-radio-{{index}}">
-          {{i18n('app.profile.edit.makeDescriptorDefault')}}</label>
-      </div>
-    </div>
-    <tags-group
-      :label="i18n('app.profile.edit.tagsLabel')"
-      :hint="i18n('app.profile.edit.tagsHint')"
-      :placeholder="i18n('app.profile.edit.tagsPlaceholder')"
-      :value="tags"
-      @change="onTagsChange">
-    </tags-group>
-  `,
+Vue.component('azure-storage-item', {
+  template: StorageItemVue,
   props: {
     storageItem: {
       required: true,
@@ -193,7 +138,7 @@ Vue.component('storage-item', {
     if (this.tagLinks.length) {
       services.loadTags(this.tagLinks).then((tagsResponse) => {
         let tagsData = Object.values(tagsResponse);
-        this.tags = tagsData.map(({key, value}) => ({
+        this.storageItem.tags = tagsData.map(({key, value}) => ({
           key,
           value
         }));
@@ -204,6 +149,9 @@ Vue.component('storage-item', {
     let diskProperties = this.storageItem.diskProperties;
     let tagLinks = this.storageItem.tagLinks;
     this.storageItem.tags = [];
+    if (!this.storageItem.name) {
+      this.storageItem.name = `${i18n.t('app.profile.edit.itemHeader')} ${this.index}`;
+    }
     return {
       storageAccount: diskProperties.azureStorageAccountName || '',
       storageAccountType: diskProperties.azureStorageAccountType || '',

@@ -540,10 +540,30 @@
         "defaultForZoneLabel": "Default for Zone",
         "addStorageItem": "Add Storage Item",
         "defaultLabel": "Default",
-        "makeDescriptorDefault": "Make this descriptor default",
-        "storageAccountNameLabel": "Storage Account Name",
-        "storageAccountTypeLabel": "Storage Account Type",
-        "osDiskCachingLabel": "OS Disk Caching"
+        "makeDescriptorDefault": "Make this storage item default",
+        "itemHeader": "Storage Item",
+        "storage": {
+          "azure": {
+            "storageAccountNameLabel": "Storage Account Name",
+            "storageAccountTypeLabel": "Storage Account Type",
+            "osDiskCachingLabel": "OS Disk Caching"
+          },
+          "vsphere": {
+            "storagePolicyLabel": "Storage Policy",
+            "provisioningTypeLabel": "Provisioning Type",
+            "datastoreLabel": "Datastore",
+            "sharesLevelLabel": "Shares Level",
+            "sharesLabel": "Shares",
+            "limitLabel": "Limit IOPS"
+          },
+          "aws": {
+            "volumeTypeLabel": "Volume Type",
+            "deviceTypeLabel": "Device Type",
+            "iopsLabel": "IOPS",
+            "fileSystemLabel": "File System",
+            "encryptedLabel": "Supports Encryption"
+          }
+        }
       },
       "instanceType": {
         "aws": {
@@ -573,17 +593,39 @@
         "photon": "Photon OS",
         "ubuntu-1604": "Ubuntu"
       },
-      "storageAccountType": {
+      "azureStorageAccountType": {
         "standardLRS": "Standard LRS",
         "standardZRS": "Standard ZRS",
         "standardGRS": "Standard GRS",
         "standardRAGRS": "Standard RAGRS",
         "premiumLRS": "Premium LRS"
       },
-      "osDiskCachingType": {
+      "azureOSDiskCachingType": {
         "none": "None",
         "readOnly": "Read Only",
         "readWrite": "Read Write"
+      },
+      "vsphereProvisioningTypes": {
+        "thin": "Thin",
+        "thick": "Thick",
+        "eagerZeroedThick": "Eager Zeroed Thick"
+      },
+      "vsphereSharesLevel": {
+        "low": "Low",
+        "normal": "Normal",
+        "high": "High",
+        "custom": "Custom"
+      },
+      "awsVolumeTypes": {
+        "gp2": "General Purpose SSD (GP2)",
+        "io1": "Provisioned IOPS SSD (IO1)",
+        "sc1": "Cold HDD (SC1)",
+        "st1": "Throughput Optimized HDD (ST1)",
+        "standard": "Magnetic"
+      },
+      "awsDeviceTypes": {
+        "ebs": "EBS",
+        "instanceStore": "Instance Store"
       }
     },
     "endpoint": {

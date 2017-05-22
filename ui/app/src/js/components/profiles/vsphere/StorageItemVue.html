@@ -1,0 +1,89 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+<div>
+  <h4>{{storageItem.name}}</h4>
+  <div class="align-right toolbar">
+    <a @click="onRemoveItem" class="btn btn-circle-outline">
+      <i class="fa fa-minus"></i>
+    </a>
+  </div>
+</div>
+<text-group
+  :label="i18n('app.profile.edit.nameLabel')"
+  :value="storageItem.name"
+  :required="true"
+  @change="onNameChange">
+</text-group>
+<div class="form-group">
+  <form-label>{{i18n('app.profile.edit.storage.vsphere.storagePolicyLabel')}}</form-label>
+  <div class="form-control select">
+    <select>
+    </select>
+  </div>
+</div>
+<div class="form-group">
+  <form-label :required="true">
+    {{i18n('app.profile.edit.storage.vsphere.datastoreLabel')}}</form-label>
+  <div class="form-control select">
+    <select @change="onDatastoreChange" v-model="datastore">
+      <option v-for="datastore of datastores" :value="datastore.selfLink">
+        {{datastore.name}}</option>
+    </select>
+  </div>
+</div>
+<div class="form-group">
+  <form-label>
+    {{i18n('app.profile.edit.storage.vsphere.provisioningTypeLabel')}}</form-label>
+  <div class="form-control select">
+    <select @change="onProvisioningTypeChange" v-model="provisioningType">
+      <option v-for="provisioningType of provisioningTypes"
+              :value="provisioningType.value">{{provisioningType.name}}</option>
+    </select>
+  </div>
+</div>
+<div class="form-group">
+  <form-label>{{i18n('app.profile.edit.storage.vsphere.sharesLevelLabel')}}</form-label>
+  <div class="form-control select">
+    <select @change="onSharesLevelChange" v-model="sharesLevel">
+      <option  v-for="shareLevel of sharesLevelTypes" :value="shareLevel.value">
+        {{shareLevel.name}}</option>
+    </select>
+  </div>
+</div>
+<div class="form-group">
+  <form-label>{{i18n('app.profile.edit.storage.vsphere.sharesLabel')}}</form-label>
+  <div class="form-control">
+    <input type="number" class="form-control" :disabled="!customShares" v-model="shares" @change="onSharesChange">
+  </div>
+</div>
+<div class="form-group">
+  <form-label>{{i18n('app.profile.edit.storage.vsphere.limitLabel')}}</form-label>
+  <div class="form-control">
+    <input type="number" class="form-control"
+           @change="onLimitChange" v-model="limit">
+  </div>
+</div>
+<tags-group
+  :label="i18n('app.profile.edit.tagsLabel')"
+  :hint="i18n('app.profile.edit.tagsHint')"
+  :placeholder="i18n('app.profile.edit.tagsPlaceholder')"
+  :value="tags"
+  @change="onTagsChange">
+</tags-group>
+<div class="form-group">
+  <label>{{i18n('app.profile.edit.defaultLabel')}}</label>
+  <div class="radio">
+    <input type="radio" name="defaultRadio" id="default-radio-{{index}}"
+           :checked="storageItem.defaultItem" @click="onDefaultChange">
+    <label for="default-radio-{{index}}">
+      {{i18n('app.profile.edit.makeDescriptorDefault')}}</label>
+  </div>
+</div>

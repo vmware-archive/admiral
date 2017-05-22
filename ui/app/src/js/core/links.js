@@ -42,7 +42,7 @@ var links = Immutable({
   SUBNETWORKS: RESOURCES + '/sub-networks',
   IMAGE_RESOURCES: RESOURCES + '/images',
   IMAGE_RESOURCES_SEARCH: RESOURCES + '/image-search',
-  STORAGE_ACCOUNTS: RESOURCES + '/storage-descriptions',
+  STORAGE_DESCRIPTIONS: RESOURCES + '/storage-descriptions',
 
   CONTAINER_HOSTS: RESOURCES + '/hosts',
   CONTAINERS: RESOURCES + '/containers',
