@@ -137,7 +137,7 @@ public abstract class BaseWordpressComputeProvisionIT extends BaseComputeProvisi
             fail(String.format(
                     "VM '%s' is assigned to unexpected subnet: '%s', expected subnet: '%s'",
                     computeState.name,
-                    subnetState.id, expectedSubnet));
+                    subnetState.name, expectedSubnet));
         }
     }
 }

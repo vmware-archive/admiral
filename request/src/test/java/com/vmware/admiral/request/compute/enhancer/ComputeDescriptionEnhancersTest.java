@@ -38,6 +38,7 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.test.BaseTestCase;
+import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
@@ -86,8 +87,6 @@ import com.vmware.xenon.services.common.QueryTask;
 
 public class ComputeDescriptionEnhancersTest extends BaseTestCase {
 
-    private static final String DEFAULT_REGION_ID = "eu-west-1";
-
     private ComputeDescription cd;
     private EnhanceContext context;
 
@@ -134,7 +133,7 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         context.endpointType = awsEndpointType;
         context.profileLink = UriUtils.buildUriPath(ProfileService.FACTORY_LINK,
                 awsEndpointType);
-        context.regionId = DEFAULT_REGION_ID;
+        context.regionId = CommonTestStateFactory.ENDPOINT_REGION_ID;
     }
 
     @Test
