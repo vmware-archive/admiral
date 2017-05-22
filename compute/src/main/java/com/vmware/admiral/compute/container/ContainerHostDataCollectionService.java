@@ -98,7 +98,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
     private static final int DC_DELAY_SECONDS = Integer.parseInt(System.getProperty(
             "com.vmware.admiral.compute.container.host.dc.delay", "5"));
     private static final int DC_BATCH_SIZE = Integer.parseInt(System.getProperty(
-            "com.vmware.admiral.compute.container.host.dc.delay", "10"));
+            "com.vmware.admiral.compute.container.host.dc.batch.size", "10"));
 
     private static final String LOAD_SKIP_DC_PARAMETER = "com.vmware.admiral.compute.container.load.average.dc.skip";
 
