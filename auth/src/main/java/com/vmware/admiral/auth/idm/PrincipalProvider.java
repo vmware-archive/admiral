@@ -12,11 +12,12 @@
 package com.vmware.admiral.auth.idm;
 
 import java.util.List;
+import java.util.function.BiConsumer;
 
 public interface PrincipalProvider {
 
-    String getPrincipal(String principalId);
+    void getPrincipal(String principalId, BiConsumer<String, Throwable> callback);
 
-    List<String> getPrincipals(String criteria);
+    void getPrincipals(String criteria, BiConsumer<List<String>, Throwable> callback);
 
 }

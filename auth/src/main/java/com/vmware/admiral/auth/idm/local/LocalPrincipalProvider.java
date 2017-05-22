@@ -11,44 +11,118 @@
 
 package com.vmware.admiral.auth.idm.local;
 
-import java.util.Arrays;
-import java.util.Collections;
+import static com.vmware.admiral.common.util.AssertUtil.PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT;
+import static com.vmware.admiral.common.util.AssertUtil.PROPERTY_CANNOT_BE_NULL_MESSAGE_FORMAT;
+
+import java.net.URI;
 import java.util.List;
-import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.auth.idm.PrincipalProvider;
+import com.vmware.xenon.common.LocalizableValidationException;
+import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocumentQueryResult;
+import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.UserService;
+import com.vmware.xenon.services.common.UserService.UserState;
 
 public class LocalPrincipalProvider implements PrincipalProvider {
+    private static final String FILTER_QUERY_KEY = "$filter";
+    private static final String EMAIL_FILTER_QUERY_FORMAT = "email eq '*%s*'";
 
-    private static final List<String> PRINCIPALS = Arrays.asList("Fritz", "Gloria", "Connie");
+    private static final String PRINCIPAL_NOT_FOUND_MESSAGE_FORMAT = "Principal not found for "
+            + "principal id: %s";
+    private static final String PRINCIPALS_NOT_FOUND_FOR_CRITERIA_MESSAGE_FORMAT = "Principals not "
+            + "found for criteria: %s";
 
-    @Override
-    public String getPrincipal(String principalId) {
+    private ServiceHost host;
 
-        if ((principalId == null) || (principalId.isEmpty())) {
-            return null;
-        }
-
-        Optional<String> principal = PRINCIPALS.stream()
-                .filter(p -> p.equalsIgnoreCase(principalId))
-                .findFirst();
-
-        return principal.orElse(null);
+    public void setServiceHost(ServiceHost host) {
+        this.host = host;
     }
 
     @Override
-    public List<String> getPrincipals(String criteria) {
-
-        if ((criteria == null) || (criteria.isEmpty())) {
-            return Collections.emptyList();
+    public void getPrincipal(String principalId, BiConsumer<String, Throwable> callback) {
+        if (!validateInput(principalId, "principalId", callback)) {
+            return;
         }
 
-        List<String> pricipals = PRINCIPALS.stream()
-                .filter(p -> p.toLowerCase().contains(criteria.toLowerCase()))
-                .collect(Collectors.toList());
-
-        return pricipals;
+        URI uri = UriUtils.buildUri(host, UserService.FACTORY_LINK);
+        uri = UriUtils.extendUri(uri, principalId);
+        Operation get = Operation.createGet(uri)
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        if (Operation.STATUS_CODE_NOT_FOUND == o.getStatusCode()) {
+                            String errorMessage = String.format(PRINCIPAL_NOT_FOUND_MESSAGE_FORMAT,
+                                    principalId);
+                            callback.accept(null, new IllegalStateException(errorMessage));
+                            return;
+                        }
+                        callback.accept(null, ex);
+                    } else {
+                        UserState state = o.getBody(UserState.class);
+                        callback.accept(state.email, null);
+                    }
+                });
+        get.sendWith(host);
     }
 
+    @Override
+    public void getPrincipals(String criteria, BiConsumer<List<String>, Throwable> callback) {
+        if (!validateInput(criteria, "criteria", callback)) {
+            return;
+        }
+
+        String filterQuery = String.format(EMAIL_FILTER_QUERY_FORMAT, criteria);
+        URI uri = UriUtils.buildUri(host, UserService.FACTORY_LINK);
+        uri = UriUtils.extendUriWithQuery(uri, FILTER_QUERY_KEY, filterQuery);
+        Operation get = Operation.createGet(uri)
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        callback.accept(null, ex);
+                        return;
+                    }
+                    ServiceDocumentQueryResult result =
+                            o.getBody(ServiceDocumentQueryResult.class);
+                    if (result.documentLinks == null || result.documentLinks.isEmpty()) {
+                        String errorMessage = String.format(
+                                PRINCIPALS_NOT_FOUND_FOR_CRITERIA_MESSAGE_FORMAT, criteria);
+                        callback.accept(null, new IllegalStateException(errorMessage));
+                        return;
+                    }
+
+                    // Deserialize the documents from Object to UserState and collect them in a List
+                    List<String> principles = result.documents.values().stream()
+                            .map(d -> Utils.fromJson(d, UserState.class))
+                            .map(d -> d.email)
+                            .collect(Collectors.toList());
+
+                    callback.accept(principles, null);
+                });
+        get.sendWith(host);
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean validateInput(String input, String propertyName,
+            BiConsumer callback) {
+        if (input == null) {
+            callback.accept(null, new LocalizableValidationException(
+                    String.format(PROPERTY_CANNOT_BE_NULL_MESSAGE_FORMAT, propertyName),
+                    "common.assertion.property.required", propertyName));
+            return false;
+        }
+
+        if (input.isEmpty()) {
+            callback.accept(null, new LocalizableValidationException(
+                    String.format(PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT, propertyName),
+                    "common.assertion.property.not.empty", propertyName));
+            return false;
+        }
+        return true;
+    }
 }

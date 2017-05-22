@@ -66,6 +66,9 @@ public interface ManagementUriParts {
 
     String PROJECTS = "/projects";
 
+    String IDM = "/idm";
+    String PRINCIPALS = IDM + "/principals";
+
     String EPZ_COMPUTE_ENUMERATION_TASKS = RESOURCES + "/epz-compute-enumeration-tasks";
     String EPZ_PERIODIC_ENUMERATION = RESOURCES + "/epz-periodic-enumeration";
     String PLACEMENT_PERIODIC_UPDATE = RESOURCES + "/placement-periodic-update";

@@ -12,47 +12,77 @@
 package com.vmware.admiral.auth.idm.local;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.lang.reflect.Field;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.idm.PrincipalProvider;
+import com.vmware.xenon.common.test.TestContext;
 
-public class LocalPrincipalProviderTest {
+public class LocalPrincipalProviderTest extends AuthBaseTest {
 
     private PrincipalProvider provider = new LocalPrincipalProvider();
 
-    @Test
-    public void testGetPrincipal() {
-        assertNull(provider.getPrincipal(""));
-        assertEquals("Fritz", provider.getPrincipal("fritz"));
-        assertEquals("Gloria", provider.getPrincipal("Gloria"));
-        assertEquals(null, provider.getPrincipal("conie"));
+    @Before
+    public void injectHost() throws Exception {
+        Field hostField = provider.getClass().getDeclaredField("host");
+        if (!hostField.isAccessible()) {
+            hostField.setAccessible(true);
+        }
+        host.assumeIdentity(buildUserServicePath(ADMIN_USERNAME));
+        hostField.set(provider, host);
+        hostField.setAccessible(false);
     }
 
     @Test
-    public void testPrincipals() {
-        assertTrue(provider.getPrincipals("").isEmpty());
+    public void testGetPrincipalWithCallback() {
+        String principalId = "connie@admiral.com";
+        final String[] state = new String[1];
+        TestContext ctx = new TestContext(1, Duration.ofSeconds(30));
+        provider.getPrincipal(principalId, (userState, ex) -> {
+            if (ex != null) {
+                ctx.failIteration(ex);
+                return;
+            }
+            state[0] = userState;
+            ctx.completeIteration();
+        });
+        ctx.await();
+        assertNotNull(state[0]);
+        assertEquals(principalId, state[0]);
+    }
 
-        List<String> principals = provider.getPrincipals("fritz");
-        assertTrue(principals.size() == 1 && principals.contains("Fritz"));
+    @Test
+    public void testGetPrincipalsWithCallback() {
+        String criteria = "i";
+        String expectedPrincipal1 = "connie@admiral.com";
+        String expectedPrincipal2 = "fritz@admiral.com";
+        String expectedPrincipal3 = "gloria@admiral.com";
 
-        principals = provider.getPrincipals("Gloria");
-        assertTrue(principals.size() == 1 && principals.contains("Gloria"));
+        List<String> principals = new ArrayList<>();
+        TestContext ctx = new TestContext(1, Duration.ofSeconds(30));
+        provider.getPrincipals(criteria, (userStates, ex) -> {
+            if (ex != null) {
+                ctx.failIteration(ex);
+                return;
+            }
+            principals.addAll(userStates);
+            ctx.completeIteration();
+        });
+        ctx.await();
 
-        principals = provider.getPrincipals("conni");
-        assertTrue(principals.size() == 1 && principals.contains("Connie"));
-
-        principals = provider.getPrincipals("i");
-        assertTrue(principals.size() == 3 && principals.contains("Fritz")
-                && principals.contains("Gloria") && principals.contains("Connie"));
-
-        principals = provider.getPrincipals("O");
-        assertTrue(principals.size() == 2 && principals.contains("Gloria")
-                && principals.contains("Connie"));
+        assertEquals(3, principals.size());
+        assertTrue(principals.contains(expectedPrincipal1));
+        assertTrue(principals.contains(expectedPrincipal2));
+        assertTrue(principals.contains(expectedPrincipal3));
     }
 
 }
