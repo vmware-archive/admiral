@@ -49,7 +49,7 @@ public class DockerImageService extends StatefulService {
     @Override
     public ServiceDocument getDocumentTemplate() {
         ServiceDocument template = super.getDocumentTemplate();
-
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
         // instruct the index to only keep the most recent N versions
         template.documentDescription.versionRetentionLimit = 1;
         return template;

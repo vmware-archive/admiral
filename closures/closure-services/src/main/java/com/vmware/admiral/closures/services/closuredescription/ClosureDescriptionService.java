@@ -24,7 +24,9 @@ import com.vmware.admiral.closures.drivers.DriverConstants;
 import com.vmware.admiral.closures.util.ClosureProps;
 import com.vmware.admiral.closures.util.ClosureUtils;
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.photon.controller.model.ServiceUtils;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 
@@ -124,6 +126,13 @@ public class ClosureDescriptionService extends StatefulService {
 
         delete.complete();
 
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        ServiceUtils.setRetentionLimit(template);
+        return template;
     }
 
     // PRIVATE METHODS
