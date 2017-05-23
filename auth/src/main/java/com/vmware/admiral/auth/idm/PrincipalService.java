@@ -13,16 +13,15 @@ package com.vmware.admiral.auth.idm;
 
 import java.util.List;
 import java.util.Map;
-import java.util.ServiceLoader;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.auth.idm.local.LocalPrincipalProvider;
+import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.common.Utils;
 
 public class PrincipalService extends StatelessService implements PrincipalProvider {
     public static final String SELF_LINK = ManagementUriParts.PRINCIPALS;
@@ -31,8 +30,6 @@ public class PrincipalService extends StatelessService implements PrincipalProvi
     public static final String PRINCIPAL_ID_PATH_SEGMENT_TEMPLATE = SELF_LINK + "/{principalId}";
 
     public static final String CRITERIA_QUERY = "criteria";
-
-    private static final String PREFERRED_PROVIDER_PACKAGE = "com.vmware.admiral.auth.idm.psc";
 
     private PrincipalProvider provider;
 
@@ -56,7 +53,13 @@ public class PrincipalService extends StatelessService implements PrincipalProvi
 
     @Override
     public void handleStart(Operation startPost) {
-        provider = getPreferredProvider(PrincipalProvider.class);
+        provider = AuthUtil.getPreferredProvider(PrincipalProvider.class);
+
+        // TODO - replace it with some host-based init method perhaps
+        if (provider instanceof LocalPrincipalProvider) {
+            ((LocalPrincipalProvider) provider).setServiceHost(getHost());
+        }
+
         startPost.complete();
     }
 
@@ -111,34 +114,6 @@ public class PrincipalService extends StatelessService implements PrincipalProvi
     @Override
     public void getPrincipals(String criteria, BiConsumer<List<String>, Throwable> callback) {
         provider.getPrincipals(criteria, callback);
-    }
-
-    private <T> T getPreferredProvider(Class<T> clazz) {
-
-        ServiceLoader<T> loader = ServiceLoader.load(clazz);
-
-        T provider = null;
-
-        for (T loaderProvider : loader) {
-            if (provider != null
-                    && provider.getClass().getName().startsWith(PREFERRED_PROVIDER_PACKAGE)) {
-                Utils.logWarning("Ignoring provider '%s'.", loaderProvider.getClass().getName());
-                continue;
-            }
-
-            Utils.logWarning("Using provider '%s'.", loaderProvider.getClass().getName());
-            provider = loaderProvider;
-        }
-
-        if (provider instanceof LocalPrincipalProvider) {
-            ((LocalPrincipalProvider) provider).setServiceHost(getHost());
-        }
-
-        if (provider == null) {
-            throw new IllegalStateException("No provider found!");
-        }
-
-        return provider;
     }
 
 }

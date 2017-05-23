@@ -24,7 +24,6 @@ import static com.vmware.admiral.host.ManagementHostAuthUsersTest.DEFAULT_WAIT_S
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.doGet;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.doRestrictedOperation;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.login;
-import static com.vmware.admiral.service.common.AuthBootstrapService.waitForInitConfig;
 import static com.vmware.xenon.common.CommandLineArgumentParser.ARGUMENT_ASSIGNMENT;
 import static com.vmware.xenon.common.CommandLineArgumentParser.ARGUMENT_PREFIX;
 
@@ -48,8 +47,9 @@ import javax.net.ssl.SSLSocketFactory;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 
+import com.vmware.admiral.auth.idm.AuthConfigProvider;
+import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.compute.container.ContainerDescriptionService;
-import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceRequestListener;
 import com.vmware.xenon.common.UriUtils;
@@ -110,7 +110,7 @@ public abstract class ManagementHostClusterBaseTestCase extends ManagementHostBa
                         + ARGUMENT_ASSIGNMENT
                         + TRUE.toString(),
                 ARGUMENT_PREFIX
-                        + AuthBootstrapService.LOCAL_USERS_FILE
+                        + AuthUtil.LOCAL_USERS_FILE
                         + ARGUMENT_ASSIGNMENT
                         + LOCAL_USERS_FILE,
                 ARGUMENT_PREFIX
@@ -199,8 +199,8 @@ public abstract class ManagementHostClusterBaseTestCase extends ManagementHostBa
 
         TestContext ctx = new TestContext(1,
                 Duration.ofSeconds(DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES));
-        waitForInitConfig(host, host.localUsers, ctx::completeIteration,
-                ctx::failIteration);
+        AuthUtil.getPreferredProvider(AuthConfigProvider.class).waitForInitConfig(host,
+                host.localUsers, ctx::completeIteration, ctx::failIteration);
         ctx.await();
 
         System.out.println("Sleep for a while, until the host starts...");
@@ -301,7 +301,7 @@ public abstract class ManagementHostClusterBaseTestCase extends ManagementHostBa
 
     public static void waitFor(Condition condition) throws InterruptedException, TimeoutException {
         long start = System.currentTimeMillis();
-        long end = start + TIMEOUT_FOR_WAIT_CONDITION; //Wait 1 minute.
+        long end = start + TIMEOUT_FOR_WAIT_CONDITION; // Wait 1 minute.
 
         while (!condition.isReady()) {
             Thread.sleep(DELAY_BETWEEN_RETRIES_IN_MILISEC);

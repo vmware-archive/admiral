@@ -27,6 +27,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import com.vmware.admiral.auth.idm.AuthConfigProvider;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
@@ -35,8 +36,6 @@ import com.vmware.admiral.compute.PlacementZoneConstants;
 import com.vmware.admiral.compute.PlacementZoneConstants.PlacementZoneType;
 import com.vmware.admiral.host.interceptor.AuthCredentialsInterceptor;
 import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
-import com.vmware.admiral.service.common.AuthBootstrapService;
-import com.vmware.admiral.service.common.AuthBootstrapService.CredentialsScope;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
@@ -243,8 +242,8 @@ public class AuthCredentialsInterceptorTest extends BaseTestCase {
         AuthCredentialsServiceState credentialsPatch = new AuthCredentialsServiceState();
         credentialsPatch.privateKey = "password2";
         credentialsPatch.customProperties = new HashMap<>();
-        credentialsPatch.customProperties.put(AuthBootstrapService.PROPERTY_SCOPE,
-                CredentialsScope.SYSTEM.toString());
+        credentialsPatch.customProperties.put(AuthConfigProvider.PROPERTY_SCOPE,
+                AuthConfigProvider.CredentialsScope.SYSTEM.toString());
 
         credentials = doPatch(credentialsPatch, credentials.documentSelfLink);
 
@@ -262,8 +261,8 @@ public class AuthCredentialsInterceptorTest extends BaseTestCase {
         credentials.type = AuthCredentialsType.Password.toString();
         if (isSystem) {
             credentials.customProperties = new HashMap<>();
-            credentials.customProperties.put(AuthBootstrapService.PROPERTY_SCOPE,
-                    CredentialsScope.SYSTEM.toString());
+            credentials.customProperties.put(AuthConfigProvider.PROPERTY_SCOPE,
+                    AuthConfigProvider.CredentialsScope.SYSTEM.toString());
         }
         return getOrCreateDocument(credentials, AuthCredentialsService.FACTORY_LINK);
     }

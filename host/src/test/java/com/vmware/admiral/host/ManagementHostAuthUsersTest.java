@@ -52,7 +52,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import com.vmware.admiral.service.common.AuthBootstrapService;
+import com.vmware.admiral.auth.idm.AuthConfigProvider;
+import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.Operation;
@@ -91,7 +92,7 @@ public class ManagementHostAuthUsersTest extends ManagementHostBaseTest {
                         + CommandLineArgumentParser.ARGUMENT_ASSIGNMENT
                         + Boolean.TRUE.toString(),
                 CommandLineArgumentParser.ARGUMENT_PREFIX
-                        + AuthBootstrapService.LOCAL_USERS_FILE
+                        + AuthUtil.LOCAL_USERS_FILE
                         + CommandLineArgumentParser.ARGUMENT_ASSIGNMENT
                         + configFile,
                 CommandLineArgumentParser.ARGUMENT_PREFIX
@@ -107,8 +108,8 @@ public class ManagementHostAuthUsersTest extends ManagementHostBaseTest {
 
         TestContext ctx = new TestContext(1,
                 Duration.ofSeconds(DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES));
-        AuthBootstrapService.waitForInitConfig(host, host.localUsers, ctx::completeIteration,
-                ctx::failIteration);
+        AuthUtil.getPreferredProvider(AuthConfigProvider.class).waitForInitConfig(host,
+                host.localUsers, ctx::completeIteration, ctx::failIteration);
         ctx.await();
     }
 

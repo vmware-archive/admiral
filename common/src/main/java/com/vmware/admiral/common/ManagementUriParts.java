@@ -67,6 +67,9 @@ public interface ManagementUriParts {
     // Projects
     String PROJECTS = "/projects";
 
+    String AUTH = "/auth";
+    String AUTH_LOGOUT = AUTH + "/logout";
+    String AUTH_USERS = AUTH + "/users";
     String IDM = "/idm";
     String PRINCIPALS = IDM + "/principals";
 

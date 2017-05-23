@@ -22,7 +22,6 @@ import static com.vmware.admiral.host.ManagementHostAuthUsersTest.DELAY_BETWEEN_
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.doDelete;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.doRestrictedOperation;
 import static com.vmware.admiral.host.ManagementHostAuthUsersTest.login;
-import static com.vmware.admiral.service.common.AuthBootstrapService.waitForInitConfig;
 import static com.vmware.xenon.common.CommandLineArgumentParser.ARGUMENT_ASSIGNMENT;
 import static com.vmware.xenon.common.CommandLineArgumentParser.ARGUMENT_PREFIX;
 
@@ -55,6 +54,8 @@ import org.apache.commons.io.FileUtils;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
+import com.vmware.admiral.auth.idm.AuthConfigProvider;
+import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ComputeConstants;
@@ -75,7 +76,6 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionSer
 import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
-import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.admiral.service.common.ClusterMonitoringService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.test.MockComputeHostInstanceAdapter;
@@ -174,7 +174,7 @@ public abstract class BaseManagementHostClusterIT {
                         + ARGUMENT_ASSIGNMENT
                         + Boolean.TRUE.toString(),
                 ARGUMENT_PREFIX
-                        + AuthBootstrapService.LOCAL_USERS_FILE
+                        + AuthUtil.LOCAL_USERS_FILE
                         + ARGUMENT_ASSIGNMENT
                         + LOCAL_USERS_FILE,
                 ARGUMENT_PREFIX
@@ -337,7 +337,8 @@ public abstract class BaseManagementHostClusterIT {
     protected static void waitAuthServices(ManagementHost host) {
         TestContext context = new TestContext(1,
                 Duration.ofSeconds(DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES));
-        waitForInitConfig(host, host.localUsers, context::completeIteration, context::failIteration);
+        AuthUtil.getPreferredProvider(AuthConfigProvider.class).waitForInitConfig(host,
+                host.localUsers, context::completeIteration, context::failIteration);
         context.await();
     }
 

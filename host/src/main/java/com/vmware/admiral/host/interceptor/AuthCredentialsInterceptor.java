@@ -13,10 +13,9 @@ package com.vmware.admiral.host.interceptor;
 
 import java.util.logging.Level;
 
+import com.vmware.admiral.auth.idm.AuthConfigProvider;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.ComputeConstants;
-import com.vmware.admiral.service.common.AuthBootstrapService;
-import com.vmware.admiral.service.common.AuthBootstrapService.CredentialsScope;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.DeferredResult;
@@ -64,8 +63,8 @@ public class AuthCredentialsInterceptor {
         // Credentials with SYSTEM scope need the password in plain text or they can't be used to
         // login into Admiral!
         boolean isSystemScope = (body.customProperties != null)
-                && CredentialsScope.SYSTEM.toString().equals(
-                        body.customProperties.get(AuthBootstrapService.PROPERTY_SCOPE));
+                && AuthConfigProvider.CredentialsScope.SYSTEM.toString().equals(
+                        body.customProperties.get(AuthConfigProvider.PROPERTY_SCOPE));
 
         if (!isSystemScope) {
             body.privateKey = EncryptionUtils.encrypt(body.privateKey);

@@ -48,12 +48,12 @@ import org.objenesis.instantiator.ObjectInstantiator;
 
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.OperationUtil;
+import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.TestServerX509TrustManager;
 import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
-import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.xenon.common.CommandLineArgumentParser;
@@ -73,7 +73,6 @@ import com.vmware.xenon.common.http.netty.NettyHttpServiceClient;
 import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.common.test.VerificationHost;
 import com.vmware.xenon.services.common.AuthCredentialsService;
-import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 import com.vmware.xenon.services.common.QueryTask;
 
 public abstract class BaseTestCase {
@@ -105,7 +104,7 @@ public abstract class BaseTestCase {
 
         @Override
         public ServiceHost initialize(Arguments args) throws Throwable {
-            if (AuthBootstrapService.isAuthxEnabled(localUsers)) {
+            if (useLocalUsers(this)) {
                 args.isAuthorizationEnabled = true;
             }
             return super.initialize(args);
@@ -121,6 +120,20 @@ public abstract class BaseTestCase {
         public ServiceHost startService(Operation post, Service service) {
             interceptors.subscribeToService(service);
             return super.startService(post, service);
+        }
+
+        private static boolean useLocalUsers(ServiceHost host) {
+            String field = getLocalUsersFile(host);
+            return (field != null) && (!field.isEmpty());
+        }
+
+        private static String getLocalUsersFile(ServiceHost host) {
+            try {
+                return PropertyUtils.getValue(host, "localUsers");
+            } catch (Exception e) {
+                host.log(Level.SEVERE, Utils.toString(e));
+                return null;
+            }
         }
     }
 
@@ -608,9 +621,6 @@ public abstract class BaseTestCase {
 
     protected void setUpDockerHostAuthentication() throws Throwable {
         waitForServiceAvailability(AuthCredentialsService.FACTORY_LINK);
-
-        ServiceDocumentQuery<AuthCredentialsServiceState> query = new ServiceDocumentQuery<>(host,
-                AuthCredentialsServiceState.class);
 
         TestContext ctx = testCreate(1);
         String authCredentialLink = UriUtils.buildUriPath(AuthCredentialsService.FACTORY_LINK,

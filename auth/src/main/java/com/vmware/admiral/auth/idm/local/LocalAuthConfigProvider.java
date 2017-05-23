@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.service.common;
+package com.vmware.admiral.auth.idm.local;
 
 import static com.vmware.xenon.common.UriUtils.buildUriPath;
 
@@ -21,19 +21,20 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.logging.Level;
 
-import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.auth.idm.AuthConfigProvider;
+import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.AuthorizationSetupHelper;
+import com.vmware.xenon.common.Claims;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.Operation.CompletionHandler;
-import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
-import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
@@ -43,28 +44,7 @@ import com.vmware.xenon.services.common.RoleService;
 import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserService;
 
-/**
- * One-time node group setup (bootstrap) for the auth settings.
- *
- * This service is guaranteed to be performed only once within entire node group, in a consistent
- * safe way. Durable for restarting the owner node or even complete shutdown and restarting of all
- * nodes. Following the SampleBootstrapService.
- */
-public class AuthBootstrapService extends StatefulService {
-
-    public static final String FACTORY_LINK = ManagementUriParts.CONFIG + "/auth-bootstrap";
-
-    public static FactoryService createFactory() {
-        return FactoryService.create(AuthBootstrapService.class);
-    }
-
-    public static final String LOCAL_USERS_FILE = "localUsers";
-
-    public static final String PROPERTY_SCOPE = "scope";
-
-    public static enum CredentialsScope {
-        SYSTEM
-    }
+public class LocalAuthConfigProvider implements AuthConfigProvider {
 
     public static class Config {
         public List<User> users;
@@ -75,77 +55,13 @@ public class AuthBootstrapService extends StatefulService {
         public String password;
     }
 
-    public static CompletionHandler startTask(ServiceHost host) {
-        return (o, e) -> {
-            if (e != null) {
-                host.log(Level.SEVERE, Utils.toString(e));
-                return;
-            }
-            // create service with fixed link
-            // POST will be issued multiple times but will be converted to PUT after the first one.
-            ServiceDocument doc = new ServiceDocument();
-            doc.documentSelfLink = "auth-preparation-task";
-            Operation.createPost(host, AuthBootstrapService.FACTORY_LINK)
-                    .setBody(doc)
-                    .setReferer(host.getUri())
-                    .setCompletion((oo, ee) -> {
-                        if (ee != null) {
-                            host.log(Level.SEVERE, Utils.toString(ee));
-                            return;
-                        }
-                        host.log(Level.INFO, "auth-preparation-task triggered");
-                    })
-                    .sendWith(host);
-        };
-    }
-
-    public AuthBootstrapService() {
-        super(ServiceDocument.class);
-        toggleOption(ServiceOption.IDEMPOTENT_POST, true);
-        toggleOption(ServiceOption.PERSISTENCE, true);
-        toggleOption(ServiceOption.REPLICATION, true);
-        toggleOption(ServiceOption.OWNER_SELECTION, true);
-    }
-
     @Override
-    public void handleStart(Operation post) {
-        getHost().log(Level.INFO, "handleStart");
+    public void initConfig(ServiceHost host, Operation post) {
+        // TODO Auto-generated method stub
 
-        if (!ServiceHost.isServiceCreate(post)) {
-            // do not perform bootstrap logic when the post is NOT from direct client, eg: node
-            // restart
-            post.complete();
-            return;
-        }
-        initConfig(getHost(), post);
-    }
+        String localUsers = AuthUtil.getLocalUsersFile(host);
 
-    @Override
-    public void handlePut(Operation put) {
-        getHost().log(Level.INFO, "handlePut");
-
-        if (put.hasPragmaDirective(Operation.PRAGMA_DIRECTIVE_POST_TO_PUT)) {
-            // converted PUT due to IDEMPOTENT_POST option
-            logInfo("Task has already started. Ignoring converted PUT.");
-            put.complete();
-            return;
-        }
-        // normal PUT is not supported
-        put.fail(Operation.STATUS_CODE_BAD_METHOD);
-    }
-
-    @Override
-    public ServiceDocument getDocumentTemplate() {
-        ServiceDocument template = super.getDocumentTemplate();
-        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
-        return template;
-    }
-
-    private static void initConfig(ServiceHost host, Operation post) {
-
-        String localUsers = getLocalUsers(host);
-
-        if (!isAuthxEnabled(localUsers)) {
+        if (!AuthUtil.useLocalUsers(host)) {
             host.log(Level.INFO,
                     "No users configuration file is specified. AuthX services are disabled!");
             post.complete();
@@ -172,15 +88,6 @@ public class AuthBootstrapService extends StatefulService {
                 post.fail(e);
             }
         });
-    }
-
-    private static String getLocalUsers(ServiceHost host) {
-        try {
-            return (String) host.getClass().getField(LOCAL_USERS_FILE).get(host);
-        } catch (Exception e) {
-            host.log(Level.SEVERE, Utils.toString(e));
-            return null;
-        }
     }
 
     private static List<User> getUsers(ServiceHost host, String localUsers) {
@@ -268,7 +175,7 @@ public class AuthBootstrapService extends StatefulService {
     private static void patchStateType(ServiceHost host, AuthCredentialsServiceState currentState) {
         // Shouldn't update users which already have been updated.
         if ((currentState.customProperties != null) && (CredentialsScope.SYSTEM.toString().equals(
-                currentState.customProperties.get(AuthBootstrapService.PROPERTY_SCOPE)))) {
+                currentState.customProperties.get(PROPERTY_SCOPE)))) {
             return;
         }
 
@@ -299,20 +206,11 @@ public class AuthBootstrapService extends StatefulService {
                 .sendWith(host);
     }
 
-    /*
-     * Helper method to check whether auth is enabled or not.
-     */
-    public static boolean isAuthxEnabled(String localUsers) {
-        return (localUsers != null && !localUsers.isEmpty());
-    }
+    @Override
+    public void waitForInitConfig(ServiceHost host, String localUsers,
+            Runnable successfulCallback, Consumer<Throwable> failureCallback) {
 
-    /*
-     * Helper method to wait for the initial configuration to be completed.
-     */
-    public static void waitForInitConfig(ServiceHost host, String localUsers, Runnable
-            successfulCallback, Consumer<Throwable> failureCallback) {
-
-        if (!isAuthxEnabled(localUsers)) {
+        if (!AuthUtil.useLocalUsers(host)) {
             host.log(Level.INFO,
                     "No users configuration file is specified. AuthX services are disabled!");
             successfulCallback.run();
@@ -349,10 +247,7 @@ public class AuthBootstrapService extends StatefulService {
         }
     }
 
-    /*
-     * Helper method to wait for the provided user initialization to be completed.
-     */
-    public static void waitForUser(ServiceHost host, User user, Runnable successfulCallback,
+    private static void waitForUser(ServiceHost host, User user, Runnable successfulCallback,
             Consumer<Throwable> failureCallback) {
 
         final AtomicInteger servicesCounter = new AtomicInteger(4);
@@ -372,7 +267,30 @@ public class AuthBootstrapService extends StatefulService {
                 buildUriPath(UserGroupService.FACTORY_LINK, user.email + "-user-group"),
                 buildUriPath(ResourceGroupService.FACTORY_LINK, user.email + "-resource-group"),
                 buildUriPath(RoleService.FACTORY_LINK, user.email + "-role"));
+    }
 
+    @Override
+    public Service getAuthenticationService() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String getAuthenticationServiceSelfLink() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Function<Claims, String> getAuthenticationServiceUserLinkBuilder() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public FactoryService createUserServiceFactory() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

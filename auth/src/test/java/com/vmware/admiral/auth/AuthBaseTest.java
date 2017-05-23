@@ -17,8 +17,10 @@ import java.util.UUID;
 
 import org.junit.Before;
 
+import com.vmware.admiral.auth.idm.AuthConfigProvider;
 import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
+import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.host.HostInitAuthServiceConfig;
@@ -53,8 +55,9 @@ public abstract class AuthBaseTest extends BaseTestCase {
         waitForInitialBootServiceToBeSelfStopped(AuthInitialBootService.SELF_LINK);
         TestContext ctx = new TestContext(1,
                 Duration.ofSeconds(DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES));
-        AuthBootstrapService.waitForInitConfig(host, ((CustomizationVerificationHost) host)
-                .localUsers, ctx::completeIteration, ctx::failIteration);
+        AuthUtil.getPreferredProvider(AuthConfigProvider.class).waitForInitConfig(host,
+                ((CustomizationVerificationHost) host).localUsers,
+                ctx::completeIteration, ctx::failIteration);
         ctx.await();
         host.resetAuthorizationContext();
     }
@@ -63,7 +66,7 @@ public abstract class AuthBaseTest extends BaseTestCase {
     protected VerificationHost createHost() throws Throwable {
         String[] customArgs = {
                 CommandLineArgumentParser.ARGUMENT_PREFIX
-                + AuthBootstrapService.LOCAL_USERS_FILE
+                + AuthUtil.LOCAL_USERS_FILE
                 + CommandLineArgumentParser.ARGUMENT_ASSIGNMENT
                 + AuthBaseTest.class.getResource(LOCAL_USERS_FILE).toURI().getPath()
         };

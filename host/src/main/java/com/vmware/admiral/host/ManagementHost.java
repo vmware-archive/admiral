@@ -21,6 +21,8 @@ import javax.net.ssl.SSLContext;
 
 import io.swagger.models.Info;
 
+import com.vmware.admiral.auth.idm.AuthConfigProvider;
+import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
 import com.vmware.admiral.host.interceptor.AuthCredentialsInterceptor;
@@ -75,9 +77,15 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
 
     /**
      * Users configuration file (full path). Specifying a file automatically enables Xenon's Authx
-     * services.
+     * services. Exclusive with pscConfig.
      */
     public String localUsers;
+
+    /**
+     * PSC configuration file (full path). Specifying a file automatically enables Xenon's Authx
+     * services. Exclusive with localUsers.
+     */
+    public String pscConfig;
 
     /**
      * Flag to start an etcd emulator service useful for enabling overlay networking capabilities
@@ -181,7 +189,7 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
     public ServiceHost initialize(String[] args) throws Throwable {
         CommandLineArgumentParser.parse(this, args);
         Arguments baseArgs = new Arguments();
-        if (AuthBootstrapService.isAuthxEnabled(localUsers)) {
+        if (AuthUtil.isAuthxEnabled(this)) {
             baseArgs.isAuthorizationEnabled = true;
         }
         ServiceHost h = super.initialize(args, baseArgs);
@@ -367,6 +375,19 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         ServiceClient serviceClient = createServiceClient(CertificateUtil.createSSLContext(
                 trustManager, null), 0);
         setClient(serviceClient);
+
+        AuthConfigProvider authProvider = AuthUtil.getPreferredProvider(AuthConfigProvider.class);
+        if (AuthUtil.useExternalConfig(this)) {
+
+            Service authService = authProvider.getAuthenticationService();
+            addPrivilegedService(authService.getClass());
+            setAuthenticationService(authService);
+
+            com.vmware.xenon.common.AuthUtils.registerUserLinkBuilder(
+                    authProvider.getAuthenticationServiceSelfLink(),
+                    authProvider.getAuthenticationServiceUserLinkBuilder());
+        }
+
         super.start();
 
         startDefaultCoreServicesSynchronously();
@@ -377,6 +398,10 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         setAuthorizationContext(getSystemAuthorizationContext());
 
         startCommonServices();
+
+        if (AuthUtil.useExternalConfig(this)) {
+            startFactoryServicesSynchronously(authProvider.createUserServiceFactory());
+        }
 
         startExtensibilityRegistry();
 
