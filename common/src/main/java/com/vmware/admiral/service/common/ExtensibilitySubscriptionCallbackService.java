@@ -39,8 +39,6 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
 
     public static final String FACTORY_LINK = ManagementUriParts.EXTENSIBILITY_CALLBACKS;
 
-    public static final String EXTENSIBILITY_RESPONSE = "extensibilityResponse";
-
     private static final int PROCESSED_NOTIFICATION_EXPIRE_TIME = Integer.getInteger(
             "com.vmware.admiral.service.extensibility.expiration.processed", 60);
 
@@ -270,8 +268,6 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
         // Original callback to task which has to be resumed.
         ServiceTaskCallbackResponse serviceTaskCallbackResponse = currentState.serviceTaskCallback
                 .getFinishedResponse();
-        // Set custom property which defines that request has been sent from Extensibility client.
-        serviceTaskCallbackResponse.addProperty(EXTENSIBILITY_RESPONSE, Boolean.TRUE.toString());
 
         // Every service task which supports extensibility should provide it's own
         // 'extensibilityCallbackResponse' which will define suitable for modification fields, once

@@ -79,10 +79,10 @@ public class AwsWordpressProvisionNetworkIT extends BaseWordpressComputeProvisio
     protected void doSetUp() throws Throwable {
         createVpcIfNeeded();
 
-        createProfile(loadComputeProfile(), createNetworkProfile(AWS_SECONDARY_SUBNET_ID, null),
+        createProfile(loadComputeProfile(), createNetworkProfile(AWS_SECONDARY_SUBNET_NAME, null),
                 new StorageProfile());
 
-        createProfile(loadComputeProfile(), createNetworkProfile(AWS_DEFAULT_SUBNET_ID,
+        createProfile(loadComputeProfile(), createNetworkProfile(AWS_DEFAULT_SUBNET_NAME,
                 Sets.newHashSet(createTag("location", "dmz"))), new StorageProfile());
 
         createProfile(loadComputeProfile(), createIsolatedNetworkProfile(AWS_ISOLATED_VPC_NAME,
@@ -117,7 +117,7 @@ public class AwsWordpressProvisionNetworkIT extends BaseWordpressComputeProvisio
                     .filter(c -> c instanceof ComputeState)
                     .forEach(c -> {
                         try {
-                            validateComputeNic((ComputeState) c, AWS_DEFAULT_SUBNET_ID);
+                            validateComputeNic((ComputeState) c, AWS_DEFAULT_SUBNET_NAME);
                         } catch (Exception e) {
                             fail();
                         }

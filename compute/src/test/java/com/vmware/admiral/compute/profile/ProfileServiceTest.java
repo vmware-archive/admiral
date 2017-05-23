@@ -56,7 +56,9 @@ public class ProfileServiceTest extends ComputeBaseTest {
         assertEquals(EndpointType.aws.name(), profile.endpointType);
         assertNotNull(profile.computeProfile);
         assertEquals("t2.micro", profile.computeProfile.instanceTypeMapping.get("small").instanceType);
-        assertEquals("ami-eba777fd", profile.computeProfile.imageMapping.get("coreos").image);
+        assertEquals("ami-2f575749", profile.computeProfile
+                .imageMapping.get("coreos")
+                .imageByRegion.get("eu-west-1"));
     }
 
     @Test

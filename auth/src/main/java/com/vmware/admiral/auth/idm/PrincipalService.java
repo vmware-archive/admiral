@@ -12,35 +12,133 @@
 package com.vmware.admiral.auth.idm;
 
 import java.util.List;
+import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
-public class PrincipalService implements PrincipalProvider {
+import com.vmware.admiral.auth.idm.local.LocalPrincipalProvider;
+import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.StatelessService;
+import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
+
+public class PrincipalService extends StatelessService implements PrincipalProvider {
+    public static final String SELF_LINK = ManagementUriParts.PRINCIPALS;
+
+    public static final String PRINCIPAL_ID_PATH_SEGMENT = "principalId";
+    public static final String PRINCIPAL_ID_PATH_SEGMENT_TEMPLATE = SELF_LINK + "/{principalId}";
+
+    public static final String CRITERIA_QUERY = "criteria";
+
+    private static final String PREFERRED_PROVIDER_PACKAGE = "com.vmware.admiral.auth.idm.psc";
 
     private PrincipalProvider provider;
 
-    public PrincipalService() {
-        ServiceLoader<PrincipalProvider> loader = ServiceLoader.load(PrincipalProvider.class);
+    public static class PrincipalResponse {
 
-        for (PrincipalProvider principalProvider : loader) {
-            if (provider != null) {
-                break;
+        public String principalId;
+
+        public PrincipalResponse() {
+        }
+
+        public PrincipalResponse(String principalId) {
+            this.principalId = principalId;
+        }
+
+    }
+
+    public PrincipalService() {
+        super();
+        super.toggleOption(ServiceOption.URI_NAMESPACE_OWNER, true);
+    }
+
+    @Override
+    public void handleStart(Operation startPost) {
+        provider = getPreferredProvider(PrincipalProvider.class);
+        startPost.complete();
+    }
+
+    @Override
+    public void handleGet(Operation get) {
+        Map<String, String> queryParams = UriUtils.parseUriQueryParams(get.getUri());
+        Map<String, String> pathSegmentParams = UriUtils.parseUriPathSegments(get.getUri(),
+                PRINCIPAL_ID_PATH_SEGMENT_TEMPLATE);
+
+        String principalId = pathSegmentParams.get(PRINCIPAL_ID_PATH_SEGMENT);
+        String criteria = queryParams.get(CRITERIA_QUERY);
+
+        if (principalId != null && !principalId.isEmpty()) {
+            handleSearchById(principalId, get);
+        } else if (criteria != null && !criteria.isEmpty()) {
+            handleSearchByCriteria(criteria, get);
+        } else {
+            get.fail(new IllegalArgumentException("Provide either criteria or principalId to "
+                    + "search for."));
+        }
+    }
+
+    private void handleSearchById(String principalId, Operation get) {
+        getPrincipal(principalId, (principal, ex) -> {
+            if (ex != null) {
+                get.fail(ex);
+                return;
             }
-            provider = principalProvider;
+            PrincipalResponse response = new PrincipalResponse(principal);
+            get.setBody(response).complete();
+        });
+    }
+
+    private void handleSearchByCriteria(String criteria, Operation get) {
+        getPrincipals(criteria, (principals, ex) -> {
+            if (ex != null) {
+                get.fail(ex);
+                return;
+            }
+            List<PrincipalResponse> response = principals.stream()
+                    .map(PrincipalResponse::new)
+                    .collect(Collectors.toList());
+            get.setBody(response).complete();
+        });
+    }
+
+    @Override
+    public void getPrincipal(String principalId, BiConsumer<String, Throwable> callback) {
+        provider.getPrincipal(principalId, callback);
+    }
+
+    @Override
+    public void getPrincipals(String criteria, BiConsumer<List<String>, Throwable> callback) {
+        provider.getPrincipals(criteria, callback);
+    }
+
+    private <T> T getPreferredProvider(Class<T> clazz) {
+
+        ServiceLoader<T> loader = ServiceLoader.load(clazz);
+
+        T provider = null;
+
+        for (T loaderProvider : loader) {
+            if (provider != null
+                    && provider.getClass().getName().startsWith(PREFERRED_PROVIDER_PACKAGE)) {
+                Utils.logWarning("Ignoring provider '%s'.", loaderProvider.getClass().getName());
+                continue;
+            }
+
+            Utils.logWarning("Using provider '%s'.", loaderProvider.getClass().getName());
+            provider = loaderProvider;
+        }
+
+        if (provider instanceof LocalPrincipalProvider) {
+            ((LocalPrincipalProvider) provider).setServiceHost(getHost());
         }
 
         if (provider == null) {
-            throw new IllegalStateException("No PrincipalProvider found!");
+            throw new IllegalStateException("No provider found!");
         }
-    }
 
-    @Override
-    public String getPrincipal(String principalId) {
-        return provider.getPrincipal(principalId);
-    }
-
-    @Override
-    public List<String> getPrincipals(String criteria) {
-        return provider.getPrincipals(criteria);
+        return provider;
     }
 
 }

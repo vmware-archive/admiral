@@ -204,8 +204,15 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         startPost.setBody(state);
         startPost.complete();
 
-        if (isExtensibilityResponse(state)) {
-            handleStagePatch(state);
+        if (isExtensibilityResponse(startPost)) {
+            Runnable callback = () -> {
+                handleStagePatch(state);
+            };
+
+            ServiceTaskCallbackResponse replyPayload = Utils
+                    .fromJson(startPost.getBodyRaw(), this.replyPayload().getClass());
+
+            enhanceExtensibilityResponse(state, replyPayload, callback);
             return;
         }
         handleSubscriptions(state);
@@ -278,8 +285,14 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
         patch.complete();
 
-        if (isExtensibilityResponse(patchBody)) {
-            handleStagePatch(state);
+        if (isExtensibilityResponse(patch)) {
+            Runnable callback = () -> {
+                handleStagePatch(state);
+            };
+            ServiceTaskCallbackResponse replyPayload = Utils
+                    .fromJson(patch.getBodyRaw(), this.replyPayload().getClass());
+
+            enhanceExtensibilityResponse(state, replyPayload, callback);
             return;
         }
 
@@ -320,9 +333,8 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         }
     }
 
-    private boolean isExtensibilityResponse(T patchBody) {
-        return patchBody.customProperties != null && patchBody.customProperties
-                .containsKey(ExtensibilitySubscriptionCallbackService.EXTENSIBILITY_RESPONSE);
+    private boolean isExtensibilityResponse(Operation o) {
+        return o.getReferer() != null && o.getReferer().toString().contains(ExtensibilitySubscriptionCallbackService.FACTORY_LINK);
     }
 
     private void validateAndEnhanceNotificationPayload(T state,
@@ -877,6 +889,30 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
      */
     protected void enhanceNotificationPayload(T state,
             BaseExtensibilityCallbackResponse notificationPayload, Runnable callback) {
+        callback.run();
+    }
+
+    /**
+     * <p>
+     *     Once response from client is received, it may contains data that can not be merged
+     *     automatically to some of the task fields. Additional request to some resource may be
+     *     needed in order to patch object which is not defined in task itself. <br/>
+     *     <p>
+     *     For example:
+     *     {@link ComputeProvisionTaskService} provides extensibility mechanism for patching
+     *     ComputeState address. ComputeState is not defined in task, but its self link is.
+     *     In this case once the response from subscriber is received, additional call is needed
+     *     to get the corresponded ComputeState(s) in order to patch its address before task
+     *     is resumed.
+     *     </p>
+     * </p>
+     * @param state
+     *            - Task state
+     * @param callback
+     *            - callback that will be run once enhancement is finished.
+     */
+    protected void enhanceExtensibilityResponse(T state, ServiceTaskCallbackResponse
+            replyPayload, Runnable callback) {
         callback.run();
     }
 

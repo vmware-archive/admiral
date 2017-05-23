@@ -15,6 +15,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import static com.vmware.admiral.test.integration.compute.vsphere.VsphereComputeProvisionIT.VSPHERE_COMPUTE_PROFILE;
+import static com.vmware.admiral.test.integration.compute.vsphere.VsphereUtil.OVF_URI;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,6 +41,8 @@ import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
+import com.vmware.admiral.compute.profile.ComputeImageDescription;
+import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
 import com.vmware.admiral.request.RequestBrokerFactoryService;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.utils.RequestUtils;
@@ -102,6 +107,16 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
         this.endpoint = createEndpoint(getEndpointType(), TestDocumentLifeCycle.NO_DELETE);
         logger.info("Endpoint created. Starting enumeration...");
         triggerAndWaitForEndpointEnumeration(endpoint);
+
+        String image = getTestProp(OVF_URI);
+        if (image != null) {
+            ComputeProfile computeProfile = getDocument(VSPHERE_COMPUTE_PROFILE,
+                    ComputeProfile.class);
+            ComputeImageDescription computeImageDescription = new ComputeImageDescription();
+            computeImageDescription.image = image;
+            computeProfile.imageMapping.put("coreos", computeImageDescription);
+            patchDocument(computeProfile);
+        }
     }
 
     @After

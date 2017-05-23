@@ -429,8 +429,16 @@ public class ComputeReservationTaskService extends
                                         EnhanceContext context = new EnhanceContext();
                                         context.profileLink = profileLink;
                                         context.skipNetwork = true;
-                                        context.regionId = profileEntry.endpoint.endpointProperties
-                                                .get(EndpointConfigRequest.REGION_KEY);
+                                        String regionId = profileEntry.endpoint.regionId;
+                                        if (regionId == null) {
+                                            // TODO [adimitrov]: Remove this once all adapters set
+                                            // endpoint.regionId.
+
+                                            // Try to get region id from endpointProperties for now.
+                                            regionId = profileEntry.endpoint.endpointProperties.get(
+                                                    EndpointConfigRequest.REGION_KEY);
+                                        }
+                                        context.regionId = regionId;
                                         return Pair.of(context, cloned);
                                     })
                                     .map(p -> {

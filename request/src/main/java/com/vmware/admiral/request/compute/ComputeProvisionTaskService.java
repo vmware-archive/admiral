@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -18,18 +18,25 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
@@ -41,6 +48,7 @@ import com.vmware.admiral.request.utils.EventTopicUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.EventTopicDeclarator;
 import com.vmware.admiral.service.common.EventTopicService;
+import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.adapterapi.ComputeInstanceRequest;
 import com.vmware.photon.controller.model.adapterapi.ComputeInstanceRequest.InstanceRequestType;
 import com.vmware.photon.controller.model.adapterapi.ResourceOperationResponse;
@@ -48,6 +56,12 @@ import com.vmware.photon.controller.model.data.SchemaBuilder;
 import com.vmware.photon.controller.model.data.SchemaField.Type;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeStateWithDescription;
+import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService;
+import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.IpAssignment;
+import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.NetworkInterfaceDescription;
+import com.vmware.photon.controller.model.resources.NetworkInterfaceService;
+import com.vmware.photon.controller.model.resources.NetworkInterfaceService.NetworkInterfaceState;
+import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.photon.controller.model.tasks.ServiceTaskCallback;
 import com.vmware.photon.controller.model.tasks.SubTaskService;
 import com.vmware.xenon.common.DeferredResult;
@@ -76,6 +90,29 @@ public class ComputeProvisionTaskService extends
     public static final String FACTORY_LINK = ManagementUriParts.REQUEST_COMPUTE_PROVISION_TASKS;
 
     public static final String DISPLAY_NAME = "Compute Provision";
+
+    //Pre-provision EventTopic constants
+    public static final String COMPUTE_PROVISION_TOPIC_TASK_SELF_LINK =
+            "compute-provision";
+    public static final String COMPUTE_PROVISION_TOPIC_ID = "com.vmware.compute.provision.pre";
+    public static final String COMPUTE_PROVISION_TOPIC_NAME = "Compute Provision";
+    public static final String COMPUTE_PROVISION_TOPIC_TASK_DESCRIPTION = "Fired when a compute "
+            + "resource is being provisioned.";
+    public static final String COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES = "resourceNames";
+    public static final String COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES_LABEL = "Resource names.";
+    public static final String COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION =
+            "Array of the resources names.";
+
+    public static final String COMPUTE_PROVISION_TOPIC_FIELD_ADDRESSES = "addresses";
+    public static final String COMPUTE_PROVISION_TOPIC_FIELD_ADDRESSES_LABEL = "Static ip "
+            + "addresses.";
+    public static final String COMPUTE_PROVISION_TOPIC_FIELD_ADDRESSES_DESCRIPTION =
+            "Array of static ip addresses.";
+
+    public static final String COMPUTE_PROVISION_TOPIC_FIELD_SUBNET = "subnetName";
+    public static final String COMPUTE_PROVISION_TOPIC_FIELD_SUBNET_LABEL = "Name of subnetwork.";
+    public static final String COMPUTE_PROVISION_TOPIC_FIELD_SUBNET_DESCRIPTION =
+            "Subnetwork where resource will be connected.";
 
     public static class ComputeProvisionTaskState
             extends
@@ -373,8 +410,22 @@ public class ComputeProvisionTaskService extends
         }).sendWith(this);
     }
 
-    protected static class ExtensibilityCallbackResponse extends BaseExtensibilityCallbackResponse {
+    public static class ExtensibilityCallbackResponse extends BaseExtensibilityCallbackResponse {
+
+        /**
+         * Name of the resources
+         */
         public Set<String> resourceNames;
+
+        /**
+         * Static ip addresses
+         */
+        public Set<String> addresses;
+
+        /**
+         * Name of the subnetwork
+         */
+        public String subnetName;
     }
 
     @Override
@@ -403,16 +454,120 @@ public class ComputeProvisionTaskService extends
         });
     }
 
-    public static final String COMPUTE_PROVISION_TOPIC_TASK_SELF_LINK =
-            "compute-provision";
-    public static final String COMPUTE_PROVISION_TOPIC_ID = "com.vmware.compute.provision.pre";
-    public static final String COMPUTE_PROVISION_TOPIC_NAME = "Compute Provision";
-    public static final String COMPUTE_PROVISION_TOPIC_TASK_DESCRIPTION = "Fired when a compute "
-            + "resource is being provisioned.";
-    public static final String COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES = "resourceNames";
-    public static final String COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES_LABEL = "Resource names.";
-    public static final String COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION =
-            "Array of the resources names.";
+    @Override
+    protected void enhanceExtensibilityResponse(ComputeProvisionTaskState state,
+            ServiceTaskCallbackResponse replyPayload,
+            Runnable callback) {
+        if (state.taskSubStage.equals(SubStage.CUSTOMIZING_COMPUTE)) {
+
+            setIpAddress(state, replyPayload, callback);
+
+        } else {
+            callback.run();
+        }
+    }
+
+    /**
+     * <p>
+     *     Assign static ip to machine that is scheduled for provisioning.
+     *     Process has several stages.
+     *     <ul>
+     *         <li> Subnetwork validation </li>
+     *         <li> Create NIC Description </li>
+     *         <li> Create NIC State </li>
+     *         <li> Bound NIC State(s) to Compute(s) </li>
+     *     </ul>
+     * </p>
+     * @param state - task state
+     * @param replyPayload - reply payload provided by service
+     * @param callback - callback which will resume the task, once ip assignment finished
+     */
+    private void setIpAddress(ComputeProvisionTaskState state,
+            ServiceTaskCallbackResponse replyPayload,
+            Runnable callback) {
+
+        ExtensibilityCallbackResponse extensibilityResponse = (ExtensibilityCallbackResponse) replyPayload;
+
+        //Check if client patched address field
+        if (extensibilityResponse.addresses != null) {
+
+            //If subnetwork is not provided this ip assignment is pointless.
+            if (extensibilityResponse.subnetName == null) {
+                String error = "Static ip is assigned, but sub network name is not provided.";
+                failTask(error, new IllegalArgumentException(error));
+                return;
+            }
+
+            retrieveSubnetwork(state, extensibilityResponse, callback);
+
+        } else {
+            //Host address is not provided by client => Resume task.
+            callback.run();
+        }
+
+    }
+
+    private void createNicDescription(ComputeProvisionTaskState state, Set<String> addresses,
+            SubnetState subnet, Runnable callback) {
+
+        Iterator<String> iterator = addresses.iterator();
+
+        List<DeferredResult<NetworkInterfaceDescription>> results = state.resourceLinks.stream()
+                .filter(compute -> iterator.hasNext())
+                .map(compute -> createNicDescriptionOperation(state, iterator.next()))
+                .map(o -> sendWithDeferredResult(o, NetworkInterfaceDescription.class))
+                .collect(Collectors.toList());
+
+        DeferredResult.allOf(results).whenComplete((nics, err) -> {
+            if (err != null) {
+                failTask("Failed creating NetworkInterfaceDescriptions.", err);
+                return;
+            }
+
+            createNicState(state, nics, subnet, callback);
+
+        });
+    }
+
+    private void createNicState(ComputeProvisionTaskState state,
+            List<NetworkInterfaceDescription> nicDescs, SubnetState subnet, Runnable callback) {
+
+        List<DeferredResult<NetworkInterfaceState>> results = nicDescs.stream()
+                .map(nicDesc -> createNicStateOperation(state, nicDesc, subnet))
+                .map(o -> sendWithDeferredResult(o, NetworkInterfaceState.class))
+                .collect(Collectors.toList());
+
+        DeferredResult.allOf(results).whenComplete((nics, err) -> {
+            if (err != null) {
+                failTask("Failed creating NetworkInterfaceState.", err);
+                return;
+            }
+
+            //For every resource assign newly created NICs.
+            Map<String, String> computeLinkToNick = nics.stream().collect(Collectors
+                    .toMap(i -> state.resourceLinks.iterator().next(),
+                            nic -> nic.documentSelfLink));
+
+            boundNicToCompute(computeLinkToNick, callback);
+        });
+    }
+
+    private void boundNicToCompute(Map<String, String> computeToNic, Runnable callback) {
+        List<DeferredResult<ComputeState>> results = computeToNic.entrySet().stream()
+                .map(entry -> patchComputeNic(entry.getKey(), entry.getValue()))
+                .map(o -> sendWithDeferredResult(o, ComputeState.class))
+                .collect(Collectors.toList());
+
+        DeferredResult.allOf(results).whenComplete((states, err) -> {
+            if (err != null) {
+                failTask("Failed patching ComputeStates with addresses.", err);
+                return;
+            }
+
+            //ComputeState(s) have been patched -> Resume the task service.
+            callback.run();
+        });
+    }
 
     @Override
     protected BaseExtensibilityCallbackResponse notificationPayload() {
@@ -430,6 +585,59 @@ public class ComputeProvisionTaskService extends
                 Boolean.TRUE, computeProvisionTopicSchema(), taskInfo, host);
     }
 
+    private Operation createNicDescriptionOperation(ComputeProvisionTaskState state,
+            String address) {
+
+        NetworkInterfaceDescription nic = new NetworkInterfaceDescription();
+        nic.assignment = IpAssignment.STATIC;
+        nic.address = address;
+        nic.tenantLinks = state.tenantLinks;
+
+        return Operation.createPost(getHost(), NetworkInterfaceDescriptionService.FACTORY_LINK)
+                .setReferer(getHost().getUri())
+                .setBody(nic)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask(e.getMessage(), new Throwable(e));
+                    }
+                });
+    }
+
+    private Operation createNicStateOperation(ComputeProvisionTaskState state,
+            NetworkInterfaceDescription nicDesc, SubnetState subnet) {
+
+        NetworkInterfaceState nicState = new NetworkInterfaceState();
+        nicState.networkInterfaceDescriptionLink = nicDesc.documentSelfLink;
+        nicState.address = nicDesc.address;
+        nicState.tenantLinks = state.tenantLinks;
+        // nicState.networkLink = subnet.networkLink;
+        nicState.subnetLink = subnet.documentSelfLink;
+
+        return Operation.createPost(getHost(), NetworkInterfaceService.FACTORY_LINK)
+                .setReferer(getHost().getUri())
+                .setBody(nicState)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask(e.getMessage(), new Throwable(e));
+                        return;
+                    }
+
+                });
+    }
+
+    private Operation patchComputeNic(String computeLink, String nicSelfLink) {
+        ComputeState state = new ComputeState();
+        state.networkInterfaceLinks = Collections.singletonList(nicSelfLink);
+        return (Operation.createPatch(getHost(), computeLink)
+                .setBody(state)
+                .setReferer(getHost().getUri())
+                .setCompletion((oo, ee) -> {
+                    if (ee != null) {
+                        getHost().log(Level.SEVERE, ee.getMessage());
+                    }
+                }));
+    }
+
     private SchemaBuilder computeProvisionTopicSchema() {
         return new SchemaBuilder()
                 .addField(COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES)
@@ -437,11 +645,76 @@ public class ComputeProvisionTaskService extends
                 .withDataType(DATATYPE_STRING)
                 .withLabel(COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES_LABEL)
                 .withDescription(COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION)
+                .done()
+                .addField(COMPUTE_PROVISION_TOPIC_FIELD_ADDRESSES)
+                .withType(Type.LIST)
+                .withDataType(DATATYPE_STRING)
+                .withLabel(COMPUTE_PROVISION_TOPIC_FIELD_ADDRESSES_LABEL)
+                .withDescription(COMPUTE_PROVISION_TOPIC_FIELD_ADDRESSES_DESCRIPTION)
+                .done()
+                .addField(COMPUTE_PROVISION_TOPIC_FIELD_SUBNET)
+                .withDataType(DATATYPE_STRING)
+                .withLabel(COMPUTE_PROVISION_TOPIC_FIELD_SUBNET_LABEL)
+                .withDescription(COMPUTE_PROVISION_TOPIC_FIELD_SUBNET_DESCRIPTION)
                 .done();
     }
 
     @Override
     public void registerEventTopics(ServiceHost host) {
         computeProvisionEventTopic(host);
+    }
+
+    private void retrieveSubnetwork(ComputeProvisionTaskState state,
+            ExtensibilityCallbackResponse extensibilityResponse, Runnable callback) {
+
+        QueryTask.Query.Builder queryBuilder = QueryTask.Query.Builder.create()
+                .addKindFieldClause(SubnetState.class)
+                .addFieldClause("name", extensibilityResponse.subnetName);
+
+        QueryTask q = QueryTask.Builder.create().setQuery(queryBuilder.build()).build();
+        q.querySpec.resultLimit = ServiceDocumentQuery.DEFAULT_QUERY_RESULT_LIMIT;
+        QueryUtil.addExpandOption(q);
+
+        //It is expected one particular subnet provided by client.
+        final SubnetState[] subnet = new SubnetState[1];
+
+        new ServiceDocumentQuery<>(getHost(), SubnetState.class).query(q, (r) -> {
+            if (r.hasException()) {
+                getHost().log(Level.WARNING,
+                        "Exception while quering SubnetState with name [%s]. Error: [%s]",
+                        extensibilityResponse.subnetName,
+                        r.getException().getMessage());
+                failTask(r.getException().getMessage(), r.getException());
+                return;
+            } else if (r.hasResult()) {
+                subnet[0] = r.getResult();
+            } else {
+                if (subnet.length == 0) {
+                    failTask("No subnets with name [%s] found.", new Throwable());
+                    return;
+                }
+
+                //Validate than continue with creation of Nic description & state.
+                SubnetState subnetState = subnet[0];
+
+                validateSubnetwork(subnetState);
+
+                createNicDescription(state, extensibilityResponse.addresses, subnetState, callback);
+            }
+        });
+
+    }
+
+    private void validateSubnetwork(SubnetState subnetwork) {
+
+        AssertUtil.assertNotEmpty(subnetwork.dnsSearchDomains, "dnsSearchDomains");
+
+        AssertUtil.assertNotNullOrEmpty(subnetwork.gatewayAddress, "gatewayAddress");
+
+        AssertUtil.assertNotEmpty(subnetwork.dnsServerAddresses, "dnsSearchDomains");
+
+        AssertUtil.assertNotNullOrEmpty(subnetwork.domain, "domain");
+
+        AssertUtil.assertNotNullOrEmpty(subnetwork.subnetCIDR, "subnetCIDR");
     }
 }

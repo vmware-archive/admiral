@@ -33,6 +33,7 @@ import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
 import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile;
 import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfileExpanded;
 import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfile;
+import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfileExpanded;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.DeferredResult;
@@ -120,7 +121,7 @@ public class ProfileService extends StatefulService {
     public static class ProfileStateExpanded extends ProfileState {
         public EndpointState endpoint;
         public ComputeProfile computeProfile;
-        public StorageProfile storageProfile;
+        public StorageProfileExpanded storageProfile;
         public NetworkProfileExpanded networkProfile;
 
         public static URI buildUri(URI profileStateUri) {
@@ -239,11 +240,13 @@ public class ProfileService extends StatefulService {
                     }));
         }
         if (currentState.storageProfileLink != null) {
-            getOps.add(Operation.createGet(this, currentState.storageProfileLink)
+            URI uri = StorageProfileExpanded.buildUri(UriUtils.buildUri(this.getHost(),
+                    currentState.storageProfileLink));
+            getOps.add(Operation.createGet(uri)
                     .setReferer(this.getUri())
                     .setCompletion((o, e) -> {
                         if (e == null) {
-                            expanded.storageProfile = o.getBody(StorageProfile.class);
+                            expanded.storageProfile = o.getBody(StorageProfileExpanded.class);
                         }
                     }));
         }

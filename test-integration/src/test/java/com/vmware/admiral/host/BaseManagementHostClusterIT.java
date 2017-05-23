@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -108,7 +108,8 @@ import com.vmware.xenon.services.common.ServiceUriPaths;
  */
 public abstract class BaseManagementHostClusterIT {
 
-    protected final Logger logger = Logger.getLogger(BaseManagementHostClusterIT.class.getName());
+    protected static final Logger logger =
+            Logger.getLogger(BaseManagementHostClusterIT.class.getName());
 
     private static final String LOCAL_USERS_FILE = getResourceFilePath(
             "/local-users-encrypted.json");
@@ -133,7 +134,7 @@ public abstract class BaseManagementHostClusterIT {
 
     protected static GroupResourcePlacementState groupResourcePlacementState;
 
-    protected static ScheduledExecutorService scheduler;
+    protected ScheduledExecutorService scheduler;
 
     @ClassRule
     public static final TemporaryFolder test = new TemporaryFolder();
@@ -157,10 +158,7 @@ public abstract class BaseManagementHostClusterIT {
             sandboxPath = sandboxUri.toString().replace("file:", "");
             sandboxPath = sandboxPath.substring(0, sandboxPath.lastIndexOf("/"));
         } else {
-
-            TemporaryFolder sandbox = new TemporaryFolder(test.getRoot());
-            sandbox.create();
-            sandboxPath = sandbox.getRoot().toPath().toString();
+            sandboxPath = test.getRoot().toPath().toString();
         }
         String hostId = LOCALHOST.substring(0, LOCALHOST.length() - 2) + "-" + port;
 
@@ -229,8 +227,6 @@ public abstract class BaseManagementHostClusterIT {
         hosts.forEach(host -> stopHost(host, false, true));
     }
 
-
-
     protected void waitWhilePortIsListening(ManagementHost host, TestContext waiter) {
         SSLSocketFactory factory = ManagementHostAuthUsersTest.getUnsecuredSSLSocketFactory();
         try (Socket s = factory.createSocket((String) null, host.getSecurePort())) {
@@ -293,7 +289,6 @@ public abstract class BaseManagementHostClusterIT {
                     + "failed with status code %d and response body %s", result.getKey(), result
                     .getValue()));
         }
-
     }
 
     /**
@@ -509,7 +504,7 @@ public abstract class BaseManagementHostClusterIT {
         return startHost(host, sandboxUri, peers, 0);
     }
 
-    protected static void assertClusterWithToken(String token, ManagementHost... hosts)
+    protected void assertClusterWithToken(String token, ManagementHost... hosts)
             throws Exception {
         assertNotNull(token);
         Map<String, String> headers = new HashMap<>();
@@ -517,7 +512,7 @@ public abstract class BaseManagementHostClusterIT {
         assertNodes(headers, hosts);
     }
 
-    protected static void assertClusterFromNodes(ManagementHost... hosts) throws Exception {
+    protected void assertClusterFromNodes(ManagementHost... hosts) throws Exception {
         for (ManagementHost host : hosts) {
             final String[] tokens = new String[1];
             waitFor(new Condition() {
@@ -551,7 +546,7 @@ public abstract class BaseManagementHostClusterIT {
         }
     }
 
-    private static void assertNodes(Map<String, String> headers, ManagementHost... hosts)
+    private void assertNodes(Map<String, String> headers, ManagementHost... hosts)
             throws Exception {
         for (ManagementHost host : hosts) {
 
@@ -740,7 +735,6 @@ public abstract class BaseManagementHostClusterIT {
         assertEquals(HttpURLConnection.HTTP_OK, (int) response.getKey());
         logger.log(Level.INFO,
                 "############### COMPUTE STATE HAS BEEN CREATED ###################");
-
     }
 
     protected void startRequest(Map<String, String> headers, ManagementHost host,
@@ -765,7 +759,6 @@ public abstract class BaseManagementHostClusterIT {
         assertNotNull(body);
 
         return body;
-
     }
 
     protected RequestJSONResponseMapper waitTaskToCompleteAndGetResponse(
@@ -818,7 +811,7 @@ public abstract class BaseManagementHostClusterIT {
         return headers;
     }
 
-    private static void checkHostAccess(Map<String, String> headers, ManagementHost host)
+    private void checkHostAccess(Map<String, String> headers, ManagementHost host)
             throws InterruptedException, TimeoutException {
         // Assert restricted operation access before provisioning.
         waitFor(new Condition() {
@@ -849,7 +842,7 @@ public abstract class BaseManagementHostClusterIT {
 
     }
 
-    private static void waitFor(Condition condition, TestContext context) {
+    private void waitFor(Condition condition, TestContext context) {
         if (!condition.isReady()) {
             scheduler.schedule(() -> waitFor(condition, context),
                     DELAY_BETWEEN_AUTH_TOKEN_RETRIES, TimeUnit.SECONDS);
@@ -858,7 +851,7 @@ public abstract class BaseManagementHostClusterIT {
         }
     }
 
-    public static void waitFor(Condition condition) {
+    public void waitFor(Condition condition) {
         TestContext waiter = new TestContext(1, Duration.ofMinutes(2));
         waitFor(condition, waiter);
         waiter.await();
@@ -887,7 +880,6 @@ public abstract class BaseManagementHostClusterIT {
                 response.getDocumentLinks().contains(UriUtils
                         .buildUriPath(ContainerDescriptionService.FACTORY_LINK,
                                 TestAuthServiceDocumentHelper.TEST_CONTAINER_DESC_SELF_LINK)));
-
     }
 
     protected CompositeDescriptionService.CompositeDescription createCompositeDesc(
@@ -1189,4 +1181,12 @@ public abstract class BaseManagementHostClusterIT {
                 }).sendWith(host);
         waiter.await();
     }
+
+    protected static void sleep(int seconds) {
+        try {
+            Thread.sleep(TimeUnit.SECONDS.toMillis(seconds));
+        } catch (InterruptedException ignored) {
+        }
+    }
+
 }

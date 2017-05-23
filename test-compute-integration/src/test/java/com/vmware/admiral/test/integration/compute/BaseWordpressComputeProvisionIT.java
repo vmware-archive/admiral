@@ -33,8 +33,8 @@ import com.vmware.xenon.common.ServiceDocument;
 
 public abstract class BaseWordpressComputeProvisionIT extends BaseComputeProvisionIT {
 
-    protected static final String AWS_DEFAULT_SUBNET_ID = "subnet-ce01b5e4";
-    protected static final String AWS_SECONDARY_SUBNET_ID = "subnet-400f426d";
+    protected static final String AWS_DEFAULT_SUBNET_NAME = "subnet1";
+    protected static final String AWS_SECONDARY_SUBNET_NAME = "subnet2";
 
     protected static final String AWS_ISOLATED_VPC_NAME = "isolated-vpc";
 
@@ -133,11 +133,11 @@ public abstract class BaseWordpressComputeProvisionIT extends BaseComputeProvisi
                     computeState.name));
         }
 
-        if (expectedSubnet != null && !subnetState.id.equals(expectedSubnet)) {
+        if (expectedSubnet != null && !subnetState.name.equals(expectedSubnet)) {
             fail(String.format(
                     "VM '%s' is assigned to unexpected subnet: '%s', expected subnet: '%s'",
                     computeState.name,
-                    subnetState.id, expectedSubnet));
+                    subnetState.name, expectedSubnet));
         }
     }
 }

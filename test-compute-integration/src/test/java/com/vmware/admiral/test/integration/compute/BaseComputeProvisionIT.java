@@ -743,7 +743,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
     protected NetworkProfile createNetworkProfile(String subnetName, Set<String> tagLinks) throws Exception {
         QueryTask.Query query = QueryTask.Query.Builder.create()
-                .addFieldClause(SubnetState.FIELD_NAME_ID, subnetName)
+                .addFieldClause(SubnetState.FIELD_NAME_NAME, subnetName)
                 .build();
         QueryTask qt = QueryTask.Builder.createDirectTask().setQuery(query).build();
         String responseJson = sendRequest(SimpleHttpsClient.HttpMethod.POST,

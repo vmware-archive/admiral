@@ -40,6 +40,7 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.ContainerService;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
+import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.photon.controller.model.security.util.EncryptionUtils;
@@ -117,6 +118,17 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
             URI containerHostReference,
             BiConsumer<ComputeState, CommandInput> callbackFunction) {
 
+        if (!containerHostReference.getPath().startsWith(ComputeService.FACTORY_LINK)) {
+            Exception ex = new IllegalArgumentException(
+                    "getContainerHost should get a ComputeState, but got "
+                            + containerHostReference);
+            if (op != null) {
+                op.fail(ex);
+            }
+            fail(request, ex);
+            return;
+        }
+
         sendRequest(Operation.createGet(containerHostReference)
                 .setContextId(request.getRequestId())
                 .setCompletion((o, ex) -> {
@@ -128,12 +140,20 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
                     } else {
                         handleExceptions(request, op, () -> {
                             ComputeState hostComputeState = o.getBody(ComputeState.class);
+                            if (!hostComputeState.documentSelfLink
+                                    .startsWith(ComputeService.FACTORY_LINK)) {
+                                getHost().log(Level.SEVERE,
+                                        "***** Wrong ComputeState returned: request: %s, response: %s",
+                                        containerHostReference,
+                                        hostComputeState.documentSelfLink);
+                            }
                             createHostConnection(request, op, hostComputeState, callbackFunction);
                         });
                     }
                 }));
 
-        getHost().log(Level.FINE, "Fetching ComputeState: %s %s", containerHostReference,
+        // TODO: Change back to fine
+        getHost().log(Level.INFO, "Fetching ComputeState: %s %s", containerHostReference,
                 request.getRequestTrackingLog());
     }
 

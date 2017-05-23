@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -16,6 +16,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import org.junit.After;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.container.ComputeBaseTest;
@@ -38,6 +39,11 @@ import com.vmware.xenon.common.TaskState.TaskStage;
 
 public class ComputeInitialBootServiceTest extends ComputeBaseTest {
 
+    @After
+    public void tearDown() {
+        System.setProperty(SystemContainerDescriptions.AGENT_IMAGE_VERSION_PROPERTY_NAME, "");
+    }
+
     @Test
     public void testCoreAgentContainerCreatedOnStartUp() throws Throwable {
         waitForServiceAvailability(SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK);
@@ -49,7 +55,7 @@ public class ComputeInitialBootServiceTest extends ComputeBaseTest {
         assertEquals(SystemContainerDescriptions.AGENT_CONTAINER_NAME, agentDesc.name);
         String expectedImageName = String.format("%s:%s",
                 SystemContainerDescriptions.AGENT_IMAGE_NAME,
-                SystemContainerDescriptions.AGENT_IMAGE_VERSION);
+                SystemContainerDescriptions.getAgentImageVersion());
         assertEquals(expectedImageName, agentDesc.image);
     }
 
@@ -64,7 +70,8 @@ public class ComputeInitialBootServiceTest extends ComputeBaseTest {
         waitForInitialBootServiceToBeSelfStopped(ComputeInitialBootService.SELF_LINK);
 
         String newVersion = "new version";
-        setFinalStatic(SystemContainerDescriptions.class, "AGENT_IMAGE_VERSION", newVersion);
+        System.setProperty(SystemContainerDescriptions.AGENT_IMAGE_VERSION_PROPERTY_NAME,
+                newVersion);
 
         //simulate a restart of the service host
         startInitialBootService(ComputeInitialBootService.class,
@@ -73,13 +80,11 @@ public class ComputeInitialBootServiceTest extends ComputeBaseTest {
         waitFor(() -> {
             ContainerDescription updatedDocument = getDocument(ContainerDescription.class,
                     SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK);
-
             return updatedDocument.documentVersion > agentDesc.documentVersion;
         });
 
         ContainerDescription updatedAgentDesc = getDocument(ContainerDescription.class,
                 SystemContainerDescriptions.AGENT_CONTAINER_DESCRIPTION_LINK);
-
         String expectedImageName = String.format("%s:%s",
                 SystemContainerDescriptions.AGENT_IMAGE_NAME,
                 newVersion);
@@ -90,7 +95,8 @@ public class ComputeInitialBootServiceTest extends ComputeBaseTest {
 
     @Test
     public void testContainerHostDataCollectionServiceCreatedOnStartUp() throws Throwable {
-        waitForServiceAvailability(ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK);
+        waitForServiceAvailability(ContainerHostDataCollectionService
+                .HOST_INFO_DATA_COLLECTION_LINK);
         ContainerHostDataCollectionState dataCollectionState = getDocument(
                 ContainerHostDataCollectionState.class,
                 ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK);
@@ -100,7 +106,8 @@ public class ComputeInitialBootServiceTest extends ComputeBaseTest {
 
     @Test
     public void testKubernetesEntityListDataCollectionServiceCreatedOnStartUp() throws Throwable {
-        waitForServiceAvailability(KubernetesEntityDataCollection.DEFAULT_KUBERNETES_ENTITY_DATA_COLLECTION_LINK);
+        waitForServiceAvailability(KubernetesEntityDataCollection
+                .DEFAULT_KUBERNETES_ENTITY_DATA_COLLECTION_LINK);
         KubernetesEntityDataCollectionState dataCollectionState = getDocument(
                 KubernetesEntityDataCollectionState.class,
                 KubernetesEntityDataCollection.DEFAULT_KUBERNETES_ENTITY_DATA_COLLECTION_LINK);
@@ -111,7 +118,8 @@ public class ComputeInitialBootServiceTest extends ComputeBaseTest {
 
     @Test
     public void testHostContainerListDataCollectionServiceCreatedOnStartUp() throws Throwable {
-        waitForServiceAvailability(HostContainerListDataCollection.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK);
+        waitForServiceAvailability(HostContainerListDataCollection
+                .DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK);
         HostContainerListDataCollectionState dataCollectionState = getDocument(
                 HostContainerListDataCollectionState.class,
                 HostContainerListDataCollection.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK);
@@ -122,7 +130,8 @@ public class ComputeInitialBootServiceTest extends ComputeBaseTest {
 
     @Test
     public void testHostNetworkListDataCollectionServiceCreatedOnStartUp() throws Throwable {
-        waitForServiceAvailability(HostNetworkListDataCollection.DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK);
+        waitForServiceAvailability(HostNetworkListDataCollection
+                .DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK);
         HostNetworkListDataCollectionState dataCollectionState = getDocument(
                 HostNetworkListDataCollectionState.class,
                 HostNetworkListDataCollection.DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK);
@@ -133,7 +142,8 @@ public class ComputeInitialBootServiceTest extends ComputeBaseTest {
 
     @Test
     public void testHostVolumeListDataCollectionServiceCreatedOnStartUp() throws Throwable {
-        waitForServiceAvailability(HostVolumeListDataCollection.DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK);
+        waitForServiceAvailability(HostVolumeListDataCollection
+                .DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK);
         HostVolumeListDataCollectionState dataCollectionState = getDocument(
                 HostVolumeListDataCollectionState.class,
                 HostVolumeListDataCollection.DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK);
@@ -166,7 +176,9 @@ public class ComputeInitialBootServiceTest extends ComputeBaseTest {
                 GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_LINK);
 
         assertNotNull(resourcePoolState);
-        assertEquals(GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_ID, resourcePoolState.name);
+        assertEquals(GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_ID,
+                resourcePoolState.name);
         assertEquals(GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_ID, resourcePoolState.id);
     }
+
 }

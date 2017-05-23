@@ -59,7 +59,6 @@ import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.Query.Builder;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
-import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 
 public class NetworkProfileQueryUtils {
@@ -428,7 +427,7 @@ public class NetworkProfileQueryUtils {
                 && !profile.networkProfile.subnetStates.isEmpty();
         if (hasSubnetStates || isIsolatedBySubnetNetworkProfile) {
             if (!noNicVM) {
-                if (computeNetworkDescription.networkType.equals(NetworkType.ISOLATED) &&
+                if (computeNetworkDescription.networkType == NetworkType.ISOLATED &&
                         isIsolatedBySubnetNetworkProfile) {
                     subnet = DeferredResult.completed(isolatedSubnetState);
                 } else {
@@ -483,13 +482,10 @@ public class NetworkProfileQueryUtils {
                 ComputeProperties.INFRASTRUCTURE_USE_PROP_NAME, Boolean.TRUE.toString(),
                 Occurance.MUST_NOT_OCCUR);
         if (regionId != null) {
-            builder.addCompositeFieldClause(ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
-                    ComputeProperties.REGION_ID, regionId);
+            builder.addFieldClause(ResourceState.FIELD_NAME_REGION_ID, regionId);
         } else {
             Query clause = new Query()
-                    .setTermPropertyName(QuerySpecification.buildCompositeFieldName(
-                            ResourceState.FIELD_NAME_CUSTOM_PROPERTIES,
-                            ComputeProperties.REGION_ID))
+                    .setTermPropertyName(ResourceState.FIELD_NAME_REGION_ID)
                     .setTermMatchType(MatchType.WILDCARD)
                     .setTermMatchValue(UriUtils.URI_WILDCARD_CHAR);
             clause.occurance = Occurance.MUST_NOT_OCCUR;

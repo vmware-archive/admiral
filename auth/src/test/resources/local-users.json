@@ -1,12 +1,12 @@
 {
   "users": [{
-    "email": "administrator@admiral.com",
+    "email": "gloria@admiral.com",
     "password": "Password1!"
   }, {
     "email": "fritz@admiral.com",
     "password": "Password1!"
   }, {
-    "email": "tony@admiral.com",
+    "email": "connie@admiral.com",
     "password": "Password1!"
   }]
 }
