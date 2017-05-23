@@ -11,12 +11,12 @@
 
 package com.vmware.admiral.compute.container.maintenance;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.NetworkOperationType;
-import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.xenon.common.Operation;
@@ -25,128 +25,77 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 public class ContainerNetworkMaintenance {
-    public static final String SERVICE_REFERRER_PATH = "/container-network-maintenance";
+    private static final String SERVICE_REFERRER_PATH = "/container-network-maintenance";
 
-    public static final long MAINTENANCE_INTERVAL_MICROS = Long.getLong(
-            "dcp.management.container.network.periodic.maintenance.period.micros",
-            TimeUnit.SECONDS.toMicros(30));
-    protected static final long MAINTENANCE_INTERVAL_INSPECT_MICROS = Long.getLong(
+    private static final long MAINTENANCE_INTERVAL_INSPECT_MICROS = Long.getLong(
             "dcp.management.container.network.periodic.maintenance.period.micros",
             TimeUnit.SECONDS.toMicros(300));
-    protected static final long MAINTENANCE_INTERVAL_SLOW_DOWN_PERIOD = Long.getLong(
-            "dcp.management.container.network.periodic.maintenance.slow.down.period.micros",
-            TimeUnit.SECONDS.toMicros(600));
 
     private final ServiceHost host;
-    private final String networkSelfLink;
-    private long lastInspectMaintainanceInMicros;
 
-    public static ContainerNetworkMaintenance create(ServiceHost host, String networkSelfLink,
-            boolean delayFirstMaintenance) {
-        return new ContainerNetworkMaintenance(host, networkSelfLink, delayFirstMaintenance);
+    public ContainerNetworkMaintenance(ServiceHost host) {
+        this.host = host;
     }
 
-    private ContainerNetworkMaintenance(ServiceHost host, String networkSelfLink,
-            boolean delayFirstMaintenance) {
-        this.host = host;
-        this.networkSelfLink = networkSelfLink;
-        if (delayFirstMaintenance) {
-            this.lastInspectMaintainanceInMicros = Utils.getSystemNowMicrosUtc();
+    public void requestNetworksInspectIfNeeded(List<ContainerNetworkState> networkStates) {
+        if (networkStates == null || networkStates.isEmpty()) {
+            return;
+        }
+        for (ContainerNetworkState network : networkStates) {
+            try {
+                this.requestNetworkInspectIfNeeded(network);
+            } catch (Exception e) {
+                Utils.log(getClass(), SERVICE_REFERRER_PATH, Level.WARNING,
+                        "Unexpected exception inspecting network %s : %s",
+                        network.documentSelfLink, Utils.toString(e));
+            }
         }
     }
 
-    public void handlePeriodicMaintenance(Operation post) {
-        if (DeploymentProfileConfig.getInstance().isTest()) {
-            host.log(Level.FINE,
-                    "Skipping scheduled maintenance in test mode: %s", networkSelfLink);
-            post.complete();
+    private void requestNetworkInspectIfNeeded(ContainerNetworkState networkState) {
+        long lastUpdate = networkState.documentUpdateTimeMicros;
+        if (lastUpdate + MAINTENANCE_INTERVAL_INSPECT_MICROS > Utils.getSystemNowMicrosUtc()) {
+            // network was recently updated, skip inspection
+            Utils.log(getClass(), SERVICE_REFERRER_PATH, Level.FINE,
+                    "Skipping maintenance for network %s, it is recently updated",
+                    networkState.documentSelfLink);
             return;
         }
 
-        host.log(Level.FINE, "Performing maintenance for: %s", networkSelfLink);
-        host.sendRequest(Operation
-                .createGet(host, networkSelfLink)
-                .setReferer(UriUtils.buildUri(host, SERVICE_REFERRER_PATH))
-                .setCompletion(
-                        (o, ex) -> {
-                            if (ex != null) {
-                                Utils.logWarning(
-                                        "Failed to fetch self state for periodic maintenance: %s",
-                                        o.getUri());
-                                post.fail(ex);
-                                return;
-                            }
-                            ContainerNetworkState networkState = o
-                                    .getBody(ContainerNetworkState.class);
-                            long nowMicrosUtc = Utils.getSystemNowMicrosUtc();
-
-                            /*
-                             * if container hasn't been updated for a while, slow down the
-                             * data-collection
-                             */
-                            if (networkState.documentUpdateTimeMicros
-                                    + MAINTENANCE_INTERVAL_SLOW_DOWN_PERIOD < nowMicrosUtc) {
-                                /* check if the slow-down period has expired */
-                                if (lastInspectMaintainanceInMicros +
-                                        MAINTENANCE_INTERVAL_SLOW_DOWN_PERIOD < nowMicrosUtc) {
-                                    /* set another slow-down period and perform collection */
-                                    lastInspectMaintainanceInMicros = nowMicrosUtc +
-                                            MAINTENANCE_INTERVAL_SLOW_DOWN_PERIOD;
-                                    processNetworkInspect(post, networkState);
-                                } else {
-                                    post.complete();
-                                }
-
-                                return;
-                            }
-
-                            if (lastInspectMaintainanceInMicros
-                                    + MAINTENANCE_INTERVAL_INSPECT_MICROS < nowMicrosUtc) {
-                                lastInspectMaintainanceInMicros = nowMicrosUtc;
-                                processNetworkInspect(post, networkState);
-                            } else {
-                                post.complete();
-                            }
-                        }));
-    }
-
-    private void processNetworkInspect(Operation post, ContainerNetworkState networkState) {
         if (networkState.adapterManagementReference == null) {
             // probably the network hasn't finished provisioning
-            Utils.log(getClass(), networkSelfLink, Level.FINE,
+            Utils.log(getClass(), SERVICE_REFERRER_PATH, Level.FINE,
                     "Can't perform maintenance because adapter reference is not set: %s",
                     networkState.documentSelfLink);
-            post.complete();
             return;
         }
 
         if (networkState.powerState == null || networkState.powerState.isUnmanaged()) {
-            Utils.log(getClass(), networkSelfLink, Level.FINE,
+            Utils.log(getClass(), SERVICE_REFERRER_PATH, Level.FINE,
                     "Skipping maintenance for unmanaged network: %s",
                     networkState.documentSelfLink);
-            post.complete();
             return;
         }
 
-        requestNetworkInspection(post, networkState);
+        requestNetworkInspection(networkState);
     }
 
-    private void requestNetworkInspection(Operation post, ContainerNetworkState networkState) {
+    public void requestNetworkInspection(ContainerNetworkState networkState) {
         AdapterRequest request = new AdapterRequest();
         request.resourceReference = UriUtils.buildPublicUri(host, networkState.documentSelfLink);
         request.operationTypeId = NetworkOperationType.INSPECT.id;
         request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
         host.sendRequest(Operation
                 .createPatch(host, networkState.adapterManagementReference.toString())
-                .setBody(request)
+                .setBodyNoCloning(request)
                 .setReferer(UriUtils.buildUri(host, SERVICE_REFERRER_PATH))
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        Utils.logWarning(
+                        Utils.log(getClass(), SERVICE_REFERRER_PATH, Level.WARNING,
                                 "Exception while inspect request for network: %s. Error: %s",
                                 networkState.documentSelfLink, Utils.toString(ex));
                     }
-                    post.complete();
                 }));
     }
+
 }

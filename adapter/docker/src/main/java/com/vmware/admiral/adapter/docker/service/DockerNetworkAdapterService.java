@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -22,7 +22,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
 
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.http.HttpStatus;
@@ -41,7 +40,8 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
 
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER_NETWORK;
 
-    public static final String DOCKER_NETWORK_TYPE_DEFAULT = ContainerNetworkDescription.NETWORK_DRIVER_BRIDGE;
+    public static final String DOCKER_NETWORK_TYPE_DEFAULT =
+            ContainerNetworkDescription.NETWORK_DRIVER_BRIDGE;
 
     private static final String DELETE_NETWORK_MISSING_ERROR = "error 404 for DELETE";
 
@@ -100,7 +100,7 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
                     }
                 });
         handleExceptions(context.request, context.operation, () -> {
-            getHost().log(Level.FINE, "Fetching NetworkState: %s %s",
+            logFine("Fetching NetworkState: %s %s",
                     context.request.getRequestTrackingLog(),
                     context.request.getNetworkStateReference());
             sendRequest(getNetworkState);
@@ -244,7 +244,7 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
         CommandInput inspectCommandInput = new CommandInput(context.commandInput).withProperty(
                 DOCKER_CONTAINER_NETWORK_ID_PROP_NAME, networkId);
 
-        getHost().log(Level.FINE, "Executing inspect network: %s %s",
+        logFine("Executing inspect network: %s %s",
                 context.networkState.documentSelfLink, context.request.getRequestTrackingLog());
 
         context.executor.inspectNetwork(
@@ -268,9 +268,8 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
                 });
     }
 
-    private void patchNetworkState(NetworkRequest request,
-            ContainerNetworkState networkState, Map<String, Object> properties,
-            RequestContext context) {
+    private void patchNetworkState(NetworkRequest request, ContainerNetworkState networkState,
+            Map<String, Object> properties, RequestContext context) {
 
         ContainerNetworkState newNetworkState = new ContainerNetworkState();
         newNetworkState.documentSelfLink = networkState.documentSelfLink;
@@ -279,19 +278,19 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
 
         ContainerNetworkStateMapper.propertiesToContainerNetworkState(newNetworkState, properties);
 
-        getHost().log(Level.FINE, "Patching ContainerNetworkState: %s %s",
+        logFine("Patching ContainerNetworkState: %s %s",
                 newNetworkState.documentSelfLink,
                 request.getRequestTrackingLog());
         sendRequest(Operation
                 .createPatch(request.getNetworkStateReference())
-                .setBody(newNetworkState)
+                .setBodyNoCloning(newNetworkState)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         logWarning("Failure while patching network [%s]",
                                 context.networkState.documentSelfLink);
                         fail(context.request, o, ex);
                     } else {
-                        patchTaskStage(request, TaskStage.FINISHED, ex);
+                        patchTaskStage(request, TaskStage.FINISHED, null);
                     }
                 }));
     }
@@ -331,7 +330,7 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
                 context.operation.fail(ex);
             } else {
                 if (op.hasBody()) {
-                    context.operation.setBody(op.getBody(String.class));
+                    context.operation.setBodyNoCloning(op.getBody(String.class));
                 }
                 context.operation.complete();
             }

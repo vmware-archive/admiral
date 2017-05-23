@@ -100,7 +100,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
     private static final int DC_BATCH_SIZE = Integer.parseInt(System.getProperty(
             "com.vmware.admiral.compute.container.host.dc.batch.size", "10"));
 
-    private static final String LOAD_SKIP_DC_PARAMETER = "com.vmware.admiral.compute.container.load.average.dc.skip";
+    private static final String LOAD_SKIP_DC_PARAMETER =
+            "com.vmware.admiral.compute.container.load.average.dc.skip";
 
     private static double loadDCSkip = 0.0d;
 
@@ -233,13 +234,19 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 patch.complete();
 
                 for (ComputeState computeState : qr.computesByLink.values()) {
+                    if (LifecycleState.SUSPEND == computeState.lifecycleState) {
+                        logInfo("Skipping data collection for host %s as it is marked for removal",
+                                computeState.documentSelfLink);
+                        continue;
+                    }
+
                     if (!body.remove) {
                         // if we're adding a host we need to wait for the host info to be populated
                         // first
                         updateContainerHostInfo(computeState, (o, error) -> {
                             if (error != null) {
                                 handleHostNotAvailable(computeState, error);
-                                if (scheduled.getAndSet(true) == false) {
+                                if (!scheduled.getAndSet(true)) {
                                     scheduleDataCollection();
                                 }
                             } else {
@@ -295,9 +302,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
             if (Double.compare(systemLoadAverage, loadDCSkip) > 0) {
                 // If the system is under high load skip the data collection after
                 // provisioning
-                logWarning(
-                        "Skipped on demand data collection because the system is under load. Load for the last minute: "
-                                + systemLoadAverage);
+                logWarning("Skipped on demand data collection because the system is under load."
+                        + " Load for the last minute: %.2f", systemLoadAverage);
                 return true;
             }
         }
@@ -305,19 +311,19 @@ public class ContainerHostDataCollectionService extends StatefulService {
     }
 
     private void handleHostAvailable(ComputeState computeState) {
-        if (PowerState.ON.equals(computeState.powerState)) {
+        if (PowerState.ON == computeState.powerState) {
             // host is already ON, skip updating
             return;
         }
         String countString = computeState.customProperties.get(RETRIES_COUNT_PROP_NAME);
         countString = countString == null ? "0" : countString;
 
-        if (PowerState.SUSPEND.equals(computeState.powerState) && "0".equals(countString)) {
+        if (PowerState.SUSPEND == computeState.powerState && "0".equals(countString)) {
             // when a host is disabled manually the state should not be changed to ON
             return;
         }
 
-        if (PowerState.OFF.equals(computeState.powerState)) {
+        if (PowerState.OFF == computeState.powerState) {
             // set state to ON to trigger container data collection to update container states
             computeState.powerState = PowerState.ON;
         }
@@ -335,14 +341,14 @@ public class ContainerHostDataCollectionService extends StatefulService {
         patchState.customProperties = new HashMap<>();
         patchState.customProperties.put(RETRIES_COUNT_PROP_NAME, "0");
         sendRequest(Operation.createPatch(this, computeState.documentSelfLink)
-                .setBody(patchState)
+                .setBodyNoCloning(patchState)
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         logWarning("Error while patching computeState: %s", e);
                         return;
                     }
                     sendRequest(Operation.createPost(getHost(), EventLogService.FACTORY_LINK)
-                            .setBody(eventLog)
+                            .setBodyNoCloning(eventLog)
                             .setCompletion((op, ex) -> {
                                 if (ex != null) {
                                     logWarning("Failed to publish event log: %s",
@@ -353,7 +359,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
     }
 
     private void handleHostNotAvailable(ComputeState computeState, ServiceErrorResponse error) {
-        if (PowerState.OFF.equals(computeState.powerState)) {
+        if (PowerState.OFF == computeState.powerState) {
             // host is already OFF, skip updating
             return;
         }
@@ -379,7 +385,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
             patchPowerState = PowerState.SUSPEND;
         }
 
-        if (PowerState.OFF.equals(patchPowerState)) {
+        if (PowerState.OFF == patchPowerState) {
             eventLog.description = String.format(
                     "Host [%s] has been marked [OFF] after exceeding the maximum number [%s] of"
                             + " failed data collections. Error message is: %s",
@@ -403,20 +409,20 @@ public class ContainerHostDataCollectionService extends StatefulService {
             }
 
             sendRequest(Operation.createPost(getHost(), EventLogService.FACTORY_LINK)
-                    .setBody(eventLog)
+                    .setBodyNoCloning(eventLog)
                     .setCompletion((op, ex) -> {
                         if (ex != null) {
                             logWarning("Failed to publish event log error: %s", Utils.toString(ex));
                         }
                     }));
 
-            if (PowerState.OFF.equals(patchPowerState)) {
+            if (PowerState.OFF == patchPowerState) {
                 disableContainersForHost(computeState.documentSelfLink);
             }
         };
         sendRequest(Operation
                 .createPatch(this, computeState.documentSelfLink)
-                .setBody(patchState)
+                .setBodyNoCloning(patchState)
                 .setCompletion(cc));
     }
 
@@ -440,8 +446,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
             int coef = remove ? -1 : 1;
 
             resourcePoolState.minMemoryBytes = 0L;
-            if (resourcePoolState.maxMemoryBytes == Long.MAX_VALUE || totalMemory
-                    .equals(Long.MAX_VALUE)) {
+            if (resourcePoolState.maxMemoryBytes == Long.MAX_VALUE
+                    || totalMemory.equals(Long.MAX_VALUE)) {
                 resourcePoolState.maxMemoryBytes = Long.MAX_VALUE;
             } else {
                 resourcePoolState.maxMemoryBytes += totalMemory * coef;
@@ -488,8 +494,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
      */
     private void updatePlacements(ResourcePoolService.ResourcePoolState resourcePoolState) {
         QueryTask queryTask = QueryUtil.buildPropertyQuery(
-                GroupResourcePlacementService.GroupResourcePlacementState.class,
-                GroupResourcePlacementService.GroupResourcePlacementState.FIELD_NAME_RESOURCE_POOL_LINK,
+                GroupResourcePlacementState.class,
+                GroupResourcePlacementState.FIELD_NAME_RESOURCE_POOL_LINK,
                 resourcePoolState.documentSelfLink);
         QueryUtil.addExpandOption(queryTask);
         ServiceDocumentQuery<GroupResourcePlacementState> query = new ServiceDocumentQuery<>(
@@ -522,8 +528,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                                 ContainerHostDataCollectionService::getTenantAndGroupIdentifier,
                                 Collectors.summingInt(placement -> placement.priority)));
 
-                Comparator<GroupResourcePlacementService.GroupResourcePlacementState> comparator = (
-                        q1, q2) -> Double.compare(
+                Comparator<GroupResourcePlacementState> comparator = (q1, q2) -> Double.compare(
                                 ((double) q2.priority) /
                                         sumOfPrioritiesByGroup.get(getTenantAndGroupIdentifier(q2)),
                                 ((double) q1.priority) /
@@ -531,8 +536,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
                                                 .get(getTenantAndGroupIdentifier(q1)));
 
                 placements.sort(comparator);
-                Set<GroupResourcePlacementService.GroupResourcePlacementState> placementsToUpdate = new HashSet<>();
-                for (GroupResourcePlacementService.GroupResourcePlacementState placement : placements) {
+                Set<GroupResourcePlacementState> placementsToUpdate = new HashSet<>();
+                for (GroupResourcePlacementState placement : placements) {
                     if (placement.availableMemory == 0 || placement.memoryLimit == 0) {
                         continue;
                     }
@@ -547,9 +552,9 @@ public class ContainerHostDataCollectionService extends StatefulService {
                     }
                 }
 
-                for (GroupResourcePlacementService.GroupResourcePlacementState placementToUpdate : placementsToUpdate) {
+                for (GroupResourcePlacementState placementToUpdate : placementsToUpdate) {
                     sendRequest(Operation.createPut(this, placementToUpdate.documentSelfLink)
-                            .setBody(placementToUpdate));
+                            .setBodyNoCloning(placementToUpdate));
                 }
 
             }
@@ -626,7 +631,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         rpPutState.maxMemoryBytes = totalMemory;
         rpPutState.minMemoryBytes = 0L;
         sendRequest(Operation.createPut(this, rpPutState.documentSelfLink)
-                .setBody(rpPutState).setCompletion((op, e) -> {
+                .setBodyNoCloning(rpPutState).setCompletion((op, e) -> {
                     if (e != null) {
                         logSevere("Unable to update the resource pool with link "
                                 + rpPutState.documentSelfLink + ": " + e.toString());
@@ -643,7 +648,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         URI adapterManagementReference = computeHost.endpointLink == null
                 ? computeHost.adapterManagementReference : getDefaultHostAdapter(getHost());
         sendRequest(Operation.createPatch(adapterManagementReference)
-                .setBody(request)
+                .setBodyNoCloning(request)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         logWarning(Utils.toString(ex));
@@ -763,8 +768,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
 
     private void updateContainerHosts(List<ComputeState> hosts) {
         for (ComputeState compute : hosts) {
-            if (LifecycleState.SUSPEND.equals(compute.lifecycleState)) {
-                logInfo("Skipping data collection for host %s because it is marked for removal.",
+            if (LifecycleState.SUSPEND == compute.lifecycleState) {
+                logInfo("Skipping data collection for host %s as it is marked for removal.",
                         compute.documentSelfLink);
                 continue;
             }
@@ -777,7 +782,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 }
             }, null);
 
-            if (PowerState.ON.equals(compute.powerState)) {
+            if (PowerState.ON == compute.powerState) {
                 if (ContainerHostUtil.isKubernetesHost(compute)) {
                     updateKubernetesEntities(compute.documentSelfLink);
                 } else {
@@ -810,7 +815,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         spec.hostState = computeState;
         spec.isUpdateOperation = true;
         sendRequest(Operation.createPut(getHost(), ContainerHostService.SELF_LINK)
-                .setBody(spec)
+                .setBodyNoCloning(spec)
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         logWarning("Forcing trust alias update failed: %s", Utils.toString(e));
@@ -843,7 +848,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 computeState.adapterManagementReference = patchState.adapterManagementReference;
                 sendRequest(
                         Operation.createPatch(this, computeState.documentSelfLink)
-                                .setBody(patchState)
+                                .setBodyNoCloning(patchState)
                                 .setCompletion((op, ex) -> {
                                     if (ex != null) {
                                         logSevere(ex);
@@ -871,29 +876,30 @@ public class ContainerHostDataCollectionService extends StatefulService {
         request.serviceTaskCallback = serviceTaskCallback;
         request.resourceReference = UriUtils.buildUri(getHost(), documentSelfLink);
         sendRequest(Operation.createPatch(adapterURI)
-                .setBody(request)
+                .setBodyNoCloning(request)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         if (ex instanceof ConnectException) {
                             // Change adapter reference. Needed in cluster if the node that the
                             // reference point to is down
-                            logWarning(
-                                    "Adapter management reference for compute state %s will be updated because of %s. Adapter: %s",
+                            logWarning("Adapter management reference for compute state %s will"
+                                            + " be updated because of %s. Adapter: %s",
                                     computeState.documentSelfLink, ex.getMessage(),
                                     adapterURI.toString());
                             URI hostAdapter = getDefaultHostAdapter(getHost());
                             if (!computeState.adapterManagementReference.equals(hostAdapter)) {
                                 ComputeState patchState = new ComputeState();
                                 patchState.adapterManagementReference = hostAdapter;
-                                computeState.adapterManagementReference = patchState.adapterManagementReference;
-                                sendRequest(
-                                        Operation.createPatch(this, computeState.documentSelfLink)
-                                                .setBody(patchState)
-                                                .setCompletion((op, e) -> {
-                                                    if (e != null) {
-                                                        logSevere(e);
-                                                    }
-                                                }));
+                                computeState.adapterManagementReference =
+                                        patchState.adapterManagementReference;
+                                sendRequest(Operation
+                                        .createPatch(this, computeState.documentSelfLink)
+                                        .setBodyNoCloning(patchState)
+                                        .setCompletion((op, e) -> {
+                                            if (e != null) {
+                                                logSevere(e);
+                                            }
+                                        }));
                             }
                         } else {
                             logWarning(Utils.toString(ex));
@@ -907,10 +913,9 @@ public class ContainerHostDataCollectionService extends StatefulService {
         EntityListCallback body = new EntityListCallback();
         body.computeHostLink = documentSelfLink;
         sendRequest(Operation
-                .createPatch(
-                        this,
-                        KubernetesEntityDataCollection.DEFAULT_KUBERNETES_ENTITY_DATA_COLLECTION_LINK)
-                .setBody(body)
+                .createPatch(this, KubernetesEntityDataCollection
+                        .DEFAULT_KUBERNETES_ENTITY_DATA_COLLECTION_LINK)
+                .setBodyNoCloning(body)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         logWarning(Utils.toString(ex));
@@ -925,10 +930,9 @@ public class ContainerHostDataCollectionService extends StatefulService {
         body.hostAdapterReference = cs.endpointLink == null ? cs.adapterManagementReference
                 : getDefaultHostAdapter(getHost());
         sendRequest(Operation
-                .createPatch(
-                        this,
-                        HostContainerListDataCollection.DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK)
-                .setBody(body)
+                .createPatch(this, HostContainerListDataCollection
+                        .DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK)
+                .setBodyNoCloning(body)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         logWarning(Utils.toString(ex));
@@ -943,10 +947,9 @@ public class ContainerHostDataCollectionService extends StatefulService {
         body.hostAdapterReference = cs.endpointLink == null ? cs.adapterManagementReference
                 : getDefaultHostAdapter(getHost());
         sendRequest(Operation
-                .createPatch(
-                        this,
-                        HostNetworkListDataCollection.DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK)
-                .setBody(body)
+                .createPatch(this, HostNetworkListDataCollection
+                        .DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK)
+                .setBodyNoCloning(body)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         logWarning(Utils.toString(ex));
@@ -962,7 +965,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 .createPatch(
                         this,
                         HostVolumeListDataCollection.DEFAULT_HOST_VOLUME_LIST_DATA_COLLECTION_LINK)
-                .setBody(body)
+                .setBodyNoCloning(body)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         logWarning(Utils.toString(ex));
@@ -985,7 +988,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         URI callbackUri = UriUtils.buildUri(getHost(), callbackLink);
         Operation startPost = Operation
                 .createPost(callbackUri)
-                .setBody(body)
+                .setBodyNoCloning(body)
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         logWarning("Failure creating callback handler. Error %s",
@@ -1053,8 +1056,9 @@ public class ContainerHostDataCollectionService extends StatefulService {
                                 r.getDocumentSelfLink(), computeStateSelfLink);
                         sendRequest(Operation
                                 .createPatch(this, r.getDocumentSelfLink())
-                                .setBody(errorState));
+                                .setBodyNoCloning(errorState));
                     }
                 });
     }
+
 }
