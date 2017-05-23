@@ -22,6 +22,7 @@ import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.photon.controller.model.ServiceUtils;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -211,6 +212,8 @@ public class ProjectService extends StatefulService {
     @Override
     public ServiceDocument getDocumentTemplate() {
         ProjectState template = (ProjectState) super.getDocumentTemplate();
+        ServiceUtils.setRetentionLimit(template);
+
         template.name = "resource-group-1";
         template.id = "project-id";
         template.description = "project1";
