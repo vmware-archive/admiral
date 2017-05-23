@@ -15,6 +15,7 @@ import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.photon.controller.model.ServiceUtils;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
@@ -138,13 +139,14 @@ public class LogService extends StatefulService {
     @Override
     public ServiceDocument getDocumentTemplate() {
         ServiceDocument template = super.getDocumentTemplate();
+        ServiceUtils.setRetentionLimit(template);
 
         /* Workaround until https://www.pivotaltracker.com/n/projects/1471320/stories/143794415
          * is fixed. Keep minimum versions of this state, because it is going to be kept until
          * the container is existing. */
         // com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
-        template.documentDescription.versionRetentionFloor = (long) 1;
-        template.documentDescription.versionRetentionLimit = (long) 2;
+        template.documentDescription.versionRetentionFloor = 1;
+        template.documentDescription.versionRetentionLimit = 2;
 
         // resource reference prop:
         ServiceDocumentDescription.PropertyDescription pd = template.documentDescription
