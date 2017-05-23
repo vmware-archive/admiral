@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -21,11 +21,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
+
+import com.google.common.collect.Iterables;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
@@ -34,6 +34,7 @@ import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.compute.container.maintenance.ContainerNetworkMaintenance;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
@@ -66,12 +67,19 @@ public class HostNetworkListDataCollection extends StatefulService {
 
     public static final String FACTORY_LINK = ManagementUriParts.HOST_NETWORK_LIST_DATA_COLLECTION;
 
-    public static final String DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_ID = "__default-list-data-collection";
+    public static final String DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_ID =
+            "__default-list-data-collection";
     public static final String DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK = UriUtils
             .buildUriPath(FACTORY_LINK, DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_ID);
 
     protected static final long DATA_COLLECTION_LOCK_TIMEOUT_MILLISECONDS = Long.getLong(
-            "com.vmware.admiral.compute.container.network.datacollection.lock.timeout.milliseconds", 60000 * 5);
+            "com.vmware.admiral.compute.container.network.datacollection.lock.timeout.milliseconds",
+            TimeUnit.MINUTES.toMillis(5));
+
+    private static final int NETWORKS_INSPECT_DELAY_SECONDS = Integer.parseInt(System.getProperty(
+            "com.vmware.admiral.compute.container.network.inspect.delay.seconds", "2"));
+    private static final int NETWORKS_INSPECT_BATCH_SIZE = Integer.parseInt(System.getProperty(
+            "com.vmware.admiral.compute.container.network.inspect.batch.size", "50"));
 
     public static class HostNetworkListDataCollectionState extends
             TaskServiceDocument<DefaultSubStage> {
@@ -130,7 +138,26 @@ public class HostNetworkListDataCollection extends StatefulService {
             return;
         }
 
-        post.setBody(initState).complete();
+        post.setBodyNoCloning(initState).complete();
+    }
+
+    @Override
+    public void handlePut(Operation put) {
+        if (put.hasPragmaDirective(Operation.PRAGMA_DIRECTIVE_POST_TO_PUT)) {
+            logFine("Ignoring converted PUT.");
+            put.complete();
+            return;
+        }
+
+        if (!checkForBody(put)) {
+            return;
+        }
+
+        HostNetworkListDataCollectionState putBody = put
+                .getBody(HostNetworkListDataCollectionState.class);
+
+        this.setState(put, putBody);
+        put.setBodyNoCloning(putBody).complete();
     }
 
     @Override
@@ -157,11 +184,10 @@ public class HostNetworkListDataCollection extends StatefulService {
 
         AssertUtil.assertNotNull(body.networkIdsAndNames, "networkIdsAndNames");
 
-        if (Logger.getLogger(this.getClass().getName()).isLoggable(Level.FINE)) {
-            logFine("Host network list callback invoked for host [%s] with network IDs: %s",
-                    body.containerHostLink, body.networkIdsAndNames.keySet().stream()
-                            .collect(Collectors.toList()));
-        }
+        logFine(() -> String.format(
+                "Host network list callback invoked for host [%s] with network IDs: %s",
+                body.containerHostLink, new ArrayList<>(body.networkIdsAndNames.keySet()))
+        );
 
         // the patch will succeed regardless of the synchronization process
         if (state.containerHostLinks.get(body.containerHostLink) != null &&
@@ -174,34 +200,33 @@ public class HostNetworkListDataCollection extends StatefulService {
             state.containerHostLinks.put(body.containerHostLink,
                     Instant.now().toEpochMilli() + DATA_COLLECTION_LOCK_TIMEOUT_MILLISECONDS);
             op.complete();
-            // continue with the data collection.
+            // complete patch operation and continue with the data collection
         }
 
-        List<ContainerNetworkState> networkStates = new ArrayList<ContainerNetworkState>();
+        queryExistingNetworkStates(body);
+    }
 
+    private void queryExistingNetworkStates(NetworkListCallback body) {
         QueryTask queryTask = QueryUtil.buildQuery(ContainerNetworkState.class, true);
 
         // Clause to find all networks for the given host.
-
         String parentLinksItemField = QueryTask.QuerySpecification
                 .buildCollectionItemName(ContainerNetworkState.FIELD_NAME_PARENT_LINKS);
-        QueryTask.Query parentsClause = new QueryTask.Query()
+        Query parentsClause = new Query()
                 .setTermPropertyName(parentLinksItemField)
                 .setTermMatchValue(body.containerHostLink)
                 .setTermMatchType(MatchType.TERM)
                 .setOccurance(Occurance.SHOULD_OCCUR);
 
         // Clause to find all overlay networks (that may already exist on different hosts).
-
-        QueryTask.Query overlayClause = new QueryTask.Query()
+        Query overlayClause = new Query()
                 .setTermPropertyName(ContainerNetworkState.FIELD_NAME_DRIVER)
                 .setTermMatchValue("overlay")
                 .setTermMatchType(MatchType.TERM)
                 .setOccurance(Occurance.SHOULD_OCCUR);
 
         // Intermediate query because of Xenon ?!
-
-        Query intermediate = new QueryTask.Query().setOccurance(Occurance.MUST_OCCUR);
+        Query intermediate = new Query().setOccurance(Occurance.MUST_OCCUR);
         intermediate.addBooleanClause(parentsClause);
         intermediate.addBooleanClause(overlayClause);
 
@@ -210,64 +235,90 @@ public class HostNetworkListDataCollection extends StatefulService {
         QueryUtil.addExpandOption(queryTask);
         QueryUtil.addBroadcastOption(queryTask);
 
-        new ServiceDocumentQuery<ContainerNetworkState>(getHost(), ContainerNetworkState.class)
-                .query(queryTask,
-                        (r) -> {
-                            if (r.hasException()) {
-                                logSevere(
-                                        "Failed to query for existing ContainerNetworkState instances: %s",
-                                        r.getException() instanceof CancellationException
-                                                ? r.getException().getMessage()
-                                                : Utils.toString(r.getException()));
-                                unlockCurrentDataCollectionForHost(body.containerHostLink);
-                            } else if (r.hasResult()) {
-                                networkStates.add(r.getResult());
-                            } else {
-                                AdapterRequest request = new AdapterRequest();
-                                request.operationTypeId = ContainerHostOperationType.LIST_NETWORKS.id;
-                                request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
-                                request.resourceReference = UriUtils.buildUri(getHost(),
-                                        body.containerHostLink);
-                                sendRequest(Operation
-                                        .createPatch(body.hostAdapterReference)
-                                        .setBody(request)
-                                        .addPragmaDirective(
-                                                Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
-                                        .setCompletion(
-                                                (o, ex) -> {
-                                                    if (ex == null) {
-                                                        NetworkListCallback callback = o
-                                                                .getBody(NetworkListCallback.class);
-                                                        if (callback.hostAdapterReference == null) {
-                                                            callback.hostAdapterReference =
-                                                                    ContainerHostDataCollectionService.getDefaultHostAdapter(getHost());
-                                                        }
-                                                        updateContainerNetworkStates(callback,
-                                                                networkStates,
-                                                                body.containerHostLink);
-                                                    } else {
-                                                        unlockCurrentDataCollectionForHost(
-                                                                body.containerHostLink);
-                                                    }
-                                                }));
-                            }
-                        });
+        new ServiceDocumentQuery<>(getHost(), ContainerNetworkState.class)
+                .query(queryTask, processNetworkStatesQueryResults(body));
+    }
+
+    private Consumer<ServiceDocumentQuery.ServiceDocumentQueryElementResult<ContainerNetworkState>> processNetworkStatesQueryResults(
+            NetworkListCallback body) {
+        List<ContainerNetworkState> existingNetworkStates = new ArrayList<>();
+
+        return (r) -> {
+            if (r.hasException()) {
+                logSevere("Failed to query for existing ContainerNetworkState instances: %s",
+                        r.getException() instanceof CancellationException
+                                ? r.getException().getMessage()
+                                : Utils.toString(r.getException()));
+                unlockCurrentDataCollectionForHost(body.containerHostLink);
+            } else if (r.hasResult()) {
+                existingNetworkStates.add(r.getResult());
+            } else {
+                listHostNetworks(body, (o, ex) -> {
+                    if (ex == null) {
+                        NetworkListCallback callback = o.getBody(NetworkListCallback.class);
+                        if (callback.hostAdapterReference == null) {
+                            callback.hostAdapterReference = ContainerHostDataCollectionService
+                                    .getDefaultHostAdapter(getHost());
+                        }
+                        updateContainerNetworkStates(callback, existingNetworkStates,
+                                body.containerHostLink);
+                    } else {
+                        unlockCurrentDataCollectionForHost(body.containerHostLink);
+                    }
+                });
+            }
+        };
+    }
+
+    private void listHostNetworks(NetworkListCallback body, Operation.CompletionHandler c) {
+        AdapterRequest request = new AdapterRequest();
+        request.operationTypeId = ContainerHostOperationType.LIST_NETWORKS.id;
+        request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+        request.resourceReference = UriUtils.buildUri(getHost(), body.containerHostLink);
+        sendRequest(Operation
+                .createPatch(body.hostAdapterReference)
+                .setBodyNoCloning(request)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
+                .setCompletion(c));
     }
 
     private void updateContainerNetworkStates(NetworkListCallback callback,
             List<ContainerNetworkState> networkStates, String callbackHostLink) {
 
-        for (ContainerNetworkState networkState : networkStates) {
+        // inspect existing network states
+        inspectExistingNetworks(networkStates);
 
+        // process existing network states - update parent links and missing networks
+        processExistingNetworks(callback, networkStates, callbackHostLink);
+
+        // create newly discovered networks
+        processDiscoveredNetworks(callback);
+    }
+
+    private void inspectExistingNetworks(
+            List<ContainerNetworkState> networkStates) {
+        // inspect networks in batches
+        ContainerNetworkMaintenance networkMaintenance = new ContainerNetworkMaintenance(getHost());
+        AtomicInteger counter = new AtomicInteger();
+        Iterables.partition(networkStates, NETWORKS_INSPECT_BATCH_SIZE)
+                .forEach(list -> getHost().schedule(() -> {
+                    networkMaintenance.requestNetworksInspectIfNeeded(list);
+                }, counter.getAndIncrement() * NETWORKS_INSPECT_DELAY_SECONDS, TimeUnit.SECONDS));
+    }
+
+    private void processExistingNetworks(NetworkListCallback callback,
+            List<ContainerNetworkState> networkStates,
+            String callbackHostLink) {
+        for (ContainerNetworkState networkState : networkStates) {
             boolean isOverlay = "overlay".equals(networkState.driver);
 
             boolean existsInCallbackHost = false;
             if (networkState.id != null) {
                 existsInCallbackHost = callback.networkIdsAndNames.containsKey(networkState.id);
                 callback.networkIdsAndNames.remove(networkState.id);
-            } else if (networkState.powerState.equals(PowerState.PROVISIONING)
-                    || networkState.powerState.equals(PowerState.RETIRED)
-                    || networkState.powerState.equals(PowerState.ERROR)) {
+            } else if (networkState.powerState == PowerState.PROVISIONING
+                    || networkState.powerState == PowerState.RETIRED
+                    || networkState.powerState == PowerState.ERROR) {
                 String name = networkState.name;
                 existsInCallbackHost = callback.networkIdsAndNames.containsValue(name);
                 callback.networkIdsAndNames.values().remove(name);
@@ -299,9 +350,12 @@ public class HostNetworkListDataCollection extends StatefulService {
                 }
             }
         }
+    }
 
+    private void processDiscoveredNetworks(
+            NetworkListCallback callback) {
         // finished removing existing ContainerNetworkState, now deal with remaining IDs
-        List<ContainerNetworkState> networksLeft = new ArrayList<ContainerNetworkState>();
+        List<ContainerNetworkState> networksLeft = new ArrayList<>();
 
         Operation operation = Operation
                 .createGet(this, callback.containerHostLink)
@@ -318,25 +372,8 @@ public class HostNetworkListDataCollection extends StatefulService {
 
                             for (Entry<String, String> entry : callback.networkIdsAndNames
                                     .entrySet()) {
-                                ContainerNetworkState networkState = new ContainerNetworkState();
-                                networkState.id = entry.getKey();
-                                networkState.name = entry.getValue();
-                                networkState.documentSelfLink = NetworkUtils
-                                        .buildNetworkLink(networkState.id);
-                                networkState.external = true;
-
-                                networkState.tenantLinks = group;
-                                networkState.descriptionLink = String.format("%s-%s",
-                                        ContainerNetworkDescriptionService.DISCOVERED_DESCRIPTION_LINK,
-                                        UUID.randomUUID().toString());
-
-                                networkState.originatingHostLink = callback.containerHostLink;
-
-                                networkState.parentLinks = new ArrayList<>(
-                                        Arrays.asList(callback.containerHostLink));
-
-                                networkState.adapterManagementReference =
-                                        getNetworkAdapterReference(callback.hostAdapterReference);
+                                ContainerNetworkState networkState =
+                                        buildDiscoveredNetworkState(callback, group, entry);
 
                                 networksLeft.add(networkState);
                             }
@@ -352,6 +389,28 @@ public class HostNetworkListDataCollection extends StatefulService {
         sendRequest(operation);
     }
 
+    private ContainerNetworkState buildDiscoveredNetworkState(NetworkListCallback nlc,
+            List<String> group, Entry<String, String> entry) {
+        ContainerNetworkState state = new ContainerNetworkState();
+        state.id = entry.getKey();
+        state.name = entry.getValue();
+        state.documentSelfLink = NetworkUtils.buildNetworkLink(state.id);
+        state.external = true;
+
+        state.tenantLinks = group;
+        state.descriptionLink = String.format("%s-%s",
+                ContainerNetworkDescriptionService.DISCOVERED_DESCRIPTION_LINK,
+                UUID.randomUUID().toString());
+
+        state.originatingHostLink = nlc.containerHostLink;
+
+        state.parentLinks = new ArrayList<>(Arrays.asList(nlc.containerHostLink));
+
+        state.adapterManagementReference = getNetworkAdapterReference(nlc.hostAdapterReference);
+
+        return state;
+    }
+
     private URI getNetworkAdapterReference(URI hostAdapter) {
         switch (hostAdapter.getPath()) {
         case ManagementUriParts.ADAPTER_DOCKER_HOST:
@@ -364,31 +423,12 @@ public class HostNetworkListDataCollection extends StatefulService {
         }
     }
 
-    @Override
-    public void handlePut(Operation put) {
-        if (put.hasPragmaDirective(Operation.PRAGMA_DIRECTIVE_POST_TO_PUT)) {
-            logFine("Ignoring converted PUT.");
-            put.complete();
-            return;
-        }
-
-        if (!checkForBody(put)) {
-            return;
-        }
-
-        HostNetworkListDataCollectionState putBody = put
-                .getBody(HostNetworkListDataCollectionState.class);
-
-        this.setState(put, putBody);
-        put.setBody(putBody).complete();
-    }
-
     private void unlockCurrentDataCollectionForHost(String containerHostLink) {
         NetworkListCallback body = new NetworkListCallback();
         body.containerHostLink = containerHostLink;
         body.unlockDataCollectionForHost = true;
         sendRequest(Operation.createPatch(getUri())
-                .setBody(body)
+                .setBodyNoCloning(body)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         logWarning("Self patch failed: %s",
@@ -396,13 +436,6 @@ public class HostNetworkListDataCollection extends StatefulService {
                                         : Utils.toString(ex));
                     }
                 }));
-    }
-
-    @Override
-    public ServiceDocument getDocumentTemplate() {
-        ServiceDocument template = super.getDocumentTemplate();
-        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
-        return template;
     }
 
     private void createDiscoveredContainerNetworks(List<ContainerNetworkState> networkStates,
@@ -423,10 +456,11 @@ public class HostNetworkListDataCollection extends StatefulService {
                 // cluster mode not to create container network states that we already have
 
                 List<ContainerNetworkState> networkStatesFound = new ArrayList<>();
-                QueryTask networkServicesQuery = QueryUtil.buildPropertyQuery(ContainerNetworkState.class,
+                QueryTask networkServicesQuery = QueryUtil.buildPropertyQuery(
+                        ContainerNetworkState.class,
                         ContainerNetworkState.FIELD_NAME_ID, networkState.id);
-                new ServiceDocumentQuery<ContainerNetworkState>(getHost(), ContainerNetworkState.class).query(networkServicesQuery,
-                        (r) -> {
+                new ServiceDocumentQuery<>(getHost(), ContainerNetworkState.class)
+                        .query(networkServicesQuery, (r) -> {
                             if (r.hasException()) {
                                 logSevere("Failed to get network %s : %s",
                                         networkState.name, r.getException().getMessage());
@@ -450,37 +484,36 @@ public class HostNetworkListDataCollection extends StatefulService {
 
     private void createDiscoveredContainerNetwork(Consumer<Throwable> callback,
             AtomicInteger counter, ContainerNetworkState networkState) {
-
         logFine("Creating ContainerNetworkState for discovered network: %s", networkState.id);
 
         sendRequest(OperationUtil
                 .createForcedPost(this, ContainerNetworkService.FACTORY_LINK)
-                .setBody(networkState)
-                .setCompletion(
-                        (o, ex) -> {
-                            if (ex != null) {
-                                logSevere(
-                                        "Failed to create ContainerNetworkState for discovered network (id=%s): %s",
-                                        networkState.id,
-                                        ex.getMessage());
-                                callback.accept(ex);
-                                return;
-                            } else {
-                                logInfo("Created ContainerNetworkState for discovered network: %s",
-                                        networkState.id);
-                            }
+                .setBodyNoCloning(networkState)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        logSevere("Failed to create ContainerNetworkState for discovered network"
+                                        + " (id=%s): %s", networkState.id, ex.getMessage());
+                        callback.accept(ex);
+                        return;
+                    } else {
+                        logInfo("Created ContainerNetworkState for discovered network: %s",
+                                networkState.id);
+                    }
 
-                            ContainerNetworkState body = o.getBody(ContainerNetworkState.class);
-                            createDiscoveredContainerNetworkDescription(body);
+                    ContainerNetworkState body = o.getBody(ContainerNetworkState.class);
+                    createDiscoveredContainerNetworkDescription(body);
 
-                            if (counter.decrementAndGet() == 0) {
-                                callback.accept(null);
-                            }
-                        }));
+                    ContainerNetworkMaintenance networkMaintenance =
+                            new ContainerNetworkMaintenance(getHost());
+                    networkMaintenance.requestNetworkInspection(body);
+
+                    if (counter.decrementAndGet() == 0) {
+                        callback.accept(null);
+                    }
+                }));
     }
 
     private void createDiscoveredContainerNetworkDescription(ContainerNetworkState networkState) {
-
         logFine("Creating ContainerNetworkDescription for discovered network: %s", networkState.id);
 
         ContainerNetworkDescription networkDesc = NetworkUtils
@@ -488,19 +521,16 @@ public class HostNetworkListDataCollection extends StatefulService {
 
         sendRequest(OperationUtil
                 .createForcedPost(this, ContainerNetworkDescriptionService.FACTORY_LINK)
-                .setBody(networkDesc)
-                .setCompletion(
-                        (o, ex) -> {
-                            if (ex != null) {
-                                logSevere(
-                                        "Failed to create ContainerNetworkDescription for discovered network (id=%s): %s",
-                                        networkState.id, ex.getMessage());
-                            } else {
-                                logInfo("Created ContainerNetworkDescription for discovered network: %s",
-                                        networkState.id);
-                            }
-                        }));
-
+                .setBodyNoCloning(networkDesc)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        logSevere("Failed to create ContainerNetworkDescription for discovered"
+                                        + " network (id=%s): %s", networkState.id, ex.getMessage());
+                    } else {
+                        logInfo("Created ContainerNetworkDescription for discovered network: %s",
+                                networkState.id);
+                    }
+                }));
     }
 
     private void handleMissingContainerNetwork(ContainerNetworkState networkState) {
@@ -509,7 +539,7 @@ public class HostNetworkListDataCollection extends StatefulService {
         patchNetworkState.powerState = PowerState.RETIRED;
         sendRequest(Operation
                 .createPatch(this, networkState.documentSelfLink)
-                .setBody(patchNetworkState)
+                .setBodyNoCloning(patchNetworkState)
                 .setCompletion((o, ex) -> {
                     if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
                         logFine("Network %s not found to be marked as missing.",
@@ -536,7 +566,7 @@ public class HostNetworkListDataCollection extends StatefulService {
 
         sendRequest(Operation
                 .createPatch(this, networkState.documentSelfLink)
-                .setBody(patchNetworkState)
+                .setBodyNoCloning(patchNetworkState)
                 .setCompletion((o, ex) -> {
                     if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
                         logFine("Network %s not found to be updated its parent links.",
@@ -550,4 +580,12 @@ public class HostNetworkListDataCollection extends StatefulService {
                     }
                 }));
     }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
+    }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -20,7 +20,6 @@ import java.util.Map;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
-import com.vmware.admiral.compute.container.maintenance.ContainerNetworkMaintenance;
 import com.vmware.admiral.compute.container.util.CompositeComponentNotifier;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
@@ -36,8 +35,6 @@ public class ContainerNetworkService extends StatefulService {
 
     public static final String FACTORY_LINK = ManagementUriParts.CONTAINER_NETWORKS;
 
-    private volatile ContainerNetworkMaintenance containerNetworkMaintenance;
-
     public static class ContainerNetworkState extends ResourceState {
 
         public static final String FIELD_NAME_DESCRIPTION_LINK = "descriptionLink";
@@ -46,11 +43,13 @@ public class ContainerNetworkService extends StatefulService {
         public static final String FIELD_NAME_IPAM = "ipam";
         public static final String FIELD_NAME_DRIVER = "driver";
         public static final String FIELD_NAME_OPTIONS = "options";
-        public static final String FIELD_NAME_ORIGINATIONG_HOST_REFERENCE = "originatingHostReference";
-        public static final String FIELD_NAME_ADAPTER_MANAGEMENT_REFERENCE = "adapterManagementReference";
+        public static final String FIELD_NAME_ORIGINATING_HOST_REFERENCE =
+                "originatingHostReference";
+        public static final String FIELD_NAME_ADAPTER_MANAGEMENT_REFERENCE =
+                "adapterManagementReference";
         public static final String FIELD_NAME_COMPOSITE_COMPONENT_LINKS = "compositeComponentLinks";
 
-        public static enum PowerState {
+        public enum PowerState {
             UNKNOWN,
             PROVISIONING,
             CONNECTED,
@@ -72,7 +71,8 @@ public class ContainerNetworkService extends StatefulService {
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL, PropertyUsageOption.LINK })
         public String originatingHostLink;
 
-        @Documentation(description = "Links to CompositeComponents when a network is part of App/Composition request.")
+        @Documentation(description = "Links to CompositeComponents when a network is part of"
+                + " App/Composition request.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL })
         public List<String> compositeComponentLinks;
 
@@ -82,7 +82,8 @@ public class ContainerNetworkService extends StatefulService {
         public URI adapterManagementReference;
 
         /** Network state indicating runtime state of a network instance. */
-        @Documentation(description = "Network state indicating runtime state of a network instance.")
+        @Documentation(description = "Network state indicating runtime state of a network"
+                + " instance.")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public PowerState powerState;
 
@@ -114,8 +115,8 @@ public class ContainerNetworkService extends StatefulService {
         /**
          * If set to true, specifies that this network exists independently of any application.
          */
-        @Documentation(description = "If set to true, specifies that this network exists independently "
-                + "of any application.")
+        @Documentation(description = "If set to true, specifies that this network exists"
+                + " independently of any application.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public Boolean external;
@@ -124,8 +125,9 @@ public class ContainerNetworkService extends StatefulService {
          * Runtime property that will be populated during network inspections. Contains the number
          * of containers that are connected to this container network.
          */
-        @Documentation(description = "Runtime property that will be populated during network inspections. "
-                + "Contains the number of containers that are connected to this container network.")
+        @Documentation(description = "Runtime property that will be populated during network"
+                + " inspections. Contains the number of containers that are connected to this"
+                + " container network.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public Integer connectedContainersCount;
@@ -134,10 +136,13 @@ public class ContainerNetworkService extends StatefulService {
          * A map of field-value pairs for a given network. These are used to specify network option
          * that are to be used by the network drivers.
          */
-        @Documentation(description = "A map of field-value pairs for a given network. These are used"
-                + "to specify network options that are used by the network drivers.")
-        @PropertyOptions(indexing = { PropertyIndexingOption.CASE_INSENSITIVE, PropertyIndexingOption.EXPAND },
-                usage = {PropertyUsageOption.OPTIONAL, PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        @Documentation(description = "A map of field-value pairs for a given network. These are"
+                + " used to specify network options that are used by the network drivers.")
+        @PropertyOptions(
+                indexing =
+                        { PropertyIndexingOption.CASE_INSENSITIVE, PropertyIndexingOption.EXPAND },
+                usage =
+                        {PropertyUsageOption.OPTIONAL, PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public Map<String, String> options;
 
     }
@@ -155,8 +160,6 @@ public class ContainerNetworkService extends StatefulService {
         toggleOption(ServiceOption.PERSISTENCE, true);
         toggleOption(ServiceOption.REPLICATION, true);
         toggleOption(ServiceOption.OWNER_SELECTION, true);
-        toggleOption(ServiceOption.PERIODIC_MAINTENANCE, true);
-        super.setMaintenanceIntervalMicros(ContainerNetworkMaintenance.MAINTENANCE_INTERVAL_MICROS);
     }
 
     @Override
@@ -168,9 +171,6 @@ public class ContainerNetworkService extends StatefulService {
         }
 
         body.connected = new Date().getTime();
-
-        // start the monitoring service instance for this network
-        startMonitoringContainerNetworkState(body);
 
         CompositeComponentNotifier.notifyCompositionComponents(this,
                 body.compositeComponentLinks, create.getAction());
@@ -190,7 +190,7 @@ public class ContainerNetworkService extends StatefulService {
             currentState.parentLinks = PropertyUtils.mergeLists(currentState.parentLinks,
                     putState.parentLinks);
             setState(put, currentState);
-            put.setBody(currentState).complete();
+            put.setBodyNoCloning(currentState).complete();
         } catch (Throwable e) {
             logSevere(e);
             put.fail(e);
@@ -239,45 +239,6 @@ public class ContainerNetworkService extends StatefulService {
                 currentState.compositeComponentLinks, delete.getAction());
 
         super.handleDelete(delete);
-    }
-
-    @Override
-    public void handlePeriodicMaintenance(Operation post) {
-        if (getProcessingStage() != ProcessingStage.AVAILABLE) {
-            logFine("Skipping maintenance since service is not available: %s ", getUri());
-            return;
-        }
-
-        if (containerNetworkMaintenance == null) {
-            sendRequest(Operation.createGet(getUri()).setCompletion((o, e) -> {
-                if (e == null) {
-                    ContainerNetworkState currentState = o.getBody(ContainerNetworkState.class);
-                    containerNetworkMaintenance = ContainerNetworkMaintenance.create(getHost(),
-                            getSelfLink(),
-                            currentState.descriptionLink != null
-                                    && !currentState.descriptionLink.startsWith(
-                                            ContainerNetworkDescriptionService.DISCOVERED_DESCRIPTION_LINK));
-                    containerNetworkMaintenance.handlePeriodicMaintenance(post);
-                }
-            }));
-            return;
-        }
-        containerNetworkMaintenance.handlePeriodicMaintenance(post);
-    }
-
-    private void startMonitoringContainerNetworkState(ContainerNetworkState body) {
-        if (body.id != null) {
-            // perform maintenance on startup to refresh the network attributes
-            // but only for networks that already exist (and have and ID)
-            getHost().registerForServiceAvailability((o, ex) -> {
-                if (ex != null) {
-                    logWarning("Skipping maintenance because service failed to start: "
-                            + ex.getMessage());
-                } else {
-                    handlePeriodicMaintenance(o);
-                }
-            }, getSelfLink());
-        }
     }
 
     /**
@@ -350,10 +311,10 @@ public class ContainerNetworkService extends StatefulService {
         template.customProperties = new HashMap<>(1);
         template.customProperties.put("key (string)", "value (string)");
 
-        template.compositeComponentLinks = new ArrayList<String>(0);
+        template.compositeComponentLinks = new ArrayList<>(0);
         template.connectedContainersCount = 0;
 
-        template.parentLinks = new ArrayList<String>(0);
+        template.parentLinks = new ArrayList<>(0);
 
         return template;
     }

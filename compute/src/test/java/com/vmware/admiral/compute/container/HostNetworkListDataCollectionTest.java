@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -86,7 +86,7 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
         cs.id = TEST_HOST_ID;
         cs.documentSelfLink = TEST_HOST_ID;
         cs.descriptionLink = computeDesc.documentSelfLink;
-        cs.customProperties = new HashMap<String, String>();
+        cs.customProperties = new HashMap<>();
 
         doPost(cs, ComputeService.FACTORY_LINK);
 
@@ -100,7 +100,8 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
     @Test
     public void testDiscoverExistingNetworkOnHost() throws Throwable {
         // add preexisting network to the adapter service
-        addNetworkToMockAdapter(TEST_HOST_ID, TEST_PREEXISTING_NETWORK_ID, TEST_PREEXISTING_NETWORK_NAME);
+        addNetworkToMockAdapter(TEST_HOST_ID, TEST_PREEXISTING_NETWORK_ID,
+                TEST_PREEXISTING_NETWORK_NAME);
 
         // run data collection on preexisting network
         startAndWaitHostNetworkListDataCollection();
@@ -109,7 +110,8 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
         List<ContainerNetworkState> networkStates = getNetworkStates();
         assertEquals(1, networkStates.size());
         ContainerNetworkState preexistingNetworkState = networkStates.get(0);
-        assertNotNull("Preexisting network not created or can't be retrieved.", preexistingNetworkState);
+        assertNotNull("Preexisting network not created or can't be retrieved.",
+                preexistingNetworkState);
         assertEquals(TEST_PREEXISTING_NETWORK_ID, preexistingNetworkState.id);
         assertEquals(TEST_PREEXISTING_NETWORK_NAME, preexistingNetworkState.name);
         assertEquals(UriUtils.buildUriPath(ContainerNetworkService.FACTORY_LINK,
@@ -123,26 +125,32 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
     public void testProvisionedContainerIsNotDiscovered() throws Throwable {
         // provision network
         ContainerNetworkState containerNetworkCreated = createNetwork(null);
-        addNetworkToMockAdapter(TEST_HOST_ID, containerNetworkCreated.id, containerNetworkCreated.name);
+        addNetworkToMockAdapter(TEST_HOST_ID, containerNetworkCreated.id,
+                containerNetworkCreated.name);
         // run data collection on preexisting network
         startAndWaitHostNetworkListDataCollection();
         List<ContainerNetworkState> networkStates = getNetworkStates();
         assertEquals(networkStates.size(), 1);
         ContainerNetworkState containerNetworkGet = networkStates.get(0);
-        assertNotNull("Preexisting network not created or can't be retrieved.", containerNetworkGet);
+        assertNotNull("Preexisting network not created or can't be retrieved.",
+                containerNetworkGet);
         assertEquals(containerNetworkCreated.id, containerNetworkGet.id);
         assertEquals(containerNetworkCreated.name, containerNetworkGet.name);
-        assertEquals(containerNetworkCreated.documentSelfLink , containerNetworkGet.documentSelfLink);
+        assertEquals(containerNetworkCreated.documentSelfLink ,
+                containerNetworkGet.documentSelfLink);
     }
 
     @Test
     public void testDiscoveredAndCreatedNetworksWithSameNames() throws Throwable {
         getNetworkStates();
         // add preexisting network to the adapter service
-        addNetworkToMockAdapter(TEST_HOST_ID, TEST_PREEXISTING_NETWORK_ID, TEST_PREEXISTING_NETWORK_NAME);
+        addNetworkToMockAdapter(TEST_HOST_ID, TEST_PREEXISTING_NETWORK_ID,
+                TEST_PREEXISTING_NETWORK_NAME);
         // provision network
-        ContainerNetworkState containerNetworkCreated = createNetwork(TEST_PREEXISTING_NETWORK_NAME);
-        addNetworkToMockAdapter(TEST_HOST_ID, containerNetworkCreated.id, containerNetworkCreated.name);
+        ContainerNetworkState containerNetworkCreated =
+                createNetwork(TEST_PREEXISTING_NETWORK_NAME);
+        addNetworkToMockAdapter(TEST_HOST_ID, containerNetworkCreated.id,
+                containerNetworkCreated.name);
         // run data collection on preexisting network
         startAndWaitHostNetworkListDataCollection();
         List<ContainerNetworkState> networkStates = getNetworkStates();
@@ -155,8 +163,8 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
     private void startAndWaitHostNetworkListDataCollection() throws Throwable {
         host.testStart(1);
         host.sendRequest(Operation
-                .createPatch(UriUtils.buildUri(host,
-                        HostNetworkListDataCollection.DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK))
+                .createPatch(UriUtils.buildUri(host, HostNetworkListDataCollection
+                                .DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK))
                 .setBody(networkListCallback)
                 .setReferer(host.getUri())
                 .setCompletion(host.getCompletion()));
@@ -194,10 +202,11 @@ public class HostNetworkListDataCollectionTest extends ComputeBaseTest {
     private void waitForDataCollectionFinished() throws Throwable {
         AtomicBoolean cotinue = new AtomicBoolean();
 
-        String dataCollectionLink = HostNetworkListDataCollection.DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK;
+        String dataCollectionLink = HostNetworkListDataCollection
+                .DEFAULT_HOST_NETWORK_LIST_DATA_COLLECTION_LINK;
         waitFor(() -> {
-            ServiceDocumentQuery<HostNetworkListDataCollectionState> query = new ServiceDocumentQuery<>(
-                    host, HostNetworkListDataCollectionState.class);
+            ServiceDocumentQuery<HostNetworkListDataCollectionState> query =
+                    new ServiceDocumentQuery<>(host, HostNetworkListDataCollectionState.class);
             query.queryDocument(dataCollectionLink, (r) -> {
                 if (r.hasException()) {
                     host.log(
