@@ -743,7 +743,11 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
     protected NetworkProfile createNetworkProfile(String subnetName, Set<String> tagLinks) throws Exception {
         QueryTask.Query query = QueryTask.Query.Builder.create()
-                .addFieldClause(SubnetState.FIELD_NAME_NAME, subnetName)
+                .addKindFieldClause(SubnetState.class)
+                .addCaseInsensitiveFieldClause(SubnetState.FIELD_NAME_NAME, subnetName,
+                        QueryTask.QueryTerm.MatchType.TERM, QueryTask.Query.Occurance.MUST_OCCUR)
+                .addFieldClause(SubnetState.FIELD_NAME_ENDPOINT_LINK, endpoint.documentSelfLink)
+                .addClause(QueryUtil.addTenantAndGroupClause(getTenantLinks()))
                 .build();
         QueryTask qt = QueryTask.Builder.createDirectTask().setQuery(query).build();
         String responseJson = sendRequest(SimpleHttpsClient.HttpMethod.POST,
@@ -753,9 +757,8 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
         String subnetLink = result.results.documentLinks.get(0);
         NetworkProfile np = new NetworkProfile();
-        np.subnetLinks = new ArrayList<>();
+        np.subnetLinks = Collections.singletonList(subnetLink);
         np.tagLinks = tagLinks;
-        np.subnetLinks.add(subnetLink);
         return np;
     }
 

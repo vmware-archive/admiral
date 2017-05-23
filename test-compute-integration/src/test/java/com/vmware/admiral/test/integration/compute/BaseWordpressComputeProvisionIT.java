@@ -129,8 +129,9 @@ public abstract class BaseWordpressComputeProvisionIT extends BaseComputeProvisi
         SubnetState subnetState = getDocument(nic.subnetLink, SubnetState.class);
         if (subnetState == null) {
             fail(String.format(
-                    "Unable to find subnet assigned to network interface of VM '%s'",
-                    computeState.name));
+                    "Unable to find subnet assigned to network interface of VM '%s' with subnet "
+                            + "link: %s",
+                    computeState.name, nic.subnetLink));
         }
 
         if (expectedSubnet != null && !subnetState.name.equals(expectedSubnet)) {
