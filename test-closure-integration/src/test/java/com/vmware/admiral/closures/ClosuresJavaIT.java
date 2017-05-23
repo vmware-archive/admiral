@@ -101,7 +101,7 @@ public class ClosuresJavaIT extends BaseClosureIntegrationTest {
         ClosureDescription closureDescState = new ClosureDescription();
         closureDescState.name = "test";
 
-        closureDescState.source = "import com.vmware.admiral.closure.Context;\n"
+        closureDescState.source = "import com.vmware.admiral.closure.runtime.Context;\n"
                 + "\n"
                 + "public class Test {\n"
                 + "    public void test(Context context) {\n"
@@ -213,7 +213,7 @@ public class ClosuresJavaIT extends BaseClosureIntegrationTest {
         int expectedResult = 7;
 
         closureDescState.source = "import com.google.gson.JsonObject;\n"
-                + "import com.vmware.admiral.closure.Context;\n"
+                + "import com.vmware.admiral.closure.runtime.Context;\n"
                 + "\n"
                 + "public class Test {\n"
                 + "    public void test(Context context) {\n"

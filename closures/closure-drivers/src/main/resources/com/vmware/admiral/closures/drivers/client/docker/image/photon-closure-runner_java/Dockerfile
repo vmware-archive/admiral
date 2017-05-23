@@ -9,7 +9,16 @@ ENV TRUST_CERTS ${TRUST_CERTS}
 
 WORKDIR /app
 
+ENV PATH "$PATH:/var/opt/OpenJDK-1.8.0.112-bin/bin"
+
 COPY app/*.* /app/
+COPY app/com/vmware/admiral/closure/ /app/com/vmware/admiral/closure/
+
+RUN /var/opt/OpenJDK-1.8.0.112-bin/bin/javac -cp \* \
+/app/com/vmware/admiral/closure/runtime/Context.java \
+/app/com/vmware/admiral/closure/runner/AppRunner.java \
+/app/com/vmware/admiral/closure/runner/ContextImpl.java
+
 COPY app/com/vmware/admiral/closure /app/com/vmware/admiral/closure
 
 ENTRYPOINT ["./run.sh"]
