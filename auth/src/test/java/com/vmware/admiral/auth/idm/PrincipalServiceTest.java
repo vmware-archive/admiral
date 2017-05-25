@@ -26,21 +26,20 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
-import com.vmware.admiral.auth.idm.PrincipalService.PrincipalResponse;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.test.TestContext;
 
 public class PrincipalServiceTest extends AuthBaseTest {
 
     @Before
-    public void setIndentity() throws GeneralSecurityException {
+    public void setIdentity() throws GeneralSecurityException {
         host.assumeIdentity(buildUserServicePath(USERNAME_ADMIN));
     }
 
     @Test
     public void testGetPrincipalWithValidInput() {
         TestContext ctx = new TestContext(1, Duration.ofSeconds(10));
-        final PrincipalResponse[] response = new PrincipalResponse[1];
+        final Principal[] response = new Principal[1];
         Operation get = Operation
                 .createGet(host, PrincipalService.SELF_LINK + "/fritz@admiral.com")
                 .setReferer(host.getUri())
@@ -49,16 +48,16 @@ public class PrincipalServiceTest extends AuthBaseTest {
                         ctx.failIteration(ex);
                         return;
                     }
-                    response[0] = o.getBody(PrincipalResponse.class);
+                    response[0] = o.getBody(Principal.class);
                     ctx.completeIteration();
                 });
         get.sendWith(host);
         ctx.await();
         assertNotNull(response[0]);
-        assertEquals("fritz@admiral.com", response[0].principalId);
+        assertEquals("fritz@admiral.com", response[0].id);
 
         TestContext ctx1 = new TestContext(1, Duration.ofSeconds(10));
-        final PrincipalResponse[] response1 = new PrincipalResponse[1];
+        final Principal[] response1 = new Principal[1];
         get = Operation
                 .createGet(host, PrincipalService.SELF_LINK + "/connie@admiral.com")
                 .setReferer(host.getUri())
@@ -67,13 +66,13 @@ public class PrincipalServiceTest extends AuthBaseTest {
                         ctx1.failIteration(ex);
                         return;
                     }
-                    response1[0] = o.getBody(PrincipalResponse.class);
+                    response1[0] = o.getBody(Principal.class);
                     ctx1.completeIteration();
                 });
         get.sendWith(host);
         ctx1.await();
         assertNotNull(response1[0]);
-        assertEquals("connie@admiral.com", response1[0].principalId);
+        assertEquals("connie@admiral.com", response1[0].id);
     }
 
     @Test
@@ -114,7 +113,7 @@ public class PrincipalServiceTest extends AuthBaseTest {
     @Test
     public void testGetPrincipalsWithValidInput() {
         TestContext ctx = new TestContext(1, Duration.ofSeconds(10));
-        final List<PrincipalResponse> response = new ArrayList<>();
+        final List<Principal> response = new ArrayList<>();
         String criteria = "/?" + CRITERIA_QUERY + "=fritz";
         Operation get = Operation
                 .createGet(host, PrincipalService.SELF_LINK + criteria)
@@ -129,7 +128,7 @@ public class PrincipalServiceTest extends AuthBaseTest {
                 });
         get.sendWith(host);
         ctx.await();
-        assertEquals("fritz@admiral.com", response.get(0).principalId);
+        assertEquals("fritz@admiral.com", response.get(0).id);
 
         TestContext ctx1 = new TestContext(1, Duration.ofSeconds(10));
         response.clear();
@@ -148,10 +147,10 @@ public class PrincipalServiceTest extends AuthBaseTest {
         get.sendWith(host);
         ctx1.await();
 
-        for (PrincipalResponse resp : response) {
-            assertTrue(resp.principalId.equals("fritz@admiral.com")
-                    || resp.principalId.equals("connie@admiral.com")
-                    || resp.principalId.equals("gloria@admiral.com"));
+        for (Principal resp : response) {
+            assertTrue(resp.id.equals("fritz@admiral.com")
+                    || resp.id.equals("connie@admiral.com")
+                    || resp.id.equals("gloria@admiral.com"));
 
         }
 
@@ -175,6 +174,7 @@ public class PrincipalServiceTest extends AuthBaseTest {
         get.sendWith(host);
         ctx.await();
 
+        List<Principal> principals = new ArrayList<>();
         TestContext ctx1 = new TestContext(1, Duration.ofSeconds(10));
         criteria = "/?" + CRITERIA_QUERY + "=scot";
         get = Operation
@@ -182,14 +182,16 @@ public class PrincipalServiceTest extends AuthBaseTest {
                 .setReferer(host.getUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        ctx1.completeIteration();
+                        ctx1.failIteration(ex);
                         return;
                     }
-                    ctx1.failIteration(new RuntimeException("Expected exception != null when "
-                            + "searching for principal with criteria not matching anything."));
+                    principals.addAll(o.getBody(ArrayList.class));
+                    ctx1.completeIteration();
                 });
         get.sendWith(host);
         ctx1.await();
+
+        assertEquals(0, principals.size());
     }
 
 }

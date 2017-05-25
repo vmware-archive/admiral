@@ -13,17 +13,17 @@ package com.vmware.admiral.auth.idm;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 import com.vmware.admiral.auth.idm.local.LocalPrincipalProvider;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 
-public class PrincipalService extends StatelessService implements PrincipalProvider {
+public class PrincipalService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.AUTH_PRINCIPALS;
 
     public static final String PRINCIPAL_ID_PATH_SEGMENT = "principalId";
@@ -32,19 +32,6 @@ public class PrincipalService extends StatelessService implements PrincipalProvi
     public static final String CRITERIA_QUERY = "criteria";
 
     private PrincipalProvider provider;
-
-    public static class PrincipalResponse {
-
-        public String principalId;
-
-        public PrincipalResponse() {
-        }
-
-        public PrincipalResponse(String principalId) {
-            this.principalId = principalId;
-        }
-
-    }
 
     public PrincipalService() {
         super();
@@ -83,37 +70,31 @@ public class PrincipalService extends StatelessService implements PrincipalProvi
     }
 
     private void handleSearchById(String principalId, Operation get) {
-        getPrincipal(principalId, (principal, ex) -> {
+        DeferredResult<Principal> result = provider.getPrincipal(principalId);
+
+        result.whenComplete((principal, ex) -> {
             if (ex != null) {
+                if (ex instanceof ServiceNotFoundException) {
+                    get.fail(Operation.STATUS_CODE_NOT_FOUND);
+                    return;
+                }
                 get.fail(ex);
                 return;
             }
-            PrincipalResponse response = new PrincipalResponse(principal);
-            get.setBody(response).complete();
+            get.setBody(principal).complete();
         });
     }
 
     private void handleSearchByCriteria(String criteria, Operation get) {
-        getPrincipals(criteria, (principals, ex) -> {
+        DeferredResult<List<Principal>> result = provider.getPrincipals(criteria);
+
+        result.whenComplete((principals, ex) -> {
             if (ex != null) {
                 get.fail(ex);
                 return;
             }
-            List<PrincipalResponse> response = principals.stream()
-                    .map(PrincipalResponse::new)
-                    .collect(Collectors.toList());
-            get.setBody(response).complete();
+            get.setBody(principals).complete();
         });
-    }
-
-    @Override
-    public void getPrincipal(String principalId, BiConsumer<String, Throwable> callback) {
-        provider.getPrincipal(principalId, callback);
-    }
-
-    @Override
-    public void getPrincipals(String criteria, BiConsumer<List<String>, Throwable> callback) {
-        provider.getPrincipals(criteria, callback);
     }
 
 }

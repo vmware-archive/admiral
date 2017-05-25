@@ -13,11 +13,21 @@ package com.vmware.admiral.auth.idm;
 
 import java.util.List;
 
-import com.vmware.xenon.common.DeferredResult;
+public class Principal {
 
-public interface PrincipalProvider {
+    public enum PrincipalType {
+        USER,
+        GROUP
+    }
 
-    DeferredResult<Principal> getPrincipal(String principalId);
+    public String id;
 
-    DeferredResult<List<Principal>> getPrincipals(String criteria);
+    public String name;
+
+    public String email;
+
+    public List<String> groupMembers;
+
+    public PrincipalType type;
+
 }

@@ -1,11 +1,14 @@
 {
   "users": [{
+    "name": "Gloria",
     "email": "gloria@admiral.com",
     "password": "Password1!"
   }, {
+    "name": "Fritz",
     "email": "fritz@admiral.com",
     "password": "Password1!"
   }, {
+    "name": "Connie",
     "email": "connie@admiral.com",
     "password": "Password1!"
   }]

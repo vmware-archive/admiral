@@ -16,7 +16,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.lang.reflect.Field;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,7 +23,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
+import com.vmware.admiral.auth.idm.Principal;
+import com.vmware.admiral.auth.idm.Principal.PrincipalType;
 import com.vmware.admiral.auth.idm.PrincipalProvider;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.test.TestContext;
 
 public class LocalPrincipalProviderTest extends AuthBaseTest {
@@ -43,46 +45,55 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
     }
 
     @Test
-    public void testGetPrincipalWithCallback() {
+    public void testGetPrincipal() {
         String principalId = "connie@admiral.com";
-        final String[] state = new String[1];
-        TestContext ctx = new TestContext(1, Duration.ofSeconds(30));
-        provider.getPrincipal(principalId, (userState, ex) -> {
+        DeferredResult<Principal> result = provider.getPrincipal(principalId);
+
+        TestContext ctx = testCreate(1);
+        result.whenComplete((p, ex) -> {
             if (ex != null) {
                 ctx.failIteration(ex);
                 return;
             }
-            state[0] = userState;
             ctx.completeIteration();
         });
         ctx.await();
-        assertNotNull(state[0]);
-        assertEquals(principalId, state[0]);
+
+        Principal principal = result.getNow(new Principal());
+        assertNotNull(principal);
+        assertEquals(principalId, principal.email);
+        assertEquals(principalId, principal.id);
+        assertEquals("Connie", principal.name);
+        assertEquals(PrincipalType.USER, principal.type);
     }
 
     @Test
-    public void testGetPrincipalsWithCallback() {
+    public void testGetPrincipals() {
         String criteria = "i";
         String expectedPrincipal1 = "connie@admiral.com";
         String expectedPrincipal2 = "fritz@admiral.com";
         String expectedPrincipal3 = "gloria@admiral.com";
 
-        List<String> principals = new ArrayList<>();
-        TestContext ctx = new TestContext(1, Duration.ofSeconds(30));
-        provider.getPrincipals(criteria, (userStates, ex) -> {
+        DeferredResult<List<Principal>> result = provider.getPrincipals(criteria);
+
+        TestContext ctx = testCreate(1);
+        result.whenComplete((p, ex) -> {
             if (ex != null) {
                 ctx.failIteration(ex);
                 return;
             }
-            principals.addAll(userStates);
             ctx.completeIteration();
         });
         ctx.await();
 
-        assertEquals(3, principals.size());
-        assertTrue(principals.contains(expectedPrincipal1));
-        assertTrue(principals.contains(expectedPrincipal2));
-        assertTrue(principals.contains(expectedPrincipal3));
-    }
+        List<Principal> principals = result.getNow(new ArrayList<>());
 
+        assertEquals(3, principals.size());
+
+        for (Principal p : principals) {
+            assertTrue(p.email.equals(expectedPrincipal1)
+                    || p.email.equals(expectedPrincipal2)
+                    || p.email.equals(expectedPrincipal3));
+        }
+    }
 }

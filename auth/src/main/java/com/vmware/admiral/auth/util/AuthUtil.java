@@ -60,7 +60,7 @@ public class AuthUtil {
     }
 
     public static boolean useAuthConfig(ServiceHost host) {
-        String field = getPscConfigFile(host);
+        String field = getAuthConfigFile(host);
         return (field != null) && (!field.isEmpty());
     }
 
@@ -73,7 +73,7 @@ public class AuthUtil {
         }
     }
 
-    public static String getPscConfigFile(ServiceHost host) {
+    public static String getAuthConfigFile(ServiceHost host) {
         return PropertyUtils.getValue(host, AUTH_CONFIG_FILE);
     }
 

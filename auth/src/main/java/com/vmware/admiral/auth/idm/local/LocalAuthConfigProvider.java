@@ -25,11 +25,12 @@ import java.util.function.Function;
 import java.util.logging.Level;
 
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
+import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
+import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalType;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.photon.controller.model.security.util.EncryptionUtils;
-import com.vmware.xenon.common.AuthorizationSetupHelper;
 import com.vmware.xenon.common.Claims;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
@@ -51,6 +52,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
     }
 
     public static class User {
+        public String name;
         public String email;
         public String password;
     }
@@ -73,8 +75,6 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
             post.complete();
             return;
         }
-
-        EncryptionUtils.initEncryptionService();
 
         final AtomicInteger usersCounter = new AtomicInteger(users.size());
 
@@ -113,33 +113,21 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
 
         host.log(Level.INFO, "createUserIfNotExist - User '%s'...", user.email);
 
-        try {
-            user.password = EncryptionUtils.decrypt(user.password);
-        } catch (Exception e) {
-            host.log(Level.SEVERE, "Could not initialize user '%s': %s", user.email,
-                    Utils.toString(e));
-            throw new IllegalStateException(e);
-        }
+        LocalPrincipalState state = new LocalPrincipalState();
+        state.email = user.email;
+        state.password = user.password;
+        state.name = user.name;
+        state.type = LocalPrincipalType.USER;
 
-        AuthorizationSetupHelper.create()
-                .setHost(host)
-                .setUserEmail(user.email)
-                .setUserPassword(user.password)
-                .setUserSelfLink(user.email)
-                .setUserGroupName(user.email + "-user-group")
-                .setResourceGroupName(user.email + "-resource-group")
-                .setRoleName(user.email + "-role")
-                // TODO - for now all authenticated users can access everywhere
-                .setIsAdmin(true)
-                .setCompletion((e) -> {
-                    if (e != null) {
-                        host.log(Level.SEVERE, "Could not initialize user '%s': %s", user.email,
-                                Utils.toString(e));
-                        throw new IllegalStateException(e);
+        host.sendRequest(Operation.createPost(host, LocalPrincipalFactoryService.SELF_LINK)
+                .setBody(state)
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.log(Level.SEVERE, "Could not initialize user '%s': %s", state.email,
+                                Utils.toString(ex));
                     }
-                    updateCredentials(host, user.email);
-                })
-                .start();
+                }));
     }
 
     /*
@@ -148,7 +136,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
      * or password), e.g. when adding a host.
      */
 
-    private static void updateCredentials(ServiceHost host, String email) {
+    public static void updateCredentials(ServiceHost host, String email, Operation op) {
 
         QueryTask credentialsQuery = QueryUtil.buildQuery(AuthCredentialsServiceState.class, true);
         QueryUtil.addListValueClause(credentialsQuery,
@@ -158,21 +146,23 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
         host.log(Level.INFO, "updateCredentials - User '%s'...", email);
 
         new ServiceDocumentQuery<AuthCredentialsServiceState>(host,
-                AuthCredentialsServiceState.class).query(
-                        credentialsQuery, (r) -> {
-                            if (r.hasException()) {
-                                host.log(Level.SEVERE, "Exception retrieving user '%s'. Error: %s",
-                                        email, Utils.toString(r.getException()));
-                                throw new IllegalStateException(r.getException());
-                            } else if (r.hasResult()) {
-                                patchStateType(host, r.getResult());
-                            } else {
-                                // nothing to do here
-                            }
-                        });
+                    AuthCredentialsServiceState.class).query(
+                    credentialsQuery, (r) -> {
+                        if (r.hasException()) {
+                            host.log(Level.SEVERE, "Exception retrieving user '%s'. Error: %s",
+                                    email, Utils.toString(r.getException()));
+                            op.fail(r.getException());
+                        } else if (r.hasResult()) {
+                            patchStateType(host, r.getResult(), op);
+                        } else {
+                            // nothing to do here
+                        }
+                    }
+        );
     }
 
-    private static void patchStateType(ServiceHost host, AuthCredentialsServiceState currentState) {
+    private static void patchStateType(ServiceHost host, AuthCredentialsServiceState currentState,
+            Operation op) {
         // Shouldn't update users which already have been updated.
         if ((currentState.customProperties != null) && (CredentialsScope.SYSTEM.toString().equals(
                 currentState.customProperties.get(PROPERTY_SCOPE)))) {
@@ -196,11 +186,12 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
                 .setCompletion((o, e) -> {
                     if (e == null) {
                         host.log(Level.INFO, "User '%s' initialized!", currentState.userEmail);
+                        op.complete();
                     } else {
                         host.log(Level.SEVERE, "Could not patch user '%s' credentials '%s': %s",
                                 currentState.userEmail, currentState.documentSelfLink,
                                 Utils.toString(e));
-                        throw new IllegalStateException(e);
+                        op.fail(e);
                     }
                 })
                 .sendWith(host);

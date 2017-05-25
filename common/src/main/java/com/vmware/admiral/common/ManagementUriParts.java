@@ -71,6 +71,7 @@ public interface ManagementUriParts {
     String AUTH_LOGOUT = AUTH + "/logout";
     String AUTH_IDM = AUTH + "/idm";
     String AUTH_PRINCIPALS = AUTH_IDM + "/principals";
+    String LOCAL_PRINCIPALS = AUTH_IDM + "/local/principals";
 
     String EPZ_COMPUTE_ENUMERATION_TASKS = RESOURCES + "/epz-compute-enumeration-tasks";
     String EPZ_PERIODIC_ENUMERATION = RESOURCES + "/epz-periodic-enumeration";
