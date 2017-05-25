@@ -18,12 +18,10 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 
 import java.net.URI;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -56,10 +54,8 @@ import com.vmware.photon.controller.model.data.SchemaBuilder;
 import com.vmware.photon.controller.model.data.SchemaField.Type;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeStateWithDescription;
-import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.IpAssignment;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.NetworkInterfaceDescription;
-import com.vmware.photon.controller.model.resources.NetworkInterfaceService;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService.NetworkInterfaceState;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.photon.controller.model.tasks.ServiceTaskCallback;
@@ -502,8 +498,7 @@ public class ComputeProvisionTaskService extends
      * @param callback - callback which will resume the task, once ip assignment finished
      */
     private void setIpAddress(ComputeProvisionTaskState state,
-            ServiceTaskCallbackResponse replyPayload,
-            Runnable callback) {
+            ServiceTaskCallbackResponse replyPayload, Runnable callback) {
 
         ExtensibilityCallbackResponse extensibilityResponse = (ExtensibilityCallbackResponse) replyPayload;
 
@@ -527,68 +522,6 @@ public class ComputeProvisionTaskService extends
 
     }
 
-    private void createNicDescription(ComputeProvisionTaskState state, Set<String> addresses,
-            SubnetState subnet, Runnable callback) {
-
-        Iterator<String> iterator = addresses.iterator();
-
-        List<DeferredResult<NetworkInterfaceDescription>> results = state.resourceLinks.stream()
-                .filter(compute -> iterator.hasNext())
-                .map(compute -> createNicDescriptionOperation(state, iterator.next()))
-                .map(o -> sendWithDeferredResult(o, NetworkInterfaceDescription.class))
-                .collect(Collectors.toList());
-
-        DeferredResult.allOf(results).whenComplete((nics, err) -> {
-            if (err != null) {
-                failTask("Failed creating NetworkInterfaceDescriptions.", err);
-                return;
-            }
-
-            createNicState(state, nics, subnet, callback);
-
-        });
-    }
-
-    private void createNicState(ComputeProvisionTaskState state,
-            List<NetworkInterfaceDescription> nicDescs, SubnetState subnet, Runnable callback) {
-
-        List<DeferredResult<NetworkInterfaceState>> results = nicDescs.stream()
-                .map(nicDesc -> createNicStateOperation(state, nicDesc, subnet))
-                .map(o -> sendWithDeferredResult(o, NetworkInterfaceState.class))
-                .collect(Collectors.toList());
-
-        DeferredResult.allOf(results).whenComplete((nics, err) -> {
-            if (err != null) {
-                failTask("Failed creating NetworkInterfaceState.", err);
-                return;
-            }
-
-            //For every resource assign newly created NICs.
-            Map<String, String> computeLinkToNick = nics.stream().collect(Collectors
-                    .toMap(i -> state.resourceLinks.iterator().next(),
-                            nic -> nic.documentSelfLink));
-
-            boundNicToCompute(computeLinkToNick, callback);
-        });
-    }
-
-    private void boundNicToCompute(Map<String, String> computeToNic, Runnable callback) {
-        List<DeferredResult<ComputeState>> results = computeToNic.entrySet().stream()
-                .map(entry -> patchComputeNic(entry.getKey(), entry.getValue()))
-                .map(o -> sendWithDeferredResult(o, ComputeState.class))
-                .collect(Collectors.toList());
-
-        DeferredResult.allOf(results).whenComplete((states, err) -> {
-            if (err != null) {
-                failTask("Failed patching ComputeStates with addresses.", err);
-                return;
-            }
-
-            //ComputeState(s) have been patched -> Resume the task service.
-            callback.run();
-        });
-    }
-
     @Override
     protected BaseExtensibilityCallbackResponse notificationPayload() {
         return new ExtensibilityCallbackResponse();
@@ -605,57 +538,112 @@ public class ComputeProvisionTaskService extends
                 Boolean.TRUE, computeProvisionTopicSchema(), taskInfo, host);
     }
 
-    private Operation createNicDescriptionOperation(ComputeProvisionTaskState state,
-            String address) {
+    private DeferredResult<Set<String>> getNicStates(ComputeProvisionTaskState state) {
 
-        NetworkInterfaceDescription nic = new NetworkInterfaceDescription();
-        nic.assignment = IpAssignment.STATIC;
-        nic.address = address;
-        nic.tenantLinks = state.tenantLinks;
+        List<DeferredResult<ComputeState>> results = state.resourceLinks.stream()
+                .map(c -> getComputeStateOperation(c))
+                .map(o -> sendWithDeferredResult(o, ComputeState.class))
+                .collect(Collectors.toList());
 
-        return Operation.createPost(getHost(), NetworkInterfaceDescriptionService.FACTORY_LINK)
+        return DeferredResult.allOf(results).thenApply(computes ->
+                /**
+                 * Get NIC links from Compute(s) with only one (default) NIC.
+                 */
+                computes.stream()
+                        .filter(c -> c.networkInterfaceLinks != null &&
+                                c.networkInterfaceLinks.size() == 1)
+                        .map(c -> c.networkInterfaceLinks.get(0))
+                        .collect(Collectors.toSet())
+
+        );
+    }
+
+    private DeferredResult<Set<String>> patchNicStates(Set<String> nicStates, Set<String>
+            staticIps,
+            SubnetState subnet) {
+
+        Iterator<String> ipIterator = staticIps.iterator();
+
+        List<DeferredResult<NetworkInterfaceState>> results = nicStates.stream()
+                /**
+                 * Filter base on size of ip list and number of NICs. For example:
+                 * 1) IP list: [1,2,3], Computes: [A,B] => A[1], B[2]; ip 3 - will be ignored.
+                 * 2) IP list: [1,2], Computes: [A,B,C] => A[1], B[2]; Compute C - will be ignored.
+                 */
+                .filter(nic -> ipIterator.hasNext())
+                .map(nicSelfLink -> patchNicStateOperation(subnet, ipIterator.next(), nicSelfLink))
+                .map(o -> sendWithDeferredResult(o, NetworkInterfaceState.class))
+                .collect(Collectors.toList());
+
+        return DeferredResult.allOf(results).thenApply(nics -> nics.stream().map(nic -> nic
+                .networkInterfaceDescriptionLink)
+                .collect(Collectors.toSet()));
+
+    }
+
+    private DeferredResult<List<NetworkInterfaceDescription>> patchNicDescriptions(
+            Set<String> nicDescriptions,
+            Set<String> staticIps, SubnetState subnet) {
+
+        Iterator<String> ipIterator = staticIps.iterator();
+
+        List<DeferredResult<NetworkInterfaceDescription>> results = nicDescriptions.stream()
+                .filter(nic -> ipIterator.hasNext())
+                .map(nicSelfLink -> patchNicDescriptionOperation(subnet, ipIterator.next(),
+                        nicSelfLink))
+                .map(o -> sendWithDeferredResult(o, NetworkInterfaceDescription.class))
+                .collect(Collectors.toList());
+
+        return DeferredResult.allOf(results);
+    }
+
+    private Operation patchNicDescriptionOperation(SubnetState subnet, String staticIp,
+            String nicDescLink) {
+
+        NetworkInterfaceDescription patch = new NetworkInterfaceDescription();
+        patch.assignment = IpAssignment.STATIC;
+        patch.address = staticIp;
+
+        return Operation.createPatch(getHost(), nicDescLink)
+                .setBody(patch)
                 .setReferer(getHost().getUri())
-                .setBody(nic)
                 .setCompletion((o, e) -> {
                     if (e != null) {
+                        getHost().log(Level.SEVERE, e.getMessage());
                         failTask(e.getMessage(), new Throwable(e));
                     }
                 });
     }
 
-    private Operation createNicStateOperation(ComputeProvisionTaskState state,
-            NetworkInterfaceDescription nicDesc, SubnetState subnet) {
-
-        NetworkInterfaceState nicState = new NetworkInterfaceState();
-        nicState.networkInterfaceDescriptionLink = nicDesc.documentSelfLink;
-        nicState.address = nicDesc.address;
-        nicState.tenantLinks = state.tenantLinks;
-        // nicState.networkLink = subnet.networkLink;
-        nicState.subnetLink = subnet.documentSelfLink;
-
-        return Operation.createPost(getHost(), NetworkInterfaceService.FACTORY_LINK)
+    private Operation getComputeStateOperation(String computeSelfLink) {
+        return Operation.createGet(getHost(), computeSelfLink)
                 .setReferer(getHost().getUri())
-                .setBody(nicState)
                 .setCompletion((o, e) -> {
                     if (e != null) {
+                        getHost().log(Level.SEVERE, e.getMessage());
                         failTask(e.getMessage(), new Throwable(e));
-                        return;
                     }
-
                 });
     }
 
-    private Operation patchComputeNic(String computeLink, String nicSelfLink) {
-        ComputeState state = new ComputeState();
-        state.networkInterfaceLinks = Collections.singletonList(nicSelfLink);
-        return (Operation.createPatch(getHost(), computeLink)
-                .setBody(state)
+    private Operation patchNicStateOperation(SubnetState subnet, String
+            staticIp, String nicLink) {
+
+        NetworkInterfaceState patch = new NetworkInterfaceState();
+        patch.networkLink = null;
+        patch.subnetLink = subnet.documentSelfLink;
+        patch.address = staticIp;
+
+        return (Operation.createPatch(getHost(), nicLink)
+                .setBody(patch)
                 .setReferer(getHost().getUri())
-                .setCompletion((oo, ee) -> {
-                    if (ee != null) {
-                        getHost().log(Level.SEVERE, ee.getMessage());
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        getHost().log(Level.SEVERE, e.getMessage());
+                        failTask(e.getMessage(), new Throwable(e));
                     }
                 }));
+
     }
 
     private SchemaBuilder computeProvisionTopicSchema() {
@@ -716,25 +704,38 @@ public class ComputeProvisionTaskService extends
 
                 //Validate than continue with creation of Nic description & state.
                 SubnetState subnetState = subnet[0];
-
                 validateSubnetwork(subnetState);
 
-                createNicDescription(state, extensibilityResponse.addresses, subnetState, callback);
+                Set<String> addresses = extensibilityResponse.addresses;
+
+                /**
+                 * 1. Get ComputeStates in order to retrieve their {@link NetworkInterfaceState}
+                 * 2. Link {@link NetworkInterfaceState} to above {@link SubnetState}
+                 * 3. Link {@link NetworkInterfaceDescription} to above {@link SubnetState}
+                 * 4. Resume the task
+                 */
+                getNicStates(state)
+                        .thenCompose(nicStates -> patchNicStates(nicStates, addresses, subnetState))
+                        .thenCompose(
+                                nicDesciptions -> patchNicDescriptions(nicDesciptions, addresses,
+                                        subnetState)
+                        ).whenComplete((result, exception) -> {
+                            if (exception != null) {
+                                failTask(exception.getMessage(), new Throwable(exception));
+                            } else {
+                                // Finished with NicDescriptions => invoke callback and resume the task now.
+                                callback.run();
+                            }
+                        });
             }
         });
 
     }
 
     private void validateSubnetwork(SubnetState subnetwork) {
-
-        AssertUtil.assertNotEmpty(subnetwork.dnsSearchDomains, "dnsSearchDomains");
-
-        AssertUtil.assertNotNullOrEmpty(subnetwork.gatewayAddress, "gatewayAddress");
-
-        AssertUtil.assertNotEmpty(subnetwork.dnsServerAddresses, "dnsSearchDomains");
-
-        AssertUtil.assertNotNullOrEmpty(subnetwork.domain, "domain");
-
+        /**
+         * Add more validations depends on usecase for different endpoints.
+         */
         AssertUtil.assertNotNullOrEmpty(subnetwork.subnetCIDR, "subnetCIDR");
     }
 }
