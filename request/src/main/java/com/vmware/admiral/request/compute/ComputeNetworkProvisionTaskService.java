@@ -635,7 +635,8 @@ public class ComputeNetworkProvisionTaskService
                                                 context.profile.endpointLink,
                                                 context.computeStates.get(cs).left,
                                                 context.computeStates.get(cs).right,
-                                                context.isolationSecurityGroup))
+                                                context.isolationSecurityGroup,
+                                                context.profile.networkProfile.securityGroupLinks))
                                 .thenCompose(nic -> this.sendWithDeferredResult(
                                         Operation.createPost(this,
                                                 NetworkInterfaceService.FACTORY_LINK).setBody(nic),

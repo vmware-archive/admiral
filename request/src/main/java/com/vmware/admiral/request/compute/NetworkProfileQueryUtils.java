@@ -15,7 +15,6 @@ import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_I
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -382,7 +381,8 @@ public class NetworkProfileQueryUtils {
 
     public static DeferredResult<NetworkInterfaceState> createNicState(SubnetState subnet,
             List<String> tenantLinks, String endpointLink, ComputeDescription cd,
-            NetworkInterfaceDescription nid, SecurityGroupState isolationSecurityGroup) {
+            NetworkInterfaceDescription nid, SecurityGroupState isolationSecurityGroup,
+            List<String> profileSecurityGroupLinks) {
 
         if (subnet == null && nid.networkLink == null) {
             return DeferredResult.failed(
@@ -400,7 +400,7 @@ public class NetworkProfileQueryUtils {
         nic.subnetLink = subnet != null ? subnet.documentSelfLink : null;
         nic.networkInterfaceDescriptionLink = nid.documentSelfLink;
         nic.securityGroupLinks = combineSecurityGroups(nid.securityGroupLinks,
-                isolationSecurityGroup);
+                isolationSecurityGroup, profileSecurityGroupLinks);
         nic.groupLinks = nid.groupLinks;
         nic.tagLinks = nid.tagLinks;
         nic.tenantLinks = tenantLinks;
@@ -526,14 +526,18 @@ public class NetworkProfileQueryUtils {
     }
 
     private static List<String> combineSecurityGroups(List<String> existingSecurityGroupLinks,
-            SecurityGroupState isolationSecurityGroup) {
-        if (isolationSecurityGroup == null) {
-            return existingSecurityGroupLinks;
-        } else if (existingSecurityGroupLinks == null) {
-            return Arrays.asList(isolationSecurityGroup.documentSelfLink);
-        } else {
-            existingSecurityGroupLinks.add(isolationSecurityGroup.documentSelfLink);
-            return existingSecurityGroupLinks;
+            SecurityGroupState isolationSecurityGroup, List<String> profileSecurityGroup) {
+        List<String> securityGroups = new ArrayList<>();
+        if (isolationSecurityGroup != null) {
+            securityGroups.add(isolationSecurityGroup.documentSelfLink);
         }
+        if (existingSecurityGroupLinks != null) {
+            securityGroups.addAll(existingSecurityGroupLinks);
+        }
+        if (profileSecurityGroup != null) {
+            securityGroups.addAll(profileSecurityGroup);
+        }
+
+        return securityGroups;
     }
 }

@@ -794,7 +794,8 @@ public class ComputeAllocationTaskService
                     UriUtils.buildUri(getHost(), getSelfLink()), state.tenantLinks,
                     state.endpointLink, cd, nid, profile, null, null, null)
                     .thenCompose(subnetState -> NetworkProfileQueryUtils.createNicState(subnetState,
-                            state.tenantLinks, state.endpointLink, cd, nid, null));
+                            state.tenantLinks, state.endpointLink, cd, nid, null, profile
+                                    .networkProfile.securityGroupLinks));
         } else {
             return DeferredResult.completed(null);
         }

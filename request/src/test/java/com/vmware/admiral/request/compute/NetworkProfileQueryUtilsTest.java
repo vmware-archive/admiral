@@ -21,6 +21,7 @@ import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_I
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -29,7 +30,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.google.common.collect.Sets;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -474,13 +474,15 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
         SubnetState subnet = createSubnet("sub",
                 TestRequestStateFactory.createTenantLinks("test-group"), null);
         NetworkInterfaceDescription nid = createComputeNetworkInterfaceDescription("my net");
+        List<String> profileSecurityGroupLinks = Collections.singletonList("dummy");
         ComputeDescription cd = createComputeDescription(UUID.randomUUID().toString(),
-                Arrays.asList(nid.documentSelfLink));
+                Collections.singletonList(nid.documentSelfLink));
 
         TestContext ctx = testCreate(1);
         Set<NetworkInterfaceState> networkInterfaceStates = new HashSet<>();
         NetworkProfileQueryUtils.createNicState(subnet, subnet.tenantLinks, null, cd,
-                nid, null).whenComplete((nis, e) -> {
+                nid, null, profileSecurityGroupLinks)
+                .whenComplete((nis, e) -> {
                     if (e != null) {
                         ctx.fail(e);
                         return;
@@ -498,6 +500,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
         assertEquals(nis.subnetLink, subnet.documentSelfLink);
         assertEquals(nis.name, nid.name);
         assertEquals(nis.networkLink, subnet.networkLink);
+        assertEquals(1, nis.securityGroupLinks.size());
     }
 
     @Test
@@ -510,7 +513,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
         Set<NetworkInterfaceState> networkInterfaceStates = new HashSet<>();
         List<Throwable> exceptions = new ArrayList<>();
         NetworkProfileQueryUtils.createNicState(null, nid.tenantLinks, null, cd,
-                nid, null).whenComplete((nis, e) -> {
+                nid, null,null).whenComplete((nis, e) -> {
                     if (e != null) {
                         ctx.complete();
                         exceptions.add(e);
