@@ -291,7 +291,6 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
     @Test
     public void testEnhanceDiskWithNoStorageItems() throws Throwable {
         cd.instanceType = "xLarge";
-
         // Build disk description
         cd.diskDescLinks = buildDiskStatesForNoStorageItems();
 

@@ -677,7 +677,6 @@ public class ComputeProvisionTaskService extends
                 .withLabel(COMPUTE_PROVISION_TOPIC_FIELD_SUBNET_LABEL)
                 .withDescription(COMPUTE_PROVISION_TOPIC_FIELD_SUBNET_DESCRIPTION)
                 .done();
-
     }
 
     @Override
@@ -738,5 +737,4 @@ public class ComputeProvisionTaskService extends
 
         AssertUtil.assertNotNullOrEmpty(subnetwork.subnetCIDR, "subnetCIDR");
     }
-
 }

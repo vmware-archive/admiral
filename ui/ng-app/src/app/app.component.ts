@@ -11,6 +11,8 @@
 
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { ViewExpandRequestService } from './services/view-expand-request.service';
+import { FT } from './utils/ft';
 
 @Component({
     selector: 'my-app',
@@ -18,8 +20,20 @@ import { Router } from '@angular/router';
     styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-    constructor(private router: Router) {
+    expanded: boolean;
+    fullScreen: boolean;
+
+    constructor(private viewExpandRequestor: ViewExpandRequestService) {
+        this.viewExpandRequestor.getExpandRequestEmitter().subscribe(isExpand => {
+            this.expanded = isExpand;
+        });
+
+        this.viewExpandRequestor.getFullScreenRequestEmitter().subscribe(isFullScreen => {
+            this.fullScreen = isFullScreen;
+        });
     }
 
-    public opened: boolean;
+    get embedded(): boolean {
+        return FT.isApplicationEmbedded();
+    }
 }

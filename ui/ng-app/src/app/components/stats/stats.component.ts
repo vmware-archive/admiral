@@ -59,7 +59,11 @@ export class StatsComponent implements AfterViewInit, OnChanges {
     this.memoryStats.diameter(150).label('Memory');
 
 
-    this.networkStats = new NetworkTrafficVisualization(this.networkStatsEl.nativeElement, I18n);
+    this.networkStats = new NetworkTrafficVisualization(this.networkStatsEl.nativeElement, {
+      t: function(key) {
+        I18n.t(key, { ns: 'base' })
+      }
+    });
 
     this.setCpuUsage();
     this.setMemoryUsage();

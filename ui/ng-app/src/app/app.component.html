@@ -10,7 +10,31 @@
   -->
 
 <clr-main-container>
-  <div class="content-container">
+  <clr-header class="header-5" *ngIf="!embedded">
+    <div class="branding">
+        <a class="nav-link" routerLink="/">
+            <clr-icon shape="vm-bug"></clr-icon>
+            <span class="title">vSphere Integrated Containers</span>
+        </a>
+    </div>
+    <div class="header-nav">
+        <a class="nav-link nav-text" routerLink="/home" routerLinkActive="active">Home</a>
+        <a class="nav-link nav-text" routerLink="/administration" routerLinkActive="active">Administration</a>
+    </div>
+    <div class="header-actions">
+        <clr-dropdown class="dropdown bottom-right">
+            <button class="nav-text" clrDropdownToggle>
+                <span>Jason Bourne</span>
+                <clr-icon shape="caret down"></clr-icon>
+            </button>
+            <div class="dropdown-menu">
+                <a href="..." clrDropdownItem>Preferences</a>
+                <a href="..." clrDropdownItem>Log out</a>
+            </div>
+        </clr-dropdown>
+    </div>
+  </clr-header>
+  <div class="content-container" [ngClass]="{'expanded': expanded, 'full-screen': fullScreen}">
     <router-outlet></router-outlet>
   </div>
 </clr-main-container>

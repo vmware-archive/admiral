@@ -11,10 +11,11 @@
 
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { BaseListComponent } from '../../../components/base/base-list.component';
 import { slideAndFade } from '../../../utils/transitions';
 import { Links } from '../../../utils/links';
 import { DocumentService } from '../../../utils/document.service';
+import { PodDetailsComponent } from '../details/pod-details.component';
+import { NavigationContainerType } from '../../../components/navigation-container/navigation-container.component';
 
 const REGISTRY_SCHEME_REG_EXP = /^(https?):\/\//;
 const SECTION_SEPARATOR = '/';
@@ -45,9 +46,10 @@ function getImageNamespaceAndNameFromParts(namespace, imageAndTag) {
   styleUrls: ['./pod-list.component.scss'],
   animations: [slideAndFade()]
 })
-export class PodListComponent extends BaseListComponent {
-  constructor(service: DocumentService, router: Router) {
-    super(service, router, Links.PODS);
+export class PodListComponent {
+  serviceEndpoint = Links.PODS;
+  navigationContainerTypePerComponent = {
+    [<any>PodDetailsComponent]: NavigationContainerType.Fullscreen
   }
 
   getImageNamespaceAndName(image) {
@@ -78,7 +80,7 @@ export class PodListComponent extends BaseListComponent {
     if (!image) {
       return;
     }
-    let l = 'container-image-icons?container-image=' + this.getImageNamespaceAndName(image);
+    let l = '/container-image-icons?container-image=' + this.getImageNamespaceAndName(image);
     return l;
   }
 

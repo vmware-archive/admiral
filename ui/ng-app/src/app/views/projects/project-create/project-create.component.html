@@ -1,0 +1,38 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<clr-modal [clrModalOpen]="opened" (clrModalOpenChange)="toggleModal($event)" [clrModalSize]="'lg'">
+    <h3 class="modal-title">New Project</h3>
+    <div class="modal-body">
+        <form class="form" [formGroup]="projectForm">
+            <section class="form-block">
+                <div class="form-group">
+                    <label for="name" class="required">Name</label>
+                    <label for="name" aria-haspopup="true" role="tooltip" class="tooltip tooltip-validation tooltip-sm"
+                        [class.invalid]="projectForm.get('name').invalid && (projectForm.get('name').dirty || projectForm.get('name').touched)">
+                    <input id="name" type="text" formControlName="name">
+                    <span class="tooltip-content">Name is required.</span>
+                </label>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <label for="description" aria-haspopup="true" role="tooltip" class="tooltip tooltip-validation tooltip-sm">
+                    <input id="description" type="text" formControlName="description">
+                </label>
+                </div>
+            </section>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline" (click)="toggleModal(false)">Cancel</button>
+        <button type="button" class="btn btn-primary" [disabled]="projectForm.invalid" (click)="saveProject()">Save</button>
+    </div>
+</clr-modal>

@@ -15,14 +15,14 @@
 <div class="toolbar">
   <div class="row">
     <div class="col-sm-6 toolbar-primary">
-      <button class="btn btn-link"><i class="fa fa-plus"></i>Add new</button>
+      <ng-content select="[toolbar]"></ng-content>
     </div>
     <div class="col-sm-6 toolbar-secondary">
       <search [suggestionProperties]="searchSuggestionProperties"
                   [placeholder]="searchPlaceholder"
                   [queryOptions]="searchQueryOptions"
                   [occurrenceProperties]="searchOccurrenceProperties"
-                  (searchChange)="search"
+                  (searchChange)="onSearch($event)"
                   ></search>
       <span class="separator"></span>
       <button (click)="refresh()" class="btn btn-link" title="Refresh"><i class="fa fa-refresh"></i></button>
@@ -34,14 +34,18 @@
 
 </div>
 
-<div [ngClass]="{'items': true, 'list': !showCardView}" [ngStyle]="itemsHolderStyle" #itemsHolder>
-  <span *ngFor="let item of items; let i = index" class='card-item' [ngStyle]="getStyle(i)" #cardItem>
-    <template [ngTemplateOutlet]="gridItemTmpl" [ngOutletContext]="{item: item}">
-    </template>
-  </span>
-  <span *ngIf="items.length === 0 && !loading" class="content-empty">
-    No items
-  </span>
+<div class="grid-content">
+  <div [ngClass]="{'items': true, 'list': !showCardView}" [ngStyle]="itemsHolderStyle" #itemsHolder
+    infiniteScroll [infiniteScrollDistance]="1" [infiniteScrollThrottle]="150" [scrollWindow]="false" (scrolled)="onScroll()">
+    <span *ngFor="let item of items;let i = index; trackBy:trackByFn" class='card-item' [ngStyle]="cardStyles[i]" #cardItem
+      (mouseenter)='onCardEnter(i)' (mouseleave)='onCardLeave(i)'>
+      <ng-template [ngTemplateOutlet]="gridItemTmpl" [ngOutletContext]="{item: item}">
+      </ng-template>
+    </span>
+    <span *ngIf="items.length === 0 && !loading" class="content-empty">
+      No items
+    </span>
+  </div>
   <div *ngIf="loading" class="central-block-loading">
     <span class="vertical-helper"></span>
     <div class="spinner"></div>

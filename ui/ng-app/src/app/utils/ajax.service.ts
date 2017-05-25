@@ -61,8 +61,12 @@ export class Ajax {
     headers.append('X-Requested-With', 'XMLHttpRequest');
     headers.append('Content-Type', 'application/json');
 
+    if (window['getBaseServiceUrl']) {
+      url = window['getBaseServiceUrl'](url);
+    }
+
     let requestOptions = new RequestOptions({
-      url: url,
+      url: this.serviceUrl(url),
       body: data,
       method: method,
       headers: headers,
@@ -151,6 +155,14 @@ export class Ajax {
     return this.ajax(RequestMethod.Patch, url, params, data, headers);
   }
 
+  public ajaxRaw(requestOptions: RequestOptions): Promise<any> {
+    requestOptions.url = this.serviceUrl(requestOptions.url);
+
+    return this.http.request(new Request(requestOptions))
+      .toPromise()
+      .catch(error => this.handleAjaxError(error));
+  }
+
   /**
    * Polls a query task url until it's finished, failed or cancelled
    *
@@ -200,4 +212,13 @@ export class Ajax {
         interval);
     });
   }
+
+  // It could be set on App level to send calls to a different base.
+  private serviceUrl(path) {
+    let wnd:any = window;
+    if (wnd.getBaseServiceUrl) {
+      return wnd.getBaseServiceUrl(path);
+    }
+    return path;
+  };
 }

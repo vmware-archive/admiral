@@ -19,5 +19,4 @@ public interface PrincipalProvider {
     void getPrincipal(String principalId, BiConsumer<String, Throwable> callback);
 
     void getPrincipals(String criteria, BiConsumer<List<String>, Throwable> callback);
-
 }
