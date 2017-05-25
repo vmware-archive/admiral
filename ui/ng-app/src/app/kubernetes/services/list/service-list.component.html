@@ -9,45 +9,43 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div>
-  <grid-view [items]="entities" [loading]="loadingEntities"
-    [searchPlaceholder]="'Search for services'"
-    [searchSuggestionProperties]="['name']">
-    <div title>{{"services.plural" | i18n: { "ns": "kubernetes"} }}</div>
-    <template let-item="item">
-      <card [routerLink]="['./' + item.documentId]">
-        <div card-header>{{item.name}}</div>
-        <div card-content>
-          <div class="form-group">
-            <label>{{"creation" | i18n: { "ns": "kubernetes"} }}</label>
-            <div>{{item.service?.metadata.creationTimestamp || "--"}}</div>
-          </div>
-          <div class="form-group">
-            <label>{{"namespace" | i18n: { "ns": "kubernetes"} }}</label>
-            <div>{{item.service?.metadata.namespace || "--"}}</div>
-          </div>
+<grid-view [serviceEndpoint]="serviceEndpoint"
+  [searchPlaceholder]="'Search for services'"
+  [searchSuggestionProperties]="['name']">
+  <div title>Services</div>
+  <ng-template let-item="item">
+    <card [routerLink]="['./' + item.documentId]">
+      <div card-header>{{item.name}}</div>
+      <div card-content>
+        <div class="form-group">
+          <label>{{"creation" | i18n: { "ns": "kubernetes"} }}</label>
+          <div>{{item.service?.metadata.creationTimestamp || "--"}}</div>
         </div>
-        <div card-footer>
-          <clr-dropdown [clrMenuPosition]="'bottom-left'" (click)="$event.stopPropagation()">
-            <button class="btn btn-sm btn-link" clrDropdownToggle>
-                Actions
-                <clr-icon shape="caret down"></clr-icon>
-            </button>
-            <div class="dropdown-menu">
-                <label class="dropdown-header">Dropdown header</label>
-                <a href="..." clrDropdownItem [routerLink]="['./' + item.documentId]">Details</a>
-                <a href="..." clrDropdownItem>Delete</a>
-                <a href="..." class="disabled" clrDropdownItem>Disabled Action</a>
-                <div class="dropdown-divider"></div>
-            </div>
-          </clr-dropdown>
+        <div class="form-group">
+          <label>{{"namespace" | i18n: { "ns": "kubernetes"} }}</label>
+          <div>{{item.service?.metadata.namespace || "--"}}</div>
         </div>
-      </card>
-    </template>
-  </grid-view>
-  <div class="details-view" [@slideAndFade]="!isRouteActive('/kubernetes/services') && 'active'">
-    <back-button [routerLink]="['./']"></back-button>
-    <router-outlet></router-outlet>
-  </div>
-</div>
+      </div>
+      <div card-footer>
+        <clr-dropdown [clrMenuPosition]="'bottom-left'" (click)="$event.stopPropagation()">
+          <button class="btn btn-sm btn-link" clrDropdownToggle>
+              Actions
+              <clr-icon shape="caret down"></clr-icon>
+          </button>
+          <div class="dropdown-menu">
+              <label class="dropdown-header">Dropdown header</label>
+              <a href="..." clrDropdownItem [routerLink]="['./' + item.documentId]">Details</a>
+              <a href="..." clrDropdownItem>Delete</a>
+              <a href="..." class="disabled" clrDropdownItem>Disabled Action</a>
+              <div class="dropdown-divider"></div>
+          </div>
+        </clr-dropdown>
+      </div>
+    </card>
+  </ng-template>
+</grid-view>
+<navigation-container [typePerComponent]="navigationContainerTypePerComponent">
+  <back-button [routerLink]="['./']">Deployments</back-button>
+  <router-outlet></router-outlet>
+</navigation-container>
 

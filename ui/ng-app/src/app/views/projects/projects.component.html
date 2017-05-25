@@ -1,0 +1,63 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<grid-view [serviceEndpoint]="serviceEndpoint"
+  [searchPlaceholder]="'Search for projects'"
+  [searchSuggestionProperties]="['name']">
+  <div title>Projects</div>
+  <div toolbar>
+    <button class="btn btn-link" [routerLink]="['./new']"><i class="fa fa-plus"></i>Project</button>
+  </div>
+  <ng-template let-item="item">
+    <card [routerLink]="['./' + item.documentId]">
+      <div card-header>
+        <img [src]="'/container-image-icons?container-image=' + item.documentSelfLink"/>
+        {{item.name}}
+      </div>
+      <div card-content>
+        <div class="form-group">
+          <label>{{"projects.users" | i18n}}</label>
+          <div>4</div>
+        </div>
+        <div class="form-group">
+          <label>{{"projects.administrators" | i18n}}</label>
+          <div>1</div>
+        </div>
+        <div class="form-group" *ngIf="item.isPublic">
+          <label>{{"projects.projectRegistry" | i18n}}</label>
+          <div>{{"projects.public" | i18n}}</div>
+        </div>
+      </div>
+      <div card-footer>
+        <clr-dropdown [clrMenuPosition]="'bottom-left'" (click)="$event.stopPropagation()">
+          <button class="btn btn-sm btn-link" clrDropdownToggle>
+              Actions
+              <clr-icon shape="caret down"></clr-icon>
+          </button>
+          <div class="dropdown-menu">
+              <a href="..." clrDropdownItem [routerLink]="['./' + item.documentId]">Details</a>
+              <a href="..." clrDropdownItem>Make public</a>
+              <a href="..." clrDropdownItem>Add users and groups</a>
+              <a href="..." clrDropdownItem>Add clusters</a>
+              <div class="dropdown-divider"></div>
+              <a href="..." clrDropdownItem>Delete</a>
+          </div>
+        </clr-dropdown>
+      </div>
+    </card>
+  </ng-template>
+</grid-view>
+<navigation-container [typePerComponent]="navigationContainerTypePerComponent">
+  <back-button [routerLink]="['./']">Projects</back-button>
+  <router-outlet></router-outlet>
+</navigation-container>
+
+

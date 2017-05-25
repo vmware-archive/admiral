@@ -11,29 +11,110 @@
 
 import { Injectable } from '@angular/core';
 import { Ajax } from './ajax.service';
+import { Utils } from './utils';
 import { URLSearchParams } from '@angular/http';
+import { searchConstants, serviceUtils} from 'admiral-ui-common';
+
+const FILTER_VALUE_ALL_FIELDS = 'ALL_FIELDS';
+
+let toArrayIfDefined = function(obj) {
+  if (!obj) {
+    return null;
+  }
+  if (obj.constructor === Array) {
+    return obj;
+  } if (obj) {
+    return [obj];
+  }
+};
+
+let getFilter = function(queryOptions: any): string {
+  let newQueryOptions = {};
+  newQueryOptions[searchConstants.SEARCH_OCCURRENCE.PARAM] = queryOptions[searchConstants.SEARCH_OCCURRENCE.PARAM];
+
+  var anyArray = toArrayIfDefined(queryOptions.any);
+  if (anyArray) {
+    newQueryOptions[FILTER_VALUE_ALL_FIELDS] = [];
+    for (let i = 0; i < anyArray.length; i++) {
+      newQueryOptions[FILTER_VALUE_ALL_FIELDS].push({
+        val: '*' + anyArray[i].toLowerCase() + '*',
+        op: 'eq'
+      });
+    }
+  }
+
+  for (let key in queryOptions) {
+    if (key !== searchConstants.SEARCH_OCCURRENCE.PARAM &&
+      key !== 'any') {
+      var valArray = toArrayIfDefined(queryOptions[key]);
+      if (valArray) {
+        newQueryOptions[key] = [];
+        for (let i = 0; i < valArray.length; i++) {
+          newQueryOptions[key].push({
+            val: '*' + valArray[i].toLowerCase() + '*',
+            op: 'eq'
+          });
+        }
+      }
+    }
+  }
+
+  return serviceUtils.buildOdataQuery(newQueryOptions);
+}
+
+let slowPromise = function<T>(result: T):Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    resolve(result);
+    // setTimeout(() => {
+    //   resolve(result);
+    // }, 1000);
+  });
+}
 
 @Injectable()
 export class DocumentService {
 
   constructor(private ajax: Ajax) { }
 
-  public list(link : string): Promise<Array<any>> {
-    return this.ajax.get(link, new URLSearchParams('expand=true')).then(result => {
-      return result.documentLinks.map(link => {
+  public list(factoryLink: string, queryOptions: any): Promise<DocumentListResult> {
+    let params = new URLSearchParams();
+    // params.set('$limit', serviceUtils.calculateLimit().toString());
+    params.set('$limit', '10');
+    params.set('expand', 'true');
+    params.set('documentType', 'true');
+    params.set('$count', 'true');
+
+    if (queryOptions) {
+      params.set('$filter', getFilter(queryOptions));
+    }
+
+    return this.ajax.get(factoryLink, params).then(result => {
+      let documents = result.documentLinks.map(link => {
         let document = result.documents[link]
-        document.documentId = this.getDocumentId(link);
+        document.documentId = Utils.getDocumentId(link);
         return document;
       });
-    });
+      return new DocumentListResult(documents, result.nextPageLink, result.totalCount);
+    }).then(result => slowPromise(result));
+  }
+
+  public loadNextPage(nextPageLink): Promise<DocumentListResult> {
+    return this.ajax.get(nextPageLink).then(result => {
+      let documents = result.documentLinks.map(link => {
+        let document = result.documents[link]
+        document.documentId = Utils.getDocumentId(link);
+        return document;
+      });
+      return new DocumentListResult(documents, result.nextPageLink, result.totalCount);
+    }).then(result => slowPromise(result));
   }
 
   public get(documentSelfLink): Promise<any> {
     return this.ajax.get(documentSelfLink);
   }
 
-   public getById(link: string, documentId: string): Promise<any> {
-    let documentSelfLink = link + '/' + documentId
+   public getById(factoryLink: string, documentId: string): Promise<any> {
+    let documentSelfLink = factoryLink + '/' + documentId
     return this.get(documentSelfLink);
   }
 
@@ -64,9 +145,15 @@ export class DocumentService {
     });
   }
 
-  private getDocumentId(documentSelfLink) {
-    if (documentSelfLink) {
-      return documentSelfLink.substring(documentSelfLink.lastIndexOf('/') + 1);
-    }
+  public patch(documentSelfLink, patchBody): Promise<any> {
+    return this.ajax.patch(documentSelfLink, null, patchBody);
   }
+
+  public post(factoryLink, postBody): Promise<any> {
+    return this.ajax.post(factoryLink, null, postBody);
+  }
+}
+
+export class DocumentListResult {
+  constructor(public documents : Array<any>, public nextPageLink: string, public totalCount: number) {}
 }

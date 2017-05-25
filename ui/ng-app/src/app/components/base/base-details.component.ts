@@ -14,8 +14,8 @@ import { ActivatedRoute } from '@angular/router';
 import { DocumentService } from '../../utils/document.service';
 
 export class BaseDetailsComponent implements OnInit {
-  protected id;
-  protected entity;
+  id;
+  entity;
 
   constructor(protected route: ActivatedRoute, protected service: DocumentService, protected link: string) {}
 

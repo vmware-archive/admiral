@@ -11,21 +11,21 @@
 
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { PodDetailsComponent } from './pod-details.component';
+import { DeploymentDetailsComponent } from './deployment-details.component';
 
 describe('PodDetailsComponent', () => {
-  let component: PodDetailsComponent;
-  let fixture: ComponentFixture<PodDetailsComponent>;
+  let component: DeploymentDetailsComponent;
+  let fixture: ComponentFixture<DeploymentDetailsComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ PodDetailsComponent ]
+      declarations: [ DeploymentDetailsComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(PodDetailsComponent);
+    fixture = TestBed.createComponent(DeploymentDetailsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

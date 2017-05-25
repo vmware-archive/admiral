@@ -1,6 +1,10 @@
 /* You can add global styles to this file, and also import other style files */
+@import "node_modules/clarity-ui/src/color/utils/colors.clarity";
+@import "node_modules/clarity-ui/src/utils/variables.clarity";
 @import 'node_modules/admiral-ui-common/css/variables';
 @import "node_modules/admiral-ui-common/css/tokenfield-override";
+@import "node_modules/clarity-ui/src/utils/mixins.clarity";
+@import "node_modules/clarity-ui/src/utils/helpers.clarity";
 @import "node_modules/clarity-ui/src/images/images.clarity";
 @import "node_modules/clarity-ui/src/typography/typography.clarity";
 @import "node_modules/clarity-ui/src/forms/forms.clarity";
@@ -10,24 +14,71 @@
   /* Fix for fixed positioned elements http://stackoverflow.com/questions/36855473/position-fixed-not-working-is-working-like-absolute */
   -webkit-transform: none;
   background-color: #FFFFFF;
+
+  .content-container {
+    > *:not(router-outlet) {
+      display: flex;
+      flex: 1 1 auto;
+    }
+  }
+  .content-container .content-area {
+    display: flex;
+    flex: 1 1 auto;
+    > *:not(router-outlet) {
+      display: flex;
+      flex: 1 1 auto;
+      position: relative;
+    }
+  }
+
+  .content-container .sidenav {
+    transition: all 0.25s ease-in;
+  }
+  .content-container.full-screen .sidenav {
+    min-width: 0;
+    width: 0;
+
+    .sidenav-content {
+      min-width: 500px;
+    }
+  }
+
+
+  .content-container.expanded .content-area {
+    padding: 0;
+  }
 }
 
 grid-view {
   z-index: 1;
 }
 
-.details-view {
+navigation-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+navigation-container > * {
+  pointer-events: all;
+}
+
+navigation-container > .full-screen {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   background-color: white;
-  z-index: 10;
 }
 
 .main-container .tokenfield {
-  @extend %clr-form-fields-appearance;
+  @include clr-form-fields-appearance($clr-baselineRem_2_5, $clr-form-field-border-color);
   @include input-border-bottom-animation();
 }
 
@@ -35,4 +86,65 @@ grid-view {
   border-bottom: 1px solid #0094d2;
   background-size: 100% 100%;
   box-shadow: none;
+}
+
+.btn .fa.loader, .btn .fa.loader-inline {
+  display: none;
+}
+
+.btn.loading .fa.loader, .btn.loading .fa.loader-inline {
+  display: inline-block;
+}
+
+/* Clarity Ext */
+
+
+.sidenav .collapsible {
+  .nav-group {
+    margin-top: 0;
+  }
+  .collapsible {
+    label {
+      padding-left: 0;
+    }
+    .nav-list {
+      padding-left: 10px;
+    }
+  }
+}
+.sidenav .project-selector {
+  width: 100%;
+  background-color: $clr-selection-color;
+
+  .dropdown-toggle {
+    height: auto;
+    padding: 10px;
+    width: 100%;
+    text-align: left;
+
+    > .project-caret {
+      line-height: 20px;
+      position: relative;
+      clr-icon[shape^="caret"] {
+        position: relative;
+        top: 5px;
+        right: 0;
+      }
+    }
+
+    > .project-label {
+      line-height: 20px;
+      color: black;
+      text-transform: none;
+      font-size: 20px;
+    }
+  }
+
+  .dropdown-menu {
+    margin-left: 20px;
+  }
+}
+
+.btn:focus {
+  outline: none;
 }

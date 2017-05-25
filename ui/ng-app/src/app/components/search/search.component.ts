@@ -35,7 +35,7 @@ export class SearchComponent implements AfterViewInit, OnChanges {
   suggestionProperties: Array<string>;
 
   @Input()
-  occurrenceProperties: Array<string>;
+  occurrenceProperties: Array<any>;
 
   @Output()
   searchChange: EventEmitter<any> = new EventEmitter<any>();

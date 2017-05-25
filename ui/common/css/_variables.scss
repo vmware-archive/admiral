@@ -1,4 +1,3 @@
-@import "node_modules/clarity-ui/src/color/color.clarity";
 @import "mixins";
 
 /* bootstrap mixin feature toggles */
@@ -10,7 +9,7 @@ $vmw_blue_top: #3888c5;
 $vmw_blue_bottom: #225277;
 $vmw_lightblue: #3888c5;
 
-$main_color: $clr-action-blue;
+$main_color: $action-blues-dark-midtone;
 $main-color-80: rgba(51, 153, 204, 0.80);
 $main-color-semi: rgba(51, 153, 204, 0.50);
 $link_color: $main_color;
@@ -150,6 +149,7 @@ $nav-side-panel-width: 216px;
   @extend .position-expand;
   @include animation(fadein 0.4s);
   text-align: center;
+  background-color: rgba(255, 255, 255, 0.5);
   > .vertical-helper {
     display: inline-block;
     height: 100%;

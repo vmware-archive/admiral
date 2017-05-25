@@ -10,15 +10,19 @@
  */
 
 import { BrowserModule } from '@angular/platform-browser';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 import { ClarityModule } from 'clarity-angular';
+import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { AppComponent } from './app.component';
 import { ROUTING } from "./app.routing";
 import { Ajax, SessionTimedOutSubject } from './utils/ajax.service';
 import { DocumentService } from './utils/document.service';
+import { TemplateService } from './utils/template.service';
+import { ViewExpandRequestService } from './services/view-expand-request.service';
 
 import { ADMIRAL_DECLARATIONS } from './admiral';
 
@@ -26,15 +30,20 @@ import { ADMIRAL_DECLARATIONS } from './admiral';
     declarations: ADMIRAL_DECLARATIONS,
     imports: [
         BrowserModule,
+        BrowserAnimationsModule,
         FormsModule,
+        ReactiveFormsModule,
         HttpModule,
         ClarityModule.forRoot(),
-        ROUTING
+        ROUTING,
+        InfiniteScrollModule
     ],
     providers: [
         Ajax,
         SessionTimedOutSubject,
-        DocumentService
+        DocumentService,
+        TemplateService,
+        ViewExpandRequestService
     ],
     bootstrap: [AppComponent]
 })

@@ -13,6 +13,23 @@ import { AppComponent } from './app.component';
 import { TranslatePipe } from './utils/i18n.pipe';
 import { BreakOutModalDirective } from "./directives/shared/break-out-modal.directive";
 
+import { AdministrationComponent } from './views/administration/administration.component';
+import { MainResourcesComponent } from './views/main-resources/main-resources.component';
+
+import { IdentityManagementComponent } from './views/identity-management/identity-management.component';
+import { ProjectsComponent } from './views/projects/projects.component';
+import { ProjectDetailsComponent } from './views/projects/project-details/project-details.component';
+import { ProjectCreateComponent } from './views/projects/project-create/project-create.component';
+import { RegistriesComponent } from './views/registries/registries.component';
+import { ConfigurationComponent } from './views/configuration/configuration.component';
+import { LogsComponent } from './views/logs/logs.component';
+
+import { DashboardComponent } from './views/dashboard/dashboard.component';
+import { FormerViewComponent } from './views/former-view/former-view.component';
+import { ProjectRepositoriesComponent } from './views/project-repositories/project-repositories.component';
+import { PublicRepositoriesComponent } from './views/public-repositories/public-repositories.component';
+import { VchClustersComponent } from './views/vch-clusters/vch-clusters.component';
+
 import { GridViewComponent } from './components/grid-view/grid-view.component';
 import { CardComponent } from './components/card/card.component';
 import { StatsComponent } from "./components/stats/stats.component";
@@ -20,6 +37,7 @@ import { LogsScrollComponent } from "./components/logs/logs-scroll.component";
 import { MaximizableBehaviourComponent } from "./components/maximizable-behaviour/maximizable-behaviour.component";
 import { BackButtonComponent } from "./components/back-button/back-button.component";
 import { SearchComponent } from "./components/search/search.component";
+import { NavigationContainerComponent } from "./components/navigation-container/navigation-container.component";
 
 import { PodListComponent } from './kubernetes/pods/list/pod-list.component';
 import { PodDetailsComponent } from './kubernetes/pods/details/pod-details.component';
@@ -35,6 +53,23 @@ export const ADMIRAL_DECLARATIONS = [
   TranslatePipe,
   BreakOutModalDirective,
 
+  AdministrationComponent,
+  MainResourcesComponent,
+
+  IdentityManagementComponent,
+  ProjectsComponent,
+  ProjectDetailsComponent,
+  ProjectCreateComponent,
+  RegistriesComponent,
+  ConfigurationComponent,
+  LogsComponent,
+
+  DashboardComponent,
+  FormerViewComponent,
+  ProjectRepositoriesComponent,
+  PublicRepositoriesComponent,
+  VchClustersComponent,
+
   GridViewComponent,
   CardComponent,
   StatsComponent,
@@ -42,6 +77,7 @@ export const ADMIRAL_DECLARATIONS = [
   MaximizableBehaviourComponent,
   BackButtonComponent,
   SearchComponent,
+  NavigationContainerComponent,
 
   PodListComponent,
   PodDetailsComponent,
