@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -93,7 +94,7 @@ public class ContextImpl implements Context {
     }
 
     @Override
-    public void execute(String link, String operation, String body, String handler)
+    public void execute(String link, String operation, String body, Consumer<String> handler)
             throws Exception {
         String op = operation.toUpperCase();
         String targetUri = buildUri(link);
@@ -121,12 +122,13 @@ public class ContextImpl implements Context {
             resp = executeRequest(delete, client);
             break;
         default:
-            System.out.println("Unsupported operation on context object: " + op);
-            break;
+            String errMsg = "Unsupported operation on context object: " + op;
+            System.err.println(errMsg);
+            throw new Exception(errMsg);
         }
 
         if (handler != null) {
-            System.out.println(resp);
+            handler.accept(resp);
         }
     }
 

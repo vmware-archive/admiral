@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.closure.runtime;
 
+import java.util.function.Consumer;
 import java.util.Map;
 
 /**
@@ -46,10 +47,10 @@ public interface Context {
      * @param link resouce link
      * @param operation HTTP method
      * @param body body of the HTTP request
-     * @param handler handler fucntion
+     * @param handler function to handle HTTP response
      * @throws Exception thrown in case of error
      */
-    public void execute(String link, String operation, String body, String handler) throws
+    public void execute(String link, String operation, String body, Consumer<String> handler) throws
             Exception;
 
 }
