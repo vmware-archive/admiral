@@ -442,12 +442,8 @@ public class ContainerDescriptionService extends StatefulService {
             // debugging dockerHostAddress is null issue
             if (dockerHostAddress == null) {
                 Logger.getLogger(ContainerDescription.class.getName()).log(Level.INFO,
-                        String.format(
-                                "dockerHostAddress for host %s is null, version: %d, description: %s, creationTime: %d, id: %s, powerState: %s, customProperties: %s",
-                                hostComputeState.documentSelfLink, hostComputeState.documentVersion,
-                                hostComputeState.descriptionLink,
-                                hostComputeState.creationTimeMicros, hostComputeState.id,
-                                hostComputeState.powerState, hostComputeState.customProperties));
+                        String.format("dockerHostAddress for host %s is null: %s",
+                                hostComputeState.documentSelfLink, Utils.toJson(hostComputeState)));
             }
             AssertUtil.assertNotNull(dockerHostAddress, "address");
 

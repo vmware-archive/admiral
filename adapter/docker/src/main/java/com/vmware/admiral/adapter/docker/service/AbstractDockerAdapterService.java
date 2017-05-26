@@ -138,15 +138,15 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
                         }
                         fail(request, ex);
                     } else {
+                        ComputeState hostComputeState = o.getBody(ComputeState.class);
+                        if (!hostComputeState.documentSelfLink
+                                .startsWith(ComputeService.FACTORY_LINK)) {
+                            getHost().log(Level.SEVERE,
+                                    "***** Wrong ComputeState returned: request: %s, response link: %s, json: %s",
+                                    containerHostReference, hostComputeState.documentSelfLink,
+                                    Utils.toJson(hostComputeState));
+                        }
                         handleExceptions(request, op, () -> {
-                            ComputeState hostComputeState = o.getBody(ComputeState.class);
-                            if (!hostComputeState.documentSelfLink
-                                    .startsWith(ComputeService.FACTORY_LINK)) {
-                                getHost().log(Level.SEVERE,
-                                        "***** Wrong ComputeState returned: request: %s, response: %s",
-                                        containerHostReference,
-                                        hostComputeState.documentSelfLink);
-                            }
                             createHostConnection(request, op, hostComputeState, callbackFunction);
                         });
                     }
