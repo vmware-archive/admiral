@@ -260,7 +260,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         getContainerHost(
                 context.request,
                 context.operation,
-                context.request.resolve(context.containerState.parentLink),
+                UriUtils.buildUri(getHost(), context.containerState.parentLink),
                 (computeState, commandInput) -> {
                     context.commandInput = commandInput;
                     context.executor = getCommandExecutor();

@@ -39,6 +39,7 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.ContainerService;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
+import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.photon.controller.model.security.util.EncryptionUtils;
@@ -125,8 +126,15 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
                         }
                         fail(request, ex);
                     } else {
+                        ComputeState hostComputeState = o.getBody(ComputeState.class);
+                        if (!hostComputeState.documentSelfLink
+                                .startsWith(ComputeService.FACTORY_LINK)) {
+                            getHost().log(Level.SEVERE,
+                                    "***** Wrong ComputeState returned: request: %s, response link: %s, json: %s",
+                                    containerHostReference, hostComputeState.documentSelfLink,
+                                    Utils.toJson(hostComputeState));
+                        }
                         handleExceptions(request, op, () -> {
-                            ComputeState hostComputeState = o.getBody(ComputeState.class);
                             createHostConnection(request, op, hostComputeState, callbackFunction);
                         });
                     }
