@@ -136,6 +136,14 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
     private static final long DEFAULT_DISK_SIZE = 8 * 1024;
 
+    public static final String OPERATION_PAYLOAD_PROP_NAME = "__operationPayload";
+
+    public static final String DAY_2_OPERATION_POWER_ON = "Compute.PowerOn";
+    public static final String DAY_2_OPERATION_POWER_OFF = "Compute.PowerOff";
+    public static final String DAY_2_OPERATION_RESTART = "Restart";
+    public static final String DAY_2_OPERATION_REBOOT = "Reboot";
+    public static final String DAY_2_OPERATION_SUSPEND = "Suspend";
+
     protected final Map<String, ComputeState> computesToDelete = new HashMap<>();
     private final Set<String> containersToDelete = new HashSet<>();
     private GroupResourcePlacementState groupResourcePlacementState;
@@ -290,7 +298,8 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     }
 
     protected void doWithResources(Set<String> resourceLinks) throws Throwable {
-        validateHostState(resourceLinks);
+        validateHostState(resourceLinks,
+                com.vmware.photon.controller.model.resources.ComputeService.PowerState.ON);
     }
 
     protected RequestBrokerState requestCompute(String resourceDescLink,
@@ -565,14 +574,14 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         }
     }
 
-    protected void validateHostState(Collection<String> resourceLinks)
+    protected void validateHostState(Collection<String> resourceLinks,
+            com.vmware.photon.controller.model.resources.ComputeService.PowerState powerState)
             throws Exception {
         String computeStateLink = resourceLinks.iterator().next();
         ComputeState computeState = getDocument(computeStateLink, ComputeState.class);
 
         assertNotNull(computeState);
-        assertEquals(com.vmware.photon.controller.model.resources.ComputeService.PowerState.ON,
-                computeState.powerState);
+        assertEquals(powerState, computeState.powerState);
     }
 
     protected void validateAfterStart(String resourceDescLink, RequestBrokerState request)
@@ -793,4 +802,19 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         tag.tenantLinks = getTenantLinks();
         return postDocument(TagService.FACTORY_LINK, tag).documentSelfLink;
     }
+
+    protected void doDay2Operation(Set<String> resourceLinks, String operation, String payLoad)
+            throws Throwable {
+        RequestBrokerState d2oRequest = new RequestBrokerState();
+        d2oRequest.resourceType = ResourceType.COMPUTE_TYPE.getName();
+        d2oRequest.resourceLinks = resourceLinks;
+        d2oRequest.operation = operation;
+        d2oRequest.customProperties = new HashMap<>();
+        d2oRequest.customProperties.put(OPERATION_PAYLOAD_PROP_NAME, payLoad);
+        d2oRequest.tenantLinks = getTenantLinks();
+        d2oRequest = postDocument(RequestBrokerFactoryService.SELF_LINK, d2oRequest);
+
+        waitForTaskToComplete(d2oRequest.documentSelfLink);
+    }
+
 }
