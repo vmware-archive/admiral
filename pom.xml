@@ -85,6 +85,7 @@
         <bouncycastle.version>1.56</bouncycastle.version>
         <jackson.version>2.8.6</jackson.version>
         <httpclient.version>4.5.2</httpclient.version>
+        <guava.version>20.0</guava.version>
         <gson.version>2.3.1</gson.version>
 
 
@@ -209,6 +210,13 @@
               <groupId>org.apache.httpcomponents</groupId>
               <artifactId>httpclient</artifactId>
               <version>${httpclient.version}</version>
+            </dependency>
+
+            <!-- added because of mismatch between azure-sdk and xenon-swagger -->
+            <dependency>
+              <groupId>com.google.guava</groupId>
+              <artifactId>guava</artifactId>
+              <version>${guava.version}</version>
             </dependency>
 
             <!--TEST -->
