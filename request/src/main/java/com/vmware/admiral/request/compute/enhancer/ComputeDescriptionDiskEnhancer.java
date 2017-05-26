@@ -49,6 +49,7 @@ import com.vmware.xenon.common.UriUtils;
 public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
 
     public static final String FIELD_NAME_CUSTOM_PROP_DISK_NAME = "__diskName";
+    public static final String FIELD_NAME_CUSTOM_PROP_SUPPORTS_ENCRYPTION = "__supportsEncryption";
 
     private ServiceHost host;
     private URI referer;
@@ -208,8 +209,10 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                             return 0;
                         }
                     }
-                }).filter(si -> (si.storageDescription == null || !diskState.encrypted) ?
-                true : diskState.encrypted == si.storageDescription.supportsEncryption)
+                }).filter(si -> (diskState.encrypted == null || !diskState.encrypted ||
+                (si.supportsEncryption != null && si.supportsEncryption) ||
+                ((si.storageDescription != null && si.storageDescription.supportsEncryption != null) ?
+                si.storageDescription.supportsEncryption : resourceGroupEncryptionFilter(si))))
                 .findFirst().orElse(null);
     }
 
@@ -228,6 +231,22 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
             tagLinks.addAll(siExpanded.storageDescription.tagLinks);
         }
         return tagLinks;
+    }
+
+    /**
+     * Filter storage item based on resource group state's support of encryption if it is
+     * non-null. If the resource group state is null, then rely on the default storage item's
+     * field.
+     */
+    private boolean resourceGroupEncryptionFilter(StorageItemExpanded si) {
+        if (si.resourceGroupState != null && si.resourceGroupState.customProperties != null) {
+            String encryption = si.resourceGroupState.customProperties
+                    .get(FIELD_NAME_CUSTOM_PROP_SUPPORTS_ENCRYPTION);
+            if (encryption != null) {
+                return Boolean.valueOf(encryption);
+            }
+        }
+        return false;
     }
 
     /**

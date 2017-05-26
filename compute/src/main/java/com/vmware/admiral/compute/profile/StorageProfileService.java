@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.photon.controller.model.resources.ResourceGroupService.ResourceGroupState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.StorageDescriptionService.StorageDescription;
 
@@ -39,6 +40,10 @@ public class StorageProfileService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.STORAGE_PROFILES;
 
     public static class StorageItem {
+        /**
+         * Link to the resource group associated with this storage item.
+         */
+        public String resourceGroupLink;
         /**
          * Link to the Storage description associated with this storage item.
          */
@@ -60,13 +65,19 @@ public class StorageProfileService extends StatefulService {
          * defines if this particular storage item contains default storage properties
          */
         public boolean defaultItem;
+        /**
+         * Indicates whether this storage item supports encryption or not.
+         */
+        public Boolean supportsEncryption;
 
         public void copyTo(StorageItem target) {
+            target.resourceGroupLink = this.resourceGroupLink;
             target.storageDescriptionLink = this.storageDescriptionLink;
             target.name = this.name;
             target.tagLinks = this.tagLinks;
             target.diskProperties = this.diskProperties;
             target.defaultItem = this.defaultItem;
+            target.supportsEncryption = this.supportsEncryption;
         }
     }
 
@@ -102,6 +113,7 @@ public class StorageProfileService extends StatefulService {
 
     public static class StorageItemExpanded extends StorageItem {
         public StorageDescription storageDescription;
+        public ResourceGroupState resourceGroupState;
     }
 
     public StorageProfileService() {
@@ -167,6 +179,7 @@ public class StorageProfileService extends StatefulService {
         spExpanded.storageItemsExpanded = new ArrayList<>(spExpanded.storageItems.size());
         List<Operation> getOps = new ArrayList<>(spExpanded.storageItems.size());
         Map<String, StorageDescription> storageDescriptions = new HashMap<>(spExpanded.storageItems.size());
+        Map<String, ResourceGroupState> resourceGroupStates = new HashMap<>(spExpanded.storageItems.size());
         spExpanded.storageItems.stream().forEach(si -> {
             StorageItemExpanded sIExpanded = new StorageItemExpanded();
             si.copyTo(sIExpanded);
@@ -179,9 +192,28 @@ public class StorageProfileService extends StatefulService {
                             if (e == null) {
                                 storageDescriptions.put(sIExpanded.storageDescriptionLink, o
                                         .getBody(StorageDescription.class));
+                            } else {
+                                logFine("Could not load storage description %s due to %s",
+                                        sIExpanded.storageDescriptionLink, e.getMessage());
                             }
                         }));
                 storageDescriptions.put(sIExpanded.storageDescriptionLink, null);
+            }
+
+            if (sIExpanded.resourceGroupLink != null && !resourceGroupStates.containsKey
+                    (sIExpanded.resourceGroupLink)) {
+                getOps.add(Operation.createGet(this, sIExpanded.resourceGroupLink)
+                        .setReferer(this.getUri())
+                        .setCompletion((o, e) -> {
+                            if (e == null) {
+                                resourceGroupStates.put(sIExpanded.resourceGroupLink, o
+                                        .getBody(ResourceGroupState.class));
+                            } else {
+                                logFine("Could not load Resource group state %s due to %s",
+                                        sIExpanded.resourceGroupLink, e.getMessage());
+                            }
+                        }));
+                resourceGroupStates.put(sIExpanded.resourceGroupLink, null);
             }
         });
 
@@ -193,8 +225,14 @@ public class StorageProfileService extends StatefulService {
                         } else {
                             // Update storage description entries in the expanded storage item
                             spExpanded.storageItemsExpanded.stream().forEach(si ->  {
-                                si.storageDescription = storageDescriptions.get(si
-                                        .storageDescriptionLink);
+                                if (si.storageDescriptionLink != null) {
+                                    si.storageDescription = storageDescriptions.get(si
+                                            .storageDescriptionLink);
+                                }
+                                if (si.resourceGroupLink != null) {
+                                    si.resourceGroupState = resourceGroupStates.get(si
+                                            .resourceGroupLink);
+                                }
                             });
                             get.setBody(spExpanded).complete();
                         }

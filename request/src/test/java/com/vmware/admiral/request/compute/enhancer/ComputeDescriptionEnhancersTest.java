@@ -61,12 +61,15 @@ import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAl
 import com.vmware.admiral.request.compute.enhancer.Enhancer.EnhanceContext;
 import com.vmware.admiral.service.common.AbstractInitialBootService;
 import com.vmware.photon.controller.model.Constraint;
+import com.vmware.photon.controller.model.adapters.vsphere.CustomProperties;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.DiskService;
 import com.vmware.photon.controller.model.resources.DiskService.DiskState;
 import com.vmware.photon.controller.model.resources.ImageService;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService;
+import com.vmware.photon.controller.model.resources.ResourceGroupService;
+import com.vmware.photon.controller.model.resources.ResourceGroupService.ResourceGroupState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.StorageDescriptionService;
 import com.vmware.photon.controller.model.resources.StorageDescriptionService.StorageDescription;
@@ -112,7 +115,7 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
                 ComputeProfileService.class, StorageProfileService.class, ImageProfileService.class,
                 InstanceTypeService.class, NetworkProfileService.class,
                 NetworkInterfaceDescriptionService.class,
-                DiskService.class, StorageDescriptionService.class);
+                DiskService.class, StorageDescriptionService.class, ResourceGroupService.class);
         host.startFactory(TagService.class, TagFactoryService::new);
         waitForServiceAvailability(ProfileService.FACTORY_LINK);
         waitForServiceAvailability(CaSigningCertService.FACTORY_LINK);
@@ -286,6 +289,55 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
 
         // Now get all the disk states to find the properties size.
         assertDiskStates(diskState -> assertNull(diskState.customProperties));
+    }
+
+    @Test
+    public void testEnhanceDiskWithResourceGroup() throws Throwable {
+        cd.instanceType = "xLarge";
+        // Build disk description
+        cd.diskDescLinks = Arrays.asList(buildDiskState1(true).documentSelfLink);
+
+        // OVERRIDE original Context configured by 'setup' method
+        context = new EnhanceContext();
+        StorageProfile storageProfile = buildStorageProfileForEncryption(createResourceGroupState()
+                .documentSelfLink);
+        context.profile = buildProfileServiceWithStorage(storageProfile);
+        context.profileLink = context.profile.documentSelfLink;
+        context.resolvedImage = "vc://datastore/test.iso";
+
+        // Use case 1: CD (Disk1) with all hard constraints & encryption for matching SI with RG
+        // support of encryption
+
+        enhance(new ComputeDescriptionDiskEnhancer(host, host.getReferer()));
+
+        assertDiskStates(diskState -> {
+            assertNotNull(diskState.customProperties);
+            assertEquals(1, diskState.customProperties.size());
+        });
+    }
+
+    @Test
+    public void testEnhanceDiskWithDefaultEncryption() throws Throwable {
+        cd.instanceType = "xLarge";
+        // Build disk description
+        cd.diskDescLinks = Arrays.asList(buildDiskState1(true).documentSelfLink);
+
+        // OVERRIDE original Context configured by 'setup' method
+        context = new EnhanceContext();
+        StorageProfile storageProfile = buildStorageProfileForEncryption((String) null);
+        context.profile = buildProfileServiceWithStorage(storageProfile);
+        context.profileLink = context.profile.documentSelfLink;
+        context.resolvedImage = "vc://datastore/test.iso";
+
+        // Use case 1: CD (Disk2) with all soft constraints & encryption for matching SI's
+        // support of encryption
+
+        enhance(new ComputeDescriptionDiskEnhancer(host, host.getReferer()));
+
+        assertDiskStates(diskState -> {
+            assertNotNull(diskState.customProperties);
+            assertEquals(2, diskState.customProperties.size());
+        });
     }
 
     @Test
@@ -663,10 +715,22 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         return storageDescription;
     }
 
+    private ResourceGroupState createResourceGroupState()
+            throws Throwable {
+        ResourceGroupState resourceGroupState = new ResourceGroupState();
+        resourceGroupState.name = "storage policy1";
+        resourceGroupState.id = "unique id";
+        CustomProperties.of(resourceGroupState).put(ComputeDescriptionDiskEnhancer
+                .FIELD_NAME_CUSTOM_PROP_SUPPORTS_ENCRYPTION, "true");
+
+        resourceGroupState = doPost(resourceGroupState, ResourceGroupService.FACTORY_LINK);
+        return resourceGroupState;
+    }
+
     private ArrayList<String> buildDiskStates() throws Throwable {
         ArrayList<String> diskLinks = new ArrayList<>();
 
-        DiskState diskState1 = buildDiskStateWithEncryption();
+        DiskState diskState1 = buildDiskState1(false);
         diskLinks.add(diskState1.documentSelfLink);
 
         DiskState diskState2 = new DiskState();
@@ -748,10 +812,11 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         return diskLinks;
     }
 
-    private ArrayList<String> buildDiskStatesForEncryption() throws Throwable {
+    private ArrayList<String> buildDiskStatesForEncryption() throws
+            Throwable {
         ArrayList<String> diskLinks = new ArrayList<>();
 
-        DiskState diskState1 = buildDiskStateWithEncryption();
+        DiskState diskState1 = buildDiskState1(true);
         diskLinks.add(diskState1.documentSelfLink);
 
         DiskState diskState2 = new DiskState();
@@ -773,6 +838,38 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         diskLinks.add(diskState2.documentSelfLink);
 
         return diskLinks;
+    }
+
+    private StorageProfileService.StorageProfile buildStorageProfileForEncryption(String resourceGroupLink)
+            throws Throwable {
+        ArrayList<String> tags = buildTagLinks();
+
+        StorageProfileService.StorageItem storageItem1 = new StorageProfileService.StorageItem();
+        storageItem1.defaultItem = false;
+        storageItem1.name = "fast";
+        storageItem1.tagLinks = new HashSet<>(Arrays.asList(tags.get(0), tags.get(1)));
+        storageItem1.resourceGroupLink = resourceGroupLink;
+        storageItem1.diskProperties = new HashMap<>();
+        storageItem1.diskProperties.put("key1", "value1");
+
+        StorageProfileService.StorageItem storageItem2 = new StorageProfileService.StorageItem();
+        storageItem2.defaultItem = true;
+        storageItem2.name = "slow";
+        storageItem2.tagLinks = new HashSet<>(Arrays.asList(tags.get(0), tags.get(1)));
+        if (resourceGroupLink == null) {
+            storageItem2.supportsEncryption = true;
+        }
+        storageItem2.diskProperties = new HashMap<>();
+        storageItem2.diskProperties.put("key1", "value1");
+        storageItem2.diskProperties.put("key2", "value2");
+
+        StorageProfileService.StorageProfile storageProfile = new StorageProfileService.StorageProfile();
+        storageProfile.storageItems = new ArrayList<>();
+        storageProfile.storageItems.add(storageItem1);
+        storageProfile.storageItems.add(storageItem2);
+
+        storageProfile = doPost(storageProfile, StorageProfileService.FACTORY_LINK);
+        return storageProfile;
     }
 
     private StorageProfileService.StorageProfile buildStorageProfileForEncryption(boolean... supportEncryption)
@@ -807,13 +904,13 @@ public class ComputeDescriptionEnhancersTest extends BaseTestCase {
         return storageProfile;
     }
 
-    private DiskState buildDiskStateWithEncryption() throws Throwable {
+    private DiskState buildDiskState1(boolean isEncrypted) throws Throwable {
         DiskState diskState1 = new DiskState();
         diskState1.capacityMBytes = 1024;
         diskState1.type = DiskService.DiskType.HDD;
         diskState1.bootOrder = 1;
         diskState1.name = "Disk1";
-        diskState1.encrypted = true;
+        diskState1.encrypted = isEncrypted;
         diskState1.persistent = true;
         diskState1.constraint = new Constraint();
 
