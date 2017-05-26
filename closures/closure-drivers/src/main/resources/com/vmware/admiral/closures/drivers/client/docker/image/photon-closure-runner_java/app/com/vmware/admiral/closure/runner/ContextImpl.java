@@ -1,3 +1,14 @@
+/*
+ * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ *
+ * This product is licensed to you under the Apache License, Version 2.0 (the "License").
+ * You may not use this product except in compliance with the License.
+ *
+ * This product may include a number of subcomponents with separate copyright notices
+ * and license terms. Your use of these subcomponents is subject to the terms and
+ * conditions of the subcomponent's license, as noted in the LICENSE file.
+ */
+
 package com.vmware.admiral.closure.runner;
 
 import java.io.BufferedReader;
@@ -5,8 +16,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -16,6 +36,11 @@ import org.apache.http.impl.client.HttpClientBuilder;
 
 import com.vmware.admiral.closure.runtime.Context;
 
+/**
+ * Implementation of Context interface
+ *
+ * @see Context
+ */
 public class ContextImpl implements Context {
     public static final String GET = "GET";
     public static final String POST = "POST";
@@ -25,27 +50,42 @@ public class ContextImpl implements Context {
     public static final String TOKEN = System.getenv("TOKEN");
     public static final String CLOSURE_URI = System.getenv("TASK_URI");
 
-    public String closureUri;
-    public String closureSemaphore;
-    public JsonObject inputs;
-    public JsonObject outputs = new JsonObject();
+    private Gson gson;
+
+    private String closureUri;
+    private String closureSemaphore;
+    private JsonObject inputs;
+    private JsonObject outputs = new JsonObject();
 
     public ContextImpl(String closureUri, String closureSemaphore, JsonObject inputs) {
         this.closureUri = closureUri;
         this.closureSemaphore = closureSemaphore;
         this.inputs = inputs;
+
+        gson = new GsonBuilder().setLenient().create();
     }
 
     @Override
-    public String getInputs() {
+    public Map<String, Object> getInputs() {
         if (inputs == null) {
-            return "";
+            return Collections.emptyMap();
         }
-        return inputs.toString();
+
+        Map<String, Object> inMap = new HashMap<>();
+        Set<Map.Entry<String, JsonElement>> entries = inputs.entrySet();
+        entries.forEach((k) -> inMap.put(k.getKey(), k.getValue()));
+
+        return inMap;
     }
 
     @Override
-    public String getOutputs() {
+    public void setOutput(String key, Object value) {
+        JsonElement jEl = convertToJsonElement(value);
+        outputs.add(key, jEl);
+    }
+
+    @Override
+    public String getOutputsAsString() {
         if (outputs == null) {
             return "";
         }
@@ -91,6 +131,20 @@ public class ContextImpl implements Context {
     }
 
     // private methods
+
+    private JsonElement convertToJsonElement(Object value) {
+        if (value instanceof JsonElement) {
+            return (JsonElement) value;
+        } else if (value instanceof Boolean) {
+            return new JsonPrimitive((Boolean) value);
+        } else if (value instanceof Character) {
+            return new JsonPrimitive((Character) value);
+        } else if (value instanceof Number) {
+            return new JsonPrimitive((Number) value);
+        } else {
+            return gson.fromJson(value.toString(), JsonElement.class);
+        }
+    }
 
     private String executeRequest(HttpRequest request, HttpClient client) {
         setHeaders(request);

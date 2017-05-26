@@ -212,18 +212,23 @@ public class ClosuresJavaIT extends BaseClosureIntegrationTest {
         int expectedInVar2 = 4;
         int expectedResult = 7;
 
+        // @formatter:off
         closureDescState.source = "import com.google.gson.JsonObject;\n"
+                + "import com.google.gson.JsonPrimitive;\n"
                 + "import com.vmware.admiral.closure.runtime.Context;\n"
+                + "import java.util.Map;\n"
                 + "\n"
                 + "public class Test {\n"
                 + "    public void test(Context context) {\n"
-                + "        int a = context.inputs.get(\"a\").getAsInt();\n"
-                + "        int b = context.inputs.get(\"b\").getAsInt();\n"
+                + "        Map<String, Object> inputs = context.getInputs();\n"
+                + "        int a = ((JsonPrimitive) inputs.get(\"a\")).getAsInt();\n"
+                + "        int b = ((JsonPrimitive) inputs.get(\"a\")).getAsInt();\n"
                 + "        int result = a + b;\n"
                 + "        System.out.println(result);\n"
-                + "        context.outputs.addProperty(\"result\", result);\n"
+                + "        context.setOutput(\"result\", result);\n"
                 + "    }\n"
                 + "}\n";
+        // @formatter:on
 
         closureDescState.runtime = RUNTIME_JAVA;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));

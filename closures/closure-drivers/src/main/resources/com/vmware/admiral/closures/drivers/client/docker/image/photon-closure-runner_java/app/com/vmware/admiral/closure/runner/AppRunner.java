@@ -1,3 +1,14 @@
+/*
+ * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ *
+ * This product is licensed to you under the Apache License, Version 2.0 (the "License").
+ * You may not use this product except in compliance with the License.
+ *
+ * This product may include a number of subcomponents with separate copyright notices
+ * and license terms. Your use of these subcomponents is subject to the terms and
+ * conditions of the subcomponent's license, as noted in the LICENSE file.
+ */
+
 package com.vmware.admiral.closure.runner;
 
 import java.io.BufferedReader;
@@ -38,6 +49,10 @@ import org.apache.http.impl.client.HttpClientBuilder;
 
 import com.vmware.admiral.closure.runtime.Context;
 
+/**
+ * The class is responsible for executing user's java code inside a container.
+ *
+ */
 public class AppRunner {
 
     private static final String TOKEN = System.getenv("TOKEN");
@@ -123,8 +138,8 @@ public class AppRunner {
             if (skipCompilation) {
                 file = new File(SRC_FILE_ZIP);
             } else {
-                runProcess("javac -cp . -sourcepath user_scripts/ user_scripts/" +
-                        moduleName + ".java", closureSemaphore);
+                runProcess("javac -cp * -sourcepath ./ user_scripts/" + moduleName + ".java",
+                        closureSemaphore);
                 file = new File("user_scripts/");
             }
             // Load
@@ -137,7 +152,7 @@ public class AppRunner {
             // Invoke
             method.invoke(object, context);
             System.out.println("*******************");
-            patchFinishedState(context.getOutputs(), closureSemaphore);
+            patchFinishedState(context.getOutputsAsString(), closureSemaphore);
         } catch (Exception ex) {
             System.out.println("*******************");
             System.out.println("Script run failed with: " + ex);
@@ -428,8 +443,6 @@ public class AppRunner {
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != 200) {
                 System.out.println("Unable to patch failed state: " + statusCode);
-            } else {
-                System.out.println("----> PATCHED FAILURED SUCCESS");
             }
         } catch (Exception ex) {
             handlePatchException(patch, STATE_FAILED, ex.getMessage());
