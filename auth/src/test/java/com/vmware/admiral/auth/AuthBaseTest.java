@@ -73,7 +73,7 @@ public abstract class AuthBaseTest extends BaseTestCase {
         return createHost(customArgs);
     }
 
-    private static void startServices(VerificationHost host) throws Throwable {
+    protected void startServices(VerificationHost host) throws Throwable {
         DeploymentProfileConfig.getInstance().setTest(true);
 
         HostInitCommonServiceConfig.startServices(host);

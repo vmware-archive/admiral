@@ -24,7 +24,7 @@ import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 
 public class PrincipalService extends StatelessService implements PrincipalProvider {
-    public static final String SELF_LINK = ManagementUriParts.PRINCIPALS;
+    public static final String SELF_LINK = ManagementUriParts.AUTH_PRINCIPALS;
 
     public static final String PRINCIPAL_ID_PATH_SEGMENT = "principalId";
     public static final String PRINCIPAL_ID_PATH_SEGMENT_TEMPLATE = SELF_LINK + "/{principalId}";

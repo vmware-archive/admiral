@@ -79,21 +79,15 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
 
     /**
      * Users configuration file (full path). Specifying a file automatically enables Xenon's Authx
-     * services. Exclusive with pscConfig.
+     * services. Exclusive with authConfig.
      */
     public String localUsers;
 
     /**
-     * PSC configuration file (full path). Specifying a file automatically enables Xenon's Authx
-     * services. Exclusive with localUsers.
+     * External authentication configuration file (full path). Specifying a file automatically
+     * enables Xenon's Authx services. Exclusive with localUsers.
      */
-    public String pscConfig;
-
-    /**
-     * Flag to start an etcd emulator service useful for enabling overlay networking capabilities
-     * without an external KV store service
-     */
-    public boolean startEtcdEmulator;
+    public String authConfig;
 
     /**
      * Uri for clustering traffic. If set, another listener is started, which must be passed as
@@ -381,7 +375,7 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         setClient(serviceClient);
 
         AuthConfigProvider authProvider = AuthUtil.getPreferredProvider(AuthConfigProvider.class);
-        if (AuthUtil.useExternalConfig(this)) {
+        if (AuthUtil.useAuthConfig(this)) {
 
             Service authService = authProvider.getAuthenticationService();
             addPrivilegedService(authService.getClass());
@@ -403,7 +397,7 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
 
         startCommonServices();
 
-        if (AuthUtil.useExternalConfig(this)) {
+        if (AuthUtil.useAuthConfig(this)) {
             startFactoryServicesSynchronously(authProvider.createUserServiceFactory());
         }
 

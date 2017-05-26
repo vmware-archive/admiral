@@ -82,9 +82,20 @@
         </dependency>
     </dependencies>
 
-    <!-- JaCoCo Offline Instrumentation with PowerMock: https://github.com/powermock/powermock/wiki/Code-coverage-with-JaCoCo -->
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- JaCoCo Offline Instrumentation with PowerMock: https://github.com/powermock/powermock/wiki/Code-coverage-with-JaCoCo -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -117,7 +128,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>${maven.plugin.surefire}</version>
                 <configuration>
                     <useUnlimitedThreads>true</useUnlimitedThreads>
                     <systemPropertyVariables>

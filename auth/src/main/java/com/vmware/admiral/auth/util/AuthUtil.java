@@ -26,7 +26,7 @@ public class AuthUtil {
 
     public static final String LOCAL_USERS_FILE = "localUsers";
 
-    public static final String PSC_CONFIG_FILE = "pscConfig";
+    public static final String AUTH_CONFIG_FILE = "authConfig";
 
     private static final String PREFERRED_PROVIDER_PACKAGE = "com.vmware.admiral.auth.idm.psc";
 
@@ -51,7 +51,7 @@ public class AuthUtil {
     }
 
     public static boolean isAuthxEnabled(ServiceHost host) {
-        return useLocalUsers(host) || usePscConfig(host);
+        return useLocalUsers(host) || useAuthConfig(host);
     }
 
     public static boolean useLocalUsers(ServiceHost host) {
@@ -59,11 +59,7 @@ public class AuthUtil {
         return (field != null) && (!field.isEmpty());
     }
 
-    public static boolean useExternalConfig(ServiceHost host) {
-        return usePscConfig(host);
-    }
-
-    public static boolean usePscConfig(ServiceHost host) {
+    public static boolean useAuthConfig(ServiceHost host) {
         String field = getPscConfigFile(host);
         return (field != null) && (!field.isEmpty());
     }
@@ -78,7 +74,7 @@ public class AuthUtil {
     }
 
     public static String getPscConfigFile(ServiceHost host) {
-        return PropertyUtils.getValue(host, PSC_CONFIG_FILE);
+        return PropertyUtils.getValue(host, AUTH_CONFIG_FILE);
     }
 
     public static <T> T getPreferredProvider(Class<T> clazz) {
