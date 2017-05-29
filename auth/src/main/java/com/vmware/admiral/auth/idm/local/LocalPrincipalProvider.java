@@ -11,14 +11,11 @@
 
 package com.vmware.admiral.auth.idm.local;
 
-import static com.vmware.admiral.common.util.AssertUtil.PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT;
-import static com.vmware.admiral.common.util.AssertUtil.PROPERTY_CANNOT_BE_NULL_MESSAGE_FORMAT;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNullOrEmpty;
 
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.auth.idm.Principal;
@@ -27,7 +24,6 @@ import com.vmware.admiral.auth.idm.PrincipalProvider;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalType;
 import com.vmware.xenon.common.DeferredResult;
-import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
@@ -48,9 +44,8 @@ public class LocalPrincipalProvider implements PrincipalProvider {
 
     @Override
     public DeferredResult<Principal> getPrincipal(String principalId) {
-        assertNotNullOrEmpty(principalId, "principaldId");
-        URI uri = UriUtils.buildUri(host, LocalPrincipalFactoryService.SELF_LINK);
-        uri = UriUtils.extendUri(uri, principalId);
+        assertNotNullOrEmpty(principalId, "principalId");
+        URI uri = buildLocalPrincipalStateSelfLink(host, principalId);
 
         Operation get = Operation.createGet(uri)
                 .setReferer(host.getUri());
@@ -74,24 +69,44 @@ public class LocalPrincipalProvider implements PrincipalProvider {
                 .thenApply(this::fromQueryResultToPrincipalList);
     }
 
-    @SuppressWarnings("unchecked")
-    private boolean validateInput(String input, String propertyName,
-            BiConsumer callback) {
-        if (input == null) {
-            callback.accept(null, new LocalizableValidationException(
-                    String.format(PROPERTY_CANNOT_BE_NULL_MESSAGE_FORMAT, propertyName),
-                    "common.assertion.property.required", propertyName));
-            return false;
-        }
+    public DeferredResult<Principal> createPrincipal(Principal principal) {
+        LocalPrincipalState stateToCreate = fromPrincipalToLocalPrincipal(principal);
 
-        if (input.isEmpty()) {
-            callback.accept(null, new LocalizableValidationException(
-                    String.format(PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT, propertyName),
-                    "common.assertion.property.not.empty", propertyName));
-            return false;
-        }
-        return true;
+        URI uri = UriUtils.buildUri(host, LocalPrincipalFactoryService.SELF_LINK);
+
+        Operation post = Operation.createPost(uri)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
+                .setBody(stateToCreate)
+                .setReferer(host.getUri());
+
+        return host.sendWithDeferredResult(post, LocalPrincipalState.class)
+                .thenApply(this::fromLocalPrincipalToPrincipal);
     }
+
+    public DeferredResult<Principal> updatePrincipal(Principal principal) {
+        LocalPrincipalState stateToPatch = fromPrincipalToLocalPrincipal(principal);
+
+        URI uri = buildLocalPrincipalStateSelfLink(host, stateToPatch.id);
+
+        Operation post = Operation.createPatch(uri)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
+                .setBody(stateToPatch)
+                .setReferer(host.getUri());
+
+        return host.sendWithDeferredResult(post, LocalPrincipalState.class)
+                .thenApply(this::fromLocalPrincipalToPrincipal);
+    }
+
+    public DeferredResult<Principal> deletePrincipal(String principalId) {
+        URI uri = buildLocalPrincipalStateSelfLink(host, principalId);
+
+        Operation delete = Operation.createDelete(uri)
+                .setReferer(host.getUri());
+
+        return host.sendWithDeferredResult(delete, LocalPrincipalState.class)
+                .thenApply(this::fromLocalPrincipalToPrincipal);
+    }
+
 
     private Principal fromLocalPrincipalToPrincipal(LocalPrincipalState state) {
 
@@ -103,6 +118,7 @@ public class LocalPrincipalProvider implements PrincipalProvider {
         principal.email = state.email;
         principal.name = state.name;
         principal.id = state.id;
+        principal.password = state.password;
         principal.type = PrincipalType.valueOf(state.type.name());
 
         if (state.type == LocalPrincipalType.GROUP && state.groupMembersLinks != null && !state
@@ -127,5 +143,31 @@ public class LocalPrincipalProvider implements PrincipalProvider {
 
         return principals;
 
+    }
+
+    private LocalPrincipalState fromPrincipalToLocalPrincipal(Principal principal) {
+        if (principal == null) {
+            return null;
+        }
+
+        LocalPrincipalState state = new LocalPrincipalState();
+        state.email = principal.email;
+        state.id = principal.id;
+        state.password = principal.password;
+        state.name = principal.name;
+        state.type = LocalPrincipalType.valueOf(principal.type.name());
+
+        if (principal.type == PrincipalType.GROUP && principal.groupMembers != null
+                && !principal.groupMembers.isEmpty()) {
+            state.groupMembersLinks = principal.groupMembers.stream()
+                    .map(m -> LocalPrincipalFactoryService.SELF_LINK + "/" + m)
+                    .collect(Collectors.toList());
+        }
+
+        return state;
+    }
+
+    private static URI buildLocalPrincipalStateSelfLink(ServiceHost host, String id) {
+        return UriUtils.buildUri(host, LocalPrincipalFactoryService.SELF_LINK + "/" + id);
     }
 }

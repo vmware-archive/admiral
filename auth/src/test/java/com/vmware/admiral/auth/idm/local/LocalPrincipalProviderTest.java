@@ -27,6 +27,7 @@ import com.vmware.admiral.auth.idm.Principal;
 import com.vmware.admiral.auth.idm.Principal.PrincipalType;
 import com.vmware.admiral.auth.idm.PrincipalProvider;
 import com.vmware.xenon.common.DeferredResult;
+import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.test.TestContext;
 
 public class LocalPrincipalProviderTest extends AuthBaseTest {
@@ -96,4 +97,145 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
                     || p.email.equals(expectedPrincipal3));
         }
     }
+
+    @Test
+    public void testCreatePrincipal() {
+        Principal principal = new Principal();
+        principal.type = PrincipalType.USER;
+        principal.email = "test@admiral.com";
+        principal.name = "test";
+        principal.password = "testPassword";
+
+        DeferredResult<Principal> result = provider.createPrincipal(principal);
+
+        TestContext ctx = testCreate(1);
+        result.whenComplete((p, ex) -> {
+            if (ex != null) {
+                ctx.failIteration(ex);
+                return;
+            }
+            ctx.completeIteration();
+        });
+        ctx.await();
+
+        result = provider.getPrincipal(principal.email);
+
+        TestContext ctx1 = testCreate(1);
+        result.whenComplete((p, ex) -> {
+            if (ex != null) {
+                ctx1.failIteration(ex);
+                return;
+            }
+            ctx1.completeIteration();
+        });
+        ctx1.await();
+
+        Principal newPrincipal = result.getNow(new Principal());
+        assertNotNull(newPrincipal);
+        assertEquals(principal.email, newPrincipal.email);
+        assertEquals(principal.email, newPrincipal.id);
+        assertEquals("test", newPrincipal.name);
+        assertEquals(PrincipalType.USER, newPrincipal.type);
+    }
+
+    @Test
+    public void testUpdatePrincipal() {
+        Principal principal = new Principal();
+        principal.type = PrincipalType.USER;
+        principal.email = "test@admiral.com";
+        principal.name = "test";
+        principal.password = "testPassword";
+
+        DeferredResult<Principal> result = provider.createPrincipal(principal);
+
+        TestContext ctx = testCreate(1);
+        result.whenComplete((p, ex) -> {
+            if (ex != null) {
+                ctx.failIteration(ex);
+                return;
+            }
+            ctx.completeIteration();
+        });
+        ctx.await();
+        principal = result.getNow(new Principal());
+        principal.name = "NewName";
+        result = provider.updatePrincipal(principal);
+
+        TestContext ctx1 = testCreate(1);
+        result.whenComplete((p, ex) -> {
+            if (ex != null) {
+                ctx1.failIteration(ex);
+                return;
+            }
+            ctx1.completeIteration();
+        });
+        ctx1.await();
+
+        result = provider.getPrincipal(principal.email);
+
+        TestContext ctx2 = testCreate(1);
+        result.whenComplete((p, ex) -> {
+            if (ex != null) {
+                ctx2.failIteration(ex);
+                return;
+            }
+            ctx2.completeIteration();
+        });
+        ctx2.await();
+
+        Principal newPrincipal = result.getNow(new Principal());
+
+        assertNotNull(newPrincipal);
+        assertEquals(principal.name, newPrincipal.name);
+    }
+
+    @Test
+    public void testDeletePrincipal() {
+        Principal principal = new Principal();
+        principal.type = PrincipalType.USER;
+        principal.email = "test@admiral.com";
+        principal.name = "test";
+        principal.password = "testPassword";
+
+        DeferredResult<Principal> result = provider.createPrincipal(principal);
+
+        TestContext ctx = testCreate(1);
+        result.whenComplete((p, ex) -> {
+            if (ex != null) {
+                ctx.failIteration(ex);
+                return;
+            }
+            ctx.completeIteration();
+        });
+        ctx.await();
+        principal = result.getNow(new Principal());
+
+        result = provider.deletePrincipal(principal.id);
+        TestContext ctx1 = testCreate(1);
+        result.whenComplete((p, ex) -> {
+            if (ex != null) {
+                ctx1.failIteration(ex);
+                return;
+            }
+            ctx1.completeIteration();
+        });
+        ctx1.await();
+
+        result = provider.getPrincipal(principal.id);
+        TestContext ctx2 = testCreate(1);
+        result.whenComplete((p, ex) -> {
+            if (ex != null) {
+                if (ex.getCause() instanceof ServiceNotFoundException) {
+                    ctx2.completeIteration();
+                    return;
+                }
+                ctx2.failIteration(ex);
+                return;
+            }
+            ctx2.failIteration(new RuntimeException("Getting deleted principal should have "
+                    + "failed"));
+        });
+        ctx2.await();
+    }
+
 }

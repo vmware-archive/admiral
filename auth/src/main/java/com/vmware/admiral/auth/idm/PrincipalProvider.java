@@ -20,4 +20,10 @@ public interface PrincipalProvider {
     DeferredResult<Principal> getPrincipal(String principalId);
 
     DeferredResult<List<Principal>> getPrincipals(String criteria);
+
+    DeferredResult<Principal> createPrincipal(Principal principal);
+
+    DeferredResult<Principal> updatePrincipal(Principal principal);
+
+    DeferredResult<Principal> deletePrincipal(String principalId);
 }
