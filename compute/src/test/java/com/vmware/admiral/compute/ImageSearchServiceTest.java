@@ -14,12 +14,17 @@ package com.vmware.admiral.compute;
 import static org.junit.Assert.assertEquals;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.container.ComputeBaseTest;
@@ -36,29 +41,27 @@ import com.vmware.xenon.common.UriUtils;
  */
 public class ImageSearchServiceTest extends ComputeBaseTest {
 
+    private static final String TENANT_LINK = "image-tenantLink";
+    private static final String IMAGE_NAME = "image-name";
+
     private EndpointState endpoint;
+    private EndpointState shouldNotMatchEndpoint;
 
-    private void beforeTest() throws Throwable {
-
-        waitForServiceAvailability(ImageSearchService.SELF_LINK);
-
-        // Those images should be found by search
+    @Before
+    public void beforeTest() throws Throwable {
         {
-            endpoint = doPost(createEndpoint("image-endpoint"), EndpointService.FACTORY_LINK);
+            // Create AWS end-point
+            endpoint = createEndpoint("image-endpoint");
+            endpoint.documentSelfLink = "image-endpointLink";
 
-            createImage(true, endpoint);
-            createImage(false, endpoint);
+            endpoint = doPost(endpoint, EndpointService.FACTORY_LINK);
         }
 
-        // Those images should NOT be found by search
         {
-            EndpointState shouldNotMatchEndpoint = createEndpoint(
-                    endpoint.name + "-shouldNotMatch");
+            shouldNotMatchEndpoint = createEndpoint(endpoint.name + "-shouldNotMatch");
             shouldNotMatchEndpoint.endpointType = EndpointType.azure.name();
-            shouldNotMatchEndpoint = doPost(shouldNotMatchEndpoint, EndpointService.FACTORY_LINK);
 
-            createImage(true, shouldNotMatchEndpoint);
-            createImage(false, shouldNotMatchEndpoint);
+            shouldNotMatchEndpoint = doPost(shouldNotMatchEndpoint, EndpointService.FACTORY_LINK);
         }
     }
 
@@ -95,58 +98,203 @@ public class ImageSearchServiceTest extends ComputeBaseTest {
 
         final ImageSearchService instance = new ImageSearchService();
 
-        final String FILTER = "name eq 'image-name'";
-        final String TENANT_LINK = "image-tenantLink";
-        final EndpointState ENDPOINT_STATE = createEndpoint("image-endpoint");
-        ENDPOINT_STATE.documentSelfLink = "image-endpointLink";
+        final String FILTER = "name eq '" + IMAGE_NAME + "'";
 
         {
             String $filter = FILTER;
             String tenantLink = TENANT_LINK;
-            EndpointState endpointState = ENDPOINT_STATE;
 
-            String imagesFilter = instance.calculateImagesFilter($filter, tenantLink,
-                    endpointState);
+            String imagesFilter = instance.calculateImagesFilter($filter, tenantLink, endpoint);
 
             assertEquals(
-                    "(((endpointLink eq 'image-endpointLink') and (name eq 'image-name')) and (tenantLinks/item eq 'image-tenantLink')) or ((endpointType eq 'aws') and (name eq 'image-name'))",
+                    "(((endpointLink eq '/resources/endpoints/image-endpointLink') and (name eq 'image-name')) and (tenantLinks/item eq 'image-tenantLink')) or ((endpointType eq 'aws') and (name eq 'image-name'))",
                     imagesFilter);
         }
         {
             String $filter = FILTER;
             String tenantLink = null;
-            EndpointState endpointState = ENDPOINT_STATE;
 
-            String imagesFilter = instance.calculateImagesFilter($filter, tenantLink,
-                    endpointState);
+            String imagesFilter = instance.calculateImagesFilter($filter, tenantLink, endpoint);
 
             assertEquals(
-                    "((endpointLink eq 'image-endpointLink') and (name eq 'image-name')) or ((endpointType eq 'aws') and (name eq 'image-name'))",
+                    "((endpointLink eq '/resources/endpoints/image-endpointLink') and (name eq 'image-name')) or ((endpointType eq 'aws') and (name eq 'image-name'))",
                     imagesFilter);
         }
         {
             String $filter = null;
             String tenantLink = TENANT_LINK;
-            EndpointState endpointState = ENDPOINT_STATE;
 
-            String imagesFilter = instance.calculateImagesFilter($filter, tenantLink,
-                    endpointState);
+            String imagesFilter = instance.calculateImagesFilter($filter, tenantLink, endpoint);
 
             assertEquals(
-                    "((endpointLink eq 'image-endpointLink') and (tenantLinks/item eq 'image-tenantLink')) or (endpointType eq 'aws')",
+                    "((endpointLink eq '/resources/endpoints/image-endpointLink') and (tenantLinks/item eq 'image-tenantLink')) or (endpointType eq 'aws')",
                     imagesFilter);
         }
         {
             String $filter = null;
             String tenantLink = null;
-            EndpointState endpointState = ENDPOINT_STATE;
 
-            String imagesFilter = instance.calculateImagesFilter($filter, tenantLink,
-                    endpointState);
+            String imagesFilter = instance.calculateImagesFilter($filter, tenantLink, endpoint);
 
             assertEquals(
-                    "(endpointLink eq 'image-endpointLink') or (endpointType eq 'aws')",
+                    "(endpointLink eq '/resources/endpoints/image-endpointLink') or (endpointType eq 'aws')",
                     imagesFilter);
+        }
+    }
+
+    @Test
+    public void testImageSearch() throws Throwable {
+
+        Collection<ImageState> createdImages = createImage("");
+
+        final String FILTER = "name eq '" + IMAGE_NAME + "'";
+        final String FILTER_INVALID = "name eq '" + IMAGE_NAME + "-invalid'";
+
+        final String TENANT_LINK_INVALID = TENANT_LINK + "-invalid";
+
+        final String ENDPOINT_QUERY = "documentSelfLink eq '" + endpoint.documentSelfLink + "'";
+        final String ENDPOINT_QUERY_INVALID = "documentSelfLink eq '"
+                + endpoint.documentSelfLink
+                + "-invalid'";
+        final String ENDPOINT_QUERY_MULTIPLE = "name eq '" + endpoint.name + "*'";
+
+        try {
+            // Positive tests
+            {
+                String $filter = FILTER;
+                String tenantLink = TENANT_LINK;
+                String endpointQuery = ENDPOINT_QUERY;
+
+                runTest.accept(new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery)));
+            }
+            {
+                String $filter = FILTER;
+                String tenantLink = TENANT_LINK;
+                String endpointQuery = ENDPOINT_QUERY + "&" + UriUtils.URI_PARAM_ODATA_TOP + "="
+                        + 1;
+
+                TestRunCtx ctx = new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery));
+                ctx.expectedTotalCount = 1;
+
+                runTest.accept(ctx);
+            }
+            {
+                String $filter = FILTER;
+                String tenantLink = null;
+                String endpointQuery = ENDPOINT_QUERY;
+
+                runTest.accept(new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery)));
+            }
+            {
+                String $filter = null;
+                String tenantLink = TENANT_LINK;
+                String endpointQuery = ENDPOINT_QUERY;
+
+                runTest.accept(new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery)));
+            }
+            {
+                String $filter = null;
+                String tenantLink = " ";
+                String endpointQuery = ENDPOINT_QUERY;
+
+                runTest.accept(new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery)));
+            }
+            {
+                String $filter = null;
+                String tenantLink = TENANT_LINK_INVALID;
+                String endpointQuery = ENDPOINT_QUERY;
+
+                // Hit the Public image with no tenant
+                TestRunCtx ctx = new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery));
+                ctx.expectedTotalCount = 1;
+
+                runTest.accept(ctx);
+            }
+            {
+                String $filter = FILTER_INVALID;
+                String tenantLink = null;
+                String endpointQuery = ENDPOINT_QUERY;
+
+                TestRunCtx ctx = new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery));
+                ctx.expectedTotalCount = 0;
+
+                runTest.accept(ctx);
+            }
+
+            // Negative tests
+
+            // 'endpoint' query param validation
+            {
+                String $filter = FILTER;
+                String tenantLink = TENANT_LINK;
+                // Endpoint filter is Mandatory!
+                String endpointQuery = null;
+
+                runTestWithExc
+                        .accept(new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery)));
+            }
+            {
+                String $filter = FILTER;
+                String tenantLink = TENANT_LINK;
+                String endpointQuery = ENDPOINT_QUERY_INVALID;
+
+                runTestWithExc
+                        .accept(new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery)));
+            }
+            {
+                String $filter = FILTER;
+                String tenantLink = TENANT_LINK;
+                // Endpoint filter matches 2 endpoints, but single one is expected
+                String endpointQuery = ENDPOINT_QUERY_MULTIPLE;
+
+                runTestWithExc
+                        .accept(new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery)));
+            }
+
+            // 'tenantLinks' query param validation
+            {
+                String $filter = FILTER;
+                // tenantLinks should be single
+                String tenantLink = TENANT_LINK + "," + TENANT_LINK;
+                String endpointQuery = ENDPOINT_QUERY;
+
+                runTestWithExc
+                        .accept(new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery)));
+            }
+        } finally {
+            deleteImages(createdImages);
+        }
+    }
+
+    @Test
+    public void testImageSearch_multipleNamesQuery() throws Throwable {
+
+        final Collection<ImageState> createdImages = new ArrayList<>();
+        createdImages.addAll(createImage("-apple"));
+        createdImages.addAll(createImage("-orange"));
+
+        final String FILTER = "name any '" + createdImages.stream()
+                .map(imageSt -> imageSt.name)
+                .distinct()
+                .collect(Collectors.joining(";"))
+                + "'";
+
+        final String ENDPOINT_QUERY = "documentSelfLink eq '" + endpoint.documentSelfLink + "'";
+
+        try {
+            {
+                String $filter = FILTER;
+                String tenantLink = TENANT_LINK;
+                String endpointQuery = ENDPOINT_QUERY;
+
+                TestRunCtx ctx = new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery));
+                // 2 Private + 2 Public
+                ctx.expectedTotalCount = 4;
+
+                runTest.accept(ctx);
+            }
+        } finally {
+            deleteImages(createdImages);
         }
     }
 
@@ -154,8 +302,14 @@ public class ImageSearchServiceTest extends ComputeBaseTest {
 
         final String imageSearchQuery;
 
+        /**
+         * Defaults to one for private and one for public image.
+         */
         int expectedTotalCount = 2;
 
+        /**
+         * Defaults to IllegalArgumentException.
+         */
         Class<? extends Throwable> expectedExc = IllegalArgumentException.class;
 
         TestRunCtx(String imageSearchQuery) {
@@ -165,21 +319,39 @@ public class ImageSearchServiceTest extends ComputeBaseTest {
 
     private Consumer<TestRunCtx> runTest = (ctx) -> {
 
-        host.log(Level.INFO, "run testImageSearch: query=%s", ctx.imageSearchQuery);
+        host.log(Level.INFO, "R-U-N testImageSearch: query=%s", ctx.imageSearchQuery);
 
         URI uri = UriUtils.buildUri(host, ImageSearchService.SELF_LINK,
                 ctx.imageSearchQuery);
 
+        ODataFactoryQueryResult images;
         try {
-            ODataFactoryQueryResult images = getDocument(ODataFactoryQueryResult.class, uri);
-
-            assertEquals("expectedTotalCount mismatch",
-                    ctx.expectedTotalCount,
-                    images.totalCount.intValue());
-
+            images = getDocument(ODataFactoryQueryResult.class, uri);
         } catch (Throwable e) {
             throw new IllegalStateException("Test execution failed with unexpected "
                     + e.getClass().getSimpleName() + ".", e);
+        }
+
+        try {
+            assertEquals("expectedTotalCount mismatch",
+                    ctx.expectedTotalCount,
+                    images.totalCount.intValue());
+        } catch (AssertionError assertErr) {
+            try {
+                ODataFactoryQueryResult allImages = getDocument(
+                        ODataFactoryQueryResult.class,
+                        UriUtils.buildExpandLinksQueryUri(
+                                UriUtils.buildUri(host, ImageService.FACTORY_LINK)));
+                allImages.documents.values().forEach(
+                        doc -> host.log(Level.INFO, "EXISTING image = %s", doc));
+            } catch (Throwable e) {
+                host.log(Level.INFO, "EXISTING image = E_R_R_O_R (%s)", e.getMessage());
+            }
+
+            images.documents.values().forEach(
+                    doc -> host.log(Level.INFO, "RETURNED image = %s", doc));
+
+            throw assertErr;
         }
     };
 
@@ -209,137 +381,69 @@ public class ImageSearchServiceTest extends ComputeBaseTest {
         }
     };
 
-    @Test
-    public void testImageSearch() throws Throwable {
+    /**
+     * Create one public and one private image in the main end-point, and one public and one private
+     * image in the "shouldNotMatch" end-point.
+     *
+     * @return unique suffix of the image created
+     */
+    private Collection<ImageState> createImage(String suffix) throws Throwable {
 
-        beforeTest();
+        List<ImageState> preCreateImages = new ArrayList<>();
 
-        final String FILTER = "name eq 'image-name'";
-        final String FILTER_INVALID = "name eq 'image-name-invalid'";
-
-        final String TENANT_LINK = "image-tenantLink";
-        final String TENANT_LINK_INVALID = TENANT_LINK + "-invalid";
-
-        final String ENDPOINT_QUERY = "documentSelfLink eq '" + endpoint.documentSelfLink + "'";
-        final String ENDPOINT_QUERY_INVALID = "documentSelfLink eq '" + endpoint.documentSelfLink
-                + "-invalid'";
-        final String ENDPOINT_QUERY_MULTIPLE = "name eq '" + endpoint.name + "*'";
-
-        // Positive tests
+        // Those images should be found by search
         {
-            String $filter = FILTER;
-            String tenantLink = TENANT_LINK;
-            String endpointQuery = ENDPOINT_QUERY;
+            // Create it as public
+            ImageState publicImage = createImage(suffix, true, endpoint);
+            preCreateImages.add(publicImage);
 
-            runTest.accept(new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery)));
-        }
-        {
-            String $filter = FILTER;
-            String tenantLink = TENANT_LINK;
-            String endpointQuery = ENDPOINT_QUERY + "&" + UriUtils.URI_PARAM_ODATA_TOP + "=" + 1;
-
-            TestRunCtx ctx = new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery));
-            ctx.expectedTotalCount = 1;
-
-            runTest.accept(ctx);
-        }
-        {
-            String $filter = FILTER;
-            String tenantLink = null;
-            String endpointQuery = ENDPOINT_QUERY;
-
-            runTest.accept(new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery)));
-        }
-        {
-            String $filter = null;
-            String tenantLink = TENANT_LINK;
-            String endpointQuery = ENDPOINT_QUERY;
-
-            runTest.accept(new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery)));
-        }
-        {
-            String $filter = null;
-            String tenantLink = " ";
-            String endpointQuery = ENDPOINT_QUERY;
-
-            runTest.accept(new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery)));
-        }
-        {
-            String $filter = null;
-            String tenantLink = TENANT_LINK_INVALID;
-            String endpointQuery = ENDPOINT_QUERY;
-
-            // Hit the Public image with no tenant
-            TestRunCtx ctx = new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery));
-            ctx.expectedTotalCount = 1;
-
-            runTest.accept(ctx);
-        }
-        {
-            String $filter = FILTER_INVALID;
-            String tenantLink = null;
-            String endpointQuery = ENDPOINT_QUERY;
-
-            TestRunCtx ctx = new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery));
-            ctx.expectedTotalCount = 0;
-
-            runTest.accept(ctx);
+            // Create it as private
+            ImageState privateImage = createImage(suffix, false, endpoint);
+            preCreateImages.add(privateImage);
         }
 
-        // Negative tests
-
-        // 'endpoint' query param validation
+        // Those images should NOT be found by search
+        // cause they are in different End-point and End-point Type
         {
-            String $filter = FILTER;
-            String tenantLink = TENANT_LINK;
-            // Endpoint filter is Mandatory!
-            String endpointQuery = null;
+            // Use same suffix as above!
+            ImageState publicImage = createImage(suffix, true, shouldNotMatchEndpoint);
+            preCreateImages.add(publicImage);
 
-            runTestWithExc.accept(new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery)));
-        }
-        {
-            String $filter = FILTER;
-            String tenantLink = TENANT_LINK;
-            String endpointQuery = ENDPOINT_QUERY_INVALID;
-
-            runTestWithExc.accept(new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery)));
-        }
-        {
-            String $filter = FILTER;
-            String tenantLink = TENANT_LINK;
-            // Endpoint filter matches 2 endpoints, but single one is expected
-            String endpointQuery = ENDPOINT_QUERY_MULTIPLE;
-
-            runTestWithExc.accept(new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery)));
+            ImageState privateImage = createImage(suffix, false, shouldNotMatchEndpoint);
+            preCreateImages.add(privateImage);
         }
 
-        // 'tenantLinks' query param validation
-        {
-            String $filter = FILTER;
-            // tenantLinks should be single
-            String tenantLink = TENANT_LINK + "," + TENANT_LINK;
-            String endpointQuery = ENDPOINT_QUERY;
-
-            runTestWithExc.accept(new TestRunCtx(buildQuery($filter, tenantLink, endpointQuery)));
-        }
+        return preCreateImages;
     }
 
-    private ImageState createImage(boolean isPublic, EndpointState endpoint) throws Throwable {
+    private ImageState createImage(String uniqueSuffix, boolean isPublic, EndpointState endpoint)
+            throws Throwable {
 
         final ImageState imageState = new ImageState();
-        imageState.id = "image-id";
-        imageState.name = "image-name";
-        imageState.description = "image-desc";
-        imageState.regionId = "image-region";
+
+        imageState.id = "image-id" + uniqueSuffix;
+        imageState.name = IMAGE_NAME + uniqueSuffix;
+        imageState.description = "image-desc" + uniqueSuffix;
+        imageState.regionId = "image-region" + uniqueSuffix;
 
         if (isPublic) {
             imageState.endpointType = endpoint.endpointType;
         } else {
             imageState.endpointLink = endpoint.documentSelfLink;
-            imageState.tenantLinks = Collections.singletonList("image-tenantLink");
+            imageState.tenantLinks = Collections.singletonList(TENANT_LINK);
         }
 
         return doPost(imageState, ImageService.FACTORY_LINK);
+    }
+
+    private void deleteImages(Collection<ImageState> imageStates) {
+        imageStates.forEach(imageSt -> {
+            try {
+                delete(imageSt.documentSelfLink);
+            } catch (Throwable t) {
+                throw new RuntimeException(t);
+            }
+        });
     }
 
     private String buildQuery(String $filter, String tenantLink, String endpointQuery) {

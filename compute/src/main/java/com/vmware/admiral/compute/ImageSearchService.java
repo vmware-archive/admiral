@@ -275,13 +275,11 @@ public class ImageSearchService extends StatelessService {
             if (e != null) {
                 logFine(() -> String.format(msg, imagesQuery, "FAILED"));
                 getImagesOp.fail(e);
-                return;
+            } else {
+                logFine(() -> String.format(msg, imagesQuery, "SUCCESS"));
+                // ODataFactoryQueryResult is propagated as returned by ImageService factory
+                getImagesOp.setBodyNoCloning(o.getBodyRaw()).complete();
             }
-
-            logFine(() -> String.format(msg, imagesQuery, "SUCCESS"));
-            // ODataFactoryQueryResult is propagated as returned by ImageService factory
-            getImagesOp.setBody(o.getBodyRaw());
-            getImagesOp.complete();
         }));
     }
 }
