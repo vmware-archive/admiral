@@ -6,6 +6,22 @@
     "public": "public",
     "private": "private",
     "clusters": "Clusters",
-    "repositories": "Repositories"
+    "repositories": "Repositories",
+    "details": {
+      "config": {
+        "projectRegistry": "Project registry",
+        "public": "Public",
+        "publicDescription": "Making a project registry public will make all repositories accessible to everyone.",
+        "deploymentSecurity": "Deployment security",
+        "enableContentTrust": "Enable content trust",
+        "enableContentTrustDescription": "Only allow verified images to be deployed.",
+        "preventVulnerableImagesFromRunning": "Prevent vulnerable images from running",
+        "preventVulnerableImagesFromRunningDescription_part1": "Prevent images with vulnerability severity of",
+        "preventVulnerableImagesFromRunningDescription_part2": "and above from being deployed.",
+        "vulnerabilityScanning": "Vulnerability scanning",
+        "automaticallyScanImagesOnPush": "Automatically scan images on push",
+        "automaticallyScanImagesOnPushDescription": "Automatically scan images when they are pushed to the project registry."
+      }
+    }
   }
 }

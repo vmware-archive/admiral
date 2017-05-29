@@ -1,0 +1,68 @@
+<form [formGroup]="configForm">
+    <div class= "p3">
+        <h6>{{"projects.details.config.projectRegistry" | i18n | uppercase}}</h6>
+        <section class="form-block">
+            <div class="checkbox">
+                <clr-checkbox
+                        formControlName="publicRegistry"
+                        [(ngModel)]="publicRegistry">
+                    {{"projects.details.config.public" | i18n}}
+                </clr-checkbox>
+                <div>
+                    {{"projects.details.config.publicDescription" | i18n}}
+                </div>
+            </div>
+        </section>
+        <h6>{{"projects.details.config.deploymentSecurity" | i18n | uppercase}}</h6>
+        <section class="form-block">
+            <div class="checkbox">
+                <clr-checkbox
+                        formControlName="enableContentTrust"
+                        [(ngModel)]="enableContentTrust">
+                    {{"projects.details.config.enableContentTrust" | i18n}}
+                </clr-checkbox>
+                <div>
+                    {{"projects.details.config.enableContentTrustDescription" | i18n}}
+                </div>
+            </div>
+            <div class="checkbox">
+                <clr-checkbox
+                        formControlName="preventVulnerableImagesFromRunning"
+                        [(ngModel)]="preventVulnerableImagesFromRunning">
+                    {{"projects.details.config.preventVulnerableImagesFromRunning" | i18n}}
+                </clr-checkbox>
+                <div>
+                    {{"projects.details.config.preventVulnerableImagesFromRunningDescription_part1" | i18n}}
+                    <div class="select severity">
+                        <select formControlName="preventVulnerableImagesFromRunningSeverity"
+                                [(ngModel)]="preventVulnerableImagesFromRunningSeverity">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                    {{"projects.details.config.preventVulnerableImagesFromRunningDescription_part2" | i18n}}
+                </div>
+            </div>
+        </section>
+        <h6>{{"projects.details.config.vulnerabilityScanning" | i18n | uppercase}}</h6>
+        <section class="form-block">
+            <div class="checkbox">
+                <clr-checkbox
+                        formControlName="automaticallyScanImagesOnPush"
+                        [(ngModel)]="automaticallyScanImagesOnPush">
+                    {{"projects.details.config.automaticallyScanImagesOnPush" | i18n}}
+                </clr-checkbox>
+                <div>
+                    {{"projects.details.config.automaticallyScanImagesOnPushDescription" | i18n}}
+                </div>
+            </div>
+        </section>
+    </div>
+</form>
+<button _ngcontent-c17="" class="btn btn-primary" type="button"
+        (click)="saveProjectConfiguration()"
+        [disabled]="configForm.pristine">Save</button>
+<button _ngcontent-c17="" class="btn btn-outline" type="button"
+        [disabled]="configForm.pristine"
+        (click)="cancelProjectConfiguration()">Cancel</button>

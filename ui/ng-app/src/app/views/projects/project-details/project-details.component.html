@@ -22,6 +22,6 @@
         <hbr-replication [projectId]="hbrProjectId"></hbr-replication>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'configurationContent'">
-        <p>Content for configuration tab.</p>
+        <app-project-configuration [project]="entity"></app-project-configuration>
     </clr-tab-content>
 </clr-tabs>
