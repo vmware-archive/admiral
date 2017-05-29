@@ -38,19 +38,18 @@
     window.isNavigationLess = true;
     window.isEmbedded = true;
 
-    // Load main script asynchronously so that the ones that embed can inject things onload
-    function loadScript(retries) {
-      if (window.getBaseServiceUrl ||  retries === 0) {
-        script = document.createElement('script');
-        script.src = 'js/main.js';
-        document.body.appendChild(script);
-      } else {
-        setTimeout(function() {
-          loadScript(retries - 1);
-        }, 50);
+    var lookupGetBaseServiceUrl = function(wnd) {
+      if (wnd.getBaseServiceUrl) {
+        return wnd.getBaseServiceUrl;
+      }
+
+      if (wnd.parent && wnd !== wnd.parent) {
+        return lookupGetBaseServiceUrl(wnd.parent);
       }
     }
-    loadScript(50);
+
+    window.getBaseServiceUrl = lookupGetBaseServiceUrl(window);
   </script>
+  <script src='js/main.js'></script>
 </body>
 </html>

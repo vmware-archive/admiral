@@ -21,10 +21,6 @@ export class FormerViewComponent implements OnInit, OnDestroy {
   ngOnInit() {
     if (!FormerViewComponent.iframe) {
       FormerViewComponent.iframe = document.createElement('iframe');
-
-      FormerViewComponent.iframe.onload = function() {
-        FormerViewComponent.iframe.contentWindow['getBaseServiceUrl'] = window['getBaseServiceUrl'];
-      };
     }
 
     this.routeObserve = this.router.events.subscribe((event) => {
