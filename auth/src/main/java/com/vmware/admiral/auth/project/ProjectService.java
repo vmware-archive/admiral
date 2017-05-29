@@ -14,6 +14,7 @@ package com.vmware.admiral.auth.project;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.util.ProjectUtil;
@@ -49,6 +50,11 @@ import com.vmware.xenon.services.common.UserService.UserState;
 public class ProjectService extends StatefulService {
 
     public static final String FACTORY_LINK = ManagementUriParts.PROJECTS;
+
+    public static final String FIELD_NAME_CUSTOM_PROPERTIES = "customProperties";
+
+    public static final String CUSTOM_PROPERTY_HARBOR_ID = "__harborId";
+
     public static final String DEFAULT_PROJECT_ID = "default-project";
     public static final String DEFAULT_PROJECT_LINK = UriUtils.buildUriPath(FACTORY_LINK,
             DEFAULT_PROJECT_ID);
@@ -231,9 +237,12 @@ public class ProjectService extends StatefulService {
         ServiceDocumentDescription docDesc = getDocumentTemplate().documentDescription;
         String currentSignature = Utils.computeSignature(currentState, docDesc);
 
+        Map<String, String> mergedProperties = PropertyUtils
+                .mergeCustomProperties(currentState.customProperties, patchState.customProperties);
         PropertyUtils.mergeServiceDocuments(currentState, patchState);
-        String newSignature = Utils.computeSignature(currentState, docDesc);
+        currentState.customProperties = mergedProperties;
 
+        String newSignature = Utils.computeSignature(currentState, docDesc);
         return !currentSignature.equals(newSignature);
     }
 

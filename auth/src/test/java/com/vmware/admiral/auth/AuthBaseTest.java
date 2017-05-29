@@ -13,6 +13,7 @@ package com.vmware.admiral.auth;
 
 import java.net.URI;
 import java.time.Duration;
+import java.util.Map;
 import java.util.UUID;
 
 import org.junit.Before;
@@ -89,13 +90,28 @@ public abstract class AuthBaseTest extends BaseTestCase {
         return createProject(name, null, false, null, null);
     }
 
+    protected ProjectState createProject(String name, Map<String, String> customProperties) throws Throwable {
+        return createProject(name, null, false, null, null, customProperties);
+    }
+
     protected ProjectState createProject(String name, String description, boolean isPublic)
             throws Throwable {
         return createProject(name, description, isPublic, null, null);
     }
 
     protected ProjectState createProject(String name, String description, boolean isPublic,
+            Map<String, String> customProperties) throws Throwable {
+        return createProject(name, description, isPublic, null, null, customProperties);
+    }
+
+    protected ProjectState createProject(String name, String description, boolean isPublic,
             String adminsGroupLink, String membersGroupLink) throws Throwable {
+        return createProject(name, description, isPublic, adminsGroupLink, membersGroupLink, null);
+    }
+
+    protected ProjectState createProject(String name, String description, boolean isPublic,
+            String adminsGroupLink, String membersGroupLink, Map<String, String> customProperties)
+            throws Throwable {
         ProjectState projectState = new ProjectState();
 
         projectState.id = UUID.randomUUID().toString();
@@ -104,6 +120,7 @@ public abstract class AuthBaseTest extends BaseTestCase {
         projectState.isPublic = isPublic;
         projectState.administratorsUserGroupLink = adminsGroupLink;
         projectState.membersUserGroupLink = membersGroupLink;
+        projectState.customProperties = customProperties;
 
         projectState = doPost(projectState, ProjectService.FACTORY_LINK);
 
