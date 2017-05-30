@@ -204,18 +204,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         startPost.setBody(state);
         startPost.complete();
 
-        if (isExtensibilityResponse(startPost)) {
-            Runnable callback = () -> {
-                handleStagePatch(state);
-            };
-
-            ServiceTaskCallbackResponse replyPayload = Utils
-                    .fromJson(startPost.getBodyRaw(), this.replyPayload().getClass());
-
-            enhanceExtensibilityResponse(state, replyPayload, callback);
-            return;
-        }
-        handleSubscriptions(state);
+        checkAndHandleSubscriptions(state, startPost);
     }
 
     @Override
@@ -285,18 +274,30 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
         patch.complete();
 
-        if (isExtensibilityResponse(patch)) {
+        checkAndHandleSubscriptions(state, patch);
+    }
+
+    // Check if there are subscriptions and run them or resume the task
+    private void checkAndHandleSubscriptions(T state, Operation op) {
+        if (isExtensibilityResponse(op)) {
             Runnable callback = () -> {
                 handleStagePatch(state);
             };
-            ServiceTaskCallbackResponse replyPayload = Utils
-                    .fromJson(patch.getBodyRaw(), this.replyPayload().getClass());
 
-            enhanceExtensibilityResponse(state, replyPayload, callback);
-            return;
+            try {
+                ServiceTaskCallbackResponse replyPayload = op
+                        .getBody(this.replyPayload().getClass());
+
+                enhanceExtensibilityResponse(state, replyPayload, callback);
+            } catch (Exception ex) {
+                logSevere(ex);
+                logSevere("Failed resuming task from extensibility response. Payload = %s, reply"
+                        + " class = %s", op.getBodyRaw(), this.replyPayload().getClass());
+                this.failTask("Failed resuming task from extensibility response.", ex);
+            }
+        } else {
+            handleSubscriptions(state);
         }
-
-        handleSubscriptions(state);
     }
 
     // Check if Task allows subscription on this stage.
