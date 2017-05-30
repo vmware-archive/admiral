@@ -18,7 +18,7 @@ import initializer from 'core/initializer';
 
 var $loadingEl = $('body > .loading');
 
-initializer.init(() => {
+initializer.init(true, () => {
   // Explicitly not imported but lazy initialized, after the other initialization jobs are done
   var SingleView = require('components/SingleView').default;
 

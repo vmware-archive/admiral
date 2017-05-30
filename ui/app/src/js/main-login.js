@@ -13,7 +13,7 @@ import initializer from 'core/initializer';
 
 var $loadingEl = $('body > .loading');
 
-initializer.init(function() {
+initializer.init(false, function() {
   // Explicitly not imported but lazy initialized, after the other initialization jobs are done
   var Login = require('components/Login').default;
 

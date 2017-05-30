@@ -76,7 +76,7 @@ var updateHeader = function() {
   }
 };
 
-initializer.init(() => {
+initializer.init(true, () => {
   var locationSearch = window.location.search || '';
   if (locationSearch.indexOf('compute') !== -1) {
     appInitializer(require('components/AppCompute').default,

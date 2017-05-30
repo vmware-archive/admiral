@@ -15,7 +15,7 @@ window.i18n = i18next;
 
 var initializer = {};
 
-initializer.init = function(callback) {
+initializer.init = function(initProperties, callback) {
   Vue.config.debug = false;
   Vue.config.silent = false;
 
@@ -104,6 +104,11 @@ initializer.init = function(callback) {
   var utils = require('core/utils').default;
 
   require('components/common/CommonComponentsRegistry').default; //eslint-disable-line
+
+  if (!initProperties) {
+    initI18N().then(callback);
+    return;
+  }
 
   services.loadConfigurationProperties().then((properties) => {
     var configurationProperties = {};
