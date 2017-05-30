@@ -25,7 +25,7 @@ import { LogsComponent } from './views/logs/logs.component';
 
 import { DashboardComponent } from './views/dashboard/dashboard.component';
 import { FormerViewComponent } from './views/former-view/former-view.component';
-import { ProjectRepositoriesComponent } from './views/project-repositories/project-repositories.component';
+import { RepositoryComponent } from './views/hbr/repository/repository.component';
 import { PublicRepositoriesComponent } from './views/public-repositories/public-repositories.component';
 import { VchClustersComponent } from './views/vch-clusters/vch-clusters.component';
 
@@ -51,7 +51,7 @@ export const ROUTES: Routes = [
                 path: 'dashboard', component: DashboardComponent
             },
             {
-                path: 'project-repositories', component: ProjectRepositoriesComponent
+                path: 'project-repositories', component: RepositoryComponent
             },
             {
                 path: 'public-repositories', component: PublicRepositoriesComponent

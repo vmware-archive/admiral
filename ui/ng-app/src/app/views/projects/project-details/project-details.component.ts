@@ -9,18 +9,32 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
+import { BaseDetailsComponent } from './../../../components/base/base-details.component';
+import { DocumentService } from './../../../utils/document.service';
+import { ActivatedRoute } from '@angular/router';
+import { Links } from './../../../utils/links';
 
 @Component({
   selector: 'app-project-details',
   templateUrl: './project-details.component.html',
   styleUrls: ['./project-details.component.scss']
 })
-export class ProjectDetailsComponent implements OnInit {
+export class ProjectDetailsComponent extends BaseDetailsComponent {
 
-  constructor() { }
+  hbrProjectId;
+  hbrSessionInfo = {};
 
-  ngOnInit() {
+  constructor(route: ActivatedRoute, service: DocumentService) {
+    super(route, service, Links.PROJECTS);
+  }
+
+  protected entityInitialized() {
+    let cs = this.entity.customProperties || {};
+    if (!cs.__harborId) {
+      throw new Error('__harborId not provided for project');
+    }
+    this.hbrProjectId = cs.__harborId;
   }
 
 }

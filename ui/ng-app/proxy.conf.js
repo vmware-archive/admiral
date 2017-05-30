@@ -21,7 +21,8 @@ const ENDPOINTS = [
   '/groups/*',
   '/image-assets/*',
   '/user-session/*',
-  '/popular-images/*'
+  '/popular-images/*',
+  '/harbor/*'
 ];
 
 var configs = {};

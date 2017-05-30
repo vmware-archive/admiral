@@ -13,13 +13,13 @@
         <p>Content for members tab.</p>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'repositoriesContent'">
-        <p>Content for repositories tab.</p>
+        <hbr-repository [projectId]="hbrProjectId" [sessionInfo]="hbrSessionInfo"></hbr-repository>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'infrastructureContent'">
         <p>Content for infrastructure tab.</p>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'registryReplicationContent'">
-        <p>Content for registryReplication tab.</p>
+        <hbr-replication [projectId]="hbrProjectId"></hbr-replication>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'configurationContent'">
         <p>Content for configuration tab.</p>

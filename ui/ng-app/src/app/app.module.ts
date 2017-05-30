@@ -12,19 +12,45 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { NgModule } from '@angular/core';
+import { NgModule, APP_INITIALIZER } from '@angular/core';
+import { Injectable } from '@angular/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { HttpModule } from '@angular/http';
 import { ClarityModule } from 'clarity-angular';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
+import { CookieModule } from 'ngx-cookie';
 import { AppComponent } from './app.component';
 import { ROUTING } from "./app.routing";
 import { Ajax, SessionTimedOutSubject } from './utils/ajax.service';
 import { DocumentService } from './utils/document.service';
 import { TemplateService } from './utils/template.service';
 import { ViewExpandRequestService } from './services/view-expand-request.service';
+import { HarborLibraryModule, SERVICE_CONFIG, IServiceConfig } from 'harbor-ui';
+import * as I18n from 'i18next';
 
 import { ADMIRAL_DECLARATIONS } from './admiral';
+
+export const ServiceConfig:IServiceConfig = {
+    systemInfoEndpoint: "/harbor/system",
+    repositoryBaseEndpoint: "/harbor/repositories",
+    logBaseEndpoint: "/harbor/logs",
+    targetBaseEndpoint: "/harbor/targets",
+    replicationRuleEndpoint: "/harbor/policies/replication",
+    replicationJobEndpoint: "/harbor/jobs/replication"
+};
+
+
+let HBR_SUPPORTED_LANGS = ['en-us', 'zh-cn', 'es-es'];
+
+export function initConfig(ts: TranslateService) {
+    return () => {
+        let lng = I18n.language || 'en-us';
+        ts.addLangs(HBR_SUPPORTED_LANGS);
+        ts.use(lng.toLocaleLowerCase());
+    };
+}
+
 
 @NgModule({
     declarations: ADMIRAL_DECLARATIONS,
@@ -35,21 +61,36 @@ import { ADMIRAL_DECLARATIONS } from './admiral';
         ReactiveFormsModule,
         HttpModule,
         ClarityModule.forRoot(),
+        CookieModule.forRoot(),
         ROUTING,
-        InfiniteScrollModule
+        HarborLibraryModule.forChild({
+            config: {
+                provide: SERVICE_CONFIG,
+                useValue: ServiceConfig
+            }
+        }),
+        InfiniteScrollModule,
     ],
     providers: [
         Ajax,
         SessionTimedOutSubject,
         DocumentService,
         TemplateService,
-        ViewExpandRequestService
+        ViewExpandRequestService,
+        TranslateService,
+        {
+            provide: APP_INITIALIZER,
+            useFactory: initConfig,
+            deps: [TranslateService],
+            multi: true
+        },
     ],
     bootstrap: [AppComponent]
 })
 export class AppModule {
 
     constructor(router: Router) {
+
         router.events.subscribe((val) => {
             if (val instanceof NavigationEnd && window.parent !== window) {
                 window.parent.location.hash = window.location.hash;
