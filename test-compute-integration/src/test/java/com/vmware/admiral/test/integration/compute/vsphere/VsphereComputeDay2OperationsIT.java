@@ -13,8 +13,11 @@ package com.vmware.admiral.test.integration.compute.vsphere;
 
 import java.util.Set;
 
+import org.junit.Ignore;
+
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 
+@Ignore("https://jira-hzn.eng.vmware.com/browse/VCOM-926")
 public class VsphereComputeDay2OperationsIT extends VsphereComputeProvisionIT {
 
     @Override
