@@ -13,16 +13,16 @@ package com.vmware.admiral.test.integration.compute.vsphere;
 
 import java.util.Set;
 
-import org.junit.Ignore;
-
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 
-@Ignore("https://jira-hzn.eng.vmware.com/browse/VCOM-926")
 public class VsphereComputeDay2OperationsIT extends VsphereComputeProvisionIT {
 
     @Override
     protected void doWithResources(Set<String> resourceLinks) throws Throwable {
-        super.doWithResources(resourceLinks);
+
+        // Reboot requires VM to be in ON state
+        doDay2Operation(resourceLinks, DAY_2_OPERATION_POWER_ON, null);
+        validateHostState(resourceLinks, PowerState.ON);
 
         doDay2Operation(resourceLinks, DAY_2_OPERATION_REBOOT, null);
         validateHostState(resourceLinks, PowerState.ON);
