@@ -617,26 +617,24 @@ public class ContainerHostDataCollectionService extends StatefulService {
         final Long totalMemory = memorySum;
 
         // TODO this will not work in a multi-node setting, with consensus. There is a race.
-        // Resource pool should support PATCH
-        // need to do a GET and then PUT because PATCH is not implemented for these fields
-        ResourcePoolState rpPutState = Utils.clone(resourcePoolState);
-        if (rpPutState.customProperties == null) {
-            rpPutState.customProperties = new HashMap<>();
-        }
-        rpPutState.customProperties
+        ResourcePoolState rpPatchState = new ResourcePoolState();
+        rpPatchState.documentSelfLink = resourcePoolState.documentSelfLink;
+        rpPatchState.customProperties = new HashMap<>();
+
+        rpPatchState.customProperties
                 .put(RESOURCE_POOL_CPU_USAGE_CUSTOM_PROP, Double.toString(aggregateCpuUsage));
-        rpPutState.customProperties
+        rpPatchState.customProperties
                 .put(RESOURCE_POOL_AVAILABLE_MEMORY_CUSTOM_PROP,
                         Long.toString(resourcePoolAvailableMemory));
-        rpPutState.maxMemoryBytes = totalMemory;
-        rpPutState.minMemoryBytes = 0L;
-        sendRequest(Operation.createPut(this, rpPutState.documentSelfLink)
-                .setBodyNoCloning(rpPutState).setCompletion((op, e) -> {
+        rpPatchState.maxMemoryBytes = totalMemory;
+        rpPatchState.minMemoryBytes = 0L;
+        sendRequest(Operation.createPatch(this, rpPatchState.documentSelfLink)
+                .setBodyNoCloning(rpPatchState).setCompletion((op, e) -> {
                     if (e != null) {
                         logSevere("Unable to update the resource pool with link "
-                                + rpPutState.documentSelfLink + ": " + e.toString());
+                                + rpPatchState.documentSelfLink + ": " + e.toString());
                     }
-                    updatePlacements(rpPutState);
+                    updatePlacements(rpPatchState);
                 }));
     }
 
@@ -895,11 +893,11 @@ public class ContainerHostDataCollectionService extends StatefulService {
                                 sendRequest(Operation
                                         .createPatch(this, computeState.documentSelfLink)
                                         .setBodyNoCloning(patchState)
-                                        .setCompletion((op, e) -> {
-                                            if (e != null) {
-                                                logSevere(e);
-                                            }
-                                        }));
+                                                .setCompletion((op, e) -> {
+                                                    if (e != null) {
+                                                        logSevere(e);
+                                                    }
+                                                }));
                             }
                         } else {
                             logWarning(Utils.toString(ex));
