@@ -229,6 +229,7 @@ public interface ManagementUriParts {
     String CONTAINER_IMAGE_ICONS = UI_SERVICE + "/container-image-icons";
 
     String REVERSE_PROXY = "/rp";
+    String HBR_REVERSE_PROXY = "/hbr-api";
 
     String USER_SESSION_SERVICE = "/user-session";
 

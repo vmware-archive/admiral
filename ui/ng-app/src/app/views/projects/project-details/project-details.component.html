@@ -26,13 +26,13 @@
         <p>Content for members tab.</p>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'repositoriesContent'">
-        <hbr-repository [projectId]="hbrProjectId" [sessionInfo]="hbrSessionInfo"></hbr-repository>
+        <hbr-repository *ngIf="hbrProjectId" [projectId]="hbrProjectId" [sessionInfo]="hbrSessionInfo"></hbr-repository>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'infrastructureContent'">
         <p>Content for infrastructure tab.</p>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'registryReplicationContent'">
-        <hbr-replication [projectId]="hbrProjectId"></hbr-replication>
+        <hbr-replication *ngIf="hbrProjectId" [projectId]="hbrProjectId"></hbr-replication>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'configurationContent'">
         <app-project-configuration [project]="entity"></app-project-configuration>

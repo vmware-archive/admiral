@@ -13,6 +13,7 @@ package com.vmware.admiral.auth.project;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -51,6 +52,7 @@ public class ProjectService extends StatefulService {
     public static final String CUSTOM_PROPERTY_HARBOR_ID = "__harborId";
 
     public static final String DEFAULT_PROJECT_ID = "default-project";
+    public static final String DEFAULT_HARBOR_PROJECT_ID = "1";
     public static final String DEFAULT_PROJECT_LINK = UriUtils
             .buildUriPath(ProjectFactoryService.SELF_LINK, DEFAULT_PROJECT_ID);
 
@@ -59,6 +61,8 @@ public class ProjectService extends StatefulService {
         project.documentSelfLink = DEFAULT_PROJECT_LINK;
         project.name = DEFAULT_PROJECT_ID;
         project.id = project.name;
+        project.customProperties = new HashMap<>();
+        project.customProperties.put(CUSTOM_PROPERTY_HARBOR_ID, DEFAULT_HARBOR_PROJECT_ID);
 
         return project;
     }

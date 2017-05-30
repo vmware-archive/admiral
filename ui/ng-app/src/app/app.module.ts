@@ -32,12 +32,12 @@ import * as I18n from 'i18next';
 import { ADMIRAL_DECLARATIONS } from './admiral';
 
 export const ServiceConfig:IServiceConfig = {
-    systemInfoEndpoint: "/harbor/system",
-    repositoryBaseEndpoint: "/harbor/repositories",
-    logBaseEndpoint: "/harbor/logs",
-    targetBaseEndpoint: "/harbor/targets",
-    replicationRuleEndpoint: "/harbor/policies/replication",
-    replicationJobEndpoint: "/harbor/jobs/replication"
+    systemInfoEndpoint: "/hbr-api/system",
+    repositoryBaseEndpoint: "/hbr-api/repositories",
+    logBaseEndpoint: "/hbr-api/logs",
+    targetBaseEndpoint: "/hbr-api/targets",
+    replicationRuleEndpoint: "/hbr-api/policies/replication",
+    replicationJobEndpoint: "/hbr-api/jobs/replication"
 };
 
 

@@ -22,7 +22,7 @@ const ENDPOINTS = [
   '/image-assets/*',
   '/user-session/*',
   '/popular-images/*',
-  '/harbor/*',
+  '/hbr-api/*',
   '/auth/*'
 ];
 
