@@ -114,7 +114,7 @@ navigation-container > .full-screen {
 }
 .sidenav .project-selector {
   width: 100%;
-  background-color: $clr-selection-color;
+  border-bottom: 1px solid $clr-light-midtone-gray;
 
   .dropdown-toggle {
     height: auto;
