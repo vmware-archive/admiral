@@ -3,6 +3,9 @@
     "users": "Users",
     "administrators": "Administrators",
     "projectRegistry": "Registry",
-    "public": "public"
+    "public": "public",
+    "private": "private",
+    "clusters": "Clusters",
+    "repositories": "Repositories"
   }
 }

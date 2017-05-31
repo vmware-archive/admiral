@@ -20,8 +20,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
+import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
-import com.vmware.admiral.auth.project.ProjectService.ProjectStateWithMembers;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
@@ -74,7 +74,7 @@ public class ProjectFactoryServiceTest extends AuthBaseTest {
                             assertEquals(project.documentSelfLink, result.documents.keySet().iterator().next());
 
                             Object jsonProject = result.documents.values().iterator().next();
-                            ProjectStateWithMembers stateWithMembers = Utils.fromJson(jsonProject, ProjectStateWithMembers.class);
+                            ExpandedProjectState stateWithMembers = Utils.fromJson(jsonProject, ExpandedProjectState.class);
                             assertNotNull(stateWithMembers);
                             assertNotNull(stateWithMembers.administrators);
                             assertEquals(1, stateWithMembers.administrators.size());

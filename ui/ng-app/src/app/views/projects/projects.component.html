@@ -25,15 +25,21 @@
       <div card-content>
         <div class="form-group">
           <label>{{"projects.users" | i18n}}</label>
-          <div>4</div>
+          <div>{{item.members | count}}</div>
         </div>
         <div class="form-group">
-          <label>{{"projects.administrators" | i18n}}</label>
-          <div>1</div>
+          <label>{{"projects.clusters" | i18n}}</label>
+          <div>{{item.clusterLinks | count}}</div>
         </div>
-        <div class="form-group" *ngIf="item.isPublic">
+        <div class="form-group">
+          <label>{{"projects.repositories" | i18n}}</label>
+          <div>{{item.repositoryLinks | count}}</div>
+        </div>
+        <div class="form-group">
           <label>{{"projects.projectRegistry" | i18n}}</label>
-          <div>{{"projects.public" | i18n}}</div>
+          <div>
+            {{(item.isPublic ? "projects.public" : "projects.private") | i18n}}
+          </div>
         </div>
       </div>
       <div card-footer>

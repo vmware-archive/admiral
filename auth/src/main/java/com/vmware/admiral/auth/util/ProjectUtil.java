@@ -17,8 +17,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 
+import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
-import com.vmware.admiral.auth.project.ProjectService.ProjectStateWithMembers;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
@@ -52,16 +52,16 @@ public class ProjectUtil {
     }
 
     /**
-     * Creates a {@link ProjectStateWithMembers} based on the provided simple state additionally
+     * Creates a {@link ExpandedProjectState} based on the provided simple state additionally
      * building the lists of administrators and members.
      *
      * @param host a {@link ServiceHost} that can be used to retrieve service documents
      * @param simpleState the {@link ProjectState} that needs to be expanded
      * @param referer the {@link URI} of the service that issues the expand
      */
-    public static DeferredResult<ProjectStateWithMembers> expandProjectState(
+    public static DeferredResult<ExpandedProjectState> expandProjectState(
             ServiceHost host, ProjectState simpleState, URI referer) {
-        ProjectStateWithMembers expandedState = new ProjectStateWithMembers();
+        ExpandedProjectState expandedState = new ExpandedProjectState();
         simpleState.copyTo(expandedState);
 
         DeferredResult<Void> retrieveAdmins = retrieveUserGroupMembers(host,
@@ -70,9 +70,39 @@ public class ProjectUtil {
         DeferredResult<Void> retrieveMembers = retrieveUserGroupMembers(host,
                 simpleState.membersUserGroupLink, referer)
                         .thenAccept((membersList) -> expandedState.members = membersList);
+        DeferredResult<Void> retrieveClusterLinks = retrieveClusterLinks(simpleState.documentSelfLink)
+                .thenAccept((clusterLinks) -> expandedState.clusterLinks = clusterLinks);
+        DeferredResult<Void> retrieveRepositoryLinks = retrieveRepositoryLinks(simpleState.documentSelfLink)
+                .thenAccept((repositoryLinks) -> expandedState.repositoryLinks = repositoryLinks);
 
-        return DeferredResult.allOf(retrieveAdmins, retrieveMembers)
-                .thenApply((ignore) -> expandedState);
+        return DeferredResult.allOf(retrieveAdmins, retrieveMembers, retrieveClusterLinks,
+                retrieveRepositoryLinks).thenApply((ignore) -> expandedState);
+    }
+
+    private static DeferredResult<List<String>> retrieveClusterLinks(String projectLink) {
+        // TODO implement when the Cluster service becomes available
+        final int maxDummyClusters = 7;
+        return DeferredResult.completed(createDummyLinksList("/clusters/dummy-cluster",
+                // bit-mask to avoid Math.abs. Interesting read on the topic:
+                // http://findbugs.blogspot.bg/2006/09/is-mathabs-broken.html
+                (projectLink.hashCode() & Integer.MAX_VALUE) % maxDummyClusters));
+    }
+
+    private static DeferredResult<List<String>> retrieveRepositoryLinks(String projectLink) {
+        // TODO implement when the proxy service that fetches data from Harbor becomes available
+        final int maxDummyRepositories = 13;
+        return DeferredResult.completed(createDummyLinksList("/repositories/dummy-repository",
+                // bit-mask to avoid Math.abs. Interesting read on the topic:
+                // http://findbugs.blogspot.bg/2006/09/is-mathabs-broken.html
+                (projectLink.hashCode() & Integer.MAX_VALUE) % maxDummyRepositories));
+    }
+
+    private static List<String> createDummyLinksList(String linksPrefix, int linksCount) {
+        ArrayList<String> dummyLinks = new ArrayList<>(linksCount);
+        for (int i = 0; i < linksCount; i++) {
+            dummyLinks.add(String.format("%s-%d", linksPrefix, i));
+        }
+        return dummyLinks;
     }
 
     /**

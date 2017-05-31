@@ -14,8 +14,8 @@ package com.vmware.admiral.auth.project;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
-import com.vmware.admiral.auth.project.ProjectService.ProjectStateWithMembers;
 import com.vmware.admiral.auth.util.ProjectUtil;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.container.ContainerService;
@@ -58,7 +58,7 @@ public class ProjectFactoryService extends FactoryService {
         }
         ServiceDocumentQueryResult body = op.getBody(ServiceDocumentQueryResult.class);
         if (body.documents != null) {
-            List<DeferredResult<ProjectStateWithMembers>> deferredExpands = body.documents.values()
+            List<DeferredResult<ExpandedProjectState>> deferredExpands = body.documents.values()
                     .stream()
                     .map((jsonProject) -> {
                         ProjectState projectState = Utils.fromJson(jsonProject, ProjectState.class);

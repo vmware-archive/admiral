@@ -11,6 +11,7 @@
 
 import { AppComponent } from './app.component';
 import { TranslatePipe } from './utils/i18n.pipe';
+import { ArrayElementsCountPipe } from './utils/count.pipe';
 import { BreakOutModalDirective } from "./directives/shared/break-out-modal.directive";
 
 import { AdministrationComponent } from './views/administration/administration.component';
@@ -51,6 +52,7 @@ import { ServiceDetailsComponent } from './kubernetes/services/details/service-d
 export const ADMIRAL_DECLARATIONS = [
   AppComponent,
   TranslatePipe,
+  ArrayElementsCountPipe,
   BreakOutModalDirective,
 
   AdministrationComponent,

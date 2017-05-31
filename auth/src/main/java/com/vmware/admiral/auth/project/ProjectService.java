@@ -116,7 +116,7 @@ public class ProjectService extends StatefulService {
      * This class represents the expanded document state associated with a
      * {@link com.vmware.admiral.auth.project.ProjectService}.
      */
-    public static class ProjectStateWithMembers extends ProjectState {
+    public static class ExpandedProjectState extends ProjectState {
 
         /** List of administrators for this project. */
         @Documentation(description = "List of administrators for this project.")
@@ -126,7 +126,15 @@ public class ProjectService extends StatefulService {
         @Documentation(description = "List of members for this project.")
         public List<UserState> members;
 
-        public void copyTo(ProjectStateWithMembers destination) {
+        /** List of cluster links for this project. */
+        @Documentation(description = "List of cluster links for this project.")
+        public List<String> clusterLinks;
+
+        /** List of repository links for this project. */
+        @Documentation(description = "List of repository links for this project.")
+        public List<String> repositoryLinks;
+
+        public void copyTo(ExpandedProjectState destination) {
             super.copyTo(destination);
             if (administrators != null) {
                 destination.administrators = new ArrayList<>(administrators);

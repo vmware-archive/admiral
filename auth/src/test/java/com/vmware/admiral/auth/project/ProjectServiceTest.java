@@ -27,8 +27,8 @@ import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
+import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
-import com.vmware.admiral.auth.project.ProjectService.ProjectStateWithMembers;
 import com.vmware.admiral.auth.util.ProjectUtil;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.QueryUtil;
@@ -129,7 +129,7 @@ public class ProjectServiceTest extends AuthBaseTest {
     @Test
     public void testProjectRolesPatch() throws Throwable {
         // verify initial state
-        ProjectStateWithMembers expandedState = getExpandedProjectState(project.documentSelfLink);
+        ExpandedProjectState expandedState = getExpandedProjectState(project.documentSelfLink);
         assertNotNull(expandedState.administrators);
         assertNotNull(expandedState.members);
         assertEquals(1, expandedState.administrators.size());
@@ -187,7 +187,7 @@ public class ProjectServiceTest extends AuthBaseTest {
     @Test
     public void testMixedPatch() throws Throwable {
         // verify initial state
-        ProjectStateWithMembers expandedState = getExpandedProjectState(project.documentSelfLink);
+        ExpandedProjectState expandedState = getExpandedProjectState(project.documentSelfLink);
         assertEquals(PROJECT_NAME, expandedState.name);
         assertEquals(PROJECT_IS_PUBLIC, expandedState.isPublic);
         assertNotNull(expandedState.administrators);
@@ -245,7 +245,7 @@ public class ProjectServiceTest extends AuthBaseTest {
     @Test
     public void testProjectRolesPut() throws Throwable {
         // verify initial state
-        ProjectStateWithMembers expandedState = getExpandedProjectState(project.documentSelfLink);
+        ExpandedProjectState expandedState = getExpandedProjectState(project.documentSelfLink);
         assertNotNull(expandedState.administrators);
         assertNotNull(expandedState.members);
         assertEquals(1, expandedState.administrators.size());
@@ -398,7 +398,7 @@ public class ProjectServiceTest extends AuthBaseTest {
 
     @Test
     public void testGetStateWithMembers() {
-        ProjectStateWithMembers stateWithMembers = getExpandedProjectState(
+        ExpandedProjectState stateWithMembers = getExpandedProjectState(
                 project.documentSelfLink);
         assertNotNull(stateWithMembers);
 
@@ -422,7 +422,7 @@ public class ProjectServiceTest extends AuthBaseTest {
         project.membersUserGroupLink = null;
         project = doPut(project);
 
-        ProjectStateWithMembers stateWithMembers = getExpandedProjectState(
+        ExpandedProjectState stateWithMembers = getExpandedProjectState(
                 project.documentSelfLink);
         assertNotNull(stateWithMembers);
 
@@ -474,11 +474,11 @@ public class ProjectServiceTest extends AuthBaseTest {
         return doPost(pool, ResourcePoolService.FACTORY_LINK);
     }
 
-    private ProjectStateWithMembers getExpandedProjectState(String projectLink) {
+    private ExpandedProjectState getExpandedProjectState(String projectLink) {
         URI uriWithExpand = UriUtils.extendUriWithQuery(UriUtils.buildUri(host, projectLink),
                 UriUtils.URI_PARAM_ODATA_EXPAND, Boolean.toString(true));
 
-        ProjectStateWithMembers resultState = new ProjectStateWithMembers();
+        ExpandedProjectState resultState = new ExpandedProjectState();
         host.testStart(1);
         Operation.createGet(uriWithExpand)
                 .setReferer(host.getUri())
@@ -486,8 +486,8 @@ public class ProjectServiceTest extends AuthBaseTest {
                     if (e != null) {
                         host.failIteration(e);
                     } else {
-                        ProjectStateWithMembers retrievedState = o
-                                .getBody(ProjectStateWithMembers.class);
+                        ExpandedProjectState retrievedState = o
+                                .getBody(ExpandedProjectState.class);
                         retrievedState.copyTo(resultState);
                         host.completeIteration();
                     }
