@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles.RolesAssignment;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.AuthUtils;
@@ -26,7 +27,6 @@ import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.Utils;
@@ -48,7 +48,7 @@ public class ProjectRolesHandler {
      * DTO for custom PATCH and PUT requests to {@link ProjectService} instances. Used for
      * assignment/unassigment of users with various role.
      */
-    public static class ProjectRoles extends ServiceDocument {
+    public static class ProjectRoles extends com.vmware.xenon.common.ServiceDocument {
 
         /** Assignment/unassignment of project administrators. */
         @Documentation(description = "Assignment/unassignment of project administrators.")
@@ -84,6 +84,21 @@ public class ProjectRolesHandler {
         AssertUtil.assertNotEmpty(projectLink, "projectLink");
         this.serviceHost = serviceHost;
         this.projectLink = projectLink;
+    }
+
+    public static boolean isProjectRolesUpdate(Operation op) {
+        ProjectRoles body = op.getBody(ProjectRoles.class);
+        if (body == null) {
+            return false;
+        }
+        boolean updateAdmins = body.administrators != null && hasRolesUpdate(body.administrators);
+        boolean updateMembers = body.members != null && hasRolesUpdate(body.members);
+        return updateAdmins || updateMembers;
+    }
+
+    private static boolean hasRolesUpdate(RolesAssignment rolesAssignment) {
+        return (rolesAssignment.add != null && !rolesAssignment.add.isEmpty())
+                || (rolesAssignment.remove != null && !rolesAssignment.remove.isEmpty());
     }
 
     public DeferredResult<Void> handleRolesUpdate(ProjectRoles patchBody) {

@@ -46,7 +46,7 @@ public class ProjectServiceWithCustomPropertiesTest extends AuthBaseTest {
 
     @Before
     public void setUp() throws Throwable {
-        waitForServiceAvailability(ProjectService.FACTORY_LINK);
+        waitForServiceAvailability(ProjectFactoryService.SELF_LINK);
         waitForServiceAvailability(GroupResourcePlacementService.FACTORY_LINK);
 
         host.assumeIdentity(buildUserServicePath(USERNAME_ADMIN));
@@ -126,7 +126,7 @@ public class ProjectServiceWithCustomPropertiesTest extends AuthBaseTest {
 
         host.testStart(1);
         // Test simple filtered GET request to the factory
-        Operation.createGet(UriUtils.buildUri(host, ProjectService.FACTORY_LINK, filterQuery))
+        Operation.createGet(UriUtils.buildUri(host, ProjectFactoryService.SELF_LINK, filterQuery))
                 .setReferer(host.getUri())
                 .setCompletion((o, e) -> {
                     if (e != null) {

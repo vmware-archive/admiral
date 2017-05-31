@@ -19,7 +19,7 @@ import java.util.UUID;
 import org.junit.Before;
 
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
-import com.vmware.admiral.auth.project.ProjectService;
+import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.common.DeploymentProfileConfig;
@@ -122,7 +122,7 @@ public abstract class AuthBaseTest extends BaseTestCase {
         projectState.membersUserGroupLink = membersGroupLink;
         projectState.customProperties = customProperties;
 
-        projectState = doPost(projectState, ProjectService.FACTORY_LINK);
+        projectState = doPost(projectState, ProjectFactoryService.SELF_LINK);
 
         return projectState;
     }

@@ -27,7 +27,6 @@ import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
-import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.auth.project.ProjectService.ProjectStateWithMembers;
 import com.vmware.admiral.auth.util.ProjectUtil;
@@ -38,7 +37,6 @@ import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupR
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 
-import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
@@ -66,7 +64,7 @@ public class ProjectServiceTest extends AuthBaseTest {
 
     @Before
     public void setUp() throws Throwable {
-        waitForServiceAvailability(ProjectService.FACTORY_LINK);
+        waitForServiceAvailability(ProjectFactoryService.SELF_LINK);
         waitForServiceAvailability(GroupResourcePlacementService.FACTORY_LINK);
 
         host.assumeIdentity(buildUserServicePath(USERNAME_ADMIN));
@@ -76,7 +74,7 @@ public class ProjectServiceTest extends AuthBaseTest {
     @Test
     public void testProjectServices() throws Throwable {
         verifyService(
-                FactoryService.create(ProjectService.class),
+                ProjectFactoryService.class,
                 ProjectState.class,
                 (prefix, index) -> {
                     ProjectState projectState = new ProjectState();

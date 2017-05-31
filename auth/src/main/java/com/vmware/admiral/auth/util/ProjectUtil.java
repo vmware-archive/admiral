@@ -11,13 +11,26 @@
 
 package com.vmware.admiral.auth.util;
 
+import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Level;
 
+import com.vmware.admiral.auth.project.ProjectService.ProjectState;
+import com.vmware.admiral.auth.project.ProjectService.ProjectStateWithMembers;
 import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.DeferredResult;
+import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
+import com.vmware.xenon.services.common.UserService.UserState;
 
 public class ProjectUtil {
     public static final String PROJECT_IN_USE_MESSAGE = "Project is associated with %s placement%s";
@@ -37,4 +50,72 @@ public class ProjectUtil {
 
         return queryTask;
     }
+
+    /**
+     * Creates a {@link ProjectStateWithMembers} based on the provided simple state additionally
+     * building the lists of administrators and members.
+     *
+     * @param host a {@link ServiceHost} that can be used to retrieve service documents
+     * @param simpleState the {@link ProjectState} that needs to be expanded
+     * @param referer the {@link URI} of the service that issues the expand
+     */
+    public static DeferredResult<ProjectStateWithMembers> expandProjectState(
+            ServiceHost host, ProjectState simpleState, URI referer) {
+        ProjectStateWithMembers expandedState = new ProjectStateWithMembers();
+        simpleState.copyTo(expandedState);
+
+        DeferredResult<Void> retrieveAdmins = retrieveUserGroupMembers(host,
+                simpleState.administratorsUserGroupLink, referer)
+                        .thenAccept((adminsList) -> expandedState.administrators = adminsList);
+        DeferredResult<Void> retrieveMembers = retrieveUserGroupMembers(host,
+                simpleState.membersUserGroupLink, referer)
+                        .thenAccept((membersList) -> expandedState.members = membersList);
+
+        return DeferredResult.allOf(retrieveAdmins, retrieveMembers)
+                .thenApply((ignore) -> expandedState);
+    }
+
+    /**
+     * Retrieves the list of members for the specified by document link user group.
+     *
+     * @see #retrieveUserStatesForGroup(UserGroupState)
+     */
+    private static DeferredResult<List<UserState>> retrieveUserGroupMembers(ServiceHost host,
+            String groupLink, URI referer) {
+        if (groupLink == null) {
+            return DeferredResult.completed(new ArrayList<>(0));
+        }
+
+        Operation groupGet = Operation.createGet(host, groupLink).setReferer(referer);
+        return host.sendWithDeferredResult(groupGet, UserGroupState.class)
+                .thenCompose((groupState) -> retrieveUserStatesForGroup(host, groupState));
+    }
+
+    /**
+     * Retrieves the list of members for the specified user group.
+     */
+    private static DeferredResult<List<UserState>> retrieveUserStatesForGroup(ServiceHost host,
+            UserGroupState groupState) {
+        DeferredResult<List<UserState>> deferredResult = new DeferredResult<>();
+        ArrayList<UserState> resultList = new ArrayList<>();
+
+        QueryTask queryTask = QueryUtil.buildQuery(UserState.class, true, groupState.query);
+        QueryUtil.addExpandOption(queryTask);
+        new ServiceDocumentQuery<UserState>(host, UserState.class)
+                .query(queryTask, (r) -> {
+                    if (r.hasException()) {
+                        host.log(Level.WARNING,
+                                "Failed to retrieve members of UserGroupState %s: %s",
+                                groupState.documentSelfLink, Utils.toString(r.getException()));
+                        deferredResult.fail(r.getException());
+                    } else if (r.hasResult()) {
+                        resultList.add(r.getResult());
+                    } else {
+                        deferredResult.complete(resultList);
+                    }
+                });
+
+        return deferredResult;
+    }
+
 }

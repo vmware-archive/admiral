@@ -14,7 +14,7 @@ package com.vmware.admiral.host;
 import com.vmware.admiral.auth.AuthInitialBootService;
 import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalFactoryService;
-import com.vmware.admiral.auth.project.ProjectService;
+import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
@@ -27,12 +27,12 @@ public class HostInitAuthServiceConfig extends HostInitServiceHelper {
 
         startServices(host,
                 AuthInitialBootService.class,
+                ProjectFactoryService.class,
                 PrincipalService.class,
                 LocalPrincipalFactoryService.class);
 
         startServiceFactories(host,
-                AuthBootstrapService.class,
-                ProjectService.class);
+                AuthBootstrapService.class);
 
         // start initialization of system documents
         host.sendRequest(Operation
