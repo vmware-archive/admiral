@@ -13,6 +13,7 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { ViewExpandRequestService } from './services/view-expand-request.service';
 import { FT } from './utils/ft';
+import { DocumentService } from './utils/document.service';
 
 @Component({
     selector: 'my-app',
@@ -22,8 +23,9 @@ import { FT } from './utils/ft';
 export class AppComponent {
     expanded: boolean;
     fullScreen: boolean;
+    user: any;
 
-    constructor(private viewExpandRequestor: ViewExpandRequestService) {
+    constructor(private viewExpandRequestor: ViewExpandRequestService, private documentService: DocumentService) {
         this.viewExpandRequestor.getExpandRequestEmitter().subscribe(isExpand => {
             this.expanded = isExpand;
         });
@@ -31,9 +33,37 @@ export class AppComponent {
         this.viewExpandRequestor.getFullScreenRequestEmitter().subscribe(isFullScreen => {
             this.fullScreen = isFullScreen;
         });
+
+        this.documentService.loadCurrentUser().then((userState) => {
+            return this.documentService.getPrincipalById(userState.email);
+        }).then((principal) => {
+            this.user = principal;
+        }).catch((ex) => {
+            console.log(ex);
+            this.user = {
+                name: "problem1"
+            };
+        });
     }
 
     get embedded(): boolean {
         return FT.isApplicationEmbedded();
+    }
+
+    get userName(): String {
+        if (this.user) {
+            return this.user.name || this.user.email;
+        }
+        return '--';
+    }
+
+    get userNameDetail(): String {
+        if (this.user) {
+            if (!this.user.name) {
+                // Already shown above
+                return null;
+            }
+            return this.user.email;
+        }
     }
 }

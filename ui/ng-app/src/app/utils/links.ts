@@ -28,4 +28,9 @@ export class Links {
   public static CONFIG = '/config';
   public static CONFIG_PROPS = Links.CONFIG + '/props';
 
+  public static USER_SESSION = '/user-session'
+  public static AUTH = '/auth';
+  public static AUTH_IDM = Links.AUTH + '/idm';
+  public static AUTH_PRINCIPALS = Links.AUTH_IDM + '/principals'
+
 }

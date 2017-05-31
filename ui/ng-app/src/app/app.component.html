@@ -22,12 +22,13 @@
         <a class="nav-link nav-text" routerLink="/administration" routerLinkActive="active">Administration</a>
     </div>
     <div class="header-actions">
-        <clr-dropdown class="dropdown bottom-right">
+        <clr-dropdown clrMenuPosition="bottom-right" class="dropdown">
             <button class="nav-text" clrDropdownToggle>
-                <span>Jason Bourne</span>
+                <span>{{userName}}</span>
                 <clr-icon shape="caret down"></clr-icon>
             </button>
             <div class="dropdown-menu">
+                <div class="dropdown-header" *ngIf="userNameDetail">{{userNameDetail}}</div>
                 <a href="..." clrDropdownItem>Preferences</a>
                 <a href="..." clrDropdownItem>Log out</a>
             </div>

@@ -12,6 +12,7 @@
 import { Injectable } from '@angular/core';
 import { Ajax } from './ajax.service';
 import { Utils } from './utils';
+import { Links } from './links';
 import { URLSearchParams } from '@angular/http';
 import { searchConstants, serviceUtils} from 'admiral-ui-common';
 
@@ -151,6 +152,14 @@ export class DocumentService {
 
   public post(factoryLink, postBody): Promise<any> {
     return this.ajax.post(factoryLink, null, postBody);
+  }
+
+  public loadCurrentUser(): Promise<any> {
+    return this.ajax.get(Links.USER_SESSION);
+  }
+
+  public getPrincipalById(principalId): Promise<any> {
+    return this.getById(Links.AUTH_PRINCIPALS, principalId)
   }
 }
 
