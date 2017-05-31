@@ -454,10 +454,16 @@ public class NetworkProfileQueryUtils {
                     subnet = subnetDeferred;
                 }
             } else {
-                subnet = DeferredResult.completed(
-                        profile.networkProfile.subnetStates.stream()
-                                .filter(s -> s.defaultForZone != null && s.defaultForZone)
-                                .findAny().orElse(profile.networkProfile.subnetStates.get(0)));
+                // noNicVM = true
+                if (hasSubnetStates) {
+                    subnet = DeferredResult.completed(
+                            profile.networkProfile.subnetStates.stream()
+                                    .filter(s -> s.defaultForZone != null && s.defaultForZone)
+                                    .findAny().orElse(profile.networkProfile.subnetStates.get(0)));
+                } else {
+                    // no subnets selected in the network profile. Pick existing subnet.
+                    subnet = findSubnetBy(host, tenantLinks, endpointLink, cd.regionId);
+                }
             }
         } else if (noNicVM && nid.networkLink != null) {
             subnet = DeferredResult.completed(null);

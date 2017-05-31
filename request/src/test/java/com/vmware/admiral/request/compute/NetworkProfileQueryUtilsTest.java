@@ -653,6 +653,52 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
         assertEquals(selectedSubnet.documentSelfLink, isolatedSubnet.documentSelfLink);
     }
 
+    /**
+     * Test if subnet is selected when No nic VM is requested and the network profile
+     * is configured with isolation by subnets.
+     *
+     * Related Jira: VCOM-949
+     */
+    @Test
+    public void testSelectSubnetNoNicVMIsolatedNetworkProfile() throws Throwable {
+        List<String> tenantLinks =
+                TestRequestStateFactory.createTenantLinks(TestRequestStateFactory.TENANT_NAME);
+        NetworkProfile networkProfile = createNetworkProfile(null,
+                tenantLinks,
+                null,
+                IsolationSupportType.SUBNET);
+        ProfileStateExpanded profile = createProfile(networkProfile.documentSelfLink,
+                networkProfile.tenantLinks, null);
+
+        SubnetState defaultSubnet = createSubnet("sub-default", tenantLinks, null, true);
+
+        NetworkInterfaceDescription nid = createComputeNetworkInterfaceDescription("my net");
+        Map<String, String> customProperties = new HashMap<>();
+        customProperties.put(NetworkProfileQueryUtils.NO_NIC_VM, "true");
+        ComputeDescription cd = createComputeDescription(UUID.randomUUID().toString(),
+                Arrays.asList(nid.documentSelfLink), customProperties);
+
+        TestContext ctx = testCreate(1);
+        Set<SubnetState> subnetStates = new HashSet<>();
+        NetworkProfileQueryUtils.selectSubnet(host, referer,
+                tenantLinks, null, cd, nid, profile, null, null, null)
+                .whenComplete((subnet, e) -> {
+                    if (e != null) {
+                        ctx.fail(e);
+                        return;
+                    }
+                    subnetStates.add(subnet);
+                    ctx.complete();
+                });
+        ctx.await();
+
+        assertFalse(subnetStates.isEmpty());
+        assertEquals(1, subnetStates.size());
+        SubnetState selectedSubnet = subnetStates.iterator().next();
+        assertNotNull(selectedSubnet);
+        assertEquals(selectedSubnet.documentSelfLink, defaultSubnet.documentSelfLink);
+    }
+
     @Test
     public void testFindSubnetBy() throws Throwable {
         ComputeNetworkDescription nd = createNetworkDescription("my net", null,
