@@ -31,6 +31,9 @@ public interface ManagementUriParts {
     String NETWORK_PROFILES = CONFIG + "/network-profiles";
     String MIGRATION = CONFIG + "/migration";
 
+    String UTIL = "/util";
+    String LONG_URI_GET = UTIL + "/long-uri-get";
+
     String CERT_DISTRIBUTION_ADD_REGISTRY = CONFIG + "/cert-dist-add-reg";
     String CERT_DISTRIBUTION_ADD_HOST = CONFIG + "/certs-dist-add-host";
     String ENDPOINTS = CONFIG + "/endpoints";
