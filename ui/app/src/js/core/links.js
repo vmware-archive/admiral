@@ -12,6 +12,7 @@
 const CONFIG = '/config';
 const PROVISIONING = '/provisioning';
 const RESOURCES = '/resources';
+const UTIL = '/util';
 
 var links = Immutable({
   CONFIG: '/config',
@@ -95,7 +96,9 @@ var links = Immutable({
   ADAPTERS: CONFIG + '/photon-model-adapters-registry',
 
   IMAGE_ENUMERATION: PROVISIONING + '/image-enumeration-tasks',
-  RESOURCE_ENUMERATION: PROVISIONING + '/resource-enumeration-tasks'
+  RESOURCE_ENUMERATION: PROVISIONING + '/resource-enumeration-tasks',
+
+  LONG_URI_GET: UTIL + '/long-uri-get'
 });
 
 export default links;
