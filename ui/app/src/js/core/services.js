@@ -525,7 +525,22 @@ services.loadPlacementZones = function(documentSelfLinks) {
       [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
     });
   }
-  return list(links.EPZ_CONFIG, true, params);
+
+  var paramsData = params || {};
+  paramsData[DOCUMENT_TYPE_PROP_NAME] = true;
+  paramsData[EXPAND_QUERY_PROP_NAME] = true;
+  paramsData[ODATA_LIMIT_PROP_NAME] = DEFAULT_XENON_LIMIT;
+
+  var data = {
+    uri: mergeUrl(links.EPZ_CONFIG, paramsData)
+  };
+  return post(links.LONG_URI_GET, data).then(function(result) {
+    // The result.documents check is added to support vRA.
+    return result.documentLinks.reduce((previous, current) => {
+      previous[current] = result.documents[current];
+      return previous;
+    }, {});
+  });
 };
 
 services.loadPlacementZone = function(documentSelfLink) {
