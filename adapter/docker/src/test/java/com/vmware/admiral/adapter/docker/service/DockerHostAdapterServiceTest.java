@@ -13,7 +13,6 @@ package com.vmware.admiral.adapter.docker.service;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -21,14 +20,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
 import javax.net.ssl.TrustManager;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
 import com.vmware.admiral.adapter.common.service.mock.MockTaskService.MockTaskState;
 import com.vmware.admiral.adapter.docker.mock.BaseMockDockerTestCase;
@@ -304,30 +300,6 @@ public class DockerHostAdapterServiceTest extends BaseMockDockerTestCase {
             return ContainerService.ContainerState.PowerState.ERROR
                     .equals(containerState.powerState);
         });
-    }
-
-    @Ignore("This test takes a lot of time to complete because DockerAdapterServiceTest sets pragma"
-            + " Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY")
-    @Test
-    public void testListContainersNotExistingHost() throws Throwable {
-        AdapterRequest request = new AdapterRequest();
-        request.operationTypeId = ContainerHostOperationType.LIST_CONTAINERS.id;
-        request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
-        request.resourceReference = UriUtils.buildUri(host, "not-existing-host");
-
-        Operation startContainer = Operation
-                .createPatch(dockerHostAdapterServiceUri)
-                .setReferer(URI.create("/")).setBody(request)
-                .setCompletion((o, ex) -> {
-                    if (ex == null) {
-                        fail();
-                    }
-                });
-
-        host.setTimeoutSeconds(120);
-        host.testStart(1);
-        host.send(startContainer);
-        host.testWait();
     }
 
     protected void createDockerHostComputeState() throws Throwable {
