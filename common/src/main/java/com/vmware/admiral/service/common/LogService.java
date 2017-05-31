@@ -28,6 +28,13 @@ import com.vmware.xenon.common.Utils;
  * LogService is log management service which maintains the logs of a container.
  */
 public class LogService extends StatefulService {
+    // Default is 16 MB. Not recommended to be increased as it is likely to cause performance problems.
+    // A grand maximum of 64 MB, when we will fail when receiving the response from Docker. Currently,
+    // if the log goes over 64MB, we will still fail, because we won't be able to receive and handle the
+    // response to trim it.
+    private static final int DEFAULT_MAX_LOG_SIZE_VALUE = 16 * 1024 * 1024;
+    public static final int MAX_LOG_SIZE = Integer.getInteger("container.log.max.size", DEFAULT_MAX_LOG_SIZE_VALUE);
+
     public static final String FACTORY_LINK = ManagementUriParts.LOGS;
 
     protected static final long DEFAULT_EXPIRATION_MICROS = Long.getLong(
@@ -155,7 +162,7 @@ public class LogService extends StatefulService {
                 PropertyIndexingOption.EXCLUDE_FROM_SIGNATURE);
 
         // logs can be big, need to increase the default size limit
-        template.documentDescription.serializedStateSizeLimit = 4 * 1024 * 1024; // 4MB
+        template.documentDescription.serializedStateSizeLimit = MAX_LOG_SIZE;
 
         return template;
     }

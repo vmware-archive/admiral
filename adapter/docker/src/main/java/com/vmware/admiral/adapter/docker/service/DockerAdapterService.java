@@ -403,6 +403,12 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
     private void processContainerLogResponse(RequestContext context, byte[] log) {
         LogService.LogServiceState logServiceState = new LogService.LogServiceState();
         logServiceState.documentSelfLink = Service.getId(context.containerState.documentSelfLink);
+
+        int maxDocumentSize = LogService.MAX_LOG_SIZE - 256; // 256 bytes spare for service document data
+        if (log.length > maxDocumentSize) {
+            log = Arrays.copyOfRange(log, log.length - maxDocumentSize, log.length);
+        }
+
         logServiceState.logs = log;
         logServiceState.tenantLinks = context.containerState.tenantLinks;
 
