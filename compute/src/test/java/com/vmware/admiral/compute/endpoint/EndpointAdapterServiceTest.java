@@ -198,7 +198,7 @@ public class EndpointAdapterServiceTest extends ComputeBaseTest {
                 EndpointAdapterService.SELF_LINK,
                 ManagementUriParts.REQUEST_PARAM_ENUMERATE_OPERATION_NAME,
                 ManagementUriParts.REQUEST_PARAM_TARGET_RESOURCE_POOL_LINK,
-                queryResult.documents.keySet().stream().findFirst().get());
+                queryResult.documentLinks.stream().findFirst().get());
 
         EndpointState endpoint = createEndpoint("testCreateEndpointWithEnumerationEnabled");
 
