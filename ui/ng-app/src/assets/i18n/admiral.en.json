@@ -2,26 +2,44 @@
   "projects": {
     "users": "Users",
     "administrators": "Administrators",
-    "projectRegistry": "Registry",
-    "public": "public",
-    "private": "private",
+    "projectRegistry": "Project Registry",
+    "public": "Public",
+    "publicDescription": "Public access to project registry",
+    "private": "Private",
     "clusters": "Clusters",
+    "members": "Members",
     "repositories": "Repositories",
-    "details": {
-      "config": {
-        "projectRegistry": "Project registry",
-        "public": "Public",
-        "publicDescription": "Making a project registry public will make all repositories accessible to everyone.",
-        "deploymentSecurity": "Deployment security",
-        "enableContentTrust": "Enable content trust",
-        "enableContentTrustDescription": "Only allow verified images to be deployed.",
-        "preventVulnerableImagesFromRunning": "Prevent vulnerable images from running",
-        "preventVulnerableImagesFromRunningDescription_part1": "Prevent images with vulnerability severity of",
-        "preventVulnerableImagesFromRunningDescription_part2": "and above from being deployed.",
-        "vulnerabilityScanning": "Vulnerability scanning",
-        "automaticallyScanImagesOnPush": "Automatically scan images on push",
-        "automaticallyScanImagesOnPushDescription": "Automatically scan images when they are pushed to the project registry."
-      }
+    "infrastructure": "Infrastructure",
+    "registryReplication": "Registry Replication",
+    "configuration" : "Configuration",
+    "edit": {
+       "titleNew": "New Project",
+       "titleEdit": "Edit Project",
+       "name": "Name",
+       "nameRequired": "Name is required.",
+       "description": "Description"
+    },
+    "summary": {
+       "title" : "Summary",
+       "type": "Type:",
+       "status": "Status:",
+       "creationDate": "Created:"
+    },
+    "config": {
+      "publicDescription": "Making a project registry public will make all repositories accessible to everyone.",
+      "deploymentSecurity": "Deployment security",
+      "enableContentTrust": "Enable content trust",
+      "enableContentTrustDescription": "Only allow verified images to be deployed.",
+      "preventVulnerableImagesFromRunning": "Prevent vulnerable images from running",
+      "preventVulnerableImagesFromRunningDescription_part1": "Prevent images with vulnerability severity of",
+      "preventVulnerableImagesFromRunningDescription_part2": "and above from being deployed.",
+      "vulnerabilityScanning": "Vulnerability scanning",
+      "automaticallyScanImagesOnPush": "Automatically scan images on push",
+      "automaticallyScanImagesOnPushDescription": "Automatically scan images when they are pushed to the project registry."
     }
-  }
+  },
+  "edit": "Edit",
+  "save": "Save",
+  "cancel": "Cancel",
+  "unknown": "Unknown"
 }

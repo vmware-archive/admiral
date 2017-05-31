@@ -1,0 +1,24 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div toolbar>
+  <button class="btn btn-link" [routerLink]="['../edit/' + documentId]"><!-- ./edit -->
+    <clr-icon shape="edit" size="12"></clr-icon><span class="btn-spaced-text">{{"edit" | i18n}}</span></button>
+</div>
+
+<div class="project-summary">
+  <div class="project-summary-description">{{project?.description}}</div>
+  <div class="project-summary-details">
+    <div>{{"projects.summary.type" | i18n}} {{projectType | i18n}}</div>
+    <div>{{"projects.summary.status" | i18n}} {{"unknown" | i18n}}</div>
+    <div>{{"projects.summary.creationDate" | i18n}} {{"unknown" | i18n}}</div>
+  </div>
+</div>

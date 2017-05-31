@@ -110,6 +110,9 @@ export const ROUTES: Routes = [
                     }},
                     { path: ':id', component: ProjectDetailsComponent, data: {
                         navigationContainerType: NavigationContainerType.Fullscreen
+                    }},
+                    { path: 'edit/:id', component: ProjectCreateComponent, data: {
+                        navigationContainerType: NavigationContainerType.Default
                     }}
                 ]
             },

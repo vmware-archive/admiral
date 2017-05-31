@@ -1,13 +1,26 @@
- <clr-tabs>
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<h3 class="projects-details-header-title">{{entity?.name}}</h3>
+
+<clr-tabs>
     <clr-tab-link [clrTabLinkId]="'summaryTab'" [clrTabLinkActive]="true">Summary</clr-tab-link>
-    <clr-tab-link [clrTabLinkId]="'membersTab'">Members</clr-tab-link>
-    <clr-tab-link [clrTabLinkId]="'repositoriesTab'">Repositories</clr-tab-link>
-    <clr-tab-link [clrTabLinkId]="'infrastructureTab'">Infrastructure</clr-tab-link>
-    <clr-tab-link [clrTabLinkId]="'registryReplicationTab'">Registry Replication</clr-tab-link>
-    <clr-tab-link [clrTabLinkId]="'configurationTab'">Configuration</clr-tab-link>
+    <clr-tab-link [clrTabLinkId]="'membersTab'">{{"projects.members" | i18n}}</clr-tab-link>
+    <clr-tab-link [clrTabLinkId]="'repositoriesTab'">{{"projects.repositories" | i18n}}</clr-tab-link>
+    <clr-tab-link [clrTabLinkId]="'infrastructureTab'">{{"projects.infrastructure" | i18n}}</clr-tab-link>
+    <clr-tab-link [clrTabLinkId]="'registryReplicationTab'">{{"projects.registryReplication" | i18n}}</clr-tab-link>
+    <clr-tab-link [clrTabLinkId]="'configurationTab'">{{"projects.configuration" | i18n}}</clr-tab-link>
 
     <clr-tab-content [clrTabContentId]="'summaryContent'" [clrTabContentActive]="true">
-        <p>Content for summary tab.</p>
+      <app-project-summary [project]="entity"></app-project-summary>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'membersContent'">
         <p>Content for members tab.</p>

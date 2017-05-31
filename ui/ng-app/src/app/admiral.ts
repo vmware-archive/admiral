@@ -20,6 +20,7 @@ import { MainResourcesComponent } from './views/main-resources/main-resources.co
 import { IdentityManagementComponent } from './views/identity-management/identity-management.component';
 import { ProjectsComponent } from './views/projects/projects.component';
 import { ProjectDetailsComponent } from './views/projects/project-details/project-details.component';
+import { ProjectSummaryComponent } from "./views/projects/project-details/project-summary.component";
 import { ProjectConfigurationComponent } from './views/projects/project-details/project-configuration.component';
 import { ProjectCreateComponent } from './views/projects/project-create/project-create.component';
 import { RegistriesComponent } from './views/registries/registries.component';
@@ -62,8 +63,9 @@ export const ADMIRAL_DECLARATIONS = [
   IdentityManagementComponent,
   ProjectsComponent,
   ProjectDetailsComponent,
-  ProjectConfigurationComponent,
+  ProjectSummaryComponent,
   ProjectCreateComponent,
+  ProjectConfigurationComponent,
   RegistriesComponent,
   ConfigurationComponent,
   LogsComponent,

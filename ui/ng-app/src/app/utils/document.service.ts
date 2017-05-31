@@ -154,6 +154,10 @@ export class DocumentService {
     return this.ajax.post(factoryLink, null, postBody);
   }
 
+  public put(documentSelfLink, putBody): Promise<any> {
+    return this.ajax.put(documentSelfLink, null, putBody);
+  }
+
   public loadCurrentUser(): Promise<any> {
     return this.ajax.get(Links.USER_SESSION);
   }
