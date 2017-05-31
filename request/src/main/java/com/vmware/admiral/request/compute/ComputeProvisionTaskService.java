@@ -91,9 +91,9 @@ public class ComputeProvisionTaskService extends
     public static final String COMPUTE_PROVISION_TOPIC_TASK_SELF_LINK =
             "compute-provision";
     public static final String COMPUTE_PROVISION_TOPIC_ID = "com.vmware.compute.provision.pre";
-    public static final String COMPUTE_PROVISION_TOPIC_NAME = "Compute Provision";
-    public static final String COMPUTE_PROVISION_TOPIC_TASK_DESCRIPTION = "Fired when a compute "
-            + "resource is being provisioned.";
+    public static final String COMPUTE_PROVISION_TOPIC_NAME = "Compute provision";
+    public static final String COMPUTE_PROVISION_TOPIC_TASK_DESCRIPTION = "Fired before a compute "
+            + "resource is being provisioned";
     public static final String COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES = "resourceNames";
     public static final String COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES_LABEL = "Resource names.";
     public static final String COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION =

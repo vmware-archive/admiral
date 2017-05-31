@@ -109,18 +109,19 @@ public class ComputeAllocationTaskService
 
     public static final String DISPLAY_NAME = "Compute Allocation";
 
-    //Compute name assignment topic
-    private static final String COMPUTE_NAME_TOPIC_TASK_SELF_LINK = "change-compute-name";
-    private static final String COMPUTE_NAME_TOPIC_ID = "com.vmware.compute.name.assignment";
-    private static final String COMPUTE_NAME_TOPIC_NAME = "Compute name assignment";
-    private static final String COMPUTE_NAME_TOPIC_TASK_DESCRIPTION = "Assign custom compute name.";
-    private static final String COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES = "resourceNames";
-    private static final String COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES_LABEL = "Generated resource names";
-    private static final String COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION = "Generated resource names";
-    private static final String COMPUTE_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_SELECTIONS =
+    //Compute allocation topic
+    private static final String COMPUTE_ALLOCATION_TOPIC_TASK_SELF_LINK = "compute-allocation";
+    private static final String COMPUTE_ALLOCATION_TOPIC_ID = "com.vmware.compute.allocation.pre";
+    private static final String COMPUTE_ALLOCATION_TOPIC_NAME = "Compute allocation";
+    private static final String COMPUTE_ALLOCATION_TOPIC_TASK_DESCRIPTION = "Pre allocation for compute"
+            + " resoures";
+    private static final String COMPUTE_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES = "resourceNames";
+    private static final String COMPUTE_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES_LABEL = "Generated resource names";
+    private static final String COMPUTE_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION = "Generated resource names";
+    private static final String COMPUTE_ALLOCATION_TOPIC_FIELD_RESOURCE_TO_HOST_SELECTIONS =
             "resourceToHostSelection";
-    private static final String COMPUTE_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_LABEL = "Resource to host selection(Read Only)";
-    private static final String COMPUTE_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_DESCRIPTION = "Eeach string entry represents resource and host on which it will be deployed";
+    private static final String COMPUTE_ALLOCATION_TOPIC_FIELD_RESOURCE_TO_HOST_LABEL = "Resource to host selection(Read Only)";
+    private static final String COMPUTE_ALLOCATION_TOPIC_FIELD_RESOURCE_TO_HOST_DESCRIPTION = "Eeach string entry represents resource and host on which it will be deployed";
 
     private static final String ID_DELIMITER_CHAR = "-";
     // cached compute description
@@ -1102,31 +1103,32 @@ public class ComputeAllocationTaskService
         super.autoMergeState(patch, patchBody, currentState);
     }
 
-    private void changeComputeNameEventTopic(ServiceHost host) {
+    private void computeAllocationEventTopic(ServiceHost host) {
         EventTopicService.TopicTaskInfo taskInfo = new EventTopicService.TopicTaskInfo();
         taskInfo.task = ComputeAllocationTaskState.class.getSimpleName();
         taskInfo.stage = TaskStage.STARTED.name();
         taskInfo.substage = SubStage.START_COMPUTE_ALLOCATION.name();
 
-        EventTopicUtils.registerEventTopic(COMPUTE_NAME_TOPIC_ID, COMPUTE_NAME_TOPIC_NAME,
-                COMPUTE_NAME_TOPIC_TASK_DESCRIPTION, COMPUTE_NAME_TOPIC_TASK_SELF_LINK,
-                Boolean.TRUE, changeComputeNameTopicSchema(), taskInfo, host);
+        EventTopicUtils.registerEventTopic(COMPUTE_ALLOCATION_TOPIC_ID,
+                COMPUTE_ALLOCATION_TOPIC_NAME,
+                COMPUTE_ALLOCATION_TOPIC_TASK_DESCRIPTION, COMPUTE_ALLOCATION_TOPIC_TASK_SELF_LINK,
+                Boolean.TRUE, computeAllocationTopicSchema(), taskInfo, host);
     }
 
-    private SchemaBuilder changeComputeNameTopicSchema() {
+    private SchemaBuilder computeAllocationTopicSchema() {
 
         return new SchemaBuilder()
-                .addField(COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES)
+                .addField(COMPUTE_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES)
                 .withType(Type.LIST)
                 .withDataType(DATATYPE_STRING)
-                .withLabel(COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES_LABEL)
-                .withDescription(COMPUTE_NAME_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION)
+                .withLabel(COMPUTE_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES_LABEL)
+                .withDescription(COMPUTE_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION)
                 .done()
                 // Add resourceToHostSelection info
-                .addField(COMPUTE_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_SELECTIONS)
+                .addField(COMPUTE_ALLOCATION_TOPIC_FIELD_RESOURCE_TO_HOST_SELECTIONS)
                 .withType(Type.MAP)
-                .withLabel(COMPUTE_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_LABEL)
-                .withDescription(COMPUTE_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_DESCRIPTION)
+                .withLabel(COMPUTE_ALLOCATION_TOPIC_FIELD_RESOURCE_TO_HOST_LABEL)
+                .withDescription(COMPUTE_ALLOCATION_TOPIC_FIELD_RESOURCE_TO_HOST_DESCRIPTION)
                 .withConstraint(Constraint.readOnly, true)
                 .withDataType(DATATYPE_STRING)
                 .done();
@@ -1205,7 +1207,7 @@ public class ComputeAllocationTaskService
 
     @Override
     public void registerEventTopics(ServiceHost host) {
-        changeComputeNameEventTopic(host);
+        computeAllocationEventTopic(host);
     }
 
 }

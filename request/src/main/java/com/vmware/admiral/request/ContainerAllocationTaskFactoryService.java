@@ -35,18 +35,18 @@ public class ContainerAllocationTaskFactoryService extends FactoryService implem
     public static final String SELF_LINK = ManagementUriParts.REQUEST_ALLOCATION_TASKS;
 
     //EventTopic constants
-    private static final String CONTAINER_NAME_TOPIC_TASK_SELF_LINK = "change-container-name";
-    private static final String CONTAINER_NAME_TOPIC_ID = "com.vmware.container.name.assignment";
-    private static final String CONTAINER_NAME_TOPIC_NAME = "Container name assignment";
-    private static final String CONTAINER_NAME_TOPIC_TASK_DESCRIPTION = "Assign custom container "
-            + "name.";
-    private static final String CONTAINER_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_SELECTIONS =
+    private static final String CONTAINER_ALLOCATION_TOPIC_TASK_SELF_LINK = "container-allocation";
+    private static final String CONTAINER_ALLOCATION_TOPIC_ID = "com.vmware.container.allocation.pre";
+    private static final String CONTAINER_ALLOCATION_TOPIC_NAME = "Container allocation";
+    private static final String CONTAINER_ALLOCATION_TOPIC_TASK_DESCRIPTION = "Pre allocation for "
+            + "containers";
+    private static final String CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_TO_HOST_SELECTIONS =
             "resourceToHostSelection";
-    private static final String CONTAINER_NAME_TOPIC_FIELD_RESOURCE_NAMES = "resourceNames";
-    private static final String CONTAINER_NAME_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION = "Generated resource names";
-    private static final String CONTAINER_NAME_TOPIC_FIELD_RESOURCE_NAMES_LABEL = "Generated resource names";
-    private static final String CONTAINER_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_LABEL = "Resource to host selection(Read Only)";
-    private static final String CONTAINER_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_DESCRIPTION = "Eeach string entry represents resource and host on which it will be deployed";
+    private static final String CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES = "resourceNames";
+    private static final String CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION = "Generated resource names";
+    private static final String CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES_LABEL = "Generated resource names";
+    private static final String CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_TO_HOST_LABEL = "Resource to host selection(Read Only)";
+    private static final String CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_TO_HOST_DESCRIPTION = "Eeach string entry represents resource and host on which it will be deployed";
 
     public ContainerAllocationTaskFactoryService() {
         super(ContainerAllocationTaskState.class);
@@ -60,42 +60,43 @@ public class ContainerAllocationTaskFactoryService extends FactoryService implem
         return new ContainerAllocationTaskService();
     }
 
-    private SchemaBuilder changeContainerNameTopicSchema() {
+    private SchemaBuilder containerAllocationTopicSchema() {
 
         return new SchemaBuilder()
-                .addField(CONTAINER_NAME_TOPIC_FIELD_RESOURCE_NAMES)
+                .addField(CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES)
                 .withType(Type.LIST)
                 .withDataType(DATATYPE_STRING)
-                .withLabel(CONTAINER_NAME_TOPIC_FIELD_RESOURCE_NAMES_LABEL)
-                .withDescription(CONTAINER_NAME_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION)
+                .withLabel(CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES_LABEL)
+                .withDescription(CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION)
                 .done()
 
                 // Add resourceToHostSelection info
-                .addField(CONTAINER_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_SELECTIONS)
+                .addField(CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_TO_HOST_SELECTIONS)
                 .withType(Type.MAP)
-                .withLabel(CONTAINER_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_LABEL)
-                .withDescription(CONTAINER_NAME_TOPIC_FIELD_RESOURCE_TO_HOST_DESCRIPTION)
+                .withLabel(CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_TO_HOST_LABEL)
+                .withDescription(CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_TO_HOST_DESCRIPTION)
                 .withConstraint(Constraint.readOnly, true)
                 .withDataType(DATATYPE_STRING)
                 .done();
 
     }
 
-    private void changeContainerNameEventTopic(ServiceHost host) {
+    private void containerAllocationEventTopic(ServiceHost host) {
         EventTopicService.TopicTaskInfo taskInfo = new EventTopicService.TopicTaskInfo();
         taskInfo.task = ContainerAllocationTaskState.class.getSimpleName();
         taskInfo.stage = TaskStage.STARTED.name();
         taskInfo.substage = SubStage.BUILD_RESOURCES_LINKS.name();
 
-        EventTopicUtils.registerEventTopic(CONTAINER_NAME_TOPIC_ID, CONTAINER_NAME_TOPIC_NAME,
-                CONTAINER_NAME_TOPIC_TASK_DESCRIPTION,
-                CONTAINER_NAME_TOPIC_TASK_SELF_LINK, Boolean.TRUE,
-                changeContainerNameTopicSchema(), taskInfo, host);
+        EventTopicUtils.registerEventTopic(CONTAINER_ALLOCATION_TOPIC_ID,
+                CONTAINER_ALLOCATION_TOPIC_NAME,
+                CONTAINER_ALLOCATION_TOPIC_TASK_DESCRIPTION,
+                CONTAINER_ALLOCATION_TOPIC_TASK_SELF_LINK, Boolean.TRUE,
+                containerAllocationTopicSchema(), taskInfo, host);
     }
 
     @Override
     public void registerEventTopics(ServiceHost host) {
 
-        changeContainerNameEventTopic(host);
+        containerAllocationEventTopic(host);
     }
 }

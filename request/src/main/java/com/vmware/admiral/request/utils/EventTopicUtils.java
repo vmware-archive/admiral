@@ -122,7 +122,7 @@ public abstract class EventTopicUtils {
                 .addField("customProperties")
                 .withType(Type.MAP)
                 .withDataType(DATATYPE_STRING)
-                .withLabel("Properties of the resource(Read Only)")
+                .withLabel("Properties of the resource")
                 .withDescription("Resource Properties.")
                 .done();
     }

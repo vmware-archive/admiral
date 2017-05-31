@@ -583,11 +583,11 @@ public class ComputeRemovalTaskService extends
     }
 
     public static final String RESOURCE_REMOVAL_TOPIC_TASK_SELF_LINK =
-            "resource-removal";
+            "compute-removal";
     public static final String RESOURCE_REMOVAL_TOPIC_ID = "com.vmware.compute.removal.pre";
-    public static final String RESOURCE_REMOVAL_TOPIC_NAME = "Compute Resource removal";
-    public static final String RESOURCE_REMOVAL_TOPIC_TASK_DESCRIPTION = "Fired when a compute "
-            + "resource is being destroyed.";
+    public static final String RESOURCE_REMOVAL_TOPIC_NAME = "Compute removal";
+    public static final String RESOURCE_REMOVAL_TOPIC_TASK_DESCRIPTION = "Fired before a compute "
+            + "resource is being destroyed";
 
     private void resourceRemovalEventTopic(ServiceHost host) {
         EventTopicService.TopicTaskInfo taskInfo = new EventTopicService.TopicTaskInfo();
