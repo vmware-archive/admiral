@@ -57,7 +57,7 @@ public class LocalPrincipalService extends StatefulService {
         /**
          * Password in case the principal is user.
          */
-        public transient String password;
+        public String password;
 
         /**
          * List holding links to Users which are part of the group.
@@ -72,12 +72,15 @@ public class LocalPrincipalService extends StatefulService {
 
     }
 
+    static {
+        EncryptionUtils.initEncryptionService();
+    }
+
     public LocalPrincipalService() {
         super(LocalPrincipalState.class);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
-        EncryptionUtils.initEncryptionService();
     }
 
     @Override
