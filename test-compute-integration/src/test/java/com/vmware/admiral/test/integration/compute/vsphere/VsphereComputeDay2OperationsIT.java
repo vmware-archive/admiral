@@ -26,5 +26,8 @@ public class VsphereComputeDay2OperationsIT extends VsphereComputeProvisionIT {
 
         doDay2Operation(resourceLinks, DAY_2_OPERATION_REBOOT, null);
         validateHostState(resourceLinks, PowerState.ON);
+
+        doDay2Operation(resourceLinks, DAY_2_OPERATION_RESET, null);
+        validateHostState(resourceLinks, PowerState.ON);
     }
 }

@@ -82,6 +82,7 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.test.integration.BaseIntegrationSupportIT;
 import com.vmware.admiral.test.integration.SimpleHttpsClient;
 import com.vmware.photon.controller.model.ComputeProperties;
+import com.vmware.photon.controller.model.adapters.registry.operations.ResourceOperation;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -141,9 +142,10 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
     public static final String DAY_2_OPERATION_POWER_ON = "Compute.PowerOn";
     public static final String DAY_2_OPERATION_POWER_OFF = "Compute.PowerOff";
-    public static final String DAY_2_OPERATION_RESTART = "Restart";
-    public static final String DAY_2_OPERATION_REBOOT = "Reboot";
-    public static final String DAY_2_OPERATION_SUSPEND = "Suspend";
+    public static final String DAY_2_OPERATION_RESTART = ResourceOperation.RESTART.operation;
+    public static final String DAY_2_OPERATION_REBOOT = ResourceOperation.REBOOT.operation;
+    public static final String DAY_2_OPERATION_SUSPEND = ResourceOperation.SUSPEND.operation;
+    public static final String DAY_2_OPERATION_RESET = ResourceOperation.RESET.operation;
 
     protected final Map<String, ComputeState> computesToDelete = new HashMap<>();
     private final Set<String> containersToDelete = new HashSet<>();
