@@ -22,7 +22,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.ManagementUriParts;
@@ -158,24 +157,6 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
 
         // TODO: fix for CompositeComponent.componentLinks
         // assertEquals(request.resourceLinks, cc.componentLinks);
-    }
-
-    @Test
-    @Ignore("This test was written with the assumption that we provision only one resource type of the container description")
-    public void tesComputeRequestWithContainerDesc() throws Throwable {
-
-        ContainerDescription desc1 = TestRequestStateFactory.createContainerDescription("name1");
-
-        CompositeDescription compositeDesc = createCompositeDesc(desc1);
-
-        // Call RequestBroker with resourceType="Compute" for Composition task with ContainerDesc
-        // instead of ComputeDesc.
-        RequestBrokerState request = startComputeRequest(compositeDesc);
-        request = waitForTaskError(request.documentSelfLink, RequestBrokerState.class);
-        String errorMsg = String.format(
-                "No computeDescriptions found for links: [/resources/container-descriptions/%s]",
-                desc1.documentSelfLink);
-        assertEquals(errorMsg, request.taskInfo.failure.message);
     }
 
     @Test
