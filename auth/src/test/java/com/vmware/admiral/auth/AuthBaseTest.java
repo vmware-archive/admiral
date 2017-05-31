@@ -11,14 +11,23 @@
 
 package com.vmware.admiral.auth;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
+import java.io.File;
 import java.net.URI;
+import java.nio.file.Files;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.junit.Before;
 
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
+import com.vmware.admiral.auth.idm.local.LocalAuthConfigProvider.Config;
+import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.auth.util.AuthUtil;
@@ -29,12 +38,11 @@ import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.admiral.service.common.AuthBootstrapService;
-
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.common.test.VerificationHost;
-
 import com.vmware.xenon.services.common.UserService;
 
 public abstract class AuthBaseTest extends BaseTestCase {
@@ -46,6 +54,8 @@ public abstract class AuthBaseTest extends BaseTestCase {
 
     private static final String LOCAL_USERS_FILE = "/local-users.json";
 
+    protected List<String> loadedUsers;
+
     @Before
     public void beforeForAuthBase() throws Throwable {
         host.setSystemAuthorizationContext();
@@ -54,6 +64,7 @@ public abstract class AuthBaseTest extends BaseTestCase {
 
         waitForServiceAvailability(AuthInitialBootService.SELF_LINK);
         waitForInitialBootServiceToBeSelfStopped(AuthInitialBootService.SELF_LINK);
+        waitForDefaultUsers();
         TestContext ctx = new TestContext(1,
                 Duration.ofSeconds(DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES));
         AuthUtil.getPreferredProvider(AuthConfigProvider.class).waitForInitConfig(host,
@@ -67,9 +78,9 @@ public abstract class AuthBaseTest extends BaseTestCase {
     protected VerificationHost createHost() throws Throwable {
         String[] customArgs = {
                 CommandLineArgumentParser.ARGUMENT_PREFIX
-                + AuthUtil.LOCAL_USERS_FILE
-                + CommandLineArgumentParser.ARGUMENT_ASSIGNMENT
-                + AuthBaseTest.class.getResource(LOCAL_USERS_FILE).toURI().getPath()
+                        + AuthUtil.LOCAL_USERS_FILE
+                        + CommandLineArgumentParser.ARGUMENT_ASSIGNMENT
+                        + AuthBaseTest.class.getResource(LOCAL_USERS_FILE).toURI().getPath()
         };
         return createHost(customArgs);
     }
@@ -90,7 +101,8 @@ public abstract class AuthBaseTest extends BaseTestCase {
         return createProject(name, null, false, null, null);
     }
 
-    protected ProjectState createProject(String name, Map<String, String> customProperties) throws Throwable {
+    protected ProjectState createProject(String name, Map<String, String> customProperties)
+            throws Throwable {
         return createProject(name, null, false, null, null, customProperties);
     }
 
@@ -157,4 +169,41 @@ public abstract class AuthBaseTest extends BaseTestCase {
     protected String buildUserServicePath(String email) {
         return UriUtils.buildUriPath(UserService.FACTORY_LINK, email);
     }
+
+    private void loadLocalUsers() {
+        String localUsers = AuthUtil.getLocalUsersFile(host);
+        assertNotNull(localUsers);
+        Config config;
+        try {
+            String content = new String(Files.readAllBytes((new File(localUsers)).toPath()));
+            config = Utils.fromJson(content, Config.class);
+        } catch (Exception e) {
+            fail(String.format("Failed to load users configuration file '%s'!. Error: %s",
+                    localUsers, Utils.toString(e)));
+            return;
+
+        }
+
+        if (config.users == null || config.users.isEmpty()) {
+            fail("No users found in the configuration file!");
+            return;
+        }
+
+        loadedUsers = config.users.stream()
+                .map((u) -> u.email)
+                .collect(Collectors.toList());
+    }
+
+    private void waitForDefaultUsers() throws Throwable {
+        loadLocalUsers();
+        waitFor(() -> {
+            List<String> stateLinks = getDocumentLinksOfType(LocalPrincipalState.class);
+            if (stateLinks == null || stateLinks.isEmpty()
+                    || stateLinks.size() != loadedUsers.size()) {
+                return false;
+            }
+            return true;
+        });
+    }
+
 }

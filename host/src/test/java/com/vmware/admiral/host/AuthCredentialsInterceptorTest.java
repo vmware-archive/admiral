@@ -61,7 +61,6 @@ public class AuthCredentialsInterceptorTest extends BaseTestCase {
         // common setup
         System.clearProperty(EncryptionUtils.ENCRYPTION_KEY);
         System.clearProperty(EncryptionUtils.INIT_KEY_IF_MISSING);
-        EncryptionUtils.initEncryptionService();
     }
 
     @Override

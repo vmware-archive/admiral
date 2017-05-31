@@ -72,10 +72,6 @@ public class LocalPrincipalService extends StatefulService {
 
     }
 
-    static {
-        EncryptionUtils.initEncryptionService();
-    }
-
     public LocalPrincipalService() {
         super(LocalPrincipalState.class);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
