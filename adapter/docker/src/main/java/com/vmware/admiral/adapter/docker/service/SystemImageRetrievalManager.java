@@ -124,8 +124,7 @@ public class SystemImageRetrievalManager {
     private void retrieveAgentImage(String resourcesPath, String containerImageFilePath) {
         Consumer<byte[]> finalCallback = (fileBytes) -> {
             if (fileBytes == null) {
-                host.log(Level.WARNING, "System image " + containerImageFilePath
-                        + " does not exists.");
+                host.log(Level.WARNING, "System image %s does not exists.", containerImageFilePath);
             }
             notifyCallbacks(containerImageFilePath, fileBytes);
         };

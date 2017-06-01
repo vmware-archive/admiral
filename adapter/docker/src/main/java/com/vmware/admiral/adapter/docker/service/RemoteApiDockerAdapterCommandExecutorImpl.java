@@ -716,7 +716,6 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         // with createGet the authorization context is propagated to the completion handler...
         Operation op = Operation.createGet(uri)
                 .setAction(action)
-                .setBody(body)
                 .setCompletion(completionHandler);
 
         if (ClientMode.LARGE_DATA == mode) {

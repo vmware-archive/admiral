@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
-import java.util.logging.Level;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.docker.util.DockerImage;
@@ -108,8 +107,7 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
     protected DockerAdapterCommandExecutor getCommandExecutor() {
         synchronized (AbstractDockerAdapterService.class) {
             ServerX509TrustManager trustManager = ServerX509TrustManager.create(getHost());
-            return RemoteApiDockerAdapterCommandExecutorImpl.create(getHost(),
-                    trustManager);
+            return RemoteApiDockerAdapterCommandExecutorImpl.create(getHost(), trustManager);
         }
     }
 
@@ -126,21 +124,20 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
                         }
                         fail(request, ex);
                     } else {
-                        ComputeState hostComputeState = o.getBody(ComputeState.class);
-                        if (!hostComputeState.documentSelfLink
-                                .startsWith(ComputeService.FACTORY_LINK)) {
-                            getHost().log(Level.SEVERE,
-                                    "***** Wrong ComputeState returned: request: %s, response link: %s, json: %s",
-                                    containerHostReference, hostComputeState.documentSelfLink,
-                                    Utils.toJson(hostComputeState));
+                        ComputeState hostState = o.getBody(ComputeState.class);
+                        if (!hostState.documentSelfLink.startsWith(ComputeService.FACTORY_LINK)) {
+                            logSevere("***** Wrong ComputeState returned: request: %s, response"
+                                            + " link: %s, json: %s",
+                                    containerHostReference, hostState.documentSelfLink,
+                                    Utils.toJson(hostState));
                         }
                         handleExceptions(request, op, () -> {
-                            createHostConnection(request, op, hostComputeState, callbackFunction);
+                            createHostConnection(request, op, hostState, callbackFunction);
                         });
                     }
                 }));
 
-        getHost().log(Level.FINE, "Fetching ComputeState: %s %s", containerHostReference,
+        logFine("Fetching ComputeState: %s %s", containerHostReference,
                 request.getRequestTrackingLog());
     }
 
@@ -183,8 +180,7 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
                         registryLinks.add(r.getDocumentSelfLink());
                     } else {
                         if (registryLinks.isEmpty()) {
-                            getHost().log(Level.WARNING,
-                                    "Failed to find registry state with address '%s'.",
+                            logWarning("Failed to find registry state with address '%s'.",
                                     image.getHost());
                             callback.run();
                             return;
@@ -200,7 +196,8 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
         URI registryStateUri = UriUtils.buildUri(getHost(), registryStateLink,
                 UriUtils.URI_PARAM_ODATA_EXPAND);
 
-        Operation getRegistry = Operation.createGet(registryStateUri)
+        Operation getRegistry = Operation
+                .createGet(registryStateUri)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         if (context.operation != null) {
@@ -217,9 +214,10 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
                     if (registryState.authCredentials != null) {
                         AuthCredentialsServiceState authState = registryState.authCredentials;
                         AuthCredentialsType authType = AuthCredentialsType.valueOf(authState.type);
-                        if (AuthCredentialsType.Password.equals(authType)) {
+                        if (AuthCredentialsType.Password == authType) {
                             // create and encode AuthConfig
-                            DockerAdapterService.AuthConfig authConfig = new DockerAdapterService.AuthConfig();
+                            DockerAdapterService.AuthConfig authConfig =
+                                    new DockerAdapterService.AuthConfig();
                             authConfig.username = authState.userEmail;
                             authConfig.password = EncryptionUtils.decrypt(authState.privateKey);
                             authConfig.email = "";
@@ -233,8 +231,7 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
                             context.commandInput.getProperties().put(DOCKER_IMAGE_REGISTRY_AUTH,
                                     authConfigEncoded);
 
-                            getHost().log(Level.INFO,
-                                    "Detected registry requiring basic authn, %s header created.",
+                            logInfo("Detected registry requiring basic authn, %s header created.",
                                     DOCKER_IMAGE_REGISTRY_AUTH);
                         }
                     }
@@ -324,7 +321,7 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
                     callbackFunction.accept(hostComputeState, commandInput);
                 }));
 
-        getHost().log(Level.FINE, "Fetching AuthCredentials: %s %s", credentialsLink,
+        logFine("Fetching AuthCredentials: %s %s", credentialsLink,
                 request.getRequestTrackingLog());
     }
 
@@ -353,7 +350,7 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
         if (e.getMessage() != null && e.getMessage().contains(NOT_FOUND_EXCEPTION_MESSAGE)) {
             logWarning(e.getMessage());
         } else {
-            logWarning("%s", Utils.toString(e));
+            logWarning(Utils.toString(e));
         }
 
         patchTaskStage(request, TaskStage.FAILED, e);
@@ -427,19 +424,20 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
                         request.serviceTaskCallback.serviceSelfLink);
             }
 
-            sendRequest(Operation.createPatch(callbackReference)
+            sendRequest(Operation
+                    .createPatch(callbackReference)
                     .setBody(callbackResponse)
                     .setContextId(request.getRequestId())
                     .setCompletion((o, e) -> {
                         if (e != null) {
                             logWarning("Notifying parent task for resource: %s %s failed: %s",
-                                    request.resourceReference,
-                                    request.getRequestTrackingLog(), Utils.toString(e));
+                                    request.resourceReference, request.getRequestTrackingLog(),
+                                    Utils.toString(e));
                         }
                     }));
         } catch (Throwable e) {
-            logWarning(
-                    "System exception while calling back docker operation requester for resource: %s %s",
+            logWarning("System exception while calling back docker operation requester for"
+                            + " resource: %s %s",
                     request.resourceReference, request.getRequestTrackingLog());
             logSevere(e);
         }

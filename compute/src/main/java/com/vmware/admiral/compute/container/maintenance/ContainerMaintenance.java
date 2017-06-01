@@ -76,9 +76,9 @@ public class ContainerMaintenance {
                             }
                             ContainerState containerState = o.getBody(ContainerState.class);
 
-                            // inspect the container or update its stats (if needed)
+                            // inspect the container (if needed)
                             if (!inspectContainerIfNeeded(containerState, post)) {
-                                // in all other cases the inspect/stats request will
+                                // in all other cases the inspect request will
                                 // complete the operation
                                 post.complete();
                             }

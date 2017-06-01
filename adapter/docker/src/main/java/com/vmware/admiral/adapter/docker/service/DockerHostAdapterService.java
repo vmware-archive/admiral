@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -25,13 +25,11 @@ import static com.vmware.admiral.compute.ContainerHostService.SSL_TRUST_ALIAS_PR
 import static com.vmware.admiral.compute.ContainerHostService.SSL_TRUST_CERT_PROP_NAME;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 import com.vmware.admiral.adapter.common.ContainerHostOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
@@ -60,12 +58,15 @@ import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsSe
 public class DockerHostAdapterService extends AbstractDockerAdapterService {
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER_HOST;
 
-    // column 7 is "Available memory", that value might changed in case migration to newer PhotonOS/Alpine
+    // column 7 is "Available memory", that value might changed in case migration to newer
+    // PhotonOS/Alpine
     private static final String COMMAND_AVAILABLE_MEMORY = "free -b | awk '/^Mem:/{print $7}'";
-    private static final String COMMAND_CPU_USAGE = "awk -v a=\"$(awk '/cpu /{print $2+$4,$2+$4+$5}' /proc/stat; sleep 1)\" '/cpu /{split(a,b,\" \"); print 100*($2+$4-b[1])/($2+$4+$5-b[2])}'  /proc/stat";
+    private static final String COMMAND_CPU_USAGE =
+            "awk -v a=\"$(awk '/cpu /{print $2+$4,$2+$4+$5}' /proc/stat; sleep 1)\" '/cpu"
+                    + " /{split(a,b,\" \"); print 100*($2+$4-b[1])/($2+$4+$5-b[2])}' /proc/stat";
     private static final String HIDDEN_CUSTOM_PROPERTY_PREFIX = "__";
 
-    // constats to extract VCH usage data
+    // constants to extract VCH usage data
     private static final String SYSTEM_STATUS = "SystemStatus";
     private static final String VCH_MEMORY_USAGE = " VCH memory usage";
     private static final String VCH_CPU_LIMIT = " VCH CPU limit";
@@ -141,14 +142,12 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
 
     private void doVersion(ContainerHostRequest request, ComputeState computeState,
             CommandInput commandInput) {
-        getCommandExecutor().hostVersion(commandInput,
-                getHostPatchCompletionHandler(request));
+        getCommandExecutor().hostVersion(commandInput, getHostPatchCompletionHandler(request));
     }
 
     private void doInfo(ContainerHostRequest request, ComputeState computeState,
             CommandInput commandInput) {
-        getCommandExecutor().hostInfo(commandInput,
-                getHostPatchCompletionHandler(request));
+        getCommandExecutor().hostInfo(commandInput, getHostPatchCompletionHandler(request));
     }
 
     private void directHostInfo(ContainerHostRequest request, Operation op,
@@ -165,21 +164,17 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
         CommandInput commandInput = prepareDirectHostOperationCommand(hostComputeState,
                 authCredentialsState);
         updateSslTrust(request, commandInput);
-        getCommandExecutor().hostInfo(
-                commandInput,
-                (o, ex) -> {
-                    if (ex != null) {
-                        op.fail(ex);
-                    } else {
-                        updateHostStateCustomProperties(hostComputeState, o.getBody(Map.class));
-                        if (Logger.getLogger(this.getClass().getName()).isLoggable(Level.FINE)) {
-                            logFine("Compute state was updated with output of docker info. Request: %s",
-                                    request.getRequestTrackingLog());
-                        }
-                        op.setBody(hostComputeState);
-                        op.complete();
-                    }
-                });
+        getCommandExecutor().hostInfo(commandInput, (o, ex) -> {
+            if (ex != null) {
+                op.fail(ex);
+            } else {
+                updateHostStateCustomProperties(hostComputeState, o.getBody(Map.class));
+                logFine("Compute state was updated with output of docker info. Request: %s",
+                        request.getRequestTrackingLog());
+                op.setBody(hostComputeState);
+                op.complete();
+            }
+        });
     }
 
     private void doStats(ContainerHostRequest request, ComputeState computeState) {
@@ -196,7 +191,7 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
                 ShellContainerExecutorService.buildComplexCommand(
                         COMMAND_AVAILABLE_MEMORY,
                         COMMAND_CPU_USAGE));
-        post.setBody(command);
+        post.setBodyNoCloning(command);
 
         sendRequest(post.setCompletion((o2, ex2) -> {
             if (ex2 != null) {
@@ -209,7 +204,7 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
             String commandOutput = o2.getBody(String.class);
             Map<String, Object> properties = parseStatsOutput(commandOutput, hostLink);
 
-            Operation op = Operation.createPatch(null).setBody(properties);
+            Operation op = Operation.createPatch(null).setBodyNoCloning(properties);
             getHostPatchCompletionHandler(request).handle(op, null);
         }));
     }
@@ -228,7 +223,6 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
                 properties = PropertyUtils.setPropertyDouble(properties,
                         ContainerHostService.DOCKER_HOST_CPU_USAGE_PCT_PROP_NAME,
                         results[1].trim());
-
             } else {
                 logWarning("Unexpected stats output host [%s], output [%s]",
                         hostLink, commandOutput);
@@ -259,27 +253,21 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
 
         updateSslTrust(request, commandInput);
 
-        getCommandExecutor().listContainers(
-                commandInput,
-                (o, ex) -> {
-                    if (ex != null) {
-                        logWarning("Failure while listing containers of host [%s]",
-                                computeState.documentSelfLink);
-                        fail(request, o, ex);
-                    } else {
-                        ContainerListCallback callbackResponse = createContainerListCallback(
-                                computeState, o);
+        getCommandExecutor().listContainers(commandInput, (o, ex) -> {
+            if (ex != null) {
+                logWarning("Failure while listing containers of host [%s]",
+                        computeState.documentSelfLink);
+                fail(request, o, ex);
+            } else {
+                ContainerListCallback callbackResp = createContainerListCallback(computeState, o);
 
-                        if (Logger.getLogger(this.getClass().getName()).isLoggable(Level.FINE)) {
-                            logFine("Collection returned container IDs: %s %s",
-                                    callbackResponse.containerIdsAndNames.keySet().stream()
-                                            .collect(Collectors.toList()),
-                                    request.getRequestTrackingLog());
-                        }
+                logFine(() -> String.format("Collection returned container IDs: %s %s",
+                        new ArrayList<>(callbackResp.containerIdsAndNames.keySet()),
+                        request.getRequestTrackingLog()));
 
-                        patchTaskStage(request, TaskStage.FINISHED, null, callbackResponse);
-                    }
-                });
+                patchTaskStage(request, TaskStage.FINISHED, null, callbackResp);
+            }
+        });
     }
 
     // get containers within the current operation without using callback
@@ -287,24 +275,18 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
             ComputeState computeState, CommandInput commandInput) {
         updateSslTrust(request, commandInput);
 
-        getCommandExecutor().listContainers(
-                commandInput,
-                (o, ex) -> {
-                    if (ex != null) {
-                        op.fail(ex);
-                    } else {
-                        ContainerListCallback callbackResponse = createContainerListCallback(
-                                computeState, o);
-                        if (Logger.getLogger(this.getClass().getName()).isLoggable(Level.FINE)) {
-                            logFine("Collection returned container IDs: %s %s",
-                                    callbackResponse.containerIdsAndNames.keySet().stream()
-                                            .collect(Collectors.toList()),
-                                    request.getRequestTrackingLog());
-                        }
-                        op.setBody(callbackResponse);
-                        op.complete();
-                    }
-                });
+        getCommandExecutor().listContainers(commandInput, (o, ex) -> {
+            if (ex != null) {
+                op.fail(ex);
+            } else {
+                ContainerListCallback callbackResp = createContainerListCallback(computeState, o);
+                logFine(() -> String.format("Collection returned container IDs: %s %s",
+                        new ArrayList<>(callbackResp.containerIdsAndNames.keySet()),
+                        request.getRequestTrackingLog()));
+                op.setBodyNoCloning(callbackResp);
+                op.complete();
+            }
+        });
     }
 
     @SuppressWarnings("unchecked")
@@ -338,25 +320,19 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
 
         updateSslTrust(request, commandInput);
 
-        getCommandExecutor().listNetworks(
-                commandInput,
-                (o, ex) -> {
-                    if (ex != null) {
-                        fail(request, o, ex);
-                    } else {
-                        NetworkListCallback callbackResponse = createNetworkListCallback(
-                                computeState, o);
+        getCommandExecutor().listNetworks(commandInput, (o, ex) -> {
+            if (ex != null) {
+                fail(request, o, ex);
+            } else {
+                NetworkListCallback callbackResponse = createNetworkListCallback(computeState, o);
 
-                        if (Logger.getLogger(this.getClass().getName()).isLoggable(Level.FINE)) {
-                            logFine("Collection returned network IDs: %s %s",
-                                    callbackResponse.networkIdsAndNames.keySet().stream()
-                                            .collect(Collectors.toList()),
-                                    request.getRequestTrackingLog());
-                        }
+                logFine(() -> String.format("Collection returned network IDs: %s %s",
+                        new ArrayList<>(callbackResponse.networkIdsAndNames.keySet()),
+                        request.getRequestTrackingLog()));
 
-                        patchTaskStage(request, TaskStage.FINISHED, null, callbackResponse);
-                    }
-                });
+                patchTaskStage(request, TaskStage.FINISHED, null, callbackResponse);
+            }
+        });
     }
 
     // get containers within the current operation without using callback
@@ -364,24 +340,18 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
             ComputeState computeState, CommandInput commandInput) {
         updateSslTrust(request, commandInput);
 
-        getCommandExecutor().listNetworks(
-                commandInput,
-                (o, ex) -> {
-                    if (ex != null) {
-                        op.fail(ex);
-                    } else {
-                        NetworkListCallback callbackResponse = createNetworkListCallback(
-                                computeState, o);
-                        if (Logger.getLogger(this.getClass().getName()).isLoggable(Level.FINE)) {
-                            logFine("Collection returned network IDs: %s %s",
-                                    callbackResponse.networkIdsAndNames.keySet().stream()
-                                            .collect(Collectors.toList()),
-                                    request.getRequestTrackingLog());
-                        }
-                        op.setBody(callbackResponse);
-                        op.complete();
-                    }
-                });
+        getCommandExecutor().listNetworks(commandInput, (o, ex) -> {
+            if (ex != null) {
+                op.fail(ex);
+            } else {
+                NetworkListCallback callbackResponse = createNetworkListCallback(computeState, o);
+                logFine(() -> String.format("Collection returned network IDs: %s %s",
+                        new ArrayList<>(callbackResponse.networkIdsAndNames.keySet()),
+                        request.getRequestTrackingLog()));
+                op.setBodyNoCloning(callbackResponse);
+                op.complete();
+            }
+        });
     }
 
     @SuppressWarnings("unchecked")
@@ -408,26 +378,21 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
 
         updateSslTrust(request, commandInput);
 
-        getCommandExecutor().listVolumes(
-                commandInput,
-                (o, ex) -> {
-                    if (ex != null) {
-                        logWarning("Failure while listing volumes of host [%s]",
-                                computeState.documentSelfLink);
-                        fail(request, o, ex);
-                    } else {
-                        VolumeListCallback callbackResponse = createVolumeListCallback(
-                                computeState, o);
+        getCommandExecutor().listVolumes(commandInput, (o, ex) -> {
+            if (ex != null) {
+                logWarning("Failure while listing volumes of host [%s]",
+                        computeState.documentSelfLink);
+                fail(request, o, ex);
+            } else {
+                VolumeListCallback callbackResponse = createVolumeListCallback(computeState, o);
 
-                        if (Logger.getLogger(this.getClass().getName()).isLoggable(Level.FINE)) {
-                            logFine("Collection returned volume names: %s %s",
-                                    callbackResponse.volumesByName.keySet().toString(),
-                                    request.getRequestTrackingLog());
-                        }
+                logFine(() -> String.format("Collection returned volume names: %s %s",
+                        callbackResponse.volumesByName.keySet().toString(),
+                        request.getRequestTrackingLog()));
 
-                        patchTaskStage(request, TaskStage.FINISHED, null, callbackResponse);
-                    }
-                });
+                patchTaskStage(request, TaskStage.FINISHED, null, callbackResponse);
+            }
+        });
     }
 
     // get containers within the current operation without using callback
@@ -435,23 +400,18 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
             ComputeState computeState, CommandInput commandInput) {
         updateSslTrust(request, commandInput);
 
-        getCommandExecutor().listVolumes(
-                commandInput,
-                (o, ex) -> {
-                    if (ex != null) {
-                        op.fail(ex);
-                    } else {
-                        VolumeListCallback callbackResponse = createVolumeListCallback(
-                                computeState, o);
-                        if (Logger.getLogger(this.getClass().getName()).isLoggable(Level.FINE)) {
-                            logFine("Collection returned volume names: %s %s",
-                                    callbackResponse.volumesByName.keySet().toString(),
-                                    request.getRequestTrackingLog());
-                        }
-                        op.setBody(callbackResponse);
-                        op.complete();
-                    }
-                });
+        getCommandExecutor().listVolumes(commandInput, (o, ex) -> {
+            if (ex != null) {
+                op.fail(ex);
+            } else {
+                VolumeListCallback callbackResponse = createVolumeListCallback(computeState, o);
+                logFine(() -> String.format("Collection returned volume names: %s %s",
+                        callbackResponse.volumesByName.keySet().toString(),
+                        request.getRequestTrackingLog()));
+                op.setBodyNoCloning(callbackResponse);
+                op.complete();
+            }
+        });
     }
 
     @SuppressWarnings("unchecked")
@@ -511,7 +471,7 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
         updateHostStateCustomProperties(computeState, properties);
         sendRequest(Operation
                 .createPatch(request.resourceReference)
-                .setBody(computeState)
+                .setBodyNoCloning(computeState)
                 .setCompletion(callback));
     }
 
@@ -562,20 +522,19 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
             } else {
                 sendRequest(Operation
                         .createGet(this, credentialsLink)
-                        .setCompletion(
-                                (o, ex) -> {
-                                    if (ex != null) {
-                                        op.fail(ex);
-                                    } else {
-                                        try {
-                                            AuthCredentialsServiceState authCredentialsState = o
-                                                    .getBody(AuthCredentialsServiceState.class);
-                                            operation.accept(authCredentialsState);
-                                        } catch (Throwable eInner) {
-                                            op.fail(eInner);
-                                        }
-                                    }
-                                }));
+                        .setCompletion((o, ex) -> {
+                            if (ex != null) {
+                                op.fail(ex);
+                            } else {
+                                try {
+                                    AuthCredentialsServiceState authCredentialsState = o
+                                            .getBody(AuthCredentialsServiceState.class);
+                                    operation.accept(authCredentialsState);
+                                } catch (Throwable eInner) {
+                                    op.fail(eInner);
+                                }
+                            }
+                        }));
             }
         } catch (Throwable e) {
             op.fail(e);
@@ -611,9 +570,9 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
     private void parseVicStats(ComputeState computeState, Map<String, Object> properties) {
         Long totalMemory = PropertyUtils.getPropertyLong(computeState.customProperties,
                 ContainerHostService.DOCKER_HOST_TOTAL_MEMORY_PROP_NAME).orElse(0L);
-        Double usedMemory = Double.valueOf(0);
-        Long totalCpu = Long.valueOf(0);
-        Long usedCpu = Long.valueOf(0);
+        Double usedMemory = 0d;
+        Long totalCpu = 0L;
+        Long usedCpu = 0L;
         try {
             @SuppressWarnings("unchecked")
             List<List<String>> systemStatus = (List<List<String>>) properties.get(SYSTEM_STATUS);
@@ -651,12 +610,12 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
     private Double getMemoryStatus(List<String> status) {
         if (status.get(0) == null || status.get(1) == null) {
             logWarning("Unable to parse memory status for VIC host");
-            return Double.valueOf(0);
+            return 0d;
         }
         String[] sp = status.get(1).split(" ");
         if (sp.length < 2) {
             logWarning("Unable to parse memory status for VIC host");
-            return Double.valueOf(0);
+            return 0d;
         }
         double resp = 0;
         try {
@@ -670,13 +629,14 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
     private Long getCpuStatus(List<String> status) {
         if (status.get(0) == null || status.get(1) == null) {
             logWarning("Unable to parse CPU status for VIC host");
-            return Long.valueOf(0);
+            return 0L;
         }
         String[] sp = status.get(1).split(" ");
         if (sp.length < 2) {
             logWarning("Unable to parse CPU status for VIC host");
-            return Long.valueOf(0);
+            return 0L;
         }
         return ConversionUtil.cpuToHertz(Long.parseLong(sp[0]), sp[1]);
     }
+
 }

@@ -28,7 +28,6 @@ import static com.vmware.admiral.compute.ContainerHostService.SSL_TRUST_CERT_PRO
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
 
 import com.google.gson.JsonElement;
 
@@ -114,8 +113,7 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
         // use 'fromImage' - this will perform a docker pull
         ctx.commandInput.withProperty(DOCKER_IMAGE_FROM_PROP_NAME, fullImageName);
 
-        getHost().log(Level.INFO, "Pulling image: %s %s", fullImageName, ctx.request
-                .getRequestTrackingLog());
+        logInfo("Pulling image: %s %s", fullImageName, ctx.request.getRequestTrackingLog());
 
         Operation.CompletionHandler imageCompletionHandler = (o, ex) -> {
             if (ex != null) {
@@ -124,14 +122,11 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
                         computeState.documentSelfLink);
                 fail(ctx.request, o, ex);
             } else {
-                handleExceptions(
-                        ctx.request,
-                        null,
-                        () -> {
-                            logInfo("Image pulled: %s on remote machine: %s", fullImageName,
-                                    computeState.documentSelfLink);
-                            patchTaskStage(ctx.request, TaskState.TaskStage.FINISHED, null);
-                        });
+                handleExceptions(ctx.request, null, () -> {
+                    logInfo("Image pulled: %s on remote machine: %s", fullImageName,
+                            computeState.documentSelfLink);
+                    patchTaskStage(ctx.request, TaskState.TaskStage.FINISHED, null);
+                });
             }
         };
 
@@ -148,7 +143,7 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
         tagCommandInput.withProperty(DOCKER_IMAGE_REPOSITORY_PROP_NAME, imageRepo);
         tagCommandInput.withProperty(DOCKER_IMAGE_TAG_PROP_NAME, imageTag);
 
-        getHost().log(Level.INFO, "Tagging image: %s %s with repo: %s, tag: %s", fullImageName,
+        logInfo("Tagging image: %s %s with repo: %s, tag: %s", fullImageName,
                 ctx.request.getRequestTrackingLog(), imageRepo, imageTag);
 
         Operation.CompletionHandler imageCompletionHandler = (o, ex) -> {
