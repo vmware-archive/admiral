@@ -411,7 +411,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         LogService.LogServiceState logServiceState = new LogService.LogServiceState();
         logServiceState.documentSelfLink = Service.getId(context.containerState.documentSelfLink);
 
-        int maxDocumentSize = LogService.MAX_LOG_SIZE - 256; // 256 bytes spare for service document data
+        // 256 bytes spare for service document data
+        int maxDocumentSize = LogService.MAX_LOG_SIZE - 256;
         if (log.length > maxDocumentSize) {
             log = Arrays.copyOfRange(log, log.length - maxDocumentSize, log.length);
         }
@@ -782,6 +783,17 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                         Map<String, Object> body = o.getBody(Map.class);
                         context.containerState.id = (String) body
                                 .get(DOCKER_CONTAINER_ID_PROP_NAME);
+                        sendRequest(Operation.createPatch(this,
+                                context.containerState.documentSelfLink)
+                                .setBody(context.containerState)
+                                .setCompletion((op, e) -> {
+                                    if (e != null) {
+                                        logWarning(
+                                                "Could not patch container state "
+                                                + "for created container %s",
+                                                context.computeState.name);
+                                    }
+                                }));
                         processCreatedContainer(context);
                     });
                 }

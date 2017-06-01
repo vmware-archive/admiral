@@ -236,28 +236,29 @@ public class ContainerRemovalTaskService
             for (String resourceLink : resourceLinks) {
                 sendRequest(Operation
                         .createGet(this, resourceLink)
-                        .setCompletion((o, e) -> {
-                            if (e != null) {
-                                logWarning("Failed retrieving ContainerState: %s", resourceLink);
-                                completeSubTasksCounter(subTaskLink, e);
-                                return;
-                            }
-                            ContainerState containerState = o.getBody(ContainerState.class);
-                            if (isAllocatedOnlyContainer(containerState)) {
-                                completeSubTasksCounter(subTaskLink, null);
-                            } else if (containerState.id == null || containerState.id.isEmpty()) {
-                                logWarning("No ID set for container state: [%s]",
-                                        containerState.documentSelfLink);
-                                completeSubTasksCounter(subTaskLink, null);
-                            } else if (isSystemContainer(o.getBody(ContainerState.class))) {
-                                logWarning("Resource [%s] will not be removed because it is"
-                                                + " a system container",
-                                        o.getBody(ContainerState.class).documentSelfLink);
-                                completeSubTasksCounter(subTaskLink, null);
-                            } else {
-                                sendContainerDeleteRequest(containerState, subTaskLink);
-                            }
-                        }));
+                        .setCompletion(
+                                (o, e) -> {
+                                    if (e != null) {
+                                        logWarning("Failed retrieving ContainerState: "
+                                                + resourceLink);
+                                        completeSubTasksCounter(subTaskLink, e);
+                                        return;
+                                    }
+                                    ContainerState containerState = o.getBody(ContainerState.class);
+                                    if (containerState.id == null
+                                            || containerState.id.isEmpty()) {
+                                        logWarning("No ID set for container state: [%s]  ",
+                                                containerState.documentSelfLink);
+                                        completeSubTasksCounter(subTaskLink, null);
+                                    } else if (isSystemContainer(o.getBody(ContainerState.class))) {
+                                        logWarning(
+                                                "Resource [%s] will not be removed because it is a system container",
+                                                o.getBody(ContainerState.class).documentSelfLink);
+                                        completeSubTasksCounter(subTaskLink, null);
+                                    } else {
+                                        sendContainerDeleteRequest(containerState, subTaskLink);
+                                    }
+                                }));
             }
         } catch (Throwable e) {
             failTask("Unexpected exception while deleting container instances", e);
