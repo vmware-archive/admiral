@@ -1,5 +1,7 @@
 {
   "projects": {
+    "title": "Projects",
+    "project": "Project",
     "users": "Users",
     "administrators": "Administrators",
     "projectRegistry": "Project Registry",
@@ -26,6 +28,8 @@
        "creationDate": "Created:"
     },
     "config": {
+      "projectRegistry": "Project registry",
+      "public": "Public",
       "publicDescription": "Making a project registry public will make all repositories accessible to everyone.",
       "deploymentSecurity": "Deployment security",
       "enableContentTrust": "Enable content trust",
@@ -36,6 +40,18 @@
       "vulnerabilityScanning": "Vulnerability scanning",
       "automaticallyScanImagesOnPush": "Automatically scan images on push",
       "automaticallyScanImagesOnPushDescription": "Automatically scan images when they are pushed to the project registry."
+    },
+    "search": {
+      "placeholder": "Search for projects"
+    },
+    "actions": {
+      "title": "Actions",
+      "details": "Details",
+      "makePublic": "Make public",
+      "makePrivate": "Make private",
+      "addUsersAndGroups": "Add users and groups",
+      "addClusters": "Add clusters",
+      "delete": "Delete"
     }
   },
   "registries": {

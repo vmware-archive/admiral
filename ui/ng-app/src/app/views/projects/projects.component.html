@@ -10,11 +10,11 @@
   -->
 
 <grid-view [serviceEndpoint]="serviceEndpoint"
-  [searchPlaceholder]="'Search for projects'"
+  [searchPlaceholder]="'projects.search.placeholder' | i18n"
   [searchSuggestionProperties]="['name']">
-  <div title>Projects</div>
+  <div title>{{"projects.title" | i18n | titlecase}}</div>
   <div toolbar>
-    <button class="btn btn-link" [routerLink]="['./new']"><i class="fa fa-plus"></i>Project</button>
+    <button class="btn btn-link" [routerLink]="['./new']"><i class="fa fa-plus"></i>{{"projects.project" | i18n}}</button>
   </div>
   <ng-template let-item="item">
     <card [routerLink]="['./' + item.documentId]">
@@ -26,12 +26,12 @@
               <clr-icon shape="ellipsis-vertical"></clr-icon>
           </button>
           <div class="dropdown-menu">
-              <a href="..." clrDropdownItem [routerLink]="['./' + item.documentId]">Details</a>
-              <a href="..." clrDropdownItem>Make public</a>
-              <a href="..." clrDropdownItem>Add users and groups</a>
-              <a href="..." clrDropdownItem>Add clusters</a>
+              <a href="..." clrDropdownItem [routerLink]="['./' + item.documentId]">{{"projects.actions.details" | i18n}}</a>
+              <a href="..." clrDropdownItem>{{(item.isPublic ? "projects.actions.makePrivate" : "projects.actions.makePublic") | i18n}}</a>
+              <a href="..." clrDropdownItem>{{"projects.actions.addUsersAndGroups" | i18n}}</a>
+              <a href="..." clrDropdownItem>{{"projects.actions.addClusters" | i18n}}</a>
               <div class="dropdown-divider"></div>
-              <a href="..." clrDropdownItem>Delete</a>
+              <a href="..." clrDropdownItem>{{"projects.actions.delete" | i18n}}</a>
           </div>
         </clr-dropdown>
       </div>
@@ -59,7 +59,7 @@
   </ng-template>
 </grid-view>
 <navigation-container>
-  <back-button [routerLink]="['./']">Projects</back-button>
+  <back-button [routerLink]="['./']">{{"projects.actions.title" | i18n}}</back-button>
   <router-outlet></router-outlet>
 </navigation-container>
 
