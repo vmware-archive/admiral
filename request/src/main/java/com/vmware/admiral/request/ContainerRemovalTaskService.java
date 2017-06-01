@@ -21,7 +21,6 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -42,7 +41,6 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
-import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.HostPortProfileService;
 import com.vmware.admiral.request.ContainerRemovalTaskService.ContainerRemovalTaskState.SubStage;
 import com.vmware.admiral.request.ReservationRemovalTaskService.ReservationRemovalTaskState;
@@ -263,12 +261,6 @@ public class ContainerRemovalTaskService
         } catch (Throwable e) {
             failTask("Unexpected exception while deleting container instances", e);
         }
-    }
-
-    private boolean isAllocatedOnlyContainer(ContainerState containerState) {
-        return PowerState.PROVISIONING == containerState.powerState
-                && ContainerState.CONTAINER_ALLOCATION_STATUS
-                .equals(containerState.status);
     }
 
     private void createDeleteResourceCounterSubTask(ContainerRemovalTaskState state,

@@ -793,8 +793,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                                                 + "for created container %s",
                                                 context.computeState.name);
                                     }
+                                    processCreatedContainer(context);
                                 }));
-                        processCreatedContainer(context);
                     });
                 }
             });
