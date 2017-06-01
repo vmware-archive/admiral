@@ -75,6 +75,8 @@ navigation-container > .full-screen {
   right: 0;
   bottom: 0;
   background-color: white;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .main-container .tokenfield {
