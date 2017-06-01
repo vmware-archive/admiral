@@ -20,6 +20,8 @@ import static com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationSer
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.Before;
@@ -33,7 +35,10 @@ import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
 import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.compute.ComputeNetworkRemovalTaskService.ComputeNetworkRemovalTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
+import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
+import com.vmware.photon.controller.model.resources.ResourceGroupService.ResourceGroupState;
+import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.UriUtils;
 
@@ -60,7 +65,7 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
 
         removalTask = remove(removalTask);
 
-        validateResourcesRemove(removalTask.resourceLinks.iterator().next(), null);
+        validateResourcesRemove(removalTask.resourceLinks.iterator().next(), null, null, null);
     }
 
     @Test
@@ -70,15 +75,20 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
 
         removalTask = remove(removalTask);
 
-        validateResourcesRemove(removalTask.resourceLinks.iterator().next(), null);
+        validateResourcesRemove(removalTask.resourceLinks.iterator().next(), null, null, null);
     }
 
     @Test
-    public void testIsolatedNetworkRemoval() throws Throwable {
-        SubnetState subnet = createSubnetState();
+    public void testIsolatedSubnetNetworkRemoval() throws Throwable {
+        String contextId = UUID.randomUUID().toString();
+        ResourceGroupState resourceGroup = createResourceGroup(contextId, null);
+        Set<String> resourceGroupLinks = new HashSet<>();
+        resourceGroupLinks.add(resourceGroup.documentSelfLink);
+
+        SubnetState subnet = createSubnetState(resourceGroupLinks);
 
         ComputeNetworkCIDRAllocationState cidrAllocationState =
-                createCIDRAllocation(subnet.networkLink);
+                createCIDRAllocation(subnet.networkLink, subnet.tenantLinks);
 
         doPatch(allocationRequest(subnet.id, 28),
                 ComputeNetworkCIDRAllocationState.class,
@@ -89,6 +99,7 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
         ComputeNetwork cn = createNetwork("my net");
         cn.networkType = ComputeNetworkDescriptionService.NetworkType.ISOLATED;
         cn.subnetLink = subnet.documentSelfLink;
+        cn.groupLinks = resourceGroupLinks;
         cn = doPost(cn, ComputeNetworkService.FACTORY_LINK);
         ComputeNetworkRemovalTaskState removalTask = createComputeNetworkRemovalTask(
                 cn.documentSelfLink, 1);
@@ -96,9 +107,47 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
         removalTask = remove(removalTask);
 
         validateResourcesRemove(removalTask.resourceLinks.iterator().next(),
-                subnet.documentSelfLink);
+                subnet.documentSelfLink, null, resourceGroup.documentSelfLink);
 
         validateCIDRDeallocated(cidrAllocationState.documentSelfLink, subnet.id);
+    }
+
+    @Test
+    public void testIsolatedSecurityGroupNetworkRemoval() throws Throwable {
+        String contextId = UUID.randomUUID().toString();
+        ResourceGroupState resourceGroup = createResourceGroup(contextId, null);
+        Set<String> resourceGroupLinks = new HashSet<>();
+        resourceGroupLinks.add(resourceGroup.documentSelfLink);
+
+        SecurityGroupState securityGroup1 = createSecurityGroup("sg1",
+                TestRequestStateFactory.getTenantLinks(), resourceGroupLinks, contextId);
+
+        // a second security group on the same resource group but different context
+        SecurityGroupState securityGroup2 = createSecurityGroup("sg2",
+                TestRequestStateFactory.getTenantLinks(), resourceGroupLinks,
+                UUID.randomUUID().toString());
+
+        ComputeNetwork cn = createNetwork("my net");
+        cn.networkType = ComputeNetworkDescriptionService.NetworkType.ISOLATED;
+        cn.groupLinks = resourceGroupLinks;
+        cn.securityGroupLinks = new HashSet<>();
+        cn.securityGroupLinks.add(securityGroup1.documentSelfLink);
+        cn.securityGroupLinks.add(securityGroup2.documentSelfLink);
+        cn.customProperties = new HashMap<>();
+        cn.customProperties.put(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, contextId);
+        cn = doPost(cn, ComputeNetworkService.FACTORY_LINK);
+        ComputeNetworkRemovalTaskState removalTask = createComputeNetworkRemovalTask(
+                cn.documentSelfLink, 1);
+
+        removalTask = remove(removalTask);
+
+        validateResourcesRemove(removalTask.resourceLinks.iterator().next(),
+                null, securityGroup1.documentSelfLink, resourceGroup.documentSelfLink);
+
+        // the second security group still exists
+        securityGroup2 = getDocumentNoWait(SecurityGroupState.class,
+                securityGroup2.documentSelfLink);
+        assertNotNull(securityGroup2);
     }
 
     @Test
@@ -112,12 +161,12 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
 
         removalTask = remove(removalTask);
 
-        validateResourcesRemove(removalTask.resourceLinks.iterator().next(), null);
+        validateResourcesRemove(removalTask.resourceLinks.iterator().next(), null, null, null);
     }
 
     @Test
     public void testIsolatedNetworkRemovalNoSubnetAdapterShouldSucceed() throws Throwable {
-        SubnetState subnet = createSubnetState();
+        SubnetState subnet = createSubnetState(null);
         subnet.instanceAdapterReference = null;
         subnet = doPut(subnet);
 
@@ -131,7 +180,7 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
         removalTask = remove(removalTask);
 
         validateResourcesRemove(removalTask.resourceLinks.iterator().next(),
-                subnet.documentSelfLink);
+                subnet.documentSelfLink, null, null);
     }
 
     private ComputeNetworkRemovalTaskState createComputeNetworkRemovalTask(
@@ -202,8 +251,8 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
         assertFalse(cidrAllocation.allocatedCIDRs.containsKey(subnetId));
     }
 
-    private void validateResourcesRemove(String computeNetworkLink, String subnetLink)
-            throws Throwable {
+    private void validateResourcesRemove(String computeNetworkLink, String subnetLink,
+            String securityGroupLink, String resourceGroupLink) throws Throwable {
 
         ComputeNetwork networkState = getDocumentNoWait(ComputeNetwork.class,
                 computeNetworkLink);
@@ -213,15 +262,26 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
             SubnetState subnet = getDocumentNoWait(SubnetState.class, subnetLink);
             assertNull(subnet);
         }
-
+        if (securityGroupLink != null) {
+            SecurityGroupState securityGroup =
+                    getDocumentNoWait(SecurityGroupState.class, securityGroupLink);
+            assertNull(securityGroup);
+        }
+        if (resourceGroupLink != null) {
+            ResourceGroupState resourceGroup =
+                    getDocumentNoWait(ResourceGroupState.class, resourceGroupLink);
+            assertNull(resourceGroup);
+        }
     }
 
-    private ComputeNetworkCIDRAllocationState createCIDRAllocation(String networkLink)
+    private ComputeNetworkCIDRAllocationState createCIDRAllocation(String networkLink,
+            List<String> tenantLinks)
             throws Throwable {
 
         ComputeNetworkCIDRAllocationState cidrAllocationState =
                 new ComputeNetworkCIDRAllocationState();
         cidrAllocationState.networkLink = networkLink;
+        cidrAllocationState.tenantLinks = tenantLinks;
 
         return doPost(cidrAllocationState, ComputeNetworkCIDRAllocationService.FACTORY_LINK);
     }

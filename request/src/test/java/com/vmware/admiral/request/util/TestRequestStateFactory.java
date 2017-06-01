@@ -207,7 +207,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         return desc;
     }
 
-    protected static List<String> getTenantLinks() {
+    public static List<String> getTenantLinks() {
         return createTenantLinks(TENANT_NAME);
     }
 

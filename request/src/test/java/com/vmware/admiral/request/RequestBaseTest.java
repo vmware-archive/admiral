@@ -85,6 +85,7 @@ import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.admiral.service.test.MockDockerNetworkAdapterService;
 import com.vmware.admiral.service.test.MockDockerVolumeAdapterService;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSNetworkService;
+import com.vmware.photon.controller.model.adapters.awsadapter.AWSSecurityGroupService;
 import com.vmware.photon.controller.model.adapters.awsadapter.AWSSubnetService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -95,8 +96,12 @@ import com.vmware.photon.controller.model.resources.EndpointService.EndpointStat
 import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService;
 import com.vmware.photon.controller.model.resources.NetworkService;
 import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
+import com.vmware.photon.controller.model.resources.ResourceGroupService;
+import com.vmware.photon.controller.model.resources.ResourceGroupService.ResourceGroupState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.photon.controller.model.resources.SecurityGroupService;
+import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState;
 import com.vmware.photon.controller.model.resources.SubnetService;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.ServiceDocument;
@@ -594,7 +599,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
         return network;
     }
 
-    protected SubnetState createSubnetState() throws Throwable {
+    protected SubnetState createSubnetState(Set<String> groupLinks) throws Throwable {
         SubnetState subnet = new SubnetState();
         subnet.id = UUID.randomUUID().toString();
         subnet.networkLink = createNetworkState().documentSelfLink;
@@ -602,6 +607,8 @@ public abstract class RequestBaseTest extends BaseTestCase {
         subnet.subnetCIDR = "0.0.0.0/28";
         subnet.instanceAdapterReference = UriUtils.buildUri(this.host,
                 AWSSubnetService.SELF_LINK);
+        subnet.groupLinks = groupLinks;
+        subnet.tenantLinks = TestRequestStateFactory.getTenantLinks();
         subnet = doPost(subnet, SubnetService.FACTORY_LINK);
         assertNotNull(subnet);
         return subnet;
@@ -863,5 +870,33 @@ public abstract class RequestBaseTest extends BaseTestCase {
         }
 
         return containerState;
+    }
+
+    protected ResourceGroupState createResourceGroup(String contextId,
+            List<String> tenantLinks) throws Throwable {
+        ResourceGroupState resGroup = new ResourceGroupState();
+        resGroup.name = contextId;
+        resGroup.documentSelfLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                contextId);
+        resGroup.tenantLinks = tenantLinks;
+        return getOrCreateDocument(resGroup, ResourceGroupService.FACTORY_LINK);
+    }
+
+    protected SecurityGroupState createSecurityGroup(String name, List<String> tenantLinks,
+            Set<String> groupLinks, String contextId) throws Throwable {
+        SecurityGroupState securityGroup = new SecurityGroupState();
+        securityGroup.name = name;
+        securityGroup.tenantLinks = tenantLinks;
+        securityGroup.instanceAdapterReference = UriUtils.buildUri(this.host,
+                AWSSecurityGroupService.SELF_LINK);
+        securityGroup.authCredentialsLink = endpoint.authCredentialsLink;
+        securityGroup.regionId = "us-east-1";
+        securityGroup.resourcePoolLink = "resource-pool";
+        securityGroup.egress = new ArrayList<>();
+        securityGroup.ingress = new ArrayList<>();
+        securityGroup.groupLinks = groupLinks;
+        securityGroup.customProperties = new HashMap<>();
+        securityGroup.customProperties.put(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, contextId);
+        return doPost(securityGroup, SecurityGroupService.FACTORY_LINK);
     }
 }

@@ -123,6 +123,7 @@ public class ComputeNetworkProvisioningTaskServiceTest extends ComputeRequestBas
         cn.provisionProfileLink = profileLink;
         cn.tenantLinks = cnd.tenantLinks;
         cn.descriptionLink = cnd.documentSelfLink;
+        cn.groupLinks = new HashSet<>();
         cn = doPost(cn, ComputeNetworkService.FACTORY_LINK);
         assertNotNull(cn);
         return cn;
@@ -132,7 +133,7 @@ public class ComputeNetworkProvisioningTaskServiceTest extends ComputeRequestBas
             throws Throwable {
         NetworkProfile networkProfile = new NetworkProfile();
         networkProfile.isolationType = IsolationSupportType.NONE;
-        networkProfile.subnetLinks = Arrays.asList(createSubnetState().documentSelfLink);
+        networkProfile.subnetLinks = Arrays.asList(createSubnetState(null).documentSelfLink);
         networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
         ProfileState profile = super.createProfile(null, null, networkProfile, null,
                 null);

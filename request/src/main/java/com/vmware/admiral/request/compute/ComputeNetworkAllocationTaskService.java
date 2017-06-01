@@ -15,6 +15,7 @@ import static com.vmware.admiral.common.util.AssertUtil.assertNotEmpty;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
+import static com.vmware.admiral.request.utils.RequestUtils.getContextId;
 
 import java.util.HashSet;
 import java.util.List;
@@ -37,6 +38,7 @@ import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
+import com.vmware.photon.controller.model.resources.ResourceGroupService.ResourceGroupState;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -135,6 +137,16 @@ public class ComputeNetworkAllocationTaskService extends
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public List<String> profileLinks;
 
+        /**
+         * (Internal) Set by task with the ResourceGroupState associated to this compute network
+         */
+        @Documentation(
+                description = "Set by task environments that can be used to create compute network.")
+        @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
+                PropertyUsageOption.SERVICE_USE,
+                PropertyUsageOption.SINGLE_ASSIGNMENT,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        public ResourceGroupState resourceGroup;
     }
 
     public ComputeNetworkAllocationTaskService() {
@@ -237,16 +249,29 @@ public class ComputeNetworkAllocationTaskService extends
             return;
         }
 
-        proceedTo(SubStage.CONTEXT_PREPARED, s -> {
-            // merge request/allocation properties over the network description properties
-            s.customProperties = mergeCustomProperties(networkDescription.customProperties,
-                    state.customProperties);
+        // create resource group (if it doesn't exist already)
+        ResourceGroupUtils.createResourceGroup(getHost(),
+                UriUtils.buildUri(getHost(), getSelfLink()), getContextId(state),
+                state.tenantLinks)
+                .whenComplete((resourceGroup, t) -> {
+                    if (t != null) {
+                        failTask("Failure creating resource group", t);
+                        return;
+                    }
+                    proceedTo(SubStage.CONTEXT_PREPARED, s -> {
+                        // merge request/allocation properties over the network description properties
+                        s.customProperties = mergeCustomProperties(
+                                networkDescription.customProperties,
+                                state.customProperties);
 
-            if (s.getCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY) == null) {
-                s.addCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, getSelfId());
-            }
-            s.descName = networkDescription.name;
-        });
+                        if (s.getCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY) == null) {
+                            s.addCustomProperty(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY,
+                                    getSelfId());
+                        }
+                        s.descName = networkDescription.name;
+                        s.resourceGroup = resourceGroup;
+                    });
+                });
     }
 
     private void createResourcePrefixNameSelectionTask(ComputeNetworkAllocationTaskState state,
@@ -315,6 +340,7 @@ public class ComputeNetworkAllocationTaskService extends
         assertNotNull(networkDescription, "networkDescription");
         assertNotEmpty(resourceName, "resourceName");
         assertNotNull(taskCallback, "taskCallback");
+        assertNotNull(state.resourceGroup, "state.resourceGroup should not be null");
 
         try {
             final ComputeNetwork networkState = new ComputeNetwork();
@@ -327,6 +353,8 @@ public class ComputeNetworkAllocationTaskService extends
             networkState.tenantLinks = state.tenantLinks;
             networkState.customProperties = state.customProperties;
             networkState.profileLinks = state.profileLinks;
+            networkState.groupLinks = new HashSet<>();
+            networkState.groupLinks.add(state.resourceGroup.documentSelfLink);
 
             String contextId;
             if (state.customProperties != null

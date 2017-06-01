@@ -56,6 +56,7 @@ public class ComputeNetworkAllocationTaskServiceTest extends RequestBaseTest {
         assertEquals(computeNetworkDesc.documentSelfLink, networkState.descriptionLink);
         assertTrue(networkState.name.contains(computeNetworkDesc.name));
         assertEquals(allocationTask.resourceLinks.iterator().next(), networkState.documentSelfLink);
+        assertNotNull(networkState.groupLinks);
     }
 
     @Test
@@ -77,6 +78,7 @@ public class ComputeNetworkAllocationTaskServiceTest extends RequestBaseTest {
         assertEquals(NetworkType.EXTERNAL, networkState.networkType);
 
         assertTrue(networkState.name.contains(networkDescription.name));
+        assertNotNull(networkState.groupLinks);
     }
 
     @Test
@@ -100,6 +102,7 @@ public class ComputeNetworkAllocationTaskServiceTest extends RequestBaseTest {
                 networkState.subnetLink);
 
         assertTrue(networkState.name.contains(networkDescription.name));
+        assertNotNull(networkState.groupLinks);
     }
 
     private ComputeNetworkAllocationTaskState createComputeNetworkAllocationTask(

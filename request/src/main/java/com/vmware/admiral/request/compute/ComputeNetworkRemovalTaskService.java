@@ -12,16 +12,21 @@
 package com.vmware.admiral.request.compute;
 
 import static com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationRequest.deallocationRequest;
+import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.vmware.admiral.adapter.common.NetworkOperationType;
 import com.vmware.admiral.common.DeploymentProfileConfig;
@@ -36,10 +41,15 @@ import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
 import com.vmware.admiral.request.compute.ComputeNetworkRemovalTaskService.ComputeNetworkRemovalTaskState.SubStage;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.TaskServiceDocument;
+import com.vmware.photon.controller.model.adapterapi.SecurityGroupInstanceRequest.InstanceRequestType;
 import com.vmware.photon.controller.model.adapterapi.SubnetInstanceRequest;
+import com.vmware.photon.controller.model.query.QueryUtils;
 import com.vmware.photon.controller.model.query.QueryUtils.QueryByPages;
 import com.vmware.photon.controller.model.query.QueryUtils.QueryTop;
+import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
+import com.vmware.photon.controller.model.tasks.ProvisionSecurityGroupTaskService;
+import com.vmware.photon.controller.model.tasks.ProvisionSecurityGroupTaskService.ProvisionSecurityGroupTaskState;
 import com.vmware.photon.controller.model.tasks.ProvisionSubnetTaskService;
 import com.vmware.photon.controller.model.tasks.ProvisionSubnetTaskService.ProvisionSubnetTaskState;
 import com.vmware.photon.controller.model.tasks.ServiceTaskCallback;
@@ -51,6 +61,7 @@ import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.Query.Builder;
 
 /**
  * Task implementing removal of Compute Networks.
@@ -67,14 +78,17 @@ public class ComputeNetworkRemovalTaskService extends
 
         public enum SubStage {
             CREATED,
-            INSTANCES_REMOVING,
-            INSTANCES_REMOVED,
+            SUBNET_INSTANCES_REMOVING,
+            SUBNET_INSTANCES_REMOVED,
+            SECURITY_GROUP_INSTANCES_REMOVING,
+            SECURITY_GROUP_INSTANCES_REMOVED,
             REMOVING_RESOURCE_STATES,
             COMPLETED,
             ERROR;
 
-            static final Set<SubStage> TRANSIENT_SUB_STAGES =
-                    Collections.singleton(REMOVING_RESOURCE_STATES);
+            static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
+                    Arrays.asList(SUBNET_INSTANCES_REMOVING, SECURITY_GROUP_INSTANCES_REMOVING,
+                            REMOVING_RESOURCE_STATES));
         }
 
         /**
@@ -85,13 +99,13 @@ public class ComputeNetworkRemovalTaskService extends
     }
 
     private static class Context {
-        public Context(ComputeNetwork computeNetwork, ServiceTaskCallback<?> serviceTaskCallback) {
+        public Context(ComputeNetwork computeNetwork, ServiceTaskCallback serviceTaskCallback) {
             this.computeNetwork = computeNetwork;
             this.serviceTaskCallback = serviceTaskCallback;
         }
 
         ComputeNetwork computeNetwork;
-        ServiceTaskCallback<?> serviceTaskCallback;
+        ServiceTaskCallback serviceTaskCallback;
         SubnetState subnet;
         String cidrAllocationServiceLink;
     }
@@ -113,11 +127,16 @@ public class ComputeNetworkRemovalTaskService extends
         try {
             switch (state.taskSubStage) {
             case CREATED:
-                deleteResourceInstances(state, computeNetworks);
+                removeSubnetInstances(state, computeNetworks);
                 break;
-            case INSTANCES_REMOVING:
+            case SUBNET_INSTANCES_REMOVING:
                 break;
-            case INSTANCES_REMOVED:
+            case SUBNET_INSTANCES_REMOVED:
+                removeSecurityGroupInstances(state, computeNetworks);
+                break;
+            case SECURITY_GROUP_INSTANCES_REMOVING:
+                break;
+            case SECURITY_GROUP_INSTANCES_REMOVED:
                 removeComputeNetworkStates(state, computeNetworks, null);
                 break;
             case REMOVING_RESOURCE_STATES:
@@ -146,11 +165,11 @@ public class ComputeNetworkRemovalTaskService extends
         return statusTask;
     }
 
-    private void deleteResourceInstances(ComputeNetworkRemovalTaskState state,
+    private void  removeSubnetInstances(ComputeNetworkRemovalTaskState state,
             List<ComputeNetwork> computeNetworks) {
         if (computeNetworks == null) {
             queryComputeNetworkResources(state, networks ->
-                    deleteResourceInstances(state, networks));
+                    removeSubnetInstances(state, networks));
             return;
         }
 
@@ -159,22 +178,21 @@ public class ComputeNetworkRemovalTaskService extends
                 .filter(n -> n.networkType == NetworkType.ISOLATED && n.subnetLink != null)
                 .collect(Collectors.toList());
         if (isolatedComputeNetworks.size() == 0) {
-            proceedTo(SubStage.INSTANCES_REMOVED);
+            proceedTo(SubStage.SUBNET_INSTANCES_REMOVED);
             return;
         }
 
-        ServiceTaskCallback<SubStage> callback = ServiceTaskCallback.create(getUri());
-        callback.onSuccessTo(SubStage.INSTANCES_REMOVED);
-        callback.onErrorTo(SubStage.ERROR);
-
-        deleteSubnets(isolatedComputeNetworks, callback);
+        deleteSubnets(isolatedComputeNetworks);
     }
 
-    private void deleteSubnets(List<ComputeNetwork> isolatedComputeNetworks,
-            ServiceTaskCallback<?> serviceTaskCallback) {
+    private void deleteSubnets(List<ComputeNetwork> isolatedComputeNetworks) {
+        ServiceTaskCallback<SubStage> callback = ServiceTaskCallback.create(getUri());
+        callback.onSuccessTo(SubStage.SUBNET_INSTANCES_REMOVED);
+        callback.onErrorTo(SubStage.ERROR);
+
         try {
             isolatedComputeNetworks.forEach(isolatedComputeNetwork ->
-                    DeferredResult.completed(new Context(isolatedComputeNetwork, serviceTaskCallback))
+                    DeferredResult.completed(new Context(isolatedComputeNetwork, callback))
                             .thenCompose(this::populateSubnet)
                             .thenCompose(this::populateCIDRAllocationService)
                             .thenCompose(this::destroySubnet)
@@ -184,17 +202,26 @@ public class ComputeNetworkRemovalTaskService extends
                                         instanceof ServiceHost.ServiceNotFoundException) {
                                     logWarning("Subnet State is not found at link: %s ",
                                             isolatedComputeNetwork.subnetLink);
-                                    completeSubTask(serviceTaskCallback, null);
+                                    completeSubTask(callback, null);
                                 } else {
-                                    completeSubTask(serviceTaskCallback, e);
+                                    completeSubTask(callback, e);
                                 }
                                 return null;
                             })
             );
-            proceedTo(SubStage.INSTANCES_REMOVING);
+            proceedTo(SubStage.SUBNET_INSTANCES_REMOVING);
         } catch (Throwable e) {
             failTask("Unexpected exception while deleting subnets", e);
         }
+    }
+
+    private DeferredResult<Context> populateSubnet(Context context) {
+        return this.sendWithDeferredResult(
+                Operation.createGet(this, context.computeNetwork.subnetLink), SubnetState.class)
+                .thenApply(subnetState -> {
+                    context.subnet = subnetState;
+                    return context;
+                });
     }
 
     private DeferredResult<Context> destroySubnet(Context context) {
@@ -246,6 +273,101 @@ public class ComputeNetworkRemovalTaskService extends
                 });
     }
 
+    private void removeSecurityGroupInstances(ComputeNetworkRemovalTaskState state,
+            List<ComputeNetwork> computeNetworks) {
+        if (computeNetworks == null) {
+            queryComputeNetworkResources(state, networks ->
+                    removeSecurityGroupInstances(state, networks));
+            return;
+        }
+
+        List<ComputeNetwork> isolatedNetworks = computeNetworks.stream()
+                .filter(n -> n.networkType == NetworkType.ISOLATED && (
+                        n.securityGroupLinks != null && !n.securityGroupLinks.isEmpty()))
+                .collect(Collectors.toList());
+
+        if (isolatedNetworks.isEmpty()) {
+            proceedTo(SubStage.SECURITY_GROUP_INSTANCES_REMOVED);
+            return;
+        }
+
+        deleteSecurityGroups(isolatedNetworks, state.tenantLinks);
+    }
+
+    private void deleteSecurityGroups(List<ComputeNetwork> isolatedComputeNetworks,
+            List<String> tenantLinks) {
+        try {
+            DeferredResult.allOf(
+                    isolatedComputeNetworks.stream()
+                            .map(cn -> getSecurityGroupLinks(cn))
+                            .collect(Collectors.toList()))
+                    .thenApply(allSecurityGroupLinks -> {
+                        Set<String> uniqueSecurityGroupLinks = new HashSet<>();
+                        return allSecurityGroupLinks.stream()
+                                .filter(securityGroupLinks -> !securityGroupLinks.isEmpty())
+                                .flatMap(securityGroups ->
+                                        securityGroups.stream().filter(
+                                                sgLink -> uniqueSecurityGroupLinks.add(sgLink)
+                                        )).collect(Collectors.toSet());
+                    })
+                    .thenCompose(securityGroupLinks ->
+                            destroySecurityGroups(securityGroupLinks, tenantLinks));
+            proceedTo(SubStage.SECURITY_GROUP_INSTANCES_REMOVING);
+        } catch (Throwable e) {
+            failTask("Unexpected exception while deleting security groups", e);
+        }
+    }
+
+    private DeferredResult<Set<String>> getSecurityGroupLinks(ComputeNetwork computeNetwork) {
+        // Find all SecurityGroups that are associated to and have the same context id as this
+        // network
+        String contextId = computeNetwork.customProperties != null ?
+                computeNetwork.customProperties.get(FIELD_NAME_CONTEXT_ID_KEY) : null;
+
+        if (StringUtils.isBlank(contextId)) {
+            return DeferredResult.completed(Collections.emptySet());
+        }
+
+        Set<String> securityGroups = new HashSet<>();
+        Builder builder = Builder.create()
+                .addKindFieldClause(SecurityGroupState.class)
+                .addCompositeFieldClause(SecurityGroupState.FIELD_NAME_CUSTOM_PROPERTIES,
+                        FIELD_NAME_CONTEXT_ID_KEY, contextId)
+                .addInClause(SecurityGroupState.FIELD_NAME_SELF_LINK,
+                        computeNetwork.securityGroupLinks);
+        QueryUtils.QueryByPages<SecurityGroupState> query = new QueryUtils.QueryByPages<>(
+                getHost(),
+                builder.build(), SecurityGroupState.class, computeNetwork.tenantLinks);
+
+        return query.queryLinks(sg -> securityGroups.add(sg))
+                .thenApply(v -> securityGroups);
+    }
+
+    private DeferredResult<Operation> destroySecurityGroups(Set<String> securityGroupLinks,
+            List<String> tenantLinks) {
+        if (securityGroupLinks.isEmpty()) {
+            proceedTo(SubStage.SECURITY_GROUP_INSTANCES_REMOVED);
+            return DeferredResult.completed(null);
+        }
+
+        ServiceTaskCallback<SubStage> callback = ServiceTaskCallback.create(getUri());
+        callback.onSuccessTo(SubStage.SECURITY_GROUP_INSTANCES_REMOVED);
+        callback.onErrorTo(SubStage.ERROR);
+
+        ProvisionSecurityGroupTaskState provisionTaskState = new ProvisionSecurityGroupTaskState();
+        provisionTaskState.isMockRequest = DeploymentProfileConfig.getInstance().isTest();
+        provisionTaskState.requestType = InstanceRequestType.DELETE;
+        provisionTaskState.serviceTaskCallback = callback;
+        provisionTaskState.tenantLinks = tenantLinks;
+        provisionTaskState.documentExpirationTimeMicros = ServiceUtils
+                .getDefaultTaskExpirationTimeInMicros();
+        provisionTaskState.securityGroupDescriptionLinks = securityGroupLinks;
+
+        return this.sendWithDeferredResult(
+                Operation.createPost(this, ProvisionSecurityGroupTaskService.FACTORY_LINK)
+                        .setBody(provisionTaskState));
+    }
+
     private void removeComputeNetworkStates(ComputeNetworkRemovalTaskState state,
             List<ComputeNetwork> computeNetworks, String subTaskLink) {
         if (subTaskLink == null) {
@@ -271,18 +393,30 @@ public class ComputeNetworkRemovalTaskService extends
                                 }
                                 logInfo("Deleted ComputeNetworkState: "
                                         + computeNetwork.documentSelfLink);
-                                completeSubTasksCounter(subTaskLink, null);
+
+                                removeResourceGroups(computeNetwork.groupLinks,
+                                        v -> completeSubTasksCounter(subTaskLink, null));
                             }).sendWith(this);
         }
         proceedTo(SubStage.REMOVING_RESOURCE_STATES);
     }
 
-    private DeferredResult<Context> populateSubnet(Context context) {
-        return this.sendWithDeferredResult(
-                Operation.createGet(this, context.computeNetwork.subnetLink), SubnetState.class)
-                .thenApply(subnetState -> {
-                    context.subnet = subnetState;
-                    return context;
+    private void removeResourceGroups(Set<String> groupLinks, Consumer<Void> callback) {
+        if (groupLinks == null || groupLinks.size() == 0) {
+            callback.accept(null);
+            return;
+        }
+
+        DeferredResult.allOf(groupLinks.stream().map(
+                groupLink -> this.sendWithDeferredResult(
+                        Operation.createDelete(this, groupLink)
+                )
+        ).collect(Collectors.toList()))
+                .whenComplete((all, t) -> {
+                    if (t != null) {
+                        logWarning("Failed deleting all ResourceGroupStates: " + groupLinks, t);
+                    }
+                    callback.accept(null);
                 });
     }
 

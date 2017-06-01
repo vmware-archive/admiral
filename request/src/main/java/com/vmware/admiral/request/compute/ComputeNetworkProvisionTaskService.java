@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
@@ -222,7 +223,7 @@ public class ComputeNetworkProvisionTaskService
                     .thenCompose(this::populateContext)
                     .thenCompose(this::provisionResource)
                     .exceptionally(t -> {
-                        logSevere("Failure provisioning a subnet: %s", t);
+                        logSevere("Failure provisioning a network: %s", t);
                         completeSubTask(callback, t);
                         return null;
                     }));
@@ -449,6 +450,8 @@ public class ComputeNetworkProvisionTaskService
         AssertUtil.assertNotNull(context.profile, "Context.profile should not be null.");
         AssertUtil.assertNotNull(context.computeNetwork,
                 "Context.computeNetwork should not be null.");
+        AssertUtil.assertNotNull(context.computeNetwork.groupLinks,
+                "Context.computeNetwork.groupLinks should not be null.");
         AssertUtil.assertNotNull(context.profile.networkProfile,
                 "Context.profile.networkProfile should not be null.");
 
@@ -467,6 +470,7 @@ public class ComputeNetworkProvisionTaskService
             subnet.name = context.computeNetwork.name;
             subnet.networkLink = context.computeNetwork.documentSelfLink;
             subnet.tenantLinks = context.computeNetwork.tenantLinks;
+            subnet.groupLinks = context.computeNetwork.groupLinks;
 
             subnet.lifecycleState = LifecycleState.PROVISIONING;
 
@@ -485,6 +489,8 @@ public class ComputeNetworkProvisionTaskService
         AssertUtil.assertNotNull(context.profile, "Context.profile should not be null.");
         AssertUtil.assertNotNull(context.computeNetwork,
                 "Context.computeNetwork should not be null.");
+        AssertUtil.assertNotNull(context.computeNetwork.groupLinks,
+                "Context.computeNetwork.groupLinks should not be null.");
         AssertUtil.assertNotNull(context.profile.networkProfile,
                 "Context.profile.networkProfile should not be null.");
         AssertUtil.assertTrue(context.computeNetwork.networkType.equals(NetworkType.ISOLATED),
@@ -511,6 +517,12 @@ public class ComputeNetworkProvisionTaskService
                 URI.create(context.securityGroupInstanceAdapterReference);
         securityGroup.resourcePoolLink = context.profile.endpoint.resourcePoolLink;
         securityGroup.authCredentialsLink = context.profile.endpoint.authCredentialsLink;
+        securityGroup.groupLinks = context.computeNetwork.groupLinks;
+        String contextId = RequestUtils.getContextId(context.state);
+        if (contextId != null) {
+            securityGroup.customProperties = new HashMap<>();
+            securityGroup.customProperties.put(FIELD_NAME_CONTEXT_ID_KEY, contextId);
+        }
 
         // build "deny-all" rules for now
         securityGroup.ingress = buildIsolationRules();
@@ -522,7 +534,8 @@ public class ComputeNetworkProvisionTaskService
                 .thenApply(sg -> {
                     context.isolationSecurityGroup = sg;
                     return context;
-                });
+                })
+                .thenCompose(this::patchComputeNetwork);
     }
 
     private DeferredResult<Context> allocateSubnetCIDR(Context context) {
@@ -557,6 +570,12 @@ public class ComputeNetworkProvisionTaskService
         subnet.endpointLink = context.isolatedNetworkEndpoint.documentSelfLink;
         subnet.instanceAdapterReference = URI.create(context.subnetInstanceAdapterReference);
         subnet.subnetCIDR = context.subnetCIDR;
+        subnet.groupLinks = context.computeNetwork.groupLinks;
+        String contextId = RequestUtils.getContextId(context.state);
+        if (contextId != null) {
+            subnet.customProperties = new HashMap<>();
+            subnet.customProperties.put(FIELD_NAME_CONTEXT_ID_KEY, contextId);
+        }
 
         return this.sendWithDeferredResult(
                 Operation.createPost(this, SubnetService.FACTORY_LINK)
@@ -590,7 +609,7 @@ public class ComputeNetworkProvisionTaskService
         AssertUtil.assertNotNull(context.isolationSecurityGroup,
                 "Context.isolationSecurityGroup should not be null.");
         AssertUtil.assertNotNull(context.subnetNetworkState,
-                "Context.isolationSecurityGroup should not be null.");
+                "Context.subnetNetworkState should not be null.");
 
         ProvisionSecurityGroupTaskState provisionTaskState = new ProvisionSecurityGroupTaskState();
         provisionTaskState.isMockRequest = DeploymentProfileConfig.getInstance().isTest();
@@ -598,10 +617,12 @@ public class ComputeNetworkProvisionTaskService
         provisionTaskState.tenantLinks = context.computeNetwork.tenantLinks;
         provisionTaskState.documentExpirationTimeMicros = ServiceUtils
                 .getDefaultTaskExpirationTimeInMicros();
-        provisionTaskState.securityGroupDescriptionLink = context.isolationSecurityGroup
-                .documentSelfLink;
+        provisionTaskState.securityGroupDescriptionLinks = Stream.of(context.isolationSecurityGroup
+                .documentSelfLink).collect(Collectors.toSet());
         provisionTaskState.serviceTaskCallback = context.serviceTaskCallback;
         provisionTaskState.customProperties = new HashMap<>();
+        // the network state id is the vpc id on AWS; it is needed by the photon-model to create
+        // this security group
         provisionTaskState.customProperties.put(NETWORK_STATE_ID_PROP_NAME, context
                 .subnetNetworkState.id);
 
@@ -659,7 +680,16 @@ public class ComputeNetworkProvisionTaskService
     }
 
     private DeferredResult<Context> patchComputeNetwork(Context context) {
-        context.computeNetwork.subnetLink = context.subnet.documentSelfLink;
+        if (context.subnet != null) {
+            context.computeNetwork.subnetLink = context.subnet.documentSelfLink;
+        }
+        if (context.isolationSecurityGroup != null) {
+            if (context.computeNetwork.securityGroupLinks == null) {
+                context.computeNetwork.securityGroupLinks = new HashSet<>();
+            }
+            context.computeNetwork.securityGroupLinks.add(context
+                    .isolationSecurityGroup.documentSelfLink);
+        }
         return this.sendWithDeferredResult(
                 Operation.createPatch(this, context.computeNetwork.documentSelfLink)
                         .setBody(context.computeNetwork))

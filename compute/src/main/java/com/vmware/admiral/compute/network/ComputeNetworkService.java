@@ -125,5 +125,11 @@ public class ComputeNetworkService extends StatefulService {
     private void updateState(ComputeNetwork currentState, ComputeNetwork newState) {
         currentState.provisionProfileLink = newState.provisionProfileLink;
         currentState.subnetLink = newState.subnetLink;
+        if (newState.securityGroupLinks != null) {
+            if (currentState.securityGroupLinks == null) {
+                currentState.securityGroupLinks = new HashSet<>();
+            }
+            currentState.securityGroupLinks.addAll(newState.securityGroupLinks);
+        }
     }
 }
