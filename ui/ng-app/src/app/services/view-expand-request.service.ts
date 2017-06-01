@@ -14,12 +14,4 @@ export class ViewExpandRequestService {
   getFullScreenRequestEmitter(): EventEmitter<boolean> {
     return this.fullScreenRequestEmitter;
   }
-
-  requestExpandScreen(value) {
-    this.expandRequestEmitter.emit(value);
-  }
-
-  getExpandRequestEmitter(): EventEmitter<boolean> {
-    return this.expandRequestEmitter;
-  }
 }

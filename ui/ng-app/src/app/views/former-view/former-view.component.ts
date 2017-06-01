@@ -1,51 +1,30 @@
-import { Component, OnInit, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ViewEncapsulation, Input } from '@angular/core';
 import { Router, ActivatedRoute, Route, RoutesRecognized, NavigationEnd, NavigationCancel } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ViewExpandRequestService } from '../../services/view-expand-request.service';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
-  selector: 'app-former-view',
+  selector: 'former-view',
   templateUrl: './former-view.component.html',
   styleUrls: ['./former-view.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class FormerViewComponent implements OnInit, OnDestroy {
-  private routeObserve: Subscription;
+export class FormerViewComponent {
+  @Input()
+  path: String;
 
-  @ViewChild('frameHolder') frameHolder;
+  constructor(private sanitizer: DomSanitizer) {}
 
-  private static iframe: HTMLIFrameElement;
-
-  constructor(private router: Router, private route: ActivatedRoute, private viewExpandRequestService: ViewExpandRequestService) {}
-
-  ngOnInit() {
-    if (!FormerViewComponent.iframe) {
-      FormerViewComponent.iframe = document.createElement('iframe');
-    }
-
-    this.routeObserve = this.router.events.subscribe((event) => {
-      if (event instanceof NavigationEnd) {
-        console.log('event.url ' + event.url);
-
-        let url = event.url.substring('/home/'.length);
-        let route = this.route;
-        console.log('route ', route, 'url', url);
-
-        if (!this.frameHolder.nativeElement.querySelector('iframe')) {
-          this.frameHolder.nativeElement.appendChild(FormerViewComponent.iframe);
-        }
-
-        FormerViewComponent.iframe.src = '../index-no-navigation.html#' + url;
-        FormerViewComponent.iframe.id = 'former-view-frame';
-
-        this.viewExpandRequestService.requestExpandScreen(true);
-      }
-    });
+  get src() {
+    let path = this.path || 'containers';
+    return this.sanitizer.bypassSecurityTrustResourceUrl('../index-no-navigation.html#' + path);
   }
+}
 
-  ngOnDestroy() {
-    this.routeObserve.unsubscribe();
-    this.viewExpandRequestService.requestExpandScreen(false);
-  }
-
+@Component({
+  selector: 'former-view-placeholder',
+  template: '<div></div>'
+})
+export class FormerPlaceholderViewComponent {
 }

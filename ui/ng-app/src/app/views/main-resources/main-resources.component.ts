@@ -1,3 +1,4 @@
+import { NavigationEnd } from '@angular/router';
 /*
  * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
@@ -10,7 +11,9 @@
  */
 
 import { FT } from './../../utils/ft';
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, OnDestroy } from '@angular/core';
+import { Subscription } from 'rxjs/Subscription';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-main-resources',
@@ -18,14 +21,48 @@ import { Component, OnInit, ViewEncapsulation } from '@angular/core';
   styleUrls: ['./main-resources.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class MainResourcesComponent implements OnInit {
+export class MainResourcesComponent implements OnInit, OnDestroy {
 
     kubernetesEnabled = FT.isKubernetesHostOptionEnabled();
 
     embeddedMode = FT.isApplicationEmbedded();
 
-    constructor() { }
+    routeObserve: Subscription;
+
+    formerViewPaths = {
+      'templates': 'templates?$category=templates',
+      'public-repositories': 'templates?$category=images',
+      'registries': 'registries',
+      'hosts': 'hosts',
+      'applications': 'applications',
+      'containers': 'containers',
+      'networks': 'networks',
+      'volumes': 'volumes'
+    }
+
+    formerViewPath;
+
+    constructor(private router: Router) { }
 
     ngOnInit() {
+      this.routeObserve = this.router.events.subscribe((event) => {
+        if (event instanceof NavigationEnd) {
+          let formerViewPath;
+          if (event.urlAfterRedirects.startsWith("/home/")) {
+            let url = event.urlAfterRedirects.replace("/home/", "");
+            for (let key in this.formerViewPaths) {
+              if (url.startsWith(key)) {
+                formerViewPath = this.formerViewPaths[key]
+              }
+            }
+          }
+
+          this.formerViewPath = formerViewPath;
+        }
+      });
+    }
+
+    ngOnDestroy() {
+      this.routeObserve.unsubscribe();
     }
 }

@@ -31,9 +31,6 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
 
   protected entityInitialized() {
     let cs = this.entity.customProperties || {};
-    if (!cs.__harborId) {
-      throw new Error('__harborId not provided for project');
-    }
     this.hbrProjectId = cs.__harborId;
   }
 

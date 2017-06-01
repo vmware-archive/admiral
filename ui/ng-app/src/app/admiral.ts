@@ -28,9 +28,8 @@ import { ConfigurationComponent } from './views/configuration/configuration.comp
 import { LogsComponent } from './views/logs/logs.component';
 
 import { DashboardComponent } from './views/dashboard/dashboard.component';
-import { FormerViewComponent } from './views/former-view/former-view.component';
+import { FormerViewComponent, FormerPlaceholderViewComponent } from './views/former-view/former-view.component';
 import { RepositoryComponent } from './views/hbr/repository/repository.component';
-import { PublicRepositoriesComponent } from './views/public-repositories/public-repositories.component';
 import { VchClustersComponent } from './views/vch-clusters/vch-clusters.component';
 
 import { GridViewComponent } from './components/grid-view/grid-view.component';
@@ -72,8 +71,8 @@ export const ADMIRAL_DECLARATIONS = [
 
   DashboardComponent,
   FormerViewComponent,
+  FormerPlaceholderViewComponent,
   RepositoryComponent,
-  PublicRepositoriesComponent,
   VchClustersComponent,
 
   GridViewComponent,

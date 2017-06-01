@@ -21,15 +21,10 @@ import { DocumentService } from './utils/document.service';
     styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-    expanded: boolean;
     fullScreen: boolean;
     user: any;
 
     constructor(private viewExpandRequestor: ViewExpandRequestService, private documentService: DocumentService) {
-        this.viewExpandRequestor.getExpandRequestEmitter().subscribe(isExpand => {
-            this.expanded = isExpand;
-        });
-
         this.viewExpandRequestor.getFullScreenRequestEmitter().subscribe(isFullScreen => {
             this.fullScreen = isFullScreen;
         });

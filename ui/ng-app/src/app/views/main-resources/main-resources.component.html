@@ -73,6 +73,9 @@
       </section>
   </section>
 </nav>
-<div class="content-area">
+<div class="content-area" [hidden]="formerViewPath">
     <router-outlet></router-outlet>
+</div>
+<div class="content-area expanded" [hidden]="!formerViewPath">
+    <former-view [path]="formerViewPath"></former-view>
 </div>

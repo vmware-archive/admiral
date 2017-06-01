@@ -24,9 +24,8 @@ import { ConfigurationComponent } from './views/configuration/configuration.comp
 import { LogsComponent } from './views/logs/logs.component';
 
 import { DashboardComponent } from './views/dashboard/dashboard.component';
-import { FormerViewComponent } from './views/former-view/former-view.component';
+import { FormerPlaceholderViewComponent } from './views/former-view/former-view.component';
 import { RepositoryComponent } from './views/hbr/repository/repository.component';
-import { PublicRepositoriesComponent } from './views/public-repositories/public-repositories.component';
 import { VchClustersComponent } from './views/vch-clusters/vch-clusters.component';
 
 import { PodListComponent } from './kubernetes/pods/list/pod-list.component';
@@ -56,12 +55,6 @@ export const ROUTES: Routes = [
                 path: 'project-repositories', component: RepositoryComponent
             },
             {
-                path: 'public-repositories', component: PublicRepositoriesComponent
-            },
-            {
-                path: 'registries', component: FormerViewComponent
-            },
-            {
                 path: 'vch-clusters', component: VchClustersComponent
             },
             {
@@ -89,7 +82,7 @@ export const ROUTES: Routes = [
                 ]
             },
             {
-                 path: '**', component: FormerViewComponent
+                 path: '**', component: FormerPlaceholderViewComponent
             }
         ]
     },
