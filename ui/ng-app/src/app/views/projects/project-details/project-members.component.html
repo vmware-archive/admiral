@@ -1,0 +1,40 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div toolbar>
+    <button class="btn btn-link" [routerLink]="['./add-member']">
+        <clr-icon shape="add" size="12"></clr-icon><span class="btn-spaced-text">{{"add" | i18n}}</span></button>
+</div>
+
+<clr-datagrid>
+    <clr-dg-column>{{"projects.members.columnName" | i18n}}</clr-dg-column>
+    <clr-dg-column>{{"projects.members.columnPrimaryId" | i18n}}</clr-dg-column>
+    <clr-dg-column>{{"projects.members.columnSource" | i18n}}</clr-dg-column>
+    <clr-dg-column>{{"projects.members.columnRole" | i18n}}</clr-dg-column>
+
+    <clr-dg-row *ngFor="let member of members">
+        <clr-dg-action-overflow>
+            <button class="action-item" (click)="onEdit(member)">{{"edit" | i18n}}</button>
+            <button class="action-item" (click)="onDelete(member)">{{"delete" | i18n}}</button>
+        </clr-dg-action-overflow>
+        <clr-dg-cell><clr-icon *ngIf="member.type == 'USER'" shape="user"></clr-icon>
+            <clr-icon *ngIf="member.type == 'GROUP'" shape="group"></clr-icon> {{member.name}}</clr-dg-cell>
+        <clr-dg-cell>{{member.id}}</clr-dg-cell>
+        <clr-dg-cell>{{"projects.members.source.local" | i18n }} <clr-icon shape="lock"></clr-icon></clr-dg-cell>
+        <clr-dg-cell>
+            <span *ngIf="member.role === 'ADMIN'">{{"projects.members.roles.administrator" | i18n }}</span>
+            <span *ngIf="member.role === 'USER'">{{"projects.members.roles.member" | i18n }}</span>
+        </clr-dg-cell>
+    </clr-dg-row>
+
+    <clr-dg-footer>{{members.length}} {{"projects.members.count" | i18n}}</clr-dg-footer>
+
+</clr-datagrid>

@@ -9,29 +9,51 @@
     "publicDescription": "Public access to project registry",
     "private": "Private",
     "clusters": "Clusters",
-    "members": "Members",
     "repositories": "Repositories",
     "infrastructure": "Infrastructure",
     "registryReplication": "Registry Replication",
     "configuration" : "Configuration",
     "edit": {
-       "titleNew": "New Project",
-       "titleEdit": "Edit Project",
-       "name": "Name",
-       "nameRequired": "Name is required.",
-       "description": "Description"
+      "titleNew": "New Project",
+      "titleEdit": "Edit Project",
+      "name": "Name",
+      "nameRequired": "Name is required.",
+      "description": "Description"
     },
     "delete": {
       "title": "Remove Project",
       "confirmation": "Confirm removing of project {{projectName}}. Members and clusters will be unasociated from project. The operation cannot be undone."
     },
     "summary": {
-       "title" : "Summary",
-       "type": "Type:",
-       "status": "Status:",
-       "creationDate": "Created:"
+      "title" : "Summary",
+      "type": "Type:",
+      "status": "Status:",
+      "creationDate": "Created:"
+    },
+    "members": {
+      "title":"Members",
+      "columnName": "Name",
+      "columnPrimaryId": "Primary ID",
+      "columnSource": "Source",
+      "columnRole": "Role",
+      "count": "members",
+      "addMembers": {
+        "title": "Add Users and Groups",
+        "description": "Add Users and groups to the project by their ID or email.",
+        "fieldTitleId": "ID or email",
+        "fieldRequiredId": "ID is required.",
+        "fieldTitleRole": "Role in project"
+       },
+      "roles": {
+        "administrator": "DevOps Administrator",
+        "member": "Developer"
+      },
+      "source": {
+        "local": "Local"
+      }
     },
     "config": {
+      "title": "Configuration",
       "projectRegistry": "Project registry",
       "public": "Public",
       "publicDescription": "Making a project registry public will make all repositories accessible to everyone.",

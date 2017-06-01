@@ -10,7 +10,7 @@
   -->
 
 <div toolbar>
-  <button class="btn btn-link" [routerLink]="['../edit/' + documentId]"><!-- ./edit -->
+  <button class="btn btn-link" [routerLink]="['./edit']">
     <clr-icon shape="edit" size="12"></clr-icon><span class="btn-spaced-text">{{"edit" | i18n}}</span></button>
 </div>
 
@@ -22,3 +22,9 @@
     <div>{{"projects.summary.creationDate" | i18n}} {{"unknown" | i18n}}</div>
   </div>
 </div>
+
+<navigation-container>
+    <back-button [routerLink]="['./']">name</back-button>
+    <router-outlet></router-outlet>
+</navigation-container>
+

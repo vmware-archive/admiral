@@ -35,9 +35,6 @@ export class AppComponent {
             this.user = principal;
         }).catch((ex) => {
             console.log(ex);
-            this.user = {
-                name: "problem1"
-            };
         });
     }
 

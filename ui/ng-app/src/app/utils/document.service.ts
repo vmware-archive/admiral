@@ -61,7 +61,7 @@ let getFilter = function(queryOptions: any): string {
   }
 
   return serviceUtils.buildOdataQuery(newQueryOptions);
-}
+};
 
 let slowPromise = function<T>(result: T):Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -70,7 +70,9 @@ let slowPromise = function<T>(result: T):Promise<T> {
     //   resolve(result);
     // }, 1000);
   });
-}
+};
+
+const PAGE_LIMIT : string = '50';
 
 @Injectable()
 export class DocumentService {
@@ -80,7 +82,7 @@ export class DocumentService {
   public list(factoryLink: string, queryOptions: any): Promise<DocumentListResult> {
     let params = new URLSearchParams();
     // params.set('$limit', serviceUtils.calculateLimit().toString());
-    params.set('$limit', '10');
+    params.set('$limit', PAGE_LIMIT);
     params.set('expand', 'true');
     params.set('documentType', 'true');
     params.set('$count', 'true');
@@ -102,7 +104,7 @@ export class DocumentService {
   public loadNextPage(nextPageLink): Promise<DocumentListResult> {
     return this.ajax.get(nextPageLink).then(result => {
       let documents = result.documentLinks.map(link => {
-        let document = result.documents[link]
+        let document = result.documents[link];
         document.documentId = Utils.getDocumentId(link);
         return document;
       });
@@ -110,13 +112,20 @@ export class DocumentService {
     }).then(result => slowPromise(result));
   }
 
-  public get(documentSelfLink): Promise<any> {
+  public get(documentSelfLink, expand: boolean = false): Promise<any> {
+    if (expand) {
+      let params = new URLSearchParams();
+      params.set('expand', 'true');
+
+      return this.ajax.get(documentSelfLink, params);
+    }
+
     return this.ajax.get(documentSelfLink);
   }
 
    public getById(factoryLink: string, documentId: string): Promise<any> {
     let documentSelfLink = factoryLink + '/' + documentId
-    return this.get(documentSelfLink);
+    return this.get(documentSelfLink, true);
   }
 
 

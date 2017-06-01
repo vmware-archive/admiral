@@ -23,6 +23,8 @@ import { ProjectSummaryComponent } from "./views/projects/project-details/projec
 import { ProjectConfigurationComponent } from './views/projects/project-details/project-configuration.component';
 import { ProjectCreateComponent } from './views/projects/project-create/project-create.component';
 import { ProjectDeleteComponent } from './views/projects/project-delete/project-delete.component';
+import { ProjectMembersComponent } from "./views/projects/project-details/project-members.component";
+import { ProjectAddMemberComponent } from "./views/projects/project-details/project-add-member-component";
 import { RegistriesComponent } from './views/registries/registries.component';
 import { ConfigurationComponent } from './views/configuration/configuration.component';
 import { LogsComponent } from './views/logs/logs.component';
@@ -49,7 +51,6 @@ import { DeploymentDetailsComponent } from './kubernetes/deployments/details/dep
 import { ServiceListComponent } from './kubernetes/services/list/service-list.component';
 import { ServiceDetailsComponent } from './kubernetes/services/details/service-details.component';
 
-
 export const ADMIRAL_DECLARATIONS = [
   AppComponent,
   TranslatePipe,
@@ -62,6 +63,8 @@ export const ADMIRAL_DECLARATIONS = [
   ProjectsComponent,
   ProjectDetailsComponent,
   ProjectSummaryComponent,
+  ProjectMembersComponent,
+  ProjectAddMemberComponent,
   ProjectCreateComponent,
   ProjectDeleteComponent,
   ProjectConfigurationComponent,

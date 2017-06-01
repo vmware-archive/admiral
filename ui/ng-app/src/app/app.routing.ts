@@ -19,6 +19,7 @@ import { ProjectsComponent } from './views/projects/projects.component';
 import { ProjectDetailsComponent } from './views/projects/project-details/project-details.component';
 import { ProjectCreateComponent } from './views/projects/project-create/project-create.component';
 import { ProjectDeleteComponent } from './views/projects/project-delete/project-delete.component';
+import { ProjectAddMemberComponent } from "./views/projects/project-details/project-add-member-component";
 import { RegistriesComponent } from './views/registries/registries.component';
 import { ConfigurationComponent } from './views/configuration/configuration.component';
 import { LogsComponent } from './views/logs/logs.component';
@@ -103,10 +104,13 @@ export const ROUTES: Routes = [
                     }},
                     { path: ':id', component: ProjectDetailsComponent, data: {
                         navigationContainerType: NavigationContainerType.Fullscreen
-                    }},
-                    { path: 'edit/:id', component: ProjectCreateComponent, data: {
-                        navigationContainerType: NavigationContainerType.Default
-                    }},
+                     }},
+                    { path: ':id/edit', component: ProjectCreateComponent, data: {
+                        navigationContainerType: NavigationContainerType.Fullscreen
+                     }},
+                    { path: ':id/add-member', component: ProjectAddMemberComponent, data: {
+                        navigationContainerType: NavigationContainerType.Fullscreen
+                      }},
                     { path: 'delete/:id', component: ProjectDeleteComponent, data: {
                         navigationContainerType: NavigationContainerType.Default
                     }}
