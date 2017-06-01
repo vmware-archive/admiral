@@ -2065,7 +2065,7 @@ services.loadClusterContainers = function(descriptionLink, compositionContextId)
 
 services.loadContainerStats = function(containerId) {
   return new Promise(function(resolve, reject) {
-    var containerStatsPath = links.CONTAINERS + '/' + containerId + '/stats';
+    var containerStatsPath = links.CONTAINERS + '/' + containerId + '?stats';
     get(containerStatsPath).then(function(serviceStats) {
        var val = serviceStats.entries;
        if (val) {

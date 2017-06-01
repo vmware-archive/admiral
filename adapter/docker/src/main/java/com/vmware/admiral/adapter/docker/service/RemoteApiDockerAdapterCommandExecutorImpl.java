@@ -205,7 +205,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         targetUri = extendUriWithQuery(targetUri, input);
 
         Operation op = Operation.createPost(targetUri)
-                .setBody("")
+                .setBodyNoCloning("")
                 .setCompletion((o, ex) -> {
                     if (ex == null) {
                         // check the last status to make sure there was no error during download
@@ -529,7 +529,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
 
         String[] command = (String[]) input.getProperties().remove(DOCKER_EXEC_COMMAND_PROP_NAME);
 
-        URI createtUri = UriUtils.extendUri(input.getDockerUri(),
+        URI execUri = UriUtils.extendUri(input.getDockerUri(),
                 String.format("/containers/%s/exec", containerId));
 
         String attachStdErr = (String) input.getProperties().remove(
@@ -546,7 +546,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         create.put(DOCKER_EXEC_TTY_PROP_NAME, false);
         create.put(DOCKER_EXEC_COMMAND_PROP_NAME, command);
 
-        sendPost(createtUri, create, ClientMode.DEFAULT, (o, e) -> {
+        sendPost(execUri, create, ClientMode.DEFAULT, (o, e) -> {
             if (e != null) {
                 completionHandler.handle(o, e);
             } else {
@@ -591,7 +591,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
                         completionHandler.handle(null, new RuntimeException(err));
                         return;
                     }
-                    op.setBody(body);
+                    op.setBodyNoCloning(body);
                 }
                 completionHandler.handle(op, null);
             }
@@ -691,7 +691,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
     private void sendPost(URI uri, Object body, ClientMode mode,
             CompletionHandler completionHandler) {
 
-        if (!ClientMode.LARGE_DATA.equals(mode)) {
+        if (ClientMode.LARGE_DATA != mode) {
             logger.finest(() -> String.format(
                     "Sending POST to %s with body (possibly truncated):\n---\n%1.1024s\n---\n",
                     uri, Utils.toJsonHtml(body)));
@@ -702,10 +702,8 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
     }
 
     private void sendPostAttach(URI uri, Object body, CompletionHandler completionHandler) {
-        logger.finest(() -> String
-                .format(
-                        "Sending POST for attach to %s with body (possibly truncated):\n---\n%1.1024s\n---\n",
-                        uri, Utils.toJsonHtml(body)));
+        logger.finest(() -> String.format( "Sending POST for attach to %s with body (possibly"
+                        + " truncated):\n---\n%1.1024s\n---\n", uri, Utils.toJsonHtml(body)));
         sendRequest(Service.Action.POST, uri, body, completionHandler, ClientMode.ATTACH);
     }
 
@@ -721,11 +719,11 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
                 .setBody(body)
                 .setCompletion(completionHandler);
 
-        if (ClientMode.LARGE_DATA.equals(mode)) {
+        if (ClientMode.LARGE_DATA == mode) {
             op.setBodyNoCloning(body);
             prepareRequest(op, true);
             largeDataClient.send(op);
-        } else if (ClientMode.ATTACH.equals(mode)) {
+        } else if (ClientMode.ATTACH == mode) {
             op.setBody(body);
             prepareRequest(op,false);
             attachServiceClient.send(op);
@@ -742,12 +740,9 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         op.forceRemote();
 
         if (op.getExpirationMicrosUtc() == 0) {
-            long timeout;
-            if (longRunningRequest) {
-                timeout = TimeUnit.SECONDS.toMicros(DOCKER_IMAGE_REQUEST_TIMEOUT_SECONDS);
-            } else {
-                timeout = TimeUnit.SECONDS.toMicros(DOCKER_REQUEST_TIMEOUT_SECONDS);
-            }
+            long timeout = longRunningRequest ?
+                    TimeUnit.SECONDS.toMicros(DOCKER_IMAGE_REQUEST_TIMEOUT_SECONDS) :
+                    TimeUnit.SECONDS.toMicros(DOCKER_REQUEST_TIMEOUT_SECONDS);
 
             op.setExpiration(ServiceUtils.getExpirationTimeFromNowInMicros(timeout));
         }
@@ -766,7 +761,6 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         URI targetUri = UriUtils.extendUri(input.getDockerUri(), "/volumes/create");
 
         sendPost(targetUri, input.getProperties(), ClientMode.DEFAULT, completionHandler);
-
     }
 
     /**
@@ -784,7 +778,6 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         URI uri = UriUtils.extendUri(input.getDockerUri(), path);
 
         sendDelete(uri, completionHandler);
-
     }
 
     /**
@@ -797,7 +790,6 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         URI uri = UriUtils.extendUri(input.getDockerUri(), "/volumes");
 
         sendGet(uri, null, completionHandler);
-
     }
 
     /**
@@ -813,6 +805,6 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
 
         sendGet(UriUtils.extendUri(input.getDockerUri(), path), input.getProperties(),
                 completionHandler);
-
     }
+
 }
