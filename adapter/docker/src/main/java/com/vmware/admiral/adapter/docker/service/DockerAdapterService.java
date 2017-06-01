@@ -80,7 +80,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import org.apache.http.HttpStatus;
@@ -142,7 +141,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER;
 
-    public static final String PROVISION_CONTAINER_RETRIES_COUNT_PARAM_NAME = "provision.container.retries.count";
+    public static final String PROVISION_CONTAINER_RETRIES_COUNT_PARAM_NAME =
+            "provision.container.retries.count";
 
     private SystemImageRetrievalManager imageRetrievalManager;
 
@@ -210,8 +210,9 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                     containerRequest.getRequestTrackingLog());
         }
 
-        if (operationType == ContainerOperationType.EXEC) {
-            // Exec is direct operation
+        if (ContainerOperationType.EXEC == operationType
+                || ContainerOperationType.STATS == operationType) {
+            // Exec is direct operation, stats will complete operation after completion
             context.operation = op;
         } else {
             op.complete();// TODO: can't return the operation if state not persisted.
@@ -240,8 +241,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                     }
                 });
         handleExceptions(context.request, context.operation, () -> {
-            getHost().log(Level.FINE, "Fetching ContainerState: %s %s",
-                    context.request.getRequestTrackingLog(),
+            logFine("Fetching ContainerState: %s %s", context.request.getRequestTrackingLog(),
                     context.request.getContainerStateReference());
             sendRequest(getContainerState);
         });
@@ -406,7 +406,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
         sendRequest(Operation.createPost(this, LogService.FACTORY_LINK)
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
-                .setBody(logServiceState)
+                .setBodyNoCloning(logServiceState)
                 .setContextId(context.request.getRequestId())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -440,7 +440,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
     }
 
     private void processContainerDescription(RequestContext context) {
-        context.containerState.adapterManagementReference = context.containerDescription.instanceAdapterReference;
+        context.containerState.adapterManagementReference =
+                context.containerDescription.instanceAdapterReference;
 
         CommandInput createImageCommandInput = new CommandInput(context.commandInput);
 
@@ -481,15 +482,13 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                     .toString();
 
             // use 'fromImage' - this will perform a docker pull
-            createImageCommandInput.withProperty(DOCKER_IMAGE_FROM_PROP_NAME,
-                    fullImageName);
+            createImageCommandInput.withProperty(DOCKER_IMAGE_FROM_PROP_NAME, fullImageName);
 
-            getHost().log(Level.INFO, "Pulling image: %s %s", fullImageName,
-                    context.request.getRequestTrackingLog());
+            logInfo("Pulling image: %s %s", fullImageName, context.request.getRequestTrackingLog());
             processPullImageFromRegistry(context, createImageCommandInput, imageCompletionHandler);
         } else {
             // fetch the image first, then execute a image load command
-            getHost().log(Level.INFO, "Downloading image from: %s %s", imageReference,
+            logInfo("Downloading image from: %s %s", imageReference,
                     context.request.getRequestTrackingLog());
             try {
                 if (FILE_SCHEME.equals(imageReference.getScheme())) {
@@ -516,8 +515,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                                     fail(context.request, ex);
 
                                 } else {
-                                    getHost().log(Level.INFO,
-                                            "Finished download of %d bytes from %s to %s %s",
+                                    logInfo("Finished download of %d bytes from %s to %s %s",
                                             tempFile.length(), o.getUri(),
                                             tempFile.getAbsolutePath(),
                                             context.request.getRequestTrackingLog());
@@ -576,8 +574,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
             CompletionHandler imageCompletionHandler) {
         if (imageData == null || imageData.length == 0) {
             String errMsg = String.format("No content loaded for file: %s %s",
-                    fileName,
-                    context.request.getRequestTrackingLog());
+                    fileName, context.request.getRequestTrackingLog());
             this.logSevere(errMsg);
             imageCompletionHandler.handle(null,
                     new LocalizableValidationException(errMsg, "adapter.load.image.empty", fileName,
@@ -753,8 +750,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
             context.executor.createContainer(createCommandInput, (o, ex) -> {
                 if (ex != null) {
                     if (shouldTryCreateFromLocalImage(context.containerDescription)) {
-                        logInfo("Unable to create container using local image. Will be fetched from a remote "
-                                + "location...");
+                        logInfo("Unable to create container using local image. Will be fetched"
+                                + " from a remote location...");
                         context.containerDescription.customProperties
                                 .put(DOCKER_CONTAINER_CREATE_USE_LOCAL_IMAGE_WITH_PRIORITY,
                                         "false");
@@ -820,19 +817,22 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         Map<String, Object> ipamConfig = new HashMap<>();
         if (network.ipv4_address != null) {
             ipamConfig.put(
-                    DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG.IPAM_CONFIG.IPV4_CONFIG,
+                    DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG
+                            .IPAM_CONFIG.IPV4_CONFIG,
                     network.ipv4_address);
         }
 
         if (network.ipv6_address != null) {
-            ipamConfig
-                    .put(DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG.IPAM_CONFIG.IPV6_CONFIG,
-                            network.ipv6_address);
+            ipamConfig.put(
+                    DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG
+                            .IPAM_CONFIG.IPV6_CONFIG,
+                    network.ipv6_address);
         }
 
         if (!ipamConfig.isEmpty()) {
             endpointConfig.put(
-                    DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG.IPAM_CONFIG_PROP_NAME,
+                    DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG
+                            .IPAM_CONFIG_PROP_NAME,
                     ipamConfig);
         }
 
@@ -991,8 +991,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         CommandInput inspectCommandInput = new CommandInput(context.commandInput).withProperty(
                 DOCKER_CONTAINER_ID_PROP_NAME, context.containerState.id);
 
-        getHost().log(Level.FINE, "Executing inspect container: %s %s",
-                context.containerState.documentSelfLink, context.request.getRequestTrackingLog());
+        logFine("Executing inspect container: %s %s", context.containerState.documentSelfLink,
+                context.request.getRequestTrackingLog());
 
         if (context.containerState.id == null) {
             if (!context.requestFailed && (context.containerState.powerState == null
@@ -1030,10 +1030,15 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         String command = context.request.customProperties
                 .get(ShellContainerExecutorService.COMMAND_KEY);
         if (command == null) {
-            context.operation.fail(new LocalizableValidationException("Command not provided"
-                    + context.request.getRequestTrackingLog(),
+            Exception e = new LocalizableValidationException(
+                    "Command not provided" + context.request.getRequestTrackingLog(),
                     "adapter.exec.container.command.missing",
-                    context.request.getRequestTrackingLog()));
+                    context.request.getRequestTrackingLog());
+            if (context.operation != null) {
+                context.operation.fail(e);
+            }
+            fail(context.request, e);
+            return;
         }
 
         String[] commandArr = command
@@ -1053,8 +1058,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                     context.request.customProperties.get(DOCKER_EXEC_ATTACH_STDOUT_PROP_NAME));
         }
 
-        getHost().log(Level.FINE, "Executing command in container: %s %s",
-                context.containerState.documentSelfLink,
+        logFine("Executing command in container: %s %s", context.containerState.documentSelfLink,
                 context.request.getRequestTrackingLog());
 
         if (context.containerState.id == null) {
@@ -1068,7 +1072,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 context.operation.fail(ex);
             } else {
                 if (op.hasBody()) {
-                    context.operation.setBody(op.getBody(String.class));
+                    context.operation.setBodyNoCloning(op.getBody(String.class));
                 }
                 context.operation.complete();
             }
@@ -1077,10 +1081,14 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
     private void fetchContainerStats(RequestContext context) {
         if (context.containerState.powerState != PowerState.RUNNING) {
-            fail(context.request, new IllegalStateException(
+            Exception e = new IllegalStateException(
                     "Can't fetch stats from a stopped container without blocking: "
                             + context.containerState.documentSelfLink
-                            + context.request.getRequestTrackingLog()));
+                            + context.request.getRequestTrackingLog());
+            if (context.operation != null) {
+                context.operation.fail(e);
+            }
+            fail(context.request, e);
             return;
         }
 
@@ -1094,7 +1102,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         CommandInput statsCommandInput = new CommandInput(context.commandInput).withProperty(
                 DOCKER_CONTAINER_ID_PROP_NAME, context.containerState.id);
 
-        getHost().log(Level.FINE, "Executing fetch container stats: %s %s",
+        logFine("Executing fetch container stats: %s %s",
                 context.containerState.documentSelfLink, context.request.getRequestTrackingLog());
 
         context.executor.fetchContainerStats(statsCommandInput, (o, ex) -> {
@@ -1103,6 +1111,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                         "Exception while fetching stats for container [%s] of host [%s]",
                         context.containerState.documentSelfLink,
                         context.computeState.documentSelfLink);
+                context.operation.fail(ex);
                 fail(context.request, o, ex);
             } else {
                 handleExceptions(context.request, context.operation, () -> {
@@ -1114,15 +1123,22 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
     }
 
     private void processContainerStats(RequestContext context, String stats) {
-        getHost().log(Level.FINE, "Updating container stats: %s %s",
-                context.request.resourceReference, context.request.getRequestTrackingLog());
+        logFine("Updating container stats: %s %s", context.request.resourceReference,
+                context.request.getRequestTrackingLog());
 
         ContainerStats containerStats = ContainerStatsEvaluator.calculateStatsValues(stats);
         String containerLink = context.request.resourceReference.getPath();
         URI uri = UriUtils.buildUri(getHost(), containerLink);
         sendRequest(Operation.createPatch(uri)
-                .setBody(containerStats)
+                .setBodyNoCloning(containerStats)
                 .setCompletion((o, ex) -> {
+                    if (context.operation != null) {
+                        if (ex != null) {
+                            context.operation.fail(ex);
+                        } else {
+                            context.operation.complete();
+                        }
+                    }
                     patchTaskStage(context.request, TaskStage.FINISHED, ex);
                 }));
     }
@@ -1150,11 +1166,11 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
         ContainerStateMapper.propertiesToContainerState(newContainerState, properties);
 
-        getHost().log(Level.FINE, "Patching ContainerState: %s %s",
-                containerState.documentSelfLink, request.getRequestTrackingLog());
+        logFine("Patching ContainerState: %s %s", containerState.documentSelfLink,
+                request.getRequestTrackingLog());
         sendRequest(Operation
                 .createPatch(request.getContainerStateReference())
-                .setBody(newContainerState)
+                .setBodyNoCloning(newContainerState)
                 .setCompletion((o, ex) -> {
                     if (!context.requestFailed) {
                         patchTaskStage(request, TaskStage.FINISHED, ex);
@@ -1282,8 +1298,8 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                     PROVISION_CONTAINER_RETRIES_COUNT_PARAM_NAME);
             sendRequest(Operation.createGet(this, maxRetriesCountConfigPropPath)
                     .setCompletion((o, ex) -> {
-                        /** in case of exception the default retry count will be 3 */
-                        retriesCount = Integer.valueOf(3);
+                        /* in case of exception the default retry count will be 3 */
+                        retriesCount = 3;
                         if (ex == null) {
                             retriesCount = Integer.valueOf(
                                     o.getBody(ConfigurationState.class).value);

@@ -24,7 +24,7 @@ import constants from 'core/constants';
 import utils from 'core/utils';
 import ansi from 'ansi_up';
 
-const REFRESH_STATS_TIMEOUT = 60000;
+const REFRESH_STATS_TIMEOUT = 20000;
 const REFRESH_LOGS_TIMEOUT = 5000;
 const START_REFRESH_POLLING_DELAY = 2000;
 

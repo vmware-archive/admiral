@@ -124,15 +124,14 @@ public class ContainerControlLoopService extends StatefulService {
             return;
         }
 
-        ContainerControlLoopState body = patch
-                .getBody(ContainerControlLoopState.class);
+        ContainerControlLoopState body = patch.getBody(ContainerControlLoopState.class);
 
         if (containerDescriptionsToBeProcessed.get() == 0) {
             logFine("Performing maintenance for: %s", getUri());
 
             performMaintenance();
         } else {
-            logFine("Previous maintenence maintenance not finished for: %s", getUri());
+            logFine("Previous maintenance not finished for: %s", getUri());
         }
 
         ContainerControlLoopState currentState = getState(patch);
@@ -179,11 +178,14 @@ public class ContainerControlLoopService extends StatefulService {
                                     return;
                                 }
 
-                                List<ContainerState> containersToBeRemoved = ContainerDiff.inspect
-                                        (containerDescription, containers).stream().filter(diff ->
-                                        Recommendation.REDEPLOY.equals(ContainerRecommendation
-                                                .recommend(diff))).collect(Collectors.mapping(diff ->
-                                        diff.currentState, Collectors.toList()));
+                                List<ContainerState> containersToBeRemoved = ContainerDiff
+                                        .inspect(containerDescription, containers)
+                                        .stream()
+                                        .filter(diff ->
+                                                Recommendation.REDEPLOY == ContainerRecommendation
+                                                        .recommend(diff))
+                                        .map(container -> container.currentState)
+                                        .collect(Collectors.toList());
                                 redeployContainers(containerDescription, containersToBeRemoved);
                             });
             }
@@ -261,7 +263,7 @@ public class ContainerControlLoopService extends StatefulService {
 
         sendRequest(Operation
                 .createPost(this, ContainerRedeploymentTaskService.FACTORY_LINK)
-                .setBody(redeployingTaskState)
+                .setBodyNoCloning(redeployingTaskState)
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
                     if (e != null) {

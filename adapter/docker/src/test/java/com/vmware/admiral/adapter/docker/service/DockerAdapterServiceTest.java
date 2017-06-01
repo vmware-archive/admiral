@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -100,7 +100,6 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
     private ContainerState containerState;
     private ContainerStats containerStats;
     private String containerId;
-    private static URI imageReference;
 
     private DockerAdapterCommandExecutor commandExecutor;
     private DockerAdapterService dockerAdapterService;
@@ -114,7 +113,7 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
         URL testImageResource = DockerAdapterServiceTest.class.getResource(TEST_IMAGE_FILE);
         assertNotNull("Missing test resource: " + TEST_IMAGE_FILE, testImageResource);
         File file = new File(testImageResource.toURI());
-        imageReference = UriUtils.buildPublicUri(host, TEST_IMAGE_URL_PATH);
+        URI imageReference = UriUtils.buildPublicUri(host, TEST_IMAGE_URL_PATH);
         host.startService(Operation.createPost(imageReference),
                 new FileContentService(file));
     }
@@ -239,7 +238,6 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
 
         host.startService(Operation.createPost(dockerAdapterServiceUri),
                 dockerAdapterService);
-
     }
 
     /**
@@ -358,8 +356,6 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
 
     /**
      * Test stop and start container requests to the DockerAdapterService
-     *
-     * @throws Throwable
      */
     @Test
     public void testStopAndStart() throws Throwable {
@@ -421,7 +417,11 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
                 TaskState.TaskStage.FINISHED);
 
         // try to fetch the stats again and expect failure
-        sendFetchContainerStatsRequest();
+        try {
+            sendFetchContainerStatsRequest();
+            fail("Fetch stats is expected to fail");
+        } catch (Exception ignored) {
+        }
 
         // wait for request task stage to change to finish
         waitForPropertyValue(provisioningTaskLink, MockTaskState.class, "taskInfo.stage",
@@ -499,8 +499,6 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
 
     /**
      * Create a container, store its id in this.containerId
-     *
-     * @throws Throwable
      */
     protected void createContainer(boolean expectError) throws Throwable {
         sendCreateContainerRequest();
@@ -530,8 +528,6 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
 
     /**
      * Remove the container previously created using createContainer()
-     *
-     * @throws Throwable
      */
     protected void removeContainer() throws Throwable {
         if (containerId == null) {
@@ -603,7 +599,8 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
 
         Operation startContainer = Operation
                 .createPatch(dockerAdapterServiceUri)
-                .setReferer(URI.create("/")).setBody(request)
+                .setReferer(URI.create("/"))
+                .setBodyNoCloning(request)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         host.failIteration(ex);
@@ -708,8 +705,6 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
 
     /**
      * Perform an inspect command to check the container's run status
-     *
-     * @throws Throwable
      */
     protected void verifyContainerProperty(String propertyPath,
             Object expectedValue) throws Throwable {
@@ -788,10 +783,6 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
      * Get a property designated by a dot-notation path from a root object
      *
      * This implementation assumes the object is a nested map of maps until the leaf object is found
-     *
-     * @param object
-     * @param propertyPath
-     * @return
      */
     private Object getNestedPropertyByPath(Object object, String propertyPath) {
         List<String> pathParts = new LinkedList<>(Arrays.asList(propertyPath
@@ -836,7 +827,6 @@ public class DockerAdapterServiceTest extends BaseMockDockerTestCase {
                                         uri.getFragment());
 
                                 op.setUri(newUri);
-
                             } catch (URISyntaxException x) {
                                 throw new RuntimeException(x);
                             }

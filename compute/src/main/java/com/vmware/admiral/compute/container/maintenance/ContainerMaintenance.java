@@ -18,7 +18,6 @@ import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
-import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
@@ -26,7 +25,7 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 public class ContainerMaintenance {
-    public static final String SERVICE_REFERRER_PATH = "/container-maintenance";
+    private static final String SERVICE_REFERRER_PATH = "/container-maintenance";
 
     public static final long MAINTENANCE_INTERVAL_MICROS = Long.getLong(
             "dcp.management.container.periodic.maintenance.period.micros",
@@ -44,7 +43,6 @@ public class ContainerMaintenance {
     private final ServiceHost host;
     private final String containerSelfLink;
     private long lastInspectMaintenanceInMicros;
-    private long lastStatsMaintenanceInMicros;
 
     public static ContainerMaintenance create(ServiceHost host, String containerSelfLink) {
         return new ContainerMaintenance(host, containerSelfLink);
@@ -80,11 +78,9 @@ public class ContainerMaintenance {
 
                             // inspect the container or update its stats (if needed)
                             if (!inspectContainerIfNeeded(containerState, post)) {
-                                if (!collectStatsIfNeeded(containerState, post)) {
-                                    // in all other cases the inspect/stats request will
-                                    // complete the operation
-                                    post.complete();
-                                }
+                                // in all other cases the inspect/stats request will
+                                // complete the operation
+                                post.complete();
                             }
                         }));
     }
@@ -104,29 +100,6 @@ public class ContainerMaintenance {
             // schedule next period and request inspect
             lastInspectMaintenanceInMicros = nowMicrosUtc;
             processContainerInspect(post, containerState);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * Checks whether it is time to update the stats for this container and sends a stats collection
-     * request if needed
-     *
-     * @return whether a stats collection request was sent or not
-     */
-    private boolean collectStatsIfNeeded(ContainerState containerState, Operation post) {
-        long nowMicrosUtc = Utils.getSystemNowMicrosUtc();
-        // if the container state is recently updated, we want to collect stats on each maintenance
-        long updatePeriod = isUpdatedRecently(containerState, nowMicrosUtc)
-                ? 0 : MAINTENANCE_PERIOD_MICROS;
-
-        // check whether the update period has passed
-        if (lastStatsMaintenanceInMicros + updatePeriod < nowMicrosUtc) {
-            // schedule next period and request stats collection
-            lastStatsMaintenanceInMicros = nowMicrosUtc;
-            performStatsInspection(post, containerState);
             return true;
         } else {
             return false;
@@ -166,14 +139,12 @@ public class ContainerMaintenance {
 
     private void requestContainerInspection(Operation post, ContainerState containerState) {
         AdapterRequest request = new AdapterRequest();
-        request.resourceReference = UriUtils.buildPublicUri(host,
-                containerState.documentSelfLink);
-
+        request.resourceReference = UriUtils.buildUri(host, containerState.documentSelfLink);
         request.operationTypeId = ContainerOperationType.INSPECT.id;
         request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
         host.sendRequest(Operation
                 .createPatch(host, containerState.adapterManagementReference.toString())
-                .setBody(request)
+                .setBodyNoCloning(request)
                 .setReferer(UriUtils.buildUri(host, SERVICE_REFERRER_PATH))
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -185,47 +156,4 @@ public class ContainerMaintenance {
                 }));
     }
 
-    public void performStatsInspection(Operation post, ContainerState containerState) {
-        if (containerState.adapterManagementReference == null) {
-            // probably the container hasn't finished provisioning
-            Utils.log(getClass(), containerSelfLink, Level.FINE,
-                    "Can't perform maintenance because adapter reference is not set: %s",
-                    containerState.documentSelfLink);
-
-            post.complete();
-            return;
-        }
-
-        if (containerState.powerState != PowerState.RUNNING) {
-            Utils.log(getClass(), containerSelfLink, Level.FINE,
-                    "Skipping fetching stats for a container that is not running: %s",
-                    containerState.documentSelfLink);
-
-            post.complete();
-            return;
-        }
-
-        requestStatsInspection(post, containerState);
-    }
-
-    public void requestStatsInspection(Operation post, ContainerState containerState) {
-        AdapterRequest request = new AdapterRequest();
-        request.resourceReference = UriUtils.buildPublicUri(host,
-                containerState.documentSelfLink);
-
-        request.operationTypeId = ContainerOperationType.STATS.id;
-        request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
-        host.sendRequest(Operation
-                .createPatch(host, containerState.adapterManagementReference.toString())
-                .setBody(request)
-                .setReferer(UriUtils.buildUri(host, SERVICE_REFERRER_PATH))
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        Utils.logWarning(
-                                "Exception while stats request for container: %s. Error: %s",
-                                containerState.documentSelfLink, Utils.toString(ex));
-                    }
-                    post.complete();
-                }));
-    }
 }
