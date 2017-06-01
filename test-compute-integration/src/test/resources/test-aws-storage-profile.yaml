@@ -1,0 +1,24 @@
+---
+storageItems:
+  - name: standard
+    tagLinks: []
+    defaultItem: true
+    supportsEncryption: true
+    diskProperties:
+      deviceType: "ebs"
+      volumeType: "standard"
+  - name: general
+    tagLinks: []
+    defaultItem: false
+    supportsEncryption: true
+    diskProperties:
+      deviceType: "ebs"
+      volumeType: "gp2"
+  - name: fast
+    tagLinks: []
+    defaultItem: false
+    supportsEncryption: true
+    diskProperties:
+      deviceType: "ebs"
+      volumeType: "io1"
+      iops: 400

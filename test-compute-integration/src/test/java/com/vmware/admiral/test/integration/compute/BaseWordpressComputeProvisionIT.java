@@ -18,20 +18,16 @@ import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 
-import java.io.InputStream;
 import java.net.URI;
-import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.commons.net.util.SubnetUtils;
 
-import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
-import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
 import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile;
 import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile.IsolationSupportType;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
@@ -115,19 +111,6 @@ public abstract class BaseWordpressComputeProvisionIT extends BaseComputeProvisi
         } catch (Exception eInner) {
             logger.error("Failed to verify wordpress connection: %s", eInner.getMessage());
             fail();
-        }
-    }
-
-    protected ComputeProfile loadComputeProfile(String endpointType) {
-        URL r = getClass().getClassLoader().getResource(
-                "test-" + endpointType.toLowerCase() + "-compute-profile.yaml");
-
-        try (InputStream is = r.openStream()) {
-            return YamlMapper.objectMapper().readValue(is, ComputeProfile.class);
-        } catch (Exception e) {
-            logger.error("Failure reading default environment: %s, reason: %s", r,
-                    e.getMessage());
-            return null;
         }
     }
 

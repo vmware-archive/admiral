@@ -16,7 +16,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
+import java.io.InputStream;
+
 import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,6 +44,7 @@ import com.vmware.admiral.common.test.BaseTestCase.TestWaitForHandler;
 import com.vmware.admiral.common.test.CommonTestStateFactory;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.UriUtilsExtended;
+import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.DockerAdapterType;
@@ -389,7 +393,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         List<ServiceDocument> docs = new ArrayList<>();
         String id = UUID.randomUUID().toString();
         ProfileState profile = new ProfileState();
-        profile.name = "wordpressEnv";
+        profile.name = getProfileName();
         profile.documentSelfLink = UriUtils.buildUriPath(ProfileService.FACTORY_LINK, id);
         profile.endpointLink = endpoint.documentSelfLink;
         profile.tenantLinks = getTenantLinks();
@@ -421,6 +425,23 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
                 throw new RuntimeException(e);
             }
         });
+    }
+
+    protected String getProfileName() {
+        return "wordpressEnv";
+    }
+
+    protected ComputeProfile loadComputeProfile(String endpointType) {
+        URL r = getClass().getClassLoader().getResource(
+                "test-" + endpointType.toLowerCase() + "-compute-profile.yaml");
+
+        try (InputStream is = r.openStream()) {
+            return YamlMapper.objectMapper().readValue(is, ComputeProfile.class);
+        } catch (Exception e) {
+            logger.error("Failure reading default environment: %s, reason: %s", r,
+                    e.getMessage());
+            return null;
+        }
     }
 
     protected String getResourceDescriptionLink() throws Exception {
@@ -588,6 +609,11 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
         assertNotNull(computeState);
         assertEquals(powerState, computeState.powerState);
+        validateDisks(computeState.diskLinks);
+    }
+
+    protected void validateDisks(List<String> diskLinks) throws Exception{
+        //The actual validations are added in the Disk related tests
     }
 
     protected void validateAfterStart(String resourceDescLink, RequestBrokerState request)
