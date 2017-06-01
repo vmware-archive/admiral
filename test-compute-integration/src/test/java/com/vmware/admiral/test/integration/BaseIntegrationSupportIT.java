@@ -112,7 +112,7 @@ public abstract class BaseIntegrationSupportIT {
     }
 
     @Rule
-    public Timeout globalTimeout = Timeout.seconds(TimeUnit.MINUTES.toSeconds(15));
+    public Timeout globalTimeout = Timeout.seconds(TimeUnit.MINUTES.toSeconds(20));
     private String tenantSuffix;
 
     @BeforeClass
