@@ -111,7 +111,6 @@ import com.vmware.admiral.compute.container.volume.VolumeBinding;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.common.LogService;
-import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.FileUtils;
 import com.vmware.xenon.common.LocalizableValidationException;
@@ -998,8 +997,9 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 context.request.getRequestTrackingLog());
 
         if (context.containerState.id == null) {
-            if (!context.requestFailed && (context.containerState.powerState == null
-                    || context.containerState.powerState.isUnmanaged())) {
+            if (!context.requestFailed &&
+                    (context.containerState.powerState == null
+                            || context.containerState.powerState.isUnmanaged())) {
                 patchTaskStage(context.request, TaskStage.FINISHED, null);
             } else {
                 fail(context.request, new IllegalStateException("container id is required"
@@ -1008,25 +1008,19 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
             return;
         }
 
-        context.executor.inspectContainer(
-                inspectCommandInput,
-                (o, ex) -> {
-                    if (ex != null) {
-                        logWarning("Exception while inspecting container [%s] of host [%s]",
-                                context.containerState.documentSelfLink,
-                                context.computeState.documentSelfLink);
-                        fail(context.request, o, ex);
-                    } else {
-                        handleExceptions(
-                                context.request,
-                                context.operation,
-                                () -> {
-                                    Map<String, Object> properties = o.getBody(Map.class);
-                                    patchContainerState(context.request, context.containerState,
-                                            properties, context);
-                                });
-                    }
+        context.executor.inspectContainer(inspectCommandInput, (o, ex) -> {
+            if (ex != null) {
+                logWarning("Exception while inspecting container [%s] of host [%s]",
+                        context.containerState.documentSelfLink,
+                        context.computeState.documentSelfLink);
+                fail(context.request, o, ex);
+            } else {
+                handleExceptions(context.request, context.operation, () -> {
+                    Map<String, Object> props = o.getBody(Map.class);
+                    patchContainerState(context.request, context.containerState, props, context);
                 });
+            }
+        });
     }
 
     private void execContainer(RequestContext context) {
@@ -1177,26 +1171,6 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 .setCompletion((o, ex) -> {
                     if (!context.requestFailed) {
                         patchTaskStage(request, TaskStage.FINISHED, ex);
-                    }
-                    if (newContainerState.powerState == PowerState.RUNNING) {
-                        // request fetch stats
-
-                        ContainerInstanceRequest containerRequest = new ContainerInstanceRequest();
-                        containerRequest.operationTypeId = ContainerOperationType.STATS.id;
-                        containerRequest.resourceReference = request.resourceReference;
-                        containerRequest.serviceTaskCallback = ServiceTaskCallback.createEmpty();
-
-                        RequestContext newContext = new RequestContext();
-                        newContext.containerState = newContainerState;
-                        newContext.computeState = context.computeState;
-                        newContext.containerDescription = context.containerDescription;
-                        newContext.request = containerRequest;
-                        newContext.commandInput = context.commandInput;
-                        newContext.executor = context.executor;
-                        newContext.operation = context.operation;
-
-                        processOperation(newContext);
-                        return;
                     }
                 }));
     }

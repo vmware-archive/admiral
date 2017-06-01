@@ -21,7 +21,6 @@ import static com.vmware.admiral.compute.container.volume.ContainerVolumeDescrip
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.logging.Level;
 
 import com.vmware.admiral.adapter.common.VolumeOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
@@ -89,7 +88,7 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
                     }
                 });
         handleExceptions(context.request, context.operation, () -> {
-            getHost().log(Level.FINE, "Fetching VolumeState: %s %s",
+            logFine("Fetching VolumeState: %s %s",
                     context.request.getRequestTrackingLog(),
                     context.request.getVolumeStateReference());
             sendRequest(getVolumeState);
@@ -212,27 +211,22 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
         CommandInput inspectCommandInput = context.commandInput.withProperty(
                 DOCKER_VOLUME_NAME_PROP_NAME, context.volumeState.name);
 
-        getHost().log(Level.FINE, "Executing inspect volume: %s %s",
-                context.volumeState.documentSelfLink, context.request.getRequestTrackingLog());
+        logFine("Executing inspect volume: %s %s", context.volumeState.documentSelfLink,
+                context.request.getRequestTrackingLog());
 
-        context.executor.inspectVolume(
-                inspectCommandInput,
-                (o, ex) -> {
-                    if (ex != null) {
-                        logWarning("Failure while inspecting volume [%s]",
-                                context.volumeState.documentSelfLink);
-                        fail(context.request, o, ex);
-                    } else {
-                        handleExceptions(context.request,
-                                context.operation,
-                                () -> {
-                                    Map<String, Object> properties = o.getBody(Map.class);
+        context.executor.inspectVolume(inspectCommandInput, (o, ex) -> {
+            if (ex != null) {
+                logWarning("Failure while inspecting volume [%s]",
+                        context.volumeState.documentSelfLink);
+                fail(context.request, o, ex);
+            } else {
+                handleExceptions(context.request, context.operation, () -> {
+                    Map<String, Object> properties = o.getBody(Map.class);
 
-                                    patchVolumeState(context.request, context.volumeState,
-                                            properties, context);
-                                });
-                    }
+                    patchVolumeState(context.request, context.volumeState, properties, context);
                 });
+            }
+        });
     }
 
     private void patchVolumeState(ContainerVolumeRequest request,
@@ -247,12 +241,12 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
 
         ContainerVolumeStateMapper.propertiesToContainerVolumeState(newVolumeState, properties);
 
-        getHost().log(Level.FINE, "Patching ContainerVolumeState: %s %s",
+        logFine("Patching ContainerVolumeState: %s %s",
                 newVolumeState.documentSelfLink,
                 request.getRequestTrackingLog());
         sendRequest(Operation
                 .createPatch(request.getVolumeStateReference())
-                .setBody(newVolumeState)
+                .setBodyNoCloning(newVolumeState)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         logWarning("Failure while patching volume [%s]",
@@ -273,7 +267,7 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
                 context.operation.fail(ex);
             } else {
                 if (op.hasBody()) {
-                    context.operation.setBody(op.getBody(String.class));
+                    context.operation.setBodyNoCloning(op.getBody(String.class));
                 }
                 context.operation.complete();
             }
@@ -367,7 +361,7 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
 
         sendRequest(Operation
                 .createPatch(context.request.resourceReference)
-                .setBody(patch)
+                .setBodyNoCloning(patch)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         logWarning("Failure while patching compute state [%s] with volume [%s]",
@@ -379,4 +373,5 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
                     }
                 }));
     }
+
 }
