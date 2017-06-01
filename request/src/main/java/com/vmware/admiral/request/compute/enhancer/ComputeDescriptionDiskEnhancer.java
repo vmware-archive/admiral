@@ -26,7 +26,6 @@ import java.util.stream.Stream;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.profile.InstanceTypeDescription;
 import com.vmware.admiral.compute.profile.ProfileService;
-import com.vmware.admiral.compute.profile.StorageProfileService.StorageItem;
 import com.vmware.admiral.compute.profile.StorageProfileService.StorageItemExpanded;
 import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfileExpanded;
 import com.vmware.admiral.request.compute.StorageProfileUtils;
@@ -36,6 +35,7 @@ import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.DiskService;
 import com.vmware.photon.controller.model.resources.DiskService.DiskState;
+import com.vmware.photon.controller.model.resources.ResourceGroupService.ResourceGroupState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
@@ -99,9 +99,9 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
             rootDisk.capacityMBytes = diskSizeMbFromProfile > 0 ? diskSizeMbFromProfile
                     : (8 * 1024);
 
-            StorageItem storageItem = findDefaultStorageItem(context.profile);
-            if (storageItem != null && storageItem.diskProperties != null) {
-                rootDisk.customProperties = new HashMap<>(storageItem.diskProperties);
+            StorageItemExpanded storageItem = findDefaultStorageItem(context.profile);
+            if (storageItem != null) {
+                updateDiskStateWithStorageItemProperties(rootDisk, storageItem);
             }
 
             fillInBootConfigContent(context, computeDesc, rootDisk);
@@ -147,11 +147,7 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                                         "No matching storage defined in profile: %s, for requested disk: %s",
                                         context.profile.documentSelfLink, diskState.name)));
                     } else {
-                        diskState.storageDescriptionLink = storageItem.storageDescriptionLink;
-                        if (storageItem.diskProperties != null) {
-                            diskState.customProperties = new HashMap<>(
-                                    storageItem.diskProperties);
-                        }
+                        updateDiskStateWithStorageItemProperties(diskState, storageItem);
                     }
                     return this.host
                             .sendWithDeferredResult(updateDiskDescriptionState(diskState),
@@ -178,6 +174,20 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
     }
 
     /**
+     * Update disk state with the chosen storage item properties.
+     */
+    private void updateDiskStateWithStorageItemProperties(DiskState diskState, StorageItemExpanded storageItem) {
+        diskState.storageDescriptionLink = storageItem.storageDescriptionLink;
+        if (storageItem.diskProperties != null) {
+            diskState.customProperties = new HashMap<>(storageItem.diskProperties);
+        }
+        if (storageItem.resourceGroupLink != null) {
+            diskState.groupLinks = new HashSet<>(1);
+            diskState.groupLinks.add(storageItem.resourceGroupLink);
+        }
+    }
+
+    /**
      * Find the storage item that is matching the given set of constraints
      */
     private StorageItemExpanded findStorageItem(ProfileService.ProfileStateExpanded profile,
@@ -197,7 +207,7 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                 StorageProfileUtils.extractStorageTagConditions(diskState.constraint, profile
                         .tenantLinks),
                 storageItemsStream(profile.storageProfile),
-                si -> storageItemTagLinks(si), (i1, i2) -> {
+                si -> collectStorageItemTagLinks(si), (i1, i2) -> {
                     if (i1.defaultItem && i2.defaultItem) {
                         return 0;
                     } else {
@@ -209,10 +219,19 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                             return 0;
                         }
                     }
-                }).filter(si -> (diskState.encrypted == null || !diskState.encrypted ||
+                }).filter(si -> (
+                // Disk is not requesting for encryption and is null
+                diskState.encrypted == null ||
+                // Disk is not requesting for encryption and it is marked false
+                !diskState.encrypted ||
+                // Storage Item itself supports encryption
                 (si.supportsEncryption != null && si.supportsEncryption) ||
+                // Storage description related to storage item supports encryption
                 ((si.storageDescription != null && si.storageDescription.supportsEncryption != null) ?
-                si.storageDescription.supportsEncryption : resourceGroupEncryptionFilter(si))))
+                        // Storage Description related to storage item supports encryption
+                        storageDescriptionEncryptionFilter(si) :
+                        // Resource group state related to storage item supports encryption
+                        resourceGroupEncryptionFilter(si.resourceGroupState))))
                 .findFirst().orElse(null);
     }
 
@@ -222,15 +241,41 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
     }
 
     /**
-     * Merge tagLinks if any from the storage description to the storage item tagLinks.
+     * Storage item tag Links + Storage Description tag links + Resource group state tag links.
      */
-    private Set<String> storageItemTagLinks(StorageItemExpanded siExpanded) {
-        Set<String> tagLinks = siExpanded.tagLinks != null ? siExpanded.tagLinks : new HashSet<>();
+    private Set<String> collectStorageItemTagLinks(StorageItemExpanded siExpanded) {
+        Set<String> tagLinks = siExpanded.tagLinks != null ? new HashSet<>(siExpanded.tagLinks) :
+                new HashSet<>();
+        // Storage description tag links
         if (siExpanded.storageDescription != null
                 && siExpanded.storageDescription.tagLinks != null) {
             tagLinks.addAll(siExpanded.storageDescription.tagLinks);
         }
+        // Resource group state tag links
+        if (siExpanded.resourceGroupState != null
+                && siExpanded.resourceGroupState.tagLinks != null) {
+            tagLinks.addAll(siExpanded.resourceGroupState.tagLinks);
+        }
         return tagLinks;
+    }
+
+    /**
+     * Filter storage item based on storage description supports encryption field it is not null
+     * and true. If this is false, then it will iterate over all the resource group states that
+     * are associated with this SD, if any one of them returns true, then this storage item will
+     * be supporting encryption. Otherwise it will be false, which means no encryption support.
+     */
+    private boolean storageDescriptionEncryptionFilter(StorageItemExpanded si) {
+        if (si.storageDescription.supportsEncryption) {
+            return true;
+        } else if (si.resourceGroupState == null && si.storageDescription.resourceGroupStates != null) {
+            // If there is a chosen resource group state already, then that should be honored
+            // instead of picking something from the list of resource group states that this
+            // storage description is related to.
+            return si.storageDescription.resourceGroupStates.stream().filter(rg ->
+                    resourceGroupEncryptionFilter(rg)).count() > 0;
+        }
+        return false;
     }
 
     /**
@@ -238,9 +283,9 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
      * non-null. If the resource group state is null, then rely on the default storage item's
      * field.
      */
-    private boolean resourceGroupEncryptionFilter(StorageItemExpanded si) {
-        if (si.resourceGroupState != null && si.resourceGroupState.customProperties != null) {
-            String encryption = si.resourceGroupState.customProperties
+    private boolean resourceGroupEncryptionFilter(ResourceGroupState resourceGroupState) {
+        if (resourceGroupState != null && resourceGroupState.customProperties != null) {
+            String encryption = resourceGroupState.customProperties
                     .get(FIELD_NAME_CUSTOM_PROP_SUPPORTS_ENCRYPTION);
             if (encryption != null) {
                 return Boolean.valueOf(encryption);

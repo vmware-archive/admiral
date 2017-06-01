@@ -23,8 +23,7 @@ import java.util.Set;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.photon.controller.model.resources.ResourceGroupService.ResourceGroupState;
 import com.vmware.photon.controller.model.resources.ResourceState;
-import com.vmware.photon.controller.model.resources.StorageDescriptionService.StorageDescription;
-
+import com.vmware.photon.controller.model.resources.StorageDescriptionService.StorageDescriptionExpanded;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceDocument;
@@ -112,7 +111,7 @@ public class StorageProfileService extends StatefulService {
     }
 
     public static class StorageItemExpanded extends StorageItem {
-        public StorageDescription storageDescription;
+        public StorageDescriptionExpanded storageDescription;
         public ResourceGroupState resourceGroupState;
     }
 
@@ -178,7 +177,7 @@ public class StorageProfileService extends StatefulService {
 
         spExpanded.storageItemsExpanded = new ArrayList<>(spExpanded.storageItems.size());
         List<Operation> getOps = new ArrayList<>(spExpanded.storageItems.size());
-        Map<String, StorageDescription> storageDescriptions = new HashMap<>(spExpanded.storageItems.size());
+        Map<String, StorageDescriptionExpanded> storageDescriptions = new HashMap<>(spExpanded.storageItems.size());
         Map<String, ResourceGroupState> resourceGroupStates = new HashMap<>(spExpanded.storageItems.size());
         spExpanded.storageItems.stream().forEach(si -> {
             StorageItemExpanded sIExpanded = new StorageItemExpanded();
@@ -186,12 +185,14 @@ public class StorageProfileService extends StatefulService {
             spExpanded.storageItemsExpanded.add(sIExpanded);
             if (sIExpanded.storageDescriptionLink != null && !storageDescriptions.containsKey
                     (sIExpanded.storageDescriptionLink)) {
-                getOps.add(Operation.createGet(this, sIExpanded.storageDescriptionLink)
+                URI uri = StorageDescriptionExpanded.buildUri(UriUtils.buildUri(this.getHost(),
+                        sIExpanded.storageDescriptionLink));
+                getOps.add(Operation.createGet(uri)
                         .setReferer(this.getUri())
                         .setCompletion((o, e) -> {
                             if (e == null) {
                                 storageDescriptions.put(sIExpanded.storageDescriptionLink, o
-                                        .getBody(StorageDescription.class));
+                                        .getBody(StorageDescriptionExpanded.class));
                             } else {
                                 logFine("Could not load storage description %s due to %s",
                                         sIExpanded.storageDescriptionLink, e.getMessage());
