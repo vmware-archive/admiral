@@ -48,9 +48,6 @@ function getImageNamespaceAndNameFromParts(namespace, imageAndTag) {
 })
 export class PodListComponent {
   serviceEndpoint = Links.PODS;
-  navigationContainerTypePerComponent = {
-    [<any>PodDetailsComponent]: NavigationContainerType.Fullscreen
-  }
 
   getImageNamespaceAndName(image) {
     var imageWithoutScheme = image.replace(REGISTRY_SCHEME_REG_EXP, '');

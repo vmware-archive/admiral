@@ -36,6 +36,8 @@ import { DeploymentDetailsComponent } from './kubernetes/deployments/details/dep
 import { ServiceListComponent } from './kubernetes/services/list/service-list.component';
 import { ServiceDetailsComponent } from './kubernetes/services/details/service-details.component';
 
+import { NavigationContainerType } from './components/navigation-container/navigation-container.component';
+
 
 export const ROUTES: Routes = [
     {
@@ -65,19 +67,25 @@ export const ROUTES: Routes = [
             {
                 path: 'kubernetes/pods', component: PodListComponent,
                 children: [
-                    { path: ':id', component: PodDetailsComponent }
+                    { path: ':id', component: PodDetailsComponent, data: {
+                        navigationContainerType: NavigationContainerType.Fullscreen
+                    }}
                 ]
             },
             {
                 path: 'kubernetes/deployments', component: DeploymentListComponent,
                 children: [
-                    { path: ':id', component: DeploymentDetailsComponent }
+                    { path: ':id', component: DeploymentDetailsComponent, data: {
+                        navigationContainerType: NavigationContainerType.Fullscreen
+                    }}
                 ]
             },
             {
                 path: 'kubernetes/services', component: ServiceListComponent,
                 children: [
-                    { path: ':id', component: ServiceDetailsComponent }
+                    { path: ':id', component: ServiceDetailsComponent, data: {
+                        navigationContainerType: NavigationContainerType.Fullscreen
+                    }}
                 ]
             },
             {
@@ -97,8 +105,12 @@ export const ROUTES: Routes = [
             {
                 path: 'projects', component: ProjectsComponent,
                 children: [
-                    { path: 'new', component: ProjectCreateComponent },
-                    { path: ':id', component: ProjectDetailsComponent }
+                    { path: 'new', component: ProjectCreateComponent, data: {
+                        navigationContainerType: NavigationContainerType.Default
+                    }},
+                    { path: ':id', component: ProjectDetailsComponent, data: {
+                        navigationContainerType: NavigationContainerType.Fullscreen
+                    }}
                 ]
             },
             {

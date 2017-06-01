@@ -24,7 +24,6 @@ export class NavigationContainerComponent implements OnInit, OnDestroy {
   };
 
   type: string;
-  @Input() typePerComponent: Map<any, NavigationContainerType>;
   @ViewChild('contentHolder') contentHolder;
 
   constructor(private router: Router, private route: ActivatedRoute,
@@ -33,17 +32,33 @@ export class NavigationContainerComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.routeObserve = this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
-        var newComponent: any = this.route.children.length != 0 && this.route.children[0].component;
-        this.handleNewComponent(newComponent);
+        var child: Route = (this.route.children.length != 0 && this.route.children[0]) || {};
+        this.handleNewComponent(child);
       }
     });
   }
 
-  handleNewComponent(newComponent) {
+  hasFullscreenParent(route) {
+    var routeData = route.data && route.data.value;
+    if (routeData && routeData.navigationContainerType === NavigationContainerType.Fullscreen) {
+      return true;
+    }
+
+    if (!route.parent) {
+      return false;
+    }
+
+    return this.hasFullscreenParent(route.parent);
+  }
+
+  handleNewComponent(newRoute) {
+    var newComponent: any = newRoute.component;
+    var navigationContainerType = newRoute.data && newRoute.data.value && newRoute.data.value.navigationContainerType;
+
     let selectedType;
     if (newComponent != this.oldComponent) {
       this.oldComponent = newComponent;
-      selectedType = this.typePerComponent[newComponent] || NavigationContainerType.None;
+      selectedType = navigationContainerType || NavigationContainerType.None;
       this.type = selectedType.toString();
 
       if (selectedType === NavigationContainerType.None) {
@@ -60,12 +75,15 @@ export class NavigationContainerComponent implements OnInit, OnDestroy {
       }
     }
 
-    this.viewExpandRequestor.requestFullScreen(selectedType === NavigationContainerType.Fullscreen);
+    let isFullscreen = this.hasFullscreenParent(newRoute);
+    this.viewExpandRequestor.requestFullScreen(isFullscreen);
   }
 
   ngOnDestroy() {
     this.routeObserve.unsubscribe();
-    this.viewExpandRequestor.requestFullScreen(false);
+
+    let isFullscreen = this.hasFullscreenParent(this.route);
+    this.viewExpandRequestor.requestFullScreen(isFullscreen);
   }
 }
 

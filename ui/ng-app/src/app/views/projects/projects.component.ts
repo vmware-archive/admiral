@@ -11,8 +11,4 @@ import { NavigationContainerType } from '../../components/navigation-container/n
 })
 export class ProjectsComponent {
   serviceEndpoint = Links.PROJECTS;
-  navigationContainerTypePerComponent = {
-    [<any>ProjectDetailsComponent]: NavigationContainerType.Fullscreen,
-    [<any>ProjectCreateComponent]: NavigationContainerType.Default
-  }
 }

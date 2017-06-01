@@ -26,7 +26,4 @@ import { ServiceDetailsComponent } from './../details/service-details.component'
 })
 export class ServiceListComponent {
   serviceEndpoint = Links.SERVICES;
-  navigationContainerTypePerComponent = {
-    [<any>ServiceDetailsComponent]: NavigationContainerType.Fullscreen
-  }
 }
