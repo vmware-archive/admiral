@@ -11,7 +11,9 @@
 
 package com.vmware.admiral.service.test;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import com.vmware.admiral.closures.drivers.DriverRegistry;
 import com.vmware.admiral.closures.services.closure.Closure;
@@ -66,19 +68,46 @@ public class MockClosureService extends ClosureService {
             currentState.logs = requestedState.logs;
         }
 
-        // ON CREATE move immediately to FINISHED.
-        ServiceTaskCallback.ServiceTaskCallbackResponse callbackResponse = patch
-                .getBody(ServiceTaskCallback.ServiceTaskCallbackResponse.class);
-        TaskState taskInfo = callbackResponse.taskInfo;
+        // If state is STARTED move to FINISHED
+        if (currentState.state == TaskState.TaskStage.STARTED) {
+            moveToCompleteState(currentState);
+            return currentState;
+        }
 
-        if (TaskState.isFinished(taskInfo)) {
-            final Map outputs = currentState.outputs;
-            currentState.state = TaskState.TaskStage.FINISHED;
-            currentState.inputs.forEach((k, v) -> {
-                outputs.put(k, v);
-            });
+        // On image ready move to STARTED.
+        if (isImageReady(patch)) {
+            moveToStartedState(currentState);
         }
 
         return currentState;
+    }
+
+    private boolean isImageReady(Operation patch) {
+        ServiceTaskCallback.ServiceTaskCallbackResponse callbackResponse = patch
+                .getBody(ServiceTaskCallback.ServiceTaskCallbackResponse.class);
+        TaskState taskInfo = callbackResponse.taskInfo;
+        return TaskState.isFinished(taskInfo);
+    }
+
+    private void moveToStartedState(Closure currentState) {
+        Closure startedState = new Closure();
+        startedState.state = TaskState.TaskStage.STARTED;
+        startedState.closureSemaphore = currentState.closureSemaphore;
+        getHost().schedule(() -> sendSelfPatch(startedState), 1, TimeUnit.SECONDS);
+    }
+
+    private void moveToCompleteState(Closure currentState) {
+        Closure completedState = new Closure();
+        completedState.state = TaskState.TaskStage.FINISHED;
+        completedState.closureSemaphore = currentState.closureSemaphore;
+        completedState.inputs = currentState.inputs;
+        final Map outputs = new HashMap();
+        completedState.inputs.forEach((k, v) -> {
+            outputs.put(k, v);
+        });
+
+        completedState.outputs = outputs;
+
+        getHost().schedule(() -> sendSelfPatch(completedState), 3, TimeUnit.SECONDS);
     }
 }

@@ -814,7 +814,7 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         return driverRegistry.getDriver(taskDef.runtime);
     }
 
-    private void sendSelfPatch(Closure body) {
+    protected void sendSelfPatch(Closure body) {
         sendRequest(Operation
                 .createPatch(getUri())
                 .setBody(body)
