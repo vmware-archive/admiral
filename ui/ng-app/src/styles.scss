@@ -150,3 +150,10 @@ navigation-container > .full-screen {
 .btn:focus {
   outline: none;
 }
+
+.main-view {
+  width: 100%;
+  .title {
+    @include view-title();
+  }
+}
