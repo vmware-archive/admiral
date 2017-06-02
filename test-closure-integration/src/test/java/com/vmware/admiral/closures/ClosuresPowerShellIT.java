@@ -51,7 +51,7 @@ import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.Utils;
 
-@Ignore
+@Ignore("VBV-1315")
 public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
 
     protected static String IMAGE_NAME_PREFIX = "vmware/photon-closure-runner_";
