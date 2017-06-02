@@ -3,3 +3,11 @@
   width: 32px;
   height: 32px;
 }
+
+.card-header .card-actions {
+  float: right;
+
+  .dropdown-toggle.btn {
+    padding-right: 0;
+  }
+}

@@ -24,23 +24,10 @@ grid-view {
       position: absolute;
       margin-right: 40px;
       transition: width 0.4s, transform 0.4s;
-
-      .card-footer {
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: -50px;
-        border-top: 1px solid #eee;
-        transition: bottom 0.2s ease-in;
-        background-color: white;
-      }
     }
 
     .card-item:hover {
       z-index: 1;
-      .card-footer {
-        bottom: 0;
-      }
     }
 
     .central-block-loading {

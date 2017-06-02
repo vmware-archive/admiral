@@ -21,6 +21,19 @@
       <div card-header>
         <img [src]="'/container-image-icons?container-image=' + item.documentSelfLink"/>
         {{item.name}}
+        <clr-dropdown class="card-actions" [clrMenuPosition]="'left-top'" (click)="$event.stopPropagation()">
+          <button class="btn btn-sm btn-link" clrDropdownToggle>
+              <clr-icon shape="ellipsis-vertical"></clr-icon>
+          </button>
+          <div class="dropdown-menu">
+              <a href="..." clrDropdownItem [routerLink]="['./' + item.documentId]">Details</a>
+              <a href="..." clrDropdownItem>Make public</a>
+              <a href="..." clrDropdownItem>Add users and groups</a>
+              <a href="..." clrDropdownItem>Add clusters</a>
+              <div class="dropdown-divider"></div>
+              <a href="..." clrDropdownItem>Delete</a>
+          </div>
+        </clr-dropdown>
       </div>
       <div card-content>
         <div class="form-group">
@@ -41,22 +54,6 @@
             {{(item.isPublic ? "projects.public" : "projects.private") | i18n}}
           </div>
         </div>
-      </div>
-      <div card-footer>
-        <clr-dropdown [clrMenuPosition]="'bottom-left'" (click)="$event.stopPropagation()">
-          <button class="btn btn-sm btn-link" clrDropdownToggle>
-              Actions
-              <clr-icon shape="caret down"></clr-icon>
-          </button>
-          <div class="dropdown-menu">
-              <a href="..." clrDropdownItem [routerLink]="['./' + item.documentId]">Details</a>
-              <a href="..." clrDropdownItem>Make public</a>
-              <a href="..." clrDropdownItem>Add users and groups</a>
-              <a href="..." clrDropdownItem>Add clusters</a>
-              <div class="dropdown-divider"></div>
-              <a href="..." clrDropdownItem>Delete</a>
-          </div>
-        </clr-dropdown>
       </div>
     </card>
   </ng-template>

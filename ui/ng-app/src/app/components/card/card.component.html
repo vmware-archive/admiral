@@ -16,7 +16,7 @@
     <div class="card-block">
         <div class="card-text"><ng-content select="[card-content]"></ng-content></div>
     </div>
-    <div class="card-footer">
+    <div class="card-footer" #footer [hidden]="footer.children.length == 0">
         <ng-content select="[card-footer]"></ng-content>
     </div>
 </div>

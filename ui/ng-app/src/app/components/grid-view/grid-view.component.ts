@@ -40,7 +40,6 @@ export class GridViewComponent implements OnInit {
   cardStyles = [];
   itemsHolderStyle: any = {};
   layoutTimeout;
-  cardOverTimeout;
   querySub: Subscription;
   totalItemsCount: number;
   loadedPages: number = 0;
@@ -229,15 +228,10 @@ export class GridViewComponent implements OnInit {
   }
 
   onCardEnter(i) {
-    clearTimeout(this.cardOverTimeout);
-    this.cardStyles[i].overflow = 'hidden';
-    this.cardOverTimeout = setTimeout(() => {
-      this.cardStyles[i].overflow = 'visible';
-    }, 300);
+    this.cardStyles[i].overflow = 'visible';
   }
 
   onCardLeave(i) {
-    clearTimeout(this.cardOverTimeout);
     this.cardStyles[i].overflow = 'hidden';
   }
 
