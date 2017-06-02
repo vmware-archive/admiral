@@ -32,7 +32,15 @@ export class NavigationContainerComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.routeObserve = this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
-        var child: Route = (this.route.children.length != 0 && this.route.children[0]) || {};
+
+        let child = {
+          parent: this.route
+        }
+
+        if (this.route.children.length != 0) {
+          child = this.route.children[0];
+        }
+
         this.handleNewComponent(child);
       }
     });
