@@ -86,7 +86,7 @@ export default Vue.component('subnetwork-search', {
       return `
         <div>
           <div class="host-picker-item-primary" title="${subnetwork.name}">
-            core ${utils.escapeHtml(subnetwork.name)}
+            ${utils.escapeHtml(subnetwork.name)}
           </div>
           <div class="host-picker-item-secondary" title="${secondary}">
             ${secondary}
