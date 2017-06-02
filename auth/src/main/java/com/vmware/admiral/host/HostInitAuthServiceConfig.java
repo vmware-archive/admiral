@@ -13,6 +13,7 @@ package com.vmware.admiral.host;
 
 import com.vmware.admiral.auth.AuthInitialBootService;
 import com.vmware.admiral.auth.idm.PrincipalService;
+import com.vmware.admiral.auth.idm.content.AuthContentService;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalFactoryService;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.service.common.AuthBootstrapService;
@@ -29,7 +30,8 @@ public class HostInitAuthServiceConfig extends HostInitServiceHelper {
                 AuthInitialBootService.class,
                 ProjectFactoryService.class,
                 PrincipalService.class,
-                LocalPrincipalFactoryService.class);
+                LocalPrincipalFactoryService.class,
+                AuthContentService.class);
 
         startServiceFactories(host,
                 AuthBootstrapService.class);

@@ -30,7 +30,7 @@ import com.vmware.xenon.common.ServiceHost;
 public class ProjectRolesHandler {
 
     private static final String BODY_IS_REQUIRED_MESSAGE = "Body is required.";
-    private static final String BODY_IS_REQURED_MESSAGE_CODE = "auth.body.required";
+    private static final String BODY_IS_REQUIRED_MESSAGE_CODE = "auth.body.required";
 
 
     /**
@@ -93,7 +93,7 @@ public class ProjectRolesHandler {
     public DeferredResult<Void> handleRolesUpdate(ProjectRoles patchBody) {
         if (patchBody == null) {
             return DeferredResult.failed(new LocalizableValidationException(
-                    BODY_IS_REQUIRED_MESSAGE, BODY_IS_REQURED_MESSAGE_CODE));
+                    BODY_IS_REQUIRED_MESSAGE, BODY_IS_REQUIRED_MESSAGE_CODE));
         }
         return getProjectState()
                 .thenCompose((projectState) -> handleRolesAssignment(projectState, patchBody));

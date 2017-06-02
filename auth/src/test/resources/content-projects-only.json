@@ -1,0 +1,18 @@
+{
+  "projects": [
+    {
+      "name": "testProject1",
+      "description": "Test project 1 description.",
+      "isPublic": true,
+      "administrators": ["fritz@admiral.com"],
+      "members": ["connie@admiral.com"]
+    },
+    {
+      "name": "testProject2",
+      "description": "Test project 2 description.",
+      "isPublic": true,
+      "administrators": ["fritz@admiral.com"],
+      "members": ["gloria@admiral.com"]
+    }
+  ]
+}
