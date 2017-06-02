@@ -38,6 +38,12 @@
       "automaticallyScanImagesOnPushDescription": "Automatically scan images when they are pushed to the project registry."
     }
   },
+  "registries": {
+    "title": "Registries",
+    "sourceRegistries": "Source Registries",
+    "replicationEndpoints": "Replication Endpoints",
+    "replicationRules": "Replication Rules"
+  },
   "edit": "Edit",
   "save": "Save",
   "cancel": "Cancel",
