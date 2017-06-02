@@ -164,7 +164,7 @@ public class ImageSearchService extends StatelessService {
      * original filter, tenant links and target end-point.
      *
      * <pre>
-     * (((EP) and (filter)) and (tenant)) OR ((EPType) and (filter))
+     * (filter) and ((EPType) or ((EP) and (tenant)))
      * </pre>
      */
     String calculateImagesFilter(
@@ -188,12 +188,10 @@ public class ImageSearchService extends StatelessService {
         // Also tenantLinks related clauses are very sensitive.
         // Please, touch with care.
 
-        final String privateImagesFilter = bool(
-                bool(endpointLinkFilter, "and", filter), "and", tenantLinkFilter);
+        String publicCriteria = endpointTypeFilter;
+        String privateCriteria = bool(endpointLinkFilter, "and", tenantLinkFilter);
 
-        final String publicImagesFilter = bool(endpointTypeFilter, "and", filter);
-
-        return bool(privateImagesFilter, "or", publicImagesFilter);
+        return bool(filter, "and", bool(publicCriteria, "or", privateCriteria));
     }
 
     /**

@@ -92,7 +92,7 @@ public class ImageSearchServiceTest extends ComputeBaseTest {
         assertEquals("((A and (C)) and B)", instance.parenthesis("((A and (C)) and B)"));
     }
 
-    // The generic format is: (((EP) and (filter)) and (tenant)) OR ((EPType) and (filter))
+    // The generic format is: (filter) and ((EPType) or ((EP) and (tenantLinks)))
     @Test
     public void testCalculateImagesFilter() throws Throwable {
 
@@ -107,7 +107,7 @@ public class ImageSearchServiceTest extends ComputeBaseTest {
             String imagesFilter = instance.calculateImagesFilter($filter, tenantLink, endpoint);
 
             assertEquals(
-                    "(((endpointLink eq '/resources/endpoints/image-endpointLink') and (name eq 'image-name')) and (tenantLinks/item eq 'image-tenantLink')) or ((endpointType eq 'aws') and (name eq 'image-name'))",
+                    "(name eq 'image-name') and ((endpointType eq 'aws') or ((endpointLink eq '/resources/endpoints/image-endpointLink') and (tenantLinks/item eq 'image-tenantLink')))",
                     imagesFilter);
         }
         {
@@ -117,7 +117,7 @@ public class ImageSearchServiceTest extends ComputeBaseTest {
             String imagesFilter = instance.calculateImagesFilter($filter, tenantLink, endpoint);
 
             assertEquals(
-                    "((endpointLink eq '/resources/endpoints/image-endpointLink') and (name eq 'image-name')) or ((endpointType eq 'aws') and (name eq 'image-name'))",
+                    "(name eq 'image-name') and ((endpointType eq 'aws') or (endpointLink eq '/resources/endpoints/image-endpointLink'))",
                     imagesFilter);
         }
         {
@@ -127,7 +127,7 @@ public class ImageSearchServiceTest extends ComputeBaseTest {
             String imagesFilter = instance.calculateImagesFilter($filter, tenantLink, endpoint);
 
             assertEquals(
-                    "((endpointLink eq '/resources/endpoints/image-endpointLink') and (tenantLinks/item eq 'image-tenantLink')) or (endpointType eq 'aws')",
+                    "((endpointType eq 'aws') or ((endpointLink eq '/resources/endpoints/image-endpointLink') and (tenantLinks/item eq 'image-tenantLink')))",
                     imagesFilter);
         }
         {
@@ -137,7 +137,7 @@ public class ImageSearchServiceTest extends ComputeBaseTest {
             String imagesFilter = instance.calculateImagesFilter($filter, tenantLink, endpoint);
 
             assertEquals(
-                    "(endpointLink eq '/resources/endpoints/image-endpointLink') or (endpointType eq 'aws')",
+                    "((endpointType eq 'aws') or (endpointLink eq '/resources/endpoints/image-endpointLink'))",
                     imagesFilter);
         }
     }
@@ -273,11 +273,11 @@ public class ImageSearchServiceTest extends ComputeBaseTest {
         createdImages.addAll(createImage("-apple"));
         createdImages.addAll(createImage("-orange"));
 
-        final String FILTER = "name any '" + createdImages.stream()
+        final String FILTER = createdImages.stream()
                 .map(imageSt -> imageSt.name)
                 .distinct()
-                .collect(Collectors.joining(";"))
-                + "'";
+                .map(imageName -> "name eq '" + imageName + "'")
+                .collect(Collectors.joining(" or "));
 
         final String ENDPOINT_QUERY = "documentSelfLink eq '" + endpoint.documentSelfLink + "'";
 
