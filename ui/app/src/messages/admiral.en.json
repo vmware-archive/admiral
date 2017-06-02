@@ -260,8 +260,10 @@
       "list": {
         "title": "Popular Templates",
         "titleSearch": "Found Templates",
+        "popularRepositories": "Popular Repositories",
         "searchImagesTemplatesPlaceholder": "Search for images, templates",
         "searchImagesPlaceholder": "Search for images",
+        "searchRepositoriesPlaceholder": "Search for repositories",
         "searchTemplatesPlaceholder": "Search for templates",
         "searchClosuresPlaceholder": "Search for closures",
         "manageRegistry": "Manage Registries",
@@ -284,7 +286,8 @@
           "all": "All",
           "images": "Images",
           "templates": "Templates",
-          "closures": "Closures"
+          "closures": "Closures",
+          "repositories": "Repositories"
         }
       },
       "details": {

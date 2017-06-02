@@ -56,8 +56,6 @@
 
   <script src="lib/vendor.js"></script>
   <script>
-    window.isEmbedded = true;
-
     // Load main script asynchronously so that the ones that embed can inject things onload
     function loadScript(retries) {
       if (window.getBaseServiceUrl ||  retries === 0) {

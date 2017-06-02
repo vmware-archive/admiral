@@ -24,7 +24,6 @@ const RE_UNIX_ABS_PATH_OR_NAME = new RegExp('^((' + RX_NAME + ')|(' + RX_UNIX_AB
 
 const VERSION_REG_EX = /^(\*|\d+(\.\d+){0,2}(\.\*)?)/g;
 
-var isEmbedded = window.isEmbedded;
 var isSingleView = window.isSingleView;
 var isNavigationLess = window.isNavigationLess;
 
@@ -649,7 +648,7 @@ var utils = {
   },
 
   isApplicationEmbedded: function() {
-    return isEmbedded;
+    return this.getConfigurationPropertyBoolean('embedded');
   },
 
   isApplicationSingleView: function() {

@@ -18,45 +18,19 @@
       <div class="list-view scroll-view" v-if="model.listView">
         <list-title v-on:refresh-list="refresh()"
                     v-bind:has-search-query="isShowingSearchResults" v-bind:count="itemsCount"
-                    v-bind:title="i18n('app.template.list.title')"
-                    v-bind:title-search="i18n('app.template.list.titleSearch')">
+                    v-bind:title="title"
+                    v-bind:title-search="titleSearch">
         </list-title>
         <div class="toolbar">
           <div class="row">
             <div class="col-sm-6 toolbar-primary">
-              <a href="#/registries" class="btn btn-link manage-registry-btn"
-            ><i class="fa fa-server"></i>{{i18n("app.template.list.manageRegistry")}}</a>
-              <span class="import-template">
+              <span v-if="selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES" class="import-template">
                 <a href="#/import-template" class="btn btn-link">
                   <i class="fa fa-upload" v-tooltip="i18n('app.template.import.importTemplateTooltip')"></i>{{i18n("app.template.import.title")}}
                 </a>
               </span>
             </div>
             <div class="col-sm-6 toolbar-secondary">
-              <div class="category-filter">
-                <span class="title">{{i18n('app.template.list.searchCategoryFilterTitle')}}</span>
-                <a href="#"
-                   data-category="all"
-                   v-on:click="selectCategory(constants.TEMPLATES.SEARCH_CATEGORY.ALL, $event)"
-                   v-bind:class="{'active': selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.ALL}"
-                  >{{i18n('app.template.list.searchCategory.all')}}</a>
-                <a href="#"
-                   data-category="images"
-                   v-on:click="selectCategory(constants.TEMPLATES.SEARCH_CATEGORY.IMAGES, $event)"
-                   v-bind:class="{'active': selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.IMAGES}"
-                  >{{i18n('app.template.list.searchCategory.images')}}</a>
-                <a href="#"
-                   data-category="templates"
-                   v-on:click="selectCategory(constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES, $event)"
-                   v-bind:class="{'active': selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES}"
-                  >{{i18n('app.template.list.searchCategory.templates')}}</a>
-                <a href="#"
-                   data-category="closures"
-                   v-if="areClosuresAllowed"
-                   v-on:click="selectCategory(constants.TEMPLATES.SEARCH_CATEGORY.CLOSURES, $event)"
-                   v-bind:class="{'active': selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.CLOSURES}"
-                  >{{i18n('app.template.list.searchCategory.closures')}}</a>
-              </div>
               <search v-bind:placeholder="i18n('app.template.list.searchImagesTemplatesPlaceholder')"
                       v-bind:placeholder-by-category="placeholderByCategory"
                       v-bind:query-options="queryOptions"

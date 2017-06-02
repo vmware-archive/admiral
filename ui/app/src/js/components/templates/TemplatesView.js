@@ -55,7 +55,7 @@ var TemplatesViewVueComponent = Vue.extend({
     placeholderByCategory[constants.TEMPLATES.SEARCH_CATEGORY.ALL] =
       i18n.t('app.template.list.searchImagesTemplatesPlaceholder');
     placeholderByCategory[constants.TEMPLATES.SEARCH_CATEGORY.IMAGES] =
-      i18n.t('app.template.list.searchImagesPlaceholder');
+      i18n.t('app.template.list.searchRepositoriesPlaceholder');
     placeholderByCategory[constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES] =
       i18n.t('app.template.list.searchTemplatesPlaceholder');
     placeholderByCategory[constants.TEMPLATES.SEARCH_CATEGORY.CLOSURES] =
@@ -126,6 +126,18 @@ var TemplatesViewVueComponent = Vue.extend({
     },
     isPartialResult: function() {
       return this.model.listView && this.model.listView.isPartialResult;
+    },
+    title: function() {
+      if (this.selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES) {
+        return i18n.t('app.template.list.searchCategory.templates');
+      }
+      return i18n.t('app.template.list.popularRepositories');
+    },
+    titleSearch: function() {
+      if (this.selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES) {
+        return i18n.t('app.template.list.searchCategory.templates');
+      }
+      return i18n.t('app.template.list.searchCategory.repositories');
     }
   },
   mixins: [GridHolderMixin],
