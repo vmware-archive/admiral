@@ -32,7 +32,6 @@ import static com.vmware.admiral.compute.content.CompositeTemplateUtil.serialize
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -249,30 +248,54 @@ public class CompositeDescriptionContentService extends StatelessService {
     private void processCompositeTemplate(CompositeTemplate template, Operation op) {
         validateCompositeTemplate(template);
 
-        DeferredResult<List<Operation>> components = createComponents(template);
-        components.thenCompose((ops) -> {
-            CompositeDescription description = fromCompositeTemplateToCompositeDescription(
-                    template);
-            description.descriptionLinks = ops.stream()
-                    .map((o) -> o.getBody(ServiceDocument.class).documentSelfLink)
-                    .collect(Collectors.toList());
+        Map<String, NestedState> componentNestedStates = createComponentNestedStates(template);
 
-            Operation createDescriptionOp = Operation
-                    .createPost(this, CompositeDescriptionFactoryService.SELF_LINK)
-                    .setBody(description);
-            return sendWithDeferredResult(createDescriptionOp, CompositeDescription.class);
-        }).whenComplete((description, e) -> {
-            if (e != null) {
-                logWarning("Failed to create CompositeDescription: %s", Utils.toString(e));
-                LocalizableValidationException ex = new LocalizableValidationException(e,
-                        "Failed to create CompositeDescription: " + Utils.toString(e),
-                        "compute.composite-description.create.failed");
-                op.fail(ex);
-            } else {
-                op.addResponseHeader(Operation.LOCATION_HEADER, description.documentSelfLink);
-                op.complete();
-            }
-        });
+        DeferredResult<List<Operation>> publishComponentsDR = DeferredResult.allOf(
+                componentNestedStates.values().stream()
+                        .map(ns -> ns.sendRequest(this, Action.POST))
+                        .collect(Collectors.toList()));
+        publishComponentsDR
+                .thenCompose(ignore -> updateComponentLinks(componentNestedStates))
+                .thenCompose(ignore -> persistCompositeDescription(template, componentNestedStates))
+                .whenComplete((description, e) -> {
+                    if (e != null) {
+                        logWarning("Failed to create CompositeDescription: %s", Utils.toString(e));
+                        LocalizableValidationException ex = new LocalizableValidationException(e,
+                                "Failed to create CompositeDescription: " + Utils.toString(e),
+                                "compute.composite-description.create.failed");
+                        op.fail(ex);
+                    } else {
+                        op.addResponseHeader(Operation.LOCATION_HEADER, description.documentSelfLink);
+                        op.complete();
+                    }
+                });
+    }
+
+    /**
+     * Updates links that reference other components from the composition. If a link field contains
+     * the name of a component from the composition, it is replaced with the actual component link
+     * through a PATCH request.
+     */
+    private DeferredResult<Void> updateComponentLinks(
+            Map<String, NestedState> componentNestedStates) {
+        Map<String, String> componentLinks = componentNestedStates.entrySet().stream().collect(
+                Collectors.toMap(e -> e.getKey(), e -> e.getValue().object.documentSelfLink));
+        List<DeferredResult<Void>> updateOps = componentNestedStates.values().stream()
+                .map(ns -> ns.updateComponentLinks(this, componentLinks)).collect(Collectors.toList());
+        return DeferredResult.allOf(updateOps).thenApply(ignore -> (Void) null);
+    }
+
+    private DeferredResult<CompositeDescription> persistCompositeDescription(
+            CompositeTemplate template, Map<String, NestedState> componentNestedStates) {
+        CompositeDescription description = fromCompositeTemplateToCompositeDescription(
+                template);
+        description.descriptionLinks = componentNestedStates.values().stream()
+                .map(ns -> ns.object.documentSelfLink).collect(Collectors.toList());
+
+        Operation createDescriptionOp = Operation
+                .createPost(this, CompositeDescriptionFactoryService.SELF_LINK)
+                .setBody(description);
+        return sendWithDeferredResult(createDescriptionOp, CompositeDescription.class);
     }
 
     private void processKubernetesTemplate(String yamlContent, Operation post) {
@@ -311,16 +334,14 @@ public class CompositeDescriptionContentService extends StatelessService {
                 }));
     }
 
-    private DeferredResult<List<Operation>> createComponents(CompositeTemplate compositeTemplate) {
-
-        List<DeferredResult<Operation>> results = new ArrayList<>();
-        compositeTemplate.components.values().stream()
-                .forEach(component -> results.add(persistComponent(component)));
-
-        return DeferredResult.allOf(results);
+    private Map<String, NestedState> createComponentNestedStates(CompositeTemplate compositeTemplate) {
+        return compositeTemplate.components.entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> e.getKey(),
+                        e -> createComponentNestedState(e.getValue())));
     }
 
-    private DeferredResult<Operation> persistComponent(ComponentTemplate<?> component) {
+    private NestedState createComponentNestedState(ComponentTemplate<?> component) {
         NestedState nestedState = new NestedState();
         nestedState.object = (ServiceDocument) component.data;
         nestedState.children = component.children;
@@ -330,7 +351,7 @@ public class CompositeDescriptionContentService extends StatelessService {
                 .descriptionFactoryLinkByType(resourceType.getName());
         nestedState.factoryLink = factoryLink;
 
-        return nestedState.sendRequest(this, Action.POST);
+        return nestedState;
     }
 
     private void validateCompositeTemplate(CompositeTemplate compositeTemplate) {

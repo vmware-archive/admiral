@@ -54,6 +54,7 @@ import com.vmware.photon.controller.model.Constraint;
 import com.vmware.photon.controller.model.Constraint.Condition.Enforcement;
 import com.vmware.photon.controller.model.Constraint.Condition.Type;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceErrorResponse;
@@ -78,6 +79,7 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
                 { "WordPress_with_MySQL_containers.yaml", verifyContainerTemplate },
                 { "WordPress_with_MySQL_compute.yaml", verifyComputeTemplate },
                 { "WordPress_with_MySQL_bindings.yaml", verifyBindingsTemplate },
+                { "WordPress_with_MySQL_with_load_balancer.yaml", verifyLoadBalancerTemplate },
                 { "WordPress_with_MySQL_kubernetes.yaml", verifyKubernetesTemplate }
         });
     }
@@ -179,6 +181,29 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
                 "${mysql~restart_policy}"));
         assertTrue(hasBindingExpression(componentBinding.bindings,
                 "${_resource~mysql~address}:3306"));
+
+        descLinks.addAll(cd.descriptionLinks);
+    };
+
+    private static BiConsumer<Operation, List<String>> verifyLoadBalancerTemplate = (o, descLinks) -> {
+        CompositeDescriptionExpanded cd = o.getBody(CompositeDescriptionExpanded.class);
+        assertEquals("name", "wordPressWithMySqlLoadBalancer", cd.name);
+        assertEquals("descriptionLinks.size", 4, cd.descriptionLinks.size());
+
+        LoadBalancerDescription loadBalancerDescription =
+                (LoadBalancerDescription)cd.componentDescriptions.stream()
+                        .filter(c -> c.type.equals(ResourceType.LOAD_BALANCER_TYPE.getName()))
+                        .findFirst().get()
+                        .getServiceDocument();
+        ComputeDescription wordpressComputeDescription =
+                (ComputeDescription)cd.componentDescriptions.stream()
+                        .filter(c -> c.name.equals("wordpress"))
+                        .findFirst().get()
+                        .getServiceDocument();
+
+        // validate the correct instance document self link is referenced in the load balancer desc
+        assertEquals(wordpressComputeDescription.documentSelfLink,
+                loadBalancerDescription.computeDescriptionLink);
 
         descLinks.addAll(cd.descriptionLinks);
     };
@@ -320,10 +345,10 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
         for (String link : containerDescriptionLinks) {
             verifyOperation(Operation.createGet(UriUtils.buildUri(host, link)), (o) -> {
                 ResourceState cd = o.getBody(ResourceState.class);
-                assertTrue("unexpected name",
+                assertTrue("unexpected component name: " + cd.name,
                         Arrays.asList("wordpress", "mysql", "public-wpnet", "wpnet",
                                 "wordpress-mysql-svc", "wordpress-mysql-dpl", "wordpress-svc",
-                                "wordpress-dpl").contains(cd.name));
+                                "wordpress-dpl", "wordpress-lb").contains(cd.name));
             });
         }
     }

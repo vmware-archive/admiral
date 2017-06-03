@@ -1,0 +1,39 @@
+---
+name: "wordPressWithMySqlLoadBalancer"
+properties:
+  _leaseDays: "3"
+components:
+  mysql:
+    type: "Compute"
+    data:
+      name: "mysql"
+      environmentName: "On premise"
+      cpuCount: 1
+      networks:
+        - name: "public-wpnet"
+          address: 10.0.0.7
+          assignment: STATIC
+      totalMemoryBytes: 1073741824
+      imageType: "coreos"
+  wordpress:
+    type: "Compute"
+    data:
+      name: "wordpress"
+      environmentName: "On premise"
+      instanceType: small
+      imageType: "ubuntu-server-1604"
+      networks:
+        - name: public-wpnet
+  wordpress-lb:
+    type: "App.LoadBalancer"
+    data:
+      name: "wordpress-lb"
+      protocol: "HTTP"
+      port: 80
+      instance: "wordpress"
+      instanceProtocol: "HTTP"
+      instancePort: 80
+  public-wpnet:
+    type: "Compute.Network"
+    data:
+      name: public-wpnet

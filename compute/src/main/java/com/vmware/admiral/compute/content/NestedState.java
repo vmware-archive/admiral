@@ -30,8 +30,13 @@ import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.TagService;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ReflectionUtils;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.ServiceDocumentDescription;
+import com.vmware.xenon.common.ServiceDocumentDescription.PropertyDescription;
+import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
+import com.vmware.xenon.common.ServiceDocumentDescription.TypeName;
 
 /**
  * Since xenon model classes don't have "real java" references manipulating an object with its whole
@@ -198,13 +203,16 @@ public class NestedState {
         }
         String link = getLink(action);
 
-        Operation op = Operation.createPost(sender, link);
-        op.setAction(action);
-
         return DeferredResult.allOf(allChildren)
                 .thenCompose(voids -> {
+                    Operation op = Operation.createPost(sender, link);
+                    op.setAction(action);
                     op.setBody(object);
-                    return sender.sendWithDeferredResult(op);
+                    return sender.sendWithDeferredResult(op).thenApply(o -> {
+                        ServiceDocument createdDocument = o.getBody(ServiceDocument.class);
+                        object.documentSelfLink = createdDocument.documentSelfLink;
+                        return o;
+                    });
                 });
     }
 
@@ -299,5 +307,69 @@ public class NestedState {
 
             return DeferredResult.allOf(childrenDeferredResult).thenApply(o -> result);
         });
+    }
+
+    /**
+     * Updates link fields that reference components by name by replacing them with the actual
+     * component self link. This is also recursively done for nested documents.
+     */
+    public DeferredResult<Void> updateComponentLinks(Service sender,
+            Map<String, String> componentLinks) {
+        ServiceDocumentDescription sdd = ServiceDocumentDescription.Builder.create()
+                .buildDescription(this.object.getClass());
+        Object patchBody = ReflectionUtils.instantiate(this.object.getClass());
+        boolean changed = false;
+        for (PropertyDescription pd : sdd.propertyDescriptions.values()) {
+            // handle a single link field
+            if (pd.usageOptions != null && pd.usageOptions.contains(PropertyUsageOption.LINK)
+                    && TypeName.STRING.equals(pd.typeName)) {
+                String currentLinkValue = (String) ReflectionUtils.getPropertyValue(pd,
+                        this.object);
+                if (componentLinks.containsKey(currentLinkValue)) {
+                    ReflectionUtils.setPropertyValue(pd, patchBody,
+                            componentLinks.get(currentLinkValue));
+                    changed = true;
+                }
+            }
+
+            // handle a collection of links
+            if (pd.usageOptions != null && pd.usageOptions.contains(PropertyUsageOption.LINKS)) {
+                Object currentValue = ReflectionUtils.getPropertyValue(pd, this.object);
+                if (currentValue == null || !Collection.class.isAssignableFrom(currentValue.getClass())) {
+                    continue;
+                }
+                @SuppressWarnings("unchecked")
+                Collection<String> currentLinks = (Collection<String>)currentValue;
+                List<String> newLinks = new ArrayList<>();
+                boolean linkReplaced = false;
+                for (String link : currentLinks) {
+                    if (componentLinks.containsKey(link)) {
+                        linkReplaced = true;
+                        newLinks.add(componentLinks.get(link));
+                    } else {
+                        newLinks.add(link);
+                    }
+                }
+
+                if (linkReplaced) {
+                    ReflectionUtils.setPropertyValue(pd, patchBody, newLinks);
+                    changed = true;
+                }
+            }
+        }
+
+        // create a DR for the root document
+        List<DeferredResult<Void>> drs = new ArrayList<>();
+        drs.add(changed ? sender.sendWithDeferredResult(
+                Operation.createPatch(sender, this.object.documentSelfLink).setBody(patchBody))
+                .thenApply(ignore -> null) : DeferredResult.completed(null));
+
+        // recursively collect DRs for the nested documents
+        if (this.children != null) {
+            this.children.values()
+                    .forEach(ns -> drs.add(ns.updateComponentLinks(sender, componentLinks)));
+        }
+
+        return DeferredResult.allOf(drs).thenApply(ignore -> null);
     }
 }

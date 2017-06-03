@@ -56,6 +56,7 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.compute.content.CompositeDescriptionContentService;
 import com.vmware.admiral.compute.content.TemplateComputeDescription;
+import com.vmware.admiral.compute.content.TemplateLoadBalancerDescription;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
 import com.vmware.admiral.compute.endpoint.EndpointHealthCheckTaskService;
 import com.vmware.admiral.compute.kubernetes.KubernetesEntityDataCollection;
@@ -90,6 +91,9 @@ import com.vmware.admiral.service.test.MockContainerHostService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService;
+import com.vmware.photon.controller.model.resources.LoadBalancerService;
+import com.vmware.photon.controller.model.resources.LoadBalancerService.LoadBalancerState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
@@ -200,6 +204,10 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
         CompositeComponentRegistry.registerComponent(ResourceType.COMPUTE_NETWORK_TYPE.getName(),
                 ComputeNetworkDescriptionService.FACTORY_LINK, ComputeNetworkDescription.class,
                 ComputeNetworkService.FACTORY_LINK, ComputeNetwork.class);
+
+        CompositeComponentRegistry.registerComponent(ResourceType.LOAD_BALANCER_TYPE.getName(),
+                LoadBalancerDescriptionService.FACTORY_LINK, TemplateLoadBalancerDescription.class,
+                LoadBalancerService.FACTORY_LINK, LoadBalancerState.class);
 
         CompositeComponentRegistry.registerComponent(ResourceType.KUBERNETES_POD_TYPE.getName(),
                 KubernetesDescriptionService.FACTORY_LINK, KubernetesDescription.class,
