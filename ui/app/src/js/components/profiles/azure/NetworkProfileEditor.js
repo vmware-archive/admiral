@@ -27,6 +27,16 @@ export default Vue.component('azure-network-profile-editor', {
   template: `
     <div>
       <section class="form-block" v-if="endpoint">
+        <label>{{i18n('app.profile.edit.generalLabel')}}</label>
+        <dropdown-search-group
+          :label="i18n('app.profile.edit.securityGroupIsolationTypeLabel')"
+          :filter="searchSecurityGroups"
+          :value="securityGroup"
+          :renderer="renderSecurityGroup"
+          @change="onSecurityGroupChange">
+        </dropdown-search-group>
+      </section>
+      <section class="form-block" v-if="endpoint">
         <label>{{i18n('app.profile.edit.existingLabel')}}</label>
         <multicolumn-editor-group
           :label="i18n('app.profile.edit.subnetworksLabel')"
@@ -91,13 +101,19 @@ export default Vue.component('azure-network-profile-editor', {
         return {
           name: subnetwork
         };
-      })
+      }),
+      securityGroup: this.model.securityGroupStates && this.model.securityGroupStates.length > 0
+          ? this.model.securityGroupStates[0] : null
     };
   },
   attached() {
     this.emitChange();
   },
   methods: {
+    onSecurityGroupChange(value) {
+      this.securityGroup = value;
+      this.emitChange();
+    },
     onSubnetworkChange(value) {
       this.subnetworks = value;
       this.emitChange();
@@ -152,6 +168,42 @@ export default Vue.component('azure-network-profile-editor', {
         }).catch(reject);
       });
     },
+    renderSecurityGroup(securityGroup) {
+      let secondary = i18n.t('app.profile.edit.resourceGroupsLabel') + ': ' +
+          (securityGroup.groupNames ? utils.escapeHtml(securityGroup.groupNames.join(', ')) : '');
+      return `
+        <div>
+          <div class="host-picker-item-primary" title="${securityGroup.name}">
+            ${utils.escapeHtml(securityGroup.name)}
+          </div>
+          <div class="host-picker-item-secondary truncateText" title="${secondary}">
+            ${secondary}
+          </div>
+        </div>`;
+    },
+    searchSecurityGroups(...args) {
+      return new Promise((resolve, reject) => {
+        services.searchSecurityGroups.apply(null,
+            [this.endpoint.documentSelfLink, ...args]).then((result) => {
+          let groupLinks = result.items.reduce((previous, current) => {
+            if (current.groupLinks) {
+              previous = previous.concat(current.groupLinks);
+            }
+            return previous;
+          }, []);
+          services.loadResourceGroups([...new Set(groupLinks)]).then((groups) => {
+            result.items.forEach((item) => {
+              if (item.groupLinks) {
+                item.groupNames = item.groupLinks.map((groupLink) => {
+                  return groups[groupLink].name;
+                });
+              }
+            });
+            resolve(result);
+          });
+        }).catch(reject);
+      });
+    },
     manageSubnetworks() {
       this.$emit('manage.subnetworks');
     },
@@ -167,7 +219,8 @@ export default Vue.component('azure-network-profile-editor', {
               previous.push(current.name.documentSelfLink);
             }
             return previous;
-          }, [])
+          }, []),
+          securityGroupLinks: this.securityGroup ? [this.securityGroup.documentSelfLink] : []
         },
         valid: this.isolationType === ISOLATION_TYPES[0] ||
             (this.isolationType === ISOLATION_TYPES[1] &&
