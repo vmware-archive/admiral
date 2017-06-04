@@ -55,6 +55,9 @@ export const ROUTES: Routes = [
                 path: 'project-repositories', component: RepositoryComponent
             },
             {
+                path: 'registries', component: RegistriesComponent
+            },
+            {
                 path: 'vch-clusters', component: VchClustersComponent
             },
             {

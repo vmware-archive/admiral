@@ -32,7 +32,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     formerViewPaths = {
       'templates': 'templates?$category=templates',
       'public-repositories': 'templates?$category=images',
-      'registries': 'registries',
+      'placements': 'placements',
       'hosts': 'hosts',
       'applications': 'applications',
       'containers': 'containers',

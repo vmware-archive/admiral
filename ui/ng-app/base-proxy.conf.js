@@ -21,7 +21,8 @@ const ENDPOINTS = [
   '/js/*',
   '/styles/*',
   '/messages/*',
-  '/fonts/*'
+  '/fonts/*',
+  '/util/*'
 ];
 
 var configure = function(env) {
