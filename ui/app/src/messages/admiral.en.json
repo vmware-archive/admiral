@@ -534,6 +534,7 @@
         "noneIsolationTypeLabel": "None",
         "subnetIsolationTypeLabel": "Subnetwork",
         "securityGroupIsolationTypeLabel": "Security Group",
+        "securityGroups": "Security Groups",
         "cidrLabel": "CIDR",
         "cidrLabelHint": "0.0.0.0/0",
         "cidrPrefixLabel": "Subnets Prefix Length",
@@ -734,6 +735,9 @@
     },
     "network": {
       "entity": "Network"
+    },
+    "securityGroup": {
+      "entity": "Security Group"
     },
     "subnetwork": {
       "list": {

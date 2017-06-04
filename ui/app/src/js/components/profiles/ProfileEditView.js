@@ -23,6 +23,7 @@ import { ProfileActions, NavigationActions } from 'actions/Actions';
 import EndpointsList from 'components/endpoints/EndpointsList'; //eslint-disable-line
 import SubnetworkSearch from 'components/subnetworks/SubnetworkSearch'; //eslint-disable-line
 import SubnetworksList from 'components/subnetworks/SubnetworksList'; //eslint-disable-line
+import SecurityGroupSearch from 'components/profiles/SecurityGroupSearch'; //eslint-disable-line
 import ProfileEditViewVue from 'components/profiles/ProfileEditViewVue.html';
 import utils from 'core/utils';
 

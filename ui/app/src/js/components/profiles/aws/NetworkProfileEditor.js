@@ -28,13 +28,17 @@ export default Vue.component('aws-network-profile-editor', {
     <div>
       <section class="form-block" v-if="endpoint">
         <label>{{i18n('app.profile.edit.generalLabel')}}</label>
-        <dropdown-search-group
-          :label="i18n('app.profile.edit.securityGroupIsolationTypeLabel')"
-          :filter="searchSecurityGroups"
-          :value="securityGroup"
+        <multicolumn-editor-group
+          :label="i18n('app.profile.edit.securityGroups')"
+          :value="securityGroups"
           @change="onSecurityGroupChange">
-        </dropdown-group>
-      </dropdown-search-group>
+          <multicolumn-cell name="name">
+            <securitygroup-search
+              :endpoint="endpoint">
+            </securitygroup-search>
+          </multicolumn-cell>
+        </multicolumn-editor-group>
+      </section>
       <section class="form-block" v-if="endpoint">
         <label>{{i18n('app.profile.edit.existingLabel')}}</label>
         <multicolumn-editor-group
@@ -90,6 +94,8 @@ export default Vue.component('aws-network-profile-editor', {
   data() {
     let subnetworks = this.model.subnetworks &&
         this.model.subnetworks.asMutable() || [];
+    let securityGroups = this.model.securityGroupStates &&
+        this.model.securityGroupStates.asMutable() || [];
     return {
       isolatedSubnetCIDRPrefix: this.model.isolatedSubnetCIDRPrefix,
       isolationNetwork: this.model.isolationNetwork,
@@ -101,8 +107,11 @@ export default Vue.component('aws-network-profile-editor', {
           name: subnetwork
         };
       }),
-      securityGroup: this.model.securityGroupStates && this.model.securityGroupStates.length > 0
-          ? this.model.securityGroupStates[0] : null
+      securityGroups: securityGroups.map((securityGroup) => {
+        return {
+          name: securityGroup
+        };
+      })
     };
   },
   attached() {
@@ -110,7 +119,7 @@ export default Vue.component('aws-network-profile-editor', {
   },
   methods: {
     onSecurityGroupChange(value) {
-      this.securityGroup = value;
+      this.securityGroups = value;
       this.emitChange();
     },
     onSubnetworkChange(value) {
@@ -150,14 +159,6 @@ export default Vue.component('aws-network-profile-editor', {
         }).catch(reject);
       });
     },
-    searchSecurityGroups(...args) {
-      return new Promise((resolve, reject) => {
-        services.searchSecurityGroups.apply(null,
-            [this.endpoint.documentSelfLink, ...args]).then((result) => {
-          resolve(result);
-        }).catch(reject);
-      });
-    },
     manageSubnetworks() {
       this.$emit('manage.subnetworks');
     },
@@ -174,7 +175,12 @@ export default Vue.component('aws-network-profile-editor', {
             }
             return previous;
           }, []),
-          securityGroupLinks: this.securityGroup ? [this.securityGroup.documentSelfLink] : []
+          securityGroupLinks: this.securityGroups.reduce((previous, current) => {
+            if (current.name && current.name.documentSelfLink) {
+              previous.push(current.name.documentSelfLink);
+            }
+            return previous;
+          }, [])
         },
         valid: this.isolationType === ISOLATION_TYPES[0] ||
             (this.isolationType === ISOLATION_TYPES[1] &&
