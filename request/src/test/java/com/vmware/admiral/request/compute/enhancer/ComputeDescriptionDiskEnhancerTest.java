@@ -112,6 +112,35 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
     }
 
     @Test
+    public void testEnhanceDiskWithDefaultStorageItem() throws Throwable {
+        // Build disk description
+        cd.diskDescLinks = Arrays.asList(buildDiskState1(false, false).documentSelfLink);
+
+        createEnhanceContext(buildStorageProfileWithConstraints());
+        // Use case 1: CD (Disk1) with no constraints and has default storage item as a match
+
+        enhance(new ComputeDescriptionDiskEnhancer(host, host.getReferer()));
+
+        assertDiskStates(diskState -> {
+            if (diskState.name.equals("Disk1")) {
+                assertNotNull(diskState.customProperties);
+                assertEquals(2, diskState.customProperties.size());
+            }
+        });
+    }
+
+    @Test
+    public void testFailureEnhanceEncryptedDiskWithDefaultStorageItem() throws Throwable {
+        // Build disk description
+        cd.diskDescLinks = Arrays.asList(buildDiskState1(true, false).documentSelfLink);
+
+        createEnhanceContext(buildStorageProfileWithConstraints());
+        // Use case 1: CD (Disk1) with no constraints and has default storage item as a match
+
+        enhanceDiskFailure();
+    }
+
+    @Test
     public void testSuccessEnhanceDiskWithEncryption() throws Throwable {
         // Build disk description
         cd.diskDescLinks = buildDiskStatesForEncryption();
@@ -140,21 +169,7 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
         // Both should fail.
         // Use case 1: Disk1 with all hard constraints & encryption.
         // Use case 2: Disk2 with all soft constraints & encryption
-        ComputeDescriptionDiskEnhancer enhancer = new ComputeDescriptionDiskEnhancer(host,
-                host.getReferer());
-        DeferredResult<ComputeDescription> result = enhancer.enhance(context, cd);
-
-        TestContext ctx = testCreate(1);
-        result.whenComplete((desc, t) -> {
-            if (t != null) {
-                assertNotNull(t.getMessage());
-                assertTrue(t.getMessage().contains("No matching storage defined in profile"));
-                ctx.completeIteration();
-                return;
-            }
-            ctx.completeIteration();
-        });
-        ctx.await();
+        enhanceDiskFailure();
 
         // Now get all the disk states to find the properties size.
         assertDiskStates(diskState -> assertNull(diskState.customProperties));
@@ -254,6 +269,24 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
 
         // Now get all the disk states to find the properties size.
         assertDiskStates(diskState -> assertNull(diskState.customProperties));
+    }
+
+    private void enhanceDiskFailure() {
+        ComputeDescriptionDiskEnhancer enhancer = new ComputeDescriptionDiskEnhancer(host,
+                host.getReferer());
+        DeferredResult<ComputeDescription> result = enhancer.enhance(context, cd);
+
+        TestContext ctx = testCreate(1);
+        result.whenComplete((desc, t) -> {
+            if (t != null) {
+                assertNotNull(t.getMessage());
+                assertTrue(t.getMessage().contains("No matching storage defined in profile"));
+                ctx.completeIteration();
+                return;
+            }
+            ctx.completeIteration();
+        });
+        ctx.await();
     }
 
     private void createEnhanceContext() {
@@ -635,6 +668,11 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
     }
 
     private DiskService.DiskState buildDiskState1(boolean isEncrypted) throws Throwable {
+        return buildDiskState1(isEncrypted, true);
+    }
+
+    private DiskService.DiskState buildDiskState1(boolean isEncrypted, boolean withConstraints)
+            throws Throwable {
         DiskService.DiskState diskState1 = new DiskService.DiskState();
         diskState1.capacityMBytes = 1024;
         diskState1.type = DiskService.DiskType.HDD;
@@ -642,14 +680,16 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
         diskState1.name = "Disk1";
         diskState1.encrypted = isEncrypted;
         diskState1.persistent = true;
-        diskState1.constraint = new Constraint();
+        if (withConstraints) {
+            diskState1.constraint = new Constraint();
 
-        List<Constraint.Condition> conditions = new ArrayList<>();
-        conditions.add(Constraint.Condition.forTag("FAST", null,
-                Constraint.Condition.Enforcement.HARD, QueryTask.Query.Occurance.MUST_OCCUR));
-        conditions.add(Constraint.Condition.forTag("HA", null,
-                Constraint.Condition.Enforcement.HARD, QueryTask.Query.Occurance.MUST_OCCUR));
-        diskState1.constraint.conditions = conditions;
+            List<Constraint.Condition> conditions = new ArrayList<>();
+            conditions.add(Constraint.Condition.forTag("FAST", null,
+                    Constraint.Condition.Enforcement.HARD, QueryTask.Query.Occurance.MUST_OCCUR));
+            conditions.add(Constraint.Condition.forTag("HA", null,
+                    Constraint.Condition.Enforcement.HARD, QueryTask.Query.Occurance.MUST_OCCUR));
+            diskState1.constraint.conditions = conditions;
+        }
         diskState1 = doPost(diskState1, DiskService.FACTORY_LINK);
 
         return diskState1;

@@ -194,7 +194,12 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
             DiskState diskState) {
         // if no constraints return default
         if (checkIfNoConstraintAvailable(diskState.constraint)) {
-            return findDefaultStorageItem(profile);
+            StorageItemExpanded defItem = findDefaultStorageItem(profile);
+            if (diskState.encrypted == null || !diskState.encrypted) {
+                return defItem;
+            } else {
+                return storageItemEncryptionFilter(defItem) ? defItem : null;
+            }
         }
         // Step 1: Find if there are hard constraints. Then all of them will be available in one
         // of the storage item in the profile, as placement would have done this filtering to chose
@@ -224,15 +229,30 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                 diskState.encrypted == null ||
                 // Disk is not requesting for encryption and it is marked false
                 !diskState.encrypted ||
-                // Storage Item itself supports encryption
-                (si.supportsEncryption != null && si.supportsEncryption) ||
+                        // Explore Storage Item for encryption support.
+                        storageItemEncryptionFilter(si)))
+                .findFirst().orElse(null);
+    }
+
+    /**
+     * Find whether storage Item supports encryption
+     *
+     * 1. Storage Item itself supports encryption.
+     * 2. Storage Description associated with storage item supports encryption or if there is no
+     * explicit resource group associated with storage item, then query for resource groups to which
+     * this storage description belongs to, to see whether any of it supports encryption.
+     * 3. Resource group to which this storage item is associated supports encryption.
+     */
+    private boolean storageItemEncryptionFilter(StorageItemExpanded si) {
+        // Storage Item itself supports encryption
+        return (si.supportsEncryption != null && si.supportsEncryption) ||
                 // Storage description related to storage item supports encryption
-                ((si.storageDescription != null && si.storageDescription.supportsEncryption != null) ?
+                ((si.storageDescription != null
+                        && si.storageDescription.supportsEncryption != null) ?
                         // Storage Description related to storage item supports encryption
                         storageDescriptionEncryptionFilter(si) :
                         // Resource group state related to storage item supports encryption
-                        resourceGroupEncryptionFilter(si.resourceGroupState))))
-                .findFirst().orElse(null);
+                        resourceGroupEncryptionFilter(si.resourceGroupState));
     }
 
     private Stream<StorageItemExpanded> storageItemsStream(StorageProfileExpanded storageProfile) {
