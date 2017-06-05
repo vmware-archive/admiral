@@ -3,16 +3,12 @@
   <clr-tabs>
     <clr-tab-link [clrTabLinkId]="'sourceRegistriesTab'" [clrTabLinkActive]="true">{{"registries.sourceRegistries" | i18n}}</clr-tab-link>
     <clr-tab-link [clrTabLinkId]="'replicationEndpointsTab'">{{"registries.replicationEndpoints" | i18n}}</clr-tab-link>
-    <clr-tab-link [clrTabLinkId]="'replicationRulesTab'">{{"registries.replicationRules" | i18n}}</clr-tab-link>
 
     <clr-tab-content [clrTabContentId]="'sourceRegistriesContent'" [clrTabContentActive]="true">
       <former-view path="registries"></former-view>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'replicationEndpointsContent'">
         <hbr-endpoint></hbr-endpoint>
-    </clr-tab-content>
-    <clr-tab-content [clrTabContentId]="'replicationRulesContent'">
-        <hbr-replication [projectId]="1"></hbr-replication>
     </clr-tab-content>
   </clr-tabs>
 </div>

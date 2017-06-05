@@ -930,6 +930,15 @@ $main-list-view-right: 10px;
   @extend .inline-editable-list-and-context-view;
 }
 
+.registry-view .main-panel > .list-holder {
+  .inline-editable-list {
+    left: 0;
+  }
+  .inline-editable-list-table {
+    top: 50px;
+  }
+}
+
 .endpoint-icon,
 .dropdown-holder .dropdown-options {
   img {
