@@ -44,7 +44,7 @@ public abstract class BaseWordpressComputeProvisionIT extends BaseComputeProvisi
 
     protected static final String AWS_ISOLATED_VPC_NAME = "isolated-vpc";
 
-    private static final String WP_PATH = "mywordpresssite";
+    private static final String WP_PATH = "mywordpresssite/wp-admin/install.php?step=1";
     private static final int STATUS_CODE_WAIT_POLLING_RETRY_COUNT = 300; //5 min
 
     @Override

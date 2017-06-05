@@ -646,6 +646,10 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
                 });
         ctx.await();
 
+        NetworkInterfaceDescription updatedNid = getDocument(NetworkInterfaceDescription.class,
+                nid.documentSelfLink);
+
+        assertEquals(false, updatedNid.assignPublicIpAddress);
         assertFalse(subnetStates.isEmpty());
         assertEquals(1, subnetStates.size());
         SubnetState selectedSubnet = subnetStates.iterator().next();

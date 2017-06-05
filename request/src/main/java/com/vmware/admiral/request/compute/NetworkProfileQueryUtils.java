@@ -429,7 +429,14 @@ public class NetworkProfileQueryUtils {
             if (!noNicVM) {
                 if (computeNetworkDescription.networkType == NetworkType.ISOLATED &&
                         isIsolatedBySubnetNetworkProfile) {
-                    subnet = DeferredResult.completed(isolatedSubnetState);
+
+                    // in case of isolated network don't assign public ip addresses if the user set nothing
+                    if (nid.assignPublicIpAddress == null) {
+                        subnet = setAssignPublicIpAddress(nid, false, host, referer)
+                                .thenCompose(o -> DeferredResult.completed(isolatedSubnetState));
+                    } else {
+                        subnet = DeferredResult.completed(isolatedSubnetState);
+                    }
                 } else {
                     DeferredResult<SubnetState> subnetDeferred = new DeferredResult<>();
                     NetworkProfileQueryUtils.getSubnetForComputeNic(computeNetwork,
@@ -441,11 +448,7 @@ public class NetworkProfileQueryUtils {
                                 }
 
                                 if (computeNetwork.networkType == NetworkType.PUBLIC) {
-                                    nid.assignPublicIpAddress = true;
-
-                                    host.sendWithDeferredResult(
-                                            Operation.createPatch(host, nid.documentSelfLink)
-                                                    .setBody(nid).setReferer(referer))
+                                    setAssignPublicIpAddress(nid, true, host, referer)
                                             .thenAccept(v -> subnetDeferred.complete(s));
                                 } else {
                                     subnetDeferred.complete(s);
@@ -476,6 +479,15 @@ public class NetworkProfileQueryUtils {
         }
 
         return subnet;
+    }
+
+    private static DeferredResult<Operation> setAssignPublicIpAddress(
+            NetworkInterfaceDescription nid, boolean assignPublicIpAddress, ServiceHost host,
+            URI referer) {
+        nid.assignPublicIpAddress = assignPublicIpAddress;
+
+        return host.sendWithDeferredResult(
+                Operation.createPatch(host, nid.documentSelfLink).setBody(nid).setReferer(referer));
     }
 
     private static DeferredResult<SubnetState> findSubnetBy(ServiceHost host,
