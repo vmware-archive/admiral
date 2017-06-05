@@ -77,6 +77,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -137,6 +138,12 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
      * name of the feature toggle that enables stats collection for VCH
      */
     private static final String ALLOW_VCH_STATS_COLLECTION_PROP_NAME = "allow.vch.stats.collection";
+
+    /**
+     * retry failed inspect command after 10 sec, then if fails, reschedule after 120 sec, and
+     * finally after 600 sec
+     */
+    private static final long[] INSPECT_RETRY_AFTER_SECONDS = { 10, 120, 600 };
 
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER;
 
@@ -521,7 +528,6 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                                                 tempFile, context.request.getRequestTrackingLog());
                                     }
                                     fail(context.request, ex);
-
                                 } else {
                                     logInfo("Finished download of %d bytes from %s to %s %s",
                                             tempFile.length(), o.getUri(),
@@ -635,8 +641,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 .toString();
 
         CommandInput createCommandInput = new CommandInput(context.commandInput)
-                .withProperty(DOCKER_CONTAINER_IMAGE_PROP_NAME,
-                        fullImageName)
+                .withProperty(DOCKER_CONTAINER_IMAGE_PROP_NAME, fullImageName)
                 .withProperty(DOCKER_CONTAINER_TTY_PROP_NAME, true)
                 .withProperty(DOCKER_CONTAINER_OPEN_STDIN_PROP_NAME, true)
                 .withPropertyIfNotNull(DOCKER_CONTAINER_COMMAND_PROP_NAME,
@@ -1020,6 +1025,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                         context.containerState.documentSelfLink,
                         context.computeState.documentSelfLink);
                 fail(context.request, o, ex);
+                scheduleRetryInspectContainer(context, inspectCommandInput, 0);
             } else {
                 handleExceptions(context.request, context.operation, () -> {
                     Map<String, Object> props = o.getBody(Map.class);
@@ -1027,6 +1033,30 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 });
             }
         });
+    }
+
+    /**
+     * Schedules executing INSPECT command on host for given container with several retries at
+     * predefined time intervals.
+     */
+    @SuppressWarnings("unchecked")
+    private void scheduleRetryInspectContainer(RequestContext c, CommandInput inspectCommand,
+            int indexWaiting) {
+        if (indexWaiting < 0 || indexWaiting >= INSPECT_RETRY_AFTER_SECONDS.length) {
+            return;
+        }
+        getHost().schedule(() -> c.executor.inspectContainer(inspectCommand, (o, ex) -> {
+            if (ex != null) {
+                logWarning("Error inspecting container [%s] of host [%s] (retries left: %d): %s",
+                        c.containerState.documentSelfLink, c.computeState.documentSelfLink,
+                        INSPECT_RETRY_AFTER_SECONDS.length - indexWaiting - 1, ex.getMessage());
+                scheduleRetryInspectContainer(c, inspectCommand, indexWaiting + 1);
+            } else {
+                Map<String, Object> props = o.getBody(Map.class);
+                c.requestFailed = true; // set to true to avoid setting task to finished
+                patchContainerState(c.request, c.containerState, props, c);
+            }
+        }), INSPECT_RETRY_AFTER_SECONDS[indexWaiting], TimeUnit.SECONDS);
     }
 
     private void execContainer(RequestContext context) {
@@ -1309,4 +1339,5 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         }
         return volumeBindings;
     }
+
 }

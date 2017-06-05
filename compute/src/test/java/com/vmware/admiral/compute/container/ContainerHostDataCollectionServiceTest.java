@@ -22,13 +22,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.vmware.admiral.adapter.common.AdapterRequest;
@@ -43,7 +41,6 @@ import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService.ContainerHostDataCollectionState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
-import com.vmware.admiral.compute.container.maintenance.ContainerMaintenance;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.admiral.service.test.MockDockerHostAdapterService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
@@ -71,15 +68,6 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
     private List<String> preexistingContainerNames;
     private List<String> containerNames;
 
-    @BeforeClass
-    public static void beforeForDataCollection() throws Throwable {
-        setFinalStatic(ContainerMaintenance.class
-                .getDeclaredField("MAINTENANCE_INTERVAL_MICROS"), TimeUnit.SECONDS.toMicros(1));
-        setFinalStatic(ContainerMaintenance.class
-                .getDeclaredField("MAINTENANCE_PERIOD_MICROS"),
-                TimeUnit.SECONDS.toMicros(1));
-    }
-
     @Before
     public void setUp() throws Throwable {
         DeploymentProfileConfig.getInstance().setTest(true);
@@ -89,7 +77,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         preexistingContainerNames = new ArrayList<>();
         preexistingContainerNames.add(preexistingContainerName);
 
-        containerNames = new ArrayList<String>();
+        containerNames = new ArrayList<>();
         containerNames.add(createdContainerName);
 
         MockDockerHostAdapterService service = new MockDockerHostAdapterService();
@@ -303,9 +291,8 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
                     false,
                     Service.Action.PATCH);
 
-            host.log(
-                    ">>>> testDiscoverCreateAndInspectContainer: Container Host %s created. Waiting for data collection...",
-                    cs.documentSelfLink);
+            host.log(">>>> testDiscoverCreateAndInspectContainer: Container Host %s created."
+                            + " Waiting for data collection...", cs.documentSelfLink);
             String csLink = cs.documentSelfLink;
             waitFor(() -> {
                 ComputeState computeState = getDocument(ComputeState.class, csLink);
@@ -507,7 +494,8 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
                     resourcePoolState.documentSelfLink);
             Long availableMemory = PropertyUtils
                     .getPropertyLong(resourcePoolStateUpdated.customProperties,
-                            ContainerHostDataCollectionService.RESOURCE_POOL_AVAILABLE_MEMORY_CUSTOM_PROP)
+                            ContainerHostDataCollectionService
+                                    .RESOURCE_POOL_AVAILABLE_MEMORY_CUSTOM_PROP)
                     .orElse(0L);
             Long cpuUsage = PropertyUtils
                     .getPropertyLong(resourcePoolStateUpdated.customProperties,
@@ -537,7 +525,8 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
                     resourcePoolState.documentSelfLink);
             return resourcePoolStateUpdated.maxMemoryBytes == 1500 && PropertyUtils
                     .getPropertyLong(resourcePoolStateUpdated.customProperties,
-                            ContainerHostDataCollectionService.RESOURCE_POOL_AVAILABLE_MEMORY_CUSTOM_PROP)
+                            ContainerHostDataCollectionService
+                                    .RESOURCE_POOL_AVAILABLE_MEMORY_CUSTOM_PROP)
                     .get() == 600L;
         });
 
@@ -573,7 +562,8 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
                     resourcePoolState.documentSelfLink);
             return resourcePoolStateUpdated.maxMemoryBytes == 1000 && PropertyUtils
                     .getPropertyLong(resourcePoolStateUpdated.customProperties,
-                            ContainerHostDataCollectionService.RESOURCE_POOL_AVAILABLE_MEMORY_CUSTOM_PROP)
+                            ContainerHostDataCollectionService
+                                    .RESOURCE_POOL_AVAILABLE_MEMORY_CUSTOM_PROP)
                     .get() == 500L;
         });
         delete(anotherOne.documentSelfLink);
@@ -590,7 +580,8 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
                     resourcePoolState.documentSelfLink);
             Long availableMemory = PropertyUtils
                     .getPropertyLong(resourcePoolStateUpdated.customProperties,
-                            ContainerHostDataCollectionService.RESOURCE_POOL_AVAILABLE_MEMORY_CUSTOM_PROP)
+                            ContainerHostDataCollectionService
+                                    .RESOURCE_POOL_AVAILABLE_MEMORY_CUSTOM_PROP)
                     .orElse(0L);
             Long cpuUsage = PropertyUtils
                     .getPropertyLong(resourcePoolStateUpdated.customProperties,
@@ -628,7 +619,8 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         ResourcePoolService.ResourcePoolState resourcePoolState = createAndStoreResourcePool();
 
         //Create a host with 1000 memory and 1000 storage
-        createAndStoreComputeState(hostDescription, resourcePoolState, MIN_MEMORY, 1000L, 0L, 0.0, 1);
+        createAndStoreComputeState(hostDescription, resourcePoolState, MIN_MEMORY, 1000L, 0L, 0.0,
+                1);
 
         //Create a host with 1000 memory and 1000 storage
         ComputeState second = createAndStoreComputeState(hostDescription, resourcePoolState,
@@ -649,10 +641,12 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         });
 
         //Create two placements with different priorities
-        GroupResourcePlacementService.GroupResourcePlacementState a100 = createGroupResourcePlacementState(
-                resourcePoolState.documentSelfLink, "A", 100, MIN_MEMORY, 700);
-        GroupResourcePlacementService.GroupResourcePlacementState a200 = createGroupResourcePlacementState(
-                resourcePoolState.documentSelfLink, "A", 200, MIN_MEMORY, 800);
+        GroupResourcePlacementService.GroupResourcePlacementState a100 =
+                createGroupResourcePlacementState(resourcePoolState.documentSelfLink, "A", 100,
+                        MIN_MEMORY, 700);
+        GroupResourcePlacementService.GroupResourcePlacementState a200 =
+                createGroupResourcePlacementState(resourcePoolState.documentSelfLink, "A", 200,
+                        MIN_MEMORY, 800);
 
         doDelete(UriUtils.buildUri(host, second.documentSelfLink), false);
 
@@ -663,11 +657,14 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
 
         //The memory limit of the placement with the lower priority should be decreased
         waitFor(() -> {
-            GroupResourcePlacementService.GroupResourcePlacementState placementStateA200 = getDocument(
-                    GroupResourcePlacementService.GroupResourcePlacementState.class, a200.documentSelfLink);
-            GroupResourcePlacementService.GroupResourcePlacementState placementStateA100 = getDocument(
-                    GroupResourcePlacementService.GroupResourcePlacementState.class, a100.documentSelfLink);
-            return placementStateA200.memoryLimit == 0 && placementStateA100.memoryLimit == MIN_MEMORY;
+            GroupResourcePlacementService.GroupResourcePlacementState placementStateA200 =
+                    getDocument(GroupResourcePlacementService.GroupResourcePlacementState.class,
+                            a200.documentSelfLink);
+            GroupResourcePlacementService.GroupResourcePlacementState placementStateA100 =
+                    getDocument(GroupResourcePlacementService.GroupResourcePlacementState.class,
+                            a100.documentSelfLink);
+            return placementStateA200.memoryLimit == 0
+                    && placementStateA100.memoryLimit == MIN_MEMORY;
         });
 
         //Create a host with 1000 memory and 1000 storage
@@ -675,11 +672,13 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
                 MIN_MEMORY, 1000L, 0L, 0.0, 1);
 
         //Create another two placements for a different group
-        GroupResourcePlacementService.GroupResourcePlacementState b1 = createGroupResourcePlacementState(
-                resourcePoolState.documentSelfLink, "B", 1, MIN_MEMORY, 800);
+        GroupResourcePlacementService.GroupResourcePlacementState b1 =
+                createGroupResourcePlacementState(resourcePoolState.documentSelfLink, "B", 1,
+                        MIN_MEMORY, 800);
 
-        GroupResourcePlacementService.GroupResourcePlacementState b12 = createGroupResourcePlacementState(
-                resourcePoolState.documentSelfLink, "B", 1, MIN_MEMORY, 800);
+        GroupResourcePlacementService.GroupResourcePlacementState b12 =
+                createGroupResourcePlacementState(resourcePoolState.documentSelfLink, "B", 1,
+                        MIN_MEMORY, 800);
 
         doDelete(UriUtils.buildUri(host, second.documentSelfLink), false);
         doOperation(new ContainerHostDataCollectionState(), UriUtils.buildUri(host,
@@ -690,10 +689,12 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         //The normalized priorities will be B: 0.5, 0.5; A: 0.33, 0.66. Because the 0.33 one is
         //already empty we expect to decrease the 1000 from the two 0.5
         waitFor(() -> {
-            GroupResourcePlacementService.GroupResourcePlacementState placementState = getDocument(
-                    GroupResourcePlacementService.GroupResourcePlacementState.class, b1.documentSelfLink);
-            GroupResourcePlacementService.GroupResourcePlacementState placementState2 = getDocument(
-                    GroupResourcePlacementService.GroupResourcePlacementState.class, b12.documentSelfLink);
+            GroupResourcePlacementService.GroupResourcePlacementState placementState =
+                    getDocument(GroupResourcePlacementService.GroupResourcePlacementState.class,
+                            b1.documentSelfLink);
+            GroupResourcePlacementService.GroupResourcePlacementState placementState2 =
+                    getDocument(GroupResourcePlacementService.GroupResourcePlacementState.class,
+                            b12.documentSelfLink);
             return placementState.memoryLimit == 0 && placementState2.memoryLimit == 0;
         });
 
@@ -728,9 +729,8 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
                     false,
                     Service.Action.PATCH);
 
-            host.log(
-                    ">>>> testDiscoverCreateAndInspectContainer: Container Host %s created. Waiting for data collection...",
-                    cs.documentSelfLink);
+            host.log(">>>> testDiscoverCreateAndInspectContainer: Container Host %s created."
+                            + " Waiting for data collection...", cs.documentSelfLink);
             String csLink = cs.documentSelfLink;
             waitFor(() -> {
                 ComputeState computeState = getDocument(ComputeState.class, csLink);
@@ -746,10 +746,11 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
                 return containers != null && Integer.parseInt(containers) >= 1;
             });
 
-            host.log(">>>> wait for the ContainerState of the discovered container to be created...");
+            host.log(">>>> wait for the ContainerState of the discovered container to be"
+                    + " created...");
             AtomicReference<String> containerStateSelfLink = new AtomicReference<>();
             // wait for the ContainerState of the discovered container to be created
-            // since we don't know the documentSelfLink of the new container we have to query by the ID
+            // since we don't know the documentSelfLink of the new container we have to query by ID
             waitFor(() -> {
                 QueryTask queryTask = QueryUtil.buildPropertyQuery(ContainerState.class,
                         ContainerState.FIELD_NAME_ID, preexistingContainerId);
@@ -856,7 +857,8 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
     private GroupResourcePlacementService.GroupResourcePlacementState createGroupResourcePlacementState(
             String resourcePoolLink, String group, int priority, long memoryLimit,
             long availableMemory) throws Throwable {
-        GroupResourcePlacementService.GroupResourcePlacementState rsrvState = new GroupResourcePlacementService.GroupResourcePlacementState();
+        GroupResourcePlacementService.GroupResourcePlacementState rsrvState =
+                new GroupResourcePlacementService.GroupResourcePlacementState();
         rsrvState.resourcePoolLink = resourcePoolLink;
         rsrvState.name = UUID.randomUUID().toString();
         rsrvState.maxNumberInstances = 10;
@@ -870,7 +872,8 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
     }
 
     private ResourcePoolService.ResourcePoolState createAndStoreResourcePool() throws Throwable {
-        ResourcePoolService.ResourcePoolState poolState = new ResourcePoolService.ResourcePoolState();
+        ResourcePoolService.ResourcePoolState poolState =
+                new ResourcePoolService.ResourcePoolState();
         poolState.name = "resource-pool";
         poolState.id = poolState.name;
         poolState.documentSelfLink = poolState.id;

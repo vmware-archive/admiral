@@ -12,7 +12,6 @@
 package com.vmware.admiral.compute.kubernetes.service;
 
 import com.vmware.admiral.common.util.PropertyUtils;
-import com.vmware.admiral.compute.container.maintenance.ContainerMaintenance;
 import com.vmware.admiral.compute.kubernetes.maintenance.KubernetesMaintenance;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
@@ -31,7 +30,7 @@ public abstract class AbstractKubernetesObjectService<T extends BaseKubernetesSt
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
         super.toggleOption(ServiceOption.PERIODIC_MAINTENANCE, true);
         super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
-        super.setMaintenanceIntervalMicros(ContainerMaintenance.MAINTENANCE_INTERVAL_MICROS);
+        super.setMaintenanceIntervalMicros(KubernetesMaintenance.MAINTENANCE_INTERVAL_MICROS);
         this.stateType = stateType;
     }
 

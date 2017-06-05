@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -23,6 +23,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -63,10 +64,11 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
 
 
     public static final String JAVAX_NET_SSL_TRUST_STORE = "dcp.net.ssl.trustStore";
-    public static final String JAVAX_NET_SSL_TRUST_STORE_PASSWORD = "dcp.net.ssl.trustStorePassword";
+    public static final String JAVAX_NET_SSL_TRUST_STORE_PASSWORD =
+            "dcp.net.ssl.trustStorePassword";
     private static final String DEFAULT_JAVA_CACERTS_PASSWORD = "changeit";
 
-    private static ServerX509TrustManager INSTANCE;
+    private static volatile ServerX509TrustManager INSTANCE;
 
     private final DelegatingX509TrustManager delegatingTrustManager;
     private final ServiceHost host;
@@ -77,10 +79,18 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
     /* Last time the document was update in microseconds since UNIX epoch */
     private volatile long documentUpdateTimeMicros;
 
-    public static synchronized ServerX509TrustManager create(ServiceHost host) {
-        if (INSTANCE == null) {
-            INSTANCE = new ServerX509TrustManager(host);
-            INSTANCE.start();
+    private AtomicBoolean started = new AtomicBoolean();
+
+    public static ServerX509TrustManager create(ServiceHost host) {
+        if (INSTANCE != null) {
+            return INSTANCE;
+        }
+        synchronized (ServerX509TrustManager.class) {
+            if (INSTANCE == null) {
+                ServerX509TrustManager tm = new ServerX509TrustManager(host);
+                tm.start();
+                INSTANCE = tm;
+            }
         }
         return INSTANCE;
     }
@@ -89,9 +99,14 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
      * This method only initialize the ServerX509TrustManager, does not start it. The method is
      * intended to be use only on server start.
      */
-    public static synchronized ServerX509TrustManager init(ServiceHost host) {
-        if (INSTANCE == null) {
-            INSTANCE = new ServerX509TrustManager(host);
+    public static ServerX509TrustManager init(ServiceHost host) {
+        if (INSTANCE != null) {
+            return INSTANCE;
+        }
+        synchronized (ServerX509TrustManager.class) {
+            if (INSTANCE == null) {
+                INSTANCE = new ServerX509TrustManager(host);
+            }
         }
         return INSTANCE;
     }
@@ -145,9 +160,8 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
             delegatingTrustManager.putDelegate(alias,
                     (X509TrustManager) CertificateUtil.getTrustManagers(store)[0]);
         } catch (Exception e) {
-            Utils.logWarning(
-                    "Exception during trust manager configuration. Trust Store '%s' (path: '%s'). Error: %s",
-                    alias, trustStore, Utils.toString(e));
+            Utils.logWarning("Exception during trust manager configuration. Trust Store '%s'"
+                            + " (path: '%s'). Error: %s", alias, trustStore, Utils.toString(e));
         }
     }
 
@@ -156,6 +170,11 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
      * of ssl trust certificates.
      */
     public void start() {
+        // check if it's already started
+        if (started.getAndSet(true)) {
+            return;
+        }
+
         this.documentUpdateTimeMicros = 0;
         try {
             verifySubscriptionTargetExists(() -> {
@@ -164,8 +183,8 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
                     loadSslTrustCertServices();
                 } catch (Exception e) {
                     host.log(Level.SEVERE,
-                            "Failure while subscribing for ssl certificate notifications: " + Utils
-                                    .toString(e));
+                            "Failure while subscribing for ssl certificate notifications: %s",
+                            Utils.toString(e));
                 }
             });
         } finally {
@@ -188,7 +207,7 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
 
         Runnable task = () -> {
             try {
-                host.log(Level.INFO, "Host " + host.getPublicUri() + ": reloading all certificates");
+                host.log(Level.INFO, "Host %s reloading all certificates", host.getPublicUri());
                 documentUpdateTimeMicros = 0;
                 loadSslTrustCertServices();
 
@@ -310,7 +329,7 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
                                 : Utils.toString(result.getException()));
             } else if (result.hasResult()) {
                 SslTrustCertificateState sslTrustCert = result.getResult();
-                self.host.log(Level.FINE, "Adding certificate " + sslTrustCert.fingerprint);
+                self.host.log(Level.FINE, "Adding certificate %s", sslTrustCert.fingerprint);
 
                 if (ServiceDocument.isDeleted(sslTrustCert)) {
                     deleteCertificate(sslTrustCert.getAlias());
@@ -339,4 +358,5 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
 
         }
     }
+
 }

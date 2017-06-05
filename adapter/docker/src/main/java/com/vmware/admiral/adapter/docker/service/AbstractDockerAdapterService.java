@@ -106,10 +106,8 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
     }
 
     protected DockerAdapterCommandExecutor getCommandExecutor() {
-        synchronized (AbstractDockerAdapterService.class) {
-            ServerX509TrustManager trustManager = ServerX509TrustManager.create(getHost());
-            return RemoteApiDockerAdapterCommandExecutorImpl.create(getHost(), trustManager);
-        }
+        ServerX509TrustManager trustManager = ServerX509TrustManager.create(getHost());
+        return RemoteApiDockerAdapterCommandExecutorImpl.create(getHost(), trustManager);
     }
 
     protected void getContainerHost(AdapterRequest request, Operation op,

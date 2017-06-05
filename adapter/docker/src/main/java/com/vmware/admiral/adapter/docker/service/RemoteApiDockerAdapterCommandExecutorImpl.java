@@ -62,7 +62,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
 
     public static final String MEDIA_TYPE_APPLICATION_TAR = "application/tar";
 
-    private static RemoteApiDockerAdapterCommandExecutorImpl INSTANCE;
+    private static volatile RemoteApiDockerAdapterCommandExecutorImpl INSTANCE;
 
     private static final Pattern ERROR_PATTERN = Pattern.compile("\"error\":\"(.*)\"");
     private final ServiceHost host;
@@ -90,7 +90,7 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
     }
 
     protected RemoteApiDockerAdapterCommandExecutorImpl(ServiceHost host,
-            final TrustManager trustManager) {
+            TrustManager trustManager) {
         this.host = host;
         this.serviceClient = ServiceClientFactory.createServiceClient(trustManager, keyManager);
         this.attachServiceClient = ServiceClientFactory.createServiceClient(trustManager,
@@ -103,10 +103,15 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
         }
     }
 
-    public static synchronized RemoteApiDockerAdapterCommandExecutorImpl create(
-            ServiceHost host, final TrustManager trustManager) {
-        if (INSTANCE == null) {
-            INSTANCE = new RemoteApiDockerAdapterCommandExecutorImpl(host, trustManager);
+    public static RemoteApiDockerAdapterCommandExecutorImpl create(ServiceHost host,
+            TrustManager trustManager) {
+        if (INSTANCE != null) {
+            return INSTANCE;
+        }
+        synchronized (RemoteApiDockerAdapterCommandExecutorImpl.class) {
+            if (INSTANCE == null) {
+                INSTANCE = new RemoteApiDockerAdapterCommandExecutorImpl(host, trustManager);
+            }
         }
         return INSTANCE;
     }

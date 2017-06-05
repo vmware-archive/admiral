@@ -30,7 +30,6 @@ import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.compute.Composable;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
 import com.vmware.admiral.compute.container.maintenance.ContainerHealthEvaluator;
-import com.vmware.admiral.compute.container.maintenance.ContainerMaintenance;
 import com.vmware.admiral.compute.container.maintenance.ContainerStats;
 import com.vmware.admiral.compute.container.util.ContainerUtil;
 import com.vmware.admiral.compute.content.EnvDeserializer;
@@ -51,8 +50,6 @@ import com.vmware.xenon.common.Utils;
  * container instances acting as a shared template.
  */
 public class ContainerService extends StatefulService {
-
-    private volatile ContainerMaintenance containerMaintenance;
 
     public static class ContainerState
             extends com.vmware.photon.controller.model.resources.ResourceState
@@ -77,7 +74,7 @@ public class ContainerService extends StatefulService {
         public static final String FIELD_NAME_SYSTEM = "system";
         public static final String FIELD_NAME_VOLUME_DRIVER = "volumeDriver";
 
-        public static enum PowerState {
+        public enum PowerState {
             UNKNOWN,
             PROVISIONING,
             RUNNING,
@@ -290,8 +287,6 @@ public class ContainerService extends StatefulService {
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
-        super.toggleOption(ServiceOption.PERIODIC_MAINTENANCE, true);
-        super.setMaintenanceIntervalMicros(ContainerMaintenance.MAINTENANCE_INTERVAL_MICROS);
     }
 
     @Override
@@ -366,6 +361,11 @@ public class ContainerService extends StatefulService {
         patch.complete();
     }
 
+    @Override
+    public void handleDelete(Operation delete) {
+        super.handleDelete(delete);
+    }
+
     private void patchContainerStats(Operation patch, ContainerState currentState) {
         ContainerStats patchStatsBody = patch.getBody(ContainerStats.class);
 
@@ -376,24 +376,6 @@ public class ContainerService extends StatefulService {
 
         patch.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
         patch.complete();
-    }
-
-    @Override
-    public void handleDelete(Operation delete) {
-        super.handleDelete(delete);
-    }
-
-    @Override
-    public void handlePeriodicMaintenance(Operation post) {
-        if (getProcessingStage() != ProcessingStage.AVAILABLE) {
-            logFine("Skipping maintenance since service is not available: %s ", getUri());
-            return;
-        }
-
-        if (containerMaintenance == null) {
-            containerMaintenance = ContainerMaintenance.create(getHost(), getSelfLink());
-        }
-        containerMaintenance.handlePeriodicMaintenance(post);
     }
 
     private void startMonitoringContainerState(ContainerState body) {
