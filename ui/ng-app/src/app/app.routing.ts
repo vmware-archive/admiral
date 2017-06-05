@@ -15,7 +15,6 @@ import { Routes, RouterModule } from '@angular/router';
 import { AdministrationComponent } from './views/administration/administration.component';
 import { MainResourcesComponent } from './views/main-resources/main-resources.component';
 
-import { IdentityManagementComponent } from './views/identity-management/identity-management.component';
 import { ProjectsComponent } from './views/projects/projects.component';
 import { ProjectDetailsComponent } from './views/projects/project-details/project-details.component';
 import { ProjectCreateComponent } from './views/projects/project-create/project-create.component';
@@ -93,10 +92,7 @@ export const ROUTES: Routes = [
         path: 'administration', component: AdministrationComponent,
         children: [
             {
-                path: '', redirectTo: 'identity-management', pathMatch: 'full'
-            },
-            {
-                path: 'identity-management', component: IdentityManagementComponent
+                path: '', redirectTo: 'projects', pathMatch: 'full'
             },
             {
                 path: 'projects', component: ProjectsComponent,

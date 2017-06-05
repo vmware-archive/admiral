@@ -17,7 +17,6 @@ import { BreakOutModalDirective } from "./directives/shared/break-out-modal.dire
 import { AdministrationComponent } from './views/administration/administration.component';
 import { MainResourcesComponent } from './views/main-resources/main-resources.component';
 
-import { IdentityManagementComponent } from './views/identity-management/identity-management.component';
 import { ProjectsComponent } from './views/projects/projects.component';
 import { ProjectDetailsComponent } from './views/projects/project-details/project-details.component';
 import { ProjectSummaryComponent } from "./views/projects/project-details/project-summary.component";
@@ -59,7 +58,6 @@ export const ADMIRAL_DECLARATIONS = [
   AdministrationComponent,
   MainResourcesComponent,
 
-  IdentityManagementComponent,
   ProjectsComponent,
   ProjectDetailsComponent,
   ProjectSummaryComponent,
