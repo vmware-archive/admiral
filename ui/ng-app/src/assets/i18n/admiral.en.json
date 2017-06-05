@@ -21,6 +21,10 @@
        "nameRequired": "Name is required.",
        "description": "Description"
     },
+    "delete": {
+      "title": "Remove Project",
+      "confirmation": "Confirm removing of project {{projectName}}. Members and clusters will be unasociated from project. The operation cannot be undone."
+    },
     "summary": {
        "title" : "Summary",
        "type": "Type:",
@@ -50,8 +54,7 @@
       "makePublic": "Make public",
       "makePrivate": "Make private",
       "addUsersAndGroups": "Add users and groups",
-      "addClusters": "Add clusters",
-      "delete": "Delete"
+      "addClusters": "Add clusters"
     }
   },
   "registries": {
@@ -60,8 +63,13 @@
     "replicationEndpoints": "Replication Endpoints",
     "replicationRules": "Replication Rules"
   },
+  "errors": {
+    "itemNotFound": "Item was not found."
+  },
   "edit": "Edit",
   "save": "Save",
+  "remove": "Remove",
+  "delete": "Delete",
   "cancel": "Cancel",
   "unknown": "Unknown"
 }

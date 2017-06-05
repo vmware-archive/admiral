@@ -27,11 +27,11 @@
           </button>
           <div class="dropdown-menu">
               <a href="..." clrDropdownItem [routerLink]="['./' + item.documentId]">{{"projects.actions.details" | i18n}}</a>
-              <a href="..." clrDropdownItem>{{(item.isPublic ? "projects.actions.makePrivate" : "projects.actions.makePublic") | i18n}}</a>
-              <a href="..." clrDropdownItem>{{"projects.actions.addUsersAndGroups" | i18n}}</a>
-              <a href="..." clrDropdownItem>{{"projects.actions.addClusters" | i18n}}</a>
+              <a href="..." clrDropdownItem [routerLink]="['./' + item.documentId]">{{(item.isPublic ? "projects.actions.makePrivate" : "projects.actions.makePublic") | i18n}}</a>
+              <a href="..." clrDropdownItem [routerLink]="['./' + item.documentId]">{{"projects.actions.addUsersAndGroups" | i18n}}</a>
+              <a href="..." clrDropdownItem [routerLink]="['./' + item.documentId]">{{"projects.actions.addClusters" | i18n}}</a>
               <div class="dropdown-divider"></div>
-              <a href="..." clrDropdownItem>{{"projects.actions.delete" | i18n}}</a>
+              <a href="..." clrDropdownItem [routerLink]="['./delete/' + item.documentId]">{{"delete" | i18n}}</a>
           </div>
         </clr-dropdown>
       </div>

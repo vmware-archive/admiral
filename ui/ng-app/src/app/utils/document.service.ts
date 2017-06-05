@@ -158,6 +158,10 @@ export class DocumentService {
     return this.ajax.put(documentSelfLink, null, putBody);
   }
 
+  public delete(documentSelfLink): Promise<any> {
+    return this.ajax.delete(documentSelfLink);
+  }
+
   public loadCurrentUser(): Promise<any> {
     return this.ajax.get(Links.USER_SESSION);
   }

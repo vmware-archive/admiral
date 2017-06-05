@@ -18,6 +18,7 @@ import { MainResourcesComponent } from './views/main-resources/main-resources.co
 import { ProjectsComponent } from './views/projects/projects.component';
 import { ProjectDetailsComponent } from './views/projects/project-details/project-details.component';
 import { ProjectCreateComponent } from './views/projects/project-create/project-create.component';
+import { ProjectDeleteComponent } from './views/projects/project-delete/project-delete.component';
 import { RegistriesComponent } from './views/registries/registries.component';
 import { ConfigurationComponent } from './views/configuration/configuration.component';
 import { LogsComponent } from './views/logs/logs.component';
@@ -104,6 +105,9 @@ export const ROUTES: Routes = [
                         navigationContainerType: NavigationContainerType.Fullscreen
                     }},
                     { path: 'edit/:id', component: ProjectCreateComponent, data: {
+                        navigationContainerType: NavigationContainerType.Default
+                    }},
+                    { path: 'delete/:id', component: ProjectDeleteComponent, data: {
                         navigationContainerType: NavigationContainerType.Default
                     }}
                 ]

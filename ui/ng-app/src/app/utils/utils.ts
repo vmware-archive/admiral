@@ -9,8 +9,11 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
+import * as I18n from 'i18next';
 
 export class Utils {
+  public static ERROR_NOT_FOUND = 404;
+
   private static configurationProperties;
 
   public static getHashWithQuery(hash:string, queryOptions:any):string {
@@ -82,6 +85,33 @@ export class Utils {
 
   public static existsConfigurationProperty(property) {
     return this.configurationProperties.hasOwnProperty(property);
+  }
+
+  public static getErrorMessage(err) {
+    let errorMessage;
+
+    if (err.status === Utils.ERROR_NOT_FOUND) {
+      errorMessage = I18n.t('errors.itemNotFound');
+    } else {
+
+      let errorResponse = err._body;
+      if (errorResponse) {
+        if (errorResponse.errors && errorResponse.errors.length > 0) {
+          errorMessage = errorResponse.errors[0].systemMessage;
+        } else if (errorResponse.message) {
+          errorMessage = errorResponse.message;
+        }
+      }
+
+      if (!errorMessage) {
+        errorMessage = err.message || err.statusText || err.responseText;
+      }
+
+    }
+
+    return {
+      _generic: errorMessage
+    };
   }
 }
 
