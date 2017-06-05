@@ -25,6 +25,7 @@ import com.vmware.admiral.adapter.common.VolumeOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState.PowerState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
@@ -164,13 +165,30 @@ public class MockDockerVolumeAdapterService extends BaseMockAdapterService {
         }
 
         if (state.isProvisioning()) {
-            addVolume(Service.getId(volume.originatingHostLink),
-                    state.resourceReference.toString(), volume.name);
-            patchTaskStage(state, (Throwable) null);
+            patchContainerVolumeState(state, volume);
         } else if (state.isDeprovisioning()) {
             removeVolumeByReference(state.resourceReference);
             patchTaskStage(state, (Throwable) null);
         }
+    }
+
+    private void patchContainerVolumeState(MockAdapterRequest state,
+            ContainerVolumeState volumeState) {
+        addVolume(Service.getId(volumeState.originatingHostLink),
+                state.resourceReference.toString(), volumeState.name);
+
+        volumeState.powerState = PowerState.CONNECTED;
+        volumeState.scope = "local";
+        sendRequest(Operation.createPatch(state.resourceReference)
+                .setBody(volumeState)
+                .setCompletion((o, e) -> {
+                    Throwable patchException = null;
+                    if (e != null) {
+                        logSevere(e);
+                        patchException = e;
+                    }
+                    patchTaskStage(state, patchException);
+                }));
     }
 
     public static synchronized void resetVolumes() {

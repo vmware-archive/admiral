@@ -35,6 +35,7 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionSer
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
+import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState.PowerState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -126,6 +127,9 @@ public class ContainerVolumeProvisionTaskServiceTest extends RequestBaseTest {
                 !cont1.parentLink.equals(cont2.parentLink));
 
         ContainerVolumeState volume = getDocument(ContainerVolumeState.class, volumeLink);
+        assertNotNull(volume);
+        assertEquals(PowerState.CONNECTED, volume.powerState);
+        assertEquals("local", volume.scope);
         String volumeDescProp = volume.customProperties.get("volume propKey string");
         assertNotNull(volumeDescProp);
         assertEquals("volume customPropertyValue string", volumeDescProp);

@@ -1234,6 +1234,11 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertFalse(cont1.parentLink.equals(cont2.parentLink));
 
         ContainerVolumeState volume = getDocument(ContainerVolumeState.class, volumeLink);
+        assertNotNull(volume);
+        assertEquals(
+                com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState.PowerState.CONNECTED,
+                volume.powerState);
+        assertEquals("local", volume.scope);
         assertTrue(volume.name.contains(sharedVolumeName));
 
         String volumeDescProp = volume.customProperties.get("volume propKey string");
