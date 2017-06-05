@@ -11,28 +11,17 @@
 
 package com.vmware.admiral.auth.project;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles.RolesAssignment;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
+import com.vmware.admiral.auth.util.UserGroupsUpdater;
 import com.vmware.admiral.common.util.AssertUtil;
-import com.vmware.admiral.common.util.AuthUtils;
-import com.vmware.admiral.common.util.QueryUtil;
-import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.ServiceHost;
-import com.vmware.xenon.common.Utils;
-import com.vmware.xenon.services.common.QueryTask;
-import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
-import com.vmware.xenon.services.common.UserService.UserState;
 
 /**
  * Handles assignment/unassignment of multiple users with multiple roles to/from a project. Used for
@@ -117,212 +106,28 @@ public class ProjectRolesHandler {
     }
 
     private DeferredResult<Void> handleRolesAssignment(ProjectState projectState, ProjectRoles patchBody) {
-        return DeferredResult.allOf(
-                applyBatchUserOperationOnGroup(patchBody.administrators,
-                        projectState.administratorsUserGroupLink, null, null, null, null),
-                applyBatchUserOperationOnGroup(patchBody.members, projectState.membersUserGroupLink,
-                        null, null, null, null));
-    }
+        DeferredResult<Void> updateAdmins;
+        DeferredResult<Void> updateMembers;
 
-    private DeferredResult<Void> applyBatchUserOperationOnGroup(
-            ProjectRoles.RolesAssignment roleAssignment, String groupLink,
-            Map<String, UserState> cachedUsers, List<UserState> groupMembers,
-            List<UserState> removedMembers, List<UserState> newMembers) {
-
-        try {
-            AssertUtil.assertNotEmpty(groupLink, "groupLink");
-        } catch (LocalizableValidationException ex) {
-            return DeferredResult.failed(ex);
-        }
-
-        if (roleAssignment == null
-                || ((roleAssignment.add == null || roleAssignment.add.isEmpty())
-                        && (roleAssignment.remove == null || roleAssignment.remove.isEmpty()))) {
-            // no operation to apply
-            return DeferredResult.completed(null);
-        }
-
-        // Start building cache of loaded user states
-        if (cachedUsers == null) {
-            // recursion is used because cachedUsers needs to be effectively final
-            return applyBatchUserOperationOnGroup(roleAssignment, groupLink, new HashMap<>(),
-                    groupMembers, removedMembers, newMembers);
-        }
-
-        // retrieve current group members
-        if (groupMembers == null) {
-            return retrieveUserGroupMembers(groupLink)
-                    .thenApply((retrievedUsers) -> {
-                        // extend the cache with the retrieved users
-                        retrievedUsers.forEach(user -> cachedUsers.put(user.email, user));
-                        return retrievedUsers;
-                    })
-                    .thenCompose((retrievedUsers) -> applyBatchUserOperationOnGroup(roleAssignment,
-                            groupLink, cachedUsers, retrievedUsers, removedMembers, newMembers));
-        }
-
-        // retrieve users that are to be removed from the group
-        if (removedMembers == null) {
-            return retrieveUserStatesByPrincipalId(roleAssignment.remove, cachedUsers)
-                    .thenApply((retrievedUsers) -> {
-                        // extend the cache with the retrieved users
-                        retrievedUsers.forEach(user -> cachedUsers.put(user.email, user));
-                        return retrievedUsers;
-                    })
-                    .thenCompose((retrievedUsers) -> applyBatchUserOperationOnGroup(roleAssignment,
-                            groupLink, cachedUsers, groupMembers, retrievedUsers, newMembers));
-        }
-
-        // retrieve users that are to be added to the group
-        if (newMembers == null) {
-            return retrieveUserStatesByPrincipalId(roleAssignment.add, cachedUsers)
-                    .thenApply((retrievedUsers) -> {
-                        // extend the cache with the retrieved users
-                        retrievedUsers.forEach(user -> cachedUsers.put(user.email, user));
-                        return retrievedUsers;
-                    })
-                    .thenCompose((retrievedUsers) -> applyBatchUserOperationOnGroup(roleAssignment,
-                            groupLink, cachedUsers, groupMembers, removedMembers, retrievedUsers));
-        }
-
-        // Prepare group updates
-        groupMembers.removeAll(removedMembers);
-        groupMembers.addAll(newMembers);
-
-        // Do update the members of the group
-        return updateUserGroupMembers(groupLink, groupMembers);
-    }
-
-    private DeferredResult<Void> updateUserGroupMembers(String groupLink,
-            List<UserState> groupMembers) {
-
-        List<String> membersLinks = groupMembers.stream()
-                .map(userState -> userState.documentSelfLink)
-                .collect(Collectors.toList());
-
-        return getHost().sendWithDeferredResult(
-                Operation.createGet(getHost(), groupLink)
-                        .setReferer(getProjectLink()),
-                UserGroupState.class)
-                .thenCompose((groupState) -> {
-                    groupState.query = AuthUtils.buildUsersQuery(membersLinks);
-                    return getHost().sendWithDeferredResult(
-                            Operation.createPut(getHost(), groupLink)
-                                    .setReferer(getProjectLink())
-                                    .setBody(groupState),
-                            UserGroupState.class);
-                }).thenCompose((ignore) -> DeferredResult.completed(null));
-
-    }
-
-    /**
-     * Retrieves the list of members for the specified by document link user group.
-     *
-     * @see #retrieveUserStatesForGroup(UserGroupState)
-     */
-    private DeferredResult<List<UserState>> retrieveUserGroupMembers(String groupLink) {
-        if (groupLink == null) {
-            return DeferredResult.completed(new ArrayList<>(0));
-        }
-
-        Operation groupGet = Operation.createGet(getHost(), groupLink)
-                .setReferer(getProjectLink())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        logWarning("Failed to retrieve UserGroupState %s: %s", groupLink,
-                                Utils.toString(e));
-                    }
-                });
-
-        return getHost().sendWithDeferredResult(groupGet, UserGroupState.class)
-                .thenCompose(this::retrieveUserStatesForGroup);
-    }
-
-    /**
-     * Retrieves the list of members for the specified user group.
-     */
-    private DeferredResult<List<UserState>> retrieveUserStatesForGroup(UserGroupState groupState) {
-        DeferredResult<List<UserState>> deferredResult = new DeferredResult<>();
-        ArrayList<UserState> resultList = new ArrayList<>();
-
-        QueryTask queryTask = QueryUtil.buildQuery(UserState.class, true, groupState.query);
-        QueryUtil.addExpandOption(queryTask);
-        new ServiceDocumentQuery<UserState>(getHost(), UserState.class)
-                .query(queryTask, (r) -> {
-                    if (r.hasException()) {
-                        logWarning("Failed to retrieve members of UserGroupState %s: %s",
-                                groupState.documentSelfLink, Utils.toString(r.getException()));
-                        deferredResult.fail(r.getException());
-                    } else if (r.hasResult()) {
-                        resultList.add(r.getResult());
-                    } else {
-                        deferredResult.complete(resultList);
-                    }
-                });
-
-        return deferredResult;
-    }
-
-    private DeferredResult<List<UserState>> retrieveUserStatesByPrincipalId(
-            List<String> principalIds, Map<String, UserState> cachedStates) {
-
-        if (principalIds == null || principalIds.isEmpty()) {
-            return DeferredResult.completed(new ArrayList<>(0));
-        }
-
-        if (cachedStates == null || cachedStates.isEmpty()) {
-            return retrieveUserStatesByPrincipalIds(principalIds);
-        }
-
-        ArrayList<String> remainingPrincipalIds = new ArrayList<>(principalIds.size());
-        ArrayList<UserState> resultStates = new ArrayList<>(principalIds.size());
-
-        // retrieve users from cache and build the list of non-cached users
-        principalIds.forEach((principalId) -> {
-            UserState cachedState = cachedStates.get(principalId);
-            if (cachedState != null) {
-                resultStates.add(cachedState);
-            } else {
-                remainingPrincipalIds.add(principalId);
-            }
-        });
-
-        if (remainingPrincipalIds.isEmpty()) {
-            // all users have been retrieved from cache.
-            return DeferredResult.completed(resultStates);
+        if (patchBody.administrators == null) {
+            updateAdmins = DeferredResult.completed(null);
         } else {
-            // retrieve users that were not present in the cache
-            return retrieveUserStatesByPrincipalIds(remainingPrincipalIds)
-                    .thenApply((retrievedUsers) -> {
-                        resultStates.addAll(retrievedUsers);
-                        return resultStates;
-                    });
+            updateAdmins = UserGroupsUpdater.create(getHost(),
+                    projectState.administratorsUserGroupLink, getProjectLink(),
+                    patchBody.administrators.add, patchBody.administrators.remove)
+                    .update();
         }
 
-    }
-
-    private DeferredResult<List<UserState>> retrieveUserStatesByPrincipalIds(
-            List<String> principalIds) {
-
-        if (principalIds == null || principalIds.isEmpty()) {
-            return DeferredResult.completed(new ArrayList<>(0));
+        if (patchBody.members == null) {
+            updateMembers = DeferredResult.completed(null);
+        } else {
+            updateMembers = UserGroupsUpdater.create(getHost(),
+                    projectState.membersUserGroupLink, getProjectLink(),
+                    patchBody.members.add, patchBody.members.remove)
+                    .update();
         }
 
-        List<String> documentLinks = principalIds.stream()
-                .map(AuthUtils::getUserStateDocumentLink)
-                .collect(Collectors.toList());
-        return retrieveUserStatesByDocumentLinks(documentLinks);
-    }
-
-    private DeferredResult<List<UserState>> retrieveUserStatesByDocumentLinks(
-            List<String> documentLinks) {
-        List<DeferredResult<UserState>> deferredStates = documentLinks.stream()
-                .map((documentLink) -> Operation.createGet(getHost(), documentLink)
-                        .setReferer(getProjectLink()))
-                .map((getOp) -> getHost().sendWithDeferredResult(getOp, UserState.class))
-                .collect(Collectors.toList());
-
-        return DeferredResult.allOf(deferredStates);
+        return DeferredResult.allOf(updateAdmins, updateMembers);
     }
 
     private ServiceHost getHost() {
@@ -331,10 +136,6 @@ public class ProjectRolesHandler {
 
     private String getProjectLink() {
         return projectLink;
-    }
-
-    private void logWarning(String format, Object... args) {
-        getHost().log(Level.WARNING, format, args);
     }
 
 }
