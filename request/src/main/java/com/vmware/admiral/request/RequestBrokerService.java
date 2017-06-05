@@ -134,8 +134,9 @@ public class RequestBrokerService extends
         public static final String CLUSTER_RESOURCE_OPERATION = "CLUSTER_RESOURCE";
         public static final String CONFIGURE_HOST_OPERATION = "CONFIGURE_HOST";
 
-        public static enum SubStage {
-            CREATED, RESOURCE_COUNTED, RESERVING, RESERVED, ALLOCATING, ALLOCATED, REQUEST_FAILED, RESERVATION_CLEANUP, RESERVATION_CLEANED_UP, COMPLETED, ERROR;
+        public enum SubStage {
+            CREATED, RESOURCE_COUNTED, RESERVING, RESERVED, ALLOCATING, ALLOCATED, REQUEST_FAILED,
+            RESERVATION_CLEANUP, RESERVATION_CLEANED_UP, COMPLETED, ERROR;
 
             static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
                     Arrays.asList(RESERVING, ALLOCATING, RESERVATION_CLEANUP));
@@ -266,11 +267,6 @@ public class RequestBrokerService extends
             }
             break;
         case REQUEST_FAILED:
-            // handle the case when REQUEST_FAILED stage is called directly
-            if (state.actualResourceCount == null && state.taskInfo.failure == null) {
-                calculateActualRequestedResources(state, SubStage.REQUEST_FAILED);
-            }
-
             if (isProvisionOperation(state)) {
                 createReservationRemovalTask(state);
             } else if (isPostAllocationOperation(state)) {
@@ -422,7 +418,7 @@ public class RequestBrokerService extends
         eventLog.tenantLinks = state.tenantLinks;
 
         sendRequest(Operation.createPost(this, EventLogService.FACTORY_LINK)
-                .setBody(eventLog)
+                .setBodyNoCloning(eventLog)
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         logWarning("Failed to create event log: %s", Utils.toString(e));
@@ -441,7 +437,7 @@ public class RequestBrokerService extends
         RequestBrokerState state = getState(delete);
         if (state.requestTrackerLink != null && !state.requestTrackerLink.isEmpty()) {
             sendRequest(Operation.createDelete(this, state.requestTrackerLink)
-                    .setBody(new ServiceDocument())
+                    .setBodyNoCloning(new ServiceDocument())
                     .setCompletion((o, e) -> {
                         if (Operation.STATUS_CODE_NOT_FOUND == o.getStatusCode()) {
                             logWarning("Request status not found: %s",
@@ -553,8 +549,8 @@ public class RequestBrokerService extends
                             componentLinks.addAll(r.getResult().componentLinks);
                         } else {
                             if (componentLinks.isEmpty()) {
-                                logSevere(
-                                        "Failed to create operation task - composite component's container links are empty");
+                                logSevere("Failed to create operation task - composite component's"
+                                        + " container links are empty");
                             }
                             state.resourceLinks = componentLinks;
 
@@ -581,7 +577,7 @@ public class RequestBrokerService extends
 
         Operation post = Operation
                 .createPost(this, CompositeComponentRemovalTaskService.FACTORY_LINK)
-                .setBody(removalState)
+                .setBodyNoCloning(removalState)
                 .setContextId(getSelfId())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -608,7 +604,7 @@ public class RequestBrokerService extends
                 TaskStage.STARTED, SubStage.REQUEST_FAILED);
 
         sendRequest(Operation.createPost(this, ProvisionContainerHostsTaskService.FACTORY_LINK)
-                .setBody(provisionContainerHostTask)
+                .setBodyNoCloning(provisionContainerHostTask)
                 .setContextId(getSelfId())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -645,7 +641,7 @@ public class RequestBrokerService extends
         computeRemovalState.requestTrackerLink = state.requestTrackerLink;
 
         sendRequest(Operation.createPost(this, ComputeRemovalTaskService.FACTORY_LINK)
-                .setBody(computeRemovalState)
+                .setBodyNoCloning(computeRemovalState)
                 .setContextId(getSelfId())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -679,7 +675,7 @@ public class RequestBrokerService extends
         }
 
         sendRequest(Operation.createPost(this, ComputeNetworkRemovalTaskService.FACTORY_LINK)
-                .setBody(removalState)
+                .setBodyNoCloning(removalState)
                 .setContextId(getSelfId())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -719,11 +715,12 @@ public class RequestBrokerService extends
 
         removalState.externalInspectOnly = (state.customProperties != null
                 && "true".equalsIgnoreCase(state.customProperties
-                        .get(ContainerNetworkRemovalTaskService.EXTERNAL_INSPECT_ONLY_CUSTOM_PROPERTY)));
+                        .get(ContainerNetworkRemovalTaskService
+                                .EXTERNAL_INSPECT_ONLY_CUSTOM_PROPERTY)));
         removalState.cleanupRemoval = cleanupRemoval;
 
         sendRequest(Operation.createPost(this, ContainerNetworkRemovalTaskService.FACTORY_LINK)
-                .setBody(removalState)
+                .setBodyNoCloning(removalState)
                 .setContextId(getSelfId())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -763,11 +760,12 @@ public class RequestBrokerService extends
 
         removalState.externalInspectOnly = (state.customProperties != null
                 && "true".equalsIgnoreCase(state.customProperties
-                        .get(ContainerVolumeRemovalTaskService.EXTERNAL_INSPECT_ONLY_CUSTOM_PROPERTY)));
+                        .get(ContainerVolumeRemovalTaskService
+                                .EXTERNAL_INSPECT_ONLY_CUSTOM_PROPERTY)));
         removalState.cleanupRemoval = cleanupRemoval;
 
         sendRequest(Operation.createPost(this, ContainerVolumeRemovalTaskService.FACTORY_LINK)
-                .setBody(removalState)
+                .setBodyNoCloning(removalState)
                 .setContextId(getSelfId())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -802,7 +800,7 @@ public class RequestBrokerService extends
         removalState.documentSelfLink = getSelfId();
         removalState.requestTrackerLink = state.requestTrackerLink;
         Operation post = Operation.createPost(this, ContainerRemovalTaskFactoryService.SELF_LINK)
-                .setBody(removalState)
+                .setBodyNoCloning(removalState)
                 .setContextId(getSelfId())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -837,7 +835,7 @@ public class RequestBrokerService extends
         removalState.documentSelfLink = getSelfId();
         removalState.requestTrackerLink = state.requestTrackerLink;
         Operation post = Operation.createPost(this, ClosureRemovalTaskFactoryService.SELF_LINK)
-                .setBody(removalState)
+                .setBodyNoCloning(removalState)
                 .setContextId(getSelfId())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -862,7 +860,7 @@ public class RequestBrokerService extends
         operationState.requestTrackerLink = state.requestTrackerLink;
 
         sendRequest(Operation.createPost(this, ContainerOperationTaskFactoryService.SELF_LINK)
-                .setBody(operationState)
+                .setBodyNoCloning(operationState)
                 .setContextId(getSelfId())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -884,7 +882,7 @@ public class RequestBrokerService extends
         operationState.tenantLinks = state.tenantLinks;
 
         sendRequest(Operation.createPost(this, ComputeOperationTaskService.FACTORY_LINK)
-                .setBody(operationState)
+                .setBodyNoCloning(operationState)
                 .setContextId(getSelfId())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -942,7 +940,7 @@ public class RequestBrokerService extends
         }
 
         sendRequest(Operation.createPost(this, ReservationTaskFactoryService.SELF_LINK)
-                .setBody(rsrvTask)
+                .setBodyNoCloning(rsrvTask)
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -980,7 +978,7 @@ public class RequestBrokerService extends
         }
 
         sendRequest(Operation.createPost(this, ComputeReservationTaskService.FACTORY_LINK)
-                .setBody(rsrvTask)
+                .setBodyNoCloning(rsrvTask)
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -1042,7 +1040,7 @@ public class RequestBrokerService extends
 
             sendRequest(Operation
                     .createPost(this, ContainerAllocationTaskFactoryService.SELF_LINK)
-                    .setBody(allocationTask)
+                    .setBodyNoCloning(allocationTask)
                     .setContextId(getSelfId())
                     .setCompletion((o, e) -> {
                         if (e != null) {
@@ -1072,7 +1070,7 @@ public class RequestBrokerService extends
 
         sendRequest(Operation
                 .createPost(this, ContainerNetworkAllocationTaskService.FACTORY_LINK)
-                .setBody(allocationTask)
+                .setBodyNoCloning(allocationTask)
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -1099,7 +1097,7 @@ public class RequestBrokerService extends
 
         sendRequest(Operation
                 .createPost(this, ContainerNetworkProvisionTaskService.FACTORY_LINK)
-                .setBody(provisionTask)
+                .setBodyNoCloning(provisionTask)
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -1125,7 +1123,7 @@ public class RequestBrokerService extends
 
         sendRequest(Operation
                 .createPost(this, ComputeNetworkAllocationTaskService.FACTORY_LINK)
-                .setBody(allocationTask)
+                .setBodyNoCloning(allocationTask)
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -1152,7 +1150,7 @@ public class RequestBrokerService extends
 
         sendRequest(Operation
                 .createPost(this, ComputeNetworkProvisionTaskService.FACTORY_LINK)
-                .setBody(provisionTask)
+                .setBodyNoCloning(provisionTask)
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -1259,7 +1257,7 @@ public class RequestBrokerService extends
 
             sendRequest(Operation
                     .createPost(this, ComputeAllocationTaskService.FACTORY_LINK)
-                    .setBody(allocationTask)
+                    .setBodyNoCloning(allocationTask)
                     .setContextId(getSelfId())
                     .setCompletion((o, e) -> {
                         if (e != null) {
@@ -1299,7 +1297,7 @@ public class RequestBrokerService extends
 
         sendRequest(Operation
                 .createPost(this, ComputeProvisionTaskService.FACTORY_LINK)
-                .setBody(ps)
+                .setBodyNoCloning(ps)
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -1335,7 +1333,7 @@ public class RequestBrokerService extends
 
         sendRequest(Operation
                 .createPost(this, ContainerVolumeAllocationTaskService.FACTORY_LINK)
-                .setBody(allocationTask)
+                .setBodyNoCloning(allocationTask)
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -1363,7 +1361,7 @@ public class RequestBrokerService extends
 
         sendRequest(Operation
                 .createPost(this, ContainerVolumeProvisionTaskService.FACTORY_LINK)
-                .setBody(provisionTask)
+                .setBodyNoCloning(provisionTask)
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -1434,7 +1432,7 @@ public class RequestBrokerService extends
 
         sendRequest(Operation
                 .createPost(this, ClosureProvisionTaskService.FACTORY_LINK)
-                .setBody(allocationTask)
+                .setBodyNoCloning(allocationTask)
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -1458,7 +1456,7 @@ public class RequestBrokerService extends
 
         sendRequest(Operation
                 .createPost(this, ClosureAllocationTaskService.FACTORY_LINK)
-                .setBody(allocationTask)
+                .setBodyNoCloning(allocationTask)
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -1482,7 +1480,7 @@ public class RequestBrokerService extends
             compositionTask.requestTrackerLink = state.requestTrackerLink;
 
             sendRequest(Operation.createPost(this, CompositionTaskFactoryService.SELF_LINK)
-                    .setBody(compositionTask)
+                    .setBodyNoCloning(compositionTask)
                     .setContextId(getSelfId())
                     .setCompletion((o, e) -> {
                         if (e != null) {
@@ -1517,7 +1515,7 @@ public class RequestBrokerService extends
         rsrvTask.tenantLinks = state.tenantLinks;
 
         sendRequest(Operation.createPost(this, ReservationRemovalTaskFactoryService.SELF_LINK)
-                .setBody(rsrvTask)
+                .setBodyNoCloning(rsrvTask)
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
                     if (e != null) {
@@ -1548,7 +1546,7 @@ public class RequestBrokerService extends
         clusteringState.requestTrackerLink = state.requestTrackerLink;
         Operation post = Operation
                 .createPost(this, ClusteringTaskService.FACTORY_LINK)
-                .setBody(clusteringState)
+                .setBodyNoCloning(clusteringState)
                 .setContextId(getSelfId())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -1583,7 +1581,7 @@ public class RequestBrokerService extends
         clusteringState.requestTrackerLink = state.requestTrackerLink;
         Operation post = Operation
                 .createPost(this, ClusteringTaskService.FACTORY_LINK)
-                .setBody(clusteringState)
+                .setBodyNoCloning(clusteringState)
                 .setContextId(getSelfId())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -1609,10 +1607,12 @@ public class RequestBrokerService extends
         configureState.port = Integer.parseInt(splitted[2]);
         configureState.authCredentialsLink = state
                 .getCustomProperty(
-                        ConfigureHostOverSshTaskService.CONFIGURE_HOST_AUTH_CREDENTIALS_LINK_CUSTOM_PROP);
+                        ConfigureHostOverSshTaskService
+                                .CONFIGURE_HOST_AUTH_CREDENTIALS_LINK_CUSTOM_PROP);
         configureState.placementZoneLink = state
                 .getCustomProperty(
-                        ConfigureHostOverSshTaskService.CONFIGURE_HOST_PLACEMENT_ZONE_LINK_CUSTOM_PROP);
+                        ConfigureHostOverSshTaskService
+                                .CONFIGURE_HOST_PLACEMENT_ZONE_LINK_CUSTOM_PROP);
 
         boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED;
         configureState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
@@ -1624,7 +1624,8 @@ public class RequestBrokerService extends
             configureState.tagLinks = new HashSet<>(
                     Arrays.asList(state
                             .getCustomProperty(
-                                    ConfigureHostOverSshTaskService.CONFIGURE_HOST_TAG_LINKS_CUSTOM_PROP)
+                                    ConfigureHostOverSshTaskService
+                                            .CONFIGURE_HOST_TAG_LINKS_CUSTOM_PROP)
                             .split(" ")));
         }
 
@@ -1636,7 +1637,7 @@ public class RequestBrokerService extends
         configureState.requestTrackerLink = state.requestTrackerLink;
         Operation post = Operation
                 .createPost(this, ConfigureHostOverSshTaskService.FACTORY_LINK)
-                .setBody(configureState)
+                .setBodyNoCloning(configureState)
                 .setContextId(getSelfId())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
@@ -1965,7 +1966,7 @@ public class RequestBrokerService extends
         }
 
         sendRequest(Operation.createPost(this, RequestStatusFactoryService.SELF_LINK)
-                .setBody(requestStatus)
+                .setBodyNoCloning(requestStatus)
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         failTask("Failed to create request tracker for: "
