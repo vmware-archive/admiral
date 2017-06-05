@@ -60,6 +60,8 @@ import com.vmware.admiral.request.compute.ComputeNetworkProvisionTaskService;
 import com.vmware.admiral.request.compute.ComputeNetworkProvisionTaskService.ComputeNetworkProvisionTaskState;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputeProvisionTaskState;
+import com.vmware.admiral.request.compute.LoadBalancerProvisionTaskService;
+import com.vmware.admiral.request.compute.LoadBalancerProvisionTaskService.LoadBalancerProvisionTaskState;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
@@ -407,6 +409,9 @@ public class CompositionSubTaskService
         } else if (ResourceType.COMPUTE_NETWORK_TYPE.getName()
                 .equalsIgnoreCase(state.resourceType)) {
             createComputeNetworkProvisionTaskState(state);
+        } else if (ResourceType.LOAD_BALANCER_TYPE.getName()
+                .equalsIgnoreCase(state.resourceType)) {
+            createLoadBalancerProvisionTaskState(state);
         } else if (ResourceType.CLOSURE_TYPE.getName().equalsIgnoreCase(state.resourceType)) {
             createClosureProvisionTask(state);
         } else {
@@ -568,6 +573,29 @@ public class CompositionSubTaskService
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         failTask("Failure creating compute network provision task", e);
+                        return;
+                    }
+                }));
+
+        proceedTo(SubStage.EXECUTING);
+    }
+
+    private void createLoadBalancerProvisionTaskState(CompositionSubTaskState state) {
+        LoadBalancerProvisionTaskState task = new LoadBalancerProvisionTaskState();
+        task.documentSelfLink = getSelfId();
+        task.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
+                TaskStage.STARTED, SubStage.COMPLETED, TaskStage.STARTED, SubStage.ERROR);
+        task.tenantLinks = state.tenantLinks;
+        task.requestTrackerLink = state.requestTrackerLink;
+        task.resourceLinks = state.resourceLinks;
+//        task.resourceDescriptionLink = state.resourceDescriptionLink;
+
+        sendRequest(Operation.createPost(this, LoadBalancerProvisionTaskService.FACTORY_LINK)
+                .setBody(task)
+                .setContextId(state.requestId)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating load balancer provision task", e);
                         return;
                     }
                 }));

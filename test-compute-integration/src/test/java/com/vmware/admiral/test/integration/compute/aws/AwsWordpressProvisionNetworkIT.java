@@ -35,12 +35,12 @@ import com.amazonaws.services.ec2.model.DeleteVpcRequest;
 import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.Vpc;
 import com.google.common.collect.Sets;
+
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfile;
 import com.vmware.admiral.test.integration.compute.BaseWordpressComputeProvisionIT;
-import com.vmware.admiral.test.integration.compute.aws.AwsComputeProvisionIT;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
@@ -60,7 +60,8 @@ public class AwsWordpressProvisionNetworkIT extends BaseWordpressComputeProvisio
                 {"WordPress_with_MySQL_compute_public_network.yaml", null },
                 {"WordPress_with_MySQL_compute_isolated_network.yaml",
                         (BiConsumer<Set<ServiceDocument>, String>) BaseWordpressComputeProvisionIT
-                                ::validateIsolatedNic }
+                                ::validateIsolatedNic },
+                {"WordPress_with_MySQL_compute_with_load_balancer.yaml", null }
         });
     }
 

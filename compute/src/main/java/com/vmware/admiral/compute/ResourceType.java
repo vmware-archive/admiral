@@ -28,7 +28,7 @@ public enum ResourceType {
     CLOSURE_TYPE("CLOSURE", "App.Closure"),
     CONFIGURE_HOST_TYPE("CONFIGURE_HOST", ""),
     COMPUTE_NETWORK_TYPE("COMPUTE_NETWORK", "Compute.Network"),
-    LOAD_BALANCER_TYPE("LOAD_BALANCER", "App.LoadBalancer"),
+    LOAD_BALANCER_TYPE("LOAD_BALANCER", "Compute.LoadBalancer"),
     KUBERNETES_POD_TYPE("KUBERNETES_POD", "Kubernetes.Pod"),
     KUBERNETES_DEPLOYMENT_TYPE("KUBERNETES_DEPLOYMENT", "Kubernetes.Deployment"),
     KUBERNETES_SERVICE_TYPE("KUBERNETES_SERVICE", "Kubernetes.Service"),

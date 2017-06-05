@@ -89,6 +89,7 @@ import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.DiskService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
+import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService;
 import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
@@ -733,6 +734,8 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
                 state = new ContainerVolumeDescription();
             } else if (descriptionLink.startsWith(ComputeNetworkDescriptionService.FACTORY_LINK)) {
                 state = new ComputeNetworkDescription();
+            } else if (descriptionLink.startsWith(LoadBalancerDescriptionService.FACTORY_LINK)) {
+                state = new LoadBalancerDescriptionService.LoadBalancerDescription();
             } else if (descriptionLink.startsWith(ComputeDescriptionService.FACTORY_LINK)) {
                 state = new ComputeDescription();
             } else if (descriptionLink.startsWith(ContainerDescriptionService.FACTORY_LINK)) {

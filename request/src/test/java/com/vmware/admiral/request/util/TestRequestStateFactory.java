@@ -53,6 +53,7 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.photon.controller.model.resources.EndpointService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
+import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription;
 import com.vmware.photon.controller.model.resources.NetworkService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
@@ -186,6 +187,15 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
     public static ComputeNetworkDescription createComputeNetworkDescription(String name) {
         ComputeNetworkDescription desc = new ComputeNetworkDescription();
         desc.documentSelfLink = "test-network-" + name;
+        desc.name = name;
+        desc.tenantLinks = getTenantLinks();
+        desc.customProperties = new HashMap<>();
+        return desc;
+    }
+
+    public static LoadBalancerDescription createLoadBalancerDescription(String name) {
+        LoadBalancerDescription desc = new LoadBalancerDescription();
+        desc.documentSelfLink = "test-lb-" + name;
         desc.name = name;
         desc.tenantLinks = getTenantLinks();
         desc.customProperties = new HashMap<>();

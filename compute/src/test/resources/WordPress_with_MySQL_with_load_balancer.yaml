@@ -21,11 +21,11 @@ components:
       name: "wordpress"
       environmentName: "On premise"
       instanceType: small
-      imageType: "ubuntu-server-1604"
+      imageType: "ubuntu-1604"
       networks:
         - name: public-wpnet
   wordpress-lb:
-    type: "App.LoadBalancer"
+    type: "Compute.LoadBalancer"
     data:
       name: "wordpress-lb"
       protocol: "HTTP"

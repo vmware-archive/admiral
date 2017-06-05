@@ -137,11 +137,15 @@ public interface ManagementUriParts {
     String REQUEST_ALLOCATION_TASKS = REQUEST + "/allocation-tasks";
     String REQUEST_CONTAINER_REDEPLOYMENT_TASKS = REQUEST + "/container-redeployment-tasks";
     String REQUEST_COMPUTE_ALLOCATION_TASKS = REQUEST + "/compute-allocation-tasks";
-    String REQUEST_COMPUTE_NETWORK_ALLOCATION_TASKS = REQUEST
-            + "/compute-network-allocation-tasks";
-    String REQUEST_PROVISION_COMPUTE_NETWORK_TASKS = REQUEST
-            + "/provision-compute-network-tasks";
+
+    String REQUEST_COMPUTE_NETWORK_ALLOCATION_TASKS = REQUEST + "/compute-network-allocation-tasks";
+    String REQUEST_PROVISION_COMPUTE_NETWORK_TASKS = REQUEST + "/provision-compute-network-tasks";
     String REQUEST_COMPUTE_NETWORK_REMOVAL_TASKS = REQUEST + "/compute-network-removal-tasks";
+
+    String REQUEST_LOAD_BALANCER_ALLOCATION_TASKS = REQUEST + "/load-balancer-allocation-tasks";
+    String REQUEST_LOAD_BALANCER_PROVISION_TASKS = REQUEST + "/load-balancer-provision-tasks";
+    String REQUEST_LOAD_BALANCER_REMOVAL_TASKS = REQUEST + "/load-balancer-removal-tasks";
+
     String REQUEST_CONTAINER_NETWORK_ALLOCATION_TASKS = REQUEST
             + "/container-network-allocation-tasks";
     String REQUEST_CONTAINER_NETWORK_REMOVAL_TASKS = REQUEST + "/container-network-removal-tasks";

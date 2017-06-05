@@ -35,7 +35,9 @@ import com.vmware.admiral.request.compute.allocation.filter.ComputeServiceAffini
 import com.vmware.admiral.request.compute.allocation.filter.ComputeServiceAntiAffinityHostFilter;
 import com.vmware.admiral.request.compute.allocation.filter.ComputeSpreadAffinityHostFilter;
 import com.vmware.admiral.request.compute.allocation.filter.ComputeToNetworkAffinityHostFilter;
+import com.vmware.admiral.request.compute.allocation.filter.LoadBalancerToComputeAffinityHostFilter;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription;
 import com.vmware.xenon.common.ServiceHost;
 
 /**
@@ -62,6 +64,8 @@ public final class AffinityFilters {
             initialize(host, (ComputeDescription) desc);
         } else if (ComputeNetworkDescription.class.isInstance(desc)) {
             // TODO initialize(host, (ComputeNetworkDescription) desc)
+        } else if (LoadBalancerDescription.class.isInstance(desc)) {
+            initialize(host, (LoadBalancerDescription) desc);
         } else if (ContainerNetworkDescription.class.isInstance(desc)) {
             initialize(host, (ContainerNetworkDescription) desc);
         } else if (ComponentDescription.class.isInstance(desc)) {
@@ -90,6 +94,10 @@ public final class AffinityFilters {
         filters.add(new ComputeToNetworkAffinityHostFilter(host, desc));
         filters.add(new ComputeBinpackAffinityHostFilter(host, desc));
         filters.add(new ComputeSpreadAffinityHostFilter(host, desc));
+    }
+
+    private void initialize(ServiceHost host, LoadBalancerDescription desc) {
+        filters.add(new LoadBalancerToComputeAffinityHostFilter(host, desc));
     }
 
     private void initialize(ServiceHost host, ComponentDescription desc) {

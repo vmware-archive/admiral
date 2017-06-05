@@ -50,6 +50,9 @@ import com.vmware.admiral.request.compute.ComputePlacementSelectionTaskService;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService;
 import com.vmware.admiral.request.compute.ComputeRemovalTaskService;
 import com.vmware.admiral.request.compute.ComputeReservationTaskService;
+import com.vmware.admiral.request.compute.LoadBalancerAllocationTaskService;
+import com.vmware.admiral.request.compute.LoadBalancerProvisionTaskService;
+import com.vmware.admiral.request.compute.LoadBalancerRemovalTaskService;
 import com.vmware.admiral.request.compute.ProvisionContainerHostsTaskService;
 import com.vmware.admiral.request.kubernetes.CompositeKubernetesProvisioningTaskService;
 import com.vmware.admiral.request.kubernetes.CompositeKubernetesRemovalTaskService;
@@ -89,6 +92,9 @@ public class HostInitRequestServicesConfig extends HostInitServiceHelper {
                 ComputeNetworkAllocationTaskService.class,
                 ComputeNetworkProvisionTaskService.class,
                 ComputeNetworkRemovalTaskService.class,
+                LoadBalancerAllocationTaskService.class,
+                LoadBalancerProvisionTaskService.class,
+                LoadBalancerRemovalTaskService.class,
                 ContainerNetworkRemovalTaskService.class,
                 ContainerVolumeAllocationTaskService.class,
                 ContainerVolumeProvisionTaskService.class,
