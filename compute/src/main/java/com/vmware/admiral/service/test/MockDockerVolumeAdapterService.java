@@ -169,6 +169,8 @@ public class MockDockerVolumeAdapterService extends BaseMockAdapterService {
         } else if (state.isDeprovisioning()) {
             removeVolumeByReference(state.resourceReference);
             patchTaskStage(state, (Throwable) null);
+        } else if (VolumeOperationType.INSPECT.id.equals(state.operationTypeId)) {
+            patchTaskStage(state, (Throwable) null);
         }
     }
 
