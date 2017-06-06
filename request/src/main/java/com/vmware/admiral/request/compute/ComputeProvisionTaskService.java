@@ -92,8 +92,8 @@ public class ComputeProvisionTaskService extends
             "compute-provision";
     public static final String COMPUTE_PROVISION_TOPIC_ID = "com.vmware.compute.provision.pre";
     public static final String COMPUTE_PROVISION_TOPIC_NAME = "Compute provision";
-    public static final String COMPUTE_PROVISION_TOPIC_TASK_DESCRIPTION = "Fired before a compute "
-            + "resource is being provisioned";
+    public static final String COMPUTE_PROVISION_TOPIC_TASK_DESCRIPTION = "Fired before a "
+            + "compute resource is being provisioned";
     public static final String COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES = "resourceNames";
     public static final String COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES_LABEL = "Resource names.";
     public static final String COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION =
@@ -110,6 +110,13 @@ public class ComputeProvisionTaskService extends
     public static final String COMPUTE_PROVISION_TOPIC_FIELD_SUBNET_DESCRIPTION =
             "Subnetwork where resource will be connected.";
 
+    public static final String COMPUTE_POST_PROVISION_TOPIC_TASK_SELF_LINK =
+            "compute-provision-post";
+    public static final String COMPUTE_POST_PROVISION_TOPIC_ID = "com.vmware.compute.provision.post";
+    public static final String COMPUTE_POST_PROVISION_TOPIC_NAME = "Compute post provision";
+    public static final String COMPUTE_POST_PROVISION_TOPIC_TASK_DESCRIPTION = "Fired after a "
+            + "compute resource gets provisioned";
+
     public static class ComputeProvisionTaskState
             extends
             com.vmware.admiral.service.common.TaskServiceDocument<ComputeProvisionTaskState.SubStage> {
@@ -125,7 +132,7 @@ public class ComputeProvisionTaskService extends
             static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
                     Arrays.asList(PROVISIONING_COMPUTE));
             static final Set<SubStage> SUBSCRIPTION_SUB_STAGES = new HashSet<>(
-                    Arrays.asList(CUSTOMIZING_COMPUTE));
+                    Arrays.asList(CUSTOMIZING_COMPUTE, COMPLETED));
         }
 
         /**
@@ -527,7 +534,7 @@ public class ComputeProvisionTaskService extends
         return new ExtensibilityCallbackResponse();
     }
 
-    private void computeProvisionEventTopic(ServiceHost host) {
+    private void computePreProvisionEventTopic(ServiceHost host) {
         EventTopicService.TopicTaskInfo taskInfo = new EventTopicService.TopicTaskInfo();
         taskInfo.task = ComputeProvisionTaskState.class.getSimpleName();
         taskInfo.stage = TaskStage.STARTED.name();
@@ -535,7 +542,20 @@ public class ComputeProvisionTaskService extends
 
         EventTopicUtils.registerEventTopic(COMPUTE_PROVISION_TOPIC_ID, COMPUTE_PROVISION_TOPIC_NAME,
                 COMPUTE_PROVISION_TOPIC_TASK_DESCRIPTION, COMPUTE_PROVISION_TOPIC_TASK_SELF_LINK,
-                Boolean.TRUE, computeProvisionTopicSchema(), taskInfo, host);
+                Boolean.TRUE, computePreProvisionTopicSchema(), taskInfo, host);
+    }
+
+    private void computePostProvisionEventTopic(ServiceHost host) {
+        EventTopicService.TopicTaskInfo taskInfo = new EventTopicService.TopicTaskInfo();
+        taskInfo.task = ComputeProvisionTaskState.class.getSimpleName();
+        taskInfo.stage = TaskStage.FINISHED.name();
+        taskInfo.substage = SubStage.COMPLETED.name();
+
+        EventTopicUtils.registerEventTopic(COMPUTE_POST_PROVISION_TOPIC_ID,
+                COMPUTE_POST_PROVISION_TOPIC_NAME,
+                COMPUTE_POST_PROVISION_TOPIC_TASK_DESCRIPTION,
+                COMPUTE_POST_PROVISION_TOPIC_TASK_SELF_LINK,
+                Boolean.TRUE, computePostProvisionTopicSchema(), taskInfo, host);
     }
 
     private DeferredResult<Set<String>> getNicStates(ComputeProvisionTaskState state) {
@@ -646,7 +666,7 @@ public class ComputeProvisionTaskService extends
 
     }
 
-    private SchemaBuilder computeProvisionTopicSchema() {
+    private SchemaBuilder computePreProvisionTopicSchema() {
         return new SchemaBuilder()
                 .addField(COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES)
                 .withType(Type.LIST)
@@ -667,9 +687,20 @@ public class ComputeProvisionTaskService extends
                 .done();
     }
 
+    private SchemaBuilder computePostProvisionTopicSchema() {
+        return new SchemaBuilder()
+                .addField(COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES)
+                .withType(Type.LIST)
+                .withDataType(DATATYPE_STRING)
+                .withLabel(COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES_LABEL)
+                .withDescription(COMPUTE_PROVISION_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION)
+                .done();
+    }
+
     @Override
     public void registerEventTopics(ServiceHost host) {
-        computeProvisionEventTopic(host);
+        computePreProvisionEventTopic(host);
+        computePostProvisionEventTopic(host);
     }
 
     private void retrieveSubnetwork(ComputeProvisionTaskState state,
