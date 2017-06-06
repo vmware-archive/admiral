@@ -10,7 +10,7 @@ components:
       environmentName: "On premise"
       cpuCount: 1
       networks:
-        - name: "public-wpnet"
+        - name: "wpnet"
           address: 10.0.0.7
           assignment: STATIC
       totalMemoryBytes: 1073741824
@@ -23,11 +23,12 @@ components:
       instanceType: small
       imageType: "ubuntu-1604"
       networks:
-        - name: public-wpnet
+        - name: "wpnet"
   wordpress-lb:
     type: "Compute.LoadBalancer"
     data:
       name: "wordpress-lb"
+      network: "public-wpnet"
       protocol: "HTTP"
       port: 80
       instance: "wordpress"
@@ -36,4 +37,8 @@ components:
   public-wpnet:
     type: "Compute.Network"
     data:
-      name: public-wpnet
+      name: "public-wpnet"
+  wpnet:
+    type: "Compute.Network"
+    data:
+      name: "wpnet"

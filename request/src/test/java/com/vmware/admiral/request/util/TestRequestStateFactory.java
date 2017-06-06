@@ -199,6 +199,11 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         desc.name = name;
         desc.tenantLinks = getTenantLinks();
         desc.customProperties = new HashMap<>();
+        desc.networkName = "test-network";
+        desc.protocol = "HTTP";
+        desc.port = 80;
+        desc.instanceProtocol = "HTTP";
+        desc.instancePort = 80;
         return desc;
     }
 

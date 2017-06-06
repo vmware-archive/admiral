@@ -27,4 +27,13 @@ public class TemplateLoadBalancerDescription extends LoadBalancerDescription {
     public void setInstance(String instance) {
         this.computeDescriptionLink = instance;
     }
+
+    @JsonProperty("network")
+    public String getNetwork() {
+        return this.networkName;
+    }
+
+    public void setNetwork(String network) {
+        this.networkName = network;
+    }
 }

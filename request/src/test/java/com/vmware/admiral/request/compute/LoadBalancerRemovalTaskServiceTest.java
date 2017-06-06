@@ -13,7 +13,6 @@ package com.vmware.admiral.request.compute;
 
 import static org.junit.Assert.assertNotNull;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -21,18 +20,17 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.request.RequestBaseTest;
-import com.vmware.admiral.request.compute.LoadBalancerProvisionTaskService.LoadBalancerProvisionTaskState;
+import com.vmware.admiral.request.compute.LoadBalancerRemovalTaskService.LoadBalancerRemovalTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService;
 import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription;
-import com.vmware.photon.controller.model.resources.LoadBalancerService;
 
 /**
- * Tests for the {@link LoadBalancerProvisionTaskService} class.
+ * Tests for the {@link LoadBalancerRemovalTaskService} class.
  */
-public class LoadBalancerProvisionTaskServiceTest extends RequestBaseTest {
+public class LoadBalancerRemovalTaskServiceTest extends RequestBaseTest {
 
     private LoadBalancerDescription loadBalancerDesc;
 
@@ -46,41 +44,39 @@ public class LoadBalancerProvisionTaskServiceTest extends RequestBaseTest {
     }
 
     @Test
-    public void testProvisionTaskServiceLifeCycle() throws Throwable {
+    public void testRemovalTaskServiceLifeCycle() throws Throwable {
         // TODO: enhance once the task implementation is complete
-        LoadBalancerProvisionTaskState provisionTask = createLoadBalancerProvisionTask(
+        LoadBalancerRemovalTaskState removalTask = createLoadBalancerRemovalTask(
                 loadBalancerDesc.documentSelfLink);
-        provisionTask = provision(provisionTask);
+        removalTask = remove(removalTask);
     }
 
-    private LoadBalancerProvisionTaskState createLoadBalancerProvisionTask(
+    private LoadBalancerRemovalTaskState createLoadBalancerRemovalTask(
             String loadBalancerDescLink) {
-        LoadBalancerProvisionTaskState provisionTask = new LoadBalancerProvisionTaskState();
-        provisionTask.resourceLinks = Collections
-                .singleton(LoadBalancerService.FACTORY_LINK + "/dummy-lb");
-        provisionTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();
-        provisionTask.customProperties = new HashMap<>();
-        return provisionTask;
+        LoadBalancerRemovalTaskState removalTask = new LoadBalancerRemovalTaskState();
+        removalTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+        removalTask.customProperties = new HashMap<>();
+        return removalTask;
     }
 
-    private LoadBalancerProvisionTaskState provision(
-            LoadBalancerProvisionTaskState provisionTask)
+    private LoadBalancerRemovalTaskState remove(
+            LoadBalancerRemovalTaskState removalTask)
             throws Throwable {
-        provisionTask = startProvisionTask(provisionTask);
-        host.log("Start provision test: " + provisionTask.documentSelfLink);
+        removalTask = startRemovalTask(removalTask);
+        host.log("Start removal test: " + removalTask.documentSelfLink);
 
-        provisionTask = waitForTaskSuccess(provisionTask.documentSelfLink,
-                LoadBalancerProvisionTaskState.class);
+        removalTask = waitForTaskSuccess(removalTask.documentSelfLink,
+                LoadBalancerRemovalTaskState.class);
 
-        return provisionTask;
+        return removalTask;
     }
 
-    private LoadBalancerProvisionTaskState startProvisionTask(
-            LoadBalancerProvisionTaskState provisionTask) throws Throwable {
-        LoadBalancerProvisionTaskState outProvisionTask = doPost(
-                provisionTask, LoadBalancerProvisionTaskService.FACTORY_LINK);
-        assertNotNull(outProvisionTask);
-        return outProvisionTask;
+    private LoadBalancerRemovalTaskState startRemovalTask(
+            LoadBalancerRemovalTaskState removalTask) throws Throwable {
+        LoadBalancerRemovalTaskState outRemovalTask = doPost(
+                removalTask, LoadBalancerRemovalTaskService.FACTORY_LINK);
+        assertNotNull(outRemovalTask);
+        return outRemovalTask;
     }
 
     private LoadBalancerDescription createLoadBalancerDescription(String name)

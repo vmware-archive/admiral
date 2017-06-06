@@ -88,10 +88,6 @@ public class LoadBalancerAllocationTaskServiceTest extends RequestBaseTest {
                 desc.documentSelfLink = UUID.randomUUID().toString();
                 desc.computeDescriptionLink = ComputeDescriptionService.FACTORY_LINK
                         + "/dummy-compute-link";
-                desc.protocol = "HTTP";
-                desc.port = 80;
-                desc.instanceProtocol = "HTTP";
-                desc.instancePort = 80;
 
                 loadBalancerDesc = doPost(desc, LoadBalancerDescriptionService.FACTORY_LINK);
                 assertNotNull(loadBalancerDesc);

@@ -54,6 +54,7 @@ components:
     type: "Compute.LoadBalancer"
     data:
       name: "wordpress-lb"
+      network: "wpnet"
       protocol: "HTTP"
       port: 80
       instance: "wordpress"

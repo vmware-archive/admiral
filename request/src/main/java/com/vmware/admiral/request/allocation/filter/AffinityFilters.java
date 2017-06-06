@@ -36,6 +36,7 @@ import com.vmware.admiral.request.compute.allocation.filter.ComputeServiceAntiAf
 import com.vmware.admiral.request.compute.allocation.filter.ComputeSpreadAffinityHostFilter;
 import com.vmware.admiral.request.compute.allocation.filter.ComputeToNetworkAffinityHostFilter;
 import com.vmware.admiral.request.compute.allocation.filter.LoadBalancerToComputeAffinityHostFilter;
+import com.vmware.admiral.request.compute.allocation.filter.LoadBalancerToNetworkAffinityHostFilter;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription;
 import com.vmware.xenon.common.ServiceHost;
@@ -98,6 +99,7 @@ public final class AffinityFilters {
 
     private void initialize(ServiceHost host, LoadBalancerDescription desc) {
         filters.add(new LoadBalancerToComputeAffinityHostFilter(host, desc));
+        filters.add(new LoadBalancerToNetworkAffinityHostFilter(host, desc));
     }
 
     private void initialize(ServiceHost host, ComponentDescription desc) {

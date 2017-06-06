@@ -17,6 +17,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
@@ -40,8 +41,10 @@ import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription;
 import com.vmware.photon.controller.model.resources.SubnetService;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.UriUtils;
@@ -170,6 +173,29 @@ public class CompositionTaskServiceTest extends RequestBaseTest {
         request = waitForTaskSuccess(request.documentSelfLink, RequestBrokerState.class);
 
         assertValidRequest(request, compositeDesc);
+    }
+
+    @Test
+    public void testWithLoadBalancer() throws Throwable {
+        createComputeGroupResourcePlacement(createComputeResourcePool(), 0);
+
+        SubnetState subnet = TestRequestStateFactory.createSubnetState("my-subnet");
+        subnet = doPost(subnet, SubnetService.FACTORY_LINK);
+
+        ComputeDescription compute = TestRequestStateFactory.createDockerHostDescription();
+        compute.documentSelfLink = ComputeDescriptionService.FACTORY_LINK + "/compute-1";
+        compute.instanceAdapterReference = UriUtils.buildUri(host,
+                ManagementUriParts.ADAPTER_DOCKER);
+        compute.customProperties.put("subnetworkLink", subnet.documentSelfLink);
+
+        LoadBalancerDescription lb = TestRequestStateFactory.createLoadBalancerDescription("lb");
+        lb.computeDescriptionLink = compute.documentSelfLink;
+        lb.networkName = null;
+        lb.subnetLinks = Collections.singleton(subnet.documentSelfLink);
+
+        CompositeDescription compositeDesc = createCompositeDesc(false, false, compute, lb);
+        RequestBrokerState request = startComputeRequest(compositeDesc);
+        request = waitForTaskSuccess(request.documentSelfLink, RequestBrokerState.class);
     }
 
     @Test

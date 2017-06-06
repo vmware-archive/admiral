@@ -92,6 +92,7 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
+import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService;
 import com.vmware.photon.controller.model.resources.NetworkService;
 import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
@@ -741,6 +742,8 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 desc = doPost(desc, ComputeDescriptionService.FACTORY_LINK);
             } else if (desc instanceof ContainerVolumeDescriptionService.ContainerVolumeDescription) {
                 desc = doPost(desc, ContainerVolumeDescriptionService.FACTORY_LINK);
+            } else if (desc instanceof LoadBalancerDescriptionService.LoadBalancerDescription) {
+                desc = doPost(desc, LoadBalancerDescriptionService.FACTORY_LINK);
             } else {
                 throw new IllegalArgumentException(
                         "Unknown description type: " + desc.getClass().getSimpleName());

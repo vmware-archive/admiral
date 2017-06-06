@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.junit.Test;
@@ -168,6 +170,25 @@ public class ElasticPlacementZoneServiceTest extends ComputeBaseTest {
         patchEpz(epzLink, "tag3", "tag4");
         rp = getDocument(ResourcePoolState.class, rp.documentSelfLink);
         assertEquals(EnumSet.of(ResourcePoolProperty.ELASTIC), rp.properties);
+    }
+
+    @Test
+    public void testPatchNoChange() throws Throwable {
+        // create a non-elastic RP
+        ResourcePoolState rp = createRp();
+        assertEquals(EnumSet.noneOf(ResourcePoolProperty.class), rp.properties);
+        assertTrue(isNonElasticQuery(rp.query));
+
+        // create EPZ for the RP
+        String epzLink = createEpz(rp.documentSelfLink, "tag1", "tag2").documentSelfLink;
+
+        ElasticPlacementZoneState patchState = new ElasticPlacementZoneState();
+        patchState.tagLinksToMatch = tagSet("tag1");
+
+        Operation patchOp = Operation.createPatch(host, epzLink).setBody(patchState).forceRemote();
+        Operation returnedOp = ((CompletableFuture<Operation>) host.sendWithDeferredResult(patchOp)
+                .toCompletionStage()).get(60, TimeUnit.SECONDS);
+        assertEquals(Operation.STATUS_CODE_NOT_MODIFIED, returnedOp.getStatusCode());
     }
 
     @Test

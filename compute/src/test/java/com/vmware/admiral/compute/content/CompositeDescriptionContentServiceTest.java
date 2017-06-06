@@ -188,7 +188,7 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
     private static BiConsumer<Operation, List<String>> verifyLoadBalancerTemplate = (o, descLinks) -> {
         CompositeDescriptionExpanded cd = o.getBody(CompositeDescriptionExpanded.class);
         assertEquals("name", "wordPressWithMySqlLoadBalancer", cd.name);
-        assertEquals("descriptionLinks.size", 4, cd.descriptionLinks.size());
+        assertEquals("descriptionLinks.size", 5, cd.descriptionLinks.size());
 
         LoadBalancerDescription loadBalancerDescription =
                 (LoadBalancerDescription)cd.componentDescriptions.stream()
@@ -204,6 +204,7 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
         // validate the correct instance document self link is referenced in the load balancer desc
         assertEquals(wordpressComputeDescription.documentSelfLink,
                 loadBalancerDescription.computeDescriptionLink);
+        assertEquals("public-wpnet", loadBalancerDescription.networkName);
 
         descLinks.addAll(cd.descriptionLinks);
     };
