@@ -22,9 +22,9 @@ import { ProjectDetailsComponent } from './views/projects/project-details/projec
 import { ProjectSummaryComponent } from "./views/projects/project-details/project-summary.component";
 import { ProjectConfigurationComponent } from './views/projects/project-details/project-configuration.component';
 import { ProjectCreateComponent } from './views/projects/project-create/project-create.component';
-import { ProjectDeleteComponent } from './views/projects/project-delete/project-delete.component';
 import { ProjectMembersComponent } from "./views/projects/project-details/project-members.component";
 import { ProjectAddMemberComponent } from "./views/projects/project-details/project-add-member-component";
+import { DeleteConfirmationComponent } from './views/delete-confirmation/delete-confirmation.component';
 import { RegistriesComponent } from './views/registries/registries.component';
 import { ConfigurationComponent } from './views/configuration/configuration.component';
 import { LogsComponent } from './views/logs/logs.component';
@@ -60,13 +60,14 @@ export const ADMIRAL_DECLARATIONS = [
   AdministrationComponent,
   MainResourcesComponent,
 
+  DeleteConfirmationComponent,
+
   ProjectsComponent,
   ProjectDetailsComponent,
   ProjectSummaryComponent,
   ProjectMembersComponent,
   ProjectAddMemberComponent,
   ProjectCreateComponent,
-  ProjectDeleteComponent,
   ProjectConfigurationComponent,
   RegistriesComponent,
   ConfigurationComponent,

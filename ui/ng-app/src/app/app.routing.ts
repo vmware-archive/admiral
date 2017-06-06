@@ -18,7 +18,6 @@ import { MainResourcesComponent } from './views/main-resources/main-resources.co
 import { ProjectsComponent } from './views/projects/projects.component';
 import { ProjectDetailsComponent } from './views/projects/project-details/project-details.component';
 import { ProjectCreateComponent } from './views/projects/project-create/project-create.component';
-import { ProjectDeleteComponent } from './views/projects/project-delete/project-delete.component';
 import { ProjectAddMemberComponent } from "./views/projects/project-details/project-add-member-component";
 import { RegistriesComponent } from './views/registries/registries.component';
 import { ConfigurationComponent } from './views/configuration/configuration.component';
@@ -110,10 +109,7 @@ export const ROUTES: Routes = [
                      }},
                     { path: ':id/add-member', component: ProjectAddMemberComponent, data: {
                         navigationContainerType: NavigationContainerType.Fullscreen
-                      }},
-                    { path: 'delete/:id', component: ProjectDeleteComponent, data: {
-                        navigationContainerType: NavigationContainerType.Default
-                    }}
+                      }}
                 ]
             },
             {
