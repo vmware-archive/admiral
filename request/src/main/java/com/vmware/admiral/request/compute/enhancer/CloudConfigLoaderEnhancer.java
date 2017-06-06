@@ -18,6 +18,7 @@ import static com.vmware.admiral.request.compute.enhancer.EnhancerUtils.objectMa
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.vmware.admiral.compute.ComputeConstants;
@@ -29,39 +30,54 @@ public class CloudConfigLoaderEnhancer extends ComputeEnhancer {
 
     @Override
     @SuppressWarnings("unchecked")
-    public DeferredResult<ComputeState> enhance(EnhanceContext context,
-            ComputeState cs) {
-        String fileContent = getCustomProperty(cs,
-                ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME);
-        if (fileContent == null) {
-            boolean supportDocker = enableContainerHost(cs.customProperties);
-            String imageType = cs.customProperties.get(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
-            String fileName = String.format("/%s-content/cloud_config_%s.yml",
-                    context.endpointType, supportDocker ? imageType + "_docker" : "base");
-            try {
-                fileContent = loadResource(fileName);
-                if (fileContent != null && !fileContent.trim().isEmpty()) {
-                    Map<String, Object> content = objectMapper().readValue(fileContent, Map.class);
-
-                    context.content = content;
-                } else {
-                    context.content = new LinkedHashMap<>();
-                }
-            } catch (IOException e) {
-                Utils.logWarning("Error reading cloud-config data from %s, reason : %s",
-                        fileName, e.getMessage());
-            }
-            return DeferredResult.completed(cs);
-        } else {
-            try {
-                Map<String, Object> content = objectMapper().readValue(fileContent, Map.class);
-
-                context.content = content;
-            } catch (IOException e) {
-                Utils.logWarning("Error reading cloud-config data from %s, reason : %s",
-                        fileContent, e.getMessage());
-            }
-            return DeferredResult.completed(cs);
+    public DeferredResult<ComputeState> enhance(EnhanceContext context, ComputeState cs) {
+        if (context.content == null) {
+            context.content = new LinkedHashMap<>();
         }
+
+        String customCloudConfig = getCustomProperty(cs,
+                ComputeConstants.COMPUTE_CONFIG_CONTENT_PROP_NAME);
+        if (customCloudConfig != null) {
+            try {
+                Map<String, Object> content = objectMapper()
+                        .readValue(customCloudConfig, Map.class);
+                mergeContent(context.content, content);
+            } catch (IOException e) {
+                Utils.logWarning("Error reading cloud-config data from %s, reason : %s",
+                        customCloudConfig, e.getMessage());
+            }
+        }
+
+        boolean supportDocker = enableContainerHost(cs.customProperties);
+        String imageType = cs.customProperties.get(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME);
+        String fileName = String.format("/%s-content/cloud_config_%s.yml", context.endpointType,
+                supportDocker ? imageType + "_docker" : "base");
+        try {
+            customCloudConfig = loadResource(fileName);
+            if (customCloudConfig != null && !customCloudConfig.trim().isEmpty()) {
+                Map<String, Object> content = objectMapper()
+                        .readValue(customCloudConfig, Map.class);
+                mergeContent(context.content, content);
+            }
+        } catch (IOException e) {
+            Utils.logWarning("Error reading cloud-config data from %s, reason : %s", fileName,
+                    e.getMessage());
+        }
+        return DeferredResult.completed(cs);
+    }
+
+    /**
+     * Merges two maps, assuming the values are lists. For a duplicate keys, the resulting value
+     * is a list containing all elements of both list from each map.
+     */
+    private void mergeContent(Map<String, Object> targetMap, Map<String, Object> mapToMerge) {
+        mapToMerge.forEach((key, list) -> {
+            if (list != null) {
+                targetMap.merge(key, list, (sourceList, targetList) -> {
+                    ((List<Object>) sourceList).addAll(((List<Object>) targetList));
+                    return sourceList;
+                });
+            }
+        });
     }
 }
