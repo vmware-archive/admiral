@@ -14,6 +14,9 @@ package com.vmware.admiral.auth;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.security.GeneralSecurityException;
+
+import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.auth.project.ProjectService;
@@ -21,10 +24,14 @@ import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 
 public class AuthInitialBootServiceTest extends AuthBaseTest {
 
+    @Before
+    public void setup() throws GeneralSecurityException {
+        host.assumeIdentity(buildUserServicePath(USERNAME_ADMIN));
+    }
+
     @Test
     public void testDefaultProjectCreatedOnStartUp() throws Throwable {
         waitForServiceAvailability(ProjectService.DEFAULT_PROJECT_LINK);
-        host.assumeIdentity(buildUserServicePath(USERNAME_ADMIN));
 
         ProjectState project = getDocument(ProjectState.class,
                 ProjectService.DEFAULT_PROJECT_LINK);

@@ -36,7 +36,6 @@ import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
-
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
@@ -174,7 +173,8 @@ public class ProjectServiceTest extends AuthBaseTest {
         // remove all users from a group
         projectRoles = new ProjectRoles();
         projectRoles.members = new ProjectRoles.RolesAssignment();
-        projectRoles.members.remove = Arrays.asList(USERNAME_ADMIN, USERNAME_GLORIA, USERNAME_CONNIE);
+        projectRoles.members.remove = Arrays.asList(USERNAME_ADMIN, USERNAME_GLORIA,
+                USERNAME_CONNIE);
         doPatch(projectRoles, expandedState.documentSelfLink);
 
         // verify result

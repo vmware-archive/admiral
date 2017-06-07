@@ -11,18 +11,64 @@
 
 package com.vmware.admiral.auth.util;
 
+import static com.vmware.admiral.common.util.AuthUtils.buildUsersQuery;
+
 import java.util.Base64;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.ServiceLoader;
 import java.util.logging.Level;
 
+import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.photon.controller.model.security.util.EncryptionUtils;
+import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service.Action;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
+import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
+import com.vmware.xenon.services.common.QueryTask.QueryTerm;
+import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
+import com.vmware.xenon.services.common.ResourceGroupService;
+import com.vmware.xenon.services.common.ResourceGroupService.ResourceGroupState;
+import com.vmware.xenon.services.common.RoleService;
+import com.vmware.xenon.services.common.RoleService.Policy;
+import com.vmware.xenon.services.common.RoleService.RoleState;
+import com.vmware.xenon.services.common.ServiceUriPaths;
+import com.vmware.xenon.services.common.UserGroupService;
+import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
 
 public class AuthUtil {
+
+    public static final String CLOUD_ADMINS = "cloud-admins";
+    public static final String CLOUD_ADMINS_RESOURCE_GROUP_LINK = UriUtils
+            .buildUriPath(ResourceGroupService.FACTORY_LINK, CLOUD_ADMINS);
+    public static final String CLOUD_ADMINS_USER_GROUP_LINK = UriUtils
+            .buildUriPath(UserGroupService.FACTORY_LINK, CLOUD_ADMINS);
+    public static final String CLOUD_ADMINS_ROLE_LINK = UriUtils
+            .buildUriPath(RoleService.FACTORY_LINK, CLOUD_ADMINS);
+
+
+    public static final String BASIC_USERS = "basic-users";
+    public static final String BASIC_USERS_EXTENDED = "basic-users-extended";
+
+    public static final String BASIC_USERS_RESOURCE_GROUP_LINK = UriUtils
+            .buildUriPath(ResourceGroupService.FACTORY_LINK, BASIC_USERS);
+    public static final String BASIC_USERS_USER_GROUP_LINK = UriUtils
+            .buildUriPath(UserGroupService.FACTORY_LINK, BASIC_USERS);
+    public static final String BASIC_USERS_ROLE_LINK = UriUtils
+            .buildUriPath(RoleService.FACTORY_LINK, BASIC_USERS);
+
+    public static final String BASIC_USERS_EXTENDED_RESOURCE_GROUP_LINK = UriUtils
+            .buildUriPath(ResourceGroupService.FACTORY_LINK, BASIC_USERS_EXTENDED);
+    public static final String BASIC_USERS_EXTENDED_ROLE_LINK = UriUtils
+            .buildUriPath(RoleService.FACTORY_LINK, BASIC_USERS_EXTENDED);
 
     public static final String LOCAL_USERS_FILE = "localUsers";
 
@@ -99,6 +145,168 @@ public class AuthUtil {
         }
 
         return provider;
+    }
+
+    public static UserGroupState buildEmptyCloudAdminsUserGroup() {
+        Query cloudAdminsQuery = buildUsersQuery(null);
+
+        UserGroupState cloudAdminsUserGroup = UserGroupState.Builder
+                .create()
+                .withQuery(cloudAdminsQuery)
+                .withSelfLink(CLOUD_ADMINS_USER_GROUP_LINK)
+                .build();
+
+        return cloudAdminsUserGroup;
+    }
+
+    public static ResourceGroupState buildCloudAdminsResourceGroup() {
+        Query resourceGroupQuery = Query.Builder
+                .create()
+                .setTerm(ServiceDocument.FIELD_NAME_SELF_LINK, UriUtils.URI_WILDCARD_CHAR,
+                        QueryTerm.MatchType.WILDCARD)
+                .build();
+
+        ResourceGroupState resourceGroupState = ResourceGroupState.Builder
+                .create()
+                .withQuery(resourceGroupQuery)
+                .withSelfLink(CLOUD_ADMINS_RESOURCE_GROUP_LINK)
+                .build();
+
+        return resourceGroupState;
+    }
+
+    public static RoleState buildCloudAdminsRole() {
+
+        EnumSet<Action> verbs = EnumSet.allOf(Action.class);
+        Collections.addAll(verbs, Action.values());
+
+        RoleState cloudAdminRole = RoleState.Builder
+                .create()
+                .withPolicy(Policy.ALLOW)
+                .withSelfLink(CLOUD_ADMINS_ROLE_LINK)
+                .withVerbs(verbs)
+                .withResourceGroupLink(CLOUD_ADMINS_RESOURCE_GROUP_LINK)
+                .withUserGroupLink(CLOUD_ADMINS_USER_GROUP_LINK)
+                .build();
+
+        return cloudAdminRole;
+    }
+
+    public static UserGroupState buildEmptyBasicUsersUserGroup() {
+        Query cloudAdminsQuery = buildUsersQuery(null);
+
+        UserGroupState basicUsersUserGroup = UserGroupState.Builder
+                .create()
+                .withQuery(cloudAdminsQuery)
+                .withSelfLink(BASIC_USERS_USER_GROUP_LINK)
+                .build();
+
+        return basicUsersUserGroup;
+    }
+
+    public static ResourceGroupState buildBasicUsersResourceGroup() {
+
+        Query resourceGroupQuery = Query.Builder
+                .create()
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ProjectFactoryService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ConfigurationFactoryService.SELF_LINK),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+
+                .build();
+
+        ResourceGroupState resourceGroupState = ResourceGroupState.Builder
+                .create()
+                .withQuery(resourceGroupQuery)
+                .withSelfLink(BASIC_USERS_RESOURCE_GROUP_LINK)
+                .build();
+
+        return resourceGroupState;
+    }
+
+    public static RoleState buildBasicUsersRole() {
+
+        EnumSet<Action> verbs = EnumSet.noneOf(Action.class);
+        verbs.add(Action.GET);
+
+        RoleState basicUsersRole = RoleState.Builder
+                .create()
+                .withPolicy(Policy.ALLOW)
+                .withSelfLink(BASIC_USERS_ROLE_LINK)
+                .withVerbs(verbs)
+                .withResourceGroupLink(BASIC_USERS_RESOURCE_GROUP_LINK)
+                .withUserGroupLink(BASIC_USERS_USER_GROUP_LINK)
+                .build();
+
+        return basicUsersRole;
+    }
+
+    /**
+     * This is currently used to workaround xenon problem, where we can't
+     * get documents if with OData query.
+     */
+    public static ResourceGroupState buildBasicUsersResourceGroupExtended() {
+
+        Query resourceGroupQuery = Query.Builder
+                .create()
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ServiceUriPaths.CORE_QUERY_TASKS),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        buildUriWithWildcard(ServiceUriPaths.CORE_QUERY_PAGE),
+                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
+                .build();
+
+        ResourceGroupState resourceGroupState = ResourceGroupState.Builder
+                .create()
+                .withQuery(resourceGroupQuery)
+                .withSelfLink(BASIC_USERS_EXTENDED_RESOURCE_GROUP_LINK)
+                .build();
+
+        return resourceGroupState;
+    }
+
+    /**
+     * This is currently used to workaround xenon problem, where we can't
+     * get documents if with OData query.
+     */
+    public static RoleState buildBasicUsersRoleExtended() {
+
+        EnumSet<Action> verbs = EnumSet.noneOf(Action.class);
+        verbs.add(Action.GET);
+        verbs.add(Action.POST);
+
+        RoleState basicUsersRole = RoleState.Builder
+                .create()
+                .withPolicy(Policy.ALLOW)
+                .withSelfLink(BASIC_USERS_EXTENDED_ROLE_LINK)
+                .withVerbs(verbs)
+                .withResourceGroupLink(BASIC_USERS_EXTENDED_RESOURCE_GROUP_LINK)
+                .withUserGroupLink(BASIC_USERS_USER_GROUP_LINK)
+                .build();
+
+        return basicUsersRole;
+    }
+
+    /**
+     * Authorization related operations should take effect on all replicas, before they
+     * complete. This method adds a special header that sets the quorum level to all
+     * available nodes, avoiding a race where a client can reach a node that has not yet
+     * received latest authorization changes, even if it received success from this auth
+     * helper class
+     */
+    public static void addReplicationFactor(Operation op) {
+        op.addRequestHeader(Operation.REPLICATION_QUORUM_HEADER,
+                Operation.REPLICATION_QUORUM_HEADER_VALUE_ALL);
+    }
+
+    public static String buildUriWithWildcard(String link) {
+        if (link.endsWith(UriUtils.URI_PATH_CHAR)) {
+            return link + UriUtils.URI_WILDCARD_CHAR;
+        }
+        return link + UriUtils.URI_PATH_CHAR + UriUtils.URI_WILDCARD_CHAR;
     }
 
 }

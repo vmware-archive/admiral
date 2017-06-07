@@ -11,13 +11,19 @@
 
 package com.vmware.admiral.auth.idm.local;
 
+import static com.vmware.admiral.auth.util.AuthUtil.BASIC_USERS_RESOURCE_GROUP_LINK;
+import static com.vmware.admiral.auth.util.AuthUtil.BASIC_USERS_ROLE_LINK;
+import static com.vmware.admiral.auth.util.AuthUtil.BASIC_USERS_USER_GROUP_LINK;
+import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_RESOURCE_GROUP_LINK;
+import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_ROLE_LINK;
+import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_USER_GROUP_LINK;
 import static com.vmware.xenon.common.UriUtils.buildUriPath;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -28,21 +34,12 @@ import com.vmware.admiral.auth.idm.AuthConfigProvider;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalType;
 import com.vmware.admiral.auth.util.AuthUtil;
-import com.vmware.admiral.common.util.QueryUtil;
-import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.Claims;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
-import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
-import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
-import com.vmware.xenon.services.common.QueryTask;
-import com.vmware.xenon.services.common.ResourceGroupService;
-import com.vmware.xenon.services.common.RoleService;
-import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserService;
 
 public class LocalAuthConfigProvider implements AuthConfigProvider {
@@ -55,6 +52,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
         public String name;
         public String email;
         public String password;
+        public Boolean isAdmin;
     }
 
     @Override
@@ -76,18 +74,48 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
             return;
         }
 
-        final AtomicInteger usersCounter = new AtomicInteger(users.size());
+        AtomicInteger counter = new AtomicInteger(6);
+        AtomicBoolean hasError = new AtomicBoolean(false);
 
-        users.forEach(user -> {
-            try {
-                createUserIfNotExist(host, user);
-                if (usersCounter.decrementAndGet() == 0) {
+        host.registerForServiceAvailability((o, ex) -> {
+            if (ex != null) {
+                hasError.set(true);
+                host.log(Level.SEVERE, "Unable to create default user groups: %s",
+                        Utils.toString(ex));
+            } else {
+                if (counter.decrementAndGet() == 0 && !hasError.get()) {
+                    createUsers(host, users, post);
+                }
+            }
+        }, true, CLOUD_ADMINS_RESOURCE_GROUP_LINK,
+                CLOUD_ADMINS_USER_GROUP_LINK,
+                CLOUD_ADMINS_ROLE_LINK,
+                BASIC_USERS_RESOURCE_GROUP_LINK,
+                BASIC_USERS_USER_GROUP_LINK,
+                BASIC_USERS_ROLE_LINK);
+
+    }
+
+    private static void createUsers(ServiceHost host, List<User> users, Operation post) {
+        AtomicInteger counter = new AtomicInteger(users.size());
+
+        for (User user : users) {
+            // Needed synchronization of user creation, because if all users are created in parallel
+            // this causes the user group to be overwritten.
+            CountDownLatch latch = new CountDownLatch(1);
+            createUserIfNotExist(host, user, () -> {
+                if (counter.decrementAndGet() == 0) {
                     post.complete();
                 }
-            } catch (Exception e) {
+                latch.countDown();
+            });
+            try {
+                latch.await(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
                 post.fail(e);
+                break;
             }
-        });
+        }
     }
 
     private static List<User> getUsers(ServiceHost host, String localUsers) {
@@ -109,7 +137,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
         return config.users;
     }
 
-    private static void createUserIfNotExist(ServiceHost host, User user) {
+    private static void createUserIfNotExist(ServiceHost host, User user, Runnable callback) {
 
         host.log(Level.INFO, "createUserIfNotExist - User '%s'...", user.email);
 
@@ -118,6 +146,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
         state.password = user.password;
         state.name = user.name;
         state.type = LocalPrincipalType.USER;
+        state.isAdmin = user.isAdmin;
 
         host.sendRequest(Operation.createPost(host, LocalPrincipalFactoryService.SELF_LINK)
                 .setBody(state)
@@ -127,74 +156,8 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
                         host.log(Level.SEVERE, "Could not initialize user '%s': %s", state.email,
                                 Utils.toString(ex));
                     }
+                    callback.run();
                 }));
-    }
-
-    /*
-     * Next two methods update the credentials type to distinguish the local users credentials
-     * (internal) from the credentials that can be created for configuration purposes (public key
-     * or password), e.g. when adding a host.
-     */
-
-    public static void updateCredentials(ServiceHost host, String email, Operation op) {
-
-        QueryTask credentialsQuery = QueryUtil.buildQuery(AuthCredentialsServiceState.class, true);
-        QueryUtil.addListValueClause(credentialsQuery,
-                AuthCredentialsServiceState.FIELD_NAME_EMAIL, Arrays.asList(email));
-        QueryUtil.addExpandOption(credentialsQuery);
-
-        host.log(Level.INFO, "updateCredentials - User '%s'...", email);
-
-        new ServiceDocumentQuery<AuthCredentialsServiceState>(host,
-                    AuthCredentialsServiceState.class).query(
-                    credentialsQuery, (r) -> {
-                        if (r.hasException()) {
-                            host.log(Level.SEVERE, "Exception retrieving user '%s'. Error: %s",
-                                    email, Utils.toString(r.getException()));
-                            op.fail(r.getException());
-                        } else if (r.hasResult()) {
-                            patchStateType(host, r.getResult(), op);
-                        } else {
-                            // nothing to do here
-                        }
-                    }
-        );
-    }
-
-    private static void patchStateType(ServiceHost host, AuthCredentialsServiceState currentState,
-            Operation op) {
-        // Shouldn't update users which already have been updated.
-        if ((currentState.customProperties != null) && (CredentialsScope.SYSTEM.toString().equals(
-                currentState.customProperties.get(PROPERTY_SCOPE)))) {
-            return;
-        }
-
-        AuthCredentialsServiceState patch = new AuthCredentialsServiceState();
-        patch.customProperties = new HashMap<>();
-        patch.customProperties.put(PROPERTY_SCOPE, CredentialsScope.SYSTEM.toString());
-
-        // Credentials with SYSTEM scope need the password in plain text or they can't be used to
-        // login into Admiral!
-        patch.privateKey = EncryptionUtils.decrypt(currentState.privateKey);
-
-        host.log(Level.INFO, "patchStateType - User '%s'...", currentState.userEmail);
-
-        Operation.createPatch(UriUtils.buildUri(host, currentState.documentSelfLink))
-                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
-                .setReferer(host.getUri())
-                .setBody(patch)
-                .setCompletion((o, e) -> {
-                    if (e == null) {
-                        host.log(Level.INFO, "User '%s' initialized!", currentState.userEmail);
-                        op.complete();
-                    } else {
-                        host.log(Level.SEVERE, "Could not patch user '%s' credentials '%s': %s",
-                                currentState.userEmail, currentState.documentSelfLink,
-                                Utils.toString(e));
-                        op.fail(e);
-                    }
-                })
-                .sendWith(host);
     }
 
     @Override
@@ -241,7 +204,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
     private static void waitForUser(ServiceHost host, User user, Runnable successfulCallback,
             Consumer<Throwable> failureCallback) {
 
-        final AtomicInteger servicesCounter = new AtomicInteger(4);
+        final AtomicInteger servicesCounter = new AtomicInteger(1);
         final AtomicBoolean hasError = new AtomicBoolean(false);
 
         host.registerForServiceAvailability((o, e) -> {
@@ -254,10 +217,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
                 }
             }
         }, true,
-                buildUriPath(UserService.FACTORY_LINK, user.email),
-                buildUriPath(UserGroupService.FACTORY_LINK, user.email + "-user-group"),
-                buildUriPath(ResourceGroupService.FACTORY_LINK, user.email + "-resource-group"),
-                buildUriPath(RoleService.FACTORY_LINK, user.email + "-role"));
+                buildUriPath(UserService.FACTORY_LINK, user.email));
     }
 
     @Override

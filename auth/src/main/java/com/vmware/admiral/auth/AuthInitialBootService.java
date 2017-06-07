@@ -11,6 +11,15 @@
 
 package com.vmware.admiral.auth;
 
+import static com.vmware.admiral.auth.util.AuthUtil.buildBasicUsersResourceGroup;
+import static com.vmware.admiral.auth.util.AuthUtil.buildBasicUsersResourceGroupExtended;
+import static com.vmware.admiral.auth.util.AuthUtil.buildBasicUsersRole;
+import static com.vmware.admiral.auth.util.AuthUtil.buildBasicUsersRoleExtended;
+import static com.vmware.admiral.auth.util.AuthUtil.buildCloudAdminsResourceGroup;
+import static com.vmware.admiral.auth.util.AuthUtil.buildCloudAdminsRole;
+import static com.vmware.admiral.auth.util.AuthUtil.buildEmptyBasicUsersUserGroup;
+import static com.vmware.admiral.auth.util.AuthUtil.buildEmptyCloudAdminsUserGroup;
+
 import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.service.common.AbstractInitialBootService;
@@ -24,7 +33,20 @@ public class AuthInitialBootService extends AbstractInitialBootService {
 
     @Override
     public void handlePost(Operation post) {
-        initInstances(post, ProjectService.buildDefaultProjectInstance());
+        logInfo("Creating user groups.");
+        initInstances(post,
+                ProjectService.buildDefaultProjectInstance(),
+                //Initialize Cloud Admins global role.
+                buildEmptyCloudAdminsUserGroup(),
+                buildCloudAdminsResourceGroup(),
+                buildCloudAdminsRole(),
+                //Initialize Basic Users global role.
+                buildEmptyBasicUsersUserGroup(),
+                buildBasicUsersResourceGroup(),
+                buildBasicUsersRole(),
+                //Initialize Basic Users Extended role.
+                buildBasicUsersResourceGroupExtended(),
+                buildBasicUsersRoleExtended());
     }
 
 }

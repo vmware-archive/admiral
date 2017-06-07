@@ -14,6 +14,13 @@ package com.vmware.admiral.auth;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
+import static com.vmware.admiral.auth.util.AuthUtil.BASIC_USERS_RESOURCE_GROUP_LINK;
+import static com.vmware.admiral.auth.util.AuthUtil.BASIC_USERS_ROLE_LINK;
+import static com.vmware.admiral.auth.util.AuthUtil.BASIC_USERS_USER_GROUP_LINK;
+import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_RESOURCE_GROUP_LINK;
+import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_ROLE_LINK;
+import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_USER_GROUP_LINK;
+
 import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
@@ -49,6 +56,7 @@ public abstract class AuthBaseTest extends BaseTestCase {
     public static final int DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES = 180;
 
     protected static final String USERNAME_ADMIN = "fritz@admiral.com";
+    protected static final String USERNAME_BASIC_USER = "tony@admiral.com";
     protected static final String USERNAME_GLORIA = "gloria@admiral.com";
     protected static final String USERNAME_CONNIE = "connie@admiral.com";
 
@@ -64,6 +72,7 @@ public abstract class AuthBaseTest extends BaseTestCase {
 
         waitForServiceAvailability(AuthInitialBootService.SELF_LINK);
         waitForInitialBootServiceToBeSelfStopped(AuthInitialBootService.SELF_LINK);
+        waitForDefaultRoles();
         waitForDefaultUsers();
         TestContext ctx = new TestContext(1,
                 Duration.ofSeconds(DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES));
@@ -192,6 +201,15 @@ public abstract class AuthBaseTest extends BaseTestCase {
         loadedUsers = config.users.stream()
                 .map((u) -> u.email)
                 .collect(Collectors.toList());
+    }
+
+    private void waitForDefaultRoles() throws Throwable {
+        waitForServiceAvailability(CLOUD_ADMINS_RESOURCE_GROUP_LINK,
+                CLOUD_ADMINS_USER_GROUP_LINK,
+                CLOUD_ADMINS_ROLE_LINK,
+                BASIC_USERS_ROLE_LINK,
+                BASIC_USERS_USER_GROUP_LINK,
+                BASIC_USERS_RESOURCE_GROUP_LINK);
     }
 
     private void waitForDefaultUsers() throws Throwable {

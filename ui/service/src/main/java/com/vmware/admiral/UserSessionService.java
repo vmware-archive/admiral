@@ -31,6 +31,11 @@ public class UserSessionService extends StatelessService {
     }
 
     @Override
+    public void authorizeRequest(Operation op) {
+        op.complete();
+    }
+
+    @Override
     public void handleGet(Operation get) {
         AuthorizationContext ctx = get.getAuthorizationContext();
         if (ctx == null) {
@@ -47,14 +52,16 @@ public class UserSessionService extends StatelessService {
             return;
         }
 
-        sendRequest(Operation.createGet(this, subject).setCompletion((o, e) -> {
-            if (e != null) {
-                get.fail(e);
-                return;
-            }
-
-            get.setBody(o.getBodyRaw());
-            get.complete();
-        }));
+        Operation getUser = Operation.createGet(this, subject)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        get.fail(ex);
+                        return;
+                    }
+                    get.setBody(o.getBodyRaw());
+                    get.complete();
+                });
+        setAuthorizationContext(getUser, getSystemAuthorizationContext());
+        sendRequest(getUser);
     }
 }

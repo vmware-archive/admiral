@@ -43,6 +43,7 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
         String connieEmail = "connie@admiral.com";
         String gloriaEmail = "gloria@admiral.com";
 
+
         String fritzSelfLink = LocalPrincipalFactoryService.SELF_LINK + "/" + fritzEmail;
         String connieSelfLink = LocalPrincipalFactoryService.SELF_LINK + "/" + connieEmail;
         String gloriaSelfLink = LocalPrincipalFactoryService.SELF_LINK + "/" + gloriaEmail;
