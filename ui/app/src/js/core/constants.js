@@ -23,7 +23,10 @@ var constants = Immutable({
     REQUESTS: 'requests',
     EVENTLOGS: 'eventlogs',
     ENDPOINTS: 'endpoints',
-    SUBNETWORKS: 'subnetworks'
+    SUBNETWORKS: 'subnetworks',
+    STORAGE_AZURE: 'storage_azure',
+    VSPHERE_DATASTORES: 'vsphere_datastores',
+    VSPHERE_STORAGE_POLICIES: 'vsphere_storage_policies'
   },
   VIEWS: {
     HOME: {name: 'home'},

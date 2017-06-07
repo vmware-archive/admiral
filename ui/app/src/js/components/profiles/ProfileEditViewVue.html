@@ -159,12 +159,37 @@
         :label="i18n('app.subnetwork.contextPanelTooltip')"
         @open="manageSubnetworks()" @close="closeToolbar()">
       </context-sidepanel-toolbar-item>
+      <context-sidepanel-toolbar-item
+        v-if="endpoint && endpointType === 'azure' && currentView === 'storage'"
+        :active="activeContextItem === 'storage_azure'"
+        :label="i18n('app.profile.edit.storage.azure.contextPanelTooltip')"
+        @open="manageAzureStorageAccounts()" @close="closeToolbar()">
+      </context-sidepanel-toolbar-item>
+      <context-sidepanel-toolbar-item
+        v-if="endpoint && endpointType === 'vsphere' && currentView === 'storage'"
+        :active="activeContextItem === 'vsphere_datastores'"
+        :label="i18n('app.profile.edit.storage.vsphere.datastoreContextPanelTooltip')"
+        @open="manageVsphereDatastores()" @close="closeToolbar()">
+      </context-sidepanel-toolbar-item>
+      <context-sidepanel-toolbar-item
+        v-if="endpoint && endpointType === 'vsphere' && currentView === 'storage'"
+        :active="activeContextItem === 'vsphere_storage_policies'"
+        :label="i18n('app.profile.edit.storage.vsphere.storagePolicyContextPanelTooltip')"
+        @open="manageVsphereStoragePolicies()" @close="closeToolbar()">
+      </context-sidepanel-toolbar-item>
     </div>
     <div slot="content" class="content">
       <endpoints-list v-if="activeContextItem === 'endpoints'"
         :model="model.contextView.activeItem.data"></endpoints-list>
       <subnetworks-list v-if="activeContextItem === 'subnetworks'"
         :model="model.contextView.activeItem.data"></subnetworks-list>
+      <azure-storage-accounts-list v-if="activeContextItem === 'storage_azure' &&
+        endpoint && endpoint.endpointType === 'azure'"
+        :model="model.contextView.activeItem.data"></azure-storage-accounts-list>
+      <vsphere-datastores-list v-if="activeContextItem === 'vsphere_datastores'"
+        :model="model.contextView.activeItem.data"></vsphere-datastores-list>
+      <vsphere-storage-policies-list v-if="activeContextItem === 'vsphere_storage_policies'"
+        :model="model.contextView.activeItem.data"></vsphere-storage-policies-list>
     </div>
   </context-sidepanel>
 

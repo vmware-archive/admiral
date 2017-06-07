@@ -10,11 +10,15 @@
  */
 
 import { EndpointsActions, ProfileActions, NavigationActions,
-    SubnetworksActions } from 'actions/Actions';
+  SubnetworksActions, AzureStorageAccountsActions, VsphereDatastoreActions,
+  VsphereStoragePolicyActions} from 'actions/Actions';
 import ContextPanelStoreMixin from 'stores/mixins/ContextPanelStoreMixin';
 import CrudStoreMixin from 'stores/mixins/CrudStoreMixin';
 import EndpointsStore from 'stores/EndpointsStore';
 import SubnetworksStore from 'stores/SubnetworksStore';
+import AzureStorageAccountsStore from 'stores/AzureStorageAccountsStore';
+import VsphereDatastoreStore from 'stores/VsphereDatastoreStore';
+import VsphereStoragePolicyStore from 'stores/VsphereStoragePolicyStore';
 import constants from 'core/constants';
 import services from 'core/services';
 import utils from 'core/utils';
@@ -103,6 +107,58 @@ let ProfilesStore = Reflux.createStore({
             this.onCloseToolbar();
           }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
         }
+      }
+
+      this.emitChange();
+    });
+
+    AzureStorageAccountsStore.listen((storageAccountsData) => {
+
+      let storageAccounts = storageAccountsData.items || [];
+      this.setInData(['storageAccounts'], storageAccounts);
+      if (!this.data.editingItemData) {
+        return;
+      } else {
+        this.setInData(['editingItemData', 'storageAccounts'], storageAccounts);
+      }
+
+      if (isContextPanelActive.call(this, constants.CONTEXT_PANEL.STORAGE_AZURE)) {
+        this.setInData(['editingItemData', 'contextView', 'activeItem', 'data'],
+          storageAccountsData);
+      }
+
+      this.emitChange();
+    });
+
+    VsphereDatastoreStore.listen((datastoresData) => {
+      let datastores = datastoresData.items || [];
+      this.setInData(['datastores'], datastores);
+      if (!this.data.editingItemData) {
+        return;
+      } else {
+        this.setInData(['editingItemData', 'datastores'], datastores);
+      }
+
+      if (isContextPanelActive.call(this, constants.CONTEXT_PANEL.VSPHERE_DATASTORES)) {
+        this.setInData(['editingItemData', 'contextView', 'activeItem', 'data'],
+          datastoresData);
+      }
+
+      this.emitChange();
+    });
+
+    VsphereStoragePolicyStore.listen((storagePoliciesData) => {
+      let storagePolicies = storagePoliciesData.items || [];
+      this.setInData(['storagePolicies'], storagePolicies);
+      if (!this.data.editingItemData) {
+        return;
+      } else {
+        this.setInData(['editingItemData', 'storagePolicies'], storagePolicies);
+      }
+
+      if (isContextPanelActive.call(this, constants.CONTEXT_PANEL.VSPHERE_STORAGE_POLICIES)) {
+        this.setInData(['editingItemData', 'contextView', 'activeItem', 'data'],
+          storagePoliciesData);
       }
 
       this.emitChange();
@@ -385,13 +441,23 @@ let ProfilesStore = Reflux.createStore({
     }
   },
 
-  onSelectView(view, endpointLink) {
+  onSelectView(view, endpoint) {
     switch (view) {
       case 'basic':
         EndpointsActions.retrieveEndpoints();
         break;
       case 'network':
-        SubnetworksActions.retrieveSubnetworks(endpointLink);
+        SubnetworksActions.retrieveSubnetworks(endpoint && endpoint.documentSelfLink);
+        break;
+      case 'storage':
+        if (endpoint) {
+          if (endpoint.endpointType === 'azure') {
+            AzureStorageAccountsActions.retrieveAccounts();
+          } else if (endpoint.endpointType === 'vsphere') {
+            VsphereDatastoreActions.retrieveDatastores(endpoint.documentSelfLink);
+            VsphereStoragePolicyActions.retrieveStoragePolicies(endpoint.documentSelfLink);
+          }
+        }
         break;
     }
   },
@@ -417,12 +483,28 @@ let ProfilesStore = Reflux.createStore({
     onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.SUBNETWORKS,
         SubnetworksStore.getData(), true);
   },
+
   onLoadStorageTags(tagLinks) {
     let tags = {};
     services.loadTags(tagLinks).then((tagsResponse) => {
       tags = Object.values(tagsResponse);
     });
     return tags;
+  },
+
+  onManageAzureStorageAccounts() {
+    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.STORAGE_AZURE,
+      AzureStorageAccountsStore.getData(), true);
+  },
+
+  onManageVsphereStoragePolicies() {
+    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.VSPHERE_STORAGE_POLICIES,
+      VsphereStoragePolicyStore.getData(), true);
+  },
+
+  onManageVsphereDatastores() {
+    onOpenToolbarItem.call(this, constants.CONTEXT_PANEL.VSPHERE_DATASTORES,
+      VsphereDatastoreStore.getData(), true);
   }
 });
 

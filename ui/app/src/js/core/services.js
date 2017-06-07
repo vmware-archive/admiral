@@ -2299,8 +2299,14 @@ services.loadAdapters = function() {
   return list(links.ADAPTERS, true);
 };
 
-services.loadStorageAccounts = function() {
+services.loadAzureStorageAccounts = function(nameFilter) {
   let storageQuery = {};
+  if (nameFilter) {
+    storageQuery.name = [{
+      val: `${nameFilter}*`,
+      op: 'eq'
+    }];
+  }
   storageQuery['customProperties.storageType'] = [{
     val: 'Microsoft.Storage/storageAccounts',
     op: 'eq'
@@ -2310,15 +2316,68 @@ services.loadStorageAccounts = function() {
   });
 };
 
-services.loadVsphereDatastores = function(endpointLink) {
+services.updateStorageAccount = function(storageAccount) {
+  return patch(storageAccount.documentSelfLink, {
+    supportsEncryption: storageAccount.supportsEncryption
+  });
+};
+
+services.loadVsphereDatastores = function(endpointLink, nameFilter, storagePolicyLink) {
   let datastoreQuery = {
     endpointLink: [{
       val: endpointLink,
       op: 'eq'
     }]
   };
+  if (nameFilter) {
+    datastoreQuery.name = [{
+      val: `${nameFilter}*`,
+      op: 'eq'
+    }];
+  }
+  if (storagePolicyLink) {
+    datastoreQuery['groupLinks.item'] = [{
+      val: storagePolicyLink,
+      op: 'eq'
+    }];
+  }
   return get(links.STORAGE_DESCRIPTIONS, {
     [ODATA_FILTER_PROP_NAME]: serviceUtils.buildOdataQuery(datastoreQuery)
+  });
+};
+
+services.updateVsphereDatastore = function(datastore) {
+  return patch(datastore.documentSelfLink, {
+    supportsEncryption: datastore.supportsEncryption
+  });
+};
+
+services.loadVsphereStoragePolicies = function(endpointLink, nameFilter) {
+  let storagePoliciesQuery = {};
+  storagePoliciesQuery['customProperties.__type'] = [{
+    val: 'STORAGE',
+    op: 'eq'
+  }];
+  storagePoliciesQuery['customProperties.__endpointLink'] = [{
+    val: endpointLink,
+    op: 'eq'
+  }];
+  if (nameFilter) {
+    storagePoliciesQuery.name = [{
+      val: `${nameFilter}*`,
+      op: 'eq'
+    }];
+  }
+  return get(links.RESOURCE_GROUPS, {
+    [ODATA_FILTER_PROP_NAME]: serviceUtils.buildOdataQuery(storagePoliciesQuery)
+  });
+};
+
+services.updateVsphereStoragePolicy = function(storagePolicy) {
+  return patch(storagePolicy.documentSelfLink, {
+    customProperties: {
+      __supportsEncryption: storagePolicy.customProperties.__supportsEncryption
+    }
   });
 };
 

@@ -24,17 +24,24 @@ export default Vue.component('vsphere-storage-profile-editor', {
     class="storage-item"
     :class="index !== storageItems.length - 1 ? 'not-last-storage-item' : ''">
     <vsphere-storage-item
-    :storage-item="item"
-    :datastores="datastores"
-    :index="index"
-    @change="onStorageItemChange"
-    @remove="onRemoveStorageItem">
+      :storage-item="item"
+      :endpoint="endpoint"
+      :index="index"
+      :resource-group-state="storageItemsExpanded &&
+        storageItemsExpanded[$index] &&
+        storageItemsExpanded[$index].resourceGroupState || {}"
+      :storage-description="storageItemsExpanded &&
+        storageItemsExpanded[$index] &&
+        storageItemsExpanded[$index].storageDescription || {}"
+      @change="onStorageItemChange"
+      @remove="onRemoveStorageItem"
+      @default-item-changed="onDefaultItemChange">
     </vsphere-storage-item>
   </div>
   `,
   props: {
     endpoint: {
-      required: false,
+      required: true,
       type: Object
     },
     model: {
@@ -42,28 +49,14 @@ export default Vue.component('vsphere-storage-profile-editor', {
       type: Object
     }
   },
-  created() {
-    let datastores = [];
-    if (this.endpoint && this.endpoint.documentSelfLink) {
-      services.loadVsphereDatastores(this.endpoint.documentSelfLink).then((response) => {
-        let resourceDocuments = utils.getDocumentArray(response);
-        datastores = resourceDocuments.map((resourceDocument) => {
-          return {
-            name: resourceDocument.name,
-            selfLink: resourceDocument.documentSelfLink
-          };
-        });
-        this.datastores = datastores;
-      });
-    }
-    this.datastores = datastores;
-  },
   data() {
     let storageItems = this.model.storageItems &&
       this.model.storageItems.asMutable({deep: true}) || [];
+    let storageItemsExpanded = this.model.storageItemsExpanded;
     return {
+      storageItemsSize: this.model.storageItems && this.model.storageItems.length,
       storageItems: storageItems,
-      datastores: []
+      storageItemsExpanded: storageItemsExpanded
     };
   },
   attached() {
@@ -83,21 +76,30 @@ export default Vue.component('vsphere-storage-profile-editor', {
     },
     onAddStorageItem() {
       let newStorageItem = {
-        name: '',
+        name: `Storage Item ${this.storageItemsSize++}`,
         tagLinks: [],
         diskProperties: {},
-        defaultForDisk: false
+        defaultItem: !this.storageItems.length
       };
       this.storageItems.push(newStorageItem);
     },
     onRemoveStorageItem(index) {
+      let isDefault = this.storageItems[index].defaultItem;
       this.storageItems.splice(index, 1);
+      if (this.storageItems.length && isDefault) {
+        this.storageItems[0].defaultItem = true;
+      }
       this.emitChange();
     },
     validate() {
       return this.storageItems.reduce((acc, storageItem) => {
         return acc && storageItem.valid;
       }, true);
+    },
+    onDefaultItemChange(index) {
+      this.storageItems.forEach((item, currentIndex) => {
+        item.defaultItem = index === currentIndex;
+      });
     }
   }
 });
@@ -161,9 +163,17 @@ Vue.component('vsphere-storage-item', {
       required: true,
       type: Number
     },
-    datastores: {
+    endpoint: {
       required: true,
-      type: Array
+      type: Object
+    },
+    resourceGroupState: {
+      required: false,
+      type: Object
+    },
+    storageDescription: {
+      required: true,
+      type: Object
     }
   },
   data() {
@@ -178,10 +188,10 @@ Vue.component('vsphere-storage-item', {
       provisioningTypes: PROVISIONTNG_TYPES,
       sharesLevelTypes: SHARES_LEVEL,
       provisioningType: diskProperties.provisioningType || 'thin',
-      datastore: diskProperties.datastore || '',
       sharesLevel: diskProperties.sharesLevel || SHARES_LEVEL_VALUES.normal,
       shares: diskProperties.shares || SHARES_VALUES.normal,
-      limit: diskProperties.limit || ''
+      limitIops: diskProperties.limitIops || '',
+      independent: diskProperties.independent === 'true'
     };
   },
   computed: {
@@ -201,9 +211,16 @@ Vue.component('vsphere-storage-item', {
     }
   },
   attached() {
-    this.onDiskPropertyChange('sharesLevel', SHARES_LEVEL_VALUES.normal);
-    this.onDiskPropertyChange('shares', SHARES_VALUES.normal);
-    this.onDiskPropertyChange('limit', '');
+    this.onDiskPropertyChange('sharesLevel',
+      this.storageItem.diskProperties.sharesLevel || SHARES_LEVEL_VALUES.normal);
+    this.onDiskPropertyChange('shares',
+      this.storageItem.diskProperties.shares || SHARES_VALUES.normal);
+    this.onDiskPropertyChange('limitIops',
+      this.storageItem.diskProperties.limitIops || '');
+    this.onDiskPropertyChange('provisioningType',
+      this.storageItem.diskProperties.provisioningType || 'thin');
+    this.onDiskPropertyChange('independent',
+      this.storageItem.diskProperties.independent || false);
     this.storageItem.valid = this.isValid();
     this.$emit('change');
   },
@@ -220,16 +237,13 @@ Vue.component('vsphere-storage-item', {
     onRemoveItem() {
       this.$emit('remove', this.index);
     },
-    onDefaultChange($event) {
-      this.storageItem.defaultItem = $event.target.checked;
+    onDefaultChange() {
+      this.$emit('default-item-changed', this.index);
     },
     onDiskPropertyChange(diskPropertyName, value) {
       this.storageItem.diskProperties[diskPropertyName] = value;
       this.storageItem.valid = this.isValid();
       this.$emit('change');
-    },
-    onDatastoreChange($event) {
-      this.onDiskPropertyChange('datastore', $event.target.value);
     },
     onProvisioningTypeChange($event) {
       this.onDiskPropertyChange('provisioningType', $event.target.value);
@@ -251,25 +265,102 @@ Vue.component('vsphere-storage-item', {
           break;
         case SHARES_LEVEL_VALUES.custom:
           this.customShares = true;
+          this.shares = '';
           break;
       }
       this.onDiskPropertyChange('sharesLevel', $event.target.value);
       this.onDiskPropertyChange('shares', this.shares);
     },
     onLimitChange($event) {
-      this.onDiskPropertyChange('limit', $event.target.value);
+      this.onDiskPropertyChange('limitIops', $event.target.value);
     },
     onSharesChange($event) {
       this.shares = $event.target.value;
       this.onDiskPropertyChange('shares', this.shares);
     },
     isValid() {
-      return !!this.storageItem.name && !!this.storageItem.diskProperties.datastore
-        && (parseInt(this.storageItem.diskProperties.limit, 10) <= LIMIT_RANGE.max
-        && parseInt(this.storageItem.diskProperties.limit, 10) >= LIMIT_RANGE.min
-        || this.storageItem.diskProperties.limit === '')
+      return !!(this.storageItem.name
+        && (parseInt(this.storageItem.diskProperties.limitIops, 10) <= LIMIT_RANGE.max
+        && parseInt(this.storageItem.diskProperties.limitIops, 10) >= LIMIT_RANGE.min
+        || this.storageItem.diskProperties.limitIops === '')
         && parseInt(this.storageItem.diskProperties.shares, 10) <= SHARES_RANGE.max
-        && parseInt(this.storageItem.diskProperties.shares, 10) >= SHARES_RANGE.min;
+        && parseInt(this.storageItem.diskProperties.shares, 10) >= SHARES_RANGE.min
+        && this.storageItem.storageDescriptionLink);
+    },
+    searchVsphereDatastores(filterString) {
+      return new Promise((resolve, reject) => {
+        services.loadVsphereDatastores(this.endpoint.documentSelfLink, filterString,
+          this.storageItem.resourceGroupLink)
+          .then((response) => {
+            let result = {
+              totalCount: response.totalCount
+            };
+            result.items = utils.getDocumentArray(response);
+            resolve(result);
+        }).catch(reject);
+      });
+    },
+    renderDatastore(datastore) {
+      let props = [
+        i18n.t('app.profile.edit.storage.vsphere.datastore.typeLabel') + ': ' +
+        utils.escapeHtml(datastore.type),
+        i18n.t('app.profile.edit.storage.vsphere.datastore.capacityLabel') + ': ' +
+        utils.escapeHtml(utils.convertToGigabytes(datastore.capacityBytes)) +
+        i18n.t('app.profile.edit.storage.vsphere.datastore.capacityUnit')
+      ];
+      let secondary = props.join(', ');
+      return `
+        <div>
+          <div class="host-picker-item-primary">
+            ${utils.escapeHtml(datastore.name)}
+        </div>
+        <div class="host-picker-item-secondary" title="${secondary}">
+            ${secondary}
+        </div>`;
+    },
+    searchVsphereStoragePolicies(filterString) {
+      return new Promise((resolve, reject) => {
+        services.loadVsphereStoragePolicies(this.endpoint.documentSelfLink, filterString)
+          .then((response) => {
+            let result = {
+              totalCount: response.totalCount
+            };
+            result.items = utils.getDocumentArray(response);
+            resolve(result);
+        }).catch(reject);
+      });
+    },
+    renderStoragePolicy(storagePolicy) {
+      let props = [
+        i18n.t('app.profile.edit.storage.vsphere.storagePolicy.descriptionLabel')
+        + ': ' + utils.escapeHtml(storagePolicy.desc)
+      ];
+      return `
+      <div>
+        <div class="host-picker-item-primary">
+          ${utils.escapeHtml(storagePolicy.name)}
+        </div>
+        <div class="host-picker-item-secondary" title="${props}">
+          ${props}
+        </div>
+      </div>`;
+    },
+    onDatastoreChange(value) {
+      this.storageItem.storageDescriptionLink = value && value.documentSelfLink || '';
+      this.storageDescription = value;
+      this.storageItem.valid = this.isValid();
+      this.$emit('change');
+    },
+    onStoragePolicyChange(value) {
+      this.storageItem.resourceGroupLink = value && value.documentSelfLink || null;
+      this.storageItem.storageDescriptionLink = null;
+      this.storageDescription = null;
+      this.resourceGroupState = value;
+      this.storageItem.valid = this.isValid();
+      this.$emit('change');
+    },
+    onIndependentChange(value) {
+      this.onDiskPropertyChange('independent', value);
     }
   }
 });

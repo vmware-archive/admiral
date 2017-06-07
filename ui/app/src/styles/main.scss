@@ -352,7 +352,10 @@ textarea {
 .endpoints-view .control-btns,
 .placement-zones-view .control-btns,
 .groups-view .control-btns,
-.subnetworks-view .control-btns {
+.subnetworks-view .control-btns,
+.vsphere-storage-policies-view .control-btns,
+.azure-storage-accounts-view .control-btns,
+.vsphere-datastores-view .control-btns {
   padding-top: 10px;
 }
 
@@ -2442,5 +2445,13 @@ $request-graph-header-color: #0b40c8;
 
   .graph-container {
     position: relative;
+  }
+}
+
+.custom-property-table {
+  width: 100%;
+  margin: 10px 0px 0px 0px;
+  thead, td {
+    opacity: 1 !important;
   }
 }

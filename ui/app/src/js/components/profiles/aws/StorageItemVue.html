@@ -50,11 +50,11 @@
 </div>
 <div class="form-group">
   <form-label>{{i18n('app.profile.edit.storage.aws.encryptedLabel')}}</form-label>
-  <div class="toggle-switch">
-    <input type="checkbox" name="encryptionCheckbox" id="encryption-checkbox-{{index}}"
-      @change="onEncryptionChange" :checked="storageItem.supportsEncryption">
-    <label for="encryption-checkbox-{{index}}"></label>
-  </div>
+  <checkbox-control
+    :label="i18n('app.profile.edit.storage.azure.list.edit.encryptionLabel')"
+    :value="storageItem.supportsEncryption"
+    @change="onEncryptionChange">
+  </checkbox-control>
 </div>
 <tags-group
   :label="i18n('app.profile.edit.tagsLabel')"
@@ -67,7 +67,7 @@
   <label>{{i18n('app.profile.edit.defaultLabel')}}</label>
   <div class="radio">
     <input type="radio" name="defaultRadio" id="default-radio-{{index}}"
-           :checked="storageItem.defaultItem" @click="onDefaultChange">
+           :checked="storageItem.defaultItem" @change="onDefaultChange">
     <label for="default-radio-{{index}}">
       {{i18n('app.profile.edit.makeDescriptorDefault')}}</label>
   </div>

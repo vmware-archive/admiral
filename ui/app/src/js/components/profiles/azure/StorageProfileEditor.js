@@ -24,11 +24,11 @@ export default Vue.component('azure-storage-profile-editor', {
     class="storage-item"
     :class="index !== storageItems.length - 1 ? 'not-last-storage-item' : ''">
     <azure-storage-item
-    :storage-item="item"
-    :index="index"
-    :storage-accounts="storageAccounts"
-    @change="onStorageItemChange"
-    @remove="onRemoveStorageItem">
+      :storage-item="item"
+      :index="index"
+      @change="onStorageItemChange"
+      @remove="onRemoveStorageItem"
+      @default-item-changed="onDefaultItemChange">
     </azure-storage-item>
   </div>
   `,
@@ -43,21 +43,12 @@ export default Vue.component('azure-storage-profile-editor', {
     }
   },
   data() {
-    let storageItems = this.model.storageItems &&
-      this.model.storageItems.asMutable({deep: true}) || [];
+    let storageItems = this.model.storageItemsExpanded &&
+      this.model.storageItemsExpanded.asMutable({deep: true}) || [];
     return {
-      storageItems: storageItems,
-      storageAccounts: []
+      storageItemsSize: this.model.storageItems && this.model.storageItems.length,
+      storageItems: storageItems
     };
-  },
-  created() {
-    services.loadStorageAccounts().then((response) => {
-      let documents = utils.getDocumentArray(response);
-      let accountNames = documents.map((document) => {
-        return document.name;
-      });
-      this.storageAccounts = accountNames || [];
-    });
   },
   attached() {
     this.emitChange();
@@ -71,41 +62,38 @@ export default Vue.component('azure-storage-profile-editor', {
         properties: {
           storageItems: this.storageItems
         },
-        valid: true
+        valid: this.validate()
       });
     },
     onAddStorageItem() {
       let newStorageItem = {
-        name: '',
+        name: `Storage Item ${this.storageItemsSize++}`,
         tagLinks: [],
         diskProperties: {},
-        defaultForDisk: false
+        defaultItem: !this.storageItems.length
       };
       this.storageItems.push(newStorageItem);
     },
     onRemoveStorageItem(index) {
+      let isDefault = this.storageItems[index].defaultItem;
       this.storageItems.splice(index, 1);
+      if (this.storageItems.length && isDefault) {
+        this.storageItems[0].defaultItem = true;
+      }
       this.emitChange();
+    },
+    onDefaultItemChange(index) {
+      this.storageItems.forEach((item, currentIndex) => {
+        item.defaultItem = index === currentIndex;
+      });
+    },
+    validate() {
+      return this.storageItems.reduce((acc, storageItem) => {
+        return acc && storageItem.valid;
+      }, true);
     }
   }
 });
-
-const STORAGE_ACCOUNT_TYPES = [{
-  name: i18n.t('app.profile.azureStorageAccountType.standardLRS'),
-  value: 'Standard_LRS'
-}, {
-  name: i18n.t('app.profile.azureStorageAccountType.standardZRS'),
-  value: 'Standard_ZRS'
-}, {
-  name: i18n.t('app.profile.azureStorageAccountType.standardGRS'),
-  value: 'Standard_GRS'
-}, {
-  name: i18n.t('app.profile.azureStorageAccountType.standardRAGRS'),
-  value: 'Standard_RAGRS'
-}, {
-  name: i18n.t('app.profile.azureStorageAccountType.premiumLRS'),
-  value: 'Premium_LRS'
-}];
 
 const OS_DISK_CACHING_TYPES = [{
   name: i18n.t('app.profile.azureOSDiskCachingType.none'),
@@ -129,9 +117,10 @@ Vue.component('azure-storage-item', {
       required: true,
       type: Number
     },
-    storageAccounts: {
-      required: true,
-      type: Array
+    disabled: {
+      default: false,
+      required: false,
+      type: Boolean
     }
   },
   created() {
@@ -145,6 +134,10 @@ Vue.component('azure-storage-item', {
       });
     }
   },
+  attached() {
+    this.storageItem.valid = this.isValid();
+    this.$emit('change');
+  },
   data() {
     let diskProperties = this.storageItem.diskProperties;
     let tagLinks = this.storageItem.tagLinks;
@@ -153,14 +146,10 @@ Vue.component('azure-storage-item', {
       this.storageItem.name = `${i18n.t('app.profile.edit.itemHeader')} ${this.index}`;
     }
     return {
-      storageAccount: diskProperties.azureStorageAccountName || '',
-      storageAccountType: diskProperties.azureStorageAccountType || '',
       osDiskCaching: diskProperties.azureOsDiskCaching || '',
       tagLinks: tagLinks,
       tags: [],
-      accountTypes: STORAGE_ACCOUNT_TYPES,
-      cachingTypes: OS_DISK_CACHING_TYPES,
-      existingAccountSelected: true
+      cachingTypes: OS_DISK_CACHING_TYPES
     };
   },
   methods: {
@@ -170,28 +159,60 @@ Vue.component('azure-storage-item', {
     },
     onNameChange(value) {
       this.storageItem.name = value;
+      this.storageItem.valid = this.isValid();
+      this.$emit('change');
     },
     onRemoveItem() {
       this.$emit('remove', this.index);
     },
-    onDefaultChange($event) {
-      this.storageItem.defaultItem = $event.target.checked;
-    },
-    onAccountNameChange($event) {
-      let value = $event.target.value;
-      this.existingAccountSelected = this.storageAccounts.find((storageAccount) => {
-        return storageAccount === value;
-      });
-      this.onDiskPropertyChange('azureStorageAccountName', value);
-    },
-    onAccountTypeChange($event) {
-      this.onDiskPropertyChange('azureStorageAccountType', $event.target.value);
+    onDefaultChange() {
+      this.$emit('default-item-changed', this.index);
     },
     onOSDiskCachingChange($event) {
       this.onDiskPropertyChange('azureOsDiskCaching', $event.target.value);
     },
     onDiskPropertyChange(diskPropertyName, value) {
       this.storageItem.diskProperties[diskPropertyName] = value;
+      this.storageItem.valid = this.isValid();
+      this.$emit('change');
+    },
+    renderStorageAccount(storageAccount) {
+      let props = [
+        i18n.t('app.profile.edit.storage.azure.typeLabel') + ': ' +
+          utils.escapeHtml(storageAccount.type),
+        i18n.t('app.profile.edit.storage.azure.encryptionLabel') + ': ' +
+          utils.escapeHtml(storageAccount.supportsEncryption)
+      ];
+      let secondary = props.join(', ');
+      return `
+        <div>
+          <div class="host-picker-item-primary">
+            ${utils.escapeHtml(storageAccount.name)}
+        </div>
+        <div class="host-picker-item-secondary" title="${secondary}">
+            ${secondary}
+        </div>`;
+    },
+    searchAzureAccounts(filterString) {
+      return new Promise((resolve, reject) => {
+        services.loadAzureStorageAccounts(filterString).then((response) => {
+          let result = {
+            totalCount: response.totalCount
+          };
+          result.items = utils.getDocumentArray(response);
+          resolve(result);
+        }).catch(reject);
+      });
+    },
+    onChange(value) {
+      this.storageItem.storageDescriptionLink = value && value.documentSelfLink || '';
+      this.storageItem.valid = this.isValid();
+      this.$emit('change');
+    },
+    isValid() {
+      return this.storageItem.name &&
+        this.storageItem.storageDescriptionLink &&
+        this.storageItem.diskProperties.azureOsDiskCaching;
     }
   }
 });

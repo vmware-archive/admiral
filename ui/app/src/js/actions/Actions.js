@@ -179,7 +179,8 @@ export var ProfileActions = Reflux.createActions([
   'openProfiles', 'openProfilesNext', 'openAddProfile', 'editProfile',
   'cancelEditProfile', 'createProfile', 'updateProfile', 'deleteProfile',
   'createEndpoint', 'manageEndpoints', 'createSubnetwork', 'manageSubnetworks',
-  'closeToolbar', 'selectView'
+  'closeToolbar', 'selectView', 'manageAzureStorageAccounts', 'manageVsphereDatastores',
+  'manageVsphereStoragePolicies'
 ]);
 
 export var EndpointsActions = Reflux.createActions([
@@ -212,6 +213,18 @@ export var NotificationsActions = Reflux.createActions([
 
 export var StorageDescriptionsActions = Reflux.createActions([
   'retrieveStorageDescriptions'
+]);
+
+export var AzureStorageAccountsActions = Reflux.createActions([
+  'editAccount', 'cancelEditAccount', 'updateAccount', 'retrieveAccounts'
+]);
+
+export var VsphereDatastoreActions = Reflux.createActions([
+  'editDatastore', 'cancelEditDatastore', 'updateDatastore', 'retrieveDatastores'
+]);
+
+export var VsphereStoragePolicyActions = Reflux.createActions([
+  'editStoragePolicy', 'cancelEditStoragePolicy', 'updateStoragePolicy', 'retrieveStoragePolicies'
 ]);
 
 /*

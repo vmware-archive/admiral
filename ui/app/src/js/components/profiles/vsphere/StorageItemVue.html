@@ -24,20 +24,24 @@
 </text-group>
 <div class="form-group">
   <form-label>{{i18n('app.profile.edit.storage.vsphere.storagePolicyLabel')}}</form-label>
-  <div class="form-control select">
-    <select>
-    </select>
-  </div>
+  <dropdown-search
+    :filter="searchVsphereStoragePolicies"
+    :renderer="renderStoragePolicy"
+    @change="onStoragePolicyChange"
+    :entity="i18n('app.profile.edit.storage.vsphere.storagePolicyEntityLabel')"
+    :value="resourceGroupState">
+  </dropdown-search>
 </div>
 <div class="form-group">
   <form-label :required="true">
     {{i18n('app.profile.edit.storage.vsphere.datastoreLabel')}}</form-label>
-  <div class="form-control select">
-    <select @change="onDatastoreChange" v-model="datastore">
-      <option v-for="datastore of datastores" :value="datastore.selfLink">
-        {{datastore.name}}</option>
-    </select>
-  </div>
+  <dropdown-search
+    :filter="searchVsphereDatastores"
+    :renderer="renderDatastore"
+    @change="onDatastoreChange"
+    :entity="i18n('app.profile.edit.storage.vsphere.datastoreEntityLabel')"
+    :value="storageDescription">
+  </dropdown-search>
 </div>
 <div class="form-group">
   <form-label>
@@ -67,9 +71,16 @@
 <div class="form-group">
   <form-label>{{i18n('app.profile.edit.storage.vsphere.limitLabel')}}</form-label>
   <div class="form-control">
-    <input type="number" class="form-control"
-           @change="onLimitChange" v-model="limit">
+    <input type="number" class="form-control" @change="onLimitChange" v-model="limitIops">
   </div>
+</div>
+<div class="form-group">
+  <form-label>{{i18n('app.profile.edit.storage.vsphere.snapshotsLabel')}}</form-label>
+  <checkbox-control
+    :label=""
+    :value="independent"
+    @change="onIndependentChange">
+  </checkbox-control>
 </div>
 <tags-group
   :label="i18n('app.profile.edit.tagsLabel')"
@@ -82,7 +93,7 @@
   <label>{{i18n('app.profile.edit.defaultLabel')}}</label>
   <div class="radio">
     <input type="radio" name="defaultRadio" id="default-radio-{{index}}"
-           :checked="storageItem.defaultItem" @click="onDefaultChange">
+           :checked="storageItem.defaultItem" @change="onDefaultChange">
     <label for="default-radio-{{index}}">
       {{i18n('app.profile.edit.makeDescriptorDefault')}}</label>
   </div>

@@ -23,10 +23,11 @@ export default Vue.component('aws-storage-profile-editor', {
     class="storage-item"
     :class="index !== storageItems.length - 1 ? 'not-last-storage-item' : ''">
     <aws-storage-item
-    :storage-item="item"
-    :index="index"
-    @change="onStorageItemChange"
-    @remove="onRemoveStorageItem">
+      :storage-item="item"
+      :index="index"
+      @change="onStorageItemChange"
+      @remove="onRemoveStorageItem"
+      @default-item-changed="onDefaultItemChange">
     </aws-storage-item>
   </div>
   `,
@@ -44,6 +45,7 @@ export default Vue.component('aws-storage-profile-editor', {
     let storageItems = this.model.storageItems &&
       this.model.storageItems.asMutable({deep: true}) || [];
     return {
+      storageItemsSize: this.model.storageItems && this.model.storageItems.length,
       storageItems: storageItems
     };
   },
@@ -64,21 +66,30 @@ export default Vue.component('aws-storage-profile-editor', {
     },
     onAddStorageItem() {
       let newStorageItem = {
-        name: '',
+        name: `Storage Item ${this.storageItemsSize++}`,
         tagLinks: [],
         diskProperties: {},
-        defaultForDisk: false
+        defaultItem: !this.storageItems.length
       };
       this.storageItems.push(newStorageItem);
     },
     onRemoveStorageItem(index) {
+      let isDefault = this.storageItems[index].defaultItem;
       this.storageItems.splice(index, 1);
+      if (this.storageItems.length && isDefault) {
+        this.storageItems[0].defaultItem = true;
+      }
       this.emitChange();
     },
     validate() {
       return this.storageItems.reduce((acc, storageItem) => {
         return acc && storageItem.valid;
       }, true);
+    },
+    onDefaultItemChange(index) {
+      this.storageItems.forEach((item, currentIndex) => {
+        item.defaultItem = index === currentIndex;
+      });
     }
   }
 });
@@ -177,8 +188,8 @@ Vue.component('aws-storage-item', {
     onRemoveItem() {
       this.$emit('remove', this.index);
     },
-    onDefaultChange($event) {
-      this.storageItem.defaultItem = $event.target.checked;
+    onDefaultChange() {
+      this.$emit('default-item-changed', this.index);
     },
     onDiskPropertyChange(diskPropertyName, value) {
       this.storageItem.diskProperties[diskPropertyName] = value;
@@ -194,8 +205,8 @@ Vue.component('aws-storage-item', {
     onIOPSChange($event) {
       this.onDiskPropertyChange('iops', $event.target.value);
     },
-    onEncryptionChange($event) {
-      this.storageItem.supportsEncryption = $event.target.value;
+    onEncryptionChange(value) {
+      this.storageItem.supportsEncryption = value;
     },
     isValid() {
       if (!this.deviceType && !this.name) {

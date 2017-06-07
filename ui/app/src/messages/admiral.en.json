@@ -72,7 +72,7 @@
         "tagsPlaceholder": "Example: location:west",
         "tagsHint": "Enter key:value tags",
         "autoConfigure": "Auto configure",
-        "autoConfigureInput":"Enable host auto configuration",
+        "autoConfigureInput": "Enable host auto configuration",
         "autoConfigureHint": "This option will configure the docker remote API on the provided address and port with generated self signed certificates. It will be done once, over SSH. Supported operating systems are: CoreOS, PhotonOS, Ubuntu Server 16.04 or greater.",
         "reservationPolicy": "Reservation policy",
         "endpoint": "Endpoint",
@@ -337,12 +337,12 @@
           "ipamConfigGatewayHint": "Example: 172.16.238.1",
           "customProperties": "Custom properties"
         },
-        "editClosures" :{
+        "editClosures": {
           "newTitle": "Add Closure",
           "editTitle": "Edit Closure",
           "name": "Name"
         },
-        "editVolume" :{
+        "editVolume": {
           "newLabel": "Add Volume",
           "newTitle": "Add Volume",
           "newDropdownTitle": "Add Volume...",
@@ -549,9 +549,25 @@
         "itemHeader": "Storage Item",
         "storage": {
           "azure": {
-            "storageAccountNameLabel": "Storage Account Name",
+            "selectAccountLabel": "Select Account",
             "storageAccountTypeLabel": "Storage Account Type",
-            "osDiskCachingLabel": "OS Disk Caching"
+            "osDiskCachingLabel": "OS Disk Caching",
+            "contextPanelTooltip": "Storage Accounts",
+            "typeLabel": "Type",
+            "encryptionLabel": "Storage Service Encryption",
+            "entityLabel": "Storage Accounts",
+            "list": {
+              "title": "Storage Accounts",
+              "nameColumn": "Name",
+              "typeColumn": "Type",
+              "encryptionColumn": "Storage Service Encryption",
+              "edit": {
+                "title": "Edit Storage Account",
+                "nameLabel": "Account Name",
+                "typeLabel": "Account Type",
+                "encryptionLabel": "Storage Service Encryption"
+              }
+            }
           },
           "vsphere": {
             "storagePolicyLabel": "Storage Policy",
@@ -559,7 +575,50 @@
             "datastoreLabel": "Datastore",
             "sharesLevelLabel": "Shares Level",
             "sharesLabel": "Shares",
-            "limitLabel": "Limit IOPS"
+            "limitLabel": "Limit IOPS",
+            "datastoreContextPanelTooltip": "Datastores",
+            "storagePolicyContextPanelTooltip": "Storage Policies",
+            "datastoreEntityLabel": "Datastores",
+            "storagePolicyEntityLabel": "Storage Policies",
+            "snapshotsLabel": "Independent of Snapshots",
+            "datastore": {
+              "typeLabel": "Type",
+              "capacityLabel": "Capacity",
+              "capacityUnit": "GB",
+              "list": {
+                "title": "Datastores",
+                "nameColumn": "Name",
+                "typeColumn": "Type",
+                "capacityColumn": "Capacity(GB)",
+                "encryptionColumn": "Supports Encryption",
+                "edit": {
+                  "title": "Edit Datastore",
+                  "nameLabel": "Datastore",
+                  "typeLabel": "Type",
+                  "encryptionLabel": "Supports Encryption",
+                  "capacityLabel": "Capacity(GB)"
+                }
+              }
+            },
+            "storagePolicy": {
+              "descriptionLabel": "Description",
+              "list": {
+                "title": "Storage Policies",
+                "nameColumn": "Name",
+                "descColumn": "Description",
+                "encryptionColumn": "Supports Encryption",
+                "edit": {
+                  "title": "Edit Storage Policy",
+                  "nameLabel": "Name",
+                  "descLabel": "Description",
+                  "customPropertiesLabel": "Custom Properties",
+                  "customPropertiesTable": {
+                    "keyColumn": "Key",
+                    "valueColumn": "Value"
+                  }
+                }
+              }
+            }
           },
           "aws": {
             "volumeTypeLabel": "Volume Type",
@@ -690,7 +749,7 @@
         "importPlaceholder": ""
       },
       "details": {
-        "propertyName" : "Name",
+        "propertyName": "Name",
         "propertyValue": "Value",
         "general": {
           "id": "ID",
@@ -705,7 +764,7 @@
           "profile": "Profile"
         },
         "customProperties": {
-          "title" : "Custom Properties"
+          "title": "Custom Properties"
         }
       }
     },
@@ -1088,12 +1147,12 @@
           },
           "logConfigOptions": "Options",
           "logConfigOptionsDescription": "Supported options for each logging driver",
-          "logConfigOptionsInputs" : {
+          "logConfigOptionsInputs": {
             "name": "Name",
             "nameHint": "Example: max-size",
             "value": "Value",
             "valueHint": "Example: 10m"
-           }
+          }
         }
       },
       "state": {
@@ -1149,7 +1208,7 @@
       "details": {
         "name": "Name",
         "description": "Description",
-        "runtime" : "Runtime",
+        "runtime": "Runtime",
         "state": "State",
         "id": "ID",
         "inputs": "Inputs",
@@ -1170,7 +1229,7 @@
         "FAILED": "FAILED",
         "CANCELLED": "CANCELLED"
       },
-      "list" : {
+      "list": {
         "name": "Closure",
         "closuresCountLabel": "Closures",
         "closureRunsLabel": "Closure runs",
@@ -1193,22 +1252,22 @@
             "powershell": "Powershell 6",
             "java": "Java 8"
           },
-          "logConfigOptionsInputs" : {
+          "logConfigOptionsInputs": {
             "name": "Name",
             "nameHint": "Example: max-size",
             "value": "Value",
             "valueHint": "Example: 10m"
-           },
-           "closureInputs" : {
+          },
+          "closureInputs": {
             "name": "Name",
             "nameHint": "Example: a",
             "value": "Value",
             "valueHint": "Example: 1"
-           },
-           "closureOutputs" : {
+          },
+          "closureOutputs": {
             "name": "Name",
             "nameHint": "Example: result"
-           },
+          },
           "memoryLimit": "Memory limit (megabytes)",
           "timeout": "Timeout (seconds)",
           "entrypoint": "Entrypoint handler",
@@ -1253,103 +1312,104 @@
       "entity": "image"
     },
     "help": {
-        "link": "Help",
-        "description": "Ensemble allows you to access relevant information for the context of the task that you are currently performing. It will refresh automatically with instructions as you continue your work. Use a second screen or split-screen to access the information in real time. You can use a mobile device, a TV, and any other screen whether it is connected to your computer or not. You can use Ensemble outside of the trusted network, while still receiving instantaneous updates.",
-        "descriptionOpen": "To open Ensemble, click <strong>Open in new tab</strong> or scan the QR code with your mobile device."
-      },
-      "resources": {
-        "selectMultiple": "Select Items",
-        "message": {
-          "selectShift": "Use shift to select multiple items"
-        }
+      "link": "Help",
+      "description": "Ensemble allows you to access relevant information for the context of the task that you are currently performing. It will refresh automatically with instructions as you continue your work. Use a second screen or split-screen to access the information in real time. You can use a mobile device, a TV, and any other screen whether it is connected to your computer or not. You can use Ensemble outside of the trusted network, while still receiving instantaneous updates.",
+      "descriptionOpen": "To open Ensemble, click <strong>Open in new tab</strong> or scan the QR code with your mobile device."
+    },
+    "resources": {
+      "selectMultiple": "Select Items",
+      "message": {
+        "selectShift": "Use shift to select multiple items"
       }
     },
-    "loginPanel": {
-      "login": "Login",
-      "logout": "Logout",
-      "username": "Username",
-      "password": "Password",
-      "success": "Authentication successful",
-      "failure": "Authentication error"
-    },
-    "dropdownSearchMenu": {
-      "title": "Select from the {{entity}} list",
-      "searchPlaceholder": "Search for {{entity}}",
-      "clear": "Clear Selection",
-      "showingCount": "Showing {{count}} out of {{totalCount}}",
-      "noResults": "No items found"
-    },
-    "customProperties": {
-      "name": "Name",
-      "nameHint": "Example: speedchecker",
-      "value": "Value",
-      "valueHint": "Example: slow"
-    },
-    "yes": "Yes",
-    "no": "No",
-    "ok": "Ok",
-    "cancel": "Cancel",
-    "error": "Error",
-    "delete": "Delete",
-    "enable": "Enable",
-    "enabled": "Enabled",
-    "disable": "Disable",
-    "disabled": "Disabled",
-    "close": "Close",
-    "edit": "Edit",
-    "remove": "Remove",
-    "add": "Add",
-    "save": "Save",
-    "verify": "Verify",
-    "verified": "Verified successfully!",
-    "back": "Back",
-    "refresh": "Refresh",
-    "clear": "Clear",
-    "deleteAll": "Delete All",
-    "pendingOperationCancel": "operation in",
-    "openInNewTab": "Open in new tab",
-    "unavailable": "N/A",
-    "advanced": "Advanced",
-    "noSelection": "No Selection",
-    "buildNumber": "Build number",
-    "errors": {
-      "hostIp": "Value must be hostname or IP address.",
-      "urlPath": "URL path is invalid.",
-      "propertyNameRequired": "Property name is required.",
-      "propertyContainerNameInvalid": "Invalid container name, only [a-zA-Z0-9][a-zA-Z0-9_.-] are allowed.",
-      "propertyNamesNotUnique": "Property names must be unique.",
-      "nonNegativeNumber": "Value must be a non-negative integer less than 2147483648.",
-      "positiveNumber": "Value must be a positive integer less than 2147483648.",
-      "nonNegativeNumberAndMinusOne": "Value must be an integer between -1 and 2147483647.",
-      "portNumber": "Invalid port number. A valid port number ranges from 0 to 65535.",
-      "containerMemory": "Memory must be 0 (no limit) or at least 4194304 bytes (4MB).",
-      "required": "Value is required.",
-      "requiredAll": "All fields are required.",
-      "serviceNameRequired": "Service name is required.",
-      "networkRequired": "Network is required.",
-      "itemNotFound": "Item was not found.",
-      "networkExists": "Network already exists in template.",
-      "volumeDestinationRequired": "Volume destination is required.",
-      "invalidInputValue": "Invalid input value",
-      "invalidPath": "Value must be an absolute path.",
-      "invalidPathOrName": "Value must be an absolute path or a valid volume name.",
-      "containersConnected": "There are connected containers.",
-      "managedByCatalog": "Managed by catalog",
-      "projectsUnexpectedError": "An unexpected error has occured"
-    },
-    "infoMessages": {
-      "created": "Created Successfully!",
-      "updated": "Updated Successfully!"
-    },
-    "occurrence": {
-      "all": "Match all",
-      "any": "Match any"
-    },
-    "state": {
-      "ON": "ON",
-      "OFF": "OFF",
-      "SUSPEND": "DISABLED",
-      "UNKNOWN": "UNKNOWN",
-      "stateSinceMessage": "since {{date}}"
-    }
+    "noneLabel": "None"
+  },
+  "loginPanel": {
+    "login": "Login",
+    "logout": "Logout",
+    "username": "Username",
+    "password": "Password",
+    "success": "Authentication successful",
+    "failure": "Authentication error"
+  },
+  "dropdownSearchMenu": {
+    "title": "Select from the {{entity}} list",
+    "searchPlaceholder": "Search for {{entity}}",
+    "clear": "Clear Selection",
+    "showingCount": "Showing {{count}} out of {{totalCount}}",
+    "noResults": "No items found"
+  },
+  "customProperties": {
+    "name": "Name",
+    "nameHint": "Example: speedchecker",
+    "value": "Value",
+    "valueHint": "Example: slow"
+  },
+  "yes": "Yes",
+  "no": "No",
+  "ok": "Ok",
+  "cancel": "Cancel",
+  "error": "Error",
+  "delete": "Delete",
+  "enable": "Enable",
+  "enabled": "Enabled",
+  "disable": "Disable",
+  "disabled": "Disabled",
+  "close": "Close",
+  "edit": "Edit",
+  "remove": "Remove",
+  "add": "Add",
+  "save": "Save",
+  "verify": "Verify",
+  "verified": "Verified successfully!",
+  "back": "Back",
+  "refresh": "Refresh",
+  "clear": "Clear",
+  "deleteAll": "Delete All",
+  "pendingOperationCancel": "operation in",
+  "openInNewTab": "Open in new tab",
+  "unavailable": "N/A",
+  "advanced": "Advanced",
+  "noSelection": "No Selection",
+  "buildNumber": "Build number",
+  "errors": {
+    "hostIp": "Value must be hostname or IP address.",
+    "urlPath": "URL path is invalid.",
+    "propertyNameRequired": "Property name is required.",
+    "propertyContainerNameInvalid": "Invalid container name, only [a-zA-Z0-9][a-zA-Z0-9_.-] are allowed.",
+    "propertyNamesNotUnique": "Property names must be unique.",
+    "nonNegativeNumber": "Value must be a non-negative integer less than 2147483648.",
+    "positiveNumber": "Value must be a positive integer less than 2147483648.",
+    "nonNegativeNumberAndMinusOne": "Value must be an integer between -1 and 2147483647.",
+    "portNumber": "Invalid port number. A valid port number ranges from 0 to 65535.",
+    "containerMemory": "Memory must be 0 (no limit) or at least 4194304 bytes (4MB).",
+    "required": "Value is required.",
+    "requiredAll": "All fields are required.",
+    "serviceNameRequired": "Service name is required.",
+    "networkRequired": "Network is required.",
+    "itemNotFound": "Item was not found.",
+    "networkExists": "Network already exists in template.",
+    "volumeDestinationRequired": "Volume destination is required.",
+    "invalidInputValue": "Invalid input value",
+    "invalidPath": "Value must be an absolute path.",
+    "invalidPathOrName": "Value must be an absolute path or a valid volume name.",
+    "containersConnected": "There are connected containers.",
+    "managedByCatalog": "Managed by catalog",
+    "projectsUnexpectedError": "An unexpected error has occured"
+  },
+  "infoMessages": {
+    "created": "Created Successfully!",
+    "updated": "Updated Successfully!"
+  },
+  "occurrence": {
+    "all": "Match all",
+    "any": "Match any"
+  },
+  "state": {
+    "ON": "ON",
+    "OFF": "OFF",
+    "SUSPEND": "DISABLED",
+    "UNKNOWN": "UNKNOWN",
+    "stateSinceMessage": "since {{date}}"
+  }
 }

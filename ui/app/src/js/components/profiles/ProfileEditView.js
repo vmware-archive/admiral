@@ -26,6 +26,9 @@ import SubnetworksList from 'components/subnetworks/SubnetworksList'; //eslint-d
 import SecurityGroupSearch from 'components/profiles/SecurityGroupSearch'; //eslint-disable-line
 import ProfileEditViewVue from 'components/profiles/ProfileEditViewVue.html';
 import utils from 'core/utils';
+import AzureStorageAccountsList from 'components/profiles/azure/AzureStorageAccountsList'; //eslint-disable-line
+import VsphereDatastoresList from 'components/profiles/vsphere/VsphereDatastoresList'; //eslint-disable-line
+import VsphereStoragePoliciesList from 'components/profiles/vsphere/VsphereStoragePoliciesList'; //eslint-disable-line
 
 export default Vue.component('profile-edit-view', {
   template: ProfileEditViewVue,
@@ -93,8 +96,7 @@ export default Vue.component('profile-edit-view', {
         return false;
       }
       this.currentView = $(e.target).attr('href').substring(1);
-      ProfileActions.selectView(this.currentView,
-          this.endpoint && this.endpoint.documentSelfLink);
+      ProfileActions.selectView(this.currentView, this.endpoint);
     });
 
     $(this.$el).find('.nav-item a[href="#' + this.currentView + '"]').tab('show');
@@ -164,6 +166,15 @@ export default Vue.component('profile-edit-view', {
     },
     manageSubnetworks() {
       ProfileActions.manageSubnetworks();
+    },
+    manageAzureStorageAccounts() {
+      ProfileActions.manageAzureStorageAccounts();
+    },
+    manageVsphereDatastores() {
+      ProfileActions.manageVsphereDatastores();
+    },
+    manageVsphereStoragePolicies() {
+      ProfileActions.manageVsphereStoragePolicies();
     },
     closeToolbar() {
       ProfileActions.closeToolbar();

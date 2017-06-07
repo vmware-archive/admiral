@@ -1396,6 +1396,10 @@ var utils = {
     return documentResponse.documentLinks.map((documentLink) => {
       return documentResponse.documents[documentLink];
     });
+  },
+
+  convertToGigabytes(bytes) {
+    return (bytes / 1073741824).toFixed(2);
   }
 };
 

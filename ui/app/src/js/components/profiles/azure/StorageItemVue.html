@@ -21,24 +21,15 @@
   @change="onNameChange">
 </text-group>
 <div class="form-group">
-  <form-label :required="true">
-    {{i18n('app.profile.edit.storage.azure.storageAccountNameLabel')}}</form-label>
+  <form-label :required="true">{{i18n('app.profile.edit.storage.azure.selectAccountLabel')}}</form-label>
   <div class="form-control">
-    <input type="text" list="storageaccounts" class="form-control"
-           @change="onAccountNameChange($event)" :value="storageAccount">
-    <datalist id="storageaccounts">
-      <option v-for="account of storageAccounts" value="{{account}}"></option>
-    </datalist>
-  </div>
-</div>
-<div class="form-group" v-if="!existingAccountSelected">
-  <form-label :required="true">
-    {{i18n('app.profile.edit.storage.azure.storageAccountTypeLabel')}}</form-label>
-  <div class="form-control select">
-    <select @change="onAccountTypeChange" v-model="storageAccountType">
-      <option v-for="accountType of accountTypes" value="{{accountType.value}}">
-        {{accountType.name}}</option>
-    </select>
+    <dropdown-search
+      :filter="searchAzureAccounts"
+      :renderer="renderStorageAccount"
+      @change="onChange"
+      :entity="i18n('app.profile.edit.storage.azure.entityLabel')"
+      :value="storageItem.storageDescription">
+    </dropdown-search>
   </div>
 </div>
 <div class="form-group">
@@ -62,7 +53,7 @@
   <label>{{i18n('app.profile.edit.defaultLabel')}}</label>
   <div class="radio">
     <input type="radio" name="defaultRadio" id="default-radio-{{index}}"
-           :checked="storageItem.defaultItem" @click="onDefaultChange">
+           :checked="storageItem.defaultItem" @change="onDefaultChange">
     <label for="default-radio-{{index}}">
       {{i18n('app.profile.edit.makeDescriptorDefault')}}</label>
   </div>
