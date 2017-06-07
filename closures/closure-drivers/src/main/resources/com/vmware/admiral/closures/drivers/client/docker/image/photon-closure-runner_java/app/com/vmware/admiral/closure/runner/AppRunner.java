@@ -107,7 +107,8 @@ public class AppRunner {
                 Files.createDirectories(Paths.get(SRC_DIR));
             }
             String sourceContent = closureDescription.get("source").getAsString();
-            FileWriter writer = new FileWriter(SRC_DIR + File.separator + moduleName + ".java");
+            FileWriter writer = new FileWriter(SRC_DIR + File.separator + normalizedModulename
+                    (moduleName) + ".java");
             try (BufferedWriter bufferedWriter = new BufferedWriter(writer)) {
                 bufferedWriter.write(sourceContent);
             }
@@ -135,17 +136,20 @@ public class AppRunner {
             Context context = new ContextImpl(CLOSURE_URI, closureSemaphore, inputs);
 
             File file = null;
+            String targetClass = normalizedModulename(moduleName);
             if (skipCompilation) {
                 file = new File(SRC_FILE_ZIP);
             } else {
-                runProcess("javac -cp * -sourcepath ./ user_scripts/" + moduleName + ".java",
-                        closureSemaphore);
+                String[] cmd = { "/bin/sh", "-c",
+                        "javac -cp gson*.jar -sourcepath ./ $(find ./user_scripts/* | grep .java)"
+                };
+                runProcess(cmd, closureSemaphore);
                 file = new File("user_scripts/");
             }
             // Load
             URL url = file.toURI().toURL();
             ClassLoader classLoader = new URLClassLoader(new URL[] { url });
-            Class loadedClass = classLoader.loadClass(moduleName);
+            Class loadedClass = classLoader.loadClass(targetClass);
             Constructor constructor = loadedClass.getConstructor();
             Object object = constructor.newInstance();
             Method method = loadedClass.getMethod(handlerName, Context.class);
@@ -166,6 +170,20 @@ public class AppRunner {
         }
     }
 
+    private String normalizedModulename(String moduleName) {
+        int packageIndex = moduleName.lastIndexOf(".");
+        if (packageIndex < 0) {
+            return firstCharToUpper(moduleName);
+        }
+        String packageName = moduleName.substring(0, packageIndex);
+        String className = moduleName.substring(packageIndex + 1);
+        return packageName + "." + firstCharToUpper(className);
+    }
+
+    private String firstCharToUpper(String name) {
+        return Character.toUpperCase(name.charAt(0)) + name.substring(1);
+    }
+
     private CloseableHttpClient createHttpClient() {
         return HttpClientBuilder.create().build();
     }
@@ -181,7 +199,7 @@ public class AppRunner {
         }
     }
 
-    public void runProcess(String command, String closureSemaphore) {
+    public void runProcess(String[] command, String closureSemaphore) {
         try {
             Process process = Runtime.getRuntime().exec(command);
             printOutput(process.getInputStream());
@@ -262,13 +280,21 @@ public class AppRunner {
             while (entry != null) {
                 String fileName = entry.getName();
                 File newFile = new File(SRC_DIR + File.separator + fileName);
-                new File(newFile.getParent()).mkdirs();
-                try (FileOutputStream fileOutputStream = new FileOutputStream
-                        (newFile)) {
-                    int len;
-                    byte[] buffer = new byte[BUFFER_SIZE];
-                    while ((len = zipInput.read(buffer)) > 0) {
-                        fileOutputStream.write(buffer, 0, len);
+
+                if (entry.isDirectory()) {
+                    newFile.mkdirs();
+                } else {
+                    String fileParent = newFile.getParent();
+                    if (!new File(fileParent).exists()) {
+                        Files.createDirectories(Paths.get(fileParent));
+                    }
+
+                    try (FileOutputStream fileOutputStream = new FileOutputStream(newFile)) {
+                        int len;
+                        byte[] buffer = new byte[BUFFER_SIZE];
+                        while ((len = zipInput.read(buffer)) > 0) {
+                            fileOutputStream.write(buffer, 0, len);
+                        }
                     }
                 }
                 zipInput.closeEntry();

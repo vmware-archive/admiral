@@ -13,8 +13,10 @@ package com.vmware.admiral.closures;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.net.URI;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -29,7 +31,6 @@ import junit.framework.TestCase;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.BaseClosureIntegrationTest;
@@ -40,11 +41,14 @@ import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptio
 import com.vmware.admiral.closures.services.closuredescription.ResourceConstraints;
 import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.compute.RegistryHostConfigService;
+import com.vmware.admiral.service.common.RegistryService;
+import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.TaskState;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
-@Ignore("VBV-1315")
 public class ClosuresJavaIT extends BaseClosureIntegrationTest {
 
     protected static String IMAGE_NAME_PREFIX = "vmware/photon-closure-runner_";
@@ -61,18 +65,29 @@ public class ClosuresJavaIT extends BaseClosureIntegrationTest {
     private static String dockerBuildImageLink;
     private static String dockerBuildBaseImageLink;
 
+    private RegistryHostConfigService.RegistryHostSpec hostState;
+    private RegistryService.RegistryState registryState;
+
+    private URI helperUri;
+    private URI helperWithValidationUri;
+
     @BeforeClass
     public static void beforeClass() throws Exception {
-        serviceClient = ServiceClientFactory.createServiceClient(null);
-        testWebserverUri = getTestWebServerUrl();
+        try {
+            serviceClient = ServiceClientFactory.createServiceClient(null);
+            testWebserverUri = getTestWebServerUrl();
 
-        setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
-        dockerBuildImageLink = getBaseUrl()
-                + createImageBuildRequestUri(IMAGE_NAME + ":1.0", dockerHostCompute
-                .documentSelfLink);
-        dockerBuildBaseImageLink = getBaseUrl()
-                + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
-                .documentSelfLink);
+            setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
+            dockerBuildImageLink = getBaseUrl()
+                    + createImageBuildRequestUri(IMAGE_NAME + ":1.0", dockerHostCompute
+                    .documentSelfLink);
+            dockerBuildBaseImageLink = getBaseUrl()
+                    + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
+                    .documentSelfLink);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw ex;
+        }
     }
 
     @AfterClass
@@ -88,11 +103,33 @@ public class ClosuresJavaIT extends BaseClosureIntegrationTest {
                     .execute(SimpleHttpsClient.HttpMethod.DELETE, dockerBuildBaseImageLink);
         }
         serviceClient.stop();
+
     }
 
     @Before
-    public void init() {
+    public void init() throws Throwable {
         logger.info("Executing against docker host: %s ", dockerHostCompute.address);
+
+        registryState = createRegistryState();
+
+        hostState = new RegistryHostConfigService.RegistryHostSpec();
+        hostState.hostState = registryState;
+        hostState.acceptHostAddress = true;
+        hostState.acceptCertificate = true;
+
+        helperUri = UriUtils.buildUri(UriUtils.buildUri(getBaseUrl()), RegistryHostConfigService
+                .SELF_LINK);
+
+        Operation op = Operation
+                .createPut(helperUri)
+                .setBody(hostState)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        fail("Unable to set insecure registry: " + e.getMessage());
+                    }
+                });
+
+        sendRequest(serviceClient, op);
     }
 
     @Test
@@ -157,6 +194,7 @@ public class ClosuresJavaIT extends BaseClosureIntegrationTest {
         closureDescState.sourceURL = testWebserverUri + "/test_script_java.zip";
         closureDescState.source = "should not be used";
         closureDescState.runtime = RUNTIME_JAVA;
+        closureDescState.entrypoint = "testpackage.Test.test";
 
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 10;
@@ -222,7 +260,7 @@ public class ClosuresJavaIT extends BaseClosureIntegrationTest {
                 + "    public void test(Context context) {\n"
                 + "        Map<String, Object> inputs = context.getInputs();\n"
                 + "        int a = ((JsonPrimitive) inputs.get(\"a\")).getAsInt();\n"
-                + "        int b = ((JsonPrimitive) inputs.get(\"a\")).getAsInt();\n"
+                + "        int b = ((JsonPrimitive) inputs.get(\"b\")).getAsInt();\n"
                 + "        int result = a + b;\n"
                 + "        System.out.println(result);\n"
                 + "        context.setOutput(\"result\", result);\n"
@@ -273,4 +311,14 @@ public class ClosuresJavaIT extends BaseClosureIntegrationTest {
         cleanResource(createdClosure.documentSelfLink, serviceClient);
         cleanResource(closureDescription.documentSelfLink, serviceClient);
     }
+
+    private RegistryService.RegistryState createRegistryState() {
+        RegistryService.RegistryState registryState = new RegistryService.RegistryState();
+        registryState.name = getClass().getName();
+        registryState.address = "https://bellevue-ci.eng.vmware.com:5005";
+        registryState.endpointType = RegistryService.RegistryState.DOCKER_REGISTRY_ENDPOINT_TYPE;
+
+        return registryState;
+    }
+
 }

@@ -9,12 +9,13 @@ ENV TRUST_CERTS ${TRUST_CERTS}
 
 WORKDIR /app
 
-ENV PATH "$PATH:/var/opt/OpenJDK-1.8.0.112-bin/bin"
+RUN ln -s $(ls -d /var/opt/OpenJDK-1.8*/bin) /var/opt/java
+ENV PATH $PATH:/var/opt/java
 
 COPY app/*.* /app/
 COPY app/com/vmware/admiral/closure/ /app/com/vmware/admiral/closure/
 
-RUN /var/opt/OpenJDK-1.8.0.112-bin/bin/javac -cp \* \
+RUN javac -cp \* \
 /app/com/vmware/admiral/closure/runtime/Context.java \
 /app/com/vmware/admiral/closure/runner/AppRunner.java \
 /app/com/vmware/admiral/closure/runner/ContextImpl.java
