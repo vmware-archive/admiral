@@ -15,6 +15,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,6 +25,9 @@ import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.common.DeploymentProfileConfig;
+import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService;
+import com.vmware.admiral.compute.network.ComputeNetworkCIDRAllocationService.ComputeNetworkCIDRAllocationState;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.NetworkType;
@@ -35,13 +40,46 @@ import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
 import com.vmware.admiral.request.compute.ComputeNetworkProvisionTaskService.ComputeNetworkProvisionTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
+import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
+import com.vmware.photon.controller.model.resources.NetworkService;
+import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
+import com.vmware.photon.controller.model.resources.SecurityGroupService;
+import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState;
+import com.vmware.xenon.common.UriUtils;
 
 public class ComputeNetworkProvisioningTaskServiceTest extends ComputeRequestBaseTest {
+
+    private static final String NETWORK_ADDRESS = "192.168.0.0";
+    private static final int NETWORK_CIDR_PREFIX = 29;
+    private static final String NETWORK_CIDR = NETWORK_ADDRESS + "/" + NETWORK_CIDR_PREFIX;
+    private static final String NETWORK_LINK = NetworkService.FACTORY_LINK + "/myNetwork";
 
     @Override
     @Before
     public void setUp() throws Throwable {
+        DeploymentProfileConfig.getInstance().setTest(true);
         super.setUp();
+    }
+
+    @Test
+    public void testProvisionIsolatedNetworkNoCompute() throws Throwable {
+        ComputeNetworkDescription computeNetworkDesc = createComputeNetworkDescription(UUID
+                .randomUUID().toString(), NetworkType.ISOLATED);
+
+        ComputeNetwork computeNetwork = createComputeNetwork(computeNetworkDesc,
+                createIsolatedNetworkProfile(createSecurityGroupState()).documentSelfLink);
+
+        ComputeNetworkProvisionTaskState provisioningTask = createComputeNetworkProvisionTask(
+                computeNetworkDesc.documentSelfLink, computeNetwork.documentSelfLink, 1);
+        provisioningTask = provision(provisioningTask);
+
+        ComputeNetwork networkState = getDocument(ComputeNetwork.class,
+                provisioningTask.resourceLinks.iterator().next());
+
+        assertNotNull(networkState);
+        assertEquals(computeNetworkDesc.documentSelfLink, networkState.descriptionLink);
+        assertTrue(networkState.name.contains(computeNetworkDesc.name));
+        assertEquals(provisioningTask.resourceLinks.iterator().next(), networkState.documentSelfLink);
     }
 
     @Test
@@ -148,5 +186,60 @@ public class ComputeNetworkProvisioningTaskServiceTest extends ComputeRequestBas
         desc.documentSelfLink = UUID.randomUUID().toString();
         desc.networkType = networkType;
         return desc;
+    }
+
+    private SecurityGroupState createSecurityGroupState() throws Throwable {
+
+        SecurityGroupState securityGroupState = new SecurityGroupState();
+        securityGroupState.name = "securityGroupStateName";
+        securityGroupState.documentSelfLink = UUID.randomUUID().toString();
+        securityGroupState.egress = new ArrayList<>();
+        securityGroupState.ingress = new ArrayList<>();
+        securityGroupState.regionId = "regionId";
+        securityGroupState.authCredentialsLink = UUID.randomUUID().toString();
+        securityGroupState.resourcePoolLink = UUID.randomUUID().toString();
+        securityGroupState.instanceAdapterReference = new URI("http://instanceAdapterReference");
+        securityGroupState = doPost(securityGroupState, SecurityGroupService.FACTORY_LINK);
+
+        return securityGroupState;
+    }
+
+    private ProfileState createIsolatedNetworkProfile(SecurityGroupState securityGroupState) throws Throwable {
+
+        ComputeNetworkCIDRAllocationState cidrAllocation = createNetworkCIDRAllocationState();
+
+        NetworkProfile networkProfile = new NetworkProfile();
+        networkProfile.name = "networkProfileName";
+        networkProfile.isolationNetworkLink = cidrAllocation.networkLink;
+        networkProfile.isolationNetworkCIDR = "192.168.0.0/16";
+        networkProfile.securityGroupLinks = Arrays.asList(securityGroupState.documentSelfLink);
+
+        networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
+
+        ProfileState profile = super.createProfile(null, null, networkProfile, null,
+                null);
+        assertNotNull(profile);
+
+        return profile;
+    }
+
+    private ComputeNetworkCIDRAllocationState createNetworkCIDRAllocationState() throws Throwable {
+        EndpointState epState = TestRequestStateFactory.createEndpoint();
+        NetworkState network = new NetworkState();
+        network.subnetCIDR = NETWORK_CIDR;
+        network.name = "IsolatedNetwork";
+        network.endpointLink = epState.documentSelfLink;
+        network.instanceAdapterReference = UriUtils.buildUri("/instance-adapter-reference");
+        network.resourcePoolLink = "/dummy-resource-pool-link";
+        network.regionId = "dummy-region-id";
+        network = doPost(network, NetworkService.FACTORY_LINK);
+        return createNetworkCIDRAllocationState(network.documentSelfLink);
+    }
+
+    private ComputeNetworkCIDRAllocationState createNetworkCIDRAllocationState(String networkLink)
+            throws Throwable {
+        ComputeNetworkCIDRAllocationState state = new ComputeNetworkCIDRAllocationState();
+        state.networkLink = networkLink;
+        return doPost(state, ComputeNetworkCIDRAllocationService.FACTORY_LINK);
     }
 }
