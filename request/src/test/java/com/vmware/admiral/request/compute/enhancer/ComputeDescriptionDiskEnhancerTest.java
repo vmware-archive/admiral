@@ -141,6 +141,23 @@ public class ComputeDescriptionDiskEnhancerTest extends BaseComputeDescriptionEn
     }
 
     @Test
+    public void testEnhanceDiskWithNoConstraintAndEncryption() throws Throwable {
+        // Build disk description
+        cd.diskDescLinks = Arrays.asList(buildDiskState1(true, false).documentSelfLink);
+
+        createEnhanceContext(buildStorageProfileForEncryption());
+
+        enhance(new ComputeDescriptionDiskEnhancer(host, host.getReferer()));
+
+        assertDiskStates(diskState -> {
+            if (diskState.name.equals("Disk1")) {
+                assertNotNull(diskState.customProperties);
+                assertEquals(1, diskState.customProperties.size());
+            }
+        });
+    }
+
+    @Test
     public void testSuccessEnhanceDiskWithEncryption() throws Throwable {
         // Build disk description
         cd.diskDescLinks = buildDiskStatesForEncryption();

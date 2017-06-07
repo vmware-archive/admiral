@@ -198,7 +198,9 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
             if (diskState.encrypted == null || !diskState.encrypted) {
                 return defItem;
             } else {
-                return storageItemEncryptionFilter(defItem) ? defItem : null;
+                // Filter stream based on encryption field
+                return storageItemsStream(profile.storageProfile)
+                        .filter(si -> storageItemEncryptionFilter(si)).findFirst().orElse(null);
             }
         }
         // Step 1: Find if there are hard constraints. Then all of them will be available in one
@@ -293,7 +295,7 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
             // instead of picking something from the list of resource group states that this
             // storage description is related to.
             return si.storageDescription.resourceGroupStates.stream().filter(rg ->
-                    resourceGroupEncryptionFilter(rg)).count() > 0;
+                    resourceGroupEncryptionFilter(rg)).findFirst().isPresent();
         }
         return false;
     }
