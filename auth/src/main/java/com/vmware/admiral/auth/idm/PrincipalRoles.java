@@ -14,7 +14,7 @@ package com.vmware.admiral.auth.idm;
 import java.util.List;
 import java.util.Map;
 
-public class PrincipalRolesUpdate {
+public class PrincipalRoles {
 
     public Map<String, PrincipalRoleAssignment> roles;
 

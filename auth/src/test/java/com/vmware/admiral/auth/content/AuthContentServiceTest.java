@@ -34,7 +34,7 @@ import com.vmware.xenon.common.test.TestContext;
 
 public class AuthContentServiceTest extends AuthBaseTest {
     private String projectOnlyContent;
-    private AuthContentBody body;
+    private String authContent;
 
     @Before
     public void setup() throws GeneralSecurityException, IOException {
@@ -42,12 +42,16 @@ public class AuthContentServiceTest extends AuthBaseTest {
         projectOnlyContent = new BufferedReader(new InputStreamReader(getClass().getClassLoader()
                 .getResourceAsStream("content-projects-only.json")))
                 .lines().collect(Collectors.joining("\n"));
-        body = Utils.fromJson(projectOnlyContent, AuthContentBody.class);
+
+        authContent = new BufferedReader(new InputStreamReader(getClass().getClassLoader()
+                .getResourceAsStream("auth-content.json")))
+                .lines().collect(Collectors.joining("\n"));
 
     }
 
     @Test
     public void testImportContentWithProjectsOnly() throws Throwable {
+        AuthContentBody body = Utils.fromJson(projectOnlyContent, AuthContentBody.class);
         TestContext ctx = testCreate(1);
         host.send(Operation.createPost(host, AuthContentService.SELF_LINK)
                 .setBody(projectOnlyContent)
@@ -73,5 +77,37 @@ public class AuthContentServiceTest extends AuthBaseTest {
             ProjectState state = getDocument(ProjectState.class, link);
             assertTrue(projectToImportNames.contains(state.name));
         }
+    }
+
+    @Test
+    public void testImportContentWithProjectAndUsers() throws Throwable {
+        AuthContentBody body = Utils.fromJson(authContent, AuthContentBody.class);
+        TestContext ctx = testCreate(1);
+        host.send(Operation.createPost(host, AuthContentService.SELF_LINK)
+                .setBody(authContent)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                    } else {
+                        ctx.completeIteration();
+                    }
+                }));
+        ctx.await();
+
+        List<String> projectLinks = getDocumentLinksOfType(ProjectState.class);
+        projectLinks.remove("/projects/default-project");
+
+        assertEquals(body.projects.size(), projectLinks.size());
+
+        List<String> projectToImportNames = body.projects.stream()
+                .map(p -> p.name)
+                .collect(Collectors.toList());
+
+        for (String link : projectLinks) {
+            ProjectState state = getDocument(ProjectState.class, link);
+            assertTrue(projectToImportNames.contains(state.name));
+        }
+
+        //TODO: Assert users are correctly distributed when roles are implemented.
     }
 }

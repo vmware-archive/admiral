@@ -150,7 +150,8 @@ public class PrincipalServiceTest extends AuthBaseTest {
         for (Principal resp : response) {
             assertTrue(resp.id.equals("fritz@admiral.com")
                     || resp.id.equals("connie@admiral.com")
-                    || resp.id.equals("gloria@admiral.com"));
+                    || resp.id.equals("gloria@admiral.com")
+                    || resp.id.equals("tony@admiral.com"));
 
         }
 

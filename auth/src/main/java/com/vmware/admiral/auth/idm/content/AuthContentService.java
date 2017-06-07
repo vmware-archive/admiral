@@ -15,14 +15,15 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import com.vmware.admiral.auth.idm.PrincipalRolesUpdate;
-import com.vmware.admiral.auth.idm.PrincipalRolesUpdate.PrincipalRoleAssignment;
+import com.vmware.admiral.auth.idm.PrincipalRoles;
+import com.vmware.admiral.auth.idm.PrincipalRoles.PrincipalRoleAssignment;
 import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
@@ -39,7 +40,7 @@ public class AuthContentService extends StatelessService {
 
     public static class AuthContentBody {
 
-        public PrincipalRolesUpdate roles;
+        public Map<String, PrincipalRoleAssignment> roles;
 
         public List<ProjectContentBody> projects;
     }
@@ -70,7 +71,7 @@ public class AuthContentService extends StatelessService {
             return;
         }
 
-        if (body.roles != null && body.roles.roles != null && !body.roles.roles.isEmpty()) {
+        if (body.roles != null && !body.roles.isEmpty()) {
             handleRoles(body, post);
             return;
         }
@@ -81,9 +82,9 @@ public class AuthContentService extends StatelessService {
 
     private void handleRoles(AuthContentBody body, Operation post) {
 
-        AtomicInteger counter = new AtomicInteger(body.roles.roles.size());
+        AtomicInteger counter = new AtomicInteger(body.roles.size());
 
-        for (Entry<String, PrincipalRoleAssignment> roleWithUsers : body.roles.roles.entrySet()) {
+        for (Entry<String, PrincipalRoleAssignment> roleWithUsers : body.roles.entrySet()) {
             verifyRole(roleWithUsers, () -> {
                 if (counter.decrementAndGet() == 0) {
                     patchRoles(body, post);
@@ -153,9 +154,11 @@ public class AuthContentService extends StatelessService {
     }
 
     private void patchRoles(AuthContentBody body, Operation post) {
+        PrincipalRoles roles = new PrincipalRoles();
+        roles.roles = body.roles;
         sendRequest(Operation.createPatch(this, PrincipalService.SELF_LINK)
                 .setReferer(getHost().getUri())
-                .setBody(body.roles)
+                .setBody(roles)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         logWarning("Failed to patch roles: %s", Utils.toString(ex));

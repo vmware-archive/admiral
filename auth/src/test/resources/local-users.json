@@ -11,5 +11,9 @@
     "name": "Connie",
     "email": "connie@admiral.com",
     "password": "Password1!"
+  }, {
+    "name": "Tony",
+    "email": "tony@admiral.com",
+    "password": "Password1!"
   }]
 }

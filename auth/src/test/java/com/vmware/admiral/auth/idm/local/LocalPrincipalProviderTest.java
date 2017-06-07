@@ -74,6 +74,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         String expectedPrincipal1 = "connie@admiral.com";
         String expectedPrincipal2 = "fritz@admiral.com";
         String expectedPrincipal3 = "gloria@admiral.com";
+        String expectedPrincipal4 = "tony@admiral.com";
 
         DeferredResult<List<Principal>> result = provider.getPrincipals(criteria);
 
@@ -89,12 +90,13 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
 
         List<Principal> principals = result.getNow(new ArrayList<>());
 
-        assertEquals(3, principals.size());
+        assertEquals(4, principals.size());
 
         for (Principal p : principals) {
             assertTrue(p.email.equals(expectedPrincipal1)
                     || p.email.equals(expectedPrincipal2)
-                    || p.email.equals(expectedPrincipal3));
+                    || p.email.equals(expectedPrincipal3)
+                    || p.email.equals(expectedPrincipal4));
         }
     }
 

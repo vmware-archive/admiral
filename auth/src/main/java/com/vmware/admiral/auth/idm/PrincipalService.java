@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 
-import com.vmware.admiral.auth.idm.PrincipalRolesUpdate.PrincipalRoleAssignment;
+import com.vmware.admiral.auth.idm.PrincipalRoles.PrincipalRoleAssignment;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalProvider;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.common.ManagementUriParts;
@@ -107,7 +107,8 @@ public class PrincipalService extends StatelessService {
             return;
         }
 
-        PrincipalRolesUpdate roles = patch.getBody(PrincipalRolesUpdate.class);
+        PrincipalRoles roles = patch.getBody(PrincipalRoles.class);
+
         if (roles == null) {
             patch.fail(new IllegalArgumentException("body not supported"));
             return;
@@ -115,7 +116,7 @@ public class PrincipalService extends StatelessService {
         updatePrincipalRoles(roles, patch);
     }
 
-    private void updatePrincipalRoles(PrincipalRolesUpdate roles, Operation op) {
+    private void updatePrincipalRoles(PrincipalRoles roles, Operation op) {
         for (Entry<String, PrincipalRoleAssignment> entry : roles.roles.entrySet()) {
             for (String user : entry.getValue().add) {
                 log(Level.INFO, "%s assigned to role: %s",
