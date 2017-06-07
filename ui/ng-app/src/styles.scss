@@ -11,8 +11,6 @@
 
 
 .main-container {
-  /* Fix for fixed positioned elements http://stackoverflow.com/questions/36855473/position-fixed-not-working-is-working-like-absolute */
-  -webkit-transform: none;
   background-color: #FFFFFF;
 
   .content-container {
