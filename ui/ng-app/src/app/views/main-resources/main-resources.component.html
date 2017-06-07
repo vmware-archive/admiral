@@ -62,6 +62,7 @@
               <li *ngIf="isHbrEnabled"><a class="nav-link" routerLink="project-repositories" routerLinkActive="active">Project repositories</a></li>
               <li><a class="nav-link" routerLink="public-repositories" routerLinkActive="active">Public repositories</a></li>
               <li *ngIf="embeddedMode"><a class="nav-link" routerLink="registries" routerLinkActive="active">Registries</a></li>
+              <li *ngIf="areClosuresAllowed"><a class="nav-link" routerLink="closures" routerLinkActive="active">Closures</a></li>
           </ul>
       </section>
        <section class="nav-group collapsible">
