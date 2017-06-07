@@ -535,6 +535,7 @@
         "subnetIsolationTypeLabel": "Subnetwork",
         "securityGroupIsolationTypeLabel": "Security Group",
         "securityGroups": "Security Groups",
+        "vpc": "VPC",
         "cidrLabel": "CIDR",
         "cidrLabelHint": "0.0.0.0/0",
         "cidrPrefixLabel": "Subnets Prefix Length",

@@ -34,7 +34,9 @@ export default Vue.component('aws-network-profile-editor', {
           @change="onSecurityGroupChange">
           <multicolumn-cell name="name">
             <securitygroup-search
-              :endpoint="endpoint">
+              :endpoint="endpoint"
+              :fetch-additional-data="fetchVpcIds"
+              :renderer="renderSecurityGroup">
             </securitygroup-search>
           </multicolumn-cell>
         </multicolumn-editor-group>
@@ -137,6 +139,44 @@ export default Vue.component('aws-network-profile-editor', {
     onIsolatedSubnetCIDRPrefixChange(value) {
       this.isolatedSubnetCIDRPrefix = value;
       this.emitChange();
+    },
+    fetchVpcIds(result, resolve) {
+      let vpcIds = result.items.reduce((previous, current) => {
+        if (current.customProperties && current.customProperties.awsVpcId) {
+          if (!previous.includes(current.customProperties.awsVpcId)) {
+            previous = previous.concat(current.customProperties.awsVpcId);
+          }
+        }
+        return previous;
+      }, []);
+
+      services.loadVpcs(vpcIds).then((vpcs) => {
+
+        result.items.forEach((item) => {
+          if (item.customProperties && item.customProperties.awsVpcId) {
+            for (var vpcLink in vpcs) {
+              if (vpcs[vpcLink].id === item.customProperties.awsVpcId) {
+                item.vpcName = vpcs[vpcLink].name;
+                break;
+              }
+            }
+          }
+        });
+        resolve(result);
+      });
+    },
+    renderSecurityGroup(securityGroup) {
+      let secondary = i18n.t('app.profile.edit.vpc') + ': ' + securityGroup.vpcName;
+
+      return `
+        <div>
+          <div class="host-picker-item-primary" title="${securityGroup.name}">
+            ${utils.escapeHtml(securityGroup.name)}
+          </div>
+          <div class="host-picker-item-secondary truncateText" title="${secondary}">
+            ${secondary}
+          </div>
+        </div>`;
     },
     renderIsolationNetwork(network) {
       let secondary = i18n.t('app.profile.edit.cidrLabel') + ': ' +

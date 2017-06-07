@@ -866,6 +866,27 @@ services.searchNetworks = function(endpointLink, query, limit) {
   });
 };
 
+services.loadVpcs = function(vpcIds) {
+  if (vpcIds == null || vpcIds.length === 0) {
+    return Promise.resolve([]);
+  }
+
+  var params = {};
+
+  params[ODATA_FILTER_PROP_NAME] = serviceUtils.buildOdataQuery({
+    id: vpcIds.map((id) => {
+      return {
+        val: id,
+        op: 'eq'
+      };
+    }),
+    [constants.SEARCH_OCCURRENCE.PARAM]: constants.SEARCH_OCCURRENCE.ANY
+  });
+  params[ODATA_ORDERBY_PROP_NAME] = 'documentUpdateTimeMicros desc';
+
+  return list(links.NETWORKS, true, params);
+};
+
 services.searchSecurityGroups = function(endpointLink, query, limit) {
   var qOps = {
     any: query.toLowerCase(),

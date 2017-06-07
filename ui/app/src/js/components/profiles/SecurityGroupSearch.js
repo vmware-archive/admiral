@@ -19,11 +19,20 @@ export default Vue.component('securitygroup-search', {
         :entity="i18n('app.securityGroup.entity')"
         :filter="searchSecurityGroups"
         :value="value"
+        :renderer="renderer"
         @change="onChange">
       </dropdown-search>
     </div>
   `,
   props: {
+    fetchAdditionalData: {
+      required: false,
+      type: Function
+    },
+    renderer: {
+      required: false,
+      type: Function
+    },
     disabled: {
       default: false,
       required: false,
@@ -43,7 +52,11 @@ export default Vue.component('securitygroup-search', {
       return new Promise((resolve, reject) => {
         services.searchSecurityGroups.apply(null,
             [this.endpoint.documentSelfLink, ...args]).then((result) => {
-          resolve(result);
+              if (this.fetchAdditionalData) {
+                this.fetchAdditionalData(result, resolve);
+              } else {
+                resolve(result);
+              }
         }).catch(reject);
       });
     },
