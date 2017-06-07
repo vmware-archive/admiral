@@ -130,12 +130,16 @@ var TemplatesViewVueComponent = Vue.extend({
     title: function() {
       if (this.selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES) {
         return i18n.t('app.template.list.searchCategory.templates');
+      } else if (this.selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.CLOSURES) {
+        return i18n.t('app.template.list.searchCategory.closures');
       }
       return i18n.t('app.template.list.popularRepositories');
     },
     titleSearch: function() {
       if (this.selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.TEMPLATES) {
         return i18n.t('app.template.list.searchCategory.templates');
+      } else if (this.selectedCategory === constants.TEMPLATES.SEARCH_CATEGORY.CLOSURES) {
+        return i18n.t('app.template.list.searchCategory.closures');
       }
       return i18n.t('app.template.list.searchCategory.repositories');
     }

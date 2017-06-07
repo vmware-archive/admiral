@@ -24,6 +24,7 @@ import { Router } from '@angular/router';
 export class MainResourcesComponent implements OnInit, OnDestroy {
 
     kubernetesEnabled = FT.isKubernetesHostOptionEnabled();
+    areClosuresAllowed = FT.areClosuresAllowed();
 
     embeddedMode = FT.isApplicationEmbedded();
 
@@ -32,6 +33,7 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
     formerViewPaths = {
       'templates': 'templates?$category=templates',
       'public-repositories': 'templates?$category=images',
+      'closures': 'templates?$category=closures',
       'placements': 'placements',
       'hosts': 'hosts',
       'applications': 'applications',
