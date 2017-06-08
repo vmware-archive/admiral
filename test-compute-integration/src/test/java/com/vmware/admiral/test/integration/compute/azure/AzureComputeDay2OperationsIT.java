@@ -19,19 +19,12 @@ public class AzureComputeDay2OperationsIT extends AzureComputeProvisionIT {
 
     @Override
     protected void doWithResources(Set<String> resourceLinks) throws Throwable {
+        // Tests a single day 2 operation with an integration test.
+        // The rest of Day2 ops should be tested with tests in the lower layer.
         super.doWithResources(resourceLinks);
-
-        doDay2Operation(resourceLinks, DAY_2_OPERATION_RESTART, null);
-        validateHostState(resourceLinks, PowerState.ON);
 
         doDay2Operation(resourceLinks, DAY_2_OPERATION_SUSPEND, null);
         validateHostState(resourceLinks, PowerState.SUSPEND);
-
-        doDay2Operation(resourceLinks, DAY_2_OPERATION_POWER_OFF, null);
-        validateHostState(resourceLinks, PowerState.OFF);
-
-        doDay2Operation(resourceLinks, DAY_2_OPERATION_POWER_ON, null);
-        validateHostState(resourceLinks, PowerState.ON);
     }
 
 }

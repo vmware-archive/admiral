@@ -19,15 +19,9 @@ public class VsphereComputeDay2OperationsIT extends VsphereComputeProvisionIT {
 
     @Override
     protected void doWithResources(Set<String> resourceLinks) throws Throwable {
-
-        // Reboot requires VM to be in ON state
+        // Tests a single day 2 operation with an integration test.
+        // The rest of Day2 ops should be tested with tests in the lower layer.
         doDay2Operation(resourceLinks, DAY_2_OPERATION_POWER_ON, null);
-        validateHostState(resourceLinks, PowerState.ON);
-
-        doDay2Operation(resourceLinks, DAY_2_OPERATION_REBOOT, null);
-        validateHostState(resourceLinks, PowerState.ON);
-
-        doDay2Operation(resourceLinks, DAY_2_OPERATION_RESET, null);
         validateHostState(resourceLinks, PowerState.ON);
     }
 }
