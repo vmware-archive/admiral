@@ -63,9 +63,6 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
 
         logFine("Processing host docker image operation request %s",
                 request.getRequestTrackingLog());
-        // debugging dockerHostAddress is null issue
-        logInfo("DockerHostAdapterImageService.handlePatch, compute: %s",
-                request.resourceReference);
         getContainerHost(request, op, request.resourceReference,
                 (computeState, commandInput) -> processOperation(ctx, op, computeState,
                         commandInput, request.getOperationType()));

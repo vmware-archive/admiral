@@ -119,9 +119,6 @@ public class DockerNetworkAdapterService extends AbstractDockerAdapterService {
             return;
         }
 
-        // debugging dockerHostAddress is null issue
-        logInfo("DockerNetworkAdapterService.processNetworkState, network: %s, compute: %s",
-                context.networkState.documentSelfLink, context.networkState.originatingHostLink);
         getContainerHost(
                 context.request,
                 context.operation,

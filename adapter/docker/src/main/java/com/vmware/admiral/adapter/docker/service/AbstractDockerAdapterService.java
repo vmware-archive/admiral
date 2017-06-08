@@ -148,8 +148,7 @@ public abstract class AbstractDockerAdapterService extends StatelessService {
                     }
                 }));
 
-        // TODO: Change back to fine
-        logInfo("Fetching ComputeState: %s %s", containerHostReference,
+        logFine("Fetching ComputeState: %s %s", containerHostReference,
                 request.getRequestTrackingLog());
     }
 

@@ -107,9 +107,6 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
             return;
         }
 
-        // debugging dockerHostAddress is null issue
-        logInfo("DockerVolumeAdapterService.processVolumeState, volume: %s, compute: %s",
-                context.volumeState.documentSelfLink, context.volumeState.originatingHostLink);
         getContainerHost(
                 context.request,
                 context.operation,
@@ -275,8 +272,6 @@ public class DockerVolumeAdapterService extends AbstractDockerAdapterService {
     }
 
     private void processDiscoverVmdkDatastore(RequestContext context) {
-        logInfo("DockerVolumeAdapterService.processDiscoverVmdkDatastore, volume: %s, compute: %s",
-                context.volumeState.documentSelfLink, context.volumeState.originatingHostLink);
         getContainerHost(
                 context.request,
                 context.operation,
