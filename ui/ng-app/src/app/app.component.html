@@ -22,7 +22,7 @@
         <a class="nav-link nav-text" routerLink="/administration" routerLinkActive="active">Administration</a>
     </div>
     <div class="header-actions">
-        <clr-dropdown clrMenuPosition="bottom-right" class="dropdown">
+        <clr-dropdown clrMenuPosition="bottom-right" class="dropdown" *ngIf="userName">
             <button class="nav-text" clrDropdownToggle>
                 <span>{{userName}}</span>
                 <clr-icon shape="caret down"></clr-icon>

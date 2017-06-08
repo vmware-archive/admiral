@@ -46,7 +46,7 @@ export class AppComponent {
         if (this.user) {
             return this.user.name || this.user.email;
         }
-        return '--';
+        return null;
     }
 
     get userNameDetail(): String {
