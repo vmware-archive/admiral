@@ -1,3 +1,68 @@
-<p>
-  vch-clusters works!
-</p>
+<grid-view [serviceEndpoint]="serviceEndpoint">
+  <div title>{{ "clusters.title" | i18n }}</div>
+  <div toolbar>
+    <button class="btn btn-link" [routerLink]="['./new']"><i class="fa fa-plus"></i>{{ "clusters.new" | i18n | uppercase }}</button>
+  </div>
+  <ng-template let-item="item">
+    <card class="clusterCard" [routerLink]="['./' + item.documentId]">
+      <div card-header>
+        <div class="clusterIcon">
+          <clr-icon shape="rack-server" size="48"></clr-icon>
+        </div>
+        <div class="titleHolder">
+          <div>{{ item.name }}</div>
+          <div *ngIf="item.address" class="clusterAddress">{{ item.address }}</div>
+        </div>
+        <clr-dropdown class="card-actions" [clrMenuPosition]="'left-top'" (click)="$event.stopPropagation()">
+          <button class="btn btn-sm btn-link" clrDropdownToggle>
+              <clr-icon shape="ellipsis-vertical"></clr-icon>
+          </button>
+          <div class="dropdown-menu">
+            <a href="..." clrDropdownItem [routerLink]="['./' + item.documentId]">{{ "projects.actions.details" | i18n }}</a>
+            <div class="dropdown-divider"></div>
+            <a href="..." clrDropdownItem (click)="deleteProject($event, item)">{{ "delete" | i18n }}</a>
+          </div>
+        </clr-dropdown>
+      </div>
+      <div card-content>
+        <div class="form-group">
+          <label>{{ "clusters.status" | i18n }}</label>
+          <div class="status {{ clusterState(item) }}">{{ clusterState(item) }}</div>
+        </div>
+        <div class="form-group">
+          <label>{{ "clusters.type" | i18n }}</label>
+          <div>{{ item.type }}</div>
+        </div>
+        <div class="form-group">
+          <label>{{ "clusters.containers" | i18n }}</label>
+          <div>{{ item.containerCount }}</div>
+        </div>
+        <div class="form-group">
+          <label>{{ "clusters.cpu" | i18n }}</label>
+          <div class="row">
+            <div class="progress-block col-sm-4">
+              <div class="progress-static">
+                <div class="progress-meter" attr.data-value="{{ cpuPercentageLevel(item) }}"></div>
+              </div>
+            </div>
+            <div class="col-sm-8 progress-details p7">{{ item.cpuUsage }} of {{ item.totalCpu }}GHz</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>{{ "clusters.memory" | i18n }}</label>
+          <div class="row">
+            <div class="progress-block col-sm-4">
+              <div class="progress-static">
+                <div class="progress-meter" attr.data-value="{{ memoryPercentageLevel(item) }}"></div>
+              </div>
+            </div>
+            <div class="col-sm-8 progress-details p7">{{ item.memoryUsage }} of {{ item.totalMemory }}GB</div>
+          </div>
+        </div>
+        <div class="progress-static top">
+          <div class="progress-meter {{ item.status }}" data-value="100"></div>
+        </div>
+      </div>
+    </card>
+  </ng-template>
+</grid-view>

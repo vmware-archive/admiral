@@ -93,6 +93,21 @@
     "replicationEndpoints": "Replication Endpoints",
     "replicationRules": "Replication Rules"
   },
+  "clusters": {
+    "title": "Clusters",
+    "new": "New",
+    "status": "Status",
+    "state": {
+      "ON": "ON",
+      "OFF": "OFF",
+      "DISABLED": "DISABLED",
+      "WARNING": "WARNING"
+    },
+    "type": "Type",
+    "containers": "Containers",
+    "cpu": "CPU",
+    "memory": "Memory"
+  },
   "logs": {
     "title": "Logs",
     "system": {

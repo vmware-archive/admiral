@@ -47,7 +47,7 @@ export const ROUTES: Routes = [
         path: 'home', component: MainResourcesComponent,
         children: [
             {
-                path: '', redirectTo: 'hosts', pathMatch: 'full'
+                path: '', redirectTo: 'applications', pathMatch: 'full'
             },
             {
                 path: 'dashboard', component: DashboardComponent
