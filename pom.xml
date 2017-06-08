@@ -40,7 +40,6 @@
         <module>compute</module>
         <module>request</module>
         <module>closures</module>
-        <module>continuous-delivery</module>
         <module>ui</module>
         <module>host</module>
         <module>adapter</module>
