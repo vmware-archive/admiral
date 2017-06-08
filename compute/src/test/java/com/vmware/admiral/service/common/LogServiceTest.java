@@ -12,6 +12,7 @@
 package com.vmware.admiral.service.common;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -36,5 +37,26 @@ public class LogServiceTest extends ComputeBaseTest {
         LogServiceState newLogState = doPost(logState, LogService.FACTORY_LINK);
 
         assertEquals(new String(logState.logs), new String(newLogState.logs));
+    }
+
+    @Test
+    public void testMaxLogSize() {
+        int maxLogSize = LogService.MAX_LOG_SIZE;
+        assertEquals(LogService.DEFAULT_MAX_LOG_SIZE_VALUE, maxLogSize);
+    }
+
+    @Test
+    public void testHandleMaintainance() throws Throwable {
+        LogServiceState logServiceState = doPost(new LogServiceState(), LogService.FACTORY_LINK);
+
+        // Sleep twice the period to avoid race conditions
+        Thread.sleep(2 * LogService.DEFAULT_EXPIRATION_MICROS / 1000);
+
+        try {
+            getDocument(LogServiceState.class, logServiceState.documentSelfLink);
+            fail("Container logs were not deleted after the expiration period");
+        } catch (Exception ex) {
+            // ok, logs were deleted
+        }
     }
 }
