@@ -14,6 +14,7 @@ package com.vmware.admiral.request.compute;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 
 import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
 
 import com.vmware.photon.controller.model.resources.ResourceGroupService;
@@ -25,6 +26,9 @@ import com.vmware.xenon.common.UriUtils;
 
 public class ResourceGroupUtils {
 
+    public static final String RESOURCE_GROUP_TYPE_KEY = "type";
+    public static final String COMPUTE_DEPLOYMENT_TYPE_VALUE = "compute_deployment";
+
     public static DeferredResult<ResourceGroupState> createResourceGroup(ServiceHost host,
             URI referer, String contextId, List<String> tenantLinks) {
 
@@ -32,6 +36,8 @@ public class ResourceGroupUtils {
         resourceGroup.name = contextId;
         resourceGroup.documentSelfLink = generateSelfLink(resourceGroup);
         resourceGroup.tenantLinks = tenantLinks;
+        resourceGroup.customProperties = new HashMap<>();
+        resourceGroup.customProperties.put(RESOURCE_GROUP_TYPE_KEY, COMPUTE_DEPLOYMENT_TYPE_VALUE);
 
         return host.sendWithDeferredResult(
                 Operation.createPost(host, ResourceGroupService.FACTORY_LINK)

@@ -16,6 +16,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
+
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
@@ -27,12 +29,21 @@ import org.apache.commons.net.util.SubnetUtils;
 import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
+import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
 import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
+import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile;
+import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile.IsolationSupportType;
+import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService.NetworkInterfaceState;
 import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.photon.controller.model.resources.SecurityGroupService.Protocol;
+import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState;
+import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState.Rule;
+import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState.Rule.Access;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
@@ -163,27 +174,116 @@ public abstract class BaseWordpressComputeProvisionIT extends BaseComputeProvisi
                 NetworkInterfaceState networkInterfaceState = getDocument(
                         computeState.networkInterfaceLinks.get(0), NetworkInterfaceState.class);
 
-                SubnetState subnetState = getDocument(
-                        networkInterfaceState.subnetLink,
-                        SubnetState.class);
+                IsolationSupportType isolationType = getNetworkProfileIsolationType
+                        (networkInterfaceState, computes);
+                if (isolationType == IsolationSupportType.SUBNET) {
+                    SubnetState subnetState = getDocument(
+                            networkInterfaceState.subnetLink,
+                            SubnetState.class);
 
-                assertTrue(subnetState.name.contains("wpnet"));
+                    assertTrue(subnetState.name.contains("wpnet"));
 
-                NetworkState networkState = getDocument(subnetState.networkLink,
-                        NetworkState.class);
+                    NetworkState networkState = getDocument(subnetState.networkLink,
+                            NetworkState.class);
 
-                assertEquals(networkState.name, isolatedNetworkName);
+                    assertEquals(networkState.name, isolatedNetworkName);
 
-                //validate the cidr
-                String lowSubnetAddress = new SubnetUtils(subnetState.subnetCIDR).getInfo()
-                        .getLowAddress();
+                    //validate the cidr
+                    String lowSubnetAddress = new SubnetUtils(subnetState.subnetCIDR).getInfo()
+                            .getLowAddress();
 
-                assertTrue(new SubnetUtils(networkState.subnetCIDR).getInfo()
-                        .isInRange(lowSubnetAddress));
+                    assertTrue(new SubnetUtils(networkState.subnetCIDR).getInfo()
+                            .isInRange(lowSubnetAddress));
+                }  else if (isolationType == IsolationSupportType.SECURITY_GROUP) {
+                    assertNotNull(networkInterfaceState.securityGroupLinks);
+                    assertTrue(networkInterfaceState.securityGroupLinks.size() > 0);
+
+                    boolean isIsolationSecurityGroup = false;
+                    for (String sgLink : networkInterfaceState.securityGroupLinks) {
+                        SecurityGroupState securityGroupState = getDocument(sgLink,
+                                SecurityGroupState.class);
+                        assertNotNull(securityGroupState);
+                        assertNotNull(computeState.customProperties);
+
+                        isIsolationSecurityGroup = isIsolationSecurityGroup(securityGroupState,
+                                computeState.customProperties.get(FIELD_NAME_CONTEXT_ID_KEY));
+                    }
+
+                    assertTrue(isIsolationSecurityGroup);
+                }
             } catch (Exception e) {
                 fail();
             }
         }
 
+    }
+
+    private static IsolationSupportType getNetworkProfileIsolationType(NetworkInterfaceState nic,
+            Set<ServiceDocument> computes) throws Exception {
+        ComputeNetwork computeNetwork = null;
+        for (ServiceDocument compute : computes) {
+            if (compute instanceof ComputeNetwork) {
+                ComputeNetworkDescription cnd = getDocument(((ComputeNetwork)compute).descriptionLink,
+                        ComputeNetworkDescription.class);
+                assertNotNull(cnd);
+                assertNotNull(cnd.name);
+                if (cnd.name.equals(nic.name)) {
+                    computeNetwork = (ComputeNetwork) compute;
+                }
+            }
+        }
+
+        if (computeNetwork == null) {
+            throw new AssertionError(
+                    "Unable to find the ComputeNetwork corresponding to NIC " + nic.name);
+        }
+
+        assertNotNull("Provision profile link must be set", computeNetwork.provisionProfileLink);
+
+        ProfileState profileState = getDocument(computeNetwork.provisionProfileLink,
+                ProfileState.class);
+
+        assertNotNull(profileState);
+        assertNotNull(profileState.networkProfileLink);
+
+        NetworkProfile networkProfile = getDocument(profileState.networkProfileLink,
+                NetworkProfile.class);
+
+        assertNotNull(networkProfile);
+        assertNotNull(networkProfile.isolationType);
+
+        return networkProfile.isolationType;
+    }
+
+    private static boolean isIsolationSecurityGroup(SecurityGroupState securityGroupState,
+            String contextId) {
+        assertNotNull(contextId);
+        // an isolation security group must be within the same context id as the compute, and
+        // have one single ingress/egress firewall rule where all protocols are denied
+
+        if (securityGroupState.customProperties == null ||
+                !securityGroupState.customProperties.containsKey(FIELD_NAME_CONTEXT_ID_KEY)) {
+            return false;
+        }
+
+        if (!securityGroupState.customProperties.get(FIELD_NAME_CONTEXT_ID_KEY).equals(contextId)
+                || securityGroupState.egress == null || securityGroupState.egress.size() != 1 ||
+                securityGroupState.ingress == null || securityGroupState.ingress.size() != 1) {
+            return false;
+        }
+
+        Rule rule = securityGroupState.egress.get(0);
+        if (rule.access != Access.Deny || !rule.protocol.equals(Protocol.ANY.getName())
+                || !rule.ports.equals("1-65535") || !rule.ipRangeCidr.equals("0.0.0.0/0")) {
+            return false;
+        }
+
+        rule = securityGroupState.ingress.get(0);
+        if (rule.access != Access.Deny || !rule.protocol.equals(Protocol.ANY.getName())
+                || !rule.ports.equals("1-65535") || !rule.ipRangeCidr.equals("0.0.0.0/0")) {
+            return false;
+        }
+
+        return true;
     }
 }

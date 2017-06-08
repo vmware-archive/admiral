@@ -771,7 +771,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         return np;
     }
 
-    protected NetworkProfile createIsolatedNetworkProfile(String isolatedNetworkName, int cidrPrefix) throws Exception {
+    protected NetworkProfile createIsolatedSubnetNetworkProfile(String isolatedNetworkName, int cidrPrefix) throws Exception {
         String networkLink = loadResource(NetworkState.class, isolatedNetworkName);
 
         NetworkProfile np = new NetworkProfile();
@@ -806,6 +806,29 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         }
 
         return result.results.documentLinks.get(0);
+    }
+
+    protected NetworkProfile createIsolatedSecurityGroupNetworkProfile(String subnetName,
+            Set<String> tagLinks) throws Exception {
+        QueryTask.Query query = QueryTask.Query.Builder.create()
+                .addKindFieldClause(SubnetState.class)
+                .addCaseInsensitiveFieldClause(SubnetState.FIELD_NAME_NAME, subnetName,
+                        QueryTask.QueryTerm.MatchType.TERM, QueryTask.Query.Occurance.MUST_OCCUR)
+                .addFieldClause(SubnetState.FIELD_NAME_ENDPOINT_LINK, endpoint.documentSelfLink)
+                .addClause(QueryUtil.addTenantAndGroupClause(getTenantLinks()))
+                .build();
+        QueryTask qt = QueryTask.Builder.createDirectTask().setQuery(query).build();
+        String responseJson = sendRequest(SimpleHttpsClient.HttpMethod.POST,
+                ServiceUriPaths.CORE_QUERY_TASKS,
+                Utils.toJson(qt));
+        QueryTask result = Utils.fromJson(responseJson, QueryTask.class);
+
+        String subnetLink = result.results.documentLinks.get(0);
+        NetworkProfile np = new NetworkProfile();
+        np.subnetLinks = Collections.singletonList(subnetLink);
+        np.isolationType = IsolationSupportType.SECURITY_GROUP;
+        np.tagLinks = tagLinks;
+        return np;
     }
 
     protected String createTag(String key, String value) throws Throwable {

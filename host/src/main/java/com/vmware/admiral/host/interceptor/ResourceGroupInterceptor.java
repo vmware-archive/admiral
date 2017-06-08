@@ -11,8 +11,8 @@
 
 package com.vmware.admiral.host.interceptor;
 
-import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.vmware.admiral.auth.util.ProjectUtil;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
@@ -20,6 +20,7 @@ import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
 import com.vmware.photon.controller.model.query.QueryUtils;
 import com.vmware.photon.controller.model.resources.ResourceGroupService;
 import com.vmware.photon.controller.model.resources.ResourceGroupService.ResourceGroupState;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.DeferredResult;
@@ -71,24 +72,14 @@ public class ResourceGroupInterceptor {
     private static DeferredResult<Void> queryForLinkedNetworks(Service service,
             ResourceGroupState currentState) {
 
-        Builder builder = Builder.create()
-                .addKindFieldClause(ComputeNetwork.class)
-                .addCollectionItemClause(ComputeNetwork.FIELD_NAME_GROUP_LINKS,
-                        currentState.documentSelfLink);
-        QueryUtils.QueryByPages<ComputeNetwork> query = new QueryUtils.QueryByPages<>(
-                service.getHost(),
-                builder.build(), ComputeNetwork.class, currentState.tenantLinks);
-
-        Set<String> networkLinks = new HashSet<>();
-        return query.queryLinks(n -> networkLinks.add(n))
-                .thenAccept(v -> {
-                    int documentCount = networkLinks.size();
-                    if (documentCount != 0) {
+        return queryForLinkedResources(service, currentState, ComputeNetwork.class)
+                .thenAccept(count -> {
+                    if (count != 0) {
                         throw new LocalizableValidationException(
                                 String.format("Resource Group is associated to %s network%s",
-                                        documentCount, documentCount > 1 ? "s" : ""),
+                                        count, count > 1 ? "s" : ""),
                                 "compute.network.resource-group.in.use",
-                                documentCount, documentCount > 1 ? "s" : "");
+                                count, count > 1 ? "s" : "");
                     }
                 });
     }
@@ -96,24 +87,14 @@ public class ResourceGroupInterceptor {
     private static DeferredResult<Void> queryForLinkedSubnets(Service service,
             ResourceGroupState currentState) {
 
-        Builder builder = Builder.create()
-                .addKindFieldClause(SubnetState.class)
-                .addCollectionItemClause(SubnetState.FIELD_NAME_GROUP_LINKS,
-                        currentState.documentSelfLink);
-        QueryUtils.QueryByPages<SubnetState> query = new QueryUtils.QueryByPages<>(
-                service.getHost(),
-                builder.build(), SubnetState.class, currentState.tenantLinks);
-
-        Set<String> subnetLinks = new HashSet<>();
-        return query.queryLinks(n -> subnetLinks.add(n))
-                .thenAccept(v -> {
-                    int documentCount = subnetLinks.size();
-                    if (documentCount != 0) {
+        return queryForLinkedResources(service, currentState, SubnetState.class)
+                .thenAccept(count -> {
+                    if (count != 0) {
                         throw new LocalizableValidationException(
                                 String.format("Resource Group is associated to %s subnet%s",
-                                        documentCount, documentCount > 1 ? "s" : ""),
+                                        count, count > 1 ? "s" : ""),
                                 "subnet.resource-group.in.use",
-                                documentCount, documentCount > 1 ? "s" : "");
+                                count, count > 1 ? "s" : "");
                     }
                 });
     }
@@ -121,25 +102,30 @@ public class ResourceGroupInterceptor {
     private static DeferredResult<Void> queryForLinkedSecurityGroups(Service service,
             ResourceGroupState currentState) {
 
-        Builder builder = Builder.create()
-                .addKindFieldClause(SecurityGroupState.class)
-                .addCollectionItemClause(SecurityGroupState.FIELD_NAME_GROUP_LINKS,
-                        currentState.documentSelfLink);
-        QueryUtils.QueryByPages<SecurityGroupState> query = new QueryUtils.QueryByPages<>(
-                service.getHost(),
-                builder.build(), SecurityGroupState.class, currentState.tenantLinks);
-
-        Set<String> sgLinks = new HashSet<>();
-        return query.queryLinks(sg -> sgLinks.add(sg))
-                .thenAccept(v -> {
-                    int documentCount = sgLinks.size();
-                    if (documentCount != 0) {
+        return queryForLinkedResources(service, currentState, SecurityGroupState.class)
+                .thenAccept(count -> {
+                    if (count != 0) {
                         throw new LocalizableValidationException(
                                 String.format("Resource Group is associated to %s security group%s",
-                                        documentCount, documentCount > 1 ? "s" : ""),
+                                        count, count > 1 ? "s" : ""),
                                 "security.group.resource-group.in.use",
-                                documentCount, documentCount > 1 ? "s" : "");
+                                count, count > 1 ? "s" : "");
                     }
                 });
+    }
+
+    private static <T extends ResourceState>DeferredResult<Integer> queryForLinkedResources(
+            Service service, ResourceGroupState currentState, Class<T> resourceClass) {
+
+        Builder builder = Builder.create()
+                .addKindFieldClause(resourceClass)
+                .addCollectionItemClause(T.FIELD_NAME_GROUP_LINKS,
+                        currentState.documentSelfLink);
+        QueryUtils.QueryByPages<T> query = new QueryUtils.QueryByPages<>(
+                service.getHost(),
+                builder.build(), resourceClass, currentState.tenantLinks);
+
+        return query.collectLinks(Collectors.toSet())
+                .thenApply(Set::size);
     }
 }

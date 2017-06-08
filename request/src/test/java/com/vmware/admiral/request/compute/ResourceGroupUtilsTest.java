@@ -64,6 +64,9 @@ public class ResourceGroupUtilsTest extends RequestBaseTest {
         assertNotNull(resourceGroup);
         assertEquals(resourceGroup.name, contextId);
         assertEquals(resourceGroup.tenantLinks, tenantLinks);
+        assertNotNull(resourceGroup.customProperties);
+        assertEquals(resourceGroup.customProperties.get(ResourceGroupUtils.RESOURCE_GROUP_TYPE_KEY),
+                ResourceGroupUtils.COMPUTE_DEPLOYMENT_TYPE_VALUE);
     }
 
     @Test
@@ -91,5 +94,8 @@ public class ResourceGroupUtilsTest extends RequestBaseTest {
         assertEquals(resourceGroup.documentSelfLink, resGroup.documentSelfLink);
         assertEquals(resourceGroup.name, contextId);
         assertEquals(resourceGroup.tenantLinks, tenantLinks);
+        assertNotNull(resourceGroup.customProperties);
+        assertEquals(resourceGroup.customProperties.get(ResourceGroupUtils.RESOURCE_GROUP_TYPE_KEY),
+                ResourceGroupUtils.COMPUTE_DEPLOYMENT_TYPE_VALUE);
     }
 }

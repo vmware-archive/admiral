@@ -119,7 +119,7 @@ public class AzureWordpressProvisionNetworkIT extends BaseWordpressComputeProvis
                 new StorageProfile());
 
         createProfile(loadComputeProfile(getEndpointType()),
-                createIsolatedNetworkProfile(virtualNetworkIsolated.name(),
+                createIsolatedSubnetNetworkProfile(virtualNetworkIsolated.name(),
                         CIDR_PREFIX),
                 new StorageProfile());
     }
