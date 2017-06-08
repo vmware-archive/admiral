@@ -13,7 +13,6 @@ package com.vmware.admiral.closures;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.net.URI;
@@ -43,10 +42,8 @@ import com.vmware.admiral.common.util.ServiceClientFactory;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.RegistryHostConfigService;
 import com.vmware.admiral.service.common.RegistryService;
-import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.TaskState;
-import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 public class ClosuresJavaIT extends BaseClosureIntegrationTest {
@@ -69,7 +66,6 @@ public class ClosuresJavaIT extends BaseClosureIntegrationTest {
     private RegistryService.RegistryState registryState;
 
     private URI helperUri;
-    private URI helperWithValidationUri;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
@@ -110,26 +106,7 @@ public class ClosuresJavaIT extends BaseClosureIntegrationTest {
     public void init() throws Throwable {
         logger.info("Executing against docker host: %s ", dockerHostCompute.address);
 
-        registryState = createRegistryState();
-
-        hostState = new RegistryHostConfigService.RegistryHostSpec();
-        hostState.hostState = registryState;
-        hostState.acceptHostAddress = true;
-        hostState.acceptCertificate = true;
-
-        helperUri = UriUtils.buildUri(UriUtils.buildUri(getBaseUrl()), RegistryHostConfigService
-                .SELF_LINK);
-
-        Operation op = Operation
-                .createPut(helperUri)
-                .setBody(hostState)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        fail("Unable to set insecure registry: " + e.getMessage());
-                    }
-                });
-
-        sendRequest(serviceClient, op);
+        registerExternalDockerRegistry(serviceClient);
     }
 
     @Test
@@ -369,15 +346,6 @@ public class ClosuresJavaIT extends BaseClosureIntegrationTest {
 
         cleanResource(createdClosure.documentSelfLink, serviceClient);
         cleanResource(closureDescription.documentSelfLink, serviceClient);
-    }
-
-    private RegistryService.RegistryState createRegistryState() {
-        RegistryService.RegistryState registryState = new RegistryService.RegistryState();
-        registryState.name = getClass().getName();
-        registryState.address = "https://bellevue-ci.eng.vmware.com:5005";
-        registryState.endpointType = RegistryService.RegistryState.DOCKER_REGISTRY_ENDPOINT_TYPE;
-
-        return registryState;
     }
 
 }

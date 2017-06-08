@@ -23,6 +23,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,12 +32,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-
 import junit.framework.TestCase;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.BaseClosureIntegrationTest;
@@ -51,7 +50,6 @@ import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.Utils;
 
-@Ignore("VBV-1315")
 public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
 
     protected static String IMAGE_NAME_PREFIX = "vmware/photon-closure-runner_";
@@ -103,8 +101,10 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
     }
 
     @Before
-    public void init() {
+    public void init() throws Throwable {
         logger.info("Executing against docker host: %s ", dockerHostCompute.address);
+
+        registerExternalDockerRegistry(serviceClient);
     }
 
     @Test
@@ -120,7 +120,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         closureDescState.runtime = RUNTIME_POWERSHELL;
 
         ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 3;
+        constraints.timeoutSeconds = 60;
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
@@ -171,7 +171,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
 
         ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 3;
+        constraints.timeoutSeconds = 60;
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
@@ -231,7 +231,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 4;
+        constraints.timeoutSeconds = 60;
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
@@ -290,7 +290,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 2;
+        constraints.timeoutSeconds = 60;
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
@@ -351,7 +351,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 4;
+        constraints.timeoutSeconds = 60;
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
@@ -413,7 +413,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 4;
+        constraints.timeoutSeconds = 60;
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
@@ -474,7 +474,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 4;
+        constraints.timeoutSeconds = 60;
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
@@ -511,7 +511,8 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
         assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
 
-        verifyJsonArrayBooleans(expectedInVar, fetchedClosure.inputs.get("a").getAsJsonArray());
+        verifyJsonArrayBooleans(Arrays.stream(expectedInVar).map(m -> Boolean.parseBoolean(m
+                .toLowerCase())).toArray(), fetchedClosure.inputs.get("a").getAsJsonArray());
         verifyJsonArrayBooleans(expectedResult,
                 fetchedClosure.outputs.get("result").getAsJsonArray());
 
@@ -525,10 +526,23 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         public String boolTest;
     }
 
+    class TestObjectResult {
+        public String strTest;
+        public int intTest;
+        public Boolean boolTest;
+    }
+
     class NestedTestObject {
         public String strTest;
         public int intTest;
         public String boolTest;
+        public NestedTestObject objTest;
+    }
+
+    class NestedTestObjectResult {
+        public String strTest;
+        public int intTest;
+        public Boolean boolTest;
         public NestedTestObject objTest;
     }
 
@@ -557,7 +571,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 2;
+        constraints.timeoutSeconds = 60;
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
@@ -599,7 +613,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         assertEquals(expectedInVar.boolTest, deserialObj.boolTest);
 
         JsonObject jsonResultObj = fetchedClosure.outputs.get("result").getAsJsonObject();
-        TestObject resultObj = json.fromJson(jsonResultObj, TestObject.class);
+        TestObjectResult resultObj = json.fromJson(jsonResultObj, TestObjectResult.class);
 
         assertEquals(expectedResult, resultObj.strTest);
         assertEquals(expectedInVar.intTest + 1, resultObj.intTest);
@@ -627,14 +641,14 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
                 + "    $inputs.a[0].strTest = $inputs.a[0].strTest + '_changed'\n"
                 + "    $inputs.a[0].intTest = $inputs.a[0].intTest + 1\n"
                 + "    $inputs.a[0].boolTest = -not $inputs.a[0].boolTest\n"
-                + "    $result = $inputs.a[0]\n"
+                + "    $result = $inputs.a\n"
                 + "    $context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
                 + "}\n";
 
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 4;
+        constraints.timeoutSeconds = 60;
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
@@ -679,7 +693,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
 
         JsonObject jsonResultObj = fetchedClosure.outputs.get("result").getAsJsonArray().get(0)
                 .getAsJsonObject();
-        TestObject resultObj = json.fromJson(jsonResultObj, TestObject.class);
+        TestObjectResult resultObj = json.fromJson(jsonResultObj, TestObjectResult.class);
 
         assertEquals(expectedResult, resultObj.strTest);
         assertEquals(expectedInVar.intTest + 1, resultObj.intTest);
@@ -720,7 +734,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 3;
+        constraints.timeoutSeconds = 60;
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
@@ -764,13 +778,13 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
 
         JsonObject jsonChild = fetchedClosure.outputs.get("result").getAsJsonObject().get("objTest")
                 .getAsJsonObject();
-        NestedTestObject resultObj = json.fromJson(jsonChild, NestedTestObject.class);
+        NestedTestObjectResult resultObj = json.fromJson(jsonChild, NestedTestObjectResult.class);
         assertEquals(expectedResult, resultObj.strTest);
         assertEquals(expectedInVar.objTest.intTest + 1, resultObj.intTest);
         assertEquals(expectedBoolResult, resultObj.boolTest);
 
-        cleanResource(createdClosure.documentSelfLink, serviceClient);
-        cleanResource(closureDescription.documentSelfLink, serviceClient);
+        //        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        //        cleanResource(closureDescription.documentSelfLink, serviceClient);
     }
 
     @Test
@@ -1012,7 +1026,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
 
         closureDescState.runtime = RUNTIME_POWERSHELL;
         ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 4;
+        constraints.timeoutSeconds = 60;
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
@@ -1057,14 +1071,14 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         closureDescState.source = "function test($context)\n"
                 + "{\n"
                 + "    $context.b\n"
-                + "    $result = $context.b\n"
+                + "    $result = b\n"
                 + "    return $result\n"
                 + "}\n";
 
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 3;
+        constraints.timeoutSeconds = 60;
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
@@ -1112,7 +1126,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 10;
+        constraints.timeoutSeconds = 60;
         constraints.ramMB = 300;
         closureDescState.resources = constraints;
 
@@ -1148,9 +1162,9 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsString());
         assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsString());
 
-        cleanResource(imageRequestLink, serviceClient);
-        cleanResource(createdClosure.documentSelfLink, serviceClient);
-        cleanResource(closureDescription.documentSelfLink, serviceClient);
+        //        cleanResource(imageRequestLink, serviceClient);
+        //        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        //        cleanResource(closureDescription.documentSelfLink, serviceClient);
     }
 
     @Test
@@ -1167,7 +1181,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 2;
+        constraints.timeoutSeconds = 60;
         constraints.ramMB = 300;
         closureDescState.resources = constraints;
 
@@ -1228,7 +1242,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 3;
+        constraints.timeoutSeconds = 60;
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
@@ -1285,7 +1299,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 2;
+        constraints.timeoutSeconds = 60;
         closureDescState.resources = constraints;
 
         String taskDefPayload = Utils.toJson(closureDescState);
@@ -1334,7 +1348,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
         closureDescState.runtime = RUNTIME_POWERSHELL;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
-        constraints.timeoutSeconds = 10;
+        constraints.timeoutSeconds = 60;
         constraints.ramMB = 300;
         closureDescState.resources = constraints;
 

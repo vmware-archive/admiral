@@ -12,7 +12,9 @@
 package com.vmware.admiral;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
+import static com.vmware.admiral.BaseProvisioningOnCoreOsIT.RegistryType.V1_SSL_SECURE;
 import static com.vmware.admiral.TestPropertiesUtil.getTestRequiredProp;
 
 import java.io.IOException;
@@ -38,6 +40,8 @@ import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptio
 import com.vmware.admiral.closures.services.images.DockerImage;
 import com.vmware.admiral.closures.services.images.DockerImageFactoryService;
 import com.vmware.admiral.closures.util.ClosureUtils;
+import com.vmware.admiral.compute.RegistryHostConfigService;
+import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.TaskState;
@@ -51,9 +55,16 @@ public class BaseClosureIntegrationTest extends BaseProvisioningOnCoreOsIT {
 
     public static final int DOCKER_IMAGE_BUILD_TIMEOUT_SECONDS = 30 * 60;
 
+    public final String DOCKER_REGISTRY_URL = getRegistryHostname(V1_SSL_SECURE);
+
     protected static final String TEST_WEB_SERVER_URL_PROP_NAME = "test.webserver.url";
 
     protected static DriverRegistry driverRegistry = new DriverRegistryImpl();
+
+    private RegistryHostConfigService.RegistryHostSpec hostState;
+    private RegistryService.RegistryState registryState;
+
+    private URI helperUri;
 
     @Override
     protected String getResourceDescriptionLink(boolean downloadImage, RegistryType registryType)
@@ -136,6 +147,38 @@ public class BaseClosureIntegrationTest extends BaseProvisioningOnCoreOsIT {
                 + dockerHostCompute.documentSelfLink);
 
         return dockerBuildImageLink;
+    }
+
+    protected void registerExternalDockerRegistry(ServiceClient serviceClient) throws Throwable {
+        registryState = createRegistryState(DOCKER_REGISTRY_URL);
+
+        hostState = new RegistryHostConfigService.RegistryHostSpec();
+        hostState.hostState = registryState;
+        hostState.acceptHostAddress = true;
+        hostState.acceptCertificate = true;
+
+        helperUri = UriUtils.buildUri(UriUtils.buildUri(getBaseUrl()), RegistryHostConfigService
+                .SELF_LINK);
+
+        Operation op = Operation
+                .createPut(helperUri)
+                .setBody(hostState)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        fail("Unable to set insecure registry: " + e.getMessage());
+                    }
+                });
+
+        sendRequest(serviceClient, op);
+    }
+
+    protected RegistryService.RegistryState createRegistryState(String repoUrl) {
+        RegistryService.RegistryState registryState = new RegistryService.RegistryState();
+        registryState.name = getClass().getName();
+        registryState.address = repoUrl;
+        registryState.endpointType = RegistryService.RegistryState.DOCKER_REGISTRY_ENDPOINT_TYPE;
+
+        return registryState;
     }
 
     private boolean isImageReady(String serviceHostUri, String dockerBuildImageLink)
