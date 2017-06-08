@@ -41,7 +41,7 @@ public class AwsProvisionContainerHostIT extends BaseIntegrationSupportIT {
     private static final String ACCESS_SECRET_PROP = "test.aws.secret.key";
     private static final String REGION_ID_PROP = "test.aws.region.id";
 
-    private EndpointType endpointType;
+    private String endpointType;
     private EndpointState endpoint;
     private Set<String> resourceLinks;
 
@@ -76,8 +76,8 @@ public class AwsProvisionContainerHostIT extends BaseIntegrationSupportIT {
     }
 
     @Override
-    protected EndpointType getEndpointType() {
-        return EndpointType.aws;
+    protected String getEndpointType() {
+        return EndpointType.aws.name();
     }
 
     @Override

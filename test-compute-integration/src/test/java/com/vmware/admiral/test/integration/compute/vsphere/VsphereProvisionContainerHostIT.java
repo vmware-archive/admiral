@@ -54,7 +54,7 @@ import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public class VsphereProvisionContainerHostIT extends BaseIntegrationSupportIT {
 
-    private EndpointType endpointType;
+    private String endpointType;
     private EndpointState endpoint;
     private Set<String> resourceLinks;
 
@@ -102,8 +102,8 @@ public class VsphereProvisionContainerHostIT extends BaseIntegrationSupportIT {
     }
 
     @Override
-    protected EndpointType getEndpointType() {
-        return EndpointType.vsphere;
+    protected String getEndpointType() {
+        return EndpointType.vsphere.name();
     }
 
     @Override

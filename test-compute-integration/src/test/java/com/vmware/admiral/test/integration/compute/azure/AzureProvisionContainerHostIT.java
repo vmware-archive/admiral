@@ -51,7 +51,7 @@ public class AzureProvisionContainerHostIT extends BaseIntegrationSupportIT {
 
     private static final String REGION_ID_PROP = "test.azure.region.id";
 
-    private EndpointType endpointType;
+    private String endpointType;
     private EndpointState endpoint;
     private Set<String> resourceLinks;
 
@@ -86,8 +86,8 @@ public class AzureProvisionContainerHostIT extends BaseIntegrationSupportIT {
     }
 
     @Override
-    protected EndpointType getEndpointType() {
-        return EndpointType.azure;
+    protected String getEndpointType() {
+        return EndpointType.azure.name();
     }
 
     @Override

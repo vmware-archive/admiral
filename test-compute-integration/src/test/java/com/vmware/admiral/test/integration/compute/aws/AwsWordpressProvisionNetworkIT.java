@@ -78,11 +78,11 @@ public class AwsWordpressProvisionNetworkIT extends BaseWordpressComputeProvisio
         createVpcIfNeeded();
 
         createProfile(loadComputeProfile(getEndpointType()), createNetworkProfile(
-                AWS_SECONDARY_SUBNET_NAME, null),
+                AWS_SECONDARY_SUBNET_NAME, null, null),
                 new StorageProfile());
 
         createProfile(loadComputeProfile(getEndpointType()), createNetworkProfile(
-                AWS_DEFAULT_SUBNET_NAME,
+                AWS_DEFAULT_SUBNET_NAME, null,
                 Sets.newHashSet(createTag("location", "dmz"))), new StorageProfile());
 
         createProfile(loadComputeProfile(getEndpointType()), createIsolatedNetworkProfile(AWS_ISOLATED_VPC_NAME,
@@ -91,8 +91,8 @@ public class AwsWordpressProvisionNetworkIT extends BaseWordpressComputeProvisio
     }
 
     @Override
-    protected EndpointType getEndpointType() {
-        return EndpointType.aws;
+    protected String getEndpointType() {
+        return EndpointType.aws.name();
     }
 
     @Override

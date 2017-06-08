@@ -47,6 +47,7 @@ import javax.net.ssl.X509TrustManager;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -67,7 +68,6 @@ import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpMethod;
 import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpResponse;
 import com.vmware.photon.controller.model.adapterapi.EndpointConfigRequest;
-import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeStateWithDescription;
@@ -512,11 +512,11 @@ public abstract class BaseIntegrationSupportIT {
         return null;
     }
 
-    protected EndpointState createEndpoint(EndpointType endpointType,
+    protected EndpointState createEndpoint(String endpointType,
             TestDocumentLifeCycle documentLifeCycle)
             throws Exception {
         EndpointState endpoint = new EndpointState();
-        endpoint.endpointType = endpointType.name();
+        endpoint.endpointType = endpointType;
         endpoint.documentSelfLink = getNewUniqueLink(EndpointService.FACTORY_LINK);
         endpoint.name = name(endpointType, getClass().getSimpleName().toLowerCase(), SUFFIX);
         endpoint.tenantLinks = getTenantLinks();
@@ -558,12 +558,12 @@ public abstract class BaseIntegrationSupportIT {
         waitForTaskToComplete(returnedState.documentSelfLink);
     }
 
-    protected abstract EndpointType getEndpointType();
+    protected abstract String    getEndpointType();
 
     protected abstract void extendEndpoint(EndpointState endpoint);
 
-    protected String name(EndpointType endpointType, String prefix, String suffix) {
-        return String.format("%s-%s-%s", prefix, endpointType.name(), suffix);
+    protected String name(String endpointType, String prefix, String suffix) {
+        return String.format("%s-%s-%s", prefix, endpointType, suffix);
     }
 
     protected String nextName(String prefix) {

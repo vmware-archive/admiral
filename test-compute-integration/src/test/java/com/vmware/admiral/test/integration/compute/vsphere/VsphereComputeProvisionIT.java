@@ -47,8 +47,8 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
     final String DISK_URI_IMAGE_ID = "coreos-disk";
 
     @Override
-    protected EndpointType getEndpointType() {
-        return EndpointType.vsphere;
+    protected String getEndpointType() {
+        return EndpointType.vsphere.name();
     }
 
     @Override

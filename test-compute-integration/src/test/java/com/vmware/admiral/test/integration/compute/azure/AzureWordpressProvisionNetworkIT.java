@@ -109,12 +109,12 @@ public class AzureWordpressProvisionNetworkIT extends BaseWordpressComputeProvis
         patchDocument(patch);
 
         createProfile(loadComputeProfile(getEndpointType()),
-                createNetworkProfile(secondarySubnet.name(), null),
+                createNetworkProfile(secondarySubnet.name(), null, null),
                 new StorageProfile());
 
         createProfile(loadComputeProfile(getEndpointType()),
                 createNetworkProfile(
-                        defaultSubnet.name(),
+                        defaultSubnet.name(), null,
                         Sets.newHashSet(createTag("location", "dmz"), createTag("type", "public"))),
                 new StorageProfile());
 
@@ -147,8 +147,8 @@ public class AzureWordpressProvisionNetworkIT extends BaseWordpressComputeProvis
     }
 
     @Override
-    protected EndpointType getEndpointType() {
-        return EndpointType.azure;
+    protected String getEndpointType() {
+        return EndpointType.azure.name();
     }
 
     @Override

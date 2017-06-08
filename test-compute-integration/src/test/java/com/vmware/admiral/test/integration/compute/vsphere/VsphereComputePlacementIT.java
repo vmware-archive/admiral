@@ -87,8 +87,8 @@ public class VsphereComputePlacementIT extends BaseIntegrationSupportIT {
     private RequestBrokerState provisionRequest2;
 
     @Override
-    protected EndpointType getEndpointType() {
-        return EndpointType.vsphere;
+    protected String getEndpointType() {
+        return EndpointType.vsphere.name();
     }
 
     @Override

@@ -29,7 +29,6 @@ import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
-import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService.NetworkInterfaceState;
 import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
@@ -106,9 +105,9 @@ public abstract class BaseWordpressComputeProvisionIT extends BaseComputeProvisi
         }
     }
 
-    protected ComputeProfile loadComputeProfile(EndpointType endpointType) {
+    protected ComputeProfile loadComputeProfile(String endpointType) {
         URL r = getClass().getClassLoader().getResource(
-                "test-" + endpointType.toString().toLowerCase() + "-compute-profile.yaml");
+                "test-" + endpointType.toLowerCase() + "-compute-profile.yaml");
 
         try (InputStream is = r.openStream()) {
             return YamlMapper.objectMapper().readValue(is, ComputeProfile.class);

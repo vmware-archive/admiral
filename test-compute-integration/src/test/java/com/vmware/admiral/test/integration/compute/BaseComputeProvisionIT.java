@@ -83,7 +83,7 @@ import com.vmware.admiral.test.integration.BaseIntegrationSupportIT;
 import com.vmware.admiral.test.integration.SimpleHttpsClient;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.adapters.registry.operations.ResourceOperation;
-import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
+import com.vmware.photon.controller.model.constants.PhotonModelConstants;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -95,6 +95,7 @@ import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.photon.controller.model.resources.TagService;
 import com.vmware.photon.controller.model.resources.TagService.TagState;
@@ -150,7 +151,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
     protected final Map<String, ComputeState> computesToDelete = new HashMap<>();
     private final Set<String> containersToDelete = new HashSet<>();
     private GroupResourcePlacementState groupResourcePlacementState;
-    private EndpointType endpointType;
+    private String endpointType;
     protected final TestDocumentLifeCycle documentLifeCycle = TestDocumentLifeCycle.FOR_DELETE;
     protected ResourcePoolState vmsResourcePool;
 
@@ -213,7 +214,9 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
 
         super.baseTearDown();
 
-        delete(UriUtils.buildUriPath(EndpointAdapterService.SELF_LINK, endpoint.documentSelfLink));
+        if (endpoint != null) {
+            delete(UriUtils.buildUriPath(EndpointAdapterService.SELF_LINK, endpoint.documentSelfLink));
+        }
     }
 
     private void cleanupReservation(ComputeState compute) throws Exception {
@@ -339,13 +342,13 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         }
     }
 
-    protected ResourcePoolState createResourcePool(EndpointType endpointType,
+    protected ResourcePoolState createResourcePool(String endpointType,
             EndpointState endpoint, TestDocumentLifeCycle documentLifeCycle) throws Exception {
         return createResourcePool(endpointType, endpoint, getClass().getSimpleName(),
                 documentLifeCycle);
     }
 
-    protected ResourcePoolState createResourcePool(EndpointType endpointType,
+    protected ResourcePoolState createResourcePool(String endpointType,
             EndpointState endpoint, String poolId, TestDocumentLifeCycle documentLifeCycle)
             throws Exception {
         String name = name(endpointType, poolId, SUFFIX);
@@ -353,7 +356,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         poolState.documentSelfLink = getExistingLink(ResourcePoolService.FACTORY_LINK, name);
         poolState.name = name;
         poolState.id = poolState.name;
-        poolState.projectName = endpointType.name();
+        poolState.projectName = endpointType;
         poolState.tenantLinks = getTenantLinks();
         poolState.maxCpuCount = 1600L;
         poolState.minCpuCount = 16L;
@@ -375,7 +378,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         return resourcePoolState;
     }
 
-    private ResourcePoolState createResourcePoolOfVMs(EndpointType endpointType,
+    private ResourcePoolState createResourcePoolOfVMs(String endpointType,
             TestDocumentLifeCycle documentLifeCycle) throws Exception {
         return createResourcePool(endpointType, null, "vms-" + getClass().getSimpleName(),
                 documentLifeCycle);
@@ -494,7 +497,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         return computeDesc;
     }
 
-    protected GroupResourcePlacementState createResourcePlacement(String name, EndpointType endpointType,
+    protected GroupResourcePlacementState createResourcePlacement(String name, String endpointType,
             String resourcePoolLink, TestDocumentLifeCycle documentLifeCycle)
             throws Exception {
         GroupResourcePlacementState placementState = new GroupResourcePlacementState();
@@ -755,42 +758,21 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         return compositeDescriptionLink;
     }
 
-    protected NetworkProfile createNetworkProfile(String subnetName, Set<String> tagLinks) throws Exception {
-        QueryTask.Query query = QueryTask.Query.Builder.create()
-                .addKindFieldClause(SubnetState.class)
-                .addCaseInsensitiveFieldClause(SubnetState.FIELD_NAME_NAME, subnetName,
-                        QueryTask.QueryTerm.MatchType.TERM, QueryTask.Query.Occurance.MUST_OCCUR)
-                .addFieldClause(SubnetState.FIELD_NAME_ENDPOINT_LINK, endpoint.documentSelfLink)
-                .addClause(QueryUtil.addTenantAndGroupClause(getTenantLinks()))
-                .build();
-        QueryTask qt = QueryTask.Builder.createDirectTask().setQuery(query).build();
-        String responseJson = sendRequest(SimpleHttpsClient.HttpMethod.POST,
-                ServiceUriPaths.CORE_QUERY_TASKS,
-                Utils.toJson(qt));
-        QueryTask result = Utils.fromJson(responseJson, QueryTask.class);
+    protected NetworkProfile createNetworkProfile(String subnetName, String securityGroupName, Set<String> tagLinks) throws Exception {
 
-        String subnetLink = result.results.documentLinks.get(0);
+        String subnetLink = loadResource(SubnetState.class, subnetName);
         NetworkProfile np = new NetworkProfile();
         np.subnetLinks = Collections.singletonList(subnetLink);
+        if (securityGroupName != null) {
+            np.securityGroupLinks = Collections.singletonList(
+                    loadResource(SecurityGroupState.class, securityGroupName));
+        }
         np.tagLinks = tagLinks;
         return np;
     }
 
     protected NetworkProfile createIsolatedNetworkProfile(String isolatedNetworkName, int cidrPrefix) throws Exception {
-        QueryTask.Query query = QueryTask.Query.Builder.create()
-                .addCaseInsensitiveFieldClause(NetworkState.FIELD_NAME_NAME, isolatedNetworkName,
-                        QueryTask.QueryTerm.MatchType.TERM, QueryTask.Query.Occurance.MUST_OCCUR)
-                .addFieldClause(NetworkState.FIELD_NAME_ENDPOINT_LINK, endpoint.documentSelfLink)
-                .addClause(QueryUtil.addTenantAndGroupClause(getTenantLinks()))
-                .build();
-
-        QueryTask qt = QueryTask.Builder.createDirectTask().setQuery(query).build();
-        String responseJson = sendRequest(SimpleHttpsClient.HttpMethod.POST,
-                ServiceUriPaths.CORE_QUERY_TASKS,
-                Utils.toJson(qt));
-        QueryTask result = Utils.fromJson(responseJson, QueryTask.class);
-
-        String networkLink = result.results.documentLinks.get(0);
+        String networkLink = loadResource(NetworkState.class, isolatedNetworkName);
 
         NetworkProfile np = new NetworkProfile();
         np.subnetLinks = new ArrayList<>();
@@ -798,6 +780,32 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         np.isolationNetworkLink = networkLink;
         np.isolatedSubnetCIDRPrefix = cidrPrefix;
         return np;
+    }
+
+    protected String loadResource(Class resourceClass, String name) throws Exception {
+        QueryTask.Query query = QueryTask.Query.Builder.create()
+                .addKindFieldClause(resourceClass)
+                .addCaseInsensitiveFieldClause(ResourceState.FIELD_NAME_NAME, name,
+                        QueryTask.QueryTerm.MatchType.TERM, QueryTask.Query.Occurance.MUST_OCCUR)
+                .addFieldClause(PhotonModelConstants.FIELD_NAME_ENDPOINT_LINK,
+                        endpoint.documentSelfLink)
+                .addClause(QueryUtil.addTenantAndGroupClause(getTenantLinks()))
+                .build();
+        QueryTask qt = QueryTask.Builder.createDirectTask().setQuery(query).build();
+        String responseJson = sendRequest(SimpleHttpsClient.HttpMethod.POST,
+                ServiceUriPaths.CORE_QUERY_TASKS,
+                Utils.toJson(qt));
+        QueryTask result = Utils.fromJson(responseJson, QueryTask.class);
+
+        if (result.results.documentLinks.size() == 0) {
+            throw new IllegalArgumentException(String.format("Cannot find %s '%s'",
+                    resourceClass.getSimpleName(), name));
+        } else if (result.results.documentLinks.size() > 1) {
+            logger.warning("There are more then one %s with name '%s'",
+                    resourceClass.getSimpleName(), name);
+        }
+
+        return result.results.documentLinks.get(0);
     }
 
     protected String createTag(String key, String value) throws Throwable {

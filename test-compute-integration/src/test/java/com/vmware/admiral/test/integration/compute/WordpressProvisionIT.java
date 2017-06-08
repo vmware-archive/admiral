@@ -35,17 +35,17 @@ public class WordpressProvisionIT extends BaseWordpressComputeProvisionIT {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
-                { EndpointType.aws, awsEndpointExtender, awsSetUp }
+                { EndpointType.aws.name(), awsEndpointExtender, awsSetUp }
                 //TODO uncomment once the vsphere issues are resolved
-                //{ EndpointType.vsphere, vSphereEndpointExtender, vSphereSetUp }
+                //{ EndpointType.vsphere.name(), vSphereEndpointExtender, vSphereSetUp }
         });
     }
 
-    private final EndpointType endpointType;
+    private final String endpointType;
     private final Consumer<EndpointState> endpointExtender;
     private final Runnable setUp;
 
-    public WordpressProvisionIT(EndpointType endpointType,
+    public WordpressProvisionIT(String endpointType,
             Consumer<EndpointState> endpointExtender, Runnable setUp) {
         this.endpointType = endpointType;
         this.endpointExtender = endpointExtender;
@@ -57,12 +57,12 @@ public class WordpressProvisionIT extends BaseWordpressComputeProvisionIT {
         setUp.run();
 
         createProfile(loadComputeProfile(getEndpointType()), createNetworkProfile(
-                AWS_DEFAULT_SUBNET_NAME, null),
+                AWS_DEFAULT_SUBNET_NAME, null, null),
                 new StorageProfileService.StorageProfile());
     }
 
     @Override
-    protected EndpointType getEndpointType() {
+    protected String getEndpointType() {
         return endpointType;
     }
 

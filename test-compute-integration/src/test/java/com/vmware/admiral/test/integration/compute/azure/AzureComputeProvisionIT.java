@@ -35,8 +35,8 @@ public class AzureComputeProvisionIT extends BaseComputeProvisionIT {
     public static final String REGION_ID_PROP = "test.azure.region.id";
 
     @Override
-    protected EndpointType getEndpointType() {
-        return EndpointType.azure;
+    protected String getEndpointType() {
+        return EndpointType.azure.name();
     }
 
     @Override

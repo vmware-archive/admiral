@@ -26,8 +26,8 @@ public class AwsComputeProvisionIT extends BaseComputeProvisionIT {
     public static final String REGION_ID_PROP = "test.aws.region.id";
 
     @Override
-    protected EndpointType getEndpointType() {
-        return EndpointType.aws;
+    protected String getEndpointType() {
+        return EndpointType.aws.name();
     }
 
     @Override
