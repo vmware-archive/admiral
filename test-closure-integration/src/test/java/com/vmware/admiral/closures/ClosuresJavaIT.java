@@ -241,6 +241,65 @@ public class ClosuresJavaIT extends BaseClosureIntegrationTest {
     }
 
     @Test
+    public void executeJavaExtSourceAsJARTest() throws Throwable {
+        // Create Closure Definition
+        ClosureDescription closureDescState = new ClosureDescription();
+        closureDescState.name = "test";
+
+        int expectedInVar = 3;
+        int expectedInVar2 = 4;
+        int expectedResult = 7;
+
+        closureDescState.sourceURL = testWebserverUri + "/test_script_java_classes.jar";
+        closureDescState.source = "should not be used";
+        closureDescState.runtime = RUNTIME_JAVA;
+        closureDescState.entrypoint = "testpackage.Test.test";
+
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 10;
+        constraints.ramMB = 300;
+        closureDescState.resources = constraints;
+
+        String taskDefPayload = Utils.toJson(closureDescState);
+        ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
+                serviceClient);
+        assertNotNull(closureDescription);
+
+        // Create Closure
+        Closure createdClosure = createClosure(closureDescription, serviceClient);
+        assertEquals(closureDescription.documentSelfLink, createdClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.CREATED, createdClosure.state);
+
+        // Execute the created Closure
+        Closure closureRequest = new Closure();
+        Map inputs = new HashMap<>();
+        inputs.put("a", new JsonPrimitive(expectedInVar));
+        inputs.put("b", new JsonPrimitive(expectedInVar2));
+        closureRequest.inputs = inputs;
+
+        executeClosure(createdClosure, closureRequest, serviceClient);
+
+        // Wait for the completion timeout
+        String imageRequestLink = waitForBuildCompletion(IMAGE_NAME, closureDescription);
+
+        waitForTaskState(createdClosure.documentSelfLink, TaskState.TaskStage.FINISHED,
+                serviceClient);
+
+        Closure fetchedClosure = getClosure(createdClosure.documentSelfLink, serviceClient);
+
+        assertEquals(closureDescription.documentSelfLink, fetchedClosure.descriptionLink);
+        assertEquals(TaskState.TaskStage.FINISHED, fetchedClosure.state);
+
+        assertEquals(expectedInVar, fetchedClosure.inputs.get("a").getAsInt());
+        assertEquals(expectedInVar2, fetchedClosure.inputs.get("b").getAsInt());
+        assertEquals(expectedResult, fetchedClosure.outputs.get("result").getAsInt(), 0);
+
+        cleanResource(imageRequestLink, serviceClient);
+        cleanResource(createdClosure.documentSelfLink, serviceClient);
+        cleanResource(closureDescription.documentSelfLink, serviceClient);
+    }
+
+    @Test
     public void executeJavaNumberParametersTest() throws Throwable {
         // Create Closure Definition
         ClosureDescription closureDescState = new ClosureDescription();
