@@ -35,7 +35,7 @@ import com.amazonaws.services.ec2.model.DeleteVpcRequest;
 import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.Vpc;
 import com.google.common.collect.Sets;
-
+import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -75,8 +75,6 @@ public class AwsWordpressProvisionNetworkIT extends BaseWordpressComputeProvisio
 
     @Override
     protected void doSetUp() throws Throwable {
-        createVpcIfNeeded();
-
         createProfile(loadComputeProfile(getEndpointType()), createNetworkProfile(
                 AWS_SECONDARY_SUBNET_NAME, null, null),
                 new StorageProfile());
@@ -126,7 +124,8 @@ public class AwsWordpressProvisionNetworkIT extends BaseWordpressComputeProvisio
 
     }
 
-    private void createVpcIfNeeded() throws Exception {
+    @BeforeClass
+    public static void createVpcIfNeeded() throws Exception {
         // check if the vpc that we use for isolation network tests exist and create it if it doesn't
         BasicAWSCredentials cred = new BasicAWSCredentials(getTestRequiredProp(ACCESS_KEY_PROP), getTestRequiredProp(ACCESS_SECRET_PROP));
 
@@ -165,8 +164,6 @@ public class AwsWordpressProvisionNetworkIT extends BaseWordpressComputeProvisio
 
                 throw e;
             }
-
-            triggerAndWaitForEndpointEnumeration(endpoint);
         }
     }
 }
