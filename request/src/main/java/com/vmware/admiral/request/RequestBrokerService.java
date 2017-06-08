@@ -1160,13 +1160,13 @@ public class RequestBrokerService extends
     }
 
     private void createLoadBalancerAllocationTask(RequestBrokerState state) {
-        // TODO: just a placeholder, needs to be implemented
         LoadBalancerAllocationTaskState allocationTask = new LoadBalancerAllocationTaskState();
         allocationTask.documentSelfLink = getSelfId();
         allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
                 getSelfLink(), TaskStage.STARTED, SubStage.ALLOCATED,
                 TaskStage.STARTED, SubStage.ERROR);
 
+        allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
         allocationTask.tenantLinks = state.tenantLinks;
         allocationTask.requestTrackerLink = state.requestTrackerLink;
 
