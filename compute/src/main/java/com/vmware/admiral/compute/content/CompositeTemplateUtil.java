@@ -366,7 +366,7 @@ public class CompositeTemplateUtil {
 
     public static List<Object> toList(JsonArray array) {
         List<Object> list = new ArrayList<Object>();
-        for (Object obj : list) {
+        for (Object obj : array) {
             if (obj instanceof JsonArray) {
                 obj = toList((JsonArray) obj);
                 list.add(obj);
