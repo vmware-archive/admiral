@@ -14,7 +14,7 @@ include agent.properties
 ADMIRAL_CLOSURE_NODEJS_IMAGE_TAR_FILENAME=photon-closure-runner_nodejs_base
 ADMIRAL_CLOSURE_PYTHON_IMAGE_TAR_FILENAME=photon-closure-runner_python_base
 ADMIRAL_CLOSURE_JAVA_IMAGE_TAR_FILENAME=photon-closure-runner_java_base
-ADMIRAL_CLOSURE_POWERSHELL_IMAGE_NAME=photon-closure-runner_powershell_base
+ADMIRAL_CLOSURE_POWERSHELL_IMAGE_TAR_FILENAME=photon-closure-runner_powershell_base
 
 FOLDER_HASH	:= $(shell pwd | sha1sum | head -c 7)
 GIT_HASH	:= $(shell git log  --pretty=format:%h -n 1 .)
@@ -41,11 +41,11 @@ build_javabase: $(ADMIRAL_CLOSURE_JAVA_IMAGE_TAR_FILENAME)-export-$(TAG)
 	cp $(ADMIRAL_CLOSURE_JAVA_IMAGE_TAR_FILENAME)-export-$(TAG) \
 	  ../../host/images-bin/$(ADMIRAL_CLOSURE_JAVA_IMAGE_TAR_FILENAME).tar.xz
 
-build_powershellbase: $(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_NAME)-export-$(TAG)
-	rm -f ../../host/images-bin/$(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_NAME).tar.xz
+build_powershellbase: $(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_TAR_FILENAME)-export-$(TAG)
+	rm -f ../../host/images-bin/$(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_TAR_FILENAME).tar.xz
 	mkdir -p ../../host/images-bin || true
-	cp $(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_NAME)-export-$(TAG) \
-	  ../../host/images-bin/$(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_NAME).tar.xz
+	cp $(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_TAR_FILENAME)-export-$(TAG) \
+	  ../../host/images-bin/$(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_TAR_FILENAME).tar.xz
 
 
 $(ADMIRAL_CLOSURE_NODEJS_IMAGE_TAR_FILENAME)-export-$(TAG):
@@ -72,14 +72,14 @@ $(ADMIRAL_CLOSURE_JAVA_IMAGE_TAR_FILENAME)-export-$(TAG):
 	    $(ADMIRAL_CLOSURE_JAVA_IMAGE_NAME):$(ADMIRAL_CLOSURE_JAVA_IMAGE_VERSION) \
 	    | xz -z -f -c > $(ADMIRAL_CLOSURE_JAVA_IMAGE_TAR_FILENAME)-export-$(TAG)
 
-$(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_NAME)-export-$(TAG):
+$(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_TAR_FILENAME)-export-$(TAG):
 	docker ${DOCKER_ARGS} build \
 	    -t $(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_NAME):$(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_VERSION) \
 	    photon-closure-runner_powershell_base
 
 	docker ${DOCKER_ARGS} save \
 	    $(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_NAME):$(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_VERSION) \
-	    | xz -z -f -c > $(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_NAME)-export-$(TAG)
+	    | xz -z -f -c > $(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_TAR_FILENAME)-export-$(TAG)
 
 
 
@@ -94,5 +94,5 @@ clean:
 	rm -fr $(ADMIRAL_CLOSURE_NODEJS_IMAGE_TAR_FILENAME)-export-*
 	rm -fr $(ADMIRAL_CLOSURE_PYTHON_IMAGE_TAR_FILENAME)-export-*
 	rm -fr $(ADMIRAL_CLOSURE_JAVA_IMAGE_TAR_FILENAME)-export-*
-	rm -fr $(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_NAME)-export-*
+	rm -fr $(ADMIRAL_CLOSURE_POWERSHELL_IMAGE_TAR_FILENAME)-export-*
 	rm -fr ../../host/images-bin/photon-closure-runner*
