@@ -93,7 +93,7 @@ public abstract class BaseIntegrationSupportIT {
     protected static final int STATE_CHANGE_WAIT_POLLING_RETRY_COUNT = Integer.getInteger(
             "test.state.change.wait.retry.count", 300);
     protected static final int TASK_CHANGE_WAIT_POLLING_RETRY_COUNT = Integer.getInteger(
-            "test.task.change.wait.retry.count", 600);
+            "test.task.change.wait.retry.count", 900);
     protected static final int STATE_CHANGE_WAIT_POLLING_PERIOD_MILLIS = Integer.getInteger(
             "test.state.change.wait.period.millis", 1000);
 
