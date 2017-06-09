@@ -15,6 +15,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -54,9 +55,11 @@ import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.photon.controller.model.resources.EndpointService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription;
+import com.vmware.photon.controller.model.resources.LoadBalancerService.LoadBalancerState;
 import com.vmware.photon.controller.model.resources.NetworkService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.photon.controller.model.resources.SubnetService;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.AuthCredentialsService;
@@ -205,6 +208,27 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         desc.instanceProtocol = "HTTP";
         desc.instancePort = 80;
         return desc;
+    }
+
+    public static LoadBalancerState createLoadBalancerState(String name) {
+        LoadBalancerState state = new LoadBalancerState();
+        state.name = name;
+        state.descriptionLink = "lb-desc";
+        state.tenantLinks = getTenantLinks();
+        state.customProperties = new HashMap<>();
+        state.protocol = "HTTP";
+        state.port = 80;
+        state.instanceProtocol = "HTTP";
+        state.instancePort = 80;
+        state.endpointLink = "my-endpoint";
+        state.regionId = "my-region";
+        state.subnetLinks = Collections.singleton(SubnetService.FACTORY_LINK + "/lb-subnet");
+        state.computeLinks = Collections.singleton("compute-link-1");
+        try {
+            state.instanceAdapterReference = new URI("http://instanceAdapterReference");
+        } catch (URISyntaxException e) {
+        }
+        return state;
     }
 
     public static List<String> getTenantLinks() {

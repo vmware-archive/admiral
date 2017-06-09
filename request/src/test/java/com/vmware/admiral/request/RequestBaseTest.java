@@ -422,7 +422,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
         computeDescription.authCredentialsLink = endpoint.authCredentialsLink;
         computeDescription = getOrCreateDocument(computeDescription,
                 ComputeDescriptionService.FACTORY_LINK);
-        assertNotNull(vmGuestComputeDescription);
+        assertNotNull(computeDescription);
         return computeDescription;
     }
 

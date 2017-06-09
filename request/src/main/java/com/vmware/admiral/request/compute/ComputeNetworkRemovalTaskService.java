@@ -53,7 +53,6 @@ import com.vmware.photon.controller.model.tasks.ProvisionSecurityGroupTaskServic
 import com.vmware.photon.controller.model.tasks.ProvisionSubnetTaskService;
 import com.vmware.photon.controller.model.tasks.ProvisionSubnetTaskService.ProvisionSubnetTaskState;
 import com.vmware.photon.controller.model.tasks.ServiceTaskCallback;
-import com.vmware.photon.controller.model.tasks.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.tasks.TaskOption;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
@@ -202,9 +201,9 @@ public class ComputeNetworkRemovalTaskService extends
                                         instanceof ServiceHost.ServiceNotFoundException) {
                                     logWarning("Subnet State is not found at link: %s ",
                                             isolatedComputeNetwork.subnetLink);
-                                    completeSubTask(callback, null);
+                                    callback.sendResponse(this, (Throwable) null);
                                 } else {
-                                    completeSubTask(callback, e);
+                                    callback.sendResponse(this, e);
                                 }
                                 return null;
                             })
@@ -268,7 +267,7 @@ public class ComputeNetworkRemovalTaskService extends
         return this.sendWithDeferredResult(
                 Operation.createDelete(this, context.subnet.documentSelfLink))
                 .thenCompose(o -> {
-                    completeSubTask(context.serviceTaskCallback, null);
+                    context.serviceTaskCallback.sendResponse(this, (Throwable) null);
                     return DeferredResult.completed(context);
                 });
     }
@@ -479,24 +478,6 @@ public class ComputeNetworkRemovalTaskService extends
                     } else {
                         this.computeNetworks = computeNetworks;
                         callbackFunction.accept(this.computeNetworks);
-                    }
-                }));
-    }
-
-    private void completeSubTask(ServiceTaskCallback<SubStage> taskCallback, Throwable ex) {
-        ServiceTaskCallbackResponse<SubStage> response;
-        if (ex == null) {
-            response = taskCallback.getFinishedResponse();
-        } else {
-            response = taskCallback.getFailedResponse(ex);
-        }
-
-        sendRequest(Operation.createPatch(taskCallback.serviceURI)
-                .setBody(response)
-                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Notifying calling task failed: %s", e);
                     }
                 }));
     }

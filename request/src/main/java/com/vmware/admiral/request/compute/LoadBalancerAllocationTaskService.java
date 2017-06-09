@@ -324,8 +324,12 @@ public class LoadBalancerAllocationTaskService extends
         lbState.instancePort = this.lbDescription.instancePort;
         lbState.internetFacing = this.lbDescription.internetFacing;
         lbState.computeLinks = state.computeLinks;
-        // TODO: populate subnet from the network profile
-        lbState.subnetLinks = Collections.singleton(SubnetService.FACTORY_LINK + "/dummy-subnet");
+        if (this.lbDescription.subnetLinks != null) {
+            lbState.subnetLinks = this.lbDescription.subnetLinks;
+        } else {
+            // TODO: populate subnet from the network profile
+            lbState.subnetLinks = Collections.singleton(SubnetService.FACTORY_LINK + "/dummy-subnet");
+        }
         lbState.endpointLink = this.lbDescription.endpointLink;
         lbState.regionId = this.lbDescription.regionId;
         lbState.instanceAdapterReference = this.lbDescription.instanceAdapterReference;

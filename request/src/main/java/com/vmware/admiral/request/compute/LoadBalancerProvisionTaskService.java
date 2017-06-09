@@ -11,40 +11,61 @@
 
 package com.vmware.admiral.request.compute;
 
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
+import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
+
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
+import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.ServiceUtils;
+import com.vmware.admiral.request.compute.LoadBalancerProvisionTaskService.LoadBalancerProvisionTaskState.SubStage;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
-import com.vmware.admiral.service.common.DefaultSubStage;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
+import com.vmware.photon.controller.model.adapterapi.LoadBalancerInstanceRequest.InstanceRequestType;
+import com.vmware.photon.controller.model.tasks.ProvisionLoadBalancerTaskService;
+import com.vmware.photon.controller.model.tasks.ProvisionLoadBalancerTaskService.ProvisionLoadBalancerTaskState;
+import com.vmware.photon.controller.model.tasks.ServiceTaskCallback;
+import com.vmware.xenon.common.DeferredResult;
+import com.vmware.xenon.common.Operation;
 
 /**
  * Task implementing the provision of a load balancer.
  */
 public class LoadBalancerProvisionTaskService extends
-        AbstractTaskStatefulService<LoadBalancerProvisionTaskService.LoadBalancerProvisionTaskState, DefaultSubStage> {
+        AbstractTaskStatefulService<
+                LoadBalancerProvisionTaskService.LoadBalancerProvisionTaskState,
+                LoadBalancerProvisionTaskService.LoadBalancerProvisionTaskState.SubStage> {
 
     public static final String FACTORY_LINK = ManagementUriParts.REQUEST_LOAD_BALANCER_PROVISION_TASKS;
 
     public static final String DISPLAY_NAME = "Load Balancer Provision";
 
     public static class LoadBalancerProvisionTaskState extends
-            com.vmware.admiral.service.common.TaskServiceDocument<DefaultSubStage> {
+            com.vmware.admiral.service.common.TaskServiceDocument<LoadBalancerProvisionTaskState.SubStage> {
+        public enum SubStage {
+            CREATED,
+            PROVISIONING,
+            COMPLETED,
+            ERROR
+        }
+
+        static final Set<SubStage> TRANSIENT_SUB_STAGES = new HashSet<>(
+                Arrays.asList(SubStage.PROVISIONING));
+
         /**
          * (Required) Links to already allocated resources that are going to be provisioned.
          */
         @Documentation(
                 description = "Links to already allocated resources that are going to be provisioned.")
-        @PropertyOptions(indexing = PropertyIndexingOption.STORE_ONLY, usage = {
-                PropertyUsageOption.REQUIRED, PropertyUsageOption.SINGLE_ASSIGNMENT })
+        @PropertyOptions(usage = { REQUIRED, SINGLE_ASSIGNMENT })
         public Set<String> resourceLinks;
-
-        // TODO
     }
 
     public LoadBalancerProvisionTaskService() {
-        super(LoadBalancerProvisionTaskState.class, DefaultSubStage.class, DISPLAY_NAME);
+        super(LoadBalancerProvisionTaskState.class, LoadBalancerProvisionTaskState.SubStage.class,
+                DISPLAY_NAME);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
         super.toggleOption(ServiceOption.REPLICATION, true);
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
@@ -52,10 +73,23 @@ public class LoadBalancerProvisionTaskService extends
     }
 
     @Override
+    protected void validateStateOnStart(LoadBalancerProvisionTaskState state)
+            throws IllegalArgumentException {
+        if (state.resourceLinks.size() != 1) {
+            throw new IllegalArgumentException(
+                    "No more than one load balancer can be provisioned by this task");
+        }
+    }
+
+    @Override
     protected void handleStartedStagePatch(LoadBalancerProvisionTaskState state) {
         switch (state.taskSubStage) {
         case CREATED:
-            proceedTo(DefaultSubStage.COMPLETED);
+            provisionLoadBalancer(state).thenAccept(ignore -> {
+                proceedTo(SubStage.PROVISIONING);
+            });
+            break;
+        case PROVISIONING:
             break;
         case COMPLETED:
             complete();
@@ -66,5 +100,29 @@ public class LoadBalancerProvisionTaskService extends
         default:
             break;
         }
+    }
+
+    private DeferredResult<Operation> provisionLoadBalancer(LoadBalancerProvisionTaskState state) {
+        ServiceTaskCallback<LoadBalancerProvisionTaskState.SubStage> callback =
+                ServiceTaskCallback.create(getUri());
+        callback.onSuccessTo(LoadBalancerProvisionTaskState.SubStage.COMPLETED);
+        callback.onErrorTo(LoadBalancerProvisionTaskState.SubStage.ERROR);
+
+        ProvisionLoadBalancerTaskState task = new ProvisionLoadBalancerTaskState();
+        task.isMockRequest = DeploymentProfileConfig.getInstance().isTest();
+        task.requestType = InstanceRequestType.CREATE;
+        task.serviceTaskCallback = callback;
+        task.tenantLinks = state.tenantLinks;
+        task.documentExpirationTimeMicros = ServiceUtils.getDefaultTaskExpirationTimeInMicros();
+        task.loadBalancerLink = state.resourceLinks.iterator().next();
+
+        return this.sendWithDeferredResult(
+                Operation.createPost(this, ProvisionLoadBalancerTaskService.FACTORY_LINK)
+                        .setBody(task))
+                .whenComplete((o, e) -> {
+                    if (e != null) {
+                        failTask("Error starting load balancer provisioning task", e);
+                    }
+                });
     }
 }

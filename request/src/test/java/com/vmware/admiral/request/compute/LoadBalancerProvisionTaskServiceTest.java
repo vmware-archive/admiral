@@ -17,48 +17,52 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.UUID;
 
-import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.compute.LoadBalancerProvisionTaskService.LoadBalancerProvisionTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
-import com.vmware.admiral.service.common.ServiceTaskCallback;
+import com.vmware.photon.controller.model.adapters.awsadapter.AWSLoadBalancerService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService;
 import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription;
 import com.vmware.photon.controller.model.resources.LoadBalancerService;
+import com.vmware.photon.controller.model.resources.LoadBalancerService.LoadBalancerState;
+import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
+import com.vmware.xenon.common.UriUtils;
 
 /**
  * Tests for the {@link LoadBalancerProvisionTaskService} class.
  */
 public class LoadBalancerProvisionTaskServiceTest extends RequestBaseTest {
 
-    private LoadBalancerDescription loadBalancerDesc;
-
     @Override
-    @Before
     public void setUp() throws Throwable {
+        DeploymentProfileConfig.getInstance().setTest(true);
         super.setUp();
-
-        // setup Load Balancer description
-        createLoadBalancerDescription(UUID.randomUUID().toString());
     }
 
     @Test
     public void testProvisionTaskServiceLifeCycle() throws Throwable {
-        // TODO: enhance once the task implementation is complete
+        // create prerequisites
+        ComputeState compute = createVmComputeWithRandomComputeDescription(true, ComputeType.VM_GUEST);
+        SubnetState subnet = createSubnetState(null);
+        LoadBalancerDescription loadBalancerDesc = createLoadBalancerDescription(
+                ComputeDescriptionService.FACTORY_LINK + "/comp-desc");
+        LoadBalancerState loadBalancerState = createLoadBalancerState(
+                loadBalancerDesc.documentSelfLink, compute.documentSelfLink, subnet.documentSelfLink);
+
         LoadBalancerProvisionTaskState provisionTask = createLoadBalancerProvisionTask(
-                loadBalancerDesc.documentSelfLink);
+                loadBalancerState.documentSelfLink);
         provisionTask = provision(provisionTask);
     }
 
-    private LoadBalancerProvisionTaskState createLoadBalancerProvisionTask(
-            String loadBalancerDescLink) {
+    private LoadBalancerProvisionTaskState createLoadBalancerProvisionTask(String lbLink) {
         LoadBalancerProvisionTaskState provisionTask = new LoadBalancerProvisionTaskState();
-        provisionTask.resourceLinks = Collections
-                .singleton(LoadBalancerService.FACTORY_LINK + "/dummy-lb");
-        provisionTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+        provisionTask.resourceLinks = Collections.singleton(lbLink);
         provisionTask.customProperties = new HashMap<>();
         return provisionTask;
     }
@@ -83,20 +87,24 @@ public class LoadBalancerProvisionTaskServiceTest extends RequestBaseTest {
         return outProvisionTask;
     }
 
-    private LoadBalancerDescription createLoadBalancerDescription(String name)
-            throws Throwable {
-        synchronized (initializationLock) {
-            if (loadBalancerDesc == null) {
-                LoadBalancerDescription desc = TestRequestStateFactory
-                        .createLoadBalancerDescription(name);
-                desc.documentSelfLink = UUID.randomUUID().toString();
-                desc.computeDescriptionLink = ComputeDescriptionService.FACTORY_LINK
-                        + "/dummy-compute-link";
+    private LoadBalancerDescription createLoadBalancerDescription(String cdLink) throws Throwable {
+        LoadBalancerDescription desc = TestRequestStateFactory
+                .createLoadBalancerDescription(UUID.randomUUID().toString());
+        desc.computeDescriptionLink = cdLink;
 
-                loadBalancerDesc = doPost(desc, LoadBalancerDescriptionService.FACTORY_LINK);
-                assertNotNull(loadBalancerDesc);
-            }
-            return loadBalancerDesc;
-        }
+        return doPost(desc, LoadBalancerDescriptionService.FACTORY_LINK);
+    }
+
+    private LoadBalancerState createLoadBalancerState(String lbdLink, String computeLink,
+            String subnetLink) throws Throwable {
+        LoadBalancerState state = TestRequestStateFactory
+                .createLoadBalancerState(UUID.randomUUID().toString());
+        state.descriptionLink = lbdLink;
+        state.endpointLink = this.endpoint.documentSelfLink;
+        state.computeLinks = Collections.singleton(computeLink);
+        state.subnetLinks = Collections.singleton(subnetLink);
+        state.instanceAdapterReference = UriUtils.buildUri(host, AWSLoadBalancerService.SELF_LINK);
+
+        return doPost(state, LoadBalancerService.FACTORY_LINK);
     }
 }

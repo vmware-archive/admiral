@@ -70,7 +70,6 @@ import com.vmware.photon.controller.model.tasks.ProvisionSecurityGroupTaskServic
 import com.vmware.photon.controller.model.tasks.ProvisionSubnetTaskService;
 import com.vmware.photon.controller.model.tasks.ProvisionSubnetTaskService.ProvisionSubnetTaskState;
 import com.vmware.photon.controller.model.tasks.ServiceTaskCallback;
-import com.vmware.photon.controller.model.tasks.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.tasks.TaskOption;
 import com.vmware.photon.controller.model.util.AssertUtil;
 import com.vmware.xenon.common.DeferredResult;
@@ -224,7 +223,7 @@ public class ComputeNetworkProvisionTaskService
                     .thenCompose(this::provisionResource)
                     .exceptionally(t -> {
                         logSevere("Failure provisioning a network: %s", t);
-                        completeSubTask(callback, t);
+                        callback.sendResponse(this, t);
                         return null;
                     }));
 
@@ -285,7 +284,7 @@ public class ComputeNetworkProvisionTaskService
             return DeferredResult.completed(context)
                     .thenCompose(this::createNicStates)
                     .thenCompose(ctx -> {
-                        completeSubTask(context.serviceTaskCallback, null);
+                        context.serviceTaskCallback.sendResponse(this, (Throwable)null);
                         return DeferredResult.completed(ctx);
                     });
         }
@@ -596,7 +595,7 @@ public class ComputeNetworkProvisionTaskService
         provisionTaskState.tenantLinks = context.computeNetwork.tenantLinks;
         provisionTaskState.documentExpirationTimeMicros = ServiceUtils
                 .getDefaultTaskExpirationTimeInMicros();
-        provisionTaskState.subnetDescriptionLink = context.subnet.documentSelfLink;
+        provisionTaskState.subnetLink = context.subnet.documentSelfLink;
 
         return this.sendWithDeferredResult(
                 Operation.createPost(this, ProvisionSubnetTaskService.FACTORY_LINK)
@@ -742,23 +741,5 @@ public class ComputeNetworkProvisionTaskService
                     context.endpointComputeState = computeState;
                     return context;
                 });
-    }
-
-    private void completeSubTask(ServiceTaskCallback<SubStage> taskCallback, Throwable ex) {
-        ServiceTaskCallbackResponse<SubStage> response;
-        if (ex == null) {
-            response = taskCallback.getFinishedResponse();
-        } else {
-            response = taskCallback.getFailedResponse(ex);
-        }
-
-        sendRequest(Operation.createPatch(taskCallback.serviceURI)
-                .setBody(response)
-                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        failTask("Notifying calling task failed: %s", e);
-                    }
-                }));
     }
 }

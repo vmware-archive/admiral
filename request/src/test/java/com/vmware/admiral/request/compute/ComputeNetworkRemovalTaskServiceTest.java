@@ -201,14 +201,14 @@ public class ComputeNetworkRemovalTaskServiceTest extends RequestBaseTest {
         ComputeNetworkRemovalTaskState outRemovalTask = doPost(
                 removalTask, ComputeNetworkRemovalTaskService.FACTORY_LINK);
         assertNotNull(outRemovalTask);
-        host.log("Start allocation test: " + outRemovalTask.documentSelfLink);
+        host.log("Start removal test: " + outRemovalTask.documentSelfLink);
 
         outRemovalTask = waitForTaskSuccess(outRemovalTask.documentSelfLink,
                 ComputeNetworkRemovalTaskState.class);
 
         assertNotNull("ResourceLinks null for allocation: " + outRemovalTask.documentSelfLink,
                 outRemovalTask.resourceLinks);
-        host.log("Finished allocation test: " + outRemovalTask.documentSelfLink);
+        host.log("Finished removal test: " + outRemovalTask.documentSelfLink);
         return outRemovalTask;
     }
 
