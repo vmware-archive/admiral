@@ -99,13 +99,13 @@ public class ComputeNetworkRemovalTaskService extends
     }
 
     private static class Context {
-        public Context(ComputeNetwork computeNetwork, ServiceTaskCallback serviceTaskCallback) {
+        public Context(ComputeNetwork computeNetwork, ServiceTaskCallback<SubStage> serviceTaskCallback) {
             this.computeNetwork = computeNetwork;
             this.serviceTaskCallback = serviceTaskCallback;
         }
 
         ComputeNetwork computeNetwork;
-        ServiceTaskCallback serviceTaskCallback;
+        ServiceTaskCallback<SubStage> serviceTaskCallback;
         SubnetState subnet;
         String cidrAllocationServiceLink;
     }
@@ -241,7 +241,7 @@ public class ComputeNetworkRemovalTaskService extends
         provisionTaskState.tenantLinks = context.computeNetwork.tenantLinks;
         provisionTaskState.documentExpirationTimeMicros = ServiceUtils
                 .getDefaultTaskExpirationTimeInMicros();
-        provisionTaskState.subnetDescriptionLink = context.subnet.documentSelfLink;
+        provisionTaskState.subnetLink = context.subnet.documentSelfLink;
 
         return this.sendWithDeferredResult(
                 Operation.createPost(this, ProvisionSubnetTaskService.FACTORY_LINK)
@@ -483,8 +483,8 @@ public class ComputeNetworkRemovalTaskService extends
                 }));
     }
 
-    private void completeSubTask(ServiceTaskCallback taskCallback, Throwable ex) {
-        ServiceTaskCallbackResponse response;
+    private void completeSubTask(ServiceTaskCallback<SubStage> taskCallback, Throwable ex) {
+        ServiceTaskCallbackResponse<SubStage> response;
         if (ex == null) {
             response = taskCallback.getFinishedResponse();
         } else {

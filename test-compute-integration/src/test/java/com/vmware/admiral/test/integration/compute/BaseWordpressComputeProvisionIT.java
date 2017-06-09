@@ -32,6 +32,7 @@ import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService.NetworkInterfaceState;
 import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
@@ -86,7 +87,8 @@ public abstract class BaseWordpressComputeProvisionIT extends BaseComputeProvisi
                 CompositeComponent.class);
         Set<ServiceDocument> computes = new HashSet<>();
         for (String link : compositeComponent.componentLinks) {
-            Class stateClass = CompositeComponentRegistry.metaByStateLink(link).stateClass;
+            Class<? extends ResourceState> stateClass = CompositeComponentRegistry
+                    .metaByStateLink(link).stateClass;
             ServiceDocument document = getDocument(link, stateClass);
             computes.add(document);
         }

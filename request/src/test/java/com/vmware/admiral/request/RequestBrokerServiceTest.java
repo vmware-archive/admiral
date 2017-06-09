@@ -657,6 +657,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertEquals(groupPlacementState.allocatedInstancesCount, 0);
 
         String containerLink1 = null;
+        @SuppressWarnings("unused")
         String containerLink2 = null;
 
         Iterator<String> iterator = compositeDesc.descriptionLinks.iterator();
@@ -782,6 +783,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertEquals(groupPlacementState.allocatedInstancesCount, 0);
 
         String containerLink1 = null;
+        @SuppressWarnings("unused")
         String containerLink2 = null;
 
         Iterator<String> iterator = compositeDesc.descriptionLinks.iterator();
@@ -1471,6 +1473,7 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertEquals(groupPlacementState.allocatedInstancesCount, 0);
 
         String containerLink1 = null;
+        @SuppressWarnings("unused")
         String containerLink2 = null;
 
         Iterator<String> iterator = compositeDesc.descriptionLinks.iterator();

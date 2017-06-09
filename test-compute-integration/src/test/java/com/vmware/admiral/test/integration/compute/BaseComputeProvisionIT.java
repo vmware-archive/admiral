@@ -782,7 +782,7 @@ public abstract class BaseComputeProvisionIT extends BaseIntegrationSupportIT {
         return np;
     }
 
-    protected String loadResource(Class resourceClass, String name) throws Exception {
+    protected String loadResource(Class<? extends ServiceDocument> resourceClass, String name) throws Exception {
         QueryTask.Query query = QueryTask.Query.Builder.create()
                 .addKindFieldClause(resourceClass)
                 .addCaseInsensitiveFieldClause(ResourceState.FIELD_NAME_NAME, name,

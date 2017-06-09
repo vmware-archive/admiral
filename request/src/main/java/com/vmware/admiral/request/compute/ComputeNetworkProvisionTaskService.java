@@ -144,7 +144,7 @@ public class ComputeNetworkProvisionTaskService
 
     private static class Context {
         public Context(String computeNetworkLink, ComputeNetworkProvisionTaskState state,
-                ServiceTaskCallback<?> serviceTaskCallback) {
+                ServiceTaskCallback<SubStage> serviceTaskCallback) {
             this.computeNetworkLink = computeNetworkLink;
             this.state = state;
             this.serviceTaskCallback = serviceTaskCallback;
@@ -165,7 +165,7 @@ public class ComputeNetworkProvisionTaskService
         public SecurityGroupState isolationSecurityGroup;
         public NetworkState subnetNetworkState;
         public ComputeStateWithDescription endpointComputeState;
-        public ServiceTaskCallback<?> serviceTaskCallback;
+        public ServiceTaskCallback<SubStage> serviceTaskCallback;
     }
 
     public ComputeNetworkProvisionTaskService() {
@@ -744,8 +744,8 @@ public class ComputeNetworkProvisionTaskService
                 });
     }
 
-    private void completeSubTask(ServiceTaskCallback taskCallback, Throwable ex) {
-        ServiceTaskCallbackResponse response;
+    private void completeSubTask(ServiceTaskCallback<SubStage> taskCallback, Throwable ex) {
+        ServiceTaskCallbackResponse<SubStage> response;
         if (ex == null) {
             response = taskCallback.getFinishedResponse();
         } else {

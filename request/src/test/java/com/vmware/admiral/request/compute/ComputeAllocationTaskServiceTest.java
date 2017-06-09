@@ -64,6 +64,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
 
         ProfileStateExpanded p1 = createProfileWithInstanceType(
                 "small", "t2.micro", "coreos", "ami-234355");
+        @SuppressWarnings("unused")
         ProfileStateExpanded p2 =
                 createProfileWithInstanceType("large", "t2.large", "coreos", "ami-234355");
 
@@ -87,6 +88,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
     public void testAllocationTaskServiceLifeCycleWithTwoProfilesByImage() throws Throwable {
         ComputeDescription computeDescription = createVMComputeDescription(false);
 
+        @SuppressWarnings("unused")
         ProfileStateExpanded p1 = createProfileWithInstanceType(
                 "small", "t2.micro", "linux", "ami-234355");
         ProfileStateExpanded p2 =
