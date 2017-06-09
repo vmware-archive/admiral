@@ -1,0 +1,7 @@
+---
+instanceTypeMapping:
+  small:
+    instanceType: "10" # m1.xsmall
+imageMapping:
+  ubuntu-1404:
+    image: "9e30b680-12b3-4d22-b6fa-f1287940d250" # ubuntu-14.04-server-cloudimg-amd64
