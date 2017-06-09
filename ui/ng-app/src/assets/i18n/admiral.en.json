@@ -50,6 +50,10 @@
       },
       "source": {
         "local": "Local"
+      },
+      "deleteMember": {
+          "title": "Remove Member from Project",
+          "confirmation": "Are you sure you want to remove the member from this project?"
       }
     },
     "config": {

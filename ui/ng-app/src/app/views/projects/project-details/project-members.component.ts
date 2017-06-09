@@ -9,9 +9,10 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import {Component, Input, OnChanges} from '@angular/core';
-import {DocumentService} from "../../../utils/document.service";
-
+import { Component, Input, OnChanges } from '@angular/core';
+import { DocumentService } from "../../../utils/document.service";
+import * as I18n from 'i18next';
+import { Utils } from "../../../utils/utils";
 
 @Component({
     selector: 'app-project-members',
@@ -26,6 +27,14 @@ export class ProjectMembersComponent implements OnChanges {
     @Input() project: any;
 
     members: any[] = [];
+    memberToDelete: any;
+
+    get deleteConfirmationDescription(): string {
+        return this.memberToDelete && this.memberToDelete.id
+            && I18n.t('projects.members.deleteMember.confirmation',
+                { projectName:  this.memberToDelete.id } as I18n.TranslationOptions);
+    }
+    deleteConfirmationAlert: string;
 
     constructor(protected service: DocumentService) { }
 
@@ -33,49 +42,40 @@ export class ProjectMembersComponent implements OnChanges {
         // TODO Implementation
     }
 
-    onDelete(member) {
-        let patchValue;
-        if (member.type === 'ADMIN') {
-            patchValue = {
-                "administrators": {"remove": [member.id]}
-            };
-        }
+    onRemove(member) {
+        this.memberToDelete = member;
+    }
 
-        if (member.type === 'USER') {
-            patchValue = {
-                "members": {"remove": [member.id]}
-            };
-        }
+    deleteConfirmed() {
+        this.deleteMember();
+    }
 
-        this.service.patch(this.project.documentSelfLink, patchValue).then(() => {
-            console.log("Successfully to removed member");
-        }).catch((error) => {
-            if (error.status === 304) {
-                // actually success
-                // TODO refresh screen
-            } else {
-                console.log("Failed to remove member", error);
-            }
-        });
+    deleteCanceled() {
+        this.memberToDelete = null;
     }
 
     ngOnChanges() {
+        this.loadMembers();
+    }
+
+    private loadMembers() {
         this.members = [];
 
         if (this.project) {
             // Load members details
             let memberIds = [];
-            memberIds = memberIds.concat(this.project.administrators.map((admin) => admin.email));
-            memberIds = memberIds.concat(this.project.members.map((member) => member.email));
+            let adminIds = this.project.administrators.map((admin) => admin.email);
+            let devIds = this.project.members.map((member) => member.email);
+            memberIds = memberIds.concat(adminIds);
+            memberIds = memberIds.concat(devIds);
             // uniques
             memberIds = Array.from(new Set(memberIds));
             let principalCalls =
-                            memberIds.map((memberId) => this.service.getPrincipalById(memberId));
+                memberIds.map((memberId) => this.service.getPrincipalById(memberId));
 
             Promise.all(principalCalls).then((principalResults) => {
                 principalResults.forEach((principal) => {
-                    let isAdmin =
-                        this.project.administrators.filter((admin) => admin.id === principal.id);
+                    let isAdmin = adminIds.indexOf(principal.email) > -1;
                     principal.role = isAdmin ? 'ADMIN' : 'USER';
 
                     this.members.push(principal);
@@ -84,5 +84,40 @@ export class ProjectMembersComponent implements OnChanges {
                 console.log('failed to retrieve project members', e);
             });
         }
+    }
+
+    private deleteMember() {
+        let patchValue;
+        if (this.memberToDelete.type === 'ADMIN') {
+            patchValue = {
+                "administrators": {"remove": [this.memberToDelete.id]}
+            };
+        }
+
+        if (this.memberToDelete.type === 'USER') {
+            patchValue = {
+                "members": {"remove": [this.memberToDelete.id]}
+            };
+        }
+
+        this.service.patch(this.project.documentSelfLink, patchValue).then(() => {
+            // Successfully removed member
+        }).catch((error) => {
+            if (error.status === 304) {
+                // Refresh data
+                this.service.get(this.project.documentSelfLink, true).then((updatedProject) => {
+                    this.memberToDelete = null;
+
+                    this.project = updatedProject;
+                    this.loadMembers();
+                }).catch((error) => {
+                    console.log("Failed to reload project data", error);
+                    this.deleteConfirmationAlert = Utils.getErrorMessage(error)._generic;
+                });
+            } else {
+                console.log("Failed to remove member", error);
+                this.deleteConfirmationAlert = Utils.getErrorMessage(error)._generic;
+            }
+        });
     }
 }

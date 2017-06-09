@@ -20,10 +20,10 @@
     <clr-dg-column>{{"projects.members.columnSource" | i18n}}</clr-dg-column>
     <clr-dg-column>{{"projects.members.columnRole" | i18n}}</clr-dg-column>
 
-    <clr-dg-row *ngFor="let member of members">
+    <clr-dg-row *clrDgItems="let member of members" [clrDgItem]="member">
         <clr-dg-action-overflow>
             <button class="action-item" (click)="onEdit(member)">{{"edit" | i18n}}</button>
-            <button class="action-item" (click)="onDelete(member)">{{"delete" | i18n}}</button>
+            <button class="action-item" (click)="onRemove(member)">{{"remove" | i18n}}</button>
         </clr-dg-action-overflow>
         <clr-dg-cell><clr-icon *ngIf="member.type == 'USER'" shape="user"></clr-icon>
             <clr-icon *ngIf="member.type == 'GROUP'" shape="group"></clr-icon> {{member.name}}</clr-dg-cell>
@@ -38,3 +38,10 @@
     <clr-dg-footer>{{members.length}} {{"projects.members.count" | i18n}}</clr-dg-footer>
 
 </clr-datagrid>
+
+<delete-confirmation [title]="'projects.members.deleteMember.title' | i18n"
+                     [description]="deleteConfirmationDescription"
+                     [(alert)]="deleteConfirmationAlert"
+                     [visible]="memberToDelete"
+                     (onDelete)="deleteConfirmed()"
+                     (onCancel)="deleteCanceled()">

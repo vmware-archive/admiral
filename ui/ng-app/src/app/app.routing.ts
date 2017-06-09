@@ -18,7 +18,7 @@ import { MainResourcesComponent } from './views/main-resources/main-resources.co
 import { ProjectsComponent } from './views/projects/projects.component';
 import { ProjectDetailsComponent } from './views/projects/project-details/project-details.component';
 import { ProjectCreateComponent } from './views/projects/project-create/project-create.component';
-import { ProjectAddMemberComponent } from "./views/projects/project-details/project-add-member-component";
+import { ProjectAddMemberComponent } from "./views/projects/project-details/project-add-member.component";
 import { RegistriesComponent } from './views/registries/registries.component';
 import { ConfigurationComponent } from './views/configuration/configuration.component';
 import { LogsComponent } from './views/logs/logs.component';

@@ -23,7 +23,7 @@ import { ProjectSummaryComponent } from "./views/projects/project-details/projec
 import { ProjectConfigurationComponent } from './views/projects/project-details/project-configuration.component';
 import { ProjectCreateComponent } from './views/projects/project-create/project-create.component';
 import { ProjectMembersComponent } from "./views/projects/project-details/project-members.component";
-import { ProjectAddMemberComponent } from "./views/projects/project-details/project-add-member-component";
+import { ProjectAddMemberComponent } from "./views/projects/project-details/project-add-member.component";
 import { DeleteConfirmationComponent } from './views/delete-confirmation/delete-confirmation.component';
 import { RegistriesComponent } from './views/registries/registries.component';
 import { ConfigurationComponent } from './views/configuration/configuration.component';
