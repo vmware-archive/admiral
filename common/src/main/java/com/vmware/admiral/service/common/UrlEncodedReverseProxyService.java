@@ -16,6 +16,8 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.logging.Logger;
 
@@ -34,6 +36,9 @@ public class UrlEncodedReverseProxyService extends StatelessService {
             UriUtils.HTTP_SCHEME,
             UriUtils.HTTPS_SCHEME,
             UriUtils.FILE_SCHEME);
+    //Do not perform authorization for static files with these extensions (web page related)
+    private static final Set<String> NO_AUTHZ_EXTENSIONS = new HashSet<>(
+            Arrays.asList("html", "htm", "css", "js", "png"));
 
     public static final String SELF_LINK = "/uerp";
     /**
@@ -45,6 +50,25 @@ public class UrlEncodedReverseProxyService extends StatelessService {
 
     public UrlEncodedReverseProxyService() {
         super.toggleOption(ServiceOption.URI_NAMESPACE_OWNER, true);
+    }
+
+    @Override
+    public void authorizeRequest(Operation op) {
+        if (Action.GET == op.getAction()) {
+            URI uri = op.getUri();
+            String path = uri.getPath();
+            if (path != null) {
+                int index = path.lastIndexOf('.');
+                if (index != -1) {
+                    String extension = path.substring(index + 1);
+                    if (NO_AUTHZ_EXTENSIONS.contains(extension.toLowerCase())) {
+                        op.complete();
+                        return;
+                    }
+                }
+            }
+        }
+        super.authorizeRequest(op);
     }
 
     @Override
