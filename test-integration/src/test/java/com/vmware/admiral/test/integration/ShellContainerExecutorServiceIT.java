@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ContainerHostService;
@@ -33,6 +34,7 @@ public class ShellContainerExecutorServiceIT extends BaseProvisioningOnCoreOsIT 
     }
 
     @Test
+    @Ignore("https://jira-hzn.eng.vmware.com/browse/VBV-1364")
     public void testShellCommandExecution() throws Exception {
         logger.info("testShellCommandExecution");
         URI uri = URI.create(getBaseUrl() + buildServiceUri(
