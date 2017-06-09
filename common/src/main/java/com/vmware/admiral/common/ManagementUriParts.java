@@ -64,6 +64,7 @@ public interface ManagementUriParts {
     String TAG_ASSIGNMENT = RESOURCES + "/tag-assignment";
     String COMPUTE_SEARCH = RESOURCES + "/compute-search";
     String IMAGE_SEARCH = RESOURCES + "/image-search";
+    String CLUSTERS = RESOURCES + "/clusters";
 
     String COMPUTE_NETWORK_CIDR_ALLOCATIONS = RESOURCES + "/compute-network-cidr-allocations";
 

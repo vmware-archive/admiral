@@ -27,6 +27,7 @@ import com.vmware.admiral.compute.PlacementCapacityUpdateTaskService;
 import com.vmware.admiral.compute.RegistryConfigCertificateDistributionService;
 import com.vmware.admiral.compute.RegistryHostConfigService;
 import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.compute.cluster.ClusterService;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.CompositeDescriptionCloneService;
@@ -122,7 +123,8 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 ProfileMappingService.class,
                 KubernetesDescriptionContentService.class,
                 PodLogService.class,
-                UrlEncodedReverseProxyService.class);
+                UrlEncodedReverseProxyService.class,
+                ClusterService.class);
 
         startServiceFactories(host, CaSigningCertService.class,
                 ContainerDescriptionService.class,
