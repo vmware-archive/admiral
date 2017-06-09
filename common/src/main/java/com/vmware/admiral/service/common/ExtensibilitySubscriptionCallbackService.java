@@ -11,12 +11,21 @@
 
 package com.vmware.admiral.service.common;
 
+import static java.time.temporal.ChronoUnit.MILLIS;
+
 import java.net.URI;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
+import javax.management.ServiceNotFoundException;
+
+import com.google.gson.annotations.Since;
+
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.xenon.common.Operation;
@@ -39,6 +48,8 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
     public static final String DISPLAY_NAME = "Extensibility Callback";
 
     public static final String FACTORY_LINK = ManagementUriParts.EXTENSIBILITY_CALLBACKS;
+
+    public static final String EXTENSIBILITY_STATUS_MESSAGE = "extensibilityStatusMessage";
 
     private static final int PROCESSED_NOTIFICATION_EXPIRE_TIME = Integer.getInteger(
             "com.vmware.admiral.service.extensibility.expiration.processed", 60);
@@ -67,17 +78,29 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public Status status;
 
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
+        @Documentation(description = "Status message")
+        @UsageOption(option = PropertyUsageOption.OPTIONAL)
+        public String statusMessage;
+
         @Documentation(description = "Resume counter")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
         public int retryCounter;
 
-        @Documentation(description = "Defines Task fields which will be sent to client for information about the task.")
+        @Documentation(
+                description = "Defines Task fields which will be sent to client for information about the task.")
         @UsageOption(option = PropertyUsageOption.REQUIRED)
         public String notificationPayload;
 
-        @Documentation(description = "Defines Task fields which will be merged when subscriber return response.")
+        @Documentation(
+                description = "Defines Task fields which will be merged when subscriber return response.")
         @UsageOption(option = PropertyUsageOption.REQUIRED)
         public ServiceTaskCallbackResponse replyPayload;
+
+        @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
+        @Documentation(description = "Due time of the reply.")
+        @UsageOption(option = PropertyUsageOption.REQUIRED)
+        public LocalDateTime due;
 
     }
 
@@ -105,6 +128,30 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
     }
 
     @Override
+    public void handleStart(Operation post) {
+        ExtensibilitySubscriptionCallback body = getBody(post);
+        long millisToDue = LocalDateTime.now().until(body.due, MILLIS);
+        String timeoutMessage = getTimeoutMessage(body);
+
+        if (millisToDue <= 0) {
+            markDone(timeoutMessage);
+        } else if (ExtensibilitySubscriptionCallback.Status.RESUME.equals(body.status)) {
+            markDone(null);
+        } else {
+            getHost().schedule(() -> markDone(timeoutMessage), millisToDue,
+                    TimeUnit.MILLISECONDS);
+        }
+        post.complete();
+    }
+
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
+    }
+
+    @Override
     public void handlePost(Operation post) {
         if (!checkForBody(post)) {
             return;
@@ -123,7 +170,7 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
         post.setBody(currentState).complete();
 
         if (currentState.status == ExtensibilitySubscriptionCallback.Status.RESUME) {
-            markDone();
+            markDone(getErrorMessage(currentState));
         }
     }
 
@@ -156,6 +203,8 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
             state.taskSubStage = patchBody.taskSubStage;
         }
 
+        state.statusMessage = patchBody.statusMessage;
+
         patch.complete();
 
         if (patchBody.status == ExtensibilitySubscriptionCallback.Status.DONE) {
@@ -186,8 +235,8 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
         // Once task has been marked as 'Done' it's status shouldn't be changed.
         if ((patchBody.status != null)
                 && (ExtensibilitySubscriptionCallback.Status.DONE.equals(state.status)
-                        && !ExtensibilitySubscriptionCallback.Status.DONE
-                                .equals(patchBody.status))) {
+                && !ExtensibilitySubscriptionCallback.Status.DONE
+                .equals(patchBody.status))) {
             patch.fail(new IllegalArgumentException("Changing status is not allowed"));
             return true;
         }
@@ -200,41 +249,33 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
         return false;
     }
 
-    @Override
-    public void handleStart(Operation post) {
-        ExtensibilitySubscriptionCallback body = getBody(post);
-        if (ExtensibilitySubscriptionCallback.Status.RESUME.equals(body.status)) {
-            markDone();
-        }
-        post.complete();
-    }
-
-    @Override
-    public ServiceDocument getDocumentTemplate() {
-        ServiceDocument template = super.getDocumentTemplate();
-        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
-        return template;
-    }
-
     /**
      * Self-update with status done and sets expiration time.
      */
-    private void markDone() {
+    private void markDone(String statusMessage) {
         ExtensibilitySubscriptionCallback patch = new ExtensibilitySubscriptionCallback();
         patch.status = ExtensibilitySubscriptionCallback.Status.DONE;
+        patch.statusMessage = statusMessage;
         patch.documentExpirationTimeMicros = ServiceUtils.getExpirationTimeFromNowInMicros(
                 TimeUnit.MINUTES.toMicros(PROCESSED_NOTIFICATION_EXPIRE_TIME));
 
         sendRequest(Operation.createPatch(getUri())
                 .setBody(patch)
                 .setCompletion((o, e) -> {
-                    if (e != null) {
+                    if (e != null && !(e instanceof ServiceNotFoundException)) {
                         logSevere("Self patch [%s] failed: %s", getSelfLink(), Utils.toString(e));
                     }
                 }));
     }
 
     private void notifyParentTask(ExtensibilitySubscriptionCallback body) {
+        if (body.statusMessage != null && !body.statusMessage.isEmpty()) {
+            body.replyPayload.customProperties = body.replyPayload.customProperties != null ?
+                    body.replyPayload.customProperties : new HashMap<>();
+            body.replyPayload.customProperties
+                    .put(EXTENSIBILITY_STATUS_MESSAGE, body.statusMessage);
+        }
+
         sendRequest(Operation
                 .createPatch(UriUtils.buildUri(getHost(), body.serviceTaskCallback.serviceSelfLink))
                 .setReferer(getHost().getUri())
@@ -257,10 +298,8 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
     /**
      * Merges received task state with the persisted one.
      *
-     * @param currentState
-     *            existing state
-     * @param op
-     *            the current service operation
+     * @param currentState existing state
+     * @param op           the current service operation
      */
     private void syncTaskStates(
             ExtensibilitySubscriptionCallback currentState, Operation op) {
@@ -281,8 +320,17 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
         // Inherit original callback in order to be aware which task stage should be resumed.
         extensibilityResponse.copy(serviceTaskCallbackResponse);
         extensibilityResponse.customProperties = customProperties;
+
         // Store extensibility callback in order to be used as finished callback response.
         currentState.replyPayload = extensibilityResponse;
 
+    }
+
+    private static String getTimeoutMessage(ExtensibilitySubscriptionCallback state) {
+        return "Timeout: due was '" + state.due + "' but expired";
+    }
+
+    private static String getErrorMessage(ExtensibilitySubscriptionCallback state) {
+        return null;
     }
 }

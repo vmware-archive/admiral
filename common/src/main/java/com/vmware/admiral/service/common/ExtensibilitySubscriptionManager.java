@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.service.common;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -19,16 +21,16 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.CommonContinuousQueries;
+import com.vmware.admiral.common.util.CommonContinuousQueries.ContinuousQueryId;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
-import com.vmware.admiral.common.util.SubscriptionManager;
-import com.vmware.admiral.common.util.SubscriptionManager.SubscriptionNotification;
-import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
-import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
+import com.vmware.admiral.service.common.EventTopicService.EventTopicState;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionCallbackService.ExtensibilitySubscriptionCallback;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionService.ExtensibilitySubscription;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceErrorResponse;
@@ -55,11 +57,18 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
             "com.vmware.admiral.service.extensibility.notification.retries", 3);
     private static final int NOTIFICATION_RETRY_WAIT = Integer.getInteger(
             "com.vmware.admiral.service.extensibility.notification.wait", 15);
+    private static final Duration EXTENSIBILITY_TIMEOUT = Duration.parse(
+            System.getProperty("com.vmware.admiral.service.extensibility.timeout", "PT30M"));
 
+    private static final String TIMEOUT_SUFFIX = ".timeout";
     // internal map of the registered extensibility subscriptions
     private final Map<String, ExtensibilitySubscription> subscriptions = new ConcurrentHashMap<>();
 
-    private SubscriptionManager<ConfigurationState> subscriptionManager;
+    private final Map<String, Duration> timeoutsPerTaskStageAndSubstage = new
+            ConcurrentHashMap<>();
+
+    private final Map<String, String> topicsPerTaskStageAndSubstage = new
+            ConcurrentHashMap<>();
 
     private AtomicBoolean initialized = new AtomicBoolean();
 
@@ -73,9 +82,6 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
 
     @Override
     public void handleStop(Operation delete) {
-        if (subscriptionManager != null) {
-            subscriptionManager.close();
-        }
         initialized.set(false);
 
         super.handleStop(delete);
@@ -84,7 +90,7 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
     <T extends TaskServiceDocument<?>> void handleStagePatch(
             ServiceTaskCallbackResponse notificationPayload,
             ServiceTaskCallbackResponse replyPayload, T state,
-            Consumer<T> callback, Runnable notificationCallback ) {
+            Consumer<T> callback, Runnable notificationCallback) {
 
         ExtensibilitySubscription extensibilitySubscription = getExtensibilitySubscription(state);
 
@@ -103,6 +109,8 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
 
         if (extensibilitySubscription.blocking) {
             // blocking notification
+            replyPayload.taskSubStage = state.taskSubStage;
+            replyPayload.taskInfo = state.taskInfo;
             sendBlockingNotificationCall(notificationPayload, replyPayload,
                     extensibilitySubscription, state);
         } else {
@@ -128,22 +136,101 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
             return;
         }
 
-        ensureSubscriptionTargetExists(op, () -> {
-            subscribe();
-            loadExtensibilityStates(op);
+        DeferredResult<Void> subscriptionsRead = subscribeForSubscriptions().thenCompose(k ->
+                loadSubscriptions());
+        DeferredResult<Void> topicsRead = subscribeForTopics().thenCompose(k -> loadTopics());
+
+        DeferredResult.allOf(subscriptionsRead, topicsRead).whenComplete((useless, th) -> {
+            if (th != null) {
+                op.fail(th);
+            } else {
+                op.complete();
+            }
         });
     }
 
-    private void subscribe() {
-        subscriptionManager = new SubscriptionManager<>(
-                getHost(), getHost().nextUUID(),
-                ExtensibilitySubscriptionService.LAST_UPDATED_DOCUMENT_KEY,
-                ConfigurationState.class, true);
+    private DeferredResult<Void> subscribeForSubscriptions() {
+        DeferredResult<Void> subscriptionsRead = new DeferredResult<Void>();
+        CommonContinuousQueries
+                .subscribeTo(this.getHost(), ContinuousQueryId.EXTENSIBILITY_SUBSCRIPTIONS,
+                        op -> onSubscriptionChange(op, subscriptionsRead));
 
-        subscriptionManager.start(this::updateExtensibilityCache, null);
+        return subscriptionsRead;
     }
 
-    private void loadExtensibilityStates(Operation op) {
+    private DeferredResult<Void> subscribeForTopics() {
+        DeferredResult<Void> topicsRead = new DeferredResult<Void>();
+        CommonContinuousQueries.subscribeTo(this.getHost(), ContinuousQueryId.EVENT_TOPICS,
+                op -> onEventTopicChange(op, topicsRead));
+
+        return topicsRead;
+    }
+
+    private void onEventTopicChange(Operation op, DeferredResult<Void> done) {
+        op.complete();
+        QueryTask queryTask = op.getBody(QueryTask.class);
+        if (queryTask.results != null) {
+            for (EventTopicState state : queryTask.results.documents.values()
+                    .stream().map(o -> (EventTopicState) o).collect(Collectors.toList())) {
+
+                handleUpdateEventTopicState(state);
+            }
+            done.complete(null);
+        }
+    }
+
+    private void handleUpdateEventTopicState(EventTopicState state) {
+        String customConfig = System.getProperty(state.id + TIMEOUT_SUFFIX);
+        Duration timeout = customConfig != null ? Duration.parse(customConfig) :
+                EXTENSIBILITY_TIMEOUT;
+
+        String stateKey = constructKey(state);
+        timeoutsPerTaskStageAndSubstage.put(stateKey, timeout);
+        topicsPerTaskStageAndSubstage.put(stateKey, state.id);
+    }
+
+    private DeferredResult<Void> loadTopics() {
+        DeferredResult<Void> res = new DeferredResult<>();
+        QueryTask q = QueryUtil.buildQuery(EventTopicState.class, false);
+        QueryUtil.addExpandOption(q);
+        new ServiceDocumentQuery<>(getHost(), EventTopicState.class)
+                .query(q, (r) -> {
+                    if (r.hasException()) {
+                        logSevere("Exception while initializing LifecycleExtensibilityManager. "
+                                + "Error: [%s]", r.getException().getMessage());
+                        res.fail(r.getException());
+                    } else if (r.hasResult()) {
+                        EventTopicState state = r.getResult();
+                        handleUpdateEventTopicState(state);
+                    } else {
+                        logInfo("Loaded %d extensibility states", subscriptions.size());
+                        res.complete(null);
+                    }
+                });
+
+        return res;
+    }
+
+    private void onSubscriptionChange(Operation op, DeferredResult<Void> done) {
+        op.complete();
+        QueryTask queryTask = op.getBody(QueryTask.class);
+        if (queryTask.results != null) {
+            for (ExtensibilitySubscription subscription : queryTask.results.documents.values()
+                    .stream().map(o -> (ExtensibilitySubscription) o)
+                    .collect(Collectors.toList())) {
+
+                if (Action.DELETE.toString().equals(subscription.documentUpdateAction)) {
+                    removeExtensibilitySubscription(subscription.documentSelfLink);
+                } else {
+                    addExtensibilitySubscription(subscription);
+                }
+            }
+            done.complete(null);
+        }
+    }
+
+    private DeferredResult<Void> loadSubscriptions() {
+        DeferredResult<Void> res = new DeferredResult<>();
         QueryTask q = QueryUtil.buildQuery(ExtensibilitySubscription.class, false);
         QueryUtil.addExpandOption(q);
         new ServiceDocumentQuery<>(getHost(), ExtensibilitySubscription.class)
@@ -151,55 +238,27 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
                     if (r.hasException()) {
                         logSevere("Exception while initializing LifecycleExtensibilityManager. "
                                 + "Error: [%s]", r.getException().getMessage());
-                        op.fail(r.getException());
+                        res.fail(r.getException());
                     } else if (r.hasResult()) {
                         ExtensibilitySubscription state = r.getResult();
                         addExtensibilitySubscription(state);
                     } else {
                         logInfo("Loaded %d extensibility states", subscriptions.size());
-                        op.complete();
+                        res.complete(null);
                     }
                 });
-    }
 
-    private void updateExtensibilityCache(SubscriptionNotification<ConfigurationState> prop) {
-        if (prop.isDelete()) {
-            throw new IllegalStateException("Deleting update extensibility configuration is "
-                    + "not expected");
-        }
-
-        String extensibilityLink = prop.getResult().value;
-
-        sendRequest(Operation.createGet(this, extensibilityLink)
-                .setCompletion((o, e) -> {
-                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
-                        removeExtensibilitySubscription(extensibilityLink);
-                        return;
-                    }
-                    if (e != null) {
-                        logSevere("Error getting '%s' for extensibility subscription: %s",
-                                extensibilityLink, Utils.toJson(e));
-                        throw e instanceof RuntimeException
-                                ? (RuntimeException) e
-                                : new RuntimeException(e);
-                    }
-
-                    addExtensibilitySubscription(o.getBody(ExtensibilitySubscription.class));
-                }));
+        return res;
     }
 
     /**
      * Sends notification to subscriber. Client should post to the callback state to resume the task
      * execution.
      *
-     * @param notificationPayload
-     *            payload that task sent to subscriber,
-     * @param replyPayload
-     *            payload which task accept for response
-     * @param extensibility
-     *            subscription info.
-     * @param state
-     *            task state to send
+     * @param notificationPayload payload that task sent to subscriber,
+     * @param replyPayload        payload which task accept for response
+     * @param extensibility       subscription info.
+     * @param state               task state to send
      */
     @SuppressWarnings({ "rawtypes" })
     private <T extends TaskServiceDocument> void sendBlockingNotificationCall(
@@ -224,6 +283,10 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
         callbackState.replyPayload = replyPayload;
         callbackState.tenantLinks = state.tenantLinks;
 
+        Duration stagePhaseTimeout = getStagePhaseTimeout(state);
+
+        callbackState.due = LocalDateTime.now().plusNanos(stagePhaseTimeout.toNanos());
+
         sendRequest(Operation
                 .createPost(this, ExtensibilitySubscriptionCallbackService.FACTORY_LINK)
                 .setBody(callbackState)
@@ -245,14 +308,10 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
     /**
      * Sends notification to subscriber
      *
-     * @param notificationPayload
-     *            notification payload
-     * @param replyPayload
-     *            reply payload
-     * @param extensibility
-     *            extensibility state
-     * @param state
-     *            task state to send
+     * @param notificationPayload notification payload
+     * @param replyPayload        reply payload
+     * @param extensibility       extensibility state
+     * @param state               task state to send
      */
     @SuppressWarnings({ "rawtypes" })
     private <T extends TaskServiceDocument> void sendAsyncNotificationCall(
@@ -283,16 +342,10 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
      * Sends a service document to external url. Supports retry in case of an error and if task
      * service is provided this method will call failTask when no more retries left.
      *
-     *
-     * @param extensibility
-     *            extensibility state
-     * @param body
-     *            document to send
-     * @param state
-     *            - task state
-     * @param retriesLeft
-     *            number of retries left before give up
-     *
+     * @param extensibility extensibility state
+     * @param body          document to send
+     * @param state         - task state
+     * @param retriesLeft   number of retries left before give up
      */
     @SuppressWarnings("rawtypes")
     private <T extends TaskServiceDocument> void sendExternalNotification(
@@ -318,7 +371,7 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
                         } else if (o.getStatusCode() == Operation.STATUS_CODE_TIMEOUT) {
                             // Call to ExtensibilitySubscriptionCallback will resume the service
                             // task.
-                            logWarning("Request to [%s] for task [%s] expired! ",
+                            logWarning("Request to [%s] for task [%s] expired!",
                                     extensibility.callbackReference, body.documentSelfLink);
                         } else {
                             getHost().schedule(() -> {
@@ -369,37 +422,6 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
                 .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
     }
 
-    private void ensureSubscriptionTargetExists(Operation op, Runnable callback) {
-        new ServiceDocumentQuery<>(getHost(), ConfigurationState.class)
-                .queryDocument(ExtensibilitySubscriptionService.LAST_UPDATED_DOCUMENT_KEY, (r) -> {
-                    if (r.hasException()) {
-                        op.fail(r.getException());
-                    } else if (r.hasResult()) {
-                        // configuration document exists, proceed.
-
-                        callback.run();
-                    } else {
-                        // create new configuration document with empty value and subscribe to it
-                        ConfigurationState body = ExtensibilitySubscriptionService
-                                .buildConfigurationStateWithValue(null);
-
-                        sendRequest(Operation
-                                .createPost(this, ConfigurationFactoryService.SELF_LINK)
-                                .addPragmaDirective(
-                                        Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
-                                .setBody(body)
-                                .setCompletion((o, e) -> {
-                                    if (e != null) {
-                                        op.fail(e);
-                                        return;
-                                    }
-
-                                    callback.run();
-                                }));
-                    }
-                });
-    }
-
     private void failTask(String msg, String taskDocumentSelfLink) {
         String errMsg = msg != null ? msg : "Unexpected State";
         logWarning("Fail extensibility task: %s", errMsg);
@@ -438,7 +460,24 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
                 state.taskInfo.stage.name(), state.taskSubStage.name());
     }
 
+    private String constructKey(EventTopicState state) {
+        return String.format("%s:%s:%s", state.topicTaskInfo.task,
+                state.topicTaskInfo.stage, state.topicTaskInfo.substage);
+    }
+
     protected ExtensibilitySubscription getExtensibilitySubscription(TaskServiceDocument<?> task) {
         return subscriptions.get(constructKey(task));
+    }
+
+    private <T extends TaskServiceDocument> Duration getStagePhaseTimeout(T state) {
+        String stateSubstateKey = constructKey(state);
+        String topicTimeoutKey =
+                topicsPerTaskStageAndSubstage.get(stateSubstateKey) + TIMEOUT_SUFFIX;
+        if (state.customProperties != null && state.customProperties.containsKey(topicTimeoutKey)) {
+            return Duration.parse(state.customProperties.get(topicTimeoutKey).toString());
+        } else {
+            return timeoutsPerTaskStageAndSubstage.getOrDefault(stateSubstateKey,
+                    EXTENSIBILITY_TIMEOUT);
+        }
     }
 }

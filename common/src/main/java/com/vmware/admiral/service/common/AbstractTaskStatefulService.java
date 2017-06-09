@@ -280,20 +280,29 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     // Check if there are subscriptions and run them or resume the task
     private void checkAndHandleSubscriptions(T state, Operation op) {
         if (isExtensibilityResponse(op)) {
-            Runnable callback = () -> {
-                handleStagePatch(state);
-            };
 
-            try {
-                ServiceTaskCallbackResponse replyPayload = op
-                        .getBody(this.replyPayload().getClass());
+            String failure = getExtensibilityFailureMessage(state);
+            if (failure != null) {
+                this.failTask("Extensibility triggered task failure: " + failure, null);
+            } else {
 
-                enhanceExtensibilityResponse(state, replyPayload, callback);
-            } catch (Exception ex) {
-                logSevere(ex);
-                logSevere("Failed resuming task from extensibility response. Payload = %s, reply"
-                        + " class = %s", op.getBodyRaw(), this.replyPayload().getClass());
-                this.failTask("Failed resuming task from extensibility response.", ex);
+                Runnable callback = () -> {
+                    handleStagePatch(state);
+                };
+
+                try {
+                    ServiceTaskCallbackResponse replyPayload = op
+                            .getBody(this.replyPayload().getClass());
+
+                    enhanceExtensibilityResponse(state, replyPayload, callback);
+                } catch (Exception ex) {
+                    logSevere(ex);
+                    logSevere(
+                            "Failed resuming task from extensibility response. Payload = %s, reply"
+                                    + " class = %s", op.getBodyRaw(),
+                            this.replyPayload().getClass());
+                    this.failTask("Failed resuming task from extensibility response.", ex);
+                }
             }
         } else {
             handleSubscriptions(state);
@@ -323,7 +332,6 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
                 manager.handleStagePatch(notificationPayload, this.replyPayload(), state,
                         this::handleStagePatch, notificationCallback);
-
             } else {
                 // ServiceHost is not instance of ManagementHost
                 handleStagePatch(state);
@@ -335,7 +343,14 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     }
 
     private boolean isExtensibilityResponse(Operation o) {
-        return o.getReferer() != null && o.getReferer().toString().contains(ExtensibilitySubscriptionCallbackService.FACTORY_LINK);
+        return o.getReferer() != null && o.getReferer().toString()
+                .contains(ExtensibilitySubscriptionCallbackService.FACTORY_LINK);
+    }
+
+    private String getExtensibilityFailureMessage(T patch) {
+        return patch.customProperties != null ? patch.customProperties
+                .get(ExtensibilitySubscriptionCallbackService
+                        .EXTENSIBILITY_STATUS_MESSAGE) : null;
     }
 
     private void validateAndEnhanceNotificationPayload(T state,
@@ -365,7 +380,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                             // log but don't fail the task
                             if (ex instanceof CancellationException) {
                                 logFine("CancellationException: Failed to update request tracker:"
-                                                + " %s", state.requestTrackerLink);
+                                        + " %s", state.requestTrackerLink);
                                 // retry only the finished and failed updates. The others are not so
                                 // important
                             } else if (TaskStage.FINISHED.name()
@@ -882,12 +897,9 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
      * defined in task, so additional logic is neccessary in order to retrieve the object. Here
      * comes the method.
      *
-     * @param state
-     *            - Task state
-     * @param notificationPayload
-     *            - notification payload of task that will be extended with more data.
-     * @param callback
-     *            - callback that will be run once enhancement is finished.
+     * @param state               - Task state
+     * @param notificationPayload - notification payload of task that will be extended with more data.
+     * @param callback            - callback that will be run once enhancement is finished.
      */
     protected void enhanceNotificationPayload(T state,
             BaseExtensibilityCallbackResponse notificationPayload, Runnable callback) {
@@ -896,22 +908,21 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
     /**
      * <p>
-     *     Once response from client is received, it may contains data that can not be merged
-     *     automatically to some of the task fields. Additional request to some resource may be
-     *     needed in order to patch object which is not defined in task itself. <br/>
-     *     <p>
-     *     For example:
-     *     {@link ComputeProvisionTaskService} provides extensibility mechanism for patching
-     *     ComputeState address. ComputeState is not defined in task, but its self link is.
-     *     In this case once the response from subscriber is received, additional call is needed
-     *     to get the corresponded ComputeState(s) in order to patch its address before task
-     *     is resumed.
-     *     </p>
+     * Once response from client is received, it may contains data that can not be merged
+     * automatically to some of the task fields. Additional request to some resource may be
+     * needed in order to patch object which is not defined in task itself. <br/>
+     * <p>
+     * For example:
+     * {@link ComputeProvisionTaskService} provides extensibility mechanism for patching
+     * ComputeState address. ComputeState is not defined in task, but its self link is.
+     * In this case once the response from subscriber is received, additional call is needed
+     * to get the corresponded ComputeState(s) in order to patch its address before task
+     * is resumed.
      * </p>
-     * @param state
-     *            - Task state
-     * @param callback
-     *            - callback that will be run once enhancement is finished.
+     * </p>
+     *
+     * @param state    - Task state
+     * @param callback - callback that will be run once enhancement is finished.
      */
     protected void enhanceExtensibilityResponse(T state, ServiceTaskCallbackResponse
             replyPayload, Runnable callback) {

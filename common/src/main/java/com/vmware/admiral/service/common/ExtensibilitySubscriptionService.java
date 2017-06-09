@@ -14,8 +14,6 @@ package com.vmware.admiral.service.common;
 import java.net.URI;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
-import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
@@ -32,10 +30,6 @@ import com.vmware.xenon.common.Utils;
 public class ExtensibilitySubscriptionService extends StatefulService {
 
     public static final String FACTORY_LINK = ManagementUriParts.EXTENSIBILITY_SUBSCRIPTION;
-
-    public static final String LAST_UPDATED_DOCUMENT_EMPTY = "null";
-    public static final String LAST_UPDATED_DOCUMENT_KEY = ConfigurationFactoryService.SELF_LINK +
-            "/extensibility.notification.updated.document";
 
     public static class ExtensibilitySubscription extends MultiTenantDocument {
 
@@ -72,12 +66,7 @@ public class ExtensibilitySubscriptionService extends StatefulService {
     @Override
     public void handleCreate(Operation post) {
         validateState(post);
-        notifyUpdatedExtensibilityDocument(post);
-    }
-
-    @Override
-    public void handleDelete(Operation delete) {
-        notifyUpdatedExtensibilityDocument(delete);
+        post.complete();
     }
 
     @Override
@@ -96,30 +85,4 @@ public class ExtensibilitySubscriptionService extends StatefulService {
 
         Utils.validateState(getStateDescription(), state);
     }
-
-    static ConfigurationState buildConfigurationStateWithValue(String value) {
-        ConfigurationState cs = new ConfigurationState();
-        cs.documentSelfLink = LAST_UPDATED_DOCUMENT_KEY;
-        cs.key = LAST_UPDATED_DOCUMENT_KEY;
-        cs.value = (value != null && value.length() > 0) ? value : LAST_UPDATED_DOCUMENT_EMPTY;
-
-        return cs;
-    }
-
-    private void notifyUpdatedExtensibilityDocument(Operation operation) {
-        sendRequest(Operation.createPut(this, LAST_UPDATED_DOCUMENT_KEY)
-                .setBody(buildConfigurationStateWithValue(getSelfLink()))
-                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        logWarning("Error notify updated extensibility document for '%s' : %s",
-                                getSelfLink(), Utils.toString(e));
-                        operation.fail(e);
-                        return;
-                    }
-                    operation.complete();
-                    logFine("Updated extensibility %s completed.", getSelfLink());
-                }));
-    }
-
 }

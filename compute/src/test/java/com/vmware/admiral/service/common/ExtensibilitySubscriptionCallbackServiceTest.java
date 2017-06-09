@@ -11,11 +11,14 @@
 
 package com.vmware.admiral.service.common;
 
+import static java.time.temporal.ChronoUnit.SECONDS;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.net.URI;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.junit.Before;
@@ -23,8 +26,11 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionCallbackService.ExtensibilitySubscriptionCallback;
+import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
+import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.common.test.TestRequestSender;
@@ -104,6 +110,26 @@ public class ExtensibilitySubscriptionCallbackServiceTest extends BaseTestCase {
 
     }
 
+    @Test
+    public void testTimeout() throws Throwable {
+        ExtensibilitySubscriptionCallback state = createExtensibilityCallback(
+                ExtensibilitySubscriptionCallback.Status.BLOCKED);
+
+        state.due = LocalDateTime.now().plus(5, SECONDS);
+        state.serviceTaskCallback = new ServiceTaskCallback();
+        state.serviceTaskCallback.serviceSelfLink = TestStatelessService.SELF_LINK;
+        state.replyPayload = new ServiceTaskCallbackResponse();
+
+        DeferredResult<Void> done = new DeferredResult<>();
+        this.host.startService(new TestStatelessService(done));
+        this.host.waitForServiceAvailable(TestStatelessService.SELF_LINK);
+
+        URI uri = UriUtils.buildUri(host, ExtensibilitySubscriptionCallbackService.FACTORY_LINK);
+        sender.sendPostAndWait(uri, state, ExtensibilitySubscriptionCallback.class);
+
+        this.waitFor("Task did not time out.", () -> done.isDone());
+    }
+
     private ExtensibilitySubscriptionCallback createExtensibilityCallback(
             ExtensibilitySubscriptionCallback.Status status) {
         ExtensibilitySubscriptionCallback callback = new ExtensibilitySubscriptionCallback();
@@ -111,7 +137,23 @@ public class ExtensibilitySubscriptionCallbackServiceTest extends BaseTestCase {
         callback.status = status;
         callback.taskStateJson = "taskStateJson";
         callback.documentSelfLink = UUID.randomUUID().toString();
+        callback.due = LocalDateTime.now();
         return callback;
+    }
+
+    public static class TestStatelessService extends StatelessService {
+        public static String SELF_LINK = TestStatelessService.class.getSimpleName();
+        private DeferredResult<Void> done;
+
+        public TestStatelessService(DeferredResult<Void> done) {
+            this.done = done;
+        }
+
+        @Override
+        public void handlePatch(Operation patch) {
+            patch.complete();
+            done.complete(null);
+        }
     }
 
 }

@@ -16,7 +16,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.compute.CommonContinuousQueries.ContinuousQueryId;
+import com.vmware.admiral.common.util.CommonContinuousQueries;
+import com.vmware.admiral.common.util.CommonContinuousQueries.ContinuousQueryId;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.services.common.QueryTask;

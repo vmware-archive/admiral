@@ -27,6 +27,8 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.test.BaseTestCase;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
+import com.vmware.admiral.service.common.EventTopicService.EventTopicState;
+import com.vmware.admiral.service.common.EventTopicService.TopicTaskInfo;
 import com.vmware.admiral.service.common.ExtensibilitySubscriptionService.ExtensibilitySubscription;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
@@ -50,12 +52,19 @@ public class ExtensibilitySubscriptionManagerTest extends BaseTestCase {
 
         host.startServiceAndWait(ExtensibilitySubscriptionFactoryService.class,
                 ExtensibilitySubscriptionFactoryService.SELF_LINK);
+
+        host.startFactory(new EventTopicService());
+        waitForServiceAvailability(EventTopicService.FACTORY_LINK);
     }
 
     @Test
     public void testInitialState() throws Throwable {
         assertNotNull(manager);
         Map<String, ExtensibilitySubscription> map = getExtensibilitySubscriptions();
+        assertNotNull(map);
+        assertEquals(0, map.size());
+
+        Map<String, Duration> timeouts = getTimeoutsPerStageAndSubstage();
         assertNotNull(map);
         assertEquals(0, map.size());
     }
@@ -103,9 +112,46 @@ public class ExtensibilitySubscriptionManagerTest extends BaseTestCase {
         verifyMapSize(map, 2);
     }
 
+    @Test
+    public void testAddRemoveTopic() throws Throwable {
+        EventTopicState state1 = createTopicState("substage1", "topic1");
+        EventTopicState state2 = createTopicState("substage2", "topic2");
+        EventTopicState state3 = createTopicState("substage3", "topic3");
+        Map<String, Duration> map = getTimeoutsPerStageAndSubstage();
+        assertNotNull(map);
+
+        URI uri = UriUtils.buildUri(host, EventTopicService.FACTORY_LINK);
+        EventTopicState result1 = sender
+                .sendPostAndWait(uri, state1, EventTopicState.class);
+        assertNotNull(result1);
+        verifyMapSize(map, 1);
+
+        EventTopicState result2 = sender
+                .sendPostAndWait(uri, state2, EventTopicState.class);
+        assertNotNull(result2);
+        verifyMapSize(map, 2);
+
+        EventTopicState result3 = sender
+                .sendPostAndWait(uri, state3, EventTopicState.class);
+        assertNotNull(result3);
+        verifyMapSize(map, 3);
+
+        Operation delete = Operation.createDelete(host, result1.documentSelfLink);
+        result1 = sender.sendAndWait(delete, EventTopicState.class);
+        assertNotNull(result1);
+        verifyMapSize(map, 2);
+    }
+
     private Map<String, ExtensibilitySubscription> getExtensibilitySubscriptions()
             throws Exception {
         Field f = ExtensibilitySubscriptionManager.class.getDeclaredField("subscriptions");
+        return getPrivateField(f, manager);
+    }
+
+    private Map<String, Duration> getTimeoutsPerStageAndSubstage()
+            throws Exception {
+        Field f = ExtensibilitySubscriptionManager.class
+                .getDeclaredField("timeoutsPerTaskStageAndSubstage");
         return getPrivateField(f, manager);
     }
 
@@ -136,6 +182,19 @@ public class ExtensibilitySubscriptionManagerTest extends BaseTestCase {
         state.substage = substage;
         state.callbackReference = UriUtils.buildUri(uri);
         state.blocking = false;
+        return state;
+    }
+
+    private EventTopicState createTopicState(String substage, String topicId) {
+        EventTopicState state = new EventTopicState();
+        state.topicTaskInfo = new TopicTaskInfo();
+        state.topicTaskInfo.task = "task";
+        state.topicTaskInfo.stage = "stage";
+        state.topicTaskInfo.substage = substage;
+        state.id = topicId;
+        state.name = topicId;
+        state.blockable = false;
+        state.schema = "";
         return state;
     }
 

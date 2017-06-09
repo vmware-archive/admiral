@@ -16,8 +16,8 @@ import java.util.Collections;
 import java.util.EnumSet;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.compute.CommonContinuousQueries;
-import com.vmware.admiral.compute.CommonContinuousQueries.ContinuousQueryId;
+import com.vmware.admiral.common.util.CommonContinuousQueries;
+import com.vmware.admiral.common.util.CommonContinuousQueries.ContinuousQueryId;
 import com.vmware.admiral.request.compute.ComputeRemovalTaskService.ComputeRemovalTaskState;
 import com.vmware.photon.controller.model.tasks.TaskOption;
 import com.vmware.xenon.common.Operation;

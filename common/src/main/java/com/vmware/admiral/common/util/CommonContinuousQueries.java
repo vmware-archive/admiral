@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,13 +9,16 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.compute;
+package com.vmware.admiral.common.util;
 
+import java.util.EnumSet;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
+import com.vmware.admiral.service.common.EventTopicService.EventTopicState;
+import com.vmware.admiral.service.common.ExtensibilitySubscriptionService.ExtensibilitySubscription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.LifecycleState;
 import com.vmware.xenon.common.LocalizableValidationException;
@@ -62,7 +65,17 @@ public class CommonContinuousQueries {
         /**
          * Query for all {@link ComputeState}s in {@link LifecycleState.RETIRED} state.
          */
-        RETIRED_COMPUTES
+        RETIRED_COMPUTES,
+
+        /**
+         * Query for all {@link EventTopicState}s
+         */
+        EVENT_TOPICS,
+
+        /**
+         * Query for all {@link ExtensibilitySubscription}
+         */
+        EXTENSIBILITY_SUBSCRIPTIONS
     }
 
     /**
@@ -116,6 +129,24 @@ public class CommonContinuousQueries {
                     .build();
             task = QueryTask.Builder.create().addOption(QueryOption.CONTINUOUS)
                     .setQuery(retiredComputesQuery).build();
+            break;
+        case EVENT_TOPICS:
+            Query eventTopicQuery = Query.Builder.create()
+                    .addKindFieldClause(EventTopicState.class)
+                    .addFieldClause(ServiceDocument.FIELD_NAME_OWNER, host.getId())
+                    .build();
+            task = QueryTask.Builder.create()
+                    .addOptions(EnumSet.of(QueryOption.CONTINUOUS, QueryOption.EXPAND_CONTENT))
+                    .setQuery(eventTopicQuery).build();
+            break;
+        case EXTENSIBILITY_SUBSCRIPTIONS:
+            Query extensibilitySubscriptionQuery = Query.Builder.create()
+                    .addKindFieldClause(ExtensibilitySubscription.class)
+                    .addFieldClause(ServiceDocument.FIELD_NAME_OWNER, host.getId())
+                    .build();
+            task = QueryTask.Builder.create()
+                    .addOptions(EnumSet.of(QueryOption.CONTINUOUS, QueryOption.EXPAND_CONTENT))
+                    .setQuery(extensibilitySubscriptionQuery).build();
             break;
         default:
             throw new LocalizableValidationException("Unrecognized common query: " + queryId, "compute.quieries.unrecognized", queryId);
