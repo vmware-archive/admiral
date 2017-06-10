@@ -274,7 +274,7 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
                         try {
                             handler.run();
                         } catch (Throwable t) {
-                            Utils.logWarning(Utils.toString(t));
+                            Utils.logWarning("%s", Utils.toString(t));
                         }
                     } else {
                         // create new configuration element in order to subscribe to it
@@ -288,7 +288,7 @@ public class ServerX509TrustManager implements X509TrustManager, Closeable {
                                 .setBody(body)
                                 .setCompletion((o, e) -> {
                                     if (e != null) {
-                                        Utils.logWarning(Utils.toString(e));
+                                        Utils.logWarning("%s", Utils.toString(e));
                                         return;
                                     }
                                     handler.run();

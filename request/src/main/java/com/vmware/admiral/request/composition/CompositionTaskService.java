@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -201,17 +201,18 @@ public class CompositionTaskService
                 final ResourceNode resourceNode = currentState.resourceNodes.get(patchSelfLink);
                 if (resourceNode != null) {
                     currentState.remainingCount--;
-                    logInfo("Remaining count: [%s]. Stage: [%s]. Completion of resource name: [%s] composition sub-task [%s] patched.",
+                    logInfo("Remaining count: [%s]. Stage: [%s]. Completion of resource name: [%s]"
+                                    + " composition sub-task [%s] patched.",
                             currentState.remainingCount, patchBody.taskSubStage, resourceNode.name,
                             patchSelfLink);
                 } else {
-                    logWarning(
-                            "Remaining count: [%s]. Completion of composition sub-task [%s] patched but not found in the list.",
+                    logWarning("Remaining count: [%s]. Completion of composition sub-task [%s]"
+                                    + " patched but not found in the list.",
                             currentState.remainingCount, patchSelfLink);
                 }
             } else {
-                logWarning(
-                        "Remaining count: [%s]. Completion of composition sub-task patched but no referer property was found. Actual referer [%s]",
+                logWarning("Remaining count: [%s]. Completion of composition sub-task patched but"
+                                + " no referer property was found. Actual referer [%s]",
                         currentState.remainingCount, patch.getReferer().getPath());
             }
         } else if (SubStage.ERROR_ALLOCATING == patchBody.taskSubStage) {
@@ -378,18 +379,16 @@ public class CompositionTaskService
             sendRequest(Operation
                     .createPatch(this, state.requestTrackerLink)
                     .setBody(requestStatus)
-                    .setCompletion(
-                            (o, ex) -> {
-                                if (ex != null) {
-                                    logSevere(
-                                            "Failed to update components in request tracker [%s], progress will be innacurate: %s",
-                                            state.requestTrackerLink, Utils.toString(ex));
-                                }
-                            }));
-
+                    .setCompletion((o, ex) -> {
+                        if (ex != null) {
+                            logSevere("Failed to update components in request tracker [%s],"
+                                            + " progress will be inaccurate: %s",
+                                    state.requestTrackerLink, Utils.toString(ex));
+                        }
+                    }));
         } catch (Throwable x) {
-            logSevere(
-                    "Failed to update components in request tracker [%s], progress will be innacurate: %s",
+            logSevere("Failed to update components in request tracker [%s], progress will be"
+                            + " inaccurate: %s",
                     state.requestTrackerLink, Utils.toString(x));
         }
     }
@@ -414,7 +413,7 @@ public class CompositionTaskService
                     }
                     return;
                 }
-                logFine("Composition subTask created: " + subTaskSelfLink);
+                logFine("Composition subTask created: %s", subTaskSelfLink);
                 if (!error.get()) {
                     logFine("Composition subTask creation completed successfully.");
                 }
@@ -480,7 +479,7 @@ public class CompositionTaskService
                     }
                     return;
                 }
-                logFine("Composition subTask patched: " + subTaskSelfLink);
+                logFine("Composition subTask patched: %s", subTaskSelfLink);
                 if (!error.get()) {
                     logFine("Composition subTask patch completed successfully.");
                 }
@@ -530,7 +529,7 @@ public class CompositionTaskService
                     }
                     return;
                 }
-                logFine("Composition subTask patched: " + subTaskSelfLink);
+                logFine("Composition subTask patched: %s", subTaskSelfLink);
                 if (!error.get()) {
                     logFine("Composition subTask patch completed successfully.");
                 }
@@ -717,7 +716,8 @@ public class CompositionTaskService
             return;
         }
 
-        CompositeComponentRemovalTaskState removalTaskState = new CompositeComponentRemovalTaskState();
+        CompositeComponentRemovalTaskState removalTaskState =
+                new CompositeComponentRemovalTaskState();
         removalTaskState.documentSelfLink = getSelfId() + "-cleanup";
         removalTaskState.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
                 TaskStage.FAILED, SubStage.FAILED, TaskStage.FAILED, SubStage.FAILED);
@@ -731,23 +731,23 @@ public class CompositionTaskService
                 .createPost(this, CompositeComponentRemovalTaskService.FACTORY_LINK)
                 .setBody(removalTaskState)
                 .setContextId(getSelfId())
-                .setCompletion(
-                        (o, e) -> {
-                            if (e != null) {
-                                logWarning(
-                                        "Failure creating composite component removal task. Error: [%s]",
-                                        Utils.toString(e));
-                                completeWithError();
-                            }
-                        }));
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logWarning("Failure creating composite component removal task. Error: [%s]",
+                                Utils.toString(e));
+                        completeWithError();
+                    }
+                }));
     }
 
     private String getExternalSchedulerTaskLink(CompositeDescriptionExpanded compositeDesc) {
         if (compositeDesc.descriptionLinks != null) {
-            if (CompositeKubernetesProvisioningTaskService.supportsCompositeDescription(compositeDesc)) {
+            if (CompositeKubernetesProvisioningTaskService
+                    .supportsCompositeDescription(compositeDesc)) {
                 return CompositeKubernetesProvisioningTaskService.FACTORY_LINK;
             }
         }
         return null;
     }
+
 }

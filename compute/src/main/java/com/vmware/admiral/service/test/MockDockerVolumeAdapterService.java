@@ -209,15 +209,14 @@ public class MockDockerVolumeAdapterService extends BaseMockAdapterService {
                     Utils.log(MockDockerVolumeAdapterService.class,
                             MockDockerVolumeAdapterService.class.getSimpleName(), Level.INFO,
                             "Volume with reference: %s and container name: %s removed.",
-                            entry.getKey(),
-                            entry.getValue());
+                            entry.getKey(), entry.getValue());
                     itVolumes.remove();
                     return;
                 }
             }
         }
-        Utils.logWarning("**************** No volumeId found for reference: "
-                + volumeReference.getPath());
+        Utils.logWarning("**************** No volumeId found for reference: %s",
+                volumeReference.getPath());
     }
 
     public static synchronized void addVolume(String hostId, String reference, String volumeName) {

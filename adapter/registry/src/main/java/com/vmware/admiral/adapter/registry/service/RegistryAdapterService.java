@@ -45,6 +45,7 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.http.netty.NettyHttpServiceClient;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
@@ -139,7 +140,8 @@ public class RegistryAdapterService extends StatelessService {
             registryProxyAddress = props.get(REGITRY_PROXY_PARAM_NAME);
         }
 
-        if (registryProxyAddress != null && !registryProxyAddress.equals(REGISTRY_PROXY_NULL_VALUE)) {
+        if (registryProxyAddress != null
+                && !registryProxyAddress.equals(REGISTRY_PROXY_NULL_VALUE)) {
             try {
                 URI registryProxyURI = new URI(registryProxyAddress);
                 serviceClientProxy = ServiceClientFactory.createServiceClient(trustManager, null);
@@ -148,12 +150,13 @@ public class RegistryAdapterService extends StatelessService {
                     ((NettyHttpServiceClient) serviceClientProxy).setHttpProxy(registryProxyURI);
                 } else {
                     logSevere("Cannot set proxy for accessing registries. Expecting "
-                            + "NettyHttpServiceClient, actual:"
-                            + serviceClientProxy.getClass().getSimpleName());
+                            + "NettyHttpServiceClient, actual: %s",
+                            serviceClientProxy.getClass().getSimpleName());
                     serviceClientProxy = null;
                 }
             } catch (Exception e) {
-                logSevere("Registry proxy URI invalid syntax:" + e.getMessage(), e);
+                logSevere("Registry proxy URI invalid syntax: %s. Error: %s", e.getMessage(),
+                        Utils.toString(e));
                 serviceClientProxy = null;
             }
         }
@@ -167,8 +170,10 @@ public class RegistryAdapterService extends StatelessService {
             String registryProxyAddress = props.get(REGITRY_PROXY_PARAM_NAME);
             String registryNoProxiedHosts = props.get(REGITRY_NO_PROXY_LIST_PARAM_NAME);
 
-            if (registryNoProxiedHosts != null && !registryNoProxiedHosts.equals(REGISTRY_PROXY_NULL_VALUE) &&
-                    registryProxyAddress != null && !registryProxyAddress.equals(REGISTRY_PROXY_NULL_VALUE)) {
+            if (registryNoProxiedHosts != null
+                    && !registryNoProxiedHosts.equals(REGISTRY_PROXY_NULL_VALUE)
+                    && registryProxyAddress != null
+                    && !registryProxyAddress.equals(REGISTRY_PROXY_NULL_VALUE)) {
                 logFine("Setting non-proxied registry hosts: %s", registryNoProxiedHosts);
                 serviceClientNoProxyList.addAll(
                         Arrays.asList(registryNoProxiedHosts.split("\\s*,\\s*")));
@@ -408,7 +413,8 @@ public class RegistryAdapterService extends StatelessService {
 
                             if (isBearerTokenChallenge(wwwAuthHeader)) {
                                 requestAuthorizationToken(wwwAuthHeader, context,
-                                        () -> sendV2SearchRequest(searchUri, searchTerm, response, context),
+                                        () -> sendV2SearchRequest(searchUri, searchTerm, response,
+                                                context),
                                         (t) -> context.operation.fail(t));
                                 return;
                             }
@@ -505,7 +511,7 @@ public class RegistryAdapterService extends StatelessService {
                 .setReferer(URI.create("/"))
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        if (ApiVersion.V2.equals(apiVersion) && o.getStatusCode() == 401) {
+                        if (ApiVersion.V2 == apiVersion && o.getStatusCode() == 401) {
                             if (context.tokenAlreadyRequested) {
                                 failureCallback.accept(ex);
                                 return;
@@ -516,7 +522,8 @@ public class RegistryAdapterService extends StatelessService {
 
                             if (isBearerTokenChallenge(wwwAuthHeader)) {
                                 requestAuthorizationToken(wwwAuthHeader, context,
-                                        () -> doPing(apiVersion, pingEndpoint, context, failureCallback),
+                                        () -> doPing(apiVersion, pingEndpoint, context,
+                                                failureCallback),
                                         failureCallback);
                                 return;
                             }
@@ -592,7 +599,7 @@ public class RegistryAdapterService extends StatelessService {
 
                         @SuppressWarnings("unchecked")
                         Map<String, String> response = o.getBody(Map.class);
-                        List<String> tags = new ArrayList<String>(response.keySet());
+                        List<String> tags = new ArrayList<>(response.keySet());
 
                         context.operation.setBody(tags);
                         context.operation.complete();

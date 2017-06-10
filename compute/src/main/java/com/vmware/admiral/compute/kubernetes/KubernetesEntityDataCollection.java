@@ -242,8 +242,7 @@ public class KubernetesEntityDataCollection extends StatefulService {
         new ServiceDocumentQuery<ResourceState>(getHost(), ResourceState.class).query(q,
                 (r) -> {
                     if (r.hasException()) {
-                        logSevere(
-                                "Failed to query for existing KubernetesState instances: %s",
+                        logSevere("Failed to query for existing KubernetesState instances: %s",
                                 r.getException() instanceof CancellationException
                                         ? r.getException().getMessage()
                                         : Utils.toString(r.getException()));
@@ -298,7 +297,7 @@ public class KubernetesEntityDataCollection extends StatefulService {
                 .setCompletion(
                         (o, ex) -> {
                             if (ex != null) {
-                                logSevere("Failure to retrieve host [%s].",
+                                logSevere("Failure to retrieve host [%s]. Error: %s",
                                         callback.computeHostLink, Utils.toString(ex));
                                 unlockCurrentDataCollectionForHost(callback.computeHostLink);
                                 return;
@@ -463,9 +462,8 @@ public class KubernetesEntityDataCollection extends StatefulService {
                 .setCompletion(
                         (o, ex) -> {
                             if (ex != null) {
-                                logSevere(
-                                        "Failed to create KubernetesState for discovered entity (id=%s): %s",
-                                        entity.id, ex.getMessage());
+                                logSevere("Failed to create KubernetesState for discovered entity"
+                                                + " (id=%s): %s", entity.id, ex.getMessage());
                                 if (hasError.compareAndSet(false, true)) {
                                     callback.run();
                                 }
@@ -497,8 +495,8 @@ public class KubernetesEntityDataCollection extends StatefulService {
                 .setCompletion(
                         (o, ex) -> {
                             if (ex != null) {
-                                logSevere(
-                                        "Failed to create KubernetesDescription for discovered entity (id=%s): %s",
+                                logSevere("Failed to create KubernetesDescription for discovered"
+                                                + " entity (id=%s): %s",
                                         entity.id, ex.getMessage());
                             } else {
                                 logInfo("Created KubernetesDescription for discovered entity: %s",
@@ -515,14 +513,13 @@ public class KubernetesEntityDataCollection extends StatefulService {
                 .setCompletion(
                         (op, ex) -> {
                             if (ex != null) {
-                                logWarning(
-                                        "Failed deleting KubernetesState of missing entity: "
-                                                + state.documentSelfLink,
+                                logWarning("Failed deleting KubernetesState of missing entity: %s",
+                                                state.documentSelfLink,
                                         ex);
                                 return;
                             }
-                            logInfo("Deleted KubernetesState of missing entity: "
-                                    + state.documentSelfLink);
+                            logInfo("Deleted KubernetesState of missing entity: %s",
+                                    state.documentSelfLink);
                         }));
     }
 

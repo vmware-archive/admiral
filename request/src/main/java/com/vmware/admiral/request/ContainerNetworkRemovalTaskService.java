@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -38,6 +38,7 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 
 /**
@@ -190,36 +191,35 @@ public class ContainerNetworkRemovalTaskService extends
             for (String resourceLink : resourceLinks) {
                 sendRequest(Operation
                         .createGet(this, resourceLink)
-                        .setCompletion(
-                                (o, e) -> {
-                                    if (e != null) {
-                                        logWarning("Failed retrieving ContainerNetworkState: "
-                                                + resourceLink);
-                                        completeSubTasksCounter(subTaskLink, e);
-                                        return;
-                                    }
-                                    ContainerNetworkState networkState = o
-                                            .getBody(ContainerNetworkState.class);
-                                    if (networkState.id == null || networkState.id.isEmpty()) {
-                                        logWarning("No ID set for container network state: [%s]  ",
-                                                networkState.documentSelfLink);
-                                        completeSubTasksCounter(subTaskLink, null);
-                                    } else if (networkState.originatingHostLink == null
-                                            || networkState.originatingHostLink.isEmpty()) {
-                                        logWarning(
-                                                "No originatingHostLink set for network state [%s].",
-                                                networkState.documentSelfLink);
-                                        completeSubTasksCounter(subTaskLink, null);
-                                    } else if (ContainerNetworkState.PowerState.RETIRED == networkState.powerState) {
-                                        logWarning(
-                                                "Network with id '%s' is retired. Deleting the state only.",
-                                                networkState.id);
-                                        completeSubTasksCounter(subTaskLink, null);
-                                    } else {
-                                        sendContainerNetworkDeleteRequest(state, networkState,
-                                                subTaskLink);
-                                    }
-                                }));
+                        .setCompletion((o, e) -> {
+                            if (e != null) {
+                                logWarning("Failed retrieving ContainerNetworkState: %s",
+                                        resourceLink);
+                                completeSubTasksCounter(subTaskLink, e);
+                                return;
+                            }
+                            ContainerNetworkState networkState = o
+                                    .getBody(ContainerNetworkState.class);
+                            if (networkState.id == null || networkState.id.isEmpty()) {
+                                logWarning("No ID set for container network state: [%s]",
+                                        networkState.documentSelfLink);
+                                completeSubTasksCounter(subTaskLink, null);
+                            } else if (networkState.originatingHostLink == null
+                                    || networkState.originatingHostLink.isEmpty()) {
+                                logWarning("No originatingHostLink set for network state [%s].",
+                                        networkState.documentSelfLink);
+                                completeSubTasksCounter(subTaskLink, null);
+                            } else if (ContainerNetworkState.PowerState.RETIRED ==
+                                    networkState.powerState) {
+                                logWarning(
+                                        "Network with id '%s' is retired. Deleting the state only.",
+                                        networkState.id);
+                                completeSubTasksCounter(subTaskLink, null);
+                            } else {
+                                sendContainerNetworkDeleteRequest(state, networkState,
+                                        subTaskLink);
+                            }
+                        }));
             }
             proceedTo(SubStage.INSTANCES_REMOVING);
         } catch (Throwable e) {
@@ -316,11 +316,12 @@ public class ContainerNetworkRemovalTaskService extends
                 .setCompletion(
                         (o, e) -> {
                             if (e != null) {
-                                logWarning("Failed deleting ContainerNetworkState: "
-                                        + cns.documentSelfLink, e);
+                                logWarning("Failed deleting ContainerNetworkState: %s. Error: %s",
+                                        cns.documentSelfLink, Utils.toString(e));
                                 return;
                             }
-                            logInfo("Deleted ContainerNetworkState: " + cns.documentSelfLink);
+                            logInfo("Deleted ContainerNetworkState: %s", cns.documentSelfLink);
                         });
     }
+
 }

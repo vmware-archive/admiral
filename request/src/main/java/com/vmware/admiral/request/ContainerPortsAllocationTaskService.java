@@ -277,7 +277,7 @@ public class ContainerPortsAllocationTaskService
                                 }
                                 ContainerService.ContainerState body = o
                                         .getBody(ContainerService.ContainerState.class);
-                                logInfo("Updated ContainerState: %s ", body.documentSelfLink);
+                                logInfo("Updated ContainerState: %s", body.documentSelfLink);
                                 completeSubTasksCounter(taskCallback, null);
                             }));
 
@@ -336,7 +336,7 @@ public class ContainerPortsAllocationTaskService
         OperationJoin.create(operationList)
                 .setCompletion((o, es) -> {
                     if (es != null && !es.isEmpty()) {
-                        logWarning(Utils.toString(es));
+                        logWarning("Failed retrieving ContainerState: %s", Utils.toString(es));
                         failTask("Failed retrieving ContainerState: ",
                                 es.values().iterator().next());
                         return;
@@ -344,4 +344,5 @@ public class ContainerPortsAllocationTaskService
                     callbackFunction.accept(containerStates);
                 }).sendWith(this);
     }
+
 }

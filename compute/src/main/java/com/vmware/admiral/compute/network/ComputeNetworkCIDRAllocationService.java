@@ -143,7 +143,7 @@ public class ComputeNetworkCIDRAllocationService extends StatefulService {
         ComputeNetworkCIDRAllocationState state =
                 post.getBody(ComputeNetworkCIDRAllocationState.class);
 
-        logFine(() -> "Create ComputeNetworkCIDRAllocation for network link: " + state.networkLink);
+        logFine("Create ComputeNetworkCIDRAllocation for network link: %s", state.networkLink);
 
         validateStateOnCreate(state);
         state.allocatedCIDRs = new HashMap<>();
@@ -175,7 +175,7 @@ public class ComputeNetworkCIDRAllocationService extends StatefulService {
             handleDeallocation(patch, state, request);
             break;
         default:
-            logWarning(() -> "Unsupported request type.");
+            logWarning("Unsupported request type.");
             patch.fail(Operation.STATUS_CODE_BAD_REQUEST);
         }
     }
@@ -193,7 +193,7 @@ public class ComputeNetworkCIDRAllocationService extends StatefulService {
     private void handleAllocation(Operation patch, ComputeNetworkCIDRAllocationState state,
             ComputeNetworkCIDRAllocationRequest request) {
 
-        logFine(() -> "Allocate CIDR for subnet id: [" + request.subnetId + "].");
+        logFine("Allocate CIDR for subnet id: [%s].", request.subnetId);
 
         DeferredResult.completed(new AllocationContext(request, state))
                 .thenCompose(this::populateNetwork)
@@ -212,7 +212,7 @@ public class ComputeNetworkCIDRAllocationService extends StatefulService {
     private void handleDeallocation(Operation patch, ComputeNetworkCIDRAllocationState state,
             ComputeNetworkCIDRAllocationRequest request) {
 
-        logFine(() -> "Deallocate subnet id: [" + request.subnetId + "].");
+        logFine("Deallocate subnet id: [%s].",request.subnetId);
 
         deallocateCIDR(state, request);
         patch.setBody(state).complete();
@@ -295,8 +295,8 @@ public class ComputeNetworkCIDRAllocationService extends StatefulService {
         String allocatedSubnetCIDR = IpHelper.calculateCidrFromIpV4Range(createdIpv4Range.low,
                 createdIpv4Range.high);
 
-        logFine(() -> "Newly allocated CIDR: [" + allocatedSubnetCIDR + "] for subnet "
-                + "id: [" + context.request.subnetId + "].");
+        logFine("Newly allocated CIDR: [%s] for subnet id: [%s].", allocatedSubnetCIDR,
+                context.request.subnetId);
 
         AssertUtil.assertTrue(!context.state.allocatedCIDRs.containsValue(allocatedSubnetCIDR),
                 "Attempt to double allocate the same subnet CIDR: [" +
@@ -414,8 +414,8 @@ public class ComputeNetworkCIDRAllocationService extends StatefulService {
         // Update service document state.
         String deallocatedCIDR = state.allocatedCIDRs.remove(request.subnetId);
         if (deallocatedCIDR == null) {
-            this.logWarning(() -> "Unable to deallocate CIDR for subnet id [" + request.subnetId
-                    + "]. No previous allocation record for this subnet.");
+            this.logWarning("Unable to deallocate CIDR for subnet id [%s].No previous allocation"
+                    + " record for this subnet.", request.subnetId);
         }
     }
 
@@ -426,17 +426,17 @@ public class ComputeNetworkCIDRAllocationService extends StatefulService {
 
     private boolean isValidRequest(ComputeNetworkCIDRAllocationRequest request) {
         if (request == null) {
-            logWarning(() -> "Request is null.");
+            logWarning("Request is null.");
             return false;
         }
 
         if (StringUtils.isEmpty(request.subnetId)) {
-            logWarning(() -> "Subnet id is mandatory.");
+            logWarning("Subnet id is mandatory.");
             return false;
         }
 
         if (request.requestType == null) {
-            logWarning(() -> "Request type is mandatory.");
+            logWarning("Request type is mandatory.");
             return false;
         }
 

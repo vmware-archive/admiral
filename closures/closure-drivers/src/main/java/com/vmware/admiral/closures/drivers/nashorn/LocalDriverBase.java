@@ -48,55 +48,54 @@ public abstract class LocalDriverBase implements ExecutionDriver {
         leasedClosure.outputs = closureRequest.outputs;
 
         URI uri = UriUtils.buildUri(getServiceHost(), leasedClosure.documentSelfLink);
-        logInfo("Leasing closure with uri: " + uri + " -> " + leasedClosure.state);
+        logInfo("Leasing closure with uri: %s -> %s", uri, leasedClosure.state);
         getServiceHost().sendRequest(Operation
                 .createPatch(uri)
                 .setReferer(getServiceHost().getUri())
                 .setBody(leasedClosure)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        Utils.logWarning("Closure execution aborted! Unable to lease closure with URI: {}, Reason: {} ",
-                                uri.toString(),
-                                Utils.toString(ex));
+                        Utils.logWarning("Closure execution aborted! Unable to lease closure with"
+                                        + " URI: %s, Reason: %s",
+                                uri.toString(), Utils.toString(ex));
                         errorHandler.accept(ex);
                         return;
                     }
 
                     proceedWithExecution(closureRequest, taskDef);
                 }));
-
     }
 
     @Override
     public void cleanClosure(Closure closure, Consumer<Throwable> errorHandler) {
-        logInfo("Cancelling execution of closure : " + closure.documentSelfLink);
+        logInfo("Cancelling execution of closure : %s", closure.documentSelfLink);
 
         String documentSelfLink = closure.documentSelfLink;
 
         Future<?> futureTask = submittedTasks.get(documentSelfLink);
         if (futureTask == null) {
-            Utils.logWarning("Unable to cancel closure: " + documentSelfLink);
+            Utils.logWarning("Unable to cancel closure: %s", documentSelfLink);
             return;
         }
 
         futureTask.cancel(true);
 
         submittedTasks.remove(documentSelfLink);
-
     }
 
     private void proceedWithExecution(Closure closureRequest, ClosureDescription taskDef) {
-        logInfo("Fetching leased closure: " + closureRequest.documentSelfLink);
+        logInfo("Fetching leased closure: %s", closureRequest.documentSelfLink);
         getServiceHost().sendRequest(Operation
                 .createGet(getServiceHost(), closureRequest.documentSelfLink)
                 .setReferer(getServiceHost().getUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        Utils.logWarning("Failed to fetch closure before execution! Reason:" + ex.getMessage());
+                        Utils.logWarning("Failed to fetch closure before execution! Reason: %s",
+                                ex.getMessage());
                         o.fail(new Exception("Unable to fetch closure."));
                     } else {
                         Closure closure = o.getBody(Closure.class);
-                        logInfo("Closure leased. state: {} {}", closure.state, closure.inputs);
+                        logInfo("Closure leased. state: %s %s", closure.state, closure.inputs);
                         executeLocal(closure, taskDef);
                         o.complete();
                     }
@@ -121,21 +120,21 @@ public abstract class LocalDriverBase implements ExecutionDriver {
             return UriUtils.buildUriPath(ClosureFactoryService.FACTORY_LINK,
                     UriUtils.getLastPathSegment(new URI(closureRequest.documentSelfLink)));
         } catch (URISyntaxException e) {
-            logError("Exception while building self link:", e);
+            logError("Exception while building self link: %s", Utils.toString(e));
             throw new RuntimeException("Wrong URI provided");
         }
     }
 
     private void sendSelfPatch(Closure body) {
         URI uri = UriUtils.buildUri(getServiceHost(), body.documentSelfLink);
-        logInfo("Executing self patching of: " + uri);
+        logInfo("Executing self patching of: %s", uri);
         getServiceHost().sendRequest(Operation
                 .createPatch(uri)
                 .setReferer(getServiceHost().getUri())
                 .setBody(body)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        Utils.logWarning("Self patch failed: {}", Utils.toString(ex));
+                        Utils.logWarning("Self patch failed: %s", Utils.toString(ex));
                     }
                 }));
     }

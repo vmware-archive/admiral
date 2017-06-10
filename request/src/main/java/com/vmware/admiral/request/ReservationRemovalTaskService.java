@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -64,7 +64,8 @@ public class ReservationRemovalTaskService
     @Override
     protected void validateStateOnStart(ReservationRemovalTaskState state) {
         if (state.resourceCount < 1) {
-            throw new LocalizableValidationException("'resourceCount' must be greater than 0.", "request.resource-count.zero");
+            throw new LocalizableValidationException("'resourceCount' must be greater than 0.",
+                    "request.resource-count.zero");
         }
     }
 
@@ -73,7 +74,7 @@ public class ReservationRemovalTaskService
         sendRequest(Operation.createGet(this, state.groupResourcePlacementLink)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        failTask("Failure retriving group placement", e);
+                        failTask("Failure retrieving group placement", e);
                         return;
                     }
                     GroupResourcePlacementState groupPlacementState = o
@@ -86,7 +87,8 @@ public class ReservationRemovalTaskService
     private void releaseResourcePlacement(ReservationRemovalTaskState state,
             GroupResourcePlacementState groupPlacementState) {
 
-        ResourcePlacementReservationRequest reservationRequest = new ResourcePlacementReservationRequest();
+        ResourcePlacementReservationRequest reservationRequest =
+                new ResourcePlacementReservationRequest();
         reservationRequest.resourceCount = -state.resourceCount;
         reservationRequest.resourceDescriptionLink = state.resourceDescriptionLink;
         reservationRequest.referer = getSelfLink();

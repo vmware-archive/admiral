@@ -79,8 +79,8 @@ public abstract class AbstractKubernetesObjectService<T extends BaseKubernetesSt
         if (body.kubernetesSelfLink != null) {
             getHost().registerForServiceAvailability((o, ex) -> {
                 if (ex != null) {
-                    logWarning("Skipping maintenance because service failed to start: "
-                            + ex.getMessage());
+                    logWarning("Skipping maintenance because service failed to start: %s",
+                            ex.getMessage());
                 } else {
                     handlePeriodicMaintenance(o);
                 }

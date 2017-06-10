@@ -97,7 +97,7 @@ public class ContainerControlLoopService extends StatefulService {
     @Override
     public void handlePeriodicMaintenance(Operation post) {
         if (getProcessingStage() != ProcessingStage.AVAILABLE) {
-            logFine("Skipping maintenance since service is not available: %s ", getUri());
+            logFine("Skipping maintenance since service is not available: %s", getUri());
             return;
         }
 

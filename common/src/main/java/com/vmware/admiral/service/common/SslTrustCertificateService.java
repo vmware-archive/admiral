@@ -41,7 +41,8 @@ import com.vmware.xenon.common.Utils;
  */
 public class SslTrustCertificateService extends StatefulService {
     public static final String FACTORY_LINK = ManagementUriParts.SSL_TRUST_CERTS;
-    public static final String SSL_TRUST_LAST_UPDATED_DOCUMENT_KEY = "ssl.trust.last.updated.document";
+    public static final String SSL_TRUST_LAST_UPDATED_DOCUMENT_KEY =
+            "ssl.trust.last.updated.document";
 
     public static class SslTrustCertificateState extends MultiTenantDocument {
 
@@ -251,12 +252,13 @@ public class SslTrustCertificateService extends StatefulService {
                 .setCompletion((o, e) -> {
                     if (e != null) {
                         if (e instanceof ServiceNotFoundException) {
-                            sendRequest(Operation.createPost(this, ConfigurationFactoryService.SELF_LINK)
+                            sendRequest(Operation
+                                    .createPost(this, ConfigurationFactoryService.SELF_LINK)
                                     .setBody(body)
                                     .setCompletion((oo, ee) -> {
                                         if (ee != null) {
-                                            logWarning(
-                                                    "Error notifying last updated ssl trust document: %s. Error: %s",
+                                            logWarning("Error notifying last updated ssl trust"
+                                                            + " document: %s. Error: %s",
                                                     getSelfLink(), Utils.toString(ee));
                                             return;
                                         }
@@ -264,8 +266,7 @@ public class SslTrustCertificateService extends StatefulService {
                                     }));
                             return;
                         }
-                        logWarning(
-                                "Error notifying last updated ssl trust document: %s. Error: %s",
+                        logWarning("Error notifying last updated ssl trust document: %s. Error: %s",
                                 getSelfLink(), Utils.toString(e));
                         return;
                     }
@@ -273,4 +274,5 @@ public class SslTrustCertificateService extends StatefulService {
                     logFine("Last updated ssl trust document completed.");
                 }));
     }
+
 }

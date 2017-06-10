@@ -392,7 +392,7 @@ public class ContainerHostService extends StatelessService {
         try {
             hostType = ContainerHostUtil.getDeclaredContainerHostType(hostSpec.hostState);
         } catch (LocalizableValidationException ex) {
-            logWarning(ex.getMessage());
+            logWarning("Error getting host type: %s", ex.getMessage());
             op.fail(ex);
             return;
         }
@@ -448,7 +448,7 @@ public class ContainerHostService extends StatelessService {
             hostType = ContainerHostUtil
                     .getDeclaredContainerHostType(hostSpec.hostState);
         } catch (LocalizableValidationException ex) {
-            logWarning(ex.getMessage());
+            logWarning("Error getting host type: %s", ex.getMessage());
             op.fail(ex);
             return;
         }
@@ -595,7 +595,7 @@ public class ContainerHostService extends StatelessService {
         try {
             hostType = ContainerHostUtil.getDeclaredContainerHostType(hostState);
         } catch (LocalizableValidationException e) {
-            logWarning(Utils.toString(e));
+            logWarning("Error getting host type: %s", e.getMessage());
             op.fail(e);
             return;
         }
@@ -617,13 +617,14 @@ public class ContainerHostService extends StatelessService {
         }
 
         // create the placement zone
-        ElasticPlacementZoneConfigurationState placementZone = new ElasticPlacementZoneConfigurationState();
+        ElasticPlacementZoneConfigurationState placementZone =
+                new ElasticPlacementZoneConfigurationState();
         placementZone.resourcePoolState = resourcePool;
         Operation.createPost(this, ElasticPlacementZoneConfigurationService.SELF_LINK)
                 .setBody(placementZone)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logWarning(Utils.toString(e));
+                        logWarning("Error posting to EPZ configuration: %s", Utils.toString(e));
                         op.fail(e);
                     } else {
                         ResourcePoolState createdPool = o.getBody(
@@ -667,7 +668,7 @@ public class ContainerHostService extends StatelessService {
                 .setBody(placement)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logWarning(Utils.toString(e));
+                        logWarning("Failed creating placement zone: %s", Utils.toString(e));
                         op.fail(e);
                     } else {
                         GroupResourcePlacementState createdPlacement = o
@@ -860,41 +861,34 @@ public class ContainerHostService extends StatelessService {
 
     private void checkForDefaultHostDescription(String descriptionLink, String descriptionId) {
         new ServiceDocumentQuery<>(getHost(), ComputeDescription.class)
-                .queryDocument(
-                        descriptionLink,
-                        (r) -> {
-                            if (r.hasException()) {
-                                r.throwRunTimeException();
-                            } else if (r.hasResult()) {
-                                logFine("Default docker compute description exists.");
-                            } else {
-                                ComputeDescription desc = new ComputeDescription();
-                                desc.environmentName = ComputeDescription.ENVIRONMENT_NAME_ON_PREMISE;
-                                desc.supportedChildren = new ArrayList<>(
-                                        Collections.singletonList(ComputeType.DOCKER_CONTAINER
-                                                .name()));
-                                desc.documentSelfLink = descriptionId;
-                                desc.id = descriptionId;
-                                sendRequest(Operation
-                                        .createPost(this, ComputeDescriptionService.FACTORY_LINK)
-                                        .setBody(desc)
-                                        .setCompletion(
-                                                (o, e) -> {
-                                                    if (e != null) {
-                                                        logWarning(
-                                                                "Default host description can't "
-                                                                        + "be created. Exception: %s",
-                                                                e instanceof CancellationException
-                                                                        ? e.getMessage() : Utils
-                                                                                .toString(e));
-                                                        return;
-                                                    }
-                                                    logInfo("Default host description created "
-                                                            + "with self link: "
-                                                            + descriptionLink);
-                                                }));
-                            }
-                        });
+                .queryDocument(descriptionLink, (r) -> {
+                    if (r.hasException()) {
+                        r.throwRunTimeException();
+                    } else if (r.hasResult()) {
+                        logFine("Default docker compute description exists.");
+                    } else {
+                        ComputeDescription desc = new ComputeDescription();
+                        desc.environmentName = ComputeDescription.ENVIRONMENT_NAME_ON_PREMISE;
+                        desc.supportedChildren = new ArrayList<>(
+                                Collections.singletonList(ComputeType.DOCKER_CONTAINER.name()));
+                        desc.documentSelfLink = descriptionId;
+                        desc.id = descriptionId;
+                        sendRequest(Operation
+                                .createPost(this, ComputeDescriptionService.FACTORY_LINK)
+                                .setBody(desc)
+                                .setCompletion((o, e) -> {
+                                    if (e != null) {
+                                        logWarning("Default host description can't be created."
+                                                        + " Exception: %s",
+                                                e instanceof CancellationException
+                                                        ? e.getMessage() : Utils.toString(e));
+                                        return;
+                                    }
+                                    logInfo("Default host description created with self link: %s",
+                                            descriptionLink);
+                                }));
+                    }
+                });
     }
 
     private AdapterRequest prepareAdapterRequest(ContainerHostOperationType operationType,
@@ -941,11 +935,14 @@ public class ContainerHostService extends StatelessService {
                         String innerMessage = toReadableErrorMessage(ex, op);
                         String message = String.format("Error connecting to %s : %s",
                                 cs.address, innerMessage);
-                        LocalizableValidationException validationEx = new LocalizableValidationException(ex,
-                                message, "compute.add.host.connection.error", cs.address, innerMessage);
+                        LocalizableValidationException validationEx =
+                                new LocalizableValidationException(ex,
+                                        message, "compute.add.host.connection.error", cs.address,
+                                        innerMessage);
                         ServiceErrorResponse rsp = Utils.toValidationErrorResponse(validationEx, op);
 
-                        logWarning(rsp.message);
+                        logWarning("Error sending adapter request with type %s : %s",
+                                request.operationTypeId, rsp.message);
                         postEventlogError(cs, rsp.message);
                         op.setStatusCode(o.getStatusCode());
                         op.setContentType(Operation.MEDIA_TYPE_APPLICATION_JSON);
@@ -984,11 +981,13 @@ public class ContainerHostService extends StatelessService {
         LocalizableValidationException localizedEx = null;
         if (e instanceof io.netty.handler.codec.DecoderException) {
             if (e.getMessage().contains("Received fatal alert: bad_certificate")) {
-                localizedEx = new LocalizableValidationException("Check login credentials", "compute.check.credentials");
+                localizedEx = new LocalizableValidationException("Check login credentials",
+                        "compute.check.credentials");
             }
         } else if (e instanceof IllegalStateException) {
             if (e.getMessage().contains("Socket channel closed:")) {
-                localizedEx = new LocalizableValidationException("Check login credentials", "compute.check.credentials");
+                localizedEx = new LocalizableValidationException("Check login credentials",
+                        "compute.check.credentials");
             }
         }
 

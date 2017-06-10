@@ -341,7 +341,7 @@ public class RequestBrokerService extends
         finishedResponse.copy(state.serviceTaskCallback.getFinishedResponse());
         finishedResponse.resourceLinks = state.resourceLinks;
         if (state.resourceLinks == null || state.resourceLinks.isEmpty()) {
-            logFine("No resourceLinks found for allocated resources." + state.taskInfo.stage);
+            logFine("No resourceLinks found for allocated resources. %s", state.taskInfo.stage);
         }
         return finishedResponse;
     }
@@ -368,14 +368,12 @@ public class RequestBrokerService extends
     }
 
     @Override
-    public void failTask(String errMsg, Throwable e) {
-        if (errMsg == null) {
-            errMsg = "Unexpected State";
-        }
+    public void failTask(String msg, Throwable e) {
+        String errMsg = msg != null ? msg : "Unexpected State";
         if (e != null) {
-            logWarning("%s. Error: %s", errMsg, Utils.toString(e));
+            logWarning("Fail task: %s. Error: %s", errMsg, Utils.toString(e));
         } else {
-            logWarning(errMsg);
+            logWarning("Fail task: %s", errMsg);
         }
 
         ServiceErrorResponse rsp;
@@ -392,7 +390,7 @@ public class RequestBrokerService extends
     }
 
     private void failRequest(RequestBrokerState state, String message, Throwable ex) {
-        logSevere(message + ",reason: %s", Utils.toString(ex));
+        logSevere("%s, reason: %s", message, Utils.toString(ex));
         proceedTo(SubStage.ERROR, s -> {
             s.taskInfo.failure = getServiceErrorResponse(ex);
         });
@@ -440,11 +438,9 @@ public class RequestBrokerService extends
                     .setBodyNoCloning(new ServiceDocument())
                     .setCompletion((o, e) -> {
                         if (Operation.STATUS_CODE_NOT_FOUND == o.getStatusCode()) {
-                            logWarning("Request status not found: %s",
-                                    state.requestTrackerLink);
+                            logWarning("Request status not found: %s", state.requestTrackerLink);
                         } else if (e != null) {
-                            logWarning(
-                                    "Exception while deleting request status: %s. Error: %s",
+                            logWarning("Exception while deleting request status: %s. Error: %s",
                                     state.requestTrackerLink, Utils.toString(e));
                         } else {
                             logFine("Request status %s deleted.", state.requestTrackerLink);
@@ -544,7 +540,7 @@ public class RequestBrokerService extends
                     .query(compositeQueryTask, (r) -> {
                         if (r.hasException()) {
                             logSevere("Failed to create operation task for %s - %s",
-                                    r.getDocumentSelfLink(), r.getException());
+                                    r.getDocumentSelfLink(), Utils.toString(r.getException()));
                         } else if (r.hasResult()) {
                             componentLinks.addAll(r.getResult().componentLinks);
                         } else {
@@ -1519,7 +1515,7 @@ public class RequestBrokerService extends
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logSevere("Reservations can't be cleaned up. Error: " + Utils.toString(e));
+                        logSevere("Reservations can't be cleaned up. Error: %s", Utils.toString(e));
                     }
                     proceedTo(SubStage.RESERVATION_CLEANUP);
                 }));

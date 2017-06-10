@@ -326,8 +326,8 @@ public class CompositeKubernetesProvisioningTaskService extends
                                         e);
                                 return;
                             }
-                            logInfo("Kubernetes provisioning started for: "
-                                    + state.compositeComponentLink);
+                            logInfo("Kubernetes provisioning started for: %s",
+                                    state.compositeComponentLink);
                         }));
     }
 

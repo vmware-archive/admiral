@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -93,7 +93,7 @@ public final class ClosureUtils {
         } catch (Exception ex) {
             String errMsg =
                     "Unable to calculate execution env. checksum! Reason: " + ex.getMessage();
-            logError(errMsg);
+            logError("%s", errMsg);
             throw new RuntimeException(errMsg);
         }
     }
@@ -111,7 +111,7 @@ public final class ClosureUtils {
 
             return byteOutputStream.toByteArray();
         } catch (Exception ex) {
-            Utils.logWarning("Unable to load docker image data! Reason: ", ex);
+            Utils.logWarning("Unable to load docker image data! Reason: %s", Utils.toString(ex));
         } finally {
             try {
                 byteOutputStream.close();

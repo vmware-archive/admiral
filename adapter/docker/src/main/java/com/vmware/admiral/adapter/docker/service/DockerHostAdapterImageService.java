@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -99,10 +99,9 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
             op.complete();
             break;
         default:
-            String errorMsg = "Unexpected image operation type: " + operationType;
-            logWarning(errorMsg);
-            op.fail(new IllegalArgumentException(errorMsg));
-
+            logWarning("Unexpected image operation type: %s", operationType);
+            op.fail(new IllegalArgumentException("Unexpected image operation type: " +
+                    operationType));
         }
     }
 
@@ -265,7 +264,7 @@ public class DockerHostAdapterImageService extends AbstractDockerAdapterService 
     }
 
     private void doDeleteImage(BaseRequestContext ctx, ComputeService.ComputeState computeState) {
-        logInfo("Deleting docker image on host: " + computeState.documentSelfLink);
+        logInfo("Deleting docker image on host: %s", computeState.documentSelfLink);
 
         CommandInput commandInput = ctx.commandInput;
         Map<String, String> customProperties = ctx.request.customProperties;

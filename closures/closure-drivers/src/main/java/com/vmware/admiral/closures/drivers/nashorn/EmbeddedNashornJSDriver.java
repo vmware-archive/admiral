@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -75,7 +75,7 @@ public class EmbeddedNashornJSDriver extends LocalDriverBase {
 
     @Override
     public Closure doExecute(Closure closure, ClosureDescription taskDef) {
-        logInfo("Submitting closure for execution: " + closure.documentSelfLink);
+        logInfo("Submitting closure for execution: %s", closure.documentSelfLink);
 
         Closure closureResult = new Closure();
 
@@ -83,7 +83,8 @@ public class EmbeddedNashornJSDriver extends LocalDriverBase {
         ScriptEngineManager manager = new ScriptEngineManager();
         ScriptEngine engine = manager.getEngineByName(DriverConstants.RUNTIME_NASHORN);
         if (engine == null) {
-            throw new IllegalStateException("Unable to execute script with runtime: " + taskDef.runtime);
+            throw new IllegalStateException("Unable to execute script with runtime: "
+                    + taskDef.runtime);
         }
 
         try {
@@ -92,7 +93,7 @@ public class EmbeddedNashornJSDriver extends LocalDriverBase {
             closureResult.state = TaskStage.FINISHED;
 
         } catch (ScriptException e) {
-            Utils.logWarning("Exception thrown while executing script: " + e.getMessage());
+            Utils.logWarning("Exception thrown while executing script: %s", e.getMessage());
             closureResult.state = TaskStage.FAILED;
             closureResult.errorMsg = e.getMessage();
         }
@@ -109,7 +110,7 @@ public class EmbeddedNashornJSDriver extends LocalDriverBase {
             final Bindings outBindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
             for (String name : outputNames) {
                 Object val = outBindings.get(name);
-                logInfo("Output parameter: name: {} value: {}", name, val);
+                logInfo("Output parameter: name: %s value: %s", name, val);
                 JsonElement convertedVal = convertToJsonElement(engine, val);
                 outputs.put(name, convertedVal);
             }
@@ -120,9 +121,9 @@ public class EmbeddedNashornJSDriver extends LocalDriverBase {
             throws ScriptException {
         String scriptSource = taskDef.source;
         ResourceConstraints resConstraints = taskDef.resources;
-        logInfo("Using resource constraints: cpuShares = {}, ram = {}, timeout = {}", resConstraints.cpuShares,
-                resConstraints.ramMB, resConstraints.timeoutSeconds);
-        logInfo("Executing script of {}:\n{}", closureRequest.documentSelfLink, scriptSource);
+        logInfo("Using resource constraints: cpuShares = %s, ram = %s, timeout = %s",
+                resConstraints.cpuShares, resConstraints.ramMB, resConstraints.timeoutSeconds);
+        logInfo("Executing script of %s:\n%s", closureRequest.documentSelfLink, scriptSource);
 
         engine.eval(scriptSource);
     }

@@ -224,8 +224,8 @@ public class MockDockerNetworkAdapterService extends BaseMockAdapterService {
                 }
             }
         }
-        Utils.logWarning("**************** No networkId found for reference: "
-                + networkReference.getPath());
+        Utils.logWarning("**************** No networkId found for reference: %s",
+                networkReference.getPath());
     }
 
     public static synchronized void addNetworkId(String hostId, String networkId,

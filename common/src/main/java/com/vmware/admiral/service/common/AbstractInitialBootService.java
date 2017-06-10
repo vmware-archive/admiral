@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -156,7 +156,8 @@ public abstract class AbstractInitialBootService extends StatelessService {
                             if (ex != null) {
                                 if (retryCount > 0 && !(ex instanceof CancellationException)) {
                                     logWarning(
-                                            "Retrying with count %s after error creating default %s instance for factory %s. Error: %s",
+                                            "Retrying with count %s after error creating default %s"
+                                                    + " instance for factory %s. Error: %s",
                                             retryCount, state.documentSelfLink, factoryPath,
                                             Utils.toString(ex));
                                     /*
@@ -166,16 +167,18 @@ public abstract class AbstractInitialBootService extends StatelessService {
                                      * Hence, the retries and the wait here.
                                      */
                                     getHost().schedule(() -> {
-                                        logInfo("Waiting for the default %s instance for factory %s to be created",
+                                        logInfo("Waiting for the default %s instance for factory %s"
+                                                        + " to be created",
                                                 state.documentSelfLink, factoryPath);
                                         createDefaultInstance(state, callback, retryCount - 1);
                                     }, RETRIES_WAIT, TimeUnit.MILLISECONDS);
                                 } else {
-                                    logWarning(
-                                            "Error creating default %s instance for factory %s. Error: %s",
+                                    logWarning("Error creating default %s instance for factory %s."
+                                                    + " Error: %s",
                                             state.documentSelfLink, factoryPath,
-                                            (ex instanceof CancellationException) ? ex.getClass()
-                                                    .getName() : Utils.toString(ex));
+                                            ex instanceof CancellationException
+                                                    ? ex.getClass().getName()
+                                                    : Utils.toString(ex));
                                     callback.accept(ex);
                                 }
                                 return;

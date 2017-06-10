@@ -251,8 +251,7 @@ public class ComputeProvisionTaskService extends
                     })).collect(Collectors.toList());
 
             DeferredResult.allOf(ops).whenComplete((all, e) -> {
-                logInfo("Requested provisioning of %s compute resources.",
-                        resourceLinks.size());
+                logInfo("Requested provisioning of %s compute resources.", resourceLinks.size());
                 proceedTo(SubStage.PROVISIONING_COMPUTE);
             });
         } catch (Throwable e) {

@@ -40,7 +40,6 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.TaskState.TaskStage;
-import com.vmware.xenon.common.Utils;
 
 /**
  * Task implementing the redeploying container request resource work flow.
@@ -179,12 +178,13 @@ public class ContainerRedeploymentTaskService
                 TaskStage.STARTED, SubStage.CLUSTER, TaskStage.FAILED,
                 SubStage.ERROR);
         requestBrokerState.addCustomProperty(FIELD_NAME_CONTEXT_ID_KEY, state.contextId);
-        requestBrokerState.addCustomProperty(CONTAINER_REDEPLOYMENT_CUSTOM_PROP, "container_redeployment");
+        requestBrokerState.addCustomProperty(CONTAINER_REDEPLOYMENT_CUSTOM_PROP,
+                "container_redeployment");
 
         sendRequest(Operation.createPost(this, RequestBrokerFactoryService.SELF_LINK)
                 .setBody(requestBrokerState).setCompletion((o, e) -> {
                     if (e != null) {
-                        logSevere(Utils.toString(e));
+                        logSevere(e);
                         return;
                     }
                 }));
@@ -196,8 +196,7 @@ public class ContainerRedeploymentTaskService
         int clusterSize = state.desiredClusterSize;
 
         logFine("Cluster container with %s description link, from %s context_id with cluster " +
-                        "size: %s",
-                cdLink, contextId, clusterSize);
+                        "size: %s", cdLink, contextId, clusterSize);
 
         RequestBrokerState rbState = new RequestBrokerState();
         rbState.resourceDescriptionLink = cdLink;
@@ -214,7 +213,7 @@ public class ContainerRedeploymentTaskService
                 .setBody(rbState)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logSevere(Utils.toString(e));
+                        logSevere(e);
                         return;
                     }
                 }));
@@ -238,4 +237,5 @@ public class ContainerRedeploymentTaskService
                     callback.accept(op, null);
                 }));
     }
+
 }

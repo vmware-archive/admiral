@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -973,8 +973,7 @@ public class ContainerHostDataCollectionServiceTest extends ComputeBaseTest {
         public void handlePatch(Operation op) {
             AdapterRequest state = op.getBody(AdapterRequest.class);
             if (ContainerOperationType.INSPECT.id.equals(state.operationTypeId)) {
-                logInfo(
-                        ">>>> Invoking MockInspectAdapterService handlePatch for Inspect for: %s ",
+                logInfo(">>>> Invoking MockInspectAdapterService handlePatch for Inspect for: %s ",
                         state.resourceReference);
                 resourcesInvokedInspect.add(state.resourceReference);
             }

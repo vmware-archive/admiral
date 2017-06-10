@@ -267,14 +267,14 @@ public class ImageSearchService extends StatelessService {
 
         final String msg = "Delegate to ImageService factory with [%s] query: %s";
 
-        logFine(() -> String.format(msg, imagesQuery, "STARTING"));
+        logFine(msg, imagesQuery, "STARTING");
 
         sendRequest(Operation.createGet(uri).setCompletion((o, e) -> {
             if (e != null) {
-                logFine(() -> String.format(msg, imagesQuery, "FAILED"));
+                logFine(msg, imagesQuery, "FAILED");
                 getImagesOp.fail(e);
             } else {
-                logFine(() -> String.format(msg, imagesQuery, "SUCCESS"));
+                logFine(msg, imagesQuery, "SUCCESS");
                 // ODataFactoryQueryResult is propagated as returned by ImageService factory
                 getImagesOp.setBodyNoCloning(o.getBodyRaw()).complete();
             }

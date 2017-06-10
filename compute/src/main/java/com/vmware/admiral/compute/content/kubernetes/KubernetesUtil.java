@@ -231,7 +231,7 @@ public class KubernetesUtil {
         try {
             object = desc.getKubernetesEntity(BaseKubernetesObject.class);
         } catch (IOException e) {
-            Utils.logWarning("Could not get kubernetes entity, reason %s", e);
+            Utils.logWarning("Could not get kubernetes entity, reason %s", Utils.toString(e));
             return desc;
         }
 
@@ -257,7 +257,7 @@ public class KubernetesUtil {
         try {
             object = desc.getKubernetesEntity(BaseKubernetesObject.class);
         } catch (IOException e) {
-            Utils.logWarning("Could not get kubernetes entity, reason %s", e);
+            Utils.logWarning("Could not get kubernetes entity, reason %s", Utils.toString(e));
             return desc;
         }
 
@@ -319,7 +319,7 @@ public class KubernetesUtil {
                 return desc;
             }
         } catch (IOException ex) {
-            Utils.logWarning("Could not get kubernetes entity, reason %s", ex);
+            Utils.logWarning("Could not get kubernetes entity, reason %s", Utils.toString(ex));
             return desc;
         }
 

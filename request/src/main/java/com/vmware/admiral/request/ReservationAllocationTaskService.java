@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -178,10 +178,11 @@ public class ReservationAllocationTaskService extends
         CallbackCompleteResponse finishedResponse = new CallbackCompleteResponse();
         finishedResponse.copy(state.serviceTaskCallback.getFinishedResponse());
         finishedResponse.groupResourcePlacementLink = state.groupResourcePlacementLink;
-        finishedResponse.resourcePoolsPerGroupPlacementLinks = state.resourcePoolsPerGroupPlacementLinks;
+        finishedResponse.resourcePoolsPerGroupPlacementLinks =
+                state.resourcePoolsPerGroupPlacementLinks;
         if (state.groupResourcePlacementLink == null
                 || state.groupResourcePlacementLink.isEmpty()) {
-            logWarning("No GroupResourcePlacement found for reservated resources.");
+            logWarning("No GroupResourcePlacement found for reserved resources.");
         }
         return finishedResponse;
     }

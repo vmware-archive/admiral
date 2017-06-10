@@ -400,12 +400,9 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
                 });
     }
 
-    private void failTask(String errMsg, String taskDocumentSelfLink) {
-        if (errMsg == null) {
-            errMsg = "Unexpected State";
-        }
-
-        logWarning(errMsg);
+    private void failTask(String msg, String taskDocumentSelfLink) {
+        String errMsg = msg != null ? msg : "Unexpected State";
+        logWarning("Fail extensibility task: %s", errMsg);
 
         ServiceTaskCallbackResponse body = new ServiceTaskCallbackResponse();
         body.taskInfo = new TaskState();

@@ -82,11 +82,9 @@ public class HostContainerListDataCollection extends StatefulService {
             "__default-list-data-collection";
     public static final String DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_LINK = UriUtils
             .buildUriPath(FACTORY_LINK, DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_ID);
-
-    private static final String SYSTEM_CONTAINER_NAME = "systemContainerName";
     protected static final long DATA_COLLECTION_LOCK_TIMEOUT_MILLISECONDS = Long.getLong(
             "com.vmware.admiral.data.collection.lock.timeout.milliseconds", 60000 * 5);
-
+    private static final String SYSTEM_CONTAINER_NAME = "systemContainerName";
     private static final int SYSTEM_CONTAINER_SSL_RETRIES_COUNT = Integer.getInteger(
             "com.vmware.admiral.system.container.ssl.retries", 3);
     private static final long SYSTEM_CONTAINER_SSL_RETRIES_WAIT = Long.getLong(
@@ -162,13 +160,6 @@ public class HostContainerListDataCollection extends StatefulService {
         }
     }
 
-    @Override
-    public ServiceDocument getDocumentTemplate() {
-        ServiceDocument template = super.getDocumentTemplate();
-        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
-        return template;
-    }
-
     public static class ContainerVersion implements Comparable<ContainerVersion> {
         public static final String LATEST_VERSION = "latest";
         private final String version;
@@ -176,6 +167,18 @@ public class HostContainerListDataCollection extends StatefulService {
         private ContainerVersion(String version) {
             AssertUtil.assertNotNull(version, "version");
             this.version = version;
+        }
+
+        public static ContainerVersion fromImageName(String image) {
+            AssertUtil.assertNotNull(image, "image");
+            String version;
+            int idx = image.indexOf(':');
+            if (idx != -1) {
+                version = image.substring(idx + 1);
+            } else {
+                version = LATEST_VERSION;
+            }
+            return new ContainerVersion(version);
         }
 
         @Override
@@ -237,18 +240,15 @@ public class HostContainerListDataCollection extends StatefulService {
             }
             return true;
         }
+    }
 
-        public static ContainerVersion fromImageName(String image) {
-            AssertUtil.assertNotNull(image, "image");
-            String version;
-            int idx = image.indexOf(':');
-            if (idx != -1) {
-                version = image.substring(idx + 1);
-            } else {
-                version = LATEST_VERSION;
-            }
-            return new ContainerVersion(version);
-        }
+    public HostContainerListDataCollection() {
+        super(HostContainerListDataCollectionState.class);
+        super.toggleOption(ServiceOption.PERSISTENCE, true);
+        super.toggleOption(ServiceOption.REPLICATION, true);
+        super.toggleOption(ServiceOption.OWNER_SELECTION, true);
+        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
+        super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
     }
 
     public static ServiceDocument buildDefaultStateInstance() {
@@ -260,13 +260,11 @@ public class HostContainerListDataCollection extends StatefulService {
         return state;
     }
 
-    public HostContainerListDataCollection() {
-        super(HostContainerListDataCollectionState.class);
-        super.toggleOption(ServiceOption.PERSISTENCE, true);
-        super.toggleOption(ServiceOption.REPLICATION, true);
-        super.toggleOption(ServiceOption.OWNER_SELECTION, true);
-        super.toggleOption(ServiceOption.INSTRUMENTATION, true);
-        super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
+    @Override
+    public ServiceDocument getDocumentTemplate() {
+        ServiceDocument template = super.getDocumentTemplate();
+        com.vmware.photon.controller.model.ServiceUtils.setRetentionLimit(template);
+        return template;
     }
 
     @Override
@@ -280,7 +278,7 @@ public class HostContainerListDataCollection extends StatefulService {
                 .getBody(HostContainerListDataCollectionState.class);
         if (initState.documentSelfLink == null
                 || !initState.documentSelfLink
-                        .endsWith(DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_ID)) {
+                .endsWith(DEFAULT_HOST_CONTAINER_LIST_DATA_COLLECTION_ID)) {
             post.fail(new LocalizableValidationException(
                     "Only one instance of containers data collection can be started",
                     "compute.container.data-collection.single"));
@@ -337,18 +335,16 @@ public class HostContainerListDataCollection extends StatefulService {
 
         AssertUtil.assertNotNull(body.containerIdsAndNames, "containerIdsAndNames");
 
-        logFine(() -> String.format(
-                "Host container list callback invoked for host [%s] with container IDs: %s",
-                containerHostLink, body.containerIdsAndNames.keySet()));
+        logFine("Host container list callback invoked for host [%s] with container IDs: %s",
+                containerHostLink, body.containerIdsAndNames.keySet());
 
         // the patch will succeed regardless of the synchronization process
         if (state.containerHostLinks.get(containerHostLink) != null &&
                 Instant.now().isBefore(Instant.ofEpochMilli(
                         (state.containerHostLinks.get(containerHostLink))))) {
-            logFine(() -> String.format(
-                    "Host container list callback for host [%s] with container IDs: %s skipped,"
+            logFine("Host container list callback for host [%s] with container IDs: %s skipped,"
                             + " another instance is active",
-                    containerHostLink, body.containerIdsAndNames.keySet()));
+                    containerHostLink, body.containerIdsAndNames.keySet());
 
             op.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
             op.complete();
@@ -459,7 +455,7 @@ public class HostContainerListDataCollection extends StatefulService {
                 .createGet(this, callback.containerHostLink)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        logSevere("Failure to retrieve host [%s].",
+                        logSevere("Failure to retrieve host [%s]. Error: %s",
                                 callback.containerHostLink, Utils.toString(ex));
                         unlockCurrentDataCollectionForHost(callback.containerHostLink);
                         return;
@@ -620,10 +616,10 @@ public class HostContainerListDataCollection extends StatefulService {
                 .setBodyNoCloning(adapterRequest)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logWarning("Failure starting system container: " + Utils.toString(e));
+                        logWarning("Failure starting system container: %s", Utils.toString(e));
                         return;
                     }
-                    logInfo("Starting system container: %s with name: %s ... ",
+                    logInfo("Starting system container: %s with name: %s ...",
                             containerState.documentSelfLink, containerState.names);
                 }));
     }
@@ -695,7 +691,7 @@ public class HostContainerListDataCollection extends StatefulService {
                                             return;
                                         }
                                         ContainerState body = o.getBody(ContainerState.class);
-                                        logInfo("Created system ContainerState: %s ",
+                                        logInfo("Created system ContainerState: %s",
                                                 body.documentSelfLink);
                                         createSystemContainerInstanceRequest(body, null);
                                         updateNumberOfContainers(containerHostLink);
@@ -963,7 +959,7 @@ public class HostContainerListDataCollection extends StatefulService {
         new ServiceDocumentQuery<ContainerState>(getHost(), ContainerState.class)
                 .query(containerQuery, (r) -> {
                     if (r.hasException()) {
-                        logWarning("Failed to retrieve containers for host:", containerHostLink);
+                        logWarning("Failed to retrieve containers for host: %s", containerHostLink);
                     } else {
                         logFine("Found %s containers for container host: %s",
                                 String.valueOf(r.getCount()), containerHostLink);
@@ -984,7 +980,7 @@ public class HostContainerListDataCollection extends StatefulService {
         new ServiceDocumentQuery<ContainerState>(getHost(), ContainerState.class)
                 .query(systemContainerQuery, (result) -> {
                     if (result.hasException()) {
-                        logWarning("Failed to retrieve system containers for host:",
+                        logWarning("Failed to retrieve system containers for host: %s",
                                 containerHostLink);
                     } else {
                         state.customProperties.put(
@@ -1003,7 +999,7 @@ public class HostContainerListDataCollection extends StatefulService {
                 .setBody(state)
                 .setCompletion((operation, e) -> {
                     if (e != null) {
-                        logSevere("Failure updating host [%s] with container count.",
+                        logSevere("Failure updating host [%s] with container count. Error: %s",
                                 containerHostLink, Utils.toString(e));
                         return;
                     }
@@ -1243,7 +1239,7 @@ public class HostContainerListDataCollection extends StatefulService {
                             return;
                         }
                         ContainerState body = o.getBody(ContainerState.class);
-                        logInfo("Created system ContainerState: %s ", body.documentSelfLink);
+                        logInfo("Created system ContainerState: %s", body.documentSelfLink);
                         createSystemContainerInstanceRequest(body, null);
                         updateNumberOfContainers(containerHostLink);
                     }));

@@ -140,7 +140,7 @@ public class ContainerHostServiceConfigureOverSshTest extends ComputeBaseTest {
                 .setCompletion(
                         (o, e) -> {
                             if (e != null) {
-                                host.log("Exception while processing the container host: {}.",
+                                host.log("Exception while processing the container host: %s.",
                                         Utils.toString(e));
                                 host.failIteration(e);
                                 return;

@@ -277,8 +277,8 @@ public class ProjectService extends StatefulService {
                 .setBody(queryTask)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logSevere("Failed to retrieve placements associated with project: "
-                                + state.documentSelfLink);
+                        logSevere("Failed to retrieve placements associated with project: %s",
+                                state.documentSelfLink);
                         delete.fail(e);
                         return;
                     } else {

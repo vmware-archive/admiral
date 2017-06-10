@@ -134,7 +134,7 @@ public class CompositeKubernetesRemovalTaskService
                             logWarning("AdapterRequest failed Error: %s", Utils.toString(e));
                         }
                     } else {
-                        logInfo("Kubernetes application removal started for: " + link);
+                        logInfo("Kubernetes application removal started for: %s", link);
                     }
                 });
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -361,12 +361,11 @@ public class ContainerNetworkAllocationTaskService extends
                                 if (e == null) {
                                     ContainerNetworkState body = o
                                             .getBody(ContainerNetworkState.class);
-                                    logInfo("Created ContainerNetworkState: %s ",
+                                    logInfo("Created ContainerNetworkState: %s",
                                             body.documentSelfLink);
                                 }
                                 completeSubTasksCounter(taskCallback, e);
                             }));
-
         } catch (Throwable e) {
             failTask("System failure creating ContainerNetworkState", e);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -66,8 +66,8 @@ public class DockerImageService extends StatefulService {
                 .createGet(getUri())
                 .setCompletion((op, ex) -> {
                     if (ex != null) {
-                        logWarning(
-                                "Failed to fetch image requests state. Reason: " + ex.getMessage());
+                        logWarning("Failed to fetch image requests state. Reason: %s",
+                                ex.getMessage());
                         post.fail(new Exception("Unable to fetch image requests state."));
                     } else {
                         DockerImage imageRequest = op.getBody(DockerImage.class);
@@ -99,7 +99,7 @@ public class DockerImageService extends StatefulService {
     @Override
     public void handleDelete(Operation delete) {
         DockerImage currentImageState = this.getState(delete);
-        logInfo("Handle delete of: %s ", currentImageState.documentSelfLink);
+        logInfo("Handle delete of: %s", currentImageState.documentSelfLink);
         cleanImage(currentImageState);
 
         delete.complete();
@@ -154,8 +154,7 @@ public class DockerImageService extends StatefulService {
         ExecutionDriver executionDriver = driverRegistry.getDriver();
         executionDriver.cleanImage(imageRequest.name, imageRequest.computeStateLink,
                 (error) -> logWarning("Unable to clean docker image: %s on host: %s",
-                        imageRequest.name,
-                        imageRequest.computeStateLink));
+                        imageRequest.name, imageRequest.computeStateLink));
     }
 
     private boolean isBuildImageExpired(DockerImage imageRequest) {
@@ -171,8 +170,7 @@ public class DockerImageService extends StatefulService {
         long timeElapsed = System.currentTimeMillis() - imageRequest.lastAccessedTimeMillis;
         if (timeElapsed >= timeout) {
             logInfo("Timeout elapsed = %s ms, timeout = %s ms of imageRequest = %s", timeElapsed,
-                    timeout,
-                    imageRequest.documentSelfLink);
+                    timeout, imageRequest.documentSelfLink);
             return true;
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -414,7 +414,7 @@ public class EndpointAdapterService extends StatelessService {
     private void handleServiceErrorResponse(Operation op, int statusCode, Throwable e,
             ServiceErrorResponse rsp) {
         if (e != null) {
-            logWarning(Utils.toString(e));
+            logWarning("handleServiceErrorResponse: %s", Utils.toString(e));
         }
         if (rsp != null) {
             logWarning("kind: %s, message: %s, errorCode: %s, statusCode: %s.",
@@ -471,12 +471,12 @@ public class EndpointAdapterService extends StatelessService {
                         .setBody(scheduledTaskState))
                                 .whenComplete((o, e) -> {
                                     if (e != null) {
-                                        logWarning(
-                                                "Error triggering stats collection task for endpoint [%s], reason: %s",
+                                        logWarning("Error triggering stats collection task for"
+                                                        + " endpoint [%s], reason: %s",
                                                 endpoint.documentSelfLink, Utils.toString(e));
                                     } else {
-                                        logInfo("Stats collection has been scheduled for endpoint [%s]",
-                                                endpoint.documentSelfLink);
+                                        logInfo("Stats collection has been scheduled for endpoint"
+                                                        + " [%s]", endpoint.documentSelfLink);
                                     }
                                 });
     }
@@ -492,8 +492,8 @@ public class EndpointAdapterService extends StatelessService {
         Operation.createDelete(this, uri)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logInfo("Unable to delete scheduled stats collection task for endpoint [%s], reason: %s",
-                                endpointLink, Utils.toString(e));
+                        logInfo("Unable to delete scheduled stats collection task for endpoint"
+                                        + " [%s], reason: %s", endpointLink, Utils.toString(e));
                     }
                 })
                 .sendWith(this);
@@ -560,19 +560,20 @@ public class EndpointAdapterService extends StatelessService {
                         .setBody(scheduledTask)
                         .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE))
                                 .whenComplete((o, e) -> {
-                                    String msg = "Scheduling Public image-enumeration for '%s' endpoint type";
                                     if (e != null) {
                                         if (e instanceof ServiceAlreadyStartedException) {
-                                            logInfo(() -> String.format(
-                                                    msg + ": SUCCESS - already started",
-                                                    scheduledTaskId));
+                                            logInfo("Scheduling Public image-enumeration for '%s'"
+                                                    + " endpoint type: SUCCESS - already"
+                                                    + " started", scheduledTaskId);
                                         } else {
-                                            logWarning(() -> String.format(msg + ": ERROR - %s",
-                                                    scheduledTaskId, Utils.toString(e)));
+                                            logWarning("Scheduling Public image-enumeration for"
+                                                            + " '%s' endpoint type: ERROR - %s",
+                                                    scheduledTaskId, Utils.toString(e));
                                         }
                                     } else {
-                                        logInfo(() -> String.format(msg + ": SUCCESS",
-                                                scheduledTaskId));
+                                        logInfo("Scheduling Public image-enumeration for '%s'"
+                                                        + " endpoint type: SUCCESS",
+                                                scheduledTaskId);
                                     }
                                 });
     }
@@ -617,13 +618,15 @@ public class EndpointAdapterService extends StatelessService {
                         .setBody(scheduledTask)
                         .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE))
                                 .whenComplete((o, e) -> {
-                                    String msg = "Scheduling Private image-enumeration for '%s' endpoint";
+                                    String msg = "Scheduling Private image-enumeration for '%s'"
+                                            + " endpoint";
                                     if (e != null) {
-                                        logWarning(() -> String.format(msg + ": ERROR - %s",
-                                                endpoint.name, Utils.toString(e)));
+                                        logWarning("Scheduling Private image-enumeration for '%s'"
+                                                        + " endpoint: ERROR - %s",
+                                                endpoint.name, Utils.toString(e));
                                     } else {
-                                        logInfo(() -> String.format(msg + ": SUCCESS",
-                                                endpoint.name));
+                                        logInfo("Scheduling Private image-enumeration for '%s'"
+                                                + " endpoint: SUCCESS", endpoint.name);
                                     }
                                 });
     }

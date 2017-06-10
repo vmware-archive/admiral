@@ -79,7 +79,7 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                 .createGet(getUri())
                 .setCompletion((op, ex) -> {
                     if (ex != null) {
-                        logWarning("Failed to fetch closure state. Reason:" + ex.getMessage());
+                        logWarning("Failed to fetch closure state. Reason: %s", ex.getMessage());
                         post.fail(new Exception("Unable to fetch closure state."));
                     } else {
                         Closure closure = op.getBody(Closure.class);
@@ -88,15 +88,15 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                                 .createGet(this, closure.descriptionLink)
                                 .setCompletion((o, e) -> {
                                     if (e != null) {
-                                        logWarning("Failed to fetch closure definition. Reason: ",
-                                                e);
+                                        logWarning("Failed to fetch closure definition. Reason: %s",
+                                                Utils.toString(e));
 
                                         sendRequest(Operation
                                                 .createDelete(getUri())
                                                 .setCompletion((dop, dex) -> {
-                                                    if (ex != null) {
-                                                        logWarning("Self delete failed: {}",
-                                                                Utils.toString(ex));
+                                                    if (dex != null) {
+                                                        logWarning("Self delete failed: %s",
+                                                                Utils.toString(dex));
                                                     }
                                                 }));
 
@@ -111,7 +111,6 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                                         processMaintenance(post, closure, taskDef);
                                     }
                                 }));
-
                     }
                 }));
     }
@@ -146,11 +145,11 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                 .getBody(ServiceTaskCallbackResponse.class);
         TaskState taskInfo = callbackResponse.taskInfo;
         if (TaskState.isFailed(taskInfo) || TaskState.isCancelled(taskInfo)) {
-            String errorMsg = String.format("Failed to build runtime image! state: %s, "
-                    + "Reason: %n%s", taskInfo.stage, taskInfo.failure.message);
-            logWarning(errorMsg);
+            String errorMsg = "Failed to build runtime image! state: %s, Reason: %n%s";
+            logWarning(errorMsg, taskInfo.stage, taskInfo.failure.message);
             currentState.state = taskInfo.stage;
-            currentState.errorMsg = errorMsg;
+            currentState.errorMsg = String.format(errorMsg, taskInfo.stage,
+                    taskInfo.failure.message);
             this.setState(patchOp, currentState);
             patchOp.setBody(currentState).complete();
 
@@ -184,7 +183,7 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
             updateRequestTracker(fromClosure(currentClosure));
 
         } catch (Exception ex) {
-            logSevere("Error while patching closure: ", ex);
+            logSevere("Error while patching closure: %s", Utils.toString(ex));
             patchOp.fail(ex);
         }
     }
@@ -244,8 +243,8 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                         if (ex != null) {
                             // log but don't fail the task
                             if (ex instanceof CancellationException) {
-                                logFine("CancellationException: Failed to update request tracker: %s",
-                                        state.requestTrackerLink);
+                                logFine("CancellationException: Failed to update request tracker:"
+                                                + " %s", state.requestTrackerLink);
                                 // retry only the finished and failed updates. The others are not so
                                 // important
                             } else if (TaskStage.FINISHED.name()
@@ -304,10 +303,8 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                     .createGet(this, closure.descriptionLink)
                     .setCompletion((op, ex) -> {
                         if (ex != null) {
-                            logWarning(
-                                    "Failed to fetch definition of closure: "
-                                            + closure.documentSelfLink + " Reason: ",
-                                    ex);
+                            logWarning("Failed to fetch definition of closure: %s. Reason: %s",
+                                            closure.documentSelfLink, Utils.toString(ex));
                         } else {
                             ClosureDescription closureDesc = op.getBody(ClosureDescription.class);
 
@@ -315,8 +312,8 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                                 if (!ClosureProps.IS_KEEP_ON_COMPLETION_ON
                                         && closure.state != TaskStage.CANCELLED) {
                                     // clean execution container
-                                    logInfo("Cleaning execution container for closure: "
-                                            + closure.documentSelfLink);
+                                    logInfo("Cleaning execution container for closure: %s",
+                                            closure.documentSelfLink);
                                     getExecutionDriver(closureDesc).cleanClosure(closure,
                                             (error) -> logWarning(
                                                     "Unable to clean resources for %s",
@@ -399,7 +396,7 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
     }
 
     private void callWebhook(String webHookUriStr, Closure closure) {
-        logInfo("Calling execution container for closure: " + closure.documentSelfLink);
+        logInfo("Calling execution container for closure: %s", closure.documentSelfLink);
         URI webHookUri = UriUtils.buildUri(webHookUriStr);
         sendRequest(Operation
                 .createPost(webHookUri)
@@ -408,9 +405,8 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                 .setBody(closure)
                 .setCompletion((op, ex) -> {
                     if (ex != null) {
-                        logWarning(
-                                "Unable to send closure state to: " + webHookUriStr + " Reason: ",
-                                ex);
+                        logWarning("Unable to send closure state to: %s. Reason: %s",
+                                webHookUriStr, Utils.toString(ex));
                     } else {
                         logInfo("Successfully sent closure state to: %s", webHookUri);
                     }
@@ -426,7 +422,7 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                 .createGet(this, closure.documentSelfLink)
                 .setCompletion((op, ex) -> {
                     if (ex != null) {
-                        logWarning("Failed to execute closure! Reason:" + ex.getMessage());
+                        logWarning("Failed to execute closure! Reason: %s", ex.getMessage());
                         put.fail(new Exception("Unable to fetch closure state."));
                     } else {
                         Closure currentState = op.getBody(Closure.class);
@@ -463,7 +459,7 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                 .createGet(this, closure.descriptionLink)
                 .setCompletion((op, ex) -> {
                     if (ex != null) {
-                        logWarning("Failed to execute closure! Reason:" + ex.getMessage());
+                        logWarning("Failed to execute closure! Reason: %s", ex.getMessage());
                         post.fail(new Exception("Unable to fetch script source."));
                     } else {
                         ClosureDescription taskDef = op.getBody(ClosureDescription.class);
@@ -500,8 +496,7 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                 .setCompletion((op, ex) -> {
                     if (ex != null) {
                         logWarning("Failed to fetch logs for closure! %s Reason: %s",
-                                closure.documentSelfLink,
-                                ex.getMessage());
+                                closure.documentSelfLink, ex.getMessage());
                     } else {
                         logInfo("Logs fetched successfully for closure: %s",
                                 closure.documentSelfLink);
@@ -550,8 +545,8 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                 .createGet(this, closure.descriptionLink)
                 .setCompletion((op, ex) -> {
                     if (ex != null) {
-                        logWarning("Failed to fetch closure definition closure! Reason:" + ex
-                                .getMessage());
+                        logWarning("Failed to fetch closure definition closure! Reason: %s",
+                                ex.getMessage());
                         post.fail(new Exception("Unable to fetch script source."));
                     } else {
                         initTask(closure, op);
@@ -576,13 +571,13 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
     }
 
     private void completeCancelTask(ClosureDescription closureDesc, Closure closure) {
-        String errorMsg = String.format("Configured timeout of [%s] seconds has expired. Closure "
-                        + "%s is cancelled.", closureDesc.resources.timeoutSeconds,
-                closure.documentSelfLink);
-        logInfo(errorMsg);
+        String errorMsg = "Configured timeout of [%s] seconds has expired. Closure %s is"
+                + " cancelled.";
+        logInfo(errorMsg, closureDesc.resources.timeoutSeconds, closure.documentSelfLink);
 
         closure.state = TaskStage.CANCELLED;
-        closure.errorMsg = errorMsg;
+        closure.errorMsg = String.format(errorMsg, closureDesc.resources.timeoutSeconds,
+                closure.documentSelfLink);
 
         sendSelfPatch(closure);
 
@@ -765,7 +760,6 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         default:
             logWarning("Unsupported closure lease state: %s", closure.state);
         }
-
     }
 
     private void handleReadyState(Operation op, Closure closure, ClosureDescription closureDesc) {

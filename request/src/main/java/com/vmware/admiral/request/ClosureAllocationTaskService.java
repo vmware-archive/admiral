@@ -220,7 +220,7 @@ public class ClosureAllocationTaskService extends
     private Set<String> buildResourceLinks(ClosureAllocationTaskState state) {
         Set<String> resourceLinks = new HashSet<>(1);
         resourceLinks.add(state.closureLink);
-        logInfo("Generate provisioned resourceLinks: %S", state.closureLink);
+        logInfo("Generate provisioned resourceLinks: %s", state.closureLink);
 
         return resourceLinks;
     }

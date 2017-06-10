@@ -67,42 +67,40 @@ public class DeploymentPolicyService extends StatefulService {
         QueryUtil.addCountOption(computeTask);
 
         AtomicInteger ac = new AtomicInteger(2);
-        new ServiceDocumentQuery<>(
-                getHost(), ComputeState.class).query(computeTask,
-                        (r) -> {
-                            if (r.hasException()) {
-                                logWarning(Utils.toString(r.getException()));
-                                delete.fail(r.getException());
-                                return;
-                            } else if (r.hasResult() && r.getCount() != 0) {
-                                delete.fail(
-                                        new LocalizableValidationException("Deployment Policy is in use",
-                                                "compute.deployment-policy.in.use"));
+        new ServiceDocumentQuery<>(getHost(), ComputeState.class)
+                .query(computeTask, (r) -> {
+                    if (r.hasException()) {
+                        logWarning("Failed query for compute count for deployment policy=%s: %s",
+                                getSelfLink(), Utils.toString(r.getException()));
+                        delete.fail(r.getException());
+                        return;
+                    } else if (r.hasResult() && r.getCount() != 0) {
+                        delete.fail(new LocalizableValidationException("Deployment Policy is in use",
+                                "compute.deployment-policy.in.use"));
+                    } else {
+                        if (ac.decrementAndGet() <= 0) {
+                            super.handleDelete(delete);
+                        }
+                    }
+                });
 
-                            } else {
-                                if (ac.decrementAndGet() <= 0) {
-                                    super.handleDelete(delete);
-                                }
-                            }
-                        });
-
-        new ServiceDocumentQuery<>(
-                getHost(), GroupResourcePlacementState.class).query(groupResourcePlacementTask,
-                        (r) -> {
-                            if (r.hasException()) {
-                                logWarning(Utils.toString(r.getException()));
-                                delete.fail(r.getException());
-                                return;
-                            } else if (r.hasResult() && r.getCount() != 0) {
-                                delete.fail(
-                                        new LocalizableValidationException("Deployment Policy is in use",
-                                                "compute.deployment-policy.in.use"));
-                            } else {
-                                if (ac.decrementAndGet() <= 0) {
-                                    super.handleDelete(delete);
-                                }
-                            }
-                        });
+        new ServiceDocumentQuery<>(getHost(), GroupResourcePlacementState.class)
+                .query(groupResourcePlacementTask, (r) -> {
+                    if (r.hasException()) {
+                        logWarning("Failed query for placements count for deployment policy=%s: %s",
+                                getSelfLink(), Utils.toString(r.getException()));
+                        delete.fail(r.getException());
+                        return;
+                    } else if (r.hasResult() && r.getCount() != 0) {
+                        delete.fail(
+                                new LocalizableValidationException("Deployment Policy is in use",
+                                        "compute.deployment-policy.in.use"));
+                    } else {
+                        if (ac.decrementAndGet() <= 0) {
+                            super.handleDelete(delete);
+                        }
+                    }
+                });
     }
 
     @Override

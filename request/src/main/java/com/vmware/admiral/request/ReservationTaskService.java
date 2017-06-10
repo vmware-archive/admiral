@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -271,13 +271,14 @@ public class ReservationTaskService
                 .build());
 
         if (isGlobal(state)) {
-            logInfo("Quering for global placements for resource description: [%s] and resource count: [%s]...",
-                    state.resourceDescriptionLink, state.resourceCount);
+            logInfo("Querying for global placements for resource description: [%s] and resource"
+                            + " count: [%s]..", state.resourceDescriptionLink, state.resourceCount);
 
             Query tenantLinksQuery = QueryUtil.addTenantAndGroupClause(null);
             q.querySpec.query.addBooleanClause(tenantLinksQuery);
         } else {
-            logInfo("Quering for group [%s] placements for resource description: [%s] and resource count: [%s]...",
+            logInfo("Querying for group [%s] placements for resource description: [%s] and resource"
+                            + " count: [%s]...",
                     state.tenantLinks, state.resourceDescriptionLink, state.resourceCount);
 
             Query tenantLinksQuery = QueryUtil.addTenantAndGroupClause(state.tenantLinks);
@@ -310,7 +311,7 @@ public class ReservationTaskService
                     .build();
 
             q.querySpec.query.addBooleanClause(memoryLimitClause);
-            logInfo("Placement query includes memory limit of: [%s]: ", memoryLimit);
+            logInfo("Placement query includes memory limit of: [%s]", memoryLimit);
         }
 
         /*
@@ -391,7 +392,8 @@ public class ReservationTaskService
         filteredPlacements.sort((g1, g2) -> g1.priority - g2.priority);
 
         for (GroupResourcePlacementState placement : filteredPlacements) {
-            logInfo("Placements found: [%s] with available instances: [%s] and available memory: [%s].",
+            logInfo("Placements found: [%s] with available instances: [%s] and available memory:"
+                            + " [%s].",
                     placement.documentSelfLink, placement.availableInstancesCount,
                     placement.availableMemory);
             resPools.put(placement.documentSelfLink, placement.resourcePoolLink);
@@ -445,7 +447,7 @@ public class ReservationTaskService
             return;
         }
 
-        logInfo("Hosts selected " + state.hostSelections);
+        logInfo("Hosts selected %s", state.hostSelections);
 
         final Set<String> resourcePools = new HashSet<>();
         state.hostSelections.forEach(hs -> resourcePools.addAll(hs.resourcePoolLinks));
@@ -499,25 +501,24 @@ public class ReservationTaskService
         sendRequest(Operation
                 .createPatch(this, placementLink)
                 .setBody(reservationRequest)
-                .setCompletion(
-                        (o, e) -> {
-                            if (e != null) {
-                                logWarning(
-                                        "Failure reserving group placement: %s. Retrying with the next one...",
-                                        e.getMessage());
-                                selectReservation(state, resourcePoolsPerGroupPlacementLinks);
-                                return;
-                            }
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logWarning("Failure reserving group placement: %s. Retrying with the next"
+                                + " one...", e.getMessage());
+                        selectReservation(state, resourcePoolsPerGroupPlacementLinks);
+                        return;
+                    }
 
-                            GroupResourcePlacementState placement = o
-                                    .getBody(GroupResourcePlacementState.class);
-                            complete(s -> {
-                                s.customProperties = mergeCustomProperties(state.customProperties,
-                                        placement.customProperties);
-                                s.groupResourcePlacementLink = placement.documentSelfLink;
-                                s.resourcePoolsPerGroupPlacementLinks = state.resourcePoolsPerGroupPlacementLinks;
-                            });
-                        }));
+                    GroupResourcePlacementState placement = o
+                            .getBody(GroupResourcePlacementState.class);
+                    complete(s -> {
+                        s.customProperties = mergeCustomProperties(state.customProperties,
+                                placement.customProperties);
+                        s.groupResourcePlacementLink = placement.documentSelfLink;
+                        s.resourcePoolsPerGroupPlacementLinks =
+                                state.resourcePoolsPerGroupPlacementLinks;
+                    });
+                }));
     }
 
     private void getContainerDescription(String resourceDescriptionLink,
@@ -548,4 +549,5 @@ public class ReservationTaskService
                     callbackFunction.accept(cd);
                 }));
     }
+
 }

@@ -360,7 +360,7 @@ public class HostNetworkListDataCollection extends StatefulService {
                 .setCompletion(
                         (o, ex) -> {
                             if (ex != null) {
-                                logSevere("Failure to retrieve host [%s].",
+                                logSevere("Failure to retrieve host [%s]. Error: %s",
                                         callback.containerHostLink, Utils.toString(ex));
                                 unlockCurrentDataCollectionForHost(callback.containerHostLink);
                                 return;

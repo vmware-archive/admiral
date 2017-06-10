@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -352,7 +352,7 @@ public class NetworkProfileService extends StatefulService {
     private DeferredResult<NetworkProfile> updateIsolationNetworkCIDRAllocation(
             NetworkProfile networkProfile) {
 
-        logInfo(() -> "Update Isolation Network CIDR Allocation for network profile: " +
+        logInfo("Update Isolation Network CIDR Allocation for network profile: %s",
                 networkProfile.name);
 
         if (networkProfile.isolationNetworkLink == null) {
@@ -368,7 +368,7 @@ public class NetworkProfileService extends StatefulService {
     private DeferredResult<NetworkProfile> getExistingCIDRAllocationLink(
             NetworkProfile networkProfile) {
 
-        logInfo(() -> "Query for existing Isolation Network CIDR Allocation for network: " +
+        logInfo("Query for existing Isolation Network CIDR Allocation for network: %s",
                 networkProfile.isolationNetworkLink);
 
         // Check if ComputeNetworkCIDRAllocationService exists for the isolated network.
@@ -410,10 +410,11 @@ public class NetworkProfileService extends StatefulService {
             return DeferredResult.completed(networkProfile);
         }
 
-        logInfo(() -> "Create new Network CIDR Allocation for network: " +
+        logInfo("Create new Network CIDR Allocation for network: %s",
                 networkProfile.isolationNetworkLink);
 
-        ComputeNetworkCIDRAllocationState cidrAllocationState = new ComputeNetworkCIDRAllocationState();
+        ComputeNetworkCIDRAllocationState cidrAllocationState =
+                new ComputeNetworkCIDRAllocationState();
         cidrAllocationState.networkLink = networkProfile.isolationNetworkLink;
         cidrAllocationState.tenantLinks = networkProfile.tenantLinks;
         Operation createOp = Operation.createPost(getHost(),
@@ -422,7 +423,8 @@ public class NetworkProfileService extends StatefulService {
 
         return sendWithDeferredResult(createOp, ComputeNetworkCIDRAllocationState.class)
                 .thenApply(resultCIDRAllocationState -> {
-                    networkProfile.isolationNetworkCIDRAllocationLink = resultCIDRAllocationState.documentSelfLink;
+                    networkProfile.isolationNetworkCIDRAllocationLink =
+                            resultCIDRAllocationState.documentSelfLink;
                     return networkProfile;
                 });
     }

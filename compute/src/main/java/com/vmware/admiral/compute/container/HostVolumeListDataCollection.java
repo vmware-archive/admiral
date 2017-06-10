@@ -219,8 +219,7 @@ public class HostVolumeListDataCollection extends StatefulService {
                 .query(queryTask,
                         (r) -> {
                             if (r.hasException()) {
-                                logSevere(
-                                        "Failed to query for existing ContainerVolumeState"
+                                logSevere("Failed to query for existing ContainerVolumeState"
                                                 + " instances: %s",
                                         r.getException() instanceof CancellationException
                                                 ? r.getException().getMessage()
@@ -340,7 +339,7 @@ public class HostVolumeListDataCollection extends StatefulService {
                 .setCompletion(
                         (o, ex) -> {
                             if (ex != null) {
-                                logSevere("Failure to retrieve host [%s].",
+                                logSevere("Failure to retrieve host [%s]. Error: %s",
                                         callback.containerHostLink, Utils.toString(ex));
                                 unlockCurrentDataCollectionForHost(callback.containerHostLink);
                                 return;
@@ -502,8 +501,7 @@ public class HostVolumeListDataCollection extends StatefulService {
                         logWarning("Failed to mark volume %s as missing: %s",
                                 volumeState.documentSelfLink, Utils.toString(ex));
                     } else {
-                        logInfo("Marked volume as missing: %s",
-                                volumeState.documentSelfLink);
+                        logInfo("Marked volume as missing: %s", volumeState.documentSelfLink);
                     }
                 }));
     }
@@ -544,8 +542,7 @@ public class HostVolumeListDataCollection extends StatefulService {
                         logWarning("Failed to update volume %s parent links: %s",
                                 volumeState.documentSelfLink, Utils.toString(ex));
                     } else {
-                        logInfo("Updated volume parent links: %s",
-                                volumeState.documentSelfLink);
+                        logInfo("Updated volume parent links: %s", volumeState.documentSelfLink);
                     }
                 }));
     }

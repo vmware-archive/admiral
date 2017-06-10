@@ -364,8 +364,8 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                         if (ex != null) {
                             // log but don't fail the task
                             if (ex instanceof CancellationException) {
-                                logFine("CancellationException: Failed to update request tracker: %s",
-                                        state.requestTrackerLink);
+                                logFine("CancellationException: Failed to update request tracker:"
+                                                + " %s", state.requestTrackerLink);
                                 // retry only the finished and failed updates. The others are not so
                                 // important
                             } else if (TaskStage.FINISHED.name()
@@ -454,7 +454,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
 
         if (TaskStage.FAILED == patchBody.taskInfo.stage
                 && TaskStage.FAILED == currentState.taskInfo.stage) {
-            logWarning("Task patched to failed when already in failed state.%s", refererLogPart);
+            logWarning("Task patched to failed when already in failed state. %s", refererLogPart);
             patch.complete();
             return true;
         }
@@ -742,15 +742,17 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         switch (state.taskInfo.stage) {
         case CREATED:
         case STARTED:
-            String errMsg = String.format(
-                    "Task expired in stage: %s, sub-stage: %s, expirationTime: %s",
-                    state.taskInfo.stage, state.taskSubStage, state.documentExpirationTimeMicros);
-            logWarning(errMsg);
+            String errMsg = "Task expired in stage: %s, sub-stage: %s, expirationTime: %s";
+            logWarning(errMsg, state.taskInfo.stage, state.taskSubStage,
+                    state.documentExpirationTimeMicros);
             if (!state.serviceTaskCallback.isEmpty()) {
+                IllegalStateException e = new IllegalStateException(String.format(errMsg,
+                        state.taskInfo.stage, state.taskSubStage,
+                        state.documentExpirationTimeMicros));
                 sendRequest(Operation
                         .createPatch(this, state.serviceTaskCallback.serviceSelfLink)
                         .setBody(state.serviceTaskCallback
-                                .getFailedResponse(new IllegalStateException(errMsg)))
+                                .getFailedResponse(e))
                         .addPragmaDirective(
                                 Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
                         .setCompletion((o, ex) -> {
@@ -779,7 +781,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             log(logLevel, () -> String.format("%s%s Error: %s", msg, msg.endsWith(".") ? "" : ".",
                     Utils.toString(t)));
         } else {
-            log(logLevel, msg);
+            log(logLevel, () -> msg);
         }
         ServiceTaskCallbackResponse body = new ServiceTaskCallbackResponse();
         body.taskInfo = new TaskState();

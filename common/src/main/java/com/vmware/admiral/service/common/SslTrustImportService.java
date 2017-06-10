@@ -130,9 +130,8 @@ public class SslTrustImportService extends StatelessService {
                                 fullSslTrustDocumentSelfLink,
                                 (r) -> {
                                     if (r.hasException()) {
-                                        logWarning(
-                                                "Exception during ssl trust certificate check: "
-                                                        + Utils.toString(r.getException()));
+                                        logWarning("Exception during ssl trust certificate check:"
+                                                        + " %s", Utils.toString(r.getException()));
                                         // return the certificate to the user for
                                         // confirmation.
                                         op.setBody(sslTrustState);

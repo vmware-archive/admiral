@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -121,10 +121,9 @@ public abstract class DockerDriverBase implements ExecutionDriver {
                 dockerClient.removeContainer(containerLink, errorHandler);
                 logInfo("Closure cancelled: %s", closure.documentSelfLink);
             } catch (Exception ex) {
-                Utils.logWarning(
-                        "Unable to clean containers corresponding to cancelled closure: "
-                                + closure.documentSelfLink,
-                        ex);
+                Utils.logWarning("Unable to clean containers corresponding to cancelled"
+                                + " closure: %s. Error: %s",
+                        closure.documentSelfLink, Utils.toString(ex));
             }
         }
     }

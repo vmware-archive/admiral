@@ -25,7 +25,7 @@ public final class TrustManagerResetter {
             field.setAccessible(true);
             field.set(null, null);
         } catch (Exception e) {
-            Utils.logWarning("Cannot reset ServerX509TrustManager");
+            Utils.logWarning("Cannot reset ServerX509TrustManager: %s", e.getMessage());
         }
     }
 }

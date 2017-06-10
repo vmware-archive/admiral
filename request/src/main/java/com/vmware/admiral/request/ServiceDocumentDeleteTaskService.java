@@ -83,7 +83,8 @@ public class ServiceDocumentDeleteTaskService
                         if (r.hasException()) {
                             logWarning("Query failed, task will not finish: %s",
                                     r.getException().getMessage());
-                            failTask(String.format("Could not get %s, task failed", task.deleteDocumentKind), r.getException());
+                            failTask(String.format("Could not get %s, task failed",
+                                    task.deleteDocumentKind), r.getException());
                             return;
                         } else if (r.hasResult() && documents.size() < r.getCount()) {
                             documents.add(r.getDocumentSelfLink());
@@ -93,7 +94,8 @@ public class ServiceDocumentDeleteTaskService
                     });
     }
 
-    private void handleDeleteServices(ServiceDocumentDeleteTaskState task, List<String> documentLinks) {
+    private void handleDeleteServices(ServiceDocumentDeleteTaskState task,
+            List<String> documentLinks) {
 
         if (documentLinks.size() == 0) {
             complete();

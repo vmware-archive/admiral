@@ -78,29 +78,26 @@ public abstract class BaseMockAdapterService extends StatelessService {
             Consumer<T> callbackFunction) {
         final Object[] result = new Object[] { null };
         sendRequest(Operation.createGet(reference)
-                .setCompletion(
-                        (o, e) -> {
-                            if (e != null) {
-                                logSevere(e);
-                                taskInfo.stage = TaskStage.FAILED;
-                                taskInfo.failure = Utils.toServiceErrorResponse(e);
-                            } else {
-                                result[0] = o.getBody(type);
-                                if (result[0] != null) {
-                                    logInfo("Get Document: [%s]", reference);
-                                    taskInfo.stage = TaskStage.FINISHED;
-                                } else {
-                                    String errMsg = String.format("Can't find resource: [%s]",
-                                            reference);
-                                    logSevere(errMsg);
-                                    taskInfo.stage = TaskStage.FAILED;
-                                    taskInfo.failure = Utils
-                                            .toServiceErrorResponse(new IllegalStateException(
-                                                    errMsg));
-                                }
-                            }
-                            callbackFunction.accept((T) result[0]);
-                        }));
-
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logSevere(e);
+                        taskInfo.stage = TaskStage.FAILED;
+                        taskInfo.failure = Utils.toServiceErrorResponse(e);
+                    } else {
+                        result[0] = o.getBody(type);
+                        if (result[0] != null) {
+                            logInfo("Get Document: [%s]", reference);
+                            taskInfo.stage = TaskStage.FINISHED;
+                        } else {
+                            String errMsg = "Can't find resource: [%s]";
+                            logSevere(errMsg, reference);
+                            taskInfo.stage = TaskStage.FAILED;
+                            taskInfo.failure = Utils.toServiceErrorResponse(
+                                    new IllegalStateException(String.format(errMsg, reference)));
+                        }
+                    }
+                    callbackFunction.accept((T) result[0]);
+                }));
     }
+
 }

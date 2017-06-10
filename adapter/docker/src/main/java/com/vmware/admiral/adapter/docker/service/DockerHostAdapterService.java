@@ -25,7 +25,6 @@ import static com.vmware.admiral.compute.ContainerHostService.SSL_TRUST_ALIAS_PR
 import static com.vmware.admiral.compute.ContainerHostService.SSL_TRUST_CERT_PROP_NAME;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -196,7 +195,7 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
         sendRequest(post.setCompletion((o2, ex2) -> {
             if (ex2 != null) {
                 // We should not fail if the command does not succeed
-                logSevere(Utils.toString(ex2));
+                logSevere(ex2);
                 patchTaskStage(request, TaskStage.FINISHED, null);
                 return;
             }
@@ -261,9 +260,9 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
             } else {
                 ContainerListCallback callbackResp = createContainerListCallback(computeState, o);
 
-                logFine(() -> String.format("Collection returned container IDs: %s %s",
-                        new ArrayList<>(callbackResp.containerIdsAndNames.keySet()),
-                        request.getRequestTrackingLog()));
+                logFine("Collection returned container IDs: %s %s",
+                        callbackResp.containerIdsAndNames.keySet(),
+                        request.getRequestTrackingLog());
 
                 patchTaskStage(request, TaskStage.FINISHED, null, callbackResp);
             }
@@ -280,9 +279,9 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
                 op.fail(ex);
             } else {
                 ContainerListCallback callbackResp = createContainerListCallback(computeState, o);
-                logFine(() -> String.format("Collection returned container IDs: %s %s",
-                        new ArrayList<>(callbackResp.containerIdsAndNames.keySet()),
-                        request.getRequestTrackingLog()));
+                logFine("Collection returned container IDs: %s %s",
+                        callbackResp.containerIdsAndNames.keySet(),
+                        request.getRequestTrackingLog());
                 op.setBodyNoCloning(callbackResp);
                 op.complete();
             }
@@ -326,9 +325,9 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
             } else {
                 NetworkListCallback callbackResponse = createNetworkListCallback(computeState, o);
 
-                logFine(() -> String.format("Collection returned network IDs: %s %s",
-                        new ArrayList<>(callbackResponse.networkIdsAndNames.keySet()),
-                        request.getRequestTrackingLog()));
+                logFine("Collection returned network IDs: %s %s",
+                        callbackResponse.networkIdsAndNames.keySet(),
+                        request.getRequestTrackingLog());
 
                 patchTaskStage(request, TaskStage.FINISHED, null, callbackResponse);
             }
@@ -345,9 +344,9 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
                 op.fail(ex);
             } else {
                 NetworkListCallback callbackResponse = createNetworkListCallback(computeState, o);
-                logFine(() -> String.format("Collection returned network IDs: %s %s",
-                        new ArrayList<>(callbackResponse.networkIdsAndNames.keySet()),
-                        request.getRequestTrackingLog()));
+                logFine("Collection returned network IDs: %s %s",
+                        callbackResponse.networkIdsAndNames.keySet(),
+                        request.getRequestTrackingLog());
                 op.setBodyNoCloning(callbackResponse);
                 op.complete();
             }
@@ -386,9 +385,9 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
             } else {
                 VolumeListCallback callbackResponse = createVolumeListCallback(computeState, o);
 
-                logFine(() -> String.format("Collection returned volume names: %s %s",
-                        callbackResponse.volumesByName.keySet().toString(),
-                        request.getRequestTrackingLog()));
+                logFine("Collection returned volume names: %s %s",
+                        callbackResponse.volumesByName.keySet(),
+                        request.getRequestTrackingLog());
 
                 patchTaskStage(request, TaskStage.FINISHED, null, callbackResponse);
             }
@@ -405,9 +404,9 @@ public class DockerHostAdapterService extends AbstractDockerAdapterService {
                 op.fail(ex);
             } else {
                 VolumeListCallback callbackResponse = createVolumeListCallback(computeState, o);
-                logFine(() -> String.format("Collection returned volume names: %s %s",
-                        callbackResponse.volumesByName.keySet().toString(),
-                        request.getRequestTrackingLog()));
+                logFine("Collection returned volume names: %s %s",
+                        callbackResponse.volumesByName.keySet(),
+                        request.getRequestTrackingLog());
                 op.setBodyNoCloning(callbackResponse);
                 op.complete();
             }

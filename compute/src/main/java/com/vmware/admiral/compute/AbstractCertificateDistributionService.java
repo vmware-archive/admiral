@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -78,19 +78,17 @@ public class AbstractCertificateDistributionService extends StatelessService {
                                 registryAddress, tenantLinks);
                     }, QUERY_RETRIEVAL_RETRY_INTERVAL_SECONDS, TimeUnit.SECONDS);
                 } else {
-                    String errMsg = String.format(
-                            "Failed to upload registry certificate for [%s] to host [%s] after %s "
-                                    + "attempts. Your host may experience issues connecting to this registry. "
-                                    + "For more info see: https://docs.docker.com/registry/insecure/#/using-self-signed-certificates",
-                            registryAddress, hostLink, MAX_RETRIES);
-                    logSevere(errMsg);
-                    publishEventLog(errMsg, tenantLinks);
+                    String errMsg = "Failed to upload registry certificate for [%s] to host [%s]"
+                            + " after %s attempts. Your host may experience issues connecting to"
+                            + " this registry. For more info see: https://docs.docker.com/registry/insecure/#/using-self-signed-certificates";
+                    logSevere(errMsg, registryAddress, hostLink, MAX_RETRIES);
+                    publishEventLog(String.format(errMsg, registryAddress, hostLink, MAX_RETRIES),
+                            tenantLinks);
                 }
             } else {
                 logInfo("Registry certificate successfully uploaded to host %s", hostLink);
-                log(Level.FINEST, () -> String.format(
-                        "Command result (possibly truncated):\n---\n%1.1024s\n---\n",
-                        o.getBody(String.class)));
+                log(Level.FINEST, "Command result (possibly truncated):\n---\n%1.1024s\n---\n",
+                        o.getBody(String.class));
             }
         }));
     }

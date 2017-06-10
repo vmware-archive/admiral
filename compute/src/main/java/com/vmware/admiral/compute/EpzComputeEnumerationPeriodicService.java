@@ -72,11 +72,12 @@ public class EpzComputeEnumerationPeriodicService extends StatelessService {
     private void doTrigger(Supplier<String> logSupplier, boolean postponeIfPaused) {
         // do nothing if refresh is currently paused
         if (!this.paused.compareAndSet(false, true)) {
+            String s = logSupplier.get() + " %s";
             if (postponeIfPaused) {
-                logFine(() -> logSupplier.get() + " [postponed]");
+                logFine(s, "[postponed]");
                 invalidated.set(true);
             } else {
-                logFine(() -> logSupplier.get() + " [not needed]");
+                logFine(s, "[not needed]");
             }
             return;
         }

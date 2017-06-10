@@ -260,7 +260,7 @@ public class ClusteringTaskService extends
         sendRequest(Operation.createPost(this, RequestBrokerFactoryService.SELF_LINK)
                 .setBody(requestBrokerState).setCompletion((o, e) -> {
                     if (e != null) {
-                        logSevere(Utils.toString(e));
+                        logSevere(e);
                         return;
                     }
                     proceedTo(SubStage.CLUSTERING);
@@ -289,7 +289,7 @@ public class ClusteringTaskService extends
         sendRequest(Operation.createPost(this, RequestBrokerFactoryService.SELF_LINK)
                 .setBody(requestBrokerState).setCompletion((o, e) -> {
                     if (e != null) {
-                        logSevere(Utils.toString(e));
+                        logSevere(e);
                         return;
                     }
                     proceedTo(SubStage.CLUSTERING);

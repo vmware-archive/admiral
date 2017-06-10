@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -192,8 +192,7 @@ public class ContainerRemovalTaskService
                 state.containersParentLinks.add(r.getResult().parentLink);
             } else {
                 if (containerLinks.isEmpty()) {
-                    logWarning(
-                            "No available resources found to be removed with links: %s",
+                    logWarning("No available resources found to be removed with links: %s",
                             state.resourceLinks);
                     proceedTo(SubStage.COMPLETED);
                 } else {
@@ -237,31 +236,28 @@ public class ContainerRemovalTaskService
             for (String resourceLink : resourceLinks) {
                 sendRequest(Operation
                         .createGet(this, resourceLink)
-                        .setCompletion(
-                                (o, e) -> {
-                                    if (e != null) {
-                                        logWarning("Failed retrieving ContainerState: "
-                                                + resourceLink);
-                                        completeSubTasksCounter(subTaskLink, e);
-                                        return;
-                                    }
-                                    ContainerState containerState = o.getBody(ContainerState.class);
-                                    if (isAllocatedOnlyContainer(containerState)) {
-                                        completeSubTasksCounter(subTaskLink, null);
-                                    } else if (containerState.id == null
-                                            || containerState.id.isEmpty()) {
-                                        logWarning("No ID set for container state: [%s]  ",
-                                                containerState.documentSelfLink);
-                                        completeSubTasksCounter(subTaskLink, null);
-                                    } else if (isSystemContainer(o.getBody(ContainerState.class))) {
-                                        logWarning(
-                                                "Resource [%s] will not be removed because it is a system container",
-                                                o.getBody(ContainerState.class).documentSelfLink);
-                                        completeSubTasksCounter(subTaskLink, null);
-                                    } else {
-                                        sendContainerDeleteRequest(containerState, subTaskLink);
-                                    }
-                                }));
+                        .setCompletion((o, e) -> {
+                            if (e != null) {
+                                logWarning("Failed retrieving ContainerState: %s", resourceLink);
+                                completeSubTasksCounter(subTaskLink, e);
+                                return;
+                            }
+                            ContainerState containerState = o.getBody(ContainerState.class);
+                            if (isAllocatedOnlyContainer(containerState)) {
+                                completeSubTasksCounter(subTaskLink, null);
+                            } else if (containerState.id == null || containerState.id.isEmpty()) {
+                                logWarning("No ID set for container state: [%s]",
+                                        containerState.documentSelfLink);
+                                completeSubTasksCounter(subTaskLink, null);
+                            } else if (isSystemContainer(o.getBody(ContainerState.class))) {
+                                logWarning("Resource [%s] will not be removed because it is"
+                                                + " a system container",
+                                        o.getBody(ContainerState.class).documentSelfLink);
+                                completeSubTasksCounter(subTaskLink, null);
+                            } else {
+                                sendContainerDeleteRequest(containerState, subTaskLink);
+                            }
+                        }));
             }
         } catch (Throwable e) {
             failTask("Unexpected exception while deleting container instances", e);
@@ -296,9 +292,9 @@ public class ContainerRemovalTaskService
                 .setBody(ps)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logWarning(
-                                "Failed to modify container state isDeleted before container delete: "
-                                        + containerState.documentSelfLink, e);
+                        logWarning("Failed to modify container state isDeleted before container"
+                                        + " delete: %s. Error: %s",
+                                containerState.documentSelfLink, Utils.toString(e));
                         return;
                     } else {
                         AdapterRequest adapterRequest = new AdapterRequest();
@@ -322,10 +318,12 @@ public class ContainerRemovalTaskService
                                                 .setBody(ps1)
                                                 .setCompletion((o2, e2) -> {
                                                     if (e2 != null) {
-                                                        logWarning(
-                                                                "Failed to modify container state  isDeleted after container delete: "
-                                                                        + containerState.documentSelfLink,
-                                                                e);
+                                                        logWarning("Failed to modify container"
+                                                                        + " state  isDeleted after"
+                                                                        + " container delete: %s."
+                                                                        + " Error: %s",
+                                                                containerState.documentSelfLink,
+                                                                Utils.toString(e));
                                                         return;
                                                     }
                                                 }));
@@ -351,39 +349,36 @@ public class ContainerRemovalTaskService
             for (String resourceLink : state.resourceLinks) {
                 sendRequest(Operation
                         .createGet(this, resourceLink)
-                        .setCompletion(
-                                (o, e) -> {
-                                    // Don't fail if container is still collected but has already
-                                    // been removed.
-                                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
-                                        logFine("Resource [%s] not found, it should have "
-                                                        + "already been removed!",
-                                                resourceLink);
-                                        completeSubTasksCounter(subTaskLink, null);
-                                        completeSubTasksCounter(subTaskLink, null);
-                                        return;
-                                    }
-                                    if (e != null) {
-                                        failTask("Failed retrieving Container State: "
-                                                + resourceLink, e);
-                                        return;
-                                    }
+                        .setCompletion((o, e) -> {
+                            // Don't fail if container is still collected but has already
+                            // been removed.
+                            if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND) {
+                                logFine("Resource [%s] not found, it should have already been"
+                                                + " removed!", resourceLink);
+                                completeSubTasksCounter(subTaskLink, null);
+                                completeSubTasksCounter(subTaskLink, null);
+                                return;
+                            }
+                            if (e != null) {
+                                failTask("Failed retrieving Container State: " + resourceLink, e);
+                                return;
+                            }
 
-                                    if (isSystemContainer(o.getBody(ContainerState.class))
-                                            && !(isRemoveHost.get())) {
-                                        logWarning(
-                                                "Resource [%s] will not be removed because it is a system container",
-                                                o.getBody(ContainerState.class).documentSelfLink);
-                                        // need to complete the counter twice, because the removal
-                                        // task is not created in this case
-                                        completeSubTasksCounter(subTaskLink, null);
-                                        completeSubTasksCounter(subTaskLink, null);
-                                        return;
-                                    }
+                            if (isSystemContainer(o.getBody(ContainerState.class))
+                                    && !(isRemoveHost.get())) {
+                                logWarning("Resource [%s] will not be removed because it is a"
+                                                + " system container",
+                                        o.getBody(ContainerState.class).documentSelfLink);
+                                // need to complete the counter twice, because the removal
+                                // task is not created in this case
+                                completeSubTasksCounter(subTaskLink, null);
+                                completeSubTasksCounter(subTaskLink, null);
+                                return;
+                            }
 
-                                    ContainerState cs = o.getBody(ContainerState.class);
-                                    doDeleteResource(state, subTaskLink, cs);
-                                }));
+                            ContainerState cs = o.getBody(ContainerState.class);
+                            doDeleteResource(state, subTaskLink, cs);
+                        }));
             }
             proceedTo(SubStage.REMOVING_RESOURCE_STATES);
         } catch (Throwable e) {
@@ -406,8 +401,8 @@ public class ContainerRemovalTaskService
         new ServiceDocumentQuery<ContainerState>(getHost(), ContainerState.class)
                 .query(compositeQueryTask, (r) -> {
                     if (r.hasException()) {
-                        logSevere(
-                                "Failed to retrieve containers, sharing the same containerdescription: %s -%s",
+                        logSevere("Failed to retrieve containers, sharing the same"
+                                        + " container description: %s -%s",
                                 r.getDocumentSelfLink(), r.getException());
                     } else if (r.hasResult()) {
                         resourcesSharingDesc.add(r.getDocumentSelfLink());
@@ -475,20 +470,19 @@ public class ContainerRemovalTaskService
         return Operation
                 .createDelete(this, cs.documentSelfLink)
                 .setBody(new ServiceDocument())
-                .setCompletion(
-                        (op, ex) -> {
-                            if (ex != null) {
-                                logWarning("Failed deleting ContainerState: " + cs.documentSelfLink,
-                                        ex);
-                                return;
-                            }
-                            logInfo("Deleted ContainerState: " + cs.documentSelfLink);
-                            /*When removing container state, remove also if there are any logs
-                              created. This is workaround for:
-                              https://www.pivotaltracker.com/n/projects/1471320/stories/143794415 */
-                            sendRequest(Operation.createDelete(this, UriUtils.buildUriPath(
-                                    LogService.FACTORY_LINK, Service.getId(cs.documentSelfLink))));
-                        });
+                .setCompletion((op, ex) -> {
+                    if (ex != null) {
+                        logWarning("Failed deleting ContainerState: %s. Error: %s",
+                                cs.documentSelfLink, Utils.toString(ex));
+                        return;
+                    }
+                    logInfo("Deleted ContainerState: %s", cs.documentSelfLink);
+                    // When removing container state, remove also if there are any logs created.
+                    // This is workaround for:
+                    //   https://www.pivotaltracker.com/n/projects/1471320/stories/143794415
+                    sendRequest(Operation.createDelete(this, UriUtils.buildUriPath(
+                            LogService.FACTORY_LINK, Service.getId(cs.documentSelfLink))));
+                });
     }
 
     private Operation deleteContainerDescription(ContainerState cs,
@@ -496,45 +490,43 @@ public class ContainerRemovalTaskService
 
         Operation deleteContainerDesc = Operation
                 .createGet(this, cs.descriptionLink)
-                .setCompletion(
-                        (o, e) -> {
-                            if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND ||
-                                    e instanceof CancellationException) {
-                                logFine("Resource [%s] not found, it will not be removed!",
-                                        cs.descriptionLink);
-                                skipOperationException.set(o.getId());
-                                return;
-                            }
+                .setCompletion((o, e) -> {
+                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND ||
+                            e instanceof CancellationException) {
+                        logFine("Resource [%s] not found, it will not be removed!",
+                                cs.descriptionLink);
+                        skipOperationException.set(o.getId());
+                        return;
+                    }
 
-                            if (e != null) {
-                                logWarning("Failed retrieving ContainerDescription: "
-                                        + cs.descriptionLink, e);
-                                return;
-                            }
+                    if (e != null) {
+                        logWarning("Failed retrieving ContainerDescription: %s. Error: %s",
+                                cs.descriptionLink, Utils.toString(e));
+                        return;
+                    }
 
-                            ContainerDescription cd = o.getBody(ContainerDescription.class);
+                    ContainerDescription cd = o.getBody(ContainerDescription.class);
 
-                            if (cd.parentDescriptionLink == null) {
-                                logFine("Resource [%s] will not be removed because it doesn't contain parentDescriptionLink!",
-                                        o.getBody(ContainerDescription.class).documentSelfLink);
-                                return;
-                            }
+                    if (cd.parentDescriptionLink == null) {
+                        logFine("Resource [%s] will not be removed because it doesn't contain"
+                                        + " parentDescriptionLink!",
+                                o.getBody(ContainerDescription.class).documentSelfLink);
+                        return;
+                    }
 
-                            sendRequest(Operation
-                                    .createDelete(this, cd.documentSelfLink)
-                                    .setBody(new ServiceDocument())
-                                    .setCompletion(
-                                            (op, ex) -> {
-                                                if (ex != null) {
-                                                    logWarning(
-                                                            "Failed deleting ContainerDescription: "
-                                                                    + cd.documentSelfLink, ex);
-                                                    return;
-                                                }
-                                                logInfo("Deleted ContainerDescription: "
-                                                        + cd.documentSelfLink);
-                                            }));
-                        });
+                    sendRequest(Operation
+                            .createDelete(this, cd.documentSelfLink)
+                            .setBody(new ServiceDocument())
+                            .setCompletion((op, ex) -> {
+                                if (ex != null) {
+                                    logWarning("Failed deleting ContainerDescription: %s."
+                                                    + " Error: %s",
+                                            cd.documentSelfLink, Utils.toString(ex));
+                                    return;
+                                }
+                                logInfo("Deleted ContainerDescription: %s", cd.documentSelfLink);
+                            }));
+                });
 
         return deleteContainerDesc;
     }
@@ -566,8 +558,8 @@ public class ContainerRemovalTaskService
                 .setBody(rsrvTask)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logWarning("Failed creating task to delete placement "
-                                + cs.groupResourcePlacementLink, e);
+                        logWarning("Failed creating task to delete placement %s. Error: %s",
+                                cs.groupResourcePlacementLink, Utils.toString(e));
                         return;
                     }
                 });
@@ -582,47 +574,46 @@ public class ContainerRemovalTaskService
         String hostPortProfileLink = HostPortProfileService.getHostPortProfileLink(cs.parentLink);
         Operation operation = Operation
                 .createGet(this, hostPortProfileLink)
-                .setCompletion(
-                        (o, e) -> {
-                            if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND ||
-                                    e instanceof CancellationException) {
-                                logWarning("Cannot find host port profile [%s]",
-                                        hostPortProfileLink);
-                                skipOperationException.set(o.getId());
-                            }
+                .setCompletion((o, e) -> {
+                    if (o.getStatusCode() == Operation.STATUS_CODE_NOT_FOUND ||
+                            e instanceof CancellationException) {
+                        logWarning("Cannot find host port profile [%s]", hostPortProfileLink);
+                        skipOperationException.set(o.getId());
+                    }
 
-                            if (e != null) {
-                                logWarning("Failed retrieving HostPortProfileState: "
-                                        + hostPortProfileLink, e);
-                                return;
-                            }
-                            HostPortProfileService.HostPortProfileState profile =
-                                    o.getBody(HostPortProfileService.HostPortProfileState.class);
+                    if (e != null) {
+                        logWarning("Failed retrieving HostPortProfileState: %s. Error: %s",
+                                hostPortProfileLink, Utils.toString(e));
+                        return;
+                    }
+                    HostPortProfileService.HostPortProfileState profile =
+                            o.getBody(HostPortProfileService.HostPortProfileState.class);
 
-                            Set<Long> allocatedPorts = HostPortProfileService.getAllocatedPorts(
-                                    profile, cs.documentSelfLink);
+                    Set<Long> allocatedPorts = HostPortProfileService.getAllocatedPorts(
+                            profile, cs.documentSelfLink);
 
-                            if (allocatedPorts.isEmpty()) {
-                                return;
-                            }
-                            // release all ports of the container
-                            HostPortProfileService.HostPortProfileReservationRequest request =
-                                    new HostPortProfileService.HostPortProfileReservationRequest();
-                            request.containerLink = cs.documentSelfLink;
-                            request.mode = HostPortProfileService.HostPortProfileReservationRequestMode.RELEASE;
+                    if (allocatedPorts.isEmpty()) {
+                        return;
+                    }
+                    // release all ports of the container
+                    HostPortProfileService.HostPortProfileReservationRequest request =
+                            new HostPortProfileService.HostPortProfileReservationRequest();
+                    request.containerLink = cs.documentSelfLink;
+                    request.mode = HostPortProfileService
+                            .HostPortProfileReservationRequestMode.RELEASE;
 
-                            sendRequest(Operation
-                                    .createPatch(getHost(), profile.documentSelfLink)
-                                    .setBody(request)
-                                    .setCompletion(
-                                            (op, ex) -> {
-                                                if (ex != null) {
-                                                    logWarning("Failed releasing container ports: "
-                                                            + cs.documentSelfLink, ex);
-                                                    return;
-                                                }
-                                            }));
-                        });
+                    sendRequest(Operation
+                            .createPatch(getHost(), profile.documentSelfLink)
+                            .setBody(request)
+                            .setCompletion((op, ex) -> {
+                                if (ex != null) {
+                                    logWarning("Failed releasing container ports: %s. Error: %s",
+                                            cs.documentSelfLink, Utils.toString(ex));
+                                    return;
+                                }
+                            }));
+                });
         return operation;
     }
+
 }

@@ -177,7 +177,7 @@ public abstract class AbstractKubernetesAdapterService extends StatelessService 
     }
 
     protected void fail(AdapterRequest request, Throwable e) {
-        logWarning(Utils.toString(e));
+        logWarning("Fail: %s", Utils.toString(e));
         patchTaskStage(request, TaskStage.FAILED, e);
     }
 
@@ -269,8 +269,8 @@ public abstract class AbstractKubernetesAdapterService extends StatelessService 
                         }
                     }));
         } catch (Throwable e) {
-            logWarning(
-                    "System exception while calling back docker operation requester for resource: %s %s",
+            logWarning("System exception while calling back docker operation requester for"
+                            + " resource: %s %s",
                     request.resourceReference, request.getRequestTrackingLog());
             logSevere(e);
         }

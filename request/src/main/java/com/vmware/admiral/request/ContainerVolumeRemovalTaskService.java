@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -183,31 +183,28 @@ public class ContainerVolumeRemovalTaskService extends
             for (String resourceLink : resourceLinks) {
                 sendRequest(Operation
                         .createGet(this, resourceLink)
-                        .setCompletion(
-                                (o, e) -> {
-                                    if (e != null) {
-                                        logWarning("Failed retrieving ContainerVolumeState: "
-                                                + resourceLink);
-                                        completeSubTasksCounter(subTaskLink, e);
-                                        return;
-                                    }
-                                    ContainerVolumeState volumeState = o
-                                            .getBody(ContainerVolumeState.class);
-                                    if (ContainerVolumeState.PowerState.RETIRED == volumeState.powerState) {
-                                        logWarning(
-                                                "Volume with name '%s' is retired. Deleting the state only.",
-                                                volumeState.name);
-                                        completeSubTasksCounter(subTaskLink, null);
-                                    } else if (volumeState.originatingHostLink == null
-                                            || volumeState.originatingHostLink.isEmpty()) {
-                                        logWarning(
-                                                "No originatingHostLink set for volume state [%s].",
-                                                volumeState.documentSelfLink);
-                                        completeSubTasksCounter(subTaskLink, null);
-                                    } else {
-                                        sendContainerVolumeDeleteRequest(state, volumeState, subTaskLink);
-                                    }
-                                }));
+                        .setCompletion((o, e) -> {
+                            if (e != null) {
+                                logWarning("Failed retrieving ContainerVolumeState: %s",
+                                        resourceLink);
+                                completeSubTasksCounter(subTaskLink, e);
+                                return;
+                            }
+                            ContainerVolumeState volumeState = o
+                                    .getBody(ContainerVolumeState.class);
+                            if (ContainerVolumeState.PowerState.RETIRED == volumeState.powerState) {
+                                logWarning("Volume with name '%s' is retired. Deleting the state"
+                                        + " only.", volumeState.name);
+                                completeSubTasksCounter(subTaskLink, null);
+                            } else if (volumeState.originatingHostLink == null
+                                    || volumeState.originatingHostLink.isEmpty()) {
+                                logWarning("No originatingHostLink set for volume state [%s].",
+                                        volumeState.documentSelfLink);
+                                completeSubTasksCounter(subTaskLink, null);
+                            } else {
+                                sendContainerVolumeDeleteRequest(state, volumeState, subTaskLink);
+                            }
+                        }));
             }
             proceedTo(SubStage.INSTANCES_REMOVING);
         } catch (Throwable e) {
@@ -302,7 +299,7 @@ public class ContainerVolumeRemovalTaskService extends
                         return;
                     }
 
-                    logInfo("Deleted ContainerVolumeState: " + cns.documentSelfLink);
+                    logInfo("Deleted ContainerVolumeState: %s", cns.documentSelfLink);
                     completeSubTasksCounter(subTaskLink, null);
                 }).sendWith(this);
     }

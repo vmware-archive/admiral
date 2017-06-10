@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -81,9 +81,8 @@ public class HostInitClosureServiceConfig extends HostInitServiceHelper {
                             .setCompletion((o, ex) -> {
                                 if (ex != null) {
                                     // shutdown the server when encountering an error
-                                    host.log(Level.SEVERE, "Failed to start service {}: {}",
-                                            o.getUri(),
-                                            Utils.toString(ex));
+                                    host.log(Level.SEVERE, "Failed to start service %s: %s",
+                                            o.getUri(), Utils.toString(ex));
                                     host.stop();
                                 }
                             }), factoryService);

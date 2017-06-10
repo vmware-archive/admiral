@@ -376,10 +376,9 @@ public class ContainerVolumeProvisionTaskService
                 .setCompletion(
                         (o, e) -> {
                             if (e != null) {
-                                String errMsg = String.format("Error while updating volume: %s",
-                                        volumeSelfLink);
-                                logWarning(errMsg);
-                                failTask(errMsg, e);
+                                logWarning("Error while updating volume: %s", volumeSelfLink);
+                                failTask(String.format("Error while updating volume: %s",
+                                        volumeSelfLink), e);
                             } else {
                                 callbackFunction.run();
                             }
@@ -411,10 +410,10 @@ public class ContainerVolumeProvisionTaskService
                 .setCompletion(
                         (o, e) -> {
                             if (e != null) {
-                                String errMsg = String.format("Error while updating volume: %s",
+                                logWarning("Error while updating volume: %s",
                                         currentVolumeState.documentSelfLink);
-                                logWarning(errMsg);
-                                failTask(errMsg, e);
+                                failTask(String.format("Error while updating volume: %s",
+                                        currentVolumeState.documentSelfLink), e);
                             } else {
                                 callbackFunction.run();
                             }

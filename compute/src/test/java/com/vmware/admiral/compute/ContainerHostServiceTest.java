@@ -372,7 +372,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
                 .setCompletion(
                         (o, e) -> {
                             if (e != null) {
-                                host.log("Exception while processing the container host: {}.",
+                                host.log("Exception while processing the container host: %s.",
                                         Utils.toString(e));
                                 host.failIteration(e);
                                 return;
@@ -400,7 +400,7 @@ public class ContainerHostServiceTest extends ComputeBaseTest {
                                 computeStates.add(r.getDocumentSelfLink());
                             } else {
                                 if (computeStates.isEmpty()) {
-                                    host.log("No compute state with description link {}",
+                                    host.log("No compute state with description link %s",
                                             hostSpec.hostState.descriptionLink);
                                     host.failIteration(r.getException());
                                 } else {

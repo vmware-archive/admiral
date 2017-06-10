@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -655,8 +655,7 @@ public class ComputeAllocationTaskService
                 .setCompletion(
                         (o, e) -> {
                             if (e != null) {
-                                logSevere(
-                                        "Failure creating compute resource: %s",
+                                logSevere("Failure creating compute resource: %s",
                                         Utils.toString(e));
                                 completeSubTasksCounter(taskCallback, e);
                                 return;
@@ -926,10 +925,10 @@ public class ComputeAllocationTaskService
             Consumer<List<String>> callbackFunction) {
 
         if (tenantLinks == null || tenantLinks.isEmpty()) {
-            logInfo("Quering for global profiles for endpoint [%s] of type [%s]...",
+            logInfo("Querying for global profiles for endpoint [%s] of type [%s]...",
                     endpoint.documentSelfLink, endpoint.endpointType);
         } else {
-            logInfo("Quering for group [%s] profiles for endpoint [%s] of type [%s]...",
+            logInfo("Querying for group [%s] profiles for endpoint [%s] of type [%s]...",
                     tenantLinks, endpoint.documentSelfLink, endpoint.endpointType);
         }
         // link=LINK || (link=unset && type=TYPE)

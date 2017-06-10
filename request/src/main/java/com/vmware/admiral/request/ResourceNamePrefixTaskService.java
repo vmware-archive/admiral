@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -140,30 +140,29 @@ public class ResourceNamePrefixTaskService
         sendRequest(Operation
                 .createPatch(this, resourceNamePrefixLink)
                 .setBody(namePrefixRequest)
-                .setCompletion(
-                        (o, e) -> {
-                            if (e != null) {
-                                logWarning(
-                                        "Failure requesting resource name prefixes: %s. Retrying with the next one...",
-                                        e.getMessage());
-                                selectResourceNamePrefix(state, iterator, globalSearch);
-                                return;
-                            }
-                            NamePrefixResponse response = o.getBody(NamePrefixResponse.class);
-                            Set<String> resourceNames = new HashSet<>(response.resourceNamePrefixes
-                                    .size());
-                            for (String prefix : response.resourceNamePrefixes) {
-                                try {
-                                    resourceNames.add(String.format(state.baseResourceNameFormat,
-                                            prefix));
-                                } catch (IllegalFormatException fe) {
-                                    failTask("Failure formatting baseResourceNameFormat", fe);
-                                    return;
-                                }
-                            }
-                            complete(DefaultSubStage.COMPLETED, s -> {
-                                s.resourceNames = resourceNames;
-                            });
-                        }));
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logWarning("Failure requesting resource name prefixes: %s. Retrying with"
+                                        + " the next one...", e.getMessage());
+                        selectResourceNamePrefix(state, iterator, globalSearch);
+                        return;
+                    }
+                    NamePrefixResponse response = o.getBody(NamePrefixResponse.class);
+                    Set<String> resourceNames = new HashSet<>(response.resourceNamePrefixes
+                            .size());
+                    for (String prefix : response.resourceNamePrefixes) {
+                        try {
+                            resourceNames.add(String.format(state.baseResourceNameFormat,
+                                    prefix));
+                        } catch (IllegalFormatException fe) {
+                            failTask("Failure formatting baseResourceNameFormat", fe);
+                            return;
+                        }
+                    }
+                    complete(DefaultSubStage.COMPLETED, s -> {
+                        s.resourceNames = resourceNames;
+                    });
+                }));
     }
+
 }

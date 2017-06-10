@@ -810,7 +810,7 @@ public class ContainerAllocationTaskService extends
                                     return;
                                 }
                                 ContainerState body = o.getBody(ContainerState.class);
-                                logInfo("Created ContainerState: %s ", body.documentSelfLink);
+                                logInfo("Created ContainerState: %s", body.documentSelfLink);
 
                                 completeSubTasksCounter(taskCallback, null);
                             }));
@@ -862,7 +862,7 @@ public class ContainerAllocationTaskService extends
                         failTask("AdapterRequest failed for container: " + containerSelfLink, e);
                         return;
                     }
-                    logInfo("Container provisioning started for: " + containerSelfLink);
+                    logInfo("Container provisioning started for: %s", containerSelfLink);
                 }));
     }
 

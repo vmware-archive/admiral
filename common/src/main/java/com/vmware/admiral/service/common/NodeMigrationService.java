@@ -196,8 +196,8 @@ public class NodeMigrationService extends StatelessService {
                                     // for the migration. The factory should be skipped.
                                     if (state.taskInfo.failure.message.contains(
                                             String.valueOf(Operation.STATUS_CODE_NOT_FOUND))) {
-                                        logInfo("Migration task skipped because it does not exist on source: %s",
-                                                currentTask);
+                                        logInfo("Migration task skipped because it does not exist"
+                                                        + " on source: %s", currentTask);
                                         migrationTasksInProgress.remove(currentTask);
                                     } else {
                                         logInfo("Migration task failed: %s", currentTask);

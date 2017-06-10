@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -75,7 +75,7 @@ public class AdmiralDockerClient implements ClosureDockerClient {
                 .setReferer(getHost().getUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        logError("Unable to send provisioning request: ", ex);
+                        logError("Unable to send provisioning request: %s", Utils.toString(ex));
                         errorHandler.accept(ex);
                         return;
                     }
@@ -109,8 +109,8 @@ public class AdmiralDockerClient implements ClosureDockerClient {
                         .setReferer(getHost().getUri())
                         .setCompletion((o, e) -> {
                             if (e != null) {
-                                logError("Exception while submitting remove container request: ",
-                                        e);
+                                logError("Exception while submitting remove container request: %s",
+                                        Utils.toString(e));
                                 errorHandler.accept(e);
                                 return;
                             }
@@ -144,7 +144,7 @@ public class AdmiralDockerClient implements ClosureDockerClient {
                 .setReferer(getHost().getUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        logError("Unable to build image on docker host: ", ex);
+                        logError("Unable to build image on docker host: %s", Utils.toString(ex));
                         errorHandler.accept(ex);
                         return;
                     }
@@ -177,7 +177,7 @@ public class AdmiralDockerClient implements ClosureDockerClient {
                 .setReferer(getHost().getUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        logError("Unable to inspect image on docker host: ", ex);
+                        logError("Unable to inspect image on docker host: %s", Utils.toString(ex));
                         errorHandler.accept(ex);
                         return;
                     }

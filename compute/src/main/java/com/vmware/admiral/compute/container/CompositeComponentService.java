@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -335,14 +335,15 @@ public class CompositeComponentService extends StatefulService {
                     logWarning("Can't find container network states. Error: %s",
                             Utils.toString(r.getException()));
                 } else if (r.hasResult()) {
-                    allNetworksExternal.set(allNetworksExternal.get() && r.getResult().external != null
+                    allNetworksExternal.set(allNetworksExternal.get()
+                            && r.getResult().external != null
                             && r.getResult().external);
                 } else {
                     if (allNetworksExternal.get()) {
                         resultCallback.accept(true);
                     } else {
-                        logWarning(
-                                "Non-external networks still associated to this composite component!");
+                        logWarning("Non-external networks still associated to this composite"
+                                + " component!");
                         resultCallback.accept(false);
                     }
                 }
@@ -376,8 +377,8 @@ public class CompositeComponentService extends StatefulService {
                     if (allVolumeExternal.get()) {
                         resultCallback.accept(true);
                     } else {
-                        logWarning(
-                                "Non-external volumes still associated to this composite component!");
+                        logWarning("Non-external volumes still associated to this composite"
+                                + " component!");
                         resultCallback.accept(false);
                     }
                 }
@@ -412,7 +413,7 @@ public class CompositeComponentService extends StatefulService {
                         return;
                     }
                     if (e != null) {
-                        logWarning("Can't find composite description. Error: %s", Utils.toString(e));
+                        logWarning("Can't find composite description.Error: %s", Utils.toString(e));
                         return;
                     }
 
@@ -428,12 +429,14 @@ public class CompositeComponentService extends StatefulService {
                             .setBody(new ServiceDocument())
                             .setCompletion((op, ex) -> {
                                 if (ex != null) {
-                                    logWarning("Error deleting CompositeDescription: %s. Exception: %s",
+                                    logWarning("Error deleting CompositeDescription: %s."
+                                                    + " Exception: %s",
                                             cd.documentSelfLink, ex instanceof CancellationException
-                                                    ? "CancellationException" : Utils.toString(ex));
+                                                    ? "CancellationException"
+                                                    : Utils.toString(ex));
                                 }
                             }));
                 }));
-
     }
+
 }

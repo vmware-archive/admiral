@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -116,9 +116,8 @@ public class ComputeOperationTaskService extends
         OperationJoin.create(operations).setCompletion((ops, exc) -> {
             if (exc != null) { // if there are exceptions and operation is not delete, we will fail.
                 if (!ComputeOperationType.DELETE.id.equals(state.operation)) {
-                    logSevere("Failed to get a computes",
-                            Utils.toString(exc));
-                    failTask("Some of the resources are not avaiable", null);
+                    logSevere("Failed to get a computes %s", Utils.toString(exc));
+                    failTask("Some of the resources are not available", null);
                     return;
                 }
             }
@@ -194,11 +193,10 @@ public class ComputeOperationTaskService extends
                     try {
                         request.payload = JsonMapper.fromJSON(payloadAsJson, Map.class);
                     } catch (Exception e) {
-                        String msg = String.format(
-                                "Failed to deserialize Payload %s of operation %s, for compute: %s.",
+                        String msg = String.format("Failed to deserialize Payload %s of operation"
+                                        + " %s, for compute: %s.",
                                 state.operation, compute.documentSelfLink, payloadAsJson);
-                        logSevere("%s. Cause: %s",
-                                msg, Utils.toString(e));
+                        logSevere("%s. Cause: %s", msg, Utils.toString(e));
 
                         throw new IllegalStateException(msg, e);
                     }
@@ -212,7 +210,6 @@ public class ComputeOperationTaskService extends
             invokeAdapter(state, compute, metadata, ex, taskCallback);
             return null;
         });
-
     }
 
     private void invokeAdapter(ComputeOperationTaskState state,
@@ -231,10 +228,8 @@ public class ComputeOperationTaskService extends
                 .setContextId(getSelfId())
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logSevere("Error when call adapter: %s "
-                                        + "to perform operation: %s "
-                                        + "for resource: %s."
-                                        + " Cause: %s",
+                        logSevere("Error when call adapter: %s to perform operation: %s "
+                                        + "for resource: %s. Cause: %s",
                                 metadata.adapterReference,
                                 state.operation,
                                 compute.documentSelfLink,
@@ -256,4 +251,5 @@ public class ComputeOperationTaskService extends
             return ret;
         }
     }
+
 }

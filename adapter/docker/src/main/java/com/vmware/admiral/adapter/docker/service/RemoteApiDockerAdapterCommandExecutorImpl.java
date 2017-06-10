@@ -697,18 +697,20 @@ public class RemoteApiDockerAdapterCommandExecutorImpl implements
             CompletionHandler completionHandler) {
 
         if (ClientMode.LARGE_DATA != mode) {
-            logger.finest(() -> String.format(
-                    "Sending POST to %s with body (possibly truncated):\n---\n%1.1024s\n---\n",
-                    uri, Utils.toJsonHtml(body)));
+            String msg = String.format("Sending POST to %s with body (possibly truncated):"
+                            + "%n---%n%1.1024s%n---%n", uri, Utils.toJsonHtml(body));
+            logger.finest(msg);
         } else {
-            logger.finest(String.format("Sending POST to %s with large body", uri));
+            String msg = String.format("Sending POST to %s with large body", uri);
+            logger.finest(msg);
         }
         sendRequest(Service.Action.POST, uri, body, completionHandler, mode);
     }
 
     private void sendPostAttach(URI uri, Object body, CompletionHandler completionHandler) {
-        logger.finest(() -> String.format( "Sending POST for attach to %s with body (possibly"
-                        + " truncated):\n---\n%1.1024s\n---\n", uri, Utils.toJsonHtml(body)));
+        String msg = String.format( "Sending POST for attach to %s with body (possibly truncated):"
+                + "%n---%n%1.1024s%n---%n", uri, Utils.toJsonHtml(body));
+        logger.finest(msg);
         sendRequest(Service.Action.POST, uri, body, completionHandler, ClientMode.ATTACH);
     }
 

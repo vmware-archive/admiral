@@ -69,7 +69,7 @@ public class KubernetesDescriptionService extends StatefulService {
                 copyTo = YamlMapper.objectMapper().readValue(kubernetesEntity, Map.class);
             } catch (Exception e) {
                 Utils.logWarning("Could not read value of kubernetes entity from yaml, reason :%s",
-                        e);
+                        Utils.toString(e));
                 return;
             }
             Map<String, Object> copyFromMap = YamlMapper.objectMapper().convertValue(copyFrom,
@@ -80,10 +80,10 @@ public class KubernetesDescriptionService extends StatefulService {
             try {
                 kubernetesEntity = YamlMapper.objectMapper().writeValueAsString(copyTo);
             } catch (JsonProcessingException e) {
-                Utils.logWarning("Could not write of kubernetes entity to yaml, reason :%s", e);
+                Utils.logWarning("Could not write of kubernetes entity to yaml, reason :%s",
+                        Utils.toString(e));
             }
         }
-
     }
 
     public KubernetesDescriptionService() {

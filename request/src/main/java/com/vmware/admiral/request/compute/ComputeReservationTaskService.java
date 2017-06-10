@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -260,10 +260,11 @@ public class ComputeReservationTaskService extends
         // GroupResourcePlacements must be filtered on by tenant and project
         List<String> tgl = QueryUtil.getTenantAndGroupLinks(tenantLinks);
         if (tgl == null || tgl.isEmpty()) {
-            logInfo("Quering for global placements for resource description: [%s] and resource count: [%s]...",
-                    state.resourceDescriptionLink, state.resourceCount);
+            logInfo("Querying for global placements for resource description: [%s] and resource"
+                            + " count: [%s]..", state.resourceDescriptionLink, state.resourceCount);
         } else {
-            logInfo("Quering for group placements in [%s], for resource description: [%s] and resource count: [%s]...",
+            logInfo("Querying for group placements in [%s], for resource description: [%s] and"
+                            + " resource count: [%s]...",
                     tgl, state.resourceDescriptionLink, state.resourceCount);
         }
 
@@ -307,11 +308,10 @@ public class ComputeReservationTaskService extends
                     return;
                 }
 
-                logInfo(() -> String.format(
-                        "Candidate placements for compute '%s' before filtering: %s",
+                logInfo("Candidate placements for compute '%s' before filtering: %s",
                         computeDesc.name,
                         placements.stream().map(ps -> ps.documentSelfLink)
-                                .collect(Collectors.toList())));
+                                .collect(Collectors.toList()));
 
                 // pass the final tenantLinks, e.g. if global GroupResourcePlacement is selected,
                 // then only global endpoints and deployment profiles must be used.
@@ -399,25 +399,23 @@ public class ComputeReservationTaskService extends
                         return;
                     }
 
-                    logInfo(() -> String.format("Found %d endpoints with configured profiles",
-                            profileEntries.size()));
+                    logInfo("Found %d endpoints with configured profiles", profileEntries.size());
                     if (profileEntries.isEmpty()) {
                         failTask(null, new IllegalStateException(
                                 "No profiles found for the selected candidate placements"));
                         return;
                     }
-                    profileEntries.forEach(profileEntry -> logInfo(
-                            () -> String.format("Endpoint %s, profiles: %s",
-                                    profileEntry.endpoint.documentSelfLink,
-                                    profileEntry.profileLinks)));
+                    profileEntries.forEach(profileEntry -> logInfo("Endpoint %s, profiles: %s",
+                            profileEntry.endpoint.documentSelfLink,
+                            profileEntry.profileLinks));
 
                     URI referer = UriUtils.buildUri(getHost().getPublicUri(), getSelfLink());
                     ComputeDescriptionProfileEnhancer pe = new ComputeDescriptionProfileEnhancer(
                             getHost(), referer);
-                    ComputeDescriptionInstanceTypeEnhancer instanceTypeEnhancer = new ComputeDescriptionInstanceTypeEnhancer(
-                            getHost(), referer);
-                    ComputeDescriptionImageEnhancer imageEnhancer = new ComputeDescriptionImageEnhancer(
-                            getHost(), referer);
+                    ComputeDescriptionInstanceTypeEnhancer instanceTypeEnhancer =
+                            new ComputeDescriptionInstanceTypeEnhancer(getHost(), referer);
+                    ComputeDescriptionImageEnhancer imageEnhancer =
+                            new ComputeDescriptionImageEnhancer(getHost(), referer);
                     ComputeDescriptionDiskEnhancer diskEnhancer = new
                             ComputeDescriptionDiskEnhancer(getHost(), referer);
 
@@ -442,7 +440,8 @@ public class ComputeReservationTaskService extends
                                         return Pair.of(context, cloned);
                                     })
                                     .map(p -> {
-                                        DeferredResult<Pair<ComputeDescription, ProfileEntry>> r = new DeferredResult<>();
+                                        DeferredResult<Pair<ComputeDescription, ProfileEntry>> r =
+                                                new DeferredResult<>();
                                         pe.enhance(p.getLeft(), p.getRight())
                                                 .thenCompose(cd -> instanceTypeEnhancer
                                                         .enhance(p.getLeft(), cd))
@@ -452,7 +451,7 @@ public class ComputeReservationTaskService extends
                                                         .enhance(p.getLeft(), cd))
                                                 .whenComplete((cd, t) -> {
                                                     if (t != null) {
-                                                        logInfo(Utils.toString(t));
+                                                        logInfo(() -> Utils.toString(t));
                                                         r.complete(Pair.of(cd, null));
                                                         return;
                                                     }
@@ -474,8 +473,8 @@ public class ComputeReservationTaskService extends
                                 .flatMap(p -> supportsCD(state, placementsByRpLink, p))
                                 .collect(Collectors.toList());
 
-                        logInfo("Remaining candidate placements after endpoint filtering: "
-                                + filteredPlacements);
+                        logInfo("Remaining candidate placements after endpoint filtering: %s",
+                                filteredPlacements);
 
                         if (filteredPlacements.isEmpty()) {
                             failTask(null, new IllegalStateException(
@@ -553,8 +552,8 @@ public class ComputeReservationTaskService extends
                         "request.compute.reservation.resource-pools.empty.tags"));
                 return;
             } else {
-                logInfo("Remaining candidate placements after tag filtering: "
-                        + placementsAfterTagFilter.keySet());
+                logInfo("Remaining candidate placements after tag filtering: %s",
+                        placementsAfterTagFilter.keySet());
             }
 
             proceedTo(isGlobal(state) ? SubStage.SELECTED_GLOBAL : SubStage.SELECTED, s -> {
@@ -629,25 +628,24 @@ public class ComputeReservationTaskService extends
         sendRequest(Operation
                 .createPatch(this, placementLink)
                 .setBody(reservationRequest)
-                .setCompletion(
-                        (o, e) -> {
-                            if (e != null) {
-                                logWarning(
-                                        "Failure reserving group placement: %s. Retrying with the next one...",
-                                        e.getMessage());
-                                selectReservation(state, resourcePoolsPerGroupPlacementLinks);
-                                return;
-                            }
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logWarning("Failure reserving group placement: %s. Retrying with the next"
+                                        + " one...", e.getMessage());
+                        selectReservation(state, resourcePoolsPerGroupPlacementLinks);
+                        return;
+                    }
 
-                            GroupResourcePlacementState placement = o
-                                    .getBody(GroupResourcePlacementState.class);
-                            complete(s -> {
-                                s.customProperties = mergeCustomProperties(state.customProperties,
-                                        placement.customProperties);
-                                s.groupResourcePlacementLink = placement.documentSelfLink;
-                                s.resourcePoolsPerGroupPlacementLinks = state.resourcePoolsPerGroupPlacementLinks;
-                            });
-                        }));
+                    GroupResourcePlacementState placement = o
+                            .getBody(GroupResourcePlacementState.class);
+                    complete(s -> {
+                        s.customProperties = mergeCustomProperties(state.customProperties,
+                                placement.customProperties);
+                        s.groupResourcePlacementLink = placement.documentSelfLink;
+                        s.resourcePoolsPerGroupPlacementLinks =
+                                state.resourcePoolsPerGroupPlacementLinks;
+                    });
+                }));
     }
 
     private void getComputeDescription(String resourceDescriptionLink,

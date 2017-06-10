@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -28,6 +28,7 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 
 /**
  * Represents closure definition service.
@@ -121,7 +122,7 @@ public class ClosureDescriptionService extends StatefulService {
     @Override
     public void handleDelete(Operation delete) {
 
-        logInfo("Deleting item: " + delete.getUri());
+        logInfo("Deleting item: %s", delete.getUri());
 
         delete.complete();
 
@@ -142,44 +143,35 @@ public class ClosureDescriptionService extends StatefulService {
         } else {
             // Validate Memory & CPU resource constraints
             if (body.resources.ramMB < ClosureProps.MIN_MEMORY_MB_RES_CONSTRAINT) {
-                logWarning(
-                        "Closure definition memory is below allowed min: %s. Setting to min allowed: %s",
-                        body
-                                .resources.ramMB, ClosureProps.MIN_MEMORY_MB_RES_CONSTRAINT);
+                logWarning("Closure definition memory is below allowed min: %s. Setting to min"
+                                + " allowed: %s",
+                        body.resources.ramMB, ClosureProps.MIN_MEMORY_MB_RES_CONSTRAINT);
                 body.resources.ramMB = ClosureProps.MIN_MEMORY_MB_RES_CONSTRAINT;
             } else if (body.resources.ramMB > ClosureProps.MAX_MEMORY_MB_RES_CONSTRAINT) {
-                logWarning(
-                        "Closure definition memory is above allowed max: %s. Setting to max allowed: %s",
-                        body
-                                .resources.ramMB, ClosureProps.MAX_MEMORY_MB_RES_CONSTRAINT);
+                logWarning("Closure definition memory is above allowed max: %s. Setting to max"
+                                + " allowed: %s",
+                        body.resources.ramMB, ClosureProps.MAX_MEMORY_MB_RES_CONSTRAINT);
                 body.resources.ramMB = ClosureProps.MAX_MEMORY_MB_RES_CONSTRAINT;
             }
 
             // Calculate CPU shares based on memory
             body.resources.cpuShares = calculateCpuShares(body.resources.ramMB);
             logInfo("Calculated CPU shares: %s for memory used: %s", body.resources.ramMB,
-                    body.resources
-                            .cpuShares);
+                    body.resources.cpuShares);
 
             // Validate execution Timeout
             if (body.resources.timeoutSeconds < ClosureProps.MIN_EXEC_TIMEOUT_SECONDS) {
-                logWarning(
-                        "Closure definition timeout is below allowed min: %s. Setting to min allowed: %s",
-                        body
-                                .resources.timeoutSeconds,
-                        ClosureProps.MIN_EXEC_TIMEOUT_SECONDS);
+                logWarning("Closure definition timeout is below allowed min: %s. Setting to min"
+                                + " allowed: %s",
+                        body.resources.timeoutSeconds, ClosureProps.MIN_EXEC_TIMEOUT_SECONDS);
                 body.resources.timeoutSeconds = ClosureProps.MIN_EXEC_TIMEOUT_SECONDS;
-            } else if (body.resources.timeoutSeconds
-                    > ClosureProps.MAX_EXEC_TIMEOUT_SECONDS) {
-                logWarning(
-                        "Closure definition timeout is above the allowed max: %s. Setting to max allowed: %s",
-                        body
-                                .resources.timeoutSeconds,
-                        ClosureProps.MAX_EXEC_TIMEOUT_SECONDS);
+            } else if (body.resources.timeoutSeconds > ClosureProps.MAX_EXEC_TIMEOUT_SECONDS) {
+                logWarning("Closure definition timeout is above the allowed max: %s. Setting to max"
+                                + " allowed: %s",
+                        body.resources.timeoutSeconds, ClosureProps.MAX_EXEC_TIMEOUT_SECONDS);
                 body.resources.timeoutSeconds = ClosureProps.MAX_EXEC_TIMEOUT_SECONDS;
             }
         }
-
     }
 
     /**
@@ -203,10 +195,10 @@ public class ClosureDescriptionService extends StatefulService {
 
     private boolean isValid(Operation op, ClosureDescription body) {
         if (!isRuntimeSupported(body)) {
-            String errorMsg = String.format("Runtime '%s' is not supported!", body.runtime);
-            logWarning(errorMsg);
+            String errorMsg = "Runtime '%s' is not supported!";
+            logWarning(errorMsg, body.runtime);
             op.setStatusCode(Operation.STATUS_CODE_BAD_REQUEST);
-            op.fail(new IllegalArgumentException(errorMsg));
+            op.fail(new IllegalArgumentException(String.format(errorMsg, body.runtime)));
             return false;
         }
 
@@ -249,7 +241,8 @@ public class ClosureDescriptionService extends StatefulService {
 
         if (!ClosureUtils.isEmpty(body.entrypoint)) {
             if (body.entrypoint.indexOf('.') < 0) {
-                String errorMsg = "Invalid format of Closure entrypoint provided. Valid format: module_name.handler_name";
+                String errorMsg = "Invalid format of Closure entrypoint provided. Valid format:"
+                        + " module_name.handler_name";
                 logWarning(errorMsg);
                 op.setStatusCode(Operation.STATUS_CODE_BAD_REQUEST);
                 op.fail(new IllegalArgumentException(errorMsg));
@@ -263,7 +256,7 @@ public class ClosureDescriptionService extends StatefulService {
             try {
                 parser.parse(body.dependencies);
             } catch (JsonSyntaxException ex) {
-                logWarning("Invalid dependencies format: ", ex);
+                logWarning("Invalid dependencies format: %s", Utils.toString(ex));
                 op.setStatusCode(Operation.STATUS_CODE_BAD_REQUEST);
                 op.fail(new IllegalArgumentException("Invalid JSON format: " + ex.getMessage()));
             }

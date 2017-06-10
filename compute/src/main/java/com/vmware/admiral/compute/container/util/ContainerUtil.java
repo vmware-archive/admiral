@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -109,7 +109,8 @@ public class ContainerUtil {
                         } catch (Exception e) {
                             Utils.log(ContainerUtil.class, ContainerUtil.class.getSimpleName(),
                                     Level.WARNING,
-                                    "Failed to retrieve value for LogConfig of ContainerState: %s. Exception: %s",
+                                    "Failed to retrieve value for LogConfig of ContainerState: %s."
+                                            + " Exception: %s",
                                     state.documentSelfLink,
                                     Utils.toString(e));
                         }
@@ -244,39 +245,36 @@ public class ContainerUtil {
                     .createPatch(service, patch.documentSelfLink)
                     .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_QUEUE_FOR_SERVICE_AVAILABILITY)
                     .setBody(patch)
-                    .setCompletion(
-                            (o, e) -> {
-                                if (e != null) {
-                                    service.logWarning(
-                                            "Failed to update ContainerDescription: %s. Error: %s",
-                                            patch.documentSelfLink, Utils.toString(e));
-                                    return;
-                                }
-                                service.logInfo(
-                                        "Discovered ContainerDescription: %s, was successfully updated.",
-                                        patch.documentSelfLink);
+                    .setCompletion((o, e) -> {
+                        if (e != null) {
+                            service.logWarning("Failed to update ContainerDescription: %s."
+                                            + " Error: %s",
+                                    patch.documentSelfLink, Utils.toString(e));
+                            return;
+                        }
+                        service.logInfo("Discovered ContainerDescription: %s, was successfully"
+                                + " updated.", patch.documentSelfLink);
 
-                                ContainerState patchState = new ContainerState();
-                                patchState.customProperties = containerState.customProperties;
-                                service.sendRequest(Operation
-                                        .createPatch(service, containerState.documentSelfLink)
-                                        .setBody(patchState)
-                                        .setCompletion(
-                                                (oo, ee) -> {
-                                                    if (ee != null) {
-                                                        service.logWarning(
-                                                                "Failed to update ContainerState: %s. Error: %s",
-                                                                containerState.documentSelfLink,
-                                                                Utils.toString(ee));
-                                                        containerState.customProperties
-                                                                .remove(DISCOVERED_CONTAINER_UPDATED);
-                                                        return;
-                                                    }
-                                                    service.logInfo(
-                                                            "Discovered ContainerState: %s, was successfully updated.",
-                                                            containerState.documentSelfLink);
-                                                }));
-                            }));
+                        ContainerState patchState = new ContainerState();
+                        patchState.customProperties = containerState.customProperties;
+                        service.sendRequest(Operation
+                                .createPatch(service, containerState.documentSelfLink)
+                                .setBody(patchState)
+                                .setCompletion((oo, ee) -> {
+                                    if (ee != null) {
+                                        service.logWarning("Failed to update ContainerState: %s."
+                                                        + " Error: %s",
+                                                containerState.documentSelfLink,
+                                                Utils.toString(ee));
+                                        containerState.customProperties
+                                                .remove(DISCOVERED_CONTAINER_UPDATED);
+                                        return;
+                                    }
+                                    service.logInfo("Discovered ContainerState: %s, was"
+                                                    + " successfully updated.",
+                                            containerState.documentSelfLink);
+                                }));
+                    }));
         }
 
         public void updateContainerPorts(ContainerState oldContainerState,
@@ -314,8 +312,8 @@ public class ContainerUtil {
                             return;
                         }
                         if (e != null) {
-                            service.logWarning("Failed retrieving HostPortProfileState: "
-                                    + hostPortProfileLink, Utils.toString(e));
+                            service.logWarning("Failed retrieving HostPortProfileState: %s. %s",
+                                    hostPortProfileLink, Utils.toString(e));
                             return;
                         }
 
@@ -332,7 +330,8 @@ public class ContainerUtil {
 
                         HostPortProfileService.HostPortProfileReservationRequest request =
                                 new HostPortProfileService.HostPortProfileReservationRequest();
-                        request.mode = HostPortProfileService.HostPortProfileReservationRequestMode.UPDATE_ALLOCATION;
+                        request.mode = HostPortProfileService.HostPortProfileReservationRequestMode
+                                .UPDATE_ALLOCATION;
                         request.specificHostPorts = newContainerHostPorts;
                         request.containerLink = oldContainerState.documentSelfLink;
 
@@ -341,8 +340,9 @@ public class ContainerUtil {
                                         .setBody(request)
                                         .setCompletion((op, ex) -> {
                                             if (ex != null) {
-                                                service.logWarning(
-                                                        "Failed updating port allocation for profile [%s] and container [%s]. Error: [%s]",
+                                                service.logWarning("Failed updating port allocation"
+                                                                + " for profile [%s] and container"
+                                                                + " [%s]. Error: [%s]",
                                                         hostPortProfileLink,
                                                         oldContainerState.documentSelfLink,
                                                         Utils.toString(ex));

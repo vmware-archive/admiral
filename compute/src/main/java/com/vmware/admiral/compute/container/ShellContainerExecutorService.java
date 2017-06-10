@@ -132,7 +132,8 @@ public class ShellContainerExecutorService extends StatelessService {
                                 int retriesRemaining = retryCount - 1;
                                 int delaySeconds = RETRY_COUNT - retriesRemaining;
 
-                                logInfo("Retrying to retrieve running container %s for shell execution. Retries left %d",
+                                logInfo("Retrying to retrieve running container %s for shell"
+                                                + " execution. Retries left %d",
                                         containerLink, retriesRemaining);
                                 getHost().schedule(
                                         () -> {

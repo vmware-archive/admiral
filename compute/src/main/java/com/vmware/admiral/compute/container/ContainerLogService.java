@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -63,11 +63,13 @@ public class ContainerLogService extends StatelessService {
                 UriUtils.buildUriPath(ContainerFactoryService.SELF_LINK, containerId))
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        String errMsg = String.format("Can't get container %s. Error: %s",
-                                containerId, Utils.toString(e));
-                        logWarning(errMsg);
+                        logWarning("Can't get container %s. Error: %s", containerId,
+                                Utils.toString(e));
                         if (get != null) {
-                            get.fail(new LocalizableValidationException(errMsg, "compute.container.log.container.unavailable",
+                            String errMsg = String.format("Can't get container %s. Error: %s",
+                                    containerId, Utils.toString(e));
+                            get.fail(new LocalizableValidationException(errMsg,
+                                    "compute.container.log.container.unavailable",
                                     containerId, Utils.toString(e)));
                         }
                         return;
@@ -101,7 +103,8 @@ public class ContainerLogService extends StatelessService {
         request.operationTypeId = ContainerOperationType.FETCH_LOGS.id;
         request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
         request.customProperties = params; // additional request params like since, tail ...
-        sendRequest(Operation.createPatch(getHost(), container.adapterManagementReference.toString())
+        sendRequest(Operation
+                .createPatch(getHost(), container.adapterManagementReference.toString())
                 .setBody(request)
                 .setContextId(Service.getId(getSelfLink()))
                 .setCompletion((op, ex) -> {
@@ -122,4 +125,5 @@ public class ContainerLogService extends StatelessService {
                 LogServiceState.class);
         return d;
     }
+
 }

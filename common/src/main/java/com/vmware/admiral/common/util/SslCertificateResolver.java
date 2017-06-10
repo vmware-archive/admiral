@@ -205,7 +205,7 @@ public class SslCertificateResolver {
             return true;
         } catch (CertificateException e) {
             Utils.log(getClass(), CertificateException.class.getSimpleName(), Level.FINE,
-                    Utils.toString(e));
+                    "%s", Utils.toString(e));
             return false;
         }
     }

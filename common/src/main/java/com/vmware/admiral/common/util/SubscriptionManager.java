@@ -270,21 +270,19 @@ public class SubscriptionManager<T extends ServiceDocument> implements Closeable
     private void handlePollingException(Consumer<SubscriptionNotification<T>> notificationHandler,
             Throwable e) {
         if (e instanceof CancellationException) {
-            Utils.logWarning(
-                    "Cancellation error scheduling a polling job for resource notifications for: %s",
-                    subscribeForServiceLink);
+            Utils.logWarning("Cancellation error scheduling a polling job for resource"
+                            + " notifications for: %s", subscribeForServiceLink);
             return;
         }
-        Utils.logWarning(
-                "Error scheduling a polling job for resource notifications for: %s. Error: %s",
-                subscribeForServiceLink, Utils.toString(e));
+        Utils.logWarning("Error scheduling a polling job for resource notifications for: %s."
+                        + " Error: %s", subscribeForServiceLink, Utils.toString(e));
 
         // Increase the period on exception to slow down the polling (prevent filling logs and so
         // on). Once a successful completion is done, the period will be reset to default
         if (30 * DEFAULT_SUBSCRIPTION_POLLING_PERIOD_MILLIS > schedulingPeriodInMillis) {
             schedulingPeriodInMillis += schedulingPeriodInMillis;
-            Utils.logWarning(
-                    "Increasing the scheduled period time to %s milliseconds on error for resource subscription: %s",
+            Utils.logWarning("Increasing the scheduled period time to %s milliseconds on error for"
+                            + " resource subscription: %s",
                     schedulingPeriodInMillis, subscribeForServiceLink);
         }
         schedulePolling(notificationHandler);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -384,12 +384,13 @@ public class AdmiralAdapterService extends
         buildImage.documentSelfLink = createImageBuildRequestUri(buildImage.name,
                 state.selectedComputeLink);
 
-        logInfo("Creating docker image request: %s ", uri);
+        logInfo("Creating docker image request: %s", uri);
         sendRequest(OperationUtil.createForcedPost(uri)
                 .setBody(buildImage)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logSevere("Exception while submitting docker image request: ", e);
+                        logSevere("Exception while submitting docker image request: %s",
+                                Utils.toString(e));
                         failTask("Unable to submit docker image request", e);
                         return;
                     }
@@ -429,7 +430,7 @@ public class AdmiralAdapterService extends
         request.serviceTaskCallback = ServiceTaskCallback.create(completionServiceCallBack);
         request.resourceReference = UriUtils.buildUri(getHost(), computeStateLink);
 
-        logInfo("Executing TAG operation %s on remote docker host: %s ",
+        logInfo("Executing TAG operation %s on remote docker host: %s",
                 request.operationTypeId,
                 request.resourceReference);
 
@@ -446,10 +447,10 @@ public class AdmiralAdapterService extends
                 .setBody(request)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        String errMsg = String.format("Tag Image operation %s failed on docker "
-                                + "host: ", request.operationTypeId);
-                        logSevere(errMsg, ex);
-                        failTask(errMsg + computeStateLink, ex);
+                        String errMsg = "Tag Image operation %s failed on docker host: %s";
+                        logSevere(errMsg,  request.operationTypeId, Utils.toString(ex));
+                        failTask(String.format(errMsg, request.operationTypeId, computeStateLink),
+                                ex);
                         return;
                     }
 
@@ -473,9 +474,8 @@ public class AdmiralAdapterService extends
                 AdmiralAdapterTaskState.SubStage.ERROR);
         request.resourceReference = UriUtils.buildUri(getHost(), computeStateLink);
 
-        logInfo("Executing CREATE operation %s to remote docker host: %s ", request
-                        .operationTypeId,
-                request.resourceReference);
+        logInfo("Executing CREATE operation %s to remote docker host: %s ",
+                request.operationTypeId, request.resourceReference);
 
         request.customProperties = new HashMap<>();
         request.customProperties.putIfAbsent(DOCKER_IMAGE_NAME_PROP_NAME, baseImageName);
@@ -485,10 +485,10 @@ public class AdmiralAdapterService extends
                 .setBody(request)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        String errMsg = String.format("Create Image operation %s failed on docker "
-                                + "host: ", request.operationTypeId);
-                        logSevere(errMsg, ex);
-                        failTask(errMsg + computeStateLink, ex);
+                        String errMsg = "Create Image operation %s failed on docker host: %s";
+                        logSevere(errMsg, request.operationTypeId, Utils.toString(ex));
+                        failTask(String.format(errMsg, request.operationTypeId, computeStateLink),
+                                ex);
                         return;
                     }
 
@@ -510,7 +510,7 @@ public class AdmiralAdapterService extends
         request.serviceTaskCallback = ServiceTaskCallback.create(completionServiceCallBack);
         request.resourceReference = UriUtils.buildUri(getHost(), computeStateLink);
 
-        logInfo("Loading image to remote docker host: %s ", computeStateLink);
+        logInfo("Loading image to remote docker host: %s", computeStateLink);
 
         request.customProperties = new HashMap<>();
         request.customProperties.putIfAbsent(DOCKER_IMAGE_NAME_PROP_NAME, baseImageName);
@@ -520,10 +520,10 @@ public class AdmiralAdapterService extends
                 .setBody(request)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        String errMsg = String.format("Load image operation %s failed on docker "
-                                + "host: ", request.operationTypeId);
-                        logSevere(errMsg, ex);
-                        failTask(errMsg + computeStateLink, ex);
+                        String errMsg = "Load image operation %s failed on docker host: %s";
+                        logSevere(errMsg, request.operationTypeId, Utils.toString(ex));
+                        failTask(String.format(errMsg, request.operationTypeId, computeStateLink),
+                                ex);
                         return;
                     }
 
@@ -620,7 +620,8 @@ public class AdmiralAdapterService extends
                 .setBody(buildImage)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logSevere("Exception while submitting docker build image request: ", e);
+                        logSevere("Exception while submitting docker build image request: %s",
+                                Utils.toString(e));
                         failTask("Unable to submit docker build image request", e);
                         return;
                     }
@@ -691,7 +692,7 @@ public class AdmiralAdapterService extends
                     proceedWithDockerImageCreation(containerDesc, state, retryCount.get());
                 } else {
                     // Failed to build docker image
-                    logWarning("Failed to build image {} on host: %s Reason: %s",
+                    logWarning("Failed to build image %s on host: %s Reason: %s",
                             containerDesc.image,
                             state.selectedComputeLink, imageRequest.taskInfo.failure);
                     String errorMessage = getErrorMsg(imageRequest);
@@ -731,7 +732,8 @@ public class AdmiralAdapterService extends
 
             proceedTo(AdmiralAdapterTaskState.SubStage.COMPLETED);
         } catch (Throwable ex) {
-            logWarning("Unable to initiate provisioning closure: " + containerDesc.env[0], ex);
+            logWarning("Unable to initiate provisioning closure: %s. Error: %s",
+                    containerDesc.env[0], Utils.toString(ex));
             throw new RuntimeException(ex);
         }
     }
@@ -746,9 +748,9 @@ public class AdmiralAdapterService extends
                 .setBody(containerDesc)
                 .setCompletion((op, ex) -> {
                     if (ex != null) {
-                        logSevere(
-                                "Unable to set expiration time on closure container description %s"
-                                        + containerDesc.documentSelfLink, ex);
+                        logSevere("Unable to set expiration time on closure container description"
+                                        + " %s. Error: %s",
+                                containerDesc.documentSelfLink, Utils.toString(ex));
                     }
                 }));
     }
@@ -759,7 +761,8 @@ public class AdmiralAdapterService extends
                 .setBody(allocationTask)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logSevere("Exception while submitting allocation closure: ", e);
+                        logSevere("Exception while submitting allocation closure: %s",
+                                Utils.toString(e));
                         return;
                     }
 
@@ -809,7 +812,8 @@ public class AdmiralAdapterService extends
                 .setBody(buildImage)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logSevere("Exception while submitting docker build image request: ", e);
+                        logSevere("Exception while submitting docker build image request: %s",
+                                Utils.toString(e));
                         failTask("Unable to submit docker build image request", e);
                         return;
                     }
@@ -842,7 +846,8 @@ public class AdmiralAdapterService extends
                 .setBody(buildImage)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logSevere("Exception while submitting docker build image request: ", e);
+                        logSevere("Exception while submitting docker build image request: %s",
+                                Utils.toString(e));
                         failTask("Unable to submit docker build image request", e);
                         return;
                     }
@@ -890,7 +895,8 @@ public class AdmiralAdapterService extends
                 .setBody(request)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        logSevere("Unable to build image on docker host: ", ex);
+                        logSevere("Unable to build image on docker host: %s",
+                                Utils.toString(ex));
                         failTask("Unable to build image on docker host: " + computeStateLink, ex);
                         return;
                     }
@@ -952,12 +958,13 @@ public class AdmiralAdapterService extends
     }
 
     private void touchDockerImage(String dockerBuildImageLink, DockerImage imageRequest) {
-        logInfo("Updating docker build image request: {}", dockerBuildImageLink);
+        logInfo("Updating docker build image request: %s", dockerBuildImageLink);
         sendRequest(Operation.createPatch(getHost(), dockerBuildImageLink)
                 .setBody(imageRequest)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logWarning("Exception while updating docker build image request: ", e);
+                        logWarning("Exception while updating docker build image request: %s",
+                                Utils.toString(e));
                         return;
                     }
 
@@ -1002,7 +1009,7 @@ public class AdmiralAdapterService extends
                             .accept(error(new Exception("No available hosts configured!")));
                 }
 
-                logInfo("Selected compute to provision: %s ", selectedComputeLink);
+                logInfo("Selected compute to provision: %s", selectedComputeLink);
                 completionHandler.accept(resultLink(selectedComputeLink, 1));
 
                 seedPeers(selectedHosts,
@@ -1072,8 +1079,8 @@ public class AdmiralAdapterService extends
         if (state.groupResourcePlacementLink == null) {
             createReservationTasks(state, containerDesc);
         } else {
-            logInfo("Closure container %s will use preconfigured placement: %s", containerDesc
-                    .documentSelfLink, state.groupResourcePlacementLink);
+            logInfo("Closure container %s will use preconfigured placement: %s",
+                    containerDesc.documentSelfLink, state.groupResourcePlacementLink);
             proceedTo(AdmiralAdapterTaskState.SubStage.RESOURCE_RESERVED);
         }
     }
@@ -1146,7 +1153,7 @@ public class AdmiralAdapterService extends
                 proceedWithPlacement(containerDesc, computeStates, state, completionHandler);
             }
         } catch (Throwable ex) {
-            logSevere("Error occurred: ", ex);
+            logSevere("Error occurred: %s", Utils.toString(ex));
             completionHandler.accept(error(ex));
         }
     }
@@ -1188,15 +1195,15 @@ public class AdmiralAdapterService extends
                             .accept(error(new Exception("No available hosts configured!")));
                 }
 
-                logInfo("Selected compute to provision: %s ", selectedComputeLink);
+                logInfo("Selected compute to provision: %s", selectedComputeLink);
                 completionHandler.accept(resultLink(selectedComputeLink, 1));
 
                 seedPeers(compObjs, (computeStateLink) -> seedWithBaseDockerImage(containerDesc,
                         (String) computeStateLink, state),
                         (s) -> {
                             String link = ((ComputeState) s).documentSelfLink;
-                            return !link.equalsIgnoreCase(selectedComputeLink) && !compStateLinks
-                                    .contains(link);
+                            return !link.equalsIgnoreCase(selectedComputeLink)
+                                    && !compStateLinks.contains(link);
                         });
             }
         });
@@ -1218,7 +1225,8 @@ public class AdmiralAdapterService extends
                     }));
 
         } catch (Throwable ex) {
-            logSevere("Unable to fetch group placement: " + state.groupResourcePlacementLink, ex);
+            logSevere("Unable to fetch group placement: %s. Error: %s",
+                    state.groupResourcePlacementLink, Utils.toString(ex));
         }
     }
 
@@ -1238,10 +1246,10 @@ public class AdmiralAdapterService extends
                     (r) -> {
                         if (r.hasException()) {
                             Throwable ex = r.getException();
-                            logWarning("Failure retrieving closure description: "
-                                    + (ex instanceof CancellationException ?
-                                    ex.getMessage() :
-                                    Utils.toString(ex)));
+                            logWarning("Failure retrieving closure description: %s",
+                                    ex instanceof CancellationException
+                                            ? ex.getMessage()
+                                            : Utils.toString(ex));
                             failTask("Failure retrieving description state", ex);
                             return;
                         } else if (r.hasResult()) {
@@ -1260,8 +1268,7 @@ public class AdmiralAdapterService extends
                     });
 
         } catch (Throwable ex) {
-            String errorMsg = "Unable to allocate execution container";
-            logSevere(errorMsg, ex);
+            logSevere("Unable to allocate execution container %s", Utils.toString(ex));
             throw new RuntimeException(ex);
         }
     }
@@ -1274,8 +1281,8 @@ public class AdmiralAdapterService extends
             sendRequest(Operation.createGet(sourceURI)
                     .setCompletion((op, ex) -> {
                         if (ex != null) {
-                            logWarning("Unable to fetch external source from uri: "
-                                    + sourceURI, ex);
+                            logWarning("Unable to fetch external source from uri: %s. Error: %s",
+                                    sourceURI, Utils.toString(ex));
                             failTask("Unable to fetch external source from uri: "
                                     + sourceURI, ex);
                         } else {
@@ -1307,7 +1314,8 @@ public class AdmiralAdapterService extends
                 .setBody(containerDesc)
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        logSevere("Exception while creating container description: ", e);
+                        logSevere("Exception while creating container description: %s",
+                                Utils.toString(e));
                         failTask("Exception while creating container description", e);
                         return;
                     }

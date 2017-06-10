@@ -384,9 +384,8 @@ public class ContainerService extends StatefulService {
             // but only for containers that already exist (and have and ID)
             getHost().registerForServiceAvailability((o, ex) -> {
                 if (ex != null) {
-                    logWarning("Skipping maintenance because service failed to start: "
-                            + ex.getMessage());
-
+                    logWarning("Skipping maintenance because service failed to start: %s",
+                            ex.getMessage());
                 } else {
                     handlePeriodicMaintenance(o);
                 }

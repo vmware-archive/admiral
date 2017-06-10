@@ -170,10 +170,9 @@ public class SimpleHttpsClient {
 
     protected static HttpResponse validateResponse(HttpResponse httpResponse) {
         if (httpResponse.statusCode < 200) {
-            logWarning("Http status code not expected: " + httpResponse.statusCode);
+            logWarning("Http status code not expected: %d", httpResponse.statusCode);
         } else if (httpResponse.statusCode >= 300 && httpResponse.statusCode < 400) {
-            logWarning("Http redirect status code is  not expected: "
-                    + httpResponse.statusCode);
+            logWarning("Http redirect status code is not expected: %d", httpResponse.statusCode);
         } else if (httpResponse.statusCode == 404) {
             httpResponse.responseBody = null;
             return httpResponse;

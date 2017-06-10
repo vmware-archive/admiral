@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -130,10 +130,11 @@ public class ClosureRemovalTaskService extends
                 .setCompletion(
                         (op, ex) -> {
                             if (ex != null) {
-                                logWarning("Failed deleting closure state: " + resourceLink, ex);
+                                logWarning("Failed deleting closure state: %s. Error: %s",
+                                        resourceLink, Utils.toString(ex));
                                 return;
                             }
-                            logInfo("Deleted closure state: " + resourceLink);
+                            logInfo("Deleted closure state: %s", resourceLink);
                         });
     }
 
@@ -153,9 +154,8 @@ public class ClosureRemovalTaskService extends
         new ServiceDocumentQuery<Closure>(getHost(), Closure.class)
                 .query(compositeQueryTask, (r) -> {
                     if (r.hasException()) {
-                        logSevere(
-                                "Failed to retrieve closures, sharing the same "
-                                        + "closureDescription: %s -%s",
+                        logSevere("Failed to retrieve closures, sharing the same"
+                                        + " closureDescription: %s -%s",
                                 r.getDocumentSelfLink(), r.getException());
                     } else if (r.hasResult()) {
                         resourcesSharingDesc.add(r.getDocumentSelfLink());
@@ -219,31 +219,31 @@ public class ClosureRemovalTaskService extends
                                 return;
                             }
                             if (e != null) {
-                                logWarning("Failed retrieving ClosureDescription: "
-                                        + closure.descriptionLink, e);
+                                logWarning("Failed retrieving ClosureDescription: %s. Error: %s",
+                                        closure.descriptionLink, Utils.toString(e));
                                 return;
                             }
 
                             ClosureDescription cd = o.getBody(ClosureDescription.class);
                             if (cd.parentDescriptionLink == null) {
-                                logFine("Resource [%s] will not be removed because it doesn't contain parentDescriptionLink!",
+                                logFine("Resource [%s] will not be removed because it doesn't"
+                                                + "  contain parentDescriptionLink!",
                                         o.getBody(ClosureDescription.class).documentSelfLink);
                                 return;
                             }
                             sendRequest(Operation
                                     .createDelete(this, cd.documentSelfLink)
                                     .setBody(new ServiceDocument())
-                                    .setCompletion(
-                                            (op, ex) -> {
-                                                if (ex != null) {
-                                                    logWarning(
-                                                            "Failed deleting ClosureDescription: "
-                                                                    + cd.documentSelfLink, ex);
-                                                    return;
-                                                }
-                                                logInfo("Deleted ClosureDescription: "
-                                                        + cd.documentSelfLink);
-                                            }));
+                                    .setCompletion((op, ex) -> {
+                                        if (ex != null) {
+                                            logWarning("Failed deleting ClosureDescription: %s."
+                                                            + " Error: %s",
+                                                    cd.documentSelfLink, Utils.toString(ex));
+                                            return;
+                                        }
+                                        logInfo("Deleted ClosureDescription: %s",
+                                                cd.documentSelfLink);
+                                    }));
                         });
 
         return deleteClosureDesc;

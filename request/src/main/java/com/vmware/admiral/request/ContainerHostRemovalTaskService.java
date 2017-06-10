@@ -191,7 +191,7 @@ public class ContainerHostRemovalTaskService extends
                         .setCompletion((o, e) -> {
                             if (e != null) {
                                 if (error.compareAndSet(false, true)) {
-                                    logWarning("Failed suspending ComputeState: " + resourceLink);
+                                    logWarning("Failed suspending ComputeState: %s", resourceLink);
                                     completeSubTasksCounter(subTaskLink, e);
                                 }
                                 return;
@@ -503,7 +503,8 @@ public class ContainerHostRemovalTaskService extends
             // Notify the data collection service first
             URI uri = UriUtils.buildUri(getHost(),
                     ContainerHostDataCollectionService.HOST_INFO_DATA_COLLECTION_LINK);
-            ContainerHostDataCollectionService.ContainerHostDataCollectionState dataCollectionState = new ContainerHostDataCollectionService.ContainerHostDataCollectionState();
+            ContainerHostDataCollectionService.ContainerHostDataCollectionState dataCollectionState
+                    = new ContainerHostDataCollectionService.ContainerHostDataCollectionState();
             dataCollectionState.computeContainerHostLinks = state.resourceLinks;
             dataCollectionState.remove = true;
             sendRequest(Operation.createPatch(uri)
@@ -525,8 +526,8 @@ public class ContainerHostRemovalTaskService extends
                                     .setBody(new ServiceDocument())
                                     .setCompletion((o, e) -> {
                                         if (e != null) {
-                                            logWarning("Failed deleting ComputeState: "
-                                                    + resourceLink);
+                                            logWarning("Failed deleting ComputeState: %s",
+                                                    resourceLink);
                                             completeSubTasksCounter(subTaskLink, e);
                                             return;
                                         }

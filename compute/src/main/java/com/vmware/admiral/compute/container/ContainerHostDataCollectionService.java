@@ -178,9 +178,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
         // perform maintenance on startup to refresh the container attributes
         getHost().registerForServiceAvailability((o, ex) -> {
             if (ex != null) {
-                logWarning("Skipping maintenance because service failed to start: "
-                        + ex.getMessage());
-
+                logWarning("Skipping maintenance because service failed to start: %s",
+                        ex.getMessage());
             } else {
                 handlePeriodicMaintenance(Operation.createGet(null));
             }
@@ -404,7 +403,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
 
         CompletionHandler cc = (operation, e) -> {
             if (e != null) {
-                logWarning("Failed updating ComputeState: " + computeState.documentSelfLink);
+                logWarning("Failed updating ComputeState: %s", computeState.documentSelfLink);
                 return;
             }
 
@@ -437,7 +436,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
 
         CompletionHandler cc = (o1, ex1) -> {
             if (ex1 != null) {
-                logSevere(Utils.toString(ex1));
+                logSevere(ex1);
                 return;
             }
             ResourcePoolService.ResourcePoolState resourcePoolState = o1
@@ -471,8 +470,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
             sendRequest(Operation.createPut(this, resourcePoolState.documentSelfLink)
                     .setBody(resourcePoolState).setCompletion((op, e) -> {
                         if (e != null) {
-                            logSevere("Unable to update the resource pool with link "
-                                    + resourcePoolState.documentSelfLink + ": " + e.toString());
+                            logSevere("Unable to update the resource pool with link %s : %s",
+                                    resourcePoolState.documentSelfLink, Utils.toString(e));
                         }
                         updatePlacements(resourcePoolState);
                     }));
@@ -631,8 +630,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
         sendRequest(Operation.createPatch(this, rpPatchState.documentSelfLink)
                 .setBodyNoCloning(rpPatchState).setCompletion((op, e) -> {
                     if (e != null) {
-                        logSevere("Unable to update the resource pool with link "
-                                + rpPatchState.documentSelfLink + ": " + e.toString());
+                        logSevere("Unable to update the resource pool with link %s : %s",
+                                rpPatchState.documentSelfLink, Utils.toString(e));
                     }
                     updatePlacements(rpPatchState);
                 }));
@@ -649,7 +648,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 .setBodyNoCloning(request)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        logWarning(Utils.toString(ex));
+                        logWarning("Failed request host stats: %s", Utils.toString(ex));
                         return;
                     }
                 }));
@@ -702,9 +701,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 return;
             }
             if (r.hasException()) {
-                logWarning(
-                        "Exception while retrieving docker host descriptions. Error: %s",
-                        (r.getException() instanceof CancellationException)
+                logWarning("Exception while retrieving docker host descriptions. Error: %s",
+                        r.getException() instanceof CancellationException
                                 ? r.getException().getClass().getName()
                                 : Utils.toString(r.getException()));
                 maintOp.fail(r.getException());
@@ -741,7 +739,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
         rpHelper.query(qr -> {
             if (qr.error != null) {
                 logWarning("Exception while retrieving docker host. Error: %s",
-                        (qr.error instanceof CancellationException)
+                        qr.error instanceof CancellationException
                                 ? qr.error.getClass().getName()
                                 : Utils.toString(qr.error));
                 maintOp.fail(qr.error);
@@ -844,17 +842,16 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 ComputeState patchState = new ComputeState();
                 patchState.adapterManagementReference = getDefaultHostAdapter(getHost());
                 computeState.adapterManagementReference = patchState.adapterManagementReference;
-                sendRequest(
-                        Operation.createPatch(this, computeState.documentSelfLink)
-                                .setBodyNoCloning(patchState)
-                                .setCompletion((op, ex) -> {
-                                    if (ex != null) {
-                                        logSevere(ex);
-                                    } else {
-                                        updateContainerHostInfo(computeState, consumer,
-                                                serviceTaskCallback);
-                                    }
-                                }));
+                sendRequest(Operation
+                        .createPatch(this, computeState.documentSelfLink)
+                        .setBodyNoCloning(patchState)
+                        .setCompletion((op, ex) -> {
+                            if (ex != null) {
+                                logSevere(ex);
+                            } else {
+                                updateContainerHostInfo(computeState, consumer, serviceTaskCallback);
+                            }
+                        }));
                 return;
             }
         }
@@ -900,7 +897,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                                                 }));
                             }
                         } else {
-                            logWarning(Utils.toString(ex));
+                            logWarning("Failed request host info: %s", Utils.toString(ex));
                             return;
                         }
                     }
@@ -916,7 +913,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 .setBodyNoCloning(body)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        logWarning(Utils.toString(ex));
+                        logWarning("Failed request kubernetes dc: %s", Utils.toString(ex));
                         return;
                     }
                 }));
@@ -933,7 +930,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 .setBodyNoCloning(body)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        logWarning(Utils.toString(ex));
+                        logWarning("Failed request host container list dc: %s", Utils.toString(ex));
                         return;
                     }
                 }));
@@ -950,7 +947,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 .setBodyNoCloning(body)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        logWarning(Utils.toString(ex));
+                        logWarning("Failed request host networks dc: %s", Utils.toString(ex));
                         return;
                     }
                 }));
@@ -966,7 +963,7 @@ public class ContainerHostDataCollectionService extends StatefulService {
                 .setBodyNoCloning(body)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        logWarning(Utils.toString(ex));
+                        logWarning("Failed request host volumes dc: %s", Utils.toString(ex));
                         return;
                     }
                 }));
@@ -1046,8 +1043,8 @@ public class ContainerHostDataCollectionService extends StatefulService {
         new ServiceDocumentQuery<>(getHost(), ContainerState.class).query(
                 containerQuery, (r) -> {
                     if (r.hasException()) {
-                        logWarning("Failed to retrieve containers for ComputeState: "
-                                + computeStateSelfLink);
+                        logWarning("Failed to retrieve containers for ComputeState: %s",
+                                computeStateSelfLink);
                         return;
                     } else if (r.hasResult()) {
                         logWarning("Disable container %s, because host %s is unavailable",

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -58,6 +58,7 @@ import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.Query.Builder;
@@ -199,7 +200,7 @@ public class ComputeNetworkRemovalTaskService extends
                             .exceptionally(e -> {
                                 if (e.getCause() != null && e.getCause()
                                         instanceof ServiceHost.ServiceNotFoundException) {
-                                    logWarning("Subnet State is not found at link: %s ",
+                                    logWarning("Subnet State is not found at link: %s",
                                             isolatedComputeNetwork.subnetLink);
                                     callback.sendResponse(this, (Throwable) null);
                                 } else {
@@ -386,12 +387,12 @@ public class ComputeNetworkRemovalTaskService extends
                     .setCompletion(
                             (o, e) -> {
                                 if (e != null) {
-                                    logWarning("Failed deleting ComputeNetworkState: "
-                                            + computeNetwork.documentSelfLink, e);
+                                    logWarning("Failed deleting ComputeNetworkState: %s. %s",
+                                            computeNetwork.documentSelfLink, Utils.toString(e));
                                     return;
                                 }
-                                logInfo("Deleted ComputeNetworkState: "
-                                        + computeNetwork.documentSelfLink);
+                                logInfo("Deleted ComputeNetworkState: %s",
+                                        computeNetwork.documentSelfLink);
 
                                 removeResourceGroups(computeNetwork.groupLinks,
                                         v -> completeSubTasksCounter(subTaskLink, null));
@@ -413,7 +414,8 @@ public class ComputeNetworkRemovalTaskService extends
         ).collect(Collectors.toList()))
                 .whenComplete((all, t) -> {
                     if (t != null) {
-                        logWarning("Failed deleting all ResourceGroupStates: " + groupLinks, t);
+                        logWarning("Failed deleting all ResourceGroupStates: %s. %s",
+                                groupLinks, Utils.toString(t));
                     }
                     callback.accept(null);
                 });
@@ -443,8 +445,8 @@ public class ComputeNetworkRemovalTaskService extends
                         // Found existing CIDRAllocationService
                         context.cidrAllocationServiceLink = cidrAllocationLinks.get(0);
                     } else {
-                        this.logWarning(() -> "Unable to find CIDR allocation service for "
-                                + "network: " + context.subnet.networkLink);
+                        this.logWarning("Unable to find CIDR allocation service for network: %s",
+                                context.subnet.networkLink);
                     }
                     return context;
                 });

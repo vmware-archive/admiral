@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -239,10 +239,11 @@ public class CompositeTemplateUtil {
                         } else if (level instanceof List<?>) {
                             ((List<Object>) level).set(Integer.parseInt(currentPath), expression);
                         } else {
-                            String message = String.format(
-                                    "[Component '%s'] Item '%s' in binding with targetFieldPath '%s' is not a valid JsonObject (Map or List)!",
+                            String message = String.format("[Component '%s'] Item '%s' in binding"
+                                            + " with targetFieldPath '%s' is not a valid JsonObject"
+                                            + " (Map or List)!",
                                     componentName, currentPath, targetFieldPath);
-                            Utils.logWarning(message);
+                            Utils.logWarning("%s", message);
                             throw new LocalizableValidationException(message,
                                     "compute.template.yaml.error", message);
                         }
@@ -254,10 +255,11 @@ public class CompositeTemplateUtil {
                     } else if (level instanceof List<?>) {
                         level = ((List<Object>) level).get(Integer.parseInt(currentPath));
                     } else {
-                        String message = String.format(
-                                "[Component '%s'] Item '%s' in binding with targetFieldPath '%s' is not a valid JsonObject (Map or List)!",
+                        String message = String.format("[Component '%s'] Item '%s' in binding with"
+                                        + " targetFieldPath '%s' is not a valid JsonObject"
+                                        + " (Map or List)!",
                                 componentName, currentPath, targetFieldPath);
-                        Utils.logWarning(message);
+                        Utils.logWarning("%s", message);
                         throw new LocalizableValidationException(message,
                                 "compute.template.yaml.error", message);
                     }
@@ -425,7 +427,7 @@ public class CompositeTemplateUtil {
 
             if (!entry.getKey().equals(component.data.name)) {
                 Utils.logWarning("Container name '%s' differs from component name '%s' and "
-                        + "it will be overriden with the component name!",
+                        + "it will be overridden with the component name!",
                         component.data.name, entry.getKey());
                 component.data.name = entry.getKey();
             }
