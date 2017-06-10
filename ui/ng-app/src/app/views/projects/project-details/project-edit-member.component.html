@@ -1,0 +1,39 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<clr-modal [clrModalStaticBackdrop]="true"
+           [clrModalOpen]="visible"
+           (clrModalOpenChange)="editCanceled()">
+    <h3 class="modal-title">{{ 'projects.members.editMember.title' | i18n }}</h3>
+    <div class="modal-body">
+        <p>{{ description }}</p>
+        <form class="form" [formGroup]="editMemberToProjectForm">
+            <section class="form-block">
+                <div class="form-group">
+                    <label for="memberRole" class="required">{{"projects.members.addMembers.fieldTitleRole" | i18n}}</label>
+                    <div class="select memberRole">
+                        <select id="memberRole" formControlName="memberRole" [(ngModel)]="memberRoleSelection">
+                            <option value="ADMIN">{{"projects.members.roles.administrator" | i18n}}</option>
+                            <option value="USER">{{"projects.members.roles.member" | i18n}}</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline"
+                (click)="editCanceled()">{{ "cancel" | i18n }}</button>
+        <button type="button" class="btn btn-primary"
+                [disabled]="editMemberToProjectForm.invalid"
+                (click)="editConfirmed()">{{ "ok" | i18n }}</button>
+    </div>
+</clr-modal>

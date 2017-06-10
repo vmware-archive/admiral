@@ -44,6 +44,10 @@
         "fieldRequiredId": "ID is required.",
         "fieldTitleRole": "Role in project"
        },
+      "editMember" : {
+          "title": "Edit member role in project",
+          "description": "Edit member {{memberId}} role in project {{projectName}}."
+      },
       "roles": {
         "administrator": "DevOps Administrator",
         "member": "Developer"

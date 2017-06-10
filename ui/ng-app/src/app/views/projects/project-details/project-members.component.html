@@ -44,4 +44,8 @@
                      [(alert)]="deleteConfirmationAlert"
                      [visible]="memberToDelete"
                      (onDelete)="deleteConfirmed()"
-                     (onCancel)="deleteCanceled()">
+                     (onCancel)="deleteCanceled()"></delete-confirmation>
+
+<app-project-edit-member [visible]="selectedMember" [project]="project" [member]="selectedMember"
+                         (onChange)="editDone()"
+                         (onCancel)="editCanceled()"></app-project-edit-member>
