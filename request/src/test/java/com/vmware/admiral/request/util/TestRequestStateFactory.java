@@ -39,8 +39,10 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionSer
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
+import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
 import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
+import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfile;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.Constraint.Condition;
@@ -233,6 +235,22 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
 
     public static List<String> getTenantLinks() {
         return createTenantLinks(TENANT_NAME);
+    }
+
+    public static ComputeProfile createComputeProfile(String name) {
+        ComputeProfile computeProfile = new ComputeProfile();
+        computeProfile.documentSelfLink = "test-compute-profile-" + name;
+        computeProfile.name = name;
+        computeProfile.tenantLinks = getTenantLinks();
+        return computeProfile;
+    }
+
+    public static StorageProfile createStorageProfile(String name) {
+        StorageProfile storageProfile = new StorageProfile();
+        storageProfile.documentSelfLink = "test-storage-profile-" + name;
+        storageProfile.name = name;
+        storageProfile.tenantLinks = getTenantLinks();
+        return storageProfile;
     }
 
     public static NetworkProfile createNetworkProfile(String name) {

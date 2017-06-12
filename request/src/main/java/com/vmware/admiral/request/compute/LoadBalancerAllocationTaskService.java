@@ -27,8 +27,14 @@ import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.ComputeConstants;
+import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
+import com.vmware.admiral.request.ResourceNamePrefixTaskService;
+import com.vmware.admiral.request.ResourceNamePrefixTaskService.ResourceNamePrefixTaskState;
 import com.vmware.admiral.request.compute.LoadBalancerAllocationTaskService.LoadBalancerAllocationTaskState;
+import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
+import com.vmware.admiral.service.common.ResourceNamePrefixService;
+import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.UriPaths;
@@ -40,9 +46,9 @@ import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription;
 import com.vmware.photon.controller.model.resources.LoadBalancerService;
 import com.vmware.photon.controller.model.resources.LoadBalancerService.LoadBalancerState;
-import com.vmware.photon.controller.model.resources.SubnetService;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.QueryTask.Query;
 
@@ -67,9 +73,11 @@ public class LoadBalancerAllocationTaskService extends
             com.vmware.admiral.service.common.TaskServiceDocument<LoadBalancerAllocationTaskState.SubStage> {
         public enum SubStage {
             CREATED,
+            DETERMINE_LB_NAME,
             FIND_ADAPTER,
             ENHANCE_DESCRIPTION,
             QUERY_COMPUTE_STATES,
+            SELECT_SUBNET,
             CREATE_LB_STATE,
             COMPLETED,
             ERROR
@@ -104,11 +112,25 @@ public class LoadBalancerAllocationTaskService extends
         public String regionId;
 
         /**
+         * Set by task after resource name prefixes requested.
+         */
+        @Documentation(description = "Set by task after resource name prefixes requested.")
+        @PropertyOptions(indexing = STORE_ONLY, usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL })
+        public Set<String> resourceNames;
+
+        /**
          * Set by the task with the reference to the load balancer adapter for this endpoint.
          */
         @Documentation(description = "Set by the task with the reference to the load balancer adapter for this endpoint.")
         @PropertyOptions(indexing = STORE_ONLY, usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL })
         public URI loadBalancerAdapterReference;
+
+        /**
+         * Set by the task with the selected subnet.
+         */
+        @Documentation(description = "Set by the task with the selected subnet.")
+        @PropertyOptions(indexing = STORE_ONLY, usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL })
+        public String selectedSubnetLink;
 
         /**
          * Set by the task with the links of the compute states.
@@ -148,12 +170,16 @@ public class LoadBalancerAllocationTaskService extends
         switch (state.taskSubStage) {
         case CREATED:
             retrieveEndpointDetails(state).thenAccept(endpointDetails -> {
-                proceedTo(LoadBalancerAllocationTaskState.SubStage.FIND_ADAPTER, s -> {
+                proceedTo(LoadBalancerAllocationTaskState.SubStage.DETERMINE_LB_NAME, s -> {
                     s.endpointLink = endpointDetails.get(0);
                     s.endpointType = endpointDetails.get(1);
                     s.regionId = endpointDetails.get(2);
                 });
             });
+            break;
+
+        case DETERMINE_LB_NAME:
+            startResourceNameTask(state);
             break;
 
         case FIND_ADAPTER:
@@ -173,8 +199,16 @@ public class LoadBalancerAllocationTaskService extends
 
         case QUERY_COMPUTE_STATES:
             findComputeStates(state).thenAccept(links -> {
-                proceedTo(LoadBalancerAllocationTaskState.SubStage.CREATE_LB_STATE, s -> {
+                proceedTo(LoadBalancerAllocationTaskState.SubStage.SELECT_SUBNET, s -> {
                     s.computeLinks = links;
+                });
+            });
+            break;
+
+        case SELECT_SUBNET:
+            selectSubnet(state).thenAccept(subnetLink -> {
+                proceedTo(LoadBalancerAllocationTaskState.SubStage.CREATE_LB_STATE, s -> {
+                    s.selectedSubnetLink = subnetLink;
                 });
             });
             break;
@@ -256,6 +290,33 @@ public class LoadBalancerAllocationTaskService extends
     }
 
     /**
+     * Starts the resource name task.
+     */
+    private void startResourceNameTask(LoadBalancerAllocationTaskState state) {
+        ResourceNamePrefixTaskState namePrefixTask = new ResourceNamePrefixTaskState();
+        namePrefixTask.documentSelfLink = getSelfId();
+        namePrefixTask.resourceCount = 1;
+        namePrefixTask.baseResourceNameFormat = ResourceNamePrefixService
+                .getDefaultResourceNameFormat(this.lbDescription.name);
+        namePrefixTask.tenantLinks = state.tenantLinks;
+
+        namePrefixTask.customProperties = state.customProperties;
+        namePrefixTask.serviceTaskCallback = ServiceTaskCallback.create(getSelfLink(),
+                TaskStage.STARTED, LoadBalancerAllocationTaskState.SubStage.FIND_ADAPTER,
+                TaskStage.STARTED, LoadBalancerAllocationTaskState.SubStage.ERROR);
+        namePrefixTask.requestTrackerLink = state.requestTrackerLink;
+
+        sendRequest(Operation.createPost(this, ResourceNamePrefixTaskService.FACTORY_LINK)
+                .setBody(namePrefixTask)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        failTask("Failure creating resource name prefix task", e);
+                        return;
+                    }
+                }));
+    }
+
+    /**
      * Retrieves the load balancer adapter reference for the selected endpoint type.
      */
     private DeferredResult<String> findLoadBalancerAdapter(LoadBalancerAllocationTaskState state) {
@@ -294,6 +355,42 @@ public class LoadBalancerAllocationTaskService extends
     }
 
     /**
+     * Selects a single subnet from the load balancer compute network.
+     */
+    private DeferredResult<String> selectSubnet(LoadBalancerAllocationTaskState state) {
+        if (this.lbDescription.subnetLinks != null && !this.lbDescription.subnetLinks.isEmpty()) {
+            return DeferredResult.completed(this.lbDescription.subnetLinks.iterator().next());
+        }
+
+        return retrieveLbNetwork(state)
+                .thenCompose(network -> NetworkProfileQueryUtils.selectSubnetForComputeNetwork(
+                        getHost(), getUri(), state.tenantLinks, state.endpointLink, network))
+                .thenApply(subnet -> subnet.documentSelfLink)
+                .whenComplete(exceptionHandler("Error selecting subnet for load balancer "
+                        + state.resourceDescriptionLink));
+    }
+
+    /**
+     * Retrieves the ComputeNetwork corresponding to the LoadBalancerDescription.networkName.
+     */
+    private DeferredResult<ComputeNetwork> retrieveLbNetwork(LoadBalancerAllocationTaskState state) {
+        DeferredResult<ComputeNetwork> dr = new DeferredResult<>();
+        NetworkProfileQueryUtils.getContextComputeNetworksByName(getHost(),
+                UriUtils.buildUri(getHost(), getSelfLink()), state.tenantLinks,
+                RequestUtils.getContextId(state),
+                Collections.singleton(this.lbDescription.networkName), (computeNetworks, ex) -> {
+                    if (computeNetworks == null || computeNetworks.isEmpty()) {
+                        dr.fail(new IllegalArgumentException(
+                                String.format("Cannot find a network with name '%s' in the context",
+                                        this.lbDescription.networkName)));
+                    } else {
+                        dr.complete(computeNetworks.get(0));
+                    }
+                });
+        return dr;
+    }
+
+    /**
      * Finds compute instances that this load balancer will balance.
      */
     private DeferredResult<Set<String>> findComputeStates(LoadBalancerAllocationTaskState state) {
@@ -317,19 +414,14 @@ public class LoadBalancerAllocationTaskService extends
             LoadBalancerAllocationTaskState state) {
         LoadBalancerState lbState = new LoadBalancerState();
         lbState.descriptionLink = this.lbDescription.documentSelfLink;
-        lbState.name = this.lbDescription.name;
+        lbState.name = state.resourceNames.iterator().next();
         lbState.protocol = this.lbDescription.protocol;
         lbState.port = this.lbDescription.port;
         lbState.instanceProtocol = this.lbDescription.instanceProtocol;
         lbState.instancePort = this.lbDescription.instancePort;
         lbState.internetFacing = this.lbDescription.internetFacing;
         lbState.computeLinks = state.computeLinks;
-        if (this.lbDescription.subnetLinks != null) {
-            lbState.subnetLinks = this.lbDescription.subnetLinks;
-        } else {
-            // TODO: populate subnet from the network profile
-            lbState.subnetLinks = Collections.singleton(SubnetService.FACTORY_LINK + "/dummy-subnet");
-        }
+        lbState.subnetLinks = Collections.singleton(state.selectedSubnetLink);
         lbState.endpointLink = this.lbDescription.endpointLink;
         lbState.regionId = this.lbDescription.regionId;
         lbState.instanceAdapterReference = this.lbDescription.instanceAdapterReference;

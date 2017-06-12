@@ -1161,6 +1161,7 @@ public class RequestBrokerService extends
         allocationTask.serviceTaskCallback = ServiceTaskCallback.create(
                 getSelfLink(), TaskStage.STARTED, SubStage.ALLOCATED,
                 TaskStage.STARTED, SubStage.ERROR);
+        allocationTask.customProperties = state.customProperties;
 
         allocationTask.resourceDescriptionLink = state.resourceDescriptionLink;
         allocationTask.tenantLinks = state.tenantLinks;
@@ -1180,12 +1181,12 @@ public class RequestBrokerService extends
     }
 
     private void createLoadBalancerProvisioningTask(RequestBrokerState state) {
-        // TODO: just a placeholder, needs to be implemented
         LoadBalancerProvisionTaskState provisionTask = new LoadBalancerProvisionTaskState();
         provisionTask.documentSelfLink = getSelfId();
         provisionTask.serviceTaskCallback = ServiceTaskCallback.create(
                 getSelfLink(), TaskStage.STARTED, SubStage.COMPLETED,
                 TaskStage.STARTED, SubStage.REQUEST_FAILED);
+        provisionTask.customProperties = state.customProperties;
 
         provisionTask.tenantLinks = state.tenantLinks;
         provisionTask.requestTrackerLink = state.requestTrackerLink;
@@ -1216,6 +1217,7 @@ public class RequestBrokerService extends
                 getSelfLink(),
                 TaskStage.STARTED, errorState ? SubStage.ERROR : SubStage.ALLOCATED,
                 TaskStage.FAILED, SubStage.ERROR);
+        removalState.customProperties = state.customProperties;
         removalState.tenantLinks = state.tenantLinks;
         if (!errorState) {
             removalState.requestTrackerLink = state.requestTrackerLink;
@@ -1777,8 +1779,6 @@ public class RequestBrokerService extends
 
     private static final Map<ResourceType, List<String>> SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE;
 
-    // TODO pmitrov: add LB tasks here
-
     static {
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE = new HashMap<>();
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.CONTAINER_TYPE, new ArrayList<>(
@@ -1788,6 +1788,9 @@ public class RequestBrokerService extends
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.COMPUTE_NETWORK_TYPE,
                 new ArrayList<>(
                         Arrays.asList(ComputeNetworkProvisionTaskService.DISPLAY_NAME)));
+        SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE.put(ResourceType.LOAD_BALANCER_TYPE,
+                new ArrayList<>(
+                        Arrays.asList(LoadBalancerProvisionTaskService.DISPLAY_NAME)));
         SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE
                 .put(ResourceType.NETWORK_TYPE, new ArrayList<>(
                         Arrays.asList(ContainerNetworkProvisionTaskService.DISPLAY_NAME)));
@@ -1823,6 +1826,10 @@ public class RequestBrokerService extends
         SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.COMPUTE_NETWORK_TYPE,
                 new ArrayList<>(
                         Arrays.asList(ComputeNetworkAllocationTaskService.DISPLAY_NAME,
+                                ResourceNamePrefixTaskService.DISPLAY_NAME)));
+        SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.put(ResourceType.LOAD_BALANCER_TYPE,
+                new ArrayList<>(
+                        Arrays.asList(LoadBalancerAllocationTaskService.DISPLAY_NAME,
                                 ResourceNamePrefixTaskService.DISPLAY_NAME)));
         SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
                 .put(ResourceType.NETWORK_TYPE, new ArrayList<>(

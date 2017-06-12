@@ -60,6 +60,7 @@ components:
       instance: "wordpress"
       instanceProtocol: "HTTP"
       instancePort: 80
+      internetFacing: true
   wpnet:
     type: "Compute.Network"
     data:

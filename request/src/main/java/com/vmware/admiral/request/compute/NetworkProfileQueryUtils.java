@@ -481,6 +481,44 @@ public class NetworkProfileQueryUtils {
         return subnet;
     }
 
+    /**
+     * Returns one of the subnets associated with network profiles that match the given
+     * compute network (based on its constraints as well as the given endpoint link).
+     */
+    public static DeferredResult<SubnetState> selectSubnetForComputeNetwork(ServiceHost host,
+            URI referer, List<String> tenantLinks, String endpointLink,
+            ComputeNetwork computeNetwork) {
+        // retrieve all profiles applicable to the given network
+        List<DeferredResult<ProfileStateExpanded>> profileDrs = computeNetwork.profileLinks.stream()
+                .map(link -> UriUtils.buildUri(host, link))
+                .map(uri -> ProfileStateExpanded.buildUri(uri))
+                .map(uriExpanded -> Operation.createGet(uriExpanded).setReferer(referer))
+                .map(op -> host.sendWithDeferredResult(op, ProfileStateExpanded.class))
+                .collect(Collectors.toList());
+
+        // filter out profiles that are not for the given endpoint
+        DeferredResult<List<ProfileStateExpanded>> endpointProfilesDr = DeferredResult
+                .allOf(profileDrs)
+                .thenApply(profiles -> profiles.stream()
+                        .filter(profile -> endpointLink.equals(profile.endpointLink))
+                        .collect(Collectors.toList()));
+
+        // combine subnets from the remaining profiles into a single list
+        DeferredResult<List<SubnetState>> subnetsDr = endpointProfilesDr
+                .thenApply(profiles -> profiles.stream()
+                        .flatMap(profile -> profile.networkProfile.subnetStates.stream())
+                        .collect(Collectors.toList()));
+
+        // just pick the first subnet
+        return subnetsDr.thenApply(subnets -> {
+            if (subnets.isEmpty()) {
+                throw new IllegalArgumentException("Cannot find a subnet for compute network "
+                        + computeNetwork.documentSelfLink);
+            }
+            return subnets.get(0);
+        });
+    }
+
     private static DeferredResult<Operation> setAssignPublicIpAddress(
             NetworkInterfaceDescription nid, boolean assignPublicIpAddress, ServiceHost host,
             URI referer) {
