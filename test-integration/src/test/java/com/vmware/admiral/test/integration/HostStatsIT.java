@@ -16,6 +16,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ContainerHostService;
@@ -29,6 +30,7 @@ public class HostStatsIT extends BaseProvisioningOnCoreOsIT {
     }
 
     @Test
+    @Ignore("https://jira-hzn.eng.vmware.com/browse/VBV-1364")
     public void testShellCommandExecution() throws Exception {
         // The total memory, available memory, cpu usage should be populated in
         // the host's custom properties. We don't know what the exact values will be,
