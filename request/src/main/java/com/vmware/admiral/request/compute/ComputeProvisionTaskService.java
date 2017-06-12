@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.ComputeConstants;
@@ -109,6 +108,11 @@ public class ComputeProvisionTaskService extends
     public static final String COMPUTE_PROVISION_TOPIC_FIELD_SUBNET_LABEL = "Name of subnetwork.";
     public static final String COMPUTE_PROVISION_TOPIC_FIELD_SUBNET_DESCRIPTION =
             "Subnetwork where resource will be connected.";
+
+    public static final String COMPUTE_PROVISION_TOPIC_FIELD_SUBNET_CIDR = "subnetCIDR";
+    public static final String COMPUTE_PROVISION_TOPIC_FIELD_SUBNET_CIDR_LABEL = "Subnet CIDR";
+    public static final String COMPUTE_PROVISION_TOPIC_FIELD_SUBNET_CIDR_DESCRIPTION =
+            "CIDR of Subnetwork.";
 
     public static final String COMPUTE_POST_PROVISION_TOPIC_TASK_SELF_LINK =
             "compute-provision-post";
@@ -428,32 +432,60 @@ public class ComputeProvisionTaskService extends
          * Name of the subnetwork
          */
         public String subnetName;
+
+        /**
+         * CIDR of subnetwork
+         */
+        public String subnetCIDR;
     }
 
     @Override
     protected void enhanceNotificationPayload(ComputeProvisionTaskState state,
             BaseExtensibilityCallbackResponse notificationPayload, Runnable callback) {
+
+        ExtensibilityCallbackResponse payload = (ExtensibilityCallbackResponse)
+                notificationPayload;
+
+        /**
+         * Enhance notification payload with:
+         * 1)Resource names
+         * 2)Custom properties
+         * 3)Subnetwork info (name, CIDR)
+         */
         List<DeferredResult<ComputeState>> results = state.resourceLinks.stream()
                 .map(link -> Operation.createGet(this, link))
                 .map(o -> sendWithDeferredResult(o, ComputeState.class))
                 .collect(Collectors.toList());
 
-        DeferredResult.allOf(results).whenComplete((states, err) -> {
-            if (err == null) {
-                ExtensibilityCallbackResponse payload = (ExtensibilityCallbackResponse)
-                        notificationPayload;
-                payload.resourceNames = states.stream().map(s -> s.name)
-                        .collect(Collectors.toSet());
+        DeferredResult.allOf(results)
+                .thenApply(states -> {
+                    payload.resourceNames = states.stream().map(s -> s.name)
+                            .collect(Collectors.toSet());
+                    //squash-merge all properties until we fire an event per resource
+                    payload.customProperties = states.stream().flatMap(s -> s.customProperties
+                            .entrySet().stream())
+                            .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+                    return states;
+                }).thenCompose(computeStates -> getSubnetsLinks(computeStates.stream().filter(c ->
+                c.networkInterfaceLinks != null &&
+                        c.networkInterfaceLinks.size() == 1)
+                .map(c -> c.networkInterfaceLinks.get(0))
+                .collect(Collectors.toSet())))
+                .thenCompose(subnetLinks -> getSubnetInfo(subnetLinks))
+                .whenComplete((result, exception) -> {
+                    if (exception != null) {
+                        failTask(exception.getMessage(), exception);
+                    } else {
+                        if (result == null) {
+                            getHost().log(Level.WARNING, "Subnetwork info not found!");
+                        } else {
+                            payload.subnetName = result.name;
+                            payload.subnetCIDR = result.subnetCIDR;
+                        }
 
-                //squash-merge all properties until we fire an event per resource
-                payload.customProperties = states.stream().flatMap(s -> s.customProperties
-                        .entrySet().stream())
-                        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
-            } else {
-                failTask("Failed retreiving custom properties.", err);
-            }
-            callback.run();
-        });
+                        callback.run();
+                    }
+                });
     }
 
     @Override
@@ -466,7 +498,7 @@ public class ComputeProvisionTaskService extends
         });
     }
 
-    private void patchCustomProperties(ComputeProvisionTaskState state,
+    protected void patchCustomProperties(ComputeProvisionTaskState state,
             ServiceTaskCallbackResponse replyPayload, Runnable callback) {
         List<DeferredResult<Operation>> results = state.resourceLinks.stream()
                 .map(link -> Operation.createGet(this, link))
@@ -520,7 +552,6 @@ public class ComputeProvisionTaskService extends
             }
 
             retrieveSubnetwork(state, extensibilityResponse, callback);
-
         } else {
             //Host address is not provided by client => Resume task.
             callback.run();
@@ -560,7 +591,7 @@ public class ComputeProvisionTaskService extends
     private DeferredResult<Set<String>> getNicStates(ComputeProvisionTaskState state) {
 
         List<DeferredResult<ComputeState>> results = state.resourceLinks.stream()
-                .map(c -> getComputeStateOperation(c))
+                .map(c -> Operation.createGet(this, c))
                 .map(o -> sendWithDeferredResult(o, ComputeState.class))
                 .collect(Collectors.toList());
 
@@ -573,6 +604,37 @@ public class ComputeProvisionTaskService extends
                                 c.networkInterfaceLinks.size() == 1)
                         .map(c -> c.networkInterfaceLinks.get(0))
                         .collect(Collectors.toSet())
+        );
+    }
+
+    private DeferredResult<Set<String>> getSubnetsLinks(Set<String> netStateLinks) {
+
+        List<DeferredResult<NetworkInterfaceState>> results = netStateLinks.stream()
+                .map(n -> Operation.createGet(this, n))
+                .map(o -> sendWithDeferredResult(o, NetworkInterfaceState.class))
+                .collect(Collectors.toList());
+
+        return DeferredResult.allOf(results).thenApply(nicStates ->
+                /**
+                 * Get Subnet links from NetworkInterfaceState(s).
+                 */
+                nicStates.stream()
+                        .map(c -> c.subnetLink)
+                        .collect(Collectors.toSet())
+        );
+    }
+
+    private DeferredResult<SubnetState> getSubnetInfo(Set<String> subnetLinks) {
+
+        List<DeferredResult<SubnetState>> results = subnetLinks.stream()
+                .map(s -> Operation.createGet(this, s))
+                .map(o -> sendWithDeferredResult(o, SubnetState.class))
+                .collect(Collectors.toList());
+
+        return DeferredResult.allOf(results).thenApply(subnets -> {
+                    //For now return first SubnetState (may be refactored at later stage)?
+                    return subnets == null || subnets.isEmpty() ? null : subnets.get(0);
+                }
 
         );
     }
@@ -608,16 +670,14 @@ public class ComputeProvisionTaskService extends
 
         List<DeferredResult<NetworkInterfaceDescription>> results = nicDescriptions.stream()
                 .filter(nic -> ipIterator.hasNext())
-                .map(nicSelfLink -> patchNicDescriptionOperation(subnet, ipIterator.next(),
-                        nicSelfLink))
+                .map(nicSelfLink -> patchNicDescriptionOperation(ipIterator.next(), nicSelfLink))
                 .map(o -> sendWithDeferredResult(o, NetworkInterfaceDescription.class))
                 .collect(Collectors.toList());
 
         return DeferredResult.allOf(results);
     }
 
-    private Operation patchNicDescriptionOperation(SubnetState subnet, String staticIp,
-            String nicDescLink) {
+    protected Operation patchNicDescriptionOperation(String staticIp, String nicDescLink) {
 
         NetworkInterfaceDescription patch = new NetworkInterfaceDescription();
         patch.assignment = IpAssignment.STATIC;
@@ -634,18 +694,7 @@ public class ComputeProvisionTaskService extends
                 });
     }
 
-    private Operation getComputeStateOperation(String computeSelfLink) {
-        return Operation.createGet(getHost(), computeSelfLink)
-                .setReferer(getHost().getUri())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        getHost().log(Level.SEVERE, e.getMessage());
-                        failTask(e.getMessage(), new Throwable(e));
-                    }
-                });
-    }
-
-    private Operation patchNicStateOperation(SubnetState subnet, String
+    protected Operation patchNicStateOperation(SubnetState subnet, String
             staticIp, String nicLink) {
 
         NetworkInterfaceState patch = new NetworkInterfaceState();
@@ -683,6 +732,11 @@ public class ComputeProvisionTaskService extends
                 .withDataType(DATATYPE_STRING)
                 .withLabel(COMPUTE_PROVISION_TOPIC_FIELD_SUBNET_LABEL)
                 .withDescription(COMPUTE_PROVISION_TOPIC_FIELD_SUBNET_DESCRIPTION)
+                .done()
+                .addField(COMPUTE_PROVISION_TOPIC_FIELD_SUBNET_CIDR)
+                .withDataType(DATATYPE_STRING)
+                .withLabel(COMPUTE_PROVISION_TOPIC_FIELD_SUBNET_CIDR_LABEL)
+                .withDescription(COMPUTE_PROVISION_TOPIC_FIELD_SUBNET_CIDR_DESCRIPTION)
                 .done();
     }
 
@@ -702,12 +756,12 @@ public class ComputeProvisionTaskService extends
         computePostProvisionEventTopic(host);
     }
 
-    private void retrieveSubnetwork(ComputeProvisionTaskState state,
-            ExtensibilityCallbackResponse extensibilityResponse, Runnable callback) {
+    protected void retrieveSubnetwork(ComputeProvisionTaskState state,
+            ExtensibilityCallbackResponse response, Runnable callback) {
 
         QueryTask.Query.Builder queryBuilder = QueryTask.Query.Builder.create()
                 .addKindFieldClause(SubnetState.class)
-                .addFieldClause("name", extensibilityResponse.subnetName);
+                .addFieldClause("name", response.subnetName);
 
         QueryTask q = QueryTask.Builder.create().setQuery(queryBuilder.build()).build();
         q.querySpec.resultLimit = ServiceDocumentQuery.DEFAULT_QUERY_RESULT_LIMIT;
@@ -720,10 +774,8 @@ public class ComputeProvisionTaskService extends
             if (r.hasException()) {
                 getHost().log(Level.WARNING,
                         "Exception while quering SubnetState with name [%s]. Error: [%s]",
-                        extensibilityResponse.subnetName,
-                        r.getException().getMessage());
+                        response.subnetName, r.getException().getMessage());
                 failTask(r.getException().getMessage(), r.getException());
-                return;
             } else if (r.hasResult()) {
                 subnet[0] = r.getResult();
             } else {
@@ -731,13 +783,6 @@ public class ComputeProvisionTaskService extends
                     failTask("No subnets with name [%s] found.", new Throwable());
                     return;
                 }
-
-                //Validate than continue with creation of Nic description & state.
-                SubnetState subnetState = subnet[0];
-                validateSubnetwork(subnetState);
-
-                Set<String> addresses = extensibilityResponse.addresses;
-
                 /**
                  * 1. Get ComputeStates in order to retrieve their {@link NetworkInterfaceState}
                  * 2. Link {@link NetworkInterfaceState} to above {@link SubnetState}
@@ -745,13 +790,12 @@ public class ComputeProvisionTaskService extends
                  * 4. Resume the task
                  */
                 getNicStates(state)
-                        .thenCompose(nicStates -> patchNicStates(nicStates, addresses, subnetState))
-                        .thenCompose(
-                                nicDesciptions -> patchNicDescriptions(nicDesciptions, addresses,
-                                        subnetState)
+                        .thenCompose(nicStates -> patchNicStates(nicStates, response.addresses, subnet[0]))
+                        .thenCompose(nicDesciptions -> patchNicDescriptions(nicDesciptions,
+                                        response.addresses, subnet[0])
                         ).whenComplete((result, exception) -> {
                             if (exception != null) {
-                                failTask(exception.getMessage(), new Throwable(exception));
+                                failTask(exception.getMessage(), exception);
                             } else {
                                 // Finished with NicDescriptions => invoke callback and resume the task now.
                                 callback.run();
@@ -760,12 +804,5 @@ public class ComputeProvisionTaskService extends
             }
         });
 
-    }
-
-    private void validateSubnetwork(SubnetState subnetwork) {
-        /**
-         * Add more validations depends on usecase for different endpoints.
-         */
-        AssertUtil.assertNotNullOrEmpty(subnetwork.subnetCIDR, "subnetCIDR");
     }
 }
