@@ -31,7 +31,9 @@ export class ProjectDetailsComponent extends BaseDetailsComponent {
 
   protected entityInitialized() {
     let cs = this.entity.customProperties || {};
-    this.hbrProjectId = cs.__harborId;
+    if (cs.__harborId) {
+      this.hbrProjectId = parseInt(cs.__harborId);
+    }
   }
 
 }

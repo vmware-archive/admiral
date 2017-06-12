@@ -1,3 +1,14 @@
-<p>
-  logs works!
-</p>
+<div class="main-view">
+  <div class="title">{{"logs.title" | i18n}}</div>
+  <clr-tabs>
+    <clr-tab-link [clrTabLinkId]="'systemLogTab'" [clrTabLinkActive]="true">{{"logs.system.title" | i18n}}</clr-tab-link>
+    <clr-tab-link *ngIf="isHbrEnabled" [clrTabLinkId]="'registryLogTab'">{{"logs.registry.title" | i18n}}</clr-tab-link>
+
+    <clr-tab-content [clrTabContentId]="'systemLogContent'" [clrTabContentActive]="true">
+      <div>Unavailable</div>
+    </clr-tab-content>
+    <clr-tab-content *ngIf="isHbrEnabled" [clrTabContentId]="'registryLogContent'">
+        <hbr-log></hbr-log>
+    </clr-tab-content>
+  </clr-tabs>
+</div>

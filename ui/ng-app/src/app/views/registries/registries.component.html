@@ -3,12 +3,16 @@
   <clr-tabs>
     <clr-tab-link [clrTabLinkId]="'sourceRegistriesTab'" [clrTabLinkActive]="true">{{"registries.sourceRegistries" | i18n}}</clr-tab-link>
     <clr-tab-link *ngIf="isHbrEnabled" [clrTabLinkId]="'replicationEndpointsTab'">{{"registries.replicationEndpoints" | i18n}}</clr-tab-link>
+    <clr-tab-link *ngIf="isHbrEnabled" [clrTabLinkId]="'replicationRulesTab'">{{"registries.replicationRules" | i18n}}</clr-tab-link>
 
     <clr-tab-content [clrTabContentId]="'sourceRegistriesContent'" [clrTabContentActive]="true">
       <former-view path="registries"></former-view>
     </clr-tab-content>
     <clr-tab-content *ngIf="isHbrEnabled" [clrTabContentId]="'replicationEndpointsContent'">
         <hbr-endpoint></hbr-endpoint>
+    </clr-tab-content>
+    <clr-tab-content *ngIf="isHbrEnabled" [clrTabContentId]="'replicationRulesContent'">
+        <hbr-replication></hbr-replication>
     </clr-tab-content>
   </clr-tabs>
 </div>

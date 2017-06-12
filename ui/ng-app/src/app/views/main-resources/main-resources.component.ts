@@ -1,4 +1,3 @@
-import { NavigationEnd } from '@angular/router';
 /*
  * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *
@@ -13,7 +12,7 @@ import { NavigationEnd } from '@angular/router';
 import { FT } from './../../utils/ft';
 import { Component, OnInit, ViewEncapsulation, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
 
 @Component({
   selector: 'app-main-resources',

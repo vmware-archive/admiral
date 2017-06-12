@@ -26,14 +26,14 @@
         <app-project-members [project]="entity"></app-project-members>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'repositoriesContent'">
-        <hbr-repository *ngIf="hbrProjectId" [projectId]="hbrProjectId" [sessionInfo]="hbrSessionInfo"></hbr-repository>
+        <hbr-repository-stackview *ngIf="hbrProjectId" [projectId]="hbrProjectId" [sessionInfo]="hbrSessionInfo"></hbr-repository-stackview>
         <p *ngIf="!hbrProjectId">{{"unavailable" | i18n: { "ns": "base" } }}</p>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'infrastructureContent'">
         <p>Content for infrastructure tab.</p>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'registryReplicationContent'">
-        <hbr-replication *ngIf="hbrProjectId" [projectId]="hbrProjectId"></hbr-replication>
+        <hbr-replication *ngIf="hbrProjectId" [projectId]="hbrProjectId" [withReplicationJob]="true"></hbr-replication>
         <p *ngIf="!hbrProjectId">{{"unavailable" | i18n: { "ns": "base" } }}</p>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'configurationContent'">

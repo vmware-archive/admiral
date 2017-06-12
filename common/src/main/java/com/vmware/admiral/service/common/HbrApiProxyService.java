@@ -34,6 +34,7 @@ public class HbrApiProxyService extends StatelessService {
 
     private static final String HBR_URL_PROP = "harbor.tab.url";
     private static final String HBR_API_BASE_ENDPOINT = "api";
+    private static final String I18N_RESOURCE_SUBPATH = "i18n/lang";
 
     private volatile String harborUrl;
 
@@ -114,10 +115,6 @@ public class HbrApiProxyService extends StatelessService {
                 .setContentType(op.getContentType())
                 .setBody(op.getBodyRaw())
                 .setCompletion((o, e) -> {
-                    if (e != null) {
-                        op.fail(e);
-                        return;
-                    }
                     op.transferResponseHeadersFrom(o);
                     op.getResponseHeaders().put(Operation.CONTENT_TYPE_HEADER, o.getContentType());
                     op.setBodyNoCloning(o.getBodyRaw());
@@ -157,12 +154,18 @@ public class HbrApiProxyService extends StatelessService {
             return null;
         }
 
+        String baseEndpoint = HBR_API_BASE_ENDPOINT;
+
+        if (opPath.contains(I18N_RESOURCE_SUBPATH)) {
+            baseEndpoint = "";
+        }
+
         try {
             String query = uri.getRawQuery();
             if (query != null && !query.isEmpty()) {
                 query = "?" + query;
             }
-            return UriUtils.buildUri(new URI(harborUrl), HBR_API_BASE_ENDPOINT, opPath, query);
+            return UriUtils.buildUri(new URI(harborUrl), baseEndpoint, opPath, query);
         } catch (URISyntaxException e) {
             return null;
         }

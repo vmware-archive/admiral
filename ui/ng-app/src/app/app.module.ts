@@ -37,7 +37,10 @@ export const ServiceConfig:IServiceConfig = {
     logBaseEndpoint: "/hbr-api/logs",
     targetBaseEndpoint: "/hbr-api/targets",
     replicationRuleEndpoint: "/hbr-api/policies/replication",
-    replicationJobEndpoint: "/hbr-api/jobs/replication"
+    replicationJobEndpoint: "/hbr-api/jobs/replication",
+    enablei18Support: true,
+    langMessageLoader: "http",
+    langMessagePathForHttpLoader: "/hbr-api/i18n/lang/"
 };
 
 

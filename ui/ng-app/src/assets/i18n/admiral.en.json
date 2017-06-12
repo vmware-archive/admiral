@@ -93,6 +93,15 @@
     "replicationEndpoints": "Replication Endpoints",
     "replicationRules": "Replication Rules"
   },
+  "logs": {
+    "title": "Logs",
+    "system": {
+      "title": "System"
+    },
+    "registry": {
+      "title": "Registry"
+    }
+  },
   "identity": {
     "title": "Identity Management",
     "credentials": "Credentials",
