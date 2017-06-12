@@ -147,8 +147,10 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
     public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER;
 
-    public static final String PROVISION_CONTAINER_RETRIES_COUNT_PARAM_NAME =
-            "provision.container.retries.count";
+    public static final String PROVISION_CONTAINER_RETRIES_COUNT_PARAM_NAME = "provision.container.retries.count";
+    public static final int PROVISION_CONTAINER_RETRIES_COUNT_DEFAULT = 3;
+
+    public static final String PROVISION_CONTAINER_PULL_RETRIES_COUNT_PARAM_NAME = "provision.container.pull-image.retries.count";
 
     private SystemImageRetrievalManager imageRetrievalManager;
 
@@ -172,6 +174,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
     private static final String DELETE_CONTAINER_MISSING_ERROR = "error 404 for DELETE";
 
     private volatile Integer retriesCount;
+    private volatile Integer pullRetriesCount;
 
     private static class RequestContext extends BaseRequestContext {
         public ComputeState computeState;
@@ -452,8 +455,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
     }
 
     private void processContainerDescription(RequestContext context) {
-        context.containerState.adapterManagementReference =
-                context.containerDescription.instanceAdapterReference;
+        context.containerState.adapterManagementReference = context.containerDescription.instanceAdapterReference;
 
         CommandInput createImageCommandInput = new CommandInput(context.commandInput);
 
@@ -604,7 +606,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
     private void processPullImageFromRegistry(RequestContext context,
             CommandInput createImageCommandInput, CompletionHandler imageCompletionHandler) {
 
-        ensurePropertyExists((retryCountProperty) -> {
+        ensurePullRetriesPropertyExists((retryCountProperty) -> {
             processPullImageFromRegistryWithRetry(context, createImageCommandInput,
                     imageCompletionHandler, 0, retryCountProperty);
         });
@@ -827,22 +829,19 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         Map<String, Object> ipamConfig = new HashMap<>();
         if (network.ipv4_address != null) {
             ipamConfig.put(
-                    DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG
-                            .IPAM_CONFIG.IPV4_CONFIG,
+                    DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG.IPAM_CONFIG.IPV4_CONFIG,
                     network.ipv4_address);
         }
 
         if (network.ipv6_address != null) {
             ipamConfig.put(
-                    DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG
-                            .IPAM_CONFIG.IPV6_CONFIG,
+                    DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG.IPAM_CONFIG.IPV6_CONFIG,
                     network.ipv6_address);
         }
 
         if (!ipamConfig.isEmpty()) {
             endpointConfig.put(
-                    DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG
-                            .IPAM_CONFIG_PROP_NAME,
+                    DOCKER_CONTAINER_NETWORKING_CONNECT_CONFIG.ENDPOINT_CONFIG.IPAM_CONFIG_PROP_NAME,
                     ipamConfig);
         }
 
@@ -1076,7 +1075,7 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
 
         CommandInput execCommandInput = new CommandInput(context.commandInput).withProperty(
                 DOCKER_CONTAINER_ID_PROP_NAME, context.containerState.id).withProperty(
-                DOCKER_EXEC_COMMAND_PROP_NAME, commandArr);
+                        DOCKER_EXEC_COMMAND_PROP_NAME, commandArr);
 
         if (context.request.customProperties.get(DOCKER_EXEC_ATTACH_STDERR_PROP_NAME) != null) {
             execCommandInput.withProperty(DOCKER_EXEC_ATTACH_STDERR_PROP_NAME,
@@ -1308,13 +1307,37 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                     PROVISION_CONTAINER_RETRIES_COUNT_PARAM_NAME);
             sendRequest(Operation.createGet(this, maxRetriesCountConfigPropPath)
                     .setCompletion((o, ex) -> {
-                        /* in case of exception the default retry count will be 3 */
-                        retriesCount = 3;
+                        /* in case of exception the default retry count will be set */
+                        retriesCount = PROVISION_CONTAINER_RETRIES_COUNT_DEFAULT;
                         if (ex == null) {
                             retriesCount = Integer.valueOf(
                                     o.getBody(ConfigurationState.class).value);
                         }
                         callback.accept(retriesCount);
+                    }));
+        }
+    }
+
+    private void ensurePullRetriesPropertyExists(Consumer<Integer> callback) {
+        if (pullRetriesCount != null) {
+            callback.accept(pullRetriesCount);
+        } else {
+            String maxRetriesCountConfigPropPath = UriUtils.buildUriPath(
+                    ConfigurationFactoryService.SELF_LINK,
+                    PROVISION_CONTAINER_PULL_RETRIES_COUNT_PARAM_NAME);
+            sendRequest(Operation.createGet(this, maxRetriesCountConfigPropPath)
+                    .setCompletion((o, ex) -> {
+                        if (ex == null) {
+                            pullRetriesCount = Integer.valueOf(
+                                    o.getBody(ConfigurationState.class).value);
+                            callback.accept(pullRetriesCount);
+                        } else {
+                            /* in case of exception the default retry count will be set to the PROVISION_CONTAINER_RETRIES_COUNT_PARAM_NAME */
+                            ensurePropertyExists(retriesCount -> {
+                                pullRetriesCount = retriesCount;
+                                callback.accept(pullRetriesCount);
+                            });
+                        }
                     }));
         }
     }
