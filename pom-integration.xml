@@ -24,6 +24,11 @@
     <artifactId>admiral-integration</artifactId>
     <packaging>pom</packaging>
 
+    <properties>
+        <!-- show full stack trace in junit reports -->
+        <trimStackTrace>false</trimStackTrace>
+    </properties>
+
     <modules>
         <module>test-integration</module>
         <module>ui/app/pom-integration.xml</module>

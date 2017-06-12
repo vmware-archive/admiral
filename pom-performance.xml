@@ -20,6 +20,11 @@
     <version>0.0.1</version>
     <packaging>pom</packaging>
 
+    <properties>
+        <!-- show full stack trace in junit reports -->
+        <trimStackTrace>false</trimStackTrace>
+    </properties>
+
     <modules>
         <module>test-performance</module>
     </modules>

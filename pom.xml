@@ -105,6 +105,9 @@
         <jacocoSkipReport>false</jacocoSkipReport>
 
         <skipITs>false</skipITs>
+
+        <!-- show full stack trace in junit reports -->
+        <trimStackTrace>false</trimStackTrace>
     </properties>
 
     <repositories>
