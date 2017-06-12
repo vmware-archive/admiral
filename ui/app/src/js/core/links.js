@@ -47,6 +47,7 @@ var links = Immutable({
 
   CONTAINER_HOSTS: RESOURCES + '/hosts',
   CONTAINERS: RESOURCES + '/containers',
+  CONTAINER_STATS: RESOURCES + '/container-stats',
   CONTAINER_LOGS: RESOURCES + '/container-logs',
   CONTAINER_DESCRIPTIONS: RESOURCES + '/container-descriptions',
   CONTAINER_NETWORK_DESCRIPTIONS: RESOURCES + '/container-network-descriptions',

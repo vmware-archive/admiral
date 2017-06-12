@@ -14,6 +14,7 @@ package com.vmware.admiral.common.util;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.RequestRouter;
@@ -23,11 +24,15 @@ import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
 import com.vmware.xenon.common.Utils;
 
-public class ServiceUtils {
+public final class ServiceUtils {
+    private static final Logger logger = Logger.getLogger(ServiceUtils.class.getName());
 
     public static final long EXPIRATION_MICROS = Long.getLong(
             "com.vmware.admiral.common.util.ServiceUtils.expiration.micros",
             TimeUnit.HOURS.toMicros(5));
+
+    private ServiceUtils() {
+    }
 
     /**
      * The default expiration time for all Task Services.
@@ -76,6 +81,20 @@ public class ServiceUtils {
                     .put(route.action, new ArrayList<>());
         }
         serviceDocument.documentDescription.serviceRequestRoutes.get(route.action).add(route);
+    }
+
+    /**
+     * Run safely runnable function. If operation is passed it will be failed in case of exception.
+     */
+    public static void handleExceptions(Operation o, Runnable function) {
+        try {
+            function.run();
+        } catch (Throwable e) {
+            logger.severe("Unexpected error: " + Utils.toString(e));
+            if (o != null) {
+                o.fail(e);
+            }
+        }
     }
 
 }

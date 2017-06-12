@@ -23,8 +23,6 @@ import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import com.vmware.admiral.adapter.common.AdapterRequest;
-import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.compute.Composable;
@@ -34,7 +32,6 @@ import com.vmware.admiral.compute.container.maintenance.ContainerStats;
 import com.vmware.admiral.compute.container.util.ContainerUtil;
 import com.vmware.admiral.compute.content.EnvDeserializer;
 import com.vmware.admiral.compute.content.EnvSerializer;
-import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
@@ -297,22 +294,9 @@ public class ContainerService extends StatefulService {
             if (body.powerState == null) {
                 body.powerState = PowerState.UNKNOWN;
             }
-
-            // start the container stats service instance for this container
-            startMonitoringContainerState(body);
         }
 
         startPost.complete();
-    }
-
-    @Override
-    public void handleGet(Operation get) {
-        // if GET query contains stats parameter forward to /stats utility service
-        if (isStatsRequest(get)) {
-            processStatsRequest(get);
-            return;
-        }
-        super.handleGet(get);
     }
 
     @Override
@@ -376,71 +360,6 @@ public class ContainerService extends StatefulService {
 
         patch.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
         patch.complete();
-    }
-
-    private void startMonitoringContainerState(ContainerState body) {
-        if (body.id != null) {
-            // perform maintenance on startup to refresh the container attributes
-            // but only for containers that already exist (and have and ID)
-            getHost().registerForServiceAvailability((o, ex) -> {
-                if (ex != null) {
-                    logWarning("Skipping maintenance because service failed to start: %s",
-                            ex.getMessage());
-                } else {
-                    handlePeriodicMaintenance(o);
-                }
-            }, getSelfLink());
-        }
-    }
-
-    private boolean isStatsRequest(Operation op) {
-        String q = op.getUri().getQuery();
-        if (q == null || q.length() == 0) {
-            return false;
-        }
-
-        return q.startsWith("stats");
-    }
-
-    /**
-     * Request getting stats through the adapter and then return /stats as body response
-     */
-    private void processStatsRequest(Operation op) {
-        ContainerState containerState = getState(op);
-        AdapterRequest request = new AdapterRequest();
-        request.resourceReference = UriUtils.buildUri(getHost(), containerState.documentSelfLink);
-        request.operationTypeId = ContainerOperationType.STATS.id;
-        request.serviceTaskCallback = ServiceTaskCallback.createEmpty();
-        sendRequest(Operation
-                .createPatch(this, containerState.adapterManagementReference.toString())
-                .setBodyNoCloning(request)
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        // do not return, just log warning, previous /stats will be returned
-                        Utils.logWarning("Exception in stats request for container: %s. Error: %s",
-                                containerState.documentSelfLink, Utils.toString(ex));
-                    }
-                    forwardStatsResponse(op, containerState);
-                }));
-    }
-
-    /**
-     * Executes /stats request to the container state and copy its response to the GET operation.
-     */
-    private void forwardStatsResponse(Operation op, ContainerState containerState) {
-        sendRequest(Operation
-                .createGet(UriUtils.buildStatsUri(getHost(), containerState.documentSelfLink))
-                .setExpiration(op.getExpirationMicrosUtc())
-                .setCompletion((o, e) -> {
-                    op.setBodyNoCloning(o.getBodyRaw());
-                    op.setStatusCode(o.getStatusCode());
-                    op.transferResponseHeadersFrom(o);
-                    if (e != null) {
-                        op.fail(e);
-                    } else {
-                        op.complete();
-                    }
-                }));
     }
 
     @Override

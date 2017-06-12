@@ -13,8 +13,11 @@ package com.vmware.admiral.compute.container;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
+import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -23,6 +26,9 @@ import com.google.gson.JsonPrimitive;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.adapter.common.AdapterRequest;
+import com.vmware.admiral.adapter.common.ContainerOperationType;
+import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState.PowerState;
@@ -35,8 +41,11 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.ServiceStats;
+import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.common.test.TestRequestSender;
+import com.vmware.xenon.common.test.TestRequestSender.FailureResponse;
 
 public class ContainerStatsServiceTest extends ComputeBaseTest {
     private ContainerStats containerStats;
@@ -137,11 +146,7 @@ public class ContainerStatsServiceTest extends ComputeBaseTest {
                 () -> {
                     ContainerState containerWithError =
                             getDocument(ContainerState.class, containerLink);
-                    if (!containerWithError.powerState.equals(PowerState.ERROR)) {
-                        return false;
-                    }
-
-                    return true;
+                    return containerWithError.powerState == PowerState.ERROR;
                 });
 
         // Patch with success - expect to go back to degraded
@@ -162,8 +167,8 @@ public class ContainerStatsServiceTest extends ComputeBaseTest {
         patchStats(patchHealth);
 
         waitFor(
-                String.format("Waiting '%s' with status = %s and powerState = %s",
-                        containerLink, ContainerState.CONTAINER_DEGRADED_STATUS, PowerState.RUNNING),
+                String.format("Waiting '%s' with status = %s and powerState = %s", containerLink,
+                        ContainerState.CONTAINER_DEGRADED_STATUS, PowerState.RUNNING),
                 () -> {
                     ContainerState healthyContainer =
                             getDocument(ContainerState.class, containerLink);
@@ -179,9 +184,64 @@ public class ContainerStatsServiceTest extends ComputeBaseTest {
         delete(containerState.documentSelfLink);
     }
 
+    @Test
+    public void testContainerStatsNoParam() {
+        TestRequestSender sender = host.getTestRequestSender();
+        FailureResponse failureResponse = sender.sendAndWaitFailure(Operation
+                .createGet(host, ContainerStatsService.SELF_LINK));
+        assertEquals(Operation.STATUS_CODE_FAILURE_THRESHOLD, failureResponse.op.getStatusCode());
+        assertTrue(failureResponse.failure instanceof IllegalArgumentException);
+    }
+
+    @Test
+    public void testContainerStatsWrongParam() {
+        TestRequestSender sender = host.getTestRequestSender();
+        String query = ContainerStatsService.CONTAINER_ID_QUERY_PARAM + "=no-container";
+        URI uri = UriUtils.buildUri(host, ContainerStatsService.SELF_LINK, query);
+        FailureResponse failureResponse = sender.sendAndWaitFailure(Operation.createGet(uri));
+        assertEquals(Operation.STATUS_CODE_NOT_FOUND, failureResponse.op.getStatusCode());
+    }
+
+    @Test
+    public void testContainerStats() throws Throwable {
+        MockStatsAdapterService mockStatsAdapterService = new MockStatsAdapterService();
+        try {
+            stopService(mockStatsAdapterService);
+
+            URI adapterServiceUri = UriUtils.buildUri(host, ManagementUriParts.ADAPTER_DOCKER);
+            host.startService(Operation.createPost(adapterServiceUri), mockStatsAdapterService);
+            waitForServiceAvailability(ManagementUriParts.ADAPTER_DOCKER);
+
+            String mockContainerDescriptionLink = UriUtils.buildUriPath(
+                    ContainerDescriptionService.FACTORY_LINK, "mockDescId");
+
+            ContainerDescription containerDesc = createContainerDescription();
+            containerDesc.documentSelfLink = mockContainerDescriptionLink;
+            containerDesc = doPost(containerDesc, ContainerDescriptionService.FACTORY_LINK);
+
+            containerState = createContainerState(mockContainerDescriptionLink);
+            host.log("creating container : " + Utils.toJson(containerState));
+            containerState = doPost(containerState, ContainerFactoryService.SELF_LINK);
+            host.log("container = " + Utils.toJson(containerState));
+
+            TestRequestSender sender = host.getTestRequestSender();
+            String query = String.format("%s=%s", ContainerStatsService.CONTAINER_ID_QUERY_PARAM,
+                    UriUtils.getLastPathSegment(containerState.documentSelfLink));
+            URI uri = UriUtils.buildUri(host, ContainerStatsService.SELF_LINK, query);
+            Operation response = sender.sendAndWait(Operation.createGet(uri));
+            assertEquals(Operation.STATUS_CODE_OK, response.getStatusCode());
+            ServiceStats stats = response.getBody(ServiceStats.class);
+            assertNotNull(stats);
+            assertEquals(ServiceStats.KIND, stats.documentKind);
+        } finally {
+            stopService(mockStatsAdapterService);
+        }
+    }
+
     private ContainerState createContainerState(String containerDescriptionLink) {
         ContainerState container = new ContainerState();
         container.descriptionLink = containerDescriptionLink;
+        container.adapterManagementReference = UriUtils.buildUri(ManagementUriParts.ADAPTER_DOCKER);
         container.status = ContainerState.CONTAINER_RUNNING_STATUS;
         return container;
     }
@@ -268,4 +328,27 @@ public class ContainerStatsServiceTest extends ComputeBaseTest {
 
         return healthConfig;
     }
+
+    public static class MockStatsAdapterService extends StatelessService {
+        public static final String SELF_LINK = ManagementUriParts.ADAPTER_DOCKER;
+
+        private final Set<URI> resourcesInvokedStats = new ConcurrentSkipListSet<>();
+
+        public boolean isInspectInvokedForResource(URI resource) {
+            return resourcesInvokedStats.contains(resource);
+        }
+
+        @Override
+        public void handlePatch(Operation op) {
+            AdapterRequest state = op.getBody(AdapterRequest.class);
+            if (ContainerOperationType.STATS.id.equals(state.operationTypeId)) {
+                logInfo(
+                        ">>>> Invoking MockStatsAdapterService handlePatch for Stats for: %s ",
+                        state.resourceReference);
+                resourcesInvokedStats.add(state.resourceReference);
+            }
+            op.complete();
+        }
+    }
+
 }

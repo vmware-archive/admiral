@@ -84,6 +84,7 @@ public interface ManagementUriParts {
     String COMPUTE_REMOVAL_WATCH = RESOURCES + "/compute-removal-watch";
 
     String CONTAINERS = RESOURCES + "/containers";
+    String CONTAINER_STATS = RESOURCES + "/container-stats";
     String CONTAINER_LOGS = RESOURCES + "/container-logs";
     String CONTAINER_SHELL = RESOURCES + "/container-shell";
     String CONTAINER_DESC = RESOURCES + "/container" + DESCRIPTION_SUFFIX;
