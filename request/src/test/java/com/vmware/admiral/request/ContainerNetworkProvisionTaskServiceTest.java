@@ -39,6 +39,7 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState.PowerState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -134,6 +135,8 @@ public class ContainerNetworkProvisionTaskServiceTest extends RequestBaseTest {
                 !cont1.parentLink.equals(cont2.parentLink));
 
         ContainerNetworkState network = getDocument(ContainerNetworkState.class, networkLink);
+        assertNotNull(network);
+        assertEquals(PowerState.CONNECTED, network.powerState);
 
         assertNotNull(cont1.networks.get(network.name));
         assertNotNull(cont2.networks.get(network.name));

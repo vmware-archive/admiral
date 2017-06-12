@@ -390,6 +390,10 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         assertFalse(cont1.parentLink.equals(cont2.parentLink));
 
         ContainerNetworkState network = searchForDocument(ContainerNetworkState.class, networkLink);
+        assertNotNull(network);
+        assertEquals(
+                com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState.PowerState.CONNECTED,
+                network.powerState);
         boolean networkIsProvisionedOnAnyHosts = network.originatingHostLink
                 .equals(dockerHost1.documentSelfLink)
                 || network.originatingHostLink.equals(dockerHost2.documentSelfLink);

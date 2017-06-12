@@ -25,6 +25,7 @@ import com.vmware.admiral.adapter.common.NetworkOperationType;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
+import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState.PowerState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
@@ -185,16 +186,33 @@ public class MockDockerNetworkAdapterService extends BaseMockAdapterService {
         }
 
         if (state.isProvisioning()) {
-            addNetworkId(Service.getId(network.originatingHostLink), network.id,
-                    state.resourceReference.toString());
-            addNetworkName(Service.getId(network.originatingHostLink), network.id, network.name);
-            patchTaskStage(state, (Throwable) null);
+            patchContainerNetworkState(state, network);
         } else if (state.isDeprovisioning()) {
             removeNetworkByReference(state.resourceReference);
             patchTaskStage(state, (Throwable) null);
         } else if (NetworkOperationType.INSPECT.id.equals(state.operationTypeId)) {
             patchTaskStage(state, (Throwable) null);
         }
+    }
+
+    private void patchContainerNetworkState(MockAdapterRequest state,
+            ContainerNetworkState networkState) {
+        addNetworkId(Service.getId(networkState.originatingHostLink), networkState.id,
+                state.resourceReference.toString());
+        addNetworkName(Service.getId(networkState.originatingHostLink), networkState.id,
+                networkState.name);
+
+        networkState.powerState = PowerState.CONNECTED;
+        sendRequest(Operation.createPatch(state.resourceReference)
+                .setBody(networkState)
+                .setCompletion((o, e) -> {
+                    Throwable patchException = null;
+                    if (e != null) {
+                        logSevere(e);
+                        patchException = e;
+                    }
+                    patchTaskStage(state, patchException);
+                }));
     }
 
     public static synchronized void resetNetworks() {
