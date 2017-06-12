@@ -11,24 +11,24 @@
 
 package com.vmware.admiral.auth.util;
 
+import static com.vmware.admiral.auth.util.PrincipalUtil.builUserStateSelfLinks;
+
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.util.AssertUtil;
-import com.vmware.admiral.common.util.AuthUtils;
-import com.vmware.admiral.common.util.QueryUtil;
-import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
-import com.vmware.xenon.common.Utils;
-import com.vmware.xenon.services.common.QueryTask;
-import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
+import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
+import com.vmware.xenon.common.ServiceStateCollectionUpdateRequest;
+import com.vmware.xenon.services.common.UserService;
 import com.vmware.xenon.services.common.UserService.UserState;
 
 public class UserGroupsUpdater {
@@ -43,45 +43,46 @@ public class UserGroupsUpdater {
 
     private List<String> usersToRemove;
 
-    private Map<String, UserState> cachedUsers;
-
     private UserGroupsUpdater(ServiceHost serviceHost, String groupLink, String referrer,
             List<String> usersToAdd, List<String> usersToRemove) {
-        AssertUtil.assertNotNull(serviceHost, "serviceHost");
         this.setHost(serviceHost);
         this.setGroupLink(groupLink);
         this.setReferrer(referrer);
         this.setUsersToAdd(usersToAdd);
         this.setUsersToRemove(usersToRemove);
-        this.cachedUsers = new HashMap<>();
     }
 
-    public void setHost(ServiceHost host) {
+    public UserGroupsUpdater setHost(ServiceHost host) {
         this.host = host;
+        return this;
     }
 
-    public void setGroupLink(String groupLink) {
+    public UserGroupsUpdater setGroupLink(String groupLink) {
         this.groupLink = groupLink;
+        return this;
     }
 
-    public void setReferrer(String referrer) {
+    public UserGroupsUpdater setReferrer(String referrer) {
         this.referrer = referrer;
+        return this;
     }
 
-    public void setUsersToAdd(List<String> usersToAdd) {
+    public UserGroupsUpdater setUsersToAdd(List<String> usersToAdd) {
         if (usersToAdd == null) {
             this.usersToAdd = new ArrayList<>();
-            return;
+        } else {
+            this.usersToAdd = usersToAdd;
         }
-        this.usersToAdd = usersToAdd;
+        return this;
     }
 
-    public void setUsersToRemove(List<String> usersToRemove) {
+    public UserGroupsUpdater setUsersToRemove(List<String> usersToRemove) {
         if (usersToRemove == null) {
             this.usersToRemove = new ArrayList<>();
-            return;
+        } else {
+            this.usersToRemove = usersToRemove;
         }
-        this.usersToRemove = usersToRemove;
+        return this;
     }
 
     public static UserGroupsUpdater create() {
@@ -90,204 +91,96 @@ public class UserGroupsUpdater {
 
     public static UserGroupsUpdater create(ServiceHost host, String groupLink, String referrer,
             List<String> usersToAdd, List<String> usersToRemove) {
-        return new UserGroupsUpdater(host, groupLink, referrer, usersToAdd, usersToRemove);
+        return new UserGroupsUpdater(host, groupLink, referrer, usersToAdd,
+                usersToRemove);
     }
 
     public DeferredResult<Void> update() {
-        return applyBatchUserOperationOnGroup(null, null, null);
+        return handleUpdate();
     }
 
-    private DeferredResult<Void> applyBatchUserOperationOnGroup(List<UserState> groupMembers,
-            List<UserState> removedMembers, List<UserState> newMembers) {
-
+    private DeferredResult<Void> handleUpdate() {
         try {
             AssertUtil.assertNotEmpty(groupLink, "groupLink");
+            AssertUtil.assertNotNull(host, "serviceHost");
+            validateUsersForDuplicates();
         } catch (LocalizableValidationException ex) {
             return DeferredResult.failed(ex);
         }
 
-        if ((usersToAdd == null || usersToAdd.isEmpty())
-                && (usersToRemove == null || usersToRemove.isEmpty())) {
-            // no operation to apply
-            return DeferredResult.completed(null);
+        List<DeferredResult<UserState>> usersResults = new ArrayList<>();
+
+        if (usersToAdd != null) {
+            for (String userToAdd : usersToAdd) {
+                usersResults.add(patchUserState(userToAdd, false));
+            }
         }
 
-        // retrieve current group members
-        if (groupMembers == null) {
-            return retrieveUserGroupMembers(host, referrer, groupLink)
-                    .thenApply((retrievedUsers) -> {
-                        // extend the cache with the retrieved users
-                        retrievedUsers.forEach(user -> cachedUsers.put(user.email, user));
-                        return retrievedUsers;
-                    })
-                    .thenCompose((retrievedUsers) -> applyBatchUserOperationOnGroup(retrievedUsers,
-                            removedMembers, newMembers));
+        if (usersToRemove != null) {
+            for (String userToRemove : usersToRemove) {
+                usersResults.add(patchUserState(userToRemove, true));
+            }
         }
 
-        // retrieve users that are to be removed from the group
-        if (removedMembers == null) {
-            return retrieveUserStatesByPrincipalId(usersToRemove)
-                    .thenApply((retrievedUsers) -> {
-                        // extend the cache with the retrieved users
-                        retrievedUsers.forEach(user -> cachedUsers.put(user.email, user));
-                        return retrievedUsers;
-                    })
-                    .thenCompose((retrievedUsers) -> applyBatchUserOperationOnGroup(groupMembers,
-                            retrievedUsers, newMembers));
-        }
-
-        // retrieve users that are to be added to the group
-        if (newMembers == null) {
-            return retrieveUserStatesByPrincipalId(usersToAdd)
-                    .thenApply((retrievedUsers) -> {
-                        // extend the cache with the retrieved users
-                        retrievedUsers.forEach(user -> cachedUsers.put(user.email, user));
-                        return retrievedUsers;
-                    })
-                    .thenCompose((retrievedUsers) -> applyBatchUserOperationOnGroup(groupMembers,
-                            removedMembers, retrievedUsers));
-        }
-
-        // Prepare group updates
-        groupMembers.removeAll(removedMembers);
-        groupMembers.addAll(newMembers);
-
-        // Do update the members of the group
-        return updateUserGroupMembers(groupMembers);
+        return DeferredResult.allOf(usersResults).thenAccept((ignore) -> {
+        });
     }
 
-    private DeferredResult<Void> updateUserGroupMembers(List<UserState> groupMembers) {
-
-        List<String> membersLinks = groupMembers.stream()
-                .map(userState -> userState.documentSelfLink)
-                .collect(Collectors.toList());
-
-        Operation getUserGroup = Operation.createGet(host, groupLink)
+    // TODO: Create the user if not exist.
+    private DeferredResult<UserState> patchUserState(String user,
+            boolean isRemove) {
+        URI userUri = builUserStateSelfLinks(this.host, user);
+        Operation getUser = Operation.createGet(userUri)
                 .setReferer(referrer == null ? host.getUri().toString() : referrer);
 
-        return host.sendWithDeferredResult(getUserGroup, UserGroupState.class)
-                .thenCompose(groupState -> {
-                    groupState.query = AuthUtils.buildUsersQuery(membersLinks);
-                    return host.sendWithDeferredResult(
-                            Operation.createPut(host, groupLink)
+        DeferredResult<UserState> result = new DeferredResult<>();
+        host.sendWithDeferredResult(getUser, UserState.class)
+                .handle((us, ex) -> {
+                    if (ex != null) {
+                        if (ex.getCause() instanceof ServiceNotFoundException) {
+                            UserState userState = new UserState();
+                            userState.email = user;
+                            userState.documentSelfLink = user;
+                            Operation createUser = Operation.createPost(host, UserService
+                                    .FACTORY_LINK)
                                     .setReferer(
                                             referrer == null ? host.getUri().toString() : referrer)
-                                    .setBody(groupState),
-                            UserGroupState.class);
-                }).thenCompose((ignore) -> DeferredResult.completed(null));
-    }
-
-    /**
-     * Retrieves the list of members for the specified by document link user group.
-     *
-     * @see #retrieveUserStatesForGroup(ServiceHost, UserGroupState)
-     */
-    private static DeferredResult<List<UserState>> retrieveUserGroupMembers(ServiceHost host,
-            String referrer, String groupLink) {
-        if (groupLink == null) {
-            return DeferredResult.completed(new ArrayList<>(0));
-        }
-
-        Operation groupGet = Operation.createGet(host, groupLink)
-                .setReferer(referrer == null ? host.getUri().toString() : referrer)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        host.log(Level.WARNING, "Failed to retrieve UserGroupState %s: %s",
-                                groupLink, Utils.toString(e));
+                                    .setBody(userState);
+                            return host.sendWithDeferredResult(createUser, UserState.class);
+                        }
+                        return DeferredResult.failed(ex);
                     }
-                });
+                    return DeferredResult.completed(us);
+                })
+                .thenAccept(deferredResult -> deferredResult
+                        .thenCompose(ignore -> {
+                            ServiceStateCollectionUpdateRequest patch;
+                            if (isRemove) {
+                                Map<String, Collection<Object>> patchGroupLinks = new HashMap<>();
+                                patchGroupLinks.put(UserState.FIELD_NAME_USER_GROUP_LINKS,
+                                        Collections.singletonList(groupLink));
+                                patch = ServiceStateCollectionUpdateRequest
+                                        .create(null, patchGroupLinks);
+                            } else {
+                                Map<String, Collection<Object>> patchGroupLinks = new HashMap<>();
+                                patchGroupLinks.put(UserState.FIELD_NAME_USER_GROUP_LINKS,
+                                        Collections.singletonList(groupLink));
+                                patch = ServiceStateCollectionUpdateRequest
+                                        .create(patchGroupLinks, null);
+                            }
+                            Operation patchOp = Operation.createPatch(userUri)
+                                    .setBody(patch)
+                                    .setReferer(
+                                            referrer == null ? host.getUri().toString() : referrer);
 
-        return host.sendWithDeferredResult(groupGet, UserGroupState.class)
-                .thenCompose((groupState) -> retrieveUserStatesForGroup(host, groupState));
+                            return host.sendWithDeferredResult(patchOp, UserState.class);
+                        }).thenAccept(userState -> result.complete(userState)));
+        return result;
     }
 
-    /**
-     * Retrieves the list of members for the specified user group.
-     */
-    private static DeferredResult<List<UserState>> retrieveUserStatesForGroup(ServiceHost host,
-            UserGroupState groupState) {
-
-        DeferredResult<List<UserState>> deferredResult = new DeferredResult<>();
-        ArrayList<UserState> resultList = new ArrayList<>();
-
-        QueryTask queryTask = QueryUtil.buildQuery(UserState.class, true, groupState.query);
-        QueryUtil.addExpandOption(queryTask);
-        new ServiceDocumentQuery<UserState>(host, UserState.class)
-                .query(queryTask, (r) -> {
-                    if (r.hasException()) {
-                        host.log(Level.WARNING,
-                                "Failed to retrieve members of UserGroupState %s: %s",
-                                groupState.documentSelfLink, Utils.toString(r.getException()));
-                        deferredResult.fail(r.getException());
-                    } else if (r.hasResult()) {
-                        resultList.add(r.getResult());
-                    } else {
-                        deferredResult.complete(resultList);
-                    }
-                });
-
-        return deferredResult;
-    }
-
-    private DeferredResult<List<UserState>> retrieveUserStatesByPrincipalId(
-            List<String> principalIds) {
-
-        if (principalIds == null || principalIds.isEmpty()) {
-            return DeferredResult.completed(new ArrayList<>(0));
+    private void validateUsersForDuplicates() {
+        if (!Collections.disjoint(usersToAdd, usersToRemove)) {
+            throw new IllegalStateException("Unable to assign and unassign role for same user.");
         }
-
-        if (cachedUsers == null || cachedUsers.isEmpty()) {
-            return retrieveUserStatesByPrincipalIds(principalIds);
-        }
-
-        ArrayList<String> remainingPrincipalIds = new ArrayList<>(principalIds.size());
-        ArrayList<UserState> resultStates = new ArrayList<>(principalIds.size());
-
-        // retrieve users from cache and build the list of non-cached users
-        principalIds.forEach((principalId) -> {
-            UserState cachedState = cachedUsers.get(principalId);
-            if (cachedState != null) {
-                resultStates.add(cachedState);
-            } else {
-                remainingPrincipalIds.add(principalId);
-            }
-        });
-
-        if (remainingPrincipalIds.isEmpty()) {
-            // all users have been retrieved from cache.
-            return DeferredResult.completed(resultStates);
-        } else {
-            // retrieve users that were not present in the cache
-            return retrieveUserStatesByPrincipalIds(remainingPrincipalIds)
-                    .thenApply((retrievedUsers) -> {
-                        resultStates.addAll(retrievedUsers);
-                        return resultStates;
-                    });
-        }
-
-    }
-
-    private DeferredResult<List<UserState>> retrieveUserStatesByPrincipalIds(
-            List<String> principalIds) {
-
-        if (principalIds == null || principalIds.isEmpty()) {
-            return DeferredResult.completed(new ArrayList<>(0));
-        }
-
-        List<String> documentLinks = principalIds.stream()
-                .map(AuthUtils::getUserStateDocumentLink)
-                .collect(Collectors.toList());
-        return retrieveUserStatesByDocumentLinks(documentLinks);
-    }
-
-    private DeferredResult<List<UserState>> retrieveUserStatesByDocumentLinks(
-            List<String> documentLinks) {
-        List<DeferredResult<UserState>> deferredStates = documentLinks.stream()
-                .map((documentLink) -> Operation.createGet(host, documentLink)
-                        .setReferer(referrer == null ? host.getUri().toString() : referrer))
-                .map((getOp) -> host.sendWithDeferredResult(getOp, UserState.class))
-                .collect(Collectors.toList());
-
-        return DeferredResult.allOf(deferredStates);
     }
 }

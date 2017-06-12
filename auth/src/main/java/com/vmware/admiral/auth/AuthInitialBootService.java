@@ -11,10 +11,13 @@
 
 package com.vmware.admiral.auth;
 
+import static com.vmware.admiral.auth.util.AuthUtil.BASIC_USERS_USER_GROUP_LINK;
+import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_USER_GROUP_LINK;
+import static com.vmware.admiral.auth.util.AuthUtil.DEFAULT_IDENTIFIER;
+import static com.vmware.admiral.auth.util.AuthUtil.buildBasicUsersExtendedResourceGroup;
+import static com.vmware.admiral.auth.util.AuthUtil.buildBasicUsersExtendedRole;
 import static com.vmware.admiral.auth.util.AuthUtil.buildBasicUsersResourceGroup;
-import static com.vmware.admiral.auth.util.AuthUtil.buildBasicUsersResourceGroupExtended;
 import static com.vmware.admiral.auth.util.AuthUtil.buildBasicUsersRole;
-import static com.vmware.admiral.auth.util.AuthUtil.buildBasicUsersRoleExtended;
 import static com.vmware.admiral.auth.util.AuthUtil.buildCloudAdminsResourceGroup;
 import static com.vmware.admiral.auth.util.AuthUtil.buildCloudAdminsRole;
 import static com.vmware.admiral.auth.util.AuthUtil.buildEmptyBasicUsersUserGroup;
@@ -31,6 +34,8 @@ import com.vmware.xenon.common.Operation;
 public class AuthInitialBootService extends AbstractInitialBootService {
     public static final String SELF_LINK = ManagementUriParts.CONFIG + "/auth-initial-boot";
 
+
+
     @Override
     public void handlePost(Operation post) {
         logInfo("Creating user groups.");
@@ -39,14 +44,14 @@ public class AuthInitialBootService extends AbstractInitialBootService {
                 //Initialize Cloud Admins global role.
                 buildEmptyCloudAdminsUserGroup(),
                 buildCloudAdminsResourceGroup(),
-                buildCloudAdminsRole(),
+                buildCloudAdminsRole(DEFAULT_IDENTIFIER, CLOUD_ADMINS_USER_GROUP_LINK),
                 //Initialize Basic Users global role.
                 buildEmptyBasicUsersUserGroup(),
                 buildBasicUsersResourceGroup(),
-                buildBasicUsersRole(),
+                buildBasicUsersRole(DEFAULT_IDENTIFIER, BASIC_USERS_USER_GROUP_LINK),
                 //Initialize Basic Users Extended role.
-                buildBasicUsersResourceGroupExtended(),
-                buildBasicUsersRoleExtended());
+                buildBasicUsersExtendedResourceGroup(),
+                buildBasicUsersExtendedRole(DEFAULT_IDENTIFIER, BASIC_USERS_USER_GROUP_LINK));
     }
 
 }

@@ -11,12 +11,14 @@
 
 package com.vmware.admiral.auth.idm.local;
 
+import static com.vmware.admiral.auth.util.AuthUtil.BASIC_USERS_EXTENDED_RESOURCE_GROUP_LINK;
 import static com.vmware.admiral.auth.util.AuthUtil.BASIC_USERS_RESOURCE_GROUP_LINK;
-import static com.vmware.admiral.auth.util.AuthUtil.BASIC_USERS_ROLE_LINK;
 import static com.vmware.admiral.auth.util.AuthUtil.BASIC_USERS_USER_GROUP_LINK;
 import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_RESOURCE_GROUP_LINK;
-import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_ROLE_LINK;
 import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_USER_GROUP_LINK;
+import static com.vmware.admiral.auth.util.AuthUtil.DEFAULT_BASIC_USERS_EXTENDED_ROLE_LINK;
+import static com.vmware.admiral.auth.util.AuthUtil.DEFAULT_BASIC_USERS_ROLE_LINK;
+import static com.vmware.admiral.auth.util.AuthUtil.DEFAULT_CLOUD_ADMINS_ROLE_LINK;
 import static com.vmware.xenon.common.UriUtils.buildUriPath;
 
 import java.io.File;
@@ -40,7 +42,6 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.Utils;
-import com.vmware.xenon.services.common.UserService;
 
 public class LocalAuthConfigProvider implements AuthConfigProvider {
 
@@ -57,7 +58,6 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
 
     @Override
     public void initConfig(ServiceHost host, Operation post) {
-        // TODO Auto-generated method stub
 
         String localUsers = AuthUtil.getLocalUsersFile(host);
 
@@ -74,7 +74,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
             return;
         }
 
-        AtomicInteger counter = new AtomicInteger(6);
+        AtomicInteger counter = new AtomicInteger(8);
         AtomicBoolean hasError = new AtomicBoolean(false);
 
         host.registerForServiceAvailability((o, ex) -> {
@@ -89,10 +89,12 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
             }
         }, true, CLOUD_ADMINS_RESOURCE_GROUP_LINK,
                 CLOUD_ADMINS_USER_GROUP_LINK,
-                CLOUD_ADMINS_ROLE_LINK,
+                DEFAULT_CLOUD_ADMINS_ROLE_LINK,
                 BASIC_USERS_RESOURCE_GROUP_LINK,
                 BASIC_USERS_USER_GROUP_LINK,
-                BASIC_USERS_ROLE_LINK);
+                DEFAULT_BASIC_USERS_ROLE_LINK,
+                BASIC_USERS_EXTENDED_RESOURCE_GROUP_LINK,
+                DEFAULT_BASIC_USERS_EXTENDED_ROLE_LINK);
 
     }
 
@@ -217,7 +219,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
                 }
             }
         }, true,
-                buildUriPath(UserService.FACTORY_LINK, user.email));
+                buildUriPath(LocalPrincipalFactoryService.SELF_LINK, user.email));
     }
 
     @Override

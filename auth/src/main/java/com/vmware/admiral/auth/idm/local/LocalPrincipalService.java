@@ -87,6 +87,13 @@ public class LocalPrincipalService extends StatefulService {
 
     }
 
+    public static class LocalPrincipalUserGroupAssignment {
+
+        public List<String> groupLinksToAdd;
+
+        public List<String> groupLinksToRemove;
+    }
+
     public LocalPrincipalService() {
         super(LocalPrincipalState.class);
         super.toggleOption(ServiceOption.PERSISTENCE, true);
@@ -105,7 +112,7 @@ public class LocalPrincipalService extends StatefulService {
             validatePrincipal(state);
 
             if (LocalPrincipalType.USER == state.type) {
-                createUserCredentials(state, post);
+                createUserState(state, post);
                 return;
             }
 
@@ -119,8 +126,8 @@ public class LocalPrincipalService extends StatefulService {
     @Override
     public void handlePatch(Operation patch) {
         LocalPrincipalState currentState = getState(patch);
-        LocalPrincipalState patchState = patch.getBody(LocalPrincipalState.class);
 
+        LocalPrincipalState patchState = patch.getBody(LocalPrincipalState.class);
         try {
             validatePrincipalPatch(patchState, currentState);
             PropertyUtils.mergeServiceDocuments(currentState, patchState);
@@ -183,6 +190,30 @@ public class LocalPrincipalService extends StatefulService {
 
     }
 
+    private void createUserState(LocalPrincipalState state, Operation op) {
+        UserState user = new UserState();
+        user.email = state.email;
+        user.documentSelfLink = state.email;
+
+        URI userFactoryUri = UriUtils.buildUri(getHost(), ServiceUriPaths.CORE_AUTHZ_USERS);
+        Operation postUser = Operation.createPost(userFactoryUri)
+                .setBody(user)
+                .setReferer(op.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        logWarning("Unable to create user state %s: %s", state.email, Utils
+                                .toString(ex));
+                        op.fail(ex);
+                        return;
+                    }
+                    createUserCredentials(state, op);
+                });
+
+        addReplicationFactor(postUser);
+        sendRequest(postUser);
+
+    }
+
     private void createUserCredentials(LocalPrincipalState state, Operation op) {
         try {
             state.password = EncryptionUtils.decrypt(state.password);
@@ -198,6 +229,7 @@ public class LocalPrincipalService extends StatefulService {
         auth.privateKey = state.password;
         auth.customProperties = new HashMap<>();
         auth.customProperties.put(PROPERTY_SCOPE, CredentialsScope.SYSTEM.toString());
+        auth.documentSelfLink = state.email;
 
         URI credentialFactoryUri = UriUtils.buildUri(getHost(), ServiceUriPaths.CORE_CREDENTIALS);
         Operation postCreds = Operation.createPost(credentialFactoryUri)
@@ -209,55 +241,34 @@ public class LocalPrincipalService extends StatefulService {
                         op.fail(ex);
                         return;
                     }
-                    createUserState(state, op);
+                    finalizeUserCreate(state, op);
                 });
         addReplicationFactor(postCreds);
         sendRequest(postCreds);
     }
 
-    private void createUserState(LocalPrincipalState state, Operation op) {
-
-        UserState userState = new UserState();
-        userState.email = state.email;
-        userState.documentSelfLink = state.email;
-        URI userFactoryUri = UriUtils.buildUri(getHost(), ServiceUriPaths.CORE_AUTHZ_USERS);
-        Operation postUser = Operation.createPost(userFactoryUri)
-                .setBody(userState)
-                .setReferer(op.getUri())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        logWarning("Unable to create user state: %s", Utils.toString(ex));
-                        op.fail(ex);
-                        return;
-                    }
-                    finalizeUserCreate(state, op);
-                });
-        addReplicationFactor(postUser);
-        sendRequest(postUser);
-    }
-
     private void finalizeUserCreate(LocalPrincipalState state, Operation op) {
-        String userGroupToAdd;
-        DeferredResult<Void> updateUserRole;
+        DeferredResult<Void> result;
         if (state.isAdmin == null || state.isAdmin) {
-            userGroupToAdd = CLOUD_ADMINS_USER_GROUP_LINK;
-            updateUserRole = UserGroupsUpdater.create(getHost(), CLOUD_ADMINS_USER_GROUP_LINK,
-                    op.getUri().toString(), Collections.singletonList(state.email), null)
+            result = UserGroupsUpdater.create()
+                    .setUsersToRemove(null)
+                    .setUsersToAdd(Collections.singletonList(state.email))
+                    .setReferrer(op.getUri().toString())
+                    .setGroupLink(CLOUD_ADMINS_USER_GROUP_LINK)
+                    .setHost(getHost())
                     .update();
         } else {
-            userGroupToAdd = BASIC_USERS_USER_GROUP_LINK;
-            updateUserRole = UserGroupsUpdater.create(getHost(), BASIC_USERS_USER_GROUP_LINK,
-                    op.getUri().toString(), Collections.singletonList(state.email), null)
+            result = UserGroupsUpdater.create()
+                    .setUsersToRemove(null)
+                    .setUsersToAdd(Collections.singletonList(state.email))
+                    .setReferrer(op.getUri().toString())
+                    .setGroupLink(BASIC_USERS_USER_GROUP_LINK)
+                    .setHost(getHost())
                     .update();
         }
 
-        updateUserRole.whenComplete((o, ex) -> {
-            if (ex != null) {
-                logWarning("Unable to add user %s to user group %s: %s", state.email,
-                        userGroupToAdd, Utils.toString(ex));
-                op.fail(ex);
-                return;
-            }
+        result.whenComplete((ignore, ex) -> {
+            logInfo("User %s successfully created.", state.email);
             state.password = null;
             op.setBody(state);
             op.complete();
@@ -277,6 +288,16 @@ public class LocalPrincipalService extends StatefulService {
                     }
                     super.handleDelete(delete);
                 }));
+    }
+
+    private boolean isRoleAssignmentUpdate(LocalPrincipalUserGroupAssignment patchGroups) {
+        if (patchGroups == null) {
+            return false;
+        }
+        boolean add = patchGroups.groupLinksToAdd != null && !patchGroups.groupLinksToAdd.isEmpty();
+        boolean remove = patchGroups.groupLinksToRemove != null
+                && !patchGroups.groupLinksToRemove.isEmpty();
+        return add || remove;
     }
 }
 

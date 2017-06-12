@@ -11,7 +11,7 @@
 
 package com.vmware.admiral.auth.util;
 
-import static com.vmware.admiral.common.util.AuthUtils.buildUsersQuery;
+import static com.vmware.admiral.common.util.AuthUtils.buildQueryForUsers;
 
 import java.util.Base64;
 import java.util.Collections;
@@ -19,6 +19,7 @@ import java.util.EnumSet;
 import java.util.ServiceLoader;
 import java.util.logging.Level;
 
+import com.vmware.admiral.auth.idm.AuthRoles;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
@@ -45,30 +46,42 @@ import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
 
 public class AuthUtil {
+    public static final String DEFAULT_IDENTIFIER = "default";
 
-    public static final String CLOUD_ADMINS = "cloud-admins";
+    public static final String DEFAULT_CLOUD_ADMINS = AuthRoles.CLOUD_ADMINS
+            .buildRoleWithSuffix(DEFAULT_IDENTIFIER);
+
     public static final String CLOUD_ADMINS_RESOURCE_GROUP_LINK = UriUtils
-            .buildUriPath(ResourceGroupService.FACTORY_LINK, CLOUD_ADMINS);
+            .buildUriPath(ResourceGroupService.FACTORY_LINK, AuthRoles.CLOUD_ADMINS.getSuffix());
+
     public static final String CLOUD_ADMINS_USER_GROUP_LINK = UriUtils
-            .buildUriPath(UserGroupService.FACTORY_LINK, CLOUD_ADMINS);
-    public static final String CLOUD_ADMINS_ROLE_LINK = UriUtils
-            .buildUriPath(RoleService.FACTORY_LINK, CLOUD_ADMINS);
+            .buildUriPath(UserGroupService.FACTORY_LINK, AuthRoles.CLOUD_ADMINS.getSuffix());
+
+    public static final String DEFAULT_CLOUD_ADMINS_ROLE_LINK = UriUtils
+            .buildUriPath(RoleService.FACTORY_LINK, DEFAULT_CLOUD_ADMINS);
 
 
-    public static final String BASIC_USERS = "basic-users";
-    public static final String BASIC_USERS_EXTENDED = "basic-users-extended";
+    public static final String DEFAULT_BASIC_USERS = AuthRoles.BASIC_USERS
+            .buildRoleWithSuffix(DEFAULT_IDENTIFIER);
 
     public static final String BASIC_USERS_RESOURCE_GROUP_LINK = UriUtils
-            .buildUriPath(ResourceGroupService.FACTORY_LINK, BASIC_USERS);
+            .buildUriPath(ResourceGroupService.FACTORY_LINK, AuthRoles.BASIC_USERS.getSuffix());
+
     public static final String BASIC_USERS_USER_GROUP_LINK = UriUtils
-            .buildUriPath(UserGroupService.FACTORY_LINK, BASIC_USERS);
-    public static final String BASIC_USERS_ROLE_LINK = UriUtils
-            .buildUriPath(RoleService.FACTORY_LINK, BASIC_USERS);
+            .buildUriPath(UserGroupService.FACTORY_LINK, AuthRoles.BASIC_USERS.getSuffix());
+
+    public static final String DEFAULT_BASIC_USERS_ROLE_LINK = UriUtils
+            .buildUriPath(RoleService.FACTORY_LINK, DEFAULT_BASIC_USERS);
+
+    public static final String DEFAULT_BASIC_USERS_EXTENDED = AuthRoles.BASIC_USERS_EXTENDED
+            .buildRoleWithSuffix(DEFAULT_IDENTIFIER);
 
     public static final String BASIC_USERS_EXTENDED_RESOURCE_GROUP_LINK = UriUtils
-            .buildUriPath(ResourceGroupService.FACTORY_LINK, BASIC_USERS_EXTENDED);
-    public static final String BASIC_USERS_EXTENDED_ROLE_LINK = UriUtils
-            .buildUriPath(RoleService.FACTORY_LINK, BASIC_USERS_EXTENDED);
+            .buildUriPath(ResourceGroupService.FACTORY_LINK,
+                    AuthRoles.BASIC_USERS_EXTENDED.getSuffix());
+
+    public static final String DEFAULT_BASIC_USERS_EXTENDED_ROLE_LINK = UriUtils
+            .buildUriPath(RoleService.FACTORY_LINK, DEFAULT_BASIC_USERS_EXTENDED);
 
     public static final String LOCAL_USERS_FILE = "localUsers";
 
@@ -148,15 +161,9 @@ public class AuthUtil {
     }
 
     public static UserGroupState buildEmptyCloudAdminsUserGroup() {
-        Query cloudAdminsQuery = buildUsersQuery(null);
+        String id = AuthRoles.CLOUD_ADMINS.getSuffix();
 
-        UserGroupState cloudAdminsUserGroup = UserGroupState.Builder
-                .create()
-                .withQuery(cloudAdminsQuery)
-                .withSelfLink(CLOUD_ADMINS_USER_GROUP_LINK)
-                .build();
-
-        return cloudAdminsUserGroup;
+        return buildUserGroupState(id);
     }
 
     public static ResourceGroupState buildCloudAdminsResourceGroup() {
@@ -175,33 +182,28 @@ public class AuthUtil {
         return resourceGroupState;
     }
 
-    public static RoleState buildCloudAdminsRole() {
-
+    public static RoleState buildCloudAdminsRole(String identifier, String userGroupLink) {
+        String id = AuthRoles.CLOUD_ADMINS.buildRoleWithSuffix(identifier);
+        String selfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
         EnumSet<Action> verbs = EnumSet.allOf(Action.class);
         Collections.addAll(verbs, Action.values());
 
         RoleState cloudAdminRole = RoleState.Builder
                 .create()
                 .withPolicy(Policy.ALLOW)
-                .withSelfLink(CLOUD_ADMINS_ROLE_LINK)
+                .withSelfLink(selfLink)
                 .withVerbs(verbs)
                 .withResourceGroupLink(CLOUD_ADMINS_RESOURCE_GROUP_LINK)
-                .withUserGroupLink(CLOUD_ADMINS_USER_GROUP_LINK)
+                .withUserGroupLink(userGroupLink)
                 .build();
 
         return cloudAdminRole;
     }
 
     public static UserGroupState buildEmptyBasicUsersUserGroup() {
-        Query cloudAdminsQuery = buildUsersQuery(null);
+        String id = AuthRoles.BASIC_USERS.getSuffix();
 
-        UserGroupState basicUsersUserGroup = UserGroupState.Builder
-                .create()
-                .withQuery(cloudAdminsQuery)
-                .withSelfLink(BASIC_USERS_USER_GROUP_LINK)
-                .build();
-
-        return basicUsersUserGroup;
+        return buildUserGroupState(id);
     }
 
     public static ResourceGroupState buildBasicUsersResourceGroup() {
@@ -226,18 +228,19 @@ public class AuthUtil {
         return resourceGroupState;
     }
 
-    public static RoleState buildBasicUsersRole() {
-
+    public static RoleState buildBasicUsersRole(String identifier, String userGroupLink) {
+        String id = AuthRoles.BASIC_USERS.buildRoleWithSuffix(identifier);
+        String selfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
         EnumSet<Action> verbs = EnumSet.noneOf(Action.class);
         verbs.add(Action.GET);
 
         RoleState basicUsersRole = RoleState.Builder
                 .create()
                 .withPolicy(Policy.ALLOW)
-                .withSelfLink(BASIC_USERS_ROLE_LINK)
+                .withSelfLink(selfLink)
                 .withVerbs(verbs)
                 .withResourceGroupLink(BASIC_USERS_RESOURCE_GROUP_LINK)
-                .withUserGroupLink(BASIC_USERS_USER_GROUP_LINK)
+                .withUserGroupLink(userGroupLink)
                 .build();
 
         return basicUsersRole;
@@ -247,7 +250,7 @@ public class AuthUtil {
      * This is currently used to workaround xenon problem, where we can't
      * get documents if with OData query.
      */
-    public static ResourceGroupState buildBasicUsersResourceGroupExtended() {
+    public static ResourceGroupState buildBasicUsersExtendedResourceGroup() {
 
         Query resourceGroupQuery = Query.Builder
                 .create()
@@ -272,7 +275,9 @@ public class AuthUtil {
      * This is currently used to workaround xenon problem, where we can't
      * get documents if with OData query.
      */
-    public static RoleState buildBasicUsersRoleExtended() {
+    public static RoleState buildBasicUsersExtendedRole(String identifier, String userGroupLink) {
+        String id = AuthRoles.BASIC_USERS_EXTENDED.buildRoleWithSuffix(identifier);
+        String selfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
 
         EnumSet<Action> verbs = EnumSet.noneOf(Action.class);
         verbs.add(Action.GET);
@@ -281,13 +286,39 @@ public class AuthUtil {
         RoleState basicUsersRole = RoleState.Builder
                 .create()
                 .withPolicy(Policy.ALLOW)
-                .withSelfLink(BASIC_USERS_EXTENDED_ROLE_LINK)
+                .withSelfLink(selfLink)
                 .withVerbs(verbs)
                 .withResourceGroupLink(BASIC_USERS_EXTENDED_RESOURCE_GROUP_LINK)
-                .withUserGroupLink(BASIC_USERS_USER_GROUP_LINK)
+                .withUserGroupLink(userGroupLink)
                 .build();
 
         return basicUsersRole;
+    }
+
+    public static UserGroupState buildProjectAdminsUserGroup(String projectId) {
+        String id = AuthRoles.PROJECT_ADMINS.buildRoleWithSuffix(projectId);
+
+        return buildUserGroupState(id);
+    }
+
+    public static UserGroupState buildProjectMembersUserGroup(String projectId) {
+        String id = AuthRoles.PROJECT_MEMBERS.buildRoleWithSuffix(projectId);
+
+        return buildUserGroupState(id);
+    }
+
+    public static UserGroupState buildUserGroupState(String identifier) {
+        String selfLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, identifier);
+
+        Query userGroupQuery = buildQueryForUsers(selfLink);
+
+        UserGroupState userGroupState = UserGroupState.Builder
+                .create()
+                .withQuery(userGroupQuery)
+                .withSelfLink(selfLink)
+                .build();
+
+        return userGroupState;
     }
 
     /**

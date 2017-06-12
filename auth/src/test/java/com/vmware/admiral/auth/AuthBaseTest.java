@@ -15,16 +15,18 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.auth.util.AuthUtil.BASIC_USERS_RESOURCE_GROUP_LINK;
-import static com.vmware.admiral.auth.util.AuthUtil.BASIC_USERS_ROLE_LINK;
 import static com.vmware.admiral.auth.util.AuthUtil.BASIC_USERS_USER_GROUP_LINK;
 import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_RESOURCE_GROUP_LINK;
-import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_ROLE_LINK;
 import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_USER_GROUP_LINK;
+import static com.vmware.admiral.auth.util.AuthUtil.DEFAULT_BASIC_USERS_ROLE_LINK;
+import static com.vmware.admiral.auth.util.AuthUtil.DEFAULT_CLOUD_ADMINS_ROLE_LINK;
+import static com.vmware.admiral.auth.util.ProjectUtil.retrieveUserStatesForGroup;
 
 import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -46,11 +48,14 @@ import com.vmware.admiral.host.HostInitComputeServicesConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.xenon.common.CommandLineArgumentParser;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.common.test.VerificationHost;
+import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
 import com.vmware.xenon.services.common.UserService;
+import com.vmware.xenon.services.common.UserService.UserState;
 
 public abstract class AuthBaseTest extends BaseTestCase {
     public static final int DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES = 180;
@@ -206,8 +211,8 @@ public abstract class AuthBaseTest extends BaseTestCase {
     private void waitForDefaultRoles() throws Throwable {
         waitForServiceAvailability(CLOUD_ADMINS_RESOURCE_GROUP_LINK,
                 CLOUD_ADMINS_USER_GROUP_LINK,
-                CLOUD_ADMINS_ROLE_LINK,
-                BASIC_USERS_ROLE_LINK,
+                DEFAULT_CLOUD_ADMINS_ROLE_LINK,
+                DEFAULT_BASIC_USERS_ROLE_LINK,
                 BASIC_USERS_USER_GROUP_LINK,
                 BASIC_USERS_RESOURCE_GROUP_LINK);
     }
@@ -222,6 +227,29 @@ public abstract class AuthBaseTest extends BaseTestCase {
             }
             return true;
         });
+    }
+
+    protected List<UserState> getUsersFromUserGroup(String userGroupLink) throws Throwable {
+        UserGroupState state = getDocument(UserGroupState.class, userGroupLink);
+        assertNotNull(state);
+        assertNotNull(state.query);
+
+        DeferredResult<List<UserState>> result = retrieveUserStatesForGroup(host, state);
+
+        List<UserState> resultList = new ArrayList<>();
+
+        TestContext ctx = testCreate(1);
+
+        result.whenComplete((list, ex) -> {
+            if (ex != null) {
+                ctx.failIteration(ex);
+                return;
+            }
+            resultList.addAll(list);
+            ctx.completeIteration();
+        });
+        ctx.await();
+        return resultList;
     }
 
 }

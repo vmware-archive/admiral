@@ -26,6 +26,7 @@ import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.UserService;
 
 public class PrincipalUtil {
 
@@ -91,5 +92,9 @@ public class PrincipalUtil {
 
     public static URI buildLocalPrincipalStateSelfLink(ServiceHost host, String id) {
         return UriUtils.buildUri(host, LocalPrincipalFactoryService.SELF_LINK + "/" + id);
+    }
+
+    public static URI builUserStateSelfLinks(ServiceHost host, String id) {
+        return UriUtils.buildUri(host, UserService.FACTORY_LINK + "/" + id);
     }
 }

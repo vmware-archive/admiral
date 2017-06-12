@@ -53,7 +53,9 @@ public class ProjectServiceTest extends AuthBaseTest {
 
     private ProjectState project;
 
-    /** A DTO for test purposes. Used to patch a project state and project roles at the same time */
+    /**
+     * A DTO for test purposes. Used to patch a project state and project roles at the same time
+     */
     private static class ProjectMixedPatchDto extends ProjectRoles {
         @SuppressWarnings("unused")
         public String name;
@@ -183,7 +185,9 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertEquals(0, expandedState.members.size());
     }
 
-    /** Test with a PATCH request that updates both the project state and the user roles. */
+    /**
+     * Test with a PATCH request that updates both the project state and the user roles.
+     */
     @Test
     public void testMixedPatch() throws Throwable {
         // verify initial state
@@ -218,7 +222,8 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertEquals(1, expandedState.administrators.size());
         assertEquals(3, expandedState.members.size());
         assertEquals(USERNAME_ADMIN, expandedState.administrators.iterator().next().email);
-        List<String> expectedMembers = Arrays.asList(USERNAME_ADMIN, USERNAME_CONNIE, USERNAME_GLORIA);
+        List<String> expectedMembers = Arrays
+                .asList(USERNAME_ADMIN, USERNAME_CONNIE, USERNAME_GLORIA);
         assertTrue(expandedState.members.stream()
                 .allMatch((userState) -> expectedMembers.contains(userState.email)));
 
@@ -257,7 +262,7 @@ public class ProjectServiceTest extends AuthBaseTest {
         ProjectRoles projectRoles = new ProjectRoles();
         projectRoles.members = new ProjectRoles.RolesAssignment();
         projectRoles.members.remove = Arrays.asList(USERNAME_ADMIN);
-        projectRoles.members.add = Arrays.asList(USERNAME_GLORIA, USERNAME_ADMIN);
+        projectRoles.members.add = Arrays.asList(USERNAME_GLORIA, USERNAME_CONNIE, "lazy@peon");
 
         host.testStart(1);
         Operation.createPut(host, expandedState.documentSelfLink)
@@ -283,14 +288,13 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertNotNull(expandedState.administrators);
         assertNotNull(expandedState.members);
         assertEquals(1, expandedState.administrators.size());
-        assertEquals(2, expandedState.members.size()); // one removed, two added
+        assertEquals(3, expandedState.members.size()); // one removed, two added
         assertEquals(USERNAME_ADMIN, expandedState.administrators.iterator().next().email);
         assertTrue(expandedState.members.stream()
                 .anyMatch((member) -> member.email.equals(USERNAME_GLORIA)));
         assertTrue(expandedState.members.stream()
-                .anyMatch((member) -> member.email.equals(USERNAME_ADMIN)));
+                .anyMatch((member) -> member.email.equals(USERNAME_CONNIE)));
     }
-
 
     @Test
     public void testDelete() throws Throwable {
@@ -406,13 +410,13 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertTrue(stateWithMembers.administrators.size() == 1);
         assertTrue(stateWithMembers.administrators.iterator()
                 .next().documentSelfLink
-                        .equals(buildUserServicePath(USERNAME_ADMIN)));
+                .equals(buildUserServicePath(USERNAME_ADMIN)));
 
         assertNotNull(stateWithMembers.members);
         assertTrue(stateWithMembers.members.size() == 1);
         assertTrue(stateWithMembers.members.iterator()
                 .next().documentSelfLink
-                        .equals(buildUserServicePath(USERNAME_ADMIN)));
+                .equals(buildUserServicePath(USERNAME_ADMIN)));
     }
 
     @Test

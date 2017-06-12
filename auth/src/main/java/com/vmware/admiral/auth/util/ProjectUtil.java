@@ -124,7 +124,7 @@ public class ProjectUtil {
     /**
      * Retrieves the list of members for the specified user group.
      */
-    private static DeferredResult<List<UserState>> retrieveUserStatesForGroup(ServiceHost host,
+    public static DeferredResult<List<UserState>> retrieveUserStatesForGroup(ServiceHost host,
             UserGroupState groupState) {
         DeferredResult<List<UserState>> deferredResult = new DeferredResult<>();
         ArrayList<UserState> resultList = new ArrayList<>();

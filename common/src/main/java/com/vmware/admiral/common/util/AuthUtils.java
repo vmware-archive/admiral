@@ -14,6 +14,7 @@ package com.vmware.admiral.common.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
@@ -29,6 +30,7 @@ import com.vmware.xenon.services.common.UserService;
 import com.vmware.xenon.services.common.UserService.UserState;
 
 public class AuthUtils {
+    public static final String FIELD_NAME_USER_GROUP_LINK = "userGroupLinks";
 
     protected static final String USERS_QUERY_NO_USERS_SELF_LINK = "__no-users";
 
@@ -57,6 +59,22 @@ public class AuthUtils {
      */
     public static boolean isDevOpsAdmin(Operation op) {
         return !OperationUtil.isGuestUser(op);
+    }
+
+    public static Query buildQueryForUsers(String userGroupLink) {
+        Query resultQuery = new Query();
+
+        Query kindClause = QueryUtil.createKindClause(UserState.class)
+                .setOccurance(Occurance.MUST_OCCUR);
+
+        Query matchUsers = Query.Builder.create()
+                .addInCollectionItemClause(FIELD_NAME_USER_GROUP_LINK,
+                        Collections.singletonList(userGroupLink), Occurance.MUST_OCCUR)
+                .build();
+
+        resultQuery.addBooleanClause(kindClause);
+        resultQuery.addBooleanClause(matchUsers);
+        return resultQuery;
     }
 
     public static Query buildQueryForUsers(String... userLinks) {
