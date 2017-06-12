@@ -15,10 +15,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -93,6 +95,47 @@ public class ClusterServiceTest extends ComputeBaseTest {
         ContainerHostSpec hostSpec = createContainerHostSpec(Collections.singletonList(projectLink),
                 ContainerHostType.VCH);
         verifyCluster(createCluster(hostSpec), ClusterType.VCH, placementZoneName, projectLink);
+    }
+
+    @Test
+    public void testListClusters() throws Throwable {
+        final String projectLinkDocker = buildProjectLink("test-docker-project");
+        final String placementZoneNameDocker = PlacementZoneUtil
+                .buildPlacementZoneDefaultName(ContainerHostType.DOCKER, COMPUTE_ADDRESS);
+
+        ContainerHostSpec hostSpecDocker = createContainerHostSpec(
+                Collections.singletonList(projectLinkDocker),
+                ContainerHostType.DOCKER);
+
+        final String projectLinkVCH = buildProjectLink("test-vch-project");
+        final String placementZoneNameVCH = PlacementZoneUtil
+                .buildPlacementZoneDefaultName(ContainerHostType.VCH, COMPUTE_ADDRESS);
+
+        ContainerHostSpec hostSpecVCH = createContainerHostSpec(
+                Collections.singletonList(projectLinkVCH),
+                ContainerHostType.VCH);
+        ClusterDto clusterDocker = createCluster(hostSpecDocker);
+        ClusterDto clusterVCH = createCluster(hostSpecVCH);
+        Map<String, ClusterDto> allClusters = getClusters();
+
+        assertEquals(3, allClusters.size());
+        ClusterDto defaultClusterDto = allClusters.get(UriUtils.buildUriPath(
+                ClusterService.SELF_LINK,
+                GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_ID));
+        assertNotNull(defaultClusterDto);
+        assertEquals(0, defaultClusterDto.nodeLinks.size());
+        assertEquals(ClusterService.ClusterStatus.DISABLED, defaultClusterDto.status);
+
+        verifyCluster(allClusters.get(clusterDocker.documentSelfLink), ClusterType.DOCKER,
+                placementZoneNameDocker, projectLinkDocker);
+        verifyCluster(allClusters.get(clusterVCH.documentSelfLink), ClusterType.VCH,
+                placementZoneNameVCH, projectLinkVCH);
+
+        Map<String, ClusterDto> filteredClusters = getClusters(
+                "?$filter=name eq 'docker:test.host.address'");
+        assertEquals(1, filteredClusters.size());
+        assertEquals(placementZoneNameDocker,
+                filteredClusters.get(clusterDocker.documentSelfLink).name);
     }
 
     private void verifyCluster(ClusterDto clusterDto, ClusterType clusterType, String expectedName,
@@ -186,6 +229,40 @@ public class ClusterServiceTest extends ComputeBaseTest {
         ClusterDto dto = result.iterator().next();
         assertNotNull(dto);
         return dto;
+    }
+
+    private Map<String, ClusterDto> getClusters() {
+        return getClusters("");
+    }
+
+    private Map<String, ClusterDto> getClusters(String oDataQuery) {
+        Map<String, ClusterDto> result = new HashMap<>();
+        URI uri = UriUtils.buildUri(host,
+                ClusterService.SELF_LINK, oDataQuery);
+        Operation get = Operation.createGet(host, uri.getPath() + uri.getQuery())
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.log(Level.SEVERE, "Failed to get cluster: %s", Utils.toString(ex));
+                        host.failIteration(ex);
+                    } else {
+                        try {
+                            result.putAll(Utils.fromJson(o.getBodyRaw(), Map.class));
+                            host.completeIteration();
+                        } catch (Throwable er) {
+                            host.log(Level.SEVERE,
+                                    "Failed to retrieve created cluster DTO from response: %s",
+                                    Utils.toString(er));
+                            host.failIteration(er);
+                        }
+                    }
+                });
+
+        host.testStart(1);
+        host.send(get);
+        host.testWait();
+
+        return result;
     }
 
     private ContainerHostSpec createContainerHostSpec(List<String> tenantLinks,

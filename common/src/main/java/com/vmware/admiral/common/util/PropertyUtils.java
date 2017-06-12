@@ -24,6 +24,7 @@ import com.vmware.xenon.common.ReflectionUtils;
 import com.vmware.xenon.common.ServiceDocument;
 
 public class PropertyUtils {
+    private static final Logger LOGGER = Logger.getLogger(PropertyUtils.class.getName());
 
     public static <T> T mergeProperty(T copyTo, T copyFrom) {
         if (copyFrom != null) {
@@ -141,8 +142,9 @@ public class PropertyUtils {
                 // Some values are written in scientific notation, so we parse them with Double
                 return Optional.of(value.longValue());
             } catch (Exception ex) {
-                Logger.getAnonymousLogger().warning(
-                        String.format("Could not parse property %s as double: %s", key, properties.get(key)));
+                LOGGER.warning(
+                        String.format("Could not parse property %s as double: %s", key,
+                                properties.get(key)));
                 return Optional.empty();
             }
         } else {
@@ -158,8 +160,9 @@ public class PropertyUtils {
             try {
                 return Optional.of(Double.valueOf(properties.get(key)));
             } catch (Exception ex) {
-                Logger.getAnonymousLogger().warning(
-                        String.format("Could not parse property %s as double: %s", key, properties.get(key)));
+                LOGGER.warning(
+                        String.format("Could not parse property %s as double: %s", key,
+                                properties.get(key)));
                 return Optional.empty();
             }
         } else {
@@ -167,7 +170,8 @@ public class PropertyUtils {
         }
     }
 
-    public static Map<String, Object> setPropertyDouble(Map<String, Object> properties, String key, String value) {
+    public static Map<String, Object> setPropertyDouble(Map<String, Object> properties, String key,
+            String value) {
         if (key == null) {
             return properties;
         }
@@ -175,8 +179,44 @@ public class PropertyUtils {
         try {
             properties.put(key, Double.valueOf(value));
         } catch (Exception e) {
-            Logger.getLogger(PropertyUtils.class.getName())
-                .warning(String.format("Cannot set property %s value %s as double", key, value));
+            LOGGER.warning(
+                            String.format("Cannot set property %s value %s as double", key, value));
+        }
+
+        return properties;
+    }
+
+    public static Optional<Integer> getPropertyInteger(Map<String, String> properties, String key) {
+        if (properties == null) {
+            return Optional.empty();
+        }
+        if (properties.containsKey(key)) {
+            try {
+                Double value = Double.valueOf(properties.get(key));
+                // Some values are written in scientific notation, so we parse them with Double
+                return Optional.of(value.intValue());
+            } catch (Exception ex) {
+                LOGGER.warning(
+                        String.format("Could not parse property %s as integer: %s", key,
+                                properties.get(key)));
+                return Optional.empty();
+            }
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    public static Map<String, Object> setPropertyInteger(Map<String, Object> properties, String key,
+            String value) {
+        if (key == null) {
+            return properties;
+        }
+
+        try {
+            properties.put(key, Integer.valueOf(value));
+        } catch (Exception e) {
+            LOGGER.warning(String.format("Cannot set property %s value %s as integer", key,
+                            value));
         }
 
         return properties;
