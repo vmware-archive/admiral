@@ -73,6 +73,6 @@ export class FT {
   }
 
   public static isHbrEnabled() {
-    return Utils.getConfigurationPropertyBoolean('harbor.tab.url') && this.isApplicationEmbedded();
+    return Utils.getConfigurationProperty('harbor.tab.url') && !this.isApplicationEmbedded();
   }
 };
