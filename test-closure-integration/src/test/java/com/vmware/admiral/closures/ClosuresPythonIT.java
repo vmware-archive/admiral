@@ -17,6 +17,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import static com.vmware.admiral.closures.drivers.DriverConstants.RUNTIME_PYTHON_3;
+
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
@@ -38,49 +40,35 @@ import org.junit.Test;
 
 import com.vmware.admiral.BaseClosureIntegrationTest;
 import com.vmware.admiral.SimpleHttpsClient;
-import com.vmware.admiral.closures.drivers.DriverConstants;
 import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
 import com.vmware.admiral.closures.services.closuredescription.ResourceConstraints;
 import com.vmware.admiral.common.util.ServiceClientFactory;
-import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.Utils;
 
+@SuppressWarnings("unchecked")
 public class ClosuresPythonIT extends BaseClosureIntegrationTest {
 
-    protected static String IMAGE_NAME_PREFIX = "vmware/photon-closure-runner_";
+    private static final String IMAGE_NAME_PREFIX = "vmware/photon-closure-runner_";
 
-    private static final String IMAGE_NAME =
-            IMAGE_NAME_PREFIX + DriverConstants.RUNTIME_PYTHON_3;
-
-    private static String testWebserverUri;
-
-    private static String RUNTIME_PYTHON = "python";
+    private static final String IMAGE_NAME = IMAGE_NAME_PREFIX + RUNTIME_PYTHON_3;
 
     private static ServiceClient serviceClient;
-
     private static String dockerBuildImageLink;
     private static String dockerBuildBaseImageLink;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        try {
-            serviceClient = ServiceClientFactory.createServiceClient(null);
-            testWebserverUri = getTestWebServerUrl();
-
-            setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
-            dockerBuildImageLink = getBaseUrl()
-                    + createImageBuildRequestUri(IMAGE_NAME + ":1.0", dockerHostCompute
-                    .documentSelfLink);
-            dockerBuildBaseImageLink = getBaseUrl()
-                    + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
-                    .documentSelfLink);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        serviceClient = ServiceClientFactory.createServiceClient(null);
+        setupClosureEnv();
+        dockerBuildImageLink = getBaseUrl()
+                + createImageBuildRequestUri(IMAGE_NAME + ":1.0", dockerHostCompute
+                .documentSelfLink);
+        dockerBuildBaseImageLink = getBaseUrl()
+                + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
+                .documentSelfLink);
     }
 
     @AfterClass
@@ -117,7 +105,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
                 + "    print('Hello numbers {}'.format(inputs['a']))\n"
                 + "    context.outputs['result'] = inputs['a'] + 1\n"
                 + "\n";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
 
         ResourceConstraints constraints = new ResourceConstraints();
@@ -175,7 +163,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
                 + "    context.outputs['result'] = x\n"
                 + "    print (context.outputs['result'])\n"
                 + "\n";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 4;
@@ -234,7 +222,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
                 + "    print('Hello string: {}'.format(inputs['a']))\n"
                 + "    ctx.outputs['result'] = inputs['a'] + \"c\"\n"
                 + "\n";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 5;
@@ -294,7 +282,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
                 + "     print ('Hello number: {}'.format(x))\n"
                 + "     context.outputs['result'] = x\n"
                 + "\n";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 4;
@@ -354,7 +342,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
                 + "     print ('Hello boolean: {}'.format(ctx.inputs['a']))\n"
                 + "     ctx.outputs['result'] = not ctx.inputs['a']\n"
                 + "\n";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 4;
@@ -412,7 +400,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
                 + "         x[index] = not x[index]\n"
                 + "     context.outputs['result'] = x\n"
                 + "\n";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 4;
@@ -494,7 +482,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
                 + "    x['boolTest'] = not x['boolTest']\n"
                 + "    context.outputs['result'] = x\n"
                 + "\n";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 2;
@@ -570,7 +558,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
                 + "     x[0]['boolTest'] = not x[0]['boolTest']\n"
                 + "     ctx.outputs['result'] = x\n"
                 + "\n";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 4;
@@ -654,7 +642,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
                 + "     x['objTest']['boolTest'] = not x['objTest']['boolTest']\n"
                 + "     ctx.outputs['result'] = x\n"
                 + "\n";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 3;
@@ -722,7 +710,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
                 + "     print('Waiting....')\n"
                 + "     time.sleep(10)\n"
                 + "\n";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 1;
@@ -768,7 +756,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
                 + "     print('Waiting....')\n"
                 + "     time.sleep(60)\n"
                 + "\n";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 1;
@@ -862,7 +850,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
                 + "     print('Waiting....')\n"
                 + "     time.sleep(10)\n"
                 + "\n";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 1;
         closureDescState.resources = constraints;
@@ -939,7 +927,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
                 + "     a = 1\n"
                 + "     print('Hello ' + invalid)\n"
                 + "\n";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 4;
@@ -989,7 +977,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
         closureDescState.source = "def test(context):\n"
                 + "    raise Exception('test exception')\n"
                 + "\n";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 3;
@@ -1038,7 +1026,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
 
         closureDescState.sourceURL = testWebserverUri + "/test_script_python.zip";
         closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 2;
@@ -1094,7 +1082,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
 
         closureDescState.sourceURL = testWebserverUri + "/non_existing.zip";
         closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 2;
@@ -1155,7 +1143,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
                 + "    print('Hello numbers {}'.format(inputs['a']))\n"
                 + "    context.outputs['result'] = inputs['a'] + 1\n"
                 + "\n";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 3;
@@ -1212,7 +1200,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
                 + "    print('Hello numbers {}'.format(inputs['a']))\n"
                 + "    context.outputs['result'] = inputs['a'] + 1\n"
                 + "\n";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 2;
@@ -1262,7 +1250,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
 
         closureDescState.sourceURL = testWebserverUri + "/test_script_python_entrypoint.zip";
         closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 5;
@@ -1348,7 +1336,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
                 + "        print(\"failed to store password\")\n"
                 + "    print(\"password\", keyring.get_password(\"demo-service\", \"tarek\"))\n"
                 + "\n";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.dependencies = "requests >= 2.9.1\nkeyring >= 9.3.1";
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
@@ -1414,7 +1402,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
                 + "    context.outputs['result'] = inputs['a'] + 1\n"
                 + "\n";
 
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.dependencies = "requests >= 2.9.1\nnumpy >= 1.11";
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
@@ -1485,7 +1473,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
                 + "        pass\n"
                 + "\n";
 
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.dependencies = "requests >= 2.9.1\nbilliard == 3.3.0.13";
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
@@ -1570,7 +1558,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
                 + "        print(\"failed to store password\")\n"
                 + "    print(\"password\", keyring.get_password(\"demo-service\", \"tarek\"))\n"
                 + "\n";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.dependencies = "requests >= 0.11.1\n";
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
@@ -1623,7 +1611,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
         double expectedResult = 4;
 
         closureDescState.sourceURL = testWebserverUri + "/test_script_python_dependencies.zip";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.ramMB = 300;
@@ -1680,7 +1668,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
                 + "    print('Hello numbers {}'.format(inputs['a']))\n"
                 + "    context.outputs['result'] = inputs['a'] + 1\n"
                 + "\n";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.notifyUrl = "/cmp/task_consumer";
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
@@ -1743,7 +1731,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
                 + "    print('Hello numbers {}'.format(inputs['a']))\n"
                 + "    context.outputs['result'] = inputs['a'] + 1\n"
                 + "\n";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.notifyUrl = "/invalid";
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
@@ -1816,7 +1804,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
 
         closureDescState.sourceURL = serviceHostUri + closureSource.documentSelfLink + "?contentValue=true";
         closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 2;
@@ -1910,7 +1898,7 @@ public class ClosuresPythonIT extends BaseClosureIntegrationTest {
 
         closureDescState.sourceURL = serviceHostUri + closureSource.documentSelfLink + "?contentValue=true";
         closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_PYTHON;
+        closureDescState.runtime = RUNTIME_PYTHON_3;
         closureDescState.dependencies = "requests >= 0.11.1\nkeyring >= 4.1.1";
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();

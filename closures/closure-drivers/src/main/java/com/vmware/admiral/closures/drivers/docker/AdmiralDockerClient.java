@@ -69,6 +69,10 @@ public class AdmiralDockerClient implements ClosureDockerClient {
         provisioningRequest.serviceTaskCallback = ServiceTaskCallback
                 .create(closure.documentSelfLink);
 
+        if (closure.customProperties != null) {
+            provisioningRequest.customProperties = new HashMap<>(closure.customProperties);
+        }
+
         URI uri = UriUtils.buildUri(getHost(), AdmiralAdapterFactoryService.FACTORY_LINK);
         getHost().sendRequest(OperationUtil.createForcedPost(uri)
                 .setBody(provisioningRequest)

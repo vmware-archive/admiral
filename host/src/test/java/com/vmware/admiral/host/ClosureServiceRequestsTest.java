@@ -54,6 +54,7 @@ import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.ConfigurationService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
 import com.vmware.admiral.service.test.MockComputeHostInstanceAdapter;
+import com.vmware.admiral.service.test.MockDockerHostAdapterImageService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.xenon.common.Operation;
@@ -68,7 +69,6 @@ public class ClosureServiceRequestsTest extends BaseTestCase {
     private static final int DEFAULT_OPERATION_TIMEOUT = 30;
 
     private ComputeDescriptionService.ComputeDescription hostDesc;
-    private ComputeService.ComputeState computeHost;
 
     private final Object initializationLock = new Object();
 
@@ -91,8 +91,14 @@ public class ClosureServiceRequestsTest extends BaseTestCase {
             this.host.log(Level.INFO, "Initial Boot Service stopped: " + ComputeInitialBootService
                     .SELF_LINK);
 
+            // first docker host
             ComputeDescriptionService.ComputeDescription dockerHostDesc = createDockerHostDescription();
             createDockerHost(dockerHostDesc);
+
+            // second docker host
+            ComputeDescriptionService.ComputeDescription dockerHostDescSecond =
+                    createDockerHostDescription();
+            createDockerHost(dockerHostDescSecond);
 
             this.host.log(Level.INFO, "Test compute created.");
 
@@ -214,6 +220,126 @@ public class ClosureServiceRequestsTest extends BaseTestCase {
                                     finalClosureResponse[0].inputs.get("a").getAsInt());
                             assertEquals(expectedResult,
                                     finalClosureResponse[0].outputs.get("a").getAsInt(), 0);
+                            ctx3.completeIteration();
+                        } catch (Throwable ex) {
+                            ctx3.failIteration(ex);
+                        }
+                    }
+                });
+        this.host.send(closureGet);
+        ctx3.await();
+
+        clean(closureChildURI);
+        clean(closureDefChildURI);
+    }
+
+    @Test
+    public void executeImageLoadFailureTest() throws Throwable {
+        // Load image from admiral or docker hub
+        configurePullFromRegistry(DriverConstants.RUNTIME_NODEJS_4, null);
+
+        // Create Closure Definition
+        URI factoryUri = UriUtils
+                .buildFactoryUri(this.host, ClosureDescriptionFactoryService.class);
+        TestContext ctx = testCreate(1);
+
+        ClosureDescription closureDefState = new ClosureDescription();
+        closureDefState.name = "test";
+
+        int expectedInVar = 3;
+        int expectedOutVar = 3;
+        double expectedResult = 3;
+
+        closureDefState.source =
+                "function test(x) {print('Hello number: ' + x); return x + 1;} var b = " +
+                        expectedOutVar
+                        + "; result = test(inputs.a);";
+        closureDefState.runtime = DriverConstants.RUNTIME_NODEJS_4;
+        closureDefState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        closureDefState.documentSelfLink = UUID.randomUUID().toString();
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 10;
+        closureDefState.resources = constraints;
+        ClosureDescription[] responses = new ClosureDescription[1];
+        URI closureDefChildURI = UriUtils.buildUri(this.host,
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/"
+                        + closureDefState.documentSelfLink);
+        Operation post = Operation
+                .createPost(factoryUri)
+                .setBody(closureDefState)
+                .setCompletion((o, e) -> {
+                    assertNull(e);
+                    responses[0] = o.getBody(ClosureDescription.class);
+                    assertNotNull(responses[0]);
+                    ctx.completeIteration();
+                });
+        this.host.send(post);
+        ctx.await();
+
+        // Create Closure
+        TestContext ctx1 = testCreate(1);
+        URI factoryTaskUri = UriUtils.buildFactoryUri(this.host, ClosureFactoryService.class);
+        //        this.host.testStart(1);
+        Closure closureState = new Closure();
+        closureState.descriptionLink =
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/"
+                        + closureDefState.documentSelfLink;
+        closureState.documentSelfLink = UUID.randomUUID().toString();
+        URI closureChildURI = UriUtils.buildUri(this.host,
+                ClosureFactoryService.FACTORY_LINK + "/" + closureState.documentSelfLink);
+
+        // Simulate image load failure
+        closureState.customProperties = new HashMap<>();
+        closureState.customProperties.put(MockDockerHostAdapterImageService.FAILURE_EXPECTED,
+                "true");
+        final Closure[] closureResponses = new Closure[1];
+        Operation closurePost = Operation
+                .createPost(factoryTaskUri)
+                .setBody(closureState)
+                .setCompletion((o, e) -> {
+                    closureResponses[0] = o.getBody(Closure.class);
+                    assertEquals(closureState.descriptionLink, closureResponses[0].descriptionLink);
+                    assertEquals(TaskState.TaskStage.CREATED, closureResponses[0].state);
+                    ctx1.completeIteration();
+                });
+        this.host.send(closurePost);
+        ctx1.await();
+
+        // Executing the created Closure
+        TestContext ctx2 = testCreate(1);
+        Closure closureRequest = new Closure();
+        Map<String, JsonElement> inputs = new HashMap<>();
+        inputs.put("a", new JsonPrimitive(expectedInVar));
+        closureRequest.inputs = inputs;
+        Operation closureExecPost = Operation
+                .createPost(closureChildURI)
+                .setBody(closureRequest)
+                .setCompletion((o, e) -> {
+                    closureResponses[0] = o.getBody(Closure.class);
+                    assertNotNull(closureResponses[0]);
+                    ctx2.completeIteration();
+                });
+        this.host.send(closureExecPost);
+        ctx2.await();
+
+        // Wait for the completion timeout
+        waitForCompletion(closureState.documentSelfLink, DEFAULT_OPERATION_TIMEOUT);
+
+        final Closure[] finalClosureResponse = new Closure[1];
+        TestContext ctx3 = testCreate(1);
+        Operation closureGet = Operation
+                .createGet(closureChildURI)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        ctx3.failIteration(e);
+                    } else {
+                        try {
+                            finalClosureResponse[0] = o.getBody(Closure.class);
+                            assertEquals(closureState.descriptionLink,
+                                    finalClosureResponse[0].descriptionLink);
+                            assertEquals(TaskState.TaskStage.FAILED,
+                                    finalClosureResponse[0].state);
+
                             ctx3.completeIteration();
                         } catch (Throwable ex) {
                             ctx3.failIteration(ex);
@@ -470,6 +596,351 @@ public class ClosureServiceRequestsTest extends BaseTestCase {
     }
 
     @Test
+    public void executeJSNumberParametersWithImageCreateExternalSourceTest() throws Throwable {
+        // Load image from private registry
+        configurePullFromRegistry(DriverConstants.RUNTIME_NODEJS_4, "private.registry.url");
+
+        // Create Closure Definition
+        URI factoryUri = UriUtils
+                .buildFactoryUri(this.host, ClosureDescriptionFactoryService.class);
+        TestContext ctx = testCreate(1);
+
+        ClosureDescription closureDefState = new ClosureDescription();
+        closureDefState.name = "test";
+
+        int expectedInVar = 3;
+        int expectedOutVar = 3;
+        double expectedResult = 3;
+
+        closureDefState.sourceURL = "http://faked_source_url";
+        closureDefState.runtime = DriverConstants.RUNTIME_NODEJS_4;
+        closureDefState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        closureDefState.documentSelfLink = UUID.randomUUID().toString();
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 10;
+        closureDefState.resources = constraints;
+        ClosureDescription[] responses = new ClosureDescription[1];
+        URI closureDefChildURI = UriUtils.buildUri(this.host,
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/"
+                        + closureDefState.documentSelfLink);
+        Operation post = Operation
+                .createPost(factoryUri)
+                .setBody(closureDefState)
+                .setCompletion((o, e) -> {
+                    assertNull(e);
+                    responses[0] = o.getBody(ClosureDescription.class);
+                    assertNotNull(responses[0]);
+                    ctx.completeIteration();
+                });
+        this.host.send(post);
+        ctx.await();
+
+        // Create Closure
+        TestContext ctx1 = testCreate(1);
+        URI factoryTaskUri = UriUtils.buildFactoryUri(this.host, ClosureFactoryService.class);
+        //        this.host.testStart(1);
+        Closure closureState = new Closure();
+        closureState.descriptionLink =
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/"
+                        + closureDefState.documentSelfLink;
+        closureState.documentSelfLink = UUID.randomUUID().toString();
+        URI closureChildURI = UriUtils.buildUri(this.host,
+                ClosureFactoryService.FACTORY_LINK + "/" + closureState.documentSelfLink);
+        final Closure[] closureResponses = new Closure[1];
+        Operation closurePost = Operation
+                .createPost(factoryTaskUri)
+                .setBody(closureState)
+                .setCompletion((o, e) -> {
+                    closureResponses[0] = o.getBody(Closure.class);
+                    assertEquals(closureState.descriptionLink, closureResponses[0].descriptionLink);
+                    assertEquals(TaskState.TaskStage.CREATED, closureResponses[0].state);
+                    ctx1.completeIteration();
+                });
+        this.host.send(closurePost);
+        ctx1.await();
+
+        // Executing the created Closure
+        TestContext ctx2 = testCreate(1);
+        Closure closureRequest = new Closure();
+        Map<String, JsonElement> inputs = new HashMap<>();
+        inputs.put("a", new JsonPrimitive(expectedInVar));
+        closureRequest.inputs = inputs;
+        Operation closureExecPost = Operation
+                .createPost(closureChildURI)
+                .setBody(closureRequest)
+                .setCompletion((o, e) -> {
+                    closureResponses[0] = o.getBody(Closure.class);
+                    assertNotNull(closureResponses[0]);
+                    ctx2.completeIteration();
+                });
+        this.host.send(closureExecPost);
+        ctx2.await();
+
+        // Wait for the completion timeout
+        waitForCompletion(closureState.documentSelfLink, DEFAULT_OPERATION_TIMEOUT);
+
+        final Closure[] finalClosureResponse = new Closure[1];
+        TestContext ctx3 = testCreate(1);
+        Operation closureGet = Operation
+                .createGet(closureChildURI)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        ctx3.failIteration(e);
+                    } else {
+                        try {
+                            finalClosureResponse[0] = o.getBody(Closure.class);
+                            assertEquals(closureState.descriptionLink,
+                                    finalClosureResponse[0].descriptionLink);
+                            assertEquals(TaskState.TaskStage.FAILED,
+                                    finalClosureResponse[0].state);
+
+                            ctx3.completeIteration();
+                        } catch (Throwable ex) {
+                            ctx3.failIteration(ex);
+                        }
+                    }
+                });
+        this.host.send(closureGet);
+        ctx3.await();
+
+        clean(closureChildURI);
+        clean(closureDefChildURI);
+    }
+
+    @Test
+    public void executeImageCreateFailureTest() throws Throwable {
+        // Load image from private registry
+        configurePullFromRegistry(DriverConstants.RUNTIME_NODEJS_4, "private.registry.url");
+
+        // Create Closure Definition
+        URI factoryUri = UriUtils
+                .buildFactoryUri(this.host, ClosureDescriptionFactoryService.class);
+        TestContext ctx = testCreate(1);
+
+        ClosureDescription closureDefState = new ClosureDescription();
+        closureDefState.name = "test";
+
+        int expectedInVar = 3;
+        int expectedOutVar = 3;
+        double expectedResult = 3;
+
+        closureDefState.source =
+                "function test(x) {print('Hello number: ' + x); return x + 1;} var b = " +
+                        expectedOutVar
+                        + "; result = test(inputs.a);";
+        closureDefState.runtime = DriverConstants.RUNTIME_NODEJS_4;
+        closureDefState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        closureDefState.documentSelfLink = UUID.randomUUID().toString();
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 10;
+        closureDefState.resources = constraints;
+        ClosureDescription[] responses = new ClosureDescription[1];
+        URI closureDefChildURI = UriUtils.buildUri(this.host,
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/"
+                        + closureDefState.documentSelfLink);
+        Operation post = Operation
+                .createPost(factoryUri)
+                .setBody(closureDefState)
+                .setCompletion((o, e) -> {
+                    assertNull(e);
+                    responses[0] = o.getBody(ClosureDescription.class);
+                    assertNotNull(responses[0]);
+                    ctx.completeIteration();
+                });
+        this.host.send(post);
+        ctx.await();
+
+        // Create Closure
+        TestContext ctx1 = testCreate(1);
+        URI factoryTaskUri = UriUtils.buildFactoryUri(this.host, ClosureFactoryService.class);
+        //        this.host.testStart(1);
+        Closure closureState = new Closure();
+        closureState.descriptionLink =
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/"
+                        + closureDefState.documentSelfLink;
+        closureState.documentSelfLink = UUID.randomUUID().toString();
+        // Simulate image load failure
+        closureState.customProperties = new HashMap<>();
+        closureState.customProperties.put(MockDockerHostAdapterImageService.FAILURE_EXPECTED,
+                "true");
+        URI closureChildURI = UriUtils.buildUri(this.host,
+                ClosureFactoryService.FACTORY_LINK + "/" + closureState.documentSelfLink);
+        final Closure[] closureResponses = new Closure[1];
+        Operation closurePost = Operation
+                .createPost(factoryTaskUri)
+                .setBody(closureState)
+                .setCompletion((o, e) -> {
+                    closureResponses[0] = o.getBody(Closure.class);
+                    assertEquals(closureState.descriptionLink, closureResponses[0].descriptionLink);
+                    assertEquals(TaskState.TaskStage.CREATED, closureResponses[0].state);
+                    ctx1.completeIteration();
+                });
+        this.host.send(closurePost);
+        ctx1.await();
+
+        // Executing the created Closure
+        TestContext ctx2 = testCreate(1);
+        Closure closureRequest = new Closure();
+        Map<String, JsonElement> inputs = new HashMap<>();
+        inputs.put("a", new JsonPrimitive(expectedInVar));
+        closureRequest.inputs = inputs;
+        Operation closureExecPost = Operation
+                .createPost(closureChildURI)
+                .setBody(closureRequest)
+                .setCompletion((o, e) -> {
+                    closureResponses[0] = o.getBody(Closure.class);
+                    assertNotNull(closureResponses[0]);
+                    ctx2.completeIteration();
+                });
+        this.host.send(closureExecPost);
+        ctx2.await();
+
+        // Wait for the completion timeout
+        waitForCompletion(closureState.documentSelfLink, DEFAULT_OPERATION_TIMEOUT);
+
+        final Closure[] finalClosureResponse = new Closure[1];
+        TestContext ctx3 = testCreate(1);
+        Operation closureGet = Operation
+                .createGet(closureChildURI)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        ctx3.failIteration(e);
+                    } else {
+                        try {
+                            finalClosureResponse[0] = o.getBody(Closure.class);
+                            assertEquals(closureState.descriptionLink,
+                                    finalClosureResponse[0].descriptionLink);
+                            assertEquals(TaskState.TaskStage.FAILED,
+                                    finalClosureResponse[0].state);
+                            ctx3.completeIteration();
+                        } catch (Throwable ex) {
+                            ctx3.failIteration(ex);
+                        }
+                    }
+                });
+        this.host.send(closureGet);
+        ctx3.await();
+
+        clean(closureChildURI);
+        clean(closureDefChildURI);
+    }
+
+    @Test
+    public void executeImageCreateFailureExtSourceTest() throws Throwable {
+        // Load image from private registry
+        configurePullFromRegistry(DriverConstants.RUNTIME_NODEJS_4, "private.registry.url");
+
+        // Create Closure Definition
+        URI factoryUri = UriUtils
+                .buildFactoryUri(this.host, ClosureDescriptionFactoryService.class);
+        TestContext ctx = testCreate(1);
+
+        ClosureDescription closureDefState = new ClosureDescription();
+        closureDefState.name = "test";
+
+        int expectedInVar = 3;
+        int expectedOutVar = 3;
+        double expectedResult = 3;
+
+        closureDefState.sourceURL = "http://faked_source_url";
+        closureDefState.runtime = DriverConstants.RUNTIME_NODEJS_4;
+        closureDefState.outputNames = new ArrayList<>(Collections.singletonList("result"));
+        closureDefState.documentSelfLink = UUID.randomUUID().toString();
+        ResourceConstraints constraints = new ResourceConstraints();
+        constraints.timeoutSeconds = 10;
+        closureDefState.resources = constraints;
+        ClosureDescription[] responses = new ClosureDescription[1];
+        URI closureDefChildURI = UriUtils.buildUri(this.host,
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/"
+                        + closureDefState.documentSelfLink);
+        Operation post = Operation
+                .createPost(factoryUri)
+                .setBody(closureDefState)
+                .setCompletion((o, e) -> {
+                    assertNull(e);
+                    responses[0] = o.getBody(ClosureDescription.class);
+                    assertNotNull(responses[0]);
+                    ctx.completeIteration();
+                });
+        this.host.send(post);
+        ctx.await();
+
+        // Create Closure
+        TestContext ctx1 = testCreate(1);
+        URI factoryTaskUri = UriUtils.buildFactoryUri(this.host, ClosureFactoryService.class);
+        //        this.host.testStart(1);
+        Closure closureState = new Closure();
+        closureState.descriptionLink =
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/"
+                        + closureDefState.documentSelfLink;
+        closureState.documentSelfLink = UUID.randomUUID().toString();
+        // Simulate image load failure
+        closureState.customProperties = new HashMap<>();
+        closureState.customProperties.put(MockDockerHostAdapterImageService.FAILURE_EXPECTED,
+                "true");
+        URI closureChildURI = UriUtils.buildUri(this.host,
+                ClosureFactoryService.FACTORY_LINK + "/" + closureState.documentSelfLink);
+        final Closure[] closureResponses = new Closure[1];
+        Operation closurePost = Operation
+                .createPost(factoryTaskUri)
+                .setBody(closureState)
+                .setCompletion((o, e) -> {
+                    closureResponses[0] = o.getBody(Closure.class);
+                    assertEquals(closureState.descriptionLink, closureResponses[0].descriptionLink);
+                    assertEquals(TaskState.TaskStage.CREATED, closureResponses[0].state);
+                    ctx1.completeIteration();
+                });
+        this.host.send(closurePost);
+        ctx1.await();
+
+        // Executing the created Closure
+        TestContext ctx2 = testCreate(1);
+        Closure closureRequest = new Closure();
+        Map<String, JsonElement> inputs = new HashMap<>();
+        inputs.put("a", new JsonPrimitive(expectedInVar));
+        closureRequest.inputs = inputs;
+        Operation closureExecPost = Operation
+                .createPost(closureChildURI)
+                .setBody(closureRequest)
+                .setCompletion((o, e) -> {
+                    closureResponses[0] = o.getBody(Closure.class);
+                    assertNotNull(closureResponses[0]);
+                    ctx2.completeIteration();
+                });
+        this.host.send(closureExecPost);
+        ctx2.await();
+
+        // Wait for the completion timeout
+        waitForCompletion(closureState.documentSelfLink, DEFAULT_OPERATION_TIMEOUT);
+
+        final Closure[] finalClosureResponse = new Closure[1];
+        TestContext ctx3 = testCreate(1);
+        Operation closureGet = Operation
+                .createGet(closureChildURI)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        ctx3.failIteration(e);
+                    } else {
+                        try {
+                            finalClosureResponse[0] = o.getBody(Closure.class);
+                            assertEquals(closureState.descriptionLink,
+                                    finalClosureResponse[0].descriptionLink);
+                            assertEquals(TaskState.TaskStage.FAILED,
+                                    finalClosureResponse[0].state);
+                            ctx3.completeIteration();
+                        } catch (Throwable ex) {
+                            ctx3.failIteration(ex);
+                        }
+                    }
+                });
+        this.host.send(closureGet);
+        ctx3.await();
+
+        clean(closureChildURI);
+        clean(closureDefChildURI);
+    }
+
+    @Test
     public void executePowershellNumberParametersWithImageLoadTest() throws Throwable {
         // Create Closure Definition
         URI factoryUri = UriUtils
@@ -702,10 +1173,7 @@ public class ClosureServiceRequestsTest extends BaseTestCase {
     protected ComputeService.ComputeState createDockerHost(
             ComputeDescriptionService.ComputeDescription computeDesc) throws Throwable {
         synchronized (initializationLock) {
-            if (computeHost == null) {
-                computeHost = createDockerHost(computeDesc, false);
-            }
-            return computeHost;
+            return createDockerHost(computeDesc, true);
         }
     }
 

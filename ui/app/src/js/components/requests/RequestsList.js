@@ -134,6 +134,7 @@ var RequestsListVueComponent = Vue.extend({
             let machineQuery;
             let isHostsRequest = false;
             let hostsQuery;
+            let closureId;
             if (this.model.resourceLinks) {
               var link = this.model.resourceLinks[0];
               if (link.indexOf(links.COMPUTE_RESOURCES) !== -1) {
@@ -149,6 +150,9 @@ var RequestsListVueComponent = Vue.extend({
                   compositeContextId: utils.getDocumentId(link)
                 };
               }
+              if (link.indexOf(links.CLOSURES) !== -1) {
+                closureId = utils.getDocumentId(link);
+              }
             } else if (this.model.name === 'Configure Host') {
               isHostsRequest = true;
             }
@@ -157,9 +161,12 @@ var RequestsListVueComponent = Vue.extend({
               NavigationActions.openMachines(machineQuery);
             } else if (isHostsRequest) {
               NavigationActions.openHosts(hostsQuery);
+            } else if (closureId) {
+              NavigationActions.openClosureDetails(closureId);
             } else {
               NavigationActions.openContainers(this.getRequestResourceQueryOpts(this.model));
             }
+
             return;
           }
 

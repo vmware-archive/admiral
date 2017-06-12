@@ -14,8 +14,9 @@ package com.vmware.admiral.closures;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import static com.vmware.admiral.closures.drivers.DriverConstants.RUNTIME_JAVA_8;
+
 import java.io.IOException;
-import java.net.URI;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -34,56 +35,35 @@ import org.junit.Test;
 
 import com.vmware.admiral.BaseClosureIntegrationTest;
 import com.vmware.admiral.SimpleHttpsClient;
-import com.vmware.admiral.closures.drivers.DriverConstants;
 import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
 import com.vmware.admiral.closures.services.closuredescription.ResourceConstraints;
 import com.vmware.admiral.common.util.ServiceClientFactory;
-import com.vmware.admiral.compute.ContainerHostService;
-import com.vmware.admiral.compute.RegistryHostConfigService;
-import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.Utils;
 
+@SuppressWarnings("unchecked")
 public class ClosuresJavaIT extends BaseClosureIntegrationTest {
 
-    protected static String IMAGE_NAME_PREFIX = "vmware/photon-closure-runner_";
+    private static final String IMAGE_NAME_PREFIX = "vmware/photon-closure-runner_";
 
-    private static final String IMAGE_NAME =
-            IMAGE_NAME_PREFIX + DriverConstants.RUNTIME_JAVA_8;
-
-    private static String testWebserverUri;
-
-    private static String RUNTIME_JAVA = "java";
+    private static final String IMAGE_NAME = IMAGE_NAME_PREFIX + RUNTIME_JAVA_8;
 
     private static ServiceClient serviceClient;
-
     private static String dockerBuildImageLink;
     private static String dockerBuildBaseImageLink;
 
-    private RegistryHostConfigService.RegistryHostSpec hostState;
-    private RegistryService.RegistryState registryState;
-
-    private URI helperUri;
-
     @BeforeClass
     public static void beforeClass() throws Exception {
-        try {
-            serviceClient = ServiceClientFactory.createServiceClient(null);
-            testWebserverUri = getTestWebServerUrl();
-
-            setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
-            dockerBuildImageLink = getBaseUrl()
-                    + createImageBuildRequestUri(IMAGE_NAME + ":1.0", dockerHostCompute
-                    .documentSelfLink);
-            dockerBuildBaseImageLink = getBaseUrl()
-                    + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
-                    .documentSelfLink);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        serviceClient = ServiceClientFactory.createServiceClient(null);
+        setupClosureEnv();
+        dockerBuildImageLink = getBaseUrl()
+                + createImageBuildRequestUri(IMAGE_NAME + ":1.0", dockerHostCompute
+                .documentSelfLink);
+        dockerBuildBaseImageLink = getBaseUrl()
+                + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
+                .documentSelfLink);
     }
 
     @AfterClass
@@ -123,7 +103,7 @@ public class ClosuresJavaIT extends BaseClosureIntegrationTest {
                 + "    }\n"
                 + "}"
                 + "\n";
-        closureDescState.runtime = RUNTIME_JAVA;
+        closureDescState.runtime = RUNTIME_JAVA_8;
 
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 10;
@@ -170,7 +150,7 @@ public class ClosuresJavaIT extends BaseClosureIntegrationTest {
 
         closureDescState.sourceURL = testWebserverUri + "/test_script_java.zip";
         closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_JAVA;
+        closureDescState.runtime = RUNTIME_JAVA_8;
         closureDescState.entrypoint = "testpackage.Test.test";
 
         ResourceConstraints constraints = new ResourceConstraints();
@@ -229,7 +209,7 @@ public class ClosuresJavaIT extends BaseClosureIntegrationTest {
 
         closureDescState.sourceURL = testWebserverUri + "/test_script_java_classes.jar";
         closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_JAVA;
+        closureDescState.runtime = RUNTIME_JAVA_8;
         closureDescState.entrypoint = "testpackage.Test.test";
 
         ResourceConstraints constraints = new ResourceConstraints();
@@ -304,7 +284,7 @@ public class ClosuresJavaIT extends BaseClosureIntegrationTest {
                 + "}\n";
         // @formatter:on
 
-        closureDescState.runtime = RUNTIME_JAVA;
+        closureDescState.runtime = RUNTIME_JAVA_8;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
 
         ResourceConstraints constraints = new ResourceConstraints();

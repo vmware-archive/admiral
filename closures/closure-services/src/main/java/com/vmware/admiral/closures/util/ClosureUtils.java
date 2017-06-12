@@ -160,9 +160,7 @@ public final class ClosureUtils {
 
     private static JsonElement toJsonElementArray(JsonNode node) {
         JsonArray jsObjArray = new JsonArray();
-        Iterator<JsonNode> iterator = node.iterator();
-        while (iterator.hasNext()) {
-            JsonNode childNode = iterator.next();
+        for (JsonNode childNode : node) {
             JsonElement convertedValue = getJsonObjElement(childNode);
             jsObjArray.add(convertedValue);
         }
@@ -263,11 +261,7 @@ public final class ClosureUtils {
     public static boolean isAdditionalRuntimeSwitchedOn(String runtime) {
         String runtimeOn = ConfigurationUtil
                 .getProperty(ClosureProps.CLOSURE_RUNTIME_IMAGE_REGISTRY + runtime);
-        if (runtimeOn == null || runtimeOn.isEmpty()) {
-            return false;
-        }
-
-        return true;
+        return !(runtimeOn == null || runtimeOn.isEmpty());
     }
 
     private static void logInfo(String message, Object... values) {

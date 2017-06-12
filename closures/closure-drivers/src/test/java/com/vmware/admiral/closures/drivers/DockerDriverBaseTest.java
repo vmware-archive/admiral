@@ -42,9 +42,7 @@ public class DockerDriverBaseTest {
     @Test
     public void cleanImageNoLinkTest() {
         final Object[] errors = { null };
-        dockerDriver.cleanImage("test_image", null, (error) -> {
-                    errors[0] = error;
-                }
+        dockerDriver.cleanImage("test_image", null, (error) -> errors[0] = error
         );
 
         assertNotNull(errors[0]);
@@ -53,9 +51,7 @@ public class DockerDriverBaseTest {
     @Test
     public void cleanImageNoImageTest() {
         final Object[] errors = { null };
-        dockerDriver.cleanImage("", "testLink", (error) -> {
-                    errors[0] = error;
-                }
+        dockerDriver.cleanImage("", "testLink", (error) -> errors[0] = error
         );
 
         assertNotNull(errors[0]);
@@ -65,9 +61,7 @@ public class DockerDriverBaseTest {
     public void cleanClosureNoLinkTest() {
         final Object[] errors = { null };
         Closure closure = new Closure();
-        dockerDriver.cleanClosure(closure, (error) -> {
-                    errors[0] = error;
-                }
+        dockerDriver.cleanClosure(closure, (error) -> errors[0] = error
         );
 
         assertNotNull(errors[0]);

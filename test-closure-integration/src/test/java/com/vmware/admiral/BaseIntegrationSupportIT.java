@@ -150,8 +150,7 @@ public class BaseIntegrationSupportIT {
 
         if (port != null) {
             String host = getSystemOrTestProp(TEST_DCP_HOST_PROP_NAME, "127.0.0.1");
-            String baseUrl = String.format("http://%s:%s", host, port);
-            return baseUrl;
+            return String.format("http://%s:%s", host, port);
         }
 
         return getSystemOrTestProp(TEST_DCP_URL_PROP_NAME);
@@ -366,8 +365,7 @@ public class BaseIntegrationSupportIT {
             }
         }
 
-        throw new RuntimeException(String.format(
-                "Failed waiting for state change"));
+        throw new RuntimeException("Failed waiting for state change");
     }
 
     protected static void waitForStatusCode(URI uri, int expectedStatusCode) throws Exception {

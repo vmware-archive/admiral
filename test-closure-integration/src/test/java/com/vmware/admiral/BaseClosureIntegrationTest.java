@@ -40,6 +40,7 @@ import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptio
 import com.vmware.admiral.closures.services.images.DockerImage;
 import com.vmware.admiral.closures.services.images.DockerImageFactoryService;
 import com.vmware.admiral.closures.util.ClosureUtils;
+import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.RegistryHostConfigService;
 import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.xenon.common.Operation;
@@ -64,7 +65,19 @@ public class BaseClosureIntegrationTest extends BaseProvisioningOnCoreOsIT {
     private RegistryHostConfigService.RegistryHostSpec hostState;
     private RegistryService.RegistryState registryState;
 
+    protected static String testWebserverUri;
+
     private URI helperUri;
+
+    protected static void setupClosureEnv() throws Exception {
+        try {
+            testWebserverUri = getTestWebServerUrl();
+            setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw ex;
+        }
+    }
 
     @Override
     protected String getResourceDescriptionLink(boolean downloadImage, RegistryType registryType)
@@ -79,9 +92,8 @@ public class BaseClosureIntegrationTest extends BaseProvisioningOnCoreOsIT {
 
     protected SimpleHttpsClient.HttpResponse getResource(String targetLink) throws Exception {
         URI targetUri = URI.create(getBaseUrl() + buildServiceUri(targetLink));
-        SimpleHttpsClient.HttpResponse response = SimpleHttpsClient
+        return SimpleHttpsClient
                 .execute(SimpleHttpsClient.HttpMethod.GET, targetUri.toString());
-        return response;
     }
 
     protected Closure createClosure(ClosureDescription closureDescription,
@@ -108,8 +120,8 @@ public class BaseClosureIntegrationTest extends BaseProvisioningOnCoreOsIT {
 
     protected void executeClosure(Closure createdClosure, Closure closureRequest,
             ServiceClient serviceClient)
-            throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException,
-            KeyManagementException, InterruptedException, ExecutionException, TimeoutException {
+            throws
+            InterruptedException, ExecutionException, TimeoutException {
         URI targetUri = URI.create(getBaseUrl() + buildServiceUri(createdClosure.documentSelfLink));
         Operation op = sendRequest(serviceClient,
                 Operation.createPost(targetUri).setBody(closureRequest));
@@ -117,8 +129,8 @@ public class BaseClosureIntegrationTest extends BaseProvisioningOnCoreOsIT {
     }
 
     protected Closure getClosure(String link, ServiceClient serviceClient)
-            throws IOException, KeyStoreException, NoSuchAlgorithmException, CertificateException,
-            KeyManagementException, InterruptedException, ExecutionException, TimeoutException {
+            throws
+            InterruptedException, ExecutionException, TimeoutException {
         URI targetUri = URI.create(getBaseUrl() + buildServiceUri(link));
         Operation op = sendRequest(serviceClient, Operation.createGet(targetUri));
 
@@ -135,7 +147,7 @@ public class BaseClosureIntegrationTest extends BaseProvisioningOnCoreOsIT {
                 dockerHostCompute.documentSelfLink);
         long startTime = System.currentTimeMillis();
         logger.info("Waiting for docker image build: " + dockerBuildImageLink);
-        while (!isImageReady(getBaseUrl(), dockerBuildImageLink) && !isTimeoutElapsed(startTime,
+        while (!isImageReady(getBaseUrl(), dockerBuildImageLink) && isTimeoutNotElapsed(startTime,
                 DOCKER_IMAGE_BUILD_TIMEOUT_SECONDS)) {
             try {
                 Thread.sleep(1000);
@@ -234,8 +246,8 @@ public class BaseClosureIntegrationTest extends BaseProvisioningOnCoreOsIT {
         return UriUtils.buildUriPath(DockerImageFactoryService.FACTORY_LINK, imageBuildRequestId);
     }
 
-    protected boolean isTimeoutElapsed(long startTime, int timeout) {
-        return System.currentTimeMillis() - startTime > TimeUnit.SECONDS.toMillis(timeout);
+    protected boolean isTimeoutNotElapsed(long startTime, int timeout) {
+        return System.currentTimeMillis() - startTime <= TimeUnit.SECONDS.toMillis(timeout);
     }
 
     protected void waitForTaskState(String link, TaskState.TaskStage state,
@@ -245,7 +257,7 @@ public class BaseClosureIntegrationTest extends BaseProvisioningOnCoreOsIT {
         long startTime = System.currentTimeMillis();
         while (state != fetchedClosure.state
                 && !isFinished(fetchedClosure.state)
-                && !isTimeoutElapsed(startTime, timeout)) {
+                && isTimeoutNotElapsed(startTime, timeout)) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -258,13 +270,10 @@ public class BaseClosureIntegrationTest extends BaseProvisioningOnCoreOsIT {
     }
 
     private boolean isFinished(TaskState.TaskStage state) {
-        if (state == TaskState.TaskStage.FINISHED
+        return state == TaskState.TaskStage.FINISHED
                 || state == TaskState.TaskStage.FAILED
-                || state == TaskState.TaskStage.CANCELLED) {
-            return true;
-        }
+                || state == TaskState.TaskStage.CANCELLED;
 
-        return false;
     }
 
     protected void waitForTaskState(String link, TaskState.TaskStage state,

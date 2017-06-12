@@ -207,7 +207,7 @@ public class SimpleHttpsClient {
 
     // Copied from https://java.net/jira/browse/JERSEY-639 . This allows us to use the new HTTP
     // methods like PATCH
-    private static final void setRequestMethodUsingWorkaroundForJREBug(
+    private static void setRequestMethodUsingWorkaroundForJREBug(
             final HttpURLConnection httpURLConnection, final String method) {
         try {
             httpURLConnection.setRequestMethod(method);
@@ -224,9 +224,7 @@ public class SimpleHttpsClient {
                 setRequestMethodUsingWorkaroundForJREBug(delegateConnection, method);
             } catch (NoSuchFieldException e) {
                 // Ignore for now, keep going
-            } catch (IllegalArgumentException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalAccessException e) {
+            } catch (IllegalArgumentException | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
             try {

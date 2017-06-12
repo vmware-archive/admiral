@@ -36,6 +36,7 @@ import com.vmware.xenon.common.BasicReusableHostTestCase;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 
+@SuppressWarnings("unchecked")
 public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
 
     @Before
@@ -62,9 +63,7 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
         Operation post = Operation
                 .createPost(factoryUri)
                 .setBody(initialState)
-                .setCompletion(getSafeHandler((o, e) -> {
-                    assertOperationFailed(e);
-                }));
+                .setCompletion(getSafeHandler((o, e) -> assertOperationFailed(e)));
         this.host.send(post);
         this.host.testWait();
     }
@@ -80,9 +79,7 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
         Operation post = Operation
                 .createPost(factoryUri)
                 .setBody(initialState)
-                .setCompletion(getSafeHandler((o, e) -> {
-                    assertOperationFailed(e);
-                }));
+                .setCompletion(getSafeHandler((o, e) -> assertOperationFailed(e)));
         this.host.send(post);
         this.host.testWait();
     }
@@ -98,9 +95,7 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
         Operation post = Operation
                 .createPost(factoryUri)
                 .setBody(initialState)
-                .setCompletion(getSafeHandler((o, e) -> {
-                    assertOperationFailed(e);
-                }));
+                .setCompletion(getSafeHandler((o, e) -> assertOperationFailed(e)));
         this.host.send(post);
         this.host.testWait();
     }
@@ -118,9 +113,7 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
         Operation post = Operation
                 .createPost(factoryUri)
                 .setBody(initialState)
-                .setCompletion(getSafeHandler((o, e) -> {
-                    assertOperationFailed(e);
-                }));
+                .setCompletion(getSafeHandler((o, e) -> assertOperationFailed(e)));
         this.host.send(post);
         this.host.testWait();
     }
@@ -136,9 +129,7 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
         Operation post = Operation
                 .createPost(factoryUri)
                 .setBody(initialState)
-                .setCompletion(getSafeHandler((o, e) -> {
-                    assertOperationFailed(e);
-                }));
+                .setCompletion(getSafeHandler((o, e) -> assertOperationFailed(e)));
         this.host.send(post);
         this.host.testWait();
     }
@@ -156,9 +147,7 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
         Operation post = Operation
                 .createPost(factoryUri)
                 .setBody(initialState)
-                .setCompletion(getSafeHandler((o, e) -> {
-                    assertOperationFailed(e);
-                }));
+                .setCompletion(getSafeHandler((o, e) -> assertOperationFailed(e)));
         this.host.send(post);
         this.host.testWait();
     }
@@ -370,9 +359,7 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
                 .createPatch(this.host,
                         ClosureDescriptionFactoryService.FACTORY_LINK + "/" + initialState.documentSelfLink)
                 .setBody(newState)
-                .setCompletion(getSafeHandler((o, e) -> {
-                    assertNotNull(e);
-                }));
+                .setCompletion(getSafeHandler((o, e) -> assertNotNull(e)));
 
         this.host.send(patch);
         this.host.testWait();
@@ -625,13 +612,11 @@ public class ClosureDescriptionServiceTest extends BasicReusableHostTestCase {
         Assert.assertNotNull("Operation should fail: ", e);
     }
 
-    private void clean(URI childURI) throws Throwable {
+    private void clean(URI childURI) {
         this.host.testStart(1);
         Operation delete = Operation
                 .createDelete(childURI)
-                .setCompletion(getSafeHandler((o, e) -> {
-                    assertNull(e);
-                }));
+                .setCompletion(getSafeHandler((o, e) -> assertNull(e)));
         this.host.send(delete);
         this.host.testWait();
     }

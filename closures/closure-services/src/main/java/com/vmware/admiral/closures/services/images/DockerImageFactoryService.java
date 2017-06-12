@@ -12,7 +12,6 @@
 package com.vmware.admiral.closures.services.images;
 
 import com.vmware.admiral.closures.drivers.DriverRegistry;
-import com.vmware.admiral.closures.drivers.DriverRegistry;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Service;

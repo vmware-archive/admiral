@@ -19,7 +19,7 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 public final class TestPropertiesUtil {
-    private static Logger logger = Logger.getLogger(TestPropertiesUtil.class.getName());
+    private static final Logger logger = Logger.getLogger(TestPropertiesUtil.class.getName());
 
     private static final String TEST_INTEGRATION_PROPERTIES_FILE_PATH = "test.integration.properties";
 
@@ -49,7 +49,7 @@ public final class TestPropertiesUtil {
         return properties;
     }
 
-    private static final void dumpProperties(Properties properties) {
+    private static void dumpProperties(Properties properties) {
         logger.info("System properties");
         for (Entry<Object, Object> e : System.getProperties().entrySet()) {
             logger.info(e.getKey() + "=" + e.getValue());

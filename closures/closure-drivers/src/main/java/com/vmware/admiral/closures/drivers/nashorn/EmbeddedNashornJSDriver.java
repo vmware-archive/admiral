@@ -11,13 +11,12 @@
 
 package com.vmware.admiral.closures.drivers.nashorn;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-
 import javax.script.Bindings;
 import javax.script.Invocable;
 import javax.script.ScriptContext;
@@ -30,7 +29,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 
 import com.vmware.admiral.closures.drivers.DriverConstants;
@@ -135,9 +133,7 @@ public class EmbeddedNashornJSDriver extends LocalDriverBase {
         Map<String, JsonElement> inputs = closureRequest.inputs;
         JsonObject element = new JsonObject();
         if (inputs != null) {
-            inputs.forEach((k, v) -> {
-                element.add(k, v);
-            });
+            inputs.forEach(element::add);
             inBindings.put("inputs", convertValue(engine, element));
         }
 
@@ -176,7 +172,7 @@ public class EmbeddedNashornJSDriver extends LocalDriverBase {
         } else if (val instanceof ScriptObjectMirror) {
             ScriptObjectMirror m = (ScriptObjectMirror) val;
             if (m.isArray()) {
-                List<Object> list = m.values().stream().collect(Collectors.toList());
+                List<Object> list = new ArrayList<>(m.values());
                 return convertToJsonElement(engine, list);
             } else {
                 JsDateWrap jsDate = ((Invocable) engine).getInterface(val, JsDateWrap.class);

@@ -31,7 +31,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,11 +41,15 @@ import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescriptionFactoryService;
 import com.vmware.admiral.closures.services.closuredescription.ResourceConstraints;
+import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.xenon.common.BasicReusableHostTestCase;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.Utils;
 
+@SuppressWarnings("unchecked")
 public class ClosureServiceTest extends BasicReusableHostTestCase {
 
     private static final int TEST_TASK_MAINTANENACE_TIMEOUT_MLS = 10;
@@ -124,6 +127,173 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
         this.host.testWait();
 
         clean(closureChildURI);
+        clean(closureDefChildURI);
+    }
+
+    @Test
+    public void addFailedClosureWithExtCallback() throws Throwable {
+        URI factoryUri = UriUtils
+                .buildFactoryUri(this.host, ClosureDescriptionFactoryService.class);
+        this.host.testStart(1);
+        ClosureDescription closureDefState = new ClosureDescription();
+        closureDefState.name = "test";
+        closureDefState.source = "var a = 1; print(\"Hello \" + a);";
+        closureDefState.runtime = "nashorn";
+        closureDefState.documentSelfLink = UUID.randomUUID().toString();
+        URI closureDefChildURI = UriUtils.buildUri(this.host,
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/"
+                        + closureDefState.documentSelfLink);
+        Operation post = Operation
+                .createPost(factoryUri)
+                .setBody(closureDefState)
+                .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> assertNull(e)));
+        this.host.send(post);
+        this.host.testWait();
+
+        URI factoryTaskUri = UriUtils.buildFactoryUri(this.host, ClosureFactoryService.class);
+        this.host.testStart(1);
+        Closure closureState = new Closure();
+        closureState.descriptionLink =
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/"
+                        + closureDefState.documentSelfLink;
+        closureState.documentSelfLink = ClosureFactoryService.SELF_LINK + "/" + UUID.randomUUID()
+                .toString();
+
+        closureState.serviceTaskCallback = ServiceTaskCallback.create
+                ("http://localhost/testcallback");
+
+        Closure[] closureResponses = new Closure[1];
+        Operation closurePost = Operation
+                .createPost(factoryTaskUri)
+                .setBody(closureState)
+                .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
+                    assertNull(e);
+                    closureResponses[0] = o.getBody(Closure.class);
+                    assertEquals(closureState.descriptionLink, closureResponses[0].descriptionLink);
+                    assertEquals(TaskStage.CREATED, closureResponses[0].state);
+                }));
+        this.host.send(closurePost);
+        this.host.testWait();
+
+        ServiceTaskCallback.ServiceTaskCallbackResponse response = closureState.serviceTaskCallback
+                .getFailedResponse(new Exception("Build Image Exception"));
+
+        this.host.testStart(1);
+        Operation closurePatch = Operation
+                .createPatch(UriUtils.buildUri(this.host, closureState.documentSelfLink))
+                .setBody(response)
+                .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
+                    assertNull(e);
+                    closureResponses[0] = o.getBody(Closure.class);
+                    assertEquals(closureState.descriptionLink, closureResponses[0].descriptionLink);
+                    assertEquals(TaskStage.FAILED, closureResponses[0].state);
+                }));
+        this.host.send(closurePatch);
+        this.host.testWait();
+
+        clean(UriUtils.buildUri(this.host, closureState.documentSelfLink));
+        clean(closureDefChildURI);
+    }
+
+    @Test
+    public void addClosureWithWebhook() throws Throwable {
+        URI factoryUri = UriUtils
+                .buildFactoryUri(this.host, ClosureDescriptionFactoryService.class);
+        this.host.testStart(1);
+        ClosureDescription closureDefState = new ClosureDescription();
+        closureDefState.name = "test";
+        closureDefState.source = "var a = 1; print(\"Hello \" + a);";
+        closureDefState.runtime = "nashorn";
+        closureDefState.documentSelfLink = UUID.randomUUID().toString();
+        closureDefState.notifyUrl = UriUtils.buildFactoryUri(this.host, ClosureFactoryService
+                .class).toString();
+
+        URI closureDefChildURI = UriUtils.buildUri(this.host,
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/"
+                        + closureDefState.documentSelfLink);
+        Operation post = Operation
+                .createPost(factoryUri)
+                .setBody(closureDefState)
+                .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> assertNull(e)));
+        this.host.send(post);
+        this.host.testWait();
+
+        URI factoryTaskUri = UriUtils.buildFactoryUri(this.host, ClosureFactoryService.class);
+        this.host.testStart(1);
+        Closure closureState = new Closure();
+        closureState.descriptionLink =
+                ClosureDescriptionFactoryService.FACTORY_LINK + "/"
+                        + closureDefState.documentSelfLink;
+        closureState.documentSelfLink = ClosureFactoryService.SELF_LINK + "/" + UUID.randomUUID()
+                .toString();
+
+        closureState.serviceTaskCallback = ServiceTaskCallback.create
+                ("http://localhost/testcallback");
+
+        Closure[] closureResponses = new Closure[1];
+        Operation closurePost = Operation
+                .createPost(factoryTaskUri)
+                .setBody(closureState)
+                .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
+                    assertNull(e);
+                    closureResponses[0] = o.getBody(Closure.class);
+                    assertEquals(closureState.descriptionLink, closureResponses[0].descriptionLink);
+                    assertEquals(TaskStage.CREATED, closureResponses[0].state);
+                }));
+        this.host.send(closurePost);
+        this.host.testWait();
+
+        closureResponses[0].state = TaskStage.STARTED;
+
+        this.host.testStart(1);
+        Operation closurePatch = Operation
+                .createPatch(UriUtils.buildUri(this.host, closureState.documentSelfLink))
+                .setBody(closureResponses[0])
+                .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
+                    assertNull(e);
+                    closureResponses[0] = o.getBody(Closure.class);
+                    assertEquals(closureState.descriptionLink, closureResponses[0].descriptionLink);
+                    assertEquals(TaskStage.STARTED, closureResponses[0].state);
+                }));
+        this.host.send(closurePatch);
+        this.host.testWait();
+
+        closureResponses[0].state = TaskStage.FINISHED;
+
+        this.host.testStart(1);
+        closurePatch = Operation
+                .createPatch(UriUtils.buildUri(this.host, closureState.documentSelfLink))
+                .setBody(closureResponses[0])
+                .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
+                    assertNull(e);
+                    closureResponses[0] = o.getBody(Closure.class);
+                    assertEquals(closureState.descriptionLink, closureResponses[0].descriptionLink);
+                    assertEquals(TaskStage.FINISHED, closureResponses[0].state);
+                }));
+        this.host.send(closurePatch);
+        this.host.testWait();
+
+        // give sometime to webhook
+        Thread.sleep(1000);
+
+        factoryTaskUri = UriUtils.buildFactoryUri(this.host, ClosureFactoryService.class);
+        this.host.testStart(1);
+        Operation closureGet = Operation
+                .createGet(UriUtils.buildExpandLinksQueryUri(factoryTaskUri))
+                .setCompletion(BasicReusableHostTestCase.getSafeHandler((o, e) -> {
+                    ServiceDocumentQueryResult result = o.getBody(ServiceDocumentQueryResult.class);
+                    Object jsonProject = result.documents.values().iterator().next();
+                    Closure closure = Utils
+                            .fromJson(jsonProject, Closure.class);
+                    assertNotNull(closure);
+                    assertEquals(closure.name, closureDefState.name);
+                    assertTrue("Webhook not invoked!", closure.documentVersion > 2);
+
+                }));
+        this.host.send(closureGet);
+        this.host.testWait();
+
+        clean(UriUtils.buildUri(this.host, closureState.documentSelfLink));
         clean(closureDefChildURI);
     }
 
@@ -1681,7 +1851,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
 
     private void clean(URI childURI) throws Throwable {
         this.host.testStart(1);
-        CompletableFuture<Operation> c = new CompletableFuture<Operation>();
+        CompletableFuture<Operation> c = new CompletableFuture<>();
         Operation delete = Operation
                 .createDelete(childURI)
                 .setCompletion(BasicReusableHostTestCase
@@ -1704,7 +1874,7 @@ public class ClosureServiceTest extends BasicReusableHostTestCase {
     private Closure getClosure(String closureLink) throws InterruptedException, ExecutionException,
             TimeoutException {
 
-        CompletableFuture<Operation> c = new CompletableFuture<Operation>();
+        CompletableFuture<Operation> c = new CompletableFuture<>();
 
         URI closureUri = UriUtils.buildUri(this.host,
                 ClosureFactoryService.FACTORY_LINK + "/" + closureLink);

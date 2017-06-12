@@ -252,9 +252,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
         // to make it interesting, drop the first letter of the image name in the query
         String queryStr = CONTAINER_ADMIRAL_IMAGE.substring(1);
 
-        String imageSearchResult = searchForImage(queryStr);
-
-        return imageSearchResult;
+        return searchForImage(queryStr);
     }
 
     protected String getRegistryHostname(RegistryType registryType) {
@@ -321,9 +319,7 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
         waitForTaskToComplete(request.documentSelfLink);
 
         request = getDocument(request.documentSelfLink, RequestBrokerState.class);
-        for (String containerLink : request.resourceLinks) {
-            containersToDelete.add(containerLink);
-        }
+        containersToDelete.addAll(request.resourceLinks);
 
         return request;
     }
@@ -464,10 +460,8 @@ public abstract class BaseProvisioningOnCoreOsIT extends BaseIntegrationSupportI
                                 + httpResponse.statusCode);
             }
 
-            String documentSelfLink = Utils.fromJson(httpResponse.responseBody,
+            return Utils.fromJson(httpResponse.responseBody,
                     AuthCredentialsServiceState.class).documentSelfLink;
-
-            return documentSelfLink;
         }
 
         return null;

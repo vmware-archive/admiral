@@ -40,7 +40,7 @@ public class ClosureProps {
     public static final int DOCKER_IMAGE_REQUEST_TIMEOUT_SECONDS = Integer.getInteger(
             "adapter.docker.api.client.image_request_timeout_seconds", 60 * 10);
 
-    public static final Integer MAX_EXEC_TIMEOUT_SECONDS_PROP =
+    private static final Integer MAX_EXEC_TIMEOUT_SECONDS_PROP =
             Integer.getInteger("closure.service.max-exec-timeout-seconds",
                     600);
 

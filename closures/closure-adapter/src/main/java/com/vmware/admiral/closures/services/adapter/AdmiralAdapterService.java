@@ -254,9 +254,8 @@ public class AdmiralAdapterService extends
                         failTask("Unable to fetch compute states: ", computeResult.getException());
                         return;
                     }
-                    proceedTo(AdmiralAdapterTaskState.SubStage.COMPUTE_STATE_SELECTED, (s) -> {
-                        s.selectedComputeLink = computeResult.getDocumentSelfLink();
-                    });
+                    proceedTo(AdmiralAdapterTaskState.SubStage.COMPUTE_STATE_SELECTED,
+                            (s) -> s.selectedComputeLink = computeResult.getDocumentSelfLink());
 
                 };
 
@@ -291,7 +290,7 @@ public class AdmiralAdapterService extends
         List<Object> selectedForSeed = availableHosts.parallelStream().filter(predicate).collect
                 (Collectors.toList());
 
-        selectedForSeed.parallelStream().forEach((s) -> consumer.accept(s));
+        selectedForSeed.parallelStream().forEach(consumer);
     }
 
     private void proceedWithBaseDockerImage(ContainerDescription containerDesc,
@@ -409,13 +408,13 @@ public class AdmiralAdapterService extends
                 .isEmpty()) {
             String baseImageName = createRegistryBaseImageName(state.imageConfig.registry,
                     buildImage.name);
-            createBaseImage(baseImageName, targetComputeLink);
+            createBaseImage(baseImageName, state, targetComputeLink);
         } else {
             String baseImageName = ClosureUtils.createBaseImageName(containerDesc.image);
-            loadBaseImage(baseImageName, state.imageConfig, targetComputeLink);
+            loadBaseImage(baseImageName, state, targetComputeLink);
 
             // 3. Poll for completion
-            getHost().schedule(delegate::run, 5, TimeUnit.SECONDS);
+            getHost().schedule(delegate, 5, TimeUnit.SECONDS);
         }
     }
 
@@ -442,13 +441,15 @@ public class AdmiralAdapterService extends
         request.customProperties
                 .putIfAbsent(DOCKER_IMAGE_TAG_PROP_NAME, imageConfig.baseImageVersion);
 
+        request.customProperties.putAll(state.customProperties);
+
         sendRequest(Operation
                 .createPatch(getHost(), ManagementUriParts.ADAPTER_DOCKER_IMAGE_HOST)
                 .setBody(request)
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         String errMsg = "Tag Image operation %s failed on docker host: %s";
-                        logSevere(errMsg,  request.operationTypeId, Utils.toString(ex));
+                        logSevere(errMsg, request.operationTypeId, Utils.toString(ex));
                         failTask(String.format(errMsg, request.operationTypeId, computeStateLink),
                                 ex);
                         return;
@@ -464,7 +465,8 @@ public class AdmiralAdapterService extends
         proceedWithBaseDockerImage(containerDesc, state, 0);
     }
 
-    private void createBaseImage(String baseImageName, String computeStateLink) {
+    private void createBaseImage(String baseImageName, AdmiralAdapterTaskState state, String
+            computeStateLink) {
         DockerImageHostRequest request = new DockerImageHostRequest();
         request.operationTypeId = ImageOperationType.CREATE.id;
 
@@ -479,6 +481,8 @@ public class AdmiralAdapterService extends
 
         request.customProperties = new HashMap<>();
         request.customProperties.putIfAbsent(DOCKER_IMAGE_NAME_PROP_NAME, baseImageName);
+
+        request.customProperties.putAll(state.customProperties);
 
         sendRequest(Operation
                 .createPatch(getHost(), ManagementUriParts.ADAPTER_DOCKER_IMAGE_HOST)
@@ -500,11 +504,11 @@ public class AdmiralAdapterService extends
                 }));
     }
 
-    private void loadBaseImage(String baseImageName, ImageConfiguration imageConfig, String
-            computeStateLink) {
+    private void loadBaseImage(String baseImageName, AdmiralAdapterTaskState state,
+            String computeStateLink) {
         DockerImageHostRequest request = new DockerImageHostRequest();
         request.operationTypeId = ImageOperationType.LOAD.id;
-        String baseDockerName = createBaseImageDockerName(imageConfig);
+        String baseDockerName = createBaseImageDockerName(state.imageConfig);
         String completionServiceCallBack = createImageBuildRequestUri(baseDockerName,
                 computeStateLink);
         request.serviceTaskCallback = ServiceTaskCallback.create(completionServiceCallBack);
@@ -514,6 +518,8 @@ public class AdmiralAdapterService extends
 
         request.customProperties = new HashMap<>();
         request.customProperties.putIfAbsent(DOCKER_IMAGE_NAME_PROP_NAME, baseImageName);
+
+        request.customProperties.putAll(state.customProperties);
 
         sendRequest(Operation
                 .createPatch(getHost(), ManagementUriParts.ADAPTER_DOCKER_IMAGE_HOST)
@@ -720,7 +726,8 @@ public class AdmiralAdapterService extends
         HostSelectionFilter.HostSelection hostSelection = new HostSelectionFilter.HostSelection();
         hostSelection.resourceCount = 1;
         hostSelection.hostLink = state.selectedComputeLink;
-        hostSelection.resourcePoolLinks = new ArrayList<>(Arrays.asList(state.placementZoneLink));
+        hostSelection.resourcePoolLinks = new ArrayList<>(
+                Collections.singletonList(state.placementZoneLink));
         allocationTask.hostSelections = new ArrayList<>(Collections.singletonList(hostSelection));
 
         // Allocate container
@@ -881,6 +888,8 @@ public class AdmiralAdapterService extends
         request.customProperties.putIfAbsent(DOCKER_BUILD_IMAGE_FORCERM_PROP_NAME, "true");
         request.customProperties.putIfAbsent(DOCKER_BUILD_IMAGE_NOCACHE_PROP_NAME, "true");
 
+        request.customProperties.putAll(state.customProperties);
+
         boolean setTaskUri = mustSetTaskUri(state);
         JsonElement buildArgsObj = prepareBuildArgs(containerDesc, setTaskUri);
 
@@ -918,7 +927,7 @@ public class AdmiralAdapterService extends
         return !ClosureUtils.isEmpty(state.configuration.sourceURL);
     }
 
-    protected void prepareRequest(Operation op, boolean longRunningRequest) {
+    private void prepareRequest(Operation op, boolean longRunningRequest) {
         op.forceRemote();
         if (op.getExpirationMicrosUtc() == 0L) {
             long timeout;
@@ -1002,7 +1011,7 @@ public class AdmiralAdapterService extends
                         .collect(Collectors.toSet());
 
                 String selectedComputeLink = (String) selectComputeLink(selectedHosts,
-                        computeStateLinks, c -> computeStateLinks.contains(c));
+                        computeStateLinks, computeStateLinks::contains);
                 if (ClosureUtils.isEmpty(selectedComputeLink)) {
                     logWarning("No available hosts configured! Aborting deployment...");
                     completionHandler
@@ -1041,9 +1050,9 @@ public class AdmiralAdapterService extends
     private <T> Object selectFromComputeStates(Collection<T> computeStates) {
         Object selectedCompute = nextValue(computeStates);
         if (selectedCompute != null) {
-            return (T) selectedCompute;
+            return selectedCompute;
         }
-        return (T) null;
+        return null;
     }
 
     private Object nextValue(Collection<?> values) {
@@ -1102,7 +1111,6 @@ public class AdmiralAdapterService extends
 
                     } else {
                         failTask("No available placements found!", null);
-                        return;
                     }
                 }
         );
@@ -1183,12 +1191,11 @@ public class AdmiralAdapterService extends
                     compStateLinks.add(dockerImage.computeStateLink);
                 }
             } else {
-                Collection<Object> compObjs = computeStates.stream().collect(Collectors.toList());
+                Set<Object> computeStateLinks = computeStates.stream().map((item) -> item
+                        .documentSelfLink).collect(Collectors.toSet());
 
-                ComputeState compState = (ComputeState) selectComputeLink(compObjs,
-                        compStateLinks,
-                        c -> compStateLinks.contains(((ComputeState) c).documentSelfLink));
-                String selectedComputeLink = compState.documentSelfLink;
+                String selectedComputeLink = (String) selectComputeLink(computeStateLinks,
+                        compStateLinks, c -> compStateLinks.contains(c));
                 if (ClosureUtils.isEmpty(selectedComputeLink)) {
                     logWarning("No available hosts configured! Aborting deployment...");
                     completionHandler
@@ -1198,10 +1205,11 @@ public class AdmiralAdapterService extends
                 logInfo("Selected compute to provision: %s", selectedComputeLink);
                 completionHandler.accept(resultLink(selectedComputeLink, 1));
 
-                seedPeers(compObjs, (computeStateLink) -> seedWithBaseDockerImage(containerDesc,
-                        (String) computeStateLink, state),
+                seedPeers(computeStateLinks,
+                        (computeStateLink) -> seedWithBaseDockerImage(containerDesc,
+                                (String) computeStateLink, state),
                         (s) -> {
-                            String link = ((ComputeState) s).documentSelfLink;
+                            String link = (String) s;
                             return !link.equalsIgnoreCase(selectedComputeLink)
                                     && !compStateLinks.contains(link);
                         });
@@ -1251,7 +1259,6 @@ public class AdmiralAdapterService extends
                                             ? ex.getMessage()
                                             : Utils.toString(ex));
                             failTask("Failure retrieving description state", ex);
-                            return;
                         } else if (r.hasResult()) {
                             ContainerDescription contDesc = r.getResult();
                             this.cachedContainerDescription = contDesc;

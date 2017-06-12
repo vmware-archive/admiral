@@ -17,6 +17,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import static com.vmware.admiral.closures.drivers.DriverConstants.RUNTIME_POWERSHELL_6;
+
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
@@ -40,49 +42,35 @@ import org.junit.Test;
 
 import com.vmware.admiral.BaseClosureIntegrationTest;
 import com.vmware.admiral.SimpleHttpsClient;
-import com.vmware.admiral.closures.drivers.DriverConstants;
 import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
 import com.vmware.admiral.closures.services.closuredescription.ResourceConstraints;
 import com.vmware.admiral.common.util.ServiceClientFactory;
-import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.Utils;
 
+@SuppressWarnings("unchecked")
 public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
 
-    protected static String IMAGE_NAME_PREFIX = "vmware/photon-closure-runner_";
+    private static final String IMAGE_NAME_PREFIX = "vmware/photon-closure-runner_";
 
-    private static final String IMAGE_NAME =
-            IMAGE_NAME_PREFIX + DriverConstants.RUNTIME_POWERSHELL_6;
-
-    private static String testWebserverUri;
-
-    private static String RUNTIME_POWERSHELL = "powershell";
+    private static final String IMAGE_NAME = IMAGE_NAME_PREFIX + RUNTIME_POWERSHELL_6;
 
     private static ServiceClient serviceClient;
-
     private static String dockerBuildImageLink;
     private static String dockerBuildBaseImageLink;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        try {
-            serviceClient = ServiceClientFactory.createServiceClient(null);
-            testWebserverUri = getTestWebServerUrl();
-
-            setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
-            dockerBuildImageLink = getBaseUrl()
-                    + createImageBuildRequestUri(IMAGE_NAME + ":1.0", dockerHostCompute
-                    .documentSelfLink);
-            dockerBuildBaseImageLink = getBaseUrl()
-                    + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
-                    .documentSelfLink);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        serviceClient = ServiceClientFactory.createServiceClient(null);
+        setupClosureEnv();
+        dockerBuildImageLink = getBaseUrl()
+                + createImageBuildRequestUri(IMAGE_NAME + ":1.0", dockerHostCompute
+                .documentSelfLink);
+        dockerBuildBaseImageLink = getBaseUrl()
+                + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
+                .documentSelfLink);
     }
 
     @AfterClass
@@ -117,7 +105,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
                 + "{\n"
                 + "    Write-Host \"Hello, world!\""
                 + "}\n";
-        closureDescState.runtime = RUNTIME_POWERSHELL;
+        closureDescState.runtime = RUNTIME_POWERSHELL_6;
 
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 60;
@@ -167,7 +155,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
                 + "    $context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
                 + "}\n";
 
-        closureDescState.runtime = RUNTIME_POWERSHELL;
+        closureDescState.runtime = RUNTIME_POWERSHELL_6;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
 
         ResourceConstraints constraints = new ResourceConstraints();
@@ -228,7 +216,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
                 + "    $context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
                 + "}\n";
 
-        closureDescState.runtime = RUNTIME_POWERSHELL;
+        closureDescState.runtime = RUNTIME_POWERSHELL_6;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 60;
@@ -287,7 +275,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
                 + "    $context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
                 + "}\n";
 
-        closureDescState.runtime = RUNTIME_POWERSHELL;
+        closureDescState.runtime = RUNTIME_POWERSHELL_6;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 60;
@@ -348,7 +336,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
                 + "    $context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
                 + "}\n";
 
-        closureDescState.runtime = RUNTIME_POWERSHELL;
+        closureDescState.runtime = RUNTIME_POWERSHELL_6;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 60;
@@ -410,7 +398,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
                 + "    $context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
                 + "}\n";
 
-        closureDescState.runtime = RUNTIME_POWERSHELL;
+        closureDescState.runtime = RUNTIME_POWERSHELL_6;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 60;
@@ -471,7 +459,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
                 + "    $context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
                 + "}\n";
 
-        closureDescState.runtime = RUNTIME_POWERSHELL;
+        closureDescState.runtime = RUNTIME_POWERSHELL_6;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 60;
@@ -568,7 +556,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
                 + "    $context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
                 + "}\n";
 
-        closureDescState.runtime = RUNTIME_POWERSHELL;
+        closureDescState.runtime = RUNTIME_POWERSHELL_6;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 60;
@@ -645,7 +633,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
                 + "    $context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
                 + "}\n";
 
-        closureDescState.runtime = RUNTIME_POWERSHELL;
+        closureDescState.runtime = RUNTIME_POWERSHELL_6;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 60;
@@ -731,7 +719,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
                 + "    $context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
                 + "}\n";
 
-        closureDescState.runtime = RUNTIME_POWERSHELL;
+        closureDescState.runtime = RUNTIME_POWERSHELL_6;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 60;
@@ -801,7 +789,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
                 + "    Write-Host \"After sleep\"\n"
                 + "}\n";
 
-        closureDescState.runtime = RUNTIME_POWERSHELL;
+        closureDescState.runtime = RUNTIME_POWERSHELL_6;
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 1;
         closureDescState.resources = constraints;
@@ -848,7 +836,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
                 + "    Write-Host \"After sleep\"\n"
                 + "}\n";
 
-        closureDescState.runtime = RUNTIME_POWERSHELL;
+        closureDescState.runtime = RUNTIME_POWERSHELL_6;
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 1;
         closureDescState.resources = constraints;
@@ -943,7 +931,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
                 + "    Write-Host \"After sleep\"\n"
                 + "}\n";
 
-        closureDescState.runtime = RUNTIME_POWERSHELL;
+        closureDescState.runtime = RUNTIME_POWERSHELL_6;
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 1;
         closureDescState.resources = constraints;
@@ -1024,7 +1012,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
                 + "    a\n"
                 + "}\n";
 
-        closureDescState.runtime = RUNTIME_POWERSHELL;
+        closureDescState.runtime = RUNTIME_POWERSHELL_6;
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 60;
         closureDescState.resources = constraints;
@@ -1075,7 +1063,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
                 + "    return $result\n"
                 + "}\n";
 
-        closureDescState.runtime = RUNTIME_POWERSHELL;
+        closureDescState.runtime = RUNTIME_POWERSHELL_6;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 60;
@@ -1123,7 +1111,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
 
         closureDescState.sourceURL = testWebserverUri + "/test_script_powershell.zip";
         closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_POWERSHELL;
+        closureDescState.runtime = RUNTIME_POWERSHELL_6;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 60;
@@ -1178,7 +1166,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
 
         closureDescState.sourceURL = testWebserverUri + "/non_existing.zip";
         closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_POWERSHELL;
+        closureDescState.runtime = RUNTIME_POWERSHELL_6;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 60;
@@ -1239,7 +1227,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
                 + "    $context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
                 + "}\n";
 
-        closureDescState.runtime = RUNTIME_POWERSHELL;
+        closureDescState.runtime = RUNTIME_POWERSHELL_6;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 60;
@@ -1296,7 +1284,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
                 + "    $context.outputs = @{\"result\" = $result} | ConvertTo-JSON\n"
                 + "}\n";
 
-        closureDescState.runtime = RUNTIME_POWERSHELL;
+        closureDescState.runtime = RUNTIME_POWERSHELL_6;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 60;
@@ -1345,7 +1333,7 @@ public class ClosuresPowerShellIT extends BaseClosureIntegrationTest {
 
         closureDescState.sourceURL = testWebserverUri + "/test_script_powershell_entrypoint.zip";
         closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_POWERSHELL;
+        closureDescState.runtime = RUNTIME_POWERSHELL_6;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 60;

@@ -17,6 +17,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import static com.vmware.admiral.closures.drivers.DriverConstants.RUNTIME_NODEJS_4;
+
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
@@ -43,52 +45,38 @@ import org.junit.Test;
 
 import com.vmware.admiral.BaseClosureIntegrationTest;
 import com.vmware.admiral.SimpleHttpsClient;
-import com.vmware.admiral.closures.drivers.DriverConstants;
 import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
 import com.vmware.admiral.closures.services.closuredescription.ResourceConstraints;
 import com.vmware.admiral.common.util.ServiceClientFactory;
-import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.service.common.LogService;
 import com.vmware.xenon.common.ServiceClient;
 import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
+@SuppressWarnings("unchecked")
 public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
-    protected static String IMAGE_NAME_PREFIX = "vmware/photon-closure-runner_";
+    protected static final String IMAGE_NAME_PREFIX = "vmware/photon-closure-runner_";
 
-    private static final String IMAGE_NAME = IMAGE_NAME_PREFIX
-            + DriverConstants.RUNTIME_NODEJS_4;
-
-    private static String testWebserverUri;
-
-    private static String RUNTIME_NODEJS = "nodejs";
+    private static final String IMAGE_NAME = IMAGE_NAME_PREFIX + RUNTIME_NODEJS_4;
 
     private static ServiceClient serviceClient;
-
     private static String dockerBuildImageLink;
     private static String dockerBuildBaseImageLink;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        try {
-            serviceClient = ServiceClientFactory.createServiceClient(null);
-            testWebserverUri = getTestWebServerUrl();
-
-            setupCoreOsHost(ContainerHostService.DockerAdapterType.API, false);
-            dockerBuildImageLink = getBaseUrl()
-                    + createImageBuildRequestUri(IMAGE_NAME + ":1.0", dockerHostCompute
-                    .documentSelfLink);
-            dockerBuildBaseImageLink = getBaseUrl()
-                    + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
-                    .documentSelfLink);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        serviceClient = ServiceClientFactory.createServiceClient(null);
+        setupClosureEnv();
+        dockerBuildImageLink = getBaseUrl()
+                + createImageBuildRequestUri(IMAGE_NAME + ":1.0", dockerHostCompute
+                .documentSelfLink);
+        dockerBuildBaseImageLink = getBaseUrl()
+                + createImageBuildRequestUri(IMAGE_NAME + "_base:1.0", dockerHostCompute
+                .documentSelfLink);
     }
 
     @AfterClass
@@ -118,7 +106,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
                 + " var a = 1;"
                 + " console.log(\"Hello test \" + a);"
                 + " };";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
 
         String taskDefPayload = Utils.toJson(closureDescState);
         ClosureDescription closureDescription = createClosureDescription(taskDefPayload,
@@ -140,7 +128,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
                 + " console.log('Hello number: ' + context.inputs.a);"
                 + " context.outputs.result=context.inputs.a + 1;"
                 + " }; ";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
 
         ResourceConstraints constraints = new ResourceConstraints();
@@ -195,7 +183,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
                 + " console.log('Executed at : ' + moment().valueOf());"
                 + " context.outputs.result = context.inputs.a + 1;"
                 + "}; ";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         closureDescState.dependencies = "{\"lodash\" : \"4.11.1\", \"moment\" : \"2.12.0\"}";
 
@@ -254,7 +242,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
                 + " x[i] = x[i] + 1;" + "}"
                 + " context.outputs.result = x;"
                 + "};";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 4;
@@ -316,7 +304,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
                 + " console.log('Hello number: ' + x);"
                 + " context.outputs.result = x;"
                 + "};";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 4;
@@ -379,7 +367,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
                 + " for(var i = 0; i < x.length; i++) {" + "x[i] = !x[i];" + "}"
                 + " context.outputs.result = x;"
                 + "};";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 4;
@@ -446,7 +434,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
                 + " console.log('Year of the date: ' + new Date(context.inputs.a).getFullYear());"
                 + " context.outputs.result = context.inputs.a;"
                 + "};";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 1;
@@ -510,7 +498,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
                         + " console.log('Year of the date: ' + new Date(x[0]).getFullYear());"
                         + " context.outputs.result = [x[0]];"
                         + "};";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 4;
@@ -591,7 +579,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
                 + " x.intTest = x.intTest + 1; x.boolTest = !x.boolTest;"
                 + " context.outputs.result = x;"
                 + "};";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 4;
@@ -671,7 +659,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
                 + " x.objTest.intTest = x.objTest.intTest + 1; x.objTest.boolTest = !x.objTest.boolTest;"
                 + " ctx.outputs.result = x;"
                 + "};";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 3;
@@ -747,7 +735,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
                 + " x[0].intTest = x[0].intTest + 1; x[0].boolTest = !x[0].boolTest;"
                 + " ctx.outputs.result= x;"
                 + "};";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 4;
@@ -819,7 +807,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
                 + " console.log('Hello string: ' + ctx.inputs.a);"
                 + " ctx.outputs.result = ctx.inputs.a.concat(\"c\");"
                 + "};";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 4;
@@ -873,7 +861,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         closureDescState.sourceURL = testWebserverUri + "/test_script_packagejson.zip";
         closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 20;
@@ -928,7 +916,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         closureDescState.sourceURL = testWebserverUri + "/test_script_as_obj_packagejson.zip";
         closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 20;
         constraints.ramMB = 300;
@@ -984,7 +972,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         closureDescState.sourceURL = testWebserverUri + "/test_script_no_packagejson.zip";
         closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 20;
@@ -1040,7 +1028,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         closureDescState.sourceURL = testWebserverUri + "/test_script_as_obj_no_packagejson.zip";
         closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 20;
@@ -1095,7 +1083,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         closureDescState.sourceURL = testWebserverUri + "/test_script_no_packagejson.zip";
         closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 20;
@@ -1150,7 +1138,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         closureDescState.sourceURL = testWebserverUri + "/test_script_as_obj_no_packagejson.zip";
         closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 20;
         constraints.ramMB = 300;
@@ -1205,7 +1193,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         closureDescState.sourceURL = testWebserverUri + "/test_script_as_obj_no_packagejson.zip";
         closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 20;
@@ -1258,7 +1246,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         closureDescState.sourceURL = testWebserverUri + "/test_script_as_obj_no_packagejson.zip";
         closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 20;
@@ -1312,7 +1300,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
                 + " console.log('Hello boolean: ' + ctx.inputs.a);"
                 + " ctx.outputs.result = !ctx.inputs.a;"
                 + "}";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 4;
@@ -1368,7 +1356,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
                 + " console.log('Hello boolean: ' + ctx.inputs.a);"
                 + " ctx.outputs.result = !ctx.inputs.a;"
                 + "}";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 4;
@@ -1425,7 +1413,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
                 + " console.log('Hello boolean: ' + ctx.inputs.a);"
                 + " ctx.outputs.result = !ctx.inputs.a;"
                 + "}";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 4;
@@ -1476,7 +1464,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
                 + " var a = 1;"
                 + " console.log(\"Hello \" + invalid);"
                 + "};";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 4;
@@ -1525,7 +1513,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
                 + " module.exports = function(ctx) {"
                 + " sleep(10000);"
                 + "};";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 1;
@@ -1572,7 +1560,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
                 + "module.exports = function(ctx) {"
                 + " sleep(10000);"
                 + "};";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 1;
@@ -1654,7 +1642,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
                 + " module.exports = function(ctx) {"
                 + " sleep(60000);"
                 + "}";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 1;
@@ -1771,7 +1759,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
                 + " console.log('Hello number: ' + context.inputs.a);"
                 + " context.outputs.result=context.inputs.a + 1;"
                 + " }; ";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 4;
@@ -1844,7 +1832,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
                 + " console.log('Hello number: ' + context.inputs.a);"
                 + " context.outputs.result=context.inputs.a + 1;"
                 + " }; ";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.notifyUrl = "/cmp/task_consumer";
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
@@ -1909,7 +1897,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
                 + " console.log('Hello number: ' + context.inputs.a);"
                 + " context.outputs.result=context.inputs.a + 1;"
                 + " }; ";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.notifyUrl = "/invalid";
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
@@ -1969,7 +1957,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
                 + "     console.log('Hello numbers: a=' + a + ' b=' + b);"
                 + "     ctx.outputs.result = a + b;"
                 + " }; ";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 10;
@@ -2035,7 +2023,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         closureDescState.sourceURL = serviceHostUri + closureSource.documentSelfLink + "?contentValue=true";
         closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = DriverConstants.RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 5;
@@ -2101,7 +2089,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
         closureDescState.dependencies = "{\"moment\" : \"2.12.0\"}";
         closureDescState.sourceURL = serviceHostUri + closureSource.documentSelfLink + "?contentValue=true";
         closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = DriverConstants.RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 10;
@@ -2166,7 +2154,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         closureDescState.sourceURL = serviceHostUri + closureSource.documentSelfLink + "?contentValue=true";
         closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = DriverConstants.RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 5;
@@ -2232,7 +2220,7 @@ public class ClosuresNodeJsIT extends BaseClosureIntegrationTest {
 
         closureDescState.sourceURL = serviceHostUri + closureSource.documentSelfLink + "?contentValue=true";
         closureDescState.source = "should not be used";
-        closureDescState.runtime = RUNTIME_NODEJS;
+        closureDescState.runtime = DriverConstants.RUNTIME_NODEJS_4;
         closureDescState.outputNames = new ArrayList<>(Collections.singletonList("result"));
         ResourceConstraints constraints = new ResourceConstraints();
         constraints.timeoutSeconds = 5;

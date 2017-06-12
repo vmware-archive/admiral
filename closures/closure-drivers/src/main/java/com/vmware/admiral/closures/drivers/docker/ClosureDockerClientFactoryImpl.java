@@ -21,8 +21,8 @@ import com.vmware.xenon.common.ServiceHost;
  */
 public class ClosureDockerClientFactoryImpl implements ClosureDockerClientFactory {
 
-    protected final ServiceHost serviceHost;
-    protected ClosureDockerClient dockerClient;
+    private final ServiceHost serviceHost;
+    private ClosureDockerClient dockerClient;
 
     public ClosureDockerClientFactoryImpl(ServiceHost serviceHost) {
         this.serviceHost = serviceHost;

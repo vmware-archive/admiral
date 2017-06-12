@@ -13,12 +13,12 @@ package com.vmware.admiral.closures.services.closure;
 
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
-import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.LINK;
-import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.OPTIONAL;
-import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
@@ -52,6 +52,10 @@ import com.vmware.xenon.common.Utils;
 public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         extends StatefulService {
 
+    public static final String CLOSURE_EXECUTION_PHASE = "Closure Execution";
+    private static final Map<String, Integer> TEMPLATE_PROGRESS_MAP = Collections.singletonMap(
+            "__DEFAULT__", 0);
+
     private final transient DriverRegistry driverRegistry;
 
     public ClosureService(DriverRegistry driverRegistry, long maintenanceTimeout) {
@@ -83,34 +87,32 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                         post.fail(new Exception("Unable to fetch closure state."));
                     } else {
                         Closure closure = op.getBody(Closure.class);
+                        handleMaintenance(post, closure);
+                    }
+                }));
+    }
+
+    private void handleMaintenance(Operation post, Closure closure) {
+        sendRequest(Operation
+                .createGet(this, closure.descriptionLink)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logWarning("Failed to fetch closure definition. Reason: %s",
+                                Utils.toString(e));
 
                         sendRequest(Operation
-                                .createGet(this, closure.descriptionLink)
-                                .setCompletion((o, e) -> {
-                                    if (e != null) {
-                                        logWarning("Failed to fetch closure definition. Reason: %s",
-                                                Utils.toString(e));
-
-                                        sendRequest(Operation
-                                                .createDelete(getUri())
-                                                .setCompletion((dop, dex) -> {
-                                                    if (dex != null) {
-                                                        logWarning("Self delete failed: %s",
-                                                                Utils.toString(dex));
-                                                    }
-                                                }));
-
-                                        post.fail(
-                                                new Exception(
-                                                        "Unable to fetch closure definition: " + e
-                                                                .getMessage()));
-                                    } else {
-                                        ClosureDescription taskDef = o
-                                                .getBody(ClosureDescription.class);
-
-                                        processMaintenance(post, closure, taskDef);
+                                .createDelete(getUri())
+                                .setCompletion((dop, dex) -> {
+                                    if (dex != null) {
+                                        logWarning("Self delete failed: %s", Utils.toString(dex));
                                     }
                                 }));
+
+                        post.fail(new Exception("Unable to fetch closure definition: " + e
+                                .getMessage()));
+                    } else {
+                        ClosureDescription taskDef = o.getBody(ClosureDescription.class);
+                        processMaintenance(post, closure, taskDef);
                     }
                 }));
     }
@@ -153,7 +155,7 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
             this.setState(patchOp, currentState);
             patchOp.setBody(currentState).complete();
 
-            updateRequestTracker(fromClosure(currentState));
+            updateRequestStatus(currentState);
             if (currentState.serviceTaskCallback != null) {
                 notifyCallerService(currentState);
             }
@@ -180,7 +182,7 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                 handleStateChanged(currentClosure);
             }
 
-            updateRequestTracker(fromClosure(currentClosure));
+            updateRequestStatus(currentClosure);
 
         } catch (Exception ex) {
             logSevere("Error while patching closure: %s", Utils.toString(ex));
@@ -188,50 +190,95 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         }
     }
 
-    private ClosureTaskState fromClosure(Closure currentClosure) {
+    private ClosureTaskState fromClosure(Closure closure) {
         ClosureTaskState closureTaskState = new ClosureTaskState();
         closureTaskState.taskInfo = new TaskState();
-        closureTaskState.taskInfo.stage = currentClosure.state;
-        closureTaskState.tenantLinks = currentClosure.tenantLinks;
+        closureTaskState.taskInfo.stage = closure.state;
+        closureTaskState.tenantLinks = closure.tenantLinks;
 
-        if (currentClosure.state == TaskStage.CREATED) {
+        if (closure.state == TaskStage.CREATED) {
             closureTaskState.taskSubStage = ClosureTaskState.SubStage.CREATED;
-        } else if (currentClosure.state == TaskStage.STARTED) {
+        } else if (closure.state == TaskStage.STARTED) {
             closureTaskState.taskSubStage = ClosureTaskState.SubStage.CLOSURE_EXECUTING;
-        } else if (currentClosure.state == TaskStage.FINISHED) {
+        } else if (closure.state == TaskStage.FINISHED) {
             closureTaskState.taskSubStage = ClosureTaskState.SubStage.COMPLETED;
-        } else if (currentClosure.state == TaskStage.FAILED
-                || currentClosure.state == TaskStage.CANCELLED) {
+        } else if (closure.state == TaskStage.FAILED
+                || closure.state == TaskStage.CANCELLED) {
             closureTaskState.taskSubStage = ClosureTaskState.SubStage.ERROR;
         }
+
+        closureTaskState.requestProgressByComponent = new HashMap<>();
+        closureTaskState.requestProgressByComponent
+                .put(CLOSURE_EXECUTION_PHASE, new HashMap<>(TEMPLATE_PROGRESS_MAP));
+
+        closureTaskState.resourceLinks = new HashSet<>();
+        closureTaskState.resourceLinks.add(closure.documentSelfLink);
+
+        closureTaskState.name = closure.name;
 
         return closureTaskState;
     }
 
-    public static class ClosureTaskState extends
+    private static class ClosureTaskState extends
             com.vmware.admiral.service.common.TaskServiceDocument<ClosureTaskState.SubStage> {
 
-        public static enum SubStage {
+        public enum SubStage {
             CREATED,
             CLOSURE_EXECUTING,
             COMPLETED,
-            ERROR;
+            ERROR
         }
 
-        @Documentation(description = "The description that defines the closure description.")
-        @PropertyOptions(usage = { SINGLE_ASSIGNMENT, LINK,
-                AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
-        public String resourceDescriptionLink;
+        public String name;
 
-        /** Set by a Task with the links of the provisioned resources. */
-        @Documentation(description = "Set by a Task with the links of the provisioned resources.")
-        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL, OPTIONAL }, indexing = STORE_ONLY)
         public Set<String> resourceLinks;
+
+        public Map<String, Map<String, Integer>> requestProgressByComponent;
 
     }
 
-    protected void updateRequestTracker(ClosureTaskState state) {
-        updateRequestTracker(state, ClosureProps.RETRIES_COUNT);
+    protected void updateRequestStatus(Closure closure) {
+        ClosureTaskState state = fromClosure(closure);
+        String requestStatusLink = ManagementUriParts.REQUEST_STATUS + "/" + getSelfId();
+        sendRequest(Operation
+                .createGet(getHost(), requestStatusLink)
+                .setCompletion((op, ex) -> {
+                    if (ex != null) {
+                        if (op.getStatusCode() == 404) {
+                            createRequestTracker(state);
+                        } else {
+                            logWarning("Unable to update request status for:" + closure
+                                    .documentSelfLink, ex);
+                        }
+                    } else {
+                        state.requestTrackerLink = requestStatusLink;
+                        updateRequestTracker(state, ClosureProps.RETRIES_COUNT);
+                    }
+                }));
+    }
+
+    public static class ClosureRequestStatus extends
+            com.vmware.admiral.service.common.AbstractTaskStatefulService.TaskStatusState {
+
+        /** Request progress (0-100%) */
+        @PropertyOptions(usage = { AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
+        public Map<String, Map<String, Integer>> requestProgressByComponent;
+
+    }
+
+    private void createRequestTracker(ClosureTaskState state) {
+        sendRequest(Operation.createPost(this, ManagementUriParts.REQUEST_STATUS)
+                .setBodyNoCloning(fromTask(state))
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        logWarning("Failed to create request tracker for: "
+                                + state.documentSelfLink, e);
+                        return;
+                    }
+                    state.requestTrackerLink = o.getBody(TaskStatusState.class).documentSelfLink;
+                    logInfo("Created request tracker: %s", state.requestTrackerLink);
+                    updateRequestTracker(state, ClosureProps.RETRIES_COUNT);
+                }));
     }
 
     protected void updateRequestTracker(ClosureTaskState state, int retryCount) {
@@ -244,7 +291,7 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                             // log but don't fail the task
                             if (ex instanceof CancellationException) {
                                 logFine("CancellationException: Failed to update request tracker:"
-                                                + " %s", state.requestTrackerLink);
+                                        + " %s", state.requestTrackerLink);
                                 // retry only the finished and failed updates. The others are not so
                                 // important
                             } else if (TaskStage.FINISHED.name()
@@ -267,13 +314,10 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         }
     }
 
-    protected TaskStatusState fromTask(ClosureTaskState state) {
-        return fromTask(new TaskStatusState(), state);
-    }
-
-    protected <S extends TaskStatusState> S fromTask(S taskStatus, ClosureTaskState state) {
+    protected ClosureRequestStatus fromTask(ClosureTaskState state) {
+        ClosureRequestStatus taskStatus = new ClosureRequestStatus();
         taskStatus.documentSelfLink = getSelfId();
-        taskStatus.phase = "Closure Execution";
+        taskStatus.phase = CLOSURE_EXECUTION_PHASE;
         taskStatus.taskInfo = state.taskInfo;
         taskStatus.subStage = state.taskSubStage.name();
         taskStatus.tenantLinks = state.tenantLinks;
@@ -292,6 +336,11 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
             taskStatus.progress = 100;
         }
 
+        taskStatus.requestProgressByComponent = state.requestProgressByComponent;
+        taskStatus.resourceLinks = state.resourceLinks;
+
+        taskStatus.name = state.name;
+
         return taskStatus;
     }
 
@@ -304,7 +353,7 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
                     .setCompletion((op, ex) -> {
                         if (ex != null) {
                             logWarning("Failed to fetch definition of closure: %s. Reason: %s",
-                                            closure.documentSelfLink, Utils.toString(ex));
+                                    closure.documentSelfLink, Utils.toString(ex));
                         } else {
                             ClosureDescription closureDesc = op.getBody(ClosureDescription.class);
 
@@ -443,9 +492,7 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
 
         // apply inputs
         if (reqClosure.inputs != null) {
-            reqClosure.inputs.forEach((k, v) -> {
-                closure.inputs.put(k, v);
-            });
+            reqClosure.inputs.forEach((k, v) -> closure.inputs.put(k, v));
         }
         closure.serviceTaskCallback = reqClosure.serviceTaskCallback;
         closure.closureSemaphore = UUID.randomUUID().toString();
@@ -523,10 +570,7 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         if (oldLogs == null) {
             return true;
         }
-        if (newLogs.length != oldLogs.length) {
-            return true;
-        }
-        return false;
+        return newLogs.length != oldLogs.length;
     }
 
     private byte[] shrinkToMaxAllowedSize(byte[] targetArray) {
@@ -615,15 +659,11 @@ public class ClosureService<T extends TaskServiceDocument<E>, E extends Enum<E>>
         closure.inputs = new HashMap<>();
         closure.name = closureDesc.name;
         if (closureDesc.inputs != null) {
-            closureDesc.inputs.forEach((k, v) -> {
-                closure.inputs.put(k, v);
-            });
+            closureDesc.inputs.forEach((k, v) -> closure.inputs.put(k, v));
         }
         closure.outputs = new HashMap<>();
         if (closureDesc.outputNames != null) {
-            closureDesc.outputNames.forEach((k) -> {
-                closure.outputs.put(k, null);
-            });
+            closureDesc.outputNames.forEach((k) -> closure.outputs.put(k, null));
         }
 
         // custom properties
