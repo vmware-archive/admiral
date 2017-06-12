@@ -21,13 +21,13 @@ import static com.vmware.photon.controller.model.adapterapi.EndpointConfigReques
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 import com.google.common.collect.Sets;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile;
 import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfile;
 import com.vmware.admiral.test.integration.compute.BaseWordpressComputeProvisionIT;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -56,40 +56,40 @@ public class OpenstackWordpressProvisionIT extends BaseWordpressComputeProvision
     private static final String NETWORK_ID_PROPERTY_KEY = "test.openstack.network.id";
     private static final String AVAILABILITY_ZONE_PROPERTY_KEY = "test.openstack.availability.zone";
 
-    @Override
-    protected void extendComputeDescription(ComputeDescription computeDescription)
-            throws Exception {
-        computeDescription.customProperties.put(RESOURCE_GROUP_NAME, "osTest");
-        computeDescription.customProperties
-                .put("osFlavor", getTestRequiredProp(FLAVOR_PROPERTY_KEY));
-        computeDescription.customProperties
-                .put("osAvailabilityZone", getTestRequiredProp(AVAILABILITY_ZONE_PROPERTY_KEY));
-    }
-
+    private final String shortName;
     private final String templateFilename;
 
-    @Parameterized.Parameters
+    @Parameterized.Parameters(name = "{index}:{0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
-                { "WordPress_with_MySQL_compute_network_ubuntu14.yaml", null }
+                { "existing", "WordPress_with_MySQL_compute_network_ubuntu14.yaml" },
+                { "isolated", "WordPress_with_MySQL_compute_isolated_ubuntu14.yaml" }
         });
     }
 
-    private final BiConsumer<Set<ServiceDocument>, String> validator;
-
-    public OpenstackWordpressProvisionIT(String templateFilename,
-            BiConsumer<Set<ServiceDocument>, String> validator) {
+    public OpenstackWordpressProvisionIT(String shortName, String templateFilename) {
+        this.shortName = shortName;
         this.templateFilename = templateFilename;
-        this.validator = validator;
     }
 
     @Override
     protected void doSetUp() throws Throwable {
+        logger.info("OpenstackWordpressProvisionIT.doSetUp()");
         createProfile(
                 loadComputeProfile(getEndpointType()),
                 createNetworkProfile(getTestRequiredProp("test.openstack.subnetwork.name"),
                         getTestRequiredProp("test.openstack.securitygroup.name"),
                         Sets.newHashSet(createTag("location", "dmz"))),
+                new StorageProfile());
+
+        NetworkProfile isolatedNetworkProfile = createIsolatedSubnetNetworkProfile(
+                getTestRequiredProp("test.openstack.network.name"),
+                Integer.parseInt(getTestRequiredProp("test.openstack.network.cidr_prefix")));
+        isolatedNetworkProfile.isolationNetworkCIDR = getTestRequiredProp(
+                "test.openstack.network.cidr");
+        createProfile(
+                loadComputeProfile(getEndpointType()),
+                isolatedNetworkProfile,
                 new StorageProfile());
     }
 
@@ -120,6 +120,16 @@ public class OpenstackWordpressProvisionIT extends BaseWordpressComputeProvision
     }
 
     @Override
+    protected void extendComputeDescription(ComputeDescription computeDescription)
+            throws Exception {
+        computeDescription.customProperties.put(RESOURCE_GROUP_NAME, "osTest");
+        computeDescription.customProperties
+                .put("osFlavor", getTestRequiredProp(FLAVOR_PROPERTY_KEY));
+        computeDescription.customProperties
+                .put("osAvailabilityZone", getTestRequiredProp(AVAILABILITY_ZONE_PROPERTY_KEY));
+    }
+
+    @Override
     protected String getResourceDescriptionLink() throws Exception {
         return importTemplate(templateFilename);
     }
@@ -128,8 +138,9 @@ public class OpenstackWordpressProvisionIT extends BaseWordpressComputeProvision
     protected void doWithResources(Set<String> resourceLinks) throws Throwable {
 
         Set<ServiceDocument> resources = getResources(resourceLinks);
-        if (validator != null) {
-            validator.accept(resources, AWS_ISOLATED_VPC_NAME);
+        if ("isolated".equals(shortName)) {
+            validateIsolatedNic(resources, getTestRequiredProp("test.openstack.network.name"),
+                    getTestRequiredProp("test.openstack.network.cidr"));
         } else {
             super.doWithResources(resourceLinks);
             resources.stream()

@@ -9,7 +9,7 @@ components:
       imageType: "ubuntu-1404"
       networks:
         - name: "wpnet"
-          ports: 5432
+          assignPublicIpAddress: false
       __computeConfigContent: |
           #cloud-config
           password: password
@@ -38,6 +38,7 @@ components:
       imageType: "ubuntu-1404"
       networks:
         - name: "wpnet"
+          assignPublicIpAddress: false
       __computeConfigContent: |
           #cloud-config
           password: password
@@ -68,7 +69,5 @@ components:
   wpnet:
     type: "Compute.Network"
     data:
-      name: wpnet
-      assignment: static
-      constraints:
-        - tag: "location:dmz:hard"
+      name: "wpnet"
+      networkType: isolated

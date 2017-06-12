@@ -162,8 +162,13 @@ public abstract class BaseWordpressComputeProvisionIT extends BaseComputeProvisi
         }
     }
 
-    protected static void validateIsolatedNic(Set<ServiceDocument> computes, String
-            isolatedNetworkName)  {
+    protected static void validateIsolatedNic(Set<ServiceDocument> computes,
+            String isolatedNetworkName) {
+        validateIsolatedNic(computes, isolatedNetworkName, null);
+    }
+
+    protected static void validateIsolatedNic(Set<ServiceDocument> computes,
+            String isolatedNetworkName, String subnetCIDR) {
         for (ServiceDocument serviceDocument : computes) {
             if (!(serviceDocument instanceof ComputeState)) {
                 continue;
@@ -192,9 +197,12 @@ public abstract class BaseWordpressComputeProvisionIT extends BaseComputeProvisi
                     String lowSubnetAddress = new SubnetUtils(subnetState.subnetCIDR).getInfo()
                             .getLowAddress();
 
-                    assertTrue(new SubnetUtils(networkState.subnetCIDR).getInfo()
-                            .isInRange(lowSubnetAddress));
-                }  else if (isolationType == IsolationSupportType.SECURITY_GROUP) {
+                    if (subnetCIDR == null) {
+                        subnetCIDR = networkState.subnetCIDR;
+                    }
+
+                    assertTrue(new SubnetUtils(subnetCIDR).getInfo().isInRange(lowSubnetAddress));
+                } else if (isolationType == IsolationSupportType.SECURITY_GROUP) {
                     assertNotNull(networkInterfaceState.securityGroupLinks);
                     assertTrue(networkInterfaceState.securityGroupLinks.size() > 0);
 
