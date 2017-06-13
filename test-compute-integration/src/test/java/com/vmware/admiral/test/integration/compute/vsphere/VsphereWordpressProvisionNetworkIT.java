@@ -18,12 +18,12 @@ import java.util.Collection;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
-import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfile;
 import com.vmware.admiral.test.integration.compute.vsphere.VsphereComputeProvisionIT;
+import com.vmware.admiral.test.integration.compute.vsphere.VsphereUtil;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
@@ -31,7 +31,6 @@ import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.ServiceDocument;
 
 @RunWith(Parameterized.class)
-@Ignore("https://jira-hzn.eng.vmware.com/browse/VCOM-1051")
 public class VsphereWordpressProvisionNetworkIT extends BaseWordpressComputeProvisionIT {
 
     public static final String DEFAULT_SUBNET_NAME = "VM Network";
@@ -82,6 +81,7 @@ public class VsphereWordpressProvisionNetworkIT extends BaseWordpressComputeProv
     @Override
     protected void extendEndpoint(EndpointState endpoint) {
         new VsphereComputeProvisionIT().extendEndpoint(endpoint);
+        endpoint.endpointProperties.put("regionId", getTestRequiredProp(VsphereUtil.VC_DATACENTER_ID));
     }
 
     @Override
