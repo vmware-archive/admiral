@@ -34,9 +34,10 @@ public class LocalPrincipalFactoryService extends FactoryService {
     @Override
     protected String buildDefaultChildSelfLink(ServiceDocument document) {
         LocalPrincipalState state = (LocalPrincipalState) document;
-        if (LocalPrincipalType.USER == state.type) {
+        if (state.type == null || LocalPrincipalType.USER == state.type) {
             return state.email;
         }
-        return super.buildDefaultChildSelfLink(document);
+        // In this case the state is group.
+        return state.name;
     }
 }

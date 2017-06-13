@@ -21,10 +21,15 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import com.vmware.admiral.auth.idm.AuthConfigProvider.CredentialsScope;
 import com.vmware.admiral.auth.util.UserGroupsUpdater;
+import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.DeferredResult;
@@ -35,7 +40,10 @@ import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
+import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.ServiceUriPaths;
+import com.vmware.xenon.services.common.UserGroupService;
+import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
 import com.vmware.xenon.services.common.UserService;
 import com.vmware.xenon.services.common.UserService.UserState;
 
@@ -111,12 +119,12 @@ public class LocalPrincipalService extends StatefulService {
         try {
             validatePrincipal(state);
 
-            if (LocalPrincipalType.USER == state.type) {
+            if (state.type == null || LocalPrincipalType.USER == state.type) {
                 createUserState(state, post);
-                return;
+            } else {
+                createUserGroup(state, post);
             }
 
-            post.setBody(state).complete();
         } catch (Exception ex) {
             post.fail(ex);
         }
@@ -140,11 +148,11 @@ public class LocalPrincipalService extends StatefulService {
     @Override
     public void handleDelete(Operation delete) {
         LocalPrincipalState state = getState(delete);
-        if (LocalPrincipalType.USER == state.type) {
+        if (state.type == null || LocalPrincipalType.USER == state.type) {
             deleteUserState(state.id, delete);
-            return;
+        } else {
+            deleteUserGroupState(state, delete);
         }
-        super.handleDelete(delete);
     }
 
     private void validatePrincipal(LocalPrincipalState principalState) {
@@ -165,8 +173,7 @@ public class LocalPrincipalService extends StatefulService {
         }
 
         if (principalState.type == LocalPrincipalType.GROUP) {
-            assertNotNull(principalState.groupMembersLinks, "groupMembersLinks");
-            principalState.id = Service.getId(principalState.documentSelfLink);
+            principalState.id = principalState.name;
             return;
         }
 
@@ -275,12 +282,90 @@ public class LocalPrincipalService extends StatefulService {
         });
     }
 
+    private void createUserGroup(LocalPrincipalState state, Operation op) {
+        String userGroupSelfLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, state.name);
+        Query userGroupQuery = AuthUtils.buildQueryForUsers(userGroupSelfLink);
+
+        UserGroupState userGroupState = UserGroupState.Builder.create()
+                .withSelfLink(userGroupSelfLink)
+                .withQuery(userGroupQuery)
+                .build();
+
+        URI userGroupFactoryUri = UriUtils.buildUri(getHost(),
+                ServiceUriPaths.CORE_AUTHZ_USER_GROUPS);
+        Operation postGroup = Operation.createPost(userGroupFactoryUri)
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE)
+                .setBody(userGroupState)
+                .setReferer(op.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        logWarning("Unable to create user group %s: %s", state.name,
+                                Utils.toString(ex));
+                        return;
+                    }
+                    UserGroupState groupState = o.getBody(UserGroupState.class);
+                    addUsersToGroup(state, groupState.documentSelfLink, op);
+                });
+        addReplicationFactor(postGroup);
+        sendRequest(postGroup);
+    }
+
+    private void addUsersToGroup(LocalPrincipalState group, String groupLink, Operation op) {
+        AtomicInteger counter = new AtomicInteger(group.groupMembersLinks.size());
+        AtomicBoolean hasError = new AtomicBoolean(false);
+
+        for (String localPrincipalLink : group.groupMembersLinks) {
+            addUserToGroup(localPrincipalLink, groupLink,
+                    (ex) -> {
+                        if (ex != null) {
+                            if (hasError.compareAndSet(false, true)) {
+                                op.fail(ex);
+                            } else {
+                                logWarning("Error when adding user %s to group %s: %s",
+                                        localPrincipalLink, groupLink, Utils.toString(ex));
+                            }
+                        } else {
+                            if (counter.decrementAndGet() == 0 && !hasError.get()) {
+                                op.setBody(group);
+                                op.complete();
+                            }
+                        }
+                    });
+        }
+    }
+
+    private void addUserToGroup(String localPrincipalLink, String groupLink, Consumer<Throwable>
+            callback) {
+        sendRequest(Operation.createGet(getHost(), localPrincipalLink)
+                .setReferer(getHost().getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        callback.accept(ex);
+                        return;
+                    }
+                    LocalPrincipalState localPrincipalState = o.getBody(LocalPrincipalState.class);
+                    DeferredResult<Void> result = UserGroupsUpdater.create()
+                            .setGroupLink(groupLink)
+                            .setHost(getHost())
+                            .setReferrer(getHost().getUri().toString())
+                            .setUsersToAdd(Collections.singletonList(localPrincipalState.email))
+                            .update();
+                    result.whenComplete((ignore, err) -> {
+                        if (err != null) {
+                            callback.accept(err);
+                            return;
+                        }
+                        callback.accept(null);
+                    });
+                }));
+    }
+
     private void deleteUserState(String id, Operation delete) {
         URI uri = UriUtils.buildUri(getHost(), UserService.FACTORY_LINK);
         uri = UriUtils.extendUri(uri, id);
 
         sendRequest(Operation.createDelete(uri)
-                .setReferer(getHost().getUri())
+                .setReferer(delete.getUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         delete.fail(ex);
@@ -288,6 +373,42 @@ public class LocalPrincipalService extends StatefulService {
                     }
                     super.handleDelete(delete);
                 }));
+    }
+
+    private void deleteUserGroupState(LocalPrincipalState state, Operation delete) {
+        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, state.id);
+
+        sendRequest(Operation.createDelete(getHost(), userGroupLink)
+                .setReferer(delete.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        delete.fail(ex);
+                        return;
+                    }
+                    removeUsersFromDeletedGroup(state, userGroupLink, delete);
+                }));
+    }
+
+    private void removeUsersFromDeletedGroup(LocalPrincipalState localGroupState, String groupLink,
+            Operation delete) {
+        List<String> usersToRemoveFromGroup = localGroupState.groupMembersLinks.stream()
+                .map(gm -> Service.getId(gm))
+                .collect(Collectors.toList());
+
+        DeferredResult<Void> result = UserGroupsUpdater.create()
+                .setReferrer(delete.getUri().toString())
+                .setHost(getHost())
+                .setGroupLink(groupLink)
+                .setUsersToRemove(usersToRemoveFromGroup)
+                .update();
+
+        result.whenComplete((ignore, ex) -> {
+            if (ex != null) {
+                delete.fail(ex);
+                return;
+            }
+            super.handleDelete(delete);
+        });
     }
 
     private boolean isRoleAssignmentUpdate(LocalPrincipalUserGroupAssignment patchGroups) {

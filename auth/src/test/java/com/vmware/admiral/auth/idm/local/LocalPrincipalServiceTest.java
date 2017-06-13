@@ -17,6 +17,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -25,7 +26,10 @@ import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalType;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
+import com.vmware.xenon.services.common.UserGroupService;
+import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
 import com.vmware.xenon.services.common.UserService;
 import com.vmware.xenon.services.common.UserService.UserState;
 
@@ -42,7 +46,6 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
         String fritzEmail = "fritz@admiral.com";
         String connieEmail = "connie@admiral.com";
         String gloriaEmail = "gloria@admiral.com";
-
 
         String fritzSelfLink = LocalPrincipalFactoryService.SELF_LINK + "/" + fritzEmail;
         String connieSelfLink = LocalPrincipalFactoryService.SELF_LINK + "/" + connieEmail;
@@ -186,6 +189,7 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
 
     @Test
     public void testCreateGroup() throws Throwable {
+        // Create first user
         LocalPrincipalState testUser = new LocalPrincipalState();
         testUser.name = "TestUser";
         testUser.email = "test@admiral.com";
@@ -193,6 +197,7 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
         testUser.type = LocalPrincipalType.USER;
         testUser = doPost(testUser, LocalPrincipalFactoryService.SELF_LINK);
 
+        // Create seconds user
         LocalPrincipalState testUser1 = new LocalPrincipalState();
         testUser1.name = "TestUser1";
         testUser1.email = "test1@admiral.com";
@@ -200,6 +205,7 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
         testUser1.type = LocalPrincipalType.USER;
         testUser1 = doPost(testUser1, LocalPrincipalFactoryService.SELF_LINK);
 
+        // Create group with already created users.
         LocalPrincipalState testGroup = new LocalPrincipalState();
         testGroup.type = LocalPrincipalType.GROUP;
         testGroup.name = "TestGroup";
@@ -208,11 +214,100 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
         testGroup.groupMembersLinks.add(testUser1.documentSelfLink);
         testGroup = doPost(testGroup, LocalPrincipalFactoryService.SELF_LINK);
 
+        // Verify the LocalPrincipalState is created.
         assertNotNull(testGroup);
         assertEquals(2, testGroup.groupMembersLinks.size());
         assertTrue(testGroup.groupMembersLinks.contains(testUser.documentSelfLink));
         assertTrue(testGroup.groupMembersLinks.contains(testUser1.documentSelfLink));
         assertTrue(testGroup.documentSelfLink.contains(testGroup.id));
+
+        // Verify UserGroupState is created.
+        UserGroupState groupState = getDocument(UserGroupState.class,
+                UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, testGroup.name));
+        assertNotNull(groupState);
+
+        // Verify users are patched.
+        List<UserState> users = getUsersFromUserGroup(groupState.documentSelfLink);
+        assertNotNull(users);
+        assertEquals(testGroup.groupMembersLinks.size(), users.size());
+
+        for (UserState userState : users) {
+            assertTrue(userState.email.equals(testUser.email)
+                    || userState.email.equals(testUser1.email));
+
+            assertTrue(userState.documentSelfLink.endsWith(testUser.email)
+                    || userState.documentSelfLink.endsWith(testUser1.email));
+        }
+
+        // Delete the group
+        doDelete(UriUtils.buildUri(host, testGroup.documentSelfLink), false);
+
+        // Verify the related LocalPrincipalState is deleted.
+        TestContext ctx = testCreate(1);
+        host.send(Operation.createGet(host, testGroup.documentSelfLink)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.completeIteration();
+                    } else {
+                        ctx.failIteration(
+                                new RuntimeException("LocalPrincipalState should be deleted."));
+                    }
+                }));
+        ctx.await();
+
+        // Verify the related UserGroupState is deleted.
+        TestContext ctx1 = testCreate(1);
+        host.send(Operation.createGet(host, groupState.documentSelfLink)
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx1.completeIteration();
+                    } else {
+                        ctx1.failIteration(
+                                new RuntimeException("UserGroupState should be deleted."));
+                    }
+                }));
+        ctx1.await();
+
+        // Verify users are modified and no longer present in deleted group.
+        for (UserState userState : users) {
+            UserState newState = getDocument(UserState.class, userState.documentSelfLink);
+            assertTrue(!newState.userGroupLinks.contains(groupState.documentSelfLink));
+        }
     }
 
+    @Test
+    public void testGroupsAreCreatedOnInitBoot() throws Throwable {
+        String developers = "developers";
+        String superusers = "superusers";
+
+        String developerSelfLink = UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK,
+                developers);
+        String developerUserGroupSelfLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                developers);
+
+        String superusersSelfLink = UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK,
+                superusers);
+        String superusersUserGroupSelfLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                superusers);
+
+        UserGroupState developersUg = getDocument(UserGroupState.class, developerUserGroupSelfLink);
+        assertNotNull(developersUg);
+        assertTrue(developersUg.documentSelfLink.endsWith(developers));
+
+        LocalPrincipalState developersPrincipalState = getDocument(LocalPrincipalState.class,
+                developerSelfLink);
+        assertNotNull(developersPrincipalState);
+        assertTrue(developersPrincipalState.documentSelfLink.endsWith(developers));
+
+        UserGroupState superusersUg = getDocument(UserGroupState.class,
+                superusersUserGroupSelfLink);
+        assertNotNull(superusersUg);
+        assertTrue(superusersUg.documentSelfLink.endsWith(superusers));
+
+        LocalPrincipalState superusersPrincipalState = getDocument(LocalPrincipalState.class,
+                superusersSelfLink);
+        assertNotNull(superusersPrincipalState);
+        assertTrue(superusersPrincipalState.documentSelfLink.endsWith(superusers));
+    }
 }

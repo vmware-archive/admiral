@@ -24,13 +24,12 @@ import static com.vmware.xenon.common.UriUtils.buildUriPath;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
@@ -41,12 +40,15 @@ import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
 public class LocalAuthConfigProvider implements AuthConfigProvider {
 
     public static class Config {
         public List<User> users;
+
+        public List<Group> groups;
     }
 
     public static class User {
@@ -54,6 +56,11 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
         public String email;
         public String password;
         public Boolean isAdmin;
+    }
+
+    public static class Group {
+        public String name;
+        public List<String> members;
     }
 
     @Override
@@ -68,8 +75,8 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
             return;
         }
 
-        List<User> users = getUsers(host, localUsers);
-        if (users == null) {
+        Config config = getConfig(host, localUsers);
+        if (config.users == null) {
             post.complete();
             return;
         }
@@ -84,7 +91,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
                         Utils.toString(ex));
             } else {
                 if (counter.decrementAndGet() == 0 && !hasError.get()) {
-                    createUsers(host, users, post);
+                    createUsers(host, config, post);
                 }
             }
         }, true, CLOUD_ADMINS_RESOURCE_GROUP_LINK,
@@ -98,29 +105,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
 
     }
 
-    private static void createUsers(ServiceHost host, List<User> users, Operation post) {
-        AtomicInteger counter = new AtomicInteger(users.size());
-
-        for (User user : users) {
-            // Needed synchronization of user creation, because if all users are created in parallel
-            // this causes the user group to be overwritten.
-            CountDownLatch latch = new CountDownLatch(1);
-            createUserIfNotExist(host, user, () -> {
-                if (counter.decrementAndGet() == 0) {
-                    post.complete();
-                }
-                latch.countDown();
-            });
-            try {
-                latch.await(5, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                post.fail(e);
-                break;
-            }
-        }
-    }
-
-    private static List<User> getUsers(ServiceHost host, String localUsers) {
+    private static Config getConfig(ServiceHost host, String localUsers) {
         Config config;
         try {
             String content = new String(Files.readAllBytes((new File(localUsers)).toPath()));
@@ -136,10 +121,35 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
             return null;
         }
 
-        return config.users;
+        return config;
     }
 
-    private static void createUserIfNotExist(ServiceHost host, User user, Runnable callback) {
+    private static void createUsers(ServiceHost host, Config config, Operation post) {
+        AtomicInteger counter = new AtomicInteger(config.users.size());
+
+        for (User user : config.users) {
+            createUserIfNotExist(host, user, () -> {
+                if (counter.decrementAndGet() == 0) {
+                    createGroups(host, config, post);
+                }
+            });
+        }
+    }
+
+    private static void createGroups(ServiceHost host, Config config, Operation post) {
+        AtomicInteger counter = new AtomicInteger(config.groups.size());
+
+        for (Group group : config.groups) {
+            createGroup(host, group, () -> {
+                if (counter.decrementAndGet() == 0) {
+                    post.complete();
+                }
+            });
+        }
+    }
+
+    private static void createUserIfNotExist(ServiceHost host, User user,
+            Runnable callback) {
 
         host.log(Level.INFO, "createUserIfNotExist - User '%s'...", user.email);
 
@@ -155,8 +165,31 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
                 .setReferer(host.getUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        host.log(Level.SEVERE, "Could not initialize user '%s': %s", state.email,
+                        host.log(Level.SEVERE, "Could not initialize user '%s': %s", user.email,
                                 Utils.toString(ex));
+                    }
+                    callback.run();
+                }));
+    }
+
+    private static void createGroup(ServiceHost host, Group group, Runnable
+            callback) {
+        host.log(Level.INFO, "createGroup - Group '%s'...", group.name);
+
+        LocalPrincipalState state = new LocalPrincipalState();
+        state.name = group.name;
+        state.type = LocalPrincipalType.GROUP;
+        state.groupMembersLinks = group.members.stream()
+                .map(u -> UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK, u))
+                .collect(Collectors.toList());
+
+        host.sendRequest(Operation.createPost(host, LocalPrincipalFactoryService.SELF_LINK)
+                .setBody(state)
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.log(Level.SEVERE, "Could not initialize group '%s': %s",
+                                group.name, Utils.toString(ex));
                     }
                     callback.run();
                 }));
@@ -173,14 +206,14 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
             return;
         }
 
-        List<User> users = getUsers(host, localUsers);
-        if (users == null) {
+        Config config = getConfig(host, localUsers);
+        if (config == null || config.users == null) {
             successfulCallback.run();
             return;
         }
 
         AtomicBoolean hasError = new AtomicBoolean(false);
-        AtomicInteger counter = new AtomicInteger(users.size());
+        AtomicInteger counter = new AtomicInteger(config.users.size());
 
         Consumer<Throwable> failCallback = (e) -> {
             if (hasError.compareAndSet(false, true)) {
@@ -198,13 +231,13 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
             }
         };
 
-        for (User user : users) {
+        for (User user : config.users) {
             waitForUser(host, user, callback, failCallback);
         }
     }
 
-    private static void waitForUser(ServiceHost host, User user, Runnable successfulCallback,
-            Consumer<Throwable> failureCallback) {
+    private static void waitForUser(ServiceHost host, User user, Runnable
+            successfulCallback, Consumer<Throwable> failureCallback) {
 
         final AtomicInteger servicesCounter = new AtomicInteger(1);
         final AtomicBoolean hasError = new AtomicBoolean(false);

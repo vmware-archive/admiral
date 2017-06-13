@@ -16,5 +16,12 @@
     "email": "tony@admiral.com",
     "password": "Password1!",
     "isAdmin": false
+  }],
+  "groups": [{
+      "name": "superusers",
+      "members": ["fritz@admiral.com"]
+    }, {
+      "name": "developers",
+      "members": ["connie@admiral.com", "gloria@admiral.com"]
   }]
 }

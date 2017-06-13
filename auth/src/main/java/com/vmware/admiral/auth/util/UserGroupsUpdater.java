@@ -11,7 +11,7 @@
 
 package com.vmware.admiral.auth.util;
 
-import static com.vmware.admiral.auth.util.PrincipalUtil.builUserStateSelfLinks;
+import static com.vmware.admiral.auth.util.PrincipalUtil.buildUserStateSelfLinks;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -129,7 +129,7 @@ public class UserGroupsUpdater {
     // TODO: Create the user if not exist.
     private DeferredResult<UserState> patchUserState(String user,
             boolean isRemove) {
-        URI userUri = builUserStateSelfLinks(this.host, user);
+        URI userUri = buildUserStateSelfLinks(this.host, user);
         Operation getUser = Operation.createGet(userUri)
                 .setReferer(referrer == null ? host.getUri().toString() : referrer);
 

@@ -68,6 +68,7 @@ public abstract class AuthBaseTest extends BaseTestCase {
     private static final String LOCAL_USERS_FILE = "/local-users.json";
 
     protected List<String> loadedUsers;
+    protected List<String> loadedGroups;
 
     @Before
     public void beforeForAuthBase() throws Throwable {
@@ -78,7 +79,7 @@ public abstract class AuthBaseTest extends BaseTestCase {
         waitForServiceAvailability(AuthInitialBootService.SELF_LINK);
         waitForInitialBootServiceToBeSelfStopped(AuthInitialBootService.SELF_LINK);
         waitForDefaultRoles();
-        waitForDefaultUsers();
+        waitForDefaultUsersAndGroups();
         TestContext ctx = new TestContext(1,
                 Duration.ofSeconds(DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES));
         AuthUtil.getPreferredProvider(AuthConfigProvider.class).waitForInitConfig(host,
@@ -206,6 +207,10 @@ public abstract class AuthBaseTest extends BaseTestCase {
         loadedUsers = config.users.stream()
                 .map((u) -> u.email)
                 .collect(Collectors.toList());
+
+        loadedGroups = config.groups.stream()
+                .map(u -> u.name)
+                .collect(Collectors.toList());
     }
 
     private void waitForDefaultRoles() throws Throwable {
@@ -217,12 +222,13 @@ public abstract class AuthBaseTest extends BaseTestCase {
                 BASIC_USERS_RESOURCE_GROUP_LINK);
     }
 
-    private void waitForDefaultUsers() throws Throwable {
+    private void waitForDefaultUsersAndGroups() throws Throwable {
         loadLocalUsers();
         waitFor(() -> {
             List<String> stateLinks = getDocumentLinksOfType(LocalPrincipalState.class);
+            int expectedSize = loadedUsers.size() + loadedGroups.size();
             if (stateLinks == null || stateLinks.isEmpty()
-                    || stateLinks.size() != loadedUsers.size()) {
+                    || stateLinks.size() != expectedSize) {
                 return false;
             }
             return true;

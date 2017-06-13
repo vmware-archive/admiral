@@ -94,7 +94,7 @@ public class PrincipalUtil {
         return UriUtils.buildUri(host, LocalPrincipalFactoryService.SELF_LINK + "/" + id);
     }
 
-    public static URI builUserStateSelfLinks(ServiceHost host, String id) {
+    public static URI buildUserStateSelfLinks(ServiceHost host, String id) {
         return UriUtils.buildUri(host, UserService.FACTORY_LINK + "/" + id);
     }
 }
