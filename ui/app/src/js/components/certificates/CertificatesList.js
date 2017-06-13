@@ -12,7 +12,7 @@
 import InlineEditableListFactory from 'components/common/InlineEditableListFactory';
 
 var CertificatesList = Vue.extend({
-  template: `<div><div v-else class="list-holder"></div></div>`,
+  template: `<div class="certificates-view"><div class="list-holder"></div></div>`,
   props: {
     model: {
       required: true,

@@ -47,13 +47,6 @@
               </li>
           </ul>
       </section>
-      <section *ngIf="embeddedMode" class="nav-group collapsible">
-          <input id="policiesCollapse" type="checkbox">
-          <label for="policiesCollapse">Policies</label>
-          <ul class="nav-list">
-              <li><a class="nav-link" routerLink="placements" routerLinkActive="active">Placements</a></li>
-          </ul>
-      </section>
       <section class="nav-group collapsible">
           <input id="libraryCollapse" type="checkbox">
           <label for="libraryCollapse">Library</label>
@@ -72,6 +65,8 @@
               <li><a class="nav-link" routerLink="hosts" routerLinkActive="active">Clusters</a></li>
           </ul>
       </section>
+      <a *ngIf="embeddedMode" class="nav-link" routerLink="placements" routerLinkActive="active">Placements</a>
+      <a *ngIf="embeddedMode" class="nav-link" routerLink="identity-management" routerLinkActive="active">Identity Management</a>
   </section>
 </nav>
 <div class="content-area" [hidden]="formerViewPath">

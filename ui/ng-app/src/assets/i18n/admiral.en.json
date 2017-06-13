@@ -93,6 +93,11 @@
     "replicationEndpoints": "Replication Endpoints",
     "replicationRules": "Replication Rules"
   },
+  "identity": {
+    "title": "Identity Management",
+    "credentials": "Credentials",
+    "certificates": "Certificates"
+  },
   "errors": {
     "itemNotFound": "Item was not found."
   },

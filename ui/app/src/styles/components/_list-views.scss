@@ -1068,7 +1068,7 @@ $elements-side-margin: $elements-margin / 2;
     z-index: 1;
     > .title {
       @include view-title();
-      margin: 20px 0 20px 20px;
+      margin: 24px 0 24px 24px;
       z-index: 1;
       position: absolute;
       > .total-items {
@@ -1109,6 +1109,17 @@ $elements-side-margin: $elements-margin / 2;
     @extend .position-expand;
     z-index: 2;
     left: 100%;
+  }
+}
+
+.center-view {
+  >.certificates-view, >.credentials-view {
+    height: 100%;
+    overflow: auto;
+
+    .inline-editable-list > .title {
+      display: none;
+    }
   }
 }
 

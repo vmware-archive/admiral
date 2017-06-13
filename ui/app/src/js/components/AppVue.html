@@ -47,6 +47,14 @@
                        v-bind:model="model.centerView.data"
                        v-ref:center-view >
       </containers-view>
+      <credentials-list v-if="model.centerView.name === constants.VIEWS.CREDENTIALS.name"
+                       v-bind:model="model.centerView.data"
+                       v-ref:center-view>
+      </credentials-list>
+      <certificates-list v-if="model.centerView.name === constants.VIEWS.CERTIFICATES.name"
+                       v-bind:model="model.centerView.data"
+                       v-ref:center-view>
+      </certificates-list>
       <ng-view v-if="showNgView"
                        v-bind:view-route="viewRoute"
                        v-ref:center-view >

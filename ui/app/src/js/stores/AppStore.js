@@ -14,6 +14,8 @@ import PlacementsStore from 'stores/PlacementsStore';
 import TemplatesStore from 'stores/TemplatesStore';
 import RegistryStore from 'stores/RegistryStore';
 import ContainersStore from 'stores/ContainersStore';
+import CredentialsStore from 'stores/CredentialsStore';
+import CertificatesStore from 'stores/CertificatesStore';
 import * as actions from 'actions/Actions';
 import routes from 'core/routes';
 import constants from 'core/constants';
@@ -111,6 +113,20 @@ let initializeStoreListeners = function() {
   ContainersStore.listen((containersData) => {
     if (this.data.centerView && utils.showResourcesView(this.data.centerView.name)) {
       this.setInData(['centerView', 'data'], containersData);
+      this.emitChange();
+    }
+  });
+
+  CredentialsStore.listen((credentialsData) => {
+    if (this.data.centerView && this.data.centerView.name === constants.VIEWS.CREDENTIALS.name) {
+      this.setInData(['centerView', 'data'], credentialsData);
+      this.emitChange();
+    }
+  });
+
+  CertificatesStore.listen((certificatesData) => {
+    if (this.data.centerView && this.data.centerView.name === constants.VIEWS.CERTIFICATES.name) {
+      this.setInData(['centerView', 'data'], certificatesData);
       this.emitChange();
     }
   });

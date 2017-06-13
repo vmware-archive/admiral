@@ -151,6 +151,16 @@ crossroads.addRoute('/registries', function() {
   actions.RegistryActions.openRegistries();
 });
 
+crossroads.addRoute('/credentials', function() {
+  actions.AppActions.openView(constants.VIEWS.CREDENTIALS.name);
+  actions.CredentialsActions.retrieveCredentials();
+});
+
+crossroads.addRoute('/certificates', function() {
+  actions.AppActions.openView(constants.VIEWS.CERTIFICATES.name);
+  actions.CertificatesActions.retrieveCertificates();
+});
+
 crossroads.addRoute('/import-template', function() {
   actions.AppActions.openView(constants.VIEWS.TEMPLATES.name);
   actions.TemplateActions.openImportTemplate();
