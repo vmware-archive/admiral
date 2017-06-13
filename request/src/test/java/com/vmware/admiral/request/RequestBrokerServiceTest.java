@@ -67,6 +67,18 @@ import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionSer
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeService.ContainerVolumeState;
 import com.vmware.admiral.compute.container.volume.VolumeUtil;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
+import com.vmware.admiral.compute.network.ComputeNetworkService;
+import com.vmware.admiral.compute.network.ComputeNetworkService.ComputeNetwork;
+import com.vmware.admiral.compute.profile.ComputeProfileService;
+import com.vmware.admiral.compute.profile.ComputeProfileService.ComputeProfile;
+import com.vmware.admiral.compute.profile.NetworkProfileService;
+import com.vmware.admiral.compute.profile.NetworkProfileService.NetworkProfile;
+import com.vmware.admiral.compute.profile.ProfileService;
+import com.vmware.admiral.compute.profile.ProfileService.ProfileState;
+import com.vmware.admiral.compute.profile.StorageProfileService;
+import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfile;
 import com.vmware.admiral.log.EventLogService.EventLogState;
 import com.vmware.admiral.log.EventLogService.EventLogState.EventLogType;
 import com.vmware.admiral.request.ContainerAllocationTaskService.ContainerAllocationTaskState;
@@ -76,16 +88,23 @@ import com.vmware.admiral.request.ReservationTaskService.ReservationTaskState;
 import com.vmware.admiral.request.composition.CompositionSubTaskService;
 import com.vmware.admiral.request.compute.ComputeOperationType;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
+import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.test.MockDockerAdapterService;
 import com.vmware.admiral.service.test.MockDockerNetworkAdapterService;
 import com.vmware.admiral.service.test.MockDockerVolumeAdapterService;
+import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
+import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService;
+import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription;
+import com.vmware.photon.controller.model.resources.LoadBalancerService.LoadBalancerState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.photon.controller.model.resources.SubnetService;
+import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
@@ -711,6 +730,123 @@ public class RequestBrokerServiceTest extends RequestBaseTest {
         ServiceDocumentQueryResult networkStates = getDocument(ServiceDocumentQueryResult.class,
                 ContainerNetworkService.FACTORY_LINK);
         assertEquals(0L, networkStates.documentCount.longValue());
+    }
+
+    @Test
+    public void testLoadBalancerRequestLifeCycle() throws Throwable {
+        host.log("########  Start of testLoadBalancerRequestLifeCycle ######## ");
+
+        // create prerequisites
+
+        String loadBalancerName = "mylb";
+        String networkName = "test-network";
+        String contextId = UUID.randomUUID().toString();
+
+        ComputeDescription computeDesc;
+        { // compute cluster
+            computeDesc = TestRequestStateFactory.createComputeDescriptionForVmGuestChildren();
+            computeDesc.endpointLink = endpoint.documentSelfLink;
+            computeDesc.customProperties.put(ComputeProperties.ENDPOINT_LINK_PROP_NAME,
+                    createEndpoint().documentSelfLink);
+            computeDesc.customProperties
+                    .put(ComputeConstants.CUSTOM_PROP_ENDPOINT_TYPE_NAME, "aws");
+            computeDesc.regionId = "region-1";
+
+            computeDesc = doPost(computeDesc, ComputeDescriptionService.FACTORY_LINK);
+            addForDeletion(computeDesc);
+        }
+
+        SubnetState subnet;
+        { // Sub-network to which the load balancer is attached
+            subnet = TestRequestStateFactory.createSubnetState("subnet");
+            subnet = doPost(subnet, SubnetService.FACTORY_LINK);
+
+            addForDeletion(subnet);
+        }
+
+        ProfileState profile;
+        { // Profile to find the sub-network
+            ComputeProfile computeProfile = TestRequestStateFactory.createComputeProfile("net");
+            computeProfile = doPost(computeProfile, ComputeProfileService.FACTORY_LINK);
+            addForDeletion(computeProfile);
+            StorageProfile storageProfile = TestRequestStateFactory.createStorageProfile("net");
+            storageProfile = doPost(storageProfile, StorageProfileService.FACTORY_LINK);
+            addForDeletion(storageProfile);
+            NetworkProfile networkProfile = TestRequestStateFactory.createNetworkProfile("net");
+            networkProfile.subnetLinks = Collections.singletonList(subnet.documentSelfLink);
+            networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
+            addForDeletion(networkProfile);
+            profile = TestRequestStateFactory
+                    .createProfile("profile", networkProfile.documentSelfLink,
+                            storageProfile.documentSelfLink, computeProfile.documentSelfLink);
+            profile.endpointLink = createEndpoint().documentSelfLink;
+            profile.endpointType = null;
+
+            profile = doPost(profile, ProfileService.FACTORY_LINK);
+            addForDeletion(profile);
+        }
+
+        { // Network attached to the profile from network allocation
+            ComputeNetworkDescription computeNetworkDescription = TestRequestStateFactory
+                    .createComputeNetworkDescription(networkName);
+            computeNetworkDescription = doPost(computeNetworkDescription,
+                    ComputeNetworkDescriptionService.FACTORY_LINK);
+            addForDeletion(computeNetworkDescription);
+
+            ComputeNetwork computeNetworkState = TestRequestStateFactory
+                    .createComputeNetworkState(networkName,
+                            computeNetworkDescription.documentSelfLink);
+            computeNetworkState.profileLinks = Collections.singletonList(profile.documentSelfLink);
+            computeNetworkState.customProperties
+                    .put(RequestUtils.FIELD_NAME_CONTEXT_ID_KEY, contextId);
+            computeNetworkState = doPost(computeNetworkState, ComputeNetworkService.FACTORY_LINK);
+            addForDeletion(computeNetworkState);
+        }
+
+        LoadBalancerDescription lbDesc;
+        { // The load balancer to be provisioned/removed
+            lbDesc = TestRequestStateFactory.createLoadBalancerDescription(loadBalancerName);
+            lbDesc.computeDescriptionLink = computeDesc.documentSelfLink;
+            lbDesc.endpointLink = endpoint.documentSelfLink;
+
+            lbDesc = doPost(lbDesc, LoadBalancerDescriptionService.FACTORY_LINK);
+            addForDeletion(lbDesc);
+        }
+
+        // 1. Request a loadBalancer:
+        RequestBrokerState request = TestRequestStateFactory
+                .createRequestState(ResourceType.LOAD_BALANCER_TYPE.getName(),
+                        lbDesc.documentSelfLink);
+        request.documentSelfLink = contextId;
+        host.log("########  Start of provisioning request ######## ");
+        request = startRequest(request);
+
+        request = waitForRequestToComplete(request);
+
+        String loadBalancerLink = request.resourceLinks.stream().findFirst().orElse(null);
+
+        assertNotNull(loadBalancerLink);
+        LoadBalancerState lbState = getDocument(LoadBalancerState.class, loadBalancerLink);
+        assertEquals(lbDesc.documentSelfLink, lbState.descriptionLink);
+        assertEquals(subnet.documentSelfLink,
+                lbState.subnetLinks.stream().findFirst().orElse(null));
+
+        // 1. Request a removal of loadBalancer:
+        RequestBrokerState removalRequest = TestRequestStateFactory
+                .createRequestState(ResourceType.LOAD_BALANCER_TYPE.getName(),
+                        lbDesc.documentSelfLink, RequestBrokerState.REMOVE_RESOURCE_OPERATION,
+                        new HashMap<>());
+        removalRequest.resourceLinks = Collections.singleton(loadBalancerLink);
+        host.log("########  Start of removal request ######## ");
+        removalRequest = startRequest(removalRequest);
+
+        removalRequest = waitForRequestToComplete(removalRequest);
+
+        LoadBalancerState removedLbState = getDocumentNoWait(LoadBalancerState.class,
+                loadBalancerLink);
+
+        assertNull(removedLbState);
+
     }
 
     @Test

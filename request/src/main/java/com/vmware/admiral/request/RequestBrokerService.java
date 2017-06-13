@@ -38,6 +38,7 @@ import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
 import com.vmware.admiral.adapter.common.ApplicationOperationType;
 import com.vmware.admiral.adapter.common.ClosureOperationType;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
+import com.vmware.admiral.adapter.common.LoadBalancerOperationType;
 import com.vmware.admiral.adapter.common.NetworkOperationType;
 import com.vmware.admiral.adapter.common.VolumeOperationType;
 import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
@@ -1190,6 +1191,7 @@ public class RequestBrokerService extends
 
         provisionTask.tenantLinks = state.tenantLinks;
         provisionTask.requestTrackerLink = state.requestTrackerLink;
+        provisionTask.resourceLinks = state.resourceLinks;
 
         sendRequest(Operation
                 .createPost(this, LoadBalancerProvisionTaskService.FACTORY_LINK)
@@ -1203,7 +1205,6 @@ public class RequestBrokerService extends
     }
 
     private void createLoadBalancerRemovalTask(RequestBrokerState state) {
-        // TODO: just a placeholder, needs to be implemented
         boolean errorState = state.taskSubStage == SubStage.REQUEST_FAILED
                 || state.taskSubStage == SubStage.RESERVATION_CLEANED_UP;
 
@@ -1212,6 +1213,7 @@ public class RequestBrokerService extends
             return;
         }
         LoadBalancerRemovalTaskState removalState = new LoadBalancerRemovalTaskState();
+        removalState.resourceLinks = state.resourceLinks;
         removalState.documentSelfLink = getSelfId();
         removalState.serviceTaskCallback = ServiceTaskCallback.create(
                 getSelfLink(),
@@ -1659,12 +1661,13 @@ public class RequestBrokerService extends
     private boolean isPostAllocationOperation(RequestBrokerState state) {
         return (isContainerType(state) || isContainerNetworkType(state) || isComputeType(state)
                 || isContainerVolumeType(state) || isComputeNetworkType(state) || isClosureType(
-                        state))
+                        state) || isLoadBalancerType(state))
                 && (ContainerOperationType.CREATE.id.equals(state.operation)
                         || NetworkOperationType.CREATE.id.equals(state.operation)
                         || ComputeOperationType.CREATE.id.equals(state.operation)
                         || VolumeOperationType.CREATE.id.equals(state.operation)
-                        || ClosureOperationType.CREATE.id.equals(state.operation));
+                        || ClosureOperationType.CREATE.id.equals(state.operation))
+                        || LoadBalancerOperationType.CREATE.id.equals(state.operation);
     }
 
     private String getPostAllocationOperation(RequestBrokerState state) {
@@ -1688,6 +1691,8 @@ public class RequestBrokerService extends
             return ComputeOperationType.CREATE.id;
         } else if (isContainerVolumeType(state)) {
             return VolumeOperationType.CREATE.id;
+        } else if (isLoadBalancerType(state)) {
+            return LoadBalancerOperationType.CREATE.id;
         } else {
             // No ContainerType here since its "unified" ContainerAllocationTaskService handles it!
             return null;
@@ -1910,6 +1915,13 @@ public class RequestBrokerService extends
                     trackedTasks.addAll(SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE
                             .get(ResourceType.COMPUTE_NETWORK_TYPE));
                 }
+            } else if (isLoadBalancerType(state)) {
+                trackedTasks.addAll(SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE
+                        .get(ResourceType.LOAD_BALANCER_TYPE));
+                if (!allocationOnly) {
+                    trackedTasks.addAll(SUPPORTED_EXEC_TASKS_BY_RESOURCE_TYPE
+                            .get(ResourceType.LOAD_BALANCER_TYPE));
+                }
             } else {
                 for (List<String> vals : SUPPORTED_ALLOCATION_TASKS_BY_RESOURCE_TYPE.values()) {
                     trackedTasks.addAll(vals);
@@ -1931,6 +1943,8 @@ public class RequestBrokerService extends
                 requestStatus.addTrackedTasks(ContainerNetworkProvisionTaskService.DISPLAY_NAME);
             } else if (isComputeNetworkType(state)) {
                 requestStatus.addTrackedTasks(ComputeNetworkProvisionTaskService.DISPLAY_NAME);
+            } else if (isLoadBalancerType(state)) {
+                requestStatus.addTrackedTasks(LoadBalancerProvisionTaskService.DISPLAY_NAME);
             } else if (isContainerVolumeType(state)) {
                 requestStatus.addTrackedTasks(ContainerVolumeProvisionTaskService.DISPLAY_NAME);
             }
@@ -1954,6 +1968,8 @@ public class RequestBrokerService extends
                     requestStatus.addTrackedTasks(ComputeRemovalTaskService.DISPLAY_NAME);
                 } else if (isComputeNetworkType(state)) {
                     requestStatus.addTrackedTasks(ComputeNetworkRemovalTaskService.DISPLAY_NAME);
+                } else if (isLoadBalancerType(state)) {
+                    requestStatus.addTrackedTasks(LoadBalancerRemovalTaskService.DISPLAY_NAME);
                 } else {
                     requestStatus.addTrackedTasks(ContainerRemovalTaskService.DISPLAY_NAME);
                 }

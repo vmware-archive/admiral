@@ -12,8 +12,11 @@
 package com.vmware.admiral.request.compute;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.UUID;
 
 import org.junit.Before;
@@ -23,9 +26,19 @@ import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.compute.LoadBalancerRemovalTaskService.LoadBalancerRemovalTaskState;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
+import com.vmware.photon.controller.model.adapters.awsadapter.AWSLoadBalancerService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription.ComputeType;
+import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService;
 import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription;
+import com.vmware.photon.controller.model.resources.LoadBalancerService;
+import com.vmware.photon.controller.model.resources.LoadBalancerService.LoadBalancerState;
+import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
+import com.vmware.photon.controller.model.tasks.ProvisionLoadBalancerTaskService;
+import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.test.TestContext;
 
 /**
  * Tests for the {@link LoadBalancerRemovalTaskService} class.
@@ -33,6 +46,7 @@ import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionServi
 public class LoadBalancerRemovalTaskServiceTest extends RequestBaseTest {
 
     private LoadBalancerDescription loadBalancerDesc;
+    private LoadBalancerState loadBalancerState;
 
     @Override
     @Before
@@ -41,58 +55,110 @@ public class LoadBalancerRemovalTaskServiceTest extends RequestBaseTest {
 
         // setup Load Balancer description
         createLoadBalancerDescription(UUID.randomUUID().toString());
+        ComputeState compute = createVmComputeWithRandomComputeDescription(true,
+                ComputeType.VM_GUEST);
+        SubnetState subnet = createSubnetState(null);
+        createLoadBalancerState(loadBalancerDesc.documentSelfLink, compute.documentSelfLink,
+                subnet.documentSelfLink);
     }
 
     @Test
     public void testRemovalTaskServiceLifeCycle() throws Throwable {
-        // TODO: enhance once the task implementation is complete
         LoadBalancerRemovalTaskState removalTask = createLoadBalancerRemovalTask(
-                loadBalancerDesc.documentSelfLink);
-        removalTask = remove(removalTask);
+                loadBalancerState.documentSelfLink);
+
+        remove(removalTask, false);
+
+        LoadBalancerState document = getDocumentNoWait(LoadBalancerState.class,
+                loadBalancerState.documentSelfLink);
+        assertNull(document);
+
     }
 
-    private LoadBalancerRemovalTaskState createLoadBalancerRemovalTask(
-            String loadBalancerDescLink) {
+    @Test
+    public void testRemovalTaskServiceWithStoppedLBTaskService() throws Throwable {
+        LoadBalancerRemovalTaskState removalTask = createLoadBalancerRemovalTask(
+                loadBalancerState.documentSelfLink);
+
+        stopService(ProvisionLoadBalancerTaskService.FACTORY_LINK);
+        remove(removalTask, true);
+
+        LoadBalancerState document = getDocument(LoadBalancerState.class,
+                loadBalancerState.documentSelfLink);
+        assertNotNull(document);
+    }
+
+    private void stopService(String link) {
+        TestContext ctx = testCreate(1);
+        Operation deleteOp = Operation.createDelete(UriUtils.buildUri(host, link))
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_NO_INDEX_UPDATE)
+                .setReplicationDisabled(true).setCompletion(ctx.getCompletion())
+                .setReferer(host.getUri());
+        host.send(deleteOp);
+        ctx.await();
+    }
+
+    private LoadBalancerRemovalTaskState createLoadBalancerRemovalTask(String loadBalancerLink) {
         LoadBalancerRemovalTaskState removalTask = new LoadBalancerRemovalTaskState();
         removalTask.serviceTaskCallback = ServiceTaskCallback.createEmpty();
         removalTask.customProperties = new HashMap<>();
+        removalTask.resourceLinks = new HashSet<>();
+        removalTask.resourceLinks.add(loadBalancerLink);
         return removalTask;
     }
 
-    private LoadBalancerRemovalTaskState remove(
-            LoadBalancerRemovalTaskState removalTask)
-            throws Throwable {
+    private LoadBalancerRemovalTaskState remove(LoadBalancerRemovalTaskState removalTask,
+            boolean shouldFail) throws Throwable {
         removalTask = startRemovalTask(removalTask);
         host.log("Start removal test: " + removalTask.documentSelfLink);
 
-        removalTask = waitForTaskSuccess(removalTask.documentSelfLink,
-                LoadBalancerRemovalTaskState.class);
+        removalTask = shouldFail ?
+                waitForTaskError(removalTask.documentSelfLink, LoadBalancerRemovalTaskState.class) :
+                waitForTaskSuccess(removalTask.documentSelfLink,
+                        LoadBalancerRemovalTaskState.class);
 
         return removalTask;
     }
 
-    private LoadBalancerRemovalTaskState startRemovalTask(
-            LoadBalancerRemovalTaskState removalTask) throws Throwable {
-        LoadBalancerRemovalTaskState outRemovalTask = doPost(
-                removalTask, LoadBalancerRemovalTaskService.FACTORY_LINK);
+    private LoadBalancerRemovalTaskState startRemovalTask(LoadBalancerRemovalTaskState removalTask)
+            throws Throwable {
+        LoadBalancerRemovalTaskState outRemovalTask = doPost(removalTask,
+                LoadBalancerRemovalTaskService.FACTORY_LINK);
         assertNotNull(outRemovalTask);
         return outRemovalTask;
     }
 
-    private LoadBalancerDescription createLoadBalancerDescription(String name)
-            throws Throwable {
+    private LoadBalancerDescription createLoadBalancerDescription(String name) throws Throwable {
         synchronized (initializationLock) {
             if (loadBalancerDesc == null) {
                 LoadBalancerDescription desc = TestRequestStateFactory
                         .createLoadBalancerDescription(name);
                 desc.documentSelfLink = UUID.randomUUID().toString();
-                desc.computeDescriptionLink = ComputeDescriptionService.FACTORY_LINK
-                        + "/dummy-compute-link";
+                desc.computeDescriptionLink =
+                        ComputeDescriptionService.FACTORY_LINK + "/dummy-compute-link";
 
                 loadBalancerDesc = doPost(desc, LoadBalancerDescriptionService.FACTORY_LINK);
                 assertNotNull(loadBalancerDesc);
             }
             return loadBalancerDesc;
+        }
+    }
+
+    private LoadBalancerState createLoadBalancerState(String lbdLink, String computeLink,
+            String subnetLink) throws Throwable {
+        synchronized (initializationLock) {
+            LoadBalancerState lbState = TestRequestStateFactory
+                    .createLoadBalancerState(UUID.randomUUID().toString());
+            lbState.descriptionLink = lbdLink;
+            lbState.endpointLink = this.endpoint.documentSelfLink;
+            lbState.computeLinks = Collections.singleton(computeLink);
+            lbState.subnetLinks = Collections.singleton(subnetLink);
+            lbState.instanceAdapterReference = UriUtils
+                    .buildUri(host, AWSLoadBalancerService.SELF_LINK);
+
+            loadBalancerState = doPost(lbState, LoadBalancerService.FACTORY_LINK);
+            assertNotNull(loadBalancerState);
+            return loadBalancerState;
         }
     }
 }
