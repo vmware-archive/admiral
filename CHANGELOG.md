@@ -1,6 +1,22 @@
 # CHANGELOG
 
-## 0.9.5-SNAPSHOT
+## 1.2.0-SNAPSHOT
+
+## 1.1.1
+
+* Bug fixes around VIC integration
+
+## 1.1.0
+
+* Better [VIC](https://vmware.github.io/vic-product/) integration
+
+* Add support for [VCH](https://vmware.github.io/vic/) host
+
+* Masthead integration with [Harbor](https://vmware.github.io/harbor/)
+
+* Various bug fixes and improvements.
+
+## 0.9.5
 
 * Add ability to provision and manage Docker hosts on AWS, Azure and vSphere.
 

@@ -5,7 +5,7 @@
     <parent>
         <artifactId>admiral-closures-parent</artifactId>
         <groupId>com.vmware.admiral.closures</groupId>
-        <version>0.9.5-SNAPSHOT</version>
+        <version>1.2.0-SNAPSHOT</version>
     </parent>
     <artifactId>admiral-closure-drivers</artifactId>
     <dependencies>

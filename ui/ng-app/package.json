@@ -1,6 +1,6 @@
 {
   "name": "admiral-ui-ng",
-  "version": "0.9.5-SNAPSHOT",
+  "version": "1.2.0-SNAPSHOT",
   "description": "Admiral UI ng",
   "angular-cli": {},
   "scripts": {

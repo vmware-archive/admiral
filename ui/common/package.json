@@ -1,6 +1,6 @@
 {
   "name": "admiral-ui-common",
-  "version": "0.9.5-SNAPSHOT",
+  "version": "1.2.0-SNAPSHOT",
   "description": "",
   "main": "dist/index.js",
   "typings": "src/index.d.ts",
