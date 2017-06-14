@@ -15,19 +15,19 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import static com.vmware.admiral.auth.idm.PrincipalService.CRITERIA_QUERY;
-
 import java.security.GeneralSecurityException;
-import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.BiFunction;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.test.TestContext;
+import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.UriUtils;
 
 public class PrincipalServiceTest extends AuthBaseTest {
 
@@ -38,161 +38,141 @@ public class PrincipalServiceTest extends AuthBaseTest {
 
     @Test
     public void testGetPrincipalWithValidInput() {
-        TestContext ctx = new TestContext(1, Duration.ofSeconds(10));
-        final Principal[] response = new Principal[1];
-        Operation get = Operation
-                .createGet(host, PrincipalService.SELF_LINK + "/fritz@admiral.com")
-                .setReferer(host.getUri())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        ctx.failIteration(ex);
-                        return;
-                    }
-                    response[0] = o.getBody(Principal.class);
-                    ctx.completeIteration();
-                });
-        get.sendWith(host);
-        ctx.await();
-        assertNotNull(response[0]);
-        assertEquals("fritz@admiral.com", response[0].id);
+        Principal admin = testRequest(Operation::createGet,
+                UriUtils.buildUriPath(PrincipalService.SELF_LINK, USER_EMAIL_ADMIN), false, null,
+                Principal.class);
+        assertNotNull(admin);
+        assertEquals(USER_EMAIL_ADMIN, admin.id);
 
-        TestContext ctx1 = new TestContext(1, Duration.ofSeconds(10));
-        final Principal[] response1 = new Principal[1];
-        get = Operation
-                .createGet(host, PrincipalService.SELF_LINK + "/connie@admiral.com")
-                .setReferer(host.getUri())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        ctx1.failIteration(ex);
-                        return;
-                    }
-                    response1[0] = o.getBody(Principal.class);
-                    ctx1.completeIteration();
-                });
-        get.sendWith(host);
-        ctx1.await();
-        assertNotNull(response1[0]);
-        assertEquals("connie@admiral.com", response1[0].id);
+        Principal connie = testRequest(Operation::createGet,
+                UriUtils.buildUriPath(PrincipalService.SELF_LINK, USER_EMAIL_CONNIE), false, null,
+                Principal.class);
+        assertNotNull(connie);
+        assertEquals(USER_EMAIL_CONNIE, connie.id);
     }
 
     @Test
     public void testGetPrincipalWithInvalidInput() {
         // Test with empty principal id.
-        TestContext ctx = new TestContext(1, Duration.ofSeconds(10));
-        Operation get = Operation
-                .createGet(host, PrincipalService.SELF_LINK)
-                .setReferer(host.getUri())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        ctx.completeIteration();
-                        return;
-                    }
-                    ctx.failIteration(new RuntimeException("Expected exception != null when "
-                            + "searching for principal with empty id."));
-                });
-        get.sendWith(host);
-        ctx.await();
+        testRequest(Operation::createGet, PrincipalService.SELF_LINK, true,
+                new IllegalStateException(
+                        "Expected exception != null when searching for principal with empty id."),
+                null);
 
         // Test with non present principal id.
-        TestContext ctx1 = new TestContext(1, Duration.ofSeconds(10));
-        get = Operation
-                .createGet(host, PrincipalService.SELF_LINK)
-                .setReferer(host.getUri())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        ctx1.completeIteration();
-                        return;
-                    }
-                    ctx1.failIteration(new RuntimeException("Expected exception != null when "
-                            + "searching for non present principal."));
-                });
-        get.sendWith(host);
-        ctx1.await();
+        testRequest(Operation::createGet,
+                UriUtils.buildUriPath(PrincipalService.SELF_LINK, "no-such-user"), true,
+                new IllegalStateException(
+                        "Expected exception != null when searching for non present principal."),
+                null);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void testGetPrincipalsWithValidInput() {
-        TestContext ctx = new TestContext(1, Duration.ofSeconds(10));
-        final List<Principal> response = new ArrayList<>();
-        String criteria = "/?" + CRITERIA_QUERY + "=fritz";
-        Operation get = Operation
-                .createGet(host, PrincipalService.SELF_LINK + criteria)
-                .setReferer(host.getUri())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        ctx.failIteration(ex);
-                        return;
-                    }
-                    response.addAll(o.getBody(ArrayList.class));
-                    ctx.completeIteration();
-                });
-        get.sendWith(host);
-        ctx.await();
-        assertEquals("fritz@admiral.com", response.get(0).id);
+        // match a single user
+        ArrayList<Principal> principals = testRequest(Operation::createGet,
+                String.format("%s/?%s=%s", PrincipalService.SELF_LINK,
+                        PrincipalService.CRITERIA_QUERY, USER_EMAIL_ADMIN),
+                false, null, ArrayList.class);
+        assertEquals(1, principals.size());
+        assertEquals(USER_EMAIL_ADMIN, principals.iterator().next().id);
 
-        TestContext ctx1 = new TestContext(1, Duration.ofSeconds(10));
-        response.clear();
-        criteria = "/?" + CRITERIA_QUERY + "=i";
-        get = Operation
-                .createGet(host, PrincipalService.SELF_LINK + criteria)
-                .setReferer(host.getUri())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        ctx1.failIteration(ex);
-                        return;
-                    }
-                    response.addAll(o.getBody(ArrayList.class));
-                    ctx1.completeIteration();
-                });
-        get.sendWith(host);
-        ctx1.await();
+        // match multiple users
+        principals = testRequest(Operation::createGet, String.format("%s/?%s=%s",
+                PrincipalService.SELF_LINK, PrincipalService.CRITERIA_QUERY, "i"), false, null,
+                ArrayList.class);
+        List<String> expectedPrincipals = Arrays.asList(USER_EMAIL_ADMIN, USER_EMAIL_BASIC_USER,
+                USER_EMAIL_GLORIA, USER_EMAIL_CONNIE);
+        assertEquals(expectedPrincipals.size(), principals.size());
+        assertTrue(USER_EMAIL_ADMIN, principals.stream().allMatch((principal) -> {
+            return expectedPrincipals.contains(principal.id);
+        }));
+    }
 
-        for (Principal resp : response) {
-            assertTrue(resp.id.equals("fritz@admiral.com")
-                    || resp.id.equals("connie@admiral.com")
-                    || resp.id.equals("gloria@admiral.com")
-                    || resp.id.equals("tony@admiral.com"));
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testGetPrincipalsWithInvalidInput() {
 
-        }
+        // Test with empty criteria
+        testRequest(Operation::createGet,
+                String.format("%s/?%s=", PrincipalService.SELF_LINK,
+                        PrincipalService.CRITERIA_QUERY),
+                true,
+                new IllegalStateException(
+                        "Expected exception != null when searching for principal with empty criteria."),
+                null);
 
+        // Test with missing user
+        ArrayList<Principal> principals = testRequest(Operation::createGet,
+                String.format("%s/?%s=%s", PrincipalService.SELF_LINK,
+                        PrincipalService.CRITERIA_QUERY, "no-such-user"),
+                false, null, ArrayList.class);
+        assertEquals(0, principals.size());
     }
 
     @Test
-    public void testGetPrincipalsWithInvalidInput() {
-        TestContext ctx = new TestContext(1, Duration.ofSeconds(10));
-        String criteria = "/?" + CRITERIA_QUERY + "=";
-        Operation get = Operation
-                .createGet(host, PrincipalService.SELF_LINK + criteria)
+    public void testGetSecurityContextShouldPass() {
+        SecurityContext securityContext = testRequest(Operation::createGet,
+                UriUtils.buildUriPath(PrincipalService.SELF_LINK, USER_EMAIL_ADMIN,
+                        PrincipalService.SECURITY_CONTEXT_SUFFIX),
+                false, null, SecurityContext.class);
+        assertEquals(USER_EMAIL_ADMIN, securityContext.id);
+    }
+
+    @Test
+    public void testGetSecurityContextShouldFail() {
+        testRequest(Operation::createGet,
+                UriUtils.buildUriPath(PrincipalService.SELF_LINK, "no-such-user",
+                        PrincipalService.SECURITY_CONTEXT_SUFFIX),
+                true,
+                new IllegalStateException(
+                        "Expected exception != null when retrieving security context for a missing user"),
+                null);
+    }
+
+    private <T> T testRequest(BiFunction<ServiceHost, String, Operation> opFunction,
+            String requestPath, boolean expectFailure, Throwable throwOnPass,
+            Class<T> resultClass) {
+        ArrayList<T> result = new ArrayList<>(1);
+
+        Operation op = opFunction.apply(host, requestPath)
                 .setReferer(host.getUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
-                        ctx.completeIteration();
-                        return;
+                        if (expectFailure) {
+                            host.completeIteration();
+                        } else {
+                            host.failIteration(ex);
+                        }
+                    } else {
+                        if (expectFailure) {
+                            host.failIteration(throwOnPass != null ? throwOnPass
+                                    : new IllegalArgumentException(String.format(
+                                            "Request to %s was expected to fail but passed",
+                                            requestPath)));
+                        } else {
+                            try {
+                                result.add(o.getBody(resultClass));
+                                host.completeIteration();
+                            } catch (Throwable er) {
+                                host.failIteration(er);
+                            }
+                        }
                     }
-                    ctx.failIteration(new RuntimeException("Expected exception != null when "
-                            + "searching for principal with empty criteria."));
                 });
-        get.sendWith(host);
-        ctx.await();
 
-        List<Principal> principals = new ArrayList<>();
-        TestContext ctx1 = new TestContext(1, Duration.ofSeconds(10));
-        criteria = "/?" + CRITERIA_QUERY + "=scot";
-        get = Operation
-                .createGet(host, PrincipalService.SELF_LINK + criteria)
-                .setReferer(host.getUri())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        ctx1.failIteration(ex);
-                        return;
-                    }
-                    principals.addAll(o.getBody(ArrayList.class));
-                    ctx1.completeIteration();
-                });
-        get.sendWith(host);
-        ctx1.await();
+        host.testStart(1);
+        host.send(op);
+        host.testWait();
 
-        assertEquals(0, principals.size());
+        if (expectFailure) {
+            return null;
+        } else {
+            assertEquals(String.format("Failed to retrieve response body of class %s",
+                    resultClass.getName()), 1, result.size());
+            return result.iterator().next();
+        }
     }
 
 }
