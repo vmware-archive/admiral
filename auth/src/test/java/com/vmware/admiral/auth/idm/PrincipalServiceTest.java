@@ -33,7 +33,7 @@ public class PrincipalServiceTest extends AuthBaseTest {
 
     @Before
     public void setIdentity() throws GeneralSecurityException {
-        host.assumeIdentity(buildUserServicePath(USERNAME_ADMIN));
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
     }
 
     @Test

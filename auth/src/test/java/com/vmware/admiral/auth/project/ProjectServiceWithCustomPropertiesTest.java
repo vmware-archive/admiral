@@ -49,7 +49,7 @@ public class ProjectServiceWithCustomPropertiesTest extends AuthBaseTest {
         waitForServiceAvailability(ProjectFactoryService.SELF_LINK);
         waitForServiceAvailability(GroupResourcePlacementService.FACTORY_LINK);
 
-        host.assumeIdentity(buildUserServicePath(USERNAME_ADMIN));
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
 
         Map<String, String> customProperties = createCustomPropertiesMap(CUSTOM_PROP_KEY_A,
                 CUSTOM_PROP_VAL_A, CUSTOM_PROP_KEY_B, CUSTOM_PROP_VAL_B);

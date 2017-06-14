@@ -39,7 +39,6 @@ import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
-import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
@@ -365,7 +364,7 @@ public class ProjectService extends StatefulService {
                     buildCreateUserGroupOperation(adminsGroupState), UserGroupState.class)
                     .thenCompose((groupState) -> {
                         projectState.administratorsUserGroupLink = groupState.documentSelfLink;
-                        String userId = Service.getId(getAuthorizedUserLink(authContext));
+                        String userId = Service.getId(AuthUtil.getAuthorizedUserLink(authContext));
                         return UserGroupsUpdater
                                 .create(getHost(), groupState.documentSelfLink, null,
                                         Collections.singletonList(userId), null)
@@ -380,7 +379,7 @@ public class ProjectService extends StatefulService {
                     buildCreateUserGroupOperation(membersGroupState), UserGroupState.class)
                     .thenCompose((groupState) -> {
                         projectState.membersUserGroupLink = groupState.documentSelfLink;
-                        String userId = Service.getId(getAuthorizedUserLink(authContext));
+                        String userId = Service.getId(AuthUtil.getAuthorizedUserLink(authContext));
                         return UserGroupsUpdater
                                 .create(getHost(), groupState.documentSelfLink, null,
                                         Collections.singletonList(userId), null)
@@ -398,15 +397,6 @@ public class ProjectService extends StatefulService {
         return Operation.createPost(getHost(), UserGroupService.FACTORY_LINK)
                 .setReferer(getHost().getUri())
                 .setBody(state);
-    }
-
-    private Query createDefaultUserGroupQuery(AuthorizationContext authContext) {
-        return AuthUtils
-                .buildUsersQuery(Collections.singletonList(getAuthorizedUserLink(authContext)));
-    }
-
-    private String getAuthorizedUserLink(AuthorizationContext authContext) {
-        return authContext.getClaims().getSubject();
     }
 
 }

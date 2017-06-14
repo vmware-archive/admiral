@@ -32,7 +32,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
     @Test
     public void testBasicUserCantReadRestrictedContent() throws Throwable {
         // Create simple container description with admins user.
-        host.assumeIdentity(buildUserServicePath(USERNAME_ADMIN));
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
         ContainerDescription description = new ContainerDescription();
         description.name = "test-name";
         description.image = "ubuntu";
@@ -41,7 +41,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         assertNotNull(description.documentSelfLink);
 
         // Verify basic user cannot see it.
-        host.assumeIdentity(buildUserServicePath(USERNAME_BASIC_USER));
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_BASIC_USER));
         List<String> containerDescriptionLinks = getDocument(
                 ServiceDocumentQueryResult.class, ContainerDescriptionService.FACTORY_LINK)
                 .documentLinks;
@@ -58,7 +58,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
     @Test
     public void testBasicUserCanReadAllowedContent() throws Throwable {
         // Create simple project with admins user. Basic user should be able to read it.
-        host.assumeIdentity(buildUserServicePath(USERNAME_ADMIN));
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
         ProjectState projectState = new ProjectState();
         projectState.name = "test-name";
         projectState.description = "test-description";
@@ -68,7 +68,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         assertNotNull(projectState.documentSelfLink);
 
         // Verify basic user can read this document
-        host.assumeIdentity(buildUserServicePath(USERNAME_CONNIE));
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_CONNIE));
         List<String> projectLinks = getDocument(ServiceDocumentQueryResult.class,
                 ProjectFactoryService.SELF_LINK).documentLinks;
         assertTrue(projectLinks != null && !projectLinks.isEmpty());

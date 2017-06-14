@@ -38,7 +38,7 @@ public class AuthContentServiceTest extends AuthBaseTest {
 
     @Before
     public void setup() throws GeneralSecurityException, IOException {
-        host.assumeIdentity(buildUserServicePath(USERNAME_ADMIN));
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
         projectOnlyContent = new BufferedReader(new InputStreamReader(getClass().getClassLoader()
                 .getResourceAsStream("content-projects-only.json")))
                 .lines().collect(Collectors.joining("\n"));

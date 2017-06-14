@@ -42,7 +42,7 @@ public class ProjectFactoryServiceTest extends AuthBaseTest {
         waitForServiceAvailability(ProjectFactoryService.SELF_LINK);
         waitForServiceAvailability(GroupResourcePlacementService.FACTORY_LINK);
 
-        host.assumeIdentity(buildUserServicePath(USERNAME_ADMIN));
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
         project = createProject(PROJECT_NAME, PROJECT_DESCRIPTION, PROJECT_IS_PUBLIC);
     }
 
@@ -78,10 +78,10 @@ public class ProjectFactoryServiceTest extends AuthBaseTest {
                             assertNotNull(stateWithMembers);
                             assertNotNull(stateWithMembers.administrators);
                             assertEquals(1, stateWithMembers.administrators.size());
-                            assertEquals(USERNAME_ADMIN, stateWithMembers.administrators.iterator().next().email);
+                            assertEquals(USER_EMAIL_ADMIN, stateWithMembers.administrators.iterator().next().email);
                             assertNotNull(stateWithMembers.members);
                             assertEquals(1, stateWithMembers.members.size());
-                            assertEquals(USERNAME_ADMIN, stateWithMembers.members.iterator().next().email);
+                            assertEquals(USER_EMAIL_ADMIN, stateWithMembers.members.iterator().next().email);
 
                             host.completeIteration();
                         } catch (Throwable ex) {

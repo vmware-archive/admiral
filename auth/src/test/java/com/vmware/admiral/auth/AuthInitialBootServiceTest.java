@@ -26,7 +26,7 @@ public class AuthInitialBootServiceTest extends AuthBaseTest {
 
     @Before
     public void setup() throws GeneralSecurityException {
-        host.assumeIdentity(buildUserServicePath(USERNAME_ADMIN));
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
     }
 
     @Test

@@ -26,6 +26,7 @@ import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFacto
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
@@ -338,6 +339,23 @@ public class AuthUtil {
             return link + UriUtils.URI_WILDCARD_CHAR;
         }
         return link + UriUtils.URI_PATH_CHAR + UriUtils.URI_WILDCARD_CHAR;
+    }
+
+    public static String getAuthorizedUserId(AuthorizationContext authContext) {
+        String userLink = getAuthorizedUserLink(authContext);
+        if (userLink == null) {
+            return null;
+        }
+
+        return UriUtils.getLastPathSegment(userLink);
+    }
+
+    public static String getAuthorizedUserLink(AuthorizationContext authContext) {
+        if (authContext == null || authContext.getClaims() == null
+                || authContext.getClaims().getSubject() == null) {
+            return null;
+        }
+        return authContext.getClaims().getSubject();
     }
 
 }

@@ -35,7 +35,7 @@ public class UserGroupsUpdaterTest extends AuthBaseTest {
 
     @Before
     public void setup() throws GeneralSecurityException {
-        host.assumeIdentity(buildUserServicePath(USERNAME_ADMIN));
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
     }
 
     @Test
@@ -57,7 +57,7 @@ public class UserGroupsUpdaterTest extends AuthBaseTest {
                 .setHost(host)
                 .setGroupLink(userGroupSelfLink)
                 .setReferrer(host.getUri().toString())
-                .setUsersToAdd(Arrays.asList(USERNAME_ADMIN, USERNAME_CONNIE))
+                .setUsersToAdd(Arrays.asList(USER_EMAIL_ADMIN, USER_EMAIL_CONNIE))
                 .update();
 
         TestContext ctx = testCreate(1);
@@ -72,7 +72,7 @@ public class UserGroupsUpdaterTest extends AuthBaseTest {
         // Verify users are added.
         List<UserState> users = getUsersFromUserGroup(userGroupState.documentSelfLink);
         for (UserState state : users) {
-            assertTrue(state.email.equals(USERNAME_ADMIN) || state.email.equals(USERNAME_CONNIE));
+            assertTrue(state.email.equals(USER_EMAIL_ADMIN) || state.email.equals(USER_EMAIL_CONNIE));
         }
 
         // Remove user.
@@ -80,7 +80,7 @@ public class UserGroupsUpdaterTest extends AuthBaseTest {
                 .setHost(host)
                 .setGroupLink(userGroupSelfLink)
                 .setReferrer(host.getUri().toString())
-                .setUsersToRemove(Arrays.asList(USERNAME_CONNIE))
+                .setUsersToRemove(Arrays.asList(USER_EMAIL_CONNIE))
                 .update();
 
         TestContext ctx1 = testCreate(1);
@@ -95,7 +95,7 @@ public class UserGroupsUpdaterTest extends AuthBaseTest {
         // Verify user is removed.
         users = getUsersFromUserGroup(userGroupState.documentSelfLink);
         for (UserState state : users) {
-            assertTrue(!state.email.equals(USERNAME_CONNIE));
+            assertTrue(!state.email.equals(USER_EMAIL_CONNIE));
         }
     }
 }

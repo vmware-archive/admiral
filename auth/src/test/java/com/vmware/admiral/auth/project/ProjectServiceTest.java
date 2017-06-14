@@ -68,7 +68,7 @@ public class ProjectServiceTest extends AuthBaseTest {
         waitForServiceAvailability(ProjectFactoryService.SELF_LINK);
         waitForServiceAvailability(GroupResourcePlacementService.FACTORY_LINK);
 
-        host.assumeIdentity(buildUserServicePath(USERNAME_ADMIN));
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
         project = createProject(PROJECT_NAME, PROJECT_DESCRIPTION, PROJECT_IS_PUBLIC);
     }
 
@@ -135,14 +135,14 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertNotNull(expandedState.members);
         assertEquals(1, expandedState.administrators.size());
         assertEquals(1, expandedState.members.size());
-        assertEquals(USERNAME_ADMIN, expandedState.administrators.iterator().next().email);
-        assertEquals(USERNAME_ADMIN, expandedState.members.iterator().next().email);
+        assertEquals(USER_EMAIL_ADMIN, expandedState.administrators.iterator().next().email);
+        assertEquals(USER_EMAIL_ADMIN, expandedState.members.iterator().next().email);
 
         // make a batch user operation: add and remove members
         ProjectRoles projectRoles = new ProjectRoles();
         projectRoles.members = new ProjectRoles.RolesAssignment();
-        projectRoles.members.remove = Arrays.asList(USERNAME_ADMIN);
-        projectRoles.members.add = Arrays.asList(USERNAME_GLORIA, USERNAME_CONNIE);
+        projectRoles.members.remove = Arrays.asList(USER_EMAIL_ADMIN);
+        projectRoles.members.add = Arrays.asList(USER_EMAIL_GLORIA, USER_EMAIL_CONNIE);
         doPatch(projectRoles, expandedState.documentSelfLink);
 
         // verify result
@@ -151,32 +151,32 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertNotNull(expandedState.members);
         assertEquals(1, expandedState.administrators.size());
         assertEquals(2, expandedState.members.size()); // one removed, two added
-        assertEquals(USERNAME_ADMIN, expandedState.administrators.iterator().next().email);
+        assertEquals(USER_EMAIL_ADMIN, expandedState.administrators.iterator().next().email);
         assertTrue(expandedState.members.stream()
-                .anyMatch((member) -> member.email.equals(USERNAME_GLORIA)));
+                .anyMatch((member) -> member.email.equals(USER_EMAIL_GLORIA)));
         assertTrue(expandedState.members.stream()
-                .anyMatch((member) -> member.email.equals(USERNAME_CONNIE)));
+                .anyMatch((member) -> member.email.equals(USER_EMAIL_CONNIE)));
 
         // make a batch user operation:
         // remove an already missing user, add an already included user
         projectRoles = new ProjectRoles();
         projectRoles.administrators = new ProjectRoles.RolesAssignment();
-        projectRoles.administrators.remove = Arrays.asList(USERNAME_GLORIA);
-        projectRoles.administrators.add = Arrays.asList(USERNAME_ADMIN);
+        projectRoles.administrators.remove = Arrays.asList(USER_EMAIL_GLORIA);
+        projectRoles.administrators.add = Arrays.asList(USER_EMAIL_ADMIN);
         doPatch(projectRoles, expandedState.documentSelfLink);
 
         // verify result
         expandedState = getExpandedProjectState(project.documentSelfLink);
         assertNotNull(expandedState.administrators);
         assertEquals(1, expandedState.administrators.size());
-        assertEquals(USERNAME_ADMIN, expandedState.administrators.iterator().next().email);
+        assertEquals(USER_EMAIL_ADMIN, expandedState.administrators.iterator().next().email);
 
         // make a batch user operation:
         // remove all users from a group
         projectRoles = new ProjectRoles();
         projectRoles.members = new ProjectRoles.RolesAssignment();
-        projectRoles.members.remove = Arrays.asList(USERNAME_ADMIN, USERNAME_GLORIA,
-                USERNAME_CONNIE);
+        projectRoles.members.remove = Arrays.asList(USER_EMAIL_ADMIN, USER_EMAIL_GLORIA,
+                USER_EMAIL_CONNIE);
         doPatch(projectRoles, expandedState.documentSelfLink);
 
         // verify result
@@ -198,8 +198,8 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertNotNull(expandedState.members);
         assertEquals(1, expandedState.administrators.size());
         assertEquals(1, expandedState.members.size());
-        assertEquals(USERNAME_ADMIN, expandedState.administrators.iterator().next().email);
-        assertEquals(USERNAME_ADMIN, expandedState.members.iterator().next().email);
+        assertEquals(USER_EMAIL_ADMIN, expandedState.administrators.iterator().next().email);
+        assertEquals(USER_EMAIL_ADMIN, expandedState.members.iterator().next().email);
 
         // Patch name, public flag and roles at the same time
         final String patchedName = "patchedName";
@@ -208,7 +208,7 @@ public class ProjectServiceTest extends AuthBaseTest {
         patchBody.name = patchedName;
         patchBody.isPublic = patchedPublicFlag;
         patchBody.members = new ProjectRoles.RolesAssignment();
-        patchBody.members.add = Arrays.asList(USERNAME_GLORIA, USERNAME_CONNIE);
+        patchBody.members.add = Arrays.asList(USER_EMAIL_GLORIA, USER_EMAIL_CONNIE);
         doPatch(patchBody, expandedState.documentSelfLink);
 
         // Verify result
@@ -221,9 +221,9 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertNotNull(expandedState.members);
         assertEquals(1, expandedState.administrators.size());
         assertEquals(3, expandedState.members.size());
-        assertEquals(USERNAME_ADMIN, expandedState.administrators.iterator().next().email);
+        assertEquals(USER_EMAIL_ADMIN, expandedState.administrators.iterator().next().email);
         List<String> expectedMembers = Arrays
-                .asList(USERNAME_ADMIN, USERNAME_CONNIE, USERNAME_GLORIA);
+                .asList(USER_EMAIL_ADMIN, USER_EMAIL_CONNIE, USER_EMAIL_GLORIA);
         assertTrue(expandedState.members.stream()
                 .allMatch((userState) -> expectedMembers.contains(userState.email)));
 
@@ -255,14 +255,14 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertNotNull(expandedState.members);
         assertEquals(1, expandedState.administrators.size());
         assertEquals(1, expandedState.members.size());
-        assertEquals(USERNAME_ADMIN, expandedState.administrators.iterator().next().email);
-        assertEquals(USERNAME_ADMIN, expandedState.members.iterator().next().email);
+        assertEquals(USER_EMAIL_ADMIN, expandedState.administrators.iterator().next().email);
+        assertEquals(USER_EMAIL_ADMIN, expandedState.members.iterator().next().email);
 
         // make a batch user operation: add and remove members
         ProjectRoles projectRoles = new ProjectRoles();
         projectRoles.members = new ProjectRoles.RolesAssignment();
-        projectRoles.members.remove = Arrays.asList(USERNAME_ADMIN);
-        projectRoles.members.add = Arrays.asList(USERNAME_GLORIA, USERNAME_CONNIE, "lazy@peon");
+        projectRoles.members.remove = Arrays.asList(USER_EMAIL_ADMIN);
+        projectRoles.members.add = Arrays.asList(USER_EMAIL_GLORIA, USER_EMAIL_CONNIE, "lazy@peon");
 
         host.testStart(1);
         Operation.createPut(host, expandedState.documentSelfLink)
@@ -289,11 +289,11 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertNotNull(expandedState.members);
         assertEquals(1, expandedState.administrators.size());
         assertEquals(3, expandedState.members.size()); // one removed, two added
-        assertEquals(USERNAME_ADMIN, expandedState.administrators.iterator().next().email);
+        assertEquals(USER_EMAIL_ADMIN, expandedState.administrators.iterator().next().email);
         assertTrue(expandedState.members.stream()
-                .anyMatch((member) -> member.email.equals(USERNAME_GLORIA)));
+                .anyMatch((member) -> member.email.equals(USER_EMAIL_GLORIA)));
         assertTrue(expandedState.members.stream()
-                .anyMatch((member) -> member.email.equals(USERNAME_CONNIE)));
+                .anyMatch((member) -> member.email.equals(USER_EMAIL_CONNIE)));
     }
 
     @Test
@@ -410,13 +410,13 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertTrue(stateWithMembers.administrators.size() == 1);
         assertTrue(stateWithMembers.administrators.iterator()
                 .next().documentSelfLink
-                .equals(buildUserServicePath(USERNAME_ADMIN)));
+                .equals(buildUserServicePath(USER_EMAIL_ADMIN)));
 
         assertNotNull(stateWithMembers.members);
         assertTrue(stateWithMembers.members.size() == 1);
         assertTrue(stateWithMembers.members.iterator()
                 .next().documentSelfLink
-                .equals(buildUserServicePath(USERNAME_ADMIN)));
+                .equals(buildUserServicePath(USER_EMAIL_ADMIN)));
     }
 
     @Test
@@ -461,7 +461,7 @@ public class ProjectServiceTest extends AuthBaseTest {
     private UserGroupState createUserGroup() throws Throwable {
 
         Query query = QueryUtil.buildPropertyQuery(UserState.class, UserState.FIELD_NAME_SELF_LINK,
-                buildUserServicePath(USERNAME_ADMIN)).querySpec.query;
+                buildUserServicePath(USER_EMAIL_ADMIN)).querySpec.query;
 
         UserGroupState userGroupState = UserGroupState.Builder
                 .create()

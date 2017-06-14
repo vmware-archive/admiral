@@ -37,7 +37,7 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
 
     @Before
     public void setup() throws Throwable {
-        host.assumeIdentity(buildUserServicePath(USERNAME_ADMIN));
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
         waitForServiceAvailability(LocalPrincipalFactoryService.SELF_LINK);
     }
 

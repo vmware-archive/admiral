@@ -76,7 +76,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
         }
 
         Config config = getConfig(host, localUsers);
-        if (config.users == null) {
+        if (config == null || config.users == null) {
             post.complete();
             return;
         }
@@ -116,7 +116,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
             return null;
         }
 
-        if (config.users == null || config.users.isEmpty()) {
+        if (config == null || config.users == null || config.users.isEmpty()) {
             host.log(Level.SEVERE, "No users found in the configuration file!");
             return null;
         }
@@ -125,6 +125,11 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
     }
 
     private static void createUsers(ServiceHost host, Config config, Operation post) {
+        if (config == null || config.users == null) {
+            createGroups(host, config, post);
+            return;
+        }
+
         AtomicInteger counter = new AtomicInteger(config.users.size());
 
         for (User user : config.users) {
@@ -137,6 +142,11 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
     }
 
     private static void createGroups(ServiceHost host, Config config, Operation post) {
+        if (config == null || config.groups == null) {
+            post.complete();
+            return;
+        }
+
         AtomicInteger counter = new AtomicInteger(config.groups.size());
 
         for (Group group : config.groups) {
