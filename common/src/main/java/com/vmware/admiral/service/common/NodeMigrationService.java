@@ -60,7 +60,7 @@ public class NodeMigrationService extends StatelessService {
             return;
         } else if (body.sourceNodeGroup == null || body.sourceNodeGroup.isEmpty()) {
             getHost().log(Level.INFO, "Source is empty!");
-            post.complete();
+            post.fail(new Throwable("sourceNodeGroup is required"));
             return;
         }
         setDependentServices();
@@ -81,10 +81,12 @@ public class NodeMigrationService extends StatelessService {
         services.add("/resources/tags");
 
         // Do not migrate these services
-        services.remove("/resources/host-container-list-data-collection");
-        services.remove("/resources/container-control-loop");
-        services.remove("/resources/hosts-data-collections");
-        services.remove("/config/event-topic");
+        services.remove(ManagementUriParts.HOST_CONTAINER_LIST_DATA_COLLECTION);
+        services.remove(ManagementUriParts.CONTAINER_CONTROL_LOOP);
+        services.remove(ManagementUriParts.CONTAINER_HOST_DATA_COLLECTION);
+        services.remove(ManagementUriParts.HOST_NETWORK_LIST_DATA_COLLECTION);
+        services.remove(ManagementUriParts.HOST_VOLUME_LIST_DATA_COLLECTION);
+        services.remove(ManagementUriParts.EVENT_TOPIC);
 
         patch.complete();
     }
@@ -105,7 +107,7 @@ public class NodeMigrationService extends StatelessService {
             migrationState.sourceNodeGroupReference = new URI(body.sourceNodeGroup);
         } catch (Exception e) {
             getHost().log(Level.SEVERE, "Invalid sourceNodeGroupReference", e.getMessage());
-            post.fail(e);
+            post.fail(new Throwable("Invalid sourceNodeGroupReference", e));
             return;
         }
         if (body.destinationNodeGroup == null || body.destinationNodeGroup.isEmpty()) {
@@ -124,7 +126,7 @@ public class NodeMigrationService extends StatelessService {
             } catch (Exception e) {
                 getHost().log(Level.SEVERE, "Invalid destinationNodeGroupReference",
                         e.getMessage());
-                post.fail(e);
+                post.fail(new Throwable("Invalid destinationNodeGroupReference", e));
                 return;
             }
         }

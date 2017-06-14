@@ -207,6 +207,75 @@ public class MigrationIT extends RequestBaseTest {
         this.targetHost.testWait();
     }
 
+    @Test
+    public void testMigrationInvalidSourceNodeGroup() throws Throwable {
+        MigrationRequest request = new MigrationRequest();
+        request.sourceNodeGroup = "http://invalid|";
+        this.targetHost.testStart(1);
+        Operation post = Operation
+                .createPost(UriUtils.buildUri(targetHost.getUri(), NodeMigrationService.SELF_LINK));
+        post.setBody(request);
+        post.setCompletion((o, e) -> {
+            if (e != null) {
+                // failure is expected!
+                assertEquals("Invalid sourceNodeGroupReference", e.getMessage());
+                this.targetHost.completeIteration();
+                return;
+            }
+
+            this.targetHost.failIteration(new Exception("expected failure but got success"));
+        });
+        this.targetHost.send(post);
+        this.targetHost.testWait();
+    }
+
+    @Test
+    public void testMigrationInvalidDestinationNodeGroup() throws Throwable {
+        MigrationRequest request = new MigrationRequest();
+        request.sourceNodeGroup = host.getPublicUriAsString() + DEAFULT_NODE_GROUP;
+        request.destinationNodeGroup = "http://invalid|";
+        this.targetHost.testStart(1);
+        Operation post = Operation
+                .createPost(UriUtils.buildUri(targetHost.getUri(), NodeMigrationService.SELF_LINK));
+        post.setBody(request);
+        post.setCompletion((o, e) -> {
+            if (e != null) {
+                // failure is expected!
+                assertEquals("Invalid destinationNodeGroupReference", e.getMessage());
+                this.targetHost.completeIteration();
+                return;
+            }
+
+            this.targetHost.failIteration(new Exception("expected failure but got success"));
+        });
+        this.targetHost.send(post);
+        this.targetHost.testWait();
+    }
+
+    @Test
+    public void testMigrationEmptySource() throws Throwable {
+        startMigrationTaskService(targetHost);
+
+        MigrationRequest request = new MigrationRequest();
+        request.sourceNodeGroup = null;
+        this.targetHost.testStart(1);
+        Operation post = Operation
+                .createPost(UriUtils.buildUri(targetHost.getUri(), NodeMigrationService.SELF_LINK));
+        post.setBody(request);
+        post.setCompletion((o, e) -> {
+            if (e != null) {
+                // failure is expected!
+                assertEquals("sourceNodeGroup is required", e.getMessage());
+                this.targetHost.completeIteration();
+                return;
+            }
+
+            this.targetHost.failIteration(new Exception("expected failure but got success"));
+        });
+        this.targetHost.send(post);
+        this.targetHost.testWait();
+    }
+
     private void startMigrationTaskService(VerificationHost host) throws Throwable {
         URI u = UriUtils.buildUri(host, MigrationTaskService.FACTORY_LINK);
         Operation post = Operation.createPost(u);
