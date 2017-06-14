@@ -13,6 +13,12 @@ import templateHelpers from 'core/templateHelpers';
 
 window.i18n = i18next;
 
+// the current UI is expected to be served under '/ogui' and/or '/iaas', therefore to get
+// the adapter url, we need to go one path up relatively '../'
+var fixupAdapterStaticResourcePath = function(path) {
+  return path.replace(/^\//, '../');
+};
+
 var initializer = {};
 
 initializer.init = function(initProperties, callback) {
@@ -141,7 +147,7 @@ initializer.init = function(initProperties, callback) {
       return {
         id: adapter.id,
         name: adapter.name,
-        iconSrc: customProperties.icon.replace(/^\//, ''),
+        iconSrc: fixupAdapterStaticResourcePath(customProperties.icon),
         endpointEditor: customProperties.endpointEditor,
         computeProfileEditorType: customProperties.computeProfileEditorType,
         computeProfileEditor: customProperties.computeProfileEditor,
@@ -153,7 +159,8 @@ initializer.init = function(initProperties, callback) {
 
     return Promise.all(Object.values(adapters)
         .filter((adapter) => adapter.customProperties && adapter.customProperties.uiLink)
-        .map((adapter) => services.loadScript(adapter.customProperties.uiLink.replace(/^\//, ''))));
+        .map((adapter) => services.loadScript(
+          fixupAdapterStaticResourcePath(adapter.customProperties.uiLink))));
 
   }).then(callback).catch((err) => {
     console.warn('Error when loading configuration! Error: ' + JSON.stringify(err));
