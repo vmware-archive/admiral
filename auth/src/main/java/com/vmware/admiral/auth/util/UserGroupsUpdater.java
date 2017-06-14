@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.auth.util;
 
+import static com.vmware.admiral.auth.util.AuthUtil.addReplicationFactor;
 import static com.vmware.admiral.auth.util.PrincipalUtil.buildUserStateSelfLinks;
 
 import java.net.URI;
@@ -146,6 +147,7 @@ public class UserGroupsUpdater {
                                     .setReferer(
                                             referrer == null ? host.getUri().toString() : referrer)
                                     .setBody(userState);
+                            addReplicationFactor(createUser);
                             return host.sendWithDeferredResult(createUser, UserState.class);
                         }
                         return DeferredResult.failed(ex);
@@ -174,7 +176,13 @@ public class UserGroupsUpdater {
                                             referrer == null ? host.getUri().toString() : referrer);
 
                             return host.sendWithDeferredResult(patchOp, UserState.class);
-                        }).thenAccept(userState -> result.complete(userState)));
+                        })
+                        .thenAccept(result::complete)
+                        .exceptionally((ex) -> {
+                            result.fail(ex);
+                            return null;
+                        }));
+
         return result;
     }
 

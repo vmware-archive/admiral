@@ -12,12 +12,16 @@
 package com.vmware.admiral.auth.content;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+
+import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_USER_GROUP_LINK;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,12 +29,20 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
+import com.vmware.admiral.auth.idm.AuthRole;
+import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
+import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.idm.content.AuthContentService;
 import com.vmware.admiral.auth.idm.content.AuthContentService.AuthContentBody;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.TestContext;
+import com.vmware.xenon.services.common.RoleService;
+import com.vmware.xenon.services.common.RoleService.RoleState;
+import com.vmware.xenon.services.common.UserService.UserState;
 
 public class AuthContentServiceTest extends AuthBaseTest {
     private String projectOnlyContent;
@@ -108,6 +120,86 @@ public class AuthContentServiceTest extends AuthBaseTest {
             assertTrue(projectToImportNames.contains(state.name));
         }
 
-        //TODO: Assert users are correctly distributed when roles are implemented.
+        // Verify Tony is added in cloud admins and Connie is removed
+        UserState tonyState = getDocument(UserState.class,
+                buildUserServicePath(USER_EMAIL_BASIC_USER));
+
+        UserState connieState = getDocument(UserState.class,
+                buildUserServicePath(USER_EMAIL_CONNIE));
+
+        assertNotNull(tonyState);
+        assertNotNull(connieState);
+
+        assertTrue(tonyState.userGroupLinks.contains(CLOUD_ADMINS_USER_GROUP_LINK));
+        assertTrue(!connieState.userGroupLinks.contains(CLOUD_ADMINS_USER_GROUP_LINK));
+    }
+
+    @Test
+    public void testImportContentToAssignAndUnassignGroups() throws Throwable {
+        // First assign developers to cloud admins role, because
+        // from config file will we will unassign them.
+        String developers = "developers";
+        PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
+        roleAssignment.add = new ArrayList<>();
+        roleAssignment.add.add(AuthRole.CLOUD_ADMINS.getName());
+        doPatch(roleAssignment, UriUtils.buildUriPath(PrincipalService.SELF_LINK, developers,
+                PrincipalService.ROLES_SUFFIX));
+
+        RoleState roleState = getDocument(RoleState.class, UriUtils.buildUriPath(RoleService
+                .FACTORY_LINK, AuthRole.CLOUD_ADMINS.buildRoleWithSuffix(developers)));
+        assertNotNull(roleState);
+
+        // Import content
+        AuthContentBody body = Utils.fromJson(authContent, AuthContentBody.class);
+        TestContext ctx = testCreate(1);
+        host.send(Operation.createPost(host, AuthContentService.SELF_LINK)
+                .setBody(body)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                    } else {
+                        ctx.completeIteration();
+                    }
+                }));
+        ctx.await();
+
+        // Verify Tony is added in cloud admins and Connie is removed
+        UserState tonyState = getDocument(UserState.class,
+                buildUserServicePath(USER_EMAIL_BASIC_USER));
+
+        UserState connieState = getDocument(UserState.class,
+                buildUserServicePath(USER_EMAIL_CONNIE));
+
+        assertNotNull(tonyState);
+        assertNotNull(connieState);
+
+        assertTrue(tonyState.userGroupLinks.contains(CLOUD_ADMINS_USER_GROUP_LINK));
+        assertTrue(!connieState.userGroupLinks.contains(CLOUD_ADMINS_USER_GROUP_LINK));
+
+        // Verify superusers are cloud admins.
+        String superusers = "superusers";
+        roleState = getDocument(RoleState.class, UriUtils.buildUriPath(RoleService
+                .FACTORY_LINK, AuthRole.CLOUD_ADMINS.buildRoleWithSuffix(superusers)));
+        assertNotNull(roleState);
+
+        // Verify developers are unassigned from cloud admins.
+        TestContext ctx1 = testCreate(1);
+        host.send(Operation.createGet(host, UriUtils.buildUriPath(RoleService
+                .FACTORY_LINK, AuthRole.CLOUD_ADMINS.buildRoleWithSuffix(developers)))
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        if (ex instanceof ServiceNotFoundException) {
+                            ctx1.completeIteration();
+                            return;
+                        }
+                        ctx1.failIteration(ex);
+                        return;
+                    }
+                    ctx1.failIteration(
+                            new RuntimeException("Superusers should've been unassigned from "
+                                    + "cloud admins."));
+                }));
+        ctx1.await();
     }
 }

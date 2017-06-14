@@ -11,16 +11,13 @@
 
 package com.vmware.admiral.auth.project;
 
-import java.util.List;
-
-import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles.RolesAssignment;
+import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.auth.util.UserGroupsUpdater;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption;
 import com.vmware.xenon.common.ServiceHost;
 
 /**
@@ -32,37 +29,22 @@ public class ProjectRolesHandler {
     private static final String BODY_IS_REQUIRED_MESSAGE = "Body is required.";
     private static final String BODY_IS_REQUIRED_MESSAGE_CODE = "auth.body.required";
 
-
     /**
      * DTO for custom PATCH and PUT requests to {@link ProjectService} instances. Used for
      * assignment/unassigment of users with various role.
      */
-    public static class ProjectRoles extends com.vmware.xenon.common.ServiceDocument {
+    public static class ProjectRoles {
 
-        /** Assignment/unassignment of project administrators. */
-        @Documentation(description = "Assignment/unassignment of project administrators.")
-        @PropertyOptions(usage = PropertyUsageOption.OPTIONAL)
-        public RolesAssignment administrators;
+        /**
+         * Assignment/unassignment of project administrators.
+         */
+        public PrincipalRoleAssignment administrators;
 
-        /** Assignment/unassignment of project members. */
-        @Documentation(description = "Assignment/unassignment of project members.")
-        @PropertyOptions(usage = PropertyUsageOption.OPTIONAL)
-        public RolesAssignment members;
+        /**
+         * Assignment/unassignment of project members.
+         */
+        public PrincipalRoleAssignment members;
 
-        public static class RolesAssignment {
-
-            /** List of principal IDs to assign to this project with a given role. */
-            @Documentation(description = "List of principal IDs to "
-                    + "assign to this project with a given role.")
-            @PropertyOptions(usage = PropertyUsageOption.OPTIONAL)
-            public List<String> add;
-
-            /** List of principal IDs with a given role to unassign from this project. */
-            @Documentation(description = "List of principal IDs with "
-                    + "a given role to unassign from this project.")
-            @PropertyOptions(usage = PropertyUsageOption.OPTIONAL)
-            public List<String> remove;
-        }
     }
 
     private ServiceHost serviceHost;
@@ -85,7 +67,7 @@ public class ProjectRolesHandler {
         return updateAdmins || updateMembers;
     }
 
-    private static boolean hasRolesUpdate(RolesAssignment rolesAssignment) {
+    private static boolean hasRolesUpdate(PrincipalRoleAssignment rolesAssignment) {
         return (rolesAssignment.add != null && !rolesAssignment.add.isEmpty())
                 || (rolesAssignment.remove != null && !rolesAssignment.remove.isEmpty());
     }
@@ -105,7 +87,8 @@ public class ProjectRolesHandler {
                 ProjectState.class);
     }
 
-    private DeferredResult<Void> handleRolesAssignment(ProjectState projectState, ProjectRoles patchBody) {
+    private DeferredResult<Void> handleRolesAssignment(ProjectState projectState,
+            ProjectRoles patchBody) {
         DeferredResult<Void> updateAdmins;
         DeferredResult<Void> updateMembers;
 

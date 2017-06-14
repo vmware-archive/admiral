@@ -18,6 +18,7 @@ import static com.vmware.admiral.auth.util.AuthUtil.addReplicationFactor;
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -255,31 +256,35 @@ public class LocalPrincipalService extends StatefulService {
     }
 
     private void finalizeUserCreate(LocalPrincipalState state, Operation op) {
-        DeferredResult<Void> result;
+        List<DeferredResult<Void>> result = new ArrayList<>();
         if (state.isAdmin == null || state.isAdmin) {
-            result = UserGroupsUpdater.create()
+            result.add(UserGroupsUpdater.create()
                     .setUsersToRemove(null)
                     .setUsersToAdd(Collections.singletonList(state.email))
                     .setReferrer(op.getUri().toString())
                     .setGroupLink(CLOUD_ADMINS_USER_GROUP_LINK)
                     .setHost(getHost())
-                    .update();
-        } else {
-            result = UserGroupsUpdater.create()
-                    .setUsersToRemove(null)
-                    .setUsersToAdd(Collections.singletonList(state.email))
-                    .setReferrer(op.getUri().toString())
-                    .setGroupLink(BASIC_USERS_USER_GROUP_LINK)
-                    .setHost(getHost())
-                    .update();
+                    .update());
         }
+        // We want always to add the user to basic users, even if he is cloud admin,
+        // in case he is removed from cloud admins he will remain basic user.
+        result.add(UserGroupsUpdater.create()
+                .setUsersToRemove(null)
+                .setUsersToAdd(Collections.singletonList(state.email))
+                .setReferrer(op.getUri().toString())
+                .setGroupLink(BASIC_USERS_USER_GROUP_LINK)
+                .setHost(getHost())
+                .update());
 
-        result.whenComplete((ignore, ex) -> {
-            logInfo("User %s successfully created.", state.email);
-            state.password = null;
-            op.setBody(state);
-            op.complete();
-        });
+        DeferredResult.allOf(result)
+                .thenAccept(ignore -> {
+                })
+                .whenComplete((ignore, ex) -> {
+                    logInfo("User %s successfully created.", state.email);
+                    state.password = null;
+                    op.setBody(state);
+                    op.complete();
+                });
     }
 
     private void createUserGroup(LocalPrincipalState state, Operation op) {

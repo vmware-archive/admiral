@@ -16,6 +16,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import static com.vmware.admiral.auth.util.AuthUtil.BASIC_USERS_USER_GROUP_LINK;
+import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_USER_GROUP_LINK;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -185,6 +188,10 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
                 "/test@admiral.com");
         assertNotNull(userState);
         assertEquals(createdUser.email, userState.email);
+        // assert user is added to basic user even if he is cloud admin.
+        assertTrue(userState.userGroupLinks.contains(BASIC_USERS_USER_GROUP_LINK));
+        // in this test case user is also cloud admin, verify it.
+        assertTrue(userState.userGroupLinks.contains(CLOUD_ADMINS_USER_GROUP_LINK));
     }
 
     @Test

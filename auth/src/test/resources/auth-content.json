@@ -17,12 +17,8 @@
   ],
   "roles": {
     "cloud-admins": {
-      "add": ["tony@admiral.com"],
-      "remove": ["fritz@admiral.com"]
-    },
-    "basic-users": {
-      "add": ["fritz@admiral.com"],
-      "remove": ["connie@admiral.com"]
+      "add": ["tony@admiral.com", "superusers"],
+      "remove": ["connie@admiral.com", "developers"]
     }
   }
 }

@@ -26,6 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
+import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
@@ -140,7 +141,7 @@ public class ProjectServiceTest extends AuthBaseTest {
 
         // make a batch user operation: add and remove members
         ProjectRoles projectRoles = new ProjectRoles();
-        projectRoles.members = new ProjectRoles.RolesAssignment();
+        projectRoles.members = new PrincipalRoleAssignment();
         projectRoles.members.remove = Arrays.asList(USER_EMAIL_ADMIN);
         projectRoles.members.add = Arrays.asList(USER_EMAIL_GLORIA, USER_EMAIL_CONNIE);
         doPatch(projectRoles, expandedState.documentSelfLink);
@@ -160,7 +161,7 @@ public class ProjectServiceTest extends AuthBaseTest {
         // make a batch user operation:
         // remove an already missing user, add an already included user
         projectRoles = new ProjectRoles();
-        projectRoles.administrators = new ProjectRoles.RolesAssignment();
+        projectRoles.administrators = new PrincipalRoleAssignment();
         projectRoles.administrators.remove = Arrays.asList(USER_EMAIL_GLORIA);
         projectRoles.administrators.add = Arrays.asList(USER_EMAIL_ADMIN);
         doPatch(projectRoles, expandedState.documentSelfLink);
@@ -173,8 +174,7 @@ public class ProjectServiceTest extends AuthBaseTest {
 
         // make a batch user operation:
         // remove all users from a group
-        projectRoles = new ProjectRoles();
-        projectRoles.members = new ProjectRoles.RolesAssignment();
+        projectRoles.members = new PrincipalRoleAssignment();
         projectRoles.members.remove = Arrays.asList(USER_EMAIL_ADMIN, USER_EMAIL_GLORIA,
                 USER_EMAIL_CONNIE);
         doPatch(projectRoles, expandedState.documentSelfLink);
@@ -207,7 +207,7 @@ public class ProjectServiceTest extends AuthBaseTest {
         ProjectMixedPatchDto patchBody = new ProjectMixedPatchDto();
         patchBody.name = patchedName;
         patchBody.isPublic = patchedPublicFlag;
-        patchBody.members = new ProjectRoles.RolesAssignment();
+        patchBody.members = new PrincipalRoleAssignment();
         patchBody.members.add = Arrays.asList(USER_EMAIL_GLORIA, USER_EMAIL_CONNIE);
         doPatch(patchBody, expandedState.documentSelfLink);
 
@@ -260,9 +260,9 @@ public class ProjectServiceTest extends AuthBaseTest {
 
         // make a batch user operation: add and remove members
         ProjectRoles projectRoles = new ProjectRoles();
-        projectRoles.members = new ProjectRoles.RolesAssignment();
+        projectRoles.members = new PrincipalRoleAssignment();
         projectRoles.members.remove = Arrays.asList(USER_EMAIL_ADMIN);
-        projectRoles.members.add = Arrays.asList(USER_EMAIL_GLORIA, USER_EMAIL_CONNIE, "lazy@peon");
+        projectRoles.members.add = Arrays.asList(USER_EMAIL_GLORIA, USER_EMAIL_CONNIE);
 
         host.testStart(1);
         Operation.createPut(host, expandedState.documentSelfLink)
@@ -288,7 +288,7 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertNotNull(expandedState.administrators);
         assertNotNull(expandedState.members);
         assertEquals(1, expandedState.administrators.size());
-        assertEquals(3, expandedState.members.size()); // one removed, two added
+        assertEquals(2, expandedState.members.size()); // one removed, two added
         assertEquals(USER_EMAIL_ADMIN, expandedState.administrators.iterator().next().email);
         assertTrue(expandedState.members.stream()
                 .anyMatch((member) -> member.email.equals(USER_EMAIL_GLORIA)));

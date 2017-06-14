@@ -11,25 +11,19 @@
 
 package com.vmware.admiral.auth.idm.content;
 
-import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
-import com.vmware.admiral.auth.idm.PrincipalRoles;
-import com.vmware.admiral.auth.idm.PrincipalRoles.PrincipalRoleAssignment;
+import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
 import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
-import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles.RolesAssignment;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
@@ -82,90 +76,60 @@ public class AuthContentService extends StatelessService {
 
     private void handleRoles(AuthContentBody body, Operation post) {
 
-        AtomicInteger counter = new AtomicInteger(body.roles.size());
-
-        for (Entry<String, PrincipalRoleAssignment> roleWithUsers : body.roles.entrySet()) {
-            verifyRole(roleWithUsers, () -> {
-                if (counter.decrementAndGet() == 0) {
-                    patchRoles(body, post);
+        List<DeferredResult<Void>> result = new ArrayList<>();
+        for (Entry<String, PrincipalRoleAssignment> role : body.roles.entrySet()) {
+            if (role.getValue().add != null && !role.getValue().add.isEmpty()) {
+                for (String principalId : role.getValue().add) {
+                    result.add(assignPrincipal(role.getKey(), principalId));
                 }
-            });
+            }
+
+            if (role.getValue().remove != null && !role.getValue().remove.isEmpty()) {
+                for (String principalId : role.getValue().remove) {
+                    result.add(unassignPrincipal(role.getKey(), principalId));
+                }
+            }
         }
 
-    }
-
-    private void verifyRole(Entry<String, PrincipalRoleAssignment> roleWithUsers,
-            Runnable callback) {
-
-        verifyUsers(roleWithUsers.getValue().add, roleWithUsers.getValue().remove,
-                (verifiedUsers) -> {
-                    List<String> verifiedUsersToAdd = roleWithUsers.getValue().add.stream()
-                            .filter(u -> verifiedUsers.contains(u))
-                            .collect(Collectors.toList());
-
-                    List<String> verifiedUsersToRemove = roleWithUsers.getValue().remove.stream()
-                            .filter(u -> verifiedUsers.contains(u))
-                            .collect(Collectors.toList());
-
-                    roleWithUsers.getValue().add = verifiedUsersToAdd;
-                    roleWithUsers.getValue().remove = verifiedUsersToRemove;
-
-                    callback.run();
+        DeferredResult.allOf(result)
+                .thenAccept(ignore -> {
+                })
+                .whenComplete((ignore, ex) -> {
+                    if (ex != null) {
+                        logWarning("Error while assigning/unassigning roles: %s",
+                                Utils.toString(ex));
+                        post.fail(ex);
+                        return;
+                    }
+                    handleProjects(body, post);
                 });
     }
 
-    private void verifyUsers(List<String> usersToAdd, List<String> usersToRemove,
-            Consumer<Set<String>> verifiedUsersCallback) {
+    private DeferredResult<Void> assignPrincipal(String role, String principalId) {
 
-        Set<String> verifiedUsers = new HashSet<>();
-        Set<String> usersToVerify = new HashSet<>();
-        usersToVerify.addAll(usersToAdd);
-        usersToVerify.addAll(usersToRemove);
+        PrincipalRoleAssignment rolePatch = new PrincipalRoleAssignment();
+        rolePatch.add = new ArrayList<>();
+        rolePatch.add.add(role);
 
-        AtomicInteger counter = new AtomicInteger(usersToVerify.size());
-        for (String user : usersToVerify) {
-            verifyUser(user, (ex) -> {
-                if (ex == null) {
-                    verifiedUsers.add(user);
-                } else {
-                    logWarning("Exception when verifying user %s: %s",
-                            user, Utils.toString(ex));
-                }
-                if (counter.decrementAndGet() == 0) {
-                    verifiedUsersCallback.accept(verifiedUsers);
-                }
-            });
-        }
-
+        return sendWithDeferredResult(Operation.createPatch(this,
+                UriUtils.buildUriPath(PrincipalService.SELF_LINK, principalId,
+                        PrincipalService.ROLES_SUFFIX))
+                .setBody(rolePatch))
+                .thenAccept(ignore -> {
+                });
     }
 
-    private void verifyUser(String user, Consumer<Throwable> error) {
-        URI uri = UriUtils.buildUri(getHost(), PrincipalService.SELF_LINK);
-        uri = UriUtils.extendUri(uri, user);
-        sendRequest(Operation.createGet(uri)
-                .setReferer(getHost().getUri())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        error.accept(ex);
-                    } else {
-                        error.accept(null);
-                    }
-                }));
-    }
+    private DeferredResult<Void> unassignPrincipal(String role, String principalId) {
+        PrincipalRoleAssignment rolePatch = new PrincipalRoleAssignment();
+        rolePatch.remove = new ArrayList<>();
+        rolePatch.remove.add(role);
 
-    private void patchRoles(AuthContentBody body, Operation post) {
-        PrincipalRoles roles = new PrincipalRoles();
-        roles.roles = body.roles;
-        sendRequest(Operation.createPatch(this, PrincipalService.SELF_LINK)
-                .setReferer(getHost().getUri())
-                .setBody(roles)
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        logWarning("Failed to patch roles: %s", Utils.toString(ex));
-                    } else {
-                        handleProjects(body, post);
-                    }
-                }));
+        return sendWithDeferredResult(Operation.createPatch(this,
+                UriUtils.buildUriPath(PrincipalService.SELF_LINK, principalId,
+                        PrincipalService.ROLES_SUFFIX))
+                .setBody(rolePatch))
+                .thenAccept(ignore -> {
+                });
     }
 
     private void handleProjects(AuthContentBody body, Operation post) {
@@ -209,10 +173,10 @@ public class AuthContentService extends StatelessService {
     private void updateProjectWithMembers(ProjectState state, ProjectContentBody projectContent,
             Runnable callback) {
         ProjectRoles projectRoles = new ProjectRoles();
-        projectRoles.administrators = new RolesAssignment();
+        projectRoles.administrators = new PrincipalRoleAssignment();
         projectRoles.administrators.add = new ArrayList<>();
         projectRoles.administrators.add.addAll(projectContent.administrators);
-        projectRoles.members = new RolesAssignment();
+        projectRoles.members = new PrincipalRoleAssignment();
         projectRoles.members.add = new ArrayList<>();
         projectRoles.members.add.addAll(projectContent.members);
 

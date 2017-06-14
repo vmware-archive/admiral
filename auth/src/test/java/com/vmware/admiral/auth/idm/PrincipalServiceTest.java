@@ -25,9 +25,14 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
+import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.test.TestContext;
+import com.vmware.xenon.services.common.RoleService;
+import com.vmware.xenon.services.common.RoleService.RoleState;
 
 public class PrincipalServiceTest extends AuthBaseTest {
 
@@ -149,8 +154,8 @@ public class PrincipalServiceTest extends AuthBaseTest {
                         if (expectFailure) {
                             host.failIteration(throwOnPass != null ? throwOnPass
                                     : new IllegalArgumentException(String.format(
-                                            "Request to %s was expected to fail but passed",
-                                            requestPath)));
+                                    "Request to %s was expected to fail but passed",
+                                    requestPath)));
                         } else {
                             try {
                                 result.add(o.getBody(resultClass));
@@ -175,4 +180,48 @@ public class PrincipalServiceTest extends AuthBaseTest {
         }
     }
 
+    @Test
+    public void testAssignAndUnassignExistingGroupsToRole() throws Throwable {
+        String superusers = "superusers";
+        PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
+        roleAssignment.add = new ArrayList<>();
+        roleAssignment.add.add(AuthRole.CLOUD_ADMINS.getName());
+
+        String uri = UriUtils.buildUriPath(PrincipalService.SELF_LINK, superusers, "roles");
+        // Assingn superusers to cloud admins
+        doPatch(roleAssignment, uri);
+
+        // Verify superusers got assigned and required roles are created.
+        String superusersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole
+                .CLOUD_ADMINS.buildRoleWithSuffix(superusers));
+
+        RoleState roleState = getDocument(RoleState.class, superusersRoleLink);
+        assertNotNull(roleState);
+        assertEquals(superusersRoleLink, roleState.documentSelfLink);
+
+        // Unassign superusers from cloud admins
+        roleAssignment = new PrincipalRoleAssignment();
+        roleAssignment.remove = new ArrayList<>();
+        roleAssignment.remove.add(AuthRole.CLOUD_ADMINS.getName());
+        doPatch(roleAssignment, uri);
+
+        // Verify superusers got unassigned and required roles are deleted
+        TestContext ctx = testCreate(1);
+        Operation getSuperusersRole = Operation.createGet(host, superusersRoleLink)
+                .setReferer(host.getUri())
+                .setCompletion((op, ex) -> {
+                    if (ex != null) {
+                        if (ex instanceof ServiceNotFoundException) {
+                            ctx.completeIteration();
+                            return;
+                        }
+                        ctx.failIteration(ex);
+                        return;
+                    }
+                    ctx.failIteration(new RuntimeException("After unassign user group, role "
+                            + "should be deleted."));
+                });
+        host.send(getSuperusersRole);
+        ctx.await();
+    }
 }

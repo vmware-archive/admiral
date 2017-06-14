@@ -49,6 +49,7 @@ import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.DeferredResult;
+import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.TestContext;
@@ -188,6 +189,22 @@ public abstract class AuthBaseTest extends BaseTestCase {
 
     protected String buildUserServicePath(String email) {
         return UriUtils.buildUriPath(UserService.FACTORY_LINK, email);
+    }
+
+    protected void doPatch(Object state, String documentSelfLink) {
+        TestContext ctx = testCreate(1);
+        Operation patch = Operation.createPatch(host, documentSelfLink)
+                .setBody(state)
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                        return;
+                    }
+                    ctx.completeIteration();
+                });
+        host.send(patch);
+        ctx.await();
     }
 
     private void loadLocalUsers() {
