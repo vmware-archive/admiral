@@ -47,6 +47,15 @@
             <artifactId>admiral-ui-ng-app</artifactId>
             <version>${project.version}</version>
         </dependency>
+        
+        <!-- TEST -->
+        <dependency>
+            <groupId>${xenon.group}</groupId>
+            <artifactId>xenon-common</artifactId>
+            <version>${xenon.version}</version>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <build>
         <resources>
@@ -107,13 +116,13 @@
                                     <groupId>${project.groupId}</groupId>
                                     <artifactId>admiral-ui-app</artifactId>
                                     <overWrite>false</overWrite>
-                                    <outputDirectory>${project.build.directory}/generated-resources/ui/com/vmware/admiral/UiService</outputDirectory>
+                                    <outputDirectory>${project.build.directory}/generated-resources/ui/com/vmware/admiral/UiOgService</outputDirectory>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
                                     <artifactId>admiral-ui-ng-app</artifactId>
                                     <overWrite>false</overWrite>
-                                    <outputDirectory>${project.build.directory}/generated-resources/ui/com/vmware/admiral/UiNgService</outputDirectory>
+                                    <outputDirectory>${project.build.directory}/generated-resources/ui/com/vmware/admiral/UiService</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>

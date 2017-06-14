@@ -2,7 +2,6 @@ import { Component, OnInit, OnDestroy, ViewChild, ViewEncapsulation, Input } fro
 import { Router, ActivatedRoute, Route, RoutesRecognized, NavigationEnd, NavigationCancel } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ViewExpandRequestService } from '../../services/view-expand-request.service';
-import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
   selector: 'former-view',
@@ -11,14 +10,30 @@ import { DomSanitizer } from '@angular/platform-browser';
   encapsulation: ViewEncapsulation.None
 })
 export class FormerViewComponent {
+
+  private url: string;
+  private frameLoading = false;
+
+  @ViewChild('theFrame') theFrame;
+
   @Input()
-  path: String;
+  set path(val: string) {
+    val = val || 'containers';
 
-  constructor(private sanitizer: DomSanitizer) {}
+    this.url = window.location.pathname + 'ogui/index-no-navigation.html#' + val;
 
-  get src() {
-    let path = this.path || 'containers';
-    return this.sanitizer.bypassSecurityTrustResourceUrl('../index-no-navigation.html#' + path);
+    let iframeEl = this.theFrame.nativeElement;
+    if (!iframeEl.src) {
+      this.frameLoading = true;
+      iframeEl.onload = () => {
+        this.frameLoading = false;
+        iframeEl.src = this.url;
+      }
+
+      iframeEl.src = this.url;
+    } else if (!this.frameLoading){
+      iframeEl.src = this.url;
+    }
   }
 }
 

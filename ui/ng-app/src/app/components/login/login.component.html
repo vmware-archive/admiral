@@ -1,0 +1,28 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<div class="login-wrapper">
+    <form class="login">
+        <label class="title">
+            <h3 class="welcome">{{"loginPanel.welcomeTo" | i18n: { "ns": "base" } }}</h3>
+            <span *ngIf="!isVic">{{"productNames.admiral" | i18n: { "ns": "base" } }}</span>
+            <span *ngIf="isVic">{{"productNames.vic" | i18n: { "ns": "base" } }}</span>
+        </label>
+        <div class="login-group">
+            <input class="username" [(ngModel)]="username" name="username" type="text" placeholder="{{'loginPanel.username' | i18n: { 'ns': 'base' } }}">
+            <input class="password" [(ngModel)]="password" name="password" type="password" placeholder="{{'loginPanel.password' | i18n: { 'ns': 'base' } }}">
+            <div *ngIf="hasError" class="error active">
+                {{"loginPanel.failure" | i18n: { "ns": "base" } }}
+            </div>
+            <button (click)="login()" [clrLoading]="loading" [disabled]="loading" class="btn btn-primary">{{"loginPanel.login" | i18n: { "ns": "base" } }}</button>
+        </div>
+    </form>
+</div>

@@ -77,8 +77,7 @@ var updateHeader = function() {
 };
 
 initializer.init(true, () => {
-  var locationSearch = window.location.search || '';
-  if (locationSearch.indexOf('compute') !== -1) {
+  if (utils.isApplicationCompute()) {
     appInitializer(require('components/AppCompute').default,
                    require('stores/AppComputeStore').default);
   } else {

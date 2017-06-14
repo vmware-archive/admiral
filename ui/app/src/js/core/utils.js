@@ -661,7 +661,8 @@ var utils = {
 
   isApplicationCompute: function() {
     var locationSearch = window.location.search || '';
-    return locationSearch.indexOf('compute') !== -1;
+    var locationPath = window.location.pathname || '';
+    return locationSearch.indexOf('compute') !== -1 || locationPath.indexOf('/iaas/') !== -1;
   },
 
   escapeHtml: function(htmlString) {

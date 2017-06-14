@@ -110,7 +110,9 @@ initializer.init = function(initProperties, callback) {
     return;
   }
 
+  console.log('Loading configuration files');
   services.loadConfigurationProperties().then((properties) => {
+    console.log('Loaded configuration files');
     var configurationProperties = {};
     for (var prop in properties) {
       if (properties.hasOwnProperty(prop)) {
@@ -120,13 +122,19 @@ initializer.init = function(initProperties, callback) {
 
     utils.initializeConfigurationProperties(configurationProperties);
 
+    console.log('Loading adapters and i18n');
+
+    var shouldLoadAdapters = utils.isApplicationCompute() &&
+        ft.isExternalPhotonAdaptersEnabled();
+
     return Promise.all([
-      ft.isExternalPhotonAdaptersEnabled() ? services.loadAdapters() : Promise.resolve([]),
+      shouldLoadAdapters ? services.loadAdapters() : Promise.resolve([]),
 
       initI18N()
     ]);
 
   }).then(([adapters]) => {
+    console.log('Loaded adapters and i18n');
 
     utils.initializeAdapters(Object.values(adapters).sort(utils.templateSortFn).map((adapter) => {
       const customProperties = adapter.customProperties || DEFAULT_ADAPTERS[adapter.id];
@@ -147,7 +155,7 @@ initializer.init = function(initProperties, callback) {
         .map((adapter) => services.loadScript(adapter.customProperties.uiLink.replace(/^\//, ''))));
 
   }).then(callback).catch((err) => {
-    console.warn('Error when loading configuration! Error: ', err);
+    console.warn('Error when loading configuration! Error: ' + JSON.stringify(err));
   });
 };
 

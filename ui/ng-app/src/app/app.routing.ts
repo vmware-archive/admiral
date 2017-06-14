@@ -40,6 +40,8 @@ import { ServiceDetailsComponent } from './kubernetes/services/details/service-d
 
 import { NavigationContainerType } from './components/navigation-container/navigation-container.component';
 
+import { LoginComponent } from './components/login/login.component';
+
 
 export const ROUTES: Routes = [
     {
