@@ -17,9 +17,11 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.vmware.admiral.common.util.QueryUtil;
@@ -34,6 +36,21 @@ public class QueryUtilTest {
     private static final String GROUP_ID = TENANT_ID + "/" + MultiTenantDocument.GROUP_IDENTIFIER
             + "/groupId";
     private static final String USER_ID = MultiTenantDocument.USERS_PREFIX + "/userId";
+
+    private static String T1 = "t1";
+    private static String T2 = "t2";
+    private static String T1_G1 = "t1g1";
+    private static String T1_G2 = "t1g2";
+    private static String T2_G1 = "t2g1";
+    private static String U1 = "john.doe@mydomain.org";
+    private static String U2 = "jane.roe@mydomain.org";
+    private static String TLINK_T1 = QueryUtil.TENANT_IDENTIFIER + T1;
+    private static String TLINK_T1_G1 = TLINK_T1 + QueryUtil.GROUP_IDENTIFIER + T1_G1;
+    private static String TLINK_T1_G2 = TLINK_T1 + QueryUtil.GROUP_IDENTIFIER + T1_G2;
+    private static String TLINK_T2 = QueryUtil.TENANT_IDENTIFIER + T2;
+    private static String TLINK_T2_G1 = TLINK_T2 + QueryUtil.GROUP_IDENTIFIER + T2_G1;
+    private static String TLINK_U1 = QueryUtil.USER_IDENTIFIER + U1;
+    private static String TLINK_U2 = QueryUtil.USER_IDENTIFIER + U2;
 
     @Test
     public void testAddTenantGroupAndUserClauseWhenTenantLinksIsNull() {
@@ -266,5 +283,65 @@ public class QueryUtilTest {
 
         assertEquals(tenantQuery.occurance, Occurance.MUST_OCCUR);
         assertEquals(userQuery.occurance, Occurance.MUST_OCCUR);
+    }
+
+    @Test
+    public void testGetTenants() throws Exception {
+        List<String> tenants = QueryUtil.getTenants(getTenantLinks());
+        Assert.assertNotNull(tenants);
+        Assert.assertEquals(new HashSet<>(Arrays.asList(T1, T2)),
+                new HashSet<>(tenants)
+        );
+    }
+
+    @Test
+    public void testGetTenantsNull() throws Exception {
+        List<String> tenants = QueryUtil.getTenants(null);
+        Assert.assertNull(tenants);
+    }
+
+    @Test
+    public void testGetGroups() throws Exception {
+        List<String> tenants = QueryUtil.getGroups(getTenantLinks());
+        Assert.assertNotNull(tenants);
+        Assert.assertEquals(new HashSet<>(Arrays.asList(
+                T1 + QueryUtil.GROUP_IDENTIFIER + T1_G1,
+                T1 + QueryUtil.GROUP_IDENTIFIER + T1_G2,
+                T2 + QueryUtil.GROUP_IDENTIFIER + T2_G1)),
+                new HashSet<>(tenants)
+        );
+    }
+
+    @Test
+    public void testGetGroupsNull() throws Exception {
+        List<String> tenants = QueryUtil.getGroups(null);
+        Assert.assertNull(tenants);
+    }
+
+    @Test
+    public void testGetUsers() throws Exception {
+        List<String> tenants = QueryUtil.getUsers(getTenantLinks());
+        Assert.assertNotNull(tenants);
+        Assert.assertEquals(new HashSet<>(Arrays.asList(U1, U2)),
+                new HashSet<>(tenants)
+        );
+    }
+
+    @Test
+    public void testGetUsersNull() throws Exception {
+        List<String> tenants = QueryUtil.getUsers(null);
+        Assert.assertNull(tenants);
+    }
+
+    private List<String> getTenantLinks() {
+        return Arrays.asList(
+                TLINK_T1,
+                TLINK_T2,
+                TLINK_T1_G1,
+                TLINK_T1_G2,
+                TLINK_T2_G1,
+                TLINK_U1,
+                TLINK_U2
+        );
     }
 }

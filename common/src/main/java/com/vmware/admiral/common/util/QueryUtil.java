@@ -35,8 +35,17 @@ public class QueryUtil {
     public static final long QUERY_RETRY_INTERVAL_MILLIS = Long.getLong(
             "com.vmware.admiral.common.util.query.retry.interval.millis", 500);
 
+    /**
+     * prefix for tenants. e.g. /tenants/t1
+     */
     public static final String TENANT_IDENTIFIER = "/tenants/";
+    /**
+     * token indicating group entry. e.g. /tenants/t1/groups/groupId
+     */
     public static final String GROUP_IDENTIFIER = "/groups/";
+    /**
+     * prefix for users. e.g. /users/john.doe@mydomain.org
+     */
     public static final String USER_IDENTIFIER = "/users/";
 
     public static QueryTask buildQuery(Class<? extends ServiceDocument> stateClass,
@@ -360,6 +369,68 @@ public class QueryUtil {
                             .contains(MultiTenantDocument.GROUP_IDENTIFIER))
                     .collect(Collectors.toList());
         }
+    }
+
+    /**
+     * Collects tenants from the given {@code tenantLink}.
+     * <p>
+     * the implementation removes the {@link #TENANT_IDENTIFIER} form tenant Link
+     * <p>e.g. [t1, t2]
+     * @param tenantLinks
+     * @return
+     */
+    public static List<String> getTenants(List<String> tenantLinks) {
+        if (tenantLinks == null || tenantLinks.isEmpty()) {
+            return tenantLinks;
+        }
+
+        return tenantLinks.stream()
+                .filter(tl -> tl != null
+                        && tl.startsWith(TENANT_IDENTIFIER)
+                        && !tl.contains(GROUP_IDENTIFIER))
+                .map(tl -> tl.substring(TENANT_IDENTIFIER.length()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Collects groups from the given {@code tenantLink}.
+     * <p>
+     * the implementation removes the {@link #TENANT_IDENTIFIER} form tenant Link and does not
+     * remove tenant and {@link #GROUP_IDENTIFIER} from the tenantLink
+     * <p>e.g. [t1/groups/g1, t2/groups/g1]
+     * @param tenantLinks
+     * @return
+     */
+    public static List<String> getGroups(List<String> tenantLinks) {
+        if (tenantLinks == null || tenantLinks.isEmpty()) {
+            return tenantLinks;
+        }
+
+        return tenantLinks.stream()
+                .filter(tl -> tl != null
+                        && tl.startsWith(TENANT_IDENTIFIER)
+                        && tl.contains(GROUP_IDENTIFIER))
+                .map(tl -> tl.substring(TENANT_IDENTIFIER.length()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Collects users from the given {@code tenantLink}.
+     * <p>
+     * the implementation removes the {@link #USER_IDENTIFIER} form tenant Link
+     * <p>e.g. [john.doe@mydomain.org,  jane.roe@mydomain.org]
+     * @param tenantLinks
+     * @return
+     */
+    public static List<String> getUsers(List<String> tenantLinks) {
+        if (tenantLinks == null || tenantLinks.isEmpty()) {
+            return tenantLinks;
+        }
+
+        return tenantLinks.stream()
+                .filter(tl -> tl != null && tl.startsWith(USER_IDENTIFIER))
+                .map(tl -> tl.substring(USER_IDENTIFIER.length()))
+                .collect(Collectors.toList());
     }
 
     public static List<String> getTenantAndGroupLinks(List<String> tenantLinks) {

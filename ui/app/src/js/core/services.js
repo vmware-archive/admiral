@@ -2872,6 +2872,7 @@ services.mcpApi = {
   htmlInit: function(iframe, model, component) {
     if (iframe) {
       try {
+        iframe.contentWindow.adapterAPI = mcpClient;
         iframe.contentWindow.mcpComponent = component;
         iframe.contentWindow.mcpEditor = component.editor;
         iframe.contentWindow.init(model);

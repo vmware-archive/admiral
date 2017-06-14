@@ -15,6 +15,7 @@ import java.net.URI;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.logging.Logger;
 
 import org.junit.Assert;
@@ -66,6 +67,43 @@ public class UrlEncodedReverseProxyServiceTest extends BaseTestCase {
         Assert.assertEquals(verificationToken, bodyRaw);
     }
 
+    @Test
+    public void testPost() {
+        testWithBody(Operation::createPost);
+    }
+
+    @Test
+    public void testPut() {
+        testWithBody(Operation::createPut);
+    }
+
+    @Test
+    public void testPatch() {
+        testWithBody(Operation::createPatch);
+    }
+
+    public void testWithBody(Function<URI, Operation> createOp) {
+        String verificationToken = UUID.randomUUID().toString();
+        this.logger.info("verificationToken: " + verificationToken);
+
+        String hostUri = this.host.getUri().toASCIIString();
+
+        String rawProxyLocation = hostUri + TestEchoService.SELF_LINK;
+        String proxyLocation = UrlEncodedReverseProxyService
+                .createReverseProxyLocation(rawProxyLocation);
+        String location = hostUri + proxyLocation;
+        this.logger.info("location: " + location);
+        URI uri = URI.create(location);
+
+        Operation response = super.host
+                .waitForResponse(createOp.apply(uri).setBody(verificationToken));
+        Assert.assertEquals(Operation.STATUS_CODE_OK, response.getStatusCode());
+        Object bodyRaw = response.getBodyRaw();
+        this.logger.info("bodyRaw: " + bodyRaw);
+        Assert.assertTrue(bodyRaw instanceof String);
+        Assert.assertEquals(verificationToken, bodyRaw);
+    }
+
     public static class TestEchoService extends StatelessService {
 
         public static final String SELF_LINK = UriPaths.RESOURCES + "/test-backend-service";
@@ -78,5 +116,25 @@ public class UrlEncodedReverseProxyServiceTest extends BaseTestCase {
             String response = params.get(QUERY_PARAM_RESPONSE);
             get.setBody(response != null ? response : getClass().getSimpleName()).complete();
         }
+
+        @Override
+        public void handlePost(Operation post) {
+            handleOpWithBody(post);
+        }
+
+        @Override
+        public void handlePut(Operation post) {
+            handleOpWithBody(post);
+        }
+
+        @Override
+        public void handlePatch(Operation post) {
+            handleOpWithBody(post);
+        }
+
+        private void handleOpWithBody(Operation post) {
+            post.setBody(post.getBody(String.class)).complete();
+        }
+
     }
 }

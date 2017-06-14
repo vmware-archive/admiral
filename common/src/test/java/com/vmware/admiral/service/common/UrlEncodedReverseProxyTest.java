@@ -16,10 +16,14 @@ import static com.vmware.admiral.service.common.UrlEncodedReverseProxyService.cr
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.util.function.Function;
 import java.util.logging.Logger;
 
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.vmware.xenon.common.Utils;
 
 public class UrlEncodedReverseProxyTest {
     private Logger logger = Logger.getLogger(getClass().getName());
@@ -40,35 +44,50 @@ public class UrlEncodedReverseProxyTest {
 
     @Test
     public void testPrepareProxyPart_full() throws UnsupportedEncodingException {
-        prepareProxyPart("https://host.com:8080/step1/step2?p1=v1&p2=v2#fragment");
+        prepareProxyPart("https://host.com:8080/step1/step2?p1=v1&p2=v2#fragment", null);
+    }
+
+    @Test
+    public void testPrepareProxyPart_placeholder() throws UnsupportedEncodingException {
+        String scheme = "http";
+        String host = "myHost";
+        String key = URLEncoder.encode("{" + host + "}", Utils.CHARSET);
+        String location = UrlEncodedReverseProxyService.SELF_LINK
+                + "/s1/" + key +
+                "/step1/step2?p1=v1&p2=v2#fragment";
+        URI uri = UrlEncodedReverseProxyService.extractBackendURI(URI.create(location),
+                k -> URI.create(scheme + "://" + k));
+        Assert.assertTrue(scheme.equals(uri.getScheme()));
+        Assert.assertTrue(host.equals(uri.getHost()));
     }
 
     @Test
     public void testPrepareProxyPart_weird() throws UnsupportedEncodingException {
-        prepareProxyPart("urn:example:mammal:monotreme:echidna");
+        prepareProxyPart("urn:example:mammal:monotreme:echidna", null);
     }
 
     @Test
     public void testPrepareProxyPart_path() throws UnsupportedEncodingException {
-        prepareProxyPart("step1/step2?p1=v1&p2=v2#fragment");
+        prepareProxyPart("step1/step2?p1=v1&p2=v2#fragment", null);
     }
 
     @Test
     public void testPrepareProxyPart_query() throws UnsupportedEncodingException {
-        prepareProxyPart("&p2=v2#fragment");
+        prepareProxyPart("&p2=v2#fragment", null);
     }
 
     @Test
     public void testPrepareProxyPart_fragment() throws UnsupportedEncodingException {
-        prepareProxyPart("#fragment");
+        prepareProxyPart("#fragment", null);
     }
 
-    private URI prepareProxyPart(String backendLocation) throws UnsupportedEncodingException {
+    private URI prepareProxyPart(String backendLocation,
+            Function<String, URI> resolver) throws UnsupportedEncodingException {
         this.logger.info("backendLocation: " + backendLocation);
         String location = createReverseProxyLocation(backendLocation);
         this.logger.info("location: " + location);
 
-        URI uri = UrlEncodedReverseProxyService.extractBackendURI(URI.create(location), null);
+        URI uri = UrlEncodedReverseProxyService.extractBackendURI(URI.create(location), resolver);
 
         this.logger.info("==> path: " + uri.toASCIIString());
         Assert.assertEquals(backendLocation, uri.toASCIIString());

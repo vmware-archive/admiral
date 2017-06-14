@@ -197,7 +197,7 @@ public class UrlEncodedReverseProxyService extends StatelessService {
             }
         }
         String path = opPath;
-        String query = uri.getQuery();
+        String query = uri.getRawQuery();
         if (query != null) {
             path = path + "?" + query;
         }
@@ -206,21 +206,24 @@ public class UrlEncodedReverseProxyService extends StatelessService {
             path = path + "#" + fragment;
         }
 
-        URI backendURI = URI.create(path);
-        if (hostResolver != null && backendURI.getAuthority() == null) {
+        URI opURI = URI.create(path);
+        if (hostResolver != null && opURI.getAuthority() == null) {
             if (hostKey == null) {
                 hostKey = KEY_HOST_URI;
             }
             URI host = hostResolver.apply(hostKey);
             if (host != null) {
-                backendURI = UriUtils.extendUri(host, backendURI.toASCIIString());
+                if (!path.startsWith(UriUtils.URI_PATH_CHAR)) {
+                    path = UriUtils.URI_PATH_CHAR + path;
+                }
+                opURI = host.resolve(path);
             } else {
                 LOGGER.warning(String.format("Cannot resolve %s for uri %s ",
                         hostKey, uriPath));
             }
         }
 
-        return backendURI;
+        return opURI;
     }
 
     private void forwardRequest(final Operation op, final Function<URI, Operation> createOp) {
@@ -240,31 +243,48 @@ public class UrlEncodedReverseProxyService extends StatelessService {
             return;
         }
 
-        Operation forwardOp = createOp.apply(backendURI)
-                .transferRequestHeadersFrom(op)
-                .setContentType(op.getContentType())
-                .setBody(op.getBodyRaw())
+        sendRequest(createForwardOperation(op, backendURI, createOp));
+    }
+
+    /**
+     * Convenient method to create forward request for provided {@code operation} to given {@code
+     * forwardURI)
+     * @param operation
+     *         the original operation received the request
+     * @param forwardURI
+     *         the URI to forward the request
+     * @param createOp
+     *         the create operation function. see {@link Operation} create methods family
+     * @return
+     */
+    public static Operation createForwardOperation(
+            Operation operation,
+            URI forwardURI,
+            Function<URI, Operation> createOp) {
+        return createOp.apply(forwardURI)
+                .transferRequestHeadersFrom(operation)
+                .setContentType(operation.getContentType())
+                .setBody(operation.getBodyRaw())
                 .setCompletion((o, e) -> {
                     if (e != null) {
-                        op.fail(e);
+                        operation.fail(e);
                         return;
                     }
-                    op.transferResponseHeadersFrom(o);
-                    op.getResponseHeaders().put(Operation.CONTENT_TYPE_HEADER, o.getContentType());
-                    op.setBody(o.getBodyRaw());
-                    op.setStatusCode(o.getStatusCode());
+                    operation.transferResponseHeadersFrom(o);
+                    operation.getResponseHeaders()
+                            .put(Operation.CONTENT_TYPE_HEADER, o.getContentType());
+                    operation.setBody(o.getBodyRaw());
+                    operation.setStatusCode(o.getStatusCode());
 
                     // handle HTTP 301/302 responses to redirect through the reverse proxy also
                     if (o.getStatusCode() == Operation.STATUS_CODE_MOVED_PERM ||
                             o.getStatusCode() == Operation.STATUS_CODE_MOVED_TEMP) {
                         String location = o.getResponseHeader(Operation.LOCATION_HEADER);
-                        op.getResponseHeaders().put(Operation.LOCATION_HEADER, location);
+                        operation.getResponseHeaders().put(Operation.LOCATION_HEADER, location);
                     }
 
-                    op.complete();
+                    operation.complete();
                 });
-
-        sendRequest(forwardOp);
     }
 
 }

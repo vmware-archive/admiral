@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.host;
 
+import com.vmware.admiral.adapter.extensibility.service.FetchDataGatewayService;
 import com.vmware.admiral.closures.services.closure.Closure;
 import com.vmware.admiral.closures.services.closure.ClosureFactoryService;
 import com.vmware.admiral.closures.services.closuredescription.ClosureDescription;
@@ -126,6 +127,7 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 KubernetesDescriptionContentService.class,
                 PodLogService.class,
                 UrlEncodedReverseProxyService.class,
+                FetchDataGatewayService.class,
                 ClusterService.class);
 
         startServiceFactories(host, CaSigningCertService.class,
