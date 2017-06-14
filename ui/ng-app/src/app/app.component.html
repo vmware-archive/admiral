@@ -9,7 +9,7 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<clr-main-container>
+<clr-main-container *ngIf="!isLogin">
   <clr-header class="header-5" *ngIf="!embedded">
     <div class="branding">
         <a class="nav-link" routerLink="/">
@@ -30,7 +30,7 @@
             <div class="dropdown-menu">
                 <div class="dropdown-header" *ngIf="userNameDetail">{{userNameDetail}}</div>
                 <a href="..." clrDropdownItem>Preferences</a>
-                <a href="..." clrDropdownItem>Log out</a>
+                <a (click)="logout()" clrDropdownItem>Log out</a>
             </div>
         </clr-dropdown>
     </div>
@@ -39,3 +39,7 @@
     <router-outlet></router-outlet>
   </div>
 </clr-main-container>
+<div *ngIf="isLogin">
+    <span style="display: none"><router-outlet></router-outlet></span>
+    <login></login>
+</div>

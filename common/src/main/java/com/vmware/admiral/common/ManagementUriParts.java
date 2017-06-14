@@ -234,6 +234,8 @@ public interface ManagementUriParts {
     // UI Service:
     String UI_SERVICE = System.getProperty("dcp.management.ui.path", "/");
     String UI_NG_SERVICE = UI_SERVICE + "ng";
+    String UI_OG_SERVICE = UI_SERVICE + "ogui";
+    String UI_COMPUTE_SERVICE = UI_SERVICE + "iaas";
 
     String CONTAINER_ICONS_RESOURCE_PATH = UI_SERVICE + "/container-icons";
     String CONTAINER_IDENTICONS_RESOURCE_PATH = UI_SERVICE + "/container-identicons";

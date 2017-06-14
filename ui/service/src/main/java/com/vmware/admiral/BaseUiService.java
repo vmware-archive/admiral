@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 
+import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.xenon.common.Claims;
 import com.vmware.xenon.common.FileUtils;
@@ -32,6 +33,7 @@ import com.vmware.xenon.common.FileUtils.ResourceEntry;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -40,9 +42,8 @@ import com.vmware.xenon.services.common.ServiceUriPaths;
 
 public abstract class BaseUiService extends StatelessService {
     public static final String HTML_RESOURCE_EXTENSION = ".html";
-    public static final String LOGIN_PATH = "login" + HTML_RESOURCE_EXTENSION;
+    public static final String LOGIN_PATH = "/login/";
     public static final String INDEX_PATH = "index" + HTML_RESOURCE_EXTENSION;
-    public static final String INDEX_EMBEDDED_PATH = "index-embedded" + HTML_RESOURCE_EXTENSION;
     public static final String I18NEXT_COOKIE = "i18next";
 
     @Override
@@ -63,10 +64,6 @@ public abstract class BaseUiService extends StatelessService {
 
     @Override
     public void handleGet(Operation get) {
-        if (redirectToLoginOrIndex(get)) {
-            return;
-        }
-
         URI uri = get.getUri();
         String selfLink = getSelfLink();
         String requestUri = uri.getPath();
@@ -176,67 +173,6 @@ public abstract class BaseUiService extends StatelessService {
         }
     }
 
-    private boolean redirectToLoginOrIndex(Operation op) {
-        // in embedded mode we are already authenticated
-        // no need to show login or home page upon successful login
-        if (ConfigurationUtil.isEmbedded()) {
-            return false;
-        }
-
-        if (getHost().isAuthorizationEnabled()) {
-            AuthorizationContext ctx = op.getAuthorizationContext();
-            if (ctx == null) {
-                // It should never happen. If no credentials are provided then Xenon falls back
-                // on the guest user authorization context and claims.
-                op.fail(new IllegalStateException("ctx == null"));
-                return true;
-            }
-
-            Claims claims = ctx.getClaims();
-            if (claims == null) {
-                // It should never happen. If no credentials are provided then Xenon falls back
-                // on the guest user authorization context and claims.
-                op.fail(new IllegalStateException("claims == null"));
-                return true;
-            }
-            String path = op.getUri().getPath();
-
-            // Is the user trying to login?
-            boolean isLoginPage = path.endsWith(LOGIN_PATH);
-
-            // Is the user trying to access an html page? No need to redirect requests to js,
-            // css, etc.
-            boolean isHTMLResource = !path.contains(".") ||
-                    path.endsWith(BaseUiService.HTML_RESOURCE_EXTENSION);
-
-            // Is the user already authenticated?
-            boolean isValidUser = (claims.getSubject() != null)
-                    && !GuestUserService.SELF_LINK.equals(claims.getSubject());
-
-            boolean loginRequired = !isLoginPage && isHTMLResource && !isValidUser;
-            boolean showHomePage = isLoginPage && isValidUser;
-
-            if (loginRequired) {
-                // Redirect the browser to the login page
-                String location = getSelfLink() + LOGIN_PATH;
-                op.addResponseHeader(Operation.LOCATION_HEADER, location);
-                op.setStatusCode(Operation.STATUS_CODE_MOVED_TEMP);
-                op.complete();
-
-                return true;
-            } else if (showHomePage) {
-                // Redirect the browser to the home page
-                String location = getSelfLink() + UriUtils.URI_PATH_CHAR;
-                op.addResponseHeader(Operation.LOCATION_HEADER, location);
-                op.setStatusCode(Operation.STATUS_CODE_MOVED_TEMP);
-                op.complete();
-
-                return true;
-            }
-        }
-        return false;
-    }
-
     private void discoverFileResources(Service s, Map<Path, String> pathToURIPath,
             Path baseUriPath,
             String prefix) {
@@ -261,6 +197,124 @@ public abstract class BaseUiService extends StatelessService {
 
         if (pathToURIPath.isEmpty()) {
             log(Level.INFO, "No resources found in directory: %s", rootDir.toString());
+        }
+    }
+
+    protected void startForwardingService(String sourcePath, String targetPath) {
+        Operation post = Operation
+                .createPost(UriUtils.buildUri(getHost(), sourcePath));
+        UiNgResourceForwarding rf = new UiNgResourceForwarding(sourcePath, targetPath);
+        getHost().startService(post, rf);
+    }
+
+    protected static boolean redirectToLoginOrIndex(ServiceHost host, Operation op) {
+        // in embedded mode we are already authenticated
+        // no need to show login or home page upon successful login
+        if (ConfigurationUtil.isEmbedded()) {
+            return false;
+        }
+
+        if (host.isAuthorizationEnabled()) {
+            AuthorizationContext ctx = op.getAuthorizationContext();
+            if (ctx == null) {
+                // It should never happen. If no credentials are provided then Xenon falls back
+                // on the guest user authorization context and claims.
+                op.fail(new IllegalStateException("ctx == null"));
+                return true;
+            }
+
+            Claims claims = ctx.getClaims();
+            if (claims == null) {
+                // It should never happen. If no credentials are provided then Xenon falls back
+                // on the guest user authorization context and claims.
+                op.fail(new IllegalStateException("claims == null"));
+                return true;
+            }
+            String path = op.getUri().getPath();
+
+            // Is the user trying to login?
+            boolean isLoginPage = path.endsWith(LOGIN_PATH);
+
+            // Is the user trying to access an html page? No need to redirect requests to js,
+            // css, etc.
+            boolean isHTMLResource = !path.contains(".") ||
+                    path.endsWith(HTML_RESOURCE_EXTENSION);
+
+            // Is the user already authenticated?
+            boolean isValidUser = (claims.getSubject() != null)
+                    && !GuestUserService.SELF_LINK.equals(claims.getSubject());
+
+            boolean loginRequired = !isLoginPage && isHTMLResource && !isValidUser;
+            boolean showHomePage = isLoginPage && isValidUser;
+
+            if (loginRequired) {
+                // Redirect the browser to the login page
+                String location = ManagementUriParts.UI_SERVICE + LOGIN_PATH;
+                location = location.replaceAll("//", "/");
+                op.addResponseHeader(Operation.LOCATION_HEADER, location);
+                op.setStatusCode(Operation.STATUS_CODE_MOVED_TEMP);
+                op.complete();
+
+                return true;
+            } else if (showHomePage) {
+                // Redirect the browser to the home page
+                String location = ManagementUriParts.UI_SERVICE;
+                op.addResponseHeader(Operation.LOCATION_HEADER, location);
+                op.setStatusCode(Operation.STATUS_CODE_MOVED_TEMP);
+                op.complete();
+
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static class UiNgResourceForwarding extends StatelessService {
+
+        private String sourcePath;
+        private String targetPath;
+
+        public UiNgResourceForwarding(String sourcePath, String targetPath) {
+            this.sourcePath = sourcePath;
+            this.targetPath = targetPath;
+            setSelfLink(sourcePath);
+
+            this.options.add(ServiceOption.URI_NAMESPACE_OWNER);
+        }
+
+        @Override
+        public void authorizeRequest(Operation op) {
+            // No authorization required.
+            op.complete();
+        }
+
+        @Override
+        public void handleGet(Operation get) {
+            if (redirectToLoginOrIndex(getHost(), get)) {
+                return;
+            }
+
+            String uri = get.getUri().toString();
+            if (uri.endsWith(sourcePath)) {
+                uri += INDEX_PATH;
+            }
+            uri = uri.replace(this.sourcePath, this.targetPath);
+
+            Operation operation = get.clone();
+            operation.setUri(UriUtils.buildUri(uri))
+                    .setCompletion((o, e) -> {
+                        get.setBody(o.getBodyRaw())
+                                .setStatusCode(o.getStatusCode())
+                                .setContentType(o.getContentType());
+                        get.transferResponseHeadersFrom(o);
+                        if (e != null) {
+                            get.fail(e);
+                        } else {
+                            get.complete();
+                        }
+                    });
+
+            getHost().sendRequest(operation);
         }
     }
 }

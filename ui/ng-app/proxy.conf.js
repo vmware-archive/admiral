@@ -15,7 +15,7 @@ const ENDPOINTS = [
   '/popular-images/*',
   '/hbr-api/*',
   '/auth/*',
-  '/index-no-navigation.html*',
+  '/ogui/index-no-navigation.html*',
   '/lib/*',
   '/js/*',
   '/styles/*',
@@ -29,13 +29,20 @@ var configure = function(env) {
 
   ENDPOINTS.forEach((e) => {
     configs[e] = {
-      'target': `http://${env.services.ip}:${env.services.port}`,
+      'target': `http://${env.services.ip}:${env.services.port}/`,
       'secure': false
     };
   });
 
   configs['/assets/i18n/base*.json'] = {
-    'target': `http://${env.services.ip}:${env.services.port}/ng`,
+    'target': `http://${env.services.ip}:${env.services.port}/`,
+    'secure': false
+  }
+
+  configs['/login/*'] = {
+    'changeOrigin': true,
+    'pathRewrite': {'^/login': ''},
+    'target': `http://${env.services.ip}:4200/`,
     'secure': false
   }
 

@@ -78,7 +78,9 @@ var updateHeader = function() {
 
 initializer.init(true, () => {
   var locationSearch = window.location.search || '';
-  if (locationSearch.indexOf('compute') !== -1) {
+  var locationPath = window.location.pathname || '';
+  if (locationSearch.indexOf('compute') !== -1 ||
+     locationPath.indexOf('/iaas/') !== -1) {
     appInitializer(require('components/AppCompute').default,
                    require('stores/AppComputeStore').default);
   } else {

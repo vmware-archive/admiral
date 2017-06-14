@@ -1329,6 +1329,7 @@
     "logout": "Logout",
     "username": "Username",
     "password": "Password",
+    "welcomeTo": "Welcome to",
     "success": "Authentication successful",
     "failure": "Authentication error"
   },
@@ -1413,5 +1414,9 @@
     "SUSPEND": "DISABLED",
     "UNKNOWN": "UNKNOWN",
     "stateSinceMessage": "since {{date}}"
+  },
+  "productNames": {
+    "admiral": "Admiral",
+    "vic": "vSphere Integrated Containers"
   }
 }

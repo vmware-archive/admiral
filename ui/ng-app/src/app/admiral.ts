@@ -53,6 +53,7 @@ import { BackButtonComponent } from "./components/back-button/back-button.compon
 import { SearchComponent } from "./components/search/search.component";
 import { SimpleSearchComponent } from './components/search/simple-search.component';
 import { NavigationContainerComponent } from "./components/navigation-container/navigation-container.component";
+import { LoginComponent } from './components/login/login.component';
 
 import { PodListComponent } from './kubernetes/pods/list/pod-list.component';
 import { PodDetailsComponent } from './kubernetes/pods/details/pod-details.component';
@@ -109,6 +110,7 @@ export const ADMIRAL_DECLARATIONS = [
   BackButtonComponent,
   SearchComponent,
   NavigationContainerComponent,
+  LoginComponent,
 
   PodListComponent,
   PodDetailsComponent,
