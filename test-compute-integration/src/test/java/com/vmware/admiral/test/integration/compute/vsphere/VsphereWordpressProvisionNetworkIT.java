@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.test.integration.compute;
+package com.vmware.admiral.test.integration.compute.vsphere;
 
 import static org.junit.Assert.fail;
 
@@ -18,12 +18,12 @@ import java.util.Collection;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import com.vmware.admiral.compute.profile.StorageProfileService.StorageProfile;
-import com.vmware.admiral.test.integration.compute.vsphere.VsphereComputeProvisionIT;
-import com.vmware.admiral.test.integration.compute.vsphere.VsphereUtil;
+import com.vmware.admiral.test.integration.compute.BaseWordpressComputeProvisionIT;
 import com.vmware.photon.controller.model.constants.PhotonModelConstants.EndpointType;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
@@ -31,6 +31,7 @@ import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
 import com.vmware.xenon.common.ServiceDocument;
 
 @RunWith(Parameterized.class)
+@Ignore("https://jira-hzn.eng.vmware.com/browse/VCOM-1083")
 public class VsphereWordpressProvisionNetworkIT extends BaseWordpressComputeProvisionIT {
 
     public static final String DEFAULT_SUBNET_NAME = "VM Network";
