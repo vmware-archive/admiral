@@ -9,12 +9,14 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<div toolbar>
-    <button class="btn btn-link" [routerLink]="['./add-member']">
-        <clr-icon shape="add" size="12"></clr-icon><span class="btn-spaced-text">{{"add" | i18n}}</span></button>
-</div>
-
-<clr-datagrid>
+<clr-datagrid class="projectMembersGrid">
+    <clr-dg-action-bar>
+        <div class="btn-group" role="group" aria-label="Available Actions">
+            <button type="button" class="btn btn-sm btn-secondary"
+                    (click)="onAddMembers()"><clr-icon shape="add"></clr-icon><span
+                                        class="btn-spaced-text">{{"add" | i18n}}</span></button>
+        </div>
+    </clr-dg-action-bar>
     <clr-dg-column>{{"projects.members.columnName" | i18n}}</clr-dg-column>
     <clr-dg-column>{{"projects.members.columnPrimaryId" | i18n}}</clr-dg-column>
     <clr-dg-column>{{"projects.members.columnSource" | i18n}}</clr-dg-column>
@@ -49,3 +51,6 @@
 <app-project-edit-member [visible]="selectedMember" [project]="project" [member]="selectedMember"
                          (onChange)="editDone()"
                          (onCancel)="editCanceled()"></app-project-edit-member>
+
+<app-project-add-members [visible]="showAddMembers" [project]="project" (onChange)="addDone()"
+                         (onCancel)="addCanceled()"></app-project-add-members>

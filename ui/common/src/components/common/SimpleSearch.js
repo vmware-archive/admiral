@@ -14,10 +14,13 @@ require('wamda-typeahead');
 
 const SEARCH_RESULT_LIMIT = 20;
 
+/**
+ * Component providing simple search typeahead functionality.
+ */
 module.exports = class SimpleSearch {
 
   constructor(displayPropertyName, sourceCallback, selectionCallback) {
-    this.$el = $('<div><input type="text"/></div>');
+    this.$el = $('<div class="simple-search-holder"><input type="text"/></div>');
 
     this.$el.find('input').typeahead({ minLength: 0 }, {
       name: 'simple-search',
@@ -40,10 +43,6 @@ module.exports = class SimpleSearch {
           }
           if (end < name.length) {
             suffix = name.substring(end, name.length);
-          //   if (context.instances) {
-          //     suffix += ' <span class="volume-search-item-secondary">(' + context.instances
-          //       + ' ' + i18n.t('app.template.details.editVolume.showingInstances') + ')</span>';
-          //   }
           }
           root = name.substring(start, end);
 
@@ -60,13 +59,13 @@ module.exports = class SimpleSearch {
         //       count: q.suggestions.length,
         //       totalCount: typeaheadSource.lastResult.totalCount
         //     };
-        //     var label = i18n.t('app.template.details.editVolume.showingCount', i18nOption);
+        //     var label = i18n.t('infoMessages.showingCount', i18nOption);
         //     return `<div class="tt-options-hint">${label}</div>`;
         //   }
         // },
         notFound: function() {
-          // var label = i18n.t('app.template.details.editVolume.noResults');
-          return `<div class="tt-options-hint">Not Found</div>`; //${label}
+          var label = 'Not Found'; // TODO i18n.t('infoMessages.notFound')
+          return `<div class="tt-options-hint">${label}</div>`;
         }
       }
     }).on('typeahead:selected', selectionCallback);
@@ -77,10 +76,10 @@ module.exports = class SimpleSearch {
   }
 
   setValue(value) {
-    $(this.$el).typeahead('val', value);
+    $(this.getEl()).find('input').typeahead('val', value);
   }
 
   getValue() {
-    return $(this.$el).typeahead('val');
+    return $(this.getEl()).find('input').typeahead('val');
   }
 }

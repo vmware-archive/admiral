@@ -178,8 +178,24 @@ export class DocumentService {
   public getPrincipalById(principalId): Promise<any> {
     return this.getById(Links.AUTH_PRINCIPALS, principalId)
   }
+
+  public findPrincipals(searchString): Promise<any> {
+      return new Promise((resolve, reject) => {
+          let searchParams = new URLSearchParams();
+          searchParams.append('criteria', searchString);
+
+          this.ajax.get(Links.AUTH_PRINCIPALS, searchParams).then((principalsResult) => {
+              resolve(principalsResult);
+          }).catch(reject);
+      });
+  }
 }
 
 export class DocumentListResult {
-  constructor(public documents : Array<any>, public nextPageLink: string, public totalCount: number) {}
+
+  constructor(public documents : Array<any>,
+              public nextPageLink: string,
+              public totalCount: number) {
+
+  }
 }

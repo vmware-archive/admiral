@@ -26,6 +26,8 @@ export class ProjectMembersComponent implements OnChanges {
 
     @Input() project: any;
 
+    showAddMembers: boolean;
+
     members: any[] = [];
     memberToDelete: any;
 
@@ -39,6 +41,19 @@ export class ProjectMembersComponent implements OnChanges {
     deleteConfirmationAlert: string;
 
     constructor(protected service: DocumentService) { }
+
+    onAddMembers() {
+        this.showAddMembers = true;
+    }
+
+    addDone() {
+        this.showAddMembers = false;
+        this.loadMembers();
+    }
+
+    addCanceled() {
+        this.showAddMembers = false;
+    }
 
     onEdit(member) {
        this.selectedMember = member;

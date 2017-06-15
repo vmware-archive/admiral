@@ -1,0 +1,129 @@
+/*
+ * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ *
+ * This product is licensed to you under the Apache License, Version 2.0 (the "License").
+ * You may not use this product except in compliance with the License.
+ *
+ * This product may include a number of subcomponents with separate copyright notices
+ * and license terms. Your use of these subcomponents is subject to the terms and
+ * conditions of the subcomponent's license, as noted in the LICENSE file.
+ */
+
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { FormGroup, FormControl } from "@angular/forms";
+import { DocumentService } from "../../../utils/document.service";
+import * as I18n from 'i18next';
+
+@Component({
+    selector: 'app-project-add-members',
+    templateUrl: './project-add-members.component.html',
+    styleUrls: ['./project-add-members.component.scss']
+})
+/**
+ * Modal add members to project.
+ */
+export class ProjectAddMembersComponent {
+
+    @Input() visible: boolean;
+    @Input() project: any;
+
+    @Output() onChange: EventEmitter<any> = new EventEmitter();
+    @Output() onCancel: EventEmitter<any> = new EventEmitter();
+
+    addMembersToProjectForm = new FormGroup({
+        memberRole: new FormControl('')
+    });
+
+    memberRoleSelection: string;
+
+    members: any[];
+    membersSuggestions: any[];
+
+    selectedMembers: any[] = [];
+
+    constructor(protected service: DocumentService) { }
+
+    get description(): string {
+        return I18n.t('projects.members.addMembers.description',
+            { projectName:  this.project && this.project.name } as I18n.TranslationOptions);
+    }
+
+    getMembers($eventData: any) {
+        console.log('get members query', $eventData.query);
+
+        if ($eventData.query === '') {
+            return [];
+        }
+
+        this.service.findPrincipals($eventData.query).then((principalsResult) => {
+            this.members = principalsResult;
+
+            this.membersSuggestions = this.members.map((principal) => {
+                let searchResult = {};
+                searchResult['id'] = principal.id;
+                searchResult['name'] = principal.email;
+
+                return searchResult;
+            });
+            // notify search component
+            $eventData.callback(this.membersSuggestions);
+
+        }).catch((error) => {
+            console.log('Failed to find members', error);
+        });
+    }
+
+    onSearchSelection(selectionData) {
+        let selectedMember = this.members.find((member) => member.id === selectionData.datum.id);
+
+        let alreadyAddedMember = this.selectedMembers.find((member) => {
+            return selectedMember.id === member.id
+        });
+
+        if (!alreadyAddedMember) {
+            this.selectedMembers.push(selectedMember);
+        }
+    }
+
+    removeMember(selectedUser: any) {
+        let idx = this.selectedMembers.findIndex((member) => member.id === selectedUser.id);
+        this.selectedMembers.splice(idx, 1);
+    }
+
+    addConfirmed() {
+        if (this.addMembersToProjectForm.valid) {
+            let selectedPrincipalIds = this.selectedMembers.map((principal) => principal.id);
+
+            let patchValue;
+            let fieldRoleValue = this.memberRoleSelection;
+            if (fieldRoleValue === 'ADMIN') {
+                patchValue = {
+                    "administrators": {"add": selectedPrincipalIds}
+                };
+            }
+
+            if (fieldRoleValue === 'USER') {
+                patchValue = {
+                    "members": {"add": selectedPrincipalIds}
+                };
+            }
+
+            this.service.patch(this.project.documentSelfLink, patchValue).then(() => {
+                this.onChange.emit(null);
+            }).catch((error) => {
+                if (error.status === 304) {
+                    // actually success
+                    // TODO correct this once backend is corrected
+                    this.onChange.emit(null);
+                } else {
+                    console.log("Failed to add members", error);
+                    // TODO show alert message?
+                }
+            });
+        }
+    }
+
+    addCanceled() {
+        this.onCancel.emit(null);
+    }
+}

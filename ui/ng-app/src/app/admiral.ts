@@ -25,6 +25,7 @@ import { ProjectConfigurationComponent } from './views/projects/project-details/
 import { ProjectCreateComponent } from './views/projects/project-create/project-create.component';
 import { ProjectMembersComponent } from "./views/projects/project-details/project-members.component";
 import { ProjectAddMemberComponent } from "./views/projects/project-details/project-add-member.component";
+import { ProjectAddMembersComponent } from "./views/projects/project-details/project-add-members.component";
 import { ProjectEditMemberComponent } from "./views/projects/project-details/project-edit-member.component";
 import { DeleteConfirmationComponent } from './views/delete-confirmation/delete-confirmation.component';
 import { RegistriesComponent } from './views/registries/registries.component';
@@ -44,6 +45,7 @@ import { LogsScrollComponent } from "./components/logs/logs-scroll.component";
 import { MaximizableBehaviourComponent } from "./components/maximizable-behaviour/maximizable-behaviour.component";
 import { BackButtonComponent } from "./components/back-button/back-button.component";
 import { SearchComponent } from "./components/search/search.component";
+import { SimpleSearchComponent } from './components/search/simple-search.component';
 import { NavigationContainerComponent } from "./components/navigation-container/navigation-container.component";
 
 import { PodListComponent } from './kubernetes/pods/list/pod-list.component';
@@ -64,6 +66,7 @@ export const ADMIRAL_DECLARATIONS = [
   MainResourcesComponent,
 
   DeleteConfirmationComponent,
+  SimpleSearchComponent,
 
   IdentityManagementComponent,
   ProjectsComponent,
@@ -71,6 +74,7 @@ export const ADMIRAL_DECLARATIONS = [
   ProjectSummaryComponent,
   ProjectMembersComponent,
   ProjectAddMemberComponent,
+  ProjectAddMembersComponent,
   ProjectEditMemberComponent,
   ProjectCreateComponent,
   ProjectConfigurationComponent,

@@ -1399,7 +1399,9 @@
   },
   "infoMessages": {
     "created": "Created Successfully!",
-    "updated": "Updated Successfully!"
+    "updated": "Updated Successfully!",
+    "notFound": "Not found",
+    "showingCount": "Showing {{count}} out of {{totalCount}}"
   },
   "occurrence": {
     "all": "Match all",

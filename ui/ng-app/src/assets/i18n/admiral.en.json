@@ -39,9 +39,10 @@
       "count": "members",
       "addMembers": {
         "title": "Add Users and Groups",
-        "description": "Add Users and groups to the project by their ID or email.",
+        "description": "Add Users and groups to {{projectName}} by their ID or email.",
         "fieldTitleId": "ID or email",
         "fieldRequiredId": "ID is required.",
+        "searchPlaceholder": "Search for users",
         "fieldTitleRole": "Role in project"
        },
       "editMember" : {
