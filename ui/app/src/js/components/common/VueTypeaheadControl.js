@@ -34,6 +34,11 @@ export default Vue.component('typeahead-control', {
       required: false,
       type: String
     },
+    limit: {
+      default: 5,
+      required: false,
+      type: Number
+    },
     renderer: {
       required: false,
       type: Function
@@ -60,9 +65,14 @@ export default Vue.component('typeahead-control', {
     $(this.$el).find('input').typeahead({
       minLength: 0
     }, {
+      limit: this.limit,
       source: (q, sync, async) => {
         this.source.call(this, q || '', 10).then((result) => {
-          async(result.items);
+          let items = result && result.items;
+          if (!items) {
+            items = [];
+          }
+          async(items);
         });
       },
       display: this.display,
