@@ -419,6 +419,7 @@ public class LoadBalancerAllocationTaskService extends
         lbState.port = this.lbDescription.port;
         lbState.instanceProtocol = this.lbDescription.instanceProtocol;
         lbState.instancePort = this.lbDescription.instancePort;
+        lbState.routes = this.lbDescription.routes;
         lbState.internetFacing = this.lbDescription.internetFacing;
         lbState.computeLinks = state.computeLinks;
         lbState.subnetLinks = Collections.singleton(state.selectedSubnetLink);

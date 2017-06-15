@@ -57,6 +57,8 @@ import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
 import com.vmware.photon.controller.model.resources.EndpointService;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
 import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription;
+import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription.Protocol;
+import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription.RouteConfiguration;
 import com.vmware.photon.controller.model.resources.LoadBalancerService.LoadBalancerState;
 import com.vmware.photon.controller.model.resources.NetworkService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
@@ -209,6 +211,12 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         desc.port = 80;
         desc.instanceProtocol = "HTTP";
         desc.instancePort = 80;
+        RouteConfiguration route = new RouteConfiguration();
+        route.protocol = Protocol.HTTP.name();
+        route.port = "80";
+        route.instanceProtocol = Protocol.HTTP.name();
+        route.instancePort = "80";
+        desc.routes = Arrays.asList(route);
         return desc;
     }
 
@@ -222,6 +230,12 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         state.port = 80;
         state.instanceProtocol = "HTTP";
         state.instancePort = 80;
+        RouteConfiguration route = new RouteConfiguration();
+        route.protocol = Protocol.HTTP.name();
+        route.port = "80";
+        route.instanceProtocol = Protocol.HTTP.name();
+        route.instancePort = "80";
+        state.routes = Arrays.asList(route);
         state.endpointLink = "my-endpoint";
         state.regionId = "my-region";
         state.subnetLinks = Collections.singleton(SubnetService.FACTORY_LINK + "/lb-subnet");
