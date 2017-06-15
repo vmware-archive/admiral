@@ -23,7 +23,9 @@ import java.util.logging.Level;
 
 import com.vmware.admiral.auth.idm.AuthRole;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
+import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.admiral.image.service.PopularImagesService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.photon.controller.model.security.util.EncryptionUtils;
@@ -241,7 +243,16 @@ public class AuthUtil {
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(ConfigurationFactoryService.SELF_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
-
+                // TODO: Currently this breaks the UI. Remove this query, once
+                // this call is skipped for basic user.
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        PopularImagesService.SELF_LINK,
+                        MatchType.TERM, Occurance.SHOULD_OCCUR)
+                // TODO: Remove this query, once
+                // the call is skipped for basic user.
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        ManagementUriParts.NOTIFICATIONS,
+                        MatchType.TERM, Occurance.SHOULD_OCCUR)
                 .build();
 
         ResourceGroupState resourceGroupState = ResourceGroupState.Builder
