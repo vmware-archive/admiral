@@ -12,13 +12,16 @@
 package com.vmware.admiral.service.common;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.container.ContainerFactoryService;
 import com.vmware.admiral.service.common.LogService.LogServiceState;
+import com.vmware.xenon.common.Operation;
 
 public class LogServiceTest extends ComputeBaseTest {
 
@@ -36,5 +39,43 @@ public class LogServiceTest extends ComputeBaseTest {
         LogServiceState newLogState = doPost(logState, LogService.FACTORY_LINK);
 
         assertEquals(new String(logState.logs), new String(newLogState.logs));
+    }
+
+    @Test
+    public void testMaxLogSize() {
+        int maxLogSize = LogService.MAX_LOG_SIZE;
+        assertEquals(LogService.DEFAULT_MAX_LOG_SIZE_VALUE, maxLogSize);
+    }
+
+    @Test
+    public void testHandleMaintainance() throws Throwable {
+        LogServiceStub logService = new LogServiceStub();
+        logService.setHost(host);
+
+        host.startFactory(logService);
+        waitForServiceAvailability(LogServiceStub.FACTORY_LINK);
+
+        LogServiceState logServiceState = doPost(new LogServiceState(), LogServiceStub.FACTORY_LINK);
+
+        logService.doMaintenance(logServiceState.documentSelfLink);
+
+        logServiceState = getDocumentNoWait(LogServiceState.class, logServiceState.documentSelfLink);
+        assertNull(logServiceState);
+    }
+
+    public static class LogServiceStub extends LogService {
+
+        private static final long EXPIRATION_TIME = 0;
+        public static final String FACTORY_LINK = ManagementUriParts.LOGS + "-stub";
+
+        public void doMaintenance(String selfLink) throws Throwable {
+            Operation post = Operation.createPost(getHost(), FACTORY_LINK);
+            super.doMaintenance(post, selfLink, EXPIRATION_TIME);
+
+            waitFor(() -> {
+                return post.getStatusCode() > 0;
+            });
+        }
+
     }
 }
