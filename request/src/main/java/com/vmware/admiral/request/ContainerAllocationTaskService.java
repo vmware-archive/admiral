@@ -39,7 +39,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -47,8 +46,6 @@ import com.vmware.admiral.adapter.common.AdapterRequest;
 import com.vmware.admiral.adapter.common.ContainerOperationType;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.OperationUtil;
-import com.vmware.admiral.common.util.QueryUtil;
-import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.compute.container.CompositeComponentFactoryService;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
@@ -75,14 +72,12 @@ import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
-import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
-import com.vmware.xenon.services.common.QueryTask;
 
 /**
  * Task implementing the provision container request resource work flow.
@@ -1084,7 +1079,7 @@ public class ContainerAllocationTaskService extends
      */
     protected static class ExtensibilityCallbackResponse extends BaseExtensibilityCallbackResponse {
         public Set<String> resourceNames;
-        public Map<String, String> resourceToHostSelection;
+        public List<String> hosts;
     }
 
     @Override
@@ -1092,70 +1087,20 @@ public class ContainerAllocationTaskService extends
             BaseExtensibilityCallbackResponse notificationPayload, Runnable callback) {
         if (state.taskSubStage == SubStage.BUILD_RESOURCES_LINKS) {
             getContainerDescription(state, (contDesc) -> {
-                ((BaseExtensibilityCallbackResponse) notificationPayload).customProperties =
-                        contDesc.customProperties;
+
+                notificationPayload.customProperties = contDesc.customProperties;
                 //Finished with ContainerDescription customProperties. Now get host selections.
-                retrieveHostsAddresses(state, notificationPayload, callback);
+                ContainerAllocationTaskService.ExtensibilityCallbackResponse ecr =
+                        (ContainerAllocationTaskService.ExtensibilityCallbackResponse)
+                                notificationPayload;
+                ecr.hosts = new ArrayList<String>(state.hostSelections.stream
+                        ().map(hs -> hs.name).collect(Collectors.toList()));
+
+                notificationPayload.customProperties = contDesc.customProperties;
+                callback.run();
             });
         } else {
             callback.run();
         }
-    }
-
-    private void retrieveHostsAddresses(ContainerAllocationTaskState state,
-            ServiceTaskCallbackResponse notificationPayload, Runnable callback) {
-
-        if (state.hostSelections != null && !state.hostSelections.isEmpty()) {
-
-            Map<String, String> hostSelfLinkToAddress = new HashMap<>();
-
-            QueryTask.Query.Builder queryBuilder = QueryTask.Query.Builder.create()
-                    .addKindFieldClause(ComputeState.class)
-                    .addInClause(ComputeState.FIELD_NAME_SELF_LINK, state.hostSelections
-                            .stream().map(h -> h.hostLink).collect(Collectors.toList()));
-
-            QueryTask q = QueryTask.Builder.create().setQuery(queryBuilder.build()).build();
-            q.querySpec.resultLimit = ServiceDocumentQuery.DEFAULT_QUERY_RESULT_LIMIT;
-            QueryUtil.addExpandOption(q);
-
-            new ServiceDocumentQuery<>(getHost(), ComputeState.class).query(q, (r) -> {
-                if (r.hasException()) {
-                    String errorMsg = String.format("Exception while quering containers during "
-                                    + "payload enhancement. Error: [%s]",
-                            r.getException().getMessage());
-
-                    getHost().log(Level.SEVERE,
-                            errorMsg);
-                    failTask(errorMsg, new Throwable());
-                    return;
-                } else if (r.hasResult()) {
-                    hostSelfLinkToAddress.put(r.getDocumentSelfLink(), r.getResult().address !=
-                            null ? r.getResult().address : "N/A");
-                } else {
-                    if (hostSelfLinkToAddress.isEmpty()) {
-                        callback.run();
-                        return;
-                    }
-                    //Populate resource to host address map and invoke callback.
-                    setResourceToHostSelection(state, notificationPayload, callback,
-                            hostSelfLinkToAddress);
-                }
-            });
-        }
-    }
-
-    private void setResourceToHostSelection(ContainerAllocationTaskState state,
-            ServiceTaskCallbackResponse notificationPayload, Runnable callback,
-            Map<String, String> hostSelfLinkToAddress) {
-
-        ((ExtensibilityCallbackResponse) notificationPayload).resourceToHostSelection =
-                selectHostPerResourceName(state.resourceNames, state.hostSelections)
-                        .entrySet
-                                ().stream()
-                        .collect(Collectors.toMap(Map.Entry::getKey, entry
-                                -> hostSelfLinkToAddress.get(entry
-                                .getValue().hostLink)));
-
-        callback.run();
     }
 }

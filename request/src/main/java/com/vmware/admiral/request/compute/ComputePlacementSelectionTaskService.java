@@ -275,6 +275,7 @@ public class ComputePlacementSelectionTaskService extends
                     .get(computeState.documentSelfLink);
             hostSelection.deploymentPolicyLink = computeState.customProperties
                     .get(ContainerHostService.CUSTOM_PROPERTY_DEPLOYMENT_POLICY);
+            hostSelection.name = computeState.name != null ? computeState.name : "N/A";
             initHostSelectionMap.put(hostSelection.hostLink, hostSelection);
         }
         return initHostSelectionMap;

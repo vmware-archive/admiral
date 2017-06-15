@@ -294,7 +294,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                     ServiceTaskCallbackResponse replyPayload = op
                             .getBody(this.replyPayload().getClass());
 
-                    enhanceExtensibilityResponse(state, replyPayload, callback);
+                    this.enhanceExtensibilityResponse(state, replyPayload, callback);
                 } catch (Exception ex) {
                     logSevere(ex);
                     logSevere(

@@ -32,14 +32,15 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import com.vmware.admiral.common.ManagementUriParts;
@@ -70,7 +71,6 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.data.SchemaBuilder;
-import com.vmware.photon.controller.model.data.SchemaField.Constraint;
 import com.vmware.photon.controller.model.data.SchemaField.Type;
 import com.vmware.photon.controller.model.query.QueryUtils.QueryByPages;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
@@ -118,10 +118,11 @@ public class ComputeAllocationTaskService
     private static final String COMPUTE_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES = "resourceNames";
     private static final String COMPUTE_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES_LABEL = "Generated resource names";
     private static final String COMPUTE_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION = "Generated resource names";
-    private static final String COMPUTE_ALLOCATION_TOPIC_FIELD_RESOURCE_TO_HOST_SELECTIONS =
-            "resourceToHostSelection";
-    private static final String COMPUTE_ALLOCATION_TOPIC_FIELD_RESOURCE_TO_HOST_LABEL = "Resource to host selection(Read Only)";
-    private static final String COMPUTE_ALLOCATION_TOPIC_FIELD_RESOURCE_TO_HOST_DESCRIPTION = "Eeach string entry represents resource and host on which it will be deployed";
+
+    private static final String COMPUTE_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS = "hostSelections";
+    private static final String COMPUTE_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS_LABEL = "Selected hosts";
+    private static final String COMPUTE_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS_DESCRIPTION =
+            "Host selections for resource";
 
     private static final String ID_DELIMITER_CHAR = "-";
     // cached compute description
@@ -1043,7 +1044,7 @@ public class ComputeAllocationTaskService
      */
     protected static class ExtensibilityCallbackResponse extends BaseExtensibilityCallbackResponse {
         public Set<String> resourceNames;
-        public Map<String, String> resourceToHostSelection;
+        public List<String> hostSelections;
     }
 
     @Override
@@ -1057,9 +1058,99 @@ public class ComputeAllocationTaskService
         getComputeDescription(state.resourceDescriptionLink, (contDesc) -> {
             notificationPayload.customProperties = contDesc.customProperties;
 
-            //Finished with ConмпутеDescription customProperties. Now get host selections.
-            retrieveHostsAddresses(state, notificationPayload, callback);
+            ExtensibilityCallbackResponse ecr = (ExtensibilityCallbackResponse) notificationPayload;
+            ecr.hostSelections = new ArrayList<String>(state.selectedComputePlacementHosts.stream
+                    ().map(hs -> hs.name).collect(Collectors.toList()));
+
+            //Ready with Notification payload, send it to client through callback invokation.
+            callback.run();
         });
+    }
+
+    @Override
+    protected void enhanceExtensibilityResponse(ComputeAllocationTaskState state,
+            ServiceTaskCallbackResponse replyPayload, Runnable callback) {
+        ExtensibilityCallbackResponse response = (ExtensibilityCallbackResponse) replyPayload;
+        reorderHostSelections(state, response, callback);
+    }
+
+    protected void reorderHostSelections(ComputeAllocationTaskState state,
+            ExtensibilityCallbackResponse response, Runnable callback) {
+
+        //Host selections that have been provided as notification payload
+        List<String> selectionsForNotificationPayload = state.selectedComputePlacementHosts.stream
+                ().map(hs -> hs.name).collect(Collectors.toList());
+        List<String> responseHostSelections = response.hostSelections;
+
+        if (responseHostSelections.size() != selectionsForNotificationPayload.size()) {
+            String missmatchInSelections = String.format("There is discrepancy between number of "
+                            + "existing host selections: %s and provided by extensibility: %s",
+                    selectionsForNotificationPayload.size(), responseHostSelections.size());
+            failTask(missmatchInSelections, new Throwable(missmatchInSelections));
+            return;
+        }
+        //Compare both Lists by indexes
+        long diffInIndexes = IntStream.range(0, selectionsForNotificationPayload.size())
+                .filter(index -> !responseHostSelections.get(index).equals
+                        (selectionsForNotificationPayload.get(index))).count();
+
+        if (diffInIndexes > 0) {
+            //Check if client provides host that doesn't exist
+            for (String hostName : response.hostSelections) {
+                if (!state.selectedComputePlacementHosts.stream().filter(hs -> hs.name != null &&
+                        hs.name.equals(hostName)).findFirst().isPresent()) {
+                    String unknownHostMsg = String.format("Unknown host: %s", hostName);
+                    failTask(unknownHostMsg, new Throwable(unknownHostMsg));
+                    return;
+                }
+            }
+
+            List<HostSelection> hostSelections = new LinkedList<>(
+                    state.selectedComputePlacementHosts);
+            List<HostSelection> copySelections = new LinkedList<>(
+                    state.selectedComputePlacementHosts);
+
+            /**
+             * Reorder host selections in order to match client's wish, i.e.
+             *
+             * As part of notification payload, client will receive the following Collection which
+             * represents host placements (name of hosts / Compute[VM_HOST].name):
+             *
+             * hostSelections = [A,B,C]
+             * resourceNames = [c1, c2, c3]
+             *
+             * After client's response if hostSelections has been changed, for example:
+             * hostSelections = [ B, A, C ].
+             * Task selectedComputePlacementHosts should be reordered to [B,A,C] => after resuming, task will
+             * take care to place resources on hosts based on indexes of both collections - Hosts &
+             * Resoures.
+             */
+            response.hostSelections.stream().forEachOrdered(hostName -> {
+                HostSelection hostSelection = hostSelections.stream()
+                        .filter(h -> h.name.equals(hostName)).findFirst().get();
+                copySelections.set(response.hostSelections.indexOf(hostName), hostSelection);
+            });
+
+            ComputeAllocationTaskState patch = new ComputeAllocationTaskState();
+            patch.selectedComputePlacementHosts = copySelections;
+            patch.taskInfo = state.taskInfo;
+            patch.taskSubStage = state.taskSubStage;
+
+            Operation.createPatch(this, state.documentSelfLink)
+                    .setBody(patch)
+                    .setReferer(getHost().getUri())
+                    .setCompletion((o, e) -> {
+                        if (e != null) {
+                            failTask(e.getMessage(), e);
+                            return;
+                        }
+                        callback.run();
+                    }).sendWith(getHost());
+
+        } else {
+            //Host selections are not changed, resume the task
+            callback.run();
+        }
     }
 
     @Override
@@ -1068,37 +1159,47 @@ public class ComputeAllocationTaskService
         if (ComputeAllocationTaskState.SubStage.SUBSCRIPTION_SUB_STAGES
                 .contains(patchBody.taskSubStage)) {
             if (currentState.resourceNames != null && !currentState.resourceNames.isEmpty()) {
-                // A couple of possible scenarios here:
-                // 1.current names -> [a,b]; patched names -> [c]; => result will be [a,c]
-                // 2.current names -> [a,b]; patched names -> [c,d]; => result will be [c,d]
-                // 3.current names -> [a]; patched names -> [b]; => result will be [b]
+
                 if (patchBody.resourceNames != null && !patchBody.resourceNames.isEmpty()) {
                     // If [patchBody.resourceNames] contains one element, and
                     // [currentState.resourceNames] contains one element as well, than autoMerge of
                     // documents won't replace old with new, but put it both in the set.That's why
                     // the below logic is needed.
-                    int currentSize = currentState.resourceNames.size();
-                    int patchedSize = patchBody.resourceNames.size();
-                    int instancesToRemoveFromCurrentResourceNames = 0;
-                    if (currentSize > patchedSize) {
-                        instancesToRemoveFromCurrentResourceNames = currentSize - patchedSize;
-                    } else if (patchedSize > currentSize) {
-                        instancesToRemoveFromCurrentResourceNames = patchedSize - currentSize;
-                    } else {
-                        instancesToRemoveFromCurrentResourceNames = patchedSize;
-                    }
+                    trimCollection(currentState.resourceNames, patchBody.resourceNames.size());
+                }
+            }
 
-                    Iterator<String> iterator = currentState.resourceNames.iterator();
-
-                    while (iterator.hasNext() && instancesToRemoveFromCurrentResourceNames > 0) {
-                        instancesToRemoveFromCurrentResourceNames--;
-                        iterator.next();
-                        iterator.remove();
-                    }
+            if (currentState.selectedComputePlacementHosts != null && !currentState
+                    .selectedComputePlacementHosts.isEmpty()) {
+                if (patchBody.selectedComputePlacementHosts != null && !patchBody
+                        .selectedComputePlacementHosts.isEmpty()) {
+                    trimCollection(currentState.selectedComputePlacementHosts,
+                            patchBody.selectedComputePlacementHosts.size());
                 }
             }
         }
         super.autoMergeState(patch, patchBody, currentState);
+    }
+
+    /**
+     * Trim elements from Collection.
+     * <p>
+     * 1.collection -> [a,b]; instancesToRemove -> [1]; => result will be [b]
+     * 2.collection -> [a,b]; instancesToRemove -> [2]; => result will be []
+     * etc.
+     *
+     * @param collection        - Collection of elements
+     * @param instancesToRemove - number of instances that will be removed
+     */
+    protected void trimCollection(Collection collection, int instancesToRemove) {
+
+        Iterator<String> iterator = collection.iterator();
+
+        while (iterator.hasNext() && instancesToRemove > 0) {
+            instancesToRemove--;
+            iterator.next();
+            iterator.remove();
+        }
     }
 
     private void computeAllocationEventTopic(ServiceHost host) {
@@ -1116,89 +1217,37 @@ public class ComputeAllocationTaskService
     private SchemaBuilder computeAllocationTopicSchema() {
 
         return new SchemaBuilder()
+                // Add resource names
                 .addField(COMPUTE_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES)
                 .withType(Type.LIST)
                 .withDataType(DATATYPE_STRING)
                 .withLabel(COMPUTE_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES_LABEL)
                 .withDescription(COMPUTE_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION)
                 .done()
-                // Add resourceToHostSelection info
-                .addField(COMPUTE_ALLOCATION_TOPIC_FIELD_RESOURCE_TO_HOST_SELECTIONS)
-                .withType(Type.MAP)
-                .withLabel(COMPUTE_ALLOCATION_TOPIC_FIELD_RESOURCE_TO_HOST_LABEL)
-                .withDescription(COMPUTE_ALLOCATION_TOPIC_FIELD_RESOURCE_TO_HOST_DESCRIPTION)
-                .withConstraint(Constraint.readOnly, true)
+                // Add host selections info
+                .addField(COMPUTE_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS)
+                .withType(Type.LIST)
                 .withDataType(DATATYPE_STRING)
+                .withLabel(COMPUTE_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS_LABEL)
+                .withDescription(COMPUTE_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS_DESCRIPTION)
                 .done();
     }
 
-    private void retrieveHostsAddresses(ComputeAllocationTaskState state,
-            ServiceTaskCallbackResponse notificationPayload, Runnable callback) {
+    private Map<String, String> loadResourceToHostNameForNotificationPayload(
+            ComputeAllocationTaskState state) {
 
+        Map<String, String> resourceToHost = new TreeMap<>();
         if (state.selectedComputePlacementHosts != null && !state.selectedComputePlacementHosts
                 .isEmpty()) {
 
-            Map<String, String> hostSelfLinkToAddress = new HashMap<>();
+            Iterator<HostSelection> placementComputeLinkIterator = state.selectedComputePlacementHosts
+                    .iterator();
+            Iterator<String> namesIterator = state.resourceNames.iterator();
+            while (namesIterator.hasNext() && placementComputeLinkIterator.hasNext()) {
+                resourceToHost
+                        .put(namesIterator.next(), placementComputeLinkIterator.next().name);
+            }
 
-            QueryTask.Query.Builder queryBuilder = QueryTask.Query.Builder.create()
-                    .addKindFieldClause(ComputeState.class)
-                    .addInClause(ComputeState.FIELD_NAME_SELF_LINK,
-                            state.selectedComputePlacementHosts
-                                    .stream().map(h -> h.hostLink).collect(Collectors.toList()));
-
-            QueryTask q = QueryTask.Builder.create().setQuery(queryBuilder.build()).build();
-            q.querySpec.resultLimit = ServiceDocumentQuery.DEFAULT_QUERY_RESULT_LIMIT;
-            QueryUtil.addExpandOption(q);
-
-            new ServiceDocumentQuery<>(getHost(), ComputeState.class).query(q, (r) -> {
-                if (r.hasException()) {
-                    String errorMsg = String.format("Exception while quering ComputeStates during "
-                                    + "payload enhancement. Error: [%s]",
-                            r.getException().getMessage());
-
-                    getHost().log(Level.SEVERE,
-                            errorMsg);
-                    failTask(errorMsg, r.getException());
-                    return;
-                } else if (r.hasResult()) {
-                    hostSelfLinkToAddress.put(r.getDocumentSelfLink(), r.getResult().address !=
-                            null ? r.getResult().address : "N/A");
-                } else {
-                    if (hostSelfLinkToAddress.isEmpty()) {
-                        callback.run();
-                        return;
-                    }
-                    //Populate resource to host address map and invoke callback.
-                    setResourceToHostSelection(state, notificationPayload, callback,
-                            hostSelfLinkToAddress);
-                }
-            });
-        } else {
-            callback.run();
-        }
-    }
-
-    private void setResourceToHostSelection(ComputeAllocationTaskState state,
-            ServiceTaskCallbackResponse notificationPayload, Runnable callback,
-            Map<String, String> hostSelfLinkToAddress) {
-
-        ((ComputeAllocationTaskService.ExtensibilityCallbackResponse) notificationPayload).resourceToHostSelection =
-                buildResourceToHostSelectionMap(state)
-                        .entrySet
-                                ().stream()
-                        .collect(Collectors.toMap(Map.Entry::getKey, entry
-                                -> hostSelfLinkToAddress.get(entry.getValue())));
-
-        callback.run();
-    }
-
-    private Map<String, String> buildResourceToHostSelectionMap(ComputeAllocationTaskState state) {
-        Map<String, String> resourceToHost = new LinkedHashMap<>();
-        Iterator<HostSelection> placementComputeLinkIterator = state.selectedComputePlacementHosts
-                .iterator();
-        Iterator<String> namesIterator = state.resourceNames.iterator();
-        while (namesIterator.hasNext() && placementComputeLinkIterator.hasNext()) {
-            resourceToHost.put(namesIterator.next(), placementComputeLinkIterator.next().hostLink);
         }
         return resourceToHost;
     }

@@ -40,13 +40,16 @@ public class ContainerAllocationTaskFactoryService extends FactoryService implem
     private static final String CONTAINER_ALLOCATION_TOPIC_NAME = "Container allocation";
     private static final String CONTAINER_ALLOCATION_TOPIC_TASK_DESCRIPTION = "Pre allocation for "
             + "containers";
-    private static final String CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_TO_HOST_SELECTIONS =
-            "resourceToHostSelection";
+
     private static final String CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES = "resourceNames";
     private static final String CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION = "Generated resource names";
     private static final String CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES_LABEL = "Generated resource names";
-    private static final String CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_TO_HOST_LABEL = "Resource to host selection(Read Only)";
-    private static final String CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_TO_HOST_DESCRIPTION = "Eeach string entry represents resource and host on which it will be deployed";
+
+    private static final String CONTAINER_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS = "hosts";
+    private static final String CONTAINER_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS_LABEL =
+            "Selected hosts";
+    private static final String CONTAINER_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS_DESCRIPTION =
+            "Host selections for given resource";
 
     public ContainerAllocationTaskFactoryService() {
         super(ContainerAllocationTaskState.class);
@@ -63,6 +66,7 @@ public class ContainerAllocationTaskFactoryService extends FactoryService implem
     private SchemaBuilder containerAllocationTopicSchema() {
 
         return new SchemaBuilder()
+                // Add resource names info
                 .addField(CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES)
                 .withType(Type.LIST)
                 .withDataType(DATATYPE_STRING)
@@ -70,13 +74,13 @@ public class ContainerAllocationTaskFactoryService extends FactoryService implem
                 .withDescription(CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_NAMES_DESCRIPTION)
                 .done()
 
-                // Add resourceToHostSelection info
-                .addField(CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_TO_HOST_SELECTIONS)
-                .withType(Type.MAP)
-                .withLabel(CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_TO_HOST_LABEL)
-                .withDescription(CONTAINER_ALLOCATION_TOPIC_FIELD_RESOURCE_TO_HOST_DESCRIPTION)
-                .withConstraint(Constraint.readOnly, true)
+                // Add hosts info
+                .addField(CONTAINER_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS)
+                .withType(Type.LIST)
                 .withDataType(DATATYPE_STRING)
+                .withConstraint(Constraint.readOnly, true)
+                .withLabel(CONTAINER_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS_LABEL)
+                .withDescription(CONTAINER_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS_DESCRIPTION)
                 .done();
 
     }

@@ -13,6 +13,7 @@ package com.vmware.admiral.request.compute;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -20,6 +21,7 @@ import static com.vmware.admiral.compute.ComputeConstants.CUSTOM_PROP_PROFILE_LI
 
 import java.lang.reflect.Field;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,6 +33,7 @@ import org.junit.Test;
 
 import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.profile.ProfileService.ProfileStateExpanded;
+import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState;
 import com.vmware.admiral.request.compute.ComputeAllocationTaskService.ComputeAllocationTaskState.SubStage;
 import com.vmware.admiral.request.compute.ComputeProvisionTaskService.ComputeProvisionTaskState;
@@ -342,6 +345,88 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
     }
 
     @Test
+    public void testEnhanceExtensibilityResponse() throws Throwable {
+
+        /**
+         * Initially the placement is:
+         *  H(1)    H(2)
+         *   |       |
+         *   c1      c2
+         *
+         * After patch from client:
+         *  H(2)    H(1)
+         *   |       |
+         *   c1      c2
+         *
+         */
+
+        createVmHostCompute(true);
+
+        ComputeDescription computeDescription = createVMComputeDescription(false);
+
+        ComputeAllocationTaskService service = new ComputeAllocationTaskService();
+        service.setHost(host);
+
+        ComputeAllocationTaskState state = createComputeAllocationTask(computeDescription
+                .documentSelfLink, 2, true);
+
+        state = doPost(state,
+                ComputeAllocationTaskService.FACTORY_LINK);
+
+        final String selfLink = state.documentSelfLink;
+        assertNotNull(selfLink);
+
+        state = allocate(state);
+
+        assertNotNull(state);
+        assertEquals(2, state.resourceLinks.size());
+
+        ComputeAllocationTaskService.ExtensibilityCallbackResponse payload =
+                (ComputeAllocationTaskService.ExtensibilityCallbackResponse) service
+                        .notificationPayload();
+
+
+        List<HostSelection> beforeExtensibility = new ArrayList<>(
+                state.selectedComputePlacementHosts);
+
+        payload.hostSelections = beforeExtensibility.stream()
+                .map(hs -> hs.name)
+                .sorted(Collections.reverseOrder())
+                .collect(Collectors.toList());
+
+        TestContext context = new TestContext(1, Duration.ofMinutes(1));
+
+        service.enhanceExtensibilityResponse(state, payload, () -> {
+            try {
+                ComputeAllocationTaskState document = getDocument(ComputeAllocationTaskState.class,
+                        selfLink);
+
+                assertNotNull(document);
+
+                List<HostSelection> patchedHosts = new ArrayList<HostSelection>(document
+                        .selectedComputePlacementHosts);
+
+                assertNotNull(patchedHosts);
+
+                assertNotEquals(beforeExtensibility, patchedHosts);
+
+                //Task is in complete state and won't remove initial host selections, just add new
+                //ones to the existing which have been assigned when document has been initialized.
+                if (patchedHosts.size() == 4) {
+                    //Assert that new newly added host selections are in proper order (reversed
+                    // of original)
+                    assertEquals(beforeExtensibility.get(1).name, patchedHosts.get(2).name);
+                    assertEquals(beforeExtensibility.get(0).name, patchedHosts.get(3).name);
+                }
+            } catch (Throwable throwable) {
+                context.failIteration(throwable);
+            }
+            context.completeIteration();
+        });
+        context.await();
+    }
+
+    @Test
     public void testRetrieveSubnetwork() throws Throwable {
 
         ComputeProvisionTaskService service = new ComputeProvisionTaskService();
@@ -411,6 +496,56 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         });
         context.await();
 
+    }
+
+    @Test
+    public void testTrimCollection() {
+
+        String a = "a";
+        String b = "b";
+        String c = "c";
+
+        List<String> collection = new ArrayList<>();
+        collection.add(a);
+        collection.add(b);
+        collection.add(c);
+
+        ComputeAllocationTaskService service = new ComputeAllocationTaskService();
+        service.trimCollection(collection, 1);
+
+        assertEquals(2, collection.size());
+        assertTrue(collection.contains(b));
+        assertTrue(collection.contains(c));
+
+    }
+
+    @Test
+    public void testReorderHostSelections() {
+        ComputeAllocationTaskService service = new ComputeAllocationTaskService();
+        service.setHost(host);
+
+        HostSelection hs1 = new HostSelection();
+        hs1.name = "hs1";
+
+        HostSelection hs2 = new HostSelection();
+        hs2.name = "hs2";
+
+        List<HostSelection> hostSelections = Arrays.asList(new HostSelection[] { hs1, hs2 });
+
+        ComputeAllocationTaskState state = new ComputeAllocationTaskState();
+        state.selectedComputePlacementHosts = hostSelections;
+
+        ComputeAllocationTaskService.ExtensibilityCallbackResponse payload =
+                (ComputeAllocationTaskService.ExtensibilityCallbackResponse) service
+                        .notificationPayload();
+        payload.hostSelections = Arrays.asList("hs1", "hs2");
+
+        TestContext context = new TestContext(1, Duration.ofMinutes(10));
+        service.reorderHostSelections(state, payload, () -> {
+            //Reordering shouldn't be invoked as both lists are the same.
+            context.completeIteration();
+        });
+        context.await();
     }
 
     private ProfileStateExpanded createProfileWithInstanceType(String instanceTypeKey,

@@ -512,6 +512,7 @@ public abstract class RequestBaseTest extends BaseTestCase {
         vmHostComputeState.resourcePoolLink = createComputeResourcePool().documentSelfLink;
         vmHostComputeState.descriptionLink = createComputeDescriptionForVmGuestChildren().documentSelfLink;
         vmHostComputeState.type = ComputeType.VM_HOST;
+        vmHostComputeState.name = UUID.randomUUID().toString();
         vmHostComputeState.endpointLink = endpoint.documentSelfLink;
         vmHostComputeState = getOrCreateDocument(vmHostComputeState, ComputeService.FACTORY_LINK);
         assertNotNull(vmHostComputeState);

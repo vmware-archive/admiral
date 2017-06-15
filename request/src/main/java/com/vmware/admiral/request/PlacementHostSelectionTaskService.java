@@ -281,7 +281,7 @@ public class PlacementHostSelectionTaskService
                     .get(ContainerHostService.DOCKER_HOST_CLUSTER_STORE_PROP_NAME);
             hostSelection.plugins = computeState.customProperties
                     .get(ContainerHostService.DOCKER_HOST_PLUGINS_PROP_NAME);
-
+            hostSelection.name = computeState.name != null ? computeState.name : "N/A";
             hostSelection.hostType = ContainerHostUtil.getDeclaredContainerHostType(computeState);
 
             initHostSelectionMap.put(hostSelection.hostLink, hostSelection);

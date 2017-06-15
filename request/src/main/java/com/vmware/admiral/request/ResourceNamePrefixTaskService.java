@@ -17,9 +17,9 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.IllegalFormatException;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -148,7 +148,7 @@ public class ResourceNamePrefixTaskService
                         return;
                     }
                     NamePrefixResponse response = o.getBody(NamePrefixResponse.class);
-                    Set<String> resourceNames = new HashSet<>(response.resourceNamePrefixes
+                    Set<String> resourceNames = new LinkedHashSet<>(response.resourceNamePrefixes
                             .size());
                     for (String prefix : response.resourceNamePrefixes) {
                         try {

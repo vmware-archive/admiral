@@ -57,6 +57,7 @@ public interface HostSelectionFilter<T> extends AffinityFilter {
         public Long availableMemory;
         public String deploymentPolicyLink;
         public String plugins;
+        public String name;
         public ContainerHostType hostType;
 
         /** Configured location of the key-value store for the overlay networks. */
