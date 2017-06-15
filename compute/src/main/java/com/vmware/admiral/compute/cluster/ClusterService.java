@@ -12,6 +12,7 @@
 package com.vmware.admiral.compute.cluster;
 
 import java.net.URI;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -32,6 +33,7 @@ import com.vmware.admiral.compute.PlacementZoneUtil;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
@@ -50,6 +52,9 @@ public class ClusterService extends StatelessService {
             .compile(String.format("^%s\\/?$", SELF_LINK));
     private static final Pattern PATTERN_PROJECT_TENANT_LINK = Pattern
             .compile(String.format("^%s\\/[^\\/]+", ManagementUriParts.PROJECTS));
+
+    public static final String CLUSTER_ID_PATH_SEGMENT = "principalId";
+    public static final String CLUSTER_ID_PATH_SEGMENT_TEMPLATE = SELF_LINK + "/{principalId}";
 
     public ClusterService() {
         super(ClusterDto.class);
@@ -111,23 +116,61 @@ public class ClusterService extends StatelessService {
 
     @Override
     public void handleGet(Operation get) {
-        URI elasticPlacementZoneConfigurationUri = UriUtils.buildUri(getHost(),
-                ElasticPlacementZoneConfigurationService.SELF_LINK, get.getUri().getQuery());
+        //        Map<String, String> queryParams = UriUtils.parseUriQueryParams(get.getUri());
+        Map<String, String> pathSegmentParams = UriUtils.parseUriPathSegments(get.getUri(),
+                CLUSTER_ID_PATH_SEGMENT_TEMPLATE);
 
-        sendWithDeferredResult(Operation
-                .createGet(UriUtils.buildExpandLinksQueryUri(elasticPlacementZoneConfigurationUri))
-                .setReferer(getUri()),
-                ServiceDocumentQueryResult.class)
-                        .thenCompose(this::getInfoFromHostsWihtinPlacementZone)
-                        .thenAccept(clusterDtoList -> {
-                            Map<String, ClusterDto> a = clusterDtoList.stream()
-                                    .collect(Collectors.toMap(
-                                            clusterDto -> clusterDto.documentSelfLink,
-                                            Function.identity()));
-                            get.setBody(a);
-                        })
-                        .whenCompleteNotify(get);
-        ;
+        String clusterId = pathSegmentParams.get(CLUSTER_ID_PATH_SEGMENT);
+
+        if (clusterId != null && !clusterId.isEmpty()) {
+            StringBuilder pathSB = new StringBuilder(
+                    ElasticPlacementZoneConfigurationService.SELF_LINK);
+            pathSB.append(ResourcePoolService.FACTORY_LINK);
+            pathSB.append("/");
+            pathSB.append(clusterId);
+
+            URI elasticPlacementZoneConfigurationUri = UriUtils.buildUri(getHost(),
+                    pathSB.toString(), get.getUri().getQuery());
+            sendWithDeferredResult(Operation
+                    .createGet(
+                            UriUtils.buildExpandLinksQueryUri(elasticPlacementZoneConfigurationUri))
+                    .setReferer(getUri()),
+                    ElasticPlacementZoneConfigurationState.class)
+                            .thenCompose(this::getInfoFromHostsWihtinOnePlacementZone)
+                            .thenAccept(clusterDtoList -> {
+                                if (!clusterDtoList.isEmpty()) {
+                                    get.setBody(clusterDtoList.get(0));
+                                }
+                            })
+                            .whenCompleteNotify(get);
+        } else {
+            boolean expand = UriUtils.hasODataExpandParamValue(get.getUri());
+            URI elasticPlacementZoneConfigurationUri = UriUtils.buildUri(getHost(),
+                    ElasticPlacementZoneConfigurationService.SELF_LINK, get.getUri().getQuery());
+
+            sendWithDeferredResult(Operation
+                    .createGet(
+                            UriUtils.buildExpandLinksQueryUri(elasticPlacementZoneConfigurationUri))
+                    .setReferer(getUri()),
+                    ServiceDocumentQueryResult.class)
+                            .thenCompose(this::getInfoFromHostsWihtinPlacementZone)
+                            .thenAccept(clusterDtoList -> {
+                                Map<String, Object> ClusterDtoMap = clusterDtoList.stream()
+                                        .collect(Collectors.toMap(
+                                                clusterDto -> clusterDto.documentSelfLink,
+                                                Function.identity()));
+
+                                ServiceDocumentQueryResult queryResult = new ServiceDocumentQueryResult();
+                                queryResult.documentLinks = new LinkedList<>(
+                                        ClusterDtoMap.keySet());
+                                queryResult.documentCount = Long.valueOf(ClusterDtoMap.size());
+                                if (expand) {
+                                    queryResult.documents = ClusterDtoMap;
+                                }
+                                get.setBody(queryResult);
+                            })
+                            .whenCompleteNotify(get);
+        }
     }
 
     private boolean isCreateClusterPost(Operation post) {
@@ -139,6 +182,21 @@ public class ClusterService extends StatelessService {
         Map<String, ElasticPlacementZoneConfigurationState> ePZstates = QueryUtil
                 .extractQueryResult(
                         queryResult, ElasticPlacementZoneConfigurationState.class);
+        List<DeferredResult<ClusterDto>> clusterDtoList = ePZstates.keySet().stream()
+                .map(key -> ClusterUtils.getHostsWihtinPlacementZone(
+                        ePZstates.get(key).resourcePoolState.documentSelfLink, getHost())
+                        .thenApply(computeStates -> {
+                            return ClusterUtils.placementZoneAndItsHostsToClusterDto(
+                                    ePZstates.get(key).resourcePoolState, computeStates);
+                        }))
+                .collect(Collectors.toList());
+        return DeferredResult.allOf(clusterDtoList);
+    }
+
+    private DeferredResult<List<ClusterDto>> getInfoFromHostsWihtinOnePlacementZone(
+            ElasticPlacementZoneConfigurationState queryResult) {
+        Map<String, ElasticPlacementZoneConfigurationState> ePZstates = new HashMap<>();
+        ePZstates.put(queryResult.documentSelfLink, queryResult);
         List<DeferredResult<ClusterDto>> clusterDtoList = ePZstates.keySet().stream()
                 .map(key -> ClusterUtils.getHostsWihtinPlacementZone(
                         ePZstates.get(key).resourcePoolState.documentSelfLink, getHost())
