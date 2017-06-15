@@ -1,0 +1,21 @@
+# Basic drone yaml to simply trigger downstream builds when code gets pushed to this repo
+# For the secrets, I just used vmware/vic secrets
+pipeline:
+  admiral-build:
+    image: alpine
+    commands:
+      - echo "Hello World!"
+
+  trigger-downstream:
+      image: plugins/downstream
+      server: https://ci.vcna.io
+      token: ${DRONE_TOKEN}
+      fork: true
+      repositories:
+        - vmware/vic-product
+      when:
+        repo: vmware/admiral
+        event: [ push, tag ]
+        branch: [ master ]
+        status: success
+
