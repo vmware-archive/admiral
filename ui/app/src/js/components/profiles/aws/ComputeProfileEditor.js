@@ -26,7 +26,8 @@ export default Vue.component('aws-compute-profile-editor', {
           <text-control></text-control>
         </multicolumn-cell>
         <multicolumn-cell name="value">
-          <text-control></text-control>
+          <typeahead-control :source="searchInstanceTypes" :limit="20">
+          </typeahead-control>
         </multicolumn-cell>
       </multicolumn-editor-group>
       <multicolumn-editor-group
@@ -63,7 +64,9 @@ export default Vue.component('aws-compute-profile-editor', {
         this.model.instanceTypeMapping.asMutable() || [];
     let imageTypeMapping = this.model.imageMapping &&
         this.model.imageMapping.asMutable() || [];
+    let instanceTypeOptions;
     return {
+      instanceTypeOptions: instanceTypeOptions,
       instanceTypeMapping: Object.keys(instanceTypeMapping).map((key) => {
         return {
           name: key,
@@ -79,9 +82,34 @@ export default Vue.component('aws-compute-profile-editor', {
     };
   },
   attached() {
+    this.pollInstanceTypes();
     this.emitChange();
   },
   methods: {
+    searchInstanceTypes(name) {
+        var f = {};
+        if (this.instanceTypeOptions) {
+            f.items = this.instanceTypeOptions.items;
+            name = name && name.toLowerCase();
+            f.items = f.items.filter(
+                a => a.name.toLowerCase().indexOf(name) >= 0 ||
+                  a.id.toLowerCase().indexOf(name) >= 0);
+            f.totalCount = f.items.length;
+        }
+        return Promise.resolve(f);
+    },
+    pollInstanceTypes() {
+        return mcp.client.get('/adapter/aws/instance-type-adapter?endpoint=' +
+            this.endpoint.documentSelfLink)
+            .then(function(data) {
+                 let result = {
+                    totalCount: data.instanceTypes.length,
+                    items: data.instanceTypes
+                };
+                this.instanceTypeOptions = result;
+                this.emitChange();
+            }.bind(this));
+    },
     searchImages(...args) {
       if (!this.endpoint) {
         return Promise.resolve([]);
@@ -95,9 +123,38 @@ export default Vue.component('aws-compute-profile-editor', {
         }).catch(reject);
       });
     },
+    getInstanceTypeByProp: function(propName, propValue) {
+        for (var i = 0; i < this.instanceTypeOptions.items.length; i++) {
+           var item = this.instanceTypeOptions.items[i];
+            if (item[propName] === propValue) {
+                return item;
+            }
+        }
+    },
+    toInstanceTypeId: function(instanceType) {
+        var result =
+            this.getInstanceTypeByProp('name', instanceType.value) || { id: instanceType.value };
+
+        return {
+            name: instanceType.name,
+            value: result.id
+        };
+    },
+    toInstanceTypeName: function(instanceType) {
+        var result =
+            this.getInstanceTypeByProp('id', instanceType.value) || { name: instanceType.value };
+
+        return {
+            name: instanceType.name,
+            value: result.name
+        };
+    },
     onInstanceTypeMappingChange(value) {
-      this.instanceTypeMapping = value;
-      this.emitChange();
+        var _this = this;
+        this.instanceTypeMapping = value.map(function(v) {
+            return _this.toInstanceTypeId(v);
+        });
+        this.emitChange();
     },
     onImageMappingChange(value) {
       this.imageMapping = value;
