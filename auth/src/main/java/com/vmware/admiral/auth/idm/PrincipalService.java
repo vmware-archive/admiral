@@ -22,6 +22,7 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceErrorResponse;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.UriUtils;
@@ -112,9 +113,19 @@ public class PrincipalService extends StatelessService {
                     get.setBody(context);
                     get.complete();
                 }).exceptionally((ex) -> {
-                    logWarning("Failed to retrieve security context for user %s: %s",
-                            principalId, Utils.toString(ex));
-                    get.fail(ex);
+                    if (ex.getCause() instanceof ServiceNotFoundException) {
+                        logWarning(
+                                "Failed to retrieve security context for user %s: user does not exist",
+                                principalId);
+                        // hide stacktrace from response
+                        ServiceErrorResponse rsp = Utils.toServiceErrorResponse(ex);
+                        rsp.stackTrace = null;
+                        get.fail(Operation.STATUS_CODE_NOT_FOUND, ex, rsp);
+                    } else {
+                        logWarning("Failed to retrieve security context for user %s: %s", principalId,
+                                Utils.toString(ex));
+                        get.fail(ex);
+                    }
                     return null;
                 });
     }

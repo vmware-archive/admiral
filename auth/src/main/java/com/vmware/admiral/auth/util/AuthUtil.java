@@ -16,6 +16,8 @@ import static com.vmware.admiral.common.util.AuthUtils.buildQueryForUsers;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.logging.Level;
 
@@ -84,11 +86,33 @@ public class AuthUtil {
     public static final String DEFAULT_BASIC_USERS_EXTENDED_ROLE_LINK = UriUtils
             .buildUriPath(RoleService.FACTORY_LINK, DEFAULT_BASIC_USERS_EXTENDED);
 
+    public static final Map<AuthRole, String> MAP_ROLE_TO_SYSTEM_USER_GROUP;
+
+    public static final Map<AuthRole, String> MAP_ROLE_TO_SYSTEM_RESOURCE_GROUP;
+
     public static final String LOCAL_USERS_FILE = "localUsers";
 
     public static final String AUTH_CONFIG_FILE = "authConfig";
 
     private static final String PREFERRED_PROVIDER_PACKAGE = "com.vmware.admiral.auth.idm.psc";
+
+    static {
+        // map roles to system user groups
+        HashMap<AuthRole, String> rolesToUserGroup = new HashMap<>();
+        rolesToUserGroup.put(AuthRole.BASIC_USERS, BASIC_USERS_USER_GROUP_LINK);
+        // all users in the basic user group are also extended basic users
+        rolesToUserGroup.put(AuthRole.BASIC_USERS_EXTENDED, BASIC_USERS_USER_GROUP_LINK);
+        rolesToUserGroup.put(AuthRole.CLOUD_ADMINS, CLOUD_ADMINS_USER_GROUP_LINK);
+        MAP_ROLE_TO_SYSTEM_USER_GROUP = Collections.unmodifiableMap(rolesToUserGroup);
+
+        HashMap<AuthRole, String> rolesToResourceGroup = new HashMap<>();
+        // map roles to system resource groups
+        rolesToResourceGroup.put(AuthRole.BASIC_USERS, BASIC_USERS_RESOURCE_GROUP_LINK);
+        rolesToResourceGroup.put(AuthRole.BASIC_USERS_EXTENDED,
+                BASIC_USERS_EXTENDED_RESOURCE_GROUP_LINK);
+        rolesToResourceGroup.put(AuthRole.CLOUD_ADMINS, CLOUD_ADMINS_RESOURCE_GROUP_LINK);
+        MAP_ROLE_TO_SYSTEM_RESOURCE_GROUP = Collections.unmodifiableMap(rolesToResourceGroup);
+    }
 
     public static String createAuthorizationHeader(AuthCredentialsServiceState authState) {
         if (authState == null) {

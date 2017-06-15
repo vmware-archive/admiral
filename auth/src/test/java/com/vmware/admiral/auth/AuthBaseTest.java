@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 import org.junit.Before;
 
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
+import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.idm.local.LocalAuthConfigProvider.Config;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
@@ -80,6 +81,7 @@ public abstract class AuthBaseTest extends BaseTestCase {
     public void beforeForAuthBase() throws Throwable {
         host.setSystemAuthorizationContext();
 
+        setPrivilegedServices();
         startServices(host);
 
         waitForServiceAvailability(AuthInitialBootService.SELF_LINK);
@@ -104,6 +106,12 @@ public abstract class AuthBaseTest extends BaseTestCase {
                         + AuthBaseTest.class.getResource(LOCAL_USERS_FILE).toURI().getPath()
         };
         return createHost(customArgs);
+    }
+
+    protected void setPrivilegedServices() {
+        // TODO remove the Principal service from this list once the security context gets exposed
+        // trough the session service
+        host.addPrivilegedService(PrincipalService.class);
     }
 
     protected void startServices(VerificationHost host) throws Throwable {

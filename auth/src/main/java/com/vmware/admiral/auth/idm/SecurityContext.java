@@ -11,6 +11,8 @@
 
 package com.vmware.admiral.auth.idm;
 
+import java.util.Set;
+
 public class SecurityContext {
 
     public String id;
@@ -18,5 +20,7 @@ public class SecurityContext {
     public String name;
 
     public String email;
+
+    public Set<AuthRole> roles;
 
 }
