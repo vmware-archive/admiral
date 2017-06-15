@@ -106,7 +106,16 @@
     "type": "Type",
     "containers": "Containers",
     "cpu": "CPU",
-    "memory": "Memory"
+    "memory": "Memory",
+    "edit": {
+      "titleNew": "New Cluster",
+      "name": "Name",
+      "nameRequired": "Name is required.",
+      "description": "Description",
+      "url": "URL",
+      "urlRequired": "Cluster URL is required.",
+      "credentials": "Credentials"
+    }
   },
   "logs": {
     "title": "Logs",

@@ -34,4 +34,6 @@ export class Links {
   public static AUTH_IDM = Links.AUTH + '/idm';
   public static AUTH_PRINCIPALS = Links.AUTH_IDM + '/principals'
 
+  public static CREDENTIALS = '/core/auth/credentials';
+
 }

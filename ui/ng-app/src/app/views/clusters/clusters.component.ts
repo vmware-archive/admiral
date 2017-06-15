@@ -4,11 +4,11 @@ import { DocumentService } from '../../utils/document.service';
 import * as I18n from 'i18next';
 
 @Component({
-  selector: 'app-vch-clusters',
-  templateUrl: './vch-clusters.component.html',
-  styleUrls: ['./vch-clusters.component.scss']
+  selector: 'app-clusters',
+  templateUrl: './clusters.component.html',
+  styleUrls: ['./clusters.component.scss']
 })
-export class VchClustersComponent implements OnInit {
+export class ClustersComponent implements OnInit {
 
   constructor(private service: DocumentService) { }
 
