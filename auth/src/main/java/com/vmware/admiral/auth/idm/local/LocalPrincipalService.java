@@ -264,6 +264,7 @@ public class LocalPrincipalService extends StatefulService {
                     .setReferrer(op.getUri().toString())
                     .setGroupLink(CLOUD_ADMINS_USER_GROUP_LINK)
                     .setHost(getHost())
+                    .setSkipPrincipalVerification(true)
                     .update());
         }
         // We want always to add the user to basic users, even if he is cloud admin,
@@ -274,11 +275,10 @@ public class LocalPrincipalService extends StatefulService {
                 .setReferrer(op.getUri().toString())
                 .setGroupLink(BASIC_USERS_USER_GROUP_LINK)
                 .setHost(getHost())
+                .setSkipPrincipalVerification(true)
                 .update());
 
         DeferredResult.allOf(result)
-                .thenAccept(ignore -> {
-                })
                 .whenComplete((ignore, ex) -> {
                     logInfo("User %s successfully created.", state.email);
                     state.password = null;

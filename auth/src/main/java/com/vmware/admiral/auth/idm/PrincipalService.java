@@ -155,8 +155,8 @@ public class PrincipalService extends StatelessService {
 
         result.whenComplete((principal, ex) -> {
             if (ex != null) {
-                if (ex instanceof ServiceNotFoundException) {
-                    get.fail(Operation.STATUS_CODE_NOT_FOUND);
+                if (ex.getCause() instanceof PrincipalNotFoundException) {
+                    get.fail(Operation.STATUS_CODE_NOT_FOUND, ex.getCause(), ex.getCause());
                     return;
                 }
                 get.fail(ex);

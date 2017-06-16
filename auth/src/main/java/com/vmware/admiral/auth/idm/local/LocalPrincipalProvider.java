@@ -21,12 +21,15 @@ import java.net.URI;
 import java.util.List;
 
 import com.vmware.admiral.auth.idm.Principal;
+import com.vmware.admiral.auth.idm.PrincipalNotFoundException;
 import com.vmware.admiral.auth.idm.PrincipalProvider;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
+import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.UriUtils;
 
 public class LocalPrincipalProvider implements PrincipalProvider {
@@ -49,6 +52,18 @@ public class LocalPrincipalProvider implements PrincipalProvider {
                 .setReferer(host.getUri());
 
         return host.sendWithDeferredResult(get, LocalPrincipalState.class)
+                .thenApply(state -> new Pair<>(state, (Throwable) null))
+                .exceptionally(ex -> new Pair<>(null, ex))
+                .thenCompose(pair -> {
+                    if (pair.right != null) {
+                        if (pair.right.getCause() instanceof ServiceNotFoundException) {
+                            return DeferredResult
+                                    .failed(new PrincipalNotFoundException(principalId));
+                        }
+                        return DeferredResult.failed(pair.right);
+                    }
+                    return DeferredResult.completed(pair.left);
+                })
                 .thenApply((s) -> fromLocalPrincipalToPrincipal(s));
     }
 

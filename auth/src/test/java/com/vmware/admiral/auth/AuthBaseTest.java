@@ -159,8 +159,10 @@ public abstract class AuthBaseTest extends BaseTestCase {
         projectState.name = name;
         projectState.description = description;
         projectState.isPublic = isPublic;
-        projectState.administratorsUserGroupLink = adminsGroupLink;
-        projectState.membersUserGroupLink = membersGroupLink;
+        projectState.administratorsUserGroupLinks = new ArrayList<>();
+        projectState.administratorsUserGroupLinks.add(adminsGroupLink);
+        projectState.membersUserGroupLinks = new ArrayList<>();
+        projectState.membersUserGroupLinks.add(membersGroupLink);
         projectState.customProperties = customProperties;
 
         projectState = doPost(projectState, ProjectFactoryService.SELF_LINK);

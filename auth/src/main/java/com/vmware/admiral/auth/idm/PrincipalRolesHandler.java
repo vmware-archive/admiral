@@ -54,6 +54,7 @@ public class PrincipalRolesHandler {
 
     private String principalId;
 
+
     private PrincipalRolesHandler() {
     }
 
@@ -153,6 +154,7 @@ public class PrincipalRolesHandler {
     }
 
     private DeferredResult<Void> handleUserRoleAssignment(AuthRole role) {
+
         if (role == AuthRole.CLOUD_ADMINS) {
             return UserGroupsUpdater.create()
                     .setGroupLink(CLOUD_ADMINS_USER_GROUP_LINK)
@@ -160,13 +162,15 @@ public class PrincipalRolesHandler {
                     .setReferrer(host.getUri().toString())
                     .setUsersToAdd(Collections.singletonList(principalId))
                     .update();
-        }
 
+        }
         return DeferredResult.failed(new LocalizableValidationException(
                 ROLE_NOT_SUPPORTED_MESSAGE, ROLE_NOT_SUPPORTED_MESSAGE_CODE, role.getName()));
+
     }
 
     private DeferredResult<Void> handleUserRoleUnassignment(AuthRole role) {
+
         if (role == AuthRole.CLOUD_ADMINS) {
             return UserGroupsUpdater.create()
                     .setGroupLink(CLOUD_ADMINS_USER_GROUP_LINK)
@@ -174,10 +178,11 @@ public class PrincipalRolesHandler {
                     .setReferrer(host.getUri().toString())
                     .setUsersToRemove(Collections.singletonList(principalId))
                     .update();
-        }
 
+        }
         return DeferredResult.failed(new LocalizableValidationException(
                 ROLE_NOT_SUPPORTED_MESSAGE, ROLE_NOT_SUPPORTED_MESSAGE_CODE, role.getName()));
+
     }
 
     private DeferredResult<Void> handleUserGroupRoleAssignment(AuthRole role) {
@@ -187,17 +192,20 @@ public class PrincipalRolesHandler {
 
         return DeferredResult.failed(new LocalizableValidationException(
                 ROLE_NOT_SUPPORTED_MESSAGE, ROLE_NOT_SUPPORTED_MESSAGE_CODE, role.getName()));
+
     }
 
     private DeferredResult<Void> handleUserGroupRoleUnassignment(AuthRole role) {
         if (role == AuthRole.CLOUD_ADMINS) {
-            return handleCloudAdminGroupUnassignment(principalId);
+            return handleCloudAdminGroupUnassignment();
         }
+
         return DeferredResult.failed(new LocalizableValidationException(
                 ROLE_NOT_SUPPORTED_MESSAGE, ROLE_NOT_SUPPORTED_MESSAGE_CODE, role.getName()));
+
     }
 
-    private DeferredResult<Void> handleCloudAdminGroupUnassignment(String principalId) {
+    private DeferredResult<Void> handleCloudAdminGroupUnassignment() {
         String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole.CLOUD_ADMINS
                 .buildRoleWithSuffix(principalId));
         Operation getRole = Operation.createGet(host, roleLink)
@@ -272,4 +280,5 @@ public class PrincipalRolesHandler {
 
         return result;
     }
+
 }

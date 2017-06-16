@@ -65,10 +65,10 @@ public class ProjectUtil {
         simpleState.copyTo(expandedState);
 
         DeferredResult<Void> retrieveAdmins = retrieveUserGroupMembers(host,
-                simpleState.administratorsUserGroupLink, referer)
+                simpleState.administratorsUserGroupLinks, referer)
                         .thenAccept((adminsList) -> expandedState.administrators = adminsList);
         DeferredResult<Void> retrieveMembers = retrieveUserGroupMembers(host,
-                simpleState.membersUserGroupLink, referer)
+                simpleState.membersUserGroupLinks, referer)
                         .thenAccept((membersList) -> expandedState.members = membersList);
         DeferredResult<Void> retrieveClusterLinks = retrieveClusterLinks(simpleState.documentSelfLink)
                 .thenAccept((clusterLinks) -> expandedState.clusterLinks = clusterLinks);
@@ -111,14 +111,31 @@ public class ProjectUtil {
      * @see #retrieveUserStatesForGroup(UserGroupState)
      */
     private static DeferredResult<List<UserState>> retrieveUserGroupMembers(ServiceHost host,
-            String groupLink, URI referer) {
-        if (groupLink == null) {
+            List<String> groupLinks, URI referer) {
+        if (groupLinks == null) {
             return DeferredResult.completed(new ArrayList<>(0));
         }
 
-        Operation groupGet = Operation.createGet(host, groupLink).setReferer(referer);
-        return host.sendWithDeferredResult(groupGet, UserGroupState.class)
-                .thenCompose((groupState) -> retrieveUserStatesForGroup(host, groupState));
+        List<DeferredResult<List<UserState>>> results = new ArrayList<>();
+
+        for (String groupLink : groupLinks) {
+            if (groupLink == null || groupLink.isEmpty()) {
+                continue;
+            }
+            Operation groupGet = Operation.createGet(host, groupLink).setReferer(referer);
+            results.add(host.sendWithDeferredResult(groupGet, UserGroupState.class)
+                    .thenCompose((groupState) -> retrieveUserStatesForGroup(host, groupState)));
+        }
+
+        if (results.isEmpty()) {
+            return DeferredResult.completed(new ArrayList<>(0));
+        }
+
+        return DeferredResult.allOf(results).thenApply(userStates -> {
+            List<UserState> states = new ArrayList<>();
+            userStates.forEach(states::addAll);
+            return states;
+        });
     }
 
     /**

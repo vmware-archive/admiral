@@ -92,8 +92,6 @@ public class AuthContentService extends StatelessService {
         }
 
         DeferredResult.allOf(result)
-                .thenAccept(ignore -> {
-                })
                 .whenComplete((ignore, ex) -> {
                     if (ex != null) {
                         logWarning("Error while assigning/unassigning roles: %s",

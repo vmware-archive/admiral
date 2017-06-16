@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.vmware.admiral.auth.idm.PrincipalNotFoundException;
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.ProjectUtil;
@@ -88,27 +89,39 @@ public class ProjectService extends StatefulService {
         public String description;
 
         /**
-         * Link to the group of administrators for this project.
+         * Links to the groups of administrators for this project.
          */
-        @Documentation(description = "Link to the group of administrators for this project.")
-        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL, PropertyUsageOption.LINK,
-                PropertyUsageOption.SINGLE_ASSIGNMENT, PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
-        public String administratorsUserGroupLink;
+        @Documentation(description = "Links to the groups of administrators for this project.")
+        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        public List<String> administratorsUserGroupLinks;
 
         /**
-         * Link to the group of members for this project.
+         * Links to the groups of members for this project.
          */
-        @Documentation(description = "Link to the group of members for this project.")
-        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL, PropertyUsageOption.LINK,
-                PropertyUsageOption.SINGLE_ASSIGNMENT, PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
-        public String membersUserGroupLink;
+        @Documentation(description = "Links to the groups of members for this project.")
+        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
+                PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        public List<String> membersUserGroupLinks;
 
         public void copyTo(ProjectState destination) {
             super.copyTo(destination);
             destination.isPublic = this.isPublic;
             destination.description = this.description;
-            destination.administratorsUserGroupLink = this.administratorsUserGroupLink;
-            destination.membersUserGroupLink = this.membersUserGroupLink;
+
+            if (this.administratorsUserGroupLinks != null
+                    && !this.administratorsUserGroupLinks.isEmpty()) {
+                destination.administratorsUserGroupLinks = new ArrayList<>(
+                        this.administratorsUserGroupLinks.size());
+                destination.administratorsUserGroupLinks.addAll(this.administratorsUserGroupLinks);
+            }
+
+            if (this.membersUserGroupLinks != null
+                    && !this.membersUserGroupLinks.isEmpty()) {
+                destination.membersUserGroupLinks = new ArrayList<>(
+                        this.membersUserGroupLinks.size());
+                destination.membersUserGroupLinks.addAll(this.membersUserGroupLinks);
+            }
         }
 
         public static ProjectState copyOf(ProjectState source) {
@@ -211,9 +224,19 @@ public class ProjectService extends StatefulService {
                 ProjectRoles rolesPut = put.getBody(ProjectRoles.class);
                 // this is an update of the roles
                 new ProjectRolesHandler(getHost(), getSelfLink()).handleRolesUpdate(rolesPut)
-                        .thenAccept(
-                                (ignore) -> put.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED))
-                        .whenCompleteNotify(put);
+                        .whenComplete((ignore, ex) -> {
+                            if (ex != null) {
+                                if (ex.getCause() instanceof PrincipalNotFoundException) {
+                                    put.fail(Operation.STATUS_CODE_BAD_REQUEST, ex.getCause(),
+                                            ex.getCause());
+                                    return;
+                                }
+                                put.fail(ex);
+                                return;
+                            }
+                            put.complete();
+                        });
+                        // .whenCompleteNotify(put);
             } else {
                 put.fail(Operation.STATUS_CODE_FORBIDDEN);
             }
@@ -235,24 +258,26 @@ public class ProjectService extends StatefulService {
             return;
         }
 
-        // Patch project state properties
         ProjectState projectPatch = patch.getBody(ProjectState.class);
-        if (projectPatch != null) {
-            boolean stateModified = handleProjectPatch(getState(patch), projectPatch);
-            if (!stateModified) {
-                // if the signature hasn't change we shouldn't modify the state
-                patch.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
-            }
-        } else {
-            patch.setStatusCode(Operation.STATUS_CODE_NOT_MODIFIED);
-        }
+        handleProjectPatch(getState(patch), projectPatch);
 
         // Patch roles if DevOps admin
         if (ProjectRolesHandler.isProjectRolesUpdate(patch)) {
             if (AuthUtils.isDevOpsAdmin(patch)) {
                 new ProjectRolesHandler(getHost(), getSelfLink())
                         .handleRolesUpdate(patch.getBody(ProjectRoles.class))
-                        .whenCompleteNotify(patch);
+                        .whenComplete((ignore, ex) -> {
+                            if (ex != null) {
+                                if (ex.getCause() instanceof PrincipalNotFoundException) {
+                                    patch.fail(Operation.STATUS_CODE_BAD_REQUEST, ex.getCause(),
+                                            ex.getCause());
+                                    return;
+                                }
+                                patch.fail(ex);
+                                return;
+                            }
+                            patch.complete();
+                        });
             } else {
                 patch.fail(Operation.STATUS_CODE_FORBIDDEN);
             }
@@ -322,6 +347,8 @@ public class ProjectService extends StatefulService {
         template.id = "project-id";
         template.description = "project1";
         template.isPublic = true;
+        template.membersUserGroupLinks = Collections.singletonList("member-group");
+        template.administratorsUserGroupLinks = Collections.singletonList("admin-group");
 
         return template;
     }
@@ -343,46 +370,57 @@ public class ProjectService extends StatefulService {
             return DeferredResult.completed(projectState);
         }
 
-        if (projectState.administratorsUserGroupLink != null
-                && projectState.membersUserGroupLink != null
-                && !projectState.administratorsUserGroupLink.trim().isEmpty()
-                && !projectState.membersUserGroupLink.trim().isEmpty()) {
+        String projectId = Service.getId(projectState.documentSelfLink);
+        UserGroupState membersGroupState = AuthUtil.buildProjectMembersUserGroup(projectId);
+        UserGroupState adminsGroupState = AuthUtil.buildProjectAdminsUserGroup(projectId);
+
+        if (projectState.administratorsUserGroupLinks != null
+                && projectState.membersUserGroupLinks != null
+                && projectState.administratorsUserGroupLinks.contains(
+                        adminsGroupState.documentSelfLink)
+                && projectState.membersUserGroupLinks.contains(
+                        membersGroupState.documentSelfLink)) {
             // No groups to create
             return DeferredResult.completed(projectState);
         }
 
         ArrayList<DeferredResult<Void>> deferredResults = new ArrayList<>();
 
-        String projectId = Service.getId(projectState.documentSelfLink);
-        UserGroupState membersGroupState = AuthUtil.buildProjectMembersUserGroup(projectId);
-        UserGroupState adminsGroupState = AuthUtil.buildProjectAdminsUserGroup(projectId);
-
-        if (projectState.administratorsUserGroupLink == null
-                || projectState.administratorsUserGroupLink.trim().isEmpty()) {
+        if (projectState.administratorsUserGroupLinks == null
+                || !projectState.administratorsUserGroupLinks.contains(
+                        adminsGroupState.documentSelfLink)) {
 
             DeferredResult<Void> result = getHost().sendWithDeferredResult(
                     buildCreateUserGroupOperation(adminsGroupState), UserGroupState.class)
                     .thenCompose((groupState) -> {
-                        projectState.administratorsUserGroupLink = groupState.documentSelfLink;
+                        if (projectState.administratorsUserGroupLinks == null) {
+                            projectState.administratorsUserGroupLinks = new ArrayList<>();
+                        }
+                        projectState.administratorsUserGroupLinks.add(groupState.documentSelfLink);
                         String userId = Service.getId(AuthUtil.getAuthorizedUserLink(authContext));
                         return UserGroupsUpdater
                                 .create(getHost(), groupState.documentSelfLink, null,
-                                        Collections.singletonList(userId), null)
+                                        Collections.singletonList(userId), null, false)
                                 .update();
                     });
             deferredResults.add(result);
         }
-        if (projectState.membersUserGroupLink == null
-                || projectState.membersUserGroupLink.trim().isEmpty()) {
+
+        if (projectState.membersUserGroupLinks == null
+                || !projectState.membersUserGroupLinks.contains(
+                        membersGroupState.documentSelfLink)) {
 
             DeferredResult<Void> result = getHost().sendWithDeferredResult(
                     buildCreateUserGroupOperation(membersGroupState), UserGroupState.class)
                     .thenCompose((groupState) -> {
-                        projectState.membersUserGroupLink = groupState.documentSelfLink;
+                        if (projectState.membersUserGroupLinks == null) {
+                            projectState.membersUserGroupLinks = new ArrayList<>();
+                        }
+                        projectState.membersUserGroupLinks.add(groupState.documentSelfLink);
                         String userId = Service.getId(AuthUtil.getAuthorizedUserLink(authContext));
                         return UserGroupsUpdater
                                 .create(getHost(), groupState.documentSelfLink, null,
-                                        Collections.singletonList(userId), null)
+                                        Collections.singletonList(userId), null, false)
                                 .update();
                     });
             deferredResults.add(result);

@@ -25,9 +25,9 @@ import org.junit.Test;
 import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.idm.Principal;
 import com.vmware.admiral.auth.idm.Principal.PrincipalType;
+import com.vmware.admiral.auth.idm.PrincipalNotFoundException;
 import com.vmware.admiral.auth.idm.PrincipalProvider;
 import com.vmware.xenon.common.DeferredResult;
-import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.test.TestContext;
 
 public class LocalPrincipalProviderTest extends AuthBaseTest {
@@ -227,7 +227,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         TestContext ctx2 = testCreate(1);
         result.whenComplete((p, ex) -> {
             if (ex != null) {
-                if (ex.getCause() instanceof ServiceNotFoundException) {
+                if (ex.getCause() instanceof PrincipalNotFoundException) {
                     ctx2.completeIteration();
                     return;
                 }

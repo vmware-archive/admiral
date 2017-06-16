@@ -26,6 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
+import com.vmware.admiral.auth.idm.AuthRole;
 import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
@@ -39,6 +40,7 @@ import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask.Query;
@@ -274,7 +276,7 @@ public class ProjectServiceTest extends AuthBaseTest {
                         host.failIteration(e);
                     } else {
                         try {
-                            assertEquals(Operation.STATUS_CODE_NOT_MODIFIED, o.getStatusCode());
+                            assertEquals(Operation.STATUS_CODE_OK, o.getStatusCode());
                             host.completeIteration();
                         } catch (AssertionError er) {
                             host.failIteration(er);
@@ -364,41 +366,14 @@ public class ProjectServiceTest extends AuthBaseTest {
 
     @Test
     public void testUserGroupsAutoCreatedOnProjectCreate() {
-        assertDocumentExists(project.administratorsUserGroupLink);
-        assertDocumentExists(project.membersUserGroupLink);
+        String adminsLinks = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, AuthRole
+                .PROJECT_ADMINS.buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
+        String membersLinks = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, AuthRole
+                .PROJECT_MEMBERS.buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
+        assertDocumentExists(adminsLinks);
+        assertDocumentExists(membersLinks);
     }
 
-    @Test
-    public void testUserGroupsNotOverridenIfSpecifiedOnProjectCreate() throws Throwable {
-        String testAdminsGroupLink = createUserGroup().documentSelfLink;
-        String testMembersGroupLink = createUserGroup().documentSelfLink;
-        ProjectState testProject;
-
-        // only admins group link provided
-        testProject = createProject("test-project-1", null, false, testAdminsGroupLink, null);
-        assertNotNull(testProject);
-        assertNotNull(testProject.administratorsUserGroupLink);
-        assertNotNull(testProject.membersUserGroupLink);
-        assertEquals(testAdminsGroupLink, testProject.administratorsUserGroupLink);
-        assertNotEquals(testMembersGroupLink, testProject.membersUserGroupLink);
-
-        // only members group link provided
-        testProject = createProject("test-project-2", null, false, null, testMembersGroupLink);
-        assertNotNull(testProject);
-        assertNotNull(testProject.administratorsUserGroupLink);
-        assertNotNull(testProject.membersUserGroupLink);
-        assertNotEquals(testAdminsGroupLink, testProject.administratorsUserGroupLink);
-        assertEquals(testMembersGroupLink, testProject.membersUserGroupLink);
-
-        // both admins and members group links provided
-        testProject = createProject("test-project-3", null, false, testAdminsGroupLink,
-                testMembersGroupLink);
-        assertNotNull(testProject);
-        assertNotNull(testProject.administratorsUserGroupLink);
-        assertNotNull(testProject.membersUserGroupLink);
-        assertEquals(testAdminsGroupLink, testProject.administratorsUserGroupLink);
-        assertEquals(testMembersGroupLink, testProject.membersUserGroupLink);
-    }
 
     @Test
     public void testGetStateWithMembers() {
@@ -422,8 +397,8 @@ public class ProjectServiceTest extends AuthBaseTest {
     @Test
     public void testGetStateWithMembersReturnsEmptyListsOnMissingUserGroups() throws Throwable {
         // update project state to have no admins and members group links stored
-        project.administratorsUserGroupLink = null;
-        project.membersUserGroupLink = null;
+        project.administratorsUserGroupLinks = null;
+        project.membersUserGroupLinks = null;
         project = doPut(project);
 
         ExpandedProjectState stateWithMembers = getExpandedProjectState(
