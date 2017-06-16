@@ -13,7 +13,9 @@ import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormGroup, FormControl, Validators } from "@angular/forms";
 import { Links } from '../../../utils/links';
+import { Utils } from "../../../utils/utils";
 import { DocumentService } from '../../../utils/document.service';
+import * as I18n from 'i18next';
 
 @Component({
   selector: 'app-cluster-create',
@@ -29,6 +31,14 @@ export class ClusterCreateComponent implements AfterViewInit, OnInit {
   selectedCredentials: any;
   credentials: any[];
 
+  showCertificateWarning: boolean;
+  certificate: any;
+  certificateShown: boolean;
+  certificateAccepted: boolean;
+
+  isSaving: boolean;
+  alertMessage: string;
+
   clusterForm = new FormGroup({
     name: new FormControl('', Validators.required),
     description: new FormControl(''),
@@ -36,7 +46,7 @@ export class ClusterCreateComponent implements AfterViewInit, OnInit {
     credentials: new FormControl('')
   });
 
-  constructor(private router: Router, private route: ActivatedRoute, private service: DocumentService) {}
+  constructor(private router: Router, private route: ActivatedRoute, private service: DocumentService) { }
 
   ngOnInit() {
     this.route.queryParams.subscribe(queryParams => {
@@ -49,6 +59,7 @@ export class ClusterCreateComponent implements AfterViewInit, OnInit {
   ngAfterViewInit() {
     setTimeout(() => {
       this.opened = true;
+      this.showCertificateWarning = false;
     });
   }
 
@@ -59,8 +70,78 @@ export class ClusterCreateComponent implements AfterViewInit, OnInit {
     }
   }
 
-  saveCluster() {
-    // TODO: implement save
+  getCredentialsName(credentials) {
+    let name = credentials.customProperties ? credentials.customProperties.__authCredentialsName : '';
+    if (!name) {
+      return credentials.documentId;
+    }
+    return name;
   }
 
+  saveCluster() {
+    if (this.clusterForm.valid) {
+      this.isSaving = true;
+
+      let formInput = this.clusterForm.value;
+      let hostState = {
+        'address': formInput.url,
+        'tenantLinks': [Links.PROJECTS + '/default-project'],
+        'customProperties': {
+          '__containerHostType': 'VCH',
+          '__adapterDockerType': 'API'
+        }
+      };
+
+      if (formInput.credentials) {
+        hostState.customProperties['__authCredentialsLink'] = formInput.credentials;
+      }
+
+      let hostSpec = {
+        'hostState': hostState,
+        'acceptCertificate': this.certificateAccepted
+      };
+      this.service.post(Links.CLUSTERS, hostSpec).then((response) => {
+        if (response.certificate) {
+          this.showCertificateWarning = true;
+          this.certificate = response;
+        } else {
+          this.isSaving = false;
+          this.toggleModal(false);
+        }
+      }).catch(error => {
+        this.isSaving = false;
+        this.alertMessage = Utils.getErrorMessage(error)._generic;
+      });
+    }
+  }
+
+  cancelCreateCluster() {
+    this.showCertificateWarning = false;
+    this.isSaving = false;
+  }
+
+  certificateWarningMessage() {
+    if (this.certificate) {
+      return I18n.t("certificate.certificateWarning", {address: this.clusterForm.value.url} as I18n.TranslationOptions);
+    }
+    return '';
+  }
+
+  showCertificate() {
+    this.certificateShown = true;
+  }
+
+  hideCertificate() {
+    this.certificateShown = false;
+  }
+
+  acceptCertificate() {
+    this.showCertificateWarning = false;
+    this.certificateAccepted = true;
+    this.saveCluster();
+  }
+
+  resetAlert() {
+    this.alertMessage = null;
+  }
 }

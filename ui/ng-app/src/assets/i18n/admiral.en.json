@@ -139,8 +139,23 @@
   "errors": {
     "itemNotFound": "Item was not found."
   },
+  "certificate": {
+    "certificateWarning": "The certificate for {{address}} is invalid. You may be connecting to a website that is pretending to be {{address}}, which could put your confidential information at risk. Would you like to connect to the website anyway?",
+    "show": "Show certificate",
+    "hide": "Hide certificate",
+    "validateTitle": "Verify Certficate",
+    "details": {
+      "commonName": "Common name",
+      "issuerName": "Issuer name",
+      "serial": "Serial",
+      "fingerprint": "SHA Fingerprint",
+      "validSince": "Valid since",
+      "validTo": "Valid to"
+    }
+  },
   "edit": "Edit",
   "save": "Save",
+  "yes": "Yes",
   "remove": "Remove",
   "delete": "Delete",
   "cancel": "Cancel",
