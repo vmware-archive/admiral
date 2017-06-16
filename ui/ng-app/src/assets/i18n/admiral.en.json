@@ -116,6 +116,10 @@
       "url": "URL",
       "urlRequired": "Cluster URL is required.",
       "credentials": "Credentials"
+    },
+    "delete": {
+      "title": "Remove Cluster",
+      "confirmation": "Confirm removing of cluster {{clusterName}}. The operation cannot be undone."
     }
   },
   "logs": {

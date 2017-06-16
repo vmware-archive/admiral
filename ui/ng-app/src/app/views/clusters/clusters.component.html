@@ -3,6 +3,13 @@
   <div toolbar>
     <button class="btn btn-link" [routerLink]="['./new']"><i class="fa fa-plus"></i>{{ "clusters.new" | i18n | uppercase }}</button>
   </div>
+  <delete-confirmation [title]="'clusters.delete.title' | i18n"
+                       [description]="deleteConfirmationDescription"
+                       [(alert)]="deleteConfirmationAlert"
+                       [visible]="clusterToDelete"
+                       (onDelete)="deleteConfirmed()"
+                       (onCancel)="deleteCanceled()">
+  </delete-confirmation>
   <ng-template let-item="item">
     <card class="clusterCard" [routerLink]="['./' + item.documentId]">
       <div card-header>
@@ -20,7 +27,7 @@
           <div class="dropdown-menu">
             <a href="..." clrDropdownItem [routerLink]="['./' + item.documentId]">{{ "projects.actions.details" | i18n }}</a>
             <div class="dropdown-divider"></div>
-            <a href="..." clrDropdownItem (click)="deleteProject($event, item)">{{ "delete" | i18n }}</a>
+            <a href="..." clrDropdownItem (click)="deleteCluster($event, item)">{{ "delete" | i18n }}</a>
           </div>
         </clr-dropdown>
       </div>
