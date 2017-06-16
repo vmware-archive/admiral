@@ -171,6 +171,40 @@ public class ClusterServiceTest extends ComputeBaseTest {
                 clusterDocker.name);
     }
 
+    @Test
+    public void testPatchCluster() throws Throwable {
+        final String projectLinkDocker = buildProjectLink("test-docker-project");
+        final String placementZoneNameDocker = PlacementZoneUtil
+                .buildPlacementZoneDefaultName(ContainerHostType.DOCKER, COMPUTE_ADDRESS);
+
+        ContainerHostSpec hostSpecDocker = createContainerHostSpec(
+                Collections.singletonList(projectLinkDocker),
+                ContainerHostType.DOCKER);
+
+        ClusterDto clusterDocker = createCluster(hostSpecDocker);
+
+        clusterDocker = getOneCluster(Service.getId(clusterDocker.documentSelfLink));
+        assertNotNull(clusterDocker);
+        assertEquals(placementZoneNameDocker,
+                clusterDocker.name);
+
+        String clusteNewName = "new-cluster-name";
+        ClusterDto patchClusterDto = new ClusterDto();
+        patchClusterDto.name = clusteNewName;
+        patchClusterDto.documentSelfLink = clusterDocker.documentSelfLink;
+        patchClusterDto = patchCluster(patchClusterDto);
+
+        assertNotNull(patchClusterDto);
+        assertEquals(clusteNewName,
+                patchClusterDto.name);
+
+        clusterDocker = getOneCluster(Service.getId(clusterDocker.documentSelfLink));
+        assertNotNull(clusterDocker);
+        assertEquals(clusteNewName,
+                clusterDocker.name);
+
+    }
+
     private void verifyCluster(ClusterDto clusterDto, ClusterType clusterType, String expectedName,
             String projectLink) throws Throwable {
         // verify cluster creation
@@ -340,11 +374,8 @@ public class ClusterServiceTest extends ComputeBaseTest {
 
     private ClusterDto getOneCluster(String clusterId) {
         List<ClusterDto> result = new LinkedList<>();
-        StringBuilder pathSB = new StringBuilder(
-                ClusterService.SELF_LINK);
-        pathSB.append("/");
-        pathSB.append(clusterId);
-        URI uri = UriUtils.buildUri(host, pathSB.toString());
+        String pathSB = UriUtils.buildUriPath(ClusterService.SELF_LINK, clusterId);
+        URI uri = UriUtils.buildUri(host, pathSB);
         Operation get = Operation.createGet(host, uri.getPath())
                 .setReferer(host.getUri())
                 .setCompletion((o, ex) -> {
@@ -366,6 +397,36 @@ public class ClusterServiceTest extends ComputeBaseTest {
 
         host.testStart(1);
         host.send(get);
+        host.testWait();
+
+        return result.get(0);
+    }
+
+    private ClusterDto patchCluster(ClusterDto clusterDto) {
+        List<ClusterDto> result = new LinkedList<>();
+        URI uri = UriUtils.buildUri(host, clusterDto.documentSelfLink);
+        Operation patch = Operation.createPatch(host, uri.getPath())
+                .setReferer(host.getUri())
+                .setBody(clusterDto)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.log(Level.SEVERE, "Failed to get cluster: %s", Utils.toString(ex));
+                        host.failIteration(ex);
+                    } else {
+                        try {
+                            result.add(o.getBody(ClusterDto.class));
+                            host.completeIteration();
+                        } catch (Throwable er) {
+                            host.log(Level.SEVERE,
+                                    "Failed to retrieve created cluster DTO from response: %s",
+                                    Utils.toString(er));
+                            host.failIteration(er);
+                        }
+                    }
+                });
+
+        host.testStart(1);
+        host.send(patch);
         host.testWait();
 
         return result.get(0);

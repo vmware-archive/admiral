@@ -53,8 +53,8 @@ public class ClusterService extends StatelessService {
     private static final Pattern PATTERN_PROJECT_TENANT_LINK = Pattern
             .compile(String.format("^%s\\/[^\\/]+", ManagementUriParts.PROJECTS));
 
-    public static final String CLUSTER_ID_PATH_SEGMENT = "principalId";
-    public static final String CLUSTER_ID_PATH_SEGMENT_TEMPLATE = SELF_LINK + "/{principalId}";
+    public static final String CLUSTER_ID_PATH_SEGMENT = "clusterId";
+    public static final String CLUSTER_ID_PATH_SEGMENT_TEMPLATE = SELF_LINK + "/{clusterId}";
 
     public ClusterService() {
         super(ClusterDto.class);
@@ -115,22 +115,51 @@ public class ClusterService extends StatelessService {
     }
 
     @Override
+    public void handlePatch(Operation patch) {
+        try {
+            validateClusterPatch(patch);
+        } catch (Throwable ex) {
+            logWarning("Failed to verify cluster PATCH: %s", Utils.toString(ex));
+            patch.fail(ex);
+            return;
+        }
+
+        String clusterId = getIDFromUri(patch.getUri());
+        String pathPZId = UriUtils.buildUriPath(
+                ElasticPlacementZoneConfigurationService.SELF_LINK,
+                ResourcePoolService.FACTORY_LINK, clusterId);
+        ResourcePoolState resourcePool = new ResourcePoolState();
+        resourcePool.documentSelfLink = UriUtils.buildUriPath(ResourcePoolService.FACTORY_LINK,
+                clusterId);
+        resourcePool.name = patch.getBody(ClusterDto.class).name;
+
+        ElasticPlacementZoneConfigurationState placementZone = new ElasticPlacementZoneConfigurationState();
+        placementZone.resourcePoolState = resourcePool;
+        sendWithDeferredResult(
+                Operation
+                        .createPatch(UriUtils.buildUri(getHost(), pathPZId))
+                        .setReferer(getHost().getUri())
+                        .setBody(placementZone),
+                ElasticPlacementZoneConfigurationState.class)
+                        .thenCompose(this::getInfoFromHostsWihtinOnePlacementZone)
+                        .thenAccept(clusterDtoList -> {
+                            if (!clusterDtoList.isEmpty()) {
+                                patch.setBody(clusterDtoList.get(0));
+                            }
+                        })
+                        .whenCompleteNotify(patch);
+    }
+
+    @Override
     public void handleGet(Operation get) {
-        //        Map<String, String> queryParams = UriUtils.parseUriQueryParams(get.getUri());
-        Map<String, String> pathSegmentParams = UriUtils.parseUriPathSegments(get.getUri(),
-                CLUSTER_ID_PATH_SEGMENT_TEMPLATE);
-
-        String clusterId = pathSegmentParams.get(CLUSTER_ID_PATH_SEGMENT);
-
+        String clusterId = getIDFromUri(get.getUri());
         if (clusterId != null && !clusterId.isEmpty()) {
-            StringBuilder pathSB = new StringBuilder(
-                    ElasticPlacementZoneConfigurationService.SELF_LINK);
-            pathSB.append(ResourcePoolService.FACTORY_LINK);
-            pathSB.append("/");
-            pathSB.append(clusterId);
+            String pathPZId = UriUtils.buildUriPath(
+                    ElasticPlacementZoneConfigurationService.SELF_LINK,
+                    ResourcePoolService.FACTORY_LINK, clusterId);
 
             URI elasticPlacementZoneConfigurationUri = UriUtils.buildUri(getHost(),
-                    pathSB.toString(), get.getUri().getQuery());
+                    pathPZId, get.getUri().getQuery());
             sendWithDeferredResult(Operation
                     .createGet(
                             UriUtils.buildExpandLinksQueryUri(elasticPlacementZoneConfigurationUri))
@@ -295,6 +324,25 @@ public class ClusterService extends StatelessService {
                                 return new Pair<>(generatedZone, generatedPlacement);
                             });
                 });
+    }
+
+    private void validateClusterPatch(Operation patch) {
+        if (!patch.hasBody()) {
+            throw new LocalizableValidationException(
+                    "Cluster body is required", "compute.host.spec.is.required");
+        }
+        ClusterDto patchClusterDto = patch.getBody(ClusterDto.class);
+        if (patchClusterDto == null) {
+            throw new LocalizableValidationException(
+                    "Cluster name is required", "compute.host.spec.is.required");
+        }
+    }
+
+    private String getIDFromUri(URI uri) {
+        Map<String, String> pathSegmentParams = UriUtils.parseUriPathSegments(uri,
+                CLUSTER_ID_PATH_SEGMENT_TEMPLATE);
+
+        return pathSegmentParams.get(CLUSTER_ID_PATH_SEGMENT);
     }
 
 }
