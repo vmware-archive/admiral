@@ -12,7 +12,6 @@ const ENDPOINTS = [
   '/templates/*',
   '/groups/*',
   '/image-assets/*',
-  '/user-session/*',
   '/popular-images/*',
   '/hbr-api/*',
   '/auth/*',

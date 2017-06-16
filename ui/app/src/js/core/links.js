@@ -83,7 +83,8 @@ var links = Immutable({
   PROJECTS: '/projects',
 
   BASIC_AUTH: '/core/authn/basic',
-  USER_SESSION: '/user-session',
+  AUTH_LOGOUT: '/auth/session/logout',
+  USER_SESSION: '/auth/user-session',
   CONFIG_PROPS: CONFIG + '/props',
 
   DELETE_TASKS: '/delete-tasks',

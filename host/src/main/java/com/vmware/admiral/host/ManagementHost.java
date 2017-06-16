@@ -21,6 +21,7 @@ import javax.net.ssl.SSLContext;
 
 import io.swagger.models.Info;
 
+import com.vmware.admiral.UserSessionService;
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
 import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.util.AuthUtil;
@@ -374,6 +375,8 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
                 trustManager, null), 0);
         setClient(serviceClient);
 
+        addPrivilegedService(UserSessionService.class);
+
         AuthConfigProvider authProvider = AuthUtil.getPreferredProvider(AuthConfigProvider.class);
         // TODO this should be moved to HostInitAuthServiceConfig once HostInitServiceHelper gets
         // support for privileged services
@@ -418,8 +421,8 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
      */
     private void postInitialization() {
         // hack to set new retention limits for 2 services from photon model
-        //   - resource pool - placement zones
-        //   - groups placement - placements
+        // - resource pool - placement zones
+        // - groups placement - placements
         registerForServiceAvailability(
                 (o, e) -> {
                     setNewLimits(GroupResourcePlacementService.DEFAULT_RESOURCE_POOL_LINK);

@@ -2280,11 +2280,7 @@ services.login = function(username, password) {
 };
 
 services.logout = function() {
-  var data = {
-    requestType: 'LOGOUT'
-  };
-
-  return post(links.BASIC_AUTH, data);
+  return get(links.AUTH_LOGOUT);
 };
 
 services.triggerDataCollection = function() {

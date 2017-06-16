@@ -14,6 +14,8 @@ package com.vmware.admiral;
 import java.net.HttpURLConnection;
 
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.xenon.common.AuthUtils;
+import com.vmware.xenon.common.Claims;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.StatelessService;
@@ -44,7 +46,8 @@ public class UserSessionService extends StatelessService {
             return;
         }
 
-        String subject = ctx.getClaims().getSubject();
+        Claims claims = ctx.getClaims();
+        String subject = claims.getSubject();
         if (subject == null || subject.equals(GuestUserService.SELF_LINK)
                 || subject.equals(SystemUserService.SELF_LINK)) {
             get.setStatusCode(HttpURLConnection.HTTP_UNAUTHORIZED);
@@ -52,7 +55,7 @@ public class UserSessionService extends StatelessService {
             return;
         }
 
-        Operation getUser = Operation.createGet(this, subject)
+        Operation getUser = Operation.createGet(AuthUtils.buildUserUriFromClaims(getHost(), claims))
                 .setCompletion((o, ex) -> {
                     if (ex != null) {
                         get.fail(ex);

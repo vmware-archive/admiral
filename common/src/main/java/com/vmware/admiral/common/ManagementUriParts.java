@@ -74,10 +74,13 @@ public interface ManagementUriParts {
     // Auth
     String AUTH = "/auth";
     String AUTH_CONTENT = AUTH + "/content";
-    String AUTH_LOGOUT = AUTH + "/logout";
+    String AUTH_SESSION = AUTH + "/session";
+    String AUTH_LOGOUT = AUTH_SESSION + "/logout";
     String AUTH_IDM = AUTH + "/idm";
     String AUTH_PRINCIPALS = AUTH_IDM + "/principals";
     String LOCAL_PRINCIPALS = AUTH_IDM + "/local/principals";
+
+    String USER_SESSION_SERVICE = AUTH + "/user-session";
 
     String EPZ_COMPUTE_ENUMERATION_TASKS = RESOURCES + "/epz-compute-enumeration-tasks";
     String EPZ_PERIODIC_ENUMERATION = RESOURCES + "/epz-periodic-enumeration";
@@ -238,8 +241,6 @@ public interface ManagementUriParts {
 
     String REVERSE_PROXY = "/rp";
     String HBR_REVERSE_PROXY = "/hbr-api";
-
-    String USER_SESSION_SERVICE = "/user-session";
 
     String REQUEST_PARAM_VALIDATE_OPERATION_NAME = "validate";
     String REQUEST_PARAM_ENUMERATE_OPERATION_NAME = "enumerate";
