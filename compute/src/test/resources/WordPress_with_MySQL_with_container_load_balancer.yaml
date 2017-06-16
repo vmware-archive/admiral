@@ -1,0 +1,83 @@
+---
+name: "wordPressWithMySqlContainerLoadBalancer"
+properties:
+  _leaseDays: "3"
+components:
+  wordpress:
+    type: "App.Container"
+    data:
+      name: "wordpress"
+      image: "centurylink/wordpress:3.9.1"
+      image_reference: "http://registry.hub.docker.com/centurylink/wordpress.tgz"
+      _cluster: 2
+      env:
+      - var: "DB_PASSWORD"
+        value: "pass@word01"
+      - var: "DB_NAME"
+        value: "wordpress"
+      publish_all: false
+      ports:
+      - host_port: "8000"
+        container_port: "80"
+      health_config:
+        protocol: "HTTP"
+        port: 80
+        url_path: "/"
+        http_method: "GET"
+        healthy_threshold: 2
+        unhealthy_threshold: 2
+      links:
+      - service: "mysql"
+        alias: "DB"
+    dependsOn:
+    - "mysql"
+  mysql:
+    type: "App.Container"
+    data:
+      name: "mysql"
+      image: "centurylink/mysql:5.5"
+      image_reference: "http://registry.hub.docker.com/centurylink/mysql.tgz"
+      env:
+      - var: "MYSQL_ROOT_PASSWORD"
+        value: "pass@word01"
+      - var: "MYSQL_ROOT_PASSWORD2"
+        value: "pass@word01"
+      publish_all: false
+      ports:
+      - host_port: "3306"
+        container_port: "3306"
+      health_config:
+        protocol: "HTTP"
+        port: 80
+        url_path: "/"
+        http_method: "GET"
+        healthy_threshold: 2
+        unhealthy_threshold: 2
+
+      custom_prop: "custom_value"
+
+  wordpress-container-lb:
+    type: "App.LoadBalancer"
+    data:
+      name: "wordpress-container-lb"
+      networks:
+        - name: "wpnet"
+      ports:
+        - host_port: "8000"
+          container_port: "8080"
+      frontends:
+      - port: 8080
+        health_config:
+          path: "/test"
+          protocol: "http"
+          port: 80
+        backends:
+        - service: "wordpress"
+          port: 90
+      links:
+        - service: "wordpress"
+          alias: "wp"
+  wpnet:
+      type: "App.Network"
+      data:
+        name: "wpnet"

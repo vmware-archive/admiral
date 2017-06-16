@@ -166,6 +166,7 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         startFabricServices();
         startManagementServices();
         startClosureServices(this, startMockHostAdapterInstance);
+        startLoadBalancerServices(this);
         startSwaggerService();
 
         log(Level.INFO, "**** Management host started. ****");
@@ -220,6 +221,15 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         host.log(Level.INFO, "Closure services starting...");
         HostInitClosureServiceConfig.startServices(host, startMockHostAdapterInstance);
         host.log(Level.INFO, "Closure services started.");
+    }
+
+    /**
+     * Start all services related to container load balancer support.
+     */
+    protected void startLoadBalancerServices(ServiceHost host) throws Throwable {
+        host.log(Level.INFO, "Container load balancer services starting...");
+        HostInitLoadBalancerServiceConfig.startServices(host);
+        host.log(Level.INFO, "Container load balancer services started.");
     }
 
     /**

@@ -48,6 +48,7 @@ import com.vmware.admiral.compute.container.CompositeDescriptionService.Composit
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescriptionExpanded;
 import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerDescriptionService.ContainerLoadBalancerDescription;
 import com.vmware.admiral.compute.content.Binding.ComponentBinding;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
 import com.vmware.photon.controller.model.Constraint;
@@ -67,10 +68,6 @@ import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
  */
 @RunWith(Parameterized.class)
 public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
-    private final BiConsumer<Operation, List<String>> verifyTemplate;
-    private String templateFileName;
-    private String template;
-
     public static final String MEDIA_TYPE_APPLICATION_YAML_WITH_CHARSET = "application/yaml; charset=utf-8";
 
     @Parameterized.Parameters
@@ -80,14 +77,10 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
                 { "WordPress_with_MySQL_compute.yaml", verifyComputeTemplate },
                 { "WordPress_with_MySQL_bindings.yaml", verifyBindingsTemplate },
                 { "WordPress_with_MySQL_with_load_balancer.yaml", verifyLoadBalancerTemplate },
+                { "WordPress_with_MySQL_with_container_load_balancer.yaml",
+                        verifyContainerLoadBalancerTemplate },
                 { "WordPress_with_MySQL_kubernetes.yaml", verifyKubernetesTemplate }
         });
-    }
-
-    public CompositeDescriptionContentServiceTest(String templateFileName,
-            BiConsumer<Operation, List<String>> verifier) {
-        this.templateFileName = templateFileName;
-        this.verifyTemplate = verifier;
     }
 
     private static BiConsumer<Operation, List<String>> verifyContainerTemplate = (o, descLinks) -> {
@@ -109,7 +102,6 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
             assertNotNull(containerDescription.imageReference);
         }
     };
-
     private static BiConsumer<Operation, List<String>> verifyComputeTemplate = (o, descLinks) -> {
         CompositeDescriptionExpanded cd = o.getBody(CompositeDescriptionExpanded.class);
         assertEquals("name", "wordPressWithMySqlCompute", cd.name);
@@ -165,7 +157,6 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
 
         descLinks.addAll(cd.descriptionLinks);
     };
-
     private static BiConsumer<Operation, List<String>> verifyBindingsTemplate = (o,
             descLinks) -> {
         CompositeDescription cd = o.getBody(CompositeDescription.class);
@@ -184,19 +175,18 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
 
         descLinks.addAll(cd.descriptionLinks);
     };
-
     private static BiConsumer<Operation, List<String>> verifyLoadBalancerTemplate = (o, descLinks) -> {
         CompositeDescriptionExpanded cd = o.getBody(CompositeDescriptionExpanded.class);
         assertEquals("name", "wordPressWithMySqlLoadBalancer", cd.name);
         assertEquals("descriptionLinks.size", 5, cd.descriptionLinks.size());
 
         LoadBalancerDescription loadBalancerDescription =
-                (LoadBalancerDescription)cd.componentDescriptions.stream()
+                (LoadBalancerDescription) cd.componentDescriptions.stream()
                         .filter(c -> c.type.equals(ResourceType.LOAD_BALANCER_TYPE.getName()))
                         .findFirst().get()
                         .getServiceDocument();
         ComputeDescription wordpressComputeDescription =
-                (ComputeDescription)cd.componentDescriptions.stream()
+                (ComputeDescription) cd.componentDescriptions.stream()
                         .filter(c -> c.name.equals("wordpress"))
                         .findFirst().get()
                         .getServiceDocument();
@@ -208,7 +198,31 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
 
         descLinks.addAll(cd.descriptionLinks);
     };
+    private static BiConsumer<Operation, List<String>> verifyContainerLoadBalancerTemplate = (o,
+            descLinks) -> {
+        CompositeDescriptionExpanded cd = o.getBody(CompositeDescriptionExpanded.class);
+        assertEquals("name", "wordPressWithMySqlContainerLoadBalancer", cd.name);
+        assertEquals("descriptionLinks.size", 4, cd.descriptionLinks.size());
 
+        ContainerLoadBalancerDescription containerLoadBalancerDescription =
+                (ContainerLoadBalancerDescription) cd.componentDescriptions.stream()
+                        .filter(c -> c.type
+                                .equals(ResourceType.CONTAINER_LOAD_BALANCER_TYPE.getName()))
+                        .findFirst().get()
+                        .getServiceDocument();
+
+        assertNotNull(containerLoadBalancerDescription.dependsOn);
+        assertNotNull(containerLoadBalancerDescription.portBindings);
+        assertNotNull(containerLoadBalancerDescription.frontends.stream().filter
+                (health ->
+                        health.healthConfig != null).findAny().get());
+        assertFalse(containerLoadBalancerDescription.networks.isEmpty());
+        assertFalse(containerLoadBalancerDescription.frontends.isEmpty());
+        assertFalse(containerLoadBalancerDescription.frontends.get(0).backends.isEmpty());
+        assertEquals(containerLoadBalancerDescription.networks.get(0).name, "wpnet");
+
+        descLinks.addAll(cd.descriptionLinks);
+    };
     private static BiConsumer<Operation, List<String>> verifyKubernetesTemplate = (o,
             descLinks) -> {
         CompositeDescription cd = o.getBody(CompositeDescription.class);
@@ -216,6 +230,24 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
 
         descLinks.addAll(cd.descriptionLinks);
     };
+    private final BiConsumer<Operation, List<String>> verifyTemplate;
+    private String templateFileName;
+    private String template;
+
+    public CompositeDescriptionContentServiceTest(String templateFileName,
+            BiConsumer<Operation, List<String>> verifier) {
+        this.templateFileName = templateFileName;
+        this.verifyTemplate = verifier;
+    }
+
+    private static boolean hasBindingExpression(List<Binding> bindings, String expression) {
+        for (Binding binding : bindings) {
+            if (expression.equals(binding.originalFieldExpression)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     @Before
     public void setUp() throws Throwable {
@@ -317,10 +349,6 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
                 });
     }
 
-    private static String getContent(String filename) {
-        return FileUtil.getResourceAsString("/compose/" + filename, true);
-    }
-
     private void verifyCompositeDescription(String location) throws Throwable {
         String selfLink = location.substring(location.lastIndexOf(UriUtils.URI_PATH_CHAR) + 1);
         assertNotNull("documentSelfLink", selfLink);
@@ -349,7 +377,8 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
                 assertTrue("unexpected component name: " + cd.name,
                         Arrays.asList("wordpress", "mysql", "public-wpnet", "wpnet",
                                 "wordpress-mysql-svc", "wordpress-mysql-dpl", "wordpress-svc",
-                                "wordpress-dpl", "wordpress-lb").contains(cd.name));
+                                "wordpress-dpl", "wordpress-lb", "wordpress-container-lb")
+                                .contains(cd.name));
             });
         }
     }
@@ -389,6 +418,10 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
                 fail(e.getMessage());
             }
         });
+    }
+
+    private static String getContent(String filename) {
+        return FileUtil.getResourceAsString("/compose/" + filename, true);
     }
 
     private static boolean isKubernetesYaml(String template) {
@@ -442,14 +475,5 @@ public class CompositeDescriptionContentServiceTest extends ComputeBaseTest {
                 "${mysql~restart_policy}"));
         assertTrue(hasBindingExpression(resultComponentBinding.bindings,
                 "${_resource~mysql~address}:3306"));
-    }
-
-    private static boolean hasBindingExpression(List<Binding> bindings, String expression) {
-        for (Binding binding : bindings) {
-            if (expression.equals(binding.originalFieldExpression)) {
-                return true;
-            }
-        }
-        return false;
     }
 }

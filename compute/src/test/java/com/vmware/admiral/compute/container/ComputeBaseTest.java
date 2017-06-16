@@ -26,6 +26,7 @@ import com.vmware.admiral.host.CompositeComponentInterceptor;
 import com.vmware.admiral.host.ComputeInitialBootService;
 import com.vmware.admiral.host.HostInitCommonServiceConfig;
 import com.vmware.admiral.host.HostInitComputeServicesConfig;
+import com.vmware.admiral.host.HostInitLoadBalancerServiceConfig;
 import com.vmware.admiral.host.HostInitPhotonModelServiceConfig;
 import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
 import com.vmware.admiral.service.common.AbstractInitialBootService;
@@ -75,6 +76,7 @@ public abstract class ComputeBaseTest extends BaseTestCase {
         HostInitTestDcpServicesConfig.startServices(serviceHost);
         HostInitCommonServiceConfig.startServices(serviceHost);
         HostInitComputeServicesConfig.startServices(serviceHost, false);
+        HostInitLoadBalancerServiceConfig.startServices(serviceHost);
     }
 
     protected void startInitialBootService(

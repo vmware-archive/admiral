@@ -108,6 +108,10 @@ public interface ManagementUriParts {
     String CLOSURES_IMAGES = RESOURCES + "/closure-images";
     String CLOSURES_CONTAINER_DESC = CONTAINER_DESC + "/closure-container-desc";
 
+    String CONTAINER_LOAD_BALANCERS = RESOURCES + "/container-load-balancers";
+    String CONTAINER_LOAD_BALANCER_DESC = RESOURCES + "/container-load-balancer"
+            + DESCRIPTION_SUFFIX;
+
     String CONTAINER_HOSTS = RESOURCES + "/hosts";
     String CONTAINER_HOST_DATA_COLLECTION = RESOURCES + "/hosts-data-collections";
     String CONTAINER_CONTROL_LOOP = RESOURCES + "/container-control-loop";
