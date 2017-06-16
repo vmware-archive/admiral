@@ -224,26 +224,4 @@ public class PrincipalServiceTest extends AuthBaseTest {
         host.send(getSuperusersRole);
         ctx.await();
     }
-
-    @Test
-    public void testGetNotExistingPrincipalReturnsPrincipalNotFoundException() {
-        TestContext ctx = testCreate(1);
-        host.send(Operation
-                .createGet(host, UriUtils.buildUriPath(PrincipalService.SELF_LINK, "test-user"))
-                .setReferer(host.getUri())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        if (ex instanceof PrincipalNotFoundException
-                                && Operation.STATUS_CODE_NOT_FOUND == o.getStatusCode()) {
-                            ctx.completeIteration();
-                            return;
-                        }
-                        ctx.failIteration(ex);
-                        return;
-                    }
-                    ctx.failIteration(
-                            new RuntimeException("GET for not existing user should fail."));
-                }));
-        ctx.await();
-    }
 }

@@ -38,7 +38,7 @@ import com.vmware.xenon.services.common.UserService.UserState;
 
 public class UserGroupsUpdater {
 
-    private Boolean skipPrincipalVerification;
+    private boolean skipPrincipalVerification;
 
     private ServiceHost host;
 
@@ -95,17 +95,13 @@ public class UserGroupsUpdater {
     }
 
     public UserGroupsUpdater setSkipPrincipalVerification(Boolean skipPrincipalVerification) {
-        if (skipPrincipalVerification == null) {
-            this.skipPrincipalVerification = false;
-        } else {
-            this.skipPrincipalVerification = skipPrincipalVerification;
-        }
+        this.skipPrincipalVerification = skipPrincipalVerification;
         return this;
     }
 
     public static UserGroupsUpdater create() {
         return new UserGroupsUpdater(null, null, null,
-                null, null, null);
+                null, null, false);
     }
 
     public static UserGroupsUpdater create(ServiceHost host, String groupLink, String referrer,
@@ -154,7 +150,7 @@ public class UserGroupsUpdater {
 
         DeferredResult<UserState> result;
 
-        if (this.skipPrincipalVerification == null || !this.skipPrincipalVerification) {
+        if (!this.skipPrincipalVerification) {
 
             String principalUri = UriUtils.buildUriPath(PrincipalService.SELF_LINK, user);
             Operation getPrincipal = Operation.createGet(host, principalUri)

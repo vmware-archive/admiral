@@ -17,7 +17,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.vmware.admiral.auth.idm.PrincipalNotFoundException;
+import javax.management.ServiceNotFoundException;
+
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.ProjectUtil;
@@ -226,7 +227,7 @@ public class ProjectService extends StatefulService {
                 new ProjectRolesHandler(getHost(), getSelfLink()).handleRolesUpdate(rolesPut)
                         .whenComplete((ignore, ex) -> {
                             if (ex != null) {
-                                if (ex.getCause() instanceof PrincipalNotFoundException) {
+                                if (ex.getCause() instanceof ServiceNotFoundException) {
                                     put.fail(Operation.STATUS_CODE_BAD_REQUEST, ex.getCause(),
                                             ex.getCause());
                                     return;
@@ -236,7 +237,6 @@ public class ProjectService extends StatefulService {
                             }
                             put.complete();
                         });
-                        // .whenCompleteNotify(put);
             } else {
                 put.fail(Operation.STATUS_CODE_FORBIDDEN);
             }
@@ -268,7 +268,7 @@ public class ProjectService extends StatefulService {
                         .handleRolesUpdate(patch.getBody(ProjectRoles.class))
                         .whenComplete((ignore, ex) -> {
                             if (ex != null) {
-                                if (ex.getCause() instanceof PrincipalNotFoundException) {
+                                if (ex.getCause() instanceof ServiceNotFoundException) {
                                     patch.fail(Operation.STATUS_CODE_BAD_REQUEST, ex.getCause(),
                                             ex.getCause());
                                     return;

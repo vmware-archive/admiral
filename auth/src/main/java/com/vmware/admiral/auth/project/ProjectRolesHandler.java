@@ -166,7 +166,7 @@ public class ProjectRolesHandler {
         results.add(handleUserAssignment(membersUsersToAdd, membersUsersToRemove,
                 AuthRole.PROJECT_MEMBERS));
 
-        // Remove try-catch once the functionality is enabled.
+        // When assigning UserGroup is ready remove the try-catch.
         // It's like this currently, because the findbugs plugin fails the build.
         try {
             results.add(handleGroupsAssignment(adminUserGroupsToAdd, adminUserGroupsToRemove,
@@ -174,7 +174,7 @@ public class ProjectRolesHandler {
         } catch (Exception ex) {
         }
 
-        // When assigning UserGroup is read call it and add the result in results.
+
         return DeferredResult.allOf(results).thenAccept(ignore -> {
         });
     }
