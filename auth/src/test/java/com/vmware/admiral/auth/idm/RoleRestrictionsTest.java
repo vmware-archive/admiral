@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.auth.idm;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -23,60 +22,186 @@ import org.junit.Test;
 import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
-import com.vmware.admiral.compute.container.ContainerDescriptionService;
-import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.common.test.CommonTestStateFactory;
+import com.vmware.admiral.service.common.RegistryService;
+import com.vmware.admiral.service.common.RegistryService.RegistryState;
+import com.vmware.admiral.service.common.SslTrustCertificateService;
+import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
+import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.services.common.AuthCredentialsService;
+import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 
 public class RoleRestrictionsTest extends AuthBaseTest {
+    public static final String EXPECTED_ILLEGAL_ACCESS_ERROR_MESSAGE = "Should've thrown IllegalAccessError!";
+    public static final String FORBIDDEN = "forbidden";
 
     @Test
-    public void testBasicUserCantReadRestrictedContent() throws Throwable {
-        // Create simple container description with admins user.
-        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
-        ContainerDescription description = new ContainerDescription();
-        description.name = "test-name";
-        description.image = "ubuntu";
-        description = doPost(description, ContainerDescriptionService.FACTORY_LINK);
-        assertNotNull(description);
-        assertNotNull(description.documentSelfLink);
+    public void testBasicUserRestrictionsToCredentials() throws Throwable {
 
-        // Verify basic user cannot see it.
+        AuthCredentialsServiceState cred = new AuthCredentialsServiceState();
+        cred.userEmail = "test";
+
+        // GET
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+        AuthCredentialsServiceState createdState = doPost(cred, AuthCredentialsService.FACTORY_LINK);
+        assertNotNull(createdState);
+        assertNotNull(createdState.documentSelfLink);
+
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_BASIC_USER));
-        List<String> containerDescriptionLinks = getDocument(
-                ServiceDocumentQueryResult.class, ContainerDescriptionService.FACTORY_LINK)
-                .documentLinks;
-        assertTrue(containerDescriptionLinks == null || containerDescriptionLinks.isEmpty());
-        try {
-            ContainerDescription cd = getDocument(
-                    ContainerDescription.class, description.documentSelfLink);
-            fail("It was expected IllegalAccessError when user attempt to get restricted document");
-        } catch (IllegalAccessError ex) {
-            assertTrue(ex.getMessage().startsWith("forbidden"));
-        }
+        doGetWithRestrictionVerification(createdState, AuthCredentialsService.FACTORY_LINK, AuthCredentialsServiceState.class.getName());
+
+        // POST
+        doPostWithRestrictionVerification(cred, AuthCredentialsService.FACTORY_LINK);
+
+        // PUT
+        createdState.userEmail = "updated-name";
+        doPutWithRestrictionVerification(createdState, AuthCredentialsService.FACTORY_LINK);
+
+        // DELETE
+        doDeleteWithRestrictionVerification(createdState, AuthCredentialsService.FACTORY_LINK);
     }
 
     @Test
-    public void testBasicUserCanReadAllowedContent() throws Throwable {
-        // Create simple project with admins user. Basic user should be able to read it.
+    public void testBasicUserRestrictionsToCertificates() throws Throwable {
+
+        SslTrustCertificateState cert = new SslTrustCertificateState();
+        cert.certificate = CommonTestStateFactory.getFileContent("test_ssl_trust.PEM").trim();
+
+        // GET
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
-        ProjectState projectState = new ProjectState();
-        projectState.name = "test-name";
-        projectState.description = "test-description";
-        projectState.isPublic = true;
-        projectState = doPost(projectState, ProjectFactoryService.SELF_LINK);
-        assertNotNull(projectState);
-        assertNotNull(projectState.documentSelfLink);
+        SslTrustCertificateState createdState = doPost(cert, SslTrustCertificateService.FACTORY_LINK);
+        assertNotNull(createdState);
+        assertNotNull(createdState.documentSelfLink);
 
-        // Verify basic user can read this document
-        host.assumeIdentity(buildUserServicePath(USER_EMAIL_CONNIE));
-        List<String> projectLinks = getDocument(ServiceDocumentQueryResult.class,
-                ProjectFactoryService.SELF_LINK).documentLinks;
-        assertTrue(projectLinks != null && !projectLinks.isEmpty());
-        assertTrue(projectLinks.contains(projectState.documentSelfLink));
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_BASIC_USER));
+        doGetWithRestrictionVerification(createdState, SslTrustCertificateService.FACTORY_LINK, SslTrustCertificateState.class.getName());
 
-        ProjectState state = getDocument(ProjectState.class, projectState.documentSelfLink);
-        assertNotNull(state);
-        assertEquals(projectState.name, state.name);
-        assertEquals(projectState.description, state.description);
+        // POST
+        doPostWithRestrictionVerification(cert, SslTrustCertificateService.FACTORY_LINK);
+
+        // PUT
+        createdState.commonName = "updated-name";
+        doPutWithRestrictionVerification(createdState, SslTrustCertificateService.FACTORY_LINK);
+
+        // DELETE
+        doDeleteWithRestrictionVerification(createdState, SslTrustCertificateService.FACTORY_LINK);
+    }
+
+
+    @Test
+    public void testBasicUserRestrictionsToRegistries() throws Throwable {
+
+        RegistryState registry = new RegistryState();
+        registry.name = "test";
+
+        // GET
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+        RegistryState createdState = doPost(registry, RegistryService.FACTORY_LINK);
+        assertNotNull(createdState);
+        assertNotNull(createdState.documentSelfLink);
+
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_BASIC_USER));
+        doGetWithRestrictionVerification(createdState, RegistryService.FACTORY_LINK, RegistryState.class.getName());
+
+        // POST
+        doPostWithRestrictionVerification(registry, RegistryService.FACTORY_LINK);
+
+        // PUT
+        createdState.name = "updated-name";
+        doPutWithRestrictionVerification(createdState, RegistryService.FACTORY_LINK);
+
+        // DELETE
+        doDeleteWithRestrictionVerification(createdState, RegistryService.FACTORY_LINK);
+    }
+
+    @Test
+    public void testBasicUserRestrictionsToProjects() throws Throwable {
+
+        ProjectState project = new ProjectState();
+        project.name = "test";
+
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+        ProjectState createdState = doPost(project, ProjectFactoryService.SELF_LINK);
+        assertNotNull(createdState);
+        assertNotNull(createdState.documentSelfLink);
+
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_BASIC_USER));
+
+        // POST
+        doPostWithRestrictionVerification(project, ProjectFactoryService.SELF_LINK);
+
+        // PUT
+        createdState.name = "updated-name";
+        doPutWithRestrictionVerification(createdState, ProjectFactoryService.SELF_LINK);
+
+        // DELETE
+        doDeleteWithRestrictionVerification(createdState, ProjectFactoryService.SELF_LINK);
+    }
+
+    @Test
+    public void testBasicUserRestrictionsToConfiguration() throws Throwable {
+        // TODO: WIP
+    }
+
+    @Test
+    public void testBasicUserRestrictionsToLogs() throws Throwable {
+        // TODO: WIP
+    }
+
+    private void assertForbiddenMessage(IllegalAccessError e) {
+        assertTrue(e.getMessage().toLowerCase().startsWith(FORBIDDEN));
+    }
+
+    private void doPostWithRestrictionVerification(ServiceDocument doc, String selfLink) throws Throwable {
+        host.log("POST to %s", selfLink);
+
+        try {
+            doPost(doc, selfLink);
+            fail(EXPECTED_ILLEGAL_ACCESS_ERROR_MESSAGE);
+        } catch (IllegalAccessError e) {
+            assertForbiddenMessage(e);
+        }
+    }
+
+    private void doGetWithRestrictionVerification(ServiceDocument createdState, String selfLink, String className) throws Throwable {
+        host.log("GET to %s", selfLink);
+
+        // Verify basic user cannot list the documents
+        List<String> docs = getDocument(
+                ServiceDocumentQueryResult.class, selfLink)
+                .documentLinks;
+        assertTrue(docs == null || docs.isEmpty());
+
+        try {
+            getDocument(Class.forName(className), createdState.documentSelfLink);
+            fail(EXPECTED_ILLEGAL_ACCESS_ERROR_MESSAGE);
+        } catch (IllegalAccessError e) {
+            assertForbiddenMessage(e);
+        }
+    }
+
+    private void doPutWithRestrictionVerification(ServiceDocument doc, String selfLink) throws Throwable {
+        host.log("PUT to %s", selfLink);
+
+        try {
+            doPut(doc);
+            fail(EXPECTED_ILLEGAL_ACCESS_ERROR_MESSAGE);
+        } catch (IllegalAccessError e) {
+            assertForbiddenMessage(e);
+        }
+    }
+
+
+    private void doDeleteWithRestrictionVerification(ServiceDocument doc, String selfLink) throws Throwable {
+        host.log("DELETE to %s", selfLink);
+
+        try {
+            doDelete(UriUtils.buildUri(host, doc.documentSelfLink), false);
+            fail(EXPECTED_ILLEGAL_ACCESS_ERROR_MESSAGE);
+        } catch (IllegalAccessError e) {
+            assertForbiddenMessage(e);
+        }
     }
 }
