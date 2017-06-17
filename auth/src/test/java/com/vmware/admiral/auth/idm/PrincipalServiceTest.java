@@ -97,7 +97,7 @@ public class PrincipalServiceTest extends AuthBaseTest {
                 PrincipalService.SELF_LINK, PrincipalService.CRITERIA_QUERY, "i"), false, null,
                 ArrayList.class);
         List<String> expectedPrincipals = Arrays.asList(USER_EMAIL_ADMIN, USER_EMAIL_BASIC_USER,
-                USER_EMAIL_GLORIA, USER_EMAIL_CONNIE);
+                USER_EMAIL_GLORIA, USER_EMAIL_CONNIE, USER_EMAIL_ADMIN2);
         assertEquals(expectedPrincipals.size(), principals.size());
         assertTrue(USER_EMAIL_ADMIN, principals.stream().allMatch((principal) -> {
             return expectedPrincipals.contains(principal.id);

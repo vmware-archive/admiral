@@ -73,7 +73,7 @@ public enum AuthRole {
         return result;
     }
 
-    public String buildRoleWithSuffix(String identifier) {
-        return identifier + SUFFIX_SEPARATOR + getSuffix();
+    public String buildRoleWithSuffix(String... identifiers) {
+        return String.join(SUFFIX_SEPARATOR, identifiers) + SUFFIX_SEPARATOR + getSuffix();
     }
 }

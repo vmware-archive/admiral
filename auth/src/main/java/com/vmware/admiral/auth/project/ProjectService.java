@@ -12,6 +12,7 @@
 package com.vmware.admiral.auth.project;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -43,6 +44,10 @@ import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.ResourceGroupService;
+import com.vmware.xenon.services.common.ResourceGroupService.ResourceGroupState;
+import com.vmware.xenon.services.common.RoleService;
+import com.vmware.xenon.services.common.RoleService.RoleState;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
@@ -347,7 +352,7 @@ public class ProjectService extends StatefulService {
 
     }
 
-    private DeferredResult<UserGroupState> deleteDefaultProjectGroups(String projectId,
+    private DeferredResult<Operation> deleteDefaultProjectGroups(String projectId,
             Operation delete) {
 
         String adminsUserGroupUri = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
@@ -356,10 +361,28 @@ public class ProjectService extends StatefulService {
         String membersUserGroupsUri = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                 AuthRole.PROJECT_MEMBERS.buildRoleWithSuffix(projectId));
 
+        String resourceGroupUri = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                projectId);
+
+        String adminsRoleUri = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole
+                .PROJECT_ADMINS.buildRoleWithSuffix(projectId, Service.getId(adminsUserGroupUri)));
+
+        String membersRoleUri = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole
+                .PROJECT_MEMBERS.buildRoleWithSuffix(projectId, Service.getId(membersUserGroupsUri)));
+
         Operation deleteMembersGroup = Operation.createDelete(this, membersUserGroupsUri)
                 .setReferer(delete.getUri());
 
         Operation deleteAdminsGroup = Operation.createDelete(this, adminsUserGroupUri)
+                .setReferer(delete.getUri());
+
+        Operation deleteResourceGroup = Operation.createDelete(this, resourceGroupUri)
+                .setReferer(delete.getUri());
+
+        Operation deleteAdminsRole = Operation.createDelete(this, adminsRoleUri)
+                .setReferer(delete.getUri());
+
+        Operation deleteMembersRole = Operation.createDelete(this, membersRoleUri)
                 .setReferer(delete.getUri());
 
         return removeDefaultProjectGroupsFromUserStates(adminsUserGroupUri, membersUserGroupsUri,
@@ -372,6 +395,21 @@ public class ProjectService extends StatefulService {
                 .thenCompose(ignore -> sendWithDeferredResult(deleteAdminsGroup, UserGroupState.class))
                 .exceptionally(ex -> {
                     logWarning("Couldn't delete admins user group: %s", Utils.toString(ex));
+                    return null;
+                })
+                .thenCompose(ignore -> sendWithDeferredResult(deleteResourceGroup))
+                .exceptionally(ex -> {
+                    logWarning("Couldn't delete project resource group: %s", Utils.toString(ex));
+                    return null;
+                })
+                .thenCompose(ignore -> sendWithDeferredResult(deleteAdminsRole))
+                .exceptionally(ex -> {
+                    logWarning("Couldn't delete admins role: %s", Utils.toString(ex));
+                    return null;
+                })
+                .thenCompose(ignore -> sendWithDeferredResult(deleteMembersRole))
+                .exceptionally(ex -> {
+                    logWarning("Couldn't delete members role: %s", Utils.toString(ex));
                     return null;
                 });
     }
@@ -469,7 +507,7 @@ public class ProjectService extends StatefulService {
             return DeferredResult.completed(projectState);
         }
 
-        ArrayList<DeferredResult<Void>> deferredResults = new ArrayList<>();
+        ArrayList<DeferredResult<Void>> projectUserGroupsDeferredResults = new ArrayList<>();
 
         if (projectState.administratorsUserGroupLinks == null
                 || !projectState.administratorsUserGroupLinks.contains(
@@ -483,7 +521,7 @@ public class ProjectService extends StatefulService {
                         }
                         projectState.administratorsUserGroupLinks.add(groupState.documentSelfLink);
                     });
-            deferredResults.add(result);
+            projectUserGroupsDeferredResults.add(result);
         }
 
         if (projectState.membersUserGroupLinks == null
@@ -498,12 +536,62 @@ public class ProjectService extends StatefulService {
                         }
                         projectState.membersUserGroupLinks.add(groupState.documentSelfLink);
                     });
-            deferredResults.add(result);
-
+            projectUserGroupsDeferredResults.add(result);
         }
 
-        return DeferredResult.allOf(deferredResults)
-                .thenCompose((ignore) -> DeferredResult.completed(projectState));
+        ArrayList<DeferredResult<List<RoleState>>> projectRolesDeferredResults = new ArrayList<>();
+
+        return DeferredResult.allOf(projectUserGroupsDeferredResults)
+                .thenCompose((ignore) -> {
+                    return createProjectResourceGroup(projectState);
+                })
+                .thenCompose((resourceGroup) -> {
+                    projectRolesDeferredResults.addAll(Arrays.asList(
+                            createProjectAdminRole(projectState, resourceGroup.documentSelfLink),
+                            createProjectMemberRole(projectState, resourceGroup.documentSelfLink)
+                            ));
+                    return DeferredResult.allOf(projectRolesDeferredResults);
+                }).thenCompose((ignore) -> {
+                    return DeferredResult.completed(projectState);
+                });
+    }
+
+    private DeferredResult<ResourceGroupState> createProjectResourceGroup(ProjectState projectState) {
+        String projectId = Service.getId(projectState.documentSelfLink);
+        ResourceGroupState resourceGroupState = AuthUtil.buildProjectResourceGroup(projectId);
+
+        return getHost().sendWithDeferredResult(
+                buildCreateResourceGroupOperation(resourceGroupState), ResourceGroupState.class);
+    }
+
+    private DeferredResult<List<RoleState>> createProjectAdminRole(ProjectState projectState, String resourceGroupLink) {
+        String projectId = Service.getId(projectState.documentSelfLink);
+
+        List<DeferredResult<RoleState>> deferredResultRoles = new ArrayList<>();
+
+        projectState.administratorsUserGroupLinks.stream().forEach((userGroupLink) -> {
+            RoleState projectAdminRoleState = AuthUtil.buildProjectAdminsRole(projectId, userGroupLink, resourceGroupLink);
+            DeferredResult<RoleState> deferredResultRole = getHost().sendWithDeferredResult(
+                    buildCreateRoleOperation(projectAdminRoleState), RoleState.class);
+            deferredResultRoles.add(deferredResultRole);
+        });
+
+        return DeferredResult.allOf(deferredResultRoles);
+    }
+
+    private DeferredResult<List<RoleState>> createProjectMemberRole(ProjectState projectState, String resourceGroupLink) {
+        String projectId = Service.getId(projectState.documentSelfLink);
+
+        List<DeferredResult<RoleState>> deferredResultRoles = new ArrayList<>();
+
+        projectState.membersUserGroupLinks.stream().forEach((userGroupLink) -> {
+            RoleState projectMemberRoleState = AuthUtil.buildProjectMembersRole(projectId, userGroupLink, resourceGroupLink);
+            DeferredResult<RoleState> deferredResultRole = getHost().sendWithDeferredResult(
+                    buildCreateRoleOperation(projectMemberRoleState), RoleState.class);
+            deferredResultRoles.add(deferredResultRole);
+        });
+
+        return DeferredResult.allOf(deferredResultRoles);
     }
 
     private Operation buildCreateUserGroupOperation(UserGroupState state) {
@@ -512,4 +600,15 @@ public class ProjectService extends StatefulService {
                 .setBody(state);
     }
 
+    private Operation buildCreateResourceGroupOperation(ResourceGroupState state) {
+        return Operation.createPost(getHost(), ResourceGroupService.FACTORY_LINK)
+                .setReferer(getHost().getUri())
+                .setBody(state);
+    }
+
+    private Operation buildCreateRoleOperation(RoleState state) {
+        return Operation.createPost(getHost(), RoleService.FACTORY_LINK)
+                .setReferer(getHost().getUri())
+                .setBody(state);
+    }
 }

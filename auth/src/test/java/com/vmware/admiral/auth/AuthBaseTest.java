@@ -67,11 +67,13 @@ public abstract class AuthBaseTest extends BaseTestCase {
     public static final int DEFAULT_WAIT_SECONDS_FOR_AUTH_SERVICES = 180;
 
     protected static final String USER_EMAIL_ADMIN = "fritz@admiral.com";
+    protected static final String USER_EMAIL_ADMIN2 = "admin@admiral.com";
     protected static final String USER_EMAIL_BASIC_USER = "tony@admiral.com";
     protected static final String USER_EMAIL_GLORIA = "gloria@admiral.com";
     protected static final String USER_EMAIL_CONNIE = "connie@admiral.com";
 
     protected static final String USER_NAME_ADMIN = "Fritz";
+    protected static final String USER_NAME_ADMIN2 = "Admin";
     protected static final String USER_NAME_BASIC_USER = "Tony";
     protected static final String USER_NAME_GLORIA = "Gloria";
     protected static final String USER_NAME_CONNIE = "Connie";
@@ -169,10 +171,15 @@ public abstract class AuthBaseTest extends BaseTestCase {
         projectState.description = description;
         projectState.isPublic = isPublic;
         projectState.administratorsUserGroupLinks = new ArrayList<>();
-        projectState.administratorsUserGroupLinks.add(adminsGroupLink);
         projectState.membersUserGroupLinks = new ArrayList<>();
-        projectState.membersUserGroupLinks.add(membersGroupLink);
         projectState.customProperties = customProperties;
+
+        if (adminsGroupLink != null) {
+            projectState.administratorsUserGroupLinks.add(adminsGroupLink);
+        }
+        if (membersGroupLink != null) {
+            projectState.membersUserGroupLinks.add(membersGroupLink);
+        }
 
         projectState = doPost(projectState, ProjectFactoryService.SELF_LINK);
 

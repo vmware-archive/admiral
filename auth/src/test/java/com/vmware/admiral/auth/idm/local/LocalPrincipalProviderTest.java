@@ -37,6 +37,7 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
 
 public class LocalPrincipalProviderTest extends AuthBaseTest {
+    private static final int EXPECTED_PRINCIPALS_COUNT = 5;
 
     private PrincipalProvider provider = new LocalPrincipalProvider();
 
@@ -81,6 +82,7 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         String expectedPrincipal2 = "fritz@admiral.com";
         String expectedPrincipal3 = "gloria@admiral.com";
         String expectedPrincipal4 = "tony@admiral.com";
+        String expectedPrincipal5 = "admin@admiral.com";
 
         DeferredResult<List<Principal>> result = provider.getPrincipals(criteria);
 
@@ -96,13 +98,14 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
 
         List<Principal> principals = result.getNow(new ArrayList<>());
 
-        assertEquals(4, principals.size());
+        assertEquals(EXPECTED_PRINCIPALS_COUNT, principals.size());
 
         for (Principal p : principals) {
             assertTrue(p.email.equals(expectedPrincipal1)
                     || p.email.equals(expectedPrincipal2)
                     || p.email.equals(expectedPrincipal3)
-                    || p.email.equals(expectedPrincipal4));
+                    || p.email.equals(expectedPrincipal4)
+                    || p.email.equals(expectedPrincipal5));
         }
     }
 

@@ -117,12 +117,12 @@ public class SecurityContextUtilTest extends AuthBaseTest {
         // load auth content for the test
 
         // do not assume the identity of the user that we are going to look for
-        host.assumeIdentity(buildUserServicePath(USER_EMAIL_GLORIA));
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN2));
         loadAuthContent(FILE_AUTH_CONTENT_PROJECTS_ONLY);
 
         // add the current user as admin and member in the imported projects.
         PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
-        roleAssignment.add = Collections.singletonList(USER_EMAIL_GLORIA);
+        roleAssignment.add = Collections.singletonList(USER_EMAIL_ADMIN2);
         ProjectRoles projectRoles = new ProjectRoles();
         projectRoles.administrators = roleAssignment;
         projectRoles.members = roleAssignment;

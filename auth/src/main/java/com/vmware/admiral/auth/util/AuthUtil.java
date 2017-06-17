@@ -28,10 +28,12 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.image.service.PopularImagesService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
@@ -65,7 +67,6 @@ public class AuthUtil {
 
     public static final String DEFAULT_CLOUD_ADMINS_ROLE_LINK = UriUtils
             .buildUriPath(RoleService.FACTORY_LINK, DEFAULT_CLOUD_ADMINS);
-
 
     public static final String DEFAULT_BASIC_USERS = AuthRole.BASIC_USERS
             .buildRoleWithSuffix(DEFAULT_IDENTIFIER);
@@ -188,10 +189,12 @@ public class AuthUtil {
         return provider;
     }
 
-    public static UserGroupState buildEmptyCloudAdminsUserGroup() {
+    public static UserGroupState buildCloudAdminsUserGroup() {
         String id = AuthRole.CLOUD_ADMINS.getSuffix();
 
-        return buildUserGroupState(id);
+        UserGroupState userGroupState = buildUserGroupState(id);
+
+        return userGroupState;
     }
 
     public static ResourceGroupState buildCloudAdminsResourceGroup() {
@@ -201,11 +204,8 @@ public class AuthUtil {
                         QueryTerm.MatchType.WILDCARD)
                 .build();
 
-        ResourceGroupState resourceGroupState = ResourceGroupState.Builder
-                .create()
-                .withQuery(resourceGroupQuery)
-                .withSelfLink(CLOUD_ADMINS_RESOURCE_GROUP_LINK)
-                .build();
+        ResourceGroupState resourceGroupState = buildResourceGroupState(resourceGroupQuery,
+                CLOUD_ADMINS_RESOURCE_GROUP_LINK);
 
         return resourceGroupState;
     }
@@ -214,28 +214,21 @@ public class AuthUtil {
         String id = AuthRole.CLOUD_ADMINS.buildRoleWithSuffix(identifier);
         String selfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
         EnumSet<Action> verbs = EnumSet.allOf(Action.class);
-        Collections.addAll(verbs, Action.values());
 
-        RoleState cloudAdminRole = RoleState.Builder
-                .create()
-                .withPolicy(Policy.ALLOW)
-                .withSelfLink(selfLink)
-                .withVerbs(verbs)
-                .withResourceGroupLink(CLOUD_ADMINS_RESOURCE_GROUP_LINK)
-                .withUserGroupLink(userGroupLink)
-                .build();
+        RoleState roleState = buildRoleState(selfLink, userGroupLink, CLOUD_ADMINS_RESOURCE_GROUP_LINK, verbs);
 
-        return cloudAdminRole;
+        return roleState;
     }
 
-    public static UserGroupState buildEmptyBasicUsersUserGroup() {
+    public static UserGroupState buildBasicUsersUserGroup() {
         String id = AuthRole.BASIC_USERS.getSuffix();
 
-        return buildUserGroupState(id);
+        UserGroupState userGroupState = buildUserGroupState(id);
+
+        return userGroupState;
     }
 
     public static ResourceGroupState buildBasicUsersResourceGroup() {
-
         Query resourceGroupQuery = Query.Builder
                 .create()
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
@@ -259,11 +252,7 @@ public class AuthUtil {
                         MatchType.TERM, Occurance.SHOULD_OCCUR)
                 .build();
 
-        ResourceGroupState resourceGroupState = ResourceGroupState.Builder
-                .create()
-                .withQuery(resourceGroupQuery)
-                .withSelfLink(BASIC_USERS_RESOURCE_GROUP_LINK)
-                .build();
+        ResourceGroupState resourceGroupState = buildResourceGroupState(resourceGroupQuery, BASIC_USERS_RESOURCE_GROUP_LINK);
 
         return resourceGroupState;
     }
@@ -271,19 +260,11 @@ public class AuthUtil {
     public static RoleState buildBasicUsersRole(String identifier, String userGroupLink) {
         String id = AuthRole.BASIC_USERS.buildRoleWithSuffix(identifier);
         String selfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
-        EnumSet<Action> verbs = EnumSet.noneOf(Action.class);
-        verbs.add(Action.GET);
+        EnumSet<Action> verbs = EnumSet.of(Action.GET);
 
-        RoleState basicUsersRole = RoleState.Builder
-                .create()
-                .withPolicy(Policy.ALLOW)
-                .withSelfLink(selfLink)
-                .withVerbs(verbs)
-                .withResourceGroupLink(BASIC_USERS_RESOURCE_GROUP_LINK)
-                .withUserGroupLink(userGroupLink)
-                .build();
+        RoleState roleState = buildRoleState(selfLink, userGroupLink, BASIC_USERS_RESOURCE_GROUP_LINK, verbs);
 
-        return basicUsersRole;
+        return roleState;
     }
 
     /**
@@ -291,7 +272,6 @@ public class AuthUtil {
      * get documents if with OData query.
      */
     public static ResourceGroupState buildBasicUsersExtendedResourceGroup() {
-
         Query resourceGroupQuery = Query.Builder
                 .create()
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
@@ -301,6 +281,7 @@ public class AuthUtil {
                         buildUriWithWildcard(ServiceUriPaths.CORE_QUERY_PAGE),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
                 .build();
+
 
         ResourceGroupState resourceGroupState = ResourceGroupState.Builder
                 .create()
@@ -319,32 +300,60 @@ public class AuthUtil {
         String id = AuthRole.BASIC_USERS_EXTENDED.buildRoleWithSuffix(identifier);
         String selfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
 
-        EnumSet<Action> verbs = EnumSet.noneOf(Action.class);
-        verbs.add(Action.GET);
-        verbs.add(Action.POST);
+        EnumSet<Action> verbs = EnumSet.of(Action.GET, Action.POST);
 
-        RoleState basicUsersRole = RoleState.Builder
-                .create()
-                .withPolicy(Policy.ALLOW)
-                .withSelfLink(selfLink)
-                .withVerbs(verbs)
-                .withResourceGroupLink(BASIC_USERS_EXTENDED_RESOURCE_GROUP_LINK)
-                .withUserGroupLink(userGroupLink)
-                .build();
+        RoleState roleState = buildRoleState(selfLink, userGroupLink, BASIC_USERS_EXTENDED_RESOURCE_GROUP_LINK, verbs);
 
-        return basicUsersRole;
+        return roleState;
     }
 
     public static UserGroupState buildProjectAdminsUserGroup(String projectId) {
         String id = AuthRole.PROJECT_ADMINS.buildRoleWithSuffix(projectId);
 
-        return buildUserGroupState(id);
+        UserGroupState userGroupState = buildUserGroupState(id);
+
+        return userGroupState;
     }
 
     public static UserGroupState buildProjectMembersUserGroup(String projectId) {
         String id = AuthRole.PROJECT_MEMBERS.buildRoleWithSuffix(projectId);
 
-        return buildUserGroupState(id);
+        UserGroupState userGroupState = buildUserGroupState(id);
+
+        return userGroupState;
+    }
+
+    public static ResourceGroupState buildProjectResourceGroup(String projectId) {
+        String projectSelfLink = UriUtils.buildUriPath(ProjectFactoryService.SELF_LINK, projectId);
+        Query resourceGroupQuery = Query.Builder
+                .create()
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK, projectSelfLink, Occurance.SHOULD_OCCUR)
+                .addCollectionItemClause(ResourceState.FIELD_NAME_TENANT_LINKS, projectSelfLink, Occurance.SHOULD_OCCUR)
+                .build();
+
+        ResourceGroupState resourceGroupState = buildResourceGroupState(projectId, resourceGroupQuery);
+
+        return resourceGroupState;
+    }
+
+    public static RoleState buildProjectAdminsRole(String projectId, String userGroupLink, String resourceGroupLink) {
+        String id = AuthRole.PROJECT_ADMINS.buildRoleWithSuffix(projectId, Service.getId(userGroupLink));
+        String selfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
+        EnumSet<Action> verbs = EnumSet.allOf(Action.class);
+
+        RoleState roleState = buildRoleState(selfLink, userGroupLink, resourceGroupLink, verbs);
+
+        return roleState;
+    }
+
+    public static RoleState buildProjectMembersRole(String projectId, String userGroupLink, String resourceGroupLink) {
+        String id = AuthRole.PROJECT_MEMBERS.buildRoleWithSuffix(projectId, Service.getId(userGroupLink));
+        String selfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
+        EnumSet<Action> verbs = EnumSet.of(Action.GET);
+
+        RoleState roleState = buildRoleState(selfLink, userGroupLink, resourceGroupLink, verbs);
+
+        return roleState;
     }
 
     public static UserGroupState buildUserGroupState(String identifier) {
@@ -359,6 +368,42 @@ public class AuthUtil {
                 .build();
 
         return userGroupState;
+    }
+
+    public static ResourceGroupState buildResourceGroupState(String identifier, Query query) {
+        String selfLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK, identifier);
+
+        ResourceGroupState resourceGroupState = ResourceGroupState.Builder
+                .create()
+                .withQuery(query)
+                .withSelfLink(selfLink)
+                .build();
+
+        return resourceGroupState;
+    }
+
+    public static ResourceGroupState buildResourceGroupState(Query query, String selfLink) {
+
+        ResourceGroupState resourceGroupState = ResourceGroupState.Builder
+                .create()
+                .withQuery(query)
+                .withSelfLink(selfLink)
+                .build();
+
+        return resourceGroupState;
+    }
+
+    public static RoleState buildRoleState(String selfLink, String userGroupLink, String resourceGroupLink, EnumSet<Action> verbs) {
+        RoleState roleState = RoleState.Builder
+                .create()
+                .withPolicy(Policy.ALLOW)
+                .withSelfLink(selfLink)
+                .withVerbs(verbs)
+                .withResourceGroupLink(resourceGroupLink)
+                .withUserGroupLink(userGroupLink)
+                .build();
+
+        return roleState;
     }
 
     /**

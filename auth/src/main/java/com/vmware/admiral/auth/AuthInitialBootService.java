@@ -18,10 +18,10 @@ import static com.vmware.admiral.auth.util.AuthUtil.buildBasicUsersExtendedResou
 import static com.vmware.admiral.auth.util.AuthUtil.buildBasicUsersExtendedRole;
 import static com.vmware.admiral.auth.util.AuthUtil.buildBasicUsersResourceGroup;
 import static com.vmware.admiral.auth.util.AuthUtil.buildBasicUsersRole;
+import static com.vmware.admiral.auth.util.AuthUtil.buildBasicUsersUserGroup;
 import static com.vmware.admiral.auth.util.AuthUtil.buildCloudAdminsResourceGroup;
 import static com.vmware.admiral.auth.util.AuthUtil.buildCloudAdminsRole;
-import static com.vmware.admiral.auth.util.AuthUtil.buildEmptyBasicUsersUserGroup;
-import static com.vmware.admiral.auth.util.AuthUtil.buildEmptyCloudAdminsUserGroup;
+import static com.vmware.admiral.auth.util.AuthUtil.buildCloudAdminsUserGroup;
 
 import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.common.ManagementUriParts;
@@ -34,19 +34,17 @@ import com.vmware.xenon.common.Operation;
 public class AuthInitialBootService extends AbstractInitialBootService {
     public static final String SELF_LINK = ManagementUriParts.CONFIG + "/auth-initial-boot";
 
-
-
     @Override
     public void handlePost(Operation post) {
-        logInfo("Creating user groups.");
+        logInfo("Creating default user/resource groups and roles.");
         initInstances(post,
                 ProjectService.buildDefaultProjectInstance(),
                 //Initialize Cloud Admins global role.
-                buildEmptyCloudAdminsUserGroup(),
+                buildCloudAdminsUserGroup(),
                 buildCloudAdminsResourceGroup(),
                 buildCloudAdminsRole(DEFAULT_IDENTIFIER, CLOUD_ADMINS_USER_GROUP_LINK),
                 //Initialize Basic Users global role.
-                buildEmptyBasicUsersUserGroup(),
+                buildBasicUsersUserGroup(),
                 buildBasicUsersResourceGroup(),
                 buildBasicUsersRole(DEFAULT_IDENTIFIER, BASIC_USERS_USER_GROUP_LINK),
                 //Initialize Basic Users Extended role.

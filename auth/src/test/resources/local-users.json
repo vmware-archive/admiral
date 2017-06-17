@@ -2,10 +2,15 @@
   "users": [{
     "name": "Gloria",
     "email": "gloria@admiral.com",
-    "password": "Password1!"
+    "password": "Password1!",
+    "isAdmin": false
   }, {
     "name": "Fritz",
     "email": "fritz@admiral.com",
+    "password": "Password1!"
+  }, {
+    "name": "Admin",
+    "email": "admin@admiral.com",
     "password": "Password1!"
   }, {
     "name": "Connie",

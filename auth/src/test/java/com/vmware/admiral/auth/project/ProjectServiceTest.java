@@ -46,6 +46,10 @@ import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.ResourceGroupService;
+import com.vmware.xenon.services.common.ResourceGroupService.ResourceGroupState;
+import com.vmware.xenon.services.common.RoleService;
+import com.vmware.xenon.services.common.RoleService.RoleState;
 import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
 import com.vmware.xenon.services.common.UserService;
@@ -338,6 +342,15 @@ public class ProjectServiceTest extends AuthBaseTest {
         String adminsGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                 AuthRole.PROJECT_ADMINS.buildRoleWithSuffix(Service.getId(project
                         .documentSelfLink)));
+        String resourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                Service.getId(project.documentSelfLink));
+        String adminsRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_ADMINS.buildRoleWithSuffix(Service.getId(project
+                        .documentSelfLink), adminsGroupLink));
+        String membersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_ADMINS.buildRoleWithSuffix(Service.getId(project
+                        .documentSelfLink), membersGroupLink));
+
         // verify fritz is added.
         UserState fritzState = getDocument(UserState.class, fritzLink);
         assertTrue(fritzState.userGroupLinks.contains(membersGroupLink));
@@ -353,6 +366,18 @@ public class ProjectServiceTest extends AuthBaseTest {
 
         UserGroupState membersGroups = getDocumentNoWait(UserGroupState.class, membersGroupLink);
         assertNull(membersGroups);
+
+        // Verify that the ResourceGroup is deleted
+        ResourceGroupState resourceGroup = getDocumentNoWait(ResourceGroupState.class, resourceGroupLink);
+        assertNull(resourceGroup);
+
+        // Verify that the AdminRole is delete
+        RoleState adminRoleState = getDocumentNoWait(RoleState.class, adminsRoleLink);
+        assertNull(adminRoleState);
+
+        // Verify that the MemberRole is delete
+        RoleState memberRoleState = getDocumentNoWait(RoleState.class, membersRoleLink);
+        assertNull(memberRoleState);
 
         // Verify fritz's userstate is patched
         fritzState = getDocument(UserState.class, fritzLink);
@@ -429,6 +454,28 @@ public class ProjectServiceTest extends AuthBaseTest {
                 .PROJECT_MEMBERS.buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
         assertDocumentExists(adminsLinks);
         assertDocumentExists(membersLinks);
+    }
+
+    @Test
+    public void testResourceGroupsAutoCreatedOnProjectCreate() {
+        String resourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK, Service.getId(project.documentSelfLink));
+        assertDocumentExists(resourceGroupLink);
+    }
+
+    @Test
+    public void testRolesAutoCreatedOnProjectCreate() {
+        String adminsUserGroupId = Service.getId(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, AuthRole
+                .PROJECT_ADMINS.buildRoleWithSuffix(Service.getId(project.documentSelfLink))));
+        String membersUserGroupId = Service.getId(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, AuthRole
+                .PROJECT_MEMBERS.buildRoleWithSuffix(Service.getId(project.documentSelfLink))));
+
+        String adminsRoleLinks = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole
+                .PROJECT_ADMINS.buildRoleWithSuffix(Service.getId(project.documentSelfLink), adminsUserGroupId));
+        String membersRoleLinks = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole
+                .PROJECT_MEMBERS.buildRoleWithSuffix(Service.getId(project.documentSelfLink), membersUserGroupId));
+
+        assertDocumentExists(adminsRoleLinks);
+        assertDocumentExists(membersRoleLinks);
     }
 
     @Test
