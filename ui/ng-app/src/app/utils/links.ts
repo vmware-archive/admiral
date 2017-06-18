@@ -19,6 +19,7 @@ export class Links {
   public static CONTAINER_LOGS = Links.RESOURCES + '/container-logs';
   public static POD_LOGS = Links.RESOURCES + '/kubernetes-pod-logs';
   public static CLUSTERS = Links.RESOURCES + '/clusters';
+  public static GROUPS = '/groups';
   public static PROJECTS = '/projects';
 
   public static COMPOSITE_DESCRIPTIONS = Links.RESOURCES + '/composite-descriptions';

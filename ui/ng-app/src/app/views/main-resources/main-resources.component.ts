@@ -13,6 +13,7 @@ import { FT } from './../../utils/ft';
 import { Component, OnInit, ViewEncapsulation, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { Router, NavigationEnd } from '@angular/router';
+import { ProjectService } from './../../utils/project.service';
 
 @Component({
   selector: 'app-main-resources',
@@ -44,7 +45,10 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
 
     formerViewPath;
 
-    constructor(private router: Router) { }
+    selectedProject;
+    projects;
+
+    constructor(private router: Router, private ps: ProjectService) { }
 
     ngOnInit() {
       this.routeObserve = this.router.events.subscribe((event) => {
@@ -62,9 +66,40 @@ export class MainResourcesComponent implements OnInit, OnDestroy {
           this.formerViewPath = formerViewPath;
         }
       });
+
+      this.ps.list().then((result) => {
+        this.projects = result.documents;
+
+        if (!this.projects || this.projects.length === 0) {
+          return;
+        }
+
+        this.selectedProject = null;
+        let localProject = this.ps.getSelectedProject();
+
+        if (localProject) {
+          this.projects.forEach(p => {
+            if ((p.documentSelfLink && p.documentSelfLink === localProject.documentSelfLink) ||
+              (p.id && p.id === localProject.id)) {
+              this.selectedProject = p;
+            }
+          });
+        }
+
+        if (!this.selectedProject) {
+          this.selectedProject = this.projects[0];
+        }
+
+        this.ps.setSelectedProject(this.selectedProject);
+      });
     }
 
     ngOnDestroy() {
       this.routeObserve.unsubscribe();
+    }
+
+    selectProject(project) {
+      this.selectedProject = project
+      this.ps.setSelectedProject(this.selectedProject);
     }
 }

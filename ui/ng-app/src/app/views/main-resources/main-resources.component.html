@@ -11,15 +11,14 @@
 
 <nav class="sidenav">
   <section class="sidenav-content">
-      <clr-dropdown *ngIf="!embeddedMode" clrMenuPosition="bottom-left" class="project-selector">
+      <clr-dropdown clrMenuPosition="bottom-left" class="project-selector">
         <button class="btn btn-link" clrDropdownToggle>
-          <div class="project-caret">Project <clr-icon shape="caret down"></clr-icon></div>
-          <div class="project-label">Dev</div>
+          <div *ngIf="embeddedMode" class="project-caret">Group <clr-icon shape="caret down"></clr-icon></div>
+          <div *ngIf="!embeddedMode" class="project-caret">Project <clr-icon shape="caret down"></clr-icon></div>
+          <div class="project-label">{{selectedProject | projectName}}</div>
         </button>
         <clr-dropdown-menu>
-          <a href="..." clrDropdownItem>Project Dev</a>
-          <a href="..." clrDropdownItem>Project Stage</a>
-          <a href="..." clrDropdownItem>Project Test</a>
+          <a *ngFor="let p of projects" (click)="selectProject(p)" clrDropdownItem>{{p | projectName}}</a>
         </clr-dropdown-menu>
       </clr-dropdown>
       <!--a class="nav-link" routerLink="dashboard" routerLinkActive="active">Dashboard</a-->
