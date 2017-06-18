@@ -12,6 +12,7 @@
 package com.vmware.admiral.auth.idm;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -36,6 +37,130 @@ import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsSe
 public class RoleRestrictionsTest extends AuthBaseTest {
     public static final String EXPECTED_ILLEGAL_ACCESS_ERROR_MESSAGE = "Should've thrown IllegalAccessError!";
     public static final String FORBIDDEN = "forbidden";
+    public static final String FIRST_CERTIFICATE_PATH = "test_ssl_trust.PEM";
+    public static final String SECOND_CERTIFICATE_PATH = "test_ssl_trust2.PEM";
+
+    @Test
+    public void testClaudAdminHasAccessToCredentials() throws Throwable {
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+
+        AuthCredentialsServiceState cred = new AuthCredentialsServiceState();
+        cred.userEmail = "test";
+
+        // POST
+        AuthCredentialsServiceState createdState = doPost(cred, AuthCredentialsService.FACTORY_LINK);
+        assertNotNull(createdState);
+        assertNotNull(createdState.documentSelfLink);
+
+        // GET
+        AuthCredentialsServiceState retrievedState = getDocument(AuthCredentialsServiceState.class, createdState.documentSelfLink);
+        assertNotNull(retrievedState);
+
+        // PUT
+        createdState.userEmail = "updated-name";
+        AuthCredentialsServiceState updatedState = doPut(createdState);
+        assertNotNull(updatedState);
+        assertTrue(createdState.userEmail.equals(updatedState.userEmail));
+
+        // DELETE
+        doDelete(UriUtils.buildUri(host, createdState.documentSelfLink), false);
+        retrievedState = getDocumentNoWait(AuthCredentialsServiceState.class, createdState.documentSelfLink);
+        assertNull(retrievedState);
+    }
+
+    @Test
+    public void testClaudAdminHasAccessToCertificates() throws Throwable {
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+
+        SslTrustCertificateState cert = new SslTrustCertificateState();
+        cert.certificate = CommonTestStateFactory.getFileContent(FIRST_CERTIFICATE_PATH).trim();
+
+        // POST
+        SslTrustCertificateState createdState = doPost(cert, SslTrustCertificateService.FACTORY_LINK);
+        assertNotNull(createdState);
+        assertNotNull(createdState.documentSelfLink);
+
+        // GET
+        SslTrustCertificateState retrievedState = getDocument(SslTrustCertificateState.class, createdState.documentSelfLink);
+        assertNotNull(retrievedState);
+
+        // PUT
+        createdState.certificate = CommonTestStateFactory.getFileContent(SECOND_CERTIFICATE_PATH).trim();
+        SslTrustCertificateState updatedState = doPut(createdState);
+        assertNotNull(updatedState);
+        assertTrue(createdState.certificate.equals(updatedState.certificate));
+
+        // DELETE
+        doDelete(UriUtils.buildUri(host, createdState.documentSelfLink), false);
+        retrievedState = getDocumentNoWait(SslTrustCertificateState.class, createdState.documentSelfLink);
+        assertNull(retrievedState);
+    }
+
+    @Test
+    public void testClaudAdminHasAccessToRegistries() throws Throwable {
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+
+        RegistryState registry = new RegistryState();
+        registry.name = "test";
+
+        // POST
+        RegistryState createdState = doPost(registry, RegistryService.FACTORY_LINK);
+        assertNotNull(createdState);
+        assertNotNull(createdState.documentSelfLink);
+
+        // GET
+        RegistryState retrievedState = getDocument(RegistryState.class, createdState.documentSelfLink);
+        assertNotNull(retrievedState);
+
+        // PUT
+        createdState.name = "updated-name";
+        RegistryState updatedState = doPut(createdState);
+        assertNotNull(updatedState);
+        assertTrue(createdState.name.equals(updatedState.name));
+
+        // DELETE
+        doDelete(UriUtils.buildUri(host, createdState.documentSelfLink), false);
+        retrievedState = getDocumentNoWait(RegistryState.class, createdState.documentSelfLink);
+        assertNull(retrievedState);
+    }
+
+    @Test
+    public void testClaudAdminHasAccessToProjects() throws Throwable {
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+
+        ProjectState project = new ProjectState();
+        project.name = "test";
+
+        // POST
+        ProjectState createdState = doPost(project, ProjectFactoryService.SELF_LINK);
+        assertNotNull(createdState);
+        assertNotNull(createdState.documentSelfLink);
+
+        // GET
+        ProjectState retrievedState = getDocument(ProjectState.class, createdState.documentSelfLink);
+        assertNotNull(retrievedState);
+
+        // PUT
+        createdState.name = "updated-name";
+        ProjectState updatedState = doPut(createdState);
+        assertNotNull(updatedState);
+        assertTrue(createdState.name.equals(updatedState.name));
+
+        // DELETE
+        doDelete(UriUtils.buildUri(host, createdState.documentSelfLink), false);
+        retrievedState = getDocumentNoWait(ProjectState.class, createdState.documentSelfLink);
+        assertNull(retrievedState);
+    }
+
+    @Test
+    public void testClaudAdminHasAccessToConfiguration() throws Throwable {
+        // TODO: WIP
+    }
+
+    @Test
+    public void testClaudAdminHasAccessToLogs() throws Throwable {
+        // TODO: WIP
+    }
 
     @Test
     public void testBasicUserRestrictionsToCredentials() throws Throwable {
@@ -67,7 +192,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
     public void testBasicUserRestrictionsToCertificates() throws Throwable {
 
         SslTrustCertificateState cert = new SslTrustCertificateState();
-        cert.certificate = CommonTestStateFactory.getFileContent("test_ssl_trust.PEM").trim();
+        cert.certificate = CommonTestStateFactory.getFileContent(FIRST_CERTIFICATE_PATH).trim();
 
         // GET
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
