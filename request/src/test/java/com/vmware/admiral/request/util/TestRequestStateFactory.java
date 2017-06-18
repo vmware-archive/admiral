@@ -33,6 +33,12 @@ import com.vmware.admiral.compute.container.ContainerDescriptionService.Containe
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.PortBinding;
+import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerBackendDescription;
+import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerDescriptionService.ContainerLoadBalancerDescription;
+import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerFrontendDescription;
+import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerHealthConfig;
+import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerService
+        .ContainerLoadBalancerState;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkService.ContainerNetworkState;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
@@ -236,6 +242,55 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
             state.instanceAdapterReference = new URI("http://instanceAdapterReference");
         } catch (URISyntaxException e) {
         }
+        return state;
+    }
+
+    public static ContainerLoadBalancerDescription createContainerLoadBalancerDescription(String
+            name) {
+        ContainerLoadBalancerDescription desc = new ContainerLoadBalancerDescription();
+        desc.documentSelfLink = "test-container-lb-" + name;
+        desc.name = name;
+        desc.tenantLinks = getTenantLinks();
+        desc.customProperties = new HashMap<>();
+        desc.frontends = new ArrayList<>();
+        ContainerLoadBalancerFrontendDescription frontend = new ContainerLoadBalancerFrontendDescription();
+        frontend.port = 80;
+        frontend.backends = new ArrayList<>();
+        ContainerLoadBalancerBackendDescription backend = new ContainerLoadBalancerBackendDescription();
+        backend.service = "wp";
+        backend.port = 90;
+        desc.links = new String[] {"wp"};
+        frontend.backends.add(backend);
+        frontend.healthConfig = new ContainerLoadBalancerHealthConfig();
+        frontend.healthConfig.port = 80;
+        frontend.healthConfig.protocol = "http";
+        frontend.healthConfig.path = "/test";
+        desc.frontends.add(frontend);
+        desc.tenantLinks = getTenantLinks();
+        return desc;
+    }
+
+    public static ContainerLoadBalancerState createContainerLoadBalancerState(String name) {
+        ContainerLoadBalancerState state = new ContainerLoadBalancerState();
+        state.name = name;
+        state.tenantLinks = getTenantLinks();
+        state.customProperties = new HashMap<>();
+        state.frontends = new ArrayList<>();
+        state.descriptionLink = "lb-desc";
+        ContainerLoadBalancerFrontendDescription frontend = new ContainerLoadBalancerFrontendDescription();
+        frontend.port = 80;
+        frontend.backends = new ArrayList<>();
+        ContainerLoadBalancerBackendDescription backend = new ContainerLoadBalancerBackendDescription();
+        backend.service = "wp";
+        backend.port = 90;
+        state.links = new String[] {"wp"};
+        frontend.backends.add(backend);
+        frontend.healthConfig = new ContainerLoadBalancerHealthConfig();
+        frontend.healthConfig.port = 80;
+        frontend.healthConfig.protocol = "http";
+        frontend.healthConfig.path = "/test";
+        state.frontends.add(frontend);
+        state.tenantLinks = getTenantLinks();
         return state;
     }
 

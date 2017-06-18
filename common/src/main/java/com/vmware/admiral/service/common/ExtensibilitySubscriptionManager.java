@@ -332,6 +332,8 @@ public class ExtensibilitySubscriptionManager extends StatelessService {
         String stateAsJson = Utils.toJson(state);
         ServiceTaskCallbackResponse notificationPayloadData = Utils.fromJson(
                 stateAsJson, notificationPayload.getClass());
+        notificationPayloadData.taskInfo.stage = TaskStage.STARTED;
+        notificationPayloadData.taskSubStage = DefaultSubStage.CREATED;
         String payLoadAsJson = Utils.toJson(notificationPayloadData);
         // Filter task fields in order to leave only notification payload fields.
         T filteredTask = (T) Utils.fromJson(payLoadAsJson, state.getClass());

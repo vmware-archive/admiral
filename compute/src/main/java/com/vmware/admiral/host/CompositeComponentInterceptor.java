@@ -17,6 +17,7 @@ import com.vmware.admiral.compute.container.CompositeComponentRegistry;
 import com.vmware.admiral.compute.container.CompositeComponentRegistry.ComponentMeta;
 import com.vmware.admiral.compute.container.CompositeComponentService.CompositeComponent;
 import com.vmware.admiral.compute.container.ContainerService;
+import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerService;
 import com.vmware.admiral.compute.container.util.CompositeComponentNotifier;
 import com.vmware.admiral.compute.kubernetes.service.DeploymentService;
 import com.vmware.admiral.compute.kubernetes.service.PodService;
@@ -45,6 +46,7 @@ public class CompositeComponentInterceptor {
         registerType(registry, ClosureService.class);
         registerType(registry, ComputeNetworkService.class);
         registerType(registry, LoadBalancerService.class);
+        registerType(registry, ContainerLoadBalancerService.class);
 
         registerType(registry, DeploymentService.class);
         registerType(registry, PodService.class);

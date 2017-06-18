@@ -13,6 +13,7 @@ package com.vmware.admiral.adapter.docker.service;
 
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_COMMAND_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_CONFIG_PROP_NAME;
+import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_CREATE_USE_BUNDLED_IMAGE;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_CREATE_USE_LOCAL_IMAGE_WITH_PRIORITY;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_DOMAINNAME_PROP_NAME;
 import static com.vmware.admiral.adapter.docker.service.DockerAdapterCommandExecutor.DOCKER_CONTAINER_ENTRYPOINT_PROP_NAME;
@@ -479,13 +480,20 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
                 processLoadedImageData(context, imageData, ref, imageCompletionHandler);
             });
         } else if (shouldTryCreateFromLocalImage(context.containerDescription)) {
-            // try to create the container from a local image first. Only if the image is not
-            // available it will be fetched according to the settings.
-            logInfo("Trying to create the container using local image first...");
-            handleExceptions(
-                    context.request,
-                    context.operation,
-                    () -> processCreateContainer(context, 0));
+            if (getBundledImage(context.containerDescription) != null) {
+                String ref = getBundledImage(context.containerDescription);
+                imageRetrievalManager.retrieveAgentImage(ref, context.request, (imageData) -> {
+                    processLoadedImageData(context, imageData, ref, imageCompletionHandler);
+                });
+            } else {
+                // try to create the container from a local image first. Only if the image is not
+                // available it will be fetched according to the settings.
+                logInfo("Trying to create the container using local image first...");
+                handleExceptions(
+                        context.request,
+                        context.operation,
+                        () -> processCreateContainer(context, 0));
+            }
         } else if (imageReference == null) {
             // canonicalize the image name (add latest tag if needed)
             String fullImageName = DockerImage.fromImageName(context.containerDescription.image)
@@ -875,6 +883,14 @@ public class DockerAdapterService extends AbstractDockerAdapterService {
         // Flag that forces container to be started from a local image and only if the image is not
         // available download it from a registry.
         return Boolean.valueOf(useLocalImageFirst);
+    }
+
+    private String getBundledImage(ContainerDescription containerDescription) {
+        if (containerDescription.customProperties == null) {
+            return null;
+        }
+        // container image which is bundled and should be uploaded to the host.
+        return containerDescription.customProperties.get(DOCKER_CONTAINER_CREATE_USE_BUNDLED_IMAGE);
     }
 
     /**

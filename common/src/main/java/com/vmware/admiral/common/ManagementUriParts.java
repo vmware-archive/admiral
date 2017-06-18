@@ -170,6 +170,15 @@ public interface ManagementUriParts {
     String REQUEST_LOAD_BALANCER_OPERATION_TASKS = REQUEST + "/load-balancer-resource-operations";
     String REQUEST_LOAD_BALANCER_REMOVAL_TASKS = REQUEST + "/load-balancer-removal-tasks";
 
+    String REQUEST_CONTAINER_LOAD_BALANCER_ALLOCATION_TASKS = REQUEST +
+            "/container-load-balancer-allocation-tasks";
+    String REQUEST_CONTAINER_LOAD_BALANCER_PROVISION_TASKS = REQUEST +
+            "/container-load-balancer-provision-tasks";
+    String REQUEST_CONTAINER_LOAD_BALANCER_REMOVAL_TASKS = REQUEST +
+            "/container-load-balancer-removal-tasks";
+    String REQUEST_CONTAINER_LOAD_BALANCER_RECONFIG_TASKS = REQUEST +
+            "/container-load-balancer-reconfig-tasks";
+
     String REQUEST_CONTAINER_NETWORK_ALLOCATION_TASKS = REQUEST
             + "/container-network-allocation-tasks";
     String REQUEST_CONTAINER_NETWORK_REMOVAL_TASKS = REQUEST + "/container-network-removal-tasks";

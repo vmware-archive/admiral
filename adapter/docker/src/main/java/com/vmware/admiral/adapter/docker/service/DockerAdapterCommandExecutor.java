@@ -73,9 +73,11 @@ public interface DockerAdapterCommandExecutor {
     String DOCKER_CONTAINER_NO_STREAM = "NoStream";
 
     // Flag that forces container creation from a local image and only if the image is not available
-    // download it
-    // from a registry.
+    // download it from a registry.
     String DOCKER_CONTAINER_CREATE_USE_LOCAL_IMAGE_WITH_PRIORITY = "UseLocalImageWithPriority";
+    // Specifies the container image which is bundled with admiral and should be uploaded to the
+    // host. Must be paired with DOCKER_CONTAINER_CREATE_USE_LOCAL_IMAGE_WITH_PRIORITY.
+    String DOCKER_CONTAINER_CREATE_USE_BUNDLED_IMAGE = "UseBundledImage";
 
     String DOCKER_EXEC_ATTACH_STDIN_PROP_NAME = "AttachStdin";
     String DOCKER_EXEC_ATTACH_STDOUT_PROP_NAME = "AttachStdout";

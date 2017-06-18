@@ -40,6 +40,7 @@ import com.vmware.admiral.host.interceptor.ProfileInterceptor;
 import com.vmware.admiral.host.interceptor.ProjectInterceptor;
 import com.vmware.admiral.host.interceptor.ResourceGroupInterceptor;
 import com.vmware.admiral.host.interceptor.SchedulerPlacementZoneInterceptor;
+import com.vmware.admiral.request.ContainerLoadBalancerBootstrapService;
 import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.admiral.service.common.ConfigurationService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationState;
@@ -255,6 +256,8 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
 
         registerForServiceAvailability(CaSigningCertService.startTask(this), true,
                 CaSigningCertService.FACTORY_LINK);
+        registerForServiceAvailability(ContainerLoadBalancerBootstrapService.startTask(this), true,
+                ContainerLoadBalancerBootstrapService.FACTORY_LINK);
 
         HostInitComputeServicesConfig.startServices(this, false);
         HostInitComputeBackgroundServicesConfig.startServices(this);

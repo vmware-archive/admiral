@@ -18,6 +18,11 @@ import com.vmware.admiral.request.ClusteringTaskService;
 import com.vmware.admiral.request.ContainerAllocationTaskFactoryService;
 import com.vmware.admiral.request.ContainerControlLoopService;
 import com.vmware.admiral.request.ContainerHostRemovalTaskFactoryService;
+import com.vmware.admiral.request.ContainerLoadBalancerAllocationTaskService;
+import com.vmware.admiral.request.ContainerLoadBalancerBootstrapService;
+import com.vmware.admiral.request.ContainerLoadBalancerProvisionTaskService;
+import com.vmware.admiral.request.ContainerLoadBalancerReconfigureTaskService;
+import com.vmware.admiral.request.ContainerLoadBalancerRemovalTaskService;
 import com.vmware.admiral.request.ContainerNetworkAllocationTaskService;
 import com.vmware.admiral.request.ContainerNetworkProvisionTaskService;
 import com.vmware.admiral.request.ContainerNetworkRemovalTaskService;
@@ -96,6 +101,11 @@ public class HostInitRequestServicesConfig extends HostInitServiceHelper {
                 LoadBalancerAllocationTaskService.class,
                 LoadBalancerProvisionTaskService.class,
                 LoadBalancerRemovalTaskService.class,
+                ContainerLoadBalancerAllocationTaskService.class,
+                ContainerLoadBalancerProvisionTaskService.class,
+                ContainerLoadBalancerRemovalTaskService.class,
+                ContainerLoadBalancerReconfigureTaskService.class,
+                ContainerLoadBalancerBootstrapService.class,
                 ContainerNetworkRemovalTaskService.class,
                 ContainerVolumeAllocationTaskService.class,
                 ContainerVolumeProvisionTaskService.class,

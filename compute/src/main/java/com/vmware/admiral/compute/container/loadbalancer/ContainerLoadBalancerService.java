@@ -26,6 +26,7 @@ import com.vmware.admiral.adapter.docker.util.DockerPortMapping;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.YamlMapper;
+import com.vmware.admiral.compute.Composable;
 import com.vmware.admiral.compute.container.PortBinding;
 import com.vmware.admiral.compute.container.ServiceNetwork;
 import com.vmware.photon.controller.model.ServiceUtils;
@@ -50,7 +51,7 @@ public class ContainerLoadBalancerService extends StatefulService {
      * Represents an instance of a container load balancer.
      */
     @JsonFilter(YamlMapper.SERVICE_DOCUMENT_FILTER)
-    public static class ContainerLoadBalancerState extends ResourceState {
+    public static class ContainerLoadBalancerState extends ResourceState implements Composable {
 
         /**
          * Link to the load balancer definition.
@@ -60,6 +61,11 @@ public class ContainerLoadBalancerService extends StatefulService {
                 ServiceDocumentDescription.PropertyUsageOption.SINGLE_ASSIGNMENT })
         @UsageOption(option = ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE)
         public String descriptionLink;
+
+        @Documentation(description = "Link to the container backing of the load balancer.")
+        @PropertyOptions(usage = { ServiceDocumentDescription.PropertyUsageOption.LINK })
+        @UsageOption(option = ServiceDocumentDescription.PropertyUsageOption.SERVICE_USE)
+        public String containerLink;
 
         @Documentation(description = "Link to CompositeComponent when a load balancer is part of "
                 + "App/Composition request.")
@@ -100,6 +106,11 @@ public class ContainerLoadBalancerService extends StatefulService {
         @Documentation(description = "Joined networks.")
         @UsageOption(option = ServiceDocumentDescription.PropertyUsageOption.OPTIONAL)
         public List<ServiceNetwork> networks;
+
+        @Override
+        public String retrieveCompositeComponentLink() {
+            return compositeComponentLink;
+        }
     }
 
     public ContainerLoadBalancerService() {

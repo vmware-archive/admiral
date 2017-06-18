@@ -26,6 +26,7 @@ import com.vmware.admiral.compute.BindingUtils;
 import com.vmware.admiral.compute.ComponentDescription;
 import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.ContainerDescriptionService.ContainerDescription;
+import com.vmware.admiral.compute.container.loadbalancer.ContainerLoadBalancerDescriptionService.ContainerLoadBalancerDescription;
 import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionService.ContainerNetworkDescription;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.ComputeNetworkDescription;
@@ -68,6 +69,8 @@ public final class AffinityFilters {
             // TODO initialize(host, (ComputeNetworkDescription) desc)
         } else if (LoadBalancerDescription.class.isInstance(desc)) {
             initialize(host, (LoadBalancerDescription) desc);
+        } else if (ContainerLoadBalancerDescription.class.isInstance(desc)) {
+            //TODO initialize(host, (ContainerLoadBalancerDescription) desc);
         } else if (ContainerNetworkDescription.class.isInstance(desc)) {
             initialize(host, (ContainerNetworkDescription) desc);
         } else if (ComponentDescription.class.isInstance(desc)) {
