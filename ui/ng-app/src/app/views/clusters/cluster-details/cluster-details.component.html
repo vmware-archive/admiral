@@ -1,0 +1,25 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
+<clr-icon shape="rack-server" size="36"></clr-icon>
+<h3 class="cluster-details-header-title">{{entity?.name}}</h3>
+
+<clr-tabs>
+    <clr-tab-link [clrTabLinkId]="'summaryTab'" [clrTabLinkActive]="true">{{"clusters.summary.title" | i18n}}</clr-tab-link>
+    <clr-tab-link [clrTabLinkId]="'resourcesTab'">{{"clusters.resources.title" | i18n}}</clr-tab-link>
+
+    <clr-tab-content [clrTabContentId]="'summaryContent'" [clrTabContentActive]="true">
+        <app-cluster-summary [cluster]="entity"></app-cluster-summary>
+    </clr-tab-content>
+    <clr-tab-content [clrTabContentId]="'resourcesContent'">
+        <app-cluster-resources [cluster]="entity"></app-cluster-resources>
+    </clr-tab-content>
+</clr-tabs>

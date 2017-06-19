@@ -28,6 +28,7 @@ import { DashboardComponent } from './views/dashboard/dashboard.component';
 import { FormerPlaceholderViewComponent } from './views/former-view/former-view.component';
 import { RepositoryComponent } from './views/hbr/repository/repository.component';
 import { ClustersComponent } from './views/clusters/clusters.component';
+import { ClusterDetailsComponent } from './views/clusters/cluster-details/cluster-details.component';
 import { ClusterCreateComponent } from './views/clusters/cluster-create/cluster-create.component';
 
 import { PodListComponent } from './kubernetes/pods/list/pod-list.component';
@@ -67,6 +68,9 @@ export const ROUTES: Routes = [
                 children: [
                     { path: 'new', component: ClusterCreateComponent, data: {
                         navigationContainerType: NavigationContainerType.Default
+                    }},
+                    { path: ':id', component: ClusterDetailsComponent, data: {
+                        navigationContainerType: NavigationContainerType.Fullscreen
                     }}
                 ]
             },

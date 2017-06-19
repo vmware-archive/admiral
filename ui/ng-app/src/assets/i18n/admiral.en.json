@@ -108,6 +108,14 @@
     "containers": "Containers",
     "cpu": "CPU",
     "memory": "Memory",
+    "summary": {
+      "title": "Summary",
+      "type": "Type:",
+      "status": "Status:"
+    },
+    "resources": {
+      "title": "Resources"
+    },
     "edit": {
       "titleNew": "New Cluster",
       "name": "Name",

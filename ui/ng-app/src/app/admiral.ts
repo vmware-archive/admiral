@@ -37,6 +37,9 @@ import { DashboardComponent } from './views/dashboard/dashboard.component';
 import { FormerViewComponent, FormerPlaceholderViewComponent } from './views/former-view/former-view.component';
 import { RepositoryComponent } from './views/hbr/repository/repository.component';
 import { ClustersComponent } from './views/clusters/clusters.component';
+import { ClusterDetailsComponent } from './views/clusters/cluster-details/cluster-details.component';
+import { ClusterSummaryComponent } from './views/clusters/cluster-details/cluster-summary.component';
+import { ClusterResourcesComponent } from './views/clusters/cluster-details/cluster-resources.component';
 import { ClusterCreateComponent } from './views/clusters/cluster-create/cluster-create.component';
 
 import { GridViewComponent } from './components/grid-view/grid-view.component';
@@ -89,6 +92,9 @@ export const ADMIRAL_DECLARATIONS = [
   FormerPlaceholderViewComponent,
   RepositoryComponent,
   ClustersComponent,
+  ClusterDetailsComponent,
+  ClusterSummaryComponent,
+  ClusterResourcesComponent,
   ClusterCreateComponent,
 
   GridViewComponent,
