@@ -54,7 +54,7 @@ export default Vue.component('vsphere-storage-profile-editor', {
       this.model.storageItems.asMutable({deep: true}) || [];
     let storageItemsExpanded = this.model.storageItemsExpanded;
     return {
-      storageItemsSize: this.model.storageItems && this.model.storageItems.length,
+      storageItemsSize: this.model.storageItems && this.model.storageItems.length || 0,
       storageItems: storageItems,
       storageItemsExpanded: storageItemsExpanded
     };

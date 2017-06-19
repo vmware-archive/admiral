@@ -45,7 +45,7 @@ export default Vue.component('aws-storage-profile-editor', {
     let storageItems = this.model.storageItems &&
       this.model.storageItems.asMutable({deep: true}) || [];
     return {
-      storageItemsSize: this.model.storageItems && this.model.storageItems.length,
+      storageItemsSize: this.model.storageItems && this.model.storageItems.length || 0,
       storageItems: storageItems
     };
   },

@@ -2303,13 +2303,14 @@ services.loadAzureStorageAccounts = function(nameFilter) {
       op: 'eq'
     }];
   }
-  storageQuery['customProperties.storageType'] = [{
+  storageQuery['customProperties/storageType'] = [{
     val: 'Microsoft.Storage/storageAccounts',
     op: 'eq'
   }];
-  return get(links.STORAGE_DESCRIPTIONS, {
-    [ODATA_FILTER_PROP_NAME]: serviceUtils.buildOdataQuery(storageQuery)
-  });
+  return get(mergeUrl(links.STORAGE_DESCRIPTIONS, {
+    [ODATA_FILTER_PROP_NAME]: serviceUtils.buildOdataQuery(storageQuery),
+    documentType: true
+  }));
 };
 
 services.updateStorageAccount = function(storageAccount) {
@@ -2332,14 +2333,15 @@ services.loadVsphereDatastores = function(endpointLink, nameFilter, storagePolic
     }];
   }
   if (storagePolicyLink) {
-    datastoreQuery['groupLinks.item'] = [{
+    datastoreQuery['groupLinks/item'] = [{
       val: storagePolicyLink,
       op: 'eq'
     }];
   }
-  return get(links.STORAGE_DESCRIPTIONS, {
-    [ODATA_FILTER_PROP_NAME]: serviceUtils.buildOdataQuery(datastoreQuery)
-  });
+  return get(mergeUrl(links.STORAGE_DESCRIPTIONS, {
+    [ODATA_FILTER_PROP_NAME]: serviceUtils.buildOdataQuery(datastoreQuery),
+    documentType: true
+  }));
 };
 
 services.updateVsphereDatastore = function(datastore) {
@@ -2350,11 +2352,11 @@ services.updateVsphereDatastore = function(datastore) {
 
 services.loadVsphereStoragePolicies = function(endpointLink, nameFilter) {
   let storagePoliciesQuery = {};
-  storagePoliciesQuery['customProperties.__type'] = [{
+  storagePoliciesQuery['customProperties/__type'] = [{
     val: 'STORAGE',
     op: 'eq'
   }];
-  storagePoliciesQuery['customProperties.__endpointLink'] = [{
+  storagePoliciesQuery['customProperties/__endpointLink'] = [{
     val: endpointLink,
     op: 'eq'
   }];
@@ -2364,9 +2366,10 @@ services.loadVsphereStoragePolicies = function(endpointLink, nameFilter) {
       op: 'eq'
     }];
   }
-  return get(links.RESOURCE_GROUPS, {
-    [ODATA_FILTER_PROP_NAME]: serviceUtils.buildOdataQuery(storagePoliciesQuery)
-  });
+  return get(mergeUrl(links.RESOURCE_GROUPS, {
+    [ODATA_FILTER_PROP_NAME]: serviceUtils.buildOdataQuery(storagePoliciesQuery),
+    documentType: true
+  }));
 };
 
 services.updateVsphereStoragePolicy = function(storagePolicy) {

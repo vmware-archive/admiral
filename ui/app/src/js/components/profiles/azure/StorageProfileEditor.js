@@ -46,7 +46,7 @@ export default Vue.component('azure-storage-profile-editor', {
     let storageItems = this.model.storageItemsExpanded &&
       this.model.storageItemsExpanded.asMutable({deep: true}) || [];
     return {
-      storageItemsSize: this.model.storageItems && this.model.storageItems.length,
+      storageItemsSize: this.model.storageItems && this.model.storageItems.length || 0,
       storageItems: storageItems
     };
   },
@@ -127,7 +127,7 @@ Vue.component('azure-storage-item', {
     if (this.tagLinks.length) {
       services.loadTags(this.tagLinks).then((tagsResponse) => {
         let tagsData = Object.values(tagsResponse);
-        this.storageItem.tags = tagsData.map(({key, value}) => ({
+        this.tags = this.storageItem.tags = tagsData.map(({key, value}) => ({
           key,
           value
         }));
