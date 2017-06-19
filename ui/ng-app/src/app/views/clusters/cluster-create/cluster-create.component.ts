@@ -42,6 +42,7 @@ export class ClusterCreateComponent implements AfterViewInit, OnInit {
   clusterForm = new FormGroup({
     name: new FormControl('', Validators.required),
     description: new FormControl(''),
+    type: new FormControl('VCH'),
     url: new FormControl('', Validators.required),
     credentials: new FormControl('')
   });
@@ -87,7 +88,7 @@ export class ClusterCreateComponent implements AfterViewInit, OnInit {
         'address': formInput.url,
         'tenantLinks': [Links.PROJECTS + '/default-project'],
         'customProperties': {
-          '__containerHostType': 'VCH',
+          '__containerHostType': formInput.type,
           '__adapterDockerType': 'API'
         }
       };

@@ -113,6 +113,7 @@
       "name": "Name",
       "nameRequired": "Name is required.",
       "description": "Description",
+      "type": "Type",
       "url": "URL",
       "urlRequired": "Cluster URL is required.",
       "credentials": "Credentials"
