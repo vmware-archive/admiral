@@ -23,7 +23,15 @@ export class DeleteConfirmationComponent {
 
   @Input() title: string;
   @Input() description: string;
-  @Input() visible: boolean;
+
+  show: boolean = false;
+  @Input() get visible() : boolean {
+      return this.show;
+  }
+  set visible (value: boolean) {
+      this.show = value;
+      this.isDeleting = false;
+  }
 
   @Output() alertChange: EventEmitter<string> = new EventEmitter();
   @Output() onDelete: EventEmitter<any> = new EventEmitter();

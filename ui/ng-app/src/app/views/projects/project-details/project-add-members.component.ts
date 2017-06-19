@@ -10,8 +10,9 @@
  */
 
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { FormGroup, FormControl } from "@angular/forms";
+import { FormGroup, FormControl, Validators } from "@angular/forms";
 import { DocumentService } from "../../../utils/document.service";
+import { Utils } from "../../../utils/utils";
 import * as I18n from 'i18next';
 
 @Component({
@@ -31,15 +32,18 @@ export class ProjectAddMembersComponent {
     @Output() onCancel: EventEmitter<any> = new EventEmitter();
 
     addMembersToProjectForm = new FormGroup({
-        memberRole: new FormControl('')
+        memberRole: new FormControl('', Validators.required)
     });
+    // form data
+    selectedMembers: any[] = [];
+    memberRoleSelection: string = 'USER';
 
-    memberRoleSelection: string;
-
+    // data
     members: any[];
     membersSuggestions: any[];
 
-    selectedMembers: any[] = [];
+    // error
+    alertMessage: string;
 
     constructor(protected service: DocumentService) { }
 
@@ -49,8 +53,6 @@ export class ProjectAddMembersComponent {
     }
 
     getMembers($eventData: any) {
-        console.log('get members query', $eventData.query);
-
         if ($eventData.query === '') {
             return [];
         }
@@ -109,21 +111,39 @@ export class ProjectAddMembersComponent {
             }
 
             this.service.patch(this.project.documentSelfLink, patchValue).then(() => {
+                this.clearState();
+
                 this.onChange.emit(null);
             }).catch((error) => {
                 if (error.status === 304) {
                     // actually success
                     // TODO correct this once backend is corrected
+                    this.clearState();
+
                     this.onChange.emit(null);
                 } else {
                     console.log("Failed to add members", error);
-                    // TODO show alert message?
+                    this.alertMessage = Utils.getErrorMessage(error)._generic;
                 }
             });
         }
     }
 
+    clearState() {
+        this.memberRoleSelection = 'USER';
+        this.members = [];
+        this.membersSuggestions = [];
+        this.selectedMembers = [];
+        this.addMembersToProjectForm.markAsPristine();
+    }
+
     addCanceled() {
+        this.clearState();
+
         this.onCancel.emit(null);
+    }
+
+    resetAlert() {
+        this.alertMessage = null;
     }
 }

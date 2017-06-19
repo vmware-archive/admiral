@@ -13,6 +13,11 @@
            (clrModalOpenChange)="addCanceled()" [clrModalSize]="'lg'">
     <h3 class="modal-title">{{ 'projects.members.addMembers.title' | i18n }}</h3>
     <div class="modal-body">
+        <clr-alert [clrAlertType]="'alert-danger'" [(clrAlertClosed)]="!alertMessage"  (clrAlertClosedChange)="resetAlert()">
+            <div class="alert-item">
+                <span class="alert-text">{{ alertMessage }}</span>
+            </div>
+        </clr-alert>
         <p>{{ description }}</p>
         <form class="form" [formGroup]="addMembersToProjectForm">
             <section class="form-block">

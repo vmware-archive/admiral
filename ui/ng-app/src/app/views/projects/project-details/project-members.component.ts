@@ -122,13 +122,16 @@ export class ProjectMembersComponent implements OnChanges {
 
     private deleteMember() {
         let patchValue;
-        if (this.memberToDelete.type === 'ADMIN') {
+
+        let isAdmin = this.project.administrators.find((admin) => {
+            return admin.email === this.memberToDelete.id;
+        });
+
+        if (isAdmin) {
             patchValue = {
                 "administrators": {"remove": [this.memberToDelete.id]}
             };
-        }
-
-        if (this.memberToDelete.type === 'USER') {
+        } else {
             patchValue = {
                 "members": {"remove": [this.memberToDelete.id]}
             };
@@ -136,22 +139,27 @@ export class ProjectMembersComponent implements OnChanges {
 
         this.service.patch(this.project.documentSelfLink, patchValue).then(() => {
             // Successfully removed member
+            this.updateStateAfterDelete();
         }).catch((error) => {
             if (error.status === 304) {
                 // Refresh data
-                this.service.get(this.project.documentSelfLink, true).then((updatedProject) => {
-                    this.memberToDelete = null;
-
-                    this.project = updatedProject;
-                    this.loadMembers();
-                }).catch((error) => {
-                    console.log("Failed to reload project data", error);
-                    this.deleteConfirmationAlert = Utils.getErrorMessage(error)._generic;
-                });
+                this.updateStateAfterDelete();
             } else {
                 console.log("Failed to remove member", error);
                 this.deleteConfirmationAlert = Utils.getErrorMessage(error)._generic;
             }
+        });
+    }
+
+    updateStateAfterDelete() {
+        this.service.get(this.project.documentSelfLink, true).then((updatedProject) => {
+            this.memberToDelete = null;
+
+            this.project = updatedProject;
+            this.loadMembers();
+        }).catch((error) => {
+            console.log("Failed to reload project data", error);
+            this.deleteConfirmationAlert = Utils.getErrorMessage(error)._generic;
         });
     }
 }

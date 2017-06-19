@@ -77,10 +77,12 @@ export class ProjectEditMemberComponent {
 
             this.service.patch(this.project.documentSelfLink, patchValue).then(() => {
                 this.onChange.emit(null);
+                this.editMemberToProjectForm.markAsPristine();
             }).catch((error) => {
                 if (error.status === 304) {
                     // actually success
                     this.onChange.emit(null);
+                    this.editMemberToProjectForm.markAsPristine();
                 } else {
                     console.log("Failed to edit member", error);
                     // todo show alert message?
