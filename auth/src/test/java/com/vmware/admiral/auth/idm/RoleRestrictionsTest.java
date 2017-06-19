@@ -275,6 +275,11 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         // TODO: WIP
     }
 
+    @Test
+    public void testBasicUserHasAccessToResourcesWhichBelongsToHim() throws Throwable {
+        // TODO: Add a test
+    }
+
     private void assertForbiddenMessage(IllegalAccessError e) {
         assertTrue(e.getMessage().toLowerCase().startsWith(FORBIDDEN));
     }

@@ -23,6 +23,7 @@ import static com.vmware.xenon.common.UriUtils.buildUriPath;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -35,13 +36,17 @@ import com.vmware.admiral.auth.idm.AuthConfigProvider;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalType;
 import com.vmware.admiral.auth.util.AuthUtil;
+import com.vmware.xenon.common.AuthorizationSetupHelper;
 import com.vmware.xenon.common.Claims;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.QueryTask.Query;
 
 public class LocalAuthConfigProvider implements AuthConfigProvider {
 
@@ -81,6 +86,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
             return;
         }
 
+        // TODO: 8?
         AtomicInteger counter = new AtomicInteger(8);
         AtomicBoolean hasError = new AtomicBoolean(false);
 
@@ -124,42 +130,69 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
         return config;
     }
 
-    private static void createUsers(ServiceHost host, Config config, Operation post) {
+    private static DeferredResult<List<Operation>> createUsers(ServiceHost host, Config config, Operation post) {
         if (config == null || config.users == null) {
-            createGroups(host, config, post);
-            return;
+            return createGroups(host, config, post);
         }
 
-        AtomicInteger counter = new AtomicInteger(config.users.size());
+        List<DeferredResult<Operation>> usersDeferredResults = new ArrayList<>();
 
-        for (User user : config.users) {
-            createUserIfNotExist(host, user, () -> {
-                if (counter.decrementAndGet() == 0) {
-                    createGroups(host, config, post);
-                }
+        config.users.stream().forEach((user) -> {
+            usersDeferredResults.add(
+                    createUserIfNotExist(host, user).whenComplete((op, ex) -> {
+                        if (ex != null) {
+                            host.log(Level.SEVERE, "Could not initialize user '%s': %s", user.email,
+                                    Utils.toString(ex));
+                            post.fail(ex);
+                        }
+
+                        LocalPrincipalState principalState = op.getBody(LocalPrincipalState.class);
+
+                        Query query = Query.Builder.create()
+                                .addFieldClause(ServiceDocument.FIELD_NAME_AUTH_PRINCIPAL_LINK, principalState.documentSelfLink)
+                                .build();
+
+                        AuthorizationSetupHelper.create()
+                                .setHost(host)
+                                .setUserSelfLink(principalState.documentSelfLink)
+                                .setUserGroupName(principalState.id)
+                                .setResourceGroupName(principalState.id)
+                                .setRoleName(principalState.id)
+                                .setIsAdmin(false)
+                                .setResourceQuery(query)
+                                .setupRole();
+                    }));
+        });
+
+        return DeferredResult.allOf(usersDeferredResults)
+            .thenCompose((ignore) -> {
+                return createGroups(host, config, post);
             });
-        }
     }
 
-    private static void createGroups(ServiceHost host, Config config, Operation post) {
+    private static DeferredResult<List<Operation>> createGroups(ServiceHost host, Config config, Operation post) {
         if (config == null || config.groups == null) {
             post.complete();
-            return;
+            return null;
         }
 
-        AtomicInteger counter = new AtomicInteger(config.groups.size());
+        List<DeferredResult<Operation>> groupsDeferredResult = new ArrayList<>();
 
-        for (Group group : config.groups) {
-            createGroup(host, group, () -> {
-                if (counter.decrementAndGet() == 0) {
-                    post.complete();
-                }
-            });
-        }
+        config.groups.stream().forEach((group) -> {
+            groupsDeferredResult.add(
+                    createGroup(host, group).whenComplete((op, ex) -> {
+                        if (ex != null) {
+                            host.log(Level.SEVERE, "Could not initialize group '%s': %s",
+                                    group.name, Utils.toString(ex));
+                            post.fail(ex);
+                        }
+                    }));
+        });
+
+        return DeferredResult.allOf(groupsDeferredResult);
     }
 
-    private static void createUserIfNotExist(ServiceHost host, User user,
-            Runnable callback) {
+    private static DeferredResult<Operation> createUserIfNotExist(ServiceHost host, User user) {
 
         host.log(Level.INFO, "createUserIfNotExist - User '%s'...", user.email);
 
@@ -170,20 +203,14 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
         state.type = LocalPrincipalType.USER;
         state.isAdmin = user.isAdmin;
 
-        host.sendRequest(Operation.createPost(host, LocalPrincipalFactoryService.SELF_LINK)
+        Operation op = Operation.createPost(host, LocalPrincipalFactoryService.SELF_LINK)
                 .setBody(state)
-                .setReferer(host.getUri())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        host.log(Level.SEVERE, "Could not initialize user '%s': %s", user.email,
-                                Utils.toString(ex));
-                    }
-                    callback.run();
-                }));
+                .setReferer(host.getUri());
+
+        return host.sendWithDeferredResult(op);
     }
 
-    private static void createGroup(ServiceHost host, Group group, Runnable
-            callback) {
+    private static DeferredResult<Operation> createGroup(ServiceHost host, Group group) {
         host.log(Level.INFO, "createGroup - Group '%s'...", group.name);
 
         LocalPrincipalState state = new LocalPrincipalState();
@@ -193,16 +220,11 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
                 .map(u -> UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK, u))
                 .collect(Collectors.toList());
 
-        host.sendRequest(Operation.createPost(host, LocalPrincipalFactoryService.SELF_LINK)
+        Operation op = Operation.createPost(host, LocalPrincipalFactoryService.SELF_LINK)
                 .setBody(state)
-                .setReferer(host.getUri())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        host.log(Level.SEVERE, "Could not initialize group '%s': %s",
-                                group.name, Utils.toString(ex));
-                    }
-                    callback.run();
-                }));
+                .setReferer(host.getUri());
+
+        return host.sendWithDeferredResult(op);
     }
 
     @Override
