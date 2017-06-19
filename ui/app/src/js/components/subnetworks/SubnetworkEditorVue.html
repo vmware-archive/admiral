@@ -44,11 +44,13 @@
       <checkbox-group
         :label="i18n('app.subnetwork.edit.supportPublicIpAddressLabel')"
         :value="model.item.supportPublicIpAddress"
+        :disabled="model.endpointType === 'aws' || model.endpointType === 'azure'"
         @change="onSupportPublicIpAddressChange">
       </checkbox-group>
       <checkbox-group
         :label="i18n('app.subnetwork.edit.defaultForZoneLabel')"
         :value="model.item.defaultForZone"
+        :disabled="model.endpointType === 'aws' || model.endpointType === 'azure'"
         @change="onDefaultForZoneChange">
       </checkbox-group>
       <div class="form-group">

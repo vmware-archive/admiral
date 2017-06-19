@@ -27,7 +27,7 @@ export default Reflux.createStore({
     this.setInData(['deleteConfirmationLoading'], false);
   },
 
-  onRetrieveSubnetworks: function(endpointLink) {
+  onRetrieveSubnetworks: function(endpointLink, endpointType) {
     var operation = this.requestCancellableOperation(OPERATION.LIST);
     if (operation) {
       this.setInData(['itemsLoading'], true);
@@ -62,6 +62,7 @@ export default Reflux.createStore({
           return Promise.all(tagsPromises);
         }).then(() => {
           this.setInData(['endpointLink'], endpointLink);
+          this.setInData(['endpointType'], endpointType);
           this.setInData(['items'], subnetworks);
           this.setInData(['itemsLoading'], false);
           this.emitChange();
@@ -70,8 +71,9 @@ export default Reflux.createStore({
     }
   },
 
-  onEditSubnetwork: function(subnetwork) {
+  onEditSubnetwork: function(subnetwork, endpointType) {
     this.setInData(['editingItemData', 'item'], subnetwork);
+    this.setInData(['editingItemData', 'endpointType'], endpointType);
     this.emitChange();
   },
 

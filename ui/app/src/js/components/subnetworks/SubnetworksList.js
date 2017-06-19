@@ -75,7 +75,7 @@ export default Vue.component('subnetworks-list', {
     editItem(item, $event) {
       $event.stopImmediatePropagation();
       $event.preventDefault();
-      SubnetworksActions.editSubnetwork(item);
+      SubnetworksActions.editSubnetwork(item, this.model.endpointType);
     },
     confirmDelete(item, $event) {
       $event.stopImmediatePropagation();

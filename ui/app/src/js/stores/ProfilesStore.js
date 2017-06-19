@@ -447,7 +447,8 @@ let ProfilesStore = Reflux.createStore({
         EndpointsActions.retrieveEndpoints();
         break;
       case 'network':
-        SubnetworksActions.retrieveSubnetworks(endpoint && endpoint.documentSelfLink);
+        SubnetworksActions.retrieveSubnetworks(endpoint && endpoint.documentSelfLink,
+            endpoint && endpoint.endpointType);
         break;
       case 'storage':
         if (endpoint) {
