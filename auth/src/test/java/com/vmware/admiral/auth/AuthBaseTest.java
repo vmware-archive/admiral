@@ -32,10 +32,13 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
 import com.vmware.admiral.auth.idm.PrincipalService;
+import com.vmware.admiral.auth.idm.content.AuthContentService;
+import com.vmware.admiral.auth.idm.content.AuthContentService.AuthContentBody;
 import com.vmware.admiral.auth.idm.local.LocalAuthConfigProvider.Config;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
@@ -72,7 +75,14 @@ public abstract class AuthBaseTest extends BaseTestCase {
     protected static final String USER_NAME_GLORIA = "Gloria";
     protected static final String USER_NAME_CONNIE = "Connie";
 
-    private static final String LOCAL_USERS_FILE = "/local-users.json";
+    protected static final String PROJECT_NAME_TEST_PROJECT_1 = "testProject1";
+    protected static final String PROJECT_NAME_TEST_PROJECT_2 = "testProject2";
+    protected static final String PROJECT_NAME_TEST_PROJECT_3 = "testProject3";
+
+    protected static final String FILE_AUTH_CONTENT_DEFAULT = "auth-content.json";
+    protected static final String FILE_AUTH_CONTENT_PROJECTS_ONLY = "content-projects-only.json";
+
+    private static final String FILE_LOCAL_USERS = "/local-users.json";
 
     protected List<String> loadedUsers;
     protected List<String> loadedGroups;
@@ -103,7 +113,7 @@ public abstract class AuthBaseTest extends BaseTestCase {
                 CommandLineArgumentParser.ARGUMENT_PREFIX
                         + AuthUtil.LOCAL_USERS_FILE
                         + CommandLineArgumentParser.ARGUMENT_ASSIGNMENT
-                        + AuthBaseTest.class.getResource(LOCAL_USERS_FILE).toURI().getPath()
+                        + AuthBaseTest.class.getResource(FILE_LOCAL_USERS).toURI().getPath()
         };
         return createHost(customArgs);
     }
@@ -288,6 +298,34 @@ public abstract class AuthBaseTest extends BaseTestCase {
         });
         ctx.await();
         return resultList;
+    }
+
+    protected void loadAuthContent(String authContentFilename) throws Throwable {
+        // read the configuration content from the specified file
+        String content = IOUtils.toString(getClass().getClassLoader().getResource(authContentFilename));
+        loadAuthContent(Utils.fromJson(content, AuthContentBody.class));
+    }
+
+    protected void loadAuthContent(AuthContentBody authContent) throws Throwable {
+        // prepate loading operation
+        Operation loadContent = Operation.createPost(host, AuthContentService.SELF_LINK)
+                .setReferer(host.getUri())
+                .setBody(authContent)
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.failIteration(e);
+                    } else {
+                        host.completeIteration();
+                    }
+                });
+
+        // ensure the AuthContentService is up
+        waitForServiceAvailability(AuthContentService.SELF_LINK);
+
+        // load the configuration
+        host.testStart(1);
+        host.send(loadContent);
+        host.testWait();
     }
 
 }

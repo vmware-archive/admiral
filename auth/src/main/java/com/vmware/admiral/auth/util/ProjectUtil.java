@@ -14,6 +14,7 @@ package com.vmware.admiral.auth.util;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
@@ -39,6 +40,9 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
+import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
 import com.vmware.xenon.services.common.UserService.UserState;
 
@@ -84,11 +88,13 @@ public class ProjectUtil {
                 simpleState.documentSelfLink)
                         .thenAccept((clusterLinks) -> expandedState.clusterLinks = clusterLinks);
         DeferredResult<Void> retrieveRepositoryLinks = retrieveRepositoryLinks(host,
-                simpleState.documentSelfLink, getHarborId(simpleState)).thenAccept(
-                        (repositoryLinks) -> expandedState.repositories = repositoryLinks);
+                simpleState.documentSelfLink, getHarborId(simpleState))
+                        .thenAccept(
+                                (repositoryLinks) -> expandedState.repositories = repositoryLinks);
 
         return DeferredResult.allOf(retrieveAdmins, retrieveMembers, retrieveClusterLinks,
-                retrieveRepositoryLinks).thenApply((ignore) -> expandedState);
+                retrieveRepositoryLinks)
+                .thenApply((ignore) -> expandedState);
     }
 
     public static String getHarborId(ProjectState state) {
@@ -201,6 +207,38 @@ public class ProjectUtil {
                 });
 
         return deferredResult;
+    }
+
+    /**
+     * Builds a {@link Query} that selects all projects that contain any of the specified groups in
+     * one of the administrators or members group lists
+     */
+    public static Query buildQueryProjectsFromGroups(Collection<String> groupLinks) {
+        Query query = new Query();
+
+        Query kindQuery = QueryUtil.createKindClause(ProjectState.class);
+        kindQuery.setOccurance(Occurance.MUST_OCCUR);
+        query.addBooleanClause(kindQuery);
+
+        Query groupQuery = new Query();
+        groupQuery.setOccurance(Occurance.MUST_OCCUR);
+        query.addBooleanClause(groupQuery);
+
+        Query adminGroupQuery = QueryUtil.addListValueClause(
+                QuerySpecification.buildCollectionItemName(
+                        ProjectState.FIELD_NAME_ADMINISTRATORS_USER_GROUP_LINKS),
+                groupLinks, MatchType.TERM);
+        adminGroupQuery.setOccurance(Occurance.SHOULD_OCCUR);
+        groupQuery.addBooleanClause(adminGroupQuery);
+
+        Query memebrsGroupQuery = QueryUtil.addListValueClause(
+                QuerySpecification
+                        .buildCollectionItemName(ProjectState.FIELD_NAME_MEMBERS_USER_GROUP_LINKS),
+                groupLinks, MatchType.TERM);
+        memebrsGroupQuery.setOccurance(Occurance.SHOULD_OCCUR);
+        groupQuery.addBooleanClause(memebrsGroupQuery);
+
+        return query;
     }
 
 }

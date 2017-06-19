@@ -17,14 +17,13 @@ import static org.junit.Assert.assertTrue;
 
 import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_USER_GROUP_LINK;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -32,8 +31,8 @@ import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.idm.AuthRole;
 import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
 import com.vmware.admiral.auth.idm.PrincipalService;
-import com.vmware.admiral.auth.idm.content.AuthContentService;
 import com.vmware.admiral.auth.idm.content.AuthContentService.AuthContentBody;
+import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
@@ -51,33 +50,19 @@ public class AuthContentServiceTest extends AuthBaseTest {
     @Before
     public void setup() throws GeneralSecurityException, IOException {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
-        projectOnlyContent = new BufferedReader(new InputStreamReader(getClass().getClassLoader()
-                .getResourceAsStream("content-projects-only.json")))
-                .lines().collect(Collectors.joining("\n"));
-
-        authContent = new BufferedReader(new InputStreamReader(getClass().getClassLoader()
-                .getResourceAsStream("auth-content.json")))
-                .lines().collect(Collectors.joining("\n"));
-
+        projectOnlyContent = IOUtils.toString(
+                getClass().getClassLoader().getResourceAsStream(FILE_AUTH_CONTENT_PROJECTS_ONLY));
+        authContent = IOUtils.toString(
+                getClass().getClassLoader().getResourceAsStream(FILE_AUTH_CONTENT_DEFAULT));
     }
 
     @Test
     public void testImportContentWithProjectsOnly() throws Throwable {
         AuthContentBody body = Utils.fromJson(projectOnlyContent, AuthContentBody.class);
-        TestContext ctx = testCreate(1);
-        host.send(Operation.createPost(host, AuthContentService.SELF_LINK)
-                .setBody(projectOnlyContent)
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        ctx.failIteration(ex);
-                    } else {
-                        ctx.completeIteration();
-                    }
-                }));
-        ctx.await();
+        loadAuthContent(body);
 
         List<String> projectLinks = getDocumentLinksOfType(ProjectState.class);
-        projectLinks.remove("/projects/default-project");
+        projectLinks.remove(ProjectService.DEFAULT_PROJECT_LINK);
 
         assertEquals(body.projects.size(), projectLinks.size());
 
@@ -94,20 +79,10 @@ public class AuthContentServiceTest extends AuthBaseTest {
     @Test
     public void testImportContentWithProjectAndUsers() throws Throwable {
         AuthContentBody body = Utils.fromJson(authContent, AuthContentBody.class);
-        TestContext ctx = testCreate(1);
-        host.send(Operation.createPost(host, AuthContentService.SELF_LINK)
-                .setBody(authContent)
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        ctx.failIteration(ex);
-                    } else {
-                        ctx.completeIteration();
-                    }
-                }));
-        ctx.await();
+        loadAuthContent(body);
 
         List<String> projectLinks = getDocumentLinksOfType(ProjectState.class);
-        projectLinks.remove("/projects/default-project");
+        projectLinks.remove(ProjectService.DEFAULT_PROJECT_LINK);
 
         assertEquals(body.projects.size(), projectLinks.size());
 
@@ -151,17 +126,7 @@ public class AuthContentServiceTest extends AuthBaseTest {
 
         // Import content
         AuthContentBody body = Utils.fromJson(authContent, AuthContentBody.class);
-        TestContext ctx = testCreate(1);
-        host.send(Operation.createPost(host, AuthContentService.SELF_LINK)
-                .setBody(body)
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        ctx.failIteration(ex);
-                    } else {
-                        ctx.completeIteration();
-                    }
-                }));
-        ctx.await();
+        loadAuthContent(body);
 
         // Verify Tony is added in cloud admins and Connie is removed
         UserState tonyState = getDocument(UserState.class,

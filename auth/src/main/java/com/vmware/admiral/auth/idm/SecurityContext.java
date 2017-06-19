@@ -11,9 +11,20 @@
 
 package com.vmware.admiral.auth.idm;
 
+import java.util.List;
 import java.util.Set;
 
 public class SecurityContext {
+
+    public static class ProjectEntry {
+
+        public String documentSelfLink;
+
+        public String name;
+
+        public Set<AuthRole> roles;
+
+    }
 
     public String id;
 
@@ -22,5 +33,7 @@ public class SecurityContext {
     public String email;
 
     public Set<AuthRole> roles;
+
+    public List<ProjectEntry> projects;
 
 }

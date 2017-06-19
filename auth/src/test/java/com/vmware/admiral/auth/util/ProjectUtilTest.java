@@ -14,15 +14,20 @@ package com.vmware.admiral.auth.util;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Arrays;
+import java.util.List;
 
 import org.junit.Test;
 
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
-
 import com.vmware.xenon.common.ServiceDocument;
+import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
+import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 
 public class ProjectUtilTest {
 
@@ -49,5 +54,42 @@ public class ProjectUtilTest {
         // test with resource null and query null
         task = ProjectUtil.createQueryTaskForProjectAssociatedWithPlacement(null, null);
         assertNull(task);
+    }
+
+    @Test
+    public void testBuildQueryProjectsFromGroups() {
+        List<String> groupLinks = Arrays.asList("/groups/a", "/groups/b", "/groups/c", "/groups/d");
+        Query query = ProjectUtil.buildQueryProjectsFromGroups(groupLinks);
+
+        assertNotNull(query.booleanClauses);
+        // kind and group clauses
+        assertEquals(2, query.booleanClauses.size());
+
+        // verify kind clause
+        Query kindClause = query.booleanClauses.get(0);
+        assertEquals(Occurance.MUST_OCCUR, kindClause.occurance);
+        assertEquals(ServiceDocument.FIELD_NAME_KIND, kindClause.term.propertyName);
+        assertEquals(Utils.buildKind(ProjectState.class), kindClause.term.matchValue);
+
+        // verify group clauses
+        Query groupClause = query.booleanClauses.get(1);
+        assertEquals(Occurance.MUST_OCCUR, groupClause.occurance);
+        assertNotNull(groupClause.booleanClauses);
+        // one for admins, one for members
+        assertEquals(2, groupClause.booleanClauses.size());
+        for (Query clause : groupClause.booleanClauses) {
+            assertEquals(Occurance.SHOULD_OCCUR, clause.occurance);
+            assertNotNull(clause.booleanClauses);
+            assertEquals(groupLinks.size(), clause.booleanClauses.size());
+            for (Query subclause: clause.booleanClauses) {
+                assertTrue(Arrays
+                        .asList(QuerySpecification.buildCollectionItemName(
+                                ProjectState.FIELD_NAME_ADMINISTRATORS_USER_GROUP_LINKS),
+                                QuerySpecification.buildCollectionItemName(
+                                        ProjectState.FIELD_NAME_MEMBERS_USER_GROUP_LINKS))
+                        .contains(subclause.term.propertyName));
+                assertTrue(groupLinks.contains(subclause.term.matchValue));
+            }
+        }
     }
 }

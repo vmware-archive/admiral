@@ -78,6 +78,8 @@ public class ProjectService extends StatefulService {
     public static class ProjectState extends ResourceState {
         public static final String FIELD_NAME_PUBLIC = "isPublic";
         public static final String FIELD_NAME_DESCRIPTION = "description";
+        public static final String FIELD_NAME_ADMINISTRATORS_USER_GROUP_LINKS = "administratorsUserGroupLinks";
+        public static final String FIELD_NAME_MEMBERS_USER_GROUP_LINKS = "membersUserGroupLinks";
 
         @Documentation(description = "Used for define a public project")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
