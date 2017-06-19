@@ -160,10 +160,10 @@ public class ProjectService extends StatefulService {
         public List<String> clusterLinks;
 
         /**
-         * List of repository links for this project.
+         * List of repositories in this project.
          */
-        @Documentation(description = "List of repository links for this project.")
-        public List<String> repositoryLinks;
+        @Documentation(description = "List of repositories in this project.")
+        public List<String> repositories;
 
         public void copyTo(ExpandedProjectState destination) {
             super.copyTo(destination);

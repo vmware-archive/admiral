@@ -14,18 +14,28 @@ package com.vmware.admiral.auth.util;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
+import com.vmware.admiral.auth.project.ProjectFactoryService;
+import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.compute.cluster.ClusterService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
+import com.vmware.admiral.service.common.HbrApiProxyService;
+import com.vmware.photon.controller.model.query.QueryUtils.QueryByPages;
+import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
 import com.vmware.xenon.services.common.QueryTask.Query;
@@ -59,8 +69,8 @@ public class ProjectUtil {
      * @param simpleState the {@link ProjectState} that needs to be expanded
      * @param referer the {@link URI} of the service that issues the expand
      */
-    public static DeferredResult<ExpandedProjectState> expandProjectState(
-            ServiceHost host, ProjectState simpleState, URI referer) {
+    public static DeferredResult<ExpandedProjectState> expandProjectState(ServiceHost host,
+            ProjectState simpleState, URI referer) {
         ExpandedProjectState expandedState = new ExpandedProjectState();
         simpleState.copyTo(expandedState);
 
@@ -70,39 +80,67 @@ public class ProjectUtil {
         DeferredResult<Void> retrieveMembers = retrieveUserGroupMembers(host,
                 simpleState.membersUserGroupLinks, referer)
                         .thenAccept((membersList) -> expandedState.members = membersList);
-        DeferredResult<Void> retrieveClusterLinks = retrieveClusterLinks(simpleState.documentSelfLink)
-                .thenAccept((clusterLinks) -> expandedState.clusterLinks = clusterLinks);
-        DeferredResult<Void> retrieveRepositoryLinks = retrieveRepositoryLinks(simpleState.documentSelfLink)
-                .thenAccept((repositoryLinks) -> expandedState.repositoryLinks = repositoryLinks);
+        DeferredResult<Void> retrieveClusterLinks = retrieveClusterLinks(host,
+                simpleState.documentSelfLink)
+                        .thenAccept((clusterLinks) -> expandedState.clusterLinks = clusterLinks);
+        DeferredResult<Void> retrieveRepositoryLinks = retrieveRepositoryLinks(host,
+                simpleState.documentSelfLink, getHarborId(simpleState)).thenAccept(
+                        (repositoryLinks) -> expandedState.repositories = repositoryLinks);
 
         return DeferredResult.allOf(retrieveAdmins, retrieveMembers, retrieveClusterLinks,
                 retrieveRepositoryLinks).thenApply((ignore) -> expandedState);
     }
 
-    private static DeferredResult<List<String>> retrieveClusterLinks(String projectLink) {
-        // TODO implement when the Cluster service becomes available
-        final int maxDummyClusters = 7;
-        return DeferredResult.completed(createDummyLinksList("/clusters/dummy-cluster",
-                // bit-mask to avoid Math.abs. Interesting read on the topic:
-                // http://findbugs.blogspot.bg/2006/09/is-mathabs-broken.html
-                (projectLink.hashCode() & Integer.MAX_VALUE) % maxDummyClusters));
-    }
-
-    private static DeferredResult<List<String>> retrieveRepositoryLinks(String projectLink) {
-        // TODO implement when the proxy service that fetches data from Harbor becomes available
-        final int maxDummyRepositories = 13;
-        return DeferredResult.completed(createDummyLinksList("/repositories/dummy-repository",
-                // bit-mask to avoid Math.abs. Interesting read on the topic:
-                // http://findbugs.blogspot.bg/2006/09/is-mathabs-broken.html
-                (projectLink.hashCode() & Integer.MAX_VALUE) % maxDummyRepositories));
-    }
-
-    private static List<String> createDummyLinksList(String linksPrefix, int linksCount) {
-        ArrayList<String> dummyLinks = new ArrayList<>(linksCount);
-        for (int i = 0; i < linksCount; i++) {
-            dummyLinks.add(String.format("%s-%d", linksPrefix, i));
+    public static String getHarborId(ProjectState state) {
+        if (state == null || state.customProperties == null) {
+            return null;
         }
-        return dummyLinks;
+        return state.customProperties.get(ProjectService.CUSTOM_PROPERTY_HARBOR_ID);
+    }
+
+    private static DeferredResult<List<String>> retrieveClusterLinks(ServiceHost host,
+            String projectLink) {
+        return new QueryByPages<ResourcePoolState>(host,
+                QueryUtil.createKindClause(ResourcePoolState.class), ResourcePoolState.class,
+                Collections.singletonList(projectLink)).collectLinks(Collectors.toList())
+                        .thenApply((links) -> {
+                            return links.stream()
+                                    .map((link) -> UriUtils.buildUriPath(ClusterService.SELF_LINK,
+                                            Service.getId(link)))
+                                    .collect(Collectors.toList());
+                        }).exceptionally((ex) -> {
+                            host.log(Level.WARNING,
+                                    "Could not retrieve clusters for project %s: %s", projectLink,
+                                    Utils.toString(ex));
+                            return Collections.emptyList();
+                        });
+    }
+
+    @SuppressWarnings("unchecked")
+    private static DeferredResult<List<String>> retrieveRepositoryLinks(ServiceHost host,
+            String projectLink,
+            String harborId) {
+        if (harborId == null || harborId.isEmpty()) {
+            host.log(Level.WARNING,
+                    "harborId not set for project %s. Skipping repository retrieval", projectLink);
+            return DeferredResult.completed(Collections.emptyList());
+        }
+
+        Operation getRepositories = Operation
+                .createGet(UriUtils.buildUri(host,
+                        UriUtils.buildUriPath(HbrApiProxyService.SELF_LINK,
+                                HbrApiProxyService.HARBOR_ENDPOINT_REPOSITORIES),
+                        UriUtils.buildUriQuery(HbrApiProxyService.HARBOR_QUERY_PARAM_PROJECT_ID,
+                                harborId)))
+                .setReferer(ProjectFactoryService.SELF_LINK);
+        return host.sendWithDeferredResult(getRepositories, List.class)
+                .thenApply((list) -> (List<String>) list)
+                .exceptionally((ex) -> {
+                    host.log(Level.WARNING,
+                            "Could not retrieve repositories for project %s with harborId %s: %s",
+                            projectLink, harborId, Utils.toString(ex));
+                    return Collections.emptyList();
+                });
     }
 
     /**

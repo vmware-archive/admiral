@@ -32,6 +32,10 @@ public class HbrApiProxyService extends StatelessService {
 
     public static final String SELF_LINK = ManagementUriParts.HBR_REVERSE_PROXY;
 
+    public static final String HARBOR_ENDPOINT_REPOSITORIES = "/repositories";
+
+    public static final String HARBOR_QUERY_PARAM_PROJECT_ID = "project_id";
+
     private static final String HBR_URL_PROP = "harbor.tab.url";
     private static final String HBR_API_BASE_ENDPOINT = "api";
     private static final String I18N_RESOURCE_SUBPATH = "i18n/lang";
