@@ -207,10 +207,6 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         desc.tenantLinks = getTenantLinks();
         desc.customProperties = new HashMap<>();
         desc.networkName = "test-network";
-        desc.protocol = "HTTP";
-        desc.port = 80;
-        desc.instanceProtocol = "HTTP";
-        desc.instancePort = 80;
         RouteConfiguration route = new RouteConfiguration();
         route.protocol = Protocol.HTTP.name();
         route.port = "80";
@@ -226,10 +222,6 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         state.descriptionLink = "lb-desc";
         state.tenantLinks = getTenantLinks();
         state.customProperties = new HashMap<>();
-        state.protocol = "HTTP";
-        state.port = 80;
-        state.instanceProtocol = "HTTP";
-        state.instancePort = 80;
         RouteConfiguration route = new RouteConfiguration();
         route.protocol = Protocol.HTTP.name();
         route.port = "80";

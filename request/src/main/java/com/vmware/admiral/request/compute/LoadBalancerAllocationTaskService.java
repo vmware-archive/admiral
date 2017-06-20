@@ -415,10 +415,6 @@ public class LoadBalancerAllocationTaskService extends
         LoadBalancerState lbState = new LoadBalancerState();
         lbState.descriptionLink = this.lbDescription.documentSelfLink;
         lbState.name = state.resourceNames.iterator().next();
-        lbState.protocol = this.lbDescription.protocol;
-        lbState.port = this.lbDescription.port;
-        lbState.instanceProtocol = this.lbDescription.instanceProtocol;
-        lbState.instancePort = this.lbDescription.instancePort;
         lbState.routes = this.lbDescription.routes;
         lbState.internetFacing = this.lbDescription.internetFacing;
         lbState.computeLinks = state.computeLinks;

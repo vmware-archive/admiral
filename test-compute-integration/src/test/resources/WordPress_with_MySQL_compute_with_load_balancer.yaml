@@ -55,11 +55,20 @@ components:
     data:
       name: "wordpress-lb"
       network: "wpnet"
-      protocol: "HTTP"
-      port: 80
       instance: "wordpress"
-      instanceProtocol: "HTTP"
-      instancePort: 80
+      routes:
+        - protocol: "HTTP"
+          port: "80"
+          instanceProtocol: "HTTP"
+          instancePort: "80"
+          healthCheckConfiguration:
+            protocol: "HTTP"
+            port: "80"
+            urlPath: "/index.html"
+            intervalSeconds: 60
+            timeoutSeconds: 5
+            unhealthyThreshold: 5
+            healthyThreshold: 2
       internetFacing: true
   wpnet:
     type: "Compute.Network"
