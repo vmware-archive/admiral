@@ -29,8 +29,12 @@ import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.idm.AuthRole;
+import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
 import com.vmware.admiral.auth.idm.SecurityContext;
 import com.vmware.admiral.auth.idm.SecurityContext.ProjectEntry;
+import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
+import com.vmware.admiral.auth.project.ProjectService;
+import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.photon.controller.model.query.QueryUtils.QueryTemplate;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.StatelessService;
@@ -112,10 +116,23 @@ public class SecurityContextUtilTest extends AuthBaseTest {
     public void testBuildBasicProjectInfo() throws Throwable {
         // load auth content for the test
 
-        // do not assume the identity of the user that we are going to look for - currently he will
-        // create all projects and will therefore be added to all of them as both user and admin
+        // do not assume the identity of the user that we are going to look for
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_GLORIA));
         loadAuthContent(FILE_AUTH_CONTENT_PROJECTS_ONLY);
+
+        // add the current user as admin and member in the imported projects.
+        PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
+        roleAssignment.add = Collections.singletonList(USER_EMAIL_GLORIA);
+        ProjectRoles projectRoles = new ProjectRoles();
+        projectRoles.administrators = roleAssignment;
+        projectRoles.members = roleAssignment;
+        List<String> projectLinks = getDocumentLinksOfType(ProjectState.class);
+        for (String pl : projectLinks) {
+            ProjectState state = getDocument(ProjectState.class, pl);
+            if (!state.documentSelfLink.equals(ProjectService.DEFAULT_PROJECT_LINK)) {
+                doPatch(projectRoles, state.documentSelfLink);
+            }
+        }
 
         SecurityContext context;
 

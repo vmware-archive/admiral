@@ -76,6 +76,12 @@ public class ProjectServiceTest extends AuthBaseTest {
 
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
         project = createProject(PROJECT_NAME, PROJECT_DESCRIPTION, PROJECT_IS_PUBLIC);
+        ProjectRoles projectRoles = new ProjectRoles();
+        projectRoles.members = new PrincipalRoleAssignment();
+        projectRoles.administrators = new PrincipalRoleAssignment();
+        projectRoles.administrators.add = Collections.singletonList(USER_EMAIL_ADMIN);
+        projectRoles.members.add = Collections.singletonList(USER_EMAIL_ADMIN);
+        doPatch(projectRoles, project.documentSelfLink);
     }
 
     @Test
@@ -424,7 +430,6 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertDocumentExists(adminsLinks);
         assertDocumentExists(membersLinks);
     }
-
 
     @Test
     public void testGetStateWithMembers() {

@@ -15,11 +15,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.net.URI;
+import java.util.Collections;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
+import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
+import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
@@ -44,6 +47,12 @@ public class ProjectFactoryServiceTest extends AuthBaseTest {
 
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
         project = createProject(PROJECT_NAME, PROJECT_DESCRIPTION, PROJECT_IS_PUBLIC);
+        ProjectRoles projectRoles = new ProjectRoles();
+        projectRoles.members = new PrincipalRoleAssignment();
+        projectRoles.administrators = new PrincipalRoleAssignment();
+        projectRoles.administrators.add = Collections.singletonList(USER_EMAIL_ADMIN);
+        projectRoles.members.add = Collections.singletonList(USER_EMAIL_ADMIN);
+        doPatch(projectRoles, project.documentSelfLink);
     }
 
     @Test

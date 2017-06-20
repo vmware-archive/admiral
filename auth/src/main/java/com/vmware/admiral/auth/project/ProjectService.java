@@ -24,7 +24,6 @@ import com.vmware.admiral.auth.idm.AuthRole;
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.ProjectUtil;
-import com.vmware.admiral.auth.util.UserGroupsUpdater;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.admiral.common.util.PropertyUtils;
@@ -34,7 +33,6 @@ import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentDescription;
@@ -200,7 +198,7 @@ public class ProjectService extends StatefulService {
         validateState(createBody);
 
         if (AuthUtils.isDevOpsAdmin(post)) {
-            createAdminAndMemberGroups(createBody, post.getAuthorizationContext())
+            createAdminAndMemberGroups(createBody)
                     .thenAccept((projectState) -> {
                         post.setBody(projectState);
                     })
@@ -429,8 +427,7 @@ public class ProjectService extends StatefulService {
         AssertUtil.assertNotNullOrEmpty(state.name, ProjectState.FIELD_NAME_NAME);
     }
 
-    private DeferredResult<ProjectState> createAdminAndMemberGroups(ProjectState projectState,
-            AuthorizationContext authContext) {
+    private DeferredResult<ProjectState> createAdminAndMemberGroups(ProjectState projectState) {
         if (projectState.documentSelfLink.equals(DEFAULT_PROJECT_LINK)) {
             return DeferredResult.completed(projectState);
         }
@@ -442,9 +439,9 @@ public class ProjectService extends StatefulService {
         if (projectState.administratorsUserGroupLinks != null
                 && projectState.membersUserGroupLinks != null
                 && projectState.administratorsUserGroupLinks.contains(
-                        adminsGroupState.documentSelfLink)
+                adminsGroupState.documentSelfLink)
                 && projectState.membersUserGroupLinks.contains(
-                        membersGroupState.documentSelfLink)) {
+                membersGroupState.documentSelfLink)) {
             // No groups to create
             return DeferredResult.completed(projectState);
         }
@@ -453,40 +450,30 @@ public class ProjectService extends StatefulService {
 
         if (projectState.administratorsUserGroupLinks == null
                 || !projectState.administratorsUserGroupLinks.contains(
-                        adminsGroupState.documentSelfLink)) {
+                adminsGroupState.documentSelfLink)) {
 
             DeferredResult<Void> result = getHost().sendWithDeferredResult(
                     buildCreateUserGroupOperation(adminsGroupState), UserGroupState.class)
-                    .thenCompose((groupState) -> {
+                    .thenAccept((groupState) -> {
                         if (projectState.administratorsUserGroupLinks == null) {
                             projectState.administratorsUserGroupLinks = new ArrayList<>();
                         }
                         projectState.administratorsUserGroupLinks.add(groupState.documentSelfLink);
-                        String userId = Service.getId(AuthUtil.getAuthorizedUserLink(authContext));
-                        return UserGroupsUpdater
-                                .create(getHost(), groupState.documentSelfLink, null,
-                                        Collections.singletonList(userId), null, false)
-                                .update();
                     });
             deferredResults.add(result);
         }
 
         if (projectState.membersUserGroupLinks == null
                 || !projectState.membersUserGroupLinks.contains(
-                        membersGroupState.documentSelfLink)) {
+                membersGroupState.documentSelfLink)) {
 
             DeferredResult<Void> result = getHost().sendWithDeferredResult(
                     buildCreateUserGroupOperation(membersGroupState), UserGroupState.class)
-                    .thenCompose((groupState) -> {
+                    .thenAccept((groupState) -> {
                         if (projectState.membersUserGroupLinks == null) {
                             projectState.membersUserGroupLinks = new ArrayList<>();
                         }
                         projectState.membersUserGroupLinks.add(groupState.documentSelfLink);
-                        String userId = Service.getId(AuthUtil.getAuthorizedUserLink(authContext));
-                        return UserGroupsUpdater
-                                .create(getHost(), groupState.documentSelfLink, null,
-                                        Collections.singletonList(userId), null, false)
-                                .update();
                     });
             deferredResults.add(result);
 

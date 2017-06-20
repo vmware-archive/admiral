@@ -14,6 +14,7 @@ package com.vmware.admiral.auth.content;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.auth.util.AuthUtil.CLOUD_ADMINS_USER_GROUP_LINK;
 
@@ -31,6 +32,7 @@ import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.idm.AuthRole;
 import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
 import com.vmware.admiral.auth.idm.PrincipalService;
+import com.vmware.admiral.auth.idm.content.AuthContentService;
 import com.vmware.admiral.auth.idm.content.AuthContentService.AuthContentBody;
 import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
@@ -166,5 +168,68 @@ public class AuthContentServiceTest extends AuthBaseTest {
                                     + "cloud admins."));
                 }));
         ctx1.await();
+    }
+
+    @Test
+    public void testWhenProjectIsImportedUserIsNotAssignedAsProjectMemberOrAdmin()
+            throws Throwable {
+        AuthContentBody body = Utils.fromJson(projectOnlyContent, AuthContentBody.class);
+        loadAuthContent(body);
+
+        List<String> projectLinks = getDocumentLinksOfType(ProjectState.class);
+        projectLinks.remove(ProjectService.DEFAULT_PROJECT_LINK);
+
+        assertEquals(body.projects.size(), projectLinks.size());
+
+        ProjectState projectState = projectLinks.stream()
+                .map(pl -> {
+                    try {
+                        return getDocument(ProjectState.class, pl);
+                    } catch (Throwable throwable) {
+                        fail(throwable.getMessage());
+                    }
+                    return null;
+                })
+                .filter(p -> p.name.equals("testProject3"))
+                .collect(Collectors.toList()).get(0);
+
+        String adminsGroup = projectState.administratorsUserGroupLinks.get(0);
+        String membersGroup = projectState.membersUserGroupLinks.get(0);
+
+        List<UserState> adminUsers = getUsersFromUserGroup(adminsGroup);
+
+        List<UserState> memberUsers = getUsersFromUserGroup(membersGroup);
+
+        for (UserState admin : adminUsers) {
+            assertTrue(!admin.email.equals(USER_EMAIL_ADMIN));
+        }
+
+        for (UserState member : memberUsers) {
+            assertTrue(!member.email.equals(USER_EMAIL_ADMIN));
+        }
+    }
+
+    @Test
+    public void testImportContentIsForbiddenIfUserNotCloudAdmin() throws GeneralSecurityException {
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_BASIC_USER));
+
+        AuthContentBody body = Utils.fromJson(projectOnlyContent, AuthContentBody.class);
+
+        TestContext ctx = testCreate(1);
+        host.send(Operation.createPost(host, AuthContentService.SELF_LINK)
+                .setBody(body)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        if (o.getStatusCode() == Operation.STATUS_CODE_FORBIDDEN) {
+                            ctx.completeIteration();
+                            return;
+                        }
+                        ctx.failIteration(ex);
+                        return;
+                    }
+                    ctx.failIteration(
+                            new RuntimeException("Importing content should fail for basic user."));
+                }));
+        ctx.await();
     }
 }
