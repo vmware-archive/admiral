@@ -17,6 +17,8 @@ import { Utils } from "../../../utils/utils";
 import { DocumentService } from '../../../utils/document.service';
 import * as I18n from 'i18next';
 
+import { BaseDetailsComponent } from '../../../components/base/base-details.component';
+
 @Component({
   selector: 'app-cluster-create',
   templateUrl: './cluster-create.component.html',
@@ -25,7 +27,7 @@ import * as I18n from 'i18next';
 /**
  * Modal for cluster creation.
  */
-export class ClusterCreateComponent implements AfterViewInit, OnInit {
+export class ClusterCreateComponent extends BaseDetailsComponent implements AfterViewInit, OnInit {
   opened: boolean;
   isEdit: boolean;
   selectedCredentials: any;
@@ -47,14 +49,24 @@ export class ClusterCreateComponent implements AfterViewInit, OnInit {
     credentials: new FormControl('')
   });
 
-  constructor(private router: Router, private route: ActivatedRoute, private service: DocumentService) { }
+  constructor(private router: Router, route: ActivatedRoute, service: DocumentService) {
+    super(route, service, Links.CLUSTERS);
+  }
 
-  ngOnInit() {
-    this.route.queryParams.subscribe(queryParams => {
-      this.service.list(Links.CREDENTIALS, queryParams).then(credentials => {
-        this.credentials = credentials.documents;
-      });
-    });
+  get title() {
+    return this.isEdit ? "clusters.edit.titleEdit" : "clusters.edit.titleNew";
+  }
+
+  entityInitialized() {
+    this.isEdit = true;
+    this.clusterForm.get('name').setValue(this.entity.name);
+    if (this.entity.description) {
+      this.clusterForm.get('description').setValue(this.entity.description);
+    }
+    this.clusterForm.get('type').setValue(this.entity.type);
+    if (this.entity.address) {
+      this.clusterForm.get('url').setValue(this.entity.address);
+    }
   }
 
   ngAfterViewInit() {
@@ -62,12 +74,17 @@ export class ClusterCreateComponent implements AfterViewInit, OnInit {
       this.opened = true;
       this.showCertificateWarning = false;
     });
+    this.service.list(Links.CREDENTIALS, {}).then(credentials => {
+      this.credentials = credentials.documents;
+    });
   }
 
   toggleModal(open) {
     this.opened = open;
     if (!open) {
-      this.router.navigate(['../'], { relativeTo: this.route });
+      let path: any[] = this.isEdit
+                        ? ['../../' + Utils.getDocumentId(this.entity.documentSelfLink)] : ['../'];
+      this.router.navigate(path, { relativeTo: this.route });
     }
   }
 
@@ -80,6 +97,27 @@ export class ClusterCreateComponent implements AfterViewInit, OnInit {
   }
 
   saveCluster() {
+    if (this.isEdit) {
+      this.updateCluster();
+    } else {
+      this.createCluster();
+    }
+  }
+
+  private updateCluster() {
+    let name = this.clusterForm.value.name;
+    if (name) {
+      this.isSaving = true;
+      this.service.patch(this.entity.documentSelfLink, { 'name': name }).then(() => {
+        this.toggleModal(false);
+      }).catch(error => {
+        this.isSaving = false;
+        this.alertMessage = Utils.getErrorMessage(error)._generic;
+      });
+    }
+  }
+
+  private createCluster() {
     if (this.clusterForm.valid) {
       this.isSaving = true;
 
@@ -123,7 +161,7 @@ export class ClusterCreateComponent implements AfterViewInit, OnInit {
 
   certificateWarningMessage() {
     if (this.certificate) {
-      return I18n.t("certificate.certificateWarning", {address: this.clusterForm.value.url} as I18n.TranslationOptions);
+      return I18n.t("certificate.certificateWarning", { address: this.clusterForm.value.url } as I18n.TranslationOptions);
     }
     return '';
   }
@@ -144,5 +182,15 @@ export class ClusterCreateComponent implements AfterViewInit, OnInit {
 
   resetAlert() {
     this.alertMessage = null;
+  }
+
+  saveButtonDisabled() {
+    if (this.isSaving) {
+      return true;
+    }
+    if (this.isEdit) {
+      return !this.clusterForm.value.name;
+    }
+    return this.clusterForm.invalid;
   }
 }

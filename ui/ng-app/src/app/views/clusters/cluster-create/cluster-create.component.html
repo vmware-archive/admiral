@@ -10,7 +10,7 @@
   -->
 
 <clr-modal [clrModalOpen]="opened" (clrModalOpenChange)="toggleModal($event)">
-  <h3 class="modal-title">{{ "clusters.edit.titleNew" | i18n }}</h3>
+  <h3 class="modal-title">{{title | i18n}}</h3>
   <div class="modal-body">
     <clr-alert [clrAlertType]="'alert-danger'" [(clrAlertClosed)]="!alertMessage"  (clrAlertClosedChange)="resetAlert()">
       <div class="alert-item">
@@ -34,7 +34,7 @@
         <div class="form-group">
           <label for="type">{{ "clusters.edit.type" | i18n }}</label>
           <div class="select">
-            <select formControlName="type">
+            <select formControlName="type" [attr.disabled]="isEdit">
               <option value="VCH">VCH</option>
               <option value="DOCKER">DOCKER</option>
             </select>
@@ -44,11 +44,11 @@
           <label for="url" class="required">{{ "clusters.edit.url" | i18n }}</label>
           <label for="url" aria-haspopup="true" role="tooltip" class="tooltip tooltip-validation tooltip-sm tooltip-right"
               [class.invalid]="clusterForm.get('url').invalid && (clusterForm.get('url').dirty || clusterForm.get('url').touched)">
-            <input id="url" type="text" placeholder="https://hostname:2376" formControlName="url">
+            <input id="url" type="text" placeholder="https://hostname:2376" formControlName="url" [attr.disabled]="isEdit">
             <span class="tooltip-content">{{ "clusters.edit.urlRequired" | i18n }}</span>
           </label>
         </div>
-        <div class="form-group">
+        <div class="form-group" *ngIf="!isEdit">
           <label for="credentials">{{ "clusters.edit.credentials" | i18n }}</label>
           <div class="select">
             <select [(ngModel)]="selectedCredentials" formControlName="credentials">
@@ -102,7 +102,7 @@
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-outline" (click)="toggleModal(false)">{{ "cancel" | i18n }}</button>
-    <button type="button" class="btn btn-primary" [disabled]="clusterForm.invalid || isSaving" (click)="saveCluster()">
+    <button type="button" class="btn btn-primary" [disabled]="saveButtonDisabled()" (click)="saveCluster()">
       <span *ngIf="isSaving" class="spinner spinner-inline spinner-inline-danger"></span>
       {{ "save" | i18n }}
     </button>

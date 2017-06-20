@@ -71,6 +71,9 @@ export const ROUTES: Routes = [
                     }},
                     { path: ':id', component: ClusterDetailsComponent, data: {
                         navigationContainerType: NavigationContainerType.Fullscreen
+                    }},
+                    { path: ':id/edit', component: ClusterCreateComponent, data: {
+                        navigationContainerType: NavigationContainerType.Fullscreen
                     }}
                 ]
             },

@@ -118,6 +118,7 @@
     },
     "edit": {
       "titleNew": "New Cluster",
+      "titleEdit": "Edit Cluster",
       "name": "Name",
       "nameRequired": "Name is required.",
       "description": "Description",
