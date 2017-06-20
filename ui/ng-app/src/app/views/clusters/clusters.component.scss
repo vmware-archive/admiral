@@ -20,36 +20,16 @@
     line-height: 25px;
 }
 
-.status {
-    font-weight: bold;
-}
-
-.status.ON {
-    color: $clr-green;
-}
-
 .progress-meter.ON::before {
     background-color: $clr-green;
-}
-
-.status.OFF {
-    color: $clr-red;
 }
 
 .progress-meter.OFF::before {
     background-color: $clr-red;
 }
 
-.status.DISABLED {
-    color: $clr-yellow-dark-midtone;
-}
-
 .progress-meter.DISABLED::before {
     background-color: $clr-yellow-dark-midtone;
-}
-
-.status.WARNING {
-    color: $clr-yellow;
 }
 
 .progress-meter.WARNING::before {

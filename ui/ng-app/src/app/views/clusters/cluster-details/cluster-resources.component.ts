@@ -9,10 +9,11 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, ViewChild, OnInit } from '@angular/core';
 import { DocumentService } from "../../../utils/document.service";
 import * as I18n from 'i18next';
 import { Utils } from "../../../utils/utils";
+import { GridViewComponent } from '../../../components/grid-view/grid-view.component';
 
 @Component({
     selector: 'app-cluster-resources',
@@ -22,13 +23,16 @@ import { Utils } from "../../../utils/utils";
 /**
  *  A cluster's resources view.
  */
-export class ClusterResourcesComponent implements OnChanges {
+export class ClusterResourcesComponent implements OnInit {
 
     @Input() cluster: any;
+    @ViewChild('gridView') gridView:GridViewComponent;
 
-    constructor(protected service: DocumentService) { }
+    serviceEndpoint = '/resources/compute';
 
-    ngOnChanges() {
+    constructor(private service: DocumentService) { }
+
+    ngOnInit() {
 
     }
 }

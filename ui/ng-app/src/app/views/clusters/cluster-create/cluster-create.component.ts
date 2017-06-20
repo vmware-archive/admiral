@@ -127,12 +127,17 @@ export class ClusterCreateComponent extends BaseDetailsComponent implements Afte
         'tenantLinks': [Links.PROJECTS + '/default-project'],
         'customProperties': {
           '__containerHostType': formInput.type,
-          '__adapterDockerType': 'API'
+          '__adapterDockerType': 'API',
+          '__clusterName': formInput.name
         }
       };
 
       if (formInput.credentials) {
         hostState.customProperties['__authCredentialsLink'] = formInput.credentials;
+      }
+
+      if (formInput.description) {
+        hostState.customProperties['__clusterDetails'] = formInput.description;
       }
 
       let hostSpec = {

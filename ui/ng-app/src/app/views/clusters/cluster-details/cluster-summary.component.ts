@@ -32,4 +32,12 @@ export class ClusterSummaryComponent implements OnInit {
   ngOnInit() {
     // DOM init
   }
+
+  formatNumber(number) {
+    if (!number){
+      return '0';
+    }
+    let m = Utils.getMagnitude(number);
+    return Utils.formatBytes(number, m) + ' ' + Utils.magnitudes[m];
+  }
 }

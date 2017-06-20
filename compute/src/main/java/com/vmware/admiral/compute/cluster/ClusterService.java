@@ -13,8 +13,7 @@ package com.vmware.admiral.compute.cluster;
 
 import java.net.HttpURLConnection;
 import java.net.URI;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoField;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -352,7 +351,7 @@ public class ClusterService extends StatelessService {
             clusterDetails = hostState.customProperties.remove(CLUSTER_DETAILS_CUSTOM_PROP);
             clusterName = hostState.customProperties.remove(CLUSTER_NAME_CUSTOM_PROP);
         }
-        Long clusterCreationTime = LocalDateTime.now().getLong(ChronoField.MICRO_OF_SECOND);
+        Long clusterCreationTime = Instant.now().toEpochMilli();
 
         // Honor predefined placement zone if any
         if (ClusterUtils.hasPlacementZone(hostState)) {

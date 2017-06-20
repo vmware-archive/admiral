@@ -12,20 +12,53 @@
 <div toolbar>
   <button class="btn btn-link" [routerLink]="['./edit']">
     <clr-icon shape="edit" size="12"></clr-icon>
-    <span class="btn-spaced-text">{{"edit" | i18n}}</span>
+    <span class="btn-spaced-text">{{ "edit" | i18n }}</span>
   </button>
 </div>
 
-<div class="project-summary">
-  <div class="project-summary-description">{{cluster?.description}}</div>
-  <div class="project-summary-details">
-    <div>{{"clusters.summary.type" | i18n}} {{ cluster?.type | i18n}}</div>
-    <div>{{"clusters.summary.status" | i18n}} {{ cluster?.status | i18n}}</div>
-  </div>
+<div class="cluster-summary">
+    <div class="summary-description">{{ cluster?.details }}</div>
+
+    <div class="summary-subsection">
+        <div class="summary-subsection-title">{{ "clusters.summary.clusterOverview" | i18n }}</div>
+        <div class="summary-subsection-content-row">
+            <div class="left-column">{{ "clusters.summary.type" | i18n}}</div>
+            <div class="right-column">{{ cluster?.type }}</div>
+            <div class="clear"></div>
+        </div>
+        <div class="summary-subsection-content-row">
+            <div class="left-column">{{ "clusters.summary.status" | i18n }}</div>
+            <div class="right-column"><span class="status {{ cluster?.status }}">{{ cluster?.status }}</span></div>
+            <div class="clear"></div>
+        </div>
+        <div class="summary-subsection-content-row">
+            <div class="left-column">{{ "clusters.summary.creationDate" | i18n }}</div>
+            <div class="right-column">{{ cluster?.clusterCreationTimeMicros | date:'medium' }}</div>
+            <div class="clear"></div>
+        </div>
+    </div>
+
+    <div class="summary-subsection">
+        <div class="summary-subsection-title">{{ "clusters.summary.clusterResources" | i18n }}</div>
+        <div class="summary-subsection-content-row">
+            <div class="left-column">{{ "clusters.summary.containersCount" | i18n }}</div>
+            <div class="right-column">{{ cluster?.containerCount }}</div>
+            <div class="clear"></div>
+        </div>
+        <div class="summary-subsection-content-row">
+            <div class="left-column">{{ "clusters.summary.cpu" | i18n }}</div>
+            <div class="right-column">{{ formatNumber(cluster?.totalCpu) }}Hz</div>
+            <div class="clear"></div>
+        </div>
+        <div class="summary-subsection-content-row">
+            <div class="left-column">{{ "clusters.summary.memory" | i18n }}</div>
+            <div class="right-column">{{ formatNumber(cluster?.totalMemory) }}B</div>
+            <div class="clear"></div>
+        </div>
+    </div>
 </div>
 
 <navigation-container>
-    <back-button [routerLink]="['./']">name</back-button>
     <router-outlet></router-outlet>
 </navigation-container>
 

@@ -165,3 +165,59 @@ navigation-container > .full-screen {
     margin-top: 8px;
   }
 }
+
+.btn-spaced-text {
+  padding-left: 2px;
+}
+
+.summary-description {
+  white-space: pre;
+  margin-bottom: 10px;
+}
+
+.summary-subsection {
+  margin-top: 10px;
+}
+
+.summary-subsection-title {
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.summary-subsection-content-row {
+  padding-left: 20px;
+
+  .left-column {
+      width: 150px;
+      float: left;
+  }
+
+  .right-column {
+      margin-left: 150px;
+  }
+
+  .clear {
+   clear: both;
+  }
+}
+
+.status {
+    font-weight: bold;
+}
+
+.status.ON {
+    color: $clr-green;
+}
+
+.status.OFF {
+    color: $clr-red;
+}
+
+.status.DISABLED {
+    color: $clr-yellow-dark-midtone;
+}
+
+.status.WARNING {
+    color: $clr-yellow;
+}

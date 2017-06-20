@@ -126,7 +126,13 @@
     "summary": {
       "title": "Summary",
       "type": "Type:",
-      "status": "Status:"
+      "clusterOverview": "Cluster Overview",
+      "clusterResources": "Cluster Resources",
+      "status": "Status:",
+      "creationDate": "Created:",
+      "containersCount": "Containers:",
+      "cpu": "vCPU:",
+      "memory": "Memory:"
     },
     "resources": {
       "title": "Resources"
