@@ -134,8 +134,8 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                     return this.host.sendWithDeferredResult(getOp, DiskState.class);
                 })
                 .map(dr -> dr.thenCompose(diskState -> {
-                    if (diskState.type != null
-                            && diskState.type == DiskService.DiskType.HDD) {
+                    if (diskState.type != null && diskState.type == DiskService.DiskType.HDD
+                            && diskState.bootOrder == 1) {
                         fillInBootConfigContent(context, cd, diskState);
                     }
                     // Match the constraints from Disk to the profile to extract the
