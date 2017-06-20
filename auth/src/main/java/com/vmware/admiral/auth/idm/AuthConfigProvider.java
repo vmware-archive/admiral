@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.auth.idm;
 
+import java.util.Collection;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -39,6 +40,6 @@ public interface AuthConfigProvider {
 
     Function<Claims, String> getAuthenticationServiceUserLinkBuilder();
 
-    FactoryService createUserServiceFactory();
+    Collection<FactoryService> createServiceFactories();
 
 }

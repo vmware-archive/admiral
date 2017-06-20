@@ -12,8 +12,11 @@
 package com.vmware.admiral.auth.idm;
 
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
 
 public interface LogoutProvider {
+
+    void init(Service service);
 
     void doLogout(Operation op);
 }

@@ -92,9 +92,15 @@ public abstract class BaseTestCase {
 
         /**
          * Users configuration file (full path). Specifying a file automatically enables Xenon's
-         * Authx services.
+         * Authx services. Exclusive with authConfig.
          */
         public String localUsers;
+
+        /**
+         * External authentication configuration file (full path). Specifying a file automatically
+         * enables Xenon's Authx services. Exclusive with localUsers.
+         */
+        public String authConfig;
 
         private final OperationInterceptorRegistry interceptors;
 

@@ -78,8 +78,12 @@ var AppMixin = {
       $event.stopPropagation();
       $event.preventDefault();
 
-      services.logout().then(() => {
-        window.location.reload(true);
+      services.logout().then((location) => {
+        if (location !== null) {
+          window.location = location;
+        } else {
+          window.location.reload(true);
+        }
       }, (e) => {
         console.log(e);
       });

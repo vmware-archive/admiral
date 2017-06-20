@@ -13,7 +13,6 @@ package com.vmware.admiral.auth.util;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNullOrEmpty;
 
-import java.util.Base64;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -34,8 +33,6 @@ import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.image.service.PopularImagesService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.photon.controller.model.resources.ResourceState;
-import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
-import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.Claims;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
@@ -45,7 +42,6 @@ import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
-import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm;
@@ -127,26 +123,6 @@ public class AuthUtil {
                 BASIC_USERS_EXTENDED_RESOURCE_GROUP_LINK);
         rolesToResourceGroup.put(AuthRole.CLOUD_ADMIN, CLOUD_ADMINS_RESOURCE_GROUP_LINK);
         MAP_ROLE_TO_SYSTEM_RESOURCE_GROUP = Collections.unmodifiableMap(rolesToResourceGroup);
-    }
-
-    public static String createAuthorizationHeader(AuthCredentialsServiceState authState) {
-        if (authState == null) {
-            return null;
-        }
-
-        AuthCredentialsType authCredentialsType = AuthCredentialsType.valueOf(authState.type);
-        if (AuthCredentialsType.Password.equals(authCredentialsType)) {
-            String username = authState.userEmail;
-            String password = EncryptionUtils.decrypt(authState.privateKey);
-
-            String code = new String(Base64.getEncoder().encode(
-                    new StringBuffer(username).append(":").append(password).toString().getBytes()));
-            String headerValue = new StringBuffer("Basic ").append(code).toString();
-
-            return headerValue;
-        }
-
-        return null;
     }
 
     public static boolean isAuthxEnabled(ServiceHost host) {

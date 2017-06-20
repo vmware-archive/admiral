@@ -15,7 +15,7 @@ import java.util.logging.Level;
 
 import com.vmware.admiral.auth.idm.LogoutProvider;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.authn.AuthenticationRequest;
 import com.vmware.xenon.services.common.authn.AuthenticationRequest.AuthenticationRequestType;
@@ -23,10 +23,11 @@ import com.vmware.xenon.services.common.authn.BasicAuthenticationService;
 
 public class LocalLogoutProvider implements LogoutProvider {
 
-    private ServiceHost host;
+    private Service service;
 
-    public void setServiceHost(ServiceHost host) {
-        this.host = host;
+    @Override
+    public void init(Service service) {
+        this.service = service;
     }
 
     @Override
@@ -35,19 +36,16 @@ public class LocalLogoutProvider implements LogoutProvider {
         AuthenticationRequest logout = new AuthenticationRequest();
         logout.requestType = AuthenticationRequestType.LOGOUT;
 
-        host.sendRequest(Operation.createPost(host, BasicAuthenticationService.SELF_LINK)
+        service.sendRequest(Operation.createPost(service, BasicAuthenticationService.SELF_LINK)
                 .setBody(logout)
-                .setReferer(host.getUri())
                 .forceRemote()
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        host.log(Level.SEVERE, "Logout failed: %s", Utils.toString(ex));
-                        op.fail(ex);
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        service.getHost().log(Level.SEVERE, "Logout failed: %s", Utils.toString(e));
+                        op.fail(e);
                         return;
                     }
-                    op.transferResponseHeadersFrom(o);
-                    op.setStatusCode(Operation.STATUS_CODE_UNAUTHORIZED);
-                    op.complete();
+                    op.transferResponseHeadersFrom(o).complete();
                 }));
     }
 

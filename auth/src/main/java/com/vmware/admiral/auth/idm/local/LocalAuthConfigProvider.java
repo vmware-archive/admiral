@@ -24,6 +24,8 @@ import static com.vmware.xenon.common.UriUtils.buildUriPath;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -85,8 +87,17 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
             return;
         }
 
-        // TODO: 8?
-        AtomicInteger counter = new AtomicInteger(8);
+        String[] servicePaths = new String[] {
+                CLOUD_ADMINS_RESOURCE_GROUP_LINK,
+                CLOUD_ADMINS_USER_GROUP_LINK,
+                DEFAULT_CLOUD_ADMINS_ROLE_LINK,
+                BASIC_USERS_RESOURCE_GROUP_LINK,
+                BASIC_USERS_USER_GROUP_LINK,
+                DEFAULT_BASIC_USERS_ROLE_LINK,
+                BASIC_USERS_EXTENDED_RESOURCE_GROUP_LINK,
+                DEFAULT_BASIC_USERS_EXTENDED_ROLE_LINK };
+
+        AtomicInteger counter = new AtomicInteger(servicePaths.length);
         AtomicBoolean hasError = new AtomicBoolean(false);
 
         host.registerForServiceAvailability((o, ex) -> {
@@ -99,14 +110,7 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
                     createUsers(host, config, post);
                 }
             }
-        }, true, CLOUD_ADMINS_RESOURCE_GROUP_LINK,
-                CLOUD_ADMINS_USER_GROUP_LINK,
-                DEFAULT_CLOUD_ADMINS_ROLE_LINK,
-                BASIC_USERS_RESOURCE_GROUP_LINK,
-                BASIC_USERS_USER_GROUP_LINK,
-                DEFAULT_BASIC_USERS_ROLE_LINK,
-                BASIC_USERS_EXTENDED_RESOURCE_GROUP_LINK,
-                DEFAULT_BASIC_USERS_EXTENDED_ROLE_LINK);
+        }, true, servicePaths);
 
     }
 
@@ -296,8 +300,8 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
     }
 
     @Override
-    public FactoryService createUserServiceFactory() {
-        return null;
+    public Collection<FactoryService> createServiceFactories() {
+        return Collections.emptyList();
     }
 
 }

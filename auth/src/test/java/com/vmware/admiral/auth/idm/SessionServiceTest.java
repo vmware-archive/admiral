@@ -68,7 +68,7 @@ public class SessionServiceTest extends AuthBaseTest {
         host.send(get);
         ctx.await();
 
-        assertEquals(Operation.STATUS_CODE_UNAUTHORIZED, getCompleted.get().getStatusCode());
+        assertEquals(Operation.STATUS_CODE_OK, getCompleted.get().getStatusCode());
         String cookie = getCompleted.get().getResponseHeader(Operation.SET_COOKIE_HEADER);
         assertTrue(cookie != null
                 && cookie.startsWith(AuthenticationConstants.REQUEST_AUTH_TOKEN_COOKIE));

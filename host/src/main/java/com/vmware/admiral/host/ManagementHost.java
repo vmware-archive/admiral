@@ -14,6 +14,7 @@ package com.vmware.admiral.host;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.logging.Level;
 
@@ -43,6 +44,7 @@ import com.vmware.admiral.service.common.ExtensibilitySubscriptionManager;
 import com.vmware.admiral.service.common.NodeMigrationService;
 import com.vmware.photon.controller.model.security.util.CertificateUtil;
 import com.vmware.xenon.common.CommandLineArgumentParser;
+import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.LoaderFactoryService;
 import com.vmware.xenon.common.LoaderService;
 import com.vmware.xenon.common.LocalizableValidationException;
@@ -402,7 +404,10 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
         startCommonServices();
 
         if (AuthUtil.useAuthConfig(this)) {
-            startFactoryServicesSynchronously(authProvider.createUserServiceFactory());
+            Collection<FactoryService> authServiceFactories = authProvider.createServiceFactories();
+            if ((authServiceFactories != null && !authServiceFactories.isEmpty())) {
+                startFactoryServicesSynchronously(authServiceFactories.toArray(new Service[] {}));
+            }
         }
 
         startExtensibilityRegistry();

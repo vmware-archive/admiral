@@ -11,7 +11,6 @@
 
 package com.vmware.admiral.auth.idm;
 
-import com.vmware.admiral.auth.idm.local.LocalLogoutProvider;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.SecurityContextUtil;
 import com.vmware.admiral.common.ManagementUriParts;
@@ -32,12 +31,7 @@ public class SessionService extends StatelessService {
     @Override
     public void handleStart(Operation startPost) {
         provider = AuthUtil.getPreferredProvider(LogoutProvider.class);
-
-        // TODO - replace it with some host-based init method perhaps
-        if (provider instanceof LocalLogoutProvider) {
-            ((LocalLogoutProvider) provider).setServiceHost(getHost());
-        }
-
+        provider.init(this);
         startPost.complete();
     }
 

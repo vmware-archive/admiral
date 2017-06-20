@@ -2280,7 +2280,15 @@ services.login = function(username, password) {
 };
 
 services.logout = function() {
-  return get(links.AUTH_LOGOUT);
+  return new Promise(function(resolve, reject) {
+    $.ajax({
+      method: 'GET',
+      url: utils.serviceUrl(links.AUTH_LOGOUT),
+      dataType: 'text'
+    }).done(function(result, textStatus, request) {
+      resolve(request.getResponseHeader('location'));
+    }).fail(reject);
+  });
 };
 
 services.triggerDataCollection = function() {

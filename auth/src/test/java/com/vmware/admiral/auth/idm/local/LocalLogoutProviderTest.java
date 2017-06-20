@@ -14,13 +14,12 @@ package com.vmware.admiral.auth.idm.local;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.lang.reflect.Field;
-
 import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.idm.LogoutProvider;
+import com.vmware.admiral.auth.idm.SessionService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
@@ -31,14 +30,11 @@ public class LocalLogoutProviderTest extends AuthBaseTest {
     private LogoutProvider provider = new LocalLogoutProvider();
 
     @Before
-    public void injectHost() throws Exception {
-        Field hostField = provider.getClass().getDeclaredField("host");
-        if (!hostField.isAccessible()) {
-            hostField.setAccessible(true);
-        }
+    public void injectHost() throws Throwable {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
-        hostField.set(provider, host);
-        hostField.setAccessible(false);
+
+        provider.init(
+                host.startServiceAndWait(SessionService.class, SessionService.SELF_LINK + "-test"));
     }
 
     @Test
@@ -57,7 +53,7 @@ public class LocalLogoutProviderTest extends AuthBaseTest {
         });
         ctx.await();
 
-        assertEquals(Operation.STATUS_CODE_UNAUTHORIZED, op.getStatusCode());
+        assertEquals(Operation.STATUS_CODE_OK, op.getStatusCode());
         String cookie = op.getResponseHeader(Operation.SET_COOKIE_HEADER);
         assertTrue(cookie != null
                 && cookie.startsWith(AuthenticationConstants.REQUEST_AUTH_TOKEN_COOKIE));

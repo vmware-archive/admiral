@@ -14,6 +14,7 @@ package com.vmware.admiral.auth.idm;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -31,6 +32,6 @@ public class LocalAuthConfigProviderTest extends AuthBaseTest {
         assertEquals(BasicAuthenticationService.SELF_LINK,
                 provider.getAuthenticationServiceSelfLink());
         assertNotNull(provider.getAuthenticationServiceUserLinkBuilder());
-        assertNull(provider.createUserServiceFactory());
+        assertTrue(provider.createServiceFactories().isEmpty());
     }
 }
