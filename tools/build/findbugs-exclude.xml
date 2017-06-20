@@ -1,0 +1,8 @@
+<FindBugsFilter>
+    <Match>
+        <Class name="com.vmware.admiral.common.util.DelegatingX509KeyManager" />
+        <Method name="getAliasByRemoteCert" />
+        <Local name="handshakeSession" />
+        <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE" />
+    </Match>
+</FindBugsFilter>
