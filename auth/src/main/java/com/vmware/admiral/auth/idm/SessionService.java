@@ -13,7 +13,9 @@ package com.vmware.admiral.auth.idm;
 
 import com.vmware.admiral.auth.idm.local.LocalLogoutProvider;
 import com.vmware.admiral.auth.util.AuthUtil;
+import com.vmware.admiral.auth.util.SecurityContextUtil;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.StatelessService;
 
@@ -43,13 +45,25 @@ public class SessionService extends StatelessService {
     public void handleGet(Operation get) {
         if (isLogoutRequest(get)) {
             provider.doLogout(get);
+        } else if (isSessionRequest(get)) {
+            getCurrentUserSecurityContext(get)
+                    .thenApply(get::setBody)
+                    .whenCompleteNotify(get);
         } else {
-            get.fail(new UnsupportedOperationException());
+            Operation.failServiceNotFound(get);
         }
     }
 
     private boolean isLogoutRequest(Operation op) {
         return ManagementUriParts.AUTH_LOGOUT.equalsIgnoreCase(op.getUri().getPath());
+    }
+
+    private boolean isSessionRequest(Operation op) {
+        return SELF_LINK.equalsIgnoreCase(op.getUri().getPath());
+    }
+
+    private DeferredResult<SecurityContext> getCurrentUserSecurityContext(Operation op) {
+        return SecurityContextUtil.getSecurityContext(this, op.getAuthorizationContext());
     }
 
 }

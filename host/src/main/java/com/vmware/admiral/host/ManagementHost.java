@@ -21,9 +21,8 @@ import javax.net.ssl.SSLContext;
 
 import io.swagger.models.Info;
 
-import com.vmware.admiral.UserSessionService;
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
-import com.vmware.admiral.auth.idm.PrincipalService;
+import com.vmware.admiral.auth.idm.SessionService;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.common.util.ConfigurationUtil;
 import com.vmware.admiral.common.util.ServerX509TrustManager;
@@ -375,12 +374,10 @@ public class ManagementHost extends ServiceHost implements IExtensibilityRegistr
                 trustManager, null), 0);
         setClient(serviceClient);
 
-        addPrivilegedService(UserSessionService.class);
-
         AuthConfigProvider authProvider = AuthUtil.getPreferredProvider(AuthConfigProvider.class);
         // TODO this should be moved to HostInitAuthServiceConfig once HostInitServiceHelper gets
         // support for privileged services
-        addPrivilegedService(PrincipalService.class);
+        addPrivilegedService(SessionService.class);
 
         if (AuthUtil.useAuthConfig(this)) {
 

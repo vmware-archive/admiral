@@ -23,6 +23,7 @@ import com.vmware.admiral.auth.idm.Principal;
 import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.idm.SecurityContext;
 import com.vmware.admiral.auth.idm.SecurityContext.ProjectEntry;
+import com.vmware.admiral.auth.idm.SessionService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.photon.controller.model.query.QueryUtils.QueryByPages;
@@ -159,7 +160,7 @@ public class SecurityContextUtil {
                 .createGet(requestorService,
                         UriUtils.buildUriPath(PrincipalService.SELF_LINK, userId))
                 .setReferer(requestorService.getUri());
-        authorizeOperation(requestorService, getOp);
+        authorizeOperationIfSessionService(requestorService, getOp);
 
         return requestorService.getHost()
                 .sendWithDeferredResult(getOp, Principal.class)
@@ -180,7 +181,7 @@ public class SecurityContextUtil {
         Operation getOp = Operation
                 .createGet(requestorService, AuthUtils.getUserStateDocumentLink(userId))
                 .setReferer(requestorService.getUri());
-        authorizeOperation(requestorService, getOp);
+        authorizeOperationIfSessionService(requestorService, getOp);
 
         return requestorService.getHost()
                 .sendWithDeferredResult(getOp, UserState.class)
@@ -212,11 +213,19 @@ public class SecurityContextUtil {
                 }).collect(Collectors.toList());
     }
 
-    // TODO this will become obsolete when we make the PrincipleService non-privileged and introduce
-    // the session service (privileged) which will be setting the system authorization context
-    // before issuing the security context for the current user from the PrincipalService
-    private static void authorizeOperation(Service requestorService, Operation op) {
-        requestorService.setAuthorizationContext(op,
-                requestorService.getSystemAuthorizationContext());
+    /**
+     * We want to authorize the operation with system context only when the requestorService is
+     * SessionService, because SessionService is privileged, so even the basic users should be able
+     * to get the SecurityContext for themselves.
+     *
+     * In other cases where the caller is not authorized to required services to collect the
+     * SecurityContext (e.g. UserService, PrincipalService), we should not authorize the
+     * operation with system context.
+     */
+    private static void authorizeOperationIfSessionService(Service requestorService, Operation op) {
+        if (requestorService instanceof SessionService) {
+            requestorService.setAuthorizationContext(op,
+                    requestorService.getSystemAuthorizationContext());
+        }
     }
 }

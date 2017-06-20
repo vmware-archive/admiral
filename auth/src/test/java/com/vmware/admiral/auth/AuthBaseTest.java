@@ -36,7 +36,8 @@ import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
-import com.vmware.admiral.auth.idm.PrincipalService;
+import com.vmware.admiral.auth.idm.SecurityContext;
+import com.vmware.admiral.auth.idm.SessionService;
 import com.vmware.admiral.auth.idm.content.AuthContentService;
 import com.vmware.admiral.auth.idm.content.AuthContentService.AuthContentBody;
 import com.vmware.admiral.auth.idm.local.LocalAuthConfigProvider.Config;
@@ -119,9 +120,7 @@ public abstract class AuthBaseTest extends BaseTestCase {
     }
 
     protected void setPrivilegedServices() {
-        // TODO remove the Principal service from this list once the security context gets exposed
-        // trough the session service
-        host.addPrivilegedService(PrincipalService.class);
+        host.addPrivilegedService(SessionService.class);
     }
 
     protected void startServices(VerificationHost host) throws Throwable {
@@ -326,6 +325,27 @@ public abstract class AuthBaseTest extends BaseTestCase {
         host.testStart(1);
         host.send(loadContent);
         host.testWait();
+    }
+
+    protected DeferredResult<SecurityContext> getSecurityContextFromSessionService() {
+        return host.sendWithDeferredResult(Operation.createGet(host, SessionService.SELF_LINK),
+                SecurityContext.class);
+    }
+
+    protected SecurityContext getSecurityContext() {
+        final SecurityContext[] context = new SecurityContext[1];
+        TestContext ctx = testCreate(1);
+        host.send(Operation.createGet(host, SessionService.SELF_LINK)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                        return;
+                    }
+                    context[0] = o.getBody(SecurityContext.class);
+                    ctx.completeIteration();
+                }));
+        ctx.await();
+        return context[0];
     }
 
 }

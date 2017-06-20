@@ -22,17 +22,15 @@ import { DocumentService } from './utils/document.service';
 })
 export class AppComponent {
     fullScreen: boolean;
-    user: any;
+    userSecurityContext: any;
 
     constructor(private viewExpandRequestor: ViewExpandRequestService, private documentService: DocumentService) {
         this.viewExpandRequestor.getFullScreenRequestEmitter().subscribe(isFullScreen => {
             this.fullScreen = isFullScreen;
         });
 
-        this.documentService.loadCurrentUser().then((userState) => {
-            return this.documentService.getPrincipalById(userState.email);
-        }).then((principal) => {
-            this.user = principal;
+        this.documentService.loadCurrentUserSecurityContext().then((securityContext) => {
+            this.userSecurityContext = securityContext;
         }).catch((ex) => {
             console.log(ex);
         });
@@ -43,19 +41,19 @@ export class AppComponent {
     }
 
     get userName(): String {
-        if (this.user) {
-            return this.user.name || this.user.email;
+        if (this.userSecurityContext) {
+            return this.userSecurityContext.name || this.userSecurityContext.email;
         }
         return null;
     }
 
     get userNameDetail(): String {
-        if (this.user) {
-            if (!this.user.name) {
+        if (this.userSecurityContext) {
+            if (!this.userSecurityContext.name) {
                 // Already shown above
                 return null;
             }
-            return this.user.email;
+            return this.userSecurityContext.email;
         }
     }
 }

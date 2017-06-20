@@ -171,7 +171,7 @@ export class DocumentService {
     return this.ajax.delete(documentSelfLink);
   }
 
-  public loadCurrentUser(): Promise<any> {
+  public loadCurrentUserSecurityContext(): Promise<any> {
     return this.ajax.get(Links.USER_SESSION);
   }
 

@@ -117,7 +117,10 @@ public class PrincipalServiceTest extends AuthBaseTest {
     }
 
     @Test
-    public void testGetSecurityContextShouldPass() {
+    public void testGetSecurityContextShouldPass() throws GeneralSecurityException {
+        // Assume the identity of admin, because basic user should not be able to use
+        // PrincipalService and get data for other users.
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
         SecurityContext securityContext = testRequest(Operation::createGet,
                 UriUtils.buildUriPath(PrincipalService.SELF_LINK, USER_EMAIL_ADMIN,
                         PrincipalService.SECURITY_CONTEXT_SUFFIX),
