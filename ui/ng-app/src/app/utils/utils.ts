@@ -113,6 +113,28 @@ export class Utils {
       _generic: errorMessage
     };
   }
+
+  // The following function returns the logarithm of y with base x
+  public static getBaseLog(x, y) {
+    return Math.log(y) / Math.log(x);
+  }
+
+  public static getMagnitude(bytes) {
+    if (bytes < 1) {
+      return 0;
+    }
+    return Math.floor(this.getBaseLog(1024, bytes));
+  }
+
+  public static magnitudes = ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
+
+  public static formatBytes(bytes, magnitude) {
+    if (bytes == 0) {
+      return 0;
+    }
+    var decimals = 2;
+    return parseFloat((bytes / Math.pow(1024, magnitude)).toFixed(decimals));
+  }
 }
 
 export class CancelablePromise<T> {
