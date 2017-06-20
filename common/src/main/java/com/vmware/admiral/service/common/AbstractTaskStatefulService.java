@@ -350,7 +350,7 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     private String getExtensibilityFailureMessage(T patch) {
         return patch.customProperties != null ? patch.customProperties
                 .get(ExtensibilitySubscriptionCallbackService
-                        .EXTENSIBILITY_STATUS_MESSAGE) : null;
+                        .EXTENSIBILITY_ERROR_MESSAGE) : null;
     }
 
     private void validateAndEnhanceNotificationPayload(T state,

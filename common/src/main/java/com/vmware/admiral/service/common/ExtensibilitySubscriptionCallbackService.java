@@ -49,7 +49,7 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
 
     public static final String FACTORY_LINK = ManagementUriParts.EXTENSIBILITY_CALLBACKS;
 
-    public static final String EXTENSIBILITY_STATUS_MESSAGE = "extensibilityStatusMessage";
+    public static final String EXTENSIBILITY_ERROR_MESSAGE = "extensibilityErrorMessage";
 
     private static final int PROCESSED_NOTIFICATION_EXPIRE_TIME = Integer.getInteger(
             "com.vmware.admiral.service.extensibility.expiration.processed", 60);
@@ -81,7 +81,7 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
         @Since(ReleaseConstants.RELEASE_VERSION_0_9_5)
         @Documentation(description = "Status message")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
-        public String statusMessage;
+        public String errorMessage;
 
         @Documentation(description = "Resume counter")
         @UsageOption(option = PropertyUsageOption.OPTIONAL)
@@ -163,6 +163,8 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
             return;
         }
 
+        String error = getErrorMessage(post);
+
         syncTaskStates(currentState, post);
 
         setState(post, currentState);
@@ -170,7 +172,7 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
         post.setBody(currentState).complete();
 
         if (currentState.status == ExtensibilitySubscriptionCallback.Status.RESUME) {
-            markDone(getErrorMessage(currentState));
+            markDone(error);
         }
     }
 
@@ -203,7 +205,7 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
             state.taskSubStage = patchBody.taskSubStage;
         }
 
-        state.statusMessage = patchBody.statusMessage;
+        state.errorMessage = patchBody.errorMessage;
 
         patch.complete();
 
@@ -255,7 +257,7 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
     private void markDone(String statusMessage) {
         ExtensibilitySubscriptionCallback patch = new ExtensibilitySubscriptionCallback();
         patch.status = ExtensibilitySubscriptionCallback.Status.DONE;
-        patch.statusMessage = statusMessage;
+        patch.errorMessage = statusMessage;
         patch.documentExpirationTimeMicros = ServiceUtils.getExpirationTimeFromNowInMicros(
                 TimeUnit.MINUTES.toMicros(PROCESSED_NOTIFICATION_EXPIRE_TIME));
 
@@ -269,11 +271,11 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
     }
 
     private void notifyParentTask(ExtensibilitySubscriptionCallback body) {
-        if (body.statusMessage != null && !body.statusMessage.isEmpty()) {
+        if (body.errorMessage != null && !body.errorMessage.isEmpty()) {
             body.replyPayload.customProperties = body.replyPayload.customProperties != null ?
                     body.replyPayload.customProperties : new HashMap<>();
             body.replyPayload.customProperties
-                    .put(EXTENSIBILITY_STATUS_MESSAGE, body.statusMessage);
+                    .put(EXTENSIBILITY_ERROR_MESSAGE, body.errorMessage);
         }
 
         sendRequest(Operation
@@ -323,14 +325,15 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
 
         // Store extensibility callback in order to be used as finished callback response.
         currentState.replyPayload = extensibilityResponse;
-
     }
 
     private static String getTimeoutMessage(ExtensibilitySubscriptionCallback state) {
         return "Timeout: due was '" + state.due + "' but expired";
     }
 
-    private static String getErrorMessage(ExtensibilitySubscriptionCallback state) {
-        return null;
+    private static String getErrorMessage(Operation op) {
+        ExtensibilitySubscriptionCallback extensibilityResponse = op
+                .getBody(ExtensibilitySubscriptionCallback.class);
+        return extensibilityResponse.errorMessage;
     }
 }
