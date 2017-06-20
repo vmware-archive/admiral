@@ -1,0 +1,30 @@
+{
+  "frontends": [
+    {
+      "port": 443,
+      "backends": [
+        {
+          "host": "www.dir.bg",
+          "port": 443
+        },
+        {
+          "host": "www.actualno.bg",
+          "port": 442
+        }
+      ]
+    },
+    {
+      "port": 80,
+      "backends": [
+        {
+          "host": "www.novini.bg",
+          "port": 8080
+        },
+        {
+          "host": "www.vesti.bg",
+          "port": 8008
+        }
+      ]
+    }
+  ]
+}

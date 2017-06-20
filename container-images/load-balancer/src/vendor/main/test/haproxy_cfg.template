@@ -1,0 +1,9 @@
+{{range $frontend := .Frontends}}
+frontend https-{{$frontend.Port}}
+    use_backend backend-{{$frontend.Port}}
+
+backend backend-{{$frontend.Port}}
+    {{range $backend := $frontend.Backends}}
+    server {{$backend.Host}} {{$backend.Host}}:{{$backend.Port}} maxconn 500
+    {{end}}
+{{end}}
