@@ -1,14 +1,29 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
 <div class="main-view">
   <div class="title">{{"identity.title" | i18n}}</div>
   <clr-tabs>
     <clr-tab-link [clrTabLinkId]="'identityCredentialsTab'" [clrTabLinkActive]="true">{{"identity.credentials" | i18n}}</clr-tab-link>
     <clr-tab-link [clrTabLinkId]="'identityCertificatesTab'">{{"identity.certificates" | i18n}}</clr-tab-link>
+    <clr-tab-link [clrTabLinkId]="'identityUsersGroupsTab'">{{"identity.usersgroups.title" | i18n}}</clr-tab-link>
 
     <clr-tab-content [clrTabContentId]="'identityCredentialsContent'" [clrTabContentActive]="true">
       <former-view path="credentials"></former-view>
     </clr-tab-content>
     <clr-tab-content [clrTabContentId]="'identityCertificatesContent'">
       <former-view path="certificates"></former-view>
+    </clr-tab-content>
+    <clr-tab-content [clrTabContentId]="'identityUsersGroupsContent'">
+      <app-identity-usersgroups></app-identity-usersgroups>
     </clr-tab-content>
   </clr-tabs>
 </div>

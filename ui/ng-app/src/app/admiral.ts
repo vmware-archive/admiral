@@ -19,6 +19,7 @@ import { AdministrationComponent } from './views/administration/administration.c
 import { MainResourcesComponent } from './views/main-resources/main-resources.component';
 
 import { IdentityManagementComponent } from './views/identity-management/identity-management.component';
+import { UsersGroupsComponent } from "./views/identity-management/users-groups.component";
 import { ProjectsComponent } from './views/projects/projects.component';
 import { ProjectDetailsComponent } from './views/projects/project-details/project-details.component';
 import { ProjectSummaryComponent } from "./views/projects/project-details/project-summary.component";
@@ -74,6 +75,7 @@ export const ADMIRAL_DECLARATIONS = [
   SimpleSearchComponent,
 
   IdentityManagementComponent,
+  UsersGroupsComponent,
   ProjectsComponent,
   ProjectDetailsComponent,
   ProjectSummaryComponent,

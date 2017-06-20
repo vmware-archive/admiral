@@ -143,7 +143,17 @@
   "identity": {
     "title": "Identity Management",
     "credentials": "Credentials",
-    "certificates": "Certificates"
+    "certificates": "Certificates",
+    "usersgroups": {
+        "title": "Users & Groups",
+        "description": "Import users and groups into the system. Then assign project roles to a user or group. You can also make a user a global cloud admin.",
+        "fieldTitleSearch": "Search Users/Groups",
+        "columnName": "User/Group Name",
+        "columnPrimaryId": "Primary ID",
+        "columnCloudAdmin": "Cloud Admin",
+        "columnProjects": "Projects",
+        "count": "users/groups"
+    }
   },
   "errors": {
     "itemNotFound": "Item was not found."
