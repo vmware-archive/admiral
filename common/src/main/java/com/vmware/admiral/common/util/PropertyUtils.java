@@ -180,10 +180,22 @@ public class PropertyUtils {
             properties.put(key, Double.valueOf(value));
         } catch (Exception e) {
             LOGGER.warning(
-                            String.format("Cannot set property %s value %s as double", key, value));
+                    String.format("Cannot set property %s value %s as double", key, value));
         }
 
         return properties;
+    }
+
+    public static Optional<String> getPropertyString(Map<String, String> properties, String key) {
+        if (properties == null) {
+            return Optional.empty();
+        }
+        if (properties.containsKey(key)) {
+            return Optional.of(properties.get(key));
+
+        } else {
+            return Optional.empty();
+        }
     }
 
     public static Optional<Integer> getPropertyInteger(Map<String, String> properties, String key) {
@@ -216,7 +228,7 @@ public class PropertyUtils {
             properties.put(key, Integer.valueOf(value));
         } catch (Exception e) {
             LOGGER.warning(String.format("Cannot set property %s value %s as integer", key,
-                            value));
+                    value));
         }
 
         return properties;

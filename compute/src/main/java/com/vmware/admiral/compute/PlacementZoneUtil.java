@@ -19,6 +19,7 @@ import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
 import com.vmware.admiral.compute.PlacementZoneConstants.PlacementZoneType;
+import com.vmware.admiral.compute.cluster.ClusterService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
@@ -59,7 +60,8 @@ public class PlacementZoneUtil {
         return getPlacementZoneType(placementZone) == PlacementZoneType.SCHEDULER;
     }
 
-    public static String buildPlacementZoneDefaultName(ContainerHostType hostType, String hostAddress) {
+    public static String buildPlacementZoneDefaultName(ContainerHostType hostType,
+            String hostAddress) {
         StringBuilder sb = new StringBuilder(hostType.toString().toLowerCase());
         sb.append(":");
         sb.append(hostAddress.replaceAll("^https?:\\/\\/", ""));
@@ -68,6 +70,13 @@ public class PlacementZoneUtil {
 
     public static DeferredResult<ResourcePoolState> generatePlacementZone(ServiceHost serviceHost,
             ComputeState hostState) {
+        return generatePlacementZone(serviceHost,
+                hostState, null, null, null);
+    }
+
+    public static DeferredResult<ResourcePoolState> generatePlacementZone(ServiceHost serviceHost,
+            ComputeState hostState, String clusterDetails, String clusterName,
+            Long clusterCreationTime) {
         try {
             AssertUtil.assertNotNull(hostState, "hostState");
         } catch (LocalizableValidationException ex) {
@@ -78,13 +87,30 @@ public class PlacementZoneUtil {
 
         ContainerHostType hostType = ContainerHostUtil.getDeclaredContainerHostType(hostState);
         ResourcePoolState resourcePool = new ResourcePoolState();
-        resourcePool.name = buildPlacementZoneDefaultName(hostType, hostState.address);
+        if (clusterName != null && !clusterName.isEmpty()) {
+            resourcePool.name = clusterName;
+        } else {
+            resourcePool.name = buildPlacementZoneDefaultName(hostType, hostState.address);
+        }
+
+        resourcePool.customProperties = new HashMap<>();
+        if (clusterDetails != null && !clusterDetails.isEmpty()) {
+            resourcePool.customProperties.put(
+                    ClusterService.CLUSTER_DETAILS_CUSTOM_PROP,
+                    clusterDetails);
+        }
+        if (clusterCreationTime != null) {
+            resourcePool.customProperties.put(
+                    ClusterService.CLUSTER_CREATION_TIME_MICROS_CUSTOM_PROP,
+                    clusterCreationTime.toString());
+        }
+
         if (hostType != ContainerHostType.DOCKER) {
             // mark the placement zone as a scheduler
-            resourcePool.customProperties = new HashMap<>();
             resourcePool.customProperties.put(
                     PlacementZoneConstants.PLACEMENT_ZONE_TYPE_CUSTOM_PROP_NAME,
                     PlacementZoneType.SCHEDULER.toString());
+
         }
         if (hostState.tenantLinks != null) {
             resourcePool.tenantLinks = new ArrayList<>(hostState.tenantLinks);

@@ -100,6 +100,44 @@ public class ClusterServiceTest extends ComputeBaseTest {
     }
 
     @Test
+    public void testCreateDockerClusterCustomNameAndDetails() throws Throwable {
+        final String projectLink = buildProjectLink("test-docker-project");
+
+        final String clusterName = "ClusterTestName";
+        final String clusterDetails = "Test cluster details.";
+
+        ContainerHostSpec hostSpec = createContainerHostSpec(Collections.singletonList(projectLink),
+                ContainerHostType.DOCKER, clusterName, clusterDetails);
+        ClusterDto clusterDto = createCluster(hostSpec);
+        verifyCluster(clusterDto, ClusterType.DOCKER, clusterName, projectLink);
+        assertEquals(clusterDetails, clusterDto.details);
+        assertNotNull(clusterDto.clusterCreationTimeMicros);
+
+        clusterDto = getOneCluster(Service.getId(clusterDto.documentSelfLink));
+        verifyCluster(clusterDto, ClusterType.DOCKER, clusterName, projectLink);
+        assertEquals(clusterDetails, clusterDto.details);
+        assertNotNull(clusterDto.clusterCreationTimeMicros);
+    }
+
+    @Test
+    public void testCreateVchClusterCustomNameAndDetails() throws Throwable {
+        final String projectLink = buildProjectLink("test-vch-project");
+
+        final String clusterName = "ClusterTestName";
+        final String clusterDetails = "Test cluster details.";
+
+        ContainerHostSpec hostSpec = createContainerHostSpec(Collections.singletonList(projectLink),
+                ContainerHostType.VCH, clusterName, clusterDetails);
+        ClusterDto clusterDto = createCluster(hostSpec);
+        verifyCluster(clusterDto, ClusterType.VCH, clusterName, projectLink);
+
+        clusterDto = getOneCluster(Service.getId(clusterDto.documentSelfLink));
+        verifyCluster(clusterDto, ClusterType.VCH, clusterName, projectLink);
+        assertEquals(clusterDetails, clusterDto.details);
+        assertNotNull(clusterDto.clusterCreationTimeMicros);
+    }
+
+    @Test
     public void testListClusters() throws Throwable {
         final String projectLinkDocker = buildProjectLink("test-docker-project");
         final String placementZoneNameDocker = PlacementZoneUtil
@@ -434,13 +472,24 @@ public class ClusterServiceTest extends ComputeBaseTest {
 
     private ContainerHostSpec createContainerHostSpec(List<String> tenantLinks,
             ContainerHostType hostType) throws Throwable {
+        return createContainerHostSpec(tenantLinks,
+                hostType, null, null);
+    }
+
+    private ContainerHostSpec createContainerHostSpec(List<String> tenantLinks,
+            ContainerHostType hostType, String clusterName, String clusterDetails)
+            throws Throwable {
         ContainerHostSpec ch = new ContainerHostSpec();
-        ch.hostState = createComputeState(hostType, ComputeService.PowerState.ON, tenantLinks);
+        ch.hostState = createComputeState(hostType, ComputeService.PowerState.ON, tenantLinks,
+                clusterName, clusterDetails);
         return ch;
     }
 
     private ComputeState createComputeState(ContainerHostType hostType,
-            ComputeService.PowerState hostState, List<String> tenantLinks) throws Throwable {
+            ComputeService.PowerState hostState, List<String> tenantLinks, String clusterName,
+            String clusterDetails
+
+    ) throws Throwable {
         ComputeState cs = new ComputeState();
         cs.id = UUID.randomUUID().toString();
         cs.address = COMPUTE_ADDRESS;
@@ -453,6 +502,17 @@ public class ClusterServiceTest extends ComputeBaseTest {
         cs.customProperties.put(MockDockerHostAdapterService.CONTAINER_HOST_TYPE_PROP_NAME,
                 hostType.toString());
         cs.tenantLinks = new ArrayList<>(tenantLinks);
+
+        if (clusterDetails != null && !clusterDetails.isEmpty()) {
+            cs.customProperties.put(
+                    ClusterService.CLUSTER_DETAILS_CUSTOM_PROP,
+                    clusterDetails);
+        }
+        if (clusterName != null) {
+            cs.customProperties.put(
+                    ClusterService.CLUSTER_NAME_CUSTOM_PROP,
+                    clusterName);
+        }
         return cs;
     }
 }

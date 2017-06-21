@@ -74,6 +74,12 @@ public class ClusterUtils {
                 ClusterService.SELF_LINK,
                 Service.getId(resourcePoolState.documentSelfLink));
         ePZClusterDto.name = resourcePoolState.name;
+        ePZClusterDto.clusterCreationTimeMicros = PropertyUtils
+                .getPropertyLong(resourcePoolState.customProperties,
+                        ClusterService.CLUSTER_CREATION_TIME_MICROS_CUSTOM_PROP)
+                .orElse(0L);
+        ePZClusterDto.details = PropertyUtils.getPropertyString (resourcePoolState.customProperties,
+                ClusterService.CLUSTER_DETAILS_CUSTOM_PROP).orElse("");
         ePZClusterDto.totalMemory = resourcePoolState.maxMemoryBytes == null ? 0
                 : resourcePoolState.maxMemoryBytes;
         ePZClusterDto.memoryUsage = ePZClusterDto.totalMemory - PropertyUtils.getPropertyLong(

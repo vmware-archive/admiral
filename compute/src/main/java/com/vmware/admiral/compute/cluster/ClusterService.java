@@ -13,6 +13,8 @@ package com.vmware.admiral.compute.cluster;
 
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoField;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -57,6 +59,9 @@ public class ClusterService extends StatelessService {
 
     public static final String CLUSTER_ID_PATH_SEGMENT = "clusterId";
     public static final String CLUSTER_ID_PATH_SEGMENT_TEMPLATE = SELF_LINK + "/{clusterId}";
+    public static final String CLUSTER_DETAILS_CUSTOM_PROP = "__clusterDetails";
+    public static final String CLUSTER_NAME_CUSTOM_PROP = "__clusterName";
+    public static final String CLUSTER_CREATION_TIME_MICROS_CUSTOM_PROP = "__clusterCreationTimeMicros";
 
     public ClusterService() {
         super(ClusterDto.class);
@@ -101,6 +106,12 @@ public class ClusterService extends StatelessService {
 
         /** (Optional) the address of the VCH cluster. */
         public String address;
+
+        /** The moment of creation of a given cluster. */
+        public Long clusterCreationTimeMicros;
+
+        /** The details of a given cluster. */
+        public String details;
 
         /** The number of containers in the cluster. */
         public int containerCount;
@@ -279,7 +290,8 @@ public class ClusterService extends StatelessService {
                     create.complete();
                 }).exceptionally((ex) -> {
                     if (ex.getCause() instanceof CertificateNotTrustedException) {
-                        create.setBody(((CertificateNotTrustedException) ex.getCause()).certificate);
+                        create.setBody(
+                                ((CertificateNotTrustedException) ex.getCause()).certificate);
                         create.complete();
                     } else {
                         logWarning("Create cluster failed: %s", Utils.toString(ex));
@@ -334,6 +346,13 @@ public class ClusterService extends StatelessService {
     private DeferredResult<Pair<ResourcePoolState, GroupResourcePlacementState>> generatePlacementZoneAndPlacement(
             ContainerHostSpec hostSpec, Set<String> generatedResourcesIds) {
         ComputeState hostState = hostSpec.hostState;
+        String clusterDetails = null;
+        String clusterName = null;
+        if (hostState.customProperties != null) {
+            clusterDetails = hostState.customProperties.remove(CLUSTER_DETAILS_CUSTOM_PROP);
+            clusterName = hostState.customProperties.remove(CLUSTER_NAME_CUSTOM_PROP);
+        }
+        Long clusterCreationTime = LocalDateTime.now().getLong(ChronoField.MICRO_OF_SECOND);
 
         // Honor predefined placement zone if any
         if (ClusterUtils.hasPlacementZone(hostState)) {
@@ -341,7 +360,9 @@ public class ClusterService extends StatelessService {
         }
 
         // else, automatically generate placement zone
-        return PlacementZoneUtil.generatePlacementZone(getHost(), hostState)
+        return PlacementZoneUtil
+                .generatePlacementZone(getHost(), hostState, clusterDetails, clusterName,
+                        clusterCreationTime)
                 .thenCompose((generatedZone) -> {
                     // update placement zone in the compute state and generate placement
                     hostState.resourcePoolLink = generatedZone.documentSelfLink;
