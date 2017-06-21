@@ -83,6 +83,9 @@ public class AzureWordpressProvisionNetworkIT extends BaseWordpressComputeProvis
                 { "WordPress_with_MySQL_compute_public_network.yaml", null },
                 { "WordPress_with_MySQL_compute_isolated_network.yaml",
                         (BiConsumer<Set<ServiceDocument>, String>) BaseWordpressComputeProvisionIT
+                                ::validateIsolatedNic },
+                {"WordPress_with_MySQL_compute_isolated_sg_network.yaml",
+                        (BiConsumer<Set<ServiceDocument>, String>) BaseWordpressComputeProvisionIT
                                 ::validateIsolatedNic }
         });
     }
@@ -99,7 +102,7 @@ public class AzureWordpressProvisionNetworkIT extends BaseWordpressComputeProvis
     @Override
     protected void doSetUp() throws Throwable {
 
-        // raise the support public ip address flag on the defaul subnet
+        // raise the support public ip address flag on the default subnet
         String defaultSubnetState = getDefaultSubnetStateLink();
 
         SubnetState patch = new SubnetState();
@@ -121,6 +124,10 @@ public class AzureWordpressProvisionNetworkIT extends BaseWordpressComputeProvis
         createProfile(loadComputeProfile(getEndpointType()),
                 createIsolatedSubnetNetworkProfile(virtualNetworkIsolated.name(),
                         CIDR_PREFIX),
+                new StorageProfile());
+
+        createProfile(loadComputeProfile(getEndpointType()), createIsolatedSecurityGroupNetworkProfile(
+                defaultSubnet.name(), Sets.newHashSet(createTag("type", "sg"))),
                 new StorageProfile());
     }
 
@@ -231,12 +238,10 @@ public class AzureWordpressProvisionNetworkIT extends BaseWordpressComputeProvis
                 .withAddressPrefix(cidr)
                 .withName(name);
 
-        SubnetInner subnet = azureSdkClients
+        return azureSdkClients
                 .getNetworkManagementClientImpl()
                 .subnets()
                 .createOrUpdate(resourceGroup.name(), virtualNetwork.name(), name, subnetRequest);
-
-        return subnet;
     }
 
     private static VirtualNetworkInner createVirtualNetwork(String vNetName)
@@ -250,12 +255,10 @@ public class AzureWordpressProvisionNetworkIT extends BaseWordpressComputeProvis
         addressSpace.withAddressPrefixes(prefixes);
         virtualNetworkRequest.withAddressSpace(addressSpace);
 
-        VirtualNetworkInner vNetwork = azureSdkClients
+        return azureSdkClients
                 .getNetworkManagementClientImpl()
                 .virtualNetworks()
                 .createOrUpdate(resourceGroup.name(), vNetName, virtualNetworkRequest);
-
-        return vNetwork;
     }
 
     private static void createResourceGroup(String resourceGroupName)

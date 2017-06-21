@@ -17,6 +17,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 
+import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.resources.ResourceGroupService;
 import com.vmware.photon.controller.model.resources.ResourceGroupService.ResourceGroupState;
 import com.vmware.xenon.common.DeferredResult;
@@ -26,7 +27,6 @@ import com.vmware.xenon.common.UriUtils;
 
 public class ResourceGroupUtils {
 
-    public static final String RESOURCE_GROUP_TYPE_KEY = "type";
     public static final String COMPUTE_DEPLOYMENT_TYPE_VALUE = "compute_deployment";
 
     public static DeferredResult<ResourceGroupState> createResourceGroup(ServiceHost host,
@@ -37,7 +37,8 @@ public class ResourceGroupUtils {
         resourceGroup.documentSelfLink = generateSelfLink(resourceGroup);
         resourceGroup.tenantLinks = tenantLinks;
         resourceGroup.customProperties = new HashMap<>();
-        resourceGroup.customProperties.put(RESOURCE_GROUP_TYPE_KEY, COMPUTE_DEPLOYMENT_TYPE_VALUE);
+        resourceGroup.customProperties.put(ComputeProperties.RESOURCE_TYPE_KEY,
+                COMPUTE_DEPLOYMENT_TYPE_VALUE);
 
         return host.sendWithDeferredResult(
                 Operation.createPost(host, ResourceGroupService.FACTORY_LINK)

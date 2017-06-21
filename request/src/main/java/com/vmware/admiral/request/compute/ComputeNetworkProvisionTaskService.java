@@ -536,8 +536,8 @@ public class ComputeNetworkProvisionTaskService
         securityGroup.id = UUID.randomUUID().toString();
         securityGroup.documentSelfLink = securityGroup.id;
         securityGroup.name =
-                String.format("Isolation Security Group for network [%s] and "
-                                + "deployment [%s]", context.computeNetworkDescription.name,
+                String.format("isolation-network-%s-deployment-%s",
+                        context.computeNetworkDescription.name,
                         RequestUtils.getContextId(context.state));
         securityGroup.desc = securityGroup.name;
         securityGroup.regionId = context.endpointComputeState.description.regionId;
@@ -555,8 +555,8 @@ public class ComputeNetworkProvisionTaskService
         }
 
         // build "deny-all" rules for now
-        securityGroup.ingress = buildIsolationRules();
-        securityGroup.egress = buildIsolationRules();
+        securityGroup.ingress = buildIsolationRules("inbound");
+        securityGroup.egress = buildIsolationRules("outbound");
 
         return this.sendWithDeferredResult(
                 Operation.createPost(this, SecurityGroupService.FACTORY_LINK)
@@ -750,9 +750,9 @@ public class ComputeNetworkProvisionTaskService
                 Operation.createPatch(this, loadBalancerLink).setBody(patchBody));
     }
 
-    private List<Rule> buildIsolationRules() {
+    private List<Rule> buildIsolationRules(String direction) {
         Rule isolationRule = new Rule();
-        isolationRule.name = "Default Rule for Isolation Security Group";
+        isolationRule.name = direction + "-deny-all";
         isolationRule.protocol = SecurityGroupService.ANY;
         isolationRule.ipRangeCidr = "0.0.0.0/0";
         isolationRule.access = Access.Deny;

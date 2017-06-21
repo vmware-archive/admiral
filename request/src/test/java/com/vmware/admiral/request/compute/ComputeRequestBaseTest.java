@@ -12,6 +12,7 @@
 package com.vmware.admiral.request.compute;
 
 import static com.vmware.admiral.common.test.CommonTestStateFactory.ENDPOINT_ID;
+import static com.vmware.admiral.request.utils.RequestUtils.FIELD_NAME_CONTEXT_ID_KEY;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,6 +42,7 @@ import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.EndpointService;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService;
@@ -94,6 +96,25 @@ public class ComputeRequestBaseTest extends RequestBaseTest {
         return cd;
     }
 
+    protected ComputeDescription createComputeDescriptionWithNetwork(String networkName) throws
+            Throwable {
+        ComputeDescription cd = new ComputeDescription();
+        cd.id = UUID.randomUUID().toString();
+        cd.name = TEST_VM_NAME;
+        cd.instanceType = "small";
+        cd.tenantLinks = computeGroupPlacementState.tenantLinks;
+        cd.customProperties = new HashMap<>();
+        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME,
+                "coreos");
+
+        SubnetState subnet = createSubnet("my-subnet");
+        NetworkInterfaceDescription nid = createNetworkInterface(networkName,
+                subnet.documentSelfLink);
+        cd.networkInterfaceDescLinks = new ArrayList<>();
+        cd.networkInterfaceDescLinks.add(nid.documentSelfLink);
+        return doPost(cd, ComputeDescriptionService.FACTORY_LINK);
+    }
+
     private SubnetState createSubnet(String name) throws Throwable {
         SubnetState sub = new SubnetState();
         sub.name = name;
@@ -101,6 +122,15 @@ public class ComputeRequestBaseTest extends RequestBaseTest {
         sub.networkLink = UriUtils.buildUriPath(NetworkService.FACTORY_LINK, name);
         sub.documentSelfLink = UriUtils.buildUriPath(SubnetService.FACTORY_LINK, name);
         return doPost(sub, SubnetService.FACTORY_LINK);
+    }
+
+    protected ComputeState createComputeState(String descLink, String contextId) throws Throwable {
+        ComputeState compute = new ComputeState();
+        compute.name = UUID.randomUUID().toString();
+        compute.descriptionLink = descLink;
+        compute.customProperties = new HashMap<>();
+        compute.customProperties.put(FIELD_NAME_CONTEXT_ID_KEY, contextId);
+        return doPost(compute, ComputeService.FACTORY_LINK);
     }
 
     private NetworkInterfaceDescription createNetworkInterface(String name, String subnetLink)

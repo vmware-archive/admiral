@@ -26,6 +26,7 @@ import org.junit.Test;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.request.RequestBaseTest;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
+import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.resources.ResourceGroupService.ResourceGroupState;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
@@ -65,7 +66,7 @@ public class ResourceGroupUtilsTest extends RequestBaseTest {
         assertEquals(resourceGroup.name, contextId);
         assertEquals(resourceGroup.tenantLinks, tenantLinks);
         assertNotNull(resourceGroup.customProperties);
-        assertEquals(resourceGroup.customProperties.get(ResourceGroupUtils.RESOURCE_GROUP_TYPE_KEY),
+        assertEquals(resourceGroup.customProperties.get(ComputeProperties.RESOURCE_TYPE_KEY),
                 ResourceGroupUtils.COMPUTE_DEPLOYMENT_TYPE_VALUE);
     }
 
@@ -95,7 +96,7 @@ public class ResourceGroupUtilsTest extends RequestBaseTest {
         assertEquals(resourceGroup.name, contextId);
         assertEquals(resourceGroup.tenantLinks, tenantLinks);
         assertNotNull(resourceGroup.customProperties);
-        assertEquals(resourceGroup.customProperties.get(ResourceGroupUtils.RESOURCE_GROUP_TYPE_KEY),
+        assertEquals(resourceGroup.customProperties.get(ComputeProperties.RESOURCE_TYPE_KEY),
                 ResourceGroupUtils.COMPUTE_DEPLOYMENT_TYPE_VALUE);
     }
 }
