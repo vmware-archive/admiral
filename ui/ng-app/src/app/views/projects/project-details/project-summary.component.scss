@@ -9,7 +9,25 @@
   white-space: pre;
   margin-bottom: 10px;
 }
-.project-summary-details {
+.project-summary-subsection {
   margin-top: 10px;
+}
+.project-summary-subsection-title {
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+.project-summary-subsection-content-row {
   padding-left: 20px;
+
+  .left-column {
+      width: 150px;
+      float: left;
+  }
+  .right-column {
+      margin-left: 150px;
+  }
+  .clear {
+   clear: both;
+  }
 }

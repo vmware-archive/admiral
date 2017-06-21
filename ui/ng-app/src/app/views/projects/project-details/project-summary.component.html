@@ -10,17 +10,56 @@
   -->
 
 <div toolbar>
-  <button class="btn btn-link" [routerLink]="['./edit']">
+    <button class="btn btn-link" [routerLink]="['./edit']">
     <clr-icon shape="edit" size="12"></clr-icon><span class="btn-spaced-text">{{"edit" | i18n}}</span></button>
 </div>
 
 <div class="project-summary">
-  <div class="project-summary-description">{{project?.description}}</div>
-  <div class="project-summary-details">
-    <div>{{"projects.summary.type" | i18n}} {{projectType | i18n}}</div>
-    <div>{{"projects.summary.status" | i18n}} {{"unknown" | i18n}}</div>
-    <div>{{"projects.summary.creationDate" | i18n}} {{"unknown" | i18n}}</div>
-  </div>
+    <div class="project-summary-description">{{project?.description}}</div>
+    <div class="project-summary-subsection">
+        <div class="project-summary-subsection-content-row">
+            <div class="left-column">{{"projects.summary.type" | i18n}}</div>
+            <div class="right-column">{{projectType | i18n}}</div><div class="clear"></div></div>
+        <div class="project-summary-subsection-content-row">
+            <div class="left-column">{{"projects.summary.creationDate" | i18n}}</div>
+            <div class="right-column">{{"unknown" | i18n}}</div><div class="clear"></div></div>
+    </div>
+
+    <div class="project-summary-subsection">
+        <div class="project-summary-subsection-title">{{"projects.summary.team.title" | i18n}}</div>
+        <div class="project-summary-subsection-content-row">
+            <div class="left-column">{{"projects.summary.team.administrators" | i18n}}</div>
+            <div class="right-column">{{project?.administrators?.length}} {{"projects.summary.team.users" | i18n}}</div>
+            <div class="clear"></div></div>
+        <div class="project-summary-subsection-content-row">
+            <div class="left-column">{{"projects.summary.team.members" | i18n}}</div>
+            <div class="right-column">{{project?.members?.length}} {{"projects.summary.team.users" | i18n}}</div>
+            <div class="clear"></div></div>
+    </div>
+
+    <div class="project-summary-subsection">
+        <div class="project-summary-subsection-title">{{"projects.summary.repositories.title" | i18n}}</div>
+        <div class="project-summary-subsection-content-row">
+            <div class="left-column">{{"projects.summary.repositories.repositories" | i18n}}</div>
+            <div class="right-column">N/A</div>
+            <div class="clear"></div></div>
+    </div>
+
+    <div class="project-summary-subsection">
+        <div class="project-summary-subsection-title">{{"projects.summary.resources.title" | i18n}}</div>
+        <div class="project-summary-subsection-content-row">
+            <div class="left-column">{{"projects.summary.resources.clusters" | i18n}}</div>
+            <div class="right-column">N/A</div>
+            <div class="clear"></div></div>
+        <div class="project-summary-subsection-content-row">
+            <div class="left-column">{{"projects.summary.resources.templates" | i18n}}</div>
+            <div class="right-column">N/A</div>
+            <div class="clear"></div></div>
+        <div class="project-summary-subsection-content-row">
+            <div class="left-column">{{"projects.summary.resources.images" | i18n}}</div>
+            <div class="right-column">N/A</div>
+            <div class="clear"></div></div>
+    </div>
 </div>
 
 <navigation-container>

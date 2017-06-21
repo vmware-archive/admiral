@@ -27,8 +27,23 @@
     "summary": {
       "title" : "Summary",
       "type": "Type:",
-      "status": "Status:",
-      "creationDate": "Created:"
+      "creationDate": "Created:",
+      "team": {
+        "title": "Project Team",
+        "administrators": "Project Admins:",
+        "members": "Developers:",
+        "users": "users"
+      },
+      "repositories": {
+        "title": "Project Repositories",
+        "repositories": "Repositories:"
+      },
+      "resources": {
+        "title": "Project Resources",
+        "clusters": "Clusters:",
+        "templates": "App Templates:",
+        "images": "Images:"
+      }
     },
     "members": {
       "title":"Members",
