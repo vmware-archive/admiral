@@ -103,6 +103,27 @@ public class ComputeNetworkProvisioningTaskServiceTest extends ComputeRequestBas
         assertEquals(provisioningTask.resourceLinks.iterator().next(), networkState.documentSelfLink);
     }
 
+    @Test
+    public void testProvisionIsolatedSubnetNetworkNoCompute() throws Throwable {
+        ComputeNetworkDescription computeNetworkDesc = createComputeNetworkDescription(UUID
+                .randomUUID().toString(), NetworkType.ISOLATED);
+
+        ComputeNetwork computeNetwork = createComputeNetwork(computeNetworkDesc,
+                createIsolatedSubnetNetworkProfile().documentSelfLink);
+
+        ComputeNetworkProvisionTaskState provisioningTask = createComputeNetworkProvisionTask(
+                computeNetworkDesc.documentSelfLink, computeNetwork.documentSelfLink, 1);
+        provisioningTask = provision(provisioningTask);
+
+        ComputeNetwork networkState = getDocument(ComputeNetwork.class,
+                provisioningTask.resourceLinks.iterator().next());
+
+        assertNotNull(networkState);
+        assertEquals(computeNetworkDesc.documentSelfLink, networkState.descriptionLink);
+        assertTrue(networkState.name.contains(computeNetworkDesc.name));
+        assertEquals(provisioningTask.resourceLinks.iterator().next(), networkState.documentSelfLink);
+    }
+
     private ComputeNetworkProvisionTaskState createComputeNetworkProvisionTask(
             String networkDescriptionSelfLink, String networkStateSelfLink, long resourceCount) {
 
@@ -167,19 +188,6 @@ public class ComputeNetworkProvisioningTaskServiceTest extends ComputeRequestBas
         return cn;
     }
 
-    private ProfileState createProfile()
-            throws Throwable {
-        NetworkProfile networkProfile = new NetworkProfile();
-        networkProfile.isolationType = IsolationSupportType.NONE;
-        networkProfile.subnetLinks = Arrays.asList(createSubnetState(null).documentSelfLink);
-        networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
-        ProfileState profile = super.createProfile(null, null, networkProfile, null,
-                null);
-        assertNotNull(profile);
-
-        return profile;
-    }
-
     private ComputeNetworkDescription createNetworkDescription(String name, NetworkType networkType) {
         ComputeNetworkDescription desc = TestRequestStateFactory
                 .createComputeNetworkDescription(name);
@@ -204,6 +212,18 @@ public class ComputeNetworkProvisioningTaskServiceTest extends ComputeRequestBas
         return securityGroupState;
     }
 
+    private ProfileState createProfile()
+            throws Throwable {
+        NetworkProfile networkProfile = new NetworkProfile();
+        networkProfile.isolationType = IsolationSupportType.NONE;
+        networkProfile.subnetLinks = Arrays.asList(createSubnetState(null).documentSelfLink);
+        networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
+        ProfileState profile = super.createProfile(null, null, networkProfile, null, null);
+        assertNotNull(profile);
+
+        return profile;
+    }
+
     private ProfileState createIsolatedNetworkProfile(SecurityGroupState securityGroupState) throws Throwable {
 
         ComputeNetworkCIDRAllocationState cidrAllocation = createNetworkCIDRAllocationState();
@@ -216,8 +236,25 @@ public class ComputeNetworkProvisioningTaskServiceTest extends ComputeRequestBas
 
         networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
 
-        ProfileState profile = super.createProfile(null, null, networkProfile, null,
-                null);
+        ProfileState profile = super.createProfile(null, null, networkProfile, null, null);
+        assertNotNull(profile);
+
+        return profile;
+    }
+
+    private ProfileState createIsolatedSubnetNetworkProfile() throws Throwable {
+
+        ComputeNetworkCIDRAllocationState cidrAllocation = createNetworkCIDRAllocationState();
+
+        NetworkProfile networkProfile = new NetworkProfile();
+        networkProfile.name = "networkProfileName";
+        networkProfile.isolationType = IsolationSupportType.SUBNET;
+        networkProfile.isolationNetworkLink = cidrAllocation.networkLink;
+        networkProfile.isolationNetworkCIDR = "192.168.0.0/16";
+        networkProfile.isolatedSubnetCIDRPrefix = 16;
+        networkProfile = doPost(networkProfile, NetworkProfileService.FACTORY_LINK);
+
+        ProfileState profile = super.createProfile(null, null, networkProfile, null, null);
         assertNotNull(profile);
 
         return profile;

@@ -81,7 +81,7 @@ public class NetworkProfileQueryUtils {
 
     /** Select Subnet that is applicable for compute network interface. */
     public static void getSubnetForComputeNic(ComputeNetwork computeNetwork,
-            ComputeNetworkDescription networkDescription, NetworkInterfaceDescription nid,
+            ComputeNetworkDescription networkDescription,
             ProfileStateExpanded profileState, BiConsumer<SubnetState, Throwable> consumer) {
 
         List<String> constraints = new ArrayList<>();
@@ -118,9 +118,9 @@ public class NetworkProfileQueryUtils {
                 consumer.accept(null, new LocalizableValidationException(
                         String.format(
                                 "Selected profile '%s' doesn't satisfy network '%s' constraints %s.",
-                                profileState.name, nid.name, constraints),
+                                profileState.name, networkDescription.name, constraints),
                         "compute.network.constraints.not.satisfied.by.profile",
-                        profileState.name, nid.name, constraints));
+                        profileState.name, networkDescription.name, constraints));
             } else {
                 consumer.accept(s, null);
             }
@@ -411,14 +411,12 @@ public class NetworkProfileQueryUtils {
     }
 
     public static DeferredResult<SubnetState> selectSubnet(ServiceHost host, URI referer,
-            List<String> tenantLinks, String endpointLink, ComputeDescription cd,
+            List<String> tenantLinks, String endpointLink, String regionId,
             NetworkInterfaceDescription nid, ProfileStateExpanded profile,
             ComputeNetwork computeNetwork, ComputeNetworkDescription computeNetworkDescription,
-            SubnetState isolatedSubnetState) {
-        String subnetLink = nid.subnetLink;
+            SubnetState isolatedSubnetState, boolean noNicVM) {
+        String subnetLink = nid != null ? nid.subnetLink : null;
 
-        boolean noNicVM = cd.customProperties != null
-                && cd.customProperties.containsKey(NetworkProfileQueryUtils.NO_NIC_VM);
         DeferredResult<SubnetState> subnet = null;
         boolean isIsolatedBySubnetNetworkProfile = profile.networkProfile != null &&
                 profile.networkProfile.isolationType == IsolationSupportType.SUBNET;
@@ -431,7 +429,7 @@ public class NetworkProfileQueryUtils {
                         isIsolatedBySubnetNetworkProfile) {
 
                     // in case of isolated network don't assign public ip addresses if the user set nothing
-                    if (nid.assignPublicIpAddress == null) {
+                    if (nid != null && nid.assignPublicIpAddress == null) {
                         subnet = setAssignPublicIpAddress(nid, false, host, referer)
                                 .thenCompose(o -> DeferredResult.completed(isolatedSubnetState));
                     } else {
@@ -440,14 +438,14 @@ public class NetworkProfileQueryUtils {
                 } else {
                     DeferredResult<SubnetState> subnetDeferred = new DeferredResult<>();
                     NetworkProfileQueryUtils.getSubnetForComputeNic(computeNetwork,
-                            computeNetworkDescription, nid, profile,
+                            computeNetworkDescription, profile,
                             (s, ex) -> {
                                 if (ex != null) {
                                     subnetDeferred.fail(ex);
                                     return;
                                 }
 
-                                if (computeNetwork.networkType == NetworkType.PUBLIC) {
+                                if (computeNetwork.networkType == NetworkType.PUBLIC && nid != null) {
                                     setAssignPublicIpAddress(nid, true, host, referer)
                                             .thenAccept(v -> subnetDeferred.complete(s));
                                 } else {
@@ -465,14 +463,14 @@ public class NetworkProfileQueryUtils {
                                     .findAny().orElse(profile.networkProfile.subnetStates.get(0)));
                 } else {
                     // no subnets selected in the network profile. Pick existing subnet.
-                    subnet = findSubnetBy(host, tenantLinks, endpointLink, cd.regionId);
+                    subnet = findSubnetBy(host, tenantLinks, endpointLink, regionId);
                 }
             }
-        } else if (noNicVM && nid.networkLink != null) {
+        } else if (noNicVM && nid != null && nid.networkLink != null) {
             subnet = DeferredResult.completed(null);
         } else if (subnetLink == null) {
             // TODO: filter also by NetworkProfile
-            subnet = findSubnetBy(host, tenantLinks, endpointLink, cd.regionId);
+            subnet = findSubnetBy(host, tenantLinks, endpointLink, regionId);
         } else {
             subnet = host.sendWithDeferredResult(Operation.createGet(host, subnetLink)
                     .setReferer(referer), SubnetState.class);
@@ -482,11 +480,11 @@ public class NetworkProfileQueryUtils {
     }
 
     /**
-     * Returns one of the subnets associated with network profiles that match the given
-     * compute network (based on its constraints as well as the given endpoint link).
+     * Selects one of the profiles available for the given compute network based on the given
+     * endpoint.
      */
-    public static DeferredResult<SubnetState> selectSubnetForComputeNetwork(ServiceHost host,
-            URI referer, List<String> tenantLinks, String endpointLink,
+    public static DeferredResult<ProfileStateExpanded> selectComputeNetworkProfileByEndpoint(
+            ServiceHost host, URI referer, List<String> tenantLinks, String endpointLink,
             ComputeNetwork computeNetwork) {
         // retrieve all profiles applicable to the given network
         List<DeferredResult<ProfileStateExpanded>> profileDrs = computeNetwork.profileLinks.stream()
@@ -503,19 +501,14 @@ public class NetworkProfileQueryUtils {
                         .filter(profile -> endpointLink.equals(profile.endpointLink))
                         .collect(Collectors.toList()));
 
-        // combine subnets from the remaining profiles into a single list
-        DeferredResult<List<SubnetState>> subnetsDr = endpointProfilesDr
-                .thenApply(profiles -> profiles.stream()
-                        .flatMap(profile -> profile.networkProfile.subnetStates.stream())
-                        .collect(Collectors.toList()));
-
-        // just pick the first subnet
-        return subnetsDr.thenApply(subnets -> {
-            if (subnets.isEmpty()) {
-                throw new IllegalArgumentException("Cannot find a subnet for compute network "
-                        + computeNetwork.documentSelfLink);
+        // just pick the first profile
+        return endpointProfilesDr.thenApply(profiles -> {
+            if (profiles.isEmpty()) {
+                throw new IllegalArgumentException(String.format(
+                        "Cannot find a profile for endpoint %s for compute network %s",
+                        endpointLink, computeNetwork.documentSelfLink));
             }
-            return subnets.get(0);
+            return profiles.get(0);
         });
     }
 

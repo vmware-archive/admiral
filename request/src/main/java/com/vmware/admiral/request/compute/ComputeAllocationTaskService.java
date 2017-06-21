@@ -791,7 +791,7 @@ public class ComputeAllocationTaskService
         if (noNicVM) {
             return NetworkProfileQueryUtils.selectSubnet(getHost(),
                     UriUtils.buildUri(getHost(), getSelfLink()), state.tenantLinks,
-                    state.endpointLink, cd, nid, profile, null, null, null)
+                    state.endpointLink, cd.regionId, nid, profile, null, null, null, noNicVM)
                     .thenCompose(subnetState -> NetworkProfileQueryUtils.createNicState(subnetState,
                             state.tenantLinks, state.endpointLink, cd, nid, null, profile
                                     .networkProfile.securityGroupLinks));
@@ -800,13 +800,12 @@ public class ComputeAllocationTaskService
         }
     }
 
-    private DeferredResult<Operation> patchComputeNetwork(ComputeNetwork computeNetwork,
-            ProfileStateExpanded profile) {
-
-        computeNetwork.provisionProfileLink = profile.documentSelfLink;
+    private DeferredResult<Operation> patchComputeNetwork(String computeNetworkLink,
+            String profileLink) {
+        ComputeNetwork patchBody = new ComputeNetwork();
+        patchBody.provisionProfileLink = profileLink;
         return this.sendWithDeferredResult(
-                Operation.createPatch(this, computeNetwork.documentSelfLink)
-                        .setBody(computeNetwork));
+                Operation.createPatch(this, computeNetworkLink).setBody(patchBody));
     }
 
     private DeferredResult<Void> patchComputeNetworks(ComputeAllocationTaskState state,
@@ -855,7 +854,8 @@ public class ComputeAllocationTaskService
                                     if (computeNetwork.provisionProfileLink != null) {
                                         return DeferredResult.completed(new Operation());
                                     }
-                                    return patchComputeNetwork(computeNetwork, profile);
+                                    return patchComputeNetwork(computeNetwork.documentSelfLink,
+                                            profile.documentSelfLink);
                                 }).collect(Collectors.toList());
 
                         DeferredResult.allOf(ops).whenComplete((allOps, t) -> {

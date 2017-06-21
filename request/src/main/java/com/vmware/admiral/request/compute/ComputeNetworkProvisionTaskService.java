@@ -23,7 +23,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -48,16 +47,18 @@ import com.vmware.photon.controller.model.adapterapi.SecurityGroupInstanceReques
 import com.vmware.photon.controller.model.adapterapi.SubnetInstanceRequest.InstanceRequestType;
 import com.vmware.photon.controller.model.adapters.registry.PhotonModelAdaptersRegistryService;
 import com.vmware.photon.controller.model.adapters.registry.PhotonModelAdaptersRegistryService.PhotonModelAdapterConfig;
-import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.photon.controller.model.query.QueryUtils;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeStateWithDescription;
 import com.vmware.photon.controller.model.resources.EndpointService.EndpointState;
+import com.vmware.photon.controller.model.resources.LoadBalancerDescriptionService.LoadBalancerDescription;
+import com.vmware.photon.controller.model.resources.LoadBalancerService.LoadBalancerState;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionService.NetworkInterfaceDescription;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService.NetworkInterfaceState;
 import com.vmware.photon.controller.model.resources.NetworkService.NetworkState;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.SecurityGroupService;
 import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState;
 import com.vmware.photon.controller.model.resources.SecurityGroupService.SecurityGroupState.Rule;
@@ -142,6 +143,19 @@ public class ComputeNetworkProvisionTaskService
 
     }
 
+    public static class ConnectedResource {
+        public ResourceState resource;
+        public ResourceState description;
+        public NetworkInterfaceDescription networkInterfaceDescription;
+
+        public static ConnectedResource create(ResourceState resource, ResourceState description) {
+            ConnectedResource result = new ConnectedResource();
+            result.resource = resource;
+            result.description = description;
+            return result;
+        }
+    }
+
     private static class Context {
         public Context(String computeNetworkLink, ComputeNetworkProvisionTaskState state,
                 ServiceTaskCallback<SubStage> serviceTaskCallback) {
@@ -159,8 +173,7 @@ public class ComputeNetworkProvisionTaskService
         public String securityGroupInstanceAdapterReference;
         public String subnetCIDR;
         public ComputeNetworkDescription computeNetworkDescription;
-        public Map<ComputeState, Pair<ComputeDescription, NetworkInterfaceDescription>>
-                computeStates;
+        public List<ConnectedResource> connectedResources;
         public ComputeNetworkProvisionTaskState state;
         public SecurityGroupState isolationSecurityGroup;
         public NetworkState subnetNetworkState;
@@ -241,7 +254,7 @@ public class ComputeNetworkProvisionTaskService
                 .thenCompose(this::populateComputeNetwork)
                 .thenCompose(this::populateComputeNetworkDescription)
                 .thenCompose(this::populateProfile)
-                .thenCompose(this::populateComputeStates)
+                .thenCompose(this::populateConnectedResources)
                 .thenCompose(this::populateSubnet)
                 .thenCompose(ctx -> {
                     if (context.computeNetwork.networkType != NetworkType.ISOLATED) {
@@ -267,7 +280,7 @@ public class ComputeNetworkProvisionTaskService
             return DeferredResult.completed(context)
                     .thenCompose(this::allocateSubnetCIDR)
                     .thenCompose(this::createSubnet)
-                    .thenCompose(this::createNicStates)
+                    .thenCompose(this::configureConnectedResources)
                     .thenCompose(this::provisionSubnet);
         } else if (context.computeNetwork.networkType == NetworkType.ISOLATED &&
                 context.profile.networkProfile.isolationType
@@ -276,14 +289,14 @@ public class ComputeNetworkProvisionTaskService
             return DeferredResult.completed(context)
                     .thenCompose(this::populateEndpointComputeState)
                     .thenCompose(this::createSecurityGroup)
-                    .thenCompose(this::createNicStates)
+                    .thenCompose(this::configureConnectedResources)
                     .thenCompose(this::pupulateSubnetNetworkState)
                     .thenCompose(this::provisionSecurityGroup);
         } else {
             // No new resources need to be provisioned.
             // Simply create the NIC states and finish the task.
             return DeferredResult.completed(context)
-                    .thenCompose(this::createNicStates)
+                    .thenCompose(this::configureConnectedResources)
                     .thenCompose(ctx -> {
                         context.serviceTaskCallback.sendResponse(this, (Throwable)null);
                         return DeferredResult.completed(ctx);
@@ -381,7 +394,18 @@ public class ComputeNetworkProvisionTaskService
         }
     }
 
+    private DeferredResult<Context> populateConnectedResources(Context context) {
+        return DeferredResult.completed(context)
+                .thenApply(ignore -> {
+                    context.connectedResources = new ArrayList<>();
+                    return context;
+                })
+                .thenCompose(this::populateComputeStates)
+                .thenCompose(this::populateLoadBalancers);
+    }
+
     private DeferredResult<Context> populateComputeStates(Context context) {
+        // get all ComputeStates that have the same context id as this compute network
         Builder builder = Builder.create()
                 .addKindFieldClause(ComputeState.class);
         builder.addCompositeFieldClause(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
@@ -389,61 +413,67 @@ public class ComputeNetworkProvisionTaskService
         QueryUtils.QueryByPages<ComputeState> query = new QueryUtils.QueryByPages<>(
                 getHost(),
                 builder.build(), ComputeState.class, context.state.tenantLinks);
-        List<ComputeState> computeStates = new ArrayList<>();
-        DeferredResult<Context> result = new DeferredResult<>();
-        // get all ComputeStates that have the same context id as this compute network
-        query.queryDocuments(cs -> computeStates.add(cs))
-                // get all descriptions for those computes
-                .thenCompose(v -> DeferredResult.allOf(computeStates.stream()
-                        .map(cs -> this.sendWithDeferredResult(
-                                Operation.createGet(getHost(), cs.descriptionLink),
-                                ComputeDescription.class)
-                                .thenApply(cd -> Pair.of(cs, cd)))
-                        .collect(Collectors.toList())))
-                // get all network interface descriptions for those computes
-                .thenCompose(pairs -> DeferredResult.allOf(pairs.stream()
-                        .filter(pair -> pair.right.networkInterfaceDescLinks != null &&
-                                !pair.right.networkInterfaceDescLinks.isEmpty())
-                        .flatMap(pair -> pair.right.networkInterfaceDescLinks.stream()
-                                .map(nidLink ->
-                                        this.sendWithDeferredResult(
-                                                Operation.createGet(getHost(), nidLink),
-                                                NetworkInterfaceDescription.class)
-                                                .thenApply(nid -> Pair.of(pair.left, Pair.of
-                                                        (pair.right, nid)))
-                                )
-                        ).collect(Collectors.toList())))
-                // keep only the network interface descriptions pointing to this network
-                .thenApply(pairs -> {
-                    context.computeStates = new HashMap<>();
-                    pairs.forEach(pair -> {
-                        if (pair.right.right.name != null &&
-                                context.computeNetworkDescription.name != null &&
-                                context.computeNetworkDescription.name.equals(
-                                        pair.right.right.name)) {
-                            // there *should* only be one NIC connecting to this network
-                            if (context.computeStates.put(pair.left, pair.right) != null) {
-                                failTask("Cannot have multiple NICs connected to the "
-                                        + "same network", new LocalizableValidationException(
-                                        "Cannot have multiple NICs connected to the same network",
-                                        "request.compute.network.provision.multiple-nics"));
-                                return;
-                            }
-                        }
-                    });
 
+        // collect the ones connected to this network
+        return query.collectDocuments(Collectors.toList())
+                .thenCompose(computes -> DeferredResult.allOf(
+                        computes.stream().map(compute -> populateComputeState(context, compute))
+                                .collect(Collectors.toList())))
+                .thenApply(resources -> resources.stream()
+                        .filter(r -> r.networkInterfaceDescription != null)
+                        .collect(Collectors.toList()))
+                .thenApply(resources -> {
+                    context.connectedResources.addAll(resources);
                     return context;
-                })
-                .whenComplete((ctx, t) -> {
-                    if (t != null) {
-                        failTask("Failure retrieving compute states and network interface "
-                                + "descriptions", t);
-                        return;
-                    }
-                    result.complete(ctx);
                 });
+    }
 
-        return result;
+    private DeferredResult<ConnectedResource> populateComputeState(Context context,
+            ComputeState compute) {
+        return getDocumentDR(compute.descriptionLink, ComputeDescription.class)
+                .thenApply(cd -> ConnectedResource.create(compute, cd))
+                .thenCompose(cr -> getDocumentsDR(
+                        ((ComputeDescription) cr.description).networkInterfaceDescLinks,
+                        NetworkInterfaceDescription.class).thenApply(nids -> nids.stream()
+                                .filter(nid -> context.computeNetworkDescription.name != null
+                                        && context.computeNetworkDescription.name.equals(nid.name))
+                                .collect(Collectors.toList())).thenApply(nids -> {
+                                    if (nids.size() > 1) {
+                                        throw new LocalizableValidationException(
+                                                "Cannot have multiple NICs connected to the same network",
+                                                "request.compute.network.provision.multiple-nics");
+                                    }
+                                    if (!nids.isEmpty()) {
+                                        cr.networkInterfaceDescription = nids.get(0);
+                                    }
+                                    return cr;
+                                }));
+    }
+
+    private DeferredResult<Context> populateLoadBalancers(Context context) {
+        // get all load balancers that have the same context id as this compute network
+        Builder builder = Builder.create()
+                .addKindFieldClause(LoadBalancerState.class);
+        builder.addCompositeFieldClause(ComputeState.FIELD_NAME_CUSTOM_PROPERTIES,
+                FIELD_NAME_CONTEXT_ID_KEY, RequestUtils.getContextId(context.state));
+        QueryUtils.QueryByPages<LoadBalancerState> query = new QueryUtils.QueryByPages<>(
+                getHost(),
+                builder.build(), LoadBalancerState.class, context.state.tenantLinks);
+
+        return query.collectDocuments(Collectors.toList())
+                .thenCompose(lbs -> DeferredResult.allOf(
+                        lbs.stream().map(lb -> populateLoadBalancer(context, lb))
+                                .collect(Collectors.toList())))
+                .thenApply(resources -> {
+                    context.connectedResources.addAll(resources);
+                    return context;
+                });
+    }
+
+    private DeferredResult<ConnectedResource> populateLoadBalancer(Context context,
+            LoadBalancerState loadBalancer) {
+        return getDocumentDR(loadBalancer.descriptionLink, LoadBalancerDescription.class)
+                .thenApply(lbd -> ConnectedResource.create(loadBalancer, lbd));
     }
 
     private DeferredResult<Context> populateSubnet(Context context) {
@@ -632,51 +662,57 @@ public class ComputeNetworkProvisionTaskService
                 .thenApply(op -> context);
     }
 
-    private DeferredResult<Context> createNicStates(Context context) {
-        if (context.computeStates == null || context.computeStates.isEmpty()) {
-            // there are no computes attached to this network
+    private DeferredResult<Context> configureConnectedResources(Context context) {
+        if (context.connectedResources == null || context.connectedResources.isEmpty()) {
+            // there are no resources attached to this network
             return DeferredResult.completed(context);
         }
 
-        DeferredResult<Context> result = new DeferredResult<>();
-
-        List<DeferredResult<Operation>> patchOps = context.computeStates.keySet().stream()
-                .map(cs ->
-                        NetworkProfileQueryUtils.selectSubnet(getHost(),
-                                UriUtils.buildUri(getHost(), getSelfLink()),
+        List<DeferredResult<Operation>> patchOps = context.connectedResources.stream()
+                .map(cr -> NetworkProfileQueryUtils
+                        .selectSubnet(getHost(), UriUtils.buildUri(getHost(), getSelfLink()),
                                 context.state.tenantLinks, context.profile.endpointLink,
-                                context.computeStates.get(cs).left,
-                                context.computeStates.get(cs).right, context.profile,
+                                cr.description.regionId,
+                                cr.networkInterfaceDescription, context.profile,
                                 context.computeNetwork, context.computeNetworkDescription,
-                                context.subnet)
-                                .thenApply(subnetState -> context.subnet = subnetState)
-                                .thenCompose(subnetState ->
-                                        NetworkProfileQueryUtils.createNicState(subnetState,
-                                                context.state.tenantLinks,
-                                                context.profile.endpointLink,
-                                                context.computeStates.get(cs).left,
-                                                context.computeStates.get(cs).right,
-                                                context.isolationSecurityGroup,
-                                                context.profile.networkProfile.securityGroupLinks))
-                                .thenCompose(nic -> this.sendWithDeferredResult(
-                                        Operation.createPost(this,
-                                                NetworkInterfaceService.FACTORY_LINK).setBody(nic),
-                                        NetworkInterfaceState.class)
-                                        .thenCompose(nis ->
-                                                DeferredResult.completed(nis.documentSelfLink)))
-                                .thenCompose(nicLink -> patchComputeState(cs, nicLink))
-                ).collect(Collectors.toList());
+                                context.subnet, false)
+                        .thenApply(subnetState -> context.subnet = subnetState)
+                        .thenCompose(subnetState -> updateConnectedResourceWithSubnet(context, cr,
+                                subnetState)))
+                .collect(Collectors.toList());
 
-        DeferredResult.allOf(patchOps).whenComplete((v, e) -> {
-            if (e != null) {
-                failTask("Failure creating NIC states", e);
-                return;
-            }
+        return DeferredResult.allOf(patchOps)
+                .thenApply(ignore -> context)
+                .whenComplete((v, e) -> {
+                    if (e != null) {
+                        failTask("Failure configuring connected resources", e);
+                        return;
+                    }
+                });
+    }
 
-            result.complete(context);
-        });
+    private DeferredResult<Operation> updateConnectedResourceWithSubnet(Context context,
+            ConnectedResource cr, SubnetState subnetState) {
+        if (cr.resource instanceof ComputeState) {
+            return NetworkProfileQueryUtils
+                    .createNicState(subnetState, context.state.tenantLinks,
+                            context.profile.endpointLink, (ComputeDescription) cr.description,
+                            cr.networkInterfaceDescription, context.isolationSecurityGroup,
+                            context.profile.networkProfile.securityGroupLinks)
+                    .thenCompose(nic -> this.sendWithDeferredResult(Operation
+                            .createPost(this, NetworkInterfaceService.FACTORY_LINK).setBody(nic),
+                            NetworkInterfaceState.class))
+                    .thenCompose(nis ->
+                            patchComputeState((ComputeState) cr.resource, nis.documentSelfLink));
+        }
 
-        return result;
+        if (cr.resource instanceof LoadBalancerState) {
+            return patchLoadBalancerState(cr.resource.documentSelfLink,
+                    subnetState.documentSelfLink);
+        }
+
+        throw new IllegalStateException(
+                "Unexpected resource type: " + cr.resource.getClass().getCanonicalName());
     }
 
     private DeferredResult<Context> patchComputeNetwork(Context context) {
@@ -704,6 +740,14 @@ public class ComputeNetworkProvisionTaskService
         return this.sendWithDeferredResult(
                 Operation.createPatch(this, computeState.documentSelfLink)
                         .setBody(computeState));
+    }
+
+    private DeferredResult<Operation> patchLoadBalancerState(String loadBalancerLink,
+            String subnetLink) {
+        LoadBalancerState patchBody = new LoadBalancerState();
+        patchBody.subnetLinks = Collections.singleton(subnetLink);
+        return this.sendWithDeferredResult(
+                Operation.createPatch(this, loadBalancerLink).setBody(patchBody));
     }
 
     private List<Rule> buildIsolationRules() {
@@ -742,5 +786,18 @@ public class ComputeNetworkProvisionTaskService
                     context.endpointComputeState = computeState;
                     return context;
                 });
+    }
+
+    private <T extends ResourceState> DeferredResult<T> getDocumentDR(String link, Class<T> type) {
+        return this.sendWithDeferredResult(Operation.createGet(this, link), type);
+    }
+
+    private <T extends ResourceState> DeferredResult<List<T>> getDocumentsDR(List<String> links,
+            Class<T> type) {
+        if (links == null) {
+            return DeferredResult.completed(Collections.emptyList());
+        }
+        return DeferredResult.allOf(
+                links.stream().map(link -> getDocumentDR(link, type)).collect(Collectors.toList()));
     }
 }

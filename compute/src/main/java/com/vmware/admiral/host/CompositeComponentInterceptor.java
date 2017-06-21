@@ -26,6 +26,7 @@ import com.vmware.admiral.compute.kubernetes.service.ServiceEntityHandler;
 import com.vmware.admiral.compute.network.ComputeNetworkService;
 import com.vmware.admiral.host.interceptor.OperationInterceptorRegistry;
 import com.vmware.photon.controller.model.resources.ComputeService;
+import com.vmware.photon.controller.model.resources.LoadBalancerService;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
@@ -43,6 +44,7 @@ public class CompositeComponentInterceptor {
         registerType(registry, ContainerService.class);
         registerType(registry, ClosureService.class);
         registerType(registry, ComputeNetworkService.class);
+        registerType(registry, LoadBalancerService.class);
 
         registerType(registry, DeploymentService.class);
         registerType(registry, PodService.class);

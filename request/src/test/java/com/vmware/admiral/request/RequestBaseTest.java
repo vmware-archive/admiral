@@ -56,6 +56,7 @@ import com.vmware.admiral.compute.container.network.ContainerNetworkDescriptionS
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService;
 import com.vmware.admiral.compute.container.volume.ContainerVolumeDescriptionService.ContainerVolumeDescription;
 import com.vmware.admiral.compute.endpoint.EndpointAdapterService;
+import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService;
 import com.vmware.admiral.host.CaSigningCertService;
 import com.vmware.admiral.host.CompositeComponentInterceptor;
 import com.vmware.admiral.host.ComputeInitialBootService;
@@ -751,6 +752,8 @@ public abstract class RequestBaseTest extends BaseTestCase {
                 desc = doPost(desc, ContainerVolumeDescriptionService.FACTORY_LINK);
             } else if (desc instanceof LoadBalancerDescriptionService.LoadBalancerDescription) {
                 desc = doPost(desc, LoadBalancerDescriptionService.FACTORY_LINK);
+            } else if (desc instanceof ComputeNetworkDescriptionService.ComputeNetworkDescription) {
+                desc = doPost(desc, ComputeNetworkDescriptionService.FACTORY_LINK);
             } else {
                 throw new IllegalArgumentException(
                         "Unknown description type: " + desc.getClass().getSimpleName());

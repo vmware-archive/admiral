@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.google.common.collect.Sets;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -286,7 +287,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
 
         TestContext ctx = testCreate(1);
         Set<String> subnets = new HashSet<>();
-        NetworkProfileQueryUtils.getSubnetForComputeNic(computeNetwork, networkDescription, nid,
+        NetworkProfileQueryUtils.getSubnetForComputeNic(computeNetwork, networkDescription,
                 profileState,
                 (s, e) -> {
                     if (e != null) {
@@ -323,7 +324,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
 
         TestContext ctx = testCreate(1);
         Set<SubnetState> subnets = new HashSet<>();
-        NetworkProfileQueryUtils.getSubnetForComputeNic(computeNetwork, networkDescription, nid,
+        NetworkProfileQueryUtils.getSubnetForComputeNic(computeNetwork, networkDescription,
                 profileState,
                 (s, e) -> {
                     if (e != null) {
@@ -364,7 +365,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
         TestContext ctx = testCreate(1);
         List<String> subnets = new ArrayList<>();
         List<Throwable> exceptions = new ArrayList<>();
-        NetworkProfileQueryUtils.getSubnetForComputeNic(computeNetwork, networkDescription, nid,
+        NetworkProfileQueryUtils.getSubnetForComputeNic(computeNetwork, networkDescription,
                 profileState,
                 (s, e) -> {
                     if (e != null) {
@@ -407,7 +408,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
 
         TestContext ctx = testCreate(1);
         Set<String> subnets = new HashSet<>();
-        NetworkProfileQueryUtils.getSubnetForComputeNic(computeNetwork, networkDescription, nid,
+        NetworkProfileQueryUtils.getSubnetForComputeNic(computeNetwork, networkDescription,
                 profileState,
                 (s, e) -> {
                     if (e != null) {
@@ -551,7 +552,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
         TestContext ctx = testCreate(1);
         Set<SubnetState> subnetStates = new HashSet<>();
         NetworkProfileQueryUtils.selectSubnet(host, referer,
-                nd.tenantLinks, null, cd, nid, profile, cn, nd, null)
+                nd.tenantLinks, null, cd.regionId, nid, profile, cn, nd, null, false)
                 .whenComplete((subnet, e) -> {
                     if (e != null) {
                         ctx.fail(e);
@@ -593,7 +594,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
         TestContext ctx = testCreate(1);
         Set<SubnetState> subnetStates = new HashSet<>();
         NetworkProfileQueryUtils.selectSubnet(host, referer,
-                nd.tenantLinks, null, cd, nid, profile, cn, nd, null)
+                nd.tenantLinks, null, cd.regionId, nid, profile, cn, nd, null, true)
                 .whenComplete((subnet, e) -> {
                     if (e != null) {
                         ctx.fail(e);
@@ -635,7 +636,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
         TestContext ctx = testCreate(1);
         Set<SubnetState> subnetStates = new HashSet<>();
         NetworkProfileQueryUtils.selectSubnet(host, referer,
-                nd.tenantLinks, null, cd, nid, profile, cn, nd, isolatedSubnet)
+                nd.tenantLinks, null, cd.regionId, nid, profile, cn, nd, isolatedSubnet, false)
                 .whenComplete((subnet, e) -> {
                     if (e != null) {
                         ctx.fail(e);
@@ -685,7 +686,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
         TestContext ctx = testCreate(1);
         Set<SubnetState> subnetStates = new HashSet<>();
         NetworkProfileQueryUtils.selectSubnet(host, referer,
-                tenantLinks, null, cd, nid, profile, null, null, null)
+                tenantLinks, null, cd.regionId, nid, profile, null, null, null, true)
                 .whenComplete((subnet, e) -> {
                     if (e != null) {
                         ctx.fail(e);
@@ -724,7 +725,7 @@ public class NetworkProfileQueryUtilsTest extends RequestBaseTest {
         TestContext ctx = testCreate(1);
         Set<SubnetState> subnetStates = new HashSet<>();
         NetworkProfileQueryUtils.selectSubnet(host, referer,
-                nd.tenantLinks, null, cd, nid, profile, cn, nd, null)
+                nd.tenantLinks, null, cd.regionId, nid, profile, cn, nd, null, false)
                 .whenComplete((subnet, e) -> {
                     if (e != null) {
                         ctx.fail(e);

@@ -26,6 +26,7 @@ import com.vmware.admiral.common.util.YamlMapper;
 import com.vmware.admiral.compute.network.ComputeNetworkDescriptionService.NetworkType;
 import com.vmware.admiral.compute.profile.ProfileService;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.photon.controller.model.resources.ResourceUtils;
 import com.vmware.photon.controller.model.resources.SecurityGroupService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
@@ -92,17 +93,8 @@ public class ComputeNetworkService extends StatefulService {
 
     @Override
     public void handlePatch(Operation patch) {
-        if (!patch.hasBody()) {
-            throw (new IllegalArgumentException("body is required"));
-        }
-        ComputeNetwork newState = patch.getBody(ComputeNetwork.class);
-        validateState(newState);
-
-        ComputeNetwork currentState = getState(patch);
-
-        updateState(currentState, newState);
-
-        patch.setBody(currentState).complete();
+        ResourceUtils.handlePatch(patch, getState(patch), getStateDescription(),
+                ComputeNetwork.class, null);
     }
 
     private void validateState(ComputeNetwork desc) {
@@ -120,16 +112,5 @@ public class ComputeNetworkService extends StatefulService {
         nd.profileLinks = new ArrayList<>();
         nd.profileLinks.add(ProfileService.FACTORY_LINK + "/my-profile");
         return nd;
-    }
-
-    private void updateState(ComputeNetwork currentState, ComputeNetwork newState) {
-        currentState.provisionProfileLink = newState.provisionProfileLink;
-        currentState.subnetLink = newState.subnetLink;
-        if (newState.securityGroupLinks != null) {
-            if (currentState.securityGroupLinks == null) {
-                currentState.securityGroupLinks = new HashSet<>();
-            }
-            currentState.securityGroupLinks.addAll(newState.securityGroupLinks);
-        }
     }
 }

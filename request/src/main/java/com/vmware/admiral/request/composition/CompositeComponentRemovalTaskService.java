@@ -80,7 +80,7 @@ public class CompositeComponentRemovalTaskService
 
     // Order of batch remove of resources, grouped by resource type.
     private static final List<ResourceType> PREFERED_ORDER_OF_REMOVAL_PER_TYPE = Arrays.asList(
-            ResourceType.CONTAINER_TYPE, ResourceType.COMPUTE_TYPE,
+            ResourceType.CONTAINER_TYPE, ResourceType.LOAD_BALANCER_TYPE, ResourceType.COMPUTE_TYPE,
             ResourceType.NETWORK_TYPE, ResourceType.COMPUTE_NETWORK_TYPE,
             ResourceType.VOLUME_TYPE, ResourceType.CLOSURE_TYPE);
 
