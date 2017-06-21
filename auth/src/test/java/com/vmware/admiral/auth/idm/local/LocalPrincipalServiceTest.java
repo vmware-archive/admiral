@@ -31,6 +31,10 @@ import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalTyp
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
+import com.vmware.xenon.services.common.ResourceGroupService;
+import com.vmware.xenon.services.common.ResourceGroupService.ResourceGroupState;
+import com.vmware.xenon.services.common.RoleService;
+import com.vmware.xenon.services.common.RoleService.RoleState;
 import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
 import com.vmware.xenon.services.common.UserService;
@@ -42,6 +46,34 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
     public void setup() throws Throwable {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
         waitForServiceAvailability(LocalPrincipalFactoryService.SELF_LINK);
+    }
+
+    @Test
+    public void testUserSpecificResourceAreCreatedWhenUserIsCreated() throws Throwable {
+        // Assert user specific UserGroup, ResourceGroup and Role are created.
+        String fritzEmail = "fritz@admiral.com";
+        String fritzSelfLink = LocalPrincipalFactoryService.SELF_LINK + "/" + fritzEmail;
+
+        LocalPrincipalState state = getDocumentNoWait(LocalPrincipalState.class, fritzSelfLink);
+        assertNotNull(state);
+
+        UserState userState = getDocumentNoWait(UserState.class, UriUtils.buildUriPath(
+                UserService.FACTORY_LINK, fritzEmail));
+        assertNotNull(userState);
+
+        ResourceGroupState resourceGroupState = getDocumentNoWait(ResourceGroupState.class,
+                UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK, fritzEmail));
+        assertNotNull(resourceGroupState);
+
+        UserGroupState userGroupState = getDocumentNoWait(UserGroupState.class,
+                UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, fritzEmail));
+        assertNotNull(userGroupState);
+
+        RoleState roleState = getDocumentNoWait(RoleState.class,
+                UriUtils.buildUriPath(RoleService.FACTORY_LINK, fritzEmail));
+        assertNotNull(roleState);
+        assertEquals(userGroupState.documentSelfLink, roleState.userGroupLink);
+        assertEquals(resourceGroupState.documentSelfLink, roleState.resourceGroupLink);
     }
 
     @Test
@@ -75,42 +107,31 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
     }
 
     @Test
-    public void testDeletePrincipalShouldDeleteUserState() {
+    public void testDeletePrincipalShouldDeleteUserState() throws Throwable {
         String fritzEmail = "fritz@admiral.com";
         String fritzSelfLink = LocalPrincipalFactoryService.SELF_LINK + "/" + fritzEmail;
 
-        TestContext ctx = testCreate(1);
-        Operation delete = Operation
-                .createDelete(host, fritzSelfLink)
-                .setReferer(host.getUri())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        ctx.failIteration(ex);
-                        return;
-                    }
-                    ctx.completeIteration();
-                });
-        host.send(delete);
-        ctx.await();
+        doDelete(UriUtils.buildUri(host, fritzSelfLink), false);
 
-        TestContext ctx1 = testCreate(1);
-        Operation get = Operation
-                .createGet(host, UserService.FACTORY_LINK + "/fritz@admiral.com")
-                .setReferer(host.getUri())
-                .setCompletion((o, ex) -> {
-                    if (ex != null) {
-                        if (Operation.STATUS_CODE_NOT_FOUND == o.getStatusCode()) {
-                            ctx1.completeIteration();
-                            return;
-                        }
-                        ctx1.failIteration(ex);
-                        return;
-                    }
-                    ctx1.failIteration(new RuntimeException("UserState fritz@admiral.com "
-                            + "should've been deleted."));
-                });
-        host.send(get);
-        ctx1.await();
+        LocalPrincipalState state = getDocumentNoWait(LocalPrincipalState.class, fritzSelfLink);
+        assertNull(state);
+
+        UserState userState = getDocumentNoWait(UserState.class, UriUtils.buildUriPath(
+                UserService.FACTORY_LINK, fritzEmail));
+        assertNull(userState);
+
+        ResourceGroupState resourceGroupState = getDocumentNoWait(ResourceGroupState.class,
+                UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK, fritzEmail));
+        assertNull(resourceGroupState);
+
+        UserGroupState userGroupState = getDocumentNoWait(UserGroupState.class,
+                UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, fritzEmail));
+        assertNull(userGroupState);
+
+        RoleState roleState = getDocumentNoWait(RoleState.class,
+                UriUtils.buildUriPath(RoleService.FACTORY_LINK, fritzEmail));
+        assertNull(roleState);
+
     }
 
     @Test

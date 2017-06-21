@@ -20,6 +20,7 @@ import static com.vmware.admiral.common.util.AssertUtil.assertNotNull;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -42,6 +43,11 @@ import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.AuthCredentialsService.AuthCredentialsServiceState;
 import com.vmware.xenon.services.common.QueryTask.Query;
+import com.vmware.xenon.services.common.ResourceGroupService;
+import com.vmware.xenon.services.common.ResourceGroupService.ResourceGroupState;
+import com.vmware.xenon.services.common.RoleService;
+import com.vmware.xenon.services.common.RoleService.Policy;
+import com.vmware.xenon.services.common.RoleService.RoleState;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
@@ -249,10 +255,69 @@ public class LocalPrincipalService extends StatefulService {
                         op.fail(ex);
                         return;
                     }
-                    finalizeUserCreate(state, op);
+                    createUserSpecificRole(state, op);
                 });
         addReplicationFactor(postCreds);
         sendRequest(postCreds);
+    }
+
+    private void createUserSpecificRole(LocalPrincipalState state, Operation op) {
+        // Create query for user specific user group, which will match only this user.
+
+        String userGroupUri = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, state.id);
+        String resourceGroupUri = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                state.id);
+        String roleUri = UriUtils.buildUriPath(RoleService.FACTORY_LINK, state.id);
+
+        Query userGroupQuery = Query.Builder.create()
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
+                        UriUtils.buildUriPath(UserService.FACTORY_LINK, state.id))
+                .build();
+
+        UserGroupState groupState = UserGroupState.Builder.create()
+                .withSelfLink(userGroupUri)
+                .withQuery(userGroupQuery).build();
+
+        Query resourceGroupQuery = Query.Builder.create()
+                .addFieldClause(ServiceDocument.FIELD_NAME_AUTH_PRINCIPAL_LINK,
+                        state.documentSelfLink)
+                .build();
+
+        ResourceGroupState resourceGroupState = ResourceGroupState.Builder.create()
+                .withSelfLink(resourceGroupUri)
+                .withQuery(resourceGroupQuery).build();
+
+        RoleState roleState = RoleState.Builder.create()
+                .withPolicy(Policy.ALLOW)
+                .withUserGroupLink(userGroupUri)
+                .withResourceGroupLink(resourceGroupUri)
+                .withSelfLink(roleUri)
+                .withVerbs(EnumSet.allOf(Action.class)).build();
+
+        Operation createUserGroup = Operation.createPost(this, UserGroupService.FACTORY_LINK)
+                .setReferer(op.getUri())
+                .setBody(groupState);
+
+        Operation createResourceGroup = Operation
+                .createPost(this, ResourceGroupService.FACTORY_LINK)
+                .setReferer(op.getUri())
+                .setBody(resourceGroupState);
+
+        Operation createRole = Operation.createPost(this, RoleService.FACTORY_LINK)
+                .setReferer(op.getUri())
+                .setBody(roleState);
+
+        sendWithDeferredResult(createUserGroup, UserGroupState.class)
+                .thenCompose(ignore -> sendWithDeferredResult(createResourceGroup,
+                        ResourceGroupState.class))
+                .thenCompose(ignore -> sendWithDeferredResult(createRole, RoleState.class))
+                .whenComplete((ignore, ex) -> {
+                    if (ex != null) {
+                        op.fail(ex);
+                        return;
+                    }
+                    finalizeUserCreate(state, op);
+                });
     }
 
     private void finalizeUserCreate(LocalPrincipalState state, Operation op) {
@@ -366,18 +431,40 @@ public class LocalPrincipalService extends StatefulService {
     }
 
     private void deleteUserState(String id, Operation delete) {
-        URI uri = UriUtils.buildUri(getHost(), UserService.FACTORY_LINK);
-        uri = UriUtils.extendUri(uri, id);
+        String userStateUri = UriUtils.buildUriPath(UserService.FACTORY_LINK, id);
+        String userGroupUri = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, id);
+        String resourceGroupUri = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK, id);
+        String roleUri = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
 
-        sendRequest(Operation.createDelete(uri)
-                .setReferer(delete.getUri())
-                .setCompletion((o, ex) -> {
+        Operation deleteUserState = Operation.createDelete(this, userStateUri)
+                .setReferer(delete.getUri());
+
+        Operation deleteUserGroupState = Operation.createDelete(this, userGroupUri)
+                .setReferer(delete.getUri());
+
+        Operation deleteResourceGroupState = Operation.createDelete(this, resourceGroupUri)
+                .setReferer(delete.getUri());
+
+        Operation deleteRoleState = Operation.createDelete(this, roleUri)
+                .setReferer(delete.getUri());
+
+        sendWithDeferredResult(deleteRoleState, RoleState.class)
+                .thenCompose(ignore -> sendWithDeferredResult(deleteResourceGroupState,
+                        ResourceGroupState.class))
+                .thenCompose(ignore -> sendWithDeferredResult(deleteUserGroupState,
+                        UserGroupState.class))
+                .thenCompose(ignore -> sendWithDeferredResult(deleteUserState,
+                        UserState.class))
+                .whenComplete((ignore, ex) -> {
                     if (ex != null) {
+                        logSevere("Problem during user cleanup %s: %s",
+                                id, Utils.toString(ex));
                         delete.fail(ex);
                         return;
                     }
                     super.handleDelete(delete);
-                }));
+                });
+
     }
 
     private void deleteUserGroupState(LocalPrincipalState state, Operation delete) {

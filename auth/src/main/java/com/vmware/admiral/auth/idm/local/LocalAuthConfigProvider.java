@@ -36,17 +36,14 @@ import com.vmware.admiral.auth.idm.AuthConfigProvider;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalType;
 import com.vmware.admiral.auth.util.AuthUtil;
-import com.vmware.xenon.common.AuthorizationSetupHelper;
 import com.vmware.xenon.common.Claims;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
-import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
-import com.vmware.xenon.services.common.QueryTask.Query;
 
 public class LocalAuthConfigProvider implements AuthConfigProvider {
 
@@ -130,66 +127,56 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
         return config;
     }
 
-    private static DeferredResult<List<Operation>> createUsers(ServiceHost host, Config config, Operation post) {
+    private static void createUsers(ServiceHost host, Config config, Operation post) {
         if (config == null || config.users == null) {
-            return createGroups(host, config, post);
+            createGroups(host, config, post);
+            return;
         }
 
         List<DeferredResult<Operation>> usersDeferredResults = new ArrayList<>();
 
-        config.users.stream().forEach((user) -> {
-            usersDeferredResults.add(
-                    createUserIfNotExist(host, user).whenComplete((op, ex) -> {
-                        if (ex != null) {
-                            host.log(Level.SEVERE, "Could not initialize user '%s': %s", user.email,
-                                    Utils.toString(ex));
-                            post.fail(ex);
-                        }
+        config.users.forEach((user) -> usersDeferredResults.add(
+                createUserIfNotExist(host, user).whenComplete((op, ex) -> {
+                    if (ex != null) {
+                        host.log(Level.SEVERE, "Could not initialize user '%s': %s", user.email,
+                                Utils.toString(ex));
+                    }
+                })));
 
-                        LocalPrincipalState principalState = op.getBody(LocalPrincipalState.class);
-
-                        Query query = Query.Builder.create()
-                                .addFieldClause(ServiceDocument.FIELD_NAME_AUTH_PRINCIPAL_LINK, principalState.documentSelfLink)
-                                .build();
-
-                        AuthorizationSetupHelper.create()
-                                .setHost(host)
-                                .setUserSelfLink(principalState.documentSelfLink)
-                                .setUserGroupName(principalState.id)
-                                .setResourceGroupName(principalState.id)
-                                .setRoleName(principalState.id)
-                                .setIsAdmin(false)
-                                .setResourceQuery(query)
-                                .setupRole();
-                    }));
-        });
-
-        return DeferredResult.allOf(usersDeferredResults)
-            .thenCompose((ignore) -> {
-                return createGroups(host, config, post);
-            });
+        DeferredResult.allOf(usersDeferredResults)
+                .whenComplete((ignore, ex) -> {
+                    if (ex != null) {
+                        post.fail(ex);
+                        return;
+                    }
+                    createGroups(host, config, post);
+                });
     }
 
-    private static DeferredResult<List<Operation>> createGroups(ServiceHost host, Config config, Operation post) {
+    private static void createGroups(ServiceHost host, Config config, Operation post) {
         if (config == null || config.groups == null) {
             post.complete();
-            return null;
+            return;
         }
 
         List<DeferredResult<Operation>> groupsDeferredResult = new ArrayList<>();
 
-        config.groups.stream().forEach((group) -> {
-            groupsDeferredResult.add(
-                    createGroup(host, group).whenComplete((op, ex) -> {
-                        if (ex != null) {
-                            host.log(Level.SEVERE, "Could not initialize group '%s': %s",
-                                    group.name, Utils.toString(ex));
-                            post.fail(ex);
-                        }
-                    }));
-        });
+        config.groups.forEach((group) -> groupsDeferredResult.add(
+                createGroup(host, group).whenComplete((op, ex) -> {
+                    if (ex != null) {
+                        host.log(Level.SEVERE, "Could not initialize group '%s': %s",
+                                group.name, Utils.toString(ex));
+                    }
+                })));
 
-        return DeferredResult.allOf(groupsDeferredResult);
+        DeferredResult.allOf(groupsDeferredResult)
+                .whenComplete((ignore, ex) -> {
+                    if (ex != null) {
+                        post.fail(ex);
+                        return;
+                    }
+                    post.complete();
+                });
     }
 
     private static DeferredResult<Operation> createUserIfNotExist(ServiceHost host, User user) {
