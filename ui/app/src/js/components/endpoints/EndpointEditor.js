@@ -24,6 +24,9 @@ export default Vue.component('endpoint-editor', {
     model: {
       required: true,
       type: Object
+    },
+    selectedEndpointType: {
+      type: Object
     }
   },
   computed: {
@@ -52,6 +55,18 @@ export default Vue.component('endpoint-editor', {
       }
     };
   },
+
+  attached: function() {
+    this.modelUnwatchVerified = this.$watch('model.verified', this.onChange);
+    this.modelUnwatchSelectedEndpoint =
+      this.$watch('selectedEndpointType', this.onSelectedEndpointChange);
+  },
+
+  detached: function() {
+    this.modelUnwatchVerified();
+    this.modelUnwatchSelectedEndpoint();
+  },
+
   methods: {
     cancel($event) {
       $event.stopImmediatePropagation();
@@ -107,23 +122,56 @@ export default Vue.component('endpoint-editor', {
       this.saveDisabled = this.isSaveDisabled();
       this.verifyDisabled = this.isVerifyDisabled();
     },
-    onEndpointTypeChange(endpointType) {
-      this.endpointType = endpointType && endpointType.id;
-      this.saveDisabled = this.isSaveDisabled();
-      this.verifyDisabled = this.isVerifyDisabled();
-      this.endpointEditorType = endpointType.endpointEditorType;
-      if (endpointType && endpointType.endpointEditorType === 'html') {
-        var res = services.encodeSchemeAndHost(endpointType.endpointEditor);
+    onEndpointTypeChange(selectedEndpointType) {
+      if (this.selectedEndpointType === selectedEndpointType) {
+        return;
+      }
+
+      if (selectedEndpointType == null) {
+        this.selectedEndpointType = null;
+        return;
+      }
+
+      if (this.selectedEndpointType &&
+        this.selectedEndpointType.id === selectedEndpointType.id) {
+        return;
+      }
+
+      for (var i = 0; i < this.adapters.length; i++) {
+        if (this.adapters[i].id === selectedEndpointType.id) {
+          this.selectedEndpointType = this.adapters[i];
+          return;
+        }
+
+      }
+
+      this.selectedEndpointType = null;
+    },
+    // update the UI model
+    onSelectedEndpointChange() {
+      if (this.selectedEndpointType == null) {
+        // reset the UI model used for visualization
+        this.endpointType = null;
+        this.endpointEditorType = null;
+        return;
+      }
+
+      this.endpointType = this.selectedEndpointType.id;
+
+      this.endpointEditorType = this.selectedEndpointType.endpointEditorType;
+      if (this.selectedEndpointType.endpointEditorType === 'html') {
+        var res = services.encodeSchemeAndHost(this.selectedEndpointType.endpointEditor);
         if (res) {
           this.htmlEditor.htmlEndpointEditorSrc = 'uerp/' + res;
         }
       }
+
+      this.onChange();
     },
     onEditorChange(editor) {
       this.editor = editor;
       this.editorErrors = null;
-      this.saveDisabled = this.isSaveDisabled();
-      this.verifyDisabled = this.isVerifyDisabled();
+      this.onChange();
     },
     onEditorError(errors) {
       this.editorErrors = errors;
