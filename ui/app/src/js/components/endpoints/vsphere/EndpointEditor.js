@@ -42,7 +42,7 @@ export default Vue.component('vsphere-endpoint-editor', {
         :loading="!regionIdValues"
         :options="regionIdValues"
         :required="true"
-        :value="convertToObject(regionId)"
+        :value="regionId"
         @change="onRegionIdChange">
       </dropdown-search-group>
       <dropdown-search-group
@@ -130,7 +130,12 @@ export default Vue.component('vsphere-endpoint-editor', {
         password: privateKey
       };
       mcp.client.patch('/provisioning/vsphere/dc-enumerator', request).then((result) => {
-        this.regionIdValues = result.datacenters.map(this.convertToObject);
+        this.regionIdValues = result.datacenters.map((val, i) => {
+          return {
+            name: val,
+            id: result.moRefs[i]
+          };
+        });
       }).catch((e) => {
         console.error(e);
         this.regionIdValues = [];
@@ -142,14 +147,6 @@ export default Vue.component('vsphere-endpoint-editor', {
           resolve(result);
         }).catch(reject);
       });
-    },
-    convertToObject(value) {
-      if (value) {
-        return {
-          id: value,
-          name: value
-        };
-      }
     }
   }
 });
