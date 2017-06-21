@@ -13,7 +13,9 @@ package com.vmware.admiral.request.compute;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -21,7 +23,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ComputeConstants;
@@ -48,6 +49,7 @@ import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.TagService;
 import com.vmware.photon.controller.model.resources.TagService.TagState;
+import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.services.common.QueryTask;
 
 public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
@@ -489,7 +491,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
 
         task = waitForTaskError(task.documentSelfLink, ComputeReservationTaskState.class);
 
-        Assert.assertTrue(
+        assertTrue(
                 "Expected 'properly tagged' in error msg '" + task.taskInfo.failure.message + "'",
                 task.taskInfo.failure.message.contains(" properly tagged"));
     }
@@ -516,6 +518,65 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
         assertNotNull(task);
 
         waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
+    }
+
+    @Test
+    public void testEnhanceExtensibilityResponse() throws Throwable {
+        ComputeReservationTaskService service = new ComputeReservationTaskService();
+        service.setHost(host);
+
+        GroupResourcePlacementState groupPlacementState1 = doPost(TestRequestStateFactory
+                        .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE, "p-1"),
+                GroupResourcePlacementService.FACTORY_LINK);
+        GroupResourcePlacementState groupPlacementState2 = doPost(TestRequestStateFactory
+                        .createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE,
+                                "p-2"),
+                GroupResourcePlacementService.FACTORY_LINK);
+
+        addForDeletion(groupPlacementState1);
+        addForDeletion(groupPlacementState2);
+
+        ComputeReservationTaskState task = new ComputeReservationTaskState();
+        task.tenantLinks = groupPlacementState1.tenantLinks;
+        task.resourceDescriptionLink = hostDesc.documentSelfLink;
+        task.resourceCount = 1;
+        task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+
+        task = doPost(task, ComputeReservationTaskService.FACTORY_LINK);
+        assertNotNull(task);
+
+        task = waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
+
+        String taskLink = task.documentSelfLink;
+
+        ComputeReservationTaskService.ExtensibilityCallbackResponse payload =
+                (ComputeReservationTaskService.ExtensibilityCallbackResponse) service
+                        .notificationPayload();
+
+        payload.placements = Arrays.asList("p-2");
+
+        TestContext context = new TestContext(1, Duration.ofMinutes(5));
+
+        service.enhanceExtensibilityResponse(task, payload, () -> {
+            try {
+                ComputeReservationTaskState t = getDocument(ComputeReservationTaskState.class,
+                        taskLink);
+
+                assertEquals("Wrong number of placements", 1,
+                        t.resourcePoolsPerGroupPlacementLinks.entrySet().size());
+
+                assertTrue("Placement was not properly patched",
+                        t.resourcePoolsPerGroupPlacementLinks
+                                .containsKey(groupPlacementState2.documentSelfLink));
+
+            } catch (Throwable t) {
+                context.failIteration(t);
+                return;
+            }
+            context.completeIteration();
+        });
+
+        context.await();
     }
 
     private static void addConstraintToComputeDesc(ComputeDescription computeDesc, String tagKey,

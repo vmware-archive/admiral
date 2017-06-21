@@ -394,11 +394,16 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
 
     public static GroupResourcePlacementState createGroupResourcePlacementState(
             ResourceType resourceType) {
+        return createGroupResourcePlacementState(resourceType, "test-reservation");
+    }
+
+    public static GroupResourcePlacementState createGroupResourcePlacementState(
+            ResourceType resourceType, String name) {
         GroupResourcePlacementState rsrvState = new GroupResourcePlacementState();
         rsrvState.resourcePoolLink = UriUtils.buildUriPath(ResourcePoolService.FACTORY_LINK,
                 RESOURCE_POOL_ID);
         rsrvState.tenantLinks = createTenantLinks(TENANT_NAME);
-        rsrvState.name = "test-reservation";
+        rsrvState.name = name;
         rsrvState.maxNumberInstances = 20;
         rsrvState.memoryLimit = 0L;
         rsrvState.cpuShares = 3;

@@ -13,6 +13,7 @@ package com.vmware.admiral.request.compute;
 
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
 import static com.vmware.admiral.request.utils.RequestUtils.getContextId;
+import static com.vmware.photon.controller.model.data.SchemaField.DATATYPE_STRING;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyIndexingOption.STORE_ONLY;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL;
 import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOption.REQUIRED;
@@ -21,17 +22,23 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.vmware.admiral.common.ManagementUriParts;
@@ -50,13 +57,18 @@ import com.vmware.admiral.request.compute.enhancer.ComputeDescriptionImageEnhanc
 import com.vmware.admiral.request.compute.enhancer.ComputeDescriptionInstanceTypeEnhancer;
 import com.vmware.admiral.request.compute.enhancer.ComputeDescriptionProfileEnhancer;
 import com.vmware.admiral.request.compute.enhancer.Enhancer.EnhanceContext;
+import com.vmware.admiral.request.utils.EventTopicUtils;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.admiral.service.common.AbstractTaskStatefulService;
+import com.vmware.admiral.service.common.EventTopicDeclarator;
+import com.vmware.admiral.service.common.EventTopicService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.ComputeProperties;
 import com.vmware.photon.controller.model.Constraint.Condition;
 import com.vmware.photon.controller.model.adapterapi.EndpointConfigRequest;
+import com.vmware.photon.controller.model.data.SchemaBuilder;
+import com.vmware.photon.controller.model.data.SchemaField.Type;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.DeferredResult;
@@ -64,6 +76,7 @@ import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -76,7 +89,8 @@ import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
  * Task implementing the reservation request resource work flow.
  */
 public class ComputeReservationTaskService extends
-        AbstractTaskStatefulService<ComputeReservationTaskService.ComputeReservationTaskState, ComputeReservationTaskService.ComputeReservationTaskState.SubStage> {
+        AbstractTaskStatefulService<ComputeReservationTaskService.ComputeReservationTaskState, ComputeReservationTaskService.ComputeReservationTaskState.SubStage>
+        implements EventTopicDeclarator {
 
     public static final String DISPLAY_NAME = "Reservation";
 
@@ -102,6 +116,9 @@ public class ComputeReservationTaskService extends
             RESERVATION_SELECTED,
             COMPLETED,
             ERROR;
+
+            static final Set<ComputeReservationTaskState.SubStage> SUBSCRIPTION_SUB_STAGES = new HashSet<>(
+                    Arrays.asList(SELECTED, SELECTED_GLOBAL));
         }
 
         @Documentation(description = "The description that defines the requested resource.")
@@ -121,6 +138,10 @@ public class ComputeReservationTaskService extends
         @PropertyOptions(usage = { SERVICE_USE }, indexing = STORE_ONLY)
         public LinkedHashMap<String, String> resourcePoolsPerGroupPlacementLinks;
 
+        @Documentation(description = "Set by task. Selected group placements links and their names. Ordered by priority asc")
+        @PropertyOptions(usage = { SERVICE_USE }, indexing = STORE_ONLY)
+        public LinkedHashMap<String, Pair<String, String>> groupPlacementsLinksAndNames;
+
         /** (Internal) Set by task after the ComputeState is found to host the containers */
         @PropertyOptions(usage = { SERVICE_USE, AUTO_MERGE_IF_NOT_NULL }, indexing = STORE_ONLY)
         public List<HostSelection> selectedComputePlacementHosts;
@@ -137,6 +158,7 @@ public class ComputeReservationTaskService extends
         super.toggleOption(ServiceOption.OWNER_SELECTION, true);
         super.toggleOption(ServiceOption.INSTRUMENTATION, true);
         super.toggleOption(ServiceOption.IDEMPOTENT_POST, true);
+        super.subscriptionSubStages = EnumSet.copyOf(SubStage.SUBSCRIPTION_SUB_STAGES);
     }
 
     @Override
@@ -191,6 +213,10 @@ public class ComputeReservationTaskService extends
         currentState.resourcePoolsPerGroupPlacementLinks = PropertyUtils.mergeProperty(
                 currentState.resourcePoolsPerGroupPlacementLinks,
                 patchBody.resourcePoolsPerGroupPlacementLinks);
+
+        currentState.groupPlacementsLinksAndNames = PropertyUtils.mergeProperty(
+                currentState.groupPlacementsLinksAndNames,
+                patchBody.groupPlacementsLinksAndNames);
     }
 
     @Override
@@ -504,6 +530,12 @@ public class ComputeReservationTaskService extends
                         .collect(Collectors.toMap(gp -> gp.documentSelfLink,
                                 gp -> gp.resourcePoolLink, (k1, k2) -> k1,
                                 LinkedHashMap::new));
+
+                s.groupPlacementsLinksAndNames = placements.stream()
+                        .sorted((g1, g2) -> g1.priority - g2.priority)
+                        .collect(Collectors.toMap(gp -> gp.documentSelfLink,
+                                gp -> Pair.of(gp.name, gp.resourcePoolLink), (k1, k2) -> k1,
+                                LinkedHashMap::new));
             });
             return;
         }
@@ -542,6 +574,13 @@ public class ComputeReservationTaskService extends
                             gp -> gp.resourcePoolLink,
                             (k1, k2) -> k1, LinkedHashMap::new));
 
+            // Provide all placements here(not filtered by tags etc.)
+            LinkedHashMap<String, Pair<String, String>> allPlacementsLinksAndNames =
+                    placements.stream()
+                    .collect(Collectors.toMap(gp -> gp.documentSelfLink,
+                            gp -> Pair.of(gp.name, gp.resourcePoolLink),
+                            (k1, k2) -> k1, LinkedHashMap::new));
+
             if (!placements.isEmpty() && placementsAfterTagFilter.isEmpty()) {
                 logInfo("No candidate placements after tag filtering");
 
@@ -558,6 +597,7 @@ public class ComputeReservationTaskService extends
 
             proceedTo(isGlobal(state) ? SubStage.SELECTED_GLOBAL : SubStage.SELECTED, s -> {
                 s.resourcePoolsPerGroupPlacementLinks = placementsAfterTagFilter;
+                s.groupPlacementsLinksAndNames = allPlacementsLinksAndNames;
             });
         }).sendWith(getHost());
     }
@@ -664,5 +704,116 @@ public class ComputeReservationTaskService extends
                     this.computeDescription = o.getBody(ComputeDescription.class);
                     callbackFunction.accept(this.computeDescription);
                 }));
+    }
+
+    @Override
+    public void registerEventTopics(ServiceHost host) {
+        computeReservationEventTopic(host);
+    }
+
+    //Compute reservation topic
+    private static final String COMPUTE_RESERVATION_TOPIC_TASK_SELF_LINK = "compute-reservation";
+    private static final String COMPUTE_RESERVATION_TOPIC_ID = "com.vmware.compute.reservation.pre";
+    private static final String COMPUTE_RESERVATION_TOPIC_NAME = "Compute reservation";
+    private static final String COMPUTE_RESERVATION_TOPIC_TASK_DESCRIPTION = "Pre reservation for "
+            + "compute resoures";
+    private static final String COMPUTE_RESERVATION_TOPIC_FIELD_PLACEMENTS = "placements";
+    private static final String COMPUTE_RESERVATION_TOPIC_FIELD_PLACEMENTS_LABEL = "Placements";
+    private static final String COMPUTE_RESERVATION_TOPIC_FIELD_PLACEMENTS_DESCRIPTION =
+            "Applicable Placements";
+
+    private void computeReservationEventTopic(ServiceHost host) {
+        EventTopicService.TopicTaskInfo taskInfo = new EventTopicService.TopicTaskInfo();
+        taskInfo.task = ComputeReservationTaskState.class.getSimpleName();
+        taskInfo.stage = TaskStage.STARTED.name();
+        taskInfo.substage = SubStage.SELECTED.name();
+
+        EventTopicUtils.registerEventTopic(COMPUTE_RESERVATION_TOPIC_ID,
+                COMPUTE_RESERVATION_TOPIC_NAME,
+                COMPUTE_RESERVATION_TOPIC_TASK_DESCRIPTION,
+                COMPUTE_RESERVATION_TOPIC_TASK_SELF_LINK,
+                Boolean.TRUE, computeReservationTopicSchema(), taskInfo, host);
+    }
+
+    private SchemaBuilder computeReservationTopicSchema() {
+
+        return new SchemaBuilder()
+                .addField(COMPUTE_RESERVATION_TOPIC_FIELD_PLACEMENTS)
+                .withType(Type.LIST)
+                .withDataType(DATATYPE_STRING)
+                .withLabel(COMPUTE_RESERVATION_TOPIC_FIELD_PLACEMENTS_LABEL)
+                .withDescription(COMPUTE_RESERVATION_TOPIC_FIELD_PLACEMENTS_DESCRIPTION)
+                .done();
+    }
+
+    /**
+     * Defines fields which are eligible for modification in case of subscription for task.
+     */
+    protected static class ExtensibilityCallbackResponse extends BaseExtensibilityCallbackResponse {
+        public Collection<String> placements;
+    }
+
+    @Override
+    protected BaseExtensibilityCallbackResponse notificationPayload() {
+        return new ExtensibilityCallbackResponse();
+    }
+
+    @Override
+    protected void enhanceNotificationPayload(ComputeReservationTaskState state,
+            BaseExtensibilityCallbackResponse notificationPayload, Runnable callback) {
+        ExtensibilityCallbackResponse payload = (ExtensibilityCallbackResponse) notificationPayload;
+        payload.placements = state.groupPlacementsLinksAndNames.values().stream()
+                .map(p -> p.getLeft())
+                .collect(Collectors.toList());
+
+        callback.run();
+    }
+
+    @Override
+    protected void enhanceExtensibilityResponse(ComputeReservationTaskState state, ServiceTaskCallbackResponse
+            replyPayload, Runnable callback) {
+
+        ExtensibilityCallbackResponse response = (ExtensibilityCallbackResponse)replyPayload;
+
+        List<String> statePlacements = state.groupPlacementsLinksAndNames.values().stream()
+                .map(p -> p.getLeft())
+                .collect(Collectors.toList());
+
+        if (!CollectionUtils.isEqualCollection(response.placements, statePlacements)) {
+            ComputeReservationTaskState patch = new ComputeReservationTaskState();
+            patch.resourcePoolsPerGroupPlacementLinks = new LinkedHashMap<>();
+
+            for (String placement : response.placements) {
+                Optional<Entry<String, Pair<String, String>>> found = state.groupPlacementsLinksAndNames
+                        .entrySet()
+                        .stream().filter(p -> p.getValue().getLeft().equals(placement))
+                        .findFirst();
+                if (!found.isPresent()) {
+                    String errorMessage = "Invalid placement '" + placement + "' specified.";
+                    failTask(errorMessage, new Throwable(errorMessage));
+                    return;
+                } else {
+                    Entry<String, Pair<String, String>> entry = found.get();
+                    patch.resourcePoolsPerGroupPlacementLinks.put(entry.getKey(), entry.getValue
+                            ().getRight());
+                }
+            }
+
+            patch.taskInfo = state.taskInfo;
+            patch.taskSubStage = state.taskSubStage;
+
+            Operation.createPatch(this, state.documentSelfLink)
+                    .setBody(patch)
+                    .setReferer(getHost().getUri())
+                    .setCompletion((o, e) -> {
+                        if (e != null) {
+                            failTask(e.getMessage(), e);
+                        } else {
+                            callback.run();
+                        }
+                    }).sendWith(getHost());
+        } else {
+            callback.run();
+        }
     }
 }
