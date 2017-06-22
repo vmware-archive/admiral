@@ -11,11 +11,11 @@
 
 package com.vmware.admiral.compute.container;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -31,7 +31,7 @@ import com.vmware.xenon.common.UriUtils;
  */
 public class CompositeComponentRegistry {
 
-    private static final List<RegistryEntry> entries = new ArrayList<>();
+    private static final List<RegistryEntry> entries = new CopyOnWriteArrayList<>();
 
     private CompositeComponentRegistry() {
     }

@@ -115,13 +115,15 @@ public abstract class BaseIntegrationSupportIT {
     public Timeout globalTimeout = Timeout.seconds(TimeUnit.MINUTES.toSeconds(20));
     private String tenantSuffix;
 
+    static {
+        HostInitComputeServicesConfig.initCompositeComponentRegistry();
+    }
+
     @BeforeClass
     public static void baseBeforeClass() {
         // Allow "Host" header to be passed
         // http://stackoverflow.com/questions/7648872/can-i-override-the-host-header-where-using-javas-httpurlconnection-class
         System.setProperty("sun.net.http.allowRestrictedHeaders", "true");
-
-        HostInitComputeServicesConfig.initCompositeComponentRegistry();
     }
 
     @AfterClass
