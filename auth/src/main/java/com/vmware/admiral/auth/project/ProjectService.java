@@ -24,6 +24,7 @@ import com.vmware.admiral.auth.idm.AuthRole;
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.ProjectUtil;
+import com.vmware.admiral.auth.util.UserGroupsUpdater;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.admiral.common.util.PropertyUtils;
