@@ -11,21 +11,27 @@
 
 package com.vmware.admiral.compute.cluster;
 
+import static java.util.EnumSet.of;
+
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.time.Instant;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.SubscriptionManager;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.compute.ContainerHostUtil;
@@ -43,9 +49,12 @@ import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
+import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.StatelessService;
+import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.TaskService;
 
 public class ClusterService extends StatelessService {
 
@@ -129,6 +138,22 @@ public class ClusterService extends StatelessService {
         public double cpuUsage;
     }
 
+    public static class ContainerHostRemovalTaskState extends TaskService.TaskServiceState {
+
+        public static final String RESOURCE_TYPE_CONTAINER_HOST = "CONTAINER_HOST";
+        public static final String OPERATION_REMOVE_RESOURCE = "REMOVE_RESOURCE";
+
+        public ContainerHostRemovalTaskState(Set<String> resourceLinks) {
+            resourceType = RESOURCE_TYPE_CONTAINER_HOST;
+            operation = OPERATION_REMOVE_RESOURCE;
+            this.resourceLinks = resourceLinks;
+        }
+
+        public String resourceType;
+        public String operation;
+        public Set<String> resourceLinks;
+    }
+
     @Override
     public void handlePost(Operation post) {
         if (isCreateClusterPost(post)) {
@@ -173,6 +198,42 @@ public class ClusterService extends StatelessService {
                             }
                         })
                         .whenCompleteNotify(patch);
+    }
+
+    @Override
+    public void handleDelete(Operation delete) {
+        String clusterId = getIDFromUri(delete.getUri());
+        String pathPZId = UriUtils.buildUriPath(
+                ElasticPlacementZoneConfigurationService.SELF_LINK,
+                ResourcePoolService.FACTORY_LINK, clusterId);
+        String pathResourcePoolId = UriUtils.buildUriPath(
+                ResourcePoolService.FACTORY_LINK, clusterId);
+        deleteHostsWihtinOnePlacementZone(getHost(), pathResourcePoolId)
+                .thenAccept(operation -> {
+                    if (operation == null || DeploymentProfileConfig.getInstance().isTest()) {
+                        //TODO if MockRequestBrokerService behaves as Task service we can remove the
+                        // check for test context
+                        ClusterUtils.deletePZ(pathPZId, delete, getHost());
+                    } else {
+                        String containerHostRemovalTaskState = operation
+                                .getBody(ContainerHostRemovalTaskState.class).documentSelfLink;
+
+                        SubscriptionManager<ContainerHostRemovalTaskState> subscriptionManager = new SubscriptionManager<>(
+                                getHost(), UUID.randomUUID().toString(),
+                                containerHostRemovalTaskState,
+                                ContainerHostRemovalTaskState.class);
+                        subscriptionManager.start(notification -> {
+                            ContainerHostRemovalTaskState eats = notification.getResult();
+                            EnumSet<TaskStage> terminalStages = of(TaskStage.FINISHED,
+                                    TaskStage.FAILED, TaskStage.CANCELLED);
+                            if (terminalStages.contains(eats.taskInfo.stage)) {
+                                subscriptionManager.close();
+                                ClusterUtils.deletePZ(pathPZId, delete, getHost());
+
+                            }
+                        }, true, null);
+                    }
+                });
     }
 
     @Override
@@ -260,6 +321,31 @@ public class ClusterService extends StatelessService {
                         }))
                 .collect(Collectors.toList());
         return DeferredResult.allOf(clusterDtoList);
+    }
+
+    private DeferredResult<Operation> deleteHostsWihtinOnePlacementZone(
+            ServiceHost host, String resourcePoolLink) {
+
+        DeferredResult<Operation> deleteNodesDR = ClusterUtils.getHostsWihtinPlacementZone(
+                resourcePoolLink, getHost())
+                .thenCompose(computeStates -> {
+
+                    if (computeStates.isEmpty()) {
+                        return DeferredResult.completed(null);
+                    }
+                    Set<String> hostLinksList = computeStates.stream()
+                            .map(computeState -> {
+                                return computeState.documentSelfLink;
+                            }).collect(Collectors.toSet());
+                    DeferredResult<Operation> deleteNodesRequestOperation = host.sendWithDeferredResult(
+                            Operation.createPost(
+                                    UriUtils.buildUri(host, ManagementUriParts.REQUESTS))
+                                    .setReferer(host.getUri())
+                                    .forceRemote()
+                                    .setBody(new ContainerHostRemovalTaskState(hostLinksList)));
+                    return deleteNodesRequestOperation;
+                });
+        return deleteNodesDR;
     }
 
     private void createCluster(Operation create) {

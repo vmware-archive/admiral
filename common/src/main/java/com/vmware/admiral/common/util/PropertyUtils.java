@@ -187,14 +187,10 @@ public class PropertyUtils {
     }
 
     public static Optional<String> getPropertyString(Map<String, String> properties, String key) {
-        if (properties == null) {
+        if ((properties == null) || (!properties.containsKey(key))) {
             return Optional.empty();
-        }
-        if (properties.containsKey(key)) {
-            return Optional.of(properties.get(key));
-
         } else {
-            return Optional.empty();
+            return Optional.of(properties.get(key));
         }
     }
 

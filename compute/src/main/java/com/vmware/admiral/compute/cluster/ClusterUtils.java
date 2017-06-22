@@ -12,11 +12,13 @@
 package com.vmware.admiral.compute.cluster;
 
 import java.util.List;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
+import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
 import com.vmware.admiral.compute.PlacementZoneUtil;
 import com.vmware.admiral.compute.cluster.ClusterService.ClusterDto;
 import com.vmware.admiral.compute.cluster.ClusterService.ClusterStatus;
@@ -26,8 +28,10 @@ import com.vmware.photon.controller.model.query.QueryUtils;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.DeferredResult;
+import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.QueryTask.Query;
 
@@ -66,6 +70,22 @@ public class ClusterUtils {
         return queryHelper.collectDocuments(Collectors.toList());
     }
 
+    public static void deletePZ(String pathPZId, Operation delete, ServiceHost host) {
+        host.sendWithDeferredResult(
+                Operation.createDelete(UriUtils.buildUri(host, pathPZId))
+                        .setBody(new ElasticPlacementZoneConfigurationState())
+                        .setReferer(host.getUri()),
+                ElasticPlacementZoneConfigurationState.class)
+                        .exceptionally(f -> {
+                            if (f instanceof ServiceNotFoundException) {
+                                return null;
+                            } else {
+                                throw new CompletionException(f);
+                            }
+                        })
+                        .whenCompleteNotify(delete);
+    }
+
     public static ClusterDto placementZoneAndItsHostsToClusterDto(
             ResourcePoolState resourcePoolState, List<ComputeState> computeStates) {
 
@@ -78,7 +98,7 @@ public class ClusterUtils {
                 .getPropertyLong(resourcePoolState.customProperties,
                         ClusterService.CLUSTER_CREATION_TIME_MICROS_CUSTOM_PROP)
                 .orElse(0L);
-        ePZClusterDto.details = PropertyUtils.getPropertyString (resourcePoolState.customProperties,
+        ePZClusterDto.details = PropertyUtils.getPropertyString(resourcePoolState.customProperties,
                 ClusterService.CLUSTER_DETAILS_CUSTOM_PROP).orElse("");
         ePZClusterDto.totalMemory = resourcePoolState.maxMemoryBytes == null ? 0
                 : resourcePoolState.maxMemoryBytes;

@@ -43,6 +43,7 @@ import com.vmware.admiral.compute.container.ComputeBaseTest;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.service.test.MockDockerHostAdapterService;
+import com.vmware.admiral.service.test.MockRequestBrokerService;
 import com.vmware.photon.controller.model.query.QueryUtils.QueryByPages;
 import com.vmware.photon.controller.model.query.QueryUtils.QueryTemplate;
 import com.vmware.photon.controller.model.resources.ComputeService;
@@ -61,6 +62,7 @@ public class ClusterServiceTest extends ComputeBaseTest {
     private static final String ADAPTER_DOCKER_TYPE_ID = "API";
 
     private MockDockerHostAdapterService dockerAdapterService;
+    private MockRequestBrokerService requestBrokerService;
 
     @Before
     public void setUp() throws Throwable {
@@ -73,7 +75,12 @@ public class ClusterServiceTest extends ComputeBaseTest {
         dockerAdapterService = new MockDockerHostAdapterService();
         host.startService(Operation.createPost(UriUtils.buildUri(host,
                 MockDockerHostAdapterService.class)), dockerAdapterService);
+        requestBrokerService = new MockRequestBrokerService();
+        host.startService(Operation.createPost(UriUtils.buildUri(host,
+                MockRequestBrokerService.class)), requestBrokerService);
+
         waitForServiceAvailability(MockDockerHostAdapterService.SELF_LINK);
+        waitForServiceAvailability(MockRequestBrokerService.SELF_LINK);
 
     }
 
@@ -97,6 +104,58 @@ public class ClusterServiceTest extends ComputeBaseTest {
         ContainerHostSpec hostSpec = createContainerHostSpec(Collections.singletonList(projectLink),
                 ContainerHostType.VCH);
         verifyCluster(createCluster(hostSpec), ClusterType.VCH, placementZoneName, projectLink);
+    }
+
+    @Test
+    public void testDeleteDockerCluster() throws Throwable {
+        final String projectLink = buildProjectLink("test-docker-project");
+        final String placementZoneName = PlacementZoneUtil
+                .buildPlacementZoneDefaultName(ContainerHostType.DOCKER, COMPUTE_ADDRESS);
+
+        ContainerHostSpec hostSpec = createContainerHostSpec(Collections.singletonList(projectLink),
+                ContainerHostType.DOCKER);
+        ClusterDto clusterDto = createCluster(hostSpec);
+        verifyCluster(clusterDto, ClusterType.DOCKER, placementZoneName, projectLink);
+
+        Map<String, ClusterDto> allClustersExpand = getClustersExpand();
+        assertTrue(allClustersExpand.keySet().size() == 2);
+        assertTrue(allClustersExpand.keySet().contains(clusterDto.documentSelfLink));
+        Map<String, ComputeState> allComputesExpand = getAllComputeExpand();
+        assertTrue(allComputesExpand.keySet().size() == 1);
+
+        deleteCluster(Service.getId(clusterDto.documentSelfLink));
+
+        allClustersExpand = getClustersExpand();
+        assertTrue(allClustersExpand.keySet().size() == 1);
+        assertTrue(!allClustersExpand.keySet().contains(clusterDto.documentSelfLink));
+        allComputesExpand = getAllComputeExpand();
+        assertTrue(allComputesExpand.keySet().isEmpty());
+    }
+
+    @Test
+    public void testDeleteVchCluster() throws Throwable {
+        final String projectLink = buildProjectLink("test-vch-project");
+        final String placementZoneName = PlacementZoneUtil
+                .buildPlacementZoneDefaultName(ContainerHostType.VCH, COMPUTE_ADDRESS);
+
+        ContainerHostSpec hostSpec = createContainerHostSpec(Collections.singletonList(projectLink),
+                ContainerHostType.VCH);
+        ClusterDto clusterDto = createCluster(hostSpec);
+        verifyCluster(clusterDto, ClusterType.VCH, placementZoneName, projectLink);
+
+        Map<String, ClusterDto> allClustersExpand = getClustersExpand();
+        assertTrue(allClustersExpand.keySet().size() == 2);
+        assertTrue(allClustersExpand.keySet().contains(clusterDto.documentSelfLink));
+        Map<String, ComputeState> allComputesExpand = getAllComputeExpand();
+        assertTrue(allComputesExpand.keySet().size() == 1);
+
+        deleteCluster(Service.getId(clusterDto.documentSelfLink));
+
+        allClustersExpand = getClustersExpand();
+        assertTrue(allClustersExpand.keySet().size() == 1);
+        assertTrue(!allClustersExpand.keySet().contains(clusterDto.documentSelfLink));
+        allComputesExpand = getAllComputeExpand();
+        assertTrue(allComputesExpand.keySet().isEmpty());
     }
 
     @Test
@@ -375,6 +434,39 @@ public class ClusterServiceTest extends ComputeBaseTest {
         return result;
     }
 
+    private Map<String, ComputeState> getAllComputeExpand() {
+        return getAllComputeExpand("");
+    }
+
+    private Map<String, ComputeState> getAllComputeExpand(String oDataQuery) {
+        Map<String, ComputeState> result = new HashMap<>();
+        URI uri = UriUtils.buildUri(host,
+                ComputeService.FACTORY_LINK, oDataQuery);
+        uri = UriUtils.extendUriWithQuery(uri, "?expand", "true");
+        Operation get = Operation.createGet(host, uri.getPath() + uri.getQuery())
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.log(Level.SEVERE, "Failed to get computes: %s", Utils.toString(ex));
+                        host.failIteration(ex);
+                    } else {
+                        o.getBody(ServiceDocumentQueryResult.class).documents
+                                .entrySet().stream()
+                                .forEach(a -> {
+                                    result.put(a.getKey(),
+                                            Utils.fromJson(a.getValue(), ComputeState.class));
+                                });
+                        host.completeIteration();
+                    }
+                });
+
+        host.testStart(1);
+        host.send(get);
+        host.testWait();
+
+        return result;
+    }
+
     private List<String> getClustersLinks() {
         return getClustersLinks("");
     }
@@ -438,6 +530,33 @@ public class ClusterServiceTest extends ComputeBaseTest {
         host.testWait();
 
         return result.get(0);
+    }
+
+    private void deleteCluster(String clusterId) {
+
+        String pathSB = UriUtils.buildUriPath(ClusterService.SELF_LINK, clusterId);
+        URI uri = UriUtils.buildUri(host, pathSB);
+        Operation get = Operation.createDelete(host, uri.getPath())
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.log(Level.SEVERE, "Failed to get cluster: %s", Utils.toString(ex));
+                        host.failIteration(ex);
+                    } else {
+                        try {
+                            host.completeIteration();
+                        } catch (Throwable er) {
+                            host.log(Level.SEVERE,
+                                    "Failed to retrieve created cluster DTO from response: %s",
+                                    Utils.toString(er));
+                            host.failIteration(er);
+                        }
+                    }
+                });
+
+        host.testStart(1);
+        host.send(get);
+        host.testWait();
     }
 
     private ClusterDto patchCluster(ClusterDto clusterDto) {
