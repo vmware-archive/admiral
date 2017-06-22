@@ -18,16 +18,24 @@ import static com.vmware.admiral.auth.util.PrincipalUtil.fromQueryResultToPrinci
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNullOrEmpty;
 
 import java.net.URI;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.vmware.admiral.auth.idm.Principal;
 import com.vmware.admiral.auth.idm.PrincipalProvider;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
+import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.Query;
 
 public class LocalPrincipalProvider implements PrincipalProvider {
     private static final String EXPAND_QUERY_KEY = "expand";
@@ -106,6 +114,102 @@ public class LocalPrincipalProvider implements PrincipalProvider {
 
         return host.sendWithDeferredResult(delete, LocalPrincipalState.class)
                 .thenApply((s) -> fromLocalPrincipalToPrincipal(s));
+    }
+
+    @Override
+    public DeferredResult<Set<String>> getAllGroupsForPrincipal(String principalId) {
+
+        return getDirectlyAssignedGroupForPrincipal(principalId)
+                .thenCompose(groups -> getIndirectlyAssignedGroupsForPrincipal(groups, null, null));
+
+    }
+
+    private DeferredResult<Set<String>> getDirectlyAssignedGroupForPrincipal(String principalId) {
+        String principalSelfLink = UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK,
+                principalId);
+
+        DeferredResult<Set<String>> result = new DeferredResult<>();
+
+        Set<String> groups = new HashSet<>();
+
+        Query query = Query.Builder.create()
+                .addInCollectionItemClause(LocalPrincipalState.FIELD_NAME_GROUP_MEMBERS_LINKS,
+                        Collections.singleton(principalSelfLink)).build();
+
+        QueryTask queryTask = QueryUtil.buildQuery(LocalPrincipalState.class, true, query);
+
+        QueryUtil.addExpandOption(queryTask);
+
+        new ServiceDocumentQuery<>(host, LocalPrincipalState.class)
+                .query(queryTask, (r) -> {
+                    if (r.hasException()) {
+                        result.fail(r.getException());
+                    } else if (r.hasResult()) {
+                        groups.add(r.getResult().id);
+                    } else {
+                        result.complete(groups);
+                    }
+                });
+
+        return result;
+    }
+
+    private DeferredResult<Set<String>> getIndirectlyAssignedGroupsForPrincipal(
+            Set<String> groupsToCheck, Set<String> foundGroups,
+            Set<String> alreadyChecked) {
+
+        if (groupsToCheck == null || groupsToCheck.isEmpty()) {
+            return DeferredResult.completed(new HashSet<>());
+        }
+
+        if (foundGroups == null) {
+            Set<String> fg = new HashSet<>();
+            fg.addAll(groupsToCheck);
+            return getIndirectlyAssignedGroupsForPrincipal(groupsToCheck, fg, alreadyChecked);
+        }
+
+        if (alreadyChecked == null) {
+            return getIndirectlyAssignedGroupsForPrincipal(groupsToCheck, foundGroups,
+                    new HashSet<>());
+        }
+
+        DeferredResult<Set<String>> result = new DeferredResult<>();
+
+        List<String> groupsToCheckLinks = groupsToCheck.stream()
+                .map(g -> UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK, g))
+                .collect(Collectors.toList());
+
+        Query query = Query.Builder.create()
+                .addInCollectionItemClause(LocalPrincipalState.FIELD_NAME_GROUP_MEMBERS_LINKS,
+                        groupsToCheckLinks).build();
+
+        QueryTask queryTask = QueryUtil.buildQuery(LocalPrincipalState.class, true, query);
+        QueryUtil.addExpandOption(queryTask);
+
+        groupsToCheck.clear();
+
+        new ServiceDocumentQuery<>(host, LocalPrincipalState.class)
+                .query(queryTask, (r) -> {
+                    if (r.hasException()) {
+                        result.fail(r.getException());
+                    } else if (r.hasResult()) {
+                        foundGroups.add(r.getResult().id);
+                        groupsToCheck.add(r.getResult().id);
+                    } else {
+                        result.complete(foundGroups);
+                    }
+                });
+
+        return result.thenCompose(resultGroups -> {
+            foundGroups.addAll(resultGroups);
+            if (groupsToCheck.isEmpty() || alreadyChecked.containsAll(groupsToCheck)) {
+                alreadyChecked.addAll(groupsToCheck);
+                return DeferredResult.completed(resultGroups);
+            }
+            alreadyChecked.addAll(groupsToCheck);
+            return getIndirectlyAssignedGroupsForPrincipal(groupsToCheck, foundGroups,
+                    alreadyChecked);
+        });
     }
 
 }

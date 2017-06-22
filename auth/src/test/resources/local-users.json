@@ -18,10 +18,10 @@
     "isAdmin": false
   }],
   "groups": [{
-      "name": "superusers",
-      "members": ["fritz@admiral.com"]
+    "name": "superusers",
+    "members": ["fritz@admiral.com"]
     }, {
-      "name": "developers",
-      "members": ["connie@admiral.com", "gloria@admiral.com"]
+    "name": "developers",
+    "members": ["connie@admiral.com", "gloria@admiral.com"]
   }]
 }

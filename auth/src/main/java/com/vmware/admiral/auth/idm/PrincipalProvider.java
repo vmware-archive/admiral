@@ -12,6 +12,7 @@
 package com.vmware.admiral.auth.idm;
 
 import java.util.List;
+import java.util.Set;
 
 import com.vmware.xenon.common.DeferredResult;
 
@@ -26,4 +27,6 @@ public interface PrincipalProvider {
     DeferredResult<Principal> updatePrincipal(Principal principal);
 
     DeferredResult<Principal> deletePrincipal(String principalId);
+
+    DeferredResult<Set<String>> getAllGroupsForPrincipal(String principalId);
 }

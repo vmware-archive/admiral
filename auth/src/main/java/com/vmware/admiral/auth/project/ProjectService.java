@@ -16,9 +16,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.management.ServiceNotFoundException;
 
+import com.vmware.admiral.auth.idm.AuthRole;
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.ProjectUtil;
@@ -27,6 +29,7 @@ import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.photon.controller.model.ServiceUtils;
+import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
@@ -316,28 +319,88 @@ public class ProjectService extends StatefulService {
         QueryTask queryTask = ProjectUtil.createQueryTaskForProjectAssociatedWithPlacement(state,
                 null);
 
-        sendRequest(Operation.createPost(getHost(), ServiceUriPaths.CORE_QUERY_TASKS)
-                .setBody(queryTask)
-                .setCompletion((o, e) -> {
-                    if (e != null) {
+        Operation getPlacementsWithProject = Operation
+                .createPost(getHost(), ServiceUriPaths.CORE_QUERY_TASKS)
+                .setBody(queryTask);
+
+        sendWithDeferredResult(getPlacementsWithProject, ServiceDocumentQueryResult.class)
+                .thenApply(result -> new Pair<>(result, (Throwable) null))
+                .exceptionally(ex -> new Pair<>(null, ex))
+                .thenCompose(pair -> {
+                    if (pair.right != null) {
                         logSevere("Failed to retrieve placements associated with project: %s",
                                 state.documentSelfLink);
-                        delete.fail(e);
-                        return;
+                        return DeferredResult.failed(pair.right);
                     } else {
-                        ServiceDocumentQueryResult result = o.getBody(QueryTask.class).results;
-                        long documentCount = result.documentCount;
-                        if (documentCount != 0) {
-                            delete.fail(new LocalizableValidationException(
+                        Long documentCount = pair.left.documentCount;
+                        if (documentCount != null && documentCount != 0) {
+                            return DeferredResult.failed(new LocalizableValidationException(
                                     ProjectUtil.PROJECT_IN_USE_MESSAGE,
                                     ProjectUtil.PROJECT_IN_USE_MESSAGE_CODE,
                                     documentCount, documentCount > 1 ? "s" : ""));
-                            return;
                         }
-
-                        super.handleDelete(delete);
+                        String projectId = Service.getId(getState(delete).documentSelfLink);
+                        return deleteDefaultProjectGroups(projectId, delete);
                     }
-                }));
+                })
+                .whenComplete((ignore, ex) -> {
+                    if (ex != null) {
+                        delete.fail(ex);
+                        return;
+                    }
+                    super.handleDelete(delete);
+                });
+
+    }
+
+    private DeferredResult<UserGroupState> deleteDefaultProjectGroups(String projectId,
+            Operation delete) {
+
+        String adminsUserGroupUri = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_ADMINS.buildRoleWithSuffix(projectId));
+
+        String membersUserGroupsUri = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBERS.buildRoleWithSuffix(projectId));
+
+        Operation deleteMembersGroup = Operation.createDelete(this, membersUserGroupsUri)
+                .setReferer(delete.getUri());
+
+        Operation deleteAdminsGroup = Operation.createDelete(this, adminsUserGroupUri)
+                .setReferer(delete.getUri());
+
+        return removeDefaultProjectGroupsFromUserStates(adminsUserGroupUri, membersUserGroupsUri,
+                delete)
+                .thenCompose(ignore -> sendWithDeferredResult(deleteMembersGroup, UserGroupState.class))
+                .thenCompose(ignore -> sendWithDeferredResult(deleteAdminsGroup, UserGroupState.class));
+    }
+
+    private DeferredResult<Void> removeDefaultProjectGroupsFromUserStates(String adminsGroup,
+            String membersGroup, Operation delete) {
+
+        Operation getAdminsGroup = Operation.createGet(this, adminsGroup)
+                .setReferer(delete.getUri());
+
+        Operation getMembersGroup = Operation.createGet(this, membersGroup)
+                .setReferer(delete.getUri());
+
+        return sendWithDeferredResult(getMembersGroup, UserGroupState.class)
+                .thenCompose(membersGroupState -> patchUserStates(membersGroupState))
+                .thenCompose(ignore -> sendWithDeferredResult(getAdminsGroup, UserGroupState.class))
+                .thenCompose(adminsGroupState -> patchUserStates(adminsGroupState));
+    }
+
+    private DeferredResult<Void> patchUserStates(UserGroupState groupState) {
+        return ProjectUtil.retrieveUserStatesForGroup(getHost(), groupState)
+                .thenCompose(userStates -> {
+                    List<String> userLinks = userStates.stream()
+                            .map(us -> Service.getId(us.documentSelfLink))
+                            .collect(Collectors.toList());
+                    return UserGroupsUpdater.create()
+                            .setGroupLink(groupState.documentSelfLink)
+                            .setHost(getHost())
+                            .setUsersToRemove(userLinks)
+                            .update();
+                });
     }
 
     @Override

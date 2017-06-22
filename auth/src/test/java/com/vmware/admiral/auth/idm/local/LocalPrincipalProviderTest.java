@@ -17,7 +17,10 @@ import static org.junit.Assert.assertTrue;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -26,8 +29,11 @@ import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.idm.Principal;
 import com.vmware.admiral.auth.idm.Principal.PrincipalType;
 import com.vmware.admiral.auth.idm.PrincipalProvider;
+import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
+import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalType;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
+import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
 
 public class LocalPrincipalProviderTest extends AuthBaseTest {
@@ -238,6 +244,71 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
                     + "failed"));
         });
         ctx2.await();
+    }
+
+    @Test
+    public void testNestedGetGroupsForPrincipal() throws Throwable {
+        // Create nested groups.
+        LocalPrincipalState itGroup = new LocalPrincipalState();
+        itGroup.name = "it";
+        itGroup.type = LocalPrincipalType.GROUP;
+        itGroup.groupMembersLinks = Collections.singletonList(UriUtils.buildUriPath(
+                LocalPrincipalFactoryService.SELF_LINK, "superusers"));
+        itGroup = doPost(itGroup, LocalPrincipalFactoryService.SELF_LINK);
+        assertNotNull(itGroup);
+
+        LocalPrincipalState organization = new LocalPrincipalState();
+        organization.name = "organization";
+        organization.type = LocalPrincipalType.GROUP;
+        organization.groupMembersLinks = Collections.singletonList(UriUtils.buildUriPath(
+                LocalPrincipalFactoryService.SELF_LINK, "it"));
+        organization = doPost(organization, LocalPrincipalFactoryService.SELF_LINK);
+        assertNotNull(organization);
+
+        // fritz is part of "superusers" which is part of "it", and "it" is part of "organization"
+        // verify when get groups for fritz "superusers", "it" and "organization is returned"
+        DeferredResult<Set<String>> result = provider.getAllGroupsForPrincipal(
+                USER_EMAIL_ADMIN);
+
+        TestContext ctx = testCreate(1);
+        Set<String> results = new HashSet<>();
+
+        result.whenComplete((groups, ex) -> {
+            if (ex != null) {
+                ctx.failIteration(ex);
+                return;
+            }
+            results.addAll(groups);
+            ctx.completeIteration();
+        });
+
+        ctx.await();
+
+        assertTrue(results.contains("superusers"));
+        assertTrue(results.contains("it"));
+        assertTrue(results.contains("organization"));
+    }
+
+    @Test
+    public void testSimpleGetGroupsForPrincipal() {
+        DeferredResult<Set<String>> result = provider.getAllGroupsForPrincipal(
+                USER_EMAIL_ADMIN);
+
+        TestContext ctx = testCreate(1);
+        Set<String> results = new HashSet<>();
+
+        result.whenComplete((groups, ex) -> {
+            if (ex != null) {
+                ctx.failIteration(ex);
+                return;
+            }
+            results.addAll(groups);
+            ctx.completeIteration();
+        });
+
+        ctx.await();
+
+        assertTrue(results.contains("superusers"));
     }
 
 }

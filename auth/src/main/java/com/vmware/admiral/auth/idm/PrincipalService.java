@@ -12,6 +12,7 @@
 package com.vmware.admiral.auth.idm;
 
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
@@ -33,6 +34,7 @@ public class PrincipalService extends StatelessService {
     public static final String CRITERIA_QUERY = "criteria";
     public static final String SECURITY_CONTEXT_SUFFIX = "/security-context";
     public static final String ROLES_SUFFIX = "/roles";
+    public static final String GROUPS_SUFFIX = "/groups";
 
     private static final String PRINCIPAL_ID_PATH_SEGMENT = "principalId";
 
@@ -69,6 +71,13 @@ public class PrincipalService extends StatelessService {
             .compile(String.format("^%s\\/[^\\/]+%s\\/?$", SELF_LINK.replaceAll("/", "\\\\/"),
                     ROLES_SUFFIX));
 
+    /**
+     * Matches /auth/idm/principals/{principal-id}/groups
+     */
+    private static final Pattern PATTERN_PRINCIPAL_GROUPS = Pattern
+            .compile(String.format("^%s\\/[^\\/]+%s\\/?$", SELF_LINK.replaceAll("/", "\\\\/"),
+                    GROUPS_SUFFIX));
+
     private PrincipalProvider provider;
 
     public PrincipalService() {
@@ -98,10 +107,36 @@ public class PrincipalService extends StatelessService {
                     .get(CRITERIA_QUERY), get);
         } else if (isSecurityContextRequest(get)) {
             handleGetSecurityContext(get);
+        } else if (isGroupsRequest(get)) {
+            handleGetGroups(get);
         } else {
             get.fail(new IllegalArgumentException(
                     "Provide either criteria or principalId to search for."));
         }
+    }
+
+    private boolean isPrincipalByIdRequest(Operation op) {
+        return PATTERN_PRINCIPAL_GET_BY_ID.matcher(op.getUri().getPath()).matches();
+    }
+
+    private boolean isPrincipalByCriteriaRequest(Operation op) {
+        if (!PATTERN_PRINCIPLE_SERVICE_BASE.matcher(op.getUri().getPath()).matches()) {
+            return false;
+        }
+        String criteria = UriUtils.parseUriQueryParams(op.getUri()).get(CRITERIA_QUERY);
+        return criteria != null && !criteria.isEmpty();
+    }
+
+    private boolean isSecurityContextRequest(Operation op) {
+        return PATTERN_PRINCIPAL_SECURITY_CONTEXT.matcher(op.getUri().getPath()).matches();
+    }
+
+    private boolean isRolesRequest(Operation op) {
+        return PATTERN_PRINCIPAL_ROLES.matcher(op.getUri().getPath()).matches();
+    }
+
+    private boolean isGroupsRequest(Operation op) {
+        return PATTERN_PRINCIPAL_GROUPS.matcher(op.getUri().getPath()).matches();
     }
 
     private void handleGetSecurityContext(Operation get) {
@@ -130,26 +165,6 @@ public class PrincipalService extends StatelessService {
                 });
     }
 
-    private boolean isPrincipalByIdRequest(Operation op) {
-        return PATTERN_PRINCIPAL_GET_BY_ID.matcher(op.getUri().getPath()).matches();
-    }
-
-    private boolean isPrincipalByCriteriaRequest(Operation op) {
-        if (!PATTERN_PRINCIPLE_SERVICE_BASE.matcher(op.getUri().getPath()).matches()) {
-            return false;
-        }
-        String criteria = UriUtils.parseUriQueryParams(op.getUri()).get(CRITERIA_QUERY);
-        return criteria != null && !criteria.isEmpty();
-    }
-
-    private boolean isSecurityContextRequest(Operation op) {
-        return PATTERN_PRINCIPAL_SECURITY_CONTEXT.matcher(op.getUri().getPath()).matches();
-    }
-
-    private boolean isRolesRequest(Operation op) {
-        return PATTERN_PRINCIPAL_ROLES.matcher(op.getUri().getPath()).matches();
-    }
-
     private void handleSearchById(String principalId, Operation get) {
         DeferredResult<Principal> result = provider.getPrincipal(principalId);
 
@@ -175,6 +190,25 @@ public class PrincipalService extends StatelessService {
                 return;
             }
             get.setBody(principals).complete();
+        });
+    }
+
+    private void handleGetGroups(Operation get) {
+        String principalId = UriUtils
+                .parseUriPathSegments(get.getUri(), TEMPLATE_PRINCIPAL_SECURITY_CONTEXT)
+                .get(PRINCIPAL_ID_PATH_SEGMENT);
+
+        DeferredResult<Set<String>> groupsResult = provider.getAllGroupsForPrincipal(principalId);
+
+        groupsResult.whenComplete((groups, ex) -> {
+            if (ex != null) {
+                logWarning("Unable to get groups for principal %s: %s",
+                        principalId, Utils.toString(ex));
+                get.fail(ex);
+                return;
+            }
+            get.setBody(groups);
+            get.complete();
         });
     }
 

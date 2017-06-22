@@ -30,6 +30,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.auth.idm.AuthConfigProvider.CredentialsScope;
+import com.vmware.admiral.auth.idm.PrincipalRolesHandler;
 import com.vmware.admiral.auth.util.UserGroupsUpdater;
 import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.admiral.common.util.PropertyUtils;
@@ -62,6 +63,8 @@ public class LocalPrincipalService extends StatefulService {
     }
 
     public static class LocalPrincipalState extends ServiceDocument {
+
+        public static final String FIELD_NAME_GROUP_MEMBERS_LINKS = "groupMembersLinks";
 
         /**
          * ID of the user or group. In case of user the ID is the email,
@@ -381,10 +384,19 @@ public class LocalPrincipalService extends StatefulService {
     }
 
     private void addUsersToGroup(LocalPrincipalState group, String groupLink, Operation op) {
-        AtomicInteger counter = new AtomicInteger(group.groupMembersLinks.size());
+        List<String> groupMembersOfTypeUser = group.groupMembersLinks.stream()
+                .filter(m -> Service.getId(m).contains(PrincipalRolesHandler.PRINCIPAL_AT_SIGN))
+                .collect(Collectors.toList());
+
+        if (groupMembersOfTypeUser.isEmpty()) {
+            op.setBody(group).complete();
+            return;
+        }
+
+        AtomicInteger counter = new AtomicInteger(groupMembersOfTypeUser.size());
         AtomicBoolean hasError = new AtomicBoolean(false);
 
-        for (String localPrincipalLink : group.groupMembersLinks) {
+        for (String localPrincipalLink : groupMembersOfTypeUser) {
             addUserToGroup(localPrincipalLink, groupLink,
                     (ex) -> {
                         if (ex != null) {

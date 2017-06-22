@@ -14,11 +14,13 @@ package com.vmware.admiral.auth.project;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -46,6 +48,7 @@ import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
+import com.vmware.xenon.services.common.UserService;
 import com.vmware.xenon.services.common.UserService.UserState;
 
 public class ProjectServiceTest extends AuthBaseTest {
@@ -300,7 +303,55 @@ public class ProjectServiceTest extends AuthBaseTest {
 
     @Test
     public void testDelete() throws Throwable {
+        String admins = project.administratorsUserGroupLinks.iterator().next();
+        String members = project.membersUserGroupLinks.iterator().next();
         deleteProject(project);
+
+        // Verify the default UserGroups are deleted
+        UserGroupState adminsGroup = getDocumentNoWait(UserGroupState.class, admins);
+        assertNull(adminsGroup);
+
+        UserGroupState membersGroups = getDocumentNoWait(UserGroupState.class, members);
+        assertNull(membersGroups);
+    }
+
+    @Test
+    public void testDeleteVerifyCleanup() throws Throwable {
+        // Add fritz as member and admin in the project.
+        PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
+        roleAssignment.add = Collections.singletonList(USER_EMAIL_ADMIN);
+        ProjectRoles roles = new ProjectRoles();
+        roles.administrators = roleAssignment;
+        roles.members = roleAssignment;
+        doPatch(roles, project.documentSelfLink);
+
+        String fritzLink = UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_ADMIN);
+        String membersGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBERS.buildRoleWithSuffix(Service.getId(project
+                        .documentSelfLink)));
+        String adminsGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_ADMINS.buildRoleWithSuffix(Service.getId(project
+                        .documentSelfLink)));
+        // verify fritz is added.
+        UserState fritzState = getDocument(UserState.class, fritzLink);
+        assertTrue(fritzState.userGroupLinks.contains(membersGroupLink));
+        assertTrue(fritzState.userGroupLinks.contains(adminsGroupLink));
+
+        deleteProject(project);
+        project = getDocumentNoWait(ProjectState.class, project.documentSelfLink);
+        assertNull(project);
+
+        // Verify the default UserGroups are deleted
+        UserGroupState adminsGroup = getDocumentNoWait(UserGroupState.class, adminsGroupLink);
+        assertNull(adminsGroup);
+
+        UserGroupState membersGroups = getDocumentNoWait(UserGroupState.class, membersGroupLink);
+        assertNull(membersGroups);
+
+        // Verify fritz's userstate is patched
+        fritzState = getDocument(UserState.class, fritzLink);
+        assertTrue(!fritzState.userGroupLinks.contains(membersGroupLink));
+        assertTrue(!fritzState.userGroupLinks.contains(adminsGroupLink));
     }
 
     @Test

@@ -18,7 +18,10 @@ import static org.junit.Assert.assertTrue;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.BiFunction;
 
 import org.junit.Before;
@@ -26,6 +29,9 @@ import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
+import com.vmware.admiral.auth.idm.local.LocalPrincipalFactoryService;
+import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
+import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalType;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
@@ -226,5 +232,65 @@ public class PrincipalServiceTest extends AuthBaseTest {
                 });
         host.send(getSuperusersRole);
         ctx.await();
+    }
+
+    @Test
+    public void testNestedGetGroupsForPrincipal() throws Throwable {
+        LocalPrincipalState itGroup = new LocalPrincipalState();
+        itGroup.name = "it";
+        itGroup.type = LocalPrincipalType.GROUP;
+        itGroup.groupMembersLinks = Collections.singletonList(UriUtils.buildUriPath(
+                LocalPrincipalFactoryService.SELF_LINK, "superusers"));
+        itGroup = doPost(itGroup, LocalPrincipalFactoryService.SELF_LINK);
+        assertNotNull(itGroup);
+
+        LocalPrincipalState organization = new LocalPrincipalState();
+        organization.name = "organization";
+        organization.type = LocalPrincipalType.GROUP;
+        organization.groupMembersLinks = Collections.singletonList(UriUtils.buildUriPath(
+                LocalPrincipalFactoryService.SELF_LINK, "it"));
+        organization = doPost(organization, LocalPrincipalFactoryService.SELF_LINK);
+        assertNotNull(organization);
+
+        // fritz is part of "superusers" which is part of "it", and "it" is part of "organization"
+        // verify when get groups for fritz "superusers", "it" and "organization is returned"
+        TestContext ctx = testCreate(1);
+        Set<String> groups = new HashSet<>();
+        host.send(Operation.createGet(host, UriUtils.buildUriPath(PrincipalService.SELF_LINK,
+                USER_EMAIL_ADMIN, PrincipalService.GROUPS_SUFFIX))
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                        return;
+                    }
+                    groups.addAll(o.getBody(HashSet.class));
+                    ctx.completeIteration();
+                }));
+        ctx.await();
+
+        assertTrue(groups.contains("superusers"));
+        assertTrue(groups.contains("it"));
+        assertTrue(groups.contains("organization"));
+    }
+
+    @Test
+    public void testSimpleGetGroupsForPrincipal() throws Throwable {
+        TestContext ctx = testCreate(1);
+        Set<String> groups = new HashSet<>();
+        host.send(Operation.createGet(host, UriUtils.buildUriPath(PrincipalService.SELF_LINK,
+                USER_EMAIL_ADMIN, PrincipalService.GROUPS_SUFFIX))
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                        return;
+                    }
+                    groups.addAll(o.getBody(HashSet.class));
+                    ctx.completeIteration();
+                }));
+        ctx.await();
+
+        assertTrue(groups.contains("superusers"));
     }
 }
