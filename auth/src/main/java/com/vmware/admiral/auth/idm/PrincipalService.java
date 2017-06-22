@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
 import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalProvider;
 import com.vmware.admiral.auth.util.AuthUtil;
+import com.vmware.admiral.auth.util.PrincipalRolesUtil;
 import com.vmware.admiral.auth.util.SecurityContextUtil;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.xenon.common.DeferredResult;
@@ -102,13 +103,20 @@ public class PrincipalService extends StatelessService {
         if (isPrincipalByIdRequest(get)) {
             handleSearchById(UriUtils.parseUriPathSegments(get.getUri(),
                     TEMPLATE_PRINCIPAL_ID_PATH_SEGMENT).get(PRINCIPAL_ID_PATH_SEGMENT), get);
+
         } else if (isPrincipalByCriteriaRequest(get)) {
             handleSearchByCriteria(UriUtils.parseUriQueryParams(get.getUri())
                     .get(CRITERIA_QUERY), get);
+
         } else if (isSecurityContextRequest(get)) {
             handleGetSecurityContext(get);
+
         } else if (isGroupsRequest(get)) {
             handleGetGroups(get);
+
+        } else if (isRolesRequest(get)) {
+            handleGetPrincipalRoles(get);
+
         } else {
             get.fail(new IllegalArgumentException(
                     "Provide either criteria or principalId to search for."));
@@ -194,6 +202,7 @@ public class PrincipalService extends StatelessService {
     }
 
     private void handleGetGroups(Operation get) {
+
         String principalId = UriUtils
                 .parseUriPathSegments(get.getUri(), TEMPLATE_PRINCIPAL_SECURITY_CONTEXT)
                 .get(PRINCIPAL_ID_PATH_SEGMENT);
@@ -210,6 +219,25 @@ public class PrincipalService extends StatelessService {
             get.setBody(groups);
             get.complete();
         });
+    }
+
+    private void handleGetPrincipalRoles(Operation get) {
+        String principalId = UriUtils
+                .parseUriPathSegments(get.getUri(), TEMPLATE_PRINCIPAL_SECURITY_CONTEXT)
+                .get(PRINCIPAL_ID_PATH_SEGMENT);
+
+        PrincipalRoles rolesResponse = new PrincipalRoles();
+
+        PrincipalRolesUtil.getDirectlyAssignedProjectRoles(getHost(), principalId)
+                .thenAccept(projectEntries -> rolesResponse.projects = projectEntries)
+                .thenCompose(ignore -> PrincipalRolesUtil
+                        .getDirectlyAssignedSystemRoles(getHost(), principalId))
+                .thenAccept(systemRoles -> {
+                    rolesResponse.roles = systemRoles;
+                })
+                .thenAccept(ignore -> get.setBody(rolesResponse))
+                .whenCompleteNotify(get);
+
     }
 
     @Override

@@ -18,9 +18,12 @@ import java.util.stream.Collectors;
 
 import com.vmware.admiral.auth.idm.Principal;
 import com.vmware.admiral.auth.idm.Principal.PrincipalType;
+import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalFactoryService;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalType;
+import com.vmware.xenon.common.DeferredResult;
+import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.ServiceHost;
@@ -88,6 +91,13 @@ public class PrincipalUtil {
         }
 
         return state;
+    }
+
+    public static DeferredResult<Principal> getPrincipal(ServiceHost host, String principalId) {
+        Operation getPrincipalOp = Operation.createGet(host, UriUtils.buildUriPath(
+                PrincipalService.SELF_LINK, principalId))
+                .setReferer(host.getUri());
+        return host.sendWithDeferredResult(getPrincipalOp, Principal.class);
     }
 
     public static URI buildLocalPrincipalStateSelfLink(ServiceHost host, String id) {

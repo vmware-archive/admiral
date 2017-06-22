@@ -231,12 +231,12 @@ public class ProjectUtil {
         adminGroupQuery.setOccurance(Occurance.SHOULD_OCCUR);
         groupQuery.addBooleanClause(adminGroupQuery);
 
-        Query memebrsGroupQuery = QueryUtil.addListValueClause(
+        Query membersGroupQuery = QueryUtil.addListValueClause(
                 QuerySpecification
                         .buildCollectionItemName(ProjectState.FIELD_NAME_MEMBERS_USER_GROUP_LINKS),
                 groupLinks, MatchType.TERM);
-        memebrsGroupQuery.setOccurance(Occurance.SHOULD_OCCUR);
-        groupQuery.addBooleanClause(memebrsGroupQuery);
+        membersGroupQuery.setOccurance(Occurance.SHOULD_OCCUR);
+        groupQuery.addBooleanClause(membersGroupQuery);
 
         return query;
     }

@@ -191,7 +191,7 @@ public class SecurityContextUtil {
                 });
     }
 
-    private static List<SecurityContext.ProjectEntry> buildProjectEntries(
+    public static List<SecurityContext.ProjectEntry> buildProjectEntries(
             Collection<ProjectState> projects, Collection<String> userGroupLinks) {
         return projects.stream()
                 .map((project) -> {

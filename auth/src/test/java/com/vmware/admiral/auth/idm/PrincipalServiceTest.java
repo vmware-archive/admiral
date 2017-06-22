@@ -32,6 +32,9 @@ import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment
 import com.vmware.admiral.auth.idm.local.LocalPrincipalFactoryService;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalType;
+import com.vmware.admiral.auth.project.ProjectFactoryService;
+import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
+import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
@@ -292,5 +295,35 @@ public class PrincipalServiceTest extends AuthBaseTest {
         ctx.await();
 
         assertTrue(groups.contains("superusers"));
+
+    }
+
+    @Test
+    public void getRolesForPrincipal() throws Throwable {
+        ProjectState project = new ProjectState();
+        project.name = "test";
+        project.description = "test-description";
+        project = doPost(project, ProjectFactoryService.SELF_LINK);
+        assertNotNull(project.documentSelfLink);
+
+        PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
+        roleAssignment.add = Collections.singletonList(USER_EMAIL_ADMIN);
+        ProjectRoles projectRoles = new ProjectRoles();
+        projectRoles.members = roleAssignment;
+        projectRoles.administrators = roleAssignment;
+        doPatch(projectRoles, project.documentSelfLink);
+
+        PrincipalRoles roles = getDocumentNoWait(PrincipalRoles.class, UriUtils.buildUriPath
+                (PrincipalService.SELF_LINK, USER_EMAIL_ADMIN, PrincipalService.ROLES_SUFFIX));
+
+        assertTrue(roles.roles.contains(AuthRole.CLOUD_ADMINS));
+        assertTrue(roles.roles.contains(AuthRole.BASIC_USERS));
+        assertTrue(roles.roles.contains(AuthRole.BASIC_USERS_EXTENDED));
+
+        assertEquals(1, roles.projects.size());
+        assertEquals(project.documentSelfLink, roles.projects.get(0).documentSelfLink);
+        assertEquals(project.name, roles.projects.get(0).name);
+        assertTrue(roles.projects.get(0).roles.contains(AuthRole.PROJECT_ADMINS));
+        assertTrue(roles.projects.get(0).roles.contains(AuthRole.PROJECT_MEMBERS));
     }
 }

@@ -119,12 +119,12 @@ public class LocalPrincipalProvider implements PrincipalProvider {
     @Override
     public DeferredResult<Set<String>> getAllGroupsForPrincipal(String principalId) {
 
-        return getDirectlyAssignedGroupForPrincipal(principalId)
+        return getDirectlyAssignedGroupsForPrincipal(principalId)
                 .thenCompose(groups -> getIndirectlyAssignedGroupsForPrincipal(groups, null, null));
 
     }
 
-    private DeferredResult<Set<String>> getDirectlyAssignedGroupForPrincipal(String principalId) {
+    private DeferredResult<Set<String>> getDirectlyAssignedGroupsForPrincipal(String principalId) {
         String principalSelfLink = UriUtils.buildUriPath(LocalPrincipalFactoryService.SELF_LINK,
                 principalId);
 
