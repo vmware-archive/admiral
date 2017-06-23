@@ -386,4 +386,44 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
         assertTrue(results.contains("superusers"));
     }
 
+    @Test
+    public void testNestedGetGroupsForPrincipalOfTypeGroup() throws Throwable {
+        // Create nested groups.
+        LocalPrincipalState itGroup = new LocalPrincipalState();
+        itGroup.name = "it";
+        itGroup.type = LocalPrincipalType.GROUP;
+        itGroup.groupMembersLinks = Collections.singletonList(UriUtils.buildUriPath(
+                LocalPrincipalFactoryService.SELF_LINK, "superusers"));
+        itGroup = doPost(itGroup, LocalPrincipalFactoryService.SELF_LINK);
+        assertNotNull(itGroup);
+
+        LocalPrincipalState organization = new LocalPrincipalState();
+        organization.name = "organization";
+        organization.type = LocalPrincipalType.GROUP;
+        organization.groupMembersLinks = Collections.singletonList(UriUtils.buildUriPath(
+                LocalPrincipalFactoryService.SELF_LINK, "it"));
+        organization = doPost(organization, LocalPrincipalFactoryService.SELF_LINK);
+        assertNotNull(organization);
+
+        DeferredResult<Set<String>> result = provider.getAllGroupsForPrincipal(
+                "superusers");
+
+        TestContext ctx = testCreate(1);
+        Set<String> results = new HashSet<>();
+
+        result.whenComplete((groups, ex) -> {
+            if (ex != null) {
+                ctx.failIteration(ex);
+                return;
+            }
+            results.addAll(groups);
+            ctx.completeIteration();
+        });
+
+        ctx.await();
+
+        assertTrue(results.contains("it"));
+        assertTrue(results.contains("organization"));
+    }
+
 }

@@ -22,11 +22,14 @@ import java.util.stream.Collectors;
 
 import javax.management.ServiceNotFoundException;
 
+import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
+
 import com.vmware.admiral.auth.idm.AuthRole;
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.ProjectUtil;
 import com.vmware.admiral.auth.util.UserGroupsUpdater;
+import com.vmware.admiral.common.serialization.ReleaseConstants;
 import com.vmware.admiral.common.util.AssertUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
@@ -108,6 +111,7 @@ public class ProjectService extends StatefulService {
         /**
          * Links to the groups of administrators for this project.
          */
+        @Since(ReleaseConstants.RELEASE_VERSION_1_2_0)
         @Documentation(description = "Links to the groups of administrators for this project.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
@@ -116,6 +120,7 @@ public class ProjectService extends StatefulService {
         /**
          * Links to the groups of members for this project.
          */
+        @Since(ReleaseConstants.RELEASE_VERSION_1_2_0)
         @Documentation(description = "Links to the groups of members for this project.")
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
@@ -128,6 +133,18 @@ public class ProjectService extends StatefulService {
         @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL,
                 PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
         public List<String> viewersUserGroupLinks;
+
+        @Deprecated
+        @Documentation(description = "Link to the group of administrators for this project.")
+        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL, PropertyUsageOption.LINK,
+                PropertyUsageOption.SINGLE_ASSIGNMENT, PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        public String administratorsUserGroupLink;
+
+        @Deprecated
+        @Documentation(description = "Link to the group of members for this project.")
+        @PropertyOptions(usage = { PropertyUsageOption.OPTIONAL, PropertyUsageOption.LINK,
+                PropertyUsageOption.SINGLE_ASSIGNMENT, PropertyUsageOption.AUTO_MERGE_IF_NOT_NULL })
+        public String membersUserGroupLink;
 
         public void copyTo(ProjectState destination) {
             super.copyTo(destination);
@@ -248,6 +265,7 @@ public class ProjectService extends StatefulService {
         validateState(createBody);
         createBody.creationTimeMicros = Instant.now().toEpochMilli();
 
+
         isProjectNameUsed(createBody.name, createBody.documentSelfLink)
                 .whenComplete((isNameUsed, ex) -> {
                     if (ex != null) {
@@ -265,9 +283,14 @@ public class ProjectService extends StatefulService {
                     generateProjectIndex()
                             .thenApply(index -> handleProjectIndex(index, createBody))
                             .thenCompose(this::createProjectUserGroups)
-                            .thenAccept(post::setBody)
+                            .thenAccept(projectState -> {
+                                projectState.membersUserGroupLink = null;
+                                projectState.administratorsUserGroupLink = null;
+                                post.setBody(projectState);
+                            })
                             .whenCompleteNotify(post);
                 });
+
     }
 
     @Override
