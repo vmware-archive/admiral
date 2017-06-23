@@ -290,6 +290,9 @@ public class RoleRestrictionsTest extends AuthBaseTest {
 
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_BASIC_USER));
 
+        // GET
+        doGetWithRestrictionVerification(createdState, ProjectFactoryService.SELF_LINK, ProjectState.class.getName());
+
         // POST
         doPostWithRestrictionVerification(project, ProjectFactoryService.SELF_LINK);
 

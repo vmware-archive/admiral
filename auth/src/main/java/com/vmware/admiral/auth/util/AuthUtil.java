@@ -23,7 +23,6 @@ import java.util.logging.Level;
 
 import com.vmware.admiral.auth.idm.AuthRole;
 import com.vmware.admiral.auth.idm.SessionService;
-import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.image.service.PopularImagesService;
@@ -231,9 +230,6 @@ public class AuthUtil {
     public static ResourceGroupState buildBasicUsersResourceGroup() {
         Query resourceGroupQuery = Query.Builder
                 .create()
-                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        buildUriWithWildcard(ProjectFactoryService.SELF_LINK),
-                        MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
                         buildUriWithWildcard(ConfigurationFactoryService.SELF_LINK),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
