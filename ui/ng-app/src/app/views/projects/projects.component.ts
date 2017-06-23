@@ -32,6 +32,8 @@ export class ProjectsComponent {
   projectToDelete: any;
   deleteConfirmationAlert: string;
 
+  selectedItem: any;
+
   @ViewChild('gridView') gridView:GridViewComponent;
 
   get deleteConfirmationTitle(): string {
@@ -47,6 +49,9 @@ export class ProjectsComponent {
   deleteProject(event, project) {
     this.projectToDelete = project;
     event.stopPropagation();
+    // clear selection
+    this.selectedItem = null;
+
     return false; // prevents navigation
   }
 
@@ -63,5 +68,20 @@ export class ProjectsComponent {
 
   deleteCanceled() {
     this.projectToDelete = null;
+  }
+
+  selectItem($event, item) {
+      $event.stopPropagation();
+
+      if (this.isItemSelected(item)) {
+          // clear selection
+          this.selectedItem = null;
+      } else {
+          this.selectedItem = item;
+      }
+  }
+
+  isItemSelected(item: any) {
+      return item === this.selectedItem;
   }
 }

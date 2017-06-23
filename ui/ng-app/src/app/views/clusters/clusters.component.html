@@ -1,3 +1,14 @@
+<!--
+  ~ Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+  ~
+  ~ This product is licensed to you under the Apache License, Version 2.0 (the "License").
+  ~ You may not use this product except in compliance with the License.
+  ~
+  ~ This product may include a number of subcomponents with separate copyright notices
+  ~ and license terms. Your use of these subcomponents is subject to the terms and
+  ~ conditions of the subcomponent's license, as noted in the LICENSE file.
+  -->
+
 <grid-view [serviceEndpoint]="serviceEndpoint">
   <div title>{{ "clusters.title" | i18n }}</div>
   <div toolbar>
@@ -11,7 +22,7 @@
                        (onCancel)="deleteCanceled()">
   </delete-confirmation>
   <ng-template let-item="item">
-    <card class="clusterCard" [routerLink]="['./' + item.documentId]">
+    <card class="clusterCard" [routerLink]="['./' + item.documentId]" [ngClass]="{'card-actions-selected': isItemSelected(item)}">
       <div card-header>
         <div class="clusterIcon">
           <clr-icon shape="rack-server" size="48"></clr-icon>
@@ -20,14 +31,18 @@
           <div>{{ item.name }}</div>
           <div *ngIf="item.address" class="clusterAddress">{{ item.address }}</div>
         </div>
-        <clr-dropdown class="card-actions" [clrMenuPosition]="'left-top'" (click)="$event.stopPropagation()">
+
+        <clr-dropdown class="card-actions" [clrMenuPosition]="'left-top'" (click)="selectItem($event, item)">
           <button class="btn btn-sm btn-link" clrDropdownToggle>
-              <clr-icon shape="ellipsis-vertical"></clr-icon>
+              <clr-icon shape="ellipsis-vertical" size="20"></clr-icon>
           </button>
           <div class="dropdown-menu">
-            <a href="..." clrDropdownItem [routerLink]="['./' + item.documentId]">{{ "projects.actions.details" | i18n }}</a>
-            <div class="dropdown-divider"></div>
-            <a href="..." clrDropdownItem (click)="deleteCluster($event, item)">{{ "delete" | i18n }}</a>
+            <a href="..." clrDropdownItem
+               [routerLink]="['./' + item.documentId]"><clr-icon shape="eye" size="20"
+                                                                 class="card-drop-down-actions"></clr-icon>{{ "projects.actions.details" | i18n }}</a>
+            <a href="..." clrDropdownItem
+               (click)="deleteCluster($event, item)"><clr-icon shape="trash" size="20"
+                                                               class="card-drop-down-actions"></clr-icon>{{ "delete" | i18n }}</a>
           </div>
         </clr-dropdown>
       </div>
@@ -73,6 +88,7 @@
     </card>
   </ng-template>
 </grid-view>
+
 <navigation-container>
   <router-outlet></router-outlet>
 </navigation-container>

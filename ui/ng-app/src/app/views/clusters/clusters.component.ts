@@ -18,6 +18,8 @@ export class ClustersComponent implements OnInit {
   clusterToDelete: any;
   deleteConfirmationAlert: string;
 
+  selectedItem: any;
+
   @ViewChild('gridView') gridView:GridViewComponent;
 
   ngOnInit() {
@@ -32,6 +34,9 @@ export class ClustersComponent implements OnInit {
   deleteCluster(event, cluster) {
     this.clusterToDelete = cluster;
     event.stopPropagation();
+    // clear selection
+    this.selectedItem = null;
+
     return false; // prevents navigation
   }
 
@@ -74,5 +79,20 @@ export class ClustersComponent implements OnInit {
 
   clusterState(cluster) {
     return I18n.t('clusters.state.' + cluster.status);
+  }
+
+  selectItem($event, item) {
+    $event.stopPropagation();
+
+    if (this.isItemSelected(item)) {
+      // clear selection
+      this.selectedItem = null;
+    } else {
+      this.selectedItem = item;
+    }
+  }
+
+  isItemSelected(item: any) {
+    return item === this.selectedItem;
   }
 }

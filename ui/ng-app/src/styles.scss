@@ -221,3 +221,33 @@ navigation-container > .full-screen {
 .status.WARNING {
     color: $clr-yellow;
 }
+
+
+// cards
+.card {
+  .dropdown-toggle {
+    color: $clr-dark-midtone-gray;
+    :hover {
+      color: $clr-dark-midtone-gray;
+    }
+  }
+  .dropdown-menu {
+    padding: 0;
+
+    .dropdown-item {
+      padding: 0px 4px 4px 4px;
+    }
+  }
+}
+
+.card.clickable:hover {
+  box-shadow: 0 3px 0 0 $clr-dark-midtone-gray;
+  border: 1px solid $clr-dark-midtone-gray;
+}
+.card-drop-down-actions {
+  margin-bottom: 4px;
+  margin-right: 4px;
+}
+.card-actions-selected .card.clickable {
+  background: rgba(216, 216, 216, 0.3);
+}
