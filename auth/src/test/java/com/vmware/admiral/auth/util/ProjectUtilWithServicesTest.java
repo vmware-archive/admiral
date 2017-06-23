@@ -138,7 +138,7 @@ public class ProjectUtilWithServicesTest extends AuthBaseTest {
     private ProjectState createTestProject() throws Throwable {
         // Prepare harbor id for this project
         HashMap<String, String> customProperties = new HashMap<>();
-        customProperties.put(ProjectService.CUSTOM_PROPERTY_HARBOR_ID,
+        customProperties.put(ProjectService.CUSTOM_PROPERTY_PROJECT_INDEX,
                 "" + MockHbrApiProxyService.MOCKED_PROJECT_ID);
 
         // Create project

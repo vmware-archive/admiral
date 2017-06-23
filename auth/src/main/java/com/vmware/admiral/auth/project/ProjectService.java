@@ -28,8 +28,9 @@ import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.ProjectUtil;
 import com.vmware.admiral.auth.util.UserGroupsUpdater;
 import com.vmware.admiral.common.util.AssertUtil;
-import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.photon.controller.model.ServiceUtils;
 import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.photon.controller.model.resources.ResourceState;
@@ -45,6 +46,7 @@ import com.vmware.xenon.common.StatefulService;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.ResourceGroupService;
 import com.vmware.xenon.services.common.ResourceGroupService.ResourceGroupState;
 import com.vmware.xenon.services.common.RoleService;
@@ -59,12 +61,16 @@ import com.vmware.xenon.services.common.UserService.UserState;
  */
 public class ProjectService extends StatefulService {
 
+    public static final String PROJECT_NAME_ALREADY_USED_MESSAGE = "Project name '%s' "
+            + "is already used.";
+    public static final String PROJECT_NAME_ALREADY_USED_CODE = "auth.projects.name.used";
+
     public static final String FIELD_NAME_CUSTOM_PROPERTIES = "customProperties";
 
-    public static final String CUSTOM_PROPERTY_HARBOR_ID = "__harborId";
+    public static final String CUSTOM_PROPERTY_PROJECT_INDEX = "__projectIndex";
 
     public static final String DEFAULT_PROJECT_ID = "default-project";
-    public static final String DEFAULT_HARBOR_PROJECT_ID = "1";
+    public static final String DEFAULT_PROJECT_INDEX = "1";
     public static final String DEFAULT_PROJECT_LINK = UriUtils
             .buildUriPath(ProjectFactoryService.SELF_LINK, DEFAULT_PROJECT_ID);
 
@@ -74,7 +80,7 @@ public class ProjectService extends StatefulService {
         project.name = DEFAULT_PROJECT_ID;
         project.id = project.name;
         project.customProperties = new HashMap<>();
-        project.customProperties.put(CUSTOM_PROPERTY_HARBOR_ID, DEFAULT_HARBOR_PROJECT_ID);
+        project.customProperties.put(CUSTOM_PROPERTY_PROJECT_INDEX, DEFAULT_PROJECT_INDEX);
 
         return project;
     }
@@ -215,13 +221,28 @@ public class ProjectService extends StatefulService {
 
         ProjectState createBody = post.getBody(ProjectState.class);
         validateState(createBody);
-
         createBody.creationTimeMicros = Instant.now().toEpochMilli();
 
-        createAdminAndMemberGroups(createBody)
-                .thenAccept(post::setBody)
-                .whenCompleteNotify(post);
-
+        isProjectNameUsed(createBody.name, createBody.documentSelfLink)
+                .whenComplete((isNameUsed, ex) -> {
+                    if (ex != null) {
+                        logWarning("Error during project name check: %s", Utils.toString(ex));
+                        post.fail(ex);
+                        return;
+                    }
+                    if (isNameUsed) {
+                        String message = String.format(PROJECT_NAME_ALREADY_USED_MESSAGE,
+                                createBody.name);
+                        post.fail(new LocalizableValidationException(message,
+                                PROJECT_NAME_ALREADY_USED_CODE, createBody.name));
+                        return;
+                    }
+                    generateProjectIndex()
+                            .thenApply(index -> handleProjectIndex(index, createBody))
+                            .thenCompose(this::createAdminAndMemberGroups)
+                            .thenAccept(post::setBody)
+                            .whenCompleteNotify(post);
+                });
     }
 
     @Override
@@ -240,32 +261,43 @@ public class ProjectService extends StatefulService {
         }
 
         if (ProjectRolesHandler.isProjectRolesUpdate(put)) {
-            if (AuthUtils.isDevOpsAdmin(put)) {
-                ProjectRoles rolesPut = put.getBody(ProjectRoles.class);
-                // this is an update of the roles
-                new ProjectRolesHandler(getHost(), getSelfLink()).handleRolesUpdate(rolesPut)
-                        .whenComplete((ignore, ex) -> {
-                            if (ex != null) {
-                                if (ex.getCause() instanceof ServiceNotFoundException) {
-                                    put.fail(Operation.STATUS_CODE_BAD_REQUEST, ex.getCause(),
-                                            ex.getCause());
-                                    return;
-                                }
-                                put.fail(ex);
+            ProjectRoles rolesPut = put.getBody(ProjectRoles.class);
+            // this is an update of the roles
+            new ProjectRolesHandler(getHost(), getSelfLink()).handleRolesUpdate(rolesPut)
+                    .whenComplete((ignore, ex) -> {
+                        if (ex != null) {
+                            if (ex.getCause() instanceof ServiceNotFoundException) {
+                                put.fail(Operation.STATUS_CODE_BAD_REQUEST, ex.getCause(),
+                                        ex.getCause());
                                 return;
                             }
-                            put.complete();
-                        });
-            } else {
-                put.fail(Operation.STATUS_CODE_FORBIDDEN);
-            }
+                            put.fail(ex);
+                            return;
+                        }
+                        put.complete();
+                    });
         } else {
             // this is an update of the state
             ProjectState projectPut = put.getBody(ProjectState.class);
+            ProjectState currentState = getState(put);
             validateState(projectPut);
-            this.setState(put, projectPut);
-            put.setBody(projectPut).complete();
-            return;
+            isProjectNameUsed(projectPut.name, currentState.documentSelfLink)
+                    .whenComplete((isNameUsed, e) -> {
+                        if (e != null) {
+                            logWarning("Error during project name check: %s",
+                                    Utils.toString(e));
+                            put.fail(e);
+                            return;
+                        }
+                        if (isNameUsed) {
+                            String message = String.format(PROJECT_NAME_ALREADY_USED_MESSAGE,
+                                    projectPut.name);
+                            put.fail(new LocalizableValidationException(message,
+                                    PROJECT_NAME_ALREADY_USED_CODE, projectPut.name));
+                            return;
+                        }
+                        handleProjectPut(projectPut, put);
+                    });
         }
     }
 
@@ -278,48 +310,90 @@ public class ProjectService extends StatefulService {
         }
 
         ProjectState projectPatch = patch.getBody(ProjectState.class);
-        handleProjectPatch(getState(patch), projectPatch);
-
-        // Patch roles if DevOps admin
-        if (ProjectRolesHandler.isProjectRolesUpdate(patch)) {
-            if (AuthUtils.isDevOpsAdmin(patch)) {
-                new ProjectRolesHandler(getHost(), getSelfLink())
-                        .handleRolesUpdate(patch.getBody(ProjectRoles.class))
-                        .whenComplete((ignore, ex) -> {
-                            if (ex != null) {
-                                if (ex.getCause() instanceof ServiceNotFoundException) {
-                                    patch.fail(Operation.STATUS_CODE_BAD_REQUEST, ex.getCause(),
-                                            ex.getCause());
-                                    return;
-                                }
-                                patch.fail(ex);
+        ProjectState currentState = getState(patch);
+        isProjectNameUsed(projectPatch.name, currentState.documentSelfLink)
+                .whenComplete((isNameUsed, e) -> {
+                    if (e != null) {
+                        logWarning("Error during project name check: %s", Utils.toString(e));
+                        patch.fail(e);
+                        return;
+                    }
+                    if (isNameUsed) {
+                        String message = String.format(PROJECT_NAME_ALREADY_USED_MESSAGE,
+                                projectPatch.name);
+                        patch.fail(new LocalizableValidationException(message,
+                                PROJECT_NAME_ALREADY_USED_CODE, projectPatch.name));
+                        return;
+                    }
+                    handleProjectPatch(currentState, projectPatch).thenCompose(ignore -> {
+                        if (!ProjectRolesHandler.isProjectRolesUpdate(patch)) {
+                            return DeferredResult.completed(null);
+                        }
+                        return new ProjectRolesHandler(getHost(), getSelfLink())
+                                .handleRolesUpdate(patch.getBody(ProjectRoles.class));
+                    }).whenComplete((ignore, ex) -> {
+                        if (ex != null) {
+                            if (ex.getCause() instanceof ServiceNotFoundException) {
+                                patch.fail(Operation.STATUS_CODE_BAD_REQUEST,
+                                        ex.getCause(), ex.getCause());
                                 return;
                             }
-                            patch.complete();
-                        });
-            } else {
-                patch.fail(Operation.STATUS_CODE_FORBIDDEN);
-            }
-        } else {
-            patch.complete();
-        }
-
+                            patch.fail(ex);
+                            return;
+                        }
+                        patch.complete();
+                    });
+                });
     }
 
     /**
      * Returns whether the projects state signature was changed after the patch.
      */
-    private boolean handleProjectPatch(ProjectState currentState, ProjectState patchState) {
+    private DeferredResult<Boolean> handleProjectPatch(ProjectState currentState, ProjectState
+            patchState) {
         ServiceDocumentDescription docDesc = getDocumentTemplate().documentDescription;
         String currentSignature = Utils.computeSignature(currentState, docDesc);
 
-        Map<String, String> mergedProperties = PropertyUtils
-                .mergeCustomProperties(currentState.customProperties, patchState.customProperties);
-        PropertyUtils.mergeServiceDocuments(currentState, patchState);
-        currentState.customProperties = mergedProperties;
+        DeferredResult<Long> projectIndex;
 
-        String newSignature = Utils.computeSignature(currentState, docDesc);
-        return !currentSignature.equals(newSignature);
+        if (currentState.customProperties == null) {
+            projectIndex = generateProjectIndex();
+        } else {
+            projectIndex = DeferredResult.completed(Long.parseLong(
+                    currentState.customProperties.get(CUSTOM_PROPERTY_PROJECT_INDEX)));
+        }
+
+        return projectIndex.thenApply(index -> {
+            Map<String, String> mergedProperties = PropertyUtils.mergeCustomProperties(
+                    currentState.customProperties, patchState.customProperties);
+            PropertyUtils.mergeServiceDocuments(currentState, patchState);
+            currentState.customProperties = mergedProperties;
+            handleProjectIndex(index, currentState);
+            String newSignature = Utils.computeSignature(currentState, docDesc);
+            return !currentSignature.equals(newSignature);
+        });
+    }
+
+    private void handleProjectPut(ProjectState putState, Operation put) {
+        ProjectState currentState = getState(put);
+        DeferredResult<Long> projectIndex;
+        if (currentState.customProperties == null) {
+            projectIndex = generateProjectIndex();
+        } else {
+            projectIndex = DeferredResult.completed(Long.parseLong(
+                    currentState.customProperties.get(CUSTOM_PROPERTY_PROJECT_INDEX)));
+        }
+
+        projectIndex.whenComplete((index, ex) -> {
+            if (ex != null) {
+                put.fail(ex);
+                return;
+            }
+            handleProjectIndex(index, putState);
+            setState(put, putState);
+            put.setBody(putState);
+            put.complete();
+        });
     }
 
     @Override
@@ -625,5 +699,91 @@ public class ProjectService extends StatefulService {
         return Operation.createPost(getHost(), RoleService.FACTORY_LINK)
                 .setReferer(getHost().getUri())
                 .setBody(state);
+    }
+
+    private DeferredResult<Long> generateProjectIndex() {
+        long random = ProjectUtil.generateRandomUnsignedInt();
+
+        return isProjectIndexUsed(random)
+                .thenCompose(isUsed -> {
+                    if (!isUsed) {
+                        return DeferredResult.completed(random);
+                    }
+                    return generateProjectIndex();
+                });
+    }
+
+    private DeferredResult<Boolean> isProjectNameUsed(String name, String currentStateSelfLink) {
+        if (name == null || name.isEmpty()) {
+            return DeferredResult.completed(false);
+        }
+        DeferredResult<Boolean> result = new DeferredResult<>();
+
+        List<ProjectState> foundProjects = new ArrayList<>();
+
+        Query query = ProjectUtil.buildQueryForProjectsFromName(name, currentStateSelfLink);
+
+        QueryTask queryTask = QueryUtil.buildQuery(ProjectState.class, true, query);
+        QueryUtil.addExpandOption(queryTask);
+
+        new ServiceDocumentQuery<>(getHost(), ProjectState.class).query(queryTask, (r) -> {
+            if (r.hasException()) {
+                result.fail(r.getException());
+            } else if (r.hasResult()) {
+                foundProjects.add(r.getResult());
+            } else {
+                if (foundProjects.isEmpty()) {
+                    result.complete(false);
+                } else {
+                    result.complete(true);
+                }
+            }
+        });
+
+        return result;
+    }
+
+    private DeferredResult<Boolean> isProjectIndexUsed(long random) {
+
+        DeferredResult<Boolean> result = new DeferredResult<>();
+
+        List<ProjectState> foundProjects = new ArrayList<>();
+
+        Query query = ProjectUtil.buildQueryForProjectsFromProjectIndex(random);
+
+        QueryTask queryTask = QueryUtil.buildQuery(ProjectState.class, true, query);
+        QueryUtil.addExpandOption(queryTask);
+
+        new ServiceDocumentQuery<>(getHost(), ProjectState.class).query(queryTask, (r) -> {
+            if (r.hasException()) {
+                result.fail(r.getException());
+            } else if (r.hasResult()) {
+                foundProjects.add(r.getResult());
+            } else {
+                if (foundProjects.isEmpty()) {
+                    result.complete(false);
+                } else {
+                    result.complete(true);
+                }
+            }
+        });
+
+        return result;
+    }
+
+    private ProjectState handleProjectIndex(long projectIndex, ProjectState state) {
+        if (state.customProperties == null) {
+            state.customProperties = new HashMap<>();
+        }
+
+        // In case it's the default project do not override the index.
+        if (state.customProperties.containsKey(CUSTOM_PROPERTY_PROJECT_INDEX)
+                && state.customProperties.get(CUSTOM_PROPERTY_PROJECT_INDEX)
+                .equalsIgnoreCase(DEFAULT_PROJECT_INDEX)) {
+            return state;
+        }
+        state.customProperties.put(CUSTOM_PROPERTY_PROJECT_INDEX,
+                Long.toString(projectIndex));
+        return state;
     }
 }

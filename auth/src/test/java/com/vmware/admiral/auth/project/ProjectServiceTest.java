@@ -18,12 +18,15 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
@@ -34,6 +37,8 @@ import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.auth.util.ProjectUtil;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
@@ -41,8 +46,12 @@ import com.vmware.photon.controller.model.resources.ResourcePoolService.Resource
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.common.test.TestContext;
+import com.vmware.xenon.services.common.QueryTask;
+import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.ResourceGroupService;
 import com.vmware.xenon.services.common.ResourceGroupService.ResourceGroupState;
 import com.vmware.xenon.services.common.RoleService;
@@ -260,6 +269,22 @@ public class ProjectServiceTest extends AuthBaseTest {
     }
 
     @Test
+    public void testPutWithSameName() throws Throwable {
+        final String updatedDescription = "updatedDescription";
+        final boolean updatedIsPublic = !PROJECT_IS_PUBLIC;
+
+        ProjectState updateState = new ProjectState();
+        updateState.name = project.name;
+        updateState.description = updatedDescription;
+        updateState.isPublic = updatedIsPublic;
+        updateState.documentSelfLink = project.documentSelfLink;
+
+        ProjectState updatedState = updateProject(updateState);
+        assertEquals(updatedDescription, updatedState.description);
+        assertEquals(updatedIsPublic, updatedState.isPublic);
+    }
+
+    @Test
     public void testProjectRolesPut() throws Throwable {
         // verify initial state
         ExpandedProjectState expandedState = getExpandedProjectState(project.documentSelfLink);
@@ -365,7 +390,8 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertNull(membersGroups);
 
         // Verify that the ResourceGroup is deleted
-        ResourceGroupState resourceGroup = getDocumentNoWait(ResourceGroupState.class, resourceGroupLink);
+        ResourceGroupState resourceGroup = getDocumentNoWait(ResourceGroupState.class,
+                resourceGroupLink);
         assertNull(resourceGroup);
 
         // Verify that the AdminRole is delete
@@ -455,21 +481,28 @@ public class ProjectServiceTest extends AuthBaseTest {
 
     @Test
     public void testResourceGroupsAutoCreatedOnProjectCreate() {
-        String resourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK, Service.getId(project.documentSelfLink));
+        String resourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                Service.getId(project.documentSelfLink));
         assertDocumentExists(resourceGroupLink);
     }
 
     @Test
     public void testRolesAutoCreatedOnProjectCreate() {
-        String adminsUserGroupId = Service.getId(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, AuthRole
-                .PROJECT_ADMINS.buildRoleWithSuffix(Service.getId(project.documentSelfLink))));
-        String membersUserGroupId = Service.getId(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, AuthRole
-                .PROJECT_MEMBERS.buildRoleWithSuffix(Service.getId(project.documentSelfLink))));
+        String adminsUserGroupId = Service
+                .getId(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, AuthRole
+                        .PROJECT_ADMINS
+                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink))));
+        String membersUserGroupId = Service
+                .getId(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, AuthRole
+                        .PROJECT_MEMBERS
+                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink))));
 
         String adminsRoleLinks = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole
-                .PROJECT_ADMINS.buildRoleWithSuffix(Service.getId(project.documentSelfLink), adminsUserGroupId));
+                .PROJECT_ADMINS
+                .buildRoleWithSuffix(Service.getId(project.documentSelfLink), adminsUserGroupId));
         String membersRoleLinks = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole
-                .PROJECT_MEMBERS.buildRoleWithSuffix(Service.getId(project.documentSelfLink), membersUserGroupId));
+                .PROJECT_MEMBERS
+                .buildRoleWithSuffix(Service.getId(project.documentSelfLink), membersUserGroupId));
 
         assertDocumentExists(adminsRoleLinks);
         assertDocumentExists(membersRoleLinks);
@@ -512,6 +545,179 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertTrue(stateWithMembers.members.size() == 0);
     }
 
+    @Test
+    public void testBuildQueryProjectsFromProjectIndex() throws Throwable {
+
+        Query query = ProjectUtil.buildQueryForProjectsFromProjectIndex(Long.parseLong(
+                ProjectService.DEFAULT_PROJECT_INDEX));
+
+        QueryTask queryTask = QueryUtil.buildQuery(ProjectState.class, true, query);
+        QueryUtil.addExpandOption(queryTask);
+
+        List<ProjectState> results = new ArrayList<>();
+        TestContext ctx = testCreate(1);
+        new ServiceDocumentQuery<>(host, ProjectState.class).query(queryTask, (r) -> {
+            if (r.hasException()) {
+                ctx.failIteration(r.getException());
+            } else if (r.hasResult()) {
+                results.add(r.getResult());
+            } else {
+                ctx.completeIteration();
+            }
+        });
+
+        ctx.await();
+
+        assertEquals(1, results.size());
+        assertEquals(ProjectService.DEFAULT_PROJECT_LINK, results.get(0).documentSelfLink);
+    }
+
+    @Test
+    public void testCreateProjectWithDuplicateNameShouldFail() throws Throwable {
+        createProject("test-name");
+
+        try {
+            createProject("test-name");
+            fail("Project create with same name should've failed");
+        } catch (Exception ex) {
+            assertTrue(ex instanceof LocalizableValidationException);
+            assertTrue(ex.getMessage().contains("test-name"));
+        }
+
+        try {
+            createProject("test-Name");
+            fail("Project create with same name (case insensitive) should've failed");
+        } catch (Exception ex) {
+            assertTrue(ex instanceof LocalizableValidationException);
+            assertTrue(ex.getMessage().contains("test-Name"));
+        }
+    }
+
+    @Test
+    public void testUpdateProjectWithDuplicateNameShouldFail() throws Throwable {
+        createProject("test-name");
+        ProjectState testProject = createProject("test-name-1");
+
+        ProjectState state = new ProjectState();
+        state.name = "test-name";
+        state.documentSelfLink = testProject.documentSelfLink;
+        try {
+            updateProject(state);
+            fail("Project update with same name should've failed");
+        } catch (Exception ex) {
+            assertTrue(ex instanceof LocalizableValidationException);
+            assertTrue(ex.getMessage().contains("test-name"));
+        }
+
+        state.name = "test-Name";
+        try {
+            updateProject(state);
+            fail("Project update with same name (case insensitive) should've failed");
+        } catch (Exception ex) {
+            assertTrue(ex instanceof LocalizableValidationException);
+            assertTrue(ex.getMessage().contains("test-Name"));
+        }
+    }
+
+    @Test
+    public void testPatchProjectWithDuplicateNameShouldFail() throws Throwable {
+        createProject("test-name");
+        ProjectState testProject = createProject("test-name-1");
+
+        ProjectState state = new ProjectState();
+        state.name = "test-name";
+        state.documentSelfLink = testProject.documentSelfLink;
+        try {
+            patchProject(state, state.documentSelfLink);
+            fail("Project update with same name should've failed");
+        } catch (Exception ex) {
+            assertTrue(ex instanceof LocalizableValidationException);
+            assertTrue(ex.getMessage().contains("test-name"));
+        }
+
+        state.name = "test-Name";
+        try {
+            patchProject(state, state.documentSelfLink);
+            fail("Project update with same name (case insensitive) should've failed");
+        } catch (Exception ex) {
+            assertTrue(ex instanceof LocalizableValidationException);
+            assertTrue(ex.getMessage().contains("test-Name"));
+        }
+    }
+
+    @Test
+    public void testProjectIndexIsReadOnly() throws Throwable {
+        ProjectState testProject = createProject("test-project");
+        String projectIndex = testProject.customProperties.get(ProjectService
+                .CUSTOM_PROPERTY_PROJECT_INDEX);
+
+        // Patch with null for custom properties.
+        testProject.customProperties = null;
+        testProject = patchProject(testProject, testProject.documentSelfLink);
+        assertNotNull(testProject.customProperties);
+        assertEquals(projectIndex, testProject.customProperties.get(
+                ProjectService.CUSTOM_PROPERTY_PROJECT_INDEX));
+
+        // Patch with changed project index.
+        testProject.customProperties.put(ProjectService.CUSTOM_PROPERTY_PROJECT_INDEX, "testValue");
+        testProject = patchProject(testProject, testProject.documentSelfLink);
+        assertNotNull(testProject.customProperties);
+        assertEquals(projectIndex, testProject.customProperties.get(
+                ProjectService.CUSTOM_PROPERTY_PROJECT_INDEX));
+
+        // Put with null for custom properties.
+        testProject.customProperties = null;
+        testProject = updateProject(testProject);
+        assertNotNull(testProject.customProperties);
+        assertEquals(projectIndex, testProject.customProperties.get(
+                ProjectService.CUSTOM_PROPERTY_PROJECT_INDEX));
+
+        // Put with changed project index.
+        testProject.customProperties.put(ProjectService.CUSTOM_PROPERTY_PROJECT_INDEX, "testValue");
+        testProject = updateProject(testProject);
+        assertNotNull(testProject.customProperties);
+        assertEquals(projectIndex, testProject.customProperties.get(
+                ProjectService.CUSTOM_PROPERTY_PROJECT_INDEX));
+    }
+
+    @Test
+    @Ignore("Once proper synchronization is implemented, remove the ignore.")
+    public void testCreateMultipleProjectsAtOnceWithSameName() throws Throwable {
+        ProjectState state = new ProjectState();
+        for (int i = 0; i < 10; i++) {
+            if (i % 2 == 0) {
+                state.name = "test-name";
+            } else {
+                state.name = "test-Name";
+            }
+            createProjectNoWait(state);
+        }
+
+        Thread.sleep(1000);
+        List<ProjectState> projects = new ArrayList<>();
+        TestContext ctx = testCreate(1);
+        host.send(Operation.createGet(host, UriUtils.buildExpandLinksQueryUri(
+                UriUtils.buildUri(ProjectFactoryService.SELF_LINK)).toString())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                        return;
+                    }
+                    ServiceDocumentQueryResult result = o.getBody(ServiceDocumentQueryResult.class);
+                    projects.addAll(result.documents.values().stream()
+                            .map(p -> (ProjectState) p)
+                            .collect(Collectors.toList()));
+                    ctx.completeIteration();
+                }));
+        ctx.await();
+
+        List<ProjectState> testProjects = projects.stream()
+                .filter(p -> p.name.equalsIgnoreCase("test-name"))
+                .collect(Collectors.toList());
+
+        assertEquals(1, testProjects.size());
+    }
+
     private void assertDocumentExists(String documentLink) {
         assertNotNull(documentLink);
 
@@ -531,6 +737,25 @@ public class ProjectServiceTest extends AuthBaseTest {
                     }
                 }).sendWith(host);
         host.testWait();
+    }
+
+    private void createProjectNoWait(ProjectState state) {
+        Operation op = Operation.createPost(host, ProjectFactoryService.SELF_LINK)
+                .setBody(state);
+        host.send(op);
+    }
+
+    private UserGroupState createUserGroup() throws Throwable {
+
+        Query query = QueryUtil.buildPropertyQuery(UserState.class, UserState.FIELD_NAME_SELF_LINK,
+                buildUserServicePath(USER_EMAIL_ADMIN)).querySpec.query;
+
+        UserGroupState userGroupState = UserGroupState.Builder
+                .create()
+                .withQuery(query)
+                .build();
+
+        return doPost(userGroupState, UserGroupService.FACTORY_LINK);
     }
 
     private ResourcePoolState createResourcePool() throws Throwable {

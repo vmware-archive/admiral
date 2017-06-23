@@ -107,7 +107,7 @@ public class ProjectUtilTest {
         assertNull(ProjectUtil.getHarborId(state));
 
         String projectId =  "" + new Random().nextInt(1000);
-        state.customProperties.put(ProjectService.CUSTOM_PROPERTY_HARBOR_ID, projectId);
+        state.customProperties.put(ProjectService.CUSTOM_PROPERTY_PROJECT_INDEX, projectId);
         assertEquals(projectId, ProjectUtil.getHarborId(state));
     }
 }

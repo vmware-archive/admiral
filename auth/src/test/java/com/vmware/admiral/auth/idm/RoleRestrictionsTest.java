@@ -60,7 +60,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         ProjectState project = new ProjectState();
         project.name = "test";
 
-        // Claud Admin creates a project
+        // Cloud Admin creates a project
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
         createdProject = doPost(project, ProjectFactoryService.SELF_LINK);
         assertNotNull(createdProject);
@@ -164,7 +164,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
 
         ProjectState project = new ProjectState();
-        project.name = "test";
+        project.name = "test-name";
 
         // POST
         ProjectState createdState = doPost(project, ProjectFactoryService.SELF_LINK);
@@ -279,7 +279,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
     public void testBasicUserRestrictionsToProjects() throws Throwable {
 
         ProjectState project = new ProjectState();
-        project.name = "test";
+        project.name = "test-name";
 
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
         ProjectState createdState = doPost(project, ProjectFactoryService.SELF_LINK);
@@ -292,6 +292,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         doGetWithRestrictionVerification(createdState, ProjectFactoryService.SELF_LINK, ProjectState.class.getName());
 
         // POST
+        project.name = "test1";
         doPostWithRestrictionVerification(project, ProjectFactoryService.SELF_LINK);
 
         // PUT
@@ -408,7 +409,7 @@ public class RoleRestrictionsTest extends AuthBaseTest {
     public void testProjectAdminRestrictionsToProjectsHeDoesNotBelongToAsAdmin() throws Throwable {
 
         ProjectState project = new ProjectState();
-        project.name = "test";
+        project.name = "test-name";
 
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
         ProjectState createdState = doPost(project, ProjectFactoryService.SELF_LINK);

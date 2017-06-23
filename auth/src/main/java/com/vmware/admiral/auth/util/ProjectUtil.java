@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -69,6 +70,10 @@ public class ProjectUtil {
         /** Number of tags for this repository. */
         public long tagsCount;
     }
+
+    public static final long PROJECT_INDEX_ORIGIN = 2L;
+    public static final long PROJECT_INDEX_BOUND = (long)Integer.MAX_VALUE * 2; // simulate uint
+
 
     public static QueryTask createQueryTaskForProjectAssociatedWithPlacement(ResourceState project, Query query) {
         QueryTask queryTask = null;
@@ -134,7 +139,7 @@ public class ProjectUtil {
         if (state == null || state.customProperties == null) {
             return null;
         }
-        return state.customProperties.get(ProjectService.CUSTOM_PROPERTY_HARBOR_ID);
+        return state.customProperties.get(ProjectService.CUSTOM_PROPERTY_PROJECT_INDEX);
     }
 
     private static DeferredResult<List<String>> retrieveClusterLinks(ServiceHost host,
@@ -307,4 +312,30 @@ public class ProjectUtil {
         return query;
     }
 
+    public static Query buildQueryForProjectsFromProjectIndex(long projectIndex) {
+        return QueryUtil.addCaseInsensitiveListValueClause(QuerySpecification
+                .buildCompositeFieldName(ProjectState.FIELD_NAME_CUSTOM_PROPERTIES,
+                        ProjectService.CUSTOM_PROPERTY_PROJECT_INDEX),
+                Collections.singletonList(Long.toString(projectIndex)), MatchType.TERM);
+    }
+
+    public static Query buildQueryForProjectsFromName(String name, String documentSelfLink) {
+        Query query = new Query();
+
+        Query nameClause = QueryUtil.addCaseInsensitiveListValueClause(ProjectState.FIELD_NAME_NAME,
+                Collections.singletonList(name), MatchType.TERM);
+
+        Query selfLinkClause = QueryUtil.addCaseInsensitiveListValueClause(ProjectState
+                .FIELD_NAME_SELF_LINK, Collections.singletonList(documentSelfLink), MatchType.TERM);
+        selfLinkClause.setOccurance(Occurance.MUST_NOT_OCCUR);
+
+        query.addBooleanClause(nameClause);
+        query.addBooleanClause(selfLinkClause);
+
+        return query;
+    }
+
+    public static long generateRandomUnsignedInt() {
+        return ThreadLocalRandom.current().nextLong(PROJECT_INDEX_ORIGIN, PROJECT_INDEX_BOUND);
+    }
 }

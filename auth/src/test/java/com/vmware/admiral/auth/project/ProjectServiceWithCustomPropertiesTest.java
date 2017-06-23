@@ -13,7 +13,6 @@ package com.vmware.admiral.auth.project;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
@@ -65,15 +64,14 @@ public class ProjectServiceWithCustomPropertiesTest extends AuthBaseTest {
         assertEquals(PROJECT_DESCRIPTION, project.description);
         assertEquals(PROJECT_IS_PUBLIC, project.isPublic);
         assertNotNull(project.customProperties);
-        assertEquals(2, project.customProperties.size());
+        assertEquals(3, project.customProperties.size());
         assertEquals(CUSTOM_PROP_VAL_A, project.customProperties.get(CUSTOM_PROP_KEY_A));
         assertEquals(CUSTOM_PROP_VAL_B, project.customProperties.get(CUSTOM_PROP_KEY_B));
     }
 
     @Test
     public void testSetCustomPropertyOnExistingProject() throws Throwable {
-        project = createProject(PROJECT_NAME);
-        assertNull(project.customProperties);
+        project = createProject("test-name");
 
         ProjectState patchState = new ProjectState();
         patchState.customProperties = createCustomPropertiesMap(CUSTOM_PROP_KEY_A,
@@ -81,7 +79,7 @@ public class ProjectServiceWithCustomPropertiesTest extends AuthBaseTest {
 
         project = doPatch(patchState, project.documentSelfLink);
         assertNotNull(project.customProperties);
-        assertEquals(1, project.customProperties.size());
+        assertEquals(2, project.customProperties.size());
         assertEquals(CUSTOM_PROP_VAL_A, project.customProperties.get(CUSTOM_PROP_KEY_A));
     }
 
@@ -94,7 +92,7 @@ public class ProjectServiceWithCustomPropertiesTest extends AuthBaseTest {
 
         ProjectState updatedProject = doPatch(patchState, project.documentSelfLink);
         assertNotNull(updatedProject.customProperties);
-        assertEquals(2, updatedProject.customProperties.size());
+        assertEquals(3, updatedProject.customProperties.size());
         assertEquals(updatedValA, updatedProject.customProperties.get(CUSTOM_PROP_KEY_A));
         assertEquals(CUSTOM_PROP_VAL_B, updatedProject.customProperties.get(CUSTOM_PROP_KEY_B));
     }
@@ -155,7 +153,7 @@ public class ProjectServiceWithCustomPropertiesTest extends AuthBaseTest {
                             assertEquals(targetProject.documentSelfLink,
                                     selectedProject.documentSelfLink);
                             assertNotNull(selectedProject.customProperties);
-                            assertEquals(1, selectedProject.customProperties.size());
+                            assertEquals(2, selectedProject.customProperties.size());
                             assertEquals(searchValue,
                                     selectedProject.customProperties.get(searchProperty));
 
