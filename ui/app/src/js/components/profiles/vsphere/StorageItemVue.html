@@ -64,14 +64,18 @@
 </div>
 <div class="form-group">
   <form-label>{{i18n('app.profile.edit.storage.vsphere.sharesLabel')}}</form-label>
-  <div class="form-control">
+  <div class="form-control tooltip tooltip-validation tooltip-top-left"
+       v-bind:class="{invalid: !isSharesValid}">
     <input type="number" class="form-control" :disabled="!customShares" v-model="shares" @change="onSharesChange">
+    <span class="tooltip-content">{{sharesInvalidMsg}}</span>
   </div>
 </div>
 <div class="form-group">
   <form-label>{{i18n('app.profile.edit.storage.vsphere.limitLabel')}}</form-label>
-  <div class="form-control">
+  <div class="form-control tooltip tooltip-validation tooltip-top-left"
+       v-bind:class="{invalid: !isLimitIopsValid}">
     <input type="number" class="form-control" @change="onLimitChange" v-model="limitIops">
+    <span class="tooltip-content">{{limitIopsInvalidMsg}}</span>
   </div>
 </div>
 <div class="form-group">

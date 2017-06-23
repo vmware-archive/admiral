@@ -156,6 +156,8 @@ Vue.component('aws-storage-item', {
       deviceTypes: DEVICE_TYPES,
       deviceType: diskProperties.deviceType || '',
       iops: diskProperties.iops || '',
+      isIopsInvalid: false,
+      iopsInvalidMsg: '',
       tagLinks: tagLinks,
       tags: []
     };
@@ -209,12 +211,15 @@ Vue.component('aws-storage-item', {
       this.storageItem.supportsEncryption = value;
     },
     isValid() {
-      if (!this.deviceType && !this.name) {
+      if (!this.deviceType || !this.storageItem.name) {
         return false;
       } else {
         if (this.ebsSelected) {
           if (this.io1Selected) {
-            return parseInt(this.iops, 10) <= IOPS_LIMIT;
+            this.isIopsInvalid = this.iops && parseInt(this.iops, 10) > IOPS_LIMIT;
+            this.iopsInvalidMsg = this.isIopsInvalid ?
+              i18n.t('app.profile.edit.validation.valueNotMoreThan', {max: IOPS_LIMIT}) : '';
+            return !!this.iops && !this.isIopsInvalid;
           } else {
             return !!this.volumeType;
           }

@@ -48,7 +48,7 @@
             <td class="truncateText primary-cell" :title="item.name">{{item.name}}</td>
             <td class="truncateText primary-cell" :title="item.type">{{item.type}}</td>
             <td class="truncateText primary-cell" :title="item.supportsEncryption">
-              <span :class="{'fa fa-check': item.supportsEncryption, 'fa fa-times': !item.supportsEncryption}"></span>
+              {{i18n(item.supportsEncryption ? 'yes' : 'no')}}
             </td>
             <!-- Actions column -->
             <td class="table-actions">

@@ -47,9 +47,8 @@
           <template v-if="!isEditingItem(item)">
             <td class="truncateText primary-cell" :title="item.name">{{item.name}}</td>
             <td class="truncateText primary-cell" :title="item.desc">{{item.desc}}</td>
-            <td class="truncateText primary-cell" :title="item.supportsEncryption">
-              <span :class="{'fa fa-check': item.customProperties.__supportsEncryption === 'true',
-                'fa fa-times': item.customProperties.__supportsEncryption === 'false'}"></span>
+            <td class="truncateText primary-cell" :title="item.customProperties.__supportsEncryption">
+              {{i18n(item.customProperties.__supportsEncryption === 'true' ? 'yes' : 'no')}}
             </td>
             <!-- Actions column -->
             <td class="table-actions">

@@ -190,7 +190,11 @@ Vue.component('vsphere-storage-item', {
       provisioningType: diskProperties.provisioningType || 'thin',
       sharesLevel: diskProperties.sharesLevel || SHARES_LEVEL_VALUES.normal,
       shares: diskProperties.shares || SHARES_VALUES.normal,
+      isSharesValid: true,
+      sharesInvalidMsg: '',
       limitIops: diskProperties.limitIops || '',
+      isLimitIopsValid: true,
+      limitIopsInvalidMsg: '',
       independent: diskProperties.independent === 'true'
     };
   },
@@ -279,12 +283,27 @@ Vue.component('vsphere-storage-item', {
       this.onDiskPropertyChange('shares', this.shares);
     },
     isValid() {
-      return !!(this.storageItem.name
-        && (parseInt(this.storageItem.diskProperties.limitIops, 10) <= LIMIT_RANGE.max
+      this.isSharesValid = parseInt(this.storageItem.diskProperties.shares, 10) <= SHARES_RANGE.max
+        && parseInt(this.storageItem.diskProperties.shares, 10) >= SHARES_RANGE.min;
+      this.isLimitIopsValid =
+        parseInt(this.storageItem.diskProperties.limitIops, 10) <= LIMIT_RANGE.max
         && parseInt(this.storageItem.diskProperties.limitIops, 10) >= LIMIT_RANGE.min
-        || this.storageItem.diskProperties.limitIops === '')
-        && parseInt(this.storageItem.diskProperties.shares, 10) <= SHARES_RANGE.max
-        && parseInt(this.storageItem.diskProperties.shares, 10) >= SHARES_RANGE.min
+        || this.storageItem.diskProperties.limitIops === '';
+
+      this.sharesInvalidMsg = this.isSharesValid ? '' :
+        i18n.t('app.profile.edit.validation.valueInRange', {
+          min: SHARES_RANGE.min,
+          max: SHARES_RANGE.max
+        });
+      this.limitIopsInvalidMsg = this.isLimitIopsValid ? '' :
+        i18n.t('app.profile.edit.validation.valueInRange', {
+          min: LIMIT_RANGE.min,
+          max: LIMIT_RANGE.max
+        });
+
+      return !!(this.storageItem.name
+        && this.isLimitIopsValid
+        && this.isSharesValid
         && this.storageItem.storageDescriptionLink);
     },
     searchVsphereDatastores(filterString) {

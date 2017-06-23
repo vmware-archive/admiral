@@ -627,6 +627,10 @@
             "fileSystemLabel": "File System",
             "encryptedLabel": "Supports Encryption"
           }
+        },
+        "validation": {
+          "valueNotMoreThan": "Value cannot be more than {{max}}",
+          "valueInRange": "Value should be in the range {{min}} to {{max}}"
         }
       },
       "instanceType": {
