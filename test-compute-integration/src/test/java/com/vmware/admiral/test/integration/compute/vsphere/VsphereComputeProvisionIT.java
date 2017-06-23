@@ -112,7 +112,8 @@ public class VsphereComputeProvisionIT extends BaseComputeProvisionIT {
         endpoint.endpointProperties.put("privateKey", getTestRequiredProp(VsphereUtil.VC_PASSWORD));
         endpoint.endpointProperties.put("hostName", getTestRequiredProp(VsphereUtil.VC_HOST));
 
-        // for this test we don't specify a datacenter on the endpoint
+        endpoint.endpointProperties.put("regionId",
+                getTestRequiredProp(VsphereUtil.VC_DATACENTER_ID));
     }
 
     @Override
