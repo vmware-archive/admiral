@@ -37,6 +37,8 @@ export class ProjectCreateComponent extends BaseDetailsComponent implements Afte
       isPublic: new FormControl('')
   });
 
+  alertMessage: string;
+
   constructor(private router: Router, route: ActivatedRoute, service: DocumentService) {
     super(route, service, Links.PROJECTS);
   }
@@ -73,15 +75,24 @@ export class ProjectCreateComponent extends BaseDetailsComponent implements Afte
 
   saveProject() {
     if (this.projectForm.valid) {
+
       if (this.isEdit) {
         this.service.patch(this.entity.documentSelfLink, this.projectForm.value).then(() => {
           this.toggleModal(false);
+        }).catch((error) => {
+            this.alertMessage = Utils.getErrorMessage(error)._generic;
         });
       } else {
         this.service.post(Links.PROJECTS, this.projectForm.value).then(() => {
           this.toggleModal(false);
+        }).catch((error) => {
+            this.alertMessage = Utils.getErrorMessage(error)._generic;
         });
       }
     }
+  }
+
+  resetAlert() {
+    this.alertMessage = null;
   }
 }

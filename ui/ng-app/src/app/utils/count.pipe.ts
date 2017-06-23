@@ -12,11 +12,12 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({ name: 'count' })
+/**
+ * Pipe calculating the number of elements of an array.
+ */
 export class ArrayElementsCountPipe implements PipeTransform {
-  public transform(arr: Array<any>): number {
-    if (arr && arr.length) {
-      return arr.length;
-    }
-    return 0;
+
+    public transform(arr: Array<any>): number {
+        return (arr && arr.length) || 0;
   }
 }

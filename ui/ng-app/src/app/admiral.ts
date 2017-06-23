@@ -13,6 +13,7 @@ import { AppComponent } from './app.component';
 import { TranslatePipe } from './utils/i18n.pipe';
 import { ArrayElementsCountPipe } from './utils/count.pipe';
 import { ProjectNamePipe } from './utils/project-name.pipe';
+import { ProjectMembersCountPipe } from "./utils/members-count.pipe";
 import { BreakOutModalDirective } from "./directives/shared/break-out-modal.directive";
 
 import { AdministrationComponent } from './views/administration/administration.component';
@@ -66,6 +67,7 @@ export const ADMIRAL_DECLARATIONS = [
   TranslatePipe,
   ArrayElementsCountPipe,
   ProjectNamePipe,
+  ProjectMembersCountPipe,
   BreakOutModalDirective,
 
   AdministrationComponent,

@@ -12,6 +12,9 @@
 <clr-modal [clrModalOpen]="opened" (clrModalOpenChange)="toggleModal($event)" [clrModalSize]="'lg'">
   <h3 class="modal-title">{{title | i18n}}</h3>
   <div class="modal-body">
+    <clr-alert [clrAlertType]="'alert-danger'" [(clrAlertClosed)]="!alertMessage" (clrAlertClosedChange)="resetAlert()">
+      <div class="alert-item"><span class="alert-text">{{ alertMessage }}</span></div></clr-alert>
+
     <form class="form" [formGroup]="projectForm">
       <section class="form-block">
         <div class="form-group">

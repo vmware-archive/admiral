@@ -29,11 +29,11 @@
         <div class="project-summary-subsection-title">{{"projects.summary.team.title" | i18n}}</div>
         <div class="project-summary-subsection-content-row">
             <div class="left-column">{{"projects.summary.team.administrators" | i18n}}</div>
-            <div class="right-column">{{project?.administrators?.length}} {{"projects.summary.team.users" | i18n}}</div>
+            <div class="right-column">{{project?.administrators | count}} {{"projects.summary.team.users" | i18n}}</div>
             <div class="clear"></div></div>
         <div class="project-summary-subsection-content-row">
             <div class="left-column">{{"projects.summary.team.members" | i18n}}</div>
-            <div class="right-column">{{project?.members?.length}} {{"projects.summary.team.users" | i18n}}</div>
+            <div class="right-column">{{project?.members | count}} {{"projects.summary.team.users" | i18n}}</div>
             <div class="clear"></div></div>
     </div>
 
@@ -41,7 +41,7 @@
         <div class="project-summary-subsection-title">{{"projects.summary.repositories.title" | i18n}}</div>
         <div class="project-summary-subsection-content-row">
             <div class="left-column">{{"projects.summary.repositories.repositories" | i18n}}</div>
-            <div class="right-column">N/A</div>
+            <div class="right-column">{{project?.repositories | count}}</div>
             <div class="clear"></div></div>
     </div>
 
@@ -49,7 +49,7 @@
         <div class="project-summary-subsection-title">{{"projects.summary.resources.title" | i18n}}</div>
         <div class="project-summary-subsection-content-row">
             <div class="left-column">{{"projects.summary.resources.clusters" | i18n}}</div>
-            <div class="right-column">N/A</div>
+            <div class="right-column">{{project?.clusterLinks | count}}</div>
             <div class="clear"></div></div>
         <div class="project-summary-subsection-content-row">
             <div class="left-column">{{"projects.summary.resources.templates" | i18n}}</div>
