@@ -198,15 +198,10 @@ public class ProjectService extends StatefulService {
         ProjectState createBody = post.getBody(ProjectState.class);
         validateState(createBody);
 
-        if (AuthUtils.isDevOpsAdmin(post)) {
-            createAdminAndMemberGroups(createBody)
-                    .thenAccept((projectState) -> {
-                        post.setBody(projectState);
-                    })
-                    .whenCompleteNotify(post);
-        } else {
-            post.complete();
-        }
+        createAdminAndMemberGroups(createBody)
+                .thenAccept(post::setBody)
+                .whenCompleteNotify(post);
+
     }
 
     @Override
@@ -370,7 +365,15 @@ public class ProjectService extends StatefulService {
         return removeDefaultProjectGroupsFromUserStates(adminsUserGroupUri, membersUserGroupsUri,
                 delete)
                 .thenCompose(ignore -> sendWithDeferredResult(deleteMembersGroup, UserGroupState.class))
-                .thenCompose(ignore -> sendWithDeferredResult(deleteAdminsGroup, UserGroupState.class));
+                .exceptionally(ex -> {
+                    logWarning("Couldn't delete members user group: %s", Utils.toString(ex));
+                    return null;
+                })
+                .thenCompose(ignore -> sendWithDeferredResult(deleteAdminsGroup, UserGroupState.class))
+                .exceptionally(ex -> {
+                    logWarning("Couldn't delete admins user group: %s", Utils.toString(ex));
+                    return null;
+                });
     }
 
     private DeferredResult<Void> removeDefaultProjectGroupsFromUserStates(String adminsGroup,
@@ -383,12 +386,31 @@ public class ProjectService extends StatefulService {
                 .setReferer(delete.getUri());
 
         return sendWithDeferredResult(getMembersGroup, UserGroupState.class)
+                .exceptionally(ex ->  {
+                    logWarning("Couldn't get members group: %s", Utils.toString(ex));
+                    return null;
+                })
                 .thenCompose(membersGroupState -> patchUserStates(membersGroupState))
+                .exceptionally(ex -> {
+                    logWarning("Couldn't patch members user states: %s", Utils.toString(ex));
+                    return null;
+                })
                 .thenCompose(ignore -> sendWithDeferredResult(getAdminsGroup, UserGroupState.class))
-                .thenCompose(adminsGroupState -> patchUserStates(adminsGroupState));
+                .exceptionally(ex ->  {
+                    logWarning("Couldn't get admins group: %s", Utils.toString(ex));
+                    return null;
+                })
+                .thenCompose(adminsGroupState -> patchUserStates(adminsGroupState))
+                .exceptionally(ex -> {
+                    logWarning("Couldn't patch admins user states: %s", Utils.toString(ex));
+                    return null;
+                });
     }
 
     private DeferredResult<Void> patchUserStates(UserGroupState groupState) {
+        if (groupState == null) {
+            return DeferredResult.completed(null);
+        }
         return ProjectUtil.retrieveUserStatesForGroup(getHost(), groupState)
                 .thenCompose(userStates -> {
                     List<String> userLinks = userStates.stream()
