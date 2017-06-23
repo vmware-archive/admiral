@@ -47,7 +47,9 @@ import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
+import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ResourceType;
+import com.vmware.admiral.compute.VsphereConstants;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.ResourcePlacementReservationRequest;
 import com.vmware.admiral.request.allocation.filter.HostSelectionFilter.HostSelection;
@@ -420,9 +422,19 @@ public class ComputeReservationTaskService extends
         String endpointLink = getProp(computeDesc.customProperties,
                 ComputeProperties.ENDPOINT_LINK_PROP_NAME);
 
+        String computeEndpointType = getProp(computeDesc.customProperties,
+                VsphereConstants.COMPUTE_COMPONENT_TYPE_ID);
+
+        ComputeConstants.EndpointType epType = ComputeConstants.EndpointType
+                .resolveEndpointType(computeEndpointType);
+
+        String epTypeStr = epType != null ? epType.type : null;
+
         ProfileQueryUtils.queryProfiles(getHost(),
                 UriUtils.buildUri(getHost(), getSelfLink()), placementsByRpLink.keySet(),
-                endpointLink, tenantLinks, state.profileConstraints, (profileEntries, e) -> {
+                endpointLink, tenantLinks, state.profileConstraints,
+                epTypeStr,
+                (profileEntries, e) -> {
                     if (e != null) {
                         failTask("Error retrieving profiles for the selected placements: ", e);
                         return;

@@ -171,6 +171,42 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         // assertEquals(vmHostCompute.documentSelfLink, computeState.parentLink);
     }
 
+    @Test
+    public void testVsphereAllocationWithFollowingProvisioningRequest() throws Throwable {
+        host.log(">>>>>>Start: testVsphereAllocationWithFollowingProvisioningRequest <<<<< ");
+        ComputeDescription computeDescription = createVsphereComputeDescription(false,
+                null);
+
+        ComputeAllocationTaskState allocationTask = createComputeAllocationTask(
+                computeDescription.documentSelfLink, 1, true);
+        allocationTask = allocate(allocationTask);
+
+        ComputeState computeState = getDocument(ComputeState.class,
+                allocationTask.resourceLinks.iterator().next());
+        assertTrue(computeState.name.startsWith(TEST_VM_NAME));
+        assertNotNull(computeState.id);
+        assertEquals(computeDescription.documentSelfLink, computeState.descriptionLink);
+        assertEquals(allocationTask.tenantLinks, computeState.tenantLinks);
+
+        // make sure the host is not update with the new container.
+        assertFalse("should not be provisioned container: " + computeState.documentSelfLink,
+                MockDockerAdapterService.isContainerProvisioned(computeState.documentSelfLink));
+
+        ComputeProvisionTaskState provisionTask = createComputeProvisionTask(
+                allocationTask.resourceLinks);
+
+        // Request provisioning after allocation:
+        provisionTask = provision(provisionTask);
+
+        // verify container state is provisioned and patched:
+        computeState =
+                getDocument(ComputeState.class, provisionTask.resourceLinks.iterator().next());
+        assertNotNull(computeState);
+
+        assertNotNull(computeState.id);
+        assertEquals(computeDescription.documentSelfLink, computeState.descriptionLink);
+    }
+
     @SuppressWarnings("static-access")
     @Test
     public void testContainerAllocationSubscriptionSubStages() throws Throwable {

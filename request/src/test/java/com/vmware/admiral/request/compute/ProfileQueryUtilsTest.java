@@ -68,7 +68,7 @@ public class ProfileQueryUtilsTest extends RequestBaseTest {
         TestContext ctx = testCreate(1);
         List<ProfileEntry> entries = new ArrayList<>();
         ProfileQueryUtils.queryProfiles(host, referer, pools.keySet(),
-                endpoint.documentSelfLink, null, null,
+                endpoint.documentSelfLink, null, null, null,
                 (all, e) -> {
                     if (e != null) {
                         ctx.fail(e);
@@ -98,7 +98,7 @@ public class ProfileQueryUtilsTest extends RequestBaseTest {
         TestContext ctx = testCreate(1);
         List<ProfileEntry> entries = new ArrayList<>();
         ProfileQueryUtils.queryProfiles(host, referer, pools, endpoint.documentSelfLink,
-                null, null,
+                null, null, null,
                 (all, e) -> {
                     if (e != null) {
                         ctx.fail(e);
@@ -132,7 +132,7 @@ public class ProfileQueryUtilsTest extends RequestBaseTest {
         TestContext ctx = testCreate(1);
         List<ProfileEntry> entries = new ArrayList<>();
         ProfileQueryUtils.queryProfiles(host, referer, pools, endpoint.documentSelfLink,
-                null, null,
+                null, null, null,
                 (all, e) -> {
                     if (e != null) {
                         ctx.fail(e);
@@ -161,7 +161,7 @@ public class ProfileQueryUtilsTest extends RequestBaseTest {
         TestContext ctx = testCreate(1);
         List<ProfileEntry> entries = new ArrayList<>();
         ProfileQueryUtils.queryProfiles(host, referer, pools.keySet(),
-                endpoint.documentSelfLink, null, profileLinks,
+                endpoint.documentSelfLink, null, profileLinks, null,
                 (all, e) -> {
                     if (e != null) {
                         ctx.fail(e);

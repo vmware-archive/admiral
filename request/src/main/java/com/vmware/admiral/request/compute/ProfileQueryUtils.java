@@ -63,7 +63,8 @@ public class ProfileQueryUtils {
 
     public static void queryProfiles(ServiceHost host, URI referer,
             Set<String> resourcePoolsLinks, String endpointLink, List<String> tenantLinks,
-            List<String> profileLinks, BiConsumer<List<ProfileEntry>, Throwable> consumer) {
+            List<String> profileLinks, String endpointType,
+            BiConsumer<List<ProfileEntry>, Throwable> consumer) {
         Builder builder = Query.Builder.create()
                 .addKindFieldClause(ResourcePoolState.class)
                 .addInClause(ServiceDocument.FIELD_NAME_SELF_LINK, resourcePoolsLinks);
@@ -109,7 +110,17 @@ public class ProfileQueryUtils {
             }
 
             // get the compute states that back the endpoints
-            List<String> computeLinks = endpoints.stream().map(ep -> ep.computeLink)
+
+            /****** Add the endpoint type filter for cloud specific BP ******/
+            List<EndpointState> endpointStates = endpoints;
+            if (endpointType != null) {
+                endpointStates = endpoints.stream()
+                        .filter(ep -> ep.endpointType.equals(endpointType))
+                        .collect(Collectors.toList());
+            }
+
+            List<String> computeLinks = endpointStates.stream()
+                    .map(ep -> ep.computeLink)
                     .collect(Collectors.toList());
 
             Builder computeStatesQueryBuilder = Query.Builder.create()

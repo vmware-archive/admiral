@@ -58,7 +58,6 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
     public void setUp() throws Throwable {
         startServices(host);
         createEndpoint();
-        createComputeResourcePool();
         createVmHostCompute(true);
         ComputeDescription dockerHostDesc = createDockerHostDescription();
         createDockerHost(dockerHostDesc, null);
@@ -236,6 +235,39 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
 
         globalGroupState = getDocument(GroupResourcePlacementState.class,
                 globalGroupState.documentSelfLink);
+
+        assertEquals(globalGroupState.documentSelfLink, task.groupResourcePlacementLink);
+
+        assertEquals(globalGroupState.allocatedInstancesCount, task.resourceCount);
+    }
+
+    @Test
+    public void testReservationTaskLifeCycleForVsphere() throws Throwable {
+        EndpointState vsphereEndpoint = createVsphereEndpoint();
+        ResourcePoolState rp = createResourcePoolForEndpoint(vsphereEndpoint);
+        createVmHostCompute(vsphereEndpoint, rp);
+        GroupResourcePlacementState globalGroupState = createGroupPlacementFor(rp);
+        globalGroupState.priority = 3;
+        addForDeletion(globalGroupState);
+
+        // create another suitable group placement but with a group that should not be selected
+        doPost(TestRequestStateFactory.createGroupResourcePlacementState(ResourceType.COMPUTE_TYPE),
+                GroupResourcePlacementService.FACTORY_LINK);
+
+        ComputeReservationTaskState task = new ComputeReservationTaskState();
+        task.tenantLinks = null;
+        ComputeDescription cd = createVsphereComputeDescription(false, globalGroupState);
+        task.resourceDescriptionLink = cd.documentSelfLink;
+        task.resourceCount = 5;
+        task.serviceTaskCallback = ServiceTaskCallback.createEmpty();
+
+        task = doPost(task, ComputeReservationTaskService.FACTORY_LINK);
+        assertNotNull(task);
+
+        task = waitForTaskSuccess(task.documentSelfLink, ComputeReservationTaskState.class);
+
+        globalGroupState = getDocument(GroupResourcePlacementState.class,
+              globalGroupState.documentSelfLink);
 
         assertEquals(globalGroupState.documentSelfLink, task.groupResourcePlacementLink);
 
@@ -655,6 +687,14 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
     private EndpointState createGlobalEndpoint() throws Throwable {
         EndpointState endpoint = TestRequestStateFactory
                 .createEndpoint(UUID.randomUUID().toString(), EndpointType.aws);
+        endpoint.tenantLinks = null;
+        endpoint = getOrCreateDocument(endpoint, EndpointAdapterService.SELF_LINK);
+        return endpoint;
+    }
+
+    private EndpointState createVsphereEndpoint() throws Throwable {
+        EndpointState endpoint = TestRequestStateFactory
+                .createEndpoint(UUID.randomUUID().toString(), EndpointType.vsphere);
         endpoint.tenantLinks = null;
         endpoint = getOrCreateDocument(endpoint, EndpointAdapterService.SELF_LINK);
         return endpoint;

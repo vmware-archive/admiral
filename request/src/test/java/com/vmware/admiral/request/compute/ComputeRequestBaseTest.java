@@ -115,6 +115,41 @@ public class ComputeRequestBaseTest extends RequestBaseTest {
         return doPost(cd, ComputeDescriptionService.FACTORY_LINK);
     }
 
+    protected ComputeDescription createVsphereComputeDescription(boolean attachNic,
+            GroupResourcePlacementState globalGroupState) throws Throwable {
+        return doPost(generateVsphereComputeDescription(attachNic, globalGroupState),
+              ComputeDescriptionService.FACTORY_LINK);
+    }
+
+    protected ComputeDescription generateVsphereComputeDescription(boolean attachNic,
+            GroupResourcePlacementState globalGroupState) throws Throwable {
+        ComputeDescription cd = new ComputeDescription();
+        cd.id = UUID.randomUUID().toString();
+        cd.name = TEST_VM_NAME;
+        //cd.instanceType = "small";
+        cd.tenantLinks = globalGroupState == null ? computeGroupPlacementState.tenantLinks :
+                globalGroupState.tenantLinks;
+        cd.customProperties = new HashMap<>();
+        //cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_ID_NAME,
+        //      "coreos");
+        cd.customProperties.put("__component_type_id", "Compute.vSphere");
+        cd.customProperties.put(ComputeConstants.OVA_URI, "http://vSphere");
+        cd.customProperties.put(ComputeConstants.CUSTOM_PROP_IMAGE_REF_NAME, "test.ova");
+        cd.cpuCount = 2;
+        cd.totalMemoryBytes = 512 * 1024 * 1024;
+
+        SubnetState subnet = createSubnet("my-subnet");
+        if (attachNic) {
+            NetworkInterfaceDescription nid = createNetworkInterface("test-nic",
+                    subnet.documentSelfLink);
+            cd.networkInterfaceDescLinks = new ArrayList<>();
+            cd.networkInterfaceDescLinks.add(nid.documentSelfLink);
+        } else {
+            cd.customProperties.put("subnetworkLink", subnet.documentSelfLink);
+        }
+        return cd;
+    }
+
     private SubnetState createSubnet(String name) throws Throwable {
         SubnetState sub = new SubnetState();
         sub.name = name;

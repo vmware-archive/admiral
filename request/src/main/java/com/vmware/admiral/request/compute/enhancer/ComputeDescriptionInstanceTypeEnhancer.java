@@ -14,6 +14,7 @@ package com.vmware.admiral.request.compute.enhancer;
 import java.net.URI;
 
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.admiral.compute.VsphereConstants;
 import com.vmware.admiral.compute.profile.InstanceTypeDescription;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.xenon.common.DeferredResult;
@@ -32,6 +33,21 @@ public class ComputeDescriptionInstanceTypeEnhancer extends ComputeDescriptionEn
     @Override
     public DeferredResult<ComputeDescription> enhance(EnhanceContext context,
             ComputeDescription cd) {
+
+        if (VsphereConstants.COMPUTE_VSPHERE_TYPE.equals(cd.customProperties.get(
+                VsphereConstants.COMPUTE_COMPONENT_TYPE_ID))) {
+            if (cd.cpuCount < 1) {
+                return DeferredResult.failed(new IllegalStateException(
+                     "CPU count cannot be 0 for Endpoint specific blueprints."));
+            }
+
+            if (cd.totalMemoryBytes < 1) {
+                return DeferredResult.failed(new IllegalStateException(
+                     "MEMORY cannot be 0 for Endpoint specific blueprints."));
+            }
+
+            return DeferredResult.completed(cd);
+        }
 
         if (cd.instanceType == null && !cd.customProperties.containsKey(REQUESTED_INSTANCE_TYPE)) {
             return DeferredResult.completed(cd);

@@ -90,4 +90,22 @@ public class ComputeConstants {
             return UriUtils.buildUriPath(UriPaths.PROVISIONING, endpointType, this.path);
         }
     }
+
+    public enum EndpointType {
+        VSPHERE_TYPE("vsphere");
+
+        public final String type;
+
+        private EndpointType(String type) {
+            this.type = type;
+        }
+
+        public static EndpointType resolveEndpointType(String computeEndpointType) {
+            if (VsphereConstants.COMPUTE_VSPHERE_TYPE.equals(computeEndpointType)) {
+                return VSPHERE_TYPE;
+            }
+
+            return null;
+        }
+    }
 }

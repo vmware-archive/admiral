@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.vmware.admiral.compute.ComputeConstants;
+import com.vmware.admiral.compute.VsphereConstants;
 import com.vmware.admiral.compute.profile.InstanceTypeDescription;
 import com.vmware.admiral.compute.profile.ProfileService;
 import com.vmware.admiral.compute.profile.StorageProfileService.StorageItemExpanded;
@@ -101,7 +102,7 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
 
             StorageItemExpanded storageItem = findDefaultStorageItem(context.profile);
             if (storageItem != null) {
-                updateDiskStateWithStorageItemProperties(rootDisk, storageItem);
+                updateDiskStateWithStorageItemProperties(rootDisk, storageItem, computeDesc);
             }
 
             fillInBootConfigContent(context, computeDesc, rootDisk);
@@ -147,7 +148,7 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
                                         "No matching storage defined in profile: %s, for requested disk: %s",
                                         context.profile.documentSelfLink, diskState.name)));
                     } else {
-                        updateDiskStateWithStorageItemProperties(diskState, storageItem);
+                        updateDiskStateWithStorageItemProperties(diskState, storageItem, cd);
                     }
                     return this.host
                             .sendWithDeferredResult(updateDiskDescriptionState(diskState),
@@ -176,11 +177,54 @@ public class ComputeDescriptionDiskEnhancer extends ComputeDescriptionEnhancer {
     /**
      * Update disk state with the chosen storage item properties.
      */
-    private void updateDiskStateWithStorageItemProperties(DiskState diskState, StorageItemExpanded storageItem) {
+    private void updateDiskStateWithStorageItemProperties(DiskState diskState, StorageItemExpanded storageItem,
+            ComputeDescription cd) {
         diskState.storageDescriptionLink = storageItem.storageDescriptionLink;
         if (storageItem.diskProperties != null) {
             diskState.customProperties = new HashMap<>(storageItem.diskProperties);
         }
+
+        //Handling for vSphere specific BP, updating the storage provisioning type attr
+        if (VsphereConstants.COMPUTE_VSPHERE_TYPE.equals(cd.customProperties.get(
+                VsphereConstants.COMPUTE_COMPONENT_TYPE_ID))) {
+
+            if (diskState.customProperties == null) {
+                diskState.customProperties = new HashMap<>();
+            }
+
+            String diskProvisionThin = cd.customProperties.get(
+                    VsphereConstants.VSPHERE_CUSTOMPROP_STORAGE_PROV_THIN_TYPE);
+
+            boolean thin = false;
+            if (diskProvisionThin != null && !"".equals(diskProvisionThin)) {
+                thin = Boolean.valueOf(diskProvisionThin).booleanValue();
+            }
+
+            if (thin) {
+                //Set thin provisioning..
+                diskState.customProperties.put(VsphereConstants.VSPHERE_DISK_PROVISION_TYPE,
+                        VsphereConstants.VSPHERE_DISK_PROVISION_THIN);
+            } else {
+                String eagerZeroedThick = cd.customProperties.get(
+                        VsphereConstants.VSPHERE_CUSTOMPROP_STORAGE_PROV_THICK_EAGER_ZERO_TYPE);
+
+                if (eagerZeroedThick != null && !"".equals(eagerZeroedThick)) {
+                    //set thick zeroed
+                    diskState.customProperties.put(VsphereConstants.VSPHERE_DISK_PROVISION_TYPE,
+                            VsphereConstants.VSPHERE_DISK_PROVISION_EAGER_ZEROED_THICK);
+                } else {
+                    String thick = cd.customProperties.get(
+                            VsphereConstants.VSPHERE_CUSTOMPROP_STORAGE_PROV_THICK_TYPE);
+
+                    if (thick != null && !"".equals(thick)) {
+                        //set thick
+                        diskState.customProperties.put(VsphereConstants.VSPHERE_DISK_PROVISION_TYPE,
+                                VsphereConstants.VSPHERE_DISK_PROVISION_THICK);
+                    }
+                }
+            }
+        } //vSphere type ends here.
+
         if (storageItem.resourceGroupLink != null) {
             diskState.groupLinks = new HashSet<>(1);
             diskState.groupLinks.add(storageItem.resourceGroupLink);
