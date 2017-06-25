@@ -2871,16 +2871,48 @@ var mcpClient = {
   put: put
 };
 
+window.constants = window.constants || {};
+window.constants.ENDPOINT_TYPE = 'Compute.EndpointType';
+
+var adapterAPI = function(contentWindow, component) {
+  return {
+    contentWindow: contentWindow,
+    component: component,
+    fetchData: function(url, body) {
+      var extensionId = this.contentWindow.csp.extension.extensionId;
+      if (extensionId.startsWith(window.constants.ENDPOINT_TYPE)) {
+
+        var fetchDataRequest = {
+          requestType: 'EndpointType',
+          entityId: component.endpointType,
+          data: body
+        };
+
+        if (!url.startsWith('/')) {
+          url += '/';
+        }
+        var urlToSend = '/adapter-extensibility/fetch-data' + url;
+
+        return patch(urlToSend, fetchDataRequest);
+      }
+      console.error('Unhandled extensionId: ' + extensionId);
+      return null;
+    }, //fetchData
+    notifyDirty: function() {
+      this.component.onChange();
+    }//notifyDirty
+  };//return
+};//adapterAPI
+
 services.mcpApi = {
-  htmlInit: function(iframe, model, component) {
+  htmlInit: function(iframe, component, csp) {
     if (iframe) {
       try {
-        iframe.contentWindow.adapterAPI = mcpClient;
-        iframe.contentWindow.mcpComponent = component;
-        iframe.contentWindow.mcpEditor = component.editor;
-        iframe.contentWindow.init(model);
+        iframe.contentWindow.csp = csp;
+        iframe.contentWindow.adapterAPI = adapterAPI(iframe.contentWindow, component);
+        iframe.contentWindow.init(component.model.item);
       } catch (err) {
-        alert('Cannot init editor. Cause: ' + err);
+        console.error('Cannot init editor. Cause: ' + err);
       }
     }
   }

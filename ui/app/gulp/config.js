@@ -40,7 +40,9 @@ var jsLibsToCopy = [
   './node_modules/ace-builds/src-noconflict/mode-text.js',
   './node_modules/tablesort/src/tablesort.js',
   './node_modules/tablesort/src/sorts/tablesort.date.js',
-  './node_modules/tablesort/src/sorts/tablesort.numeric.js'
+  './node_modules/tablesort/src/sorts/tablesort.numeric.js',
+  './node_modules/iframe-resizer/js/iframeResizer.js',
+  './node_modules/iframe-resizer/js/iframeResizer.contentWindow.js'
 ];
 
 var jsLibsToCopyMinified = [
@@ -78,8 +80,16 @@ var jsLibsToCopyMinified = [
   './node_modules/ace-builds/src-min-noconflict/mode-text.js',
   './node_modules/tablesort/tablesort.min.js',
   './node_modules/tablesort/src/sorts/tablesort.date.js',
-  './node_modules/tablesort/src/sorts/tablesort.numeric.js'
+  './node_modules/tablesort/src/sorts/tablesort.numeric.js',
+  './node_modules/iframe-resizer/js/iframeResizer.min.js',
+  './node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js'
 ];
+
+var jsLibsToCopyNoConcat = [
+  './node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js'
+];
+
+
 
 var TEST_ENV = gutil.env.test || {};
 
@@ -132,7 +142,7 @@ if (TEST_ENV.dcp && TEST_ENV.dcp.ngurl) {
 
 gutil.log('Using NG URL: ' + NG_URL);
 
-var pathsToProxy = ["/adapter", "/config", "/core", "/images", "/popular-images", "/requests", "/request-graph", "/delete-tasks", "/request-status", "/resources", "/provisioning", "/templates", "/auth", "/container-image-icons", "/rp", "/projects", "/util" ,"/ng", "/uerp"];
+var pathsToProxy = ["/adapter-extensibility", "/adapter", "/config", "/core", "/images", "/popular-images", "/requests", "/request-graph", "/delete-tasks", "/request-status", "/resources", "/provisioning", "/templates", "/auth", "/container-image-icons", "/rp", "/projects", "/util" ,"/ng", "/uerp"];
 
 /* Utilities to proxy calls from "/path" to "ADMIRAL/path".
 The Karma proxies are needed for integration tests where tests are run on a built in karma server, but are making REST calls to "ADMIRAL".
@@ -169,6 +179,7 @@ var getKarmaServerProxies = function() {
 module.exports = {
   processVendorLibs: {
     jsToCopy: gutil.env.type === 'production' ? jsLibsToCopyMinified : jsLibsToCopy,
+    jsToCopyNoConcat: jsLibsToCopyNoConcat,
     dest: dest + '/lib'
   },
   html: {

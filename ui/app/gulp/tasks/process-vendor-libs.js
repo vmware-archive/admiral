@@ -10,6 +10,10 @@ var config = require('../config');
 gulp.task('process-vendor-libs', function () {
 
   validateFilesExistence(config.processVendorLibs.jsToCopy);
+  validateFilesExistence(config.processVendorLibs.jsToCopyNoConcat);
+
+  gulp.src(config.processVendorLibs.jsToCopyNoConcat)
+    .pipe(gulp.dest(config.processVendorLibs.dest));
 
   return gulp.src(config.processVendorLibs.jsToCopy)
     .pipe(concat('vendor.js'))

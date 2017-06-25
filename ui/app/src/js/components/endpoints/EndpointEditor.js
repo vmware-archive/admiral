@@ -57,7 +57,7 @@ export default Vue.component('endpoint-editor', {
   },
 
   attached: function() {
-    this.modelUnwatchVerified = this.$watch('model.verified', this.onChange);
+    this.modelUnwatchVerified = this.$watch('model.verified', this.onModelVerifiedChange);
     this.modelUnwatchSelectedEndpoint =
       this.$watch('selectedEndpointType', this.onSelectedEndpointChange);
   },
@@ -122,6 +122,16 @@ export default Vue.component('endpoint-editor', {
       this.saveDisabled = this.isSaveDisabled();
       this.verifyDisabled = this.isVerifyDisabled();
     },
+    onModelVerifiedChange() {
+      this.onChange();
+      var model = this.model.item.endpointProperties;
+      if (this.endpointEditorType === 'html') {
+        var iframe = document.getElementById('htmlEndpointEditor');
+        if (iframe && iframe.contentWindow && iframe.contentWindow.onVerify) {
+          iframe.contentWindow.onVerify(model);
+        }
+      }
+    },
     onEndpointTypeChange(selectedEndpointType) {
       if (this.selectedEndpointType === selectedEndpointType) {
         return;
@@ -159,7 +169,7 @@ export default Vue.component('endpoint-editor', {
       this.endpointType = this.selectedEndpointType.id;
 
       this.endpointEditorType = this.selectedEndpointType.endpointEditorType;
-      if (this.selectedEndpointType.endpointEditorType === 'html') {
+      if (this.endpointEditorType === 'html') {
         var res = services.encodeSchemeAndHost(this.selectedEndpointType.endpointEditor);
         if (res) {
           this.htmlEditor.htmlEndpointEditorSrc = 'uerp/' + res;
@@ -177,17 +187,30 @@ export default Vue.component('endpoint-editor', {
       this.editorErrors = errors;
     },
     isSaveDisabled() {
-      return !this.name || !this.endpointType || !this.editor.valid ||
+      var disabled = !this.name || !this.endpointType || !this.editor.valid ||
           !(this.model.verified && this.editor.valid);
+      if (!disabled && this.endpointEditorType === 'html') {
+        var iframe = document.getElementById('htmlEndpointEditor');
+        if (iframe && iframe.contentWindow && iframe.contentWindow.canSave) {
+          disabled = !iframe.contentWindow.canSave();
+        }
+      }
+      return disabled;
     },
     isVerifyDisabled() {
+      if (this.endpointEditorType === 'html') {
+        var iframe = document.getElementById('htmlEndpointEditor');
+        if (iframe && iframe.contentWindow && iframe.contentWindow.canVerify) {
+          this.editor.valid = iframe.contentWindow.canVerify();
+        }
+      }
       return !this.name || !this.endpointType || !this.editor.valid;
     },
     getModel() {
       var props;
       if (this.endpointEditorType === 'html') {
         var iframe = document.getElementById('htmlEndpointEditor');
-        props = iframe.contentWindow.getModel();//htmlEndpointEditor
+        props = iframe.contentWindow.getModel();
       } else {
         props = this.editor.properties;
       }
@@ -208,11 +231,25 @@ export default Vue.component('endpoint-editor', {
     },
     htmlEditorInit(event) {
       var frame = event.target;
-      services.mcpApi.htmlInit(frame, this.model.item, this);
-      var body = frame.contentWindow.document.body;
 
-      var height = Math.max(body.scrollHeight, body.offsetHeight);
-      frame.height = height + 'px';
+      var script = frame.contentWindow.document.createElement('script');
+      //inject the iframe-resizer client lib
+      script.setAttribute('src', '{host.uri}/lib/iframeResizer.contentWindow.min.js');
+      frame.contentWindow.document.head.appendChild(script);
+
+      var _this = this;
+
+      window.iFrameResize({
+        heightCalculationMethod: 'bodyScroll',
+        initCallback: function(iframe) {
+          services.mcpApi.htmlInit(iframe, _this, csp);
+        }
+      }, frame);
+      var csp = {
+        extension: {
+          extensionId: window.constants && window.constants.ENDPOINT_TYPE
+        }
+      };
 
       this.htmlEditor.loaded = true;
     }
