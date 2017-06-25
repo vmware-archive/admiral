@@ -83,13 +83,27 @@ export default Vue.component('multicolumn-editor', {
     if (this.value.length === 0) {
       this.value = [{}];
     }
-    Vue.nextTick(() => {
-      this.render(0);
-    });
+    this.refresh();
+
+    this.valueWatcher = this.$watch('value', this.refresh);
   },
+
+  detached: function() {
+    this.valueWatcher();
+  },
+
   methods: {
+    refresh() {
+      Vue.nextTick(() => {
+        this.render(0);
+      });
+    },
     render(start) {
       let children = this.$children;
+      if (children == null) {
+        return;
+      }
+
       if (children.length === 0) {
         children = this.$parent.$parent.$children.filter((child) =>
             child instanceof MultiColumnCell);
