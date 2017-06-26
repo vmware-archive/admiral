@@ -17,10 +17,13 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 import org.junit.Test;
 
+import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.Utils;
@@ -91,5 +94,20 @@ public class ProjectUtilTest {
                 assertTrue(groupLinks.contains(subclause.term.matchValue));
             }
         }
+    }
+
+    @Test
+    public void testGetHarborId() {
+        ProjectState state = new ProjectState();
+
+        state.customProperties = null;
+        assertNull(ProjectUtil.getHarborId(state));
+
+        state.customProperties = new HashMap<>();
+        assertNull(ProjectUtil.getHarborId(state));
+
+        String projectId =  "" + new Random().nextInt(1000);
+        state.customProperties.put(ProjectService.CUSTOM_PROPERTY_HARBOR_ID, projectId);
+        assertEquals(projectId, ProjectUtil.getHarborId(state));
     }
 }

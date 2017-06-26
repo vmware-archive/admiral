@@ -21,6 +21,7 @@ import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.PrincipalRolesUtil;
 import com.vmware.admiral.auth.util.SecurityContextUtil;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.UriUtilsExtended;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -49,7 +50,7 @@ public class PrincipalService extends StatelessService {
     /**
      * Matches /auth/idm/principals
      */
-    private static final Pattern PATTERN_PRINCIPLE_SERVICE_BASE = Pattern
+    private static final Pattern PATTERN_PRINCIPAL_SERVICE_BASE = Pattern
             .compile(String.format("^%s\\/?$", SELF_LINK.replaceAll("/", "\\\\/")));
 
     /**
@@ -124,11 +125,11 @@ public class PrincipalService extends StatelessService {
     }
 
     private boolean isPrincipalByIdRequest(Operation op) {
-        return PATTERN_PRINCIPAL_GET_BY_ID.matcher(op.getUri().getPath()).matches();
+        return UriUtilsExtended.uriPathMatches(op.getUri(), PATTERN_PRINCIPAL_GET_BY_ID);
     }
 
     private boolean isPrincipalByCriteriaRequest(Operation op) {
-        if (!PATTERN_PRINCIPLE_SERVICE_BASE.matcher(op.getUri().getPath()).matches()) {
+        if (!UriUtilsExtended.uriPathMatches(op.getUri(), PATTERN_PRINCIPAL_SERVICE_BASE)) {
             return false;
         }
         String criteria = UriUtils.parseUriQueryParams(op.getUri()).get(CRITERIA_QUERY);
@@ -136,15 +137,15 @@ public class PrincipalService extends StatelessService {
     }
 
     private boolean isSecurityContextRequest(Operation op) {
-        return PATTERN_PRINCIPAL_SECURITY_CONTEXT.matcher(op.getUri().getPath()).matches();
+        return UriUtilsExtended.uriPathMatches(op.getUri(), PATTERN_PRINCIPAL_SECURITY_CONTEXT);
     }
 
     private boolean isRolesRequest(Operation op) {
-        return PATTERN_PRINCIPAL_ROLES.matcher(op.getUri().getPath()).matches();
+        return UriUtilsExtended.uriPathMatches(op.getUri(), PATTERN_PRINCIPAL_ROLES);
     }
 
     private boolean isGroupsRequest(Operation op) {
-        return PATTERN_PRINCIPAL_GROUPS.matcher(op.getUri().getPath()).matches();
+        return UriUtilsExtended.uriPathMatches(op.getUri(), PATTERN_PRINCIPAL_GROUPS);
     }
 
     private void handleGetSecurityContext(Operation get) {

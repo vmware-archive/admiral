@@ -34,6 +34,7 @@ import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ReverseProxyService;
 import com.vmware.admiral.service.common.SslTrustCertificateFactoryService;
 import com.vmware.admiral.service.common.SslTrustImportService;
+import com.vmware.admiral.service.common.mock.MockHbrApiProxyService;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
@@ -44,6 +45,10 @@ public class HostInitCommonServiceConfig extends HostInitServiceHelper {
             .getInteger("common.services.initialization.timeout.seconds", 30);
 
     public static void startServices(ServiceHost host) {
+        startServices(host, false);
+    }
+
+    public static void startServices(ServiceHost host, boolean mockHbrApiProxyService) {
         startServices(host, NodeMigrationService.class, NodeHealthCheckService.class,
                 SslTrustImportService.class,
                 ClusterMonitoringService.class,
@@ -51,9 +56,14 @@ public class HostInitCommonServiceConfig extends HostInitServiceHelper {
                 SslTrustCertificateFactoryService.class,
                 CommonInitialBootService.class,
                 ReverseProxyService.class,
-                HbrApiProxyService.class,
                 ExtensibilitySubscriptionFactoryService.class,
                 LongURIGetService.class);
+
+        if (mockHbrApiProxyService) {
+            startServices(host, MockHbrApiProxyService.class);
+        } else {
+            startServices(host, HbrApiProxyService.class);
+        }
 
         startServiceFactories(host, ResourceNamePrefixService.class, RegistryService.class,
                 LogService.class, EventLogService.class,

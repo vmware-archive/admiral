@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.auth.project;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -175,6 +176,18 @@ public class ProjectService extends StatefulService {
         @Documentation(description = "List of repositories in this project.")
         public List<String> repositories;
 
+        /**
+         * List of template links for this project.
+         */
+        @Documentation(description = "List of template links for this project.")
+        public List<String> templateLinks;
+
+        /**
+         * Number of images associated with this project.
+         */
+        @Documentation(description = "Number of images associated with this project.")
+        public Long numberOfImages;
+
         public void copyTo(ExpandedProjectState destination) {
             super.copyTo(destination);
             if (administrators != null) {
@@ -202,6 +215,8 @@ public class ProjectService extends StatefulService {
 
         ProjectState createBody = post.getBody(ProjectState.class);
         validateState(createBody);
+
+        createBody.creationTimeMicros = Instant.now().toEpochMilli();
 
         createAdminAndMemberGroups(createBody)
                 .thenAccept(post::setBody)

@@ -365,4 +365,10 @@ public class UriUtilsExtended {
         return new String(Base64.getUrlDecoder().decode(input), UTF_8);
     }
 
+    public static boolean uriPathMatches(URI uri, Pattern pattern) {
+        AssertUtil.assertNotNull(uri, "uri");
+        AssertUtil.assertNotNull(pattern, "pattern");
+        return pattern.matcher(UriUtils.normalizeUriPath(uri.getPath())).matches();
+    }
+
 }

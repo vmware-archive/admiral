@@ -43,6 +43,7 @@ import com.vmware.admiral.auth.idm.content.AuthContentService.AuthContentBody;
 import com.vmware.admiral.auth.idm.local.LocalAuthConfigProvider.Config;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
+import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.common.DeploymentProfileConfig;
@@ -128,7 +129,7 @@ public abstract class AuthBaseTest extends BaseTestCase {
     protected void startServices(VerificationHost host) throws Throwable {
         DeploymentProfileConfig.getInstance().setTest(true);
 
-        HostInitCommonServiceConfig.startServices(host);
+        HostInitCommonServiceConfig.startServices(host, true);
         HostInitPhotonModelServiceConfig.startServices(host);
         HostInitComputeServicesConfig.startServices(host, true);
         HostInitAuthServiceConfig.startServices(host);
@@ -353,6 +354,28 @@ public abstract class AuthBaseTest extends BaseTestCase {
                 }));
         ctx.await();
         return context[0];
+    }
+
+    protected ExpandedProjectState getExpandedProjectState(String projectLink) {
+        URI uriWithExpand = UriUtils.extendUriWithQuery(UriUtils.buildUri(host, projectLink),
+                UriUtils.URI_PARAM_ODATA_EXPAND, Boolean.toString(true));
+
+        ExpandedProjectState resultState = new ExpandedProjectState();
+        host.testStart(1);
+        Operation.createGet(uriWithExpand)
+                .setReferer(host.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.failIteration(e);
+                    } else {
+                        ExpandedProjectState retrievedState = o
+                                .getBody(ExpandedProjectState.class);
+                        retrievedState.copyTo(resultState);
+                        host.completeIteration();
+                    }
+                }).sendWith(host);
+        host.testWait();
+        return resultState;
     }
 
 }

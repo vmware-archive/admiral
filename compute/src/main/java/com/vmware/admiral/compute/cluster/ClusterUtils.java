@@ -26,6 +26,7 @@ import com.vmware.admiral.compute.cluster.ClusterService.ClusterType;
 import com.vmware.admiral.compute.container.ContainerHostDataCollectionService;
 import com.vmware.photon.controller.model.query.QueryUtils;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
+import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
@@ -154,5 +155,19 @@ public class ClusterUtils {
         return hostState != null
                 && hostState.resourcePoolLink != null
                 && !hostState.resourcePoolLink.isEmpty();
+    }
+
+    public static String toClusterSelfLink(String placementZoneLink) {
+        if (placementZoneLink == null) {
+            return null;
+        }
+
+        if (placementZoneLink.startsWith(ResourcePoolService.FACTORY_LINK)) {
+            return UriUtils.buildUriPath(ClusterService.SELF_LINK,
+                    Service.getId(placementZoneLink));
+        }
+
+        throw new IllegalArgumentException(
+                String.format("'%s' is not a placement zone link", placementZoneLink));
     }
 }

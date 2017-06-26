@@ -17,7 +17,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -38,7 +37,6 @@ import com.vmware.admiral.service.common.RegistryService;
 import com.vmware.admiral.service.common.RegistryService.RegistryState;
 import com.vmware.admiral.service.common.SslTrustCertificateService;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
-import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.UriUtils;
@@ -539,25 +537,4 @@ public class RoleRestrictionsTest extends AuthBaseTest {
         }
     }
 
-    private ExpandedProjectState getExpandedProjectState(String projectLink) {
-        URI uriWithExpand = UriUtils.extendUriWithQuery(UriUtils.buildUri(host, projectLink),
-                UriUtils.URI_PARAM_ODATA_EXPAND, Boolean.toString(true));
-
-        ExpandedProjectState resultState = new ExpandedProjectState();
-        host.testStart(1);
-        Operation.createGet(uriWithExpand)
-                .setReferer(host.getUri())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        host.failIteration(e);
-                    } else {
-                        ExpandedProjectState retrievedState = o
-                                .getBody(ExpandedProjectState.class);
-                        retrievedState.copyTo(resultState);
-                        host.completeIteration();
-                    }
-                }).sendWith(host);
-        host.testWait();
-        return resultState;
-    }
 }

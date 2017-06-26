@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import com.google.gson.annotations.SerializedName;
+
 import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
@@ -27,6 +29,7 @@ import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceDocumentQuery;
 import com.vmware.admiral.compute.cluster.ClusterService;
+import com.vmware.admiral.compute.container.CompositeDescriptionService.CompositeDescription;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.service.common.HbrApiProxyService;
 import com.vmware.photon.controller.model.query.QueryUtils.QueryByPages;
@@ -35,6 +38,7 @@ import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
@@ -49,6 +53,22 @@ import com.vmware.xenon.services.common.UserService.UserState;
 public class ProjectUtil {
     public static final String PROJECT_IN_USE_MESSAGE = "Project is associated with %s placement%s";
     public static final String PROJECT_IN_USE_MESSAGE_CODE = "host.resource-group.in.use";
+
+    private static class HbrRepositoriesResponse {
+        public static final String FIELD_NAME_RESPONSE_ENTRIES = "responseEntries";
+
+        /** List of response entries returned by Harbor */
+        public List<HbrRepositoriesResponseEntry> responseEntries;
+    }
+
+    private static class HbrRepositoriesResponseEntry {
+        /** Name of the repository. */
+        public String name;
+
+        @SerializedName("tags_count")
+        /** Number of tags for this repository. */
+        public long tagsCount;
+    }
 
     public static QueryTask createQueryTaskForProjectAssociatedWithPlacement(ResourceState project, Query query) {
         QueryTask queryTask = null;
@@ -87,13 +107,26 @@ public class ProjectUtil {
         DeferredResult<Void> retrieveClusterLinks = retrieveClusterLinks(host,
                 simpleState.documentSelfLink)
                         .thenAccept((clusterLinks) -> expandedState.clusterLinks = clusterLinks);
-        DeferredResult<Void> retrieveRepositoryLinks = retrieveRepositoryLinks(host,
+        DeferredResult<Void> retrieveTemplateLinks = retrieveTemplateLinks(host,
+                simpleState.documentSelfLink)
+                        .thenAccept((templateLinks) -> {
+                            expandedState.templateLinks = templateLinks;
+                        });
+        DeferredResult<Void> retrieveRepositoriesAndImagesCount = retrieveRepositoriesAndTagsCount(host,
                 simpleState.documentSelfLink, getHarborId(simpleState))
                         .thenAccept(
-                                (repositoryLinks) -> expandedState.repositories = repositoryLinks);
+                                (repositories) -> {
+                                    expandedState.repositories = new ArrayList<>(repositories.size());
+                                    expandedState.numberOfImages = 0L;
+
+                                    repositories.forEach((entry) -> {
+                                        expandedState.repositories.add(entry.name);
+                                        expandedState.numberOfImages += entry.tagsCount;
+                                    });
+                                });
 
         return DeferredResult.allOf(retrieveAdmins, retrieveMembers, retrieveClusterLinks,
-                retrieveRepositoryLinks)
+                retrieveTemplateLinks, retrieveRepositoriesAndImagesCount)
                 .thenApply((ignore) -> expandedState);
     }
 
@@ -106,26 +139,38 @@ public class ProjectUtil {
 
     private static DeferredResult<List<String>> retrieveClusterLinks(ServiceHost host,
             String projectLink) {
-        return new QueryByPages<ResourcePoolState>(host,
-                QueryUtil.createKindClause(ResourcePoolState.class), ResourcePoolState.class,
+        return retrieveProjectRelatedDocumentLinks(host, projectLink, ResourcePoolState.class,
+                "clusters")
+                        .thenApply(
+                                (links) -> {
+                                    return links.stream()
+                                            .map((link) -> UriUtils.buildUriPath(
+                                                    ClusterService.SELF_LINK, Service.getId(link)))
+                                            .collect(Collectors.toList());
+                                });
+    }
+
+    private static DeferredResult<List<String>> retrieveTemplateLinks(ServiceHost host,
+            String projectLink) {
+        return retrieveProjectRelatedDocumentLinks(host, projectLink, CompositeDescription.class,
+                "templates");
+    }
+
+    private static <T extends ServiceDocument> DeferredResult<List<String>> retrieveProjectRelatedDocumentLinks(
+            ServiceHost host, String projectLink, Class<T> documentClass, String documentName) {
+        return new QueryByPages<T>(host,
+                QueryUtil.createKindClause(documentClass), documentClass,
                 Collections.singletonList(projectLink)).collectLinks(Collectors.toList())
-                        .thenApply((links) -> {
-                            return links.stream()
-                                    .map((link) -> UriUtils.buildUriPath(ClusterService.SELF_LINK,
-                                            Service.getId(link)))
-                                    .collect(Collectors.toList());
-                        }).exceptionally((ex) -> {
+                        .exceptionally((ex) -> {
                             host.log(Level.WARNING,
-                                    "Could not retrieve clusters for project %s: %s", projectLink,
-                                    Utils.toString(ex));
+                                    "Could not retrieve %s for project %s: %s", documentName,
+                                    projectLink, Utils.toString(ex));
                             return Collections.emptyList();
                         });
     }
 
-    @SuppressWarnings("unchecked")
-    private static DeferredResult<List<String>> retrieveRepositoryLinks(ServiceHost host,
-            String projectLink,
-            String harborId) {
+    private static DeferredResult<List<HbrRepositoriesResponseEntry>> retrieveRepositoriesAndTagsCount(
+            ServiceHost host, String projectLink, String harborId) {
         if (harborId == null || harborId.isEmpty()) {
             host.log(Level.WARNING,
                     "harborId not set for project %s. Skipping repository retrieval", projectLink);
@@ -137,10 +182,31 @@ public class ProjectUtil {
                         UriUtils.buildUriPath(HbrApiProxyService.SELF_LINK,
                                 HbrApiProxyService.HARBOR_ENDPOINT_REPOSITORIES),
                         UriUtils.buildUriQuery(HbrApiProxyService.HARBOR_QUERY_PARAM_PROJECT_ID,
-                                harborId)))
+                                harborId,
+                                HbrApiProxyService.HARBOR_QUERY_PARAM_DETAIL,
+                                Boolean.toString(true))))
                 .setReferer(ProjectFactoryService.SELF_LINK);
-        return host.sendWithDeferredResult(getRepositories, List.class)
-                .thenApply((list) -> (List<String>) list)
+
+        return host.sendWithDeferredResult(getRepositories)
+                .thenApply((op) -> {
+                    Object body = op.getBodyRaw();
+                    String stringBody = body instanceof String ? (String) body : Utils.toJson(body);
+
+                    // Harbor is returning a list of JSON objects and since in java generic types
+                    // are runtime only, the only types that we can get the response body are String
+                    // and List of maps. If we try to do a Utils.fromJson later on for each list
+                    // entry, we are very likely to get GSON parsing errors since Map.toString
+                    // method (called by Utils.fromJson) does not produce valid JSON. For
+                    // repositories, the forward slash in the name of the repository breaks
+                    // everything.
+                    // The following is a workaround: manually wrap the raw output in a
+                    // valid JSON object with a single property (list of entries) and parse that.
+                    String json = String.format("{\"%s\": %s}",
+                            HbrRepositoriesResponse.FIELD_NAME_RESPONSE_ENTRIES, stringBody);
+
+                    HbrRepositoriesResponse response = Utils.fromJson(json, HbrRepositoriesResponse.class);
+                    return response.responseEntries;
+                })
                 .exceptionally((ex) -> {
                     host.log(Level.WARNING,
                             "Could not retrieve repositories for project %s with harborId %s: %s",

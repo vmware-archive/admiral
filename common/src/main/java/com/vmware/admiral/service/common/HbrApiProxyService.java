@@ -35,6 +35,11 @@ public class HbrApiProxyService extends StatelessService {
     public static final String HARBOR_ENDPOINT_REPOSITORIES = "/repositories";
 
     public static final String HARBOR_QUERY_PARAM_PROJECT_ID = "project_id";
+    public static final String HARBOR_QUERY_PARAM_DETAIL = "detail";
+
+    public static final String HARBOR_RESP_PROP_ID = "id";
+    public static final String HARBOR_RESP_PROP_NAME = "name";
+    public static final String HARBOR_RESP_PROP_TAGS_COUNT = "tags_count";
 
     private static final String HBR_URL_PROP = "harbor.tab.url";
     private static final String HBR_API_BASE_ENDPOINT = "api";

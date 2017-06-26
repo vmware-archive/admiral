@@ -18,7 +18,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -35,7 +34,6 @@ import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
 import com.vmware.admiral.auth.util.ProjectUtil;
 import com.vmware.admiral.common.util.AssertUtil;
-import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
@@ -45,7 +43,6 @@ import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
-import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.ResourceGroupService;
 import com.vmware.xenon.services.common.ResourceGroupService.ResourceGroupState;
 import com.vmware.xenon.services.common.RoleService;
@@ -536,46 +533,11 @@ public class ProjectServiceTest extends AuthBaseTest {
         host.testWait();
     }
 
-    private UserGroupState createUserGroup() throws Throwable {
-
-        Query query = QueryUtil.buildPropertyQuery(UserState.class, UserState.FIELD_NAME_SELF_LINK,
-                buildUserServicePath(USER_EMAIL_ADMIN)).querySpec.query;
-
-        UserGroupState userGroupState = UserGroupState.Builder
-                .create()
-                .withQuery(query)
-                .build();
-
-        return doPost(userGroupState, UserGroupService.FACTORY_LINK);
-    }
-
     private ResourcePoolState createResourcePool() throws Throwable {
         ResourcePoolState pool = new ResourcePoolState();
         pool.name = "pool";
 
         return doPost(pool, ResourcePoolService.FACTORY_LINK);
-    }
-
-    private ExpandedProjectState getExpandedProjectState(String projectLink) {
-        URI uriWithExpand = UriUtils.extendUriWithQuery(UriUtils.buildUri(host, projectLink),
-                UriUtils.URI_PARAM_ODATA_EXPAND, Boolean.toString(true));
-
-        ExpandedProjectState resultState = new ExpandedProjectState();
-        host.testStart(1);
-        Operation.createGet(uriWithExpand)
-                .setReferer(host.getUri())
-                .setCompletion((o, e) -> {
-                    if (e != null) {
-                        host.failIteration(e);
-                    } else {
-                        ExpandedProjectState retrievedState = o
-                                .getBody(ExpandedProjectState.class);
-                        retrievedState.copyTo(resultState);
-                        host.completeIteration();
-                    }
-                }).sendWith(host);
-        host.testWait();
-        return resultState;
     }
 
 }
