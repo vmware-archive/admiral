@@ -1071,7 +1071,9 @@ public class ComputeAllocationTaskService
     protected void enhanceExtensibilityResponse(ComputeAllocationTaskState state,
             ServiceTaskCallbackResponse replyPayload, Runnable callback) {
         ExtensibilityCallbackResponse response = (ExtensibilityCallbackResponse) replyPayload;
-        reorderHostSelections(state, response, callback);
+
+        patchCustomPropertiesFromExtensibilityResponse(replyPayload, Arrays.asList(state.resourceDescriptionLink),
+                ComputeDescription.class, () -> reorderHostSelections(state, response, callback));
     }
 
     protected void reorderHostSelections(ComputeAllocationTaskState state,

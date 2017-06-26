@@ -482,7 +482,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         payload.customProperties.put(prop2, value2);
 
         TestContext context = new TestContext(1, Duration.ofMinutes(1));
-        service.patchCustomProperties(state, payload, () -> {
+        service.patchCustomPropertiesFromExtensibilityResponse(payload, state.resourceLinks, ComputeState.class, () -> {
             try {
                 ComputeState document = getDocument(ComputeState.class,
                         computeHost.documentSelfLink);

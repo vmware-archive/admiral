@@ -118,7 +118,7 @@ public class ComputeReservationTaskService extends
             ERROR;
 
             static final Set<ComputeReservationTaskState.SubStage> SUBSCRIPTION_SUB_STAGES = new HashSet<>(
-                    Arrays.asList(SELECTED, SELECTED_GLOBAL));
+                    Arrays.asList(SELECTED));
         }
 
         @Documentation(description = "The description that defines the requested resource.")
@@ -574,12 +574,18 @@ public class ComputeReservationTaskService extends
                             gp -> gp.resourcePoolLink,
                             (k1, k2) -> k1, LinkedHashMap::new));
 
-            // Provide all placements here(not filtered by tags etc.)
             LinkedHashMap<String, Pair<String, String>> allPlacementsLinksAndNames =
-                    placements.stream()
-                    .collect(Collectors.toMap(gp -> gp.documentSelfLink,
-                            gp -> Pair.of(gp.name, gp.resourcePoolLink),
-                            (k1, k2) -> k1, LinkedHashMap::new));
+                    TagConstraintUtils
+                            .filterByConstraints(
+                                    tagLinkByCondition,
+                                    placements.stream(),
+                                    p -> getResourcePoolTags(
+                                            resourcePoolsByLink.get(p.resourcePoolLink)),
+                                    (g1, g2) -> g1.priority - g2.priority)
+                            .collect(Collectors.toMap(gp -> gp.documentSelfLink,
+                                    gp -> Pair.of(gp.name, gp.resourcePoolLink),
+                                    (k1, k2) -> k1,
+                                    () -> new LinkedHashMap<String, Pair<String, String>>()));
 
             if (!placements.isEmpty() && placementsAfterTagFilter.isEmpty()) {
                 logInfo("No candidate placements after tag filtering");
@@ -773,7 +779,13 @@ public class ComputeReservationTaskService extends
     protected void enhanceExtensibilityResponse(ComputeReservationTaskState state, ServiceTaskCallbackResponse
             replyPayload, Runnable callback) {
 
-        ExtensibilityCallbackResponse response = (ExtensibilityCallbackResponse)replyPayload;
+        patchCustomPropertiesFromExtensibilityResponse(replyPayload, Arrays.asList(state.resourceDescriptionLink),
+                ComputeDescription.class, () -> patchReservations(state, replyPayload, callback));
+    }
+
+    private void patchReservations(ComputeReservationTaskState state,
+            ServiceTaskCallbackResponse replyPayload, Runnable callback) {
+        ExtensibilityCallbackResponse response = (ExtensibilityCallbackResponse) replyPayload;
 
         List<String> statePlacements = state.groupPlacementsLinksAndNames.values().stream()
                 .map(p -> p.getLeft())

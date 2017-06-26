@@ -48,6 +48,7 @@ import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.EventTopicDeclarator;
 import com.vmware.admiral.service.common.EventTopicService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
+import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.data.SchemaBuilder;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.LifecycleState;
@@ -568,6 +569,15 @@ public class ComputeRemovalTaskService extends
             }
             callback.run();
         });
+    }
+
+    @Override
+    protected void enhanceExtensibilityResponse(ComputeRemovalTaskState state,
+            ServiceTaskCallbackResponse replyPayload,
+            Runnable callback) {
+
+        patchCustomPropertiesFromExtensibilityResponse(replyPayload, state.resourceLinks,
+                ComputeState.class, callback);
     }
 
     protected static class ExtensibilityCallbackResponse extends BaseExtensibilityCallbackResponse {

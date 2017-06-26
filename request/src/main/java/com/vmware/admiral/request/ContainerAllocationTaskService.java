@@ -72,6 +72,7 @@ import com.vmware.admiral.service.common.ResourceNamePrefixService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
+import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -1102,5 +1103,13 @@ public class ContainerAllocationTaskService extends
         } else {
             callback.run();
         }
+    }
+
+    @Override
+    protected void enhanceExtensibilityResponse(ContainerAllocationTaskState state,
+            ServiceTaskCallbackResponse replyPayload, Runnable callback) {
+
+        patchCustomPropertiesFromExtensibilityResponse(replyPayload, Arrays.asList(state.resourceDescriptionLink),
+                ComputeDescription.class, callback);
     }
 }

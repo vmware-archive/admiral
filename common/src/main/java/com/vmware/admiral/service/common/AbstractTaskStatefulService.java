@@ -15,21 +15,26 @@ import static com.vmware.admiral.common.DeploymentProfileConfig.getInstance;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
 
 import java.net.URI;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.host.IExtensibilityRegistryHost;
 import com.vmware.admiral.service.common.CounterSubTaskService.CounterSubTaskState;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
+import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceErrorResponse;
@@ -933,6 +938,36 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     protected void enhanceExtensibilityResponse(T state, ServiceTaskCallbackResponse
             replyPayload, Runnable callback) {
         callback.run();
+    }
+
+    public void patchCustomPropertiesFromExtensibilityResponse(ServiceTaskCallbackResponse replyPayload,
+            Collection<String> links, Class<? extends ResourceState> resourceType,
+            Runnable callback) {
+        if (replyPayload.customProperties != null && !replyPayload.customProperties.isEmpty()) {
+            List<DeferredResult<Operation>> results = links.stream()
+                    .map(link -> {
+                        try {
+                            ResourceState doc = resourceType.newInstance();
+                            doc.customProperties = new HashMap<>(replyPayload.customProperties);
+                            return sendWithDeferredResult(
+                                    Operation.createPatch(this, link).setBody(doc));
+                        } catch (InstantiationException | IllegalAccessException e) {
+                            return DeferredResult.<Operation>failed(e);
+                        }
+                    })
+                    .collect(Collectors.toList());
+
+            DeferredResult.allOf(results).whenComplete((all, t) -> {
+                if (t != null) {
+                    failTask("Error patching custom properties after extensibility response", t);
+                    return;
+                }
+
+                callback.run();
+            });
+        } else {
+            callback.run();
+        }
     }
 
     protected void fillCommonFields(T state,

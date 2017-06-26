@@ -493,31 +493,8 @@ public class ComputeProvisionTaskService extends
             ServiceTaskCallbackResponse replyPayload,
             Runnable callback) {
 
-        patchCustomProperties(state, replyPayload, () -> {
-            setIpAddress(state, replyPayload, callback);
-        });
-    }
-
-    protected void patchCustomProperties(ComputeProvisionTaskState state,
-            ServiceTaskCallbackResponse replyPayload, Runnable callback) {
-        List<DeferredResult<Operation>> results = state.resourceLinks.stream()
-                .map(link -> Operation.createGet(this, link))
-                .map(o -> sendWithDeferredResult(o, ComputeState.class))
-                .map(dr -> dr.thenCompose(cs -> {
-                    cs.customProperties.putAll(replyPayload.customProperties);
-                    return sendWithDeferredResult(
-                            Operation.createPatch(this, cs.documentSelfLink).setBody(cs));
-                }))
-                .collect(Collectors.toList());
-
-        DeferredResult.allOf(results).whenComplete((all, t) -> {
-            if (t != null) {
-                failTask("Error patching compute states", t);
-                return;
-            }
-
-            callback.run();
-        });
+        patchCustomPropertiesFromExtensibilityResponse(replyPayload, state.resourceLinks, ComputeState.class,
+                () -> setIpAddress(state, replyPayload, callback));
     }
 
     /**

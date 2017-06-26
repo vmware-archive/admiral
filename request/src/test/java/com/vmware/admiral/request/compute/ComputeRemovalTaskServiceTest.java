@@ -15,6 +15,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -31,11 +32,14 @@ import com.vmware.admiral.compute.ResourceType;
 import com.vmware.admiral.compute.container.ContainerService.ContainerState;
 import com.vmware.admiral.request.RequestBrokerService.RequestBrokerState;
 import com.vmware.admiral.request.compute.ComputeRemovalTaskService.ComputeRemovalTaskState;
+import com.vmware.admiral.request.compute.ComputeRemovalTaskService.ComputeRemovalTaskState.SubStage;
 import com.vmware.admiral.request.util.TestRequestStateFactory;
 import com.vmware.admiral.request.utils.RequestUtils;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.LifecycleState;
+import com.vmware.xenon.common.TaskState;
+import com.vmware.xenon.common.test.TestContext;
 
 public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
     private RequestBrokerState request;
@@ -229,6 +233,65 @@ public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
         assertTrue("ComputeStates not removed: " + computeStateLinks,
                 computeStateLinks.isEmpty());
 
+    }
+
+    @Test
+    public void testEnhanceExtensibilityResponse() throws Throwable {
+        final String customPropName = "CustomProp";
+
+        // compute states after compute allocation request
+        List<String> computeStateLinks = createComputeAllocationRequest();
+
+        ComputeRemovalTaskService service = new ComputeRemovalTaskService();
+        service.setHost(host);
+
+        // create a compute removal task with missing compute link
+        ComputeRemovalTaskState state = new ComputeRemovalTaskState();
+        state.customProperties = new HashMap<>();
+        state.customProperties.put(customPropName, "no");
+        state.customProperties.put(RequestUtils.FIELD_NAME_DEALLOCATION_REQUEST, Boolean.TRUE.toString());
+        state.resourceLinks = request.resourceLinks;
+        state.taskInfo = TaskState.createAsFinished();
+        state.taskSubStage = SubStage.COMPLETED;
+
+        state = doPost(state, ComputeRemovalTaskService.FACTORY_LINK);
+
+        assertNotNull("task is null", state);
+        String taskSelfLink = state.documentSelfLink;
+        assertNotNull("task self link is missing", taskSelfLink);
+
+        waitForTaskSuccess(taskSelfLink, ComputeRemovalTaskState.class);
+        String taskLink = state.documentSelfLink;
+
+        ComputeRemovalTaskService.ExtensibilityCallbackResponse payload =
+                (ComputeRemovalTaskService.ExtensibilityCallbackResponse) service
+                        .notificationPayload();
+
+        payload.customProperties = new HashMap<>();
+        payload.customProperties.put(customPropName, "yes");
+
+        TestContext context = new TestContext(1, Duration.ofMinutes(1));
+
+        service.enhanceExtensibilityResponse(state, payload, () -> {
+            try {
+                ComputeState cs = getDocument(ComputeState.class,
+                        computeStateLinks.get(0));
+
+                Map<String, String> props = cs.customProperties;
+                assertTrue("Expected property not found", cs.customProperties.containsKey
+                        (customPropName));
+
+                assertTrue("The property was not updated properly",
+                        cs.customProperties.get(customPropName).equalsIgnoreCase("yes"));
+
+            } catch (Throwable t) {
+                context.failIteration(t);
+                return;
+            }
+            context.completeIteration();
+        });
+
+        context.await();
     }
 
     private List<String> createComputeAllocationRequest() throws Throwable {
