@@ -1,4 +1,3 @@
-import { LoginComponent } from './components/login/login.component';
 /*
  * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
  *

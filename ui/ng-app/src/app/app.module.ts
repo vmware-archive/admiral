@@ -25,7 +25,6 @@ import { ROUTING } from "./app.routing";
 import { Ajax, SessionTimedOutSubject } from './utils/ajax.service';
 import { DocumentService } from './utils/document.service';
 import { ProjectService } from './utils/project.service';
-import { AuthService } from './utils/auth.service';
 import { TemplateService } from './utils/template.service';
 import { ViewExpandRequestService } from './services/view-expand-request.service';
 import { HarborLibraryModule, SERVICE_CONFIG, IServiceConfig } from 'harbor-ui';
@@ -81,7 +80,6 @@ export function initConfig(ts: TranslateService) {
         SessionTimedOutSubject,
         DocumentService,
         ProjectService,
-        AuthService,
         TemplateService,
         ViewExpandRequestService,
         TranslateService,

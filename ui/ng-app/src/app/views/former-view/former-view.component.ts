@@ -18,7 +18,7 @@ export class FormerViewComponent {
 
   get src() {
     let path = this.path || 'containers';
-    return this.sanitizer.bypassSecurityTrustResourceUrl('ogui/index-no-navigation.html#' + path);
+    return this.sanitizer.bypassSecurityTrustResourceUrl('../index-no-navigation.html#' + path);
   }
 }
 

@@ -33,8 +33,7 @@ export class Links {
   public static AUTH = '/auth';
   public static USER_SESSION = Links.AUTH + '/session';
   public static AUTH_IDM = Links.AUTH + '/idm';
-  public static AUTH_PRINCIPALS = Links.AUTH_IDM + '/principals';
-  public static BASIC_AUTH = '/core/authn/basic';
+  public static AUTH_PRINCIPALS = Links.AUTH_IDM + '/principals'
 
   public static CREDENTIALS = '/core/auth/credentials';
 

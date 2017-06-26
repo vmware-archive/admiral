@@ -14,9 +14,6 @@ import { Router } from '@angular/router';
 import { ViewExpandRequestService } from './services/view-expand-request.service';
 import { FT } from './utils/ft';
 import { DocumentService } from './utils/document.service';
-import { AuthService } from './utils/auth.service';
-
-const LOGIN_PATH="/login/"
 
 @Component({
     selector: 'my-app',
@@ -27,8 +24,7 @@ export class AppComponent {
     fullScreen: boolean;
     userSecurityContext: any;
 
-    constructor(private viewExpandRequestor: ViewExpandRequestService, private documentService: DocumentService,
-    private authService: AuthService) {
+    constructor(private viewExpandRequestor: ViewExpandRequestService, private documentService: DocumentService) {
         this.viewExpandRequestor.getFullScreenRequestEmitter().subscribe(isFullScreen => {
             this.fullScreen = isFullScreen;
         });
@@ -42,10 +38,6 @@ export class AppComponent {
 
     get embedded(): boolean {
         return FT.isApplicationEmbedded();
-    }
-
-    get isLogin(): boolean {
-        return location.pathname.indexOf(LOGIN_PATH) > -1;
     }
 
     get userName(): String {
@@ -63,11 +55,5 @@ export class AppComponent {
             }
             return this.userSecurityContext.email;
         }
-    }
-
-    logout() {
-        this.authService.logout().then(() => {
-            window.location.reload();
-        });
     }
 }

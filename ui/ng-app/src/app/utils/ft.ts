@@ -75,8 +75,4 @@ export class FT {
   public static isHbrEnabled() {
     return Utils.getConfigurationProperty('harbor.tab.url') && !this.isApplicationEmbedded();
   }
-
-  public static isVic() {
-    return Utils.getConfigurationPropertyBoolean('vic');
-  }
 };

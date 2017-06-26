@@ -107,13 +107,13 @@
                                     <groupId>${project.groupId}</groupId>
                                     <artifactId>admiral-ui-app</artifactId>
                                     <overWrite>false</overWrite>
-                                    <outputDirectory>${project.build.directory}/generated-resources/ui/com/vmware/admiral/UiOgService</outputDirectory>
+                                    <outputDirectory>${project.build.directory}/generated-resources/ui/com/vmware/admiral/UiService</outputDirectory>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
                                     <artifactId>admiral-ui-ng-app</artifactId>
                                     <overWrite>false</overWrite>
-                                    <outputDirectory>${project.build.directory}/generated-resources/ui/com/vmware/admiral/UiService</outputDirectory>
+                                    <outputDirectory>${project.build.directory}/generated-resources/ui/com/vmware/admiral/UiNgService</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
