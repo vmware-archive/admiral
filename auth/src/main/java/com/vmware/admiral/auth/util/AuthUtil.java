@@ -23,6 +23,7 @@ import java.util.logging.Level;
 
 import com.vmware.admiral.auth.idm.AuthRole;
 import com.vmware.admiral.auth.idm.SessionService;
+import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.image.service.PopularImagesService;
