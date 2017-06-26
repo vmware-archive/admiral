@@ -60,13 +60,18 @@ public class ClusterService extends StatelessService {
 
     public static final String SELF_LINK = ManagementUriParts.CLUSTERS;
 
+    private static final Pattern PATTERN_CLUSTER_OPERATION_LINK = Pattern
+            .compile(String.format("^%s\\/[^\\/]+\\/?$", SELF_LINK));
     private static final Pattern PATTERN_CLUSTER_CREATE_LINK = Pattern
             .compile(String.format("^%s\\/?$", SELF_LINK));
+    private static final Pattern PATTERN_CLUSTER_HOSTS_OPERATION_LINK = Pattern
+            .compile(String.format("^%s\\/[^\\/]+\\/hosts\\/?$", SELF_LINK));
+
     private static final Pattern PATTERN_PROJECT_TENANT_LINK = Pattern
             .compile(String.format("^%s\\/[^\\/]+", ManagementUriParts.PROJECTS));
 
     public static final String CLUSTER_ID_PATH_SEGMENT = "clusterId";
-    public static final String CLUSTER_ID_PATH_SEGMENT_TEMPLATE = SELF_LINK + "/{clusterId}";
+    public static final String CLUSTER_PATH_SEGMENT_TEMPLATE = SELF_LINK + "/{clusterId}";
     public static final String CLUSTER_DETAILS_CUSTOM_PROP = "__clusterDetails";
     public static final String CLUSTER_NAME_CUSTOM_PROP = "__clusterName";
     public static final String CLUSTER_CREATION_TIME_MICROS_CUSTOM_PROP = "__clusterCreationTimeMicros";
@@ -84,6 +89,7 @@ public class ClusterService extends StatelessService {
         ON, OFF, DISABLED, WARNING
     }
 
+    @SuppressWarnings("serial")
     public class CertificateNotTrustedException extends Exception {
         private SslTrustCertificateState certificate;
 
@@ -156,7 +162,7 @@ public class ClusterService extends StatelessService {
 
     @Override
     public void handlePost(Operation post) {
-        if (isCreateClusterPost(post)) {
+        if (isCreateCluster(post)) {
             createCluster(post);
         } else {
             // TODO add hosts to already existing cluster instead
@@ -203,17 +209,17 @@ public class ClusterService extends StatelessService {
     @Override
     public void handleDelete(Operation delete) {
         String clusterId = getIDFromUri(delete.getUri());
-        String pathPZId = UriUtils.buildUriPath(
+        String pZILink = UriUtils.buildUriPath(
                 ElasticPlacementZoneConfigurationService.SELF_LINK,
                 ResourcePoolService.FACTORY_LINK, clusterId);
-        String pathResourcePoolId = UriUtils.buildUriPath(
+        String resourcePoolLink = UriUtils.buildUriPath(
                 ResourcePoolService.FACTORY_LINK, clusterId);
-        deleteHostsWihtinOnePlacementZone(getHost(), pathResourcePoolId)
+        deleteHostsWihtinOnePlacementZone(getHost(), resourcePoolLink)
                 .thenAccept(operation -> {
                     if (operation == null || DeploymentProfileConfig.getInstance().isTest()) {
                         //TODO if MockRequestBrokerService behaves as Task service we can remove the
                         // check for test context
-                        ClusterUtils.deletePZ(pathPZId, delete, getHost());
+                        ClusterUtils.deletePZ(pZILink, delete, getHost());
                     } else {
                         String containerHostRemovalTaskState = operation
                                 .getBody(ContainerHostRemovalTaskState.class).documentSelfLink;
@@ -228,8 +234,7 @@ public class ClusterService extends StatelessService {
                                     TaskStage.FAILED, TaskStage.CANCELLED);
                             if (terminalStages.contains(eats.taskInfo.stage)) {
                                 subscriptionManager.close();
-                                ClusterUtils.deletePZ(pathPZId, delete, getHost());
-
+                                ClusterUtils.deletePZ(pZILink, delete, getHost());
                             }
                         }, true, null);
                     }
@@ -238,58 +243,110 @@ public class ClusterService extends StatelessService {
 
     @Override
     public void handleGet(Operation get) {
-        String clusterId = getIDFromUri(get.getUri());
-        if (clusterId != null && !clusterId.isEmpty()) {
-            String pathPZId = UriUtils.buildUriPath(
-                    ElasticPlacementZoneConfigurationService.SELF_LINK,
-                    ResourcePoolService.FACTORY_LINK, clusterId);
-
-            URI elasticPlacementZoneConfigurationUri = UriUtils.buildUri(getHost(),
-                    pathPZId, get.getUri().getQuery());
-            sendWithDeferredResult(Operation
-                    .createGet(
-                            UriUtils.buildExpandLinksQueryUri(elasticPlacementZoneConfigurationUri))
-                    .setReferer(getUri()),
-                    ElasticPlacementZoneConfigurationState.class)
-                            .thenCompose(this::getInfoFromHostsWihtinOnePlacementZone)
-                            .thenAccept(clusterDtoList -> {
-                                if (!clusterDtoList.isEmpty()) {
-                                    get.setBody(clusterDtoList.get(0));
-                                }
-                            })
-                            .whenCompleteNotify(get);
-        } else {
-            boolean expand = UriUtils.hasODataExpandParamValue(get.getUri());
-            URI elasticPlacementZoneConfigurationUri = UriUtils.buildUri(getHost(),
-                    ElasticPlacementZoneConfigurationService.SELF_LINK, get.getUri().getQuery());
-
-            sendWithDeferredResult(Operation
-                    .createGet(
-                            UriUtils.buildExpandLinksQueryUri(elasticPlacementZoneConfigurationUri))
-                    .setReferer(getUri()),
-                    ServiceDocumentQueryResult.class)
-                            .thenCompose(this::getInfoFromHostsWihtinPlacementZone)
-                            .thenAccept(clusterDtoList -> {
-                                Map<String, Object> ClusterDtoMap = clusterDtoList.stream()
-                                        .collect(Collectors.toMap(
-                                                clusterDto -> clusterDto.documentSelfLink,
-                                                Function.identity()));
-
-                                ServiceDocumentQueryResult queryResult = new ServiceDocumentQueryResult();
-                                queryResult.documentLinks = new LinkedList<>(
-                                        ClusterDtoMap.keySet());
-                                queryResult.documentCount = Long.valueOf(ClusterDtoMap.size());
-                                if (expand) {
-                                    queryResult.documents = ClusterDtoMap;
-                                }
-                                get.setBody(queryResult);
-                            })
-                            .whenCompleteNotify(get);
+        if (isCreateCluster(get)) {
+            clusterGet(get);
+            return;
         }
+        if (isSingleClusterOperation(get)) {
+            clusterGetSingle(get);
+            return;
+        } else if (isClusterHostsOperation(get)) {
+            clusterHostsGet(get);
+            return;
+        }
+        get.fail(Operation.STATUS_CODE_NOT_FOUND);
     }
 
-    private boolean isCreateClusterPost(Operation post) {
-        return PATTERN_CLUSTER_CREATE_LINK.matcher(post.getUri().getPath()).matches();
+    private boolean isCreateCluster(Operation op) {
+        return PATTERN_CLUSTER_CREATE_LINK.matcher(op.getUri().getPath()).matches();
+    }
+
+    private boolean isSingleClusterOperation(Operation op) {
+        return PATTERN_CLUSTER_OPERATION_LINK.matcher(op.getUri().getPath()).matches();
+    }
+
+    private boolean isClusterHostsOperation(Operation op) {
+        return PATTERN_CLUSTER_HOSTS_OPERATION_LINK.matcher(op.getUri().getPath()).matches();
+    }
+
+    private void clusterGet(Operation get) {
+        boolean expand = UriUtils.hasODataExpandParamValue(get.getUri());
+        URI elasticPlacementZoneConfigurationUri = UriUtils.buildUri(getHost(),
+                ElasticPlacementZoneConfigurationService.SELF_LINK, get.getUri().getQuery());
+
+        sendWithDeferredResult(Operation
+                .createGet(
+                        UriUtils.buildExpandLinksQueryUri(elasticPlacementZoneConfigurationUri))
+                .setReferer(getUri()),
+                ServiceDocumentQueryResult.class)
+                        .thenCompose(this::getInfoFromHostsWihtinPlacementZone)
+                        .thenAccept(clusterDtoList -> {
+                            Map<String, Object> ClusterDtoMap = clusterDtoList.stream()
+                                    .collect(Collectors.toMap(
+                                            clusterDto -> clusterDto.documentSelfLink,
+                                            Function.identity()));
+
+                            ServiceDocumentQueryResult queryResult = new ServiceDocumentQueryResult();
+                            queryResult.documentLinks = new LinkedList<>(
+                                    ClusterDtoMap.keySet());
+                            queryResult.documentCount = Long.valueOf(ClusterDtoMap.size());
+                            if (expand) {
+                                queryResult.documents = ClusterDtoMap;
+                            }
+                            get.setBody(queryResult);
+                        })
+                        .whenCompleteNotify(get);
+    }
+
+    private void clusterGetSingle(Operation get) {
+        String clusterId = getIDFromUri(get.getUri());
+        String pathPZId = UriUtils.buildUriPath(
+                ElasticPlacementZoneConfigurationService.SELF_LINK,
+                ResourcePoolService.FACTORY_LINK, clusterId);
+
+        URI elasticPlacementZoneConfigurationUri = UriUtils.buildUri(getHost(),
+                pathPZId, get.getUri().getQuery());
+        sendWithDeferredResult(Operation
+                .createGet(
+                        UriUtils.buildExpandLinksQueryUri(elasticPlacementZoneConfigurationUri))
+                .setReferer(getUri()),
+                ElasticPlacementZoneConfigurationState.class)
+                        .thenCompose(this::getInfoFromHostsWihtinOnePlacementZone)
+                        .thenAccept(clusterDtoList -> {
+                            if (!clusterDtoList.isEmpty()) {
+                                get.setBody(clusterDtoList.get(0));
+                            }
+                        })
+                        .whenCompleteNotify(get);
+
+    }
+
+    private void clusterHostsGet(Operation get) {
+        String clusterId = getIDFromUri(get.getUri());
+        String resourcePoolLink = UriUtils.buildUriPath(
+                ResourcePoolService.FACTORY_LINK, clusterId);
+        boolean expand = UriUtils.hasODataExpandParamValue(get.getUri());
+
+        ClusterUtils.getHostsWihtinPlacementZone(
+                resourcePoolLink, getHost())
+                .thenAccept(computeStates -> {
+                    ServiceDocumentQueryResult queryResult = new ServiceDocumentQueryResult();
+
+                    if (computeStates.isEmpty()) {
+                        get.setBody(queryResult);
+                    } else {
+                        queryResult.documentLinks = computeStates.stream().map(computeState -> {
+                            return computeState.documentSelfLink;
+                        }).collect(Collectors.toList());
+                        queryResult.documentCount = Long.valueOf(computeStates.size());
+                        if (expand) {
+                            queryResult.documents = computeStates.stream().collect(Collectors.toMap(
+                                    computeState -> computeState.documentSelfLink,
+                                    Function.identity()));
+                        }
+                    }
+                    get.setBody(queryResult);
+                }).whenCompleteNotify(get);
     }
 
     private DeferredResult<List<ClusterDto>> getInfoFromHostsWihtinPlacementZone(
@@ -337,12 +394,14 @@ public class ClusterService extends StatelessService {
                             .map(computeState -> {
                                 return computeState.documentSelfLink;
                             }).collect(Collectors.toSet());
-                    DeferredResult<Operation> deleteNodesRequestOperation = host.sendWithDeferredResult(
-                            Operation.createPost(
-                                    UriUtils.buildUri(host, ManagementUriParts.REQUESTS))
-                                    .setReferer(host.getUri())
-                                    .forceRemote()
-                                    .setBody(new ContainerHostRemovalTaskState(hostLinksList)));
+                    DeferredResult<Operation> deleteNodesRequestOperation = host
+                            .sendWithDeferredResult(
+                                    Operation.createPost(
+                                            UriUtils.buildUri(host, ManagementUriParts.REQUESTS))
+                                            .setReferer(host.getUri())
+                                            .forceRemote()
+                                            .setBody(new ContainerHostRemovalTaskState(
+                                                    hostLinksList)));
                     return deleteNodesRequestOperation;
                 });
         return deleteNodesDR;
@@ -474,9 +533,14 @@ public class ClusterService extends StatelessService {
 
     private String getIDFromUri(URI uri) {
         Map<String, String> pathSegmentParams = UriUtils.parseUriPathSegments(uri,
-                CLUSTER_ID_PATH_SEGMENT_TEMPLATE);
+                CLUSTER_PATH_SEGMENT_TEMPLATE);
 
         return pathSegmentParams.get(CLUSTER_ID_PATH_SEGMENT);
+    }
+
+    private boolean isHostOperation(URI uri) {
+
+        return true;
     }
 
 }
