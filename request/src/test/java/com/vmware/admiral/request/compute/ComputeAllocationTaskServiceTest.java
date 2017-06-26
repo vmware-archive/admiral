@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.compute.ResourceType;
@@ -251,6 +252,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
     }
 
     @Test
+    @Ignore("https://jira-hzn.eng.vmware.com/browse/VCOM-1146")
     public void testPatchNicDescriptionOperation() throws Throwable {
 
         String ipAddress = "10.152.8.10";
