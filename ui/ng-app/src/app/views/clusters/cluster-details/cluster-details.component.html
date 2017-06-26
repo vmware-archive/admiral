@@ -9,17 +9,19 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<clr-icon shape="rack-server" size="36"></clr-icon>
-<h3 class="cluster-details-header-title">{{entity?.name}}</h3>
+<div class="cluster-details">
+    <clr-icon shape="rack-server" size="36"></clr-icon>
+    <h3 class="cluster-details-header-title">{{entity?.name}}</h3>
 
-<clr-tabs>
-    <clr-tab-link [clrTabLinkId]="'summaryTab'" [clrTabLinkActive]="true">{{"clusters.summary.title" | i18n}}</clr-tab-link>
-    <clr-tab-link [clrTabLinkId]="'resourcesTab'">{{"clusters.resources.title" | i18n}}</clr-tab-link>
+    <clr-tabs>
+        <clr-tab-link  [clrTabLinkId]="'summaryTab'" [clrTabLinkActive]="true">{{"clusters.summary.title" | i18n}}</clr-tab-link>
+        <clr-tab-link [hidden]="!showResources" [clrTabLinkId]="'resourcesTab'">{{"clusters.resources.title" | i18n}}</clr-tab-link>
 
-    <clr-tab-content [clrTabContentId]="'summaryContent'" [clrTabContentActive]="true">
-        <app-cluster-summary [cluster]="entity"></app-cluster-summary>
-    </clr-tab-content>
-    <clr-tab-content [clrTabContentId]="'resourcesContent'">
-        <app-cluster-resources [cluster]="entity"></app-cluster-resources>
-    </clr-tab-content>
-</clr-tabs>
+        <clr-tab-content [clrTabContentId]="'summaryContent'" [clrTabContentActive]="true">
+            <app-cluster-summary [cluster]="entity"></app-cluster-summary>
+        </clr-tab-content>
+        <clr-tab-content [clrTabContentId]="'resourcesContent'">
+            <app-cluster-resources *ngIf="showResources" [cluster]="entity"></app-cluster-resources>
+        </clr-tab-content>
+    </clr-tabs>
+</div>

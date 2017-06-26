@@ -127,6 +127,7 @@
     "memory": "Memory",
     "summary": {
       "title": "Summary",
+      "address": "Address:",
       "type": "Type:",
       "clusterOverview": "Cluster Overview",
       "clusterResources": "Cluster Resources",
@@ -137,7 +138,12 @@
       "memory": "Memory:"
     },
     "resources": {
-      "title": "Resources"
+      "title": "Resources",
+      "address": "Address",
+      "status": "Status",
+      "containersCount": "Containers",
+      "memory": "Memory",
+      "cpu": "CPU"
     },
     "edit": {
       "titleNew": "New Cluster",
@@ -153,6 +159,13 @@
     "delete": {
       "title": "Remove Cluster",
       "confirmation": "Confirm removing of cluster {{clusterName}}. The operation cannot be undone."
+    }
+  },
+  "hosts": {
+    "state": {
+      "ON": "ON",
+      "OFF": "OFF",
+      "UNKNOWN": "UNKNOWN"
     }
   },
   "logs": {

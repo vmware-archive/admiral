@@ -9,30 +9,59 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<grid-view class="miro" [serviceEndpoint]="serviceEndpoint">
+<grid-view [serviceEndpoint]="serviceEndpoint">
   <ng-template let-item="item">
-    <card class="clusterCard" [routerLink]="['./' + item.documentId]">
+    <card class="clusterCard">
       <div card-header>
-        <div class="clusterIcon">
-          <clr-icon shape="rack-server" size="48"></clr-icon>
-        </div>
-        <div class="titleHolder">
-          <div>{{ item.name }}</div>
-          <div *ngIf="item.address" class="clusterAddress">{{ item.address }}</div>
-        </div>
+        <clr-icon shape="host" size="48"></clr-icon>
+        {{ getHostName(item) }}
         <clr-dropdown class="card-actions" [clrMenuPosition]="'left-top'" (click)="$event.stopPropagation()">
           <button class="btn btn-sm btn-link" clrDropdownToggle>
               <clr-icon shape="ellipsis-vertical"></clr-icon>
           </button>
           <div class="dropdown-menu">
-            <a href="..." clrDropdownItem [routerLink]="['./' + item.documentId]">{{ "projects.actions.details" | i18n }}</a>
-            <div class="dropdown-divider"></div>
             <a href="..." clrDropdownItem (click)="deleteCluster($event, item)">{{ "delete" | i18n }}</a>
           </div>
         </clr-dropdown>
       </div>
       <div card-content>
-        Hey!
+        <div class="form-group">
+          <label>{{ "clusters.resources.address" | i18n }}</label>
+          <div>{{ item.address }}</div>
+        </div>
+        <div class="form-group">
+          <label>{{ "clusters.resources.status" | i18n }}</label>
+          <div class="status {{ clusterState(item) }}">{{ clusterState(item) }}</div>
+        </div>
+        <div class="form-group">
+          <label>{{ "clusters.resources.containersCount" | i18n }}</label>
+          <div><a [href]="'#/home/containers?parentId=' + getDocumentId(item)">{{ getContainersCount(item, false) }}</a></div>
+        </div>
+        <div class="form-group">
+          <label>{{ "clusters.resources.memory" | i18n }}</label>
+          <div class="row">
+            <div class="progress-block col-sm-4">
+              <div class="progress-static">
+                <div class="progress-meter" attr.data-value="{{ getMemoryPercentage(item, true) }}"></div>
+              </div>
+            </div>
+            <div class="col-sm-8 progress-details p7">{{ getMemoryPercentage(item) }}%</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>{{ "clusters.resources.cpu" | i18n }}</label>
+          <div class="row">
+            <div class="progress-block col-sm-4">
+              <div class="progress-static">
+                <div class="progress-meter" attr.data-value="{{ getCpuPercentage(item, true) }}"></div>
+              </div>
+            </div>
+            <div class="col-sm-8 progress-details p7">{{ getCpuPercentage(item, false) }}%</div>
+          </div>
+        </div>
+        <div class="progress-static top">
+          <div class="progress-meter {{ item.powerState }}" data-value="100"></div>
+        </div>
       </div>
     </card>
   </ng-template>

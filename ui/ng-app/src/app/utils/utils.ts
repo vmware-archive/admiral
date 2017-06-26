@@ -135,6 +135,102 @@ export class Utils {
     var decimals = 2;
     return parseFloat((bytes / Math.pow(1024, magnitude)).toFixed(decimals));
   }
+
+  public static getObjectPropertyValue(obj, propertyName) {
+    let value;
+
+    if (obj && propertyName && obj.hasOwnProperty(propertyName)) {
+       value = obj[propertyName];
+    }
+
+    return value;
+  }
+
+  public static getCustomPropertyValue(customProperties, name) {
+    if (!customProperties) {
+      return null;
+    }
+
+    let value = this.getObjectPropertyValue(customProperties, name);
+
+    return (value === '') ? null : value;
+  }
+
+  public static getURLParts(url) {
+    var noProtocol = false;
+    if (url.search(/.*:\/\//) !== 0) {
+      url = 'http://' + url;
+      noProtocol = true;
+    }
+
+    var parser = document.createElement('a');
+    parser.href = url;
+
+    var protocol = noProtocol ? '' : parser.protocol.replace(':', '');
+    var search = parser.search.replace('?', '');
+
+    var port = parser.port;
+    if (port === '0') {
+      port = undefined;
+    }
+
+    return {
+      scheme: protocol,
+      host: parser.hostname,
+      port: port,
+      path: parser.pathname,
+      query: search,
+      fragment: parser.hash
+    };
+  }
+
+  public static getHostName(host) {
+    if (!host) {
+      return null;
+    }
+
+    if (host.name) {
+      return host.name;
+    }
+
+    let customProps = host.customProperties;
+
+    if (customProps) {
+      let hostAlias = this.getCustomPropertyValue(customProps, '__hostAlias') ;
+
+      if (hostAlias) {
+        return hostAlias;
+      }
+
+      let name = this.getCustomPropertyValue(customProps, '__Name');
+
+      if (name) {
+        return name;
+      }
+    }
+
+    var urlParts = this.getURLParts(host.address);
+    return urlParts.host;
+  }
+
+  public static getCpuPercentage(host, shouldRound) {
+    let cpuUsage = this.getCustomPropertyValue(host.customProperties, '__CpuUsage');
+    if (cpuUsage) {
+      return shouldRound ? Math.floor(cpuUsage) : Math.round(cpuUsage * 100) / 100;
+    }
+    return 0;
+  }
+
+  public static getMemoryPercentage(host, shouldRound) {
+    let memTotal = this.getCustomPropertyValue(host.customProperties, '__MemTotal');
+    let memAvailable = this.getCustomPropertyValue(host.customProperties, '__MemAvailable');
+    if (memTotal && memAvailable) {
+      var memoryUsage = memTotal - memAvailable;
+      var memoryUsagePct = (memoryUsage / memTotal) * 100;
+      return shouldRound ? Math.floor(memoryUsagePct) : Math.round(memoryUsagePct * 100) / 100;
+    }
+    return 0;
+  }
 }
 
 export class CancelablePromise<T> {

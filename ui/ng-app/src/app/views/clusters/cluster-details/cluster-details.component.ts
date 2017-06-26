@@ -29,4 +29,10 @@ export class ClusterDetailsComponent extends BaseDetailsComponent {
   protected entityInitialized() {
   }
 
+  get showResources() {
+    if (this.entity) {
+      return this.entity.type == 'DOCKER';
+    }
+    return false;
+  }
 }

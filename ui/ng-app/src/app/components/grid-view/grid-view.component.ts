@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-import { Component, Input, QueryList, OnInit, ContentChild,ContentChildren, ViewChild, ViewChildren, TemplateRef, HostListener, ViewEncapsulation } from '@angular/core';
+import { Component, Input, QueryList, OnInit, OnChanges, SimpleChanges, ContentChild,ContentChildren, ViewChild, ViewChildren, TemplateRef, HostListener, ViewEncapsulation } from '@angular/core';
 import { searchConstants } from 'admiral-ui-common';
 import * as I18n from 'i18next';
 import { DocumentService, DocumentListResult } from '../../utils/document.service';
@@ -23,7 +23,7 @@ import { Subscription } from 'rxjs/Subscription';
   styleUrls: ['./grid-view.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class GridViewComponent implements OnInit {
+export class GridViewComponent implements OnInit, OnChanges {
   loading: boolean;
   _items: any[] = [];
   @Input() serviceEndpoint: string;
@@ -41,6 +41,7 @@ export class GridViewComponent implements OnInit {
   itemsHolderStyle: any = {};
   layoutTimeout;
   querySub: Subscription;
+  routerSub: Subscription;
   totalItemsCount: number;
   loadedPages: number = 0;
   nextPageLink: string;
@@ -58,15 +59,20 @@ export class GridViewComponent implements OnInit {
   constructor(protected service: DocumentService, private router: Router, private route: ActivatedRoute) { }
 
   ngOnInit() {
-    this.router.events.subscribe((event) => {
-      if (event instanceof NavigationEnd && this.route.children.length === 0 && this.serviceEndpoint) {
-        // Items can be loaded from backend or provided as an input
-        this.hidePartialRows = true;
-        this.querySub = this.route.queryParams.subscribe(queryParams => {
-          this.searchQueryOptions = queryParams;
-          this.list();
-        });
-      }
+    if (this.serviceEndpoint) {
+      // Items can be loaded from backend or provided as an input
+      this.hidePartialRows = true;
+      this.list();
+    }
+
+    this.routerSub = this.router.events.subscribe((event) => {
+      this.hidePartialRows = true;
+      this.list();
+    });
+
+    this.querySub = this.route.queryParams.subscribe(queryParams => {
+      this.searchQueryOptions = queryParams;
+      this.list();
     });
   }
 
@@ -80,6 +86,15 @@ export class GridViewComponent implements OnInit {
   ngOnDestroy() {
     if (this.querySub) {
       this.querySub.unsubscribe();
+    }
+    if (this.routerSub) {
+      this.routerSub.unsubscribe();
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.serviceEndpoint && this.serviceEndpoint) {
+      this.list();
     }
   }
 

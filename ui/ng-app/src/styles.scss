@@ -214,7 +214,7 @@ navigation-container > .full-screen {
     color: $clr-red;
 }
 
-.status.DISABLED {
+.status.DISABLED, .status.UNKNOWN {
     color: $clr-yellow-dark-midtone;
 }
 
@@ -222,6 +222,21 @@ navigation-container > .full-screen {
     color: $clr-yellow;
 }
 
+.progress-meter.ON::before {
+    background-color: $clr-green;
+}
+
+.progress-meter.OFF::before {
+    background-color: $clr-red;
+}
+
+.progress-meter.DISABLED::before, .progress-meter.UNKNOWN::before {
+    background-color: $clr-yellow-dark-midtone;
+}
+
+.progress-meter.WARNING::before {
+    background-color: $clr-yellow;
+}
 
 // cards
 .card {

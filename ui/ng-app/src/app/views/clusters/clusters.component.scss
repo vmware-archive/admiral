@@ -19,19 +19,3 @@
     margin-top: 0px;
     line-height: 25px;
 }
-
-.progress-meter.ON::before {
-    background-color: $clr-green;
-}
-
-.progress-meter.OFF::before {
-    background-color: $clr-red;
-}
-
-.progress-meter.DISABLED::before {
-    background-color: $clr-yellow-dark-midtone;
-}
-
-.progress-meter.WARNING::before {
-    background-color: $clr-yellow;
-}
