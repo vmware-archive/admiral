@@ -61,7 +61,7 @@
           <input id="infrastructureCollapse" type="checkbox">
           <label for="infrastructureCollapse">Infrastructure</label>
           <ul class="nav-list">
-              <li><a class="nav-link" routerLink="clusters" routerLinkActive="active">Clusters</a></li>
+              <li *ngIf="embeddedMode"><a class="nav-link" routerLink="clusters" routerLinkActive="active">Clusters</a></li>
               <li><a class="nav-link" routerLink="hosts" routerLinkActive="active">Hosts</a></li>
           </ul>
       </section>
