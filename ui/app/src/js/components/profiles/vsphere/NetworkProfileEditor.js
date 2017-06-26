@@ -23,6 +23,8 @@ const ISOLATION_TYPES = [{
   value: 'SECURITY_GROUP'
 }];
 
+var CIDR_REGEX = /^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([1-9]|[1-2][0-9]))$/;
+
 export default Vue.component('vsphere-network-profile-editor', {
   template: `
     <div>
@@ -59,6 +61,13 @@ export default Vue.component('vsphere-network-profile-editor', {
           :value="isolationNetwork"
           @change="onIsolationNetworkChange">
         </dropdown-search-group>
+        <text-group
+          v-if="isolationType && isolationType.value === \'SUBNET\'"
+          :label="i18n(\'app.profile.edit.cidrLabel\')"
+          :required="true"
+          :value="isolatedSubnetCIDR"
+          @change="onIsolatedSubnetCIDRChange">
+        </text-group>
         <number-group
           v-if="isolationType && isolationType.value === 'SUBNET'"
           :label="i18n('app.profile.edit.cidrPrefixLabel')"
@@ -83,6 +92,7 @@ export default Vue.component('vsphere-network-profile-editor', {
     let subnetworks = this.model.subnetworks &&
         this.model.subnetworks.asMutable() || [];
     return {
+      isolatedSubnetCIDR: this.model.isolationNetworkCIDR,
       isolatedSubnetCIDRPrefix: this.model.isolatedSubnetCIDRPrefix,
       isolationNetwork: this.model.isolationNetwork,
       isolationType: ISOLATION_TYPES.find((type) => type.value === this.model.isolationType) ||
@@ -109,6 +119,10 @@ export default Vue.component('vsphere-network-profile-editor', {
     },
     onIsolationNetworkChange(value) {
       this.isolationNetwork = value;
+      this.emitChange();
+    },
+    onIsolatedSubnetCIDRChange(value) {
+      this.isolatedSubnetCIDR = value;
       this.emitChange();
     },
     onIsolatedSubnetCIDRPrefixChange(value) {
@@ -147,6 +161,7 @@ export default Vue.component('vsphere-network-profile-editor', {
           isolationNetworkLink: this.isolationNetwork &&
               this.isolationNetwork.documentSelfLink,
           isolatedSubnetCIDRPrefix: this.isolatedSubnetCIDRPrefix,
+          isolationNetworkCIDR: this.isolatedSubnetCIDR,
           subnetLinks: this.subnetworks.reduce((previous, current) => {
             if (current.name && current.name.documentSelfLink) {
               previous.push(current.name.documentSelfLink);
@@ -156,8 +171,8 @@ export default Vue.component('vsphere-network-profile-editor', {
         },
         valid: this.isolationType === ISOLATION_TYPES[0] ||
             (this.isolationType === ISOLATION_TYPES[1] &&
-            this.isolationNetwork && this.isolatedSubnetCIDRPrefix) ||
-            this.isolationType === ISOLATION_TYPES[2]
+            this.isolationNetwork && CIDR_REGEX.test(this.isolatedSubnetCIDR) &&
+            this.isolatedSubnetCIDRPrefix) || this.isolationType === ISOLATION_TYPES[2]
       });
     }
   }
