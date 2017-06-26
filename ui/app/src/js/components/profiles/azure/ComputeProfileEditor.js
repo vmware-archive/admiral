@@ -10,6 +10,7 @@
  */
 
 import services from 'core/services';
+import utils from 'core/utils';
 
 export default Vue.component('azure-compute-profile-editor', {
   template: `
@@ -26,7 +27,9 @@ export default Vue.component('azure-compute-profile-editor', {
           <text-control></text-control>
         </multicolumn-cell>
         <multicolumn-cell name="value">
-          <text-control></text-control>
+          <typeahead-control :source="searchInstanceTypes" :limit="20"
+            :renderer="renderInstanceTypeOption">
+          </typeahead-control>
         </multicolumn-cell>
       </multicolumn-editor-group>
       <multicolumn-editor-group
@@ -64,6 +67,7 @@ export default Vue.component('azure-compute-profile-editor', {
     let imageTypeMapping = this.model.imageMapping &&
         this.model.imageMapping.asMutable() || [];
     return {
+      instanceTypeOptions: null,
       instanceTypeMapping: Object.keys(instanceTypeMapping).map((key) => {
         return {
           name: key,
@@ -79,9 +83,57 @@ export default Vue.component('azure-compute-profile-editor', {
     };
   },
   attached() {
+    this.pollInstanceTypes();
     this.emitChange();
   },
   methods: {
+    searchInstanceTypes(name) {
+        var f = {};
+        if (this.instanceTypeOptions) {
+            f.items = this.instanceTypeOptions.items;
+            name = name && name.toLowerCase();
+            f.items = f.items.filter(
+                a => a.name.toLowerCase().indexOf(name) >= 0 ||
+                  a.id.toLowerCase().indexOf(name) >= 0);
+            f.totalCount = f.items.length;
+        }
+        return Promise.resolve(f);
+    },
+    pollInstanceTypes() {
+      return mcp.client.get('/adapter/azure/instance-type-adapter?endpoint=' +
+          this.endpoint.documentSelfLink)
+          .then(function(data) {
+                let result = {
+                  totalCount: data.instanceTypes.length,
+                  items: data.instanceTypes
+              };
+              this.instanceTypeOptions = result;
+              this.emitChange();
+          }.bind(this));
+    },
+    renderInstanceTypeOption: function(context) {
+      let display = context.name;
+      let query = context._query || '';
+      let index = query ? display.toLowerCase().indexOf(query.toLowerCase()) : -1;
+      if (index >= 0) {
+          display = utils.escapeHtml(display.substring(0, index))
+              + '<strong>'
+              + utils.escapeHtml(display.substring(index, index + query.length))
+              + '</strong>'
+              + utils.escapeHtml(display.substring(index + query.length));
+      } else {
+          display = utils.escapeHtml(display);
+      }
+
+      return '<div>' +
+            '   <div class="host-picker-item-primary">' +
+            '      ' + display +
+            '   </div>' +
+            '   <div class="host-picker-item-secondary truncateText">' +
+            '      ' + i18n.t('app.profile.edit.instanceTypeMappingDisplay', context) +
+            '   </div>' +
+            '</div>';
+    },
     searchImages(...args) {
       if (!this.endpoint) {
         return Promise.resolve([]);

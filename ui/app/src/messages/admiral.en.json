@@ -520,6 +520,7 @@
         "endpointLabel": "Endpoint",
         "valueLabel": "Value",
         "instanceTypeMappingLabel": "Instance type",
+        "instanceTypeMappingDisplay": "{{cpuCount}} CPU, {{memoryInMB}} MB RAM, {{bootDiskSizeInMB}} MB disk",
         "imageMappingLabel": "Image type",
         "diskPropertyMappingLabel": "Disk Properties",
         "cpuCountLabel": "CPUs",
