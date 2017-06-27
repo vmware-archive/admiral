@@ -308,10 +308,12 @@ public class ProjectService extends StatefulService {
             return;
         }
 
+        ProjectState currentState = getState(put);
         if (ProjectRolesHandler.isProjectRolesUpdate(put)) {
             ProjectRoles rolesPut = put.getBody(ProjectRoles.class);
+
             // this is an update of the roles
-            new ProjectRolesHandler(getHost(), getSelfLink()).handleRolesUpdate(rolesPut)
+            new ProjectRolesHandler(getHost(), getSelfLink()).handleRolesUpdate(currentState, rolesPut)
                     .whenComplete((ignore, ex) -> {
                         if (ex != null) {
                             if (ex.getCause() instanceof ServiceNotFoundException) {
@@ -327,7 +329,6 @@ public class ProjectService extends StatefulService {
         } else {
             // this is an update of the state
             ProjectState projectPut = put.getBody(ProjectState.class);
-            ProjectState currentState = getState(put);
             validateState(projectPut);
             isProjectNameUsed(projectPut.name, currentState.documentSelfLink)
                     .whenComplete((isNameUsed, e) -> {
@@ -373,12 +374,18 @@ public class ProjectService extends StatefulService {
                                 PROJECT_NAME_ALREADY_USED_CODE, projectPatch.name));
                         return;
                     }
-                    handleProjectPatch(currentState, projectPatch).thenCompose(ignore -> {
-                        if (!ProjectRolesHandler.isProjectRolesUpdate(patch)) {
-                            return DeferredResult.completed(null);
-                        }
-                        return new ProjectRolesHandler(getHost(), getSelfLink())
-                                .handleRolesUpdate(patch.getBody(ProjectRoles.class));
+
+                    DeferredResult<ProjectState> projectDefRes = new DeferredResult<>();
+
+                    if (ProjectRolesHandler.isProjectRolesUpdate(patch)) {
+                        projectDefRes = new ProjectRolesHandler(getHost(), getSelfLink())
+                            .handleRolesUpdate(currentState, patch.getBody(ProjectRoles.class));
+                    } else {
+                        projectDefRes.complete(currentState);
+                    }
+
+                    projectDefRes.thenCompose(project -> {
+                        return handleProjectPatch(project, projectPatch);
                     }).whenComplete((ignore, ex) -> {
                         if (ex != null) {
                             if (ex.getCause() instanceof ServiceNotFoundException) {
@@ -389,6 +396,7 @@ public class ProjectService extends StatefulService {
                             patch.fail(ex);
                             return;
                         }
+
                         patch.complete();
                     });
                 });
@@ -401,7 +409,6 @@ public class ProjectService extends StatefulService {
             patchState) {
         ServiceDocumentDescription docDesc = getDocumentTemplate().documentDescription;
         String currentSignature = Utils.computeSignature(currentState, docDesc);
-
         DeferredResult<Long> projectIndex;
 
         if (currentState.customProperties == null) {
@@ -416,6 +423,7 @@ public class ProjectService extends StatefulService {
                     currentState.customProperties, patchState.customProperties);
             PropertyUtils.mergeServiceDocuments(currentState, patchState);
             currentState.customProperties = mergedProperties;
+
             handleProjectIndex(index, currentState);
             String newSignature = Utils.computeSignature(currentState, docDesc);
             return !currentSignature.equals(newSignature);

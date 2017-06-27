@@ -16,18 +16,27 @@ import java.util.EnumSet;
 import java.util.List;
 
 import com.vmware.admiral.auth.idm.AuthRole;
-import com.vmware.admiral.auth.idm.PrincipalRolesHandler;
+import com.vmware.admiral.auth.idm.Principal;
+import com.vmware.admiral.auth.idm.Principal.PrincipalType;
 import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
+import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
+import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.UserGroupsUpdater;
 import com.vmware.admiral.common.util.AssertUtil;
+import com.vmware.photon.controller.model.adapters.util.Pair;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.services.common.ResourceGroupService;
+import com.vmware.xenon.services.common.ResourceGroupService.ResourceGroupState;
+import com.vmware.xenon.services.common.RoleService;
+import com.vmware.xenon.services.common.RoleService.RoleState;
 import com.vmware.xenon.services.common.UserGroupService;
+import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
 
 /**
  * Handles assignment/unassignment of multiple users with multiple roles to/from a project. Used for
@@ -93,24 +102,17 @@ public class ProjectRolesHandler {
                 || (rolesAssignment.remove != null && !rolesAssignment.remove.isEmpty());
     }
 
-    public DeferredResult<Void> handleRolesUpdate(ProjectRoles patchBody) {
+    public DeferredResult<ProjectState> handleRolesUpdate(ProjectState project, ProjectRoles patchBody) {
         if (patchBody == null) {
             return DeferredResult.failed(new LocalizableValidationException(
                     BODY_IS_REQUIRED_MESSAGE, BODY_IS_REQUIRED_MESSAGE_CODE));
         }
-        return getProjectState()
-                .thenCompose((projectState) -> handleRolesAssignment(projectState, patchBody));
+
+        return handleRolesAssignment(project, patchBody);
     }
 
-    private DeferredResult<ProjectState> getProjectState() {
-        return getHost().sendWithDeferredResult(
-                Operation.createGet(getHost(), getProjectLink()).setReferer(getProjectLink()),
-                ProjectState.class);
-    }
-
-    private DeferredResult<Void> handleRolesAssignment(ProjectState projectState,
+    private DeferredResult<ProjectState> handleRolesAssignment(ProjectState projectState,
             ProjectRoles patchBody) {
-
         List<String> adminUsersToAdd = new ArrayList<>();
         List<String> adminUsersToRemove = new ArrayList<>();
         List<String> membersUsersToAdd = new ArrayList<>();
@@ -125,33 +127,38 @@ public class ProjectRolesHandler {
         List<String> viewersUserGroupsToAdd = new ArrayList<>();
         List<String> viewersUserGroupsToRemove = new ArrayList<>();
 
-        buildAddRemoveLists(patchBody.administrators, adminUsersToAdd, adminUserGroupsToAdd, adminUsersToRemove, adminUserGroupsToRemove);
-        buildAddRemoveLists(patchBody.members, membersUsersToAdd, membersUserGroupsToAdd, membersUsersToRemove, membersUserGroupsToRemove);
-        buildAddRemoveLists(patchBody.viewers, viewersUsersToAdd, viewersUserGroupsToAdd, viewersUsersToRemove, viewersUserGroupsToRemove);
-
+        List<DeferredResult<Void>> principalResults = new ArrayList<>();
         List<DeferredResult<Void>> results = new ArrayList<>();
 
-        results.add(handleUserAssignment(adminUsersToAdd, adminUsersToRemove,
-                AuthRole.PROJECT_ADMIN));
-        results.add(handleUserAssignment(membersUsersToAdd, membersUsersToRemove,
-                AuthRole.PROJECT_MEMBER));
-        results.add(handleUserAssignment(viewersUsersToAdd, viewersUsersToRemove,
-                AuthRole.PROJECT_VIEWER));
+        buildAddRemoveLists(patchBody.administrators, adminUsersToAdd, adminUserGroupsToAdd, adminUsersToRemove, adminUserGroupsToRemove, principalResults);
+        buildAddRemoveLists(patchBody.members, membersUsersToAdd, membersUserGroupsToAdd, membersUsersToRemove, membersUserGroupsToRemove, principalResults);
+        buildAddRemoveLists(patchBody.viewers, viewersUsersToAdd, viewersUserGroupsToAdd, viewersUsersToRemove, viewersUserGroupsToRemove, principalResults);
 
+        return DeferredResult.allOf(principalResults)
+                .thenCompose(ignore -> {
+                    results.add(handleUserAssignment(adminUsersToAdd, adminUsersToRemove,
+                            AuthRole.PROJECT_ADMIN));
+                    results.add(handleUserAssignment(membersUsersToAdd, membersUsersToRemove,
+                            AuthRole.PROJECT_MEMBER));
+                    results.add(handleUserAssignment(viewersUsersToAdd, viewersUsersToRemove,
+                            AuthRole.PROJECT_VIEWER));
+                    results.add(handleGroupsAssignment(
+                            projectState,
+                            adminUserGroupsToAdd, adminUserGroupsToRemove,
+                            membersUserGroupsToAdd, membersUserGroupsToRemove,
+                            viewersUserGroupsToAdd, viewersUserGroupsToRemove));
+                    return DeferredResult.allOf(results);
+                })
+                .thenCompose(ignore -> {
+                    return DeferredResult.completed(projectState);
+                });
+    }
 
-        // When assigning UserGroup is ready remove the try-catch.
-        // It's like this currently, because the findbugs plugin fails the build.
-        try {
-            results.add(handleGroupsAssignment(
-                    adminUserGroupsToAdd, adminUserGroupsToRemove,
-                    membersUserGroupsToAdd, membersUserGroupsToRemove,
-                    viewersUserGroupsToAdd, viewersUserGroupsToRemove));
-        } catch (Exception ex) {
-        }
+    private DeferredResult<Principal> getPrincipal(String principal) {
+        Operation getPrincipalOp = Operation.createGet(getHost(), UriUtils.buildUriPath(PrincipalService.SELF_LINK, principal))
+                .setReferer(getHost().getUri());
 
-
-        return DeferredResult.allOf(results).thenAccept(ignore -> {
-        });
+        return getHost().sendWithDeferredResult(getPrincipalOp, Principal.class);
     }
 
     /**
@@ -160,29 +167,34 @@ public class ProjectRolesHandler {
      */
     private void buildAddRemoveLists(PrincipalRoleAssignment assignment,
             List<String> usersToAdd, List<String> userGroupsToAdd,
-            List<String> usersToRemove, List<String> userGroupsToRemove) {
+            List<String> usersToRemove, List<String> userGroupsToRemove,
+            List<DeferredResult<Void>> principalResults) {
         if (assignment == null) {
             return;
         }
 
         if (assignment.add != null && !assignment.add.isEmpty()) {
-            for (String principal : assignment.add) {
-                if (principal.contains(PrincipalRolesHandler.PRINCIPAL_AT_SIGN)) {
-                    usersToAdd.add(principal);
-                } else {
-                    userGroupsToAdd.add(principal);
-                }
-            }
+            assignment.add.stream().forEach(principal -> {
+                principalResults.add(getPrincipal(principal).thenAccept(p -> {
+                    if (PrincipalType.USER.equals(p.type)) {
+                        usersToAdd.add(principal);
+                    } else {
+                        userGroupsToAdd.add(principal);
+                    }
+                }));
+            });
         }
 
         if (assignment.remove != null && !assignment.remove.isEmpty()) {
-            for (String principal : assignment.remove) {
-                if (principal.contains(PrincipalRolesHandler.PRINCIPAL_AT_SIGN)) {
-                    usersToRemove.add(principal);
-                } else {
-                    userGroupsToRemove.add(principal);
-                }
-            }
+            assignment.remove.stream().forEach(principal -> {
+                principalResults.add(getPrincipal(principal).thenAccept(p -> {
+                    if (PrincipalType.USER.equals(p.type)) {
+                        usersToRemove.add(principal);
+                    } else {
+                        userGroupsToRemove.add(principal);
+                    }
+                }));
+            });
         }
     }
 
@@ -213,82 +225,152 @@ public class ProjectRolesHandler {
                 .setUsersToAdd(addPrincipals)
                 .setUsersToRemove(removePrincipals)
                 .update();
-
     }
 
-    /**
-     * Tips how to assign group once Roles and ResourceGroups are ready:
-     * 1. Check if there is User Group with this current principal.
-     * 2. If not existing, create it.
-     * 3. Create Resource Group(s) for this project.
-     * 4. Create Role(s) for this project.
-     * 5. Link the already existing User Group with newly created Resource Group(s) through
-     * Role(s)
-     * 6. Add the link of User Group to the list of members user groups of current project
-     * state.
-     *
-     * Tips how to unassign group once Roles and ResourceGroups are ready:
-     * 1. Remove group's corresponding resource group(s).
-     * 2. Remove group's corresponding role(s).
-     */
-
-    private DeferredResult<Void> handleGroupsAssignment(
+    private DeferredResult<Void> handleGroupsAssignment(ProjectState projectState,
             List<String> adminUserGroupsToAdd, List<String> adminUserGroupsToRemove,
             List<String> memberUserGroupsToAdd, List<String> memberUserGroupsToRemove,
-            List<String> viewerUserGroupsToAdd, List<String> viewerUserGroupsToRemove) {
+            List<String> viewerUserGroupsToAdd, List<String> viewerUserGroupsToRemove)  {
 
         List<DeferredResult<Void>> results = new ArrayList<>();
 
-        for (String addAdmin : adminUserGroupsToAdd) {
-            results.add(handleProjectAdminGroupAssignment(addAdmin));
+        for (String addAdminGroup : adminUserGroupsToAdd) {
+            results.add(handleProjectAdminGroupAssignment(projectState, addAdminGroup));
         }
 
-        for (String removeAdmin : adminUserGroupsToRemove) {
-            results.add(handleProjectAdminGroupUnassignment(removeAdmin));
+        for (String removeAdminGroup : adminUserGroupsToRemove) {
+            results.add(handleProjectAdminGroupUnassignment(projectState, removeAdminGroup));
         }
 
-        for (String addMember : memberUserGroupsToAdd) {
-            results.add(handleProjectMemberGroupAssignment(addMember));
+        for (String addMemberGroup : memberUserGroupsToAdd) {
+            results.add(handleProjectMemberGroupAssignment(projectState, addMemberGroup));
         }
 
-        for (String removeMember : memberUserGroupsToRemove) {
-            results.add(handleProjectMemberGroupUnssignment(removeMember));
+        for (String removeMemberGroup : memberUserGroupsToRemove) {
+            results.add(handleProjectMemberGroupUnssignment(projectState, removeMemberGroup));
         }
 
         for (String addViewer : viewerUserGroupsToAdd) {
-            results.add(handleProjectViewerGroupAssignment(addViewer));
+            results.add(handleProjectViewerGroupAssignment(projectState, addViewer));
         }
 
         for (String removeViewer : viewerUserGroupsToRemove) {
-            results.add(handleProjectViewerGroupUnssignment(removeViewer));
+            results.add(handleProjectViewerGroupUnssignment(projectState, removeViewer));
         }
 
         return DeferredResult.allOf(results).thenAccept(ignore -> {
         });
     }
 
-    private DeferredResult<Void> handleProjectViewerGroupAssignment(String group) {
-        throw new IllegalStateException("Not implemented yet.");
+    private DeferredResult<Void> handleProjectViewerGroupAssignment(ProjectState projectState, String groupId) {
+        String projectId = Service.getId(projectState.documentSelfLink);
+        RoleState role = AuthUtil.buildProjectViewersRole(projectId, groupId, null);
+        return createRole(projectId, groupId, role)
+               .thenAccept(ignore -> {
+                   projectState.viewersUserGroupLinks.add(role.userGroupLink);
+               });
     }
 
-    private DeferredResult<Void> handleProjectViewerGroupUnssignment(String group) {
-        throw new IllegalStateException("Not implemented yet.");
+    private DeferredResult<Void> handleProjectViewerGroupUnssignment(ProjectState projectState, String groupId) {
+        String projectId = Service.getId(projectState.documentSelfLink);
+
+        String roleLink = AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId, groupId);
+        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, groupId);
+        return deleteRole(roleLink).thenAccept(ignore -> {
+            projectState.viewersUserGroupLinks.remove(userGroupLink);
+        });
     }
 
-    private DeferredResult<Void> handleProjectMemberGroupAssignment(String group) {
-        throw new IllegalStateException("Not implemented yet.");
+    private DeferredResult<Void> handleProjectMemberGroupAssignment(ProjectState projectState, String groupId) {
+        String projectId = Service.getId(projectState.documentSelfLink);
+        RoleState role = AuthUtil.buildProjectMembersRole(projectId, groupId, null);
+        return createRole(projectId, groupId, role)
+               .thenAccept(ignore -> {
+                   projectState.membersUserGroupLinks.add(role.userGroupLink);
+               });
     }
 
-    private DeferredResult<Void> handleProjectMemberGroupUnssignment(String group) {
-        throw new IllegalStateException("Not implemented yet.");
+    private DeferredResult<Void> handleProjectMemberGroupUnssignment(ProjectState projectState, String groupId) {
+        String projectId = Service.getId(projectState.documentSelfLink);
+
+        String roleLink = AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId, groupId);
+        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, groupId);
+
+        return deleteRole(roleLink).thenAccept(ignore -> {
+            projectState.membersUserGroupLinks.remove(userGroupLink);
+        });
     }
 
-    private DeferredResult<Void> handleProjectAdminGroupAssignment(String group) {
-        throw new IllegalStateException("Not implemented yet.");
+    private DeferredResult<Void> handleProjectAdminGroupAssignment(ProjectState projectState, String groupId) {
+        String projectId = Service.getId(projectState.documentSelfLink);
+        RoleState role = AuthUtil.buildProjectAdminsRole(projectId, groupId, null);
+        return createRole(projectId, groupId, role)
+               .thenAccept(ignore -> {
+                   projectState.administratorsUserGroupLinks.add(role.userGroupLink);
+               });
     }
 
-    private DeferredResult<Void> handleProjectAdminGroupUnassignment(String group) {
-        throw new IllegalStateException("Not implemented yet.");
+    private DeferredResult<Void> handleProjectAdminGroupUnassignment(ProjectState projectState, String groupId) {
+        String projectId = Service.getId(projectState.documentSelfLink);
+        String roleLink = AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId, groupId);
+        String userGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, groupId);
+
+        return deleteRole(roleLink).thenAccept(ignore -> {
+            projectState.administratorsUserGroupLinks.remove(userGroupLink);
+        });
+    }
+
+    private DeferredResult<RoleState> createRole(String projectId, String groupId, RoleState role) {
+        Operation principalGroupOp = Operation.createGet(getHost(), UriUtils.buildUriPath(PrincipalService.SELF_LINK, groupId))
+                .setReferer(getHost().getUri());
+
+        Operation userGroupGetOp = Operation.createGet(getHost(), UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, groupId))
+                .setReferer(getHost().getUri());
+
+        Operation userGroupPostOp = Operation.createPost(getHost(), UriUtils.buildUriPath(UserGroupService.FACTORY_LINK))
+                .setReferer(getHost().getUri())
+                .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE);
+
+        Operation resourceGroupOp = Operation.createGet(getHost(), UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK, projectId))
+                .setReferer(getHost().getUri());
+
+        Operation rolePostOp = Operation.createPost(getHost(), UriUtils.buildUriPath(RoleService.FACTORY_LINK))
+                .setReferer(getHost().getUri());
+
+        return getHost().sendWithDeferredResult(principalGroupOp, Principal.class)
+            .thenCompose(principal -> {
+                // retrieve the UserGroupState for the given group
+                return getHost().sendWithDeferredResult(userGroupGetOp, UserGroupState.class);
+            })
+            .thenApply(ug -> Pair.of(ug, (Throwable) null))
+            .exceptionally(ex -> Pair.of(null, ex))
+            .thenCompose(pair -> {
+                // create UserGroupState if doesn't exist
+                if (pair.right != null) {
+                    userGroupPostOp.setBody(AuthUtil.buildProjectMembersUserGroupByGroupId(groupId));
+                    return getHost().sendWithDeferredResult(userGroupPostOp, UserGroupState.class);
+                }
+
+                // returns the fetched UserGroupState
+                return DeferredResult.completed(pair.left);
+            })
+            .thenCompose(userGroup -> {
+                role.userGroupLink = userGroup.documentSelfLink;
+                return getHost().sendWithDeferredResult(resourceGroupOp, ResourceGroupState.class);
+            })
+            .thenCompose(rg -> {
+                role.resourceGroupLink = rg.documentSelfLink;
+                rolePostOp.setBody(role);
+                return getHost().sendWithDeferredResult(rolePostOp, RoleState.class);
+            });
+    }
+
+    private DeferredResult<Void> deleteRole(String roleLink) {
+        Operation roleDeleteOp = Operation.createDelete(getHost(), UriUtils.buildUriPath(RoleService.FACTORY_LINK, roleLink))
+                .setReferer(getHost().getUri());
+
+        return getHost().sendWithDeferredResult(roleDeleteOp).thenAccept(ignore -> {
+        });
     }
 
     private ServiceHost getHost() {
@@ -298,5 +380,4 @@ public class ProjectRolesHandler {
     private String getProjectLink() {
         return projectLink;
     }
-
 }

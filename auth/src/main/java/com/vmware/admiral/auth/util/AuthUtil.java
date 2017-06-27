@@ -314,7 +314,12 @@ public class AuthUtil {
         String id = AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId);
 
         UserGroupState userGroupState = buildUserGroupState(id);
+        return userGroupState;
+    }
 
+    public static UserGroupState buildProjectMembersUserGroupByGroupId(String groupId) {
+
+        UserGroupState userGroupState = buildUserGroupState(groupId);
         return userGroupState;
     }
 
@@ -360,6 +365,7 @@ public class AuthUtil {
     public static RoleState buildProjectRole(AuthRole role, EnumSet<Action> verbs, String projectId,
             String userGroupLink, String resourceGroupLink) {
         String id = role.buildRoleWithSuffix(projectId, Service.getId(userGroupLink));
+
         String selfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
 
         RoleState roleState = buildRoleState(selfLink, userGroupLink, resourceGroupLink, verbs);

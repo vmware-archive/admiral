@@ -58,6 +58,7 @@ import com.vmware.admiral.service.common.AuthBootstrapService;
 import com.vmware.xenon.common.CommandLineArgumentParser;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.TestContext;
@@ -79,6 +80,9 @@ public abstract class AuthBaseTest extends BaseTestCase {
     protected static final String USER_NAME_BASIC_USER = "Tony";
     protected static final String USER_NAME_GLORIA = "Gloria";
     protected static final String USER_NAME_CONNIE = "Connie";
+
+    protected static final String USER_GROUP_SUPERUSERS = "superusers";
+    protected static final String USER_GROUP_DEVELOPERS = "developers";
 
     protected static final String PROJECT_NAME_TEST_PROJECT_1 = "testProject1";
     protected static final String PROJECT_NAME_TEST_PROJECT_2 = "testProject2";
@@ -404,5 +408,47 @@ public abstract class AuthBaseTest extends BaseTestCase {
         host.send(getPrincipal);
         ctx.await();
         return principal[0];
+    }
+
+    protected void assertDocumentExists(String documentLink) {
+        assertNotNull(documentLink);
+
+        host.testStart(1);
+        Operation.createGet(host, documentLink)
+                .setReferer(host.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        host.failIteration(e);
+                    } else {
+                        try {
+                            assertNotNull(o.getBodyRaw());
+                            host.completeIteration();
+                        } catch (AssertionError er) {
+                            host.failIteration(er);
+                        }
+                    }
+                }).sendWith(host);
+        host.testWait();
+    }
+
+    protected void assertDocumentNotExists(String documentLink) {
+        assertNotNull(documentLink);
+
+        host.testStart(1);
+        Operation.createGet(host, documentLink)
+                .setReferer(host.getUri())
+                .setCompletion((o, e) -> {
+                    if (e != null) {
+                        if (e instanceof ServiceNotFoundException) {
+                            host.completeIteration();
+                            return;
+                        }
+
+                        host.failIteration(e);
+                    } else {
+                        host.failIteration(new Exception(String.format("%s should've not exist!", documentLink)));
+                    }
+                }).sendWith(host);
+        host.testWait();
     }
 }

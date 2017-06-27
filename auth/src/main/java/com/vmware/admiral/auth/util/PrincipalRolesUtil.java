@@ -271,7 +271,10 @@ public class PrincipalRolesUtil {
             }
 
             ProjectEntry tempEntry = mergedEntries.get(projectEntry.documentSelfLink);
-            tempEntry.roles.addAll(projectEntry.roles);
+            Set<AuthRole> roles = new HashSet<>(projectEntry.roles);
+            roles.addAll(tempEntry.roles);
+            tempEntry.roles = new HashSet<>(roles);
+
             mergedEntries.put(projectEntry.documentSelfLink, tempEntry);
         }
 
