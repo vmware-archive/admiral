@@ -22,7 +22,7 @@
             <div class="right-column">{{projectType | i18n}}</div><div class="clear"></div></div>
         <div class="summary-subsection-content-row">
             <div class="left-column">{{"projects.summary.creationDate" | i18n}}</div>
-            <div class="right-column">{{"unknown" | i18n}}</div><div class="clear"></div></div>
+            <div class="right-column">{{ project?.creationTimeMicros | date:'longDate' }}</div><div class="clear"></div></div>
     </div>
 
     <div class="summary-subsection">
@@ -53,11 +53,11 @@
             <div class="clear"></div></div>
         <div class="summary-subsection-content-row">
             <div class="left-column">{{"projects.summary.resources.templates" | i18n}}</div>
-            <div class="right-column">N/A</div>
+            <div class="right-column">{{ project?.templateLinks | count }}</div>
             <div class="clear"></div></div>
         <div class="summary-subsection-content-row">
             <div class="left-column">{{"projects.summary.resources.images" | i18n}}</div>
-            <div class="right-column">N/A</div>
+            <div class="right-column">{{ project?.numberOfImages }}</div>
             <div class="clear"></div></div>
     </div>
 </div>
