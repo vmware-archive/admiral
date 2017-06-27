@@ -11,12 +11,15 @@
 
 package com.vmware.admiral.auth.idm;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.idm.local.LocalAuthConfigProvider;
+import com.vmware.xenon.services.common.authn.BasicAuthenticationService;
 
 public class LocalAuthConfigProviderTest extends AuthBaseTest {
 
@@ -25,8 +28,9 @@ public class LocalAuthConfigProviderTest extends AuthBaseTest {
 
         AuthConfigProvider provider = new LocalAuthConfigProvider();
         assertNull(provider.getAuthenticationService());
-        assertNull(provider.getAuthenticationServiceSelfLink());
-        assertNull(provider.getAuthenticationServiceUserLinkBuilder());
+        assertEquals(BasicAuthenticationService.SELF_LINK,
+                provider.getAuthenticationServiceSelfLink());
+        assertNotNull(provider.getAuthenticationServiceUserLinkBuilder());
         assertNull(provider.createUserServiceFactory());
     }
 }

@@ -12,26 +12,31 @@
 package com.vmware.admiral.auth.util;
 
 import static com.vmware.admiral.common.util.AssertUtil.assertNotNullOrEmpty;
-import static com.vmware.admiral.common.util.AuthUtils.buildQueryForUsers;
 
 import java.util.Base64;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.function.Function;
 import java.util.logging.Level;
 
+import com.vmware.admiral.auth.idm.AuthConfigProvider;
 import com.vmware.admiral.auth.idm.AuthRole;
 import com.vmware.admiral.auth.idm.SessionService;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.OperationUtil;
 import com.vmware.admiral.common.util.PropertyUtils;
+import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.image.service.PopularImagesService;
 import com.vmware.admiral.service.common.ConfigurationService.ConfigurationFactoryService;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.security.util.AuthCredentialsType;
 import com.vmware.photon.controller.model.security.util.EncryptionUtils;
+import com.vmware.xenon.common.Claims;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.Service;
@@ -53,6 +58,7 @@ import com.vmware.xenon.services.common.RoleService.RoleState;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
+import com.vmware.xenon.services.common.UserService.UserState;
 
 public class AuthUtil {
     public static final String DEFAULT_IDENTIFIER = "default";
@@ -94,6 +100,10 @@ public class AuthUtil {
     public static final Map<AuthRole, String> MAP_ROLE_TO_SYSTEM_USER_GROUP;
 
     public static final Map<AuthRole, String> MAP_ROLE_TO_SYSTEM_RESOURCE_GROUP;
+
+    public static final String FIELD_NAME_USER_GROUP_LINK = "userGroupLinks";
+
+    public static final String USERS_QUERY_NO_USERS_SELF_LINK = "__no-users";
 
     public static final String LOCAL_USERS_FILE = "localUsers";
 
@@ -216,7 +226,8 @@ public class AuthUtil {
         String selfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
         EnumSet<Action> verbs = EnumSet.allOf(Action.class);
 
-        RoleState roleState = buildRoleState(selfLink, userGroupLink, CLOUD_ADMINS_RESOURCE_GROUP_LINK, verbs);
+        RoleState roleState = buildRoleState(selfLink, userGroupLink,
+                CLOUD_ADMINS_RESOURCE_GROUP_LINK, verbs);
 
         return roleState;
     }
@@ -250,7 +261,8 @@ public class AuthUtil {
                         MatchType.TERM, Occurance.SHOULD_OCCUR)
                 .build();
 
-        ResourceGroupState resourceGroupState = buildResourceGroupState(resourceGroupQuery, BASIC_USERS_RESOURCE_GROUP_LINK);
+        ResourceGroupState resourceGroupState = buildResourceGroupState(resourceGroupQuery,
+                BASIC_USERS_RESOURCE_GROUP_LINK);
 
         return resourceGroupState;
     }
@@ -260,7 +272,8 @@ public class AuthUtil {
         String selfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
         EnumSet<Action> verbs = EnumSet.of(Action.GET);
 
-        RoleState roleState = buildRoleState(selfLink, userGroupLink, BASIC_USERS_RESOURCE_GROUP_LINK, verbs);
+        RoleState roleState = buildRoleState(selfLink, userGroupLink,
+                BASIC_USERS_RESOURCE_GROUP_LINK, verbs);
 
         return roleState;
     }
@@ -279,7 +292,6 @@ public class AuthUtil {
                         buildUriWithWildcard(ServiceUriPaths.CORE_QUERY_PAGE),
                         MatchType.WILDCARD, Occurance.SHOULD_OCCUR)
                 .build();
-
 
         ResourceGroupState resourceGroupState = ResourceGroupState.Builder
                 .create()
@@ -300,7 +312,8 @@ public class AuthUtil {
 
         EnumSet<Action> verbs = EnumSet.of(Action.GET, Action.POST);
 
-        RoleState roleState = buildRoleState(selfLink, userGroupLink, BASIC_USERS_EXTENDED_RESOURCE_GROUP_LINK, verbs);
+        RoleState roleState = buildRoleState(selfLink, userGroupLink,
+                BASIC_USERS_EXTENDED_RESOURCE_GROUP_LINK, verbs);
 
         return roleState;
     }
@@ -333,11 +346,14 @@ public class AuthUtil {
         String projectSelfLink = UriUtils.buildUriPath(ProjectFactoryService.SELF_LINK, projectId);
         Query resourceGroupQuery = Query.Builder
                 .create()
-                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK, projectSelfLink, Occurance.SHOULD_OCCUR)
-                .addCollectionItemClause(ResourceState.FIELD_NAME_TENANT_LINKS, projectSelfLink, Occurance.SHOULD_OCCUR)
+                .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK, projectSelfLink,
+                        Occurance.SHOULD_OCCUR)
+                .addCollectionItemClause(ResourceState.FIELD_NAME_TENANT_LINKS, projectSelfLink,
+                        Occurance.SHOULD_OCCUR)
                 .build();
 
-        ResourceGroupState resourceGroupState = buildResourceGroupState(projectId, resourceGroupQuery);
+        ResourceGroupState resourceGroupState = buildResourceGroupState(projectId,
+                resourceGroupQuery);
 
         return resourceGroupState;
     }
@@ -412,7 +428,8 @@ public class AuthUtil {
         return resourceGroupState;
     }
 
-    public static RoleState buildRoleState(String selfLink, String userGroupLink, String resourceGroupLink, EnumSet<Action> verbs) {
+    public static RoleState buildRoleState(String selfLink, String userGroupLink,
+            String resourceGroupLink, EnumSet<Action> verbs) {
         RoleState roleState = RoleState.Builder
                 .create()
                 .withPolicy(Policy.ALLOW)
@@ -462,6 +479,66 @@ public class AuthUtil {
     }
 
     /**
+     * TODO Currently all authorized non-guest users are devOpsAdmins. Needs to be changed after
+     * roles are introduced.
+     */
+    public static boolean isDevOpsAdmin(Operation op) {
+        return !OperationUtil.isGuestUser(op);
+    }
+
+    public static Query buildQueryForUsers(String userGroupLink) {
+        Query resultQuery = new Query();
+
+        Query kindClause = QueryUtil.createKindClause(UserState.class)
+                .setOccurance(Occurance.MUST_OCCUR);
+
+        Query matchUsers = Query.Builder.create()
+                .addInCollectionItemClause(FIELD_NAME_USER_GROUP_LINK,
+                        Collections.singletonList(userGroupLink), Occurance.MUST_OCCUR)
+                .build();
+
+        resultQuery.addBooleanClause(kindClause);
+        resultQuery.addBooleanClause(matchUsers);
+        return resultQuery;
+    }
+
+    public static Query buildUsersQuery(List<String> userLinks) {
+        Query resultQuery = new Query();
+
+        Query kindClause = QueryUtil.createKindClause(UserState.class)
+                .setOccurance(Occurance.MUST_OCCUR);
+
+        Query documentLinkClause = new Query().setOccurance(Occurance.MUST_OCCUR);
+
+        if (userLinks == null || userLinks.isEmpty()) {
+            // make a query that will match no users
+            documentLinkClause.setTermMatchType(MatchType.TERM)
+                    .setTermPropertyName(ServiceDocument.FIELD_NAME_SELF_LINK)
+                    .setTermMatchValue(USERS_QUERY_NO_USERS_SELF_LINK);
+        } else {
+            userLinks.stream().map((documentLink) -> {
+                return new Query().setTermPropertyName(UserState.FIELD_NAME_SELF_LINK)
+                        .setTermMatchType(MatchType.TERM)
+                        .setOccurance(Occurance.SHOULD_OCCUR)
+                        .setTermMatchValue(documentLink);
+            }).forEach(documentLinkClause::addBooleanClause);
+        }
+
+        resultQuery.addBooleanClause(kindClause);
+        resultQuery.addBooleanClause(documentLinkClause);
+        return resultQuery;
+    }
+
+    public static final Function<Claims, String> USER_LINK_BUILDER = AuthUtil
+            .getPreferredProvider(AuthConfigProvider.class)
+            .getAuthenticationServiceUserLinkBuilder();
+
+    public static String buildUserServicePathFromPrincipalId(String principalId) {
+        Claims claims = new Claims.Builder().setSubject(principalId).getResult();
+        return USER_LINK_BUILDER.apply(claims);
+    }
+
+    /**
      * Extract data from RoleState ID, which RoleState was build as duplicate RoleState when
      * assigning groups to project roles, with ID following the pattern:
      * projectId_groupdId_roleSuffix
@@ -469,7 +546,7 @@ public class AuthUtil {
      * @param roleStateId
      *
      * @return String[] with 3 elements, the first one is the project id, the second is the group
-     * id and third is the project role suffix.
+     *         id and third is the project role suffix.
      */
     public static String[] extractDataFromRoleStateId(String roleStateId) {
         assertNotNullOrEmpty(roleStateId, "roleStateId");

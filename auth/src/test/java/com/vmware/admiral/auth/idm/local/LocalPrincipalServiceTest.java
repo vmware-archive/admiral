@@ -37,7 +37,6 @@ import com.vmware.xenon.services.common.RoleService;
 import com.vmware.xenon.services.common.RoleService.RoleState;
 import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
-import com.vmware.xenon.services.common.UserService;
 import com.vmware.xenon.services.common.UserService.UserState;
 
 public class LocalPrincipalServiceTest extends AuthBaseTest {
@@ -57,8 +56,7 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
         LocalPrincipalState state = getDocumentNoWait(LocalPrincipalState.class, fritzSelfLink);
         assertNotNull(state);
 
-        UserState userState = getDocumentNoWait(UserState.class, UriUtils.buildUriPath(
-                UserService.FACTORY_LINK, fritzEmail));
+        UserState userState = getDocumentNoWait(UserState.class, buildUserServicePath(fritzEmail));
         assertNotNull(userState);
 
         ResourceGroupState resourceGroupState = getDocumentNoWait(ResourceGroupState.class,
@@ -116,8 +114,7 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
         LocalPrincipalState state = getDocumentNoWait(LocalPrincipalState.class, fritzSelfLink);
         assertNull(state);
 
-        UserState userState = getDocumentNoWait(UserState.class, UriUtils.buildUriPath(
-                UserService.FACTORY_LINK, fritzEmail));
+        UserState userState = getDocumentNoWait(UserState.class, buildUserServicePath(fritzEmail));
         assertNull(userState);
 
         ResourceGroupState resourceGroupState = getDocumentNoWait(ResourceGroupState.class,
@@ -205,8 +202,8 @@ public class LocalPrincipalServiceTest extends AuthBaseTest {
         assertEquals(testUser.email, createdUser.id);
         assertTrue(createdUser.documentSelfLink.endsWith(testUser.email));
 
-        UserState userState = getDocument(UserState.class, UserService.FACTORY_LINK +
-                "/test@admiral.com");
+        UserState userState = getDocument(UserState.class,
+                buildUserServicePath("test@admiral.com"));
         assertNotNull(userState);
         assertEquals(createdUser.email, userState.email);
         // assert user is added to basic user even if he is cloud admin.

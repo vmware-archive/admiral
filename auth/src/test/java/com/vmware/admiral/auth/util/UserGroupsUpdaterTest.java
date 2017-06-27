@@ -22,7 +22,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
-import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
@@ -42,7 +41,7 @@ public class UserGroupsUpdaterTest extends AuthBaseTest {
     public void testUserGroupsUpdater() throws Throwable {
         // Create test user group.
         String userGroupSelfLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, "testId");
-        Query userGroupQuery = AuthUtils.buildQueryForUsers(userGroupSelfLink);
+        Query userGroupQuery = AuthUtil.buildQueryForUsers(userGroupSelfLink);
         UserGroupState userGroupState = UserGroupState.Builder
                 .create()
                 .withQuery(userGroupQuery)
@@ -72,7 +71,8 @@ public class UserGroupsUpdaterTest extends AuthBaseTest {
         // Verify users are added.
         List<UserState> users = getUsersFromUserGroup(userGroupState.documentSelfLink);
         for (UserState state : users) {
-            assertTrue(state.email.equals(USER_EMAIL_ADMIN) || state.email.equals(USER_EMAIL_CONNIE));
+            assertTrue(
+                    state.email.equals(USER_EMAIL_ADMIN) || state.email.equals(USER_EMAIL_CONNIE));
         }
 
         // Remove user.

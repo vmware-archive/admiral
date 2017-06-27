@@ -25,7 +25,6 @@ import com.vmware.admiral.auth.idm.SecurityContext;
 import com.vmware.admiral.auth.idm.SecurityContext.ProjectEntry;
 import com.vmware.admiral.auth.idm.SessionService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
-import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.photon.controller.model.query.QueryUtils.QueryByPages;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
@@ -90,7 +89,8 @@ public class SecurityContextUtil {
     protected static DeferredResult<SecurityContextBuilderCache> buildDirectSystemRoles(
             Service requestorService, String userId, SecurityContextBuilderCache cache) {
         if (cache == null) {
-            return buildDirectSystemRoles(requestorService, userId, new SecurityContextBuilderCache());
+            return buildDirectSystemRoles(requestorService, userId,
+                    new SecurityContextBuilderCache());
         }
         SecurityContext context = cache.context;
 
@@ -179,7 +179,8 @@ public class SecurityContextUtil {
 
         // otherwise get the state and cache it
         Operation getOp = Operation
-                .createGet(requestorService, AuthUtils.getUserStateDocumentLink(userId))
+                .createGet(requestorService.getHost(),
+                        AuthUtil.buildUserServicePathFromPrincipalId(userId))
                 .setReferer(requestorService.getUri());
         authorizeOperationIfSessionService(requestorService, getOp);
 

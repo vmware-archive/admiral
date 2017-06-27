@@ -29,7 +29,6 @@ import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
-import com.vmware.xenon.services.common.UserService;
 
 public class PrincipalUtil {
 
@@ -46,8 +45,8 @@ public class PrincipalUtil {
         principal.password = state.password;
         principal.type = PrincipalType.valueOf(state.type.name());
 
-        if (state.type == LocalPrincipalType.GROUP && state.groupMembersLinks != null && !state
-                .groupMembersLinks.isEmpty()) {
+        if (state.type == LocalPrincipalType.GROUP && state.groupMembersLinks != null
+                && !state.groupMembersLinks.isEmpty()) {
             principal.groupMembers = state.groupMembersLinks.stream()
                     .map(Service::getId)
                     .collect(Collectors.toList());
@@ -56,8 +55,8 @@ public class PrincipalUtil {
         return principal;
     }
 
-    public static List<Principal> fromQueryResultToPrincipalList(ServiceDocumentQueryResult
-            queryResult) {
+    public static List<Principal> fromQueryResultToPrincipalList(
+            ServiceDocumentQueryResult queryResult) {
 
         List<Principal> principals = new ArrayList<>();
 
@@ -119,10 +118,6 @@ public class PrincipalUtil {
 
     public static URI buildLocalPrincipalStateSelfLink(ServiceHost host, String id) {
         return UriUtils.buildUri(host, LocalPrincipalFactoryService.SELF_LINK + "/" + id);
-    }
-
-    public static URI buildUserStateSelfLinks(ServiceHost host, String id) {
-        return UriUtils.buildUri(host, UserService.FACTORY_LINK + "/" + id);
     }
 
 }

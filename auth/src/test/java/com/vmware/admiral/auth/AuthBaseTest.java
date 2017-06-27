@@ -63,7 +63,6 @@ import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.common.test.VerificationHost;
 import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
-import com.vmware.xenon.services.common.UserService;
 import com.vmware.xenon.services.common.UserService.UserState;
 
 public abstract class AuthBaseTest extends BaseTestCase {
@@ -224,7 +223,7 @@ public abstract class AuthBaseTest extends BaseTestCase {
     }
 
     protected String buildUserServicePath(String email) {
-        return UriUtils.buildUriPath(UserService.FACTORY_LINK, email);
+        return AuthUtil.buildUserServicePathFromPrincipalId(email);
     }
 
     protected void doPatch(Object state, String documentSelfLink) {
@@ -318,7 +317,8 @@ public abstract class AuthBaseTest extends BaseTestCase {
 
     protected void loadAuthContent(String authContentFilename) throws Throwable {
         // read the configuration content from the specified file
-        String content = IOUtils.toString(getClass().getClassLoader().getResource(authContentFilename));
+        String content = IOUtils
+                .toString(getClass().getClassLoader().getResource(authContentFilename));
         loadAuthContent(Utils.fromJson(content, AuthContentBody.class));
     }
 

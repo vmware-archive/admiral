@@ -12,9 +12,7 @@
 package com.vmware.admiral.auth.util;
 
 import static com.vmware.admiral.auth.util.AuthUtil.addReplicationFactor;
-import static com.vmware.admiral.auth.util.PrincipalUtil.buildUserStateSelfLinks;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,7 +31,6 @@ import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.ServiceStateCollectionUpdateRequest;
 import com.vmware.xenon.common.UriUtils;
-import com.vmware.xenon.services.common.UserService;
 import com.vmware.xenon.services.common.UserService.UserState;
 
 public class UserGroupsUpdater {
@@ -146,28 +143,26 @@ public class UserGroupsUpdater {
     private DeferredResult<UserState> patchUserState(String user,
             boolean isRemove) {
 
-        URI userStateUri = buildUserStateSelfLinks(host, user);
+        String userStateLink = AuthUtil.buildUserServicePathFromPrincipalId(user);
+
+        String opReferer = (referrer == null) ? host.getUri().toString() : referrer;
 
         DeferredResult<UserState> result;
 
         if (!this.skipPrincipalVerification) {
 
             String principalUri = UriUtils.buildUriPath(PrincipalService.SELF_LINK, user);
-            Operation getPrincipal = Operation.createGet(host, principalUri)
-                    .setReferer(referrer == null ? host.getUri().toString() : referrer);
+            Operation getPrincipal = Operation.createGet(host, principalUri).setReferer(opReferer);
 
             result = host.sendWithDeferredResult(getPrincipal, Principal.class)
                     .thenCompose(ignore -> {
-                        Operation getUserState = Operation
-                                .createGet(buildUserStateSelfLinks(host, user))
-                                .setReferer(referrer == null ? host.getUri().toString() : referrer);
+                        Operation getUserState = Operation.createGet(host, userStateLink)
+                                .setReferer(opReferer);
                         return host.sendWithDeferredResult(getUserState, UserState.class);
                     });
         } else {
 
-            Operation getUserState = Operation
-                    .createGet(buildUserStateSelfLinks(host, user))
-                    .setReferer(referrer == null ? host.getUri().toString() : referrer);
+            Operation getUserState = Operation.createGet(host, userStateLink).setReferer(opReferer);
 
             result = host.sendWithDeferredResult(getUserState, UserState.class);
         }
@@ -180,10 +175,9 @@ public class UserGroupsUpdater {
                             UserState userState = new UserState();
                             userState.email = user;
                             userState.documentSelfLink = user;
-                            Operation createUser = Operation.createPost(host, UserService
-                                    .FACTORY_LINK)
-                                    .setReferer(
-                                            referrer == null ? host.getUri().toString() : referrer)
+                            Operation createUser = Operation.createPost(host,
+                                    AuthUtil.buildUserServicePathFromPrincipalId(""))
+                                    .setReferer(opReferer)
                                     .setBody(userState);
                             addReplicationFactor(createUser);
                             return host.sendWithDeferredResult(createUser, UserState.class);
@@ -207,10 +201,9 @@ public class UserGroupsUpdater {
                         patch = ServiceStateCollectionUpdateRequest
                                 .create(patchGroupLinks, null);
                     }
-                    Operation patchOp = Operation.createPatch(userStateUri)
+                    Operation patchOp = Operation.createPatch(host, userStateLink)
                             .setBody(patch)
-                            .setReferer(
-                                    referrer == null ? host.getUri().toString() : referrer);
+                            .setReferer(opReferer);
 
                     return host.sendWithDeferredResult(patchOp, UserState.class);
                 });

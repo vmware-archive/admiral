@@ -44,6 +44,8 @@ import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
+import com.vmware.xenon.services.common.UserService;
+import com.vmware.xenon.services.common.authn.BasicAuthenticationService;
 
 public class LocalAuthConfigProvider implements AuthConfigProvider {
 
@@ -255,8 +257,8 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
         }
     }
 
-    private static void waitForUser(ServiceHost host, User user, Runnable
-            successfulCallback, Consumer<Throwable> failureCallback) {
+    private static void waitForUser(ServiceHost host, User user, Runnable successfulCallback,
+            Consumer<Throwable> failureCallback) {
 
         final AtomicInteger servicesCounter = new AtomicInteger(1);
         final AtomicBoolean hasError = new AtomicBoolean(false);
@@ -276,25 +278,25 @@ public class LocalAuthConfigProvider implements AuthConfigProvider {
 
     @Override
     public Service getAuthenticationService() {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public String getAuthenticationServiceSelfLink() {
-        // TODO Auto-generated method stub
-        return null;
+        return BasicAuthenticationService.SELF_LINK;
     }
 
     @Override
     public Function<Claims, String> getAuthenticationServiceUserLinkBuilder() {
-        // TODO Auto-generated method stub
-        return null;
+        return LocalAuthConfigProvider::buildUserUri;
+    }
+
+    private static String buildUserUri(Claims claims) {
+        return UserService.FACTORY_LINK + "/" + claims.getSubject();
     }
 
     @Override
     public FactoryService createUserServiceFactory() {
-        // TODO Auto-generated method stub
         return null;
     }
 

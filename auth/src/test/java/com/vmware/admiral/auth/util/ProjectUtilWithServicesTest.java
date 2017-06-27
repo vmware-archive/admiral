@@ -43,7 +43,6 @@ import com.vmware.photon.controller.model.resources.ResourcePoolService.Resource
 import com.vmware.xenon.common.Utils;
 import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
-import com.vmware.xenon.services.common.UserService;
 import com.vmware.xenon.services.common.UserService.UserState;
 
 public class ProjectUtilWithServicesTest extends AuthBaseTest {
@@ -70,7 +69,7 @@ public class ProjectUtilWithServicesTest extends AuthBaseTest {
             userState.email = userName;
             userState.userGroupLinks = Collections.singleton(groupState.documentSelfLink);
             try {
-                return doPost(userState, UserService.FACTORY_LINK);
+                return doPost(userState, buildUserServicePath(""));
             } catch (Throwable e) {
                 e.printStackTrace();
                 fail(Utils.toString(e));

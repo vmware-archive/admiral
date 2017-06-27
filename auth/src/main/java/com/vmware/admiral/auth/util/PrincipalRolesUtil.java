@@ -48,7 +48,6 @@ import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 import com.vmware.xenon.services.common.RoleService.RoleState;
 import com.vmware.xenon.services.common.UserGroupService;
-import com.vmware.xenon.services.common.UserService;
 import com.vmware.xenon.services.common.UserService.UserState;
 
 public class PrincipalRolesUtil {
@@ -81,9 +80,9 @@ public class PrincipalRolesUtil {
 
             return new QueryByPages<>(host, query, ProjectState.class,
                     null)
-                    .collectDocuments(Collectors.toList())
-                    .thenApply((projects) -> buildProjectEntries(
-                            projects, userState.userGroupLinks));
+                            .collectDocuments(Collectors.toList())
+                            .thenApply((projects) -> buildProjectEntries(
+                                    projects, userState.userGroupLinks));
         });
     }
 
@@ -130,8 +129,8 @@ public class PrincipalRolesUtil {
                 });
     }
 
-    public static DeferredResult<Map<String, List<RoleState>>> getRoleStatesForGroups(ServiceHost
-            host, List<String> groups) {
+    public static DeferredResult<Map<String, List<RoleState>>> getRoleStatesForGroups(
+            ServiceHost host, List<String> groups) {
 
         if (groups == null || groups.isEmpty()) {
             return DeferredResult.completed(new HashMap<>());
@@ -280,6 +279,7 @@ public class PrincipalRolesUtil {
                 .collect(Collectors.toList());
     }
 
+    @SuppressWarnings("unchecked")
     private static DeferredResult<List<String>> getGroupsWherePrincipalBelongs(ServiceHost host,
             String principalId) {
         String uri = UriUtils.buildUriPath(PrincipalService.SELF_LINK, principalId,
@@ -293,8 +293,8 @@ public class PrincipalRolesUtil {
     }
 
     private static DeferredResult<UserState> getUserState(ServiceHost host, String principalId) {
-        Operation getUserStateOp = Operation.createGet(host, UriUtils.buildUriPath(
-                UserService.FACTORY_LINK, principalId))
+        Operation getUserStateOp = Operation.createGet(host,
+                AuthUtil.buildUserServicePathFromPrincipalId(principalId))
                 .setReferer(host.getUri());
         return host.sendWithDeferredResult(getUserStateOp, UserState.class);
     }

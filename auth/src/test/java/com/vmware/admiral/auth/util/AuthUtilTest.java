@@ -13,6 +13,7 @@ package com.vmware.admiral.auth.util;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -45,16 +46,25 @@ import static com.vmware.admiral.auth.util.AuthUtil.buildResourceGroupState;
 import static com.vmware.admiral.auth.util.AuthUtil.buildRoleState;
 import static com.vmware.admiral.auth.util.AuthUtil.buildUserGroupState;
 
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.List;
 
 import org.junit.Test;
 
 import com.vmware.admiral.auth.idm.AuthRole;
+import com.vmware.xenon.common.Claims;
 import com.vmware.xenon.common.LocalizableValidationException;
+import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Operation.AuthorizationContext;
 import com.vmware.xenon.common.Service.Action;
+import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.services.common.GuestUserService;
 import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
+import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
 import com.vmware.xenon.services.common.ResourceGroupService;
 import com.vmware.xenon.services.common.ResourceGroupService.ResourceGroupState;
 import com.vmware.xenon.services.common.RoleService;
@@ -160,7 +170,6 @@ public class AuthUtilTest {
         assertNotNull(userGroupState.query);
     }
 
-
     @Test
     public void testBuildProjectResourceGroup() {
         ResourceGroupState resourceGroupState = buildProjectResourceGroup(SAMPLE_PROJECT_ID);
@@ -199,9 +208,11 @@ public class AuthUtilTest {
 
     @Test
     public void testBuildProjectViewersRole() {
-        RoleState roleState = buildProjectViewersRole(SAMPLE_PROJECT_ID, SAMPLE_USER_GROUP_LINK, SAMPLE_RESOURCE_GROUP_LINK);
+        RoleState roleState = buildProjectViewersRole(SAMPLE_PROJECT_ID, SAMPLE_USER_GROUP_LINK,
+                SAMPLE_RESOURCE_GROUP_LINK);
 
-        String id = AuthRole.PROJECT_VIEWERS.buildRoleWithSuffix(SAMPLE_PROJECT_ID, SAMPLE_USER_GROUP_LINK);
+        String id = AuthRole.PROJECT_VIEWERS.buildRoleWithSuffix(SAMPLE_PROJECT_ID,
+                SAMPLE_USER_GROUP_LINK);
         String expectedSelfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
         assertEquals(expectedSelfLink, roleState.documentSelfLink);
         assertEquals(SAMPLE_USER_GROUP_LINK, roleState.userGroupLink);
@@ -250,6 +261,102 @@ public class AuthUtilTest {
         assertEquals(SAMPLE_USER_GROUP_LINK, roleState.userGroupLink);
         assertEquals(SAMPLE_RESOURCE_GROUP_LINK, roleState.resourceGroupLink);
         assertEquals(verbs, roleState.verbs);
+    }
+
+    @Test
+    public void testIsDevOpsAdmin() throws Throwable {
+        Method setAuthCtxMethod = Operation.class.getDeclaredMethod("setAuthorizationContext",
+                AuthorizationContext.class);
+
+        Claims guestClaims = new Claims.Builder().setSubject(GuestUserService.SELF_LINK)
+                .getResult();
+        AuthorizationContext guestContext = AuthorizationContext.Builder.create()
+                .setClaims(guestClaims).getResult();
+
+        // TODO Currently all authorized non-guest users are devOpsAdmins. Needs to be changed after
+        // roles are introduced. Also, a case for developer authorization context and cloud admin
+        // need to be added.
+        Claims devOpsClaims = new Claims.Builder()
+                .setSubject(AuthUtil.buildUserServicePathFromPrincipalId("some-user@local"))
+                .getResult();
+        AuthorizationContext devOpsContext = AuthorizationContext.Builder.create()
+                .setClaims(devOpsClaims).getResult();
+
+        setAuthCtxMethod.setAccessible(true);
+
+        Operation op = new Operation();
+        setAuthCtxMethod.invoke(op, (AuthorizationContext) null);
+        assertEquals(null, op.getAuthorizationContext());
+        assertFalse("<null> authorization context should not be treated as devOps admin context",
+                AuthUtil.isDevOpsAdmin(op));
+
+        setAuthCtxMethod.invoke(op, guestContext);
+        assertFalse("Guest authorization context should not be trated as devOps admin context",
+                AuthUtil.isDevOpsAdmin(op));
+
+        setAuthCtxMethod.invoke(op, devOpsContext);
+        assertTrue("Any non-guest authorized user should be a devOps admin",
+                AuthUtil.isDevOpsAdmin(op));
+
+        setAuthCtxMethod.setAccessible(false);
+    }
+
+    @Test
+    public void testBuildUsersQuery() {
+
+        List<String> testUsers = Arrays.asList(
+                "/users/user1@test.com",
+                "/users/user2@test.com",
+                "/users/admi@dev.local");
+
+        Query queryForUsers = AuthUtil.buildUsersQuery(testUsers);
+
+        // kind and userlinks clauses
+        List<Query> topLevelClauses = queryForUsers.booleanClauses;
+        assertNotNull(topLevelClauses);
+        assertEquals(2, topLevelClauses.size());
+
+        topLevelClauses.forEach((query) -> {
+            assertEquals(Occurance.MUST_OCCUR, query.occurance);
+            assertTrue(query.booleanClauses == null
+                    || query.booleanClauses.isEmpty()
+                    || query.booleanClauses.size() == testUsers.size());
+
+            if (query.booleanClauses == null || query.booleanClauses.isEmpty()) {
+                assertEquals(MatchType.TERM, query.term.matchType);
+            } else {
+                // this is the userLinks query clause
+                query.booleanClauses.forEach((clause) -> {
+                    assertEquals(Occurance.SHOULD_OCCUR, clause.occurance);
+                    assertEquals(MatchType.TERM, clause.term.matchType);
+                    assertEquals(ServiceDocument.FIELD_NAME_SELF_LINK, clause.term.propertyName);
+                    assertTrue(testUsers.contains(clause.term.matchValue));
+                });
+            }
+        });
+    }
+
+    @Test
+    public void testBuildUsersQueryNoUsers() {
+
+        Query queryForUsers = AuthUtil.buildUsersQuery(null);
+
+        // kind and userlinks clauses
+        List<Query> topLevelClauses = queryForUsers.booleanClauses;
+        assertNotNull(topLevelClauses);
+        assertEquals(2, topLevelClauses.size());
+
+        topLevelClauses.forEach((query) -> {
+            assertEquals(Occurance.MUST_OCCUR, query.occurance);
+            assertEquals(MatchType.TERM, query.term.matchType);
+            assertTrue(Arrays
+                    .asList(ServiceDocument.FIELD_NAME_KIND, ServiceDocument.FIELD_NAME_SELF_LINK)
+                    .contains(query.term.propertyName));
+
+            if (query.term.propertyName.equals(ServiceDocument.FIELD_NAME_SELF_LINK)) {
+                assertEquals(AuthUtil.USERS_QUERY_NO_USERS_SELF_LINK, query.term.matchValue);
+            }
+        });
     }
 
     @Test(expected = LocalizableValidationException.class)

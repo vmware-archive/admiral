@@ -20,8 +20,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.UserGroupsUpdater;
-import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -53,7 +53,6 @@ public class PrincipalRolesHandler {
     private PrincipalRoleAssignment roleAssignment;
 
     private String principalId;
-
 
     private PrincipalRolesHandler() {
     }
@@ -247,7 +246,7 @@ public class PrincipalRolesHandler {
                 .handle((ug, ex) -> {
                     if (ex != null) {
                         if (ex.getCause() instanceof ServiceNotFoundException) {
-                            Query groupQuery = AuthUtils.buildQueryForUsers(groupLink);
+                            Query groupQuery = AuthUtil.buildQueryForUsers(groupLink);
                             UserGroupState state = UserGroupState.Builder.create()
                                     .withQuery(groupQuery)
                                     .withSelfLink(groupLink).build();

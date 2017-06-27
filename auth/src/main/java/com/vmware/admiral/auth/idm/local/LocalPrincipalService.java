@@ -31,8 +31,8 @@ import java.util.stream.Collectors;
 
 import com.vmware.admiral.auth.idm.AuthConfigProvider.CredentialsScope;
 import com.vmware.admiral.auth.idm.PrincipalRolesHandler;
+import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.UserGroupsUpdater;
-import com.vmware.admiral.common.util.AuthUtils;
 import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.photon.controller.model.security.util.EncryptionUtils;
 import com.vmware.xenon.common.DeferredResult;
@@ -52,14 +52,12 @@ import com.vmware.xenon.services.common.RoleService.RoleState;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
-import com.vmware.xenon.services.common.UserService;
 import com.vmware.xenon.services.common.UserService.UserState;
 
 public class LocalPrincipalService extends StatefulService {
 
     public enum LocalPrincipalType {
-        USER,
-        GROUP
+        USER, GROUP
     }
 
     public static class LocalPrincipalState extends ServiceDocument {
@@ -167,12 +165,12 @@ public class LocalPrincipalService extends StatefulService {
 
     private void validatePrincipal(LocalPrincipalState principalState) {
         /*
-          Keep these properties optional for now.
-          Assume the type based on what is provided.
-          If email is provided the type is USER if groupMemberLinks are provided the type is GROUP.
-
-          assertNotNull(principalState.name, "name");
-          assertNotNull(principalState.type, "type");
+         * Keep these properties optional for now.
+         * Assume the type based on what is provided.
+         * If email is provided the type is USER if groupMemberLinks are provided the type is GROUP.
+         *
+         * assertNotNull(principalState.name, "name");
+         * assertNotNull(principalState.type, "type");
          */
 
         if (principalState.email != null) {
@@ -194,8 +192,8 @@ public class LocalPrincipalService extends StatefulService {
 
     }
 
-    private void validatePrincipalPatch(LocalPrincipalState patchState, LocalPrincipalState
-            currentState) {
+    private void validatePrincipalPatch(LocalPrincipalState patchState,
+            LocalPrincipalState currentState) {
 
         if (patchState.email != null && !patchState.email.equals(currentState.email)) {
             throw new IllegalStateException("Email property cannot be patched.");
@@ -212,7 +210,8 @@ public class LocalPrincipalService extends StatefulService {
         user.email = state.email;
         user.documentSelfLink = state.email;
 
-        URI userFactoryUri = UriUtils.buildUri(getHost(), ServiceUriPaths.CORE_AUTHZ_USERS);
+        URI userFactoryUri = UriUtils.buildUri(getHost(),
+                AuthUtil.buildUserServicePathFromPrincipalId(""));
         Operation postUser = Operation.createPost(userFactoryUri)
                 .setBody(user)
                 .setReferer(op.getUri())
@@ -274,7 +273,7 @@ public class LocalPrincipalService extends StatefulService {
 
         Query userGroupQuery = Query.Builder.create()
                 .addFieldClause(ServiceDocument.FIELD_NAME_SELF_LINK,
-                        UriUtils.buildUriPath(UserService.FACTORY_LINK, state.id))
+                        AuthUtil.buildUserServicePathFromPrincipalId(state.id))
                 .build();
 
         UserGroupState groupState = UserGroupState.Builder.create()
@@ -357,7 +356,7 @@ public class LocalPrincipalService extends StatefulService {
 
     private void createUserGroup(LocalPrincipalState state, Operation op) {
         String userGroupSelfLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, state.name);
-        Query userGroupQuery = AuthUtils.buildQueryForUsers(userGroupSelfLink);
+        Query userGroupQuery = AuthUtil.buildQueryForUsers(userGroupSelfLink);
 
         UserGroupState userGroupState = UserGroupState.Builder.create()
                 .withSelfLink(userGroupSelfLink)
@@ -416,8 +415,8 @@ public class LocalPrincipalService extends StatefulService {
         }
     }
 
-    private void addUserToGroup(String localPrincipalLink, String groupLink, Consumer<Throwable>
-            callback) {
+    private void addUserToGroup(String localPrincipalLink, String groupLink,
+            Consumer<Throwable> callback) {
         sendRequest(Operation.createGet(getHost(), localPrincipalLink)
                 .setReferer(getHost().getUri())
                 .setCompletion((o, ex) -> {
@@ -443,7 +442,7 @@ public class LocalPrincipalService extends StatefulService {
     }
 
     private void deleteUserState(String id, Operation delete) {
-        String userStateUri = UriUtils.buildUriPath(UserService.FACTORY_LINK, id);
+        String userStateUri = AuthUtil.buildUserServicePathFromPrincipalId(id);
         String userGroupUri = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, id);
         String resourceGroupUri = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK, id);
         String roleUri = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
@@ -516,4 +515,3 @@ public class LocalPrincipalService extends StatefulService {
     }
 
 }
-
