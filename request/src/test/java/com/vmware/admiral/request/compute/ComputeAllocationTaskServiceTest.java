@@ -387,14 +387,14 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
                 (ComputeAllocationTaskService.ExtensibilityCallbackResponse) service
                         .notificationPayload();
 
-
         List<HostSelection> beforeExtensibility = new ArrayList<>(
                 state.selectedComputePlacementHosts);
 
         payload.hostSelections = beforeExtensibility.stream()
                 .map(hs -> hs.name)
-                .sorted(Collections.reverseOrder())
                 .collect(Collectors.toList());
+
+        Collections.reverse(payload.hostSelections);
 
         TestContext context = new TestContext(1, Duration.ofMinutes(1));
 
@@ -412,7 +412,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
 
                 assertNotEquals(beforeExtensibility, patchedHosts);
 
-                //Task is in complete state and won't remove initial host selections, just add new
+                //Task is in complete state and won't remove initial host selections, just add newfo
                 //ones to the existing which have been assigned when document has been initialized.
                 if (patchedHosts.size() == 4) {
                     //Assert that new newly added host selections are in proper order (reversed
@@ -542,7 +542,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
                         .notificationPayload();
         payload.hostSelections = Arrays.asList("hs1", "hs2");
 
-        TestContext context = new TestContext(1, Duration.ofMinutes(10));
+        TestContext context = new TestContext(1, Duration.ofMinutes(1));
         service.reorderHostSelections(state, payload, () -> {
             //Reordering shouldn't be invoked as both lists are the same.
             context.completeIteration();

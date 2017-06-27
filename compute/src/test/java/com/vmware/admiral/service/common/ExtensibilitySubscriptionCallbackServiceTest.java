@@ -31,6 +31,7 @@ import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.StatelessService;
+import com.vmware.xenon.common.TaskState;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.test.TestContext;
 import com.vmware.xenon.common.test.TestRequestSender;
@@ -119,6 +120,9 @@ public class ExtensibilitySubscriptionCallbackServiceTest extends BaseTestCase {
         state.serviceTaskCallback = new ServiceTaskCallback();
         state.serviceTaskCallback.serviceSelfLink = TestStatelessService.SELF_LINK;
         state.replyPayload = new ServiceTaskCallbackResponse();
+        state.replyPayload.taskInfo = TaskState.createAsStarted();
+        state.replyPayload.taskSubStage = DefaultSubStage.CREATED;
+        state.taskStateJson = TestStatelessService.class.getSimpleName();
 
         DeferredResult<Void> done = new DeferredResult<>();
         this.host.startService(new TestStatelessService(done));

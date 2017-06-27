@@ -271,12 +271,19 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
     }
 
     private void notifyParentTask(ExtensibilitySubscriptionCallback body) {
+
+        body.replyPayload.customProperties = body.replyPayload.customProperties != null ?
+                body.replyPayload.customProperties : new HashMap<>();
+
         if (body.errorMessage != null && !body.errorMessage.isEmpty()) {
-            body.replyPayload.customProperties = body.replyPayload.customProperties != null ?
-                    body.replyPayload.customProperties : new HashMap<>();
             body.replyPayload.customProperties
                     .put(EXTENSIBILITY_ERROR_MESSAGE, body.errorMessage);
         }
+
+        // Put key to prevent sending event more than once in case of self patching in
+        // enahnceExtensibilityResponse(after response from client has been received) stage.
+        body.replyPayload.customProperties
+                .put(constructExtensibilityKey(body), Boolean.TRUE.toString());
 
         sendRequest(Operation
                 .createPatch(UriUtils.buildUri(getHost(), body.serviceTaskCallback.serviceSelfLink))
@@ -335,5 +342,11 @@ public class ExtensibilitySubscriptionCallbackService extends StatefulService {
         ExtensibilitySubscriptionCallback extensibilityResponse = op
                 .getBody(ExtensibilitySubscriptionCallback.class);
         return extensibilityResponse.errorMessage;
+    }
+
+    private String constructExtensibilityKey(ExtensibilitySubscriptionCallback document) {
+        return String.format("%s:%s:%s", document.taskStateClassName,
+                document.replyPayload.taskInfo.stage.name(),
+                document.replyPayload.taskSubStage.toString());
     }
 }

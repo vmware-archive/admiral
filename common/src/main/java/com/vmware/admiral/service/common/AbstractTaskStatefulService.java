@@ -309,9 +309,10 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         }
     }
 
-    // Check if Task allows subscription on this stage.
     private void handleSubscriptions(T state) {
-        if (subscriptionSubStages.contains(state.taskSubStage)) {
+        // Check if Task allows subscription on this stage & prevent sending of event more than once
+        if (subscriptionSubStages.contains(state.taskSubStage) && (state.customProperties ==
+                null || !state.customProperties.containsKey(constructExtensibilityResponseKey(state)))) {
             ExtensibilitySubscriptionManager manager = getExtensibilityManager();
             if (manager != null) {
                 BaseExtensibilityCallbackResponse notificationPayload = this.notificationPayload();
@@ -345,6 +346,11 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
     private boolean isExtensibilityResponse(Operation o) {
         return o.getReferer() != null && o.getReferer().toString()
                 .contains(ExtensibilitySubscriptionCallbackService.FACTORY_LINK);
+    }
+
+    private String constructExtensibilityResponseKey(T state) {
+        return String.format("%s:%s:%s", state.getClass().getSimpleName(),
+                state.taskInfo.stage.name(), state.taskSubStage.name());
     }
 
     private String getExtensibilityFailureMessage(T patch) {
