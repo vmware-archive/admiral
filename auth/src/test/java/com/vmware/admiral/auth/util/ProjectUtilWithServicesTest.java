@@ -111,6 +111,11 @@ public class ProjectUtilWithServicesTest extends AuthBaseTest {
         assertEquals(1, expandedState.members.size());
         assertEquals(USER_EMAIL_ADMIN, expandedState.members.iterator().next().email);
 
+        // verify viewers
+        assertNotNull(expandedState.viewers);
+        assertEquals(1, expandedState.viewers.size());
+        assertEquals(USER_EMAIL_BASIC_USER, expandedState.viewers.iterator().next().email);
+
         // verify clusters
         assertNotNull(expandedState.clusterLinks);
         assertEquals(1, expandedState.clusterLinks.size());
@@ -146,10 +151,13 @@ public class ProjectUtilWithServicesTest extends AuthBaseTest {
 
         // Add the ADMIN as admin and a member
         ProjectRoles projectRoles = new ProjectRoles();
+        projectRoles.viewers = new PrincipalRoleAssignment();
         projectRoles.members = new PrincipalRoleAssignment();
         projectRoles.administrators = new PrincipalRoleAssignment();
+
         projectRoles.administrators.add = Collections.singletonList(USER_EMAIL_ADMIN);
         projectRoles.members.add = Collections.singletonList(USER_EMAIL_ADMIN);
+        projectRoles.viewers.add = Collections.singletonList(USER_EMAIL_BASIC_USER);
 
         doPatch(projectRoles, project.documentSelfLink);
 

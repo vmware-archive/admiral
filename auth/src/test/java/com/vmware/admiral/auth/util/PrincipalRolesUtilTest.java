@@ -97,6 +97,7 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
         PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
         roleAssignment.add = Collections.singletonList(USER_EMAIL_ADMIN);
         ProjectRoles projectRoles = new ProjectRoles();
+        projectRoles.viewers = roleAssignment;
         projectRoles.members = roleAssignment;
         projectRoles.administrators = roleAssignment;
         doPatch(projectRoles, project.documentSelfLink);
@@ -121,6 +122,7 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
         assertEquals(project.documentSelfLink, entries.get(0).documentSelfLink);
         assertTrue(entries.get(0).roles.contains(AuthRole.PROJECT_ADMINS));
         assertTrue(entries.get(0).roles.contains(AuthRole.PROJECT_MEMBERS));
+        assertTrue(entries.get(0).roles.contains(AuthRole.PROJECT_VIEWERS));
     }
 
     @Test

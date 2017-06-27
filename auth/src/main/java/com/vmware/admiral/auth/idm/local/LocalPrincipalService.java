@@ -515,14 +515,5 @@ public class LocalPrincipalService extends StatefulService {
         });
     }
 
-    private boolean isRoleAssignmentUpdate(LocalPrincipalUserGroupAssignment patchGroups) {
-        if (patchGroups == null) {
-            return false;
-        }
-        boolean add = patchGroups.groupLinksToAdd != null && !patchGroups.groupLinksToAdd.isEmpty();
-        boolean remove = patchGroups.groupLinksToRemove != null
-                && !patchGroups.groupLinksToRemove.isEmpty();
-        return add || remove;
-    }
 }
 

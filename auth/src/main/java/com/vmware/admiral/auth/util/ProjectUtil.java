@@ -109,6 +109,9 @@ public class ProjectUtil {
         DeferredResult<Void> retrieveMembers = retrieveUserGroupMembers(host,
                 simpleState.membersUserGroupLinks, referer)
                         .thenAccept((membersList) -> expandedState.members = membersList);
+        DeferredResult<Void> retrieveViewers = retrieveUserGroupMembers(host,
+                simpleState.viewersUserGroupLinks, referer)
+                        .thenAccept((viewersList) -> expandedState.viewers = viewersList);
         DeferredResult<Void> retrieveClusterLinks = retrieveClusterLinks(host,
                 simpleState.documentSelfLink)
                         .thenAccept((clusterLinks) -> expandedState.clusterLinks = clusterLinks);
@@ -130,8 +133,8 @@ public class ProjectUtil {
                                     });
                                 });
 
-        return DeferredResult.allOf(retrieveAdmins, retrieveMembers, retrieveClusterLinks,
-                retrieveTemplateLinks, retrieveRepositoriesAndImagesCount)
+        return DeferredResult.allOf(retrieveAdmins, retrieveMembers, retrieveViewers,
+                retrieveClusterLinks, retrieveTemplateLinks, retrieveRepositoriesAndImagesCount)
                 .thenApply((ignore) -> expandedState);
     }
 

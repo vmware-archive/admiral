@@ -321,6 +321,14 @@ public class AuthUtil {
         return userGroupState;
     }
 
+    public static UserGroupState buildProjectViewersUserGroup(String projectId) {
+        String id = AuthRole.PROJECT_VIEWERS.buildRoleWithSuffix(projectId);
+
+        UserGroupState userGroupState = buildUserGroupState(id);
+
+        return userGroupState;
+    }
+
     public static ResourceGroupState buildProjectResourceGroup(String projectId) {
         String projectSelfLink = UriUtils.buildUriPath(ProjectFactoryService.SELF_LINK, projectId);
         Query resourceGroupQuery = Query.Builder
@@ -334,20 +342,33 @@ public class AuthUtil {
         return resourceGroupState;
     }
 
-    public static RoleState buildProjectAdminsRole(String projectId, String userGroupLink, String resourceGroupLink) {
-        String id = AuthRole.PROJECT_ADMINS.buildRoleWithSuffix(projectId, Service.getId(userGroupLink));
-        String selfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
+    public static RoleState buildProjectAdminsRole(String projectId, String userGroupLink,
+            String resourceGroupLink) {
         EnumSet<Action> verbs = EnumSet.allOf(Action.class);
-
-        RoleState roleState = buildRoleState(selfLink, userGroupLink, resourceGroupLink, verbs);
-
-        return roleState;
+        return buildProjectRole(AuthRole.PROJECT_ADMINS, verbs, projectId, userGroupLink,
+                resourceGroupLink);
     }
 
-    public static RoleState buildProjectMembersRole(String projectId, String userGroupLink, String resourceGroupLink) {
-        String id = AuthRole.PROJECT_MEMBERS.buildRoleWithSuffix(projectId, Service.getId(userGroupLink));
-        String selfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
+    public static RoleState buildProjectMembersRole(String projectId, String userGroupLink,
+            String resourceGroupLink) {
         EnumSet<Action> verbs = EnumSet.of(Action.GET);
+        return buildProjectRole(AuthRole.PROJECT_MEMBERS, verbs, projectId, userGroupLink,
+                resourceGroupLink);
+    }
+
+    public static RoleState buildProjectViewersRole(String projectId, String userGroupLink,
+            String resourceGroupLink) {
+        // TODO currently this is the same as the members role. Probably needs to be tweaked or
+        // another resource group needs to be introduced
+        EnumSet<Action> verbs = EnumSet.of(Action.GET);
+        return buildProjectRole(AuthRole.PROJECT_VIEWERS, verbs, projectId, userGroupLink,
+                resourceGroupLink);
+    }
+
+    public static RoleState buildProjectRole(AuthRole role, EnumSet<Action> verbs, String projectId,
+            String userGroupLink, String resourceGroupLink) {
+        String id = role.buildRoleWithSuffix(projectId, Service.getId(userGroupLink));
+        String selfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
 
         RoleState roleState = buildRoleState(selfLink, userGroupLink, resourceGroupLink, verbs);
 

@@ -171,7 +171,7 @@ public class AuthContentServiceTest extends AuthBaseTest {
     }
 
     @Test
-    public void testWhenProjectIsImportedUserIsNotAssignedAsProjectMemberOrAdmin()
+    public void testWhenProjectIsImportedUserIsNotAddedToProject()
             throws Throwable {
         AuthContentBody body = Utils.fromJson(projectOnlyContent, AuthContentBody.class);
         loadAuthContent(body);
@@ -195,10 +195,13 @@ public class AuthContentServiceTest extends AuthBaseTest {
 
         String adminsGroup = projectState.administratorsUserGroupLinks.get(0);
         String membersGroup = projectState.membersUserGroupLinks.get(0);
+        String viewersGroup = projectState.viewersUserGroupLinks.get(0);
 
         List<UserState> adminUsers = getUsersFromUserGroup(adminsGroup);
 
         List<UserState> memberUsers = getUsersFromUserGroup(membersGroup);
+
+        List<UserState> viewerUsers = getUsersFromUserGroup(viewersGroup);
 
         for (UserState admin : adminUsers) {
             assertTrue(!admin.email.equals(USER_EMAIL_ADMIN));
@@ -206,6 +209,10 @@ public class AuthContentServiceTest extends AuthBaseTest {
 
         for (UserState member : memberUsers) {
             assertTrue(!member.email.equals(USER_EMAIL_ADMIN));
+        }
+
+        for (UserState viewer : viewerUsers) {
+            assertTrue(!viewer.email.equals(USER_EMAIL_ADMIN));
         }
     }
 

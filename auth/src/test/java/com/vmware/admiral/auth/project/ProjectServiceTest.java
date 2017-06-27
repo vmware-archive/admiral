@@ -89,8 +89,11 @@ public class ProjectServiceTest extends AuthBaseTest {
         ProjectRoles projectRoles = new ProjectRoles();
         projectRoles.members = new PrincipalRoleAssignment();
         projectRoles.administrators = new PrincipalRoleAssignment();
+        projectRoles.viewers = new PrincipalRoleAssignment();
         projectRoles.administrators.add = Collections.singletonList(USER_EMAIL_ADMIN);
         projectRoles.members.add = Collections.singletonList(USER_EMAIL_ADMIN);
+        projectRoles.viewers.add = Collections.singletonList(USER_EMAIL_BASIC_USER);
+
         doPatch(projectRoles, project.documentSelfLink);
     }
 
@@ -155,10 +158,13 @@ public class ProjectServiceTest extends AuthBaseTest {
         ExpandedProjectState expandedState = getExpandedProjectState(project.documentSelfLink);
         assertNotNull(expandedState.administrators);
         assertNotNull(expandedState.members);
+        assertNotNull(expandedState.viewers);
         assertEquals(1, expandedState.administrators.size());
         assertEquals(1, expandedState.members.size());
+        assertEquals(1, expandedState.viewers.size());
         assertEquals(USER_EMAIL_ADMIN, expandedState.administrators.iterator().next().email);
         assertEquals(USER_EMAIL_ADMIN, expandedState.members.iterator().next().email);
+        assertEquals(USER_EMAIL_BASIC_USER, expandedState.viewers.iterator().next().email);
 
         // make a batch user operation: add and remove members
         ProjectRoles projectRoles = new ProjectRoles();
@@ -172,8 +178,10 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertNotNull(expandedState.administrators);
         assertNotNull(expandedState.members);
         assertEquals(1, expandedState.administrators.size());
+        assertEquals(1, expandedState.viewers.size());
         assertEquals(2, expandedState.members.size()); // one removed, two added
         assertEquals(USER_EMAIL_ADMIN, expandedState.administrators.iterator().next().email);
+        assertEquals(USER_EMAIL_BASIC_USER, expandedState.viewers.iterator().next().email);
         assertTrue(expandedState.members.stream()
                 .anyMatch((member) -> member.email.equals(USER_EMAIL_GLORIA)));
         assertTrue(expandedState.members.stream()
@@ -217,10 +225,12 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertEquals(PROJECT_IS_PUBLIC, expandedState.isPublic);
         assertNotNull(expandedState.administrators);
         assertNotNull(expandedState.members);
+        assertNotNull(expandedState.viewers);
         assertEquals(1, expandedState.administrators.size());
         assertEquals(1, expandedState.members.size());
         assertEquals(USER_EMAIL_ADMIN, expandedState.administrators.iterator().next().email);
         assertEquals(USER_EMAIL_ADMIN, expandedState.members.iterator().next().email);
+        assertEquals(USER_EMAIL_BASIC_USER, expandedState.viewers.iterator().next().email);
 
         // Patch name, public flag and roles at the same time
         final String patchedName = "patchedName";
@@ -240,8 +250,10 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertNotEquals(patchedPublicFlag, PROJECT_IS_PUBLIC);
         assertNotNull(expandedState.administrators);
         assertNotNull(expandedState.members);
+        assertEquals(1, expandedState.viewers.size());
         assertEquals(1, expandedState.administrators.size());
         assertEquals(3, expandedState.members.size());
+        assertEquals(USER_EMAIL_BASIC_USER, expandedState.viewers.iterator().next().email);
         assertEquals(USER_EMAIL_ADMIN, expandedState.administrators.iterator().next().email);
         List<String> expectedMembers = Arrays
                 .asList(USER_EMAIL_ADMIN, USER_EMAIL_CONNIE, USER_EMAIL_GLORIA);
@@ -290,10 +302,13 @@ public class ProjectServiceTest extends AuthBaseTest {
         ExpandedProjectState expandedState = getExpandedProjectState(project.documentSelfLink);
         assertNotNull(expandedState.administrators);
         assertNotNull(expandedState.members);
+        assertNotNull(expandedState.viewers);
         assertEquals(1, expandedState.administrators.size());
         assertEquals(1, expandedState.members.size());
+        assertEquals(1, expandedState.viewers.size());
         assertEquals(USER_EMAIL_ADMIN, expandedState.administrators.iterator().next().email);
         assertEquals(USER_EMAIL_ADMIN, expandedState.members.iterator().next().email);
+        assertEquals(USER_EMAIL_BASIC_USER, expandedState.viewers.iterator().next().email);
 
         // make a batch user operation: add and remove members
         ProjectRoles projectRoles = new ProjectRoles();
@@ -324,9 +339,12 @@ public class ProjectServiceTest extends AuthBaseTest {
         expandedState = getExpandedProjectState(project.documentSelfLink);
         assertNotNull(expandedState.administrators);
         assertNotNull(expandedState.members);
+        assertNotNull(expandedState.viewers);
         assertEquals(1, expandedState.administrators.size());
+        assertEquals(1, expandedState.viewers.size());
         assertEquals(2, expandedState.members.size()); // one removed, two added
         assertEquals(USER_EMAIL_ADMIN, expandedState.administrators.iterator().next().email);
+        assertEquals(USER_EMAIL_BASIC_USER, expandedState.viewers.iterator().next().email);
         assertTrue(expandedState.members.stream()
                 .anyMatch((member) -> member.email.equals(USER_EMAIL_GLORIA)));
         assertTrue(expandedState.members.stream()
@@ -337,6 +355,7 @@ public class ProjectServiceTest extends AuthBaseTest {
     public void testDelete() throws Throwable {
         String admins = project.administratorsUserGroupLinks.iterator().next();
         String members = project.membersUserGroupLinks.iterator().next();
+        String viewers = project.viewersUserGroupLinks.iterator().next();
         deleteProject(project);
 
         // Verify the default UserGroups are deleted
@@ -345,6 +364,9 @@ public class ProjectServiceTest extends AuthBaseTest {
 
         UserGroupState membersGroups = getDocumentNoWait(UserGroupState.class, members);
         assertNull(membersGroups);
+
+        UserGroupState viewersGroups = getDocumentNoWait(UserGroupState.class, viewers);
+        assertNull(viewersGroups);
     }
 
     @Test
@@ -355,26 +377,37 @@ public class ProjectServiceTest extends AuthBaseTest {
         ProjectRoles roles = new ProjectRoles();
         roles.administrators = roleAssignment;
         roles.members = roleAssignment;
+        roles.viewers = roleAssignment;
         doPatch(roles, project.documentSelfLink);
 
         String fritzLink = UriUtils.buildUriPath(UserService.FACTORY_LINK, USER_EMAIL_ADMIN);
+
+        String resourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
+                Service.getId(project.documentSelfLink));
+
+        String viewersGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_VIEWERS.buildRoleWithSuffix(Service.getId(project
+                        .documentSelfLink)));
         String membersGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                 AuthRole.PROJECT_MEMBERS.buildRoleWithSuffix(Service.getId(project
                         .documentSelfLink)));
         String adminsGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                 AuthRole.PROJECT_ADMINS.buildRoleWithSuffix(Service.getId(project
                         .documentSelfLink)));
-        String resourceGroupLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
-                Service.getId(project.documentSelfLink));
+
         String adminsRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
                 AuthRole.PROJECT_ADMINS.buildRoleWithSuffix(Service.getId(project
                         .documentSelfLink), adminsGroupLink));
         String membersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
-                AuthRole.PROJECT_ADMINS.buildRoleWithSuffix(Service.getId(project
+                AuthRole.PROJECT_MEMBERS.buildRoleWithSuffix(Service.getId(project
                         .documentSelfLink), membersGroupLink));
+        String viewersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
+                AuthRole.PROJECT_VIEWERS.buildRoleWithSuffix(Service.getId(project
+                        .documentSelfLink), viewersGroupLink));
 
         // verify fritz is added.
         UserState fritzState = getDocument(UserState.class, fritzLink);
+        assertTrue(fritzState.userGroupLinks.contains(viewersGroupLink));
         assertTrue(fritzState.userGroupLinks.contains(membersGroupLink));
         assertTrue(fritzState.userGroupLinks.contains(adminsGroupLink));
 
@@ -389,6 +422,9 @@ public class ProjectServiceTest extends AuthBaseTest {
         UserGroupState membersGroups = getDocumentNoWait(UserGroupState.class, membersGroupLink);
         assertNull(membersGroups);
 
+        UserGroupState viewersGroups = getDocumentNoWait(UserGroupState.class, viewersGroupLink);
+        assertNull(viewersGroups);
+
         // Verify that the ResourceGroup is deleted
         ResourceGroupState resourceGroup = getDocumentNoWait(ResourceGroupState.class,
                 resourceGroupLink);
@@ -402,10 +438,15 @@ public class ProjectServiceTest extends AuthBaseTest {
         RoleState memberRoleState = getDocumentNoWait(RoleState.class, membersRoleLink);
         assertNull(memberRoleState);
 
+        // Verify that the ViewerRole is delete
+        RoleState viewerRoleState = getDocumentNoWait(RoleState.class, viewersRoleLink);
+        assertNull(viewerRoleState);
+
         // Verify fritz's userstate is patched
         fritzState = getDocument(UserState.class, fritzLink);
         assertTrue(!fritzState.userGroupLinks.contains(membersGroupLink));
         assertTrue(!fritzState.userGroupLinks.contains(adminsGroupLink));
+        assertTrue(!fritzState.userGroupLinks.contains(viewersGroupLink));
     }
 
     @Test
@@ -475,8 +516,11 @@ public class ProjectServiceTest extends AuthBaseTest {
                 .PROJECT_ADMINS.buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
         String membersLinks = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, AuthRole
                 .PROJECT_MEMBERS.buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
+        String viewersLinks = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, AuthRole
+                .PROJECT_VIEWERS.buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
         assertDocumentExists(adminsLinks);
         assertDocumentExists(membersLinks);
+        assertDocumentExists(viewersLinks);
     }
 
     @Test
@@ -496,6 +540,10 @@ public class ProjectServiceTest extends AuthBaseTest {
                 .getId(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, AuthRole
                         .PROJECT_MEMBERS
                         .buildRoleWithSuffix(Service.getId(project.documentSelfLink))));
+        String viewersUserGroupId = Service
+                .getId(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, AuthRole
+                        .PROJECT_VIEWERS
+                        .buildRoleWithSuffix(Service.getId(project.documentSelfLink))));
 
         String adminsRoleLinks = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole
                 .PROJECT_ADMINS
@@ -503,9 +551,13 @@ public class ProjectServiceTest extends AuthBaseTest {
         String membersRoleLinks = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole
                 .PROJECT_MEMBERS
                 .buildRoleWithSuffix(Service.getId(project.documentSelfLink), membersUserGroupId));
+        String viewersRoleLinks = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole
+                .PROJECT_VIEWERS
+                .buildRoleWithSuffix(Service.getId(project.documentSelfLink), viewersUserGroupId));
 
         assertDocumentExists(adminsRoleLinks);
         assertDocumentExists(membersRoleLinks);
+        assertDocumentExists(viewersRoleLinks);
     }
 
     @Test
@@ -525,13 +577,20 @@ public class ProjectServiceTest extends AuthBaseTest {
         assertTrue(stateWithMembers.members.iterator()
                 .next().documentSelfLink
                 .equals(buildUserServicePath(USER_EMAIL_ADMIN)));
+
+        assertNotNull(stateWithMembers.viewers);
+        assertTrue(stateWithMembers.viewers.size() == 1);
+        assertTrue(stateWithMembers.viewers.iterator()
+                .next().documentSelfLink
+                .equals(buildUserServicePath(USER_EMAIL_BASIC_USER)));
     }
 
     @Test
-    public void testGetStateWithMembersReturnsEmptyListsOnMissingUserGroups() throws Throwable {
+    public void testGetExpandedProjectStateReturnsEmptyListsOnMissingUserGroups() throws Throwable {
         // update project state to have no admins and members group links stored
         project.administratorsUserGroupLinks = null;
         project.membersUserGroupLinks = null;
+        project.viewersUserGroupLinks = null;
         project = doPut(project);
 
         ExpandedProjectState stateWithMembers = getExpandedProjectState(
@@ -543,6 +602,9 @@ public class ProjectServiceTest extends AuthBaseTest {
 
         assertNotNull(stateWithMembers.members);
         assertTrue(stateWithMembers.members.size() == 0);
+
+        assertNotNull(stateWithMembers.viewers);
+        assertTrue(stateWithMembers.viewers.size() == 0);
     }
 
     @Test
@@ -743,19 +805,6 @@ public class ProjectServiceTest extends AuthBaseTest {
         Operation op = Operation.createPost(host, ProjectFactoryService.SELF_LINK)
                 .setBody(state);
         host.send(op);
-    }
-
-    private UserGroupState createUserGroup() throws Throwable {
-
-        Query query = QueryUtil.buildPropertyQuery(UserState.class, UserState.FIELD_NAME_SELF_LINK,
-                buildUserServicePath(USER_EMAIL_ADMIN)).querySpec.query;
-
-        UserGroupState userGroupState = UserGroupState.Builder
-                .create()
-                .withQuery(query)
-                .build();
-
-        return doPost(userGroupState, UserGroupService.FACTORY_LINK);
     }
 
     private ResourcePoolState createResourcePool() throws Throwable {

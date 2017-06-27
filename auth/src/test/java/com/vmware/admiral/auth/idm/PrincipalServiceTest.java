@@ -238,6 +238,7 @@ public class PrincipalServiceTest extends AuthBaseTest {
         ctx.await();
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void testNestedGetGroupsForPrincipal() throws Throwable {
         LocalPrincipalState itGroup = new LocalPrincipalState();
@@ -278,6 +279,7 @@ public class PrincipalServiceTest extends AuthBaseTest {
         assertTrue(groups.contains("organization"));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void testSimpleGetGroupsForPrincipal() throws Throwable {
         TestContext ctx = testCreate(1);
@@ -312,6 +314,7 @@ public class PrincipalServiceTest extends AuthBaseTest {
         ProjectRoles projectRoles = new ProjectRoles();
         projectRoles.members = roleAssignment;
         projectRoles.administrators = roleAssignment;
+        projectRoles.viewers = roleAssignment;
         doPatch(projectRoles, project.documentSelfLink);
 
         PrincipalRoles roles = getDocumentNoWait(PrincipalRoles.class, UriUtils.buildUriPath
@@ -326,6 +329,7 @@ public class PrincipalServiceTest extends AuthBaseTest {
         assertEquals(project.name, roles.projects.get(0).name);
         assertTrue(roles.projects.get(0).roles.contains(AuthRole.PROJECT_ADMINS));
         assertTrue(roles.projects.get(0).roles.contains(AuthRole.PROJECT_MEMBERS));
+        assertTrue(roles.projects.get(0).roles.contains(AuthRole.PROJECT_VIEWERS));
     }
 
     @Test

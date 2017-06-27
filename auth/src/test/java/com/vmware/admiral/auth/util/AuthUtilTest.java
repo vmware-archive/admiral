@@ -39,6 +39,8 @@ import static com.vmware.admiral.auth.util.AuthUtil.buildProjectAdminsUserGroup;
 import static com.vmware.admiral.auth.util.AuthUtil.buildProjectMembersRole;
 import static com.vmware.admiral.auth.util.AuthUtil.buildProjectMembersUserGroup;
 import static com.vmware.admiral.auth.util.AuthUtil.buildProjectResourceGroup;
+import static com.vmware.admiral.auth.util.AuthUtil.buildProjectViewersRole;
+import static com.vmware.admiral.auth.util.AuthUtil.buildProjectViewersUserGroup;
 import static com.vmware.admiral.auth.util.AuthUtil.buildResourceGroupState;
 import static com.vmware.admiral.auth.util.AuthUtil.buildRoleState;
 import static com.vmware.admiral.auth.util.AuthUtil.buildUserGroupState;
@@ -149,6 +151,17 @@ public class AuthUtilTest {
     }
 
     @Test
+    public void testBuildProjectViewersUserGroup() {
+        UserGroupState userGroupState = buildProjectViewersUserGroup(SAMPLE_PROJECT_ID);
+
+        String id = AuthRole.PROJECT_VIEWERS.buildRoleWithSuffix(SAMPLE_PROJECT_ID);
+        String expectedSelfLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, id);
+        assertEquals(expectedSelfLink, userGroupState.documentSelfLink);
+        assertNotNull(userGroupState.query);
+    }
+
+
+    @Test
     public void testBuildProjectResourceGroup() {
         ResourceGroupState resourceGroupState = buildProjectResourceGroup(SAMPLE_PROJECT_ID);
         String expectedSelfLink = UriUtils
@@ -178,6 +191,17 @@ public class AuthUtilTest {
 
         String id = AuthRole.PROJECT_MEMBERS
                 .buildRoleWithSuffix(SAMPLE_PROJECT_ID, SAMPLE_USER_GROUP_LINK);
+        String expectedSelfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
+        assertEquals(expectedSelfLink, roleState.documentSelfLink);
+        assertEquals(SAMPLE_USER_GROUP_LINK, roleState.userGroupLink);
+        assertEquals(SAMPLE_RESOURCE_GROUP_LINK, roleState.resourceGroupLink);
+    }
+
+    @Test
+    public void testBuildProjectViewersRole() {
+        RoleState roleState = buildProjectViewersRole(SAMPLE_PROJECT_ID, SAMPLE_USER_GROUP_LINK, SAMPLE_RESOURCE_GROUP_LINK);
+
+        String id = AuthRole.PROJECT_VIEWERS.buildRoleWithSuffix(SAMPLE_PROJECT_ID, SAMPLE_USER_GROUP_LINK);
         String expectedSelfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
         assertEquals(expectedSelfLink, roleState.documentSelfLink);
         assertEquals(SAMPLE_USER_GROUP_LINK, roleState.userGroupLink);

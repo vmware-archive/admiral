@@ -141,31 +141,34 @@ public abstract class AuthBaseTest extends BaseTestCase {
     }
 
     protected ProjectState createProject(String name) throws Throwable {
-        return createProject(name, null, false, null, null);
+        return createProject(name, null, false, null, null, null);
     }
 
     protected ProjectState createProject(String name, Map<String, String> customProperties)
             throws Throwable {
-        return createProject(name, null, false, null, null, customProperties);
+        return createProject(name, null, false, null, null, null, customProperties);
     }
 
     protected ProjectState createProject(String name, String description, boolean isPublic)
             throws Throwable {
-        return createProject(name, description, isPublic, null, null);
+        return createProject(name, description, isPublic, null, null, null);
     }
 
     protected ProjectState createProject(String name, String description, boolean isPublic,
             Map<String, String> customProperties) throws Throwable {
-        return createProject(name, description, isPublic, null, null, customProperties);
+        return createProject(name, description, isPublic, null, null, null, customProperties);
     }
 
     protected ProjectState createProject(String name, String description, boolean isPublic,
-            String adminsGroupLink, String membersGroupLink) throws Throwable {
-        return createProject(name, description, isPublic, adminsGroupLink, membersGroupLink, null);
+            String adminsGroupLink, String membersGroupLink, String viewersGroupLink)
+            throws Throwable {
+        return createProject(name, description, isPublic, adminsGroupLink, membersGroupLink,
+                viewersGroupLink, null);
     }
 
     protected ProjectState createProject(String name, String description, boolean isPublic,
-            String adminsGroupLink, String membersGroupLink, Map<String, String> customProperties)
+            String adminsGroupLink, String membersGroupLink, String viewersGroupLink,
+            Map<String, String> customProperties)
             throws Throwable {
         ProjectState projectState = new ProjectState();
 
@@ -175,6 +178,7 @@ public abstract class AuthBaseTest extends BaseTestCase {
         projectState.isPublic = isPublic;
         projectState.administratorsUserGroupLinks = new ArrayList<>();
         projectState.membersUserGroupLinks = new ArrayList<>();
+        projectState.viewersUserGroupLinks = new ArrayList<>();
         projectState.customProperties = customProperties;
 
         if (adminsGroupLink != null) {
@@ -182,6 +186,9 @@ public abstract class AuthBaseTest extends BaseTestCase {
         }
         if (membersGroupLink != null) {
             projectState.membersUserGroupLinks.add(membersGroupLink);
+        }
+        if (viewersGroupLink != null) {
+            projectState.viewersUserGroupLinks.add(viewersGroupLink);
         }
 
         projectState = doPost(projectState, ProjectFactoryService.SELF_LINK);

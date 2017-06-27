@@ -18,7 +18,8 @@ public enum AuthRole {
     BASIC_USERS("Basic Users", "basic-users"),
     BASIC_USERS_EXTENDED("Basic Users Extended", "basic-users-extended"),
     PROJECT_ADMINS("Project Admins", "project-admins"),
-    PROJECT_MEMBERS("Project Members", "project-members");
+    PROJECT_MEMBERS("Project Members", "project-members"),
+    PROJECT_VIEWERS("Project Viewers", "project-viewers"),;
 
     public static final String SUFFIX_SEPARATOR = "_";
 

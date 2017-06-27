@@ -39,7 +39,7 @@ public class ProjectRolesHandler {
     private static final String BODY_IS_REQUIRED_MESSAGE_CODE = "auth.body.required";
 
     public static final EnumSet<AuthRole> PROJECT_ROLES = EnumSet.of(AuthRole.PROJECT_ADMINS,
-            AuthRole.PROJECT_MEMBERS);
+            AuthRole.PROJECT_MEMBERS, AuthRole.PROJECT_VIEWERS);
 
     private static final String NOT_PROJECT_ROLE_MESSAGE = String.format(
             "Role should be one of: %s", PROJECT_ROLES);
@@ -60,6 +60,11 @@ public class ProjectRolesHandler {
          */
         public PrincipalRoleAssignment members;
 
+        /**
+         * Assignment/unassignment of project viewers.
+         */
+        public PrincipalRoleAssignment viewers;
+
     }
 
     private ServiceHost serviceHost;
@@ -79,7 +84,8 @@ public class ProjectRolesHandler {
         }
         boolean updateAdmins = body.administrators != null && hasRolesUpdate(body.administrators);
         boolean updateMembers = body.members != null && hasRolesUpdate(body.members);
-        return updateAdmins || updateMembers;
+        boolean updateViewers = body.viewers != null && hasRolesUpdate(body.viewers);
+        return updateAdmins || updateMembers || updateViewers;
     }
 
     private static boolean hasRolesUpdate(PrincipalRoleAssignment rolesAssignment) {
@@ -109,55 +115,19 @@ public class ProjectRolesHandler {
         List<String> adminUsersToRemove = new ArrayList<>();
         List<String> membersUsersToAdd = new ArrayList<>();
         List<String> membersUsersToRemove = new ArrayList<>();
+        List<String> viewersUsersToAdd = new ArrayList<>();
+        List<String> viewersUsersToRemove = new ArrayList<>();
 
         List<String> adminUserGroupsToAdd = new ArrayList<>();
         List<String> adminUserGroupsToRemove = new ArrayList<>();
         List<String> membersUserGroupsToAdd = new ArrayList<>();
         List<String> membersUserGroupsToRemove = new ArrayList<>();
+        List<String> viewersUserGroupsToAdd = new ArrayList<>();
+        List<String> viewersUserGroupsToRemove = new ArrayList<>();
 
-        if (patchBody.administrators != null && patchBody.administrators.add != null && !patchBody
-                .administrators.add.isEmpty()) {
-            for (String principal : patchBody.administrators.add) {
-                if (principal.contains(PrincipalRolesHandler.PRINCIPAL_AT_SIGN)) {
-                    adminUsersToAdd.add(principal);
-                } else {
-                    adminUserGroupsToAdd.add(principal);
-                }
-            }
-        }
-
-        if (patchBody.administrators != null && patchBody.administrators.remove != null
-                && !patchBody.administrators.remove.isEmpty()) {
-            for (String principal : patchBody.administrators.remove) {
-                if (principal.contains(PrincipalRolesHandler.PRINCIPAL_AT_SIGN)) {
-                    adminUsersToRemove.add(principal);
-                } else {
-                    adminUserGroupsToRemove.add(principal);
-                }
-            }
-        }
-
-        if (patchBody.members != null && patchBody.members.add != null && !patchBody
-                .members.add.isEmpty()) {
-            for (String principal : patchBody.members.add) {
-                if (principal.contains(PrincipalRolesHandler.PRINCIPAL_AT_SIGN)) {
-                    membersUsersToAdd.add(principal);
-                } else {
-                    membersUserGroupsToAdd.add(principal);
-                }
-            }
-        }
-
-        if (patchBody.members != null && patchBody.members.remove != null && !patchBody
-                .members.remove.isEmpty()) {
-            for (String principal : patchBody.members.remove) {
-                if (principal.contains(PrincipalRolesHandler.PRINCIPAL_AT_SIGN)) {
-                    membersUsersToRemove.add(principal);
-                } else {
-                    membersUserGroupsToRemove.add(principal);
-                }
-            }
-        }
+        buildAddRemoveLists(patchBody.administrators, adminUsersToAdd, adminUserGroupsToAdd, adminUsersToRemove, adminUserGroupsToRemove);
+        buildAddRemoveLists(patchBody.members, membersUsersToAdd, membersUserGroupsToAdd, membersUsersToRemove, membersUserGroupsToRemove);
+        buildAddRemoveLists(patchBody.viewers, viewersUsersToAdd, viewersUserGroupsToAdd, viewersUsersToRemove, viewersUserGroupsToRemove);
 
         List<DeferredResult<Void>> results = new ArrayList<>();
 
@@ -165,12 +135,17 @@ public class ProjectRolesHandler {
                 AuthRole.PROJECT_ADMINS));
         results.add(handleUserAssignment(membersUsersToAdd, membersUsersToRemove,
                 AuthRole.PROJECT_MEMBERS));
+        results.add(handleUserAssignment(viewersUsersToAdd, viewersUsersToRemove,
+                AuthRole.PROJECT_VIEWERS));
+
 
         // When assigning UserGroup is ready remove the try-catch.
         // It's like this currently, because the findbugs plugin fails the build.
         try {
-            results.add(handleGroupsAssignment(adminUserGroupsToAdd, adminUserGroupsToRemove,
-                    membersUserGroupsToAdd, membersUserGroupsToRemove));
+            results.add(handleGroupsAssignment(
+                    adminUserGroupsToAdd, adminUserGroupsToRemove,
+                    membersUserGroupsToAdd, membersUserGroupsToRemove,
+                    viewersUserGroupsToAdd, viewersUserGroupsToRemove));
         } catch (Exception ex) {
         }
 
@@ -178,6 +153,39 @@ public class ProjectRolesHandler {
         return DeferredResult.allOf(results).thenAccept(ignore -> {
         });
     }
+
+    /**
+     * Iterates through the specified {@link PrincipalRoleAssignment} and fills the provided lists
+     * with users and groups to add/remove from a given project.
+     */
+    private void buildAddRemoveLists(PrincipalRoleAssignment assignment,
+            List<String> usersToAdd, List<String> userGroupsToAdd,
+            List<String> usersToRemove, List<String> userGroupsToRemove) {
+        if (assignment == null) {
+            return;
+        }
+
+        if (assignment.add != null && !assignment.add.isEmpty()) {
+            for (String principal : assignment.add) {
+                if (principal.contains(PrincipalRolesHandler.PRINCIPAL_AT_SIGN)) {
+                    usersToAdd.add(principal);
+                } else {
+                    userGroupsToAdd.add(principal);
+                }
+            }
+        }
+
+        if (assignment.remove != null && !assignment.remove.isEmpty()) {
+            for (String principal : assignment.remove) {
+                if (principal.contains(PrincipalRolesHandler.PRINCIPAL_AT_SIGN)) {
+                    usersToRemove.add(principal);
+                } else {
+                    userGroupsToRemove.add(principal);
+                }
+            }
+        }
+    }
+
 
     private DeferredResult<Void> handleUserAssignment(List<String> addPrincipals,
             List<String> removePrincipals, AuthRole role) {
@@ -187,15 +195,11 @@ public class ProjectRolesHandler {
         String groupLink;
 
         switch (role) {
-
         case PROJECT_ADMINS:
-            groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                    AuthRole.PROJECT_ADMINS.buildRoleWithSuffix(projectId));
-            break;
-
         case PROJECT_MEMBERS:
+        case PROJECT_VIEWERS:
             groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                    AuthRole.PROJECT_MEMBERS.buildRoleWithSuffix(projectId));
+                    role.buildRoleWithSuffix(projectId));
             break;
 
         default:
@@ -228,9 +232,10 @@ public class ProjectRolesHandler {
      * 2. Remove group's corresponding role(s).
      */
 
-    private DeferredResult<Void> handleGroupsAssignment(List<String> adminUserGroupsToAdd,
-            List<String> adminUserGroupsToRemove, List<String> memberUserGroupsToAdd,
-            List<String> memberUserGroupsToRemove) {
+    private DeferredResult<Void> handleGroupsAssignment(
+            List<String> adminUserGroupsToAdd, List<String> adminUserGroupsToRemove,
+            List<String> memberUserGroupsToAdd, List<String> memberUserGroupsToRemove,
+            List<String> viewerUserGroupsToAdd, List<String> viewerUserGroupsToRemove) {
 
         List<DeferredResult<Void>> results = new ArrayList<>();
 
@@ -250,8 +255,24 @@ public class ProjectRolesHandler {
             results.add(handleProjectMemberGroupUnssignment(removeMember));
         }
 
+        for (String addViewer : viewerUserGroupsToAdd) {
+            results.add(handleProjectViewerGroupAssignment(addViewer));
+        }
+
+        for (String removeViewer : viewerUserGroupsToRemove) {
+            results.add(handleProjectViewerGroupUnssignment(removeViewer));
+        }
+
         return DeferredResult.allOf(results).thenAccept(ignore -> {
         });
+    }
+
+    private DeferredResult<Void> handleProjectViewerGroupAssignment(String group) {
+        throw new IllegalStateException("Not implemented yet.");
+    }
+
+    private DeferredResult<Void> handleProjectViewerGroupUnssignment(String group) {
+        throw new IllegalStateException("Not implemented yet.");
     }
 
     private DeferredResult<Void> handleProjectMemberGroupAssignment(String group) {

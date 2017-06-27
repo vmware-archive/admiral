@@ -208,6 +208,10 @@ public class SecurityContextUtil {
                             project.membersUserGroupLinks, userGroupLinks)) {
                         projectEntry.roles.add(AuthRole.PROJECT_MEMBERS);
                     }
+                    if (CollectionUtils.containsAny(
+                            project.viewersUserGroupLinks, userGroupLinks)) {
+                        projectEntry.roles.add(AuthRole.PROJECT_VIEWERS);
+                    }
 
                     return projectEntry;
                 }).collect(Collectors.toList());

@@ -48,10 +48,12 @@ public class ProjectFactoryServiceTest extends AuthBaseTest {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
         project = createProject(PROJECT_NAME, PROJECT_DESCRIPTION, PROJECT_IS_PUBLIC);
         ProjectRoles projectRoles = new ProjectRoles();
+        projectRoles.viewers = new PrincipalRoleAssignment();
         projectRoles.members = new PrincipalRoleAssignment();
         projectRoles.administrators = new PrincipalRoleAssignment();
         projectRoles.administrators.add = Collections.singletonList(USER_EMAIL_ADMIN);
         projectRoles.members.add = Collections.singletonList(USER_EMAIL_ADMIN);
+        projectRoles.viewers.add = Collections.singletonList(USER_EMAIL_BASIC_USER);
         doPatch(projectRoles, project.documentSelfLink);
     }
 
@@ -91,6 +93,9 @@ public class ProjectFactoryServiceTest extends AuthBaseTest {
                             assertNotNull(stateWithMembers.members);
                             assertEquals(1, stateWithMembers.members.size());
                             assertEquals(USER_EMAIL_ADMIN, stateWithMembers.members.iterator().next().email);
+                            assertNotNull(stateWithMembers.viewers);
+                            assertEquals(1, stateWithMembers.viewers.size());
+                            assertEquals(USER_EMAIL_BASIC_USER, stateWithMembers.viewers.iterator().next().email);
 
                             host.completeIteration();
                         } catch (Throwable ex) {
