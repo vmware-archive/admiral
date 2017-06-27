@@ -41,15 +41,18 @@ import com.vmware.admiral.compute.PlacementZoneUtil;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
 import com.vmware.photon.controller.model.adapters.util.Pair;
+import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
+import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.ServiceHost;
+import com.vmware.xenon.common.ServiceHost.ServiceNotFoundException;
 import com.vmware.xenon.common.StatelessService;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.UriUtils;
@@ -59,19 +62,28 @@ import com.vmware.xenon.services.common.TaskService;
 public class ClusterService extends StatelessService {
 
     public static final String SELF_LINK = ManagementUriParts.CLUSTERS;
+    public static final String HOSTS_URI_PATH_SEGMENT = "hosts";
 
-    private static final Pattern PATTERN_CLUSTER_OPERATION_LINK = Pattern
-            .compile(String.format("^%s\\/[^\\/]+\\/?$", SELF_LINK));
-    private static final Pattern PATTERN_CLUSTER_CREATE_LINK = Pattern
+    private static final Pattern PATTERN_CLUSTER_LINK = Pattern
             .compile(String.format("^%s\\/?$", SELF_LINK));
+    private static final Pattern PATTERN_SINGLE_CLUSTER_OPERATION_LINK = Pattern
+            .compile(String.format("^%s\\/[^\\/]+\\/?$", SELF_LINK));
     private static final Pattern PATTERN_CLUSTER_HOSTS_OPERATION_LINK = Pattern
-            .compile(String.format("^%s\\/[^\\/]+\\/hosts\\/?$", SELF_LINK));
+            .compile(String.format("^%s\\/[^\\/]+\\/%s\\/?$", SELF_LINK, HOSTS_URI_PATH_SEGMENT));
+    private static final Pattern PATTERN_CLUSTER_SINGLE_HOST_OPERATION_LINK = Pattern
+            .compile(String.format("^%s\\/[^\\/]+\\/%s\\/[^\\/]+\\/?$", SELF_LINK,
+                    HOSTS_URI_PATH_SEGMENT));
 
     private static final Pattern PATTERN_PROJECT_TENANT_LINK = Pattern
             .compile(String.format("^%s\\/[^\\/]+", ManagementUriParts.PROJECTS));
 
+    public static final String HOST_NOT_IN_THIS_CLUSTER_EXCEPTION_TEMPLATE = "No host with id %s found in cluster with id %s";
+
     public static final String CLUSTER_ID_PATH_SEGMENT = "clusterId";
-    public static final String CLUSTER_PATH_SEGMENT_TEMPLATE = SELF_LINK + "/{clusterId}";
+    public static final String CLUSTER_HOST_ID_PATH_SEGMENT = "hostId";
+    public static final String CLUSTER_PATH_SEGMENT_TEMPLATE = SELF_LINK + "/{clusterId}" + "/"
+            + HOSTS_URI_PATH_SEGMENT
+            + "/{hostId}";
     public static final String CLUSTER_DETAILS_CUSTOM_PROP = "__clusterDetails";
     public static final String CLUSTER_NAME_CUSTOM_PROP = "__clusterName";
     public static final String CLUSTER_CREATION_TIME_MICROS_CUSTOM_PROP = "__clusterCreationTimeMicros";
@@ -162,7 +174,7 @@ public class ClusterService extends StatelessService {
 
     @Override
     public void handlePost(Operation post) {
-        if (isCreateCluster(post)) {
+        if (isOperationOverAllCluste(post)) {
             createCluster(post);
         } else {
             // TODO add hosts to already existing cluster instead
@@ -180,7 +192,8 @@ public class ClusterService extends StatelessService {
             return;
         }
 
-        String clusterId = getIDFromUri(patch.getUri());
+        String clusterId = UriUtils.parseUriPathSegments(patch.getUri(),
+                CLUSTER_PATH_SEGMENT_TEMPLATE).get(CLUSTER_ID_PATH_SEGMENT);
         String pathPZId = UriUtils.buildUriPath(
                 ElasticPlacementZoneConfigurationService.SELF_LINK,
                 ResourcePoolService.FACTORY_LINK, clusterId);
@@ -213,7 +226,8 @@ public class ClusterService extends StatelessService {
 
     @Override
     public void handleDelete(Operation delete) {
-        String clusterId = getIDFromUri(delete.getUri());
+        String clusterId = UriUtils.parseUriPathSegments(delete.getUri(),
+                CLUSTER_PATH_SEGMENT_TEMPLATE).get(CLUSTER_ID_PATH_SEGMENT);
         String pZILink = UriUtils.buildUriPath(
                 ElasticPlacementZoneConfigurationService.SELF_LINK,
                 ResourcePoolService.FACTORY_LINK, clusterId);
@@ -248,33 +262,42 @@ public class ClusterService extends StatelessService {
 
     @Override
     public void handleGet(Operation get) {
-        if (isCreateCluster(get)) {
-            clusterGet(get);
+        if (isOperationOverAllCluste(get)) {
+            getAllClusters(get);
             return;
         }
-        if (isSingleClusterOperation(get)) {
-            clusterGetSingle(get);
+        if (isOperationOverSingleCluster(get)) {
+            getSingleCluster(get);
             return;
-        } else if (isClusterHostsOperation(get)) {
-            clusterHostsGet(get);
+        }
+        if (isOperationOverAllHostsInSingleCluster(get)) {
+            getAllHostsInSingleCluster(get);
+            return;
+        }
+        if (isOperationOverSingleHostInSingleCluster(get)) {
+            getSingleHostInSingleCluster(get);
             return;
         }
         get.fail(Operation.STATUS_CODE_NOT_FOUND);
     }
 
-    private boolean isCreateCluster(Operation op) {
-        return PATTERN_CLUSTER_CREATE_LINK.matcher(op.getUri().getPath()).matches();
+    private boolean isOperationOverAllCluste(Operation op) {
+        return PATTERN_CLUSTER_LINK.matcher(op.getUri().getPath()).matches();
     }
 
-    private boolean isSingleClusterOperation(Operation op) {
-        return PATTERN_CLUSTER_OPERATION_LINK.matcher(op.getUri().getPath()).matches();
+    private boolean isOperationOverSingleCluster(Operation op) {
+        return PATTERN_SINGLE_CLUSTER_OPERATION_LINK.matcher(op.getUri().getPath()).matches();
     }
 
-    private boolean isClusterHostsOperation(Operation op) {
+    private boolean isOperationOverAllHostsInSingleCluster(Operation op) {
         return PATTERN_CLUSTER_HOSTS_OPERATION_LINK.matcher(op.getUri().getPath()).matches();
     }
 
-    private void clusterGet(Operation get) {
+    private boolean isOperationOverSingleHostInSingleCluster(Operation op) {
+        return PATTERN_CLUSTER_SINGLE_HOST_OPERATION_LINK.matcher(op.getUri().getPath()).matches();
+    }
+
+    private void getAllClusters(Operation get) {
         boolean expand = UriUtils.hasODataExpandParamValue(get.getUri());
         URI elasticPlacementZoneConfigurationUri = UriUtils.buildUri(getHost(),
                 ElasticPlacementZoneConfigurationService.SELF_LINK, get.getUri().getQuery());
@@ -303,8 +326,9 @@ public class ClusterService extends StatelessService {
                         .whenCompleteNotify(get);
     }
 
-    private void clusterGetSingle(Operation get) {
-        String clusterId = getIDFromUri(get.getUri());
+    private void getSingleCluster(Operation get) {
+        String clusterId = UriUtils.parseUriPathSegments(get.getUri(),
+                CLUSTER_PATH_SEGMENT_TEMPLATE).get(CLUSTER_ID_PATH_SEGMENT);
         String pathPZId = UriUtils.buildUriPath(
                 ElasticPlacementZoneConfigurationService.SELF_LINK,
                 ResourcePoolService.FACTORY_LINK, clusterId);
@@ -326,8 +350,9 @@ public class ClusterService extends StatelessService {
 
     }
 
-    private void clusterHostsGet(Operation get) {
-        String clusterId = getIDFromUri(get.getUri());
+    private void getAllHostsInSingleCluster(Operation get) {
+        String clusterId = UriUtils.parseUriPathSegments(get.getUri(),
+                CLUSTER_PATH_SEGMENT_TEMPLATE).get(CLUSTER_ID_PATH_SEGMENT);
         String resourcePoolLink = UriUtils.buildUriPath(
                 ResourcePoolService.FACTORY_LINK, clusterId);
         boolean expand = UriUtils.hasODataExpandParamValue(get.getUri());
@@ -352,6 +377,32 @@ public class ClusterService extends StatelessService {
                     }
                     get.setBody(queryResult);
                 }).whenCompleteNotify(get);
+    }
+
+    private void getSingleHostInSingleCluster(Operation get) {
+        Map<String, String> uriParams = UriUtils.parseUriPathSegments(get.getUri(),
+                CLUSTER_PATH_SEGMENT_TEMPLATE);
+        String clusterId = uriParams.get(CLUSTER_ID_PATH_SEGMENT);
+        String hostId = uriParams.get(CLUSTER_HOST_ID_PATH_SEGMENT);
+
+        String hostDocumentSelfLink = UriUtils.buildUriPath(
+                ComputeService.FACTORY_LINK, hostId);
+
+        sendWithDeferredResult(
+                Operation.createGet(UriUtils.buildUri(getHost(), hostDocumentSelfLink))
+                        .setReferer(getHost().getUri()),
+                ComputeState.class)
+                        .thenAccept(cs -> {
+                            if (clusterId.equals(Service.getId(cs.resourcePoolLink))) {
+                                get.setBody(cs);
+                            } else {
+                                get.fail(new ServiceNotFoundException(String.format(
+                                        HOST_NOT_IN_THIS_CLUSTER_EXCEPTION_TEMPLATE, hostId,
+                                        clusterId)));
+                            }
+                        })
+                        .whenCompleteNotify(get);
+
     }
 
     private DeferredResult<List<ClusterDto>> getInfoFromHostsWihtinPlacementZone(
@@ -534,18 +585,6 @@ public class ClusterService extends StatelessService {
             throw new LocalizableValidationException(
                     "Cluster name is required", "compute.host.spec.is.required");
         }
-    }
-
-    private String getIDFromUri(URI uri) {
-        Map<String, String> pathSegmentParams = UriUtils.parseUriPathSegments(uri,
-                CLUSTER_PATH_SEGMENT_TEMPLATE);
-
-        return pathSegmentParams.get(CLUSTER_ID_PATH_SEGMENT);
-    }
-
-    private boolean isHostOperation(URI uri) {
-
-        return true;
     }
 
 }

@@ -338,6 +338,39 @@ public class ClusterServiceTest extends ComputeBaseTest {
         assertTrue(hostsStates.isEmpty());
     }
 
+    @Test
+    public void testGetSingleHostsInCluster() throws Throwable {
+        final String projectLinkDocker = buildProjectLink("test-docker-project");
+        PlacementZoneUtil
+                .buildPlacementZoneDefaultName(ContainerHostType.DOCKER, COMPUTE_ADDRESS);
+
+        ContainerHostSpec hostSpecDocker = createContainerHostSpec(
+                Collections.singletonList(projectLinkDocker),
+                ContainerHostType.DOCKER);
+
+        final String projectLinkVCH = buildProjectLink("test-vch-project");
+        PlacementZoneUtil
+                .buildPlacementZoneDefaultName(ContainerHostType.VCH, COMPUTE_ADDRESS);
+
+        ContainerHostSpec hostSpecVCH = createContainerHostSpec(
+                Collections.singletonList(projectLinkVCH),
+                ContainerHostType.VCH);
+        ClusterDto clusterDocker = createCluster(hostSpecDocker);
+        ClusterDto clusterVCH = createCluster(hostSpecVCH);
+
+        ComputeState cs = getSingleHostInOneCluster(
+                Service.getId(clusterDocker.documentSelfLink),
+                Service.getId(clusterDocker.nodeLinks.get(0)), false);
+
+        assertNotNull(cs);
+        assertEquals(clusterDocker.nodeLinks.get(0), cs.documentSelfLink);
+
+        cs = getSingleHostInOneCluster(
+                Service.getId(clusterVCH.documentSelfLink),
+                Service.getId(clusterDocker.nodeLinks.get(0)), true);
+        assertTrue(cs == null);
+    }
+
     private void verifyCluster(ClusterDto clusterDto, ClusterType clusterType, String expectedName,
             String projectLink) throws Throwable {
         // verify cluster creation
@@ -695,6 +728,46 @@ public class ClusterServiceTest extends ComputeBaseTest {
         host.testWait();
 
         return result;
+    }
+
+    private ComputeState getSingleHostInOneCluster(String clusterId, String hostId,
+            boolean expectedToFail) {
+        List<ComputeState> result = new LinkedList<>();
+        String pathHostsInCluster = UriUtils.buildUriPath(ClusterService.SELF_LINK, clusterId,
+                "hosts", hostId);
+        URI uri = UriUtils.buildUri(host, pathHostsInCluster);
+        Operation get = Operation.createGet(host, uri.getPath())
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.log(Level.SEVERE, "Failed to get single hosts in cluster: %s",
+                                Utils.toString(ex));
+                        if (expectedToFail && ex.getMessage().contains(String.format(
+                                ClusterService.HOST_NOT_IN_THIS_CLUSTER_EXCEPTION_TEMPLATE, hostId,
+                                clusterId))) {
+                            result.add(null);
+                            host.completeIteration();
+                        } else {
+                            host.failIteration(ex);
+                        }
+                    } else {
+                        try {
+                            result.add(o.getBody(ComputeState.class));
+                            host.completeIteration();
+                        } catch (Throwable er) {
+                            host.log(Level.SEVERE,
+                                    "Failed to retrieve single hosts in cluster from response: %s",
+                                    Utils.toString(er));
+                            host.failIteration(er);
+                        }
+                    }
+                });
+
+        host.testStart(1);
+        host.send(get);
+        host.testWait();
+
+        return result.get(0);
     }
 
     private ContainerHostSpec createContainerHostSpec(List<String> tenantLinks,
