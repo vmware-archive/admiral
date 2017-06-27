@@ -40,7 +40,6 @@ import com.vmware.xenon.services.common.QueryTask.Query;
 public class LocalPrincipalProvider implements PrincipalProvider {
     private static final String EXPAND_QUERY_KEY = "expand";
     private static final String FILTER_QUERY_KEY = "$filter";
-    private static final String EMAIL_FILTER_QUERY_FORMAT = "email eq '*%s*'";
 
     private ServiceHost host;
 
@@ -62,7 +61,7 @@ public class LocalPrincipalProvider implements PrincipalProvider {
 
     @Override
     public DeferredResult<List<Principal>> getPrincipals(String criteria) {
-        String filterQuery = String.format(EMAIL_FILTER_QUERY_FORMAT, criteria);
+        String filterQuery = buildFilterBasedOnCriteria(criteria);
 
         URI uri = UriUtils.buildUri(host, LocalPrincipalFactoryService.SELF_LINK);
         uri = UriUtils.extendUriWithQuery(uri, EXPAND_QUERY_KEY, Boolean.TRUE.toString());
@@ -210,6 +209,11 @@ public class LocalPrincipalProvider implements PrincipalProvider {
             return getIndirectlyAssignedGroupsForPrincipal(groupsToCheck, foundGroups,
                     alreadyChecked);
         });
+    }
+
+    private static String buildFilterBasedOnCriteria(String criteria) {
+        return String.format("name eq '*%s*' or email eq '*%s*' or id eq '*%s*'",
+                criteria, criteria, criteria);
     }
 
 }

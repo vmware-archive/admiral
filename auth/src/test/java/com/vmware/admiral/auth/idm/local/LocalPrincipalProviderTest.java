@@ -76,6 +76,78 @@ public class LocalPrincipalProviderTest extends AuthBaseTest {
     }
 
     @Test
+    public void testGetPrincipalsOfTypeGroup() {
+        String principalId = "superusers";
+        DeferredResult<List<Principal>> result = provider.getPrincipals(principalId);
+
+        TestContext ctx = testCreate(1);
+        result.whenComplete((p, ex) -> {
+            if (ex != null) {
+                ctx.failIteration(ex);
+                return;
+            }
+            ctx.completeIteration();
+        });
+        ctx.await();
+
+        Principal principal = result.getNow(Collections.singletonList(new Principal())).get(0);
+        assertNotNull(principal);
+        assertEquals(principalId, principal.id);
+        assertEquals("superusers", principal.name);
+        assertEquals(PrincipalType.GROUP, principal.type);
+    }
+
+    @Test
+    public void testGetPrincipalsSearchByEmailOrName() throws Throwable {
+        LocalPrincipalState lazyPeonUser = new LocalPrincipalState();
+        lazyPeonUser.name = "Lazy Peon";
+        lazyPeonUser.type = LocalPrincipalType.USER;
+        lazyPeonUser.email = "lazy@peon";
+        lazyPeonUser.password = "testPassword";
+        lazyPeonUser = doPost(lazyPeonUser, LocalPrincipalFactoryService.SELF_LINK);
+
+        // Get by email.
+        DeferredResult<List<Principal>> result = provider.getPrincipals(lazyPeonUser.email);
+
+        TestContext ctx = testCreate(1);
+        result.whenComplete((p, ex) -> {
+            if (ex != null) {
+                ctx.failIteration(ex);
+                return;
+            }
+            ctx.completeIteration();
+        });
+        ctx.await();
+
+        Principal principal = result.getNow(Collections.singletonList(new Principal())).get(0);
+        assertNotNull(principal);
+        assertEquals(lazyPeonUser.id, principal.id);
+        assertEquals(lazyPeonUser.name, principal.name);
+        assertEquals(PrincipalType.USER, principal.type);
+        assertEquals(lazyPeonUser.email, principal.email);
+
+        // Get by name.
+        result = provider.getPrincipals(lazyPeonUser.name);
+
+        TestContext ctx1 = testCreate(1);
+        result.whenComplete((p, ex) -> {
+            if (ex != null) {
+                ctx1.failIteration(ex);
+                return;
+            }
+            ctx1.completeIteration();
+        });
+        ctx1.await();
+
+        principal = result.getNow(Collections.singletonList(new Principal())).get(0);
+        assertNotNull(principal);
+        assertEquals(lazyPeonUser.id, principal.id);
+        assertEquals(lazyPeonUser.name, principal.name);
+        assertEquals(PrincipalType.USER, principal.type);
+        assertEquals(lazyPeonUser.email, principal.email);
+    }
+
+    @Test
     public void testGetPrincipals() {
         String criteria = "i";
         String expectedPrincipal1 = "connie@admiral.com";
