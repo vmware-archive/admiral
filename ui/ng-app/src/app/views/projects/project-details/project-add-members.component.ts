@@ -100,31 +100,24 @@ export class ProjectAddMembersComponent {
             let fieldRoleValue = this.memberRoleSelection;
             if (fieldRoleValue === 'ADMIN') {
                 patchValue = {
-                    "administrators": {"add": selectedPrincipalIds}
+                    "administrators": {"add": selectedPrincipalIds},
+                    "members": {"remove": selectedPrincipalIds}
                 };
             }
 
             if (fieldRoleValue === 'USER') {
                 patchValue = {
-                    "members": {"add": selectedPrincipalIds}
+                    "members": {"add": selectedPrincipalIds},
+                    "administrators": {"remove": selectedPrincipalIds}
                 };
             }
 
             this.service.patch(this.project.documentSelfLink, patchValue).then(() => {
                 this.clearState();
-
                 this.onChange.emit(null);
             }).catch((error) => {
-                if (error.status === 304) {
-                    // actually success
-                    // TODO correct this once backend is corrected
-                    this.clearState();
-
-                    this.onChange.emit(null);
-                } else {
-                    console.log("Failed to add members", error);
-                    this.alertMessage = Utils.getErrorMessage(error)._generic;
-                }
+                console.log("Failed to add members", error);
+                this.alertMessage = Utils.getErrorMessage(error)._generic;
             });
         }
     }

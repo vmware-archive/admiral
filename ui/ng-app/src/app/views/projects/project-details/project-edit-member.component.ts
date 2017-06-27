@@ -11,9 +11,8 @@
 
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormGroup, FormControl } from "@angular/forms";
-
 import { DocumentService } from "../../../utils/document.service";
-
+import { Utils } from "../../../utils/utils";
 import * as I18n from 'i18next';
 
 @Component({
@@ -49,6 +48,9 @@ export class ProjectEditMemberComponent {
 
     memberRoleSelection: string;
 
+    // error
+    alertMessage: string;
+
     constructor(protected service: DocumentService) {
     }
 
@@ -64,7 +66,8 @@ export class ProjectEditMemberComponent {
             let fieldRoleValue = this.memberRoleSelection;
             if (fieldRoleValue === 'ADMIN') {
                 patchValue = {
-                    "administrators": {"add": [this.memberToEdit.id]}
+                    "administrators": {"add": [this.memberToEdit.id]},
+                    "members": {"remove": [this.memberToEdit.id]}
                 };
             }
 
@@ -79,19 +82,17 @@ export class ProjectEditMemberComponent {
                 this.onChange.emit(null);
                 this.editMemberToProjectForm.markAsPristine();
             }).catch((error) => {
-                if (error.status === 304) {
-                    // actually success
-                    this.onChange.emit(null);
-                    this.editMemberToProjectForm.markAsPristine();
-                } else {
-                    console.log("Failed to edit member", error);
-                    // todo show alert message?
-                }
+                console.log("Failed to edit member", error);
+                this.alertMessage = Utils.getErrorMessage(error)._generic;
             });
         }
     }
 
     editCanceled() {
         this.onCancel.emit(null);
+    }
+
+    resetAlert() {
+        this.alertMessage = null;
     }
 }
