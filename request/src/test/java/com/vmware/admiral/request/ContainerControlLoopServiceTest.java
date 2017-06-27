@@ -30,6 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
@@ -286,6 +287,7 @@ public class ContainerControlLoopServiceTest extends RequestBaseTest {
     }
 
     @SuppressWarnings("unchecked")
+    @Ignore("https://jira-hzn.eng.vmware.com/browse/VBV-1427")
     @Test
     public void periodicMaintenanceTest() throws Throwable {
         containerDescription2 = createContainerDescription(false);
