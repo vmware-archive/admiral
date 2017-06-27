@@ -122,9 +122,8 @@ public class ManagementHostClusterOf3NodesIT extends BaseManagementHostClusterIT
             List<ManagementHost> hosts = Arrays.asList(hostOne, hostTwo, hostThree);
             validateDefaultContentAdded(hosts);
         } else {
-            //Process on which hostOne is running hangs out.
-            hostTwo.log(Level.SEVERE,
-                    "Host one wasn not able to stop properly: " + hostOne.getPublicUri());
+            // Process on which hostOne is running hangs out.
+            hostTwo.log(Level.SEVERE, "Host one wasn not able to stop properly: ");
         }
     }
 
