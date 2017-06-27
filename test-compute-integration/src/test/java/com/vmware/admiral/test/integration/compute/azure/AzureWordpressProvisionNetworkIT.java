@@ -83,10 +83,14 @@ public class AzureWordpressProvisionNetworkIT extends BaseWordpressComputeProvis
                 { "WordPress_with_MySQL_compute_public_network.yaml", null },
                 { "WordPress_with_MySQL_compute_isolated_network.yaml",
                         (BiConsumer<Set<ServiceDocument>, String>) BaseWordpressComputeProvisionIT
-                                ::validateIsolatedNic },
+                                ::validateIsolatedNic }
+                /*
+                Disabled until Jira VCOM-1149 is fixed.                                ,
+
                 {"WordPress_with_MySQL_compute_isolated_sg_network.yaml",
                         (BiConsumer<Set<ServiceDocument>, String>) BaseWordpressComputeProvisionIT
                                 ::validateIsolatedNic }
+                */
         });
     }
 
@@ -274,7 +278,7 @@ public class AzureWordpressProvisionNetworkIT extends BaseWordpressComputeProvis
         rgTDelete.add(resourceGroup.name());
     }
 
-    public String getDefaultSubnetStateLink() throws Exception {
+    private String getDefaultSubnetStateLink() throws Exception {
         QueryTask.Query query = QueryTask.Query.Builder.create()
                 .addFieldClause(SubnetState.FIELD_NAME_ID, defaultSubnet.id())
                 .build();
