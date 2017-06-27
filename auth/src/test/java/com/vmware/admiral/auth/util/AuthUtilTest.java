@@ -11,10 +11,11 @@
 
 package com.vmware.admiral.auth.util;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-
-import java.util.EnumSet;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import static com.vmware.admiral.auth.util.AuthUtil.BASIC_USERS_EXTENDED_RESOURCE_GROUP_LINK;
 import static com.vmware.admiral.auth.util.AuthUtil.BASIC_USERS_RESOURCE_GROUP_LINK;
@@ -42,9 +43,12 @@ import static com.vmware.admiral.auth.util.AuthUtil.buildResourceGroupState;
 import static com.vmware.admiral.auth.util.AuthUtil.buildRoleState;
 import static com.vmware.admiral.auth.util.AuthUtil.buildUserGroupState;
 
+import java.util.EnumSet;
+
 import org.junit.Test;
 
 import com.vmware.admiral.auth.idm.AuthRole;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.services.common.QueryTask.Query;
@@ -147,7 +151,8 @@ public class AuthUtilTest {
     @Test
     public void testBuildProjectResourceGroup() {
         ResourceGroupState resourceGroupState = buildProjectResourceGroup(SAMPLE_PROJECT_ID);
-        String expectedSelfLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK, SAMPLE_PROJECT_ID);
+        String expectedSelfLink = UriUtils
+                .buildUriPath(ResourceGroupService.FACTORY_LINK, SAMPLE_PROJECT_ID);
 
         assertEquals(expectedSelfLink, resourceGroupState.documentSelfLink);
         assertNotNull(resourceGroupState.query);
@@ -155,9 +160,11 @@ public class AuthUtilTest {
 
     @Test
     public void testBuildProjectAdminsRole() {
-        RoleState roleState = buildProjectAdminsRole(SAMPLE_PROJECT_ID, SAMPLE_USER_GROUP_LINK, SAMPLE_RESOURCE_GROUP_LINK);
+        RoleState roleState = buildProjectAdminsRole(SAMPLE_PROJECT_ID, SAMPLE_USER_GROUP_LINK,
+                SAMPLE_RESOURCE_GROUP_LINK);
 
-        String id = AuthRole.PROJECT_ADMINS.buildRoleWithSuffix(SAMPLE_PROJECT_ID, SAMPLE_USER_GROUP_LINK);
+        String id = AuthRole.PROJECT_ADMINS
+                .buildRoleWithSuffix(SAMPLE_PROJECT_ID, SAMPLE_USER_GROUP_LINK);
         String expectedSelfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
         assertEquals(expectedSelfLink, roleState.documentSelfLink);
         assertEquals(SAMPLE_USER_GROUP_LINK, roleState.userGroupLink);
@@ -166,9 +173,11 @@ public class AuthUtilTest {
 
     @Test
     public void testBuildProjectMembersRole() {
-        RoleState roleState = buildProjectMembersRole(SAMPLE_PROJECT_ID, SAMPLE_USER_GROUP_LINK, SAMPLE_RESOURCE_GROUP_LINK);
+        RoleState roleState = buildProjectMembersRole(SAMPLE_PROJECT_ID, SAMPLE_USER_GROUP_LINK,
+                SAMPLE_RESOURCE_GROUP_LINK);
 
-        String id = AuthRole.PROJECT_MEMBERS.buildRoleWithSuffix(SAMPLE_PROJECT_ID, SAMPLE_USER_GROUP_LINK);
+        String id = AuthRole.PROJECT_MEMBERS
+                .buildRoleWithSuffix(SAMPLE_PROJECT_ID, SAMPLE_USER_GROUP_LINK);
         String expectedSelfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
         assertEquals(expectedSelfLink, roleState.documentSelfLink);
         assertEquals(SAMPLE_USER_GROUP_LINK, roleState.userGroupLink);
@@ -190,7 +199,8 @@ public class AuthUtilTest {
 
         ResourceGroupState resourceGroupState = buildResourceGroupState(SAMPLE_PROJECT_ID, query);
 
-        String expectedSelfLink = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK, SAMPLE_PROJECT_ID);
+        String expectedSelfLink = UriUtils
+                .buildUriPath(ResourceGroupService.FACTORY_LINK, SAMPLE_PROJECT_ID);
         assertEquals(expectedSelfLink, resourceGroupState.documentSelfLink);
         assertEquals(Occurance.MUST_NOT_OCCUR, resourceGroupState.query.occurance);
     }
@@ -209,11 +219,39 @@ public class AuthUtilTest {
     @Test
     public void testBuildRoleState() {
         EnumSet<Action> verbs = EnumSet.of(Action.GET);
-        RoleState roleState = buildRoleState(SAMPLE_SELF_LINK, SAMPLE_USER_GROUP_LINK, SAMPLE_RESOURCE_GROUP_LINK, verbs);
+        RoleState roleState = buildRoleState(SAMPLE_SELF_LINK, SAMPLE_USER_GROUP_LINK,
+                SAMPLE_RESOURCE_GROUP_LINK, verbs);
 
         assertEquals(SAMPLE_SELF_LINK, roleState.documentSelfLink);
         assertEquals(SAMPLE_USER_GROUP_LINK, roleState.userGroupLink);
         assertEquals(SAMPLE_RESOURCE_GROUP_LINK, roleState.resourceGroupLink);
         assertEquals(verbs, roleState.verbs);
     }
+
+    @Test(expected = LocalizableValidationException.class)
+    public void testExtractDataFromRoleStateId() {
+        String[] in = new String[] {
+                "123_abc_project-members", "1234_abc_def_project-admins",
+                "invalid", "", null
+        };
+
+        String[][] out = new String[][] {
+                new String[] { "123", "abc", "project-members" },
+                new String[] { "1234", "abc_def", "project-admins" }
+        };
+
+        assertArrayEquals(out[0], AuthUtil.extractDataFromRoleStateId(in[0]));
+        assertArrayEquals(out[1], AuthUtil.extractDataFromRoleStateId(in[1]));
+
+        try {
+            AuthUtil.extractDataFromRoleStateId(in[2]);
+            fail("Invalid rolestateId exception expected.");
+        } catch (IllegalArgumentException ex) {
+            assertTrue(ex.getMessage().contains("projectId_groupdId_roleSuffix"));
+        }
+
+        AuthUtil.extractDataFromRoleStateId(in[3]);
+        AuthUtil.extractDataFromRoleStateId(in[4]);
+    }
+
 }

@@ -11,14 +11,20 @@
 
 package com.vmware.admiral.auth.idm;
 
+import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getAllRolesForPrincipals;
+import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getDirectlyAssignedProjectRoles;
+import static com.vmware.admiral.auth.util.PrincipalRolesUtil.getDirectlyAssignedSystemRoles;
+import static com.vmware.admiral.auth.util.PrincipalUtil.copyPrincipalData;
+
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
 import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
 import com.vmware.admiral.auth.idm.local.LocalPrincipalProvider;
 import com.vmware.admiral.auth.util.AuthUtil;
-import com.vmware.admiral.auth.util.PrincipalRolesUtil;
+import com.vmware.admiral.auth.util.PrincipalUtil;
 import com.vmware.admiral.auth.util.SecurityContextUtil;
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.UriUtilsExtended;
@@ -34,6 +40,8 @@ import com.vmware.xenon.common.Utils;
 public class PrincipalService extends StatelessService {
     public static final String SELF_LINK = ManagementUriParts.AUTH_PRINCIPALS;
     public static final String CRITERIA_QUERY = "criteria";
+    public static final String ROLES_QUERY = "roles";
+    public static final String ROLES_QUERY_VALUE = "all";
     public static final String SECURITY_CONTEXT_SUFFIX = "/security-context";
     public static final String ROLES_SUFFIX = "/roles";
     public static final String GROUPS_SUFFIX = "/groups";
@@ -106,8 +114,11 @@ public class PrincipalService extends StatelessService {
                     TEMPLATE_PRINCIPAL_ID_PATH_SEGMENT).get(PRINCIPAL_ID_PATH_SEGMENT), get);
 
         } else if (isPrincipalByCriteriaRequest(get)) {
-            handleSearchByCriteria(UriUtils.parseUriQueryParams(get.getUri())
-                    .get(CRITERIA_QUERY), get);
+            Map<String, String> queryParams = UriUtils.parseUriQueryParams(get.getUri());
+
+            String roleQueryValue = queryParams.getOrDefault(ROLES_QUERY, null);
+
+            handleSearchByCriteria(queryParams.get(CRITERIA_QUERY), roleQueryValue, get);
 
         } else if (isSecurityContextRequest(get)) {
             handleGetSecurityContext(get);
@@ -190,16 +201,18 @@ public class PrincipalService extends StatelessService {
         });
     }
 
-    private void handleSearchByCriteria(String criteria, Operation get) {
+    private void handleSearchByCriteria(String criteria, String roles, Operation get) {
         DeferredResult<List<Principal>> result = provider.getPrincipals(criteria);
 
-        result.whenComplete((principals, ex) -> {
-            if (ex != null) {
-                get.fail(ex);
-                return;
-            }
-            get.setBody(principals).complete();
-        });
+        if (roles != null && roles.equalsIgnoreCase(ROLES_QUERY_VALUE)) {
+            result.thenCompose(principals -> getAllRolesForPrincipals(getHost(), principals))
+                    .thenAccept(principalRoles -> get.setBody(principalRoles))
+                    .whenCompleteNotify(get);
+            return;
+        }
+
+        result.thenAccept(principals -> get.setBody(principals))
+                .whenCompleteNotify(get);
     }
 
     private void handleGetGroups(Operation get) {
@@ -229,13 +242,12 @@ public class PrincipalService extends StatelessService {
 
         PrincipalRoles rolesResponse = new PrincipalRoles();
 
-        PrincipalRolesUtil.getDirectlyAssignedProjectRoles(getHost(), principalId)
+        PrincipalUtil.getPrincipal(getHost(), principalId)
+                .thenAccept(principal -> copyPrincipalData(principal, rolesResponse))
+                .thenCompose(ignore -> getDirectlyAssignedProjectRoles(getHost(), rolesResponse))
                 .thenAccept(projectEntries -> rolesResponse.projects = projectEntries)
-                .thenCompose(ignore -> PrincipalRolesUtil
-                        .getDirectlyAssignedSystemRoles(getHost(), principalId))
-                .thenAccept(systemRoles -> {
-                    rolesResponse.roles = systemRoles;
-                })
+                .thenCompose(ignore -> getDirectlyAssignedSystemRoles(getHost(), rolesResponse))
+                .thenAccept(systemRoles -> rolesResponse.roles = systemRoles)
                 .thenAccept(ignore -> get.setBody(rolesResponse))
                 .whenCompleteNotify(get);
 

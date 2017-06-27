@@ -16,7 +16,7 @@ import java.util.Set;
 
 import com.vmware.admiral.auth.idm.SecurityContext.ProjectEntry;
 
-public class PrincipalRoles {
+public class PrincipalRoles extends Principal {
 
     public Set<AuthRole> roles;
 

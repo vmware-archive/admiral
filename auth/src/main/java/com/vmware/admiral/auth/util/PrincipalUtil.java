@@ -93,6 +93,23 @@ public class PrincipalUtil {
         return state;
     }
 
+    public static Principal copyPrincipalData(Principal src, Principal dst) {
+        if (src == null) {
+            return null;
+        }
+        if (dst == null) {
+            dst = new Principal();
+        }
+        dst.groupMembers = src.groupMembers;
+        dst.id = src.id;
+        dst.email = src.email;
+        dst.type = src.type;
+        dst.name = src.name;
+        dst.password = src.password;
+
+        return dst;
+    }
+
     public static DeferredResult<Principal> getPrincipal(ServiceHost host, String principalId) {
         Operation getPrincipalOp = Operation.createGet(host, UriUtils.buildUriPath(
                 PrincipalService.SELF_LINK, principalId))

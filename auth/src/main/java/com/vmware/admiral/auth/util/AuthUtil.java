@@ -11,6 +11,7 @@
 
 package com.vmware.admiral.auth.util;
 
+import static com.vmware.admiral.common.util.AssertUtil.assertNotNullOrEmpty;
 import static com.vmware.admiral.common.util.AuthUtils.buildQueryForUsers;
 
 import java.util.Base64;
@@ -437,6 +438,35 @@ public class AuthUtil {
             return null;
         }
         return authContext.getClaims().getSubject();
+    }
+
+    /**
+     * Extract data from RoleState ID, which RoleState was build as duplicate RoleState when
+     * assigning groups to project roles, with ID following the pattern:
+     * projectId_groupdId_roleSuffix
+     *
+     * @param roleStateId
+     *
+     * @return String[] with 3 elements, the first one is the project id, the second is the group
+     * id and third is the project role suffix.
+     */
+    public static String[] extractDataFromRoleStateId(String roleStateId) {
+        assertNotNullOrEmpty(roleStateId, "roleStateId");
+
+        int firstSeparatorIndex = roleStateId.indexOf(AuthRole.SUFFIX_SEPARATOR);
+        int lastSeparatorIndex = roleStateId.lastIndexOf(AuthRole.SUFFIX_SEPARATOR);
+
+        if (firstSeparatorIndex == -1 || lastSeparatorIndex == -1
+                || firstSeparatorIndex == lastSeparatorIndex) {
+            throw new IllegalArgumentException("Provided role state id is not following the "
+                    + "pattern: projectId_groupdId_roleSuffix - " + roleStateId);
+        }
+
+        String projectId = roleStateId.substring(0, firstSeparatorIndex);
+        String groupId = roleStateId.substring(firstSeparatorIndex + 1, lastSeparatorIndex);
+        String roleSuffix = roleStateId.substring(lastSeparatorIndex + 1, roleStateId.length());
+
+        return new String[] { projectId, groupId, roleSuffix };
     }
 
 }

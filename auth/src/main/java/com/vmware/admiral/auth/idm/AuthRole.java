@@ -20,7 +20,7 @@ public enum AuthRole {
     PROJECT_ADMINS("Project Admins", "project-admins"),
     PROJECT_MEMBERS("Project Members", "project-members");
 
-    private static final String SUFFIX_SEPARATOR = "_";
+    public static final String SUFFIX_SEPARATOR = "_";
 
     private final String name;
     private final String suffix;

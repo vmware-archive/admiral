@@ -36,6 +36,8 @@ import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 
 import com.vmware.admiral.auth.idm.AuthConfigProvider;
+import com.vmware.admiral.auth.idm.Principal;
+import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.idm.SecurityContext;
 import com.vmware.admiral.auth.idm.SessionService;
 import com.vmware.admiral.auth.idm.content.AuthContentService;
@@ -378,4 +380,22 @@ public abstract class AuthBaseTest extends BaseTestCase {
         return resultState;
     }
 
+    protected Principal getPrincipal(String principalId) {
+        final Principal[] principal = new Principal[1];
+        TestContext ctx = testCreate(1);
+        Operation getPrincipal = Operation
+                .createGet(host, UriUtils.buildUriPath(PrincipalService.SELF_LINK, principalId))
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        ctx.failIteration(ex);
+                        return;
+                    }
+                    principal[0] = o.getBody(Principal.class);
+                    ctx.completeIteration();
+                });
+        host.send(getPrincipal);
+        ctx.await();
+        return principal[0];
+    }
 }
