@@ -521,6 +521,7 @@
         "valueLabel": "Value",
         "instanceTypeMappingLabel": "Instance type",
         "instanceTypeMappingDisplay": "{{cpuCount}} CPU, {{memoryInMB}} MB RAM, {{bootDiskSizeInMB}} MB disk",
+        "instanceTypeMappingDisplayAWS": "{{cpuCount}} CPU, {{memoryInMB}} MB RAM, {{storageType}} Storage, {{networkType}} Network",
         "imageMappingLabel": "Image type",
         "diskPropertyMappingLabel": "Disk Properties",
         "cpuCountLabel": "CPUs",

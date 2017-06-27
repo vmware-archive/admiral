@@ -10,6 +10,7 @@
  */
 
 import services from 'core/services';
+import utils from 'core/utils';
 
 export default Vue.component('aws-compute-profile-editor', {
   template: `
@@ -26,7 +27,8 @@ export default Vue.component('aws-compute-profile-editor', {
           <text-control></text-control>
         </multicolumn-cell>
         <multicolumn-cell name="value">
-          <typeahead-control :source="searchInstanceTypes" :limit="20">
+          <typeahead-control :source="searchInstanceTypes" :limit="20"
+            :renderer="renderInstanceTypeOption">
           </typeahead-control>
         </multicolumn-cell>
       </multicolumn-editor-group>
@@ -109,6 +111,31 @@ export default Vue.component('aws-compute-profile-editor', {
                 this.instanceTypeOptions = result;
                 this.emitChange();
             }.bind(this));
+    },
+    renderInstanceTypeOption: function(context) {
+      let display = context.name;
+      let query = context._query || '';
+      let index = query ? display.toLowerCase().indexOf(query.toLowerCase()) : -1;
+      if (index >= 0) {
+          display = utils.escapeHtml(display.substring(0, index))
+              + '<strong>'
+              + utils.escapeHtml(display.substring(index, index + query.length))
+              + '</strong>'
+              + utils.escapeHtml(display.substring(index + query.length));
+      } else {
+          display = utils.escapeHtml(display);
+      }
+
+      let descriptionText = i18n.t('app.profile.edit.instanceTypeMappingDisplayAWS', context);
+
+      return '<div>' +
+            '   <div class="host-picker-item-primary">' +
+            '      ' + display +
+            '   </div>' +
+            '   <div class="host-picker-item-secondary truncateText">' +
+            '      ' + descriptionText +
+            '   </div>' +
+            '</div>';
     },
     searchImages(...args) {
       if (!this.endpoint) {
