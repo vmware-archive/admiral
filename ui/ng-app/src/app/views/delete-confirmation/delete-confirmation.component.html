@@ -28,13 +28,6 @@
   </div>
   <div class="modal-footer">
     <button type="button" [disabled]="isDeleting" class="btn btn-outline" (click)="deleteCanceled()">{{ "cancel" | i18n }}</button>
-    <!-- TODO
-    exchange the inner spinner span with [clrLoading]="isDeleting" binding for the button once clarity version is bumped to 0.9.2+
-    https://github.com/vmware/clarity/pull/760
-    -->
-    <button type="button" [disabled]="isDeleting" class="btn btn-danger" (click)="deleteConfirmed()">
-      <span *ngIf="isDeleting" class="spinner spinner-inline spinner-inline-danger"></span>
-      {{ "remove" | i18n }}
-      </button>
+    <button [clrLoading]="isDeleting" type="button" [disabled]="isDeleting" class="btn btn-danger" (click)="deleteConfirmed()">{{ "remove" | i18n }}</button>
   </div>
 </clr-modal>

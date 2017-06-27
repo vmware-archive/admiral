@@ -9,7 +9,7 @@
   ~ conditions of the subcomponent's license, as noted in the LICENSE file.
   -->
 
-<grid-view [serviceEndpoint]="serviceEndpoint">
+<grid-view #gridView [serviceEndpoint]="serviceEndpoint">
   <div title>{{ "clusters.title" | i18n }}</div>
   <div toolbar>
     <button class="btn btn-link" [routerLink]="['./new']"><i class="fa fa-plus"></i>{{ "clusters.new" | i18n | uppercase }}</button>
