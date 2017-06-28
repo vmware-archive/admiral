@@ -15,29 +15,32 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.collections.SetUtils;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.vmware.admiral.auth.AuthBaseTest;
 import com.vmware.admiral.auth.idm.AuthRole;
 import com.vmware.admiral.auth.idm.PrincipalRolesHandler.PrincipalRoleAssignment;
+import com.vmware.admiral.auth.idm.PrincipalService;
 import com.vmware.admiral.auth.idm.SecurityContext;
 import com.vmware.admiral.auth.idm.SecurityContext.ProjectEntry;
+import com.vmware.admiral.auth.idm.local.LocalPrincipalFactoryService;
+import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalState;
+import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalType;
+import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
-import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.project.ProjectService.ProjectState;
-import com.vmware.photon.controller.model.query.QueryUtils.QueryTemplate;
+import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.StatelessService;
+import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.test.TestContext;
 
 public class SecurityContextUtilTest extends AuthBaseTest {
 
@@ -71,117 +74,273 @@ public class SecurityContextUtilTest extends AuthBaseTest {
     }
 
     @Test
-    public void testBuildBasicUserInfo() throws Throwable {
-        SecurityContext context;
-
-        // cloud admin
+    public void testSecurityContextForCloudAdminAndBasicUser() throws GeneralSecurityException {
+        // Verify for cloud admin.
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
-        context = QueryTemplate.waitToComplete(SecurityContextUtil
-                .buildBasicUserInfo(requestorService, USER_EMAIL_ADMIN, null)).context;
+        DeferredResult<SecurityContext> result = SecurityContextUtil.getSecurityContext(
+                requestorService, USER_EMAIL_ADMIN);
 
-        assertEquals(USER_EMAIL_ADMIN, context.id);
-        assertEquals(USER_EMAIL_ADMIN, context.email);
-        assertEquals(USER_NAME_ADMIN, context.name);
-
-        // basic user
-        host.assumeIdentity(buildUserServicePath(USER_EMAIL_BASIC_USER));
-        context = QueryTemplate.waitToComplete(getSecurityContextFromSessionService());
-
-        assertEquals(USER_EMAIL_BASIC_USER, context.id);
-        assertEquals(USER_EMAIL_BASIC_USER, context.email);
-        assertEquals(USER_NAME_BASIC_USER, context.name);
-    }
-
-    @Test
-    public void testBuildDirectSystemRoles() throws Throwable {
-        SecurityContext context;
-
-        // cloud admin
-        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
-        context = QueryTemplate.waitToComplete(SecurityContextUtil
-                .buildDirectSystemRoles(requestorService, USER_EMAIL_ADMIN, null)).context;
-        assertNotNull(context.roles);
-        assertEquals(rolesAvailableToCloudAdmin.size(), context.roles.size());
-        assertTrue(context.roles.stream().allMatch(rolesAvailableToCloudAdmin::contains));
-
-        // basic user
-        host.assumeIdentity(buildUserServicePath(USER_EMAIL_BASIC_USER));
-        context = QueryTemplate.waitToComplete(getSecurityContextFromSessionService());
-        assertNotNull(context.roles);
-        assertEquals(rolesAvailableToBasicUsers.size(), context.roles.size());
-        assertTrue(context.roles.stream().allMatch(rolesAvailableToBasicUsers::contains));
-    }
-
-    @Test
-    public void testBuildBasicProjectInfo() throws Throwable {
-        // load auth content for the test
-
-        // do not assume the identity of the user that we are going to look for
-        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN2));
-        loadAuthContent(FILE_AUTH_CONTENT_PROJECTS_ONLY);
-
-        // add the current user as admin and member in the imported projects.
-        PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
-        roleAssignment.add = Collections.singletonList(USER_EMAIL_ADMIN2);
-        ProjectRoles projectRoles = new ProjectRoles();
-        projectRoles.administrators = roleAssignment;
-        projectRoles.members = roleAssignment;
-        List<String> projectLinks = getDocumentLinksOfType(ProjectState.class);
-        for (String pl : projectLinks) {
-            ProjectState state = getDocument(ProjectState.class, pl);
-            if (!state.documentSelfLink.equals(ProjectService.DEFAULT_PROJECT_LINK)) {
-                doPatch(projectRoles, state.documentSelfLink);
+        final SecurityContext[] context = new SecurityContext[1];
+        TestContext ctx = testCreate(1);
+        result.whenComplete((securityContext, ex) -> {
+            if (ex != null) {
+                ctx.failIteration(ex);
+                return;
             }
+            context[0] = securityContext;
+            ctx.completeIteration();
+        });
+        ctx.await();
+
+        assertEquals(3, context[0].roles.size());
+        assertTrue(context[0].roles.contains(AuthRole.CLOUD_ADMINS));
+        assertTrue(context[0].roles.contains(AuthRole.BASIC_USERS));
+        assertTrue(context[0].roles.contains(AuthRole.BASIC_USERS_EXTENDED));
+
+        // Verify for basic user.
+        result = SecurityContextUtil.getSecurityContext(
+                requestorService, USER_EMAIL_BASIC_USER);
+        TestContext ctx1 = testCreate(1);
+        result.whenComplete((securityContext, ex) -> {
+            if (ex != null) {
+                ctx1.failIteration(ex);
+                return;
+            }
+            context[0] = securityContext;
+            ctx1.completeIteration();
+        });
+        ctx1.await();
+
+        assertEquals(2, context[0].roles.size());
+        assertTrue(context[0].roles.contains(AuthRole.BASIC_USERS));
+        assertTrue(context[0].roles.contains(AuthRole.BASIC_USERS_EXTENDED));
+    }
+
+    @Test
+    public void testSecurityContextContainsDirectlyAssignedProjectRoles() throws Throwable {
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
+        ProjectState project = new ProjectState();
+        project.name = "test";
+        project.description = "test-description";
+        project = doPost(project, ProjectFactoryService.SELF_LINK);
+        assertNotNull(project.documentSelfLink);
+
+        PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
+        roleAssignment.add = Collections.singletonList(USER_EMAIL_ADMIN);
+        ProjectRoles projectRoles = new ProjectRoles();
+        projectRoles.viewers = roleAssignment;
+        projectRoles.members = roleAssignment;
+        projectRoles.administrators = roleAssignment;
+        doPatch(projectRoles, project.documentSelfLink);
+
+        DeferredResult<SecurityContext> result = SecurityContextUtil.getSecurityContext(
+                requestorService, USER_EMAIL_ADMIN);
+
+        final SecurityContext[] context = new SecurityContext[1];
+        TestContext ctx = testCreate(1);
+        result.whenComplete((securityContext, ex) -> {
+            if (ex != null) {
+                ctx.failIteration(ex);
+                return;
+            }
+            context[0] = securityContext;
+            ctx.completeIteration();
+        });
+        ctx.await();
+
+        assertEquals(1, context[0].projects.size());
+        assertEquals(project.name, context[0].projects.get(0).name);
+        assertEquals(project.documentSelfLink, context[0].projects.get(0).documentSelfLink);
+        assertTrue(context[0].projects.get(0).roles.contains(AuthRole.PROJECT_ADMINS));
+        assertTrue(context[0].projects.get(0).roles.contains(AuthRole.PROJECT_MEMBERS));
+        assertTrue(context[0].projects.get(0).roles.contains(AuthRole.PROJECT_VIEWERS));
+    }
+
+    @Test
+    public void testSecurityContextContainsAllRolesForMultipleProjects() throws Throwable {
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN2));
+        // Scenario: create 2 projects, assign fritz as project admin in 1st and as project
+        // member in 2nd project.
+
+        // Create first project and assign fritz as project admin.
+        ProjectState firstProject = createProject("firstProject");
+        assertNotNull(firstProject.documentSelfLink);
+        ProjectRoles projectRoles = new ProjectRoles();
+        PrincipalRoleAssignment admins = new PrincipalRoleAssignment();
+        admins.add = Collections.singletonList(USER_EMAIL_ADMIN);
+        projectRoles.administrators = admins;
+        doPatch(projectRoles, firstProject.documentSelfLink);
+
+        // Create second project and assign fritz as project member.
+        ProjectState secondProject = createProject("secondProject");
+        assertNotNull(secondProject.documentSelfLink);
+        projectRoles = new ProjectRoles();
+        PrincipalRoleAssignment members = new PrincipalRoleAssignment();
+        members.add = Collections.singletonList(USER_EMAIL_ADMIN);
+        projectRoles.members = members;
+        doPatch(projectRoles, secondProject.documentSelfLink);
+
+        DeferredResult<SecurityContext> result = SecurityContextUtil.getSecurityContext(
+                requestorService, USER_EMAIL_ADMIN);
+
+        final SecurityContext[] context = new SecurityContext[1];
+        TestContext ctx = testCreate(1);
+        result.whenComplete((securityContext, ex) -> {
+            if (ex != null) {
+                ctx.failIteration(ex);
+                return;
+            }
+            context[0] = securityContext;
+            ctx.completeIteration();
+        });
+        ctx.await();
+
+        SecurityContext securityContext = context[0];
+
+        assertNotNull(securityContext.email);
+        assertNotNull(securityContext.id);
+        assertNotNull(securityContext.name);
+        assertNotNull(securityContext.roles);
+        assertNotNull(securityContext.projects);
+
+        assertTrue(securityContext.roles.contains(AuthRole.CLOUD_ADMINS));
+        assertTrue(securityContext.roles.contains(AuthRole.BASIC_USERS));
+        assertTrue(securityContext.roles.contains(AuthRole.BASIC_USERS_EXTENDED));
+
+        assertEquals(2, securityContext.projects.size());
+
+        ProjectEntry firstProjectEntry;
+        ProjectEntry secondProjectEntry;
+
+        if (securityContext.projects.get(0).name.equalsIgnoreCase(firstProject.name)) {
+            firstProjectEntry = securityContext.projects.get(0);
+            secondProjectEntry = securityContext.projects.get(1);
+        } else {
+            firstProjectEntry = securityContext.projects.get(1);
+            secondProjectEntry = securityContext.projects.get(0);
         }
 
-        SecurityContext context;
+        assertEquals(firstProject.name, firstProjectEntry.name);
+        assertEquals(firstProject.documentSelfLink, firstProjectEntry.documentSelfLink);
+        assertEquals(1, firstProjectEntry.roles.size());
+        assertTrue(firstProjectEntry.roles.contains(AuthRole.PROJECT_ADMINS));
 
-        // cloud admin
-        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
-        HashMap<String, Set<AuthRole>> adminProjectRoles = new HashMap<>();
-        adminProjectRoles.put(PROJECT_NAME_TEST_PROJECT_1,
-                Collections.singleton(AuthRole.PROJECT_ADMINS));
-        adminProjectRoles.put(PROJECT_NAME_TEST_PROJECT_2,
-                Collections.singleton(AuthRole.PROJECT_ADMINS));
-        context = QueryTemplate.waitToComplete(SecurityContextUtil
-                .buildBasicProjectInfo(requestorService, USER_EMAIL_ADMIN, null)).context;
-        assertProjectRolesMatch(context.projects, adminProjectRoles);
-
-
-        // This check is currently disabled, because the project roles and resource groups are
-        // not implemented yet, and in order to make it work some things should be hacked, but
-        // when there is actual implementation this should work out of the box.
-        // cloud basic users
-        // host.assumeIdentity(buildUserServicePath(USER_EMAIL_BASIC_USER));
-        // HashMap<String, Set<AuthRole>> userProjectRoles = new HashMap<>();
-        // userProjectRoles.put(PROJECT_NAME_TEST_PROJECT_1,
-        //         Collections.singleton(AuthRole.PROJECT_MEMBERS));
-        // userProjectRoles.put(PROJECT_NAME_TEST_PROJECT_3,
-        //         Collections.singleton(AuthRole.PROJECT_ADMINS));
-        // context = QueryTemplate.waitToComplete(getSecurityContextFromSessionService());
-        // assertProjectRolesMatch(context.projects, userProjectRoles);
+        assertEquals(secondProject.name, secondProjectEntry.name);
+        assertEquals(secondProject.documentSelfLink, secondProjectEntry.documentSelfLink);
+        assertEquals(1, secondProjectEntry.roles.size());
+        assertTrue(secondProjectEntry.roles.contains(AuthRole.PROJECT_MEMBERS));
     }
 
-    private void assertProjectRolesMatch(List<ProjectEntry> projects,
-            Map<String, Set<AuthRole>> expectedProjectRoles) {
-        assertNotNull(projects);
-        assertNotNull(expectedProjectRoles);
-        assertEquals("Unexpected number of projects", expectedProjectRoles.size(), projects.size());
+    @Test
+    public void testSecurityContextContainsIndirectAssignedRoles() throws Throwable {
+        host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN2));
+        // Scenario: create a group which will contain Connie which is basic user and the group
+        // will be assigned to cloud admins. Create nested groups and add Connie in them, assign
+        // the nested groups to project roles. Verify that PrincipalRoles for Connie contains all
+        // roles where he is assigned indirectly.
 
-        projects.stream().forEach((project) -> {
-            Set<AuthRole> roles = expectedProjectRoles.get(project.name);
-            if (roles == null) {
-                throw new IllegalArgumentException(String.format(
-                        "Security context contains project %s but it was not expected",
-                        project.name));
-            }
+        // root is the group where Connie belongs and we assign the group to cloud admins role.
+        LocalPrincipalState root = new LocalPrincipalState();
+        root.type = LocalPrincipalType.GROUP;
+        root.name = "root";
+        root.groupMembersLinks = Collections.singletonList(UriUtils.buildUriPath(
+                LocalPrincipalFactoryService.SELF_LINK, USER_EMAIL_CONNIE));
+        root = doPost(root, LocalPrincipalFactoryService.SELF_LINK);
+        assertNotNull(root.documentSelfLink);
 
-            assertEquals(String.format("Unexpected number of roles for project %s", project.name),
-                    roles.size(), project.roles.size());
-            if (!SetUtils.isEqualSet(roles, project.roles)) {
-                throw new IllegalStateException(
-                        String.format("Incorrect roles: %s. Expected: %s.", project.roles, roles));
+        // nestedGroup1 is the group where Connie belongs but we will add nestedGroup1 to
+        // nestedGroup2 and we will indirectly assign roles to Connie as we assign a role to
+        // nestedGroup2.
+        LocalPrincipalState nestedGroup1 = new LocalPrincipalState();
+        nestedGroup1.type = LocalPrincipalType.GROUP;
+        nestedGroup1.name = "nestedGroup1";
+        nestedGroup1.groupMembersLinks = Collections.singletonList(UriUtils.buildUriPath(
+                LocalPrincipalFactoryService.SELF_LINK, USER_EMAIL_CONNIE));
+        nestedGroup1 = doPost(nestedGroup1, LocalPrincipalFactoryService.SELF_LINK);
+        assertNotNull(nestedGroup1.documentSelfLink);
+
+        // nestedGroup2 is the group which contains nestedGroup1
+        LocalPrincipalState nestedGroup2 = new LocalPrincipalState();
+        nestedGroup2.type = LocalPrincipalType.GROUP;
+        nestedGroup2.name = "nestedGroup2";
+        nestedGroup2.groupMembersLinks = Collections.singletonList(nestedGroup1.documentSelfLink);
+        nestedGroup2 = doPost(nestedGroup2, LocalPrincipalFactoryService.SELF_LINK);
+        assertNotNull(nestedGroup2.documentSelfLink);
+
+        // assign cloud admins role to root user group.
+        PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
+        roleAssignment.add = Collections.singletonList(AuthRole.CLOUD_ADMINS.getName());
+        doPatch(roleAssignment, UriUtils.buildUriPath(PrincipalService.SELF_LINK, root.id,
+                PrincipalService.ROLES_SUFFIX));
+
+        // Create first project and assign nestedGroup1 as project admin.
+        ProjectState firstProject = createProject("firstProject");
+        assertNotNull(firstProject.documentSelfLink);
+        ProjectRoles projectRoles = new ProjectRoles();
+        PrincipalRoleAssignment admins = new PrincipalRoleAssignment();
+        admins.add = Collections.singletonList(nestedGroup1.id);
+        projectRoles.administrators = admins;
+        doPatch(projectRoles, firstProject.documentSelfLink);
+
+        // Create second project and assign nestedGroup2 as project member.
+        ProjectState secondProject = createProject("secondProject");
+        assertNotNull(secondProject.documentSelfLink);
+        projectRoles = new ProjectRoles();
+        PrincipalRoleAssignment members = new PrincipalRoleAssignment();
+        members.add = Collections.singletonList(nestedGroup2.id);
+        projectRoles.members = members;
+        doPatch(projectRoles, secondProject.documentSelfLink);
+
+        DeferredResult<SecurityContext> result = SecurityContextUtil.getSecurityContext(
+                requestorService, USER_EMAIL_CONNIE);
+
+        final SecurityContext[] context = new SecurityContext[1];
+        TestContext ctx = testCreate(1);
+        result.whenComplete((securityContext, ex) -> {
+            if (ex != null) {
+                ctx.failIteration(ex);
+                return;
             }
+            context[0] = securityContext;
+            ctx.completeIteration();
         });
+        ctx.await();
+
+        SecurityContext securityContext = context[0];
+
+        assertNotNull(securityContext.email);
+        assertNotNull(securityContext.id);
+        assertNotNull(securityContext.name);
+        assertNotNull(securityContext.roles);
+        assertNotNull(securityContext.projects);
+
+        assertTrue(securityContext.roles.contains(AuthRole.CLOUD_ADMINS));
+        assertTrue(securityContext.roles.contains(AuthRole.BASIC_USERS));
+        assertTrue(securityContext.roles.contains(AuthRole.BASIC_USERS_EXTENDED));
+
+        // Uncomment this once group assignment for project roles is implemented.
+
+        // assertEquals(2, connieRoles.projects.size());
+
+        // ProjectEntry firstProjectEntry;
+        // ProjectEntry secondProjectEntry;
+        //
+        // if (connieRoles.projects.get(0).name.equalsIgnoreCase(firstProject.name)) {
+        //     firstProjectEntry = connieRoles.projects.get(0);
+        //     secondProjectEntry = connieRoles.projects.get(1);
+        // } else {
+        //     firstProjectEntry = connieRoles.projects.get(1);
+        //     secondProjectEntry = connieRoles.projects.get(0);
+        // }
+        //
+        // assertEquals(firstProject.name, firstProjectEntry.name);
+        // assertEquals(firstProject.documentSelfLink, firstProjectEntry.documentSelfLink);
+        // assertEquals(1, firstProjectEntry.roles.size());
+        // assertTrue(firstProjectEntry.roles.contains(AuthRole.PROJECT_ADMINS));
+        //
+        // assertEquals(secondProject.name, secondProjectEntry.name);
+        // assertEquals(secondProject.documentSelfLink, secondProjectEntry.documentSelfLink);
+        // assertEquals(1, secondProjectEntry.roles.size());
+        // assertTrue(secondProjectEntry.roles.contains(AuthRole.PROJECT_MEMBERS));
     }
 }
