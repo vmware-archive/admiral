@@ -30,13 +30,17 @@ import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.DeploymentProfileConfig;
 import com.vmware.admiral.common.ManagementUriParts;
+import com.vmware.admiral.common.util.PropertyUtils;
 import com.vmware.admiral.common.util.QueryUtil;
 import com.vmware.admiral.common.util.SubscriptionManager;
+import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
+import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
 import com.vmware.admiral.compute.ContainerHostUtil;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService;
 import com.vmware.admiral.compute.ElasticPlacementZoneConfigurationService.ElasticPlacementZoneConfigurationState;
+import com.vmware.admiral.compute.PlacementZoneConstants.PlacementZoneType;
 import com.vmware.admiral.compute.PlacementZoneUtil;
 import com.vmware.admiral.compute.container.GroupResourcePlacementService.GroupResourcePlacementState;
 import com.vmware.admiral.service.common.SslTrustCertificateService.SslTrustCertificateState;
@@ -161,7 +165,7 @@ public class ClusterService extends StatelessService {
         public static final String RESOURCE_TYPE_CONTAINER_HOST = "CONTAINER_HOST";
         public static final String OPERATION_REMOVE_RESOURCE = "REMOVE_RESOURCE";
 
-        public ContainerHostRemovalTaskState(Set<String> resourceLinks) {
+        public ContainerHostRemovalTaskState(List<String> resourceLinks) {
             resourceType = RESOURCE_TYPE_CONTAINER_HOST;
             operation = OPERATION_REMOVE_RESOURCE;
             this.resourceLinks = resourceLinks;
@@ -169,17 +173,20 @@ public class ClusterService extends StatelessService {
 
         public String resourceType;
         public String operation;
-        public Set<String> resourceLinks;
+        public List<String> resourceLinks;
     }
 
     @Override
     public void handlePost(Operation post) {
-        if (isOperationOverAllCluste(post)) {
+        if (isOperationOverAllClustes(post)) {
             createCluster(post);
-        } else {
-            // TODO add hosts to already existing cluster instead
-            post.fail(Operation.STATUS_CODE_NOT_FOUND);
+            return;
         }
+        if (isOperationOverAllHostsInSingleCluster(post)) {
+            createHostInCluster(post);
+            return;
+        }
+        post.fail(Operation.STATUS_CODE_NOT_FOUND);
     }
 
     @Override
@@ -226,43 +233,22 @@ public class ClusterService extends StatelessService {
 
     @Override
     public void handleDelete(Operation delete) {
-        String clusterId = UriUtils.parseUriPathSegments(delete.getUri(),
-                CLUSTER_PATH_SEGMENT_TEMPLATE).get(CLUSTER_ID_PATH_SEGMENT);
-        String pZILink = UriUtils.buildUriPath(
-                ElasticPlacementZoneConfigurationService.SELF_LINK,
-                ResourcePoolService.FACTORY_LINK, clusterId);
-        String resourcePoolLink = UriUtils.buildUriPath(
-                ResourcePoolService.FACTORY_LINK, clusterId);
-        deleteHostsWihtinOnePlacementZone(getHost(), resourcePoolLink)
-                .thenAccept(operation -> {
-                    if (operation == null || DeploymentProfileConfig.getInstance().isTest()) {
-                        //TODO if MockRequestBrokerService behaves as Task service we can remove the
-                        // check for test context
-                        ClusterUtils.deletePZ(pZILink, delete, getHost());
-                    } else {
-                        String containerHostRemovalTaskState = operation
-                                .getBody(ContainerHostRemovalTaskState.class).documentSelfLink;
+        if (isOperationOverSingleCluster(delete)) {
+            deleteCluster(delete);
+            return;
+        }
 
-                        SubscriptionManager<ContainerHostRemovalTaskState> subscriptionManager = new SubscriptionManager<>(
-                                getHost(), UUID.randomUUID().toString(),
-                                containerHostRemovalTaskState,
-                                ContainerHostRemovalTaskState.class);
-                        subscriptionManager.start(notification -> {
-                            ContainerHostRemovalTaskState eats = notification.getResult();
-                            EnumSet<TaskStage> terminalStages = of(TaskStage.FINISHED,
-                                    TaskStage.FAILED, TaskStage.CANCELLED);
-                            if (terminalStages.contains(eats.taskInfo.stage)) {
-                                subscriptionManager.close();
-                                ClusterUtils.deletePZ(pZILink, delete, getHost());
-                            }
-                        }, true, null);
-                    }
-                });
+        if (isOperationOverSingleHostInSingleCluster(delete)) {
+            deleteHostInCluster(delete);
+            return;
+        }
+        delete.fail(Operation.STATUS_CODE_NOT_FOUND);
+
     }
 
     @Override
     public void handleGet(Operation get) {
-        if (isOperationOverAllCluste(get)) {
+        if (isOperationOverAllClustes(get)) {
             getAllClusters(get);
             return;
         }
@@ -281,7 +267,7 @@ public class ClusterService extends StatelessService {
         get.fail(Operation.STATUS_CODE_NOT_FOUND);
     }
 
-    private boolean isOperationOverAllCluste(Operation op) {
+    private boolean isOperationOverAllClustes(Operation op) {
         return PATTERN_CLUSTER_LINK.matcher(op.getUri().getPath()).matches();
     }
 
@@ -446,36 +432,35 @@ public class ClusterService extends StatelessService {
                     if (computeStates.isEmpty()) {
                         return DeferredResult.completed(null);
                     }
-                    Set<String> hostLinksList = computeStates.stream()
+                    List<String> hostLinksList = computeStates.stream()
                             .map(computeState -> {
                                 return computeState.documentSelfLink;
-                            }).collect(Collectors.toSet());
-                    DeferredResult<Operation> deleteNodesRequestOperation = host
-                            .sendWithDeferredResult(
-                                    Operation.createPost(
-                                            UriUtils.buildUri(host, ManagementUriParts.REQUESTS))
-                                            .setReferer(host.getUri())
-                                            .forceRemote()
-                                            .setBody(new ContainerHostRemovalTaskState(
-                                                    hostLinksList)));
+                            }).collect(Collectors.toList());
+                    DeferredResult<Operation> deleteNodesRequestOperation = sendWithDeferredResult(
+                            Operation.createPost(
+                                    UriUtils.buildUri(host, ManagementUriParts.REQUESTS))
+                                    .setReferer(host.getUri())
+                                    .forceRemote()
+                                    .setBody(new ContainerHostRemovalTaskState(
+                                            hostLinksList)));
                     return deleteNodesRequestOperation;
                 });
         return deleteNodesDR;
     }
 
-    private void createCluster(Operation create) {
+    private void createCluster(Operation post) {
 
         try {
-            validateCreateClusterPost(create);
+            validateCreateClusterPost(post);
         } catch (Throwable ex) {
             logWarning("Failed to verify cluster creation POST: %s", Utils.toString(ex));
-            create.fail(ex);
+            post.fail(ex);
             return;
         }
 
         // this will contain the IDs of the auto-generated resources
         HashSet<String> generatedResourcesIds = new HashSet<>(2);
-        ContainerHostSpec hostSpec = create.getBody(ContainerHostSpec.class);
+        ContainerHostSpec hostSpec = post.getBody(ContainerHostSpec.class);
 
         generatePlacementZoneAndPlacement(hostSpec, generatedResourcesIds)
                 .thenCompose((zoneAndPlacement) -> {
@@ -485,21 +470,75 @@ public class ClusterService extends StatelessService {
                 .thenAccept((zoneAndHost) -> {
                     LinkedList<ComputeState> a = new LinkedList<ComputeState>();
                     a.add(zoneAndHost.right);
-                    create.setBody(
+                    post.setBody(
                             ClusterUtils.placementZoneAndItsHostsToClusterDto(zoneAndHost.left, a));
-                    create.complete();
+                    post.complete();
                 }).exceptionally((ex) -> {
                     if (ex.getCause() instanceof CertificateNotTrustedException) {
-                        create.setBody(
+                        post.setBody(
                                 ((CertificateNotTrustedException) ex.getCause()).certificate);
-                        create.complete();
+                        post.complete();
                     } else {
                         logWarning("Create cluster failed: %s", Utils.toString(ex));
-                        create.fail(ex.getCause());
+                        post.fail(ex.getCause());
                     }
                     ContainerHostUtil.cleanupAutogeneratedResources(this, generatedResourcesIds);
                     return null;
                 });
+    }
+
+    private void createHostInCluster(Operation post) {
+        String clusterId = UriUtils.parseUriPathSegments(post.getUri(),
+                CLUSTER_PATH_SEGMENT_TEMPLATE).get(CLUSTER_ID_PATH_SEGMENT);
+        String resourcePoolDocumentSelfLink = UriUtils.buildUriPath(
+                ResourcePoolService.FACTORY_LINK, clusterId);
+
+        if (!post.hasBody()) {
+            throw new LocalizableValidationException(
+                    "ContainerHostSpec body is required", "compute.host.spec.is.required");
+        }
+        ContainerHostSpec hostSpec = post.getBody(ContainerHostSpec.class);
+
+        ContainerHostSpec hs = new ContainerHostSpec();
+        hs.hostState = new ComputeState();
+        hs.hostState.address = hostSpec.hostState.address;
+        hs.hostState.tenantLinks = hostSpec.getHostTenantLinks();
+        //        hs.hostState.id = hostSpec.hostState.address;
+        hs.hostState.resourcePoolLink = resourcePoolDocumentSelfLink;
+        hs.acceptCertificate = hostSpec.acceptCertificate;
+        hs.hostState.customProperties = new HashMap<>();
+        hs.hostState.customProperties.put(ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
+                ContainerHostService.DockerAdapterType.API.name());
+        hs.hostState.customProperties.put(ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME,
+                ContainerHostType.DOCKER.name());
+        hs.hostState.customProperties.put(ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
+                PropertyUtils.getPropertyString(hostSpec.hostState.customProperties,
+                        ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME)
+                        .orElseThrow(() -> new LocalizableValidationException(
+                                "Certificate must not be null.",
+                                "common.certificate.null")));
+
+        sendWithDeferredResult(Operation
+                .createPut(UriUtils.buildUri(getHost(),
+                        ContainerHostService.SELF_LINK))
+                .setReferer(getUri())
+                .setBody(hs))
+                        .thenAccept(cs -> {
+                            post.setBody(cs.getBodyRaw());
+                        }).exceptionally(ex -> {
+                            if (ex.getCause() instanceof CertificateNotTrustedException) {
+                                post.setBody(
+                                        ((CertificateNotTrustedException) ex
+                                                .getCause()).certificate);
+                                post.complete();
+                            } else {
+                                logWarning("Create host in cluster %s failed: %s", clusterId,
+                                        Utils.toString(ex));
+                                post.fail(ex.getCause());
+                            }
+                            return null;
+                        }).whenCompleteNotify(post);
+
     }
 
     private void validateCreateClusterPost(Operation post) {
@@ -585,6 +624,107 @@ public class ClusterService extends StatelessService {
             throw new LocalizableValidationException(
                     "Cluster name is required", "compute.host.spec.is.required");
         }
+    }
+
+    private void deleteCluster(Operation delete) {
+        String clusterId = UriUtils.parseUriPathSegments(delete.getUri(),
+                CLUSTER_PATH_SEGMENT_TEMPLATE).get(CLUSTER_ID_PATH_SEGMENT);
+        String pZILink = UriUtils.buildUriPath(
+                ElasticPlacementZoneConfigurationService.SELF_LINK,
+                ResourcePoolService.FACTORY_LINK, clusterId);
+        String resourcePoolLink = UriUtils.buildUriPath(
+                ResourcePoolService.FACTORY_LINK, clusterId);
+        deleteHostsWihtinOnePlacementZone(getHost(), resourcePoolLink)
+                .thenAccept(operation -> {
+                    if (operation == null || DeploymentProfileConfig.getInstance().isTest()) {
+                        //TODO if MockRequestBrokerService behaves as Task service we can remove the
+                        // check for test context
+                        ClusterUtils.deletePZ(pZILink, delete, getHost());
+                    } else {
+                        String containerHostRemovalTaskState = operation
+                                .getBody(ContainerHostRemovalTaskState.class).documentSelfLink;
+
+                        SubscriptionManager<ContainerHostRemovalTaskState> subscriptionManager = new SubscriptionManager<>(
+                                getHost(), UUID.randomUUID().toString(),
+                                containerHostRemovalTaskState,
+                                ContainerHostRemovalTaskState.class);
+                        subscriptionManager.start(notification -> {
+                            ContainerHostRemovalTaskState eats = notification.getResult();
+                            EnumSet<TaskStage> terminalStages = of(TaskStage.FINISHED,
+                                    TaskStage.FAILED, TaskStage.CANCELLED);
+                            if (terminalStages.contains(eats.taskInfo.stage)) {
+                                subscriptionManager.close();
+                                ClusterUtils.deletePZ(pZILink, delete, getHost());
+                            }
+                        }, true, null);
+                    }
+                });
+    }
+
+    private void deleteHostInCluster(Operation delete) {
+
+        Map<String, String> uriParams = UriUtils.parseUriPathSegments(delete.getUri(),
+                CLUSTER_PATH_SEGMENT_TEMPLATE);
+        String clusterId = uriParams.get(CLUSTER_ID_PATH_SEGMENT);
+        String hostId = uriParams.get(CLUSTER_HOST_ID_PATH_SEGMENT);
+
+        String hostDocumentSelfLink = UriUtils.buildUriPath(
+                ComputeService.FACTORY_LINK, hostId);
+
+        List<String> hostLinksList = new LinkedList<>();
+        hostLinksList.add(hostDocumentSelfLink);
+
+        String pathPZId = UriUtils.buildUriPath(
+                ElasticPlacementZoneConfigurationService.SELF_LINK,
+                ResourcePoolService.FACTORY_LINK, clusterId);
+
+        URI elasticPlacementZoneConfigurationUri = UriUtils.buildUri(getHost(),
+                pathPZId);
+        sendWithDeferredResult(Operation
+                .createGet(
+                        UriUtils.buildExpandLinksQueryUri(elasticPlacementZoneConfigurationUri))
+                .setReferer(getUri()),
+                ElasticPlacementZoneConfigurationState.class)
+                        .thenCompose(epzcs -> {
+                            if (PlacementZoneUtil.getPlacementZoneType(
+                                    epzcs.resourcePoolState) == PlacementZoneType.DOCKER) {
+                                return sendWithDeferredResult(
+                                        Operation.createPost(
+                                                UriUtils.buildUri(getHost(),
+                                                        ManagementUriParts.REQUESTS))
+                                                .setReferer(getHost().getUri())
+                                                .forceRemote()
+                                                .setBody(new ContainerHostRemovalTaskState(
+                                                        hostLinksList)));
+                            }
+                            return DeferredResult.completed(null);
+                        }).thenAccept(operation -> {
+                            if (operation == null
+                                    || DeploymentProfileConfig.getInstance().isTest()) {
+                                //TODO if MockRequestBrokerService behaves as Task service we can remove the
+                                // check for test context
+                                delete.complete();
+                            } else {
+                                String containerHostRemovalTaskState = operation
+                                        .getBody(
+                                                ContainerHostRemovalTaskState.class).documentSelfLink;
+
+                                SubscriptionManager<ContainerHostRemovalTaskState> subscriptionManager = new SubscriptionManager<>(
+                                        getHost(), UUID.randomUUID().toString(),
+                                        containerHostRemovalTaskState,
+                                        ContainerHostRemovalTaskState.class);
+                                subscriptionManager.start(notification -> {
+                                    ContainerHostRemovalTaskState eats = notification.getResult();
+                                    EnumSet<TaskStage> terminalStages = of(TaskStage.FINISHED,
+                                            TaskStage.FAILED, TaskStage.CANCELLED);
+                                    if (terminalStages.contains(eats.taskInfo.stage)) {
+                                        subscriptionManager.close();
+                                        delete.complete();
+                                    }
+                                }, true, null);
+
+                            }
+                        });
     }
 
 }

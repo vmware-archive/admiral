@@ -31,6 +31,7 @@ import org.junit.Test;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
+import com.vmware.admiral.compute.ComputeConstants;
 import com.vmware.admiral.compute.ContainerHostService;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostSpec;
 import com.vmware.admiral.compute.ContainerHostService.ContainerHostType;
@@ -50,6 +51,7 @@ import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
@@ -371,6 +373,69 @@ public class ClusterServiceTest extends ComputeBaseTest {
         assertTrue(cs == null);
     }
 
+    @Test
+    public void testAddRemoveDockerHostInCluster() throws Throwable {
+        final String projectLinkDocker = buildProjectLink("test-docker-project");
+        PlacementZoneUtil
+                .buildPlacementZoneDefaultName(ContainerHostType.DOCKER, COMPUTE_ADDRESS);
+
+        ContainerHostSpec hostSpecDocker = createContainerHostSpec(
+                Collections.singletonList(projectLinkDocker),
+                ContainerHostType.DOCKER);
+
+        final String projectLinkVCH = buildProjectLink("test-vch-project");
+        PlacementZoneUtil
+                .buildPlacementZoneDefaultName(ContainerHostType.VCH, COMPUTE_ADDRESS);
+
+        ContainerHostSpec hostSpecVCH = createContainerHostSpec(
+                Collections.singletonList(projectLinkVCH),
+                ContainerHostType.VCH);
+        ClusterDto clusterDocker = createCluster(hostSpecDocker);
+        ClusterDto clusterVCH = createCluster(hostSpecVCH);
+
+        clusterDocker = getOneCluster(Service.getId(clusterDocker.documentSelfLink));
+        clusterVCH = getOneCluster(Service.getId(clusterVCH.documentSelfLink));
+
+        assertEquals(1, clusterDocker.nodeLinks.size());
+        assertEquals(1, clusterVCH.nodeLinks.size());
+
+        ContainerHostSpec hostSpecDocker1 = createContainerHostSpec(projectLinkDocker);
+
+        addHostInCluster(Service.getId(clusterDocker.documentSelfLink), hostSpecDocker1);
+
+        clusterDocker = getOneCluster(Service.getId(clusterDocker.documentSelfLink));
+        clusterVCH = getOneCluster(Service.getId(clusterVCH.documentSelfLink));
+
+        assertEquals(2, clusterDocker.nodeLinks.size());
+        assertEquals(1, clusterVCH.nodeLinks.size());
+
+        deleteHostInCluster(Service.getId(clusterDocker.documentSelfLink),
+                Service.getId(clusterDocker.nodeLinks.get(0)));
+
+        clusterDocker = getOneCluster(Service.getId(clusterDocker.documentSelfLink));
+        clusterVCH = getOneCluster(Service.getId(clusterVCH.documentSelfLink));
+
+        assertEquals(1, clusterDocker.nodeLinks.size());
+        assertEquals(1, clusterVCH.nodeLinks.size());
+    }
+
+    @Test(expected = LocalizableValidationException.class)
+    public void testAddHostInVCHCluster() throws Throwable {
+
+        final String projectLinkVCH = buildProjectLink("test-vch-project");
+        PlacementZoneUtil
+                .buildPlacementZoneDefaultName(ContainerHostType.VCH, COMPUTE_ADDRESS);
+
+        ContainerHostSpec hostSpecVCH = createContainerHostSpec(
+                Collections.singletonList(projectLinkVCH),
+                ContainerHostType.VCH);
+        ClusterDto clusterVCH = createCluster(hostSpecVCH);
+
+        ContainerHostSpec hostSpecDocker1 = createContainerHostSpec(projectLinkVCH);
+
+        addHostInCluster(Service.getId(clusterVCH.documentSelfLink), hostSpecDocker1);
+    }
+
     private void verifyCluster(ClusterDto clusterDto, ClusterType clusterType, String expectedName,
             String projectLink) throws Throwable {
         // verify cluster creation
@@ -415,6 +480,25 @@ public class ClusterServiceTest extends ComputeBaseTest {
                     ContainerHostUtil.getDeclaredContainerHostType(hostState));
         }
         assertEquals(ComputeService.PowerState.ON, hostState.powerState);
+    }
+
+    private ContainerHostSpec createContainerHostSpec(final String projectLinkDocker) {
+        ContainerHostSpec hostSpecDocker1 = new ContainerHostSpec();
+        hostSpecDocker1.hostState = new ComputeState();
+        hostSpecDocker1.hostState.address = "test-address";
+        hostSpecDocker1.hostState.tenantLinks = Collections.singletonList(projectLinkDocker);
+        hostSpecDocker1.acceptCertificate = true;
+        hostSpecDocker1.hostState.customProperties = new HashMap<>();
+        hostSpecDocker1.hostState.customProperties.put(
+                ContainerHostService.HOST_DOCKER_ADAPTER_TYPE_PROP_NAME,
+                ContainerHostService.DockerAdapterType.API.name());
+        hostSpecDocker1.hostState.customProperties.put(
+                ContainerHostService.CONTAINER_HOST_TYPE_PROP_NAME,
+                ContainerHostType.DOCKER.name());
+        hostSpecDocker1.hostState.customProperties.put(
+                ComputeConstants.HOST_AUTH_CREDENTIALS_PROP_NAME,
+                "");
+        return hostSpecDocker1;
     }
 
     private List<GroupResourcePlacementState> getPlacementsForZone(String placementZoneLink) {
@@ -734,7 +818,7 @@ public class ClusterServiceTest extends ComputeBaseTest {
             boolean expectedToFail) {
         List<ComputeState> result = new LinkedList<>();
         String pathHostsInCluster = UriUtils.buildUriPath(ClusterService.SELF_LINK, clusterId,
-                "hosts", hostId);
+                ClusterService.HOSTS_URI_PATH_SEGMENT, hostId);
         URI uri = UriUtils.buildUri(host, pathHostsInCluster);
         Operation get = Operation.createGet(host, uri.getPath())
                 .setReferer(host.getUri())
@@ -768,6 +852,52 @@ public class ClusterServiceTest extends ComputeBaseTest {
         host.testWait();
 
         return result.get(0);
+    }
+
+    private String addHostInCluster(String clusterId, ContainerHostSpec ch) {
+        List<String> result = new LinkedList<>();
+        String pathHostsInCluster = UriUtils.buildUriPath(ClusterService.SELF_LINK, clusterId,
+                "hosts");
+        URI uri = UriUtils.buildUri(host, pathHostsInCluster);
+        Operation post = Operation.createPost(host, uri.getPath())
+                .setReferer(host.getUri())
+                .setBody(ch)
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.log(Level.SEVERE, "Failed to add hosts in cluster: %s",
+                                Utils.toString(ex));
+                        host.failIteration(ex);
+                    } else {
+                        result.add(o.toString());
+                        host.completeIteration();
+                    }
+                });
+
+        host.testStart(1);
+        host.send(post);
+        host.testWait();
+
+        return result.get(0);
+    }
+
+    private void deleteHostInCluster(String clusterId, String hostId) {
+        String pathSB = UriUtils.buildUriPath(ClusterService.SELF_LINK, clusterId,
+                ClusterService.HOSTS_URI_PATH_SEGMENT, hostId);
+        Operation get = Operation.createDelete(host, pathSB)
+                .setReferer(host.getUri())
+                .setCompletion((o, ex) -> {
+                    if (ex != null) {
+                        host.log(Level.SEVERE, "Failed to delete host in cluster: %s",
+                                Utils.toString(ex));
+                        host.failIteration(ex);
+                    } else {
+                        host.completeIteration();
+                    }
+                });
+
+        host.testStart(1);
+        host.send(get);
+        host.testWait();
     }
 
     private ContainerHostSpec createContainerHostSpec(List<String> tenantLinks,
