@@ -46,6 +46,8 @@ public class SimpleHttpsClient {
     private static final HostnameVerifier ALLOW_ALL_HOSTNAME_VERIFIER =
             new AllowAllHostnameVerifier();
 
+    private static String authToken;
+
     public enum HttpMethod {
         GET, POST, PUT, PATCH, DELETE
     }
@@ -54,6 +56,14 @@ public class SimpleHttpsClient {
         public int statusCode;
         public String responseBody;
         public Map<String, List<String>> headers;
+    }
+
+    public static String getAuthToken() {
+        return authToken;
+    }
+
+    public static void setAuthToken(String authToken) {
+        SimpleHttpsClient.authToken = authToken;
     }
 
     /**
@@ -109,6 +119,10 @@ public class SimpleHttpsClient {
         }
         if (!isKeyInHeaders(headers, Operation.MEDIA_TYPE_APPLICATION_JSON)) {
             conn.addRequestProperty("Accept", Operation.MEDIA_TYPE_APPLICATION_JSON);
+        }
+
+        if (authToken != null && !isKeyInHeaders(headers, Operation.REQUEST_AUTH_TOKEN_HEADER)) {
+            conn.addRequestProperty(Operation.REQUEST_AUTH_TOKEN_HEADER, authToken);
         }
 
         Operation op = new Operation()
