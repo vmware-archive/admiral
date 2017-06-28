@@ -728,7 +728,7 @@
           "privateKeyIdLabel": "Username",
           "privateKeyLabel": "Password",
           "regionIdLabel": "Datacenter",
-          "linkedEndpointLabel": "NSX-T endpoint"
+          "linkedEndpointLabel": "NSX endpoint"
         }
       },
       "entity": "endpoint",

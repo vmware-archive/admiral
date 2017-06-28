@@ -10,6 +10,7 @@
  */
 
 import services from 'core/services';
+import vSphereConstants from './vSphereConstants';
 
 export default Vue.component('vsphere-endpoint-editor', {
   template: `
@@ -143,7 +144,12 @@ export default Vue.component('vsphere-endpoint-editor', {
     },
     searchLinkedEndpoints(...args) {
       return new Promise((resolve, reject) => {
-        services.searchEndpoints.apply(null, [...args, 'nsxt']).then((result) => {
+        services.searchEndpoints
+            .apply(null,
+                [...args,
+                    [vSphereConstants.ENDPOINT_TYPES.NSX_T,
+                        vSphereConstants.ENDPOINT_TYPES.NSX_V]]
+            ).then((result) => {
           resolve(result);
         }).catch(reject);
       });

@@ -1403,19 +1403,18 @@ services.updateStorageTags = function(storageItems) {
   return promiseArray;
 };
 
-services.searchEndpoints = function(query, limit, type) {
-  let endpointOps = {
-    name: [{
-      val: '*' + serviceUtils.encodeQuotes(query.toLowerCase()) + '*',
-      op: 'eq'
-    }]
-  };
-  if (type) {
-    endpointOps.endpointType = [{
-      val: type.toLowerCase(),
-      op: 'eq'
-    }];
+services.searchEndpoints = function(query, limit, types) {
+  let endpointOps = {};
+  if (types && types.length) {
+      endpointOps.endpointType = types.map((t) => {
+          return {
+              val: t.toLowerCase(),
+              op: 'eq'
+          };
+      });
+      endpointOps[constants.SEARCH_OCCURRENCE.PARAM] = constants.SEARCH_OCCURRENCE.ANY;
   }
+
   let filter = serviceUtils.buildOdataQuery(endpointOps);
 
   let url = buildPaginationUrl(links.ENDPOINTS, filter, true,
