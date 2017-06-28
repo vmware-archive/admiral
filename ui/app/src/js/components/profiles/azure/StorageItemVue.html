@@ -38,7 +38,19 @@
   <div class="form-control select">
     <select @change="onOSDiskCachingChange" v-model="osDiskCaching">
       <option v-for="cachingType of cachingTypes" value="{{cachingType.value}}">
-        {{cachingType.name}}</option>
+        {{cachingType.name}}
+      </option>
+    </select>
+  </div>
+</div>
+<div class="form-group">
+  <form-label :required="true">
+    {{i18n('app.profile.edit.storage.azure.dataDiskCachingLabel')}}</form-label>
+  <div class="form-control select">
+    <select @change="onDataDiskCachingChange" v-model="dataDiskCaching">
+      <option v-for="cachingType of cachingTypes" value="{{cachingType.value}}">
+        {{cachingType.name}}
+      </option>
     </select>
   </div>
 </div>

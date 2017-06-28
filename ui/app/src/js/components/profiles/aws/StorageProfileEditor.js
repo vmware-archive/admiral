@@ -116,7 +116,8 @@ const DEVICE_TYPES = [{
   value: 'ebs'
 }, {
   name: i18n.t('app.profile.awsDeviceTypes.instanceStore'),
-  value: 'instanceStore'
+  value: 'instanceStore',
+  disabled: true
 }];
 
 const IOPS_LIMIT = 20000;

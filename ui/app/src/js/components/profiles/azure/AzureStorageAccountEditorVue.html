@@ -27,6 +27,7 @@
       <checkbox-group
         :label="i18n('app.profile.edit.storage.vsphere.datastore.list.edit.encryptionLabel')"
         :value="supportsEncryption"
+        :disabled="true"
         @change="onSupportsEncryptionChange">
       </checkbox-group>
       <div class="form-group">

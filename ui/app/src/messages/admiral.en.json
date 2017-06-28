@@ -553,6 +553,7 @@
             "selectAccountLabel": "Select Account",
             "storageAccountTypeLabel": "Storage Account Type",
             "osDiskCachingLabel": "OS Disk Caching",
+            "dataDiskCachingLabel": "Data Disk Caching",
             "contextPanelTooltip": "Storage Accounts",
             "typeLabel": "Type",
             "encryptionLabel": "Storage Service Encryption",
@@ -624,7 +625,8 @@
           "aws": {
             "volumeTypeLabel": "Volume Type",
             "deviceTypeLabel": "Device Type",
-            "iopsLabel": "IOPS",
+            "iopsLabel": "Max IOPS",
+            "iopsHint": "Actual provisioned IOPS could be less, depending on the disk capacity",
             "fileSystemLabel": "File System",
             "encryptedLabel": "Supports Encryption"
           }
@@ -669,7 +671,7 @@
         "standardRAGRS": "Standard RAGRS",
         "premiumLRS": "Premium LRS"
       },
-      "azureOSDiskCachingType": {
+      "azureDiskCachingType": {
         "none": "None",
         "readOnly": "Read Only",
         "readWrite": "Read Write"

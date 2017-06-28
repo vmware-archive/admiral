@@ -95,14 +95,14 @@ export default Vue.component('azure-storage-profile-editor', {
   }
 });
 
-const OS_DISK_CACHING_TYPES = [{
-  name: i18n.t('app.profile.azureOSDiskCachingType.none'),
+const DISK_CACHING_TYPES = [{
+  name: i18n.t('app.profile.azureDiskCachingType.none'),
   value: 'None'
 }, {
-  name: i18n.t('app.profile.azureOSDiskCachingType.readOnly'),
+  name: i18n.t('app.profile.azureDiskCachingType.readOnly'),
   value: 'ReadOnly'
 }, {
-  name: i18n.t('app.profile.azureOSDiskCachingType.readWrite'),
+  name: i18n.t('app.profile.azureDiskCachingType.readWrite'),
   value: 'ReadWrite'
 }];
 
@@ -147,9 +147,10 @@ Vue.component('azure-storage-item', {
     }
     return {
       osDiskCaching: diskProperties.azureOsDiskCaching || '',
+      dataDiskCaching: diskProperties.azureDataDiskCaching || '',
       tagLinks: tagLinks,
       tags: [],
-      cachingTypes: OS_DISK_CACHING_TYPES
+      cachingTypes: DISK_CACHING_TYPES
     };
   },
   methods: {
@@ -170,6 +171,9 @@ Vue.component('azure-storage-item', {
     },
     onOSDiskCachingChange($event) {
       this.onDiskPropertyChange('azureOsDiskCaching', $event.target.value);
+    },
+    onDataDiskCachingChange($event) {
+      this.onDiskPropertyChange('azureDataDiskCaching', $event.target.value);
     },
     onDiskPropertyChange(diskPropertyName, value) {
       this.storageItem.diskProperties[diskPropertyName] = value;
@@ -212,7 +216,8 @@ Vue.component('azure-storage-item', {
     isValid() {
       return this.storageItem.name &&
         this.storageItem.storageDescriptionLink &&
-        this.storageItem.diskProperties.azureOsDiskCaching;
+        this.storageItem.diskProperties.azureOsDiskCaching &&
+        this.storageItem.diskProperties.azureDataDiskCaching;
     }
   }
 });
