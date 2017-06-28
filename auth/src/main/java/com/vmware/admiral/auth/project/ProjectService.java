@@ -25,6 +25,7 @@ import javax.management.ServiceNotFoundException;
 import com.esotericsoftware.kryo.serializers.VersionFieldSerializer.Since;
 
 import com.vmware.admiral.auth.idm.AuthRole;
+import com.vmware.admiral.auth.idm.Principal;
 import com.vmware.admiral.auth.project.ProjectRolesHandler.ProjectRoles;
 import com.vmware.admiral.auth.util.AuthUtil;
 import com.vmware.admiral.auth.util.ProjectUtil;
@@ -57,7 +58,6 @@ import com.vmware.xenon.services.common.RoleService.RoleState;
 import com.vmware.xenon.services.common.ServiceUriPaths;
 import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
-import com.vmware.xenon.services.common.UserService.UserState;
 
 /**
  * Project is a group sharing same resources.
@@ -194,19 +194,19 @@ public class ProjectService extends StatefulService {
          * List of administrators for this project.
          */
         @Documentation(description = "List of administrators for this project.")
-        public List<UserState> administrators;
+        public List<Principal> administrators;
 
         /**
          * List of members for this project.
          */
         @Documentation(description = "List of members for this project.")
-        public List<UserState> members;
+        public List<Principal> members;
 
         /**
          * List of viewers for this project.
          */
         @Documentation(description = "List of viewers for this project.")
-        public List<UserState> viewers;
+        public List<Principal> viewers;
 
         /**
          * List of cluster links for this project.

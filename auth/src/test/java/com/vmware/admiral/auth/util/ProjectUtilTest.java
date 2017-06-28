@@ -101,13 +101,13 @@ public class ProjectUtilTest {
         ProjectState state = new ProjectState();
 
         state.customProperties = null;
-        assertNull(ProjectUtil.getHarborId(state));
+        assertNull(ProjectUtil.getProjectIndex(state));
 
         state.customProperties = new HashMap<>();
-        assertNull(ProjectUtil.getHarborId(state));
+        assertNull(ProjectUtil.getProjectIndex(state));
 
         String projectId =  "" + new Random().nextInt(1000);
         state.customProperties.put(ProjectService.CUSTOM_PROPERTY_PROJECT_INDEX, projectId);
-        assertEquals(projectId, ProjectUtil.getHarborId(state));
+        assertEquals(projectId, ProjectUtil.getProjectIndex(state));
     }
 }

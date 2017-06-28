@@ -11,8 +11,6 @@
 
 package com.vmware.admiral.auth.idm;
 
-import java.util.List;
-
 public class Principal {
 
     public enum PrincipalType {
@@ -27,8 +25,6 @@ public class Principal {
     public String name;
 
     public String email;
-
-    public List<String> groupMembers;
 
     public PrincipalType type;
 

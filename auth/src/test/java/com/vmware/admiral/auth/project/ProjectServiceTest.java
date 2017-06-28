@@ -570,21 +570,14 @@ public class ProjectServiceTest extends AuthBaseTest {
 
         assertNotNull(stateWithMembers.administrators);
         assertTrue(stateWithMembers.administrators.size() == 1);
-        assertTrue(stateWithMembers.administrators.iterator()
-                .next().documentSelfLink
-                        .equals(buildUserServicePath(USER_EMAIL_ADMIN)));
+        assertTrue(stateWithMembers.administrators.get(0).email.equals(USER_EMAIL_ADMIN));
 
         assertNotNull(stateWithMembers.members);
         assertTrue(stateWithMembers.members.size() == 1);
-        assertTrue(stateWithMembers.members.iterator()
-                .next().documentSelfLink
-                        .equals(buildUserServicePath(USER_EMAIL_ADMIN)));
+        assertTrue(stateWithMembers.members.get(0).email.equals(USER_EMAIL_ADMIN));
 
         assertNotNull(stateWithMembers.viewers);
-        assertTrue(stateWithMembers.viewers.size() == 1);
-        assertTrue(stateWithMembers.viewers.iterator()
-                .next().documentSelfLink
-                        .equals(buildUserServicePath(USER_EMAIL_BASIC_USER)));
+        assertTrue(stateWithMembers.viewers.get(0).email.equals(USER_EMAIL_BASIC_USER));
     }
 
     @Test

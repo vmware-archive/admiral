@@ -13,7 +13,6 @@ package com.vmware.admiral.auth.util;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import static com.vmware.admiral.auth.util.PrincipalUtil.fromLocalPrincipalToPrincipal;
 import static com.vmware.admiral.auth.util.PrincipalUtil.fromPrincipalToLocalPrincipal;
@@ -80,8 +79,6 @@ public class PrincipalUtilTest {
         assertEquals(localPrincipal.id, principal.id);
         assertEquals(localPrincipal.name, principal.name);
         assertEquals(PrincipalType.GROUP, principal.type);
-        assertTrue(principal.groupMembers.contains("connie@admiral.com"));
-        assertTrue(principal.groupMembers.contains("fritz@admiral.com"));
     }
 
     @Test
@@ -116,19 +113,10 @@ public class PrincipalUtilTest {
         principal.id = "superadmins";
         principal.name = "Super Admins";
         principal.type = PrincipalType.GROUP;
-        principal.groupMembers = new ArrayList<>();
-        principal.groupMembers.add("connie@admiral.com");
-        principal.groupMembers.add("fritz@admiral.com");
 
         LocalPrincipalState localPrincipal = fromPrincipalToLocalPrincipal(principal);
         assertEquals(principal.id, localPrincipal.id);
         assertEquals(principal.name, localPrincipal.name);
         assertEquals(LocalPrincipalType.GROUP, localPrincipal.type);
-        assertTrue(localPrincipal.groupMembersLinks
-                .contains(UriUtils.buildUriPath(LocalPrincipalFactoryService
-                        .SELF_LINK, "connie@admiral.com")));
-        assertTrue(localPrincipal.groupMembersLinks
-                .contains(UriUtils.buildUriPath(LocalPrincipalFactoryService
-                        .SELF_LINK, "fritz@admiral.com")));
     }
 }

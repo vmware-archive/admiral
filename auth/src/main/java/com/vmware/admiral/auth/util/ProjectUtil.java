@@ -11,18 +11,27 @@
 
 package com.vmware.admiral.auth.util;
 
+import static com.vmware.admiral.common.util.AssertUtil.assertNotNullOrEmpty;
+import static com.vmware.admiral.compute.content.CompositeTemplateUtil.isNullOrEmpty;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import com.google.gson.annotations.SerializedName;
 
+import com.vmware.admiral.auth.idm.AuthRole;
+import com.vmware.admiral.auth.idm.Principal;
 import com.vmware.admiral.auth.project.ProjectFactoryService;
 import com.vmware.admiral.auth.project.ProjectService;
 import com.vmware.admiral.auth.project.ProjectService.ExpandedProjectState;
@@ -48,6 +57,7 @@ import com.vmware.xenon.services.common.QueryTask.Query;
 import com.vmware.xenon.services.common.QueryTask.Query.Occurance;
 import com.vmware.xenon.services.common.QueryTask.QuerySpecification;
 import com.vmware.xenon.services.common.QueryTask.QueryTerm.MatchType;
+import com.vmware.xenon.services.common.UserGroupService;
 import com.vmware.xenon.services.common.UserGroupService.UserGroupState;
 import com.vmware.xenon.services.common.UserService.UserState;
 
@@ -102,26 +112,102 @@ public class ProjectUtil {
             ProjectState simpleState, URI referer) {
         ExpandedProjectState expandedState = new ExpandedProjectState();
         simpleState.copyTo(expandedState);
+        expandedState.administrators = new ArrayList<>();
+        expandedState.members = new ArrayList<>();
+        expandedState.viewers = new ArrayList<>();
+
+        if (isNullOrEmpty(simpleState.membersUserGroupLinks)
+                && isNullOrEmpty(simpleState.administratorsUserGroupLinks)
+                && isNullOrEmpty(simpleState.viewersUserGroupLinks)) {
+            return DeferredResult.completed(expandedState);
+        }
+
+        String projectId = Service.getId(simpleState.documentSelfLink);
+
+        String adminsGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_ADMINS.buildRoleWithSuffix(projectId));
+        String membersGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_MEMBERS.buildRoleWithSuffix(projectId));
+        String viewersGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                AuthRole.PROJECT_VIEWERS.buildRoleWithSuffix(projectId));
+
+        Map<String, UserState> userStates = new HashMap<>();
+        Map<String, Principal> userLinkToPrincipal = new HashMap<>();
+        Map<AuthRole, List<String>> roleToUsersLinks = new HashMap<>();
 
         DeferredResult<Void> retrieveAdmins = retrieveUserGroupMembers(host,
-                simpleState.administratorsUserGroupLinks, referer)
-                        .thenAccept((adminsList) -> expandedState.administrators = adminsList);
+                adminsGroupLink, referer)
+                .thenAccept((adminsList) -> {
+                    adminsList.forEach(a -> userStates.put(a.documentSelfLink, a));
+                    roleToUsersLinks.put(AuthRole.PROJECT_ADMINS, adminsList.stream().map(a ->
+                            a.documentSelfLink).collect(Collectors.toList()));
+                });
+
         DeferredResult<Void> retrieveMembers = retrieveUserGroupMembers(host,
-                simpleState.membersUserGroupLinks, referer)
-                        .thenAccept((membersList) -> expandedState.members = membersList);
+                membersGroupLink, referer)
+                .thenAccept((membersList) -> {
+                    membersList.forEach(m -> userStates.put(m.documentSelfLink, m));
+                    roleToUsersLinks.put(AuthRole.PROJECT_MEMBERS, membersList.stream().map(m ->
+                            m.documentSelfLink).collect(Collectors.toList()));
+                });
+
         DeferredResult<Void> retrieveViewers = retrieveUserGroupMembers(host,
-                simpleState.viewersUserGroupLinks, referer)
-                        .thenAccept((viewersList) -> expandedState.viewers = viewersList);
+                viewersGroupLink, referer)
+                .thenAccept((viewersList) -> {
+                    viewersList.forEach(v -> userStates.put(v.documentSelfLink, v));
+                    roleToUsersLinks.put(AuthRole.PROJECT_VIEWERS, viewersList.stream().map(m ->
+                            m.documentSelfLink).collect(Collectors.toList()));
+                });
+
+        DeferredResult<Void> retrieveUserStatePrincipals = DeferredResult.allOf(retrieveAdmins,
+                retrieveMembers, retrieveViewers)
+                .thenCompose(ignore -> {
+                    List<DeferredResult<Void>> results = new ArrayList<>();
+
+                    for (Entry<String, UserState> entry : userStates.entrySet()) {
+                        DeferredResult<Void> tempResult = PrincipalUtil.getPrincipal(host,
+                                Service.getId(entry.getValue().documentSelfLink))
+                                .thenAccept(p -> userLinkToPrincipal.put(entry.getKey(), p));
+                        results.add(tempResult);
+                    }
+
+                    return DeferredResult.allOf(results);
+                })
+                .thenAccept(ignore -> {
+                    List<String> admins = roleToUsersLinks.get(AuthRole.PROJECT_ADMINS);
+                    List<String> members = roleToUsersLinks.get(AuthRole.PROJECT_MEMBERS);
+                    List<String> viewers = roleToUsersLinks.get(AuthRole.PROJECT_VIEWERS);
+
+                    admins.forEach(a -> expandedState.administrators.add(
+                            userLinkToPrincipal.get(a)));
+
+                    members.forEach(m -> expandedState.members.add(userLinkToPrincipal.get(m)));
+
+                    viewers.forEach(v -> expandedState.viewers.add(userLinkToPrincipal.get(v)));
+                });
+
+        DeferredResult<Void> retrieveAdminsGroupPrincipals = getGroupPrincipals(host,
+                simpleState.administratorsUserGroupLinks, projectId, AuthRole.PROJECT_ADMINS)
+                .thenAccept(principals -> expandedState.administrators.addAll(principals));
+
+        DeferredResult<Void> retrieveMembersGroupPrincipals = getGroupPrincipals(host,
+                simpleState.membersUserGroupLinks, projectId, AuthRole.PROJECT_MEMBERS)
+                .thenAccept(principals -> expandedState.members.addAll(principals));
+
+        DeferredResult<Void> retrieveViewersGroupPrincipals = getGroupPrincipals(host,
+                simpleState.viewersUserGroupLinks, projectId, AuthRole.PROJECT_VIEWERS)
+                .thenAccept(principals -> expandedState.viewers.addAll(principals));
+
         DeferredResult<Void> retrieveClusterLinks = retrieveClusterLinks(host,
                 simpleState.documentSelfLink)
                         .thenAccept((clusterLinks) -> expandedState.clusterLinks = clusterLinks);
+
         DeferredResult<Void> retrieveTemplateLinks = retrieveTemplateLinks(host,
                 simpleState.documentSelfLink)
-                        .thenAccept((templateLinks) -> {
-                            expandedState.templateLinks = templateLinks;
-                        });
+                        .thenAccept((templateLinks) -> expandedState.templateLinks = templateLinks);
+
         DeferredResult<Void> retrieveRepositoriesAndImagesCount = retrieveRepositoriesAndTagsCount(host,
-                simpleState.documentSelfLink, getHarborId(simpleState))
+                simpleState.documentSelfLink, getProjectIndex(simpleState))
                         .thenAccept(
                                 (repositories) -> {
                                     expandedState.repositories = new ArrayList<>(repositories.size());
@@ -133,16 +219,49 @@ public class ProjectUtil {
                                     });
                                 });
 
-        return DeferredResult.allOf(retrieveAdmins, retrieveMembers, retrieveViewers,
+        return DeferredResult.allOf(retrieveUserStatePrincipals, retrieveAdminsGroupPrincipals,
+                retrieveMembersGroupPrincipals, retrieveViewersGroupPrincipals,
                 retrieveClusterLinks, retrieveTemplateLinks, retrieveRepositoriesAndImagesCount)
                 .thenApply((ignore) -> expandedState);
     }
 
-    public static String getHarborId(ProjectState state) {
+    public static String getProjectIndex(ProjectState state) {
         if (state == null || state.customProperties == null) {
             return null;
         }
         return state.customProperties.get(ProjectService.CUSTOM_PROPERTY_PROJECT_INDEX);
+    }
+
+    private static DeferredResult<List<Principal>> getGroupPrincipals(ServiceHost host,
+            List<String> groupLinks, String projectId, AuthRole role) {
+        try {
+            assertNotNullOrEmpty(projectId, "projectId");
+        } catch (Exception ex) {
+            return DeferredResult.failed(ex);
+        }
+
+        if (groupLinks == null || groupLinks.isEmpty()) {
+            return DeferredResult.completed(new ArrayList<>());
+        }
+
+        if (!EnumSet.of(AuthRole.PROJECT_ADMINS, AuthRole.PROJECT_MEMBERS, AuthRole.PROJECT_VIEWERS)
+                .contains(role)) {
+            return DeferredResult.failed(new IllegalArgumentException(role.getName() + "is not "
+                    + "project role."));
+        }
+
+        String defaultProjectGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
+                role.buildRoleWithSuffix(projectId));
+
+        groupLinks.remove(defaultProjectGroupLink);
+
+        List<DeferredResult<Principal>> results = new ArrayList<>();
+
+        for (String groupLink : groupLinks) {
+            results.add(PrincipalUtil.getPrincipal(host, Service.getId(groupLink)));
+        }
+
+        return DeferredResult.allOf(results);
     }
 
     private static DeferredResult<List<String>> retrieveClusterLinks(ServiceHost host,
@@ -229,31 +348,18 @@ public class ProjectUtil {
      * @see #retrieveUserStatesForGroup(UserGroupState)
      */
     private static DeferredResult<List<UserState>> retrieveUserGroupMembers(ServiceHost host,
-            List<String> groupLinks, URI referer) {
-        if (groupLinks == null) {
-            return DeferredResult.completed(new ArrayList<>(0));
+            String groupLink, URI referer) {
+
+        try {
+            assertNotNullOrEmpty(groupLink, "groupLink");
+        } catch (Exception ex) {
+            return DeferredResult.failed(ex);
         }
 
-        List<DeferredResult<List<UserState>>> results = new ArrayList<>();
+        Operation groupGet = Operation.createGet(host, groupLink).setReferer(referer);
 
-        for (String groupLink : groupLinks) {
-            if (groupLink == null || groupLink.isEmpty()) {
-                continue;
-            }
-            Operation groupGet = Operation.createGet(host, groupLink).setReferer(referer);
-            results.add(host.sendWithDeferredResult(groupGet, UserGroupState.class)
-                    .thenCompose((groupState) -> retrieveUserStatesForGroup(host, groupState)));
-        }
-
-        if (results.isEmpty()) {
-            return DeferredResult.completed(new ArrayList<>(0));
-        }
-
-        return DeferredResult.allOf(results).thenApply(userStates -> {
-            List<UserState> states = new ArrayList<>();
-            userStates.forEach(states::addAll);
-            return states;
-        });
+        return host.sendWithDeferredResult(groupGet, UserGroupState.class)
+                .thenCompose(groupState -> retrieveUserStatesForGroup(host, groupState));
     }
 
     /**

@@ -14,7 +14,6 @@ package com.vmware.admiral.auth.util;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.vmware.admiral.auth.idm.Principal;
 import com.vmware.admiral.auth.idm.Principal.PrincipalType;
@@ -24,7 +23,6 @@ import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalSta
 import com.vmware.admiral.auth.idm.local.LocalPrincipalService.LocalPrincipalType;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
-import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocumentQueryResult;
 import com.vmware.xenon.common.ServiceHost;
 import com.vmware.xenon.common.UriUtils;
@@ -44,13 +42,6 @@ public class PrincipalUtil {
         principal.id = state.id;
         principal.password = state.password;
         principal.type = PrincipalType.valueOf(state.type.name());
-
-        if (state.type == LocalPrincipalType.GROUP && state.groupMembersLinks != null
-                && !state.groupMembersLinks.isEmpty()) {
-            principal.groupMembers = state.groupMembersLinks.stream()
-                    .map(Service::getId)
-                    .collect(Collectors.toList());
-        }
 
         return principal;
     }
@@ -82,13 +73,6 @@ public class PrincipalUtil {
         state.name = principal.name;
         state.type = LocalPrincipalType.valueOf(principal.type.name());
 
-        if (principal.type == PrincipalType.GROUP && principal.groupMembers != null
-                && !principal.groupMembers.isEmpty()) {
-            state.groupMembersLinks = principal.groupMembers.stream()
-                    .map(m -> LocalPrincipalFactoryService.SELF_LINK + "/" + m)
-                    .collect(Collectors.toList());
-        }
-
         return state;
     }
 
@@ -99,7 +83,6 @@ public class PrincipalUtil {
         if (dst == null) {
             dst = new Principal();
         }
-        dst.groupMembers = src.groupMembers;
         dst.id = src.id;
         dst.email = src.email;
         dst.type = src.type;
