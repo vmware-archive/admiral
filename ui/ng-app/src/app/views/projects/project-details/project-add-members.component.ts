@@ -57,7 +57,7 @@ export class ProjectAddMembersComponent {
             return [];
         }
 
-        this.service.findPrincipals($eventData.query).then((principalsResult) => {
+        this.service.findPrincipals($eventData.query, false).then((principalsResult) => {
             this.members = principalsResult;
 
             this.membersSuggestions = this.members.map((principal) => {

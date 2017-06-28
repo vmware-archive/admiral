@@ -10,7 +10,7 @@
  */
 
 import { Component, OnInit } from '@angular/core';
-import { FormGroup } from "@angular/forms";
+import { FormGroup, FormControl } from "@angular/forms";
 import { DocumentService } from "../../utils/document.service";
 
 @Component({
@@ -24,12 +24,11 @@ import { DocumentService } from "../../utils/document.service";
 export class UsersGroupsComponent implements OnInit {
 
     searchPrincipalsForm = new FormGroup({
+        searchField: new FormControl('')
     });
 
-    principals: any[] = [];
+    selected: any[] = [];
     selectedPrincipals: any[] = [];
-
-    principalSuggestions: any[];
 
     constructor(protected service: DocumentService) {
     }
@@ -37,38 +36,58 @@ export class UsersGroupsComponent implements OnInit {
     ngOnInit() {
     }
 
-    searchPrincipals($eventData: any) {
-        if ($eventData.query === '') {
-            this.principals = [];
+    searchIt($event) {
+        let searchTerm = this.searchPrincipalsForm.get("searchField").value;
+        console.log('searchTerm', searchTerm, $event);
+
+        if (searchTerm === '') {
+            this.selectedPrincipals = [];
             return;
         }
 
-        this.service.findPrincipals($eventData.query).then((principalsResult) => {
-            this.principals = principalsResult;
-
-            this.principalSuggestions = this.principals.map((principal) => {
-                let searchResult = {};
-                searchResult['id'] = principal.id;
-                searchResult['name'] = principal.email;
-
-                return searchResult;
-            });
-            // notify search component
-            $eventData.callback(this.principalSuggestions);
-
+        this.service.findPrincipals(searchTerm, true).then((principalsResult) => {
+            this.selectedPrincipals = principalsResult;
         }).catch((error) => {
             console.log('Failed to find principals', error);
         });
     }
 
-    onSearchSelection(selectionData) {
-        let selectedPrincipal = this.principals.find((principal) => principal.id === selectionData.datum.id);
-        this.selectedPrincipals = [];
-        this.selectedPrincipals.push(selectedPrincipal);
+    isCloudAdmin(principal: any) {
+        let roles: any[] = principal.roles;
+        if (!roles) {
+            return false;
+        }
+
+        let cloudAdminRole:any = roles.find((role) => {
+            return role === 'CLOUD_ADMINS';
+        });
+
+        return !!cloudAdminRole;
     }
 
-    clearSearch() {
-        this.principals = [];
-        this.selectedPrincipals = [];
+    getProjectsRoles(principal: any) {
+        let projectsRoles: any[] = [];
+
+        let projects = principal.projects;
+        if (projects) {
+            projects.forEach((project) => {
+                if (project.roles && project.roles.length > 0) {
+                    projectsRoles.push({
+                        projectName: project.name,
+                        projectRole: project.roles[0]
+                    });
+                }
+            });
+        }
+
+        return projectsRoles;
+    }
+
+    onAssignRoles() {
+        // TODO
+    }
+
+    onMakeAdmin() {
+        // TODO
     }
 }

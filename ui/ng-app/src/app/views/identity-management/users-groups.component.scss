@@ -3,3 +3,32 @@
     padding-top: 8px;
     padding-left: 4px;
 }
+
+.search-holder {
+    float: right;
+    height: 30px;
+}
+
+.search-users {
+    display: inline;
+    margin-right: 10px;
+    margin-top: 10px;
+    color: #9a9a9a;
+}
+.users-table-holder {
+    margin-top: 30px;
+}
+
+.user-cloud-admin-check {
+    color: green;
+}
+
+.label-project-role {
+    background-color: #eee;
+    margin-top: 2px;
+
+    .badge {
+        background-color: #fff;
+        color: #9a9a9a;
+    }
+}

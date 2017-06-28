@@ -11,36 +11,45 @@
 
 <p>{{"identity.usersgroups.description" | i18n}}</p>
 
-<form class="form" [formGroup]="searchPrincipalsForm">
-    <section class="form-block">
-        <div class="form-group">
-            <label>{{"identity.usersgroups.fieldTitleSearch" | i18n}}</label>
-            <simple-search displayPropertyName="id"
-                           (searchChange)="searchPrincipals($event)"
-                           (searchSelectionChange)="onSearchSelection($event)"
-                           ></simple-search>
-            <a class="clickable clear-search-btn" (click)="clearSearch()"><clr-icon shape="remove" size="20"></clr-icon></a>
+<div class="search-holder">
+    <form class="form" [formGroup]="searchPrincipalsForm">
+        <div class="search-users"><clr-icon shape="search" size="20"></clr-icon></div>
+        <input id="searchField" type="text" formControlName="searchField" (keyup.enter)="searchIt($event)">
+    </form>
+</div>
+
+<div class="users-table-holder">
+<clr-datagrid [(clrDgSelected)]="selected">
+    <clr-dg-action-bar>
+        <div class="btn-group">
+            <button type="button" class="btn btn-sm btn-secondary" (click)="onAssignRoles()"
+                    *ngIf="selected.length == 1"><clr-icon shape="pencil"></clr-icon><span
+                class="btn-spaced-text">{{"assignRoles" | i18n}}</span></button>
+            <button type="button" class="btn btn-sm btn-secondary" (click)="onMakeAdmin()"
+                    *ngIf="selected.length == 1"><clr-icon shape="pencil"></clr-icon><span
+                class="btn-spaced-text">{{"makeAdmin" | i18n}}</span></button>
         </div>
-    </section>
-</form>
-<clr-datagrid class="IdentityUsersGroupsGrid">
+    </clr-dg-action-bar>
     <clr-dg-column>{{"identity.usersgroups.columnName" | i18n}}</clr-dg-column>
     <clr-dg-column>{{"identity.usersgroups.columnPrimaryId" | i18n}}</clr-dg-column>
-    <!--<clr-dg-column>{{"identity.usersgroups.columnCloudAdmin" | i18n}}</clr-dg-column>-->
-    <!--<clr-dg-column>{{"identity.usersgroups.columnProjects" | i18n}}</clr-dg-column>-->
+    <clr-dg-column>{{"identity.usersgroups.columnCloudAdmin" | i18n}}</clr-dg-column>
+    <clr-dg-column>{{"identity.usersgroups.columnProjects" | i18n}}</clr-dg-column>
+
+    <clr-dg-placeholder>{{"identity.usersgroups.notFound" | i18n}}</clr-dg-placeholder>
 
     <clr-dg-row *clrDgItems="let principal of selectedPrincipals" [clrDgItem]="principal">
-        <!--<clr-dg-action-overflow>-->
-            <!--<button class="action-item" (click)="onEdit(principal)">{{"edit" | i18n}}</button>-->
-            <!--<button class="action-item" (click)="onRemove(principal)">{{"remove" | i18n}}</button>-->
-        <!--</clr-dg-action-overflow>-->
         <clr-dg-cell><clr-icon *ngIf="principal.type == 'USER'" shape="user"></clr-icon>
             <clr-icon *ngIf="principal.type == 'GROUP'" shape="group"></clr-icon> {{principal.name}}</clr-dg-cell>
         <clr-dg-cell>{{principal.id}}</clr-dg-cell>
-        <!--<clr-dg-cell><clr-icon shape="check"></clr-icon></clr-dg-cell>-->
-        <!--<clr-dg-cell>TODO list projects and roles</clr-dg-cell>-->
+        <clr-dg-cell> <clr-icon *ngIf="isCloudAdmin(principal)" shape="check" class="user-cloud-admin-check"></clr-icon>
+            <clr-icon *ngIf="!isCloudAdmin(principal)" shape="minus"></clr-icon></clr-dg-cell>
+        <clr-dg-cell><span *ngFor="let projectRole of getProjectsRoles(principal)" class="label label-project-role">{{ projectRole.projectName }}
+            <span class="badge" *ngIf="projectRole.projectRole == 'PROJECT_ADMINS'">{{ "identity.usersgroups.projectRole.admin" | i18n }}</span>
+            <span class="badge" *ngIf="projectRole.projectRole == 'PROJECT_MEMBERS'">{{ "identity.usersgroups.projectRole.member" | i18n }}</span>
+        </span></clr-dg-cell>
     </clr-dg-row>
 
     <clr-dg-footer>{{selectedPrincipals.length}} {{"identity.usersgroups.count" | i18n}}</clr-dg-footer>
 
 </clr-datagrid>
+</div>

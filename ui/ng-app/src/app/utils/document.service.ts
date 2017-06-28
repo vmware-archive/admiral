@@ -179,10 +179,13 @@ export class DocumentService {
     return this.getById(Links.AUTH_PRINCIPALS, principalId)
   }
 
-  public findPrincipals(searchString): Promise<any> {
+  public findPrincipals(searchString, includeRoles): Promise<any> {
       return new Promise((resolve, reject) => {
           let searchParams = new URLSearchParams();
           searchParams.append('criteria', searchString);
+          if (includeRoles) {
+              searchParams.append('roles', 'all');
+          }
 
           this.ajax.get(Links.AUTH_PRINCIPALS, searchParams).then((principalsResult) => {
               resolve(principalsResult);

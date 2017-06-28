@@ -174,7 +174,12 @@
         "columnPrimaryId": "Primary ID",
         "columnCloudAdmin": "Cloud Admin",
         "columnProjects": "Projects",
-        "count": "users/groups"
+        "count": "users/groups",
+        "notFound": "No users found",
+        "projectRole": {
+            "admin": "Project Admin",
+            "member": "Developer"
+        }
     }
   },
   "errors": {
@@ -200,5 +205,7 @@
   "remove": "Remove",
   "delete": "Delete",
   "cancel": "Cancel",
-  "unknown": "Unknown"
+  "unknown": "Unknown",
+  "assignRoles": "Assign Roles",
+  "makeAdmin": " Make Admin"
 }
