@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -43,7 +43,8 @@ import com.vmware.xenon.common.Utils;
  * Simple HTTPS client for executing HTTPS requests
  */
 public class SimpleHttpsClient {
-    private static final HostnameVerifier ALLOW_ALL_HOSTNAME_VERIFIER = new AllowAllHostnameVerifier();
+    private static final HostnameVerifier ALLOW_ALL_HOSTNAME_VERIFIER =
+            new AllowAllHostnameVerifier();
 
     public enum HttpMethod {
         GET, POST, PUT, PATCH, DELETE
@@ -102,8 +103,13 @@ public class SimpleHttpsClient {
 
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         setRequestMethodUsingWorkaroundForJREBug(conn, method.name());
-        conn.addRequestProperty("Content-type", Operation.MEDIA_TYPE_APPLICATION_JSON);
-        conn.addRequestProperty("Accept", Operation.MEDIA_TYPE_APPLICATION_JSON);
+
+        if (!isKeyInHeaders(headers, Operation.CONTENT_TYPE_HEADER)) {
+            conn.addRequestProperty("Content-type", Operation.MEDIA_TYPE_APPLICATION_JSON);
+        }
+        if (!isKeyInHeaders(headers, Operation.MEDIA_TYPE_APPLICATION_JSON)) {
+            conn.addRequestProperty("Accept", Operation.MEDIA_TYPE_APPLICATION_JSON);
+        }
 
         Operation op = new Operation()
                 .addPragmaDirective(Operation.PRAGMA_DIRECTIVE_FORCE_INDEX_UPDATE);
@@ -166,7 +172,6 @@ public class SimpleHttpsClient {
                 in.close();
             }
         }
-
     }
 
     protected static HttpResponse validateResponse(HttpResponse httpResponse) {
@@ -208,7 +213,7 @@ public class SimpleHttpsClient {
 
     // Copied from https://java.net/jira/browse/JERSEY-639 . This allows us to use the new HTTP
     // methods like PATCH
-    private static final void setRequestMethodUsingWorkaroundForJREBug(
+    private static void setRequestMethodUsingWorkaroundForJREBug(
             final HttpURLConnection httpURLConnection, final String method) {
         try {
             httpURLConnection.setRequestMethod(method);
@@ -225,9 +230,7 @@ public class SimpleHttpsClient {
                 setRequestMethodUsingWorkaroundForJREBug(delegateConnection, method);
             } catch (NoSuchFieldException e) {
                 // Ignore for now, keep going
-            } catch (IllegalArgumentException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalAccessException e) {
+            } catch (IllegalArgumentException | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
             try {
@@ -248,6 +251,14 @@ public class SimpleHttpsClient {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    private static boolean isKeyInHeaders(Map<String, String> headers, String key) {
+        if (headers == null || key == null) {
+            return false;
+        }
+        return headers.keySet().stream()
+                .anyMatch(k -> key.toLowerCase().equals(k.toLowerCase()));
     }
 
 }
