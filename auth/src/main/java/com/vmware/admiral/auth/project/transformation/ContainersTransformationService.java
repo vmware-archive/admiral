@@ -16,7 +16,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
 
 import com.vmware.admiral.common.ManagementUriParts;
 import com.vmware.admiral.common.util.QueryUtil;
@@ -47,14 +46,14 @@ public class ContainersTransformationService extends StatelessService {
                 .query(queryTask, (r) -> {
                     if (r.hasException()) {
                         post.fail(r.getException());
-                        getHost().log(Level.SEVERE, "Failed to get compute states");
+                        logSevere("Failed to get compute states");
                     } else if (r.hasResult()) {
                         hosts.add(r.getResult());
                     } else {
                         if (hosts.isEmpty()) {
                             post.complete();
                         }
-                        getHost().log(Level.INFO, "Number of hosts found: %d", hosts.size());
+                        logInfo("Number of hosts found: %d", hosts.size());
                         processHosts(hosts, post);
                     }
                 });
@@ -73,15 +72,13 @@ public class ContainersTransformationService extends StatelessService {
                             .query(queryTask, (r) -> {
                                 if (r.hasException()) {
                                     post.fail(r.getException());
-                                    getHost().log(Level.SEVERE,
-                                            "Failed to get container states with parentLink %s",
+                                    logSevere("Failed to get container states with parentLink %s",
                                             state.documentSelfLink);
                                 } else if (r.hasResult()) {
                                     containers.add(r.getResult());
                                 } else {
                                     processContainers(state, containers, post);
-                                    getHost().log(Level.INFO,
-                                            "Number of containers found with parentLink %s %d",
+                                    logInfo("Number of containers found with parentLink %s %d",
                                             state.documentSelfLink, containers.size());
                                 }
                             });
@@ -91,8 +88,7 @@ public class ContainersTransformationService extends StatelessService {
     private void processContainers(ComputeState state, List<ContainerState> containers,
             Operation post) {
         if (containers.size() == 0) {
-            getHost().log(Level.INFO,
-                    "No containers found for host %s Containers tranformation completed successfully",
+            logInfo("No containers found for host %s Containers tranformation completed successfully",
                     state.documentSelfLink);
             post.complete();
         }
@@ -110,18 +106,15 @@ public class ContainersTransformationService extends StatelessService {
                     .setReferer(UriUtils.buildUri(getHost(), SELF_LINK))
                     .setCompletion((o, ex) -> {
                         if (ex != null) {
-                            getHost().log(Level.SEVERE,
-                                    "Failed to update tenantLinks for container %s",
+                            logSevere("Failed to update tenantLinks for container %s",
                                     container.documentSelfLink);
                             post.fail(ex);
                         } else {
-                            getHost().log(Level.INFO, "Container state %s updated with tenantLinks",
+                            logInfo("Container state %s updated with tenantLinks",
                                     container.documentSelfLink);
                             if (containersCount.decrementAndGet() == 0) {
                                 if (hostsCount.decrementAndGet() == 0) {
-                                    getHost().log(Level.INFO,
-                                            "Containers tranformation completed successfully",
-                                            container.documentSelfLink);
+                                    logInfo("Containers tranformation completed successfully");
                                     post.complete();
                                 }
                             }

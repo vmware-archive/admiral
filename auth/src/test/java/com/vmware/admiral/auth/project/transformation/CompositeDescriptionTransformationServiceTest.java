@@ -43,6 +43,21 @@ public class CompositeDescriptionTransformationServiceTest extends AuthBaseTest 
     }
 
     @Test
+    public void testNoTempletesDefaultProject() throws Throwable {
+        List<String> descriptionsBeforeTransformation = getDocumentLinksOfType(
+                CompositeDescription.class);
+        Assert.assertTrue(descriptionsBeforeTransformation.size() == 0);
+        doOperation(new ServiceDocument(),
+                UriUtils.buildUri(host, CompositeDescriptionTransformationService.SELF_LINK), false,
+                Service.Action.POST);
+        List<String> descriptionsAfterTransformation = getDocumentLinksOfType(
+                CompositeDescription.class);
+        Assert.assertTrue(
+                descriptionsBeforeTransformation.size() == descriptionsAfterTransformation
+                        .size());
+    }
+
+    @Test
     public void testSingleTempleteDefaultProject() throws Throwable {
         createCompositeDescription("Description1");
         List<String> descriptionsBeforeTransformation = getDocumentLinksOfType(

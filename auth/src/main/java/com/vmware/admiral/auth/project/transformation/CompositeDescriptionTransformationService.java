@@ -41,10 +41,12 @@ public class CompositeDescriptionTransformationService extends StatelessService 
         new ServiceDocumentQuery<CompositeDescription>(getHost(), CompositeDescription.class)
                 .query(queryTask, (r) -> {
                     if (r.hasException()) {
+                        logSevere("Failed to query for composite descriptions");
                         post.fail(r.getException());
                     } else if (r.hasResult()) {
                         compositeDescriptions.add(r.getResult());
                     } else {
+                        logInfo("Composite descriptions found: %d", compositeDescriptions.size());
                         processCompositeDescriptions(compositeDescriptions, post);
                     }
                 });
@@ -58,10 +60,12 @@ public class CompositeDescriptionTransformationService extends StatelessService 
         new ServiceDocumentQuery<ProjectState>(getHost(), ProjectState.class)
                 .query(queryTask, (r) -> {
                     if (r.hasException()) {
+                        logSevere("Failed to query for project states");
                         post.fail(r.getException());
                     } else if (r.hasResult()) {
                         projects.add(r.getResult());
                     } else {
+                        logSevere("Project states found: %d", projects.size());
                         processProjects(projects, compositeDescriptions, post);
                     }
                 });
@@ -70,6 +74,11 @@ public class CompositeDescriptionTransformationService extends StatelessService 
     private void processProjects(List<ProjectState> projects,
             List<CompositeDescription> compositeDescriptions,
             Operation post) {
+        if (compositeDescriptions == null || compositeDescriptions.size() == 0) {
+            logInfo("No composite descriptions found. Composite description transformation completed successfully.");
+            post.complete();
+            return;
+        }
         AtomicInteger projectsToProcess = new AtomicInteger(projects.size());
         for (ProjectState project : projects) {
             AtomicInteger compositeDescriptionsToProcess = new AtomicInteger(compositeDescriptions.size());
@@ -82,10 +91,14 @@ public class CompositeDescriptionTransformationService extends StatelessService 
                         .setReferer(UriUtils.buildUri(getHost(), SELF_LINK))
                         .setCompletion((o, ex) -> {
                             if (ex != null) {
+                                logSevere("Failed to clone composite description");
                                 post.fail(ex);
                             } else {
+                                logInfo("CompositeDescription created %s",
+                                        o.getBody(CompositeDescription.class).documentSelfLink);
                                 if (compositeDescriptionsToProcess.decrementAndGet() == 0) {
                                     if (projectsToProcess.decrementAndGet() == 0) {
+                                        logInfo("Composite description transformation completed successfully");
                                         post.complete();
                                     }
                                 }

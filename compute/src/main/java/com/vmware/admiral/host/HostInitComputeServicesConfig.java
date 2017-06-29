@@ -93,6 +93,7 @@ import com.vmware.admiral.compute.profile.NetworkProfileService;
 import com.vmware.admiral.compute.profile.ProfileMappingService;
 import com.vmware.admiral.compute.profile.ProfileService;
 import com.vmware.admiral.compute.profile.StorageProfileService;
+import com.vmware.admiral.compute.transformation.ResourcePoolTransformationService;
 import com.vmware.admiral.service.common.UrlEncodedReverseProxyService;
 import com.vmware.admiral.service.test.MockConfigureHostOverSshTaskServiceWithoutValidate;
 import com.vmware.admiral.service.test.MockContainerHostService;
@@ -132,7 +133,8 @@ public class HostInitComputeServicesConfig extends HostInitServiceHelper {
                 PodLogService.class,
                 UrlEncodedReverseProxyService.class,
                 FetchDataGatewayService.class,
-                ClusterService.class);
+                ClusterService.class,
+                ResourcePoolTransformationService.class);
 
         startServiceFactories(host, CaSigningCertService.class,
                 ContainerDescriptionService.class,
