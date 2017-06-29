@@ -23,8 +23,9 @@ import java.util.stream.Collectors;
 
 import org.junit.Test;
 
-import com.vmware.admiral.request.TagAssignmentService.KeyValue;
-import com.vmware.admiral.request.TagAssignmentService.TagAssignmentRequest;
+import com.vmware.admiral.service.common.TagAssignmentService;
+import com.vmware.admiral.service.common.TagAssignmentService.KeyValue;
+import com.vmware.admiral.service.common.TagAssignmentService.TagAssignmentRequest;
 import com.vmware.photon.controller.model.resources.ComputeService;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.TagService.TagState;
@@ -141,9 +142,7 @@ public class TagAssignmentServiceTest extends RequestBaseTest {
 
     private KeyValue stringToKv(String tagString) {
         String[] parts = tagString.split(":");
-        KeyValue kv = new KeyValue();
-        kv.key = parts[0];
-        kv.value = parts.length > 1 ? parts[1] : "";
+        KeyValue kv = new KeyValue(parts[0], parts.length > 1 ? parts[1] : "");
         return kv;
     }
 }

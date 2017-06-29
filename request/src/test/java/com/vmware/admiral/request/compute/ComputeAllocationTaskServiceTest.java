@@ -54,6 +54,7 @@ import com.vmware.photon.controller.model.resources.NetworkInterfaceService;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService.NetworkInterfaceState;
 import com.vmware.photon.controller.model.resources.SubnetService;
 import com.vmware.photon.controller.model.resources.SubnetService.SubnetState;
+import com.vmware.photon.controller.model.resources.TagService.TagState;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.TaskState.TaskStage;
 import com.vmware.xenon.common.test.TestContext;
@@ -339,10 +340,10 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
                 .notificationPayload();
 
         TestContext context = new TestContext(1, Duration.ofMinutes(1));
-        Runnable callback = () -> {
-            context.completeIteration();
-        };
-        service.enhanceNotificationPayload(state, payload, callback);
+
+        service.enhanceNotificationPayload(state, Arrays.asList(computeHost), payload).whenComplete((r,
+                err) ->
+                context.completeIteration());
         context.await();
     }
 
@@ -398,7 +399,7 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
 
         TestContext context = new TestContext(1, Duration.ofMinutes(1));
 
-        service.enhanceExtensibilityResponse(state, payload, () -> {
+        service.enhanceExtensibilityResponse(state, payload).whenComplete((r, err) -> {
             try {
                 ComputeAllocationTaskState document = getDocument(ComputeAllocationTaskState.class,
                         selfLink);
@@ -482,7 +483,8 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
         payload.customProperties.put(prop2, value2);
 
         TestContext context = new TestContext(1, Duration.ofMinutes(1));
-        service.patchCustomPropertiesFromExtensibilityResponse(payload, state.resourceLinks, ComputeState.class, () -> {
+        service.patchCustomPropertiesFromExtensibilityResponse(state, payload).whenComplete((r,
+                err) -> {
             try {
                 ComputeState document = getDocument(ComputeState.class,
                         computeHost.documentSelfLink);
@@ -497,7 +499,63 @@ public class ComputeAllocationTaskServiceTest extends ComputeRequestBaseTest {
             context.completeIteration();
         });
         context.await();
+    }
 
+    @Test
+    public void testPatchTags() throws Throwable {
+        ComputeProvisionTaskService service = new ComputeProvisionTaskService();
+        service.setHost(host);
+
+        String prop1 = "tag1";
+        String value1 = "value1";
+
+        String prop2 = "tag2";
+        String value2 = "value2";
+
+        ComputeProvisionTaskState state = new ComputeProvisionTaskState();
+        state.resourceLinks = Collections.singleton(computeHost.documentSelfLink);
+
+        ComputeProvisionTaskService.ExtensibilityCallbackResponse payload = (ExtensibilityCallbackResponse) service
+                .notificationPayload();
+        payload.tags = new HashMap<>();
+        payload.tags.put(prop1, value1);
+        payload.tags.put(prop2, value2);
+
+        TestContext context = new TestContext(1, Duration.ofMinutes(1));
+        service.patchTagsFromExtensibilityResponse(state, payload).whenComplete((r,
+                err) -> {
+            try {
+                ComputeState document = getDocument(ComputeState.class,
+                        computeHost.documentSelfLink);
+
+                assertTrue(document.tagLinks != null);
+                assertEquals(2, document.tagLinks.size());
+
+                List<TagState> tags = document.tagLinks.stream()
+                        .map(link -> {
+                            try {
+                                return getDocument(TagState.class, link);
+                            } catch (Throwable throwable) {
+                                context.failIteration(throwable);
+                                return null;
+                            }
+                        })
+                        .sorted((t1, t2) -> t1.key.compareTo(t2.key))
+                        .collect(Collectors.toList());
+
+                assertEquals("tag1", tags.get(0).key);
+                assertEquals("value1", tags.get(0).value);
+
+                assertEquals("tag2", tags.get(1).key);
+                assertEquals("value2", tags.get(1).value);
+
+            } catch (Throwable throwable) {
+                context.failIteration(throwable);
+            }
+
+            context.completeIteration();
+        });
+        context.await();
     }
 
     @Test

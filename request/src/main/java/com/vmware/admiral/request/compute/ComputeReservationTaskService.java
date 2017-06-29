@@ -71,6 +71,7 @@ import com.vmware.photon.controller.model.data.SchemaBuilder;
 import com.vmware.photon.controller.model.data.SchemaField.Type;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -535,7 +536,7 @@ public class ComputeReservationTaskService extends
                         .sorted((g1, g2) -> g1.priority - g2.priority)
                         .collect(Collectors.toMap(gp -> gp.documentSelfLink,
                                 gp -> Pair.of(gp.name, gp.resourcePoolLink), (k1, k2) -> k1,
-                                LinkedHashMap::new));
+                                () -> new LinkedHashMap<String, Pair<String, String>>()));
             });
             return;
         }
@@ -765,26 +766,39 @@ public class ComputeReservationTaskService extends
     }
 
     @Override
-    protected void enhanceNotificationPayload(ComputeReservationTaskState state,
-            BaseExtensibilityCallbackResponse notificationPayload, Runnable callback) {
-        ExtensibilityCallbackResponse payload = (ExtensibilityCallbackResponse) notificationPayload;
+    protected Collection<String> getRelatedResourcesLinks(ComputeReservationTaskState state) {
+        return Arrays.asList(state.resourceDescriptionLink);
+    }
+
+    @Override
+    protected Class<? extends ResourceState> getRelatedResourceStateType() {
+        return ComputeDescription.class;
+    }
+
+    @Override
+    protected DeferredResult<Void> enhanceNotificationPayload(ComputeReservationTaskState state,
+            Collection<ResourceState> relatedStates,
+            BaseExtensibilityCallbackResponse notificationPayload) {
+
+        ExtensibilityCallbackResponse payload = (ExtensibilityCallbackResponse)
+                notificationPayload;
+
         payload.placements = state.groupPlacementsLinksAndNames.values().stream()
                 .map(p -> p.getLeft())
                 .collect(Collectors.toList());
 
-        callback.run();
+        return DeferredResult.completed(null);
     }
 
     @Override
-    protected void enhanceExtensibilityResponse(ComputeReservationTaskState state, ServiceTaskCallbackResponse
-            replyPayload, Runnable callback) {
+    public DeferredResult<Void> enhanceExtensibilityResponse(ComputeReservationTaskState state,
+            ServiceTaskCallbackResponse replyPayload) {
 
-        patchCustomPropertiesFromExtensibilityResponse(replyPayload, Arrays.asList(state.resourceDescriptionLink),
-                ComputeDescription.class, () -> patchReservations(state, replyPayload, callback));
+        return patchReservations(state, replyPayload);
     }
 
-    private void patchReservations(ComputeReservationTaskState state,
-            ServiceTaskCallbackResponse replyPayload, Runnable callback) {
+    private DeferredResult<Void> patchReservations(ComputeReservationTaskState state,
+            ServiceTaskCallbackResponse replyPayload) {
         ExtensibilityCallbackResponse response = (ExtensibilityCallbackResponse) replyPayload;
 
         List<String> statePlacements = state.groupPlacementsLinksAndNames.values().stream()
@@ -801,9 +815,8 @@ public class ComputeReservationTaskService extends
                         .stream().filter(p -> p.getValue().getLeft().equals(placement))
                         .findFirst();
                 if (!found.isPresent()) {
-                    String errorMessage = "Invalid placement '" + placement + "' specified.";
-                    failTask(errorMessage, new Throwable(errorMessage));
-                    return;
+                    return DeferredResult.failed(new IllegalArgumentException("Invalid placement '" + placement +
+                            "' " + "specified."));
                 } else {
                     Entry<String, Pair<String, String>> entry = found.get();
                     patch.resourcePoolsPerGroupPlacementLinks.put(entry.getKey(), entry.getValue
@@ -814,18 +827,12 @@ public class ComputeReservationTaskService extends
             patch.taskInfo = state.taskInfo;
             patch.taskSubStage = state.taskSubStage;
 
-            Operation.createPatch(this, state.documentSelfLink)
+            return this.sendWithDeferredResult(Operation.createPatch(this, state.documentSelfLink)
                     .setBody(patch)
-                    .setReferer(getHost().getUri())
-                    .setCompletion((o, e) -> {
-                        if (e != null) {
-                            failTask(e.getMessage(), e);
-                        } else {
-                            callback.run();
-                        }
-                    }).sendWith(getHost());
+                    .setReferer(getHost().getUri())).thenAccept(k -> {
+                    });
         } else {
-            callback.run();
+            return DeferredResult.completed(null);
         }
     }
 }

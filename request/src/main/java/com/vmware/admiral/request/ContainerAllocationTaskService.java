@@ -73,6 +73,7 @@ import com.vmware.admiral.service.common.ServiceTaskCallback;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.admiral.service.common.TaskServiceDocument;
 import com.vmware.photon.controller.model.resources.ComputeDescriptionService.ComputeDescription;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -1084,32 +1085,28 @@ public class ContainerAllocationTaskService extends
     }
 
     @Override
-    protected void enhanceNotificationPayload(ContainerAllocationTaskState state,
-            BaseExtensibilityCallbackResponse notificationPayload, Runnable callback) {
-        if (state.taskSubStage == SubStage.BUILD_RESOURCES_LINKS) {
-            getContainerDescription(state, (contDesc) -> {
-
-                notificationPayload.customProperties = contDesc.customProperties;
-                //Finished with ContainerDescription customProperties. Now get host selections.
-                ContainerAllocationTaskService.ExtensibilityCallbackResponse ecr =
-                        (ContainerAllocationTaskService.ExtensibilityCallbackResponse)
-                                notificationPayload;
-                ecr.hosts = new ArrayList<String>(state.hostSelections.stream
-                        ().map(hs -> hs.name).collect(Collectors.toList()));
-
-                notificationPayload.customProperties = contDesc.customProperties;
-                callback.run();
-            });
-        } else {
-            callback.run();
-        }
+    protected Collection<String> getRelatedResourcesLinks(ContainerAllocationTaskState state) {
+        return Arrays.asList(state.resourceDescriptionLink);
     }
 
     @Override
-    protected void enhanceExtensibilityResponse(ContainerAllocationTaskState state,
-            ServiceTaskCallbackResponse replyPayload, Runnable callback) {
+    protected Class<? extends ResourceState> getRelatedResourceStateType() {
+        return ComputeDescription.class;
+    }
 
-        patchCustomPropertiesFromExtensibilityResponse(replyPayload, Arrays.asList(state.resourceDescriptionLink),
-                ComputeDescription.class, callback);
+    @Override
+    protected DeferredResult<Void> enhanceNotificationPayload(ContainerAllocationTaskState state,
+            Collection<ResourceState> states, BaseExtensibilityCallbackResponse
+            notificationPayload) {
+        if (state.taskSubStage == SubStage.BUILD_RESOURCES_LINKS) {
+            //Get host selections.
+            ContainerAllocationTaskService.ExtensibilityCallbackResponse ecr =
+                    (ContainerAllocationTaskService.ExtensibilityCallbackResponse)
+                            notificationPayload;
+            ecr.hosts = new ArrayList<String>(state.hostSelections.stream
+                    ().map(hs -> hs.name).collect(Collectors.toList()));
+
+        }
+        return DeferredResult.completed(null);
     }
 }

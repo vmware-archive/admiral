@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+ * Copyright (c) 2016-2017 VMware, Inc. All Rights Reserved.
  *
  * This product is licensed to you under the Apache License, Version 2.0 (the "License").
  * You may not use this product except in compliance with the License.
@@ -9,7 +9,7 @@
  * conditions of the subcomponent's license, as noted in the LICENSE file.
  */
 
-package com.vmware.admiral.request;
+package com.vmware.admiral.service.common;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -20,7 +20,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.vmware.admiral.common.ManagementUriParts;
-import com.vmware.admiral.service.common.MultiTenantDocument;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.resources.TagFactoryService;
 import com.vmware.photon.controller.model.resources.TagService;
@@ -47,6 +46,12 @@ public class TagAssignmentService extends StatelessService {
      * Key-value structure for a tag.
      */
     public static class KeyValue {
+
+        public KeyValue(String key, String value) {
+            this.key = key;
+            this.value = value;
+        }
+
         String key;
         String value;
     }

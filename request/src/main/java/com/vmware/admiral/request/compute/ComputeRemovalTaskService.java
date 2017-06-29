@@ -20,6 +20,7 @@ import static com.vmware.xenon.common.ServiceDocumentDescription.PropertyUsageOp
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -48,15 +49,14 @@ import com.vmware.admiral.service.common.AbstractTaskStatefulService;
 import com.vmware.admiral.service.common.EventTopicDeclarator;
 import com.vmware.admiral.service.common.EventTopicService;
 import com.vmware.admiral.service.common.ServiceTaskCallback;
-import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
 import com.vmware.photon.controller.model.data.SchemaBuilder;
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.photon.controller.model.resources.ComputeService.LifecycleState;
 import com.vmware.photon.controller.model.resources.ComputeService.PowerState;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.photon.controller.model.tasks.ResourceRemovalTaskService;
 import com.vmware.photon.controller.model.tasks.ResourceRemovalTaskService.ResourceRemovalTaskState;
 import com.vmware.photon.controller.model.tasks.TaskOption;
-import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.OperationJoin;
 import com.vmware.xenon.common.ServiceDocument;
@@ -549,35 +549,13 @@ public class ComputeRemovalTaskService extends
     }
 
     @Override
-    protected void enhanceNotificationPayload(ComputeRemovalTaskState state,
-            BaseExtensibilityCallbackResponse notificationPayload, Runnable callback) {
-        List<DeferredResult<ComputeState>> results = state.resourceLinks.stream()
-                .map(link -> Operation.createGet(this, link))
-                .map(o -> sendWithDeferredResult(o, ComputeState.class))
-                .collect(Collectors.toList());
-
-        DeferredResult.allOf(results).whenComplete((states, err) -> {
-            if (err == null) {
-                ExtensibilityCallbackResponse payload = (ExtensibilityCallbackResponse)
-                        notificationPayload;
-                //squash-merge all properties until we fire an event per resource
-                payload.customProperties = states.stream().flatMap(s -> s.customProperties
-                        .entrySet().stream())
-                        .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
-            } else {
-                failTask("Failed retreiving custom properties", err);
-            }
-            callback.run();
-        });
+    protected Collection<String> getRelatedResourcesLinks(ComputeRemovalTaskState state) {
+        return state.resourceLinks;
     }
 
     @Override
-    protected void enhanceExtensibilityResponse(ComputeRemovalTaskState state,
-            ServiceTaskCallbackResponse replyPayload,
-            Runnable callback) {
-
-        patchCustomPropertiesFromExtensibilityResponse(replyPayload, state.resourceLinks,
-                ComputeState.class, callback);
+    protected Class<? extends ResourceState> getRelatedResourceStateType() {
+        return ComputeState.class;
     }
 
     protected static class ExtensibilityCallbackResponse extends BaseExtensibilityCallbackResponse {

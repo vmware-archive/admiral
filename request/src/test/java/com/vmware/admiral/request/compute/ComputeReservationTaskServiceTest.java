@@ -557,7 +557,7 @@ public class ComputeReservationTaskServiceTest extends ComputeRequestBaseTest {
 
         TestContext context = new TestContext(1, Duration.ofMinutes(5));
 
-        service.enhanceExtensibilityResponse(task, payload, () -> {
+        service.enhanceExtensibilityResponse(task, payload).whenComplete((r, err) -> {
             try {
                 ComputeReservationTaskState t = getDocument(ComputeReservationTaskState.class,
                         taskLink);

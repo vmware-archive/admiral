@@ -124,6 +124,13 @@ public abstract class EventTopicUtils {
                 .withDataType(DATATYPE_STRING)
                 .withLabel("Properties of the resource")
                 .withDescription("Resource Properties.")
+                .done()
+
+                .addField("tags")
+                .withType(Type.MAP)
+                .withDataType(DATATYPE_STRING)
+                .withLabel("Tags of the resource")
+                .withDescription("Resource Tags.")
                 .done();
     }
 }

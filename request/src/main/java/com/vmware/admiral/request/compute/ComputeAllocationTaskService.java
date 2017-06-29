@@ -86,6 +86,7 @@ import com.vmware.photon.controller.model.resources.NetworkInterfaceDescriptionS
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService;
 import com.vmware.photon.controller.model.resources.NetworkInterfaceService.NetworkInterfaceState;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
+import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
@@ -1053,32 +1054,41 @@ public class ComputeAllocationTaskService
     }
 
     @Override
-    protected void enhanceNotificationPayload(ComputeAllocationTaskState state,
-            BaseExtensibilityCallbackResponse notificationPayload, Runnable callback) {
-        getComputeDescription(state.resourceDescriptionLink, (contDesc) -> {
-            notificationPayload.customProperties = contDesc.customProperties;
-
-            ExtensibilityCallbackResponse ecr = (ExtensibilityCallbackResponse) notificationPayload;
-            ecr.hostSelections = new ArrayList<String>(state.selectedComputePlacementHosts.stream
-                    ().map(hs -> hs.name).collect(Collectors.toList()));
-
-            //Ready with Notification payload, send it to client through callback invokation.
-            callback.run();
-        });
+    protected Collection<String> getRelatedResourcesLinks(ComputeAllocationTaskState state) {
+        return Arrays.asList(state.resourceDescriptionLink);
     }
 
     @Override
-    protected void enhanceExtensibilityResponse(ComputeAllocationTaskState state,
-            ServiceTaskCallbackResponse replyPayload, Runnable callback) {
-        ExtensibilityCallbackResponse response = (ExtensibilityCallbackResponse) replyPayload;
+    protected Class<? extends ResourceState> getRelatedResourceStateType() {
+        return ComputeDescription.class;
+    }
 
-        patchCustomPropertiesFromExtensibilityResponse(replyPayload, Arrays.asList(state.resourceDescriptionLink),
-                ComputeDescription.class, () -> reorderHostSelections(state, response, callback));
+    @Override
+    protected DeferredResult<Void> enhanceNotificationPayload(ComputeAllocationTaskState state,
+            Collection<ResourceState> relatedStates,
+            BaseExtensibilityCallbackResponse notificationPayload) {
+
+        ExtensibilityCallbackResponse ecr = (ExtensibilityCallbackResponse) notificationPayload;
+        ecr.hostSelections = new ArrayList<String>(
+                state.selectedComputePlacementHosts.stream
+                        ().map(hs -> hs.name).collect(Collectors.toList()));
+
+        return DeferredResult.completed(null);
+    }
+
+    @Override
+    public DeferredResult<Void> enhanceExtensibilityResponse(ComputeAllocationTaskState state,
+            ServiceTaskCallbackResponse replyPayload) {
+
+        DeferredResult<Void> dr = new DeferredResult<>();
+        reorderHostSelections(state, replyPayload, () -> dr.complete(null));
+
+        return dr;
     }
 
     protected void reorderHostSelections(ComputeAllocationTaskState state,
-            ExtensibilityCallbackResponse response, Runnable callback) {
-
+            ServiceTaskCallbackResponse replyPayload, Runnable callback) {
+        ExtensibilityCallbackResponse response = (ExtensibilityCallbackResponse) replyPayload;
         //Host selections that have been provided as notification payload
         List<String> selectionsForNotificationPayload = state.selectedComputePlacementHosts.stream
                 ().map(hs -> hs.name).collect(Collectors.toList());

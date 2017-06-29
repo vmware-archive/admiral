@@ -236,7 +236,7 @@ public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
     }
 
     @Test
-    public void testEnhanceExtensibilityResponse() throws Throwable {
+    public void testPatchCommonFields() throws Throwable {
         final String customPropName = "CustomProp";
 
         // compute states after compute allocation request
@@ -272,7 +272,7 @@ public class ComputeRemovalTaskServiceTest extends ComputeRequestBaseTest {
 
         TestContext context = new TestContext(1, Duration.ofMinutes(1));
 
-        service.enhanceExtensibilityResponse(state, payload, () -> {
+        service.patchCommonFields(state, payload).whenComplete((r, err) -> {
             try {
                 ComputeState cs = getDocument(ComputeState.class,
                         computeStateLinks.get(0));

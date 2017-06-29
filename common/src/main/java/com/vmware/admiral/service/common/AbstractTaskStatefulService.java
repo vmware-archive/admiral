@@ -15,6 +15,7 @@ import static com.vmware.admiral.common.DeploymentProfileConfig.getInstance;
 import static com.vmware.admiral.common.util.PropertyUtils.mergeCustomProperties;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -33,7 +34,10 @@ import com.vmware.admiral.common.util.ServiceUtils;
 import com.vmware.admiral.host.IExtensibilityRegistryHost;
 import com.vmware.admiral.service.common.CounterSubTaskService.CounterSubTaskState;
 import com.vmware.admiral.service.common.ServiceTaskCallback.ServiceTaskCallbackResponse;
+import com.vmware.admiral.service.common.TagAssignmentService.KeyValue;
+import com.vmware.admiral.service.common.TagAssignmentService.TagAssignmentRequest;
 import com.vmware.photon.controller.model.resources.ResourceState;
+import com.vmware.photon.controller.model.resources.TagService.TagState;
 import com.vmware.xenon.common.DeferredResult;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.ServiceDocument;
@@ -291,15 +295,20 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                 this.failTask("Extensibility triggered task failure: " + failure, null);
             } else {
 
-                Runnable callback = () -> {
-                    handleStagePatch(state);
-                };
-
                 try {
                     ServiceTaskCallbackResponse replyPayload = op
                             .getBody(this.replyPayload().getClass());
 
-                    this.enhanceExtensibilityResponse(state, replyPayload, callback);
+                    this.patchCommonFields(state, replyPayload).thenCompose(s ->
+                            this.enhanceExtensibilityResponse(state, replyPayload))
+                            .whenComplete((r, err) -> {
+                                if (err != null) {
+                                    failTask("Failure during enhancing extensibility response",
+                                            err);
+                                } else {
+                                    handleStagePatch(state);
+                                }
+                            });
                 } catch (Exception ex) {
                     logSevere(ex);
                     logSevere(
@@ -373,8 +382,24 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
             return;
         }
 
-        this.enhanceNotificationPayload(state, notificationPayload, () ->
-                this.fillCommonFields(state, notificationPayload, callback));
+        getRelatedResourcesForExtensibility(state)
+                .thenCompose(states -> getResourceStatesTags(states).thenApply(tags -> {
+                    notificationPayload.tags = tags;
+                    notificationPayload.customProperties = states.stream()
+                            .flatMap(s -> s.customProperties.entrySet().stream())
+                            .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+                    return states;
+                }).thenCompose(resources -> enhanceNotificationPayload(state, resources,
+                        notificationPayload))
+                .whenComplete((resources, err) -> {
+                    if (err != null) {
+                        failTask("Failed during notification payload enhancment",
+                                err);
+                    } else {
+                        this.fillCommonFields(state, notificationPayload,
+                                callback);
+                    }
+                }));
     }
 
     protected void updateRequestTracker(T state) {
@@ -910,11 +935,53 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
      *
      * @param state               - Task state
      * @param notificationPayload - notification payload of task that will be extended with more data.
-     * @param callback            - callback that will be run once enhancement is finished.
+     * @param relatedStates       - compute states related to this task, provided by
+     * {@link getRelatedResourcesForExtensibility()}
+     *
+     *
      */
-    protected void enhanceNotificationPayload(T state,
-            BaseExtensibilityCallbackResponse notificationPayload, Runnable callback) {
-        callback.run();
+    protected DeferredResult<Void> enhanceNotificationPayload(T state, Collection<ResourceState>
+            relatedStates, BaseExtensibilityCallbackResponse notificationPayload) {
+        return DeferredResult.completed(null);
+    }
+
+    private DeferredResult<Collection<ResourceState>>getRelatedResourcesForExtensibility(T state) {
+        List<DeferredResult<ResourceState>> results = getRelatedResourcesLinks(state).stream()
+                .map(link -> Operation.createGet(this, link))
+                .map(o -> (DeferredResult<ResourceState>)sendWithDeferredResult(o,
+                        getRelatedResourceStateType()))
+                .collect(Collectors.toList());
+
+        return DeferredResult.allOf(results).thenApply(r -> new ArrayList<ResourceState>(r));
+    }
+
+    protected Collection<String> getRelatedResourcesLinks(T state) {
+        return new ArrayList<>();
+    }
+
+    protected Class<? extends ResourceState> getRelatedResourceStateType() {
+        return ResourceState.class;
+    }
+
+    public<R extends ResourceState> DeferredResult<Map<String, String>> getResourceStatesTags(
+            Collection<R> resources) {
+
+        List<String> tagLinks = resources.stream()
+                .filter(res -> res.tagLinks != null)
+                .flatMap(res -> res.tagLinks.stream())
+                .collect(Collectors.toList());
+
+        if (!tagLinks.isEmpty()) {
+            List<DeferredResult<TagState>> gets = tagLinks.stream()
+                    .map(link -> this.sendWithDeferredResult(Operation.createGet(this.getHost(),
+                            link), TagState.class))
+                    .collect(Collectors.toList());
+
+            return DeferredResult.allOf(gets).thenApply(tags -> tags.stream()
+                    .collect(Collectors.toMap(t -> t.key, t -> t.value)));
+        } else {
+            return DeferredResult.completed(new HashMap<String, String>());
+        }
     }
 
     /**
@@ -933,21 +1000,25 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
      * </p>
      *
      * @param state    - Task state
-     * @param callback - callback that will be run once enhancement is finished.
      */
-    protected void enhanceExtensibilityResponse(T state, ServiceTaskCallbackResponse
-            replyPayload, Runnable callback) {
-        callback.run();
+    public DeferredResult<Void> enhanceExtensibilityResponse(T state, ServiceTaskCallbackResponse
+            replyPayload) {
+        return DeferredResult.completed(null);
     }
 
-    public void patchCustomPropertiesFromExtensibilityResponse(ServiceTaskCallbackResponse replyPayload,
-            Collection<String> links, Class<? extends ResourceState> resourceType,
-            Runnable callback) {
+    public DeferredResult<Void> patchCommonFields(T state, ServiceTaskCallbackResponse
+            replyPayload) {
+        return patchCustomPropertiesFromExtensibilityResponse(state, replyPayload).thenCompose(r ->
+                patchTagsFromExtensibilityResponse(state, replyPayload));
+    }
+
+    public DeferredResult<Void> patchCustomPropertiesFromExtensibilityResponse(T state,
+            ServiceTaskCallbackResponse replyPayload) {
         if (replyPayload.customProperties != null && !replyPayload.customProperties.isEmpty()) {
-            List<DeferredResult<Operation>> results = links.stream()
+            List<DeferredResult<Operation>> results = getRelatedResourcesLinks(state).stream()
                     .map(link -> {
                         try {
-                            ResourceState doc = resourceType.newInstance();
+                            ResourceState doc = getRelatedResourceStateType().newInstance();
                             doc.customProperties = new HashMap<>(replyPayload.customProperties);
                             return sendWithDeferredResult(
                                     Operation.createPatch(this, link).setBody(doc));
@@ -957,17 +1028,34 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
                     })
                     .collect(Collectors.toList());
 
-            DeferredResult.allOf(results).whenComplete((all, t) -> {
-                if (t != null) {
-                    failTask("Error patching custom properties after extensibility response", t);
-                    return;
-                }
-
-                callback.run();
+            return DeferredResult.allOf(results).thenAccept(r -> {
             });
         } else {
-            callback.run();
+            return DeferredResult.completed(null);
         }
+    }
+
+    public DeferredResult<Void> patchTagsFromExtensibilityResponse(T state,
+            ServiceTaskCallbackResponse replyPayload) {
+
+        Collection<String> resources = getRelatedResourcesLinks(state);
+
+        List<DeferredResult<Operation>> drs = resources.stream()
+                .map(link -> {
+                    TagAssignmentRequest req = new TagAssignmentRequest();
+                    BaseExtensibilityCallbackResponse response = (BaseExtensibilityCallbackResponse) replyPayload;
+                    req.tagsToAssign = response.tags.entrySet().stream()
+                            .map(ent -> new KeyValue(ent.getKey(), ent.getValue()))
+                            .collect(Collectors.toList());
+                    req.resourceLink = link;
+                    return req;
+                })
+                .map(req -> sendWithDeferredResult(
+                        Operation.createPost(this, TagAssignmentService.SELF_LINK)
+                                .setBody(req))).collect(Collectors.toList());
+
+        return DeferredResult.allOf(drs).thenAccept(r -> {
+        });
     }
 
     protected void fillCommonFields(T state,
@@ -1067,5 +1155,6 @@ public abstract class AbstractTaskStatefulService<T extends TaskServiceDocument<
         public String blueprintId;
         public String componentTypeId;
         public String owner;
+        public Map<String, String> tags;
     }
 }
