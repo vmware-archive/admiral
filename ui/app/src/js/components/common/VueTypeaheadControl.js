@@ -35,7 +35,7 @@ export default Vue.component('typeahead-control', {
       type: String
     },
     limit: {
-      default: 5,
+      default: 10,
       required: false,
       type: Number
     },
@@ -50,6 +50,11 @@ export default Vue.component('typeahead-control', {
     value: {
       required: false,
       type: Object
+    },
+    showFooter: {
+      default: true,
+      required: false,
+      type: Boolean
     }
   },
   methods: {
@@ -62,6 +67,7 @@ export default Vue.component('typeahead-control', {
     }
   },
   attached() {
+    var me = this;
     $(this.$el).find('input').typeahead({
       minLength: 0
     }, {
@@ -72,6 +78,7 @@ export default Vue.component('typeahead-control', {
           if (!items) {
             items = [];
           }
+          me.lastResult = result;
           async(items);
         });
       },
@@ -89,6 +96,17 @@ export default Vue.component('typeahead-control', {
                 <div>${value}</div>
               </div>
             `;
+          }
+        },
+        footer: function() {
+          if (me.showFooter) {
+            var i18nOption = {
+              count: Math.min(me.limit, me.lastResult.items.length),
+              totalCount: me.lastResult.totalCount
+            };
+            return `<div class="dropdown-options-hint">
+                      ${i18n.t('dropdownSearchMenu.showingCount', i18nOption)}
+                    </div>`;
           }
         }
       }

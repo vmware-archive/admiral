@@ -1373,6 +1373,11 @@ body > .loading, .container-details > .content .loading {
   }
 }
 
+.twitter-typeahead .dropdown-options-hint {
+  padding: 0 20px;
+  font-size: 15px;
+}
+
 .dropdown-options-hint {
   color: $secondary_hint_title_color;
 }
