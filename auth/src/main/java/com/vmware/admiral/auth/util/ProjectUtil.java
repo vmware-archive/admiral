@@ -126,11 +126,11 @@ public class ProjectUtil {
         String projectId = Service.getId(simpleState.documentSelfLink);
 
         String adminsGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                AuthRole.PROJECT_ADMINS.buildRoleWithSuffix(projectId));
+                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId));
         String membersGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                AuthRole.PROJECT_MEMBERS.buildRoleWithSuffix(projectId));
+                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId));
         String viewersGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                AuthRole.PROJECT_VIEWERS.buildRoleWithSuffix(projectId));
+                AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId));
 
         Map<String, UserState> userStates = new ConcurrentHashMap<>();
         Map<String, Principal> userLinkToPrincipal = new ConcurrentHashMap<>();
@@ -140,7 +140,7 @@ public class ProjectUtil {
                 adminsGroupLink, referer)
                 .thenAccept((adminsList) -> {
                     adminsList.forEach(a -> userStates.put(a.documentSelfLink, a));
-                    roleToUsersLinks.put(AuthRole.PROJECT_ADMINS, adminsList.stream().map(a ->
+                    roleToUsersLinks.put(AuthRole.PROJECT_ADMIN, adminsList.stream().map(a ->
                             a.documentSelfLink).collect(Collectors.toList()));
                 });
 
@@ -148,7 +148,7 @@ public class ProjectUtil {
                 membersGroupLink, referer)
                 .thenAccept((membersList) -> {
                     membersList.forEach(m -> userStates.put(m.documentSelfLink, m));
-                    roleToUsersLinks.put(AuthRole.PROJECT_MEMBERS, membersList.stream().map(m ->
+                    roleToUsersLinks.put(AuthRole.PROJECT_MEMBER, membersList.stream().map(m ->
                             m.documentSelfLink).collect(Collectors.toList()));
                 });
 
@@ -156,7 +156,7 @@ public class ProjectUtil {
                 viewersGroupLink, referer)
                 .thenAccept((viewersList) -> {
                     viewersList.forEach(v -> userStates.put(v.documentSelfLink, v));
-                    roleToUsersLinks.put(AuthRole.PROJECT_VIEWERS, viewersList.stream().map(m ->
+                    roleToUsersLinks.put(AuthRole.PROJECT_VIEWER, viewersList.stream().map(m ->
                             m.documentSelfLink).collect(Collectors.toList()));
                 });
 
@@ -176,9 +176,9 @@ public class ProjectUtil {
                     return DeferredResult.allOf(results);
                 })
                 .thenAccept(ignore -> {
-                    List<String> admins = roleToUsersLinks.get(AuthRole.PROJECT_ADMINS);
-                    List<String> members = roleToUsersLinks.get(AuthRole.PROJECT_MEMBERS);
-                    List<String> viewers = roleToUsersLinks.get(AuthRole.PROJECT_VIEWERS);
+                    List<String> admins = roleToUsersLinks.get(AuthRole.PROJECT_ADMIN);
+                    List<String> members = roleToUsersLinks.get(AuthRole.PROJECT_MEMBER);
+                    List<String> viewers = roleToUsersLinks.get(AuthRole.PROJECT_VIEWER);
 
                     admins.forEach(a -> expandedState.administrators.add(
                             userLinkToPrincipal.get(a)));
@@ -189,15 +189,15 @@ public class ProjectUtil {
                 });
 
         DeferredResult<Void> retrieveAdminsGroupPrincipals = getGroupPrincipals(host,
-                simpleState.administratorsUserGroupLinks, projectId, AuthRole.PROJECT_ADMINS)
+                simpleState.administratorsUserGroupLinks, projectId, AuthRole.PROJECT_ADMIN)
                 .thenAccept(principals -> expandedState.administrators.addAll(principals));
 
         DeferredResult<Void> retrieveMembersGroupPrincipals = getGroupPrincipals(host,
-                simpleState.membersUserGroupLinks, projectId, AuthRole.PROJECT_MEMBERS)
+                simpleState.membersUserGroupLinks, projectId, AuthRole.PROJECT_MEMBER)
                 .thenAccept(principals -> expandedState.members.addAll(principals));
 
         DeferredResult<Void> retrieveViewersGroupPrincipals = getGroupPrincipals(host,
-                simpleState.viewersUserGroupLinks, projectId, AuthRole.PROJECT_VIEWERS)
+                simpleState.viewersUserGroupLinks, projectId, AuthRole.PROJECT_VIEWER)
                 .thenAccept(principals -> expandedState.viewers.addAll(principals));
 
         DeferredResult<Void> retrieveClusterLinks = retrieveClusterLinks(host,
@@ -247,9 +247,9 @@ public class ProjectUtil {
             return DeferredResult.completed(new ArrayList<>());
         }
 
-        if (!EnumSet.of(AuthRole.PROJECT_ADMINS, AuthRole.PROJECT_MEMBERS, AuthRole.PROJECT_VIEWERS)
+        if (!EnumSet.of(AuthRole.PROJECT_ADMIN, AuthRole.PROJECT_MEMBER, AuthRole.PROJECT_VIEWER)
                 .contains(role)) {
-            return DeferredResult.failed(new IllegalArgumentException(role.getName() + "is not "
+            return DeferredResult.failed(new IllegalArgumentException(role.name() + "is not "
                     + "project role."));
         }
 

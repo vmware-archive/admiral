@@ -198,7 +198,7 @@ public class PrincipalServiceTest extends AuthBaseTest {
         String superusers = "superusers";
         PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
         roleAssignment.add = new ArrayList<>();
-        roleAssignment.add.add(AuthRole.CLOUD_ADMINS.getName());
+        roleAssignment.add.add(AuthRole.CLOUD_ADMIN.name());
 
         String uri = UriUtils.buildUriPath(PrincipalService.SELF_LINK, superusers, "roles");
         // Assingn superusers to cloud admins
@@ -206,7 +206,7 @@ public class PrincipalServiceTest extends AuthBaseTest {
 
         // Verify superusers got assigned and required roles are created.
         String superusersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole
-                .CLOUD_ADMINS.buildRoleWithSuffix(superusers));
+                .CLOUD_ADMIN.buildRoleWithSuffix(superusers));
 
         RoleState roleState = getDocument(RoleState.class, superusersRoleLink);
         assertNotNull(roleState);
@@ -215,7 +215,7 @@ public class PrincipalServiceTest extends AuthBaseTest {
         // Unassign superusers from cloud admins
         roleAssignment = new PrincipalRoleAssignment();
         roleAssignment.remove = new ArrayList<>();
-        roleAssignment.remove.add(AuthRole.CLOUD_ADMINS.getName());
+        roleAssignment.remove.add(AuthRole.CLOUD_ADMIN.name());
         doPatch(roleAssignment, uri);
 
         // Verify superusers got unassigned and required roles are deleted
@@ -320,16 +320,16 @@ public class PrincipalServiceTest extends AuthBaseTest {
         PrincipalRoles roles = getDocumentNoWait(PrincipalRoles.class, UriUtils.buildUriPath
                 (PrincipalService.SELF_LINK, USER_EMAIL_ADMIN, PrincipalService.ROLES_SUFFIX));
 
-        assertTrue(roles.roles.contains(AuthRole.CLOUD_ADMINS));
-        assertTrue(roles.roles.contains(AuthRole.BASIC_USERS));
-        assertTrue(roles.roles.contains(AuthRole.BASIC_USERS_EXTENDED));
+        assertTrue(roles.roles.contains(AuthRole.CLOUD_ADMIN));
+        assertTrue(roles.roles.contains(AuthRole.BASIC_USER));
+        assertTrue(roles.roles.contains(AuthRole.BASIC_USER_EXTENDED));
 
         assertEquals(1, roles.projects.size());
         assertEquals(project.documentSelfLink, roles.projects.get(0).documentSelfLink);
         assertEquals(project.name, roles.projects.get(0).name);
-        assertTrue(roles.projects.get(0).roles.contains(AuthRole.PROJECT_ADMINS));
-        assertTrue(roles.projects.get(0).roles.contains(AuthRole.PROJECT_MEMBERS));
-        assertTrue(roles.projects.get(0).roles.contains(AuthRole.PROJECT_VIEWERS));
+        assertTrue(roles.projects.get(0).roles.contains(AuthRole.PROJECT_ADMIN));
+        assertTrue(roles.projects.get(0).roles.contains(AuthRole.PROJECT_MEMBER));
+        assertTrue(roles.projects.get(0).roles.contains(AuthRole.PROJECT_VIEWER));
     }
 
     @Test
@@ -370,7 +370,7 @@ public class PrincipalServiceTest extends AuthBaseTest {
 
         // assign cloud admins role to root user group.
         PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
-        roleAssignment.add = Collections.singletonList(AuthRole.CLOUD_ADMINS.getName());
+        roleAssignment.add = Collections.singletonList(AuthRole.CLOUD_ADMIN.name());
         doPatch(roleAssignment, UriUtils.buildUriPath(PrincipalService.SELF_LINK, root.id,
                 PrincipalService.ROLES_SUFFIX));
 
@@ -428,9 +428,9 @@ public class PrincipalServiceTest extends AuthBaseTest {
         assertNotNull(connieRoles.roles);
         assertNotNull(connieRoles.projects);
 
-        assertTrue(connieRoles.roles.contains(AuthRole.CLOUD_ADMINS));
-        assertTrue(connieRoles.roles.contains(AuthRole.BASIC_USERS));
-        assertTrue(connieRoles.roles.contains(AuthRole.BASIC_USERS_EXTENDED));
+        assertTrue(connieRoles.roles.contains(AuthRole.CLOUD_ADMIN));
+        assertTrue(connieRoles.roles.contains(AuthRole.BASIC_USER));
+        assertTrue(connieRoles.roles.contains(AuthRole.BASIC_USER_EXTENDED));
 
         // Uncomment this once group assignment for project roles is implemented.
 
@@ -450,11 +450,11 @@ public class PrincipalServiceTest extends AuthBaseTest {
         // assertEquals(firstProject.name, firstProjectEntry.name);
         // assertEquals(firstProject.documentSelfLink, firstProjectEntry.documentSelfLink);
         // assertEquals(1, firstProjectEntry.roles.size());
-        // assertTrue(firstProjectEntry.roles.contains(AuthRole.PROJECT_ADMINS));
+        // assertTrue(firstProjectEntry.roles.contains(AuthRole.PROJECT_ADMIN));
         //
         // assertEquals(secondProject.name, secondProjectEntry.name);
         // assertEquals(secondProject.documentSelfLink, secondProjectEntry.documentSelfLink);
         // assertEquals(1, secondProjectEntry.roles.size());
-        // assertTrue(secondProjectEntry.roles.contains(AuthRole.PROJECT_MEMBERS));
+        // assertTrue(secondProjectEntry.roles.contains(AuthRole.PROJECT_MEMBER));
     }
 }

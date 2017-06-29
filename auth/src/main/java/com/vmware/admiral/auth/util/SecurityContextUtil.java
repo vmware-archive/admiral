@@ -96,15 +96,15 @@ public class SecurityContextUtil {
 
                     if (CollectionUtils.containsAny(
                             project.administratorsUserGroupLinks, userGroupLinks)) {
-                        projectEntry.roles.add(AuthRole.PROJECT_ADMINS);
+                        projectEntry.roles.add(AuthRole.PROJECT_ADMIN);
                     }
                     if (CollectionUtils.containsAny(
                             project.membersUserGroupLinks, userGroupLinks)) {
-                        projectEntry.roles.add(AuthRole.PROJECT_MEMBERS);
+                        projectEntry.roles.add(AuthRole.PROJECT_MEMBER);
                     }
                     if (CollectionUtils.containsAny(
                             project.viewersUserGroupLinks, userGroupLinks)) {
-                        projectEntry.roles.add(AuthRole.PROJECT_VIEWERS);
+                        projectEntry.roles.add(AuthRole.PROJECT_VIEWER);
                     }
 
                     return projectEntry;

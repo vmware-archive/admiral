@@ -234,12 +234,12 @@ public class PrincipalRolesUtil {
 
     private static AuthRole extractSystemRoleFromRoleState(RoleState roleState) {
 
-        if (roleState.documentSelfLink.contains(AuthRole.CLOUD_ADMINS.getSuffix())) {
-            return AuthRole.CLOUD_ADMINS;
-        } else if (roleState.documentSelfLink.contains(AuthRole.BASIC_USERS.getSuffix())) {
-            return AuthRole.BASIC_USERS;
-        } else if (roleState.documentSelfLink.contains(AuthRole.BASIC_USERS_EXTENDED.getSuffix())) {
-            return AuthRole.BASIC_USERS_EXTENDED;
+        if (roleState.documentSelfLink.contains(AuthRole.CLOUD_ADMIN.getSuffix())) {
+            return AuthRole.CLOUD_ADMIN;
+        } else if (roleState.documentSelfLink.contains(AuthRole.BASIC_USER.getSuffix())) {
+            return AuthRole.BASIC_USER;
+        } else if (roleState.documentSelfLink.contains(AuthRole.BASIC_USER_EXTENDED.getSuffix())) {
+            return AuthRole.BASIC_USER_EXTENDED;
         }
 
         throw new RuntimeException("Cannot extract system role from role state with id: " +
@@ -247,8 +247,8 @@ public class PrincipalRolesUtil {
     }
 
     private static boolean isProjectRole(RoleState roleState) {
-        return roleState.documentSelfLink.contains(AuthRole.PROJECT_ADMINS.getSuffix())
-                || roleState.documentSelfLink.contains(AuthRole.PROJECT_MEMBERS.getSuffix());
+        return roleState.documentSelfLink.contains(AuthRole.PROJECT_ADMIN.getSuffix())
+                || roleState.documentSelfLink.contains(AuthRole.PROJECT_MEMBER.getSuffix());
     }
 
     private static DeferredResult<ProjectState> getProjectState(ServiceHost host,

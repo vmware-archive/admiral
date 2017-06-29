@@ -493,25 +493,25 @@ public class ProjectService extends StatefulService {
             Operation delete) {
 
         String adminsUserGroupUri = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                AuthRole.PROJECT_ADMINS.buildRoleWithSuffix(projectId));
+                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(projectId));
 
         String membersUserGroupUri = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                AuthRole.PROJECT_MEMBERS.buildRoleWithSuffix(projectId));
+                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(projectId));
 
         String viewersUserGroupUri = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                AuthRole.PROJECT_VIEWERS.buildRoleWithSuffix(projectId));
+                AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(projectId));
 
         String resourceGroupUri = UriUtils.buildUriPath(ResourceGroupService.FACTORY_LINK,
                 projectId);
 
         String adminsRoleUri = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole
-                .PROJECT_ADMINS.buildRoleWithSuffix(projectId, Service.getId(adminsUserGroupUri)));
+                .PROJECT_ADMIN.buildRoleWithSuffix(projectId, Service.getId(adminsUserGroupUri)));
 
         String membersRoleUri = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole
-                .PROJECT_MEMBERS.buildRoleWithSuffix(projectId, Service.getId(membersUserGroupUri)));
+                .PROJECT_MEMBER.buildRoleWithSuffix(projectId, Service.getId(membersUserGroupUri)));
 
         String viewersRoleUri = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole
-                .PROJECT_VIEWERS.buildRoleWithSuffix(projectId, Service.getId(viewersUserGroupUri)));
+                .PROJECT_VIEWER.buildRoleWithSuffix(projectId, Service.getId(viewersUserGroupUri)));
 
         return DeferredResult.allOf(
                 // First remove groups from user states

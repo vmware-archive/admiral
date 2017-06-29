@@ -94,16 +94,16 @@ public class SessionServiceTest extends AuthBaseTest {
     public void testGetSecurityForCurrentUserAsCloudAdmin() throws GeneralSecurityException {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_ADMIN));
         SecurityContext context = getSecurityContext();
-        assertTrue(context.roles.contains(AuthRole.CLOUD_ADMINS));
-        assertTrue(context.roles.contains(AuthRole.BASIC_USERS));
+        assertTrue(context.roles.contains(AuthRole.CLOUD_ADMIN));
+        assertTrue(context.roles.contains(AuthRole.BASIC_USER));
     }
 
     @Test
     public void testGetSecurityForCurrentUserAsBasicUser() throws GeneralSecurityException {
         host.assumeIdentity(buildUserServicePath(USER_EMAIL_BASIC_USER));
         SecurityContext context = getSecurityContext();
-        assertTrue(!context.roles.contains(AuthRole.CLOUD_ADMINS));
-        assertTrue(context.roles.contains(AuthRole.BASIC_USERS));
+        assertTrue(!context.roles.contains(AuthRole.CLOUD_ADMIN));
+        assertTrue(context.roles.contains(AuthRole.BASIC_USER));
     }
 
 }

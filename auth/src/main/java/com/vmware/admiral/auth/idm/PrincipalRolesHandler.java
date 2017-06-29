@@ -116,14 +116,14 @@ public class PrincipalRolesHandler {
         List<DeferredResult<Void>> results = new ArrayList<>();
         if (roleAssignment.add != null && !roleAssignment.add.isEmpty()) {
             for (String role : roleAssignment.add) {
-                AuthRole authRole = AuthRole.fromSuffixOrName(role);
+                AuthRole authRole = AuthRole.valueOf(role);
                 results.add(handleUserRoleAssignment(authRole));
             }
         }
 
         if (roleAssignment.remove != null && !roleAssignment.remove.isEmpty()) {
             for (String role : roleAssignment.remove) {
-                AuthRole authRole = AuthRole.fromSuffixOrName(role);
+                AuthRole authRole = AuthRole.valueOf(role);
                 results.add(handleUserRoleUnassignment(authRole));
             }
         }
@@ -136,14 +136,14 @@ public class PrincipalRolesHandler {
         List<DeferredResult<Void>> results = new ArrayList<>();
         if (roleAssignment.add != null && !roleAssignment.add.isEmpty()) {
             for (String role : roleAssignment.add) {
-                AuthRole authRole = AuthRole.fromSuffixOrName(role);
+                AuthRole authRole = AuthRole.valueOf(role);
                 results.add(handleUserGroupRoleAssignment(authRole));
             }
         }
 
         if (roleAssignment.remove != null && !roleAssignment.remove.isEmpty()) {
             for (String role : roleAssignment.remove) {
-                AuthRole authRole = AuthRole.fromSuffixOrName(role);
+                AuthRole authRole = AuthRole.valueOf(role);
                 results.add(handleUserGroupRoleUnassignment(authRole));
             }
         }
@@ -154,7 +154,7 @@ public class PrincipalRolesHandler {
 
     private DeferredResult<Void> handleUserRoleAssignment(AuthRole role) {
 
-        if (role == AuthRole.CLOUD_ADMINS) {
+        if (role == AuthRole.CLOUD_ADMIN) {
             return UserGroupsUpdater.create()
                     .setGroupLink(CLOUD_ADMINS_USER_GROUP_LINK)
                     .setHost(host)
@@ -164,13 +164,13 @@ public class PrincipalRolesHandler {
 
         }
         return DeferredResult.failed(new LocalizableValidationException(
-                ROLE_NOT_SUPPORTED_MESSAGE, ROLE_NOT_SUPPORTED_MESSAGE_CODE, role.getName()));
+                ROLE_NOT_SUPPORTED_MESSAGE, ROLE_NOT_SUPPORTED_MESSAGE_CODE, role.name()));
 
     }
 
     private DeferredResult<Void> handleUserRoleUnassignment(AuthRole role) {
 
-        if (role == AuthRole.CLOUD_ADMINS) {
+        if (role == AuthRole.CLOUD_ADMIN) {
             return UserGroupsUpdater.create()
                     .setGroupLink(CLOUD_ADMINS_USER_GROUP_LINK)
                     .setHost(host)
@@ -180,32 +180,32 @@ public class PrincipalRolesHandler {
 
         }
         return DeferredResult.failed(new LocalizableValidationException(
-                ROLE_NOT_SUPPORTED_MESSAGE, ROLE_NOT_SUPPORTED_MESSAGE_CODE, role.getName()));
+                ROLE_NOT_SUPPORTED_MESSAGE, ROLE_NOT_SUPPORTED_MESSAGE_CODE, role.name()));
 
     }
 
     private DeferredResult<Void> handleUserGroupRoleAssignment(AuthRole role) {
-        if (role == AuthRole.CLOUD_ADMINS) {
+        if (role == AuthRole.CLOUD_ADMIN) {
             return handleCloudAdminGroupAssignment(principalId);
         }
 
         return DeferredResult.failed(new LocalizableValidationException(
-                ROLE_NOT_SUPPORTED_MESSAGE, ROLE_NOT_SUPPORTED_MESSAGE_CODE, role.getName()));
+                ROLE_NOT_SUPPORTED_MESSAGE, ROLE_NOT_SUPPORTED_MESSAGE_CODE, role.name()));
 
     }
 
     private DeferredResult<Void> handleUserGroupRoleUnassignment(AuthRole role) {
-        if (role == AuthRole.CLOUD_ADMINS) {
+        if (role == AuthRole.CLOUD_ADMIN) {
             return handleCloudAdminGroupUnassignment();
         }
 
         return DeferredResult.failed(new LocalizableValidationException(
-                ROLE_NOT_SUPPORTED_MESSAGE, ROLE_NOT_SUPPORTED_MESSAGE_CODE, role.getName()));
+                ROLE_NOT_SUPPORTED_MESSAGE, ROLE_NOT_SUPPORTED_MESSAGE_CODE, role.name()));
 
     }
 
     private DeferredResult<Void> handleCloudAdminGroupUnassignment() {
-        String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole.CLOUD_ADMINS
+        String roleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole.CLOUD_ADMIN
                 .buildRoleWithSuffix(principalId));
         Operation getRole = Operation.createGet(host, roleLink)
                 .setReferer(host.getUri());

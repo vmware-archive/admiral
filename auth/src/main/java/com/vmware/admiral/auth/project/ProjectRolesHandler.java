@@ -38,8 +38,8 @@ public class ProjectRolesHandler {
     private static final String BODY_IS_REQUIRED_MESSAGE = "Body is required.";
     private static final String BODY_IS_REQUIRED_MESSAGE_CODE = "auth.body.required";
 
-    public static final EnumSet<AuthRole> PROJECT_ROLES = EnumSet.of(AuthRole.PROJECT_ADMINS,
-            AuthRole.PROJECT_MEMBERS, AuthRole.PROJECT_VIEWERS);
+    public static final EnumSet<AuthRole> PROJECT_ROLES = EnumSet.of(AuthRole.PROJECT_ADMIN,
+            AuthRole.PROJECT_MEMBER, AuthRole.PROJECT_VIEWER);
 
     private static final String NOT_PROJECT_ROLE_MESSAGE = String.format(
             "Role should be one of: %s", PROJECT_ROLES);
@@ -132,11 +132,11 @@ public class ProjectRolesHandler {
         List<DeferredResult<Void>> results = new ArrayList<>();
 
         results.add(handleUserAssignment(adminUsersToAdd, adminUsersToRemove,
-                AuthRole.PROJECT_ADMINS));
+                AuthRole.PROJECT_ADMIN));
         results.add(handleUserAssignment(membersUsersToAdd, membersUsersToRemove,
-                AuthRole.PROJECT_MEMBERS));
+                AuthRole.PROJECT_MEMBER));
         results.add(handleUserAssignment(viewersUsersToAdd, viewersUsersToRemove,
-                AuthRole.PROJECT_VIEWERS));
+                AuthRole.PROJECT_VIEWER));
 
 
         // When assigning UserGroup is ready remove the try-catch.
@@ -195,9 +195,9 @@ public class ProjectRolesHandler {
         String groupLink;
 
         switch (role) {
-        case PROJECT_ADMINS:
-        case PROJECT_MEMBERS:
-        case PROJECT_VIEWERS:
+        case PROJECT_ADMIN:
+        case PROJECT_MEMBER:
+        case PROJECT_VIEWER:
             groupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                     role.buildRoleWithSuffix(projectId));
             break;

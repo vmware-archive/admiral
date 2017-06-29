@@ -62,9 +62,9 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
         });
         ctx.await();
 
-        assertTrue(roles.contains(AuthRole.CLOUD_ADMINS));
-        assertTrue(roles.contains(AuthRole.BASIC_USERS));
-        assertTrue(roles.contains(AuthRole.BASIC_USERS_EXTENDED));
+        assertTrue(roles.contains(AuthRole.CLOUD_ADMIN));
+        assertTrue(roles.contains(AuthRole.BASIC_USER));
+        assertTrue(roles.contains(AuthRole.BASIC_USER_EXTENDED));
 
         // Verify for basic user.
         result = PrincipalRolesUtil
@@ -81,8 +81,8 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
         });
         ctx1.await();
 
-        assertTrue(roles1.contains(AuthRole.BASIC_USERS));
-        assertTrue(roles1.contains(AuthRole.BASIC_USERS_EXTENDED));
+        assertTrue(roles1.contains(AuthRole.BASIC_USER));
+        assertTrue(roles1.contains(AuthRole.BASIC_USER_EXTENDED));
     }
 
     @Test
@@ -120,9 +120,9 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
         assertEquals(1, entries.size());
         assertEquals(project.name, entries.get(0).name);
         assertEquals(project.documentSelfLink, entries.get(0).documentSelfLink);
-        assertTrue(entries.get(0).roles.contains(AuthRole.PROJECT_ADMINS));
-        assertTrue(entries.get(0).roles.contains(AuthRole.PROJECT_MEMBERS));
-        assertTrue(entries.get(0).roles.contains(AuthRole.PROJECT_VIEWERS));
+        assertTrue(entries.get(0).roles.contains(AuthRole.PROJECT_ADMIN));
+        assertTrue(entries.get(0).roles.contains(AuthRole.PROJECT_MEMBER));
+        assertTrue(entries.get(0).roles.contains(AuthRole.PROJECT_VIEWER));
     }
 
     @Test
@@ -175,9 +175,9 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
         assertNotNull(fritzRoles.roles);
         assertNotNull(fritzRoles.projects);
 
-        assertTrue(fritzRoles.roles.contains(AuthRole.CLOUD_ADMINS));
-        assertTrue(fritzRoles.roles.contains(AuthRole.BASIC_USERS));
-        assertTrue(fritzRoles.roles.contains(AuthRole.BASIC_USERS_EXTENDED));
+        assertTrue(fritzRoles.roles.contains(AuthRole.CLOUD_ADMIN));
+        assertTrue(fritzRoles.roles.contains(AuthRole.BASIC_USER));
+        assertTrue(fritzRoles.roles.contains(AuthRole.BASIC_USER_EXTENDED));
 
         assertEquals(2, fritzRoles.projects.size());
 
@@ -195,12 +195,12 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
         assertEquals(firstProject.name, firstProjectEntry.name);
         assertEquals(firstProject.documentSelfLink, firstProjectEntry.documentSelfLink);
         assertEquals(1, firstProjectEntry.roles.size());
-        assertTrue(firstProjectEntry.roles.contains(AuthRole.PROJECT_ADMINS));
+        assertTrue(firstProjectEntry.roles.contains(AuthRole.PROJECT_ADMIN));
 
         assertEquals(secondProject.name, secondProjectEntry.name);
         assertEquals(secondProject.documentSelfLink, secondProjectEntry.documentSelfLink);
         assertEquals(1, secondProjectEntry.roles.size());
-        assertTrue(secondProjectEntry.roles.contains(AuthRole.PROJECT_MEMBERS));
+        assertTrue(secondProjectEntry.roles.contains(AuthRole.PROJECT_MEMBER));
     }
 
     @Test
@@ -241,7 +241,7 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
 
         // assign cloud admins role to root user group.
         PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
-        roleAssignment.add = Collections.singletonList(AuthRole.CLOUD_ADMINS.getName());
+        roleAssignment.add = Collections.singletonList(AuthRole.CLOUD_ADMIN.name());
         doPatch(roleAssignment, UriUtils.buildUriPath(PrincipalService.SELF_LINK, root.id,
                 PrincipalService.ROLES_SUFFIX));
 
@@ -289,9 +289,9 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
         assertNotNull(connieRoles.roles);
         assertNotNull(connieRoles.projects);
 
-        assertTrue(connieRoles.roles.contains(AuthRole.CLOUD_ADMINS));
-        assertTrue(connieRoles.roles.contains(AuthRole.BASIC_USERS));
-        assertTrue(connieRoles.roles.contains(AuthRole.BASIC_USERS_EXTENDED));
+        assertTrue(connieRoles.roles.contains(AuthRole.CLOUD_ADMIN));
+        assertTrue(connieRoles.roles.contains(AuthRole.BASIC_USER));
+        assertTrue(connieRoles.roles.contains(AuthRole.BASIC_USER_EXTENDED));
 
         // Uncomment this once group assignment for project roles is implemented.
 
@@ -311,12 +311,12 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
         // assertEquals(firstProject.name, firstProjectEntry.name);
         // assertEquals(firstProject.documentSelfLink, firstProjectEntry.documentSelfLink);
         // assertEquals(1, firstProjectEntry.roles.size());
-        // assertTrue(firstProjectEntry.roles.contains(AuthRole.PROJECT_ADMINS));
+        // assertTrue(firstProjectEntry.roles.contains(AuthRole.PROJECT_ADMIN));
         //
         // assertEquals(secondProject.name, secondProjectEntry.name);
         // assertEquals(secondProject.documentSelfLink, secondProjectEntry.documentSelfLink);
         // assertEquals(1, secondProjectEntry.roles.size());
-        // assertTrue(secondProjectEntry.roles.contains(AuthRole.PROJECT_MEMBERS));
+        // assertTrue(secondProjectEntry.roles.contains(AuthRole.PROJECT_MEMBER));
     }
 
     @Test
@@ -350,7 +350,7 @@ public class PrincipalRolesUtilTest extends AuthBaseTest {
 
         assertTrue(connieRoles.projects.isEmpty());
         assertEquals(2, connieRoles.roles.size());
-        assertTrue(connieRoles.roles.contains(AuthRole.BASIC_USERS));
-        assertTrue(connieRoles.roles.contains(AuthRole.BASIC_USERS_EXTENDED));
+        assertTrue(connieRoles.roles.contains(AuthRole.BASIC_USER));
+        assertTrue(connieRoles.roles.contains(AuthRole.BASIC_USER_EXTENDED));
     }
 }

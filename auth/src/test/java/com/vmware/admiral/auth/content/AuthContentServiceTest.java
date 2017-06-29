@@ -118,12 +118,12 @@ public class AuthContentServiceTest extends AuthBaseTest {
         String developers = "developers";
         PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
         roleAssignment.add = new ArrayList<>();
-        roleAssignment.add.add(AuthRole.CLOUD_ADMINS.getName());
+        roleAssignment.add.add(AuthRole.CLOUD_ADMIN.name());
         doPatch(roleAssignment, UriUtils.buildUriPath(PrincipalService.SELF_LINK, developers,
                 PrincipalService.ROLES_SUFFIX));
 
         RoleState roleState = getDocument(RoleState.class, UriUtils.buildUriPath(RoleService
-                .FACTORY_LINK, AuthRole.CLOUD_ADMINS.buildRoleWithSuffix(developers)));
+                .FACTORY_LINK, AuthRole.CLOUD_ADMIN.buildRoleWithSuffix(developers)));
         assertNotNull(roleState);
 
         // Import content
@@ -146,13 +146,13 @@ public class AuthContentServiceTest extends AuthBaseTest {
         // Verify superusers are cloud admins.
         String superusers = "superusers";
         roleState = getDocument(RoleState.class, UriUtils.buildUriPath(RoleService
-                .FACTORY_LINK, AuthRole.CLOUD_ADMINS.buildRoleWithSuffix(superusers)));
+                .FACTORY_LINK, AuthRole.CLOUD_ADMIN.buildRoleWithSuffix(superusers)));
         assertNotNull(roleState);
 
         // Verify developers are unassigned from cloud admins.
         TestContext ctx1 = testCreate(1);
         host.send(Operation.createGet(host, UriUtils.buildUriPath(RoleService
-                .FACTORY_LINK, AuthRole.CLOUD_ADMINS.buildRoleWithSuffix(developers)))
+                .FACTORY_LINK, AuthRole.CLOUD_ADMIN.buildRoleWithSuffix(developers)))
                 .setReferer(host.getUri())
                 .setCompletion((o, ex) -> {
                     if (ex != null) {

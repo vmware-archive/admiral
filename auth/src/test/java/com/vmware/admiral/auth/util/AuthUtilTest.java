@@ -144,7 +144,7 @@ public class AuthUtilTest {
     public void testBuildProjectAdminsUserGroup() {
         UserGroupState userGroupState = buildProjectAdminsUserGroup(SAMPLE_PROJECT_ID);
 
-        String id = AuthRole.PROJECT_ADMINS.buildRoleWithSuffix(SAMPLE_PROJECT_ID);
+        String id = AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(SAMPLE_PROJECT_ID);
         String expectedSelfLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, id);
         assertEquals(expectedSelfLink, userGroupState.documentSelfLink);
         assertNotNull(userGroupState.query);
@@ -154,7 +154,7 @@ public class AuthUtilTest {
     public void testBuildProjectMembersUserGroup() {
         UserGroupState userGroupState = buildProjectMembersUserGroup(SAMPLE_PROJECT_ID);
 
-        String id = AuthRole.PROJECT_MEMBERS.buildRoleWithSuffix(SAMPLE_PROJECT_ID);
+        String id = AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(SAMPLE_PROJECT_ID);
         String expectedSelfLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, id);
         assertEquals(expectedSelfLink, userGroupState.documentSelfLink);
         assertNotNull(userGroupState.query);
@@ -164,7 +164,7 @@ public class AuthUtilTest {
     public void testBuildProjectViewersUserGroup() {
         UserGroupState userGroupState = buildProjectViewersUserGroup(SAMPLE_PROJECT_ID);
 
-        String id = AuthRole.PROJECT_VIEWERS.buildRoleWithSuffix(SAMPLE_PROJECT_ID);
+        String id = AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(SAMPLE_PROJECT_ID);
         String expectedSelfLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, id);
         assertEquals(expectedSelfLink, userGroupState.documentSelfLink);
         assertNotNull(userGroupState.query);
@@ -185,7 +185,7 @@ public class AuthUtilTest {
         RoleState roleState = buildProjectAdminsRole(SAMPLE_PROJECT_ID, SAMPLE_USER_GROUP_LINK,
                 SAMPLE_RESOURCE_GROUP_LINK);
 
-        String id = AuthRole.PROJECT_ADMINS
+        String id = AuthRole.PROJECT_ADMIN
                 .buildRoleWithSuffix(SAMPLE_PROJECT_ID, SAMPLE_USER_GROUP_LINK);
         String expectedSelfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
         assertEquals(expectedSelfLink, roleState.documentSelfLink);
@@ -198,7 +198,7 @@ public class AuthUtilTest {
         RoleState roleState = buildProjectMembersRole(SAMPLE_PROJECT_ID, SAMPLE_USER_GROUP_LINK,
                 SAMPLE_RESOURCE_GROUP_LINK);
 
-        String id = AuthRole.PROJECT_MEMBERS
+        String id = AuthRole.PROJECT_MEMBER
                 .buildRoleWithSuffix(SAMPLE_PROJECT_ID, SAMPLE_USER_GROUP_LINK);
         String expectedSelfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
         assertEquals(expectedSelfLink, roleState.documentSelfLink);
@@ -211,7 +211,7 @@ public class AuthUtilTest {
         RoleState roleState = buildProjectViewersRole(SAMPLE_PROJECT_ID, SAMPLE_USER_GROUP_LINK,
                 SAMPLE_RESOURCE_GROUP_LINK);
 
-        String id = AuthRole.PROJECT_VIEWERS.buildRoleWithSuffix(SAMPLE_PROJECT_ID,
+        String id = AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(SAMPLE_PROJECT_ID,
                 SAMPLE_USER_GROUP_LINK);
         String expectedSelfLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, id);
         assertEquals(expectedSelfLink, roleState.documentSelfLink);

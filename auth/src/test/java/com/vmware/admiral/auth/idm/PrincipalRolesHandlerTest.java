@@ -45,7 +45,7 @@ public class PrincipalRolesHandlerTest extends AuthBaseTest {
     public void testAssignRoleToUser() throws Throwable {
         PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
         roleAssignment.add = new ArrayList<>();
-        roleAssignment.add.add(AuthRole.CLOUD_ADMINS.getName());
+        roleAssignment.add.add(AuthRole.CLOUD_ADMIN.name());
 
         doRoleAssignment(roleAssignment, USER_EMAIL_BASIC_USER);
 
@@ -58,7 +58,7 @@ public class PrincipalRolesHandlerTest extends AuthBaseTest {
     public void testUnAssignRoleToUser() throws Throwable {
         PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
         roleAssignment.add = new ArrayList<>();
-        roleAssignment.add.add(AuthRole.CLOUD_ADMINS.getName());
+        roleAssignment.add.add(AuthRole.CLOUD_ADMIN.name());
 
         // Assign.
         doRoleAssignment(roleAssignment, USER_EMAIL_BASIC_USER);
@@ -70,7 +70,7 @@ public class PrincipalRolesHandlerTest extends AuthBaseTest {
         // Unassign.
         roleAssignment = new PrincipalRoleAssignment();
         roleAssignment.remove = new ArrayList<>();
-        roleAssignment.remove.add(AuthRole.CLOUD_ADMINS.getName());
+        roleAssignment.remove.add(AuthRole.CLOUD_ADMIN.name());
 
         doRoleAssignment(roleAssignment, USER_EMAIL_BASIC_USER);
 
@@ -84,12 +84,12 @@ public class PrincipalRolesHandlerTest extends AuthBaseTest {
     public void testAssignRoleToUserGroup() throws Throwable {
         PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
         roleAssignment.add = new ArrayList<>();
-        roleAssignment.add.add(AuthRole.CLOUD_ADMINS.getName());
+        roleAssignment.add.add(AuthRole.CLOUD_ADMIN.name());
 
         doRoleAssignment(roleAssignment, "developers");
 
         RoleState roleState = getDocument(RoleState.class,
-                UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole.CLOUD_ADMINS
+                UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole.CLOUD_ADMIN
                         .buildRoleWithSuffix("developers")));
         assertNotNull(roleState);
         assertEquals(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, "developers"),
@@ -100,13 +100,13 @@ public class PrincipalRolesHandlerTest extends AuthBaseTest {
     public void testUnassignRoleToUserGroup() throws Throwable {
         PrincipalRoleAssignment roleAssignment = new PrincipalRoleAssignment();
         roleAssignment.add = new ArrayList<>();
-        roleAssignment.add.add(AuthRole.CLOUD_ADMINS.getName());
+        roleAssignment.add.add(AuthRole.CLOUD_ADMIN.name());
 
         // Assign.
         doRoleAssignment(roleAssignment, "developers");
 
         RoleState roleState = getDocument(RoleState.class,
-                UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole.CLOUD_ADMINS
+                UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole.CLOUD_ADMIN
                         .buildRoleWithSuffix("developers")));
         assertNotNull(roleState);
         assertEquals(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, "developers"),
@@ -115,13 +115,13 @@ public class PrincipalRolesHandlerTest extends AuthBaseTest {
         // Unassign
         roleAssignment = new PrincipalRoleAssignment();
         roleAssignment.remove = new ArrayList<>();
-        roleAssignment.remove.add(AuthRole.CLOUD_ADMINS.getName());
+        roleAssignment.remove.add(AuthRole.CLOUD_ADMIN.name());
 
         doRoleAssignment(roleAssignment, "developers");
 
         // Verify.
         String developersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK, AuthRole
-                .CLOUD_ADMINS.buildRoleWithSuffix("developers"));
+                .CLOUD_ADMIN.buildRoleWithSuffix("developers"));
         TestContext ctx2 = testCreate(1);
         Operation getSuperusersRole = Operation.createGet(host, developersRoleLink)
                 .setReferer(host.getUri())

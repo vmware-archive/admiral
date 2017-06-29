@@ -385,23 +385,23 @@ public class ProjectServiceTest extends AuthBaseTest {
                 Service.getId(project.documentSelfLink));
 
         String viewersGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                AuthRole.PROJECT_VIEWERS
+                AuthRole.PROJECT_VIEWER
                         .buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
         String membersGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                AuthRole.PROJECT_MEMBERS
+                AuthRole.PROJECT_MEMBER
                         .buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
         String adminsGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                AuthRole.PROJECT_ADMINS
+                AuthRole.PROJECT_ADMIN
                         .buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
 
         String adminsRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
-                AuthRole.PROJECT_ADMINS.buildRoleWithSuffix(Service.getId(project.documentSelfLink),
+                AuthRole.PROJECT_ADMIN.buildRoleWithSuffix(Service.getId(project.documentSelfLink),
                         adminsGroupLink));
         String membersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
-                AuthRole.PROJECT_MEMBERS.buildRoleWithSuffix(
+                AuthRole.PROJECT_MEMBER.buildRoleWithSuffix(
                         Service.getId(project.documentSelfLink), membersGroupLink));
         String viewersRoleLink = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
-                AuthRole.PROJECT_VIEWERS.buildRoleWithSuffix(
+                AuthRole.PROJECT_VIEWER.buildRoleWithSuffix(
                         Service.getId(project.documentSelfLink), viewersGroupLink));
 
         // verify fritz is added.
@@ -512,13 +512,13 @@ public class ProjectServiceTest extends AuthBaseTest {
     @Test
     public void testUserGroupsAutoCreatedOnProjectCreate() {
         String adminsLinks = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                AuthRole.PROJECT_ADMINS
+                AuthRole.PROJECT_ADMIN
                         .buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
         String membersLinks = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                AuthRole.PROJECT_MEMBERS
+                AuthRole.PROJECT_MEMBER
                         .buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
         String viewersLinks = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
-                AuthRole.PROJECT_VIEWERS
+                AuthRole.PROJECT_VIEWER
                         .buildRoleWithSuffix(Service.getId(project.documentSelfLink)));
         assertDocumentExists(adminsLinks);
         assertDocumentExists(membersLinks);
@@ -535,25 +535,25 @@ public class ProjectServiceTest extends AuthBaseTest {
     @Test
     public void testRolesAutoCreatedOnProjectCreate() {
         String adminsUserGroupId = Service
-                .getId(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, AuthRole.PROJECT_ADMINS
+                .getId(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, AuthRole.PROJECT_ADMIN
                         .buildRoleWithSuffix(Service.getId(project.documentSelfLink))));
         String membersUserGroupId = Service
-                .getId(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, AuthRole.PROJECT_MEMBERS
+                .getId(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, AuthRole.PROJECT_MEMBER
                         .buildRoleWithSuffix(Service.getId(project.documentSelfLink))));
         String viewersUserGroupId = Service
-                .getId(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, AuthRole.PROJECT_VIEWERS
+                .getId(UriUtils.buildUriPath(UserGroupService.FACTORY_LINK, AuthRole.PROJECT_VIEWER
                         .buildRoleWithSuffix(Service.getId(project.documentSelfLink))));
 
         String adminsRoleLinks = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
-                AuthRole.PROJECT_ADMINS
+                AuthRole.PROJECT_ADMIN
                         .buildRoleWithSuffix(Service.getId(project.documentSelfLink),
                                 adminsUserGroupId));
         String membersRoleLinks = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
-                AuthRole.PROJECT_MEMBERS
+                AuthRole.PROJECT_MEMBER
                         .buildRoleWithSuffix(Service.getId(project.documentSelfLink),
                                 membersUserGroupId));
         String viewersRoleLinks = UriUtils.buildUriPath(RoleService.FACTORY_LINK,
-                AuthRole.PROJECT_VIEWERS
+                AuthRole.PROJECT_VIEWER
                         .buildRoleWithSuffix(Service.getId(project.documentSelfLink),
                                 viewersUserGroupId));
 
