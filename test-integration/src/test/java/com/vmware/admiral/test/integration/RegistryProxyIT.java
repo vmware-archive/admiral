@@ -21,6 +21,7 @@ import java.util.UUID;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.vmware.admiral.common.util.ServiceClientFactory;
@@ -36,6 +37,7 @@ import com.vmware.admiral.test.integration.SimpleHttpsClient.HttpResponse;
 import com.vmware.xenon.common.UriUtils;
 import com.vmware.xenon.common.Utils;
 
+@Ignore("VBV-1429")
 public class RegistryProxyIT extends BaseProvisioningOnCoreOsIT {
     private String compositeDescriptionLink;
     private String[] commands;
