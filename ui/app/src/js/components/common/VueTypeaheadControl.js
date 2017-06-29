@@ -67,7 +67,7 @@ export default Vue.component('typeahead-control', {
     }, {
       limit: this.limit,
       source: (q, sync, async) => {
-        this.source.call(this, q || '', 10).then((result) => {
+        this.source.call(this, q || '', this.limit).then((result) => {
           let items = result && result.items;
           if (!items) {
             items = [];

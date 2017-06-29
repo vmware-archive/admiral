@@ -45,7 +45,7 @@ export default Vue.component('azure-compute-profile-editor', {
         </multicolumn-cell>
         <multicolumn-cell name="value">
           <typeahead-control
-            :source="searchImages">
+            :source="searchImages" :limit="20">
           </typeahead-control>
         </multicolumn-cell>
       </multicolumn-editor-group>

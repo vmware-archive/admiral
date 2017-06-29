@@ -218,6 +218,18 @@ let EndpointsStore = Reflux.createStore({
     this.setInData(['editingItemData', 'validationErrors'], null);
     this.setInData(['editingItemData', 'verifying'], true);
     this.emitChange();
+    this.verifyEndpoint(endpoint);
+  },
+
+  onAcceptVerifyEndpoint: function() {
+    this.setInData(['editingItemData', 'item', 'endpointProperties', 'certificate'],
+        this.data.editingItemData.certificateInfo.certificate);
+    this.setInData(['editingItemData', 'certificateInfo'], null);
+    this.emitChange();
+    this.verifyEndpoint(this.data.editingItemData.item);
+  },
+
+  verifyEndpoint: function(endpoint) {
     services.verifyEndpoint(endpoint).then((verifiedEndpoint) => {
       if (verifiedEndpoint && verifiedEndpoint.certificateInfo) {
         this.setInData(['editingItemData', 'certificateInfo'], verifiedEndpoint.certificateInfo);
@@ -232,19 +244,6 @@ let EndpointsStore = Reflux.createStore({
         this.emitChange();
       }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
     }).catch(this.onGenericEditError);
-  },
-
-  onAcceptVerifyEndpoint: function() {
-    this.setInData(['editingItemData', 'item', 'endpointProperties', 'certificate'],
-        this.data.editingItemData.certificateInfo.certificate);
-    this.setInData(['editingItemData', 'certificateInfo'], null);
-    this.setInData(['editingItemData', 'validationErrors', '_valid'], i18n.t('verified'));
-    this.setInData(['editingItemData', 'verified'], true);
-    this.emitChange();
-    setTimeout(() => {
-      this.setInData(['editingItemData', 'validationErrors'], null);
-      this.emitChange();
-    }, constants.VISUALS.ITEM_HIGHLIGHT_ACTIVE_TIMEOUT);
   },
 
   onCancelVerifyEndpoint: function() {
