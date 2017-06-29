@@ -142,7 +142,7 @@ if (TEST_ENV.dcp && TEST_ENV.dcp.ngurl) {
 
 gutil.log('Using NG URL: ' + NG_URL);
 
-var pathsToProxy = ["/adapter-extensibility", "/adapter", "/config", "/core", "/images", "/popular-images", "/requests", "/request-graph", "/delete-tasks", "/request-status", "/resources", "/provisioning", "/templates", "/auth", "/container-image-icons", "/rp", "/projects", "/util" ,"/ng", "/uerp"];
+var pathsToProxy = ["/adapter-extensibility", "/adapter", "/config", "/core", "/images", "/popular-images", "/requests", "/request-graph", "/delete-tasks", "/request-status", "/resources", "/provisioning", "/templates", "/auth", "/container-image-icons", "/rp", "/projects", "/util" ,"/ng", "/uerp", "/node_modules"];
 
 /* Utilities to proxy calls from "/path" to "ADMIRAL/path".
 The Karma proxies are needed for integration tests where tests are run on a built in karma server, but are making REST calls to "ADMIRAL".
