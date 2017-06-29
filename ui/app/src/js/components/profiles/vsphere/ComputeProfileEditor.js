@@ -18,7 +18,6 @@ export default Vue.component('vsphere-compute-profile-editor', {
         :headers="[
           i18n('app.profile.edit.nameLabel'),
           i18n('app.profile.edit.cpuCountLabel'),
-          i18n('app.profile.edit.diskSizeMbLabel'),
           i18n('app.profile.edit.memoryMbLabel')
         ]"
         :label="i18n('app.profile.edit.instanceTypeMappingLabel')"
@@ -28,9 +27,6 @@ export default Vue.component('vsphere-compute-profile-editor', {
           <text-control></text-control>
         </multicolumn-cell>
         <multicolumn-cell name="cpuCount">
-          <number-control></number-control>
-        </multicolumn-cell>
-        <multicolumn-cell name="diskSizeMb">
           <number-control></number-control>
         </multicolumn-cell>
         <multicolumn-cell name="memoryMb">
@@ -76,7 +72,6 @@ export default Vue.component('vsphere-compute-profile-editor', {
         return {
           name: key,
           cpuCount: instanceTypeMapping[key].cpuCount,
-          diskSizeMb: instanceTypeMapping[key].diskSizeMb,
           memoryMb: instanceTypeMapping[key].memoryMb
         };
       }),
@@ -120,7 +115,6 @@ export default Vue.component('vsphere-compute-profile-editor', {
             if (current.name) {
               previous[current.name] = {
                 cpuCount: current.cpuCount,
-                diskSizeMb: current.diskSizeMb,
                 memoryMb: current.memoryMb
               };
             }
