@@ -270,35 +270,39 @@ public class ClusterServiceTest extends ComputeBaseTest {
 
     @Test
     public void testPatchCluster() throws Throwable {
+        final String name1 = "name_1";
+        final String details1 = "details_1";
+        final String name2 = "name_2";
+        final String details2 = "details_2";
+
         final String projectLinkDocker = buildProjectLink("test-docker-project");
-        final String placementZoneNameDocker = PlacementZoneUtil
-                .buildPlacementZoneDefaultName(ContainerHostType.DOCKER, COMPUTE_ADDRESS);
+        PlacementZoneUtil.buildPlacementZoneDefaultName(ContainerHostType.DOCKER, COMPUTE_ADDRESS);
 
         ContainerHostSpec hostSpecDocker = createContainerHostSpec(
                 Collections.singletonList(projectLinkDocker),
-                ContainerHostType.DOCKER);
+                ContainerHostType.DOCKER, name1, details1);
 
         ClusterDto clusterDocker = createCluster(hostSpecDocker);
 
         clusterDocker = getOneCluster(Service.getId(clusterDocker.documentSelfLink));
         assertNotNull(clusterDocker);
-        assertEquals(placementZoneNameDocker,
-                clusterDocker.name);
+        assertEquals(name1, clusterDocker.name);
+        assertEquals(details1, clusterDocker.details);
 
-        String clusteNewName = "new-cluster-name";
         ClusterDto patchClusterDto = new ClusterDto();
-        patchClusterDto.name = clusteNewName;
+        patchClusterDto.name = name2;
+        patchClusterDto.details = details2;
         patchClusterDto.documentSelfLink = clusterDocker.documentSelfLink;
         patchClusterDto = patchCluster(patchClusterDto);
 
         assertNotNull(patchClusterDto);
-        assertEquals(clusteNewName,
-                patchClusterDto.name);
+        assertEquals(name2, patchClusterDto.name);
+        assertEquals(details2, patchClusterDto.details);
 
         clusterDocker = getOneCluster(Service.getId(clusterDocker.documentSelfLink));
         assertNotNull(clusterDocker);
-        assertEquals(clusteNewName,
-                clusterDocker.name);
+        assertEquals(name2, clusterDocker.name);
+        assertEquals(details2, clusterDocker.details);
 
     }
 

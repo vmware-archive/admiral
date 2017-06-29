@@ -187,7 +187,12 @@ public class ClusterService extends StatelessService {
         ResourcePoolState resourcePool = new ResourcePoolState();
         resourcePool.documentSelfLink = UriUtils.buildUriPath(ResourcePoolService.FACTORY_LINK,
                 clusterId);
-        resourcePool.name = patch.getBody(ClusterDto.class).name;
+        ClusterDto clusterDto = patch.getBody(ClusterDto.class);
+        resourcePool.name = clusterDto.name;
+        resourcePool.customProperties = new HashMap<>();
+        resourcePool.customProperties.put(
+                ClusterService.CLUSTER_DETAILS_CUSTOM_PROP,
+                clusterDto.details);
 
         ElasticPlacementZoneConfigurationState placementZone = new ElasticPlacementZoneConfigurationState();
         placementZone.resourcePoolState = resourcePool;
