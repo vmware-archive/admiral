@@ -11,7 +11,7 @@
 
 package com.vmware.admiral.auth.util;
 
-import static com.vmware.admiral.common.util.AssertUtil.assertNotNullOrEmpty;
+import static com.vmware.admiral.common.util.AssertUtil.PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT;
 import static com.vmware.admiral.compute.content.CompositeTemplateUtil.isNullOrEmpty;
 
 import java.net.URI;
@@ -20,10 +20,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -46,6 +46,7 @@ import com.vmware.photon.controller.model.query.QueryUtils.QueryByPages;
 import com.vmware.photon.controller.model.resources.ResourcePoolService.ResourcePoolState;
 import com.vmware.photon.controller.model.resources.ResourceState;
 import com.vmware.xenon.common.DeferredResult;
+import com.vmware.xenon.common.LocalizableValidationException;
 import com.vmware.xenon.common.Operation;
 import com.vmware.xenon.common.Service;
 import com.vmware.xenon.common.ServiceDocument;
@@ -131,9 +132,9 @@ public class ProjectUtil {
         String viewersGroupLink = UriUtils.buildUriPath(UserGroupService.FACTORY_LINK,
                 AuthRole.PROJECT_VIEWERS.buildRoleWithSuffix(projectId));
 
-        Map<String, UserState> userStates = new HashMap<>();
-        Map<String, Principal> userLinkToPrincipal = new HashMap<>();
-        Map<AuthRole, List<String>> roleToUsersLinks = new HashMap<>();
+        Map<String, UserState> userStates = new ConcurrentHashMap<>();
+        Map<String, Principal> userLinkToPrincipal = new ConcurrentHashMap<>();
+        Map<AuthRole, List<String>> roleToUsersLinks = new ConcurrentHashMap<>();
 
         DeferredResult<Void> retrieveAdmins = retrieveUserGroupMembers(host,
                 adminsGroupLink, referer)
@@ -165,6 +166,7 @@ public class ProjectUtil {
                     List<DeferredResult<Void>> results = new ArrayList<>();
 
                     for (Entry<String, UserState> entry : userStates.entrySet()) {
+                        host.log(Level.INFO, "UserState size: " + userStates.size());
                         DeferredResult<Void> tempResult = PrincipalUtil.getPrincipal(host,
                                 Service.getId(entry.getValue().documentSelfLink))
                                 .thenAccept(p -> userLinkToPrincipal.put(entry.getKey(), p));
@@ -234,10 +236,11 @@ public class ProjectUtil {
 
     private static DeferredResult<List<Principal>> getGroupPrincipals(ServiceHost host,
             List<String> groupLinks, String projectId, AuthRole role) {
-        try {
-            assertNotNullOrEmpty(projectId, "projectId");
-        } catch (Exception ex) {
-            return DeferredResult.failed(ex);
+
+        if (projectId == null || projectId.isEmpty()) {
+            return DeferredResult.failed(new LocalizableValidationException(
+                    String.format(PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT, "projectId"),
+                    "common.assertion.property.not.empty", "projectId"));
         }
 
         if (groupLinks == null || groupLinks.isEmpty()) {
@@ -350,10 +353,10 @@ public class ProjectUtil {
     private static DeferredResult<List<UserState>> retrieveUserGroupMembers(ServiceHost host,
             String groupLink, URI referer) {
 
-        try {
-            assertNotNullOrEmpty(groupLink, "groupLink");
-        } catch (Exception ex) {
-            return DeferredResult.failed(ex);
+        if (groupLink == null || groupLink.isEmpty()) {
+            return DeferredResult.failed(new LocalizableValidationException(
+                    String.format(PROPERTY_CANNOT_BE_EMPTY_MESSAGE_FORMAT, "groupLink"),
+                    "common.assertion.property.not.empty", "groupLink"));
         }
 
         Operation groupGet = Operation.createGet(host, groupLink).setReferer(referer);

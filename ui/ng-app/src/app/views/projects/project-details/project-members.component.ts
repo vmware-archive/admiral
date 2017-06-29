@@ -92,28 +92,28 @@ export class ProjectMembersComponent implements OnChanges {
             this.service.get(this.project.documentSelfLink, true).then((updatedProject) => {
 
                 this.project = updatedProject;
-                let adminIds = this.project.administrators.map((admin) => admin.email);
-                let devIds = this.project.members.map((member) => member.email);
 
-                let memberIds = [];
-                memberIds = memberIds.concat(adminIds);
-                memberIds = memberIds.concat(devIds);
-                // uniques
-                memberIds = Array.from(new Set(memberIds));
-                let principalCalls =
-                    memberIds.map((memberId) => this.service.getPrincipalById(memberId));
-
-                Promise.all(principalCalls).then((principalResults) => {
-                    principalResults.forEach((principal) => {
-
-                        let isAdmin = adminIds.indexOf(principal.email) > -1;
-                        principal.role = isAdmin ? 'ADMIN' : 'USER';
-
-                        this.members.push(principal);
-                    });
-                }).catch((e) => {
-                    console.log('failed to retrieve project members', e);
+                this.project.administrators.forEach(admin => {
+                    if (admin) {
+                        admin.role = 'ADMIN'
+                        this.members.push(admin);
+                    }
                 });
+
+                this.project.members.forEach(member => {
+                    if (member) {
+                        member.role = 'MEMBER'
+                        this.members.push(member);
+                    }
+                });
+
+                this.project.viewers.forEach(viewer => {
+                    if (viewer) {
+                        viewer.role = 'VIEWER'
+                        this.members.push(viewer);
+                    }
+                });
+
             }).catch((e) => {
                 console.log('failed to update project', e);
             })
@@ -123,17 +123,19 @@ export class ProjectMembersComponent implements OnChanges {
     private deleteMember() {
         let patchValue;
 
-        let isAdmin = this.project.administrators.find((admin) => {
-            return admin.email === this.memberToDelete.id;
-        });
+        let memberRole = this.getPrincipalRole(this.memberToDelete.id);
 
-        if (isAdmin) {
+        if (memberRole === 'ADMIN') {
             patchValue = {
                 "administrators": {"remove": [this.memberToDelete.id]}
             };
-        } else {
+        } else if (memberRole === 'MEMBER') {
             patchValue = {
                 "members": {"remove": [this.memberToDelete.id]}
+            };
+        } else if (memberRole === 'VIEWER') {
+            patchValue = {
+                "viewers": {"remove": [this.memberToDelete.id]}
             };
         }
 
@@ -149,6 +151,34 @@ export class ProjectMembersComponent implements OnChanges {
                 this.deleteConfirmationAlert = Utils.getErrorMessage(error)._generic;
             }
         });
+    }
+
+    private getPrincipalRole(principalId) {
+        let foundMember = this.project.administrators.find((admin) => {
+            return admin.id === this.memberToDelete.id;
+        });
+
+        if (foundMember) {
+            return 'ADMIN';
+        }
+
+        foundMember = this.project.members.find((member) => {
+            return member.id === this.memberToDelete.id;
+        });
+
+        if (foundMember) {
+            return 'MEMBER';
+        }
+
+        foundMember = this.project.viewers.find((viewer) => {
+            return viewer.id === this.memberToDelete.id;
+        });
+
+        if (foundMember) {
+            return 'VIEWER'
+        }
+
+        return null;
     }
 
     updateStateAfterDelete() {

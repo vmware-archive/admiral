@@ -67,13 +67,23 @@ export class ProjectEditMemberComponent {
             if (fieldRoleValue === 'ADMIN') {
                 patchValue = {
                     "administrators": {"add": [this.memberToEdit.id]},
-                    "members": {"remove": [this.memberToEdit.id]}
+                    "members": {"remove": [this.memberToEdit.id]},
+                    "viewers": {"remove": [this.memberToEdit.id]}
                 };
             }
 
-            if (fieldRoleValue === 'USER') {
+            if (fieldRoleValue === 'MEMBER') {
                 patchValue = {
                     "members": {"add": [this.memberToEdit.id]},
+                    "administrators": {"remove": [this.memberToEdit.id]},
+                    "viewers": {"remove": [this.memberToEdit.id]}
+                };
+            }
+
+            if (fieldRoleValue === 'VIEWER') {
+                patchValue = {
+                    "viewers": {"add": [this.memberToEdit.id]},
+                    "members": {"remove": [this.memberToEdit.id]},
                     "administrators": {"remove": [this.memberToEdit.id]}
                 };
             }

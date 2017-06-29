@@ -36,7 +36,7 @@ export class ProjectAddMembersComponent {
     });
     // form data
     selectedMembers: any[] = [];
-    memberRoleSelection: string = 'USER';
+    memberRoleSelection: string = 'MEMBER';
 
     // data
     members: any[];
@@ -101,13 +101,23 @@ export class ProjectAddMembersComponent {
             if (fieldRoleValue === 'ADMIN') {
                 patchValue = {
                     "administrators": {"add": selectedPrincipalIds},
-                    "members": {"remove": selectedPrincipalIds}
+                    "members": {"remove": selectedPrincipalIds},
+                    "viewers": {"remove": selectedPrincipalIds}
                 };
             }
 
-            if (fieldRoleValue === 'USER') {
+            if (fieldRoleValue === 'MEMBER') {
                 patchValue = {
                     "members": {"add": selectedPrincipalIds},
+                    "administrators": {"remove": selectedPrincipalIds},
+                    "viewers": {"remove": selectedPrincipalIds}
+                };
+            }
+
+            if (fieldRoleValue === 'VIEWER') {
+                patchValue = {
+                    "viewers": {"add": selectedPrincipalIds},
+                    "members": {"remove": selectedPrincipalIds},
                     "administrators": {"remove": selectedPrincipalIds}
                 };
             }
@@ -123,7 +133,7 @@ export class ProjectAddMembersComponent {
     }
 
     clearState() {
-        this.memberRoleSelection = 'USER';
+        this.memberRoleSelection = 'MEMBER';
         this.members = [];
         this.membersSuggestions = [];
         this.selectedMembers = [];

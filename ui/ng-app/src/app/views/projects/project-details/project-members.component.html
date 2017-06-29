@@ -33,7 +33,8 @@
         <clr-dg-cell>{{"projects.members.source.local" | i18n }} <clr-icon shape="lock"></clr-icon></clr-dg-cell>
         <clr-dg-cell>
             <span *ngIf="member.role === 'ADMIN'">{{"projects.members.roles.administrator" | i18n }}</span>
-            <span *ngIf="member.role === 'USER'">{{"projects.members.roles.member" | i18n }}</span>
+            <span *ngIf="member.role === 'MEMBER'">{{"projects.members.roles.member" | i18n }}</span>
+            <span *ngIf="member.role === 'VIEWER'">{{"projects.members.roles.viewer" | i18n }}</span>
         </clr-dg-cell>
     </clr-dg-row>
 

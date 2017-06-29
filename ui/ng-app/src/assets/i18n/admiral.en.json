@@ -32,6 +32,7 @@
         "title": "Project Team",
         "administrators": "Project Admins:",
         "members": "Developers:",
+        "viewers": "Viewers",
         "users": "users"
       },
       "repositories": {
@@ -66,7 +67,8 @@
       },
       "roles": {
         "administrator": "DevOps Administrator",
-        "member": "Developer"
+        "member": "Developer",
+        "viewer": "Viewer"
       },
       "source": {
         "local": "Local"
