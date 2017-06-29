@@ -1,0 +1,22 @@
+---
+version: "2"
+services:
+  c1:
+    image: "registry.hub.docker.com/library/alpine"
+    command:
+    - "ping -i 15 c2"
+    links:
+    - "c2"
+    restart: "no"
+    networks:
+    - "n1"
+    depends_on:
+    - "c2"
+  c2:
+    image: "registry.hub.docker.com/library/alpine"
+    restart: "no"
+    networks:
+    - "n1"
+networks:
+  n1:
+    external: false
