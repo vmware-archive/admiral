@@ -439,6 +439,7 @@ public class TestRequestStateFactory extends CommonTestStateFactory {
         cs.primaryMAC = UUID.randomUUID().toString();
         cs.address = COMPUTE_ADDRESS; // this will be used for ssh to access the host
         cs.powerState = PowerState.ON;
+        cs.name = UUID.randomUUID().toString();
         cs.descriptionLink = UriUtils.buildUriPath(ComputeDescriptionService.FACTORY_LINK,
                 DOCKER_COMPUTE_DESC_ID);
         cs.resourcePoolLink = UriUtils.buildUriPath(ResourcePoolService.FACTORY_LINK,

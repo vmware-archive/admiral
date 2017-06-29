@@ -14,13 +14,16 @@ package com.vmware.admiral.request;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.net.ServerSocket;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -59,6 +62,7 @@ import com.vmware.photon.controller.model.resources.ComputeDescriptionService.Co
 import com.vmware.photon.controller.model.resources.ComputeService.ComputeState;
 import com.vmware.xenon.common.Service.Action;
 import com.vmware.xenon.common.UriUtils;
+import com.vmware.xenon.common.test.TestContext;
 
 public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
 
@@ -737,6 +741,96 @@ public class ContainerAllocationTaskServiceTest extends RequestBaseTest {
         assertNotNull(subscriptionSubStages);
         assertEquals(1, subscriptionSubStages.size());
         assertTrue(subscriptionSubStages.contains(allocationTask.taskSubStage.BUILD_RESOURCES_LINKS));
+    }
+
+
+    @Test
+    public void testEnhanceExtensibilityResponse() throws Throwable {
+
+        /**
+         * Initially the placement is:
+         *  H(1)    H(2)
+         *   |
+         *   c1
+         *
+         * After patch from client:
+         *  H(2)    H(1)
+         *   |
+         *   c1
+         *
+         */
+
+        //Create second host for host selections.
+        createDockerHost(createDockerHostDescription(), resourcePool, true);
+
+        containerDesc.customProperties = new HashMap<>();
+        containerDesc.customProperties.put("customPropA", "valueA");
+
+        doOperation(containerDesc, UriUtils.buildUri(host, containerDesc.documentSelfLink),
+                false, Action.PUT);
+
+        ContainerAllocationTaskState allocationTask = createContainerAllocationTask();
+        allocationTask.customProperties = new HashMap<>();
+        allocationTask.customProperties.put("customPropB", "valueB");
+        allocationTask = allocate(allocationTask);
+
+        final String selfLink = allocationTask.documentSelfLink;
+        assertNotNull(selfLink);
+
+        assertNotNull(allocationTask);
+        assertEquals(1, allocationTask.resourceLinks.size());
+
+        ContainerAllocationTaskService service = new ContainerAllocationTaskService();
+        service.setHost(host);
+
+        ContainerAllocationTaskService.ExtensibilityCallbackResponse payload =
+                (ContainerAllocationTaskService.ExtensibilityCallbackResponse) service
+                        .notificationPayload();
+
+        List<HostSelection> beforeExtensibility = new ArrayList<>(
+                allocationTask.hostSelections);
+
+        payload.hosts = beforeExtensibility.stream()
+                .map(hs -> hs.name)
+                .collect(Collectors.toList());
+
+        Collections.reverse(payload.hosts);
+
+        assertNotEquals(beforeExtensibility, payload.hosts);
+
+        TestContext context = new TestContext(1, Duration.ofMinutes(1));
+
+        service.enhanceExtensibilityResponse(allocationTask, payload).whenComplete((r, err) -> {
+            try {
+                ContainerAllocationTaskState document = getDocument(
+                        ContainerAllocationTaskState.class,
+                        selfLink);
+
+                assertNotNull(document);
+
+                List<HostSelection> patchedHosts = new ArrayList<HostSelection>(
+                        document.hostSelections);
+
+                assertNotNull(patchedHosts);
+
+                assertNotEquals(beforeExtensibility, patchedHosts);
+
+                //Task is in complete state and won't remove initial host selections, just add newfo
+                //ones to the existing which have been assigned when document has been initialized.
+                if (patchedHosts.size() == 4) {
+                    //Assert that new newly added host selections are in proper order (reversed
+                    // of original)
+                    assertEquals(beforeExtensibility.get(1).name, patchedHosts.get(2).name);
+                    assertEquals(beforeExtensibility.get(0).name, patchedHosts.get(3).name);
+                } else {
+                    context.failIteration(new Throwable("Expected 4 host selections."));
+                }
+            } catch (Throwable throwable) {
+                context.failIteration(throwable);
+            }
+            context.completeIteration();
+        });
+        context.await();
     }
 
     private void validatePorts(ContainerDescription containerDescription,

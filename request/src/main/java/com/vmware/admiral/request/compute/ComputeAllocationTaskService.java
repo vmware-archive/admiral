@@ -40,7 +40,6 @@ import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import com.vmware.admiral.common.ManagementUriParts;
@@ -1101,12 +1100,8 @@ public class ComputeAllocationTaskService
             failTask(missmatchInSelections, new Throwable(missmatchInSelections));
             return;
         }
-        //Compare both Lists by indexes
-        long diffInIndexes = IntStream.range(0, selectionsForNotificationPayload.size())
-                .filter(index -> !responseHostSelections.get(index).equals
-                        (selectionsForNotificationPayload.get(index))).count();
 
-        if (diffInIndexes > 0) {
+        if (!selectionsForNotificationPayload.equals(responseHostSelections)) {
             //Check if client provides host that doesn't exist
             for (String hostName : response.hostSelections) {
                 if (!state.selectedComputePlacementHosts.stream().filter(hs -> hs.name != null &&

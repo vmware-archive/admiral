@@ -20,7 +20,6 @@ import com.vmware.admiral.request.utils.EventTopicUtils;
 import com.vmware.admiral.service.common.EventTopicDeclarator;
 import com.vmware.admiral.service.common.EventTopicService;
 import com.vmware.photon.controller.model.data.SchemaBuilder;
-import com.vmware.photon.controller.model.data.SchemaField.Constraint;
 import com.vmware.photon.controller.model.data.SchemaField.Type;
 import com.vmware.xenon.common.FactoryService;
 import com.vmware.xenon.common.Service;
@@ -78,7 +77,6 @@ public class ContainerAllocationTaskFactoryService extends FactoryService implem
                 .addField(CONTAINER_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS)
                 .withType(Type.LIST)
                 .withDataType(DATATYPE_STRING)
-                .withConstraint(Constraint.readOnly, true)
                 .withLabel(CONTAINER_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS_LABEL)
                 .withDescription(CONTAINER_ALLOCATION_TOPIC_FIELD_HOST_SELECTIONS_DESCRIPTION)
                 .done();
